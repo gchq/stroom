@@ -105,36 +105,38 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
 
     @Override
     public void showSettings() {
-        if (settingsPresenter == null) {
-            settingsPresenter = (SettingsPresenter) settingsPresenterProvider.get();
-        }
+        if (settingsPresenterProvider != null) {
+            if (settingsPresenter == null) {
+                settingsPresenter = (SettingsPresenter) settingsPresenterProvider.get();
+            }
 
-        settingsPresenter.setComponents(components);
-        settingsPresenter.read(componentConfig);
+            settingsPresenter.setComponents(components);
+            settingsPresenter.read(componentConfig);
 
-        final PopupSize popupSize = PopupSize.resizable(550, 450);
-        ShowPopupEvent.builder(settingsPresenter)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(popupSize)
-                .caption("Settings")
-                .onShow(e -> settingsPresenter.focus())
-                .onHideRequest(e -> {
-                    if (e.isOk()) {
-                        if (settingsPresenter.validate()) {
-                            final boolean dirty = settingsPresenter.isDirty(componentConfig);
-                            componentConfig = settingsPresenter.write(componentConfig);
+            final PopupSize popupSize = PopupSize.resizable(550, 450);
+            ShowPopupEvent.builder(settingsPresenter)
+                    .popupType(PopupType.OK_CANCEL_DIALOG)
+                    .popupSize(popupSize)
+                    .caption("Settings")
+                    .onShow(e -> settingsPresenter.focus())
+                    .onHideRequest(e -> {
+                        if (e.isOk()) {
+                            if (settingsPresenter.validate()) {
+                                final boolean dirty = settingsPresenter.isDirty(componentConfig);
+                                componentConfig = settingsPresenter.write(componentConfig);
 
-                            if (dirty) {
-                                changeSettings();
+                                if (dirty) {
+                                    changeSettings();
+                                }
+
+                                e.hide();
                             }
-
+                        } else {
                             e.hide();
                         }
-                    } else {
-                        e.hide();
-                    }
-                })
-                .fire();
+                    })
+                    .fire();
+        }
     }
 
     protected void changeSettings() {

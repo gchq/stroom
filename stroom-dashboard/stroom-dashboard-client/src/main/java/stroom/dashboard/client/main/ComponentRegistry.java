@@ -65,16 +65,22 @@ public class ComponentRegistry {
         return null;
     }
 
+    public enum ComponentUse {
+        PANEL, INPUT
+    }
+
     public static class ComponentType {
 
         private final int priority;
         private final String id;
         private final String name;
+        private final ComponentUse use;
 
-        public ComponentType(final int priority, final String id, final String name) {
+        public ComponentType(final int priority, final String id, final String name, final ComponentUse use) {
             this.priority = priority;
             this.id = id;
             this.name = name;
+            this.use = use;
         }
 
         public String getId() {
@@ -83,6 +89,10 @@ public class ComponentRegistry {
 
         public String getName() {
             return name;
+        }
+
+        public ComponentUse getUse() {
+            return use;
         }
 
         @Override

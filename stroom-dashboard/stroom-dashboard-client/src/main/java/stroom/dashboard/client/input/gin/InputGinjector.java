@@ -16,18 +16,14 @@
 
 package stroom.dashboard.client.input.gin;
 
-import stroom.dashboard.client.input.MultiInputPlugin;
-import stroom.dashboard.client.input.MultiInputPresenter;
-import stroom.dashboard.client.input.MultiInputPresenter.MultiInputView;
-import stroom.dashboard.client.input.MultiInputViewImpl;
+import stroom.dashboard.client.input.KeyValueInputPlugin;
+import stroom.dashboard.client.input.KeyValueInputPresenter;
 
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import com.google.gwt.inject.client.AsyncProvider;
 
-public class MultiInputModule extends AbstractPresenterModule {
+public interface InputGinjector {
 
-    @Override
-    protected void configure() {
-        bind(MultiInputPlugin.class).asEagerSingleton();
-        bindPresenterWidget(MultiInputPresenter.class, MultiInputView.class, MultiInputViewImpl.class);
-    }
+    AsyncProvider<KeyValueInputPlugin> getKeyValueInputPlugin();
+
+    AsyncProvider<KeyValueInputPresenter> getKeyValueInputPresenter();
 }

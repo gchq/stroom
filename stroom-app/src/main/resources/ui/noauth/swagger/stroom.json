@@ -12515,6 +12515,19 @@
           }
         }
       },
+      "KeyValueInputComponentSettings" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ComponentSettings"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "text" : {
+              "type" : "string"
+            }
+          }
+        } ]
+      },
       "LayoutConfig" : {
         "type" : "object",
         "discriminator" : {
@@ -12570,6 +12583,34 @@
             }
           }
         }
+      },
+      "ListInputComponentSettings" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ComponentSettings"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "dictionary" : {
+              "$ref" : "#/components/schemas/DocRef"
+            },
+            "key" : {
+              "type" : "string"
+            },
+            "useDictionary" : {
+              "type" : "boolean"
+            },
+            "value" : {
+              "type" : "string"
+            },
+            "values" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            }
+          }
+        } ]
       },
       "Location" : {
         "type" : "object",
@@ -12726,19 +12767,6 @@
             "type" : "string"
           }
         }
-      },
-      "MultiInputComponentSettings" : {
-        "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/ComponentSettings"
-        }, {
-          "type" : "object",
-          "properties" : {
-            "text" : {
-              "type" : "string"
-            }
-          }
-        } ]
       },
       "Node" : {
         "type" : "object",

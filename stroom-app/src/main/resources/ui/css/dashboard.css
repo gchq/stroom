@@ -520,9 +520,16 @@
 	background-color: #1f77b4;
 }
 
-.MultiInputView {
+.KeyValueInputView {
     padding-left: 0.4rem;
     height: auto;
 }
+
+.ListInputView {
+    padding-left: 0.4rem;
+    padding-right: 0.4rem;
+    height: auto;
+}
+
 
 

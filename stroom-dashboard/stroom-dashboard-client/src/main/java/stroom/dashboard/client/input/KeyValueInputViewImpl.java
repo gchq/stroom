@@ -16,7 +16,7 @@
 
 package stroom.dashboard.client.input;
 
-import stroom.dashboard.client.input.MultiInputPresenter.MultiInputView;
+import stroom.dashboard.client.input.KeyValueInputPresenter.KeyValueInputView;
 import stroom.dashboard.client.query.QueryButtons;
 
 import com.google.gwt.event.dom.client.BlurEvent;
@@ -30,7 +30,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class MultiInputViewImpl extends ViewWithUiHandlers<MultiInputUiHandlers> implements MultiInputView {
+public class KeyValueInputViewImpl extends ViewWithUiHandlers<KeyValueInputUiHandlers> implements KeyValueInputView {
 
     private final Widget widget;
 
@@ -40,7 +40,7 @@ public class MultiInputViewImpl extends ViewWithUiHandlers<MultiInputUiHandlers>
     QueryButtons queryButtons;
 
     @Inject
-    public MultiInputViewImpl(final Binder binder) {
+    public KeyValueInputViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -90,7 +90,7 @@ public class MultiInputViewImpl extends ViewWithUiHandlers<MultiInputUiHandlers>
         }
     }
 
-    public interface Binder extends UiBinder<Widget, MultiInputViewImpl> {
+    public interface Binder extends UiBinder<Widget, KeyValueInputViewImpl> {
 
     }
 }

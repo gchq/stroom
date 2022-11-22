@@ -18,7 +18,7 @@ package stroom.dashboard.client.input;
 
 import com.gwtplatform.mvp.client.UiHandlers;
 
-public interface MultiInputUiHandlers extends UiHandlers {
+public interface KeyValueInputUiHandlers extends UiHandlers {
 
     void onValueChanged(String value);
 

@@ -22,6 +22,7 @@ import stroom.dashboard.client.HasSelection;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
+import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.DataSourceFieldsMap;
 import stroom.dashboard.client.main.IndexLoader;
@@ -100,7 +101,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
 
-    public static final ComponentType TYPE = new ComponentType(0, "query", "Query");
+    public static final ComponentType TYPE = new ComponentType(0, "query", "Query", ComponentUse.PANEL);
     static final int TEN_SECONDS = 10000;
 
     private final ExpressionTreePresenter expressionPresenter;

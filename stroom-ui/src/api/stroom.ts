@@ -1783,6 +1783,8 @@ export interface KafkaConfigDoc {
   version?: string;
 }
 
+export type KeyValueInputComponentSettings = ComponentSettings & { text?: string };
+
 export interface LayoutConfig {
   preferredSize?: Size;
   type: string;
@@ -1810,6 +1812,14 @@ export interface ListConfigResponse {
   qualifiedFilterInput?: string;
   values?: ConfigProperty[];
 }
+
+export type ListInputComponentSettings = ComponentSettings & {
+  dictionary?: DocRef;
+  key?: string;
+  useDictionary?: boolean;
+  value?: string;
+  values?: string[];
+};
 
 export interface Location {
   /** @format int32 */
@@ -1881,8 +1891,6 @@ export interface MetaRow {
   meta?: Meta;
   pipelineName?: string;
 }
-
-export type MultiInputComponentSettings = ComponentSettings & { text?: string };
 
 export interface Node {
   /** @format int64 */

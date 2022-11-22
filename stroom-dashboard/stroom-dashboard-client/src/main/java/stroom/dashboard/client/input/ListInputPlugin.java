@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.input.gin;
+package stroom.dashboard.client.input;
 
-import stroom.dashboard.client.input.MultiInputPlugin;
-import stroom.dashboard.client.input.MultiInputPresenter;
+import stroom.dashboard.client.main.ComponentRegistry;
 
-import com.google.gwt.inject.client.AsyncProvider;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
 
-public interface MultiInputGinjector {
+public class ListInputPlugin {
 
-    AsyncProvider<MultiInputPlugin> getMultiInputPlugin();
-
-    AsyncProvider<MultiInputPresenter> getMultiInputPresenter();
+    @Inject
+    public ListInputPlugin(final EventBus eventBus, final ComponentRegistry componentRegistry,
+                           final Provider<ListInputPresenter> provider) {
+        componentRegistry.register(ListInputPresenter.TYPE, provider);
+    }
 }

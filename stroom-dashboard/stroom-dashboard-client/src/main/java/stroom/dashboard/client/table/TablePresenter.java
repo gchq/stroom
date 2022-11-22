@@ -26,6 +26,7 @@ import stroom.dashboard.client.HasSelection;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
+import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.DataSourceFieldsMap;
 import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.ResultComponent;
@@ -128,7 +129,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         implements HasDirtyHandlers, ResultComponent, HasSelection, TableUiHandlers {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
-    public static final ComponentType TYPE = new ComponentType(1, "table", "Table");
+    public static final ComponentType TYPE = new ComponentType(1, "table", "Table", ComponentUse.PANEL);
     private static final int MIN_EXPANDER_COL_WIDTH = 0;
     private static final Version CURRENT_MODEL_VERSION = new Version(6, 1, 26);
 

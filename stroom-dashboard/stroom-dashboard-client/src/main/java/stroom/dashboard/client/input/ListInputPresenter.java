@@ -16,30 +16,41 @@
 
 package stroom.dashboard.client.input;
 
-import stroom.dashboard.client.input.MultiInputPresenter.MultiInputView;
+import stroom.dashboard.client.input.ListInputPresenter.ListInputView;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
+import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.Components;
-import stroom.dashboard.client.query.QueryButtons;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
-import stroom.dashboard.shared.MultiInputComponentSettings;
+import stroom.dashboard.shared.ListInputComponentSettings;
+import stroom.dictionary.shared.WordListResource;
+import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
-public class MultiInputPresenter extends AbstractComponentPresenter<MultiInputView> implements MultiInputUiHandlers {
+import java.util.List;
 
-    public static final ComponentType TYPE = new ComponentType(1, "multi-input", "Multi Input");
+public class ListInputPresenter extends AbstractComponentPresenter<ListInputView> implements
+        ListInputUiHandlers {
+
+    public static final ComponentType TYPE = new ComponentType(1, "list-input", "List Input", ComponentUse.INPUT);
+
+    private static final WordListResource WORD_LIST_RESOURCE = GWT.create(WordListResource.class);
+
+    private final RestFactory restFactory;
 
     @Inject
-    public MultiInputPresenter(final EventBus eventBus,
-                               final MultiInputView view,
-                               final RestFactory restFactory) {
+    public ListInputPresenter(final EventBus eventBus,
+                              final ListInputView view,
+                              final RestFactory restFactory) {
         super(eventBus, view, null);
+        this.restFactory = restFactory;
         view.setUiHandlers(this);
     }
 
@@ -88,9 +99,25 @@ public class MultiInputPresenter extends AbstractComponentPresenter<MultiInputVi
     public void read(final ComponentConfig componentConfig) {
         super.read(componentConfig);
         final ComponentSettings settings = componentConfig.getSettings();
-        if (settings instanceof MultiInputComponentSettings) {
-            final MultiInputComponentSettings multiInputComponentSettings = (MultiInputComponentSettings) settings;
-            getView().setValue(multiInputComponentSettings.getText());
+        if (settings instanceof ListInputComponentSettings) {
+            final ListInputComponentSettings componentSettings =
+                    (ListInputComponentSettings) settings;
+
+            if (componentSettings.isUseDictionary() &&
+                    componentSettings.getDictionary() != null) {
+                final Rest<List<String>> rest = restFactory.create();
+                rest.onSuccess(words -> {
+                            if (words != null) {
+                                getView().setValues(words);
+                                getView().setSelectedValue(componentSettings.getValue());
+                            }
+                        })
+                        .call(WORD_LIST_RESOURCE)
+                        .getWords(componentSettings.getDictionary().getUuid());
+            } else {
+                getView().setValues(componentSettings.getValues());
+                getView().setSelectedValue(componentSettings.getValue());
+            }
         }
     }
 
@@ -109,12 +136,12 @@ public class MultiInputPresenter extends AbstractComponentPresenter<MultiInputVi
         return TYPE;
     }
 
-    public interface MultiInputView extends View, HasUiHandlers<MultiInputUiHandlers> {
+    public interface ListInputView extends View, HasUiHandlers<ListInputUiHandlers> {
 
-        void setValue(String value);
+        void setValues(List<String> values);
 
-        String getValue();
+        void setSelectedValue(String selected);
 
-        QueryButtons getQueryButtons();
+        String getSelectedValue();
     }
 }

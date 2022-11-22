@@ -30,7 +30,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = TableComponentSettings.class, name = "table"),
         @JsonSubTypes.Type(value = VisComponentSettings.class, name = "vis"),
         @JsonSubTypes.Type(value = TextComponentSettings.class, name = "text"),
-        @JsonSubTypes.Type(value = MultiInputComponentSettings.class, name = "multi-input")
+        @JsonSubTypes.Type(value = KeyValueInputComponentSettings.class, name = "key-value-input"),
+        @JsonSubTypes.Type(value = ListInputComponentSettings.class, name = "list-input")
 })
 @JsonInclude(Include.NON_NULL)
 public interface ComponentSettings {

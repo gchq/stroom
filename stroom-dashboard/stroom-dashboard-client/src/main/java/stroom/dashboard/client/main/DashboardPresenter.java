@@ -22,6 +22,7 @@ import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.dashboard.client.flexlayout.FlexLayoutChangeHandler;
 import stroom.dashboard.client.flexlayout.PositionAndSize;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
+import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.DashboardPresenter.DashboardView;
 import stroom.dashboard.client.query.QueryInfoPresenter;
 import stroom.dashboard.client.query.QueryUiHandlers;
@@ -116,6 +117,15 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
     @Override
     public void onAddPanel(final ClickEvent event) {
+        onAdd(event, ComponentUse.PANEL);
+    }
+
+    @Override
+    public void onAddInput(final ClickEvent event) {
+        onAdd(event, ComponentUse.INPUT);
+    }
+
+    private void onAdd(final ClickEvent event, final ComponentUse componentUse) {
         final com.google.gwt.dom.client.Element target = event.getNativeEvent().getEventTarget().cast();
 
         final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft() - 3,
@@ -123,10 +133,12 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
         final List<Item> menuItems = new ArrayList<>();
         for (final ComponentType type : components.getComponentTypes()) {
-            menuItems.add(new SimpleMenuItem.Builder()
-                    .text(type.getName())
-                    .command(() -> addComponent(type))
-                    .build());
+            if (componentUse.equals(type.getUse())) {
+                menuItems.add(new SimpleMenuItem.Builder()
+                        .text(type.getName())
+                        .command(() -> addComponent(type))
+                        .build());
+            }
         }
 
         ShowMenuEvent
@@ -134,11 +146,6 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                 .items(menuItems)
                 .popupPosition(popupPosition)
                 .fire(this);
-    }
-
-    @Override
-    public void onAddInput(final ClickEvent event) {
-
     }
 
     @Override

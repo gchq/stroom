@@ -28,13 +28,13 @@ import java.util.Objects;
         "text"
 })
 @JsonInclude(Include.NON_NULL)
-public class MultiInputComponentSettings implements ComponentSettings {
+public class KeyValueInputComponentSettings implements ComponentSettings {
 
     @JsonProperty
     private final String text;
 
     @JsonCreator
-    public MultiInputComponentSettings(@JsonProperty("text") final String text) {
+    public KeyValueInputComponentSettings(@JsonProperty("text") final String text) {
         this.text = text;
     }
 
@@ -50,7 +50,7 @@ public class MultiInputComponentSettings implements ComponentSettings {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final MultiInputComponentSettings that = (MultiInputComponentSettings) o;
+        final KeyValueInputComponentSettings that = (KeyValueInputComponentSettings) o;
         return Objects.equals(text, that.text);
     }
 
@@ -79,8 +79,8 @@ public class MultiInputComponentSettings implements ComponentSettings {
         private Builder() {
         }
 
-        private Builder(final MultiInputComponentSettings multiInputComponentSettings) {
-            this.text = multiInputComponentSettings.text;
+        private Builder(final KeyValueInputComponentSettings keyValueInputComponentSettings) {
+            this.text = keyValueInputComponentSettings.text;
         }
 
         public Builder text(final String text) {
@@ -88,8 +88,8 @@ public class MultiInputComponentSettings implements ComponentSettings {
             return this;
         }
 
-        public MultiInputComponentSettings build() {
-            return new MultiInputComponentSettings(
+        public KeyValueInputComponentSettings build() {
+            return new KeyValueInputComponentSettings(
                     text
             );
         }

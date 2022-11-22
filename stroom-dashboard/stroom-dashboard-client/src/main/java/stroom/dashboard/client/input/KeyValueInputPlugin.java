@@ -22,11 +22,11 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
-public class MultiInputPlugin {
+public class KeyValueInputPlugin {
 
     @Inject
-    public MultiInputPlugin(final EventBus eventBus, final ComponentRegistry componentRegistry,
-                            final Provider<MultiInputPresenter> provider) {
-        componentRegistry.register(MultiInputPresenter.TYPE, provider);
+    public KeyValueInputPlugin(final EventBus eventBus, final ComponentRegistry componentRegistry,
+                               final Provider<KeyValueInputPresenter> provider) {
+        componentRegistry.register(KeyValueInputPresenter.TYPE, provider);
     }
 }

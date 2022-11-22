@@ -20,6 +20,7 @@ import stroom.dashboard.client.HasSelection;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
+import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
@@ -83,7 +84,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     private static final ScriptResource SCRIPT_RESOURCE = GWT.create(ScriptResource.class);
     private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);
 
-    public static final ComponentType TYPE = new ComponentType(4, "vis", "Visualisation");
+    public static final ComponentType TYPE = new ComponentType(4, "vis", "Visualisation", ComponentUse.PANEL);
     private static final long UPDATE_INTERVAL = 2000;
 
     private final VisFunctionCache visFunctionCache;
