@@ -16,7 +16,9 @@
 
 package stroom.dashboard.client.main;
 
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.TimeRange;
+import stroom.widget.customdatebox.client.MyDateBox;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -33,16 +35,13 @@ public class TimeRangePopup {
     @UiField
     SimplePanel quickSettings;
     @UiField
-    SimplePanel timeRangeContainer;
-
-    private final TimeRangeEditor timeRangeEditor;
+    MyDateBox timeFrom;
+    @UiField
+    MyDateBox timeTo;
 
     public TimeRangePopup() {
         final Binder binder = GWT.create(Binder.class);
         widget = binder.createAndBindUi(this);
-
-        timeRangeEditor = new TimeRangeEditor();
-        timeRangeContainer.setWidget(timeRangeEditor);
 
         final FlowPanel recent = createPanel("Recent");
         for (final TimeRange timeRange : TimeRanges.RECENT_RANGES) {
@@ -73,15 +72,43 @@ public class TimeRangePopup {
     }
 
     public void setUtc(final boolean utc) {
-        timeRangeEditor.setUtc(utc);
+        timeFrom.setUtc(utc);
+        timeTo.setUtc(utc);
     }
 
     public void read(final TimeRange timeRange) {
-        timeRangeEditor.read(timeRange);
+        timeFrom.setValue(timeRange.getFrom());
+        timeTo.setValue(timeRange.getTo());
     }
 
     public TimeRange write() {
-        return timeRangeEditor.write();
+        final String from = normalise(timeFrom.getValue());
+        final String to = normalise(timeTo.getValue());
+
+        String name = TimeRanges.ALL_TIME.getName();
+        if (from != null && to != null) {
+            name = "Between " + from + " and " + to;
+        } else if (from != null) {
+            name = "After " + from;
+        } else if (to != null) {
+            name = "Before " + to;
+        }
+
+        final TimeRange range = new TimeRange(name, Condition.BETWEEN, from, to);
+        // See if this is a quick select range.
+        for (final TimeRange timeRange : TimeRanges.ALL_RANGES) {
+            if (timeRange.equals(range)) {
+                return timeRange;
+            }
+        }
+        return range;
+    }
+
+    private String normalise(final String string) {
+        if (string != null && string.trim().length() > 0) {
+            return string.trim();
+        }
+        return null;
     }
 
     private FlowPanel createPanel(final String name) {
@@ -97,7 +124,7 @@ public class TimeRangePopup {
         final Label label = new Label(timeRange.getName(), false);
         label.addStyleName("timeRange-quickSetting");
         label.addClickHandler(event -> {
-            timeRangeEditor.read(timeRange);
+            read(timeRange);
         });
         return label;
     }
