@@ -26,15 +26,15 @@ logging:
   level: ${STROOM_LOGGING_LEVEL:- ERROR}
   loggers:
     stroom: INFO
-    io.dropwizard: INFO
-    org.eclipse.jetty: INFO
-    org.glassfish: INFO
-    org.glassfish.jersey: INFO
+    io.dropwizard: ERROR
+    org.eclipse.jetty: ERROR
+    org.glassfish: ERROR
+    org.glassfish.jersey: ERROR
     #    stroom.app.logging.DefaultLoggingFilter: INFO
     #    org.glassfish.jersey.logging.LoggingFeature: INFO
     #    org.glassfish.jersey.server.ServerRuntime.Responder: INFO
     #    org.glassfish.jersey.server.validation.internal.ValidationExceptionMapper: FINER
-    org.flywaydb: INFO
+    org.flywaydb: ERROR
     "event-logger":
       level: INFO
       additive: false

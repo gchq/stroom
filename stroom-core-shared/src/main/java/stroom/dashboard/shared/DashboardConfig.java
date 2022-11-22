@@ -17,6 +17,7 @@
 package stroom.dashboard.shared;
 
 import stroom.docref.HasDisplayValue;
+import stroom.query.api.v2.TimeRange;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -34,15 +35,18 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@JsonPropertyOrder({"parameters", "components", "layout", "tabVisibility"})
+@JsonPropertyOrder({"parameters", "timeRange", "components", "layout", "tabVisibility"})
 @JsonInclude(Include.NON_NULL)
 @XmlRootElement(name = "dashboard")
-@XmlType(name = "DashboardConfig", propOrder = {"parameters", "components", "layout", "tabVisibility"})
+@XmlType(name = "DashboardConfig", propOrder = {"parameters", "timeRange", "components", "layout", "tabVisibility"})
 public class DashboardConfig {
 
     @XmlElement(name = "parameters")
     @JsonProperty("parameters")
     private String parameters;
+    @XmlElement(name = "timeRange")
+    @JsonProperty("timeRange")
+    private TimeRange timeRange;
     @XmlElementWrapper(name = "components")
     @XmlElements({@XmlElement(name = "component", type = ComponentConfig.class)})
     @JsonProperty("components")
@@ -61,10 +65,12 @@ public class DashboardConfig {
 
     @JsonCreator
     public DashboardConfig(@JsonProperty("parameters") final String parameters,
+                           @JsonProperty("timeRange") final TimeRange timeRange,
                            @JsonProperty("components") final List<ComponentConfig> components,
                            @JsonProperty("layout") final LayoutConfig layout,
                            @JsonProperty("tabVisibility") final TabVisibility tabVisibility) {
         this.parameters = parameters;
+        this.timeRange = timeRange;
         this.components = components;
         this.layout = layout;
         this.tabVisibility = tabVisibility;
@@ -80,6 +86,14 @@ public class DashboardConfig {
 
     public void setParameters(String parameters) {
         this.parameters = parameters;
+    }
+
+    public TimeRange getTimeRange() {
+        return timeRange;
+    }
+
+    public void setTimeRange(final TimeRange timeRange) {
+        this.timeRange = timeRange;
     }
 
     public List<ComponentConfig> getComponents() {

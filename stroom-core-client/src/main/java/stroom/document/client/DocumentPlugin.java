@@ -21,9 +21,9 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.SelectContentTabEvent;
 import stroom.core.client.ContentManager;
-import stroom.core.client.ContentManager.CloseCallback;
-import stroom.core.client.ContentManager.CloseHandler;
 import stroom.core.client.HasSave;
+import stroom.core.client.event.CloseContentEvent;
+import stroom.core.client.event.CloseContentEvent.Callback;
 import stroom.core.client.presenter.Plugin;
 import stroom.docref.DocRef;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
@@ -124,7 +124,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                 tabDataToDocumentMap.put(tabData, docRef);
 
                 // Load the document and show the tab.
-                final CloseHandler closeHandler = new EntityCloseHandler(tabData);
+                final CloseContentEvent.Handler closeHandler = new EntityCloseHandler(tabData);
                 showTab(docRef, documentEditPresenter, closeHandler, tabData);
 
             } else {
@@ -138,7 +138,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 
     protected void showTab(final DocRef docRef,
                            final MyPresenterWidget<?> documentEditPresenter,
-                           final CloseHandler closeHandler,
+                           final CloseContentEvent.Handler closeHandler,
                            final DocumentTabData tabData) {
         final Consumer<Throwable> errorConsumer = caught -> {
             AlertEvent.fireError(DocumentPlugin.this, "Unable to load document " + docRef, caught.getMessage(), null);
@@ -506,7 +506,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 
     public abstract String getType();
 
-    private class EntityCloseHandler implements CloseHandler {
+    private class EntityCloseHandler implements CloseContentEvent.Handler {
 
         private final DocumentTabData tabData;
 
@@ -516,29 +516,31 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 
         @Override
         @SuppressWarnings("unchecked")
-        public void onCloseRequest(final CloseCallback callback) {
+        public void onCloseRequest(final CloseContentEvent event) {
             if (tabData != null) {
                 if (tabData instanceof DocumentEditPresenter<?, ?>) {
                     final DocumentEditPresenter<?, D> presenter = (DocumentEditPresenter<?, D>) tabData;
                     if (presenter.isDirty()) {
-                        final DocRef docRef = getDocRef(presenter.getEntity());
-                        ConfirmEvent.fire(DocumentPlugin.this,
-                                docRef.getType() + " '" + docRef.getName()
-                                        + "' has unsaved changes. Are you sure you want to close this item?",
-                                result -> actuallyClose(tabData, callback, presenter, result));
+                        if (!event.isIgnoreIfDirty()) {
+                            final DocRef docRef = getDocRef(presenter.getEntity());
+                            ConfirmEvent.fire(DocumentPlugin.this,
+                                    docRef.getType() + " '" + docRef.getName()
+                                            + "' has unsaved changes. Are you sure you want to close this item?",
+                                    result -> actuallyClose(tabData, event.getCallback(), presenter, result));
+                        }
                     } else {
-                        actuallyClose(tabData, callback, presenter, true);
+                        actuallyClose(tabData, event.getCallback(), presenter, true);
                     }
                 } else {
                     // Cleanup reference to this tab data.
                     removeTabData(tabData);
                     // Tell the callback to close the tab.
-                    callback.closeTab(true);
+                    event.getCallback().closeTab(true);
                 }
             }
         }
 
-        private void actuallyClose(final DocumentTabData tabData, final CloseCallback callback,
+        private void actuallyClose(final DocumentTabData tabData, final Callback callback,
                                    final DocumentEditPresenter<?, D> presenter, final boolean ok) {
             if (ok) {
                 // Tell the presenter we are closing.

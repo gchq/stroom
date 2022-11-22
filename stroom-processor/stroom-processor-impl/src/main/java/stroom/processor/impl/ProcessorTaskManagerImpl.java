@@ -980,6 +980,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                 .dataSource(queryData.getDataSource())
                 .expression(queryData.getExpression())
                 .params(getParams(queryData))
+                .timeRange(queryData.getTimeRange())
                 .build();
 
         // Update the tracker status message.

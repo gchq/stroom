@@ -21,23 +21,14 @@ import java.util.Objects;
 public class IndexShardKey {
 
     private final String indexUuid;
-    private final String partition;
+    private final Partition partition;
     private final int shardNo;
 
-    // The time that the partition that this shard belongs to starts
-    private final Long partitionFromTime;
-    // The time that the partition that this shard belongs to ends
-    private final Long partitionToTime;
-
     public IndexShardKey(final String indexUuid,
-                         final String partition,
-                         final Long partitionFromTime,
-                         final Long partitionToTime,
+                         final Partition partition,
                          final int shardNo) {
         this.indexUuid = indexUuid;
         this.partition = partition;
-        this.partitionFromTime = partitionFromTime;
-        this.partitionToTime = partitionToTime;
         this.shardNo = shardNo;
     }
 
@@ -45,16 +36,8 @@ public class IndexShardKey {
         return indexUuid;
     }
 
-    public String getPartition() {
+    public Partition getPartition() {
         return partition;
-    }
-
-    public Long getPartitionFromTime() {
-        return partitionFromTime;
-    }
-
-    public Long getPartitionToTime() {
-        return partitionToTime;
     }
 
     public int getShardNo() {
@@ -86,8 +69,6 @@ public class IndexShardKey {
                 "indexUuid='" + indexUuid + '\'' +
                 ", partition='" + partition + '\'' +
                 ", shardNo=" + shardNo +
-                ", partitionFromTime=" + partitionFromTime +
-                ", partitionToTime=" + partitionToTime +
                 '}';
     }
 
@@ -102,10 +83,8 @@ public class IndexShardKey {
     public static final class Builder {
 
         private String indexUuid;
-        private String partition;
+        private Partition partition;
         private int shardNo;
-        private Long partitionFromTime;
-        private Long partitionToTime;
 
         private Builder() {
         }
@@ -114,8 +93,6 @@ public class IndexShardKey {
             this.indexUuid = indexShardKey.indexUuid;
             this.partition = indexShardKey.partition;
             this.shardNo = indexShardKey.shardNo;
-            this.partitionFromTime = indexShardKey.partitionFromTime;
-            this.partitionToTime = indexShardKey.partitionToTime;
         }
 
         public Builder indexUuid(final String indexUuid) {
@@ -123,7 +100,7 @@ public class IndexShardKey {
             return this;
         }
 
-        public Builder partition(final String partition) {
+        public Builder partition(final Partition partition) {
             this.partition = partition;
             return this;
         }
@@ -133,21 +110,10 @@ public class IndexShardKey {
             return this;
         }
 
-        public Builder partitionFromTime(final Long partitionFromTime) {
-            this.partitionFromTime = partitionFromTime;
-            return this;
-        }
-
-        public Builder partitionToTime(final Long partitionToTime) {
-            this.partitionToTime = partitionToTime;
-            return this;
-        }
-
         public IndexShardKey build() {
             Objects.requireNonNull(indexUuid);
             Objects.requireNonNull(partition);
-
-            return new IndexShardKey(indexUuid, partition, partitionFromTime, partitionToTime, shardNo);
+            return new IndexShardKey(indexUuid, partition, shardNo);
         }
     }
 }

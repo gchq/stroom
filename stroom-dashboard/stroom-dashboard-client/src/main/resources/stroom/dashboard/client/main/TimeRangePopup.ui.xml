@@ -1,0 +1,13 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="quickSettings" label="Quick Settings" addStyleNames="dock-min">
+            <g:SimplePanel ui:field="quickSettings" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="timeRange" label="Time Range" addStyleNames="dock-min">
+            <g:SimplePanel ui:field="timeRangeContainer" addStyleNames="w-100"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

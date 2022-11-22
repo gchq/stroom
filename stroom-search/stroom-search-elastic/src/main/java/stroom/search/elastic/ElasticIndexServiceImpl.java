@@ -19,6 +19,7 @@ package stroom.search.elastic;
 
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.DateField;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
@@ -84,8 +85,15 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
     public DataSource getDataSource(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
             final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
+
+            DateField timeField = null;
+            if (index.getTimeField() != null && !index.getTimeField().isBlank()) {
+                timeField = new DateField(index.getTimeField());
+            }
+
             return DataSource.builder()
                     .fields(getDataSourceFields(index))
+                    .timeField(timeField)
                     .defaultExtractionPipeline(index.getDefaultExtractionPipeline())
                     .build();
         });
@@ -224,20 +232,12 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
 
     @SuppressWarnings("unchecked")
     private Map<String, FieldMappingMetadata> getFieldMappings(final ElasticIndexDoc elasticIndex) {
-        try {
-            final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
+        Map<String, FieldMappingMetadata> result = new TreeMap<>();
 
-            return elasticClientCache.contextResult(elasticCluster.getConnection(), elasticClient -> {
-                final String indexName = elasticIndex.getIndexName();
-                final GetFieldMappingsRequest request = new GetFieldMappingsRequest();
-                request.indicesOptions(IndicesOptions.lenientExpand());
-                request.indices(indexName);
-                request.fields("*");
-
-                try {
-                    final GetFieldMappingsResponse response = elasticClient.indices().getFieldMapping(
-                            request, RequestOptions.DEFAULT);
-                    final Map<String, Map<String, FieldMappingMetadata>> allMappings = response.mappings();
+        if (elasticIndex.getClusterRef() != null) {
+            try {
+                final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
+                result = elasticClientCache.contextResult(elasticCluster.getConnection(), elasticClient -> {
 
                     // Flatten the mappings, which are keyed by index, into a deduplicated list
                     final TreeMap<String, FieldMappingMetadata> mappings = new TreeMap<>((o1, o2) -> {
@@ -251,44 +251,55 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                         return o1.compareToIgnoreCase(o2);
                     });
 
-                    // Build a list of all multi fields (i.e. those defined only in the field mapping).
-                    // These are excluded from the fields the user can pick via the Stroom UI, as they are not part
-                    // of the returned `_source` field.
-                    final HashSet<String> multiFieldMappings = new HashSet<>();
-                    allMappings.values().forEach(indexMappings -> indexMappings.forEach((fieldName, mapping) -> {
-                        if (mapping.sourceAsMap().get(fieldName) instanceof Map) {
-                            @SuppressWarnings("unchecked") final Map<String, Object> source =
-                                    (Map<String, Object>) mapping.sourceAsMap().get(fieldName);
-                            final Object fields = source.get("fields");
+                    final String indexName = elasticIndex.getIndexName();
+                    final GetFieldMappingsRequest request = new GetFieldMappingsRequest();
+                    request.indicesOptions(IndicesOptions.lenientExpand());
+                    request.indices(indexName);
+                    request.fields("*");
 
-                            if (fields instanceof Map) {
-                                final Map<String, Object> multiFields = (Map<String, Object>) fields;
+                    try {
+                        final GetFieldMappingsResponse response = elasticClient.indices().getFieldMapping(
+                                request, RequestOptions.DEFAULT);
+                        final Map<String, Map<String, FieldMappingMetadata>> allMappings = response.mappings();
 
-                                multiFields.forEach((multiFieldName, multiFieldMapping) -> {
-                                    final String fullName = mapping.fullName() + "." + multiFieldName;
-                                    multiFieldMappings.add(fullName);
-                                });
+                        // Build a list of all multi fields (i.e. those defined only in the field mapping).
+                        // These are excluded from the fields the user can pick via the Stroom UI, as they are not part
+                        // of the returned `_source` field.
+                        final HashSet<String> multiFieldMappings = new HashSet<>();
+                        allMappings.values().forEach(indexMappings -> indexMappings.forEach((fieldName, mapping) -> {
+                            if (mapping.sourceAsMap().get(fieldName) instanceof Map) {
+                                @SuppressWarnings("unchecked") final Map<String, Object> source =
+                                        (Map<String, Object>) mapping.sourceAsMap().get(fieldName);
+                                final Object fields = source.get("fields");
+
+                                if (fields instanceof Map) {
+                                    final Map<String, Object> multiFields = (Map<String, Object>) fields;
+
+                                    multiFields.forEach((multiFieldName, multiFieldMapping) -> {
+                                        final String fullName = mapping.fullName() + "." + multiFieldName;
+                                        multiFieldMappings.add(fullName);
+                                    });
+                                }
                             }
-                        }
-                    }));
+                        }));
 
-                    allMappings.values().forEach(indexMappings -> indexMappings.forEach((fieldName, mapping) -> {
-                        if (!mappings.containsKey(fieldName) && !multiFieldMappings.contains(mapping.fullName())) {
-                            mappings.put(fieldName, mapping);
-                        }
-                    }));
+                        allMappings.values().forEach(indexMappings -> indexMappings.forEach((fieldName, mapping) -> {
+                            if (!mappings.containsKey(fieldName) && !multiFieldMappings.contains(mapping.fullName())) {
+                                mappings.put(fieldName, mapping);
+                            }
+                        }));
+
+                    } catch (final IOException e) {
+                        LOGGER.error(e::getMessage, e);
+                    }
 
                     return mappings;
-                } catch (final IOException e) {
-                    LOGGER.error(e::getMessage, e);
-                }
-
-                return new TreeMap<>();
-            });
-        } catch (final RuntimeException e) {
-            LOGGER.error(e::getMessage, e);
-            return new TreeMap<>();
+                });
+            } catch (final RuntimeException e) {
+                LOGGER.error(e::getMessage, e);
+            }
         }
+        return result;
     }
 
     @Override

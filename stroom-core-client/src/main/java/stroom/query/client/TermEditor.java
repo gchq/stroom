@@ -72,8 +72,7 @@ public class TermEditor extends Composite {
 
     private final AsyncSuggestOracle suggestOracle = new AsyncSuggestOracle();
 
-    public TermEditor(final EntityDropDownPresenter docRefPresenter,
-                      final boolean utc) {
+    public TermEditor(final EntityDropDownPresenter docRefPresenter) {
         this.docRefPresenter = docRefPresenter;
         if (docRefPresenter != null) {
             docRefWidget = docRefPresenter.getWidget();
@@ -98,11 +97,11 @@ public class TermEditor extends Composite {
         valueTo = createTextBox(NARROW_VALUE);
         valueTo.setVisible(false);
 
-        date = createDateBox(NARROW_VALUE, utc);
+        date = createDateBox(NARROW_VALUE);
         date.setVisible(false);
-        dateFrom = createDateBox(NARROW_VALUE, utc);
+        dateFrom = createDateBox(NARROW_VALUE);
         dateFrom.setVisible(false);
-        dateTo = createDateBox(NARROW_VALUE, utc);
+        dateTo = createDateBox(NARROW_VALUE);
         dateTo.setVisible(false);
 
         layout = new FlowPanel();
@@ -120,6 +119,12 @@ public class TermEditor extends Composite {
         layout.setVisible(false);
         layout.setStyleName("termEditor-layout");
         initWidget(layout);
+    }
+
+    public void setUtc(final boolean utc) {
+        date.setUtc(utc);
+        dateFrom.setUtc(utc);
+        dateTo.setUtc(utc);
     }
 
     public void init(final RestFactory restFactory, final DocRef dataSource, final List<AbstractField> fields) {
@@ -576,9 +581,8 @@ public class TermEditor extends Composite {
         return textBox;
     }
 
-    private MyDateBox createDateBox(final int width,
-                                    final boolean utc) {
-        final MyDateBox dateBox = new MyDateBox(utc);
+    private MyDateBox createDateBox(final int width) {
+        final MyDateBox dateBox = new MyDateBox();
         fixStyle(dateBox, width);
         return dateBox;
     }

@@ -4,6 +4,7 @@ import stroom.docref.DocRef;
 import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexVolumeDao;
 import stroom.index.impl.IndexVolumeGroupDao;
+import stroom.index.shared.AllPartition;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
@@ -84,14 +85,11 @@ class TestIndexShardDaoImpl {
     @Test
     void createAndUpdateShard() {
         // Given
-        final String partitionName = "ALL";
         final DocRef index = DocRef.builder()
                 .uuid(UUID.randomUUID().toString())
                 .name(TestData.createIndexName())
                 .type(IndexDoc.DOCUMENT_TYPE)
                 .build();
-        final Long shardFrom = System.currentTimeMillis();
-        final Long shardTo = shardFrom + 3600;
         final String nodeName = TestData.createNodeName();
 
         final String volumeGroupName = TestData.createVolumeGroupName();
@@ -105,10 +103,8 @@ class TestIndexShardDaoImpl {
         final IndexShardKey indexShardKey = IndexShardKey
                 .builder()
                 .indexUuid(index.getUuid())
-                .partition(partitionName)
+                .partition(AllPartition.INSTANCE)
                 .shardNo(0)
-                .partitionFromTime(shardFrom)
-                .partitionToTime(shardTo)
                 .build();
 
         final IndexShard indexShard = indexShardDao.create(

@@ -190,6 +190,10 @@ public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIn
 
         void setRetentionExpressionView(final View view);
 
+        String getTimeField();
+
+        void setTimeField(String partitionTimeField);
+
         void setDefaultExtractionPipelineView(View view);
     }
 }

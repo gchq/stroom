@@ -19,12 +19,10 @@ package stroom.dashboard.client.main;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
-import stroom.core.client.HasSave;
 import stroom.dashboard.client.flexlayout.FlexLayoutChangeHandler;
 import stroom.dashboard.client.flexlayout.PositionAndSize;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.DashboardPresenter.DashboardView;
-import stroom.dashboard.client.query.QueryButtons;
 import stroom.dashboard.client.query.QueryInfoPresenter;
 import stroom.dashboard.client.query.QueryUiHandlers;
 import stroom.dashboard.shared.ComponentConfig;
@@ -40,26 +38,18 @@ import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.document.client.event.SaveAsDocumentEvent;
-import stroom.document.client.event.WriteDocumentEvent;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.shared.DocumentType;
+import stroom.query.api.v2.TimeRange;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Icon;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
-import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.RandomId;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.menu.client.presenter.SimpleMenuItem;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -73,22 +63,19 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class DashboardPresenter extends DocumentEditPresenter<DashboardView, DashboardDoc>
-        implements FlexLayoutChangeHandler, DocumentTabData, DashboardUiHandlers, QueryUiHandlers, HasSave,
+        implements FlexLayoutChangeHandler, DocumentTabData, DashboardUiHandlers, QueryUiHandlers,
         Consumer<Boolean> {
 
     private static final Logger logger = Logger.getLogger(DashboardPresenter.class.getName());
-    private final ButtonView saveButton;
-    private final ButtonView saveAsButton;
     private final DashboardLayoutPresenter layoutPresenter;
     private final Components components;
     private final Provider<QueryInfoPresenter> queryInfoPresenterProvider;
-    private final ButtonView addButton;
-    private ButtonPanel leftButtons;
     private String lastLabel;
     private boolean loaded;
     private String customTitle;
     private DocRef docRef;
 
+    private TimeRange currentTimeRange;
     private String currentParams;
     private String lastUsedQueryInfo;
     private boolean embedded;
@@ -110,49 +97,12 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         final TabManager tabManager = new TabManager(components, renameTabPresenterProvider, this);
         layoutPresenter.setTabManager(tabManager);
 
-        saveButton = addButtonLeft(SvgPresets.SAVE);
-        saveAsButton = addButtonLeft(SvgPresets.SAVE_AS);
-        saveButton.setEnabled(false);
-        saveAsButton.setEnabled(false);
-
-        registerHandler(saveButton.addClickHandler(event -> save()));
-        registerHandler(saveAsButton.addClickHandler(event -> {
-            if (saveAsButton.isEnabled()) {
-                SaveAsDocumentEvent.fire(DashboardPresenter.this, docRef);
-            }
-        }));
-
         layoutPresenter.setFlexLayoutChangeHandler(this);
         layoutPresenter.setComponents(components);
         view.setContent(layoutPresenter.getView());
-
-        addButton = addButtonLeft(SvgPresets.ADD);
-        addButton.setTitle("Add Component");
-        addButton.setEnabled(false);
-
         view.setUiHandlers(this);
 
-        view.getQueryButtons().setUiHandlers(this);
-    }
-
-    @Override
-    public void save() {
-        if (saveButton.isEnabled()) {
-            WriteDocumentEvent.fire(DashboardPresenter.this, DashboardPresenter.this);
-        }
-    }
-
-    private ButtonView addButtonLeft(final Preset preset) {
-        if (leftButtons == null) {
-            leftButtons = new ButtonPanel();
-            addWidgetLeft(leftButtons);
-        }
-
-        return leftButtons.addButton(preset);
-    }
-
-    private void addWidgetLeft(final Widget widget) {
-        getView().addWidgetLeft(widget);
+//        view.getQueryButtons().setUiHandlers(this);
     }
 
     @Override
@@ -164,7 +114,8 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         components.removeAll();
     }
 
-    private void onAdd(final ClickEvent event) {
+    @Override
+    public void onAddPanel(final ClickEvent event) {
         final com.google.gwt.dom.client.Element target = event.getNativeEvent().getEventTarget().cast();
 
         final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft() - 3,
@@ -185,9 +136,29 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                 .fire(this);
     }
 
+    @Override
+    public void onAddInput(final ClickEvent event) {
+
+    }
+
+    @Override
+    public void onTimeRange(final TimeRange timeRange) {
+        setTimeRange(timeRange);
+    }
+
+    private void setTimeRange(final TimeRange timeRange) {
+        currentTimeRange = timeRange;
+        getView().setTimeRange(timeRange);
+        for (final Component component : components) {
+            if (component instanceof Queryable) {
+                final Queryable queryable = (Queryable) component;
+                queryable.setTimeRange(timeRange);
+            }
+        }
+    }
+
     public void setParams(final String params) {
         logger.log(Level.INFO, "Dashboard Presenter setParams " + params);
-
         this.currentParams = params;
     }
 
@@ -219,7 +190,13 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                         currentParams = dashboardConfig.getParameters().trim();
                     }
                 }
-                getView().setParams(currentParams);
+//                getView().setParams(currentParams);
+
+                if (currentTimeRange == null) {
+                    if (dashboardConfig.getTimeRange() != null) {
+                        setTimeRange(dashboardConfig.getTimeRange());
+                    }
+                }
 
                 layoutData = dashboardConfig.getLayout();
                 final List<ComponentConfig> componentDataList = dashboardConfig.getComponents();
@@ -311,6 +288,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             if (component instanceof Queryable) {
                 final Queryable queryable = (Queryable) component;
                 queryable.setParams(currentParams);
+                queryable.setTimeRange(currentTimeRange);
                 queryable.addModeListener(this);
             }
 
@@ -323,13 +301,13 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     }
 
     private void enableQueryButtons() {
-        getView().getQueryButtons().setEnabled(getQueryableComponents().size() > 0);
-        getView().getQueryButtons().setMode(getCombinedMode());
+//        getView().getQueryButtons().setEnabled(getQueryableComponents().size() > 0);
+//        getView().getQueryButtons().setMode(getCombinedMode());
     }
 
     @Override
     public void accept(final Boolean mode) {
-        getView().getQueryButtons().setMode(getCombinedMode());
+//        getView().getQueryButtons().setMode(getCombinedMode());
     }
 
     private boolean getCombinedMode() {
@@ -345,7 +323,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
     @Override
     protected void onWrite(final DashboardDoc dashboard) {
-        String params = getView().getParams();
+        String params = null;//getView().getParams();
         if (params != null && params.trim().length() == 0) {
             params = null;
         }
@@ -358,6 +336,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
         final DashboardConfig dashboardConfig = new DashboardConfig();
         dashboardConfig.setParameters(params);
+        dashboardConfig.setTimeRange(currentTimeRange);
         dashboardConfig.setComponents(componentDataList);
         dashboardConfig.setLayout(layoutPresenter.getLayoutData());
         dashboardConfig.setTabVisibility(TabVisibility.SHOW_ALL);
@@ -367,19 +346,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     @Override
     public void onReadOnly(final boolean readOnly) {
         super.onReadOnly(readOnly || embedded);
-
-        saveButton.setEnabled(isDirty() && !embedded);
-        saveAsButton.setEnabled(true);
-
-        boolean enabled = !readOnly && !embedded;
-        addButton.setEnabled(enabled);
-        if (enabled) {
-            registerHandler(addButton.addClickHandler(event -> {
-                if (MouseUtil.isPrimary(event)) {
-                    onAdd(event);
-                }
-            }));
-        }
+        getView().setReadOnly(readOnly || embedded);
     }
 
     @Override
@@ -435,21 +402,6 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     }
 
     @Override
-    public void onParamsChanged(final String params) {
-        String trimmed = "";
-        if (params != null && params.trim().length() > 0) {
-            trimmed = params.trim();
-        }
-
-        if (!EqualsUtil.isEquals(currentParams, trimmed)) {
-            setDirty(true);
-
-            currentParams = trimmed;
-            start();
-        }
-    }
-
-    @Override
     public void start() {
         // Get a sub list of components that can be queried.
         final List<Queryable> queryableComponents = getQueryableComponents();
@@ -469,6 +421,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
                         for (final Queryable queryable : queryableComponents) {
                             queryable.setParams(currentParams);
+                            queryable.setTimeRange(currentTimeRange);
                             queryable.setQueryInfo(lastUsedQueryInfo);
                             queryable.start();
                         }
@@ -526,7 +479,6 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             lastLabel = getLabel();
             RefreshContentTabEvent.fire(this, this);
         }
-        saveButton.setEnabled(isDirty());
     }
 
     public void setCustomTitle(final String customTitle) {
@@ -535,17 +487,15 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
     public interface DashboardView extends View, HasUiHandlers<DashboardUiHandlers> {
 
-        void addWidgetLeft(Widget widget);
+        TimeRange getTimeRange();
 
-        String getParams();
-
-        void setParams(String params);
+        void setTimeRange(TimeRange timeRange);
 
         void setContent(View view);
 
         void setEmbedded(boolean embedded);
 
-        QueryButtons getQueryButtons();
+        void setReadOnly(boolean readOnly);
     }
 
     private void addComponent(final ComponentType type) {

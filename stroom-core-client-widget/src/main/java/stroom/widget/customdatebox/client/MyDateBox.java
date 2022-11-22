@@ -44,14 +44,12 @@ public class MyDateBox extends Composite implements DateBoxView {
     private static final String DEFAULT_UTC_TIME = "T00:00:00.000Z";
     private static final String DEFAULT_LOCAL_TIME = "T00:00:00.000";
 
-    private final boolean utc;
+    private boolean utc;
     private final PopupPanel popup;
     private final DatePicker datePicker;
     private final TextBox textBox;
 
-    public MyDateBox(final boolean utc) {
-        this.utc = utc;
-
+    public MyDateBox() {
         datePicker = new CustomDatePicker();
         textBox = new TextBox();
 
@@ -70,6 +68,10 @@ public class MyDateBox extends Composite implements DateBoxView {
         textBox.addKeyDownHandler(handler);
         textBox.setDirectionEstimator(false);
         popup.addCloseHandler(handler);
+    }
+
+    public void setUtc(final boolean utc) {
+        this.utc = utc;
     }
 
     @Override

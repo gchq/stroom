@@ -22,6 +22,8 @@ import stroom.dashboard.client.main.ComponentRegistry;
 import stroom.dashboard.client.main.DashboardLayoutPresenter;
 import stroom.dashboard.client.main.DashboardLayoutViewImpl;
 import stroom.dashboard.client.main.DashboardPresenter;
+import stroom.dashboard.client.main.DashboardSettingsPresenter;
+import stroom.dashboard.client.main.DashboardSettingsViewImpl;
 import stroom.dashboard.client.main.DashboardViewImpl;
 import stroom.dashboard.client.main.RenameTabPresenter;
 import stroom.dashboard.client.main.RenameTabPresenter.RenameTabView;
@@ -44,6 +46,10 @@ public class DashboardModule extends PluginModule {
 
         bindPlugin(DashboardPlugin.class);
 
+        bindPresenterWidget(
+                DashboardSettingsPresenter.class,
+                DashboardSettingsPresenter.DashboardSettingsView.class,
+                DashboardSettingsViewImpl.class);
         bindPresenterWidget(
                 DashboardPresenter.class,
                 DashboardPresenter.DashboardView.class,

@@ -12,6 +12,7 @@ package stroom.dashboard.shared;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Param;
+import stroom.query.api.v2.TimeRange;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -28,6 +29,7 @@ import java.util.Objects;
         "expression",
         "componentSettingsMap",
         "params",
+        "timeRange",
         "incremental",
         "storeHistory",
         "queryInfo"})
@@ -43,6 +45,8 @@ public class Search {
     @JsonProperty
     private final List<Param> params;
     @JsonProperty
+    private final TimeRange timeRange;
+    @JsonProperty
     private final boolean incremental;
     @JsonProperty
     private final String queryInfo;
@@ -52,12 +56,14 @@ public class Search {
                   @JsonProperty("expression") final ExpressionOperator expression,
                   @JsonProperty("componentSettingsMap") final Map<String, ComponentSettings> componentSettingsMap,
                   @JsonProperty("params") final List<Param> params,
+                  @JsonProperty("timeRange") final TimeRange timeRange,
                   @JsonProperty("incremental") final boolean incremental,
                   @JsonProperty("queryInfo") final String queryInfo) {
         this.dataSourceRef = dataSourceRef;
         this.expression = expression;
         this.componentSettingsMap = componentSettingsMap;
         this.params = params;
+        this.timeRange = timeRange;
         this.incremental = incremental;
         this.queryInfo = queryInfo;
     }
@@ -76,6 +82,10 @@ public class Search {
 
     public List<Param> getParams() {
         return params;
+    }
+
+    public TimeRange getTimeRange() {
+        return timeRange;
     }
 
     public boolean isIncremental() {
@@ -100,6 +110,7 @@ public class Search {
                 Objects.equals(expression, search.expression) &&
                 Objects.equals(componentSettingsMap, search.componentSettingsMap) &&
                 Objects.equals(params, search.params) &&
+                Objects.equals(timeRange, search.timeRange) &&
                 Objects.equals(queryInfo, search.queryInfo);
     }
 
@@ -110,6 +121,7 @@ public class Search {
                 expression,
                 componentSettingsMap,
                 params,
+                timeRange,
                 incremental,
                 queryInfo);
     }
@@ -121,6 +133,7 @@ public class Search {
                 ", expression=" + expression +
                 ", componentSettingsMap=" + componentSettingsMap +
                 ", params=" + params +
+                ", timeRange=" + timeRange +
                 ", incremental=" + incremental +
                 ", queryInfo='" + queryInfo + '\'' +
                 '}';
@@ -140,6 +153,7 @@ public class Search {
         private ExpressionOperator expression;
         private Map<String, ComponentSettings> componentSettingsMap;
         private List<Param> params;
+        private TimeRange timeRange;
         private boolean incremental;
         private String queryInfo;
 
@@ -151,6 +165,7 @@ public class Search {
             this.expression = search.expression;
             this.componentSettingsMap = search.componentSettingsMap;
             this.params = search.params;
+            this.timeRange = search.timeRange;
             this.incremental = search.incremental;
             this.queryInfo = search.queryInfo;
         }
@@ -175,6 +190,11 @@ public class Search {
             return this;
         }
 
+        public Builder timeRange(final TimeRange timeRange) {
+            this.timeRange = timeRange;
+            return this;
+        }
+
         public Builder incremental(final boolean incremental) {
             this.incremental = incremental;
             return this;
@@ -191,6 +211,7 @@ public class Search {
                     expression,
                     componentSettingsMap,
                     params,
+                    timeRange,
                     incremental,
                     queryInfo);
         }

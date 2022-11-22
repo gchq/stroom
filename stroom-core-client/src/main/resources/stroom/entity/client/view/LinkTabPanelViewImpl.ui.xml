@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tab="urn:import:stroom.widget.tab.client.view">
     <g:FlowPanel styleName="max dock-container-vertical">
-        <g:SimplePanel styleName="dock-min stroom-border-bottom">
+        <g:SimplePanel styleName="dock-min">
             <g:FlowPanel styleName="linkTabPanelViewImpl">
                 <g:FlowPanel ui:field="left" styleName="linkTabPanelViewImpl-left"/>
                 <tab:LinkTabBar ui:field="tabBar" styleName="linkTabPanelViewImpl-middle linkTabBar"/>

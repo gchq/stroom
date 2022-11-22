@@ -30,6 +30,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -50,6 +51,8 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
     ValueSpinner partitionSize;
     @UiField
     ValueSpinner shardsPerPartition;
+    @UiField
+    TextBox timeField;
     @UiField
     ItemListBox<SupportedRetentionAge> retentionAge;
     @UiField
@@ -87,6 +90,11 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
         maxDocsPerShard.getSpinner().addSpinnerHandler(spinnerHandler);
         shardsPerPartition.getSpinner().addSpinnerHandler(spinnerHandler);
         partitionBy.addSelectionHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onChange();
+            }
+        });
+        timeField.addChangeHandler(event -> {
             if (getUiHandlers() != null) {
                 getUiHandlers().onChange();
             }
@@ -152,6 +160,16 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
     @Override
     public void setPartitionSize(final int size) {
         this.partitionSize.setValue(size);
+    }
+
+    @Override
+    public String getTimeField() {
+        return timeField.getValue();
+    }
+
+    @Override
+    public void setTimeField(final String partitionTimeField) {
+        this.timeField.setValue(partitionTimeField);
     }
 
     @Override

@@ -18,7 +18,7 @@
 package stroom.folder.client;
 
 import stroom.core.client.ContentManager;
-import stroom.core.client.ContentManager.CloseHandler;
+import stroom.core.client.event.CloseContentEvent;
 import stroom.core.client.presenter.Plugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
@@ -77,17 +77,16 @@ public class FolderRootPlugin extends Plugin implements TabData {
                             }
 
                             if (presenter != null) {
-                                final CloseHandler closeHandler = callback -> {
+                                final CloseContentEvent.Handler closeHandler = evt -> {
                                     // Give the content manager the ok to
                                     // close the tab.
-                                    callback.closeTab(true);
+                                    evt.getCallback().closeTab(true);
 
                                     // After we close the tab set the
                                     // presenter back to null so
                                     // that we can open it again.
                                     presenter = null;
                                 };
-
                                 contentManager.open(closeHandler, presenter, presenter);
                             }
                         }

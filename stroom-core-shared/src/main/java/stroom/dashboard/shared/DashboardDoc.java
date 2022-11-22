@@ -35,12 +35,15 @@ import java.util.Objects;
         "updateTimeMs",
         "createUser",
         "updateUser",
+        "description",
         "dashboardConfig"})
 @JsonInclude(Include.NON_NULL)
 public class DashboardDoc extends Doc {
 
     public static final String DOCUMENT_TYPE = "Dashboard";
 
+    @JsonProperty
+    private String description;
     @JsonProperty
     private DashboardConfig dashboardConfig;
 
@@ -56,9 +59,19 @@ public class DashboardDoc extends Doc {
                         @JsonProperty("updateTimeMs") final Long updateTimeMs,
                         @JsonProperty("createUser") final String createUser,
                         @JsonProperty("updateUser") final String updateUser,
+                        @JsonProperty("description") final String description,
                         @JsonProperty("dashboardConfig") final DashboardConfig dashboardConfig) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        this.description = description;
         this.dashboardConfig = dashboardConfig;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(final String description) {
+        this.description = description;
     }
 
     public DashboardConfig getDashboardConfig() {

@@ -45,12 +45,17 @@ import java.util.Objects;
         "connection",
         "indexBatchSize",
         "fields",
+        "timeField",
+        "defaultExtractionPipeline",
         "state",
-        "retentionExpression"})
+        "retentionExpression"
+})
 @JsonInclude(Include.NON_NULL)
 public class SolrIndexDoc extends Doc {
 
     public static final String DOCUMENT_TYPE = "SolrIndex";
+
+    private static final String DEFAULT_TIME_FIELD = "EventTime";
 
     @JsonProperty
     private String description;
@@ -61,6 +66,9 @@ public class SolrIndexDoc extends Doc {
 
     @JsonProperty
     private List<SolrIndexField> fields;
+    @JsonProperty
+    private String timeField;
+
     @JsonProperty
     private DocRef defaultExtractionPipeline;
     @JsonProperty
@@ -78,6 +86,7 @@ public class SolrIndexDoc extends Doc {
         // Always add standard id fields for now.
         fields.add(SolrIndexField.createIdField(SolrIndexConstants.STREAM_ID));
         fields.add(SolrIndexField.createIdField(SolrIndexConstants.EVENT_ID));
+        timeField = DEFAULT_TIME_FIELD;
     }
 
     @JsonCreator
@@ -93,6 +102,7 @@ public class SolrIndexDoc extends Doc {
                         @JsonProperty("collection") final String collection,
                         @JsonProperty("solrConnectionConfig") final SolrConnectionConfig solrConnectionConfig,
                         @JsonProperty("fields") final List<SolrIndexField> fields,
+                        @JsonProperty("timeField") final String timeField,
                         @JsonProperty("defaultExtractionPipeline") final DocRef defaultExtractionPipeline,
                         @JsonProperty("deletedFields") final List<SolrIndexField> deletedFields,
                         @JsonProperty("solrSynchState") final SolrSynchState solrSynchState,
@@ -102,6 +112,7 @@ public class SolrIndexDoc extends Doc {
         this.collection = collection;
         this.solrConnectionConfig = solrConnectionConfig;
         this.fields = fields;
+        this.timeField = timeField;
         this.defaultExtractionPipeline = defaultExtractionPipeline;
         this.deletedFields = deletedFields;
         this.solrSynchState = solrSynchState;
@@ -151,6 +162,14 @@ public class SolrIndexDoc extends Doc {
 
     public void setFields(final List<SolrIndexField> fields) {
         this.fields = fields;
+    }
+
+    public String getTimeField() {
+        return timeField;
+    }
+
+    public void setTimeField(final String timeField) {
+        this.timeField = timeField;
     }
 
     public DocRef getDefaultExtractionPipeline() {
@@ -206,6 +225,7 @@ public class SolrIndexDoc extends Doc {
                 Objects.equals(collection, solrIndexDoc.collection) &&
                 Objects.equals(solrConnectionConfig, solrIndexDoc.solrConnectionConfig) &&
                 Objects.equals(fields, solrIndexDoc.fields) &&
+                Objects.equals(timeField, solrIndexDoc.timeField) &&
                 Objects.equals(defaultExtractionPipeline, solrIndexDoc.defaultExtractionPipeline);
     }
 
@@ -216,6 +236,7 @@ public class SolrIndexDoc extends Doc {
                 collection,
                 solrConnectionConfig,
                 fields,
+                timeField,
                 defaultExtractionPipeline);
     }
 
@@ -226,6 +247,7 @@ public class SolrIndexDoc extends Doc {
                 ", collection='" + collection + '\'' +
                 ", solrConnectionConfig=" + solrConnectionConfig +
                 ", fields=" + fields +
+                ", timeField=" + timeField +
                 ", defaultExtractionPipeline=" + defaultExtractionPipeline +
                 '}';
     }

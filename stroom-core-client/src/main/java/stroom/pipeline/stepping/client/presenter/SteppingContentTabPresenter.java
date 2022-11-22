@@ -20,10 +20,10 @@ package stroom.pipeline.stepping.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.core.client.ContentManager.CloseCallback;
-import stroom.core.client.ContentManager.CloseHandler;
 import stroom.core.client.HasSave;
 import stroom.core.client.HasSaveRegistry;
+import stroom.core.client.event.CloseContentEvent;
+import stroom.core.client.event.CloseContentEvent.Callback;
 import stroom.data.client.presenter.ClassificationWrapperView;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
@@ -39,7 +39,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 public class SteppingContentTabPresenter extends ContentTabPresenter<ClassificationWrapperView>
-        implements HasSave, HasDirtyHandlers, CloseHandler {
+        implements HasSave, HasDirtyHandlers, CloseContentEvent.Handler {
 
     private final SteppingPresenter steppingPresenter;
     private final HasSaveRegistry hasSaveRegistry;
@@ -67,20 +67,22 @@ public class SteppingContentTabPresenter extends ContentTabPresenter<Classificat
     }
 
     @Override
-    public void onCloseRequest(final CloseCallback callback) {
+    public void onCloseRequest(final CloseContentEvent event) {
         if (dirty) {
-            ConfirmEvent.fire(this,
-                    pipeline.getType() + " '" + pipeline.getName()
-                            + "' has unsaved changes. Are you sure you want to close this item?",
-                    result -> {
-                        callback.closeTab(result);
-                        if (result) {
-                            unbind();
-                            hasSaveRegistry.unregister(SteppingContentTabPresenter.this);
-                        }
-                    });
+            if (!event.isIgnoreIfDirty()) {
+                ConfirmEvent.fire(this,
+                        pipeline.getType() + " '" + pipeline.getName()
+                                + "' has unsaved changes. Are you sure you want to close this item?",
+                        result -> {
+                            event.getCallback().closeTab(result);
+                            if (result) {
+                                unbind();
+                                hasSaveRegistry.unregister(SteppingContentTabPresenter.this);
+                            }
+                        });
+            }
         } else {
-            callback.closeTab(true);
+            event.getCallback().closeTab(true);
             unbind();
             hasSaveRegistry.unregister(SteppingContentTabPresenter.this);
         }

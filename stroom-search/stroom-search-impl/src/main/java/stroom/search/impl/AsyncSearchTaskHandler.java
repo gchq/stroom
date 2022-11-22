@@ -28,6 +28,8 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.Query;
+import stroom.query.api.v2.TimeRange;
+import stroom.query.common.v2.DateExpressionParser;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
@@ -38,6 +40,7 @@ import stroom.task.shared.TaskId;
 import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.Range;
 import stroom.util.shared.ResultPage;
 
 import java.util.ArrayList;
@@ -119,6 +122,14 @@ class AsyncSearchTaskHandler {
                     // Order by partition name and key.
                     findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_PARTITION, true, false);
                     findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_ID, true, false);
+
+                    final TimeRange timeRange = query.getTimeRange();
+                    final Range<Long> range = DateExpressionParser.parse(
+                            timeRange,
+                            task.getDateTimeSettings(),
+                            task.getNow());
+                    findIndexShardCriteria.setPartitionTimeRange(range);
+
                     final ResultPage<IndexShard> indexShards = indexShardService.find(findIndexShardCriteria);
 
                     // Build a map of nodes that will deal with each set of shards.

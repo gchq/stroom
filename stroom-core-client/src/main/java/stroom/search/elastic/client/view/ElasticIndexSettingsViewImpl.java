@@ -53,6 +53,8 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     @UiField
     SimplePanel retentionExpressionPanel;
     @UiField
+    TextBox timeField;
+    @UiField
     SimplePanel defaultExtractionPipeline;
 
     @Inject
@@ -61,6 +63,7 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
 
         description.addKeyDownHandler(e -> fireChange());
         indexName.addKeyDownHandler(e -> fireChange());
+        timeField.addKeyDownHandler(e -> fireChange());
 
         searchSlices.setMin(1L);
         searchSlices.setMax(1000L);
@@ -130,6 +133,16 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     @Override
     public void setRetentionExpressionView(final View view) {
         retentionExpressionPanel.setWidget(view.asWidget());
+    }
+
+    @Override
+    public String getTimeField() {
+        return timeField.getValue();
+    }
+
+    @Override
+    public void setTimeField(final String partitionTimeField) {
+        this.timeField.setValue(partitionTimeField);
     }
 
     @Override

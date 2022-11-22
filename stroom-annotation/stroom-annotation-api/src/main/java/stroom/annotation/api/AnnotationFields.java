@@ -29,19 +29,19 @@ public interface AnnotationFields {
     String COMMENT = ANNOTATION_FIELD_PREFIX + "Comment";
     String HISTORY = ANNOTATION_FIELD_PREFIX + "History";
 
-    AbstractField ID_FIELD = new IdField(ID);
+    IdField ID_FIELD = new IdField(ID);
     //    AbstractField STREAM_ID_FIELD = new IdField(IndexConstants.STREAM_ID);
 //    AbstractField EVENT_ID_FIELD = new IdField(IndexConstants.EVENT_ID);
-    AbstractField CREATED_ON_FIELD = new DateField(CREATED_ON);
-    AbstractField CREATED_BY_FIELD = new TextField(CREATED_BY);
-    AbstractField UPDATED_ON_FIELD = new DateField(UPDATED_ON);
-    AbstractField UPDATED_BY_FIELD = new TextField(UPDATED_BY);
-    AbstractField TITLE_FIELD = new TextField(TITLE);
-    AbstractField SUBJECT_FIELD = new TextField(SUBJECT);
-    AbstractField STATUS_FIELD = new TextField(STATUS);
-    AbstractField ASSIGNED_TO_FIELD = new TextField(ASSIGNED_TO);
-    AbstractField COMMENT_FIELD = new TextField(COMMENT);
-    AbstractField HISTORY_FIELD = new TextField(HISTORY);
+    DateField CREATED_ON_FIELD = new DateField(CREATED_ON);
+    TextField CREATED_BY_FIELD = new TextField(CREATED_BY);
+    DateField UPDATED_ON_FIELD = new DateField(UPDATED_ON);
+    TextField UPDATED_BY_FIELD = new TextField(UPDATED_BY);
+    TextField TITLE_FIELD = new TextField(TITLE);
+    TextField SUBJECT_FIELD = new TextField(SUBJECT);
+    TextField STATUS_FIELD = new TextField(STATUS);
+    TextField ASSIGNED_TO_FIELD = new TextField(ASSIGNED_TO);
+    TextField COMMENT_FIELD = new TextField(COMMENT);
+    TextField HISTORY_FIELD = new TextField(HISTORY);
 
     List<AbstractField> FIELDS = Arrays.asList(
             ID_FIELD,

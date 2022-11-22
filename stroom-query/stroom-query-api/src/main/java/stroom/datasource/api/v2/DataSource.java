@@ -22,31 +22,42 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+@JsonPropertyOrder({
+        "fields",
+        "timeField",
+        "defaultExtractionPipeline"})
 @JsonInclude(Include.NON_NULL)
 public final class DataSource implements Serializable {
 
-    private static final long serialVersionUID = 1272545271946712570L;
-
     @JsonProperty
     private final List<AbstractField> fields;
+    @JsonProperty
+    private final DateField timeField;
     @JsonProperty
     private final DocRef defaultExtractionPipeline;
 
     @JsonCreator
     public DataSource(@JsonProperty("fields") final List<AbstractField> fields,
+                      @JsonProperty("timeField") final DateField timeField,
                       @JsonProperty("defaultExtractionPipeline") final DocRef defaultExtractionPipeline) {
         this.fields = fields;
+        this.timeField = timeField;
         this.defaultExtractionPipeline = defaultExtractionPipeline;
     }
 
     public List<AbstractField> getFields() {
         return fields;
+    }
+
+    public DateField getTimeField() {
+        return timeField;
     }
 
     public DocRef getDefaultExtractionPipeline() {
@@ -62,19 +73,21 @@ public final class DataSource implements Serializable {
             return false;
         }
         final DataSource that = (DataSource) o;
-        return Objects.equals(fields, that.fields) && Objects.equals(defaultExtractionPipeline,
-                that.defaultExtractionPipeline);
+        return Objects.equals(fields, that.fields) &&
+                Objects.equals(timeField, that.timeField) &&
+                Objects.equals(defaultExtractionPipeline, that.defaultExtractionPipeline);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(fields, defaultExtractionPipeline);
+        return Objects.hash(fields, timeField, defaultExtractionPipeline);
     }
 
     @Override
     public String toString() {
         return "DataSource{" +
                 "fields=" + fields +
+                ", partitionTimeField=" + timeField +
                 ", defaultExtractionPipeline=" + defaultExtractionPipeline +
                 '}';
     }
@@ -90,6 +103,7 @@ public final class DataSource implements Serializable {
     public static final class Builder {
 
         private List<AbstractField> fields = new ArrayList<>();
+        private DateField timeField;
         private DocRef defaultExtractionPipeline;
 
         private Builder() {
@@ -97,10 +111,17 @@ public final class DataSource implements Serializable {
 
         private Builder(final DataSource dataSource) {
             fields = dataSource.fields;
+            timeField = dataSource.timeField;
+            defaultExtractionPipeline = dataSource.defaultExtractionPipeline;
         }
 
         public Builder fields(final List<AbstractField> fields) {
             this.fields = fields;
+            return this;
+        }
+
+        public Builder timeField(final DateField timeField) {
+            this.timeField = timeField;
             return this;
         }
 
@@ -110,7 +131,7 @@ public final class DataSource implements Serializable {
         }
 
         public DataSource build() {
-            return new DataSource(fields, defaultExtractionPipeline);
+            return new DataSource(fields, timeField, defaultExtractionPipeline);
         }
     }
 }

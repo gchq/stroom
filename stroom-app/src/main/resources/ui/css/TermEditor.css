@@ -19,6 +19,7 @@
 	margin-top: 0px;
 	white-space: nowrap;
 	display: flex;
+	align-items: center;
 }
 
 .termEditor-item {

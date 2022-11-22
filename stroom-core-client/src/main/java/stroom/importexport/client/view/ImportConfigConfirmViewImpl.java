@@ -41,7 +41,7 @@ public class ImportConfigConfirmViewImpl extends ViewImpl implements ImportConfi
     SimplePanel dataGridView;
     @UiField
     CustomCheckBox enableFilters;
-    @UiField(provided = true)
+    @UiField
     MyDateBox enableFrom;
     @UiField
     CustomCheckBox useImportNames;
@@ -56,8 +56,8 @@ public class ImportConfigConfirmViewImpl extends ViewImpl implements ImportConfi
     @Inject
     public ImportConfigConfirmViewImpl(final Binder binder,
                                        final UserPreferencesManager userPreferencesManager) {
-        enableFrom = new MyDateBox(userPreferencesManager.isUtc());
         widget = binder.createAndBindUi(this);
+        enableFrom.setUtc(userPreferencesManager.isUtc());
     }
 
     @Override

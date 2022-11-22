@@ -66,7 +66,8 @@ public class ExpressionTreePanel extends TreePanel<Item> {
         docRefPresenter.getWidget().getElement().getStyle().setMargin(0, Unit.PX);
 
         operatorEditor = new OperatorEditor();
-        termEditor = new TermEditor(docRefPresenter, utc);
+        termEditor = new TermEditor(docRefPresenter);
+        termEditor.setUtc(utc);
 
         final FlowPanel panel = new FlowPanel();
         panel.setStyleName("treePanel-panel");

@@ -1620,9 +1620,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AbstractField'
+                $ref: '#/components/schemas/DataSource'
           description: default response
       summary: Fetch data source fields
       tags:
@@ -6809,6 +6807,8 @@ components:
           - SHOW_ALL
           - HIDE_SINGLE
           - HIDE_ALL
+        timeRange:
+          $ref: '#/components/schemas/TimeRange'
       xml:
         name: dashboard
     DashboardDoc:
@@ -6821,6 +6821,8 @@ components:
           type: string
         dashboardConfig:
           $ref: '#/components/schemas/DashboardConfig'
+        description:
+          type: string
         name:
           type: string
         type:
@@ -7016,14 +7018,40 @@ components:
     DataSource:
       type: object
       properties:
+        defaultExtractionPipeline:
+          $ref: '#/components/schemas/DocRef'
         fields:
           type: array
           items:
             $ref: '#/components/schemas/AbstractField'
+        timeField:
+          $ref: '#/components/schemas/DateField'
     DateField:
       type: object
-      allOf:
-      - $ref: '#/components/schemas/AbstractField'
+      properties:
+        conditions:
+          type: array
+          items:
+            type: string
+            enum:
+            - CONTAINS
+            - EQUALS
+            - GREATER_THAN
+            - GREATER_THAN_OR_EQUAL_TO
+            - LESS_THAN
+            - LESS_THAN_OR_EQUAL_TO
+            - BETWEEN
+            - IN
+            - IN_DICTIONARY
+            - IN_FOLDER
+            - IS_DOC_REF
+            - IS_NULL
+            - IS_NOT_NULL
+            - MATCHES_REGEX
+        name:
+          type: string
+        queryable:
+          type: boolean
     DateTimeFormatSettings:
       type: object
       allOf:
@@ -7323,6 +7351,8 @@ components:
           format: int64
         createUser:
           type: string
+        defaultExtractionPipeline:
+          $ref: '#/components/schemas/DocRef'
         description:
           type: string
         fields:
@@ -7341,6 +7371,8 @@ components:
         searchSlices:
           type: integer
           format: int32
+        timeField:
+          type: string
         type:
           type: string
         updateTimeMs:
@@ -8007,6 +8039,8 @@ components:
           $ref: '#/components/schemas/PageRequest'
         partition:
           $ref: '#/components/schemas/StringCriteria'
+        partitionTimeRange:
+          $ref: '#/components/schemas/RangeLong'
         sort:
           type: string
           writeOnly: true
@@ -8405,6 +8439,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Message'
+        rootDocRef:
+          $ref: '#/components/schemas/DocRef'
         sourcePath:
           type: string
         state:
@@ -8429,6 +8465,8 @@ components:
           format: int64
         createUser:
           type: string
+        defaultExtractionPipeline:
+          $ref: '#/components/schemas/DocRef'
         description:
           type: string
         fields:
@@ -8456,6 +8494,8 @@ components:
         shardsPerPartition:
           type: integer
           format: int32
+        timeField:
+          type: string
         type:
           type: string
         updateTimeMs:
@@ -8912,6 +8952,14 @@ components:
           $ref: '#/components/schemas/Meta'
         pipelineName:
           type: string
+    MultiInputComponentSettings:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/ComponentSettings'
+      - type: object
+        properties:
+          text:
+            type: string
     Node:
       type: object
       properties:
@@ -9658,6 +9706,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Param'
+        timeRange:
+          $ref: '#/components/schemas/TimeRange'
       required:
       - dataSource
       - expression
@@ -9693,6 +9743,8 @@ components:
           $ref: '#/components/schemas/Limits'
         params:
           type: string
+        timeRange:
+          $ref: '#/components/schemas/TimeRange'
       xml:
         name: query
     QueryKey:
@@ -10241,6 +10293,8 @@ components:
             $ref: '#/components/schemas/Param'
         queryInfo:
           type: string
+        timeRange:
+          $ref: '#/components/schemas/TimeRange'
     SearchAccountRequest:
       type: object
       properties:
@@ -10563,6 +10617,8 @@ components:
           format: int64
         createUser:
           type: string
+        defaultExtractionPipeline:
+          $ref: '#/components/schemas/DocRef'
         deletedFields:
           type: array
           items:
@@ -10581,6 +10637,8 @@ components:
           $ref: '#/components/schemas/SolrConnectionConfig'
         solrSynchState:
           $ref: '#/components/schemas/SolrSynchState'
+        timeField:
+          type: string
         type:
           type: string
         updateTimeMs:
@@ -11080,6 +11138,8 @@ components:
     TableComponentSettings:
       type: object
       properties:
+        dataSourceRef:
+          $ref: '#/components/schemas/DocRef'
         extractValues:
           type: boolean
           description: TODO
@@ -11346,6 +11406,32 @@ components:
         tubeOpacity:
           type: string
         tubeVisible:
+          type: string
+    TimeRange:
+      type: object
+      properties:
+        condition:
+          type: string
+          enum:
+          - CONTAINS
+          - EQUALS
+          - GREATER_THAN
+          - GREATER_THAN_OR_EQUAL_TO
+          - LESS_THAN
+          - LESS_THAN_OR_EQUAL_TO
+          - BETWEEN
+          - IN
+          - IN_DICTIONARY
+          - IN_FOLDER
+          - IS_DOC_REF
+          - IS_NULL
+          - IS_NOT_NULL
+          - MATCHES_REGEX
+        from:
+          type: string
+        name:
+          type: string
+        to:
           type: string
     TimeZone:
       type: object

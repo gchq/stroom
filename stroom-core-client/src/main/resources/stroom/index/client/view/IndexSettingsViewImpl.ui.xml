@@ -20,6 +20,9 @@
         <form:FormGroup identity="indexSettingsShardsPerPartition" label="Shards Per Partition">
             <v:ValueSpinner ui:field="shardsPerPartition" width="200px"/>
         </form:FormGroup>
+        <form:FormGroup identity="indexSettingsTimeField" label="Main Time Field Name">
+            <g:TextBox ui:field="timeField" width="200px"/>
+        </form:FormGroup>
         <form:FormGroup identity="indexSettingsRetentionPeriod" label="Retention Period">
             <l:ItemListBox ui:field="retentionAge"/>
         </form:FormGroup>

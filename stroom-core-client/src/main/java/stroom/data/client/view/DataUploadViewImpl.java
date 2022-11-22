@@ -40,7 +40,7 @@ public class DataUploadViewImpl extends ViewImpl implements DataUploadView {
     StringListBox type;
     @UiField
     FileUpload fileUpload;
-    @UiField(provided = true)
+    @UiField
     MyDateBox effective;
     @UiField
     FormPanel form;
@@ -51,7 +51,6 @@ public class DataUploadViewImpl extends ViewImpl implements DataUploadView {
     public DataUploadViewImpl(final Binder binder,
                               final DataTypeUiManager dataTypeUiManager,
                               final UserPreferencesManager userPreferencesManager) {
-        effective = new MyDateBox(userPreferencesManager.isUtc());
         type = new StringListBox();
 
         dataTypeUiManager.getTypes(list -> {
@@ -63,6 +62,7 @@ public class DataUploadViewImpl extends ViewImpl implements DataUploadView {
             }
         });
         widget = binder.createAndBindUi(this);
+        effective.setUtc(userPreferencesManager.isUtc());
     }
 
     @Override

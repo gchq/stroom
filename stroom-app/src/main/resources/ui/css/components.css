@@ -994,6 +994,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    min-height: 25px;
 }
 
 .linkTabPanelViewImpl-left {
@@ -1629,4 +1630,54 @@
 
 .settingsPresenter .layerContainer-container {
     overflow: auto;
+}
+
+/*
+.timeRange-button {
+    background-color: var(--primary);
+    color: white;
+    width: 80px;
+    min-width: 80px;
+}
+*/
+
+.timeRange-selector {
+    color: var(--link__text-color);
+    cursor: pointer;
+}
+
+.timeRange-selector:hover {
+    text-decoration: underline;
+}
+
+.timeRange-popup {
+    width: 33rem;
+    height: 17rem;
+    z-index: 10;
+    padding: 0.4rem;
+}
+
+.timeRange-quickSettings {
+    display: flex;
+}
+
+.timeRange-quickSettingPanel {
+    padding: 0.4rem;
+    width: 9rem;
+}
+
+.timeRange-quickSettingPanel-title {
+    padding-bottom: 0.4rem;
+    font-weight: 300;
+    padding-top: 0.4rem;
+}
+
+.timeRange-quickSetting {
+    color: var(--link__text-color);
+    cursor: pointer;
+    padding-bottom: 0.2rem;
+}
+
+.timeRange-quickSetting:hover {
+    text-decoration: underline;
 }

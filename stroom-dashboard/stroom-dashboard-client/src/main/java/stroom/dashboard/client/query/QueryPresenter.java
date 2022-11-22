@@ -27,7 +27,6 @@ import stroom.dashboard.client.main.DataSourceFieldsMap;
 import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.Queryable;
 import stroom.dashboard.client.main.SearchModel;
-import stroom.dashboard.client.main.SettingsPresenter;
 import stroom.dashboard.client.table.TimeZones;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
@@ -58,6 +57,7 @@ import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.api.v2.TimeRange;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.security.client.api.ClientSecurityContext;
@@ -124,6 +124,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final ButtonView warningsButton;
 
     private String params;
+    private TimeRange timeRange;
     private List<String> currentWarnings;
     private ButtonView processButton;
     private long defaultProcessorTimeLimit;
@@ -495,6 +496,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         queryData.setDataSource(getQuerySettings().getDataSource());
         queryData.setExpression(root);
         queryData.setParams(params);
+        queryData.setTimeRange(timeRange);
 
         final EntityChooser chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Process Results With");
@@ -572,6 +574,11 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     @Override
+    public void setTimeRange(final TimeRange timeRange) {
+        this.timeRange = timeRange;
+    }
+
+    @Override
     public void setQueryInfo(final String queryInfo) {
         lastUsedQueryInfo = queryInfo;
     }
@@ -624,7 +631,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
             // Start search.
             searchModel.reset();
-            searchModel.startNewSearch(decorated, params, incremental, storeHistory, lastUsedQueryInfo);
+            searchModel.startNewSearch(decorated, params, timeRange, incremental, storeHistory, lastUsedQueryInfo);
         }
     }
 
@@ -831,7 +838,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
             final DashboardSearchRequest searchRequest = searchModel.createDownloadQueryRequest(
                     expressionPresenter.write(),
-                    params);
+                    params,
+                    timeRange);
 
             final Rest<ResourceGeneration> rest = restFactory.create();
             rest

@@ -5,6 +5,7 @@ import stroom.annotation.client.ShowAnnotationEvent;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.EventId;
 import stroom.core.client.ContentManager;
+import stroom.core.client.event.CloseContentEvent;
 import stroom.data.client.presenter.DataViewType;
 import stroom.data.client.presenter.DisplayMode;
 import stroom.data.client.presenter.ShowDataEvent;
@@ -256,16 +257,17 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
         presenter.setUrl(hyperlink.getHref());
         presenter.setCustomTitle(customTitle);
         presenter.setIcon(hyperlink.getIcon());
+        final CloseContentEvent.Handler handler = event ->
+                ConfirmEvent.fire(this,
+                        "Are you sure you want to close?",
+                        res -> {
+                            if (res) {
+                                presenter.close();
+                            }
+                            event.getCallback().closeTab(res);
+                        });
         contentManager.open(
-                callback ->
-                        ConfirmEvent.fire(this,
-                                "Are you sure you want to close?",
-                                res -> {
-                                    if (res) {
-                                        presenter.close();
-                                    }
-                                    callback.closeTab(res);
-                                }),
+                handler,
                 presenter,
                 presenter);
     }

@@ -28,8 +28,11 @@ import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dashboard.shared.VisResultRequest;
+import stroom.datasource.api.v2.DateField;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
@@ -39,6 +42,7 @@ import stroom.query.api.v2.ResultRequest.ResultStyle;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.api.v2.TimeRange;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -115,7 +119,11 @@ public class SearchRequestMapper {
                         .addOperator(searchRequest.getSearch().getExpression())
                         .addOperator(suppliedExpression)
                         .build();
-                return new Query(searchRequest.getSearch().getDataSourceRef(), expression, params);
+                return new Query(
+                        searchRequest.getSearch().getDataSourceRef(),
+                        expression,
+                        params,
+                        searchRequest.getSearch().getTimeRange());
 
             } catch (IOException ex) {
                 throw new UncheckedIOException("Invalid JSON for expression.  Got: " + expressionJson, ex);
@@ -124,7 +132,8 @@ public class SearchRequestMapper {
         } else {
             return new Query(searchRequest.getSearch().getDataSourceRef(),
                     searchRequest.getSearch().getExpression(),
-                    params);
+                    params,
+                    searchRequest.getSearch().getTimeRange());
         }
     }
 

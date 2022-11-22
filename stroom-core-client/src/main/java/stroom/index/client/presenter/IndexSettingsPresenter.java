@@ -111,6 +111,7 @@ public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSetti
         getView().setShardsPerPartition(index.getShardsPerPartition());
         getView().setPartitionBy(index.getPartitionBy());
         getView().setPartitionSize(index.getPartitionSize());
+        getView().setTimeField(index.getTimeField());
         updateRetentionAge(SupportedRetentionAge.get(index.getRetentionDayAge()));
         updateGroupList(index.getVolumeGroupName());
 
@@ -125,6 +126,7 @@ public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSetti
         index.setShardsPerPartition(getView().getShardsPerPartition());
         index.setPartitionBy(getView().getPartitionBy());
         index.setPartitionSize(getView().getPartitionSize());
+        index.setTimeField(getView().getTimeField());
         index.setRetentionDayAge(getView().getRetentionAge().getSelectedItem().getDays());
 
         String volumeGroupName = getView().getVolumeGroups().getSelected();
@@ -182,6 +184,10 @@ public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSetti
         PartitionBy getPartitionBy();
 
         void setPartitionBy(PartitionBy partitionBy);
+
+        String getTimeField();
+
+        void setTimeField(String partitionTimeField);
 
         ItemListBox<SupportedRetentionAge> getRetentionAge();
 

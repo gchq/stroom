@@ -38,7 +38,11 @@ class DataSourceResourceImpl implements DataSourceResource {
     @Override
     public DataSource fetch(final DocRef dataSourceRef) {
         if (dataSourceRef.equals(MetaFields.STREAM_STORE_DOC_REF)) {
-            return DataSource.builder().fields(MetaFields.getFields()).build();
+            return DataSource
+                    .builder()
+                    .fields(MetaFields.getFields())
+                    .timeField(MetaFields.CREATE_TIME)
+                    .build();
         }
 
         return dataSourceProviderRegistryProvider.get()

@@ -87,29 +87,29 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     private static final List<Condition> SUPPORTED_STRING_CONDITIONS = List.of(Condition.EQUALS);
     private static final List<Condition> SUPPORTED_DOC_REF_CONDITIONS = List.of(Condition.IS_DOC_REF, Condition.EQUALS);
 
-    private static final AbstractField KEY_FIELD = new TextField(
+    private static final TextField KEY_FIELD = new TextField(
             "Key", true, SUPPORTED_STRING_CONDITIONS);
-    private static final AbstractField VALUE_FIELD = new TextField(
+    private static final TextField VALUE_FIELD = new TextField(
             "Value", true, SUPPORTED_STRING_CONDITIONS);
-    private static final AbstractField VALUE_REF_COUNT_FIELD = new IntegerField(
+    private static final IntegerField VALUE_REF_COUNT_FIELD = new IntegerField(
             "Value Reference Count", false);
-    private static final AbstractField MAP_NAME_FIELD = new TextField(
+    private static final TextField MAP_NAME_FIELD = new TextField(
             "Map Name", true, SUPPORTED_STRING_CONDITIONS);
-    private static final AbstractField CREATE_TIME_FIELD = new DateField(
+    private static final DateField CREATE_TIME_FIELD = new DateField(
             "Create Time", true);
-    private static final AbstractField EFFECTIVE_TIME_FIELD = new DateField(
+    private static final DateField EFFECTIVE_TIME_FIELD = new DateField(
             "Effective Time", true);
-    private static final AbstractField LAST_ACCESSED_TIME_FIELD = new DateField(
+    private static final DateField LAST_ACCESSED_TIME_FIELD = new DateField(
             "Last Accessed Time", true);
-    private static final AbstractField PIPELINE_FIELD = new DocRefField(PipelineDoc.DOCUMENT_TYPE,
+    private static final DocRefField PIPELINE_FIELD = new DocRefField(PipelineDoc.DOCUMENT_TYPE,
             "Reference Loader Pipeline", true, SUPPORTED_DOC_REF_CONDITIONS);
-    private static final AbstractField PROCESSING_STATE_FIELD = new TextField(
+    private static final TextField PROCESSING_STATE_FIELD = new TextField(
             "Processing State", false);
-    private static final AbstractField STREAM_ID_FIELD = new IdField(
+    private static final IdField STREAM_ID_FIELD = new IdField(
             "Stream ID", false);
-    private static final AbstractField PART_NO_FIELD = new LongField(
+    private static final LongField PART_NO_FIELD = new LongField(
             "Part Number", false);
-    private static final AbstractField PIPELINE_VERSION_FIELD = new TextField(
+    private static final TextField PIPELINE_VERSION_FIELD = new TextField(
             "Pipeline Version", false);
 
     private static final List<AbstractField> FIELDS = List.of(
@@ -126,7 +126,11 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             PART_NO_FIELD,
             PIPELINE_VERSION_FIELD);
 
-    private static final DataSource DATA_SOURCE = DataSource.builder().fields(FIELDS).build();
+    private static final DataSource DATA_SOURCE = DataSource
+            .builder()
+            .fields(FIELDS)
+            .timeField(CREATE_TIME_FIELD)
+            .build();
 
     private static final Map<String, AbstractField> FIELD_NAME_TO_FIELD_MAP = FIELDS.stream()
             .collect(Collectors.toMap(AbstractField::getName, Function.identity()));

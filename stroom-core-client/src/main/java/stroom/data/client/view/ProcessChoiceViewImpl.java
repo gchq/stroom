@@ -1,6 +1,5 @@
 package stroom.data.client.view;
 
-import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ProcessChoicePresenter;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.widget.customdatebox.client.MyDateBox;
@@ -25,9 +24,9 @@ public class ProcessChoiceViewImpl extends ViewImpl implements ProcessChoicePres
     CustomCheckBox reprocess;
     @UiField
     CustomCheckBox enabled;
-    @UiField(provided = true)
+    @UiField
     MyDateBox minMetaCreateTimeMs;
-    @UiField(provided = true)
+    @UiField
     MyDateBox maxMetaCreateTimeMs;
 
     private final Widget widget;
@@ -35,9 +34,9 @@ public class ProcessChoiceViewImpl extends ViewImpl implements ProcessChoicePres
     @Inject
     public ProcessChoiceViewImpl(final Binder binder,
                                  final UserPreferencesManager userPreferencesManager) {
-        minMetaCreateTimeMs = new MyDateBox(userPreferencesManager.isUtc());
-        maxMetaCreateTimeMs = new MyDateBox(userPreferencesManager.isUtc());
         widget = binder.createAndBindUi(this);
+        minMetaCreateTimeMs.setUtc(userPreferencesManager.isUtc());
+        maxMetaCreateTimeMs.setUtc(userPreferencesManager.isUtc());
 
         priority.setMax(100);
         priority.setMin(1);

@@ -17,7 +17,6 @@
 
 package stroom.entity.client.presenter;
 
-import stroom.core.client.HasSave;
 import stroom.docref.DocRef;
 import stroom.docref.HasType;
 import stroom.document.client.event.DirtyEvent;
@@ -34,7 +33,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 public abstract class DocumentEditPresenter<V extends View, D> extends MyPresenterWidget<V>
-        implements HasDocumentRead<D>, HasWrite<D>, ReadOnlyChangeHandler, HasDirtyHandlers, HasType, HasSave {
+        implements HasDocumentRead<D>, HasWrite<D>, ReadOnlyChangeHandler, HasDirtyHandlers, HasType {
 
     private final ClientSecurityContext securityContext;
     private D entity;
@@ -58,7 +57,6 @@ public abstract class DocumentEditPresenter<V extends View, D> extends MyPresent
     public void onDirtyChange() {
     }
 
-    @Override
     public boolean isDirty() {
         return !readOnly && dirty;
     }
@@ -69,16 +67,18 @@ public abstract class DocumentEditPresenter<V extends View, D> extends MyPresent
 
     @Override
     public final void read(final DocRef docRef, final D entity) {
-        // Check document permissions.
-        securityContext
-                .hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.UPDATE)
-                .onSuccess(allowUpdate -> onReadOnly(!allowUpdate));
-        this.entity = entity;
-        if (entity != null) {
-            reading = true;
-            onRead(docRef, entity);
-            reading = false;
-            setDirty(false, true);
+        if (docRef != null) {
+            // Check document permissions.
+            securityContext
+                    .hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.UPDATE)
+                    .onSuccess(allowUpdate -> onReadOnly(!allowUpdate));
+            this.entity = entity;
+            if (entity != null) {
+                reading = true;
+                onRead(docRef, entity);
+                reading = false;
+                setDirty(false, true);
+            }
         }
     }
 

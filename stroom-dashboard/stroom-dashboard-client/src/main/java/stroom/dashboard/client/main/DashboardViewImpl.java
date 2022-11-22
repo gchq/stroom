@@ -16,18 +16,18 @@
 
 package stroom.dashboard.client.main;
 
-import stroom.dashboard.client.query.QueryButtons;
+import stroom.preferences.client.UserPreferencesManager;
+import stroom.query.api.v2.TimeRange;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.BlurEvent;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -37,18 +37,22 @@ public class DashboardViewImpl extends ViewWithUiHandlers<DashboardUiHandlers>
         implements DashboardPresenter.DashboardView {
 
     private final Widget widget;
+
     @UiField
-    FlowPanel left;
+    Button addPanelButton;
     @UiField
-    TextBox params;
+    Button addInputButton;
     @UiField
     SimplePanel content;
     @UiField
-    QueryButtons queryButtons;
+    TimeRangeSelector timeRangeSelector;
 
     @Inject
-    public DashboardViewImpl(final Binder binder) {
+    public DashboardViewImpl(final Binder binder,
+                             final UserPreferencesManager userPreferencesManager) {
         widget = binder.createAndBindUi(this);
+        timeRangeSelector.setUtc(userPreferencesManager.isUtc());
+        setReadOnly(true);
     }
 
     @Override
@@ -57,18 +61,13 @@ public class DashboardViewImpl extends ViewWithUiHandlers<DashboardUiHandlers>
     }
 
     @Override
-    public void addWidgetLeft(final Widget widget) {
-        left.add(widget);
+    public TimeRange getTimeRange() {
+        return timeRangeSelector.getValue();
     }
 
     @Override
-    public String getParams() {
-        return params.getText();
-    }
-
-    @Override
-    public void setParams(final String params) {
-        this.params.setText(params);
+    public void setTimeRange(final TimeRange timeRange) {
+        timeRangeSelector.setValue(timeRange);
     }
 
     @Override
@@ -84,35 +83,35 @@ public class DashboardViewImpl extends ViewWithUiHandlers<DashboardUiHandlers>
         }
     }
 
-    @UiHandler("params")
-    public void onParamsKeyDown(final KeyDownEvent event) {
-        switch (event.getNativeKeyCode()) {
-            case KeyCodes.KEY_ENTER:
-            case KeyCodes.KEY_TAB:
-            case KeyCodes.KEY_ESCAPE:
-                onParamsChanged();
-                break;
-            default:
-                if (getUiHandlers() != null) {
-                    getUiHandlers().onDirty();
-                }
-        }
-    }
-
-    @UiHandler("params")
-    public void onParamsBlur(final BlurEvent event) {
-        onParamsChanged();
-    }
-
-    private void onParamsChanged() {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onParamsChanged(params.getText());
-        }
-    }
-
     @Override
-    public QueryButtons getQueryButtons() {
-        return queryButtons;
+    public void setReadOnly(final boolean readOnly) {
+        addPanelButton.setEnabled(!readOnly);
+        addInputButton.setEnabled(!readOnly);
+    }
+
+    @UiHandler("addPanelButton")
+    public void onAddPanelButtonClick(final ClickEvent event) {
+        if (MouseUtil.isPrimary(event)) {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onAddPanel(event);
+            }
+        }
+    }
+
+    @UiHandler("addInputButton")
+    public void onAddInputButtonClick(final ClickEvent event) {
+        if (MouseUtil.isPrimary(event)) {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onAddInput(event);
+            }
+        }
+    }
+
+    @UiHandler("timeRangeSelector")
+    public void onTimeRangeSelector(final ValueChangeEvent<TimeRange> event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onTimeRange(event.getValue());
+        }
     }
 
     public interface Binder extends UiBinder<Widget, DashboardViewImpl> {

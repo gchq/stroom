@@ -16,11 +16,15 @@
 
 package stroom.dashboard.client.main;
 
+import stroom.query.api.v2.TimeRange;
+
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface DashboardUiHandlers extends UiHandlers {
+    void onAddPanel(ClickEvent event);
 
-    void onParamsChanged(String params);
+    void onAddInput(ClickEvent event);
 
-    void onDirty();
+    void onTimeRange(TimeRange timeRange);
 }

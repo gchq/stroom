@@ -5,6 +5,5 @@
     <b:ButtonPanel addStyleNames="QueryButtons svg-image-button-group">
         <g:Button ui:field="start" title="Execute Query" enabled="false"
                   styleName="svg-image-button QueryButtons-play"/>
-        <g:Button ui:field="stop" title="Stop Query" enabled="false" styleName="svg-image-button QueryButtons-stop"/>
     </b:ButtonPanel>
 </ui:UiBinder>

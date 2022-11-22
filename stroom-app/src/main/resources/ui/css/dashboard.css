@@ -20,6 +20,15 @@
 .DashboardViewImpl-top {
     gap: var(--control__padding--horizontal);
     padding: 0 var(--control__padding--horizontal) var(--control__padding--vertical) 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.DashboardViewImpl-top-buttons {
+    display: flex;
+    align-items: center;
+    gap: var(--control__padding--horizontal);
 }
 
 .DashboardViewImpl-content {
@@ -509,6 +518,11 @@
 
 	color: white;
 	background-color: #1f77b4;
+}
+
+.MultiInputView {
+    padding-left: 0.4rem;
+    height: auto;
 }
 
 

@@ -26,6 +26,9 @@
         <form:FormGroup identity="solrIndexSettingsZKPath" label="ZK Path">
             <g:TextArea ui:field="zkPath" width="400px"/>
         </form:FormGroup>
+        <form:FormGroup identity="solrIndexSettingsTimeField" label="Main Time Field Name">
+            <g:TextBox ui:field="timeField" width="200px"/>
+        </form:FormGroup>
         <form:FormGroup identity="solrIndexSettingsDefaultExtractionPipeline" label="Default Extraction Pipeline">
             <g:SimplePanel ui:field="defaultExtractionPipeline"/>
         </form:FormGroup>

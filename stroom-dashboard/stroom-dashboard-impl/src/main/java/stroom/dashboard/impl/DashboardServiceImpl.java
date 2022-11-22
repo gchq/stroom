@@ -39,11 +39,15 @@ import stroom.dashboard.shared.TableResultRequest;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.dashboard.shared.VisResultRequest;
 import stroom.datasource.api.v2.DataSourceProvider;
+import stroom.datasource.api.v2.DateField;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.query.api.v2.DateTimeSettings;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
@@ -54,6 +58,7 @@ import stroom.query.api.v2.Row;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
+import stroom.query.api.v2.TimeRange;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -470,6 +475,7 @@ class DashboardServiceImpl implements DashboardService {
                 }
                 params.add(new Param("currentUser()", securityContext.getUserId()));
                 search = search.copy().params(params).build();
+
                 updatedSearchRequest = updatedSearchRequest.copy().search(search).build();
                 SearchRequest mappedRequest = searchRequestMapper.mapRequest(updatedSearchRequest);
 
@@ -504,6 +510,11 @@ class DashboardServiceImpl implements DashboardService {
                                                 "No search provider found for '" +
                                                         dataSourceRef.getType() +
                                                         "' data source"));
+
+                        // Add partition time constraints to the query.
+                        final DateField partitionTimeField =
+                                dataSourceProvider.getDataSource(dataSourceRef).getTimeField();
+                        mappedRequest = addTimeRangeExpression(partitionTimeField, mappedRequest);
 
                         // Create a brand new query key and give it to the request.
                         queryKey = new QueryKey(UUID.randomUUID().toString());
@@ -552,6 +563,37 @@ class DashboardServiceImpl implements DashboardService {
         return result;
     }
 
+    private SearchRequest addTimeRangeExpression(final DateField partitionTimeField,
+                                                 final SearchRequest searchRequest) {
+        SearchRequest result = searchRequest;
+
+        // Add the time range to the expression.
+        if (partitionTimeField != null) {
+            final TimeRange timeRange = result.getQuery().getTimeRange();
+            if (timeRange != null && (timeRange.getFrom() != null || timeRange.getTo() != null)) {
+                ExpressionOperator.Builder and = ExpressionOperator.builder().op(Op.AND);
+                if (timeRange.getFrom() != null) {
+                    and.addTerm(
+                            partitionTimeField,
+                            Condition.GREATER_THAN_OR_EQUAL_TO,
+                            timeRange.getFrom());
+                }
+                if (timeRange.getTo() != null) {
+                    and.addTerm(
+                            partitionTimeField,
+                            Condition.LESS_THAN,
+                            timeRange.getTo());
+                }
+                Query query = result.getQuery();
+                and.addOperator(query.getExpression());
+                query = query.copy().expression(and.build()).build();
+                result = result.copy().query(query).build();
+            }
+        }
+
+        return result;
+    }
+
     private void storeSearchHistory(final DashboardSearchRequest request) {
         // We only want to record search history for user initiated searches.
         if (request.isStoreHistory()) {
@@ -559,8 +601,11 @@ class DashboardServiceImpl implements DashboardService {
                 // Add this search to the history so the user can get back to
                 // this search again.
                 final Search search = request.getSearch();
-                final List<Param> params = search.getParams();
-                final Query query = new Query(search.getDataSourceRef(), search.getExpression(), params);
+                final Query query = new Query(
+                        search.getDataSourceRef(),
+                        search.getExpression(),
+                        search.getParams(),
+                        search.getTimeRange());
 
                 final StoredQuery storedQuery = new StoredQuery();
                 storedQuery.setName("History");

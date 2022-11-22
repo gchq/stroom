@@ -60,6 +60,8 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
     @UiField
     TextArea zkPath;
     @UiField
+    TextBox timeField;
+    @UiField
     SimplePanel defaultExtractionPipeline;
     @UiField
     Button testConnection;
@@ -80,6 +82,7 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
         useZk.addValueChangeHandler(e -> fireChange());
         zkHosts.addKeyDownHandler(e -> fireChange());
         zkPath.addKeyDownHandler(e -> fireChange());
+        timeField.addKeyDownHandler(e -> fireChange());
     }
 
     private void fireChange() {
@@ -187,6 +190,17 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
     public void setRetentionExpressionView(final View view) {
         retentionExpressionPanel.setWidget(view.asWidget());
     }
+
+    @Override
+    public String getTimeField() {
+        return timeField.getValue();
+    }
+
+    @Override
+    public void setTimeField(final String partitionTimeField) {
+        this.timeField.setValue(partitionTimeField);
+    }
+
 
     @Override
     public void setDefaultExtractionPipelineView(final View view) {

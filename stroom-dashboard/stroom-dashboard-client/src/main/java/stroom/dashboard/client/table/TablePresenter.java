@@ -465,6 +465,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                         .expression(currentSearch.getExpression())
                                         .componentSettingsMap(currentSearch.getComponentSettingsMap())
                                         .params(currentSearch.getParams())
+                                        .timeRange(currentSearch.getTimeRange())
                                         .incremental(true)
                                         .queryInfo(currentSearch.getQueryInfo())
                                         .build();

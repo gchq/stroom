@@ -42,9 +42,9 @@ import javax.ws.rs.ext.WriterInterceptorContext;
 public class DefaultLoggingFilter extends LoggingFeature implements ContainerRequestFilter, ContainerResponseFilter,
         ClientRequestFilter, ClientResponseFilter, WriterInterceptor {
 
-    public static final String ENTITY_LOGGER_PROPERTY = DefaultLoggingFilter.class.getName();
+    public static final String ENTITY_LOGGER_PROPERTY = LoggingFeature.class.getName();
     private static final int MAX_ENTITY_SIZE = 8 * 1024;
-    private final Logger logger = Logger.getLogger(ENTITY_LOGGER_PROPERTY);
+    private static final Logger logger = Logger.getLogger(ENTITY_LOGGER_PROPERTY);
 
     public DefaultLoggingFilter(Logger logger, Level level, Verbosity verbosity, Integer maxEntitySize) {
         super(logger, level, verbosity, maxEntitySize);

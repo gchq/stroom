@@ -80,6 +80,7 @@ import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseOtherTabsEvent;
+import stroom.widget.tab.client.event.RequestCloseSavedTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
 import stroom.widget.tab.client.event.ShowTabMenuEvent;
 import stroom.widget.tab.client.presenter.TabData;
@@ -428,7 +429,8 @@ public class DocumentPluginEventManager extends Plugin {
 
             menuItems.add(createCloseMenuItem(1, event.getTabData()));
             menuItems.add(createCloseOthersMenuItem(2, event.getTabData()));
-            menuItems.add(createCloseAllMenuItem(3, event.getTabData()));
+            menuItems.add(createCloseSavedMenuItem(3, event.getTabData()));
+            menuItems.add(createCloseAllMenuItem(4, event.getTabData()));
             menuItems.add(new Separator(5));
             menuItems.add(createSaveMenuItem(6, event.getTabData()));
             menuItems.add(createSaveAllMenuItem(8));
@@ -836,6 +838,16 @@ public class DocumentPluginEventManager extends Plugin {
                 .text("Close Others")
                 .enabled(isTabItemSelected(selectedTab))
                 .command(() -> RequestCloseOtherTabsEvent.fire(DocumentPluginEventManager.this, selectedTab))
+                .build();
+    }
+
+    private MenuItem createCloseSavedMenuItem(final int priority, final TabData selectedTab) {
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgPresets.CLOSE)
+                .text("Close Saved")
+                .enabled(isTabItemSelected(selectedTab))
+                .command(() -> RequestCloseSavedTabsEvent.fire(DocumentPluginEventManager.this))
                 .build();
     }
 

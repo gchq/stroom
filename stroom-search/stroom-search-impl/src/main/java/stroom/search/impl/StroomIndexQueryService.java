@@ -2,6 +2,7 @@ package stroom.search.impl;
 
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DataSourceProvider;
+import stroom.datasource.api.v2.DateField;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
@@ -52,9 +53,14 @@ public class StroomIndexQueryService implements DataSourceProvider {
                     TerminateHandlerFactory.NOOP_FACTORY,
                     taskContext -> {
                         final IndexDoc index = indexStore.readDocument(docRef);
+                        DateField timeField = null;
+                        if (index.getTimeField() != null && !index.getTimeField().isBlank()) {
+                            timeField = new DateField(index.getTimeField());
+                        }
                         return DataSource
                                 .builder()
                                 .fields(IndexDataSourceFieldUtil.getDataSourceFields(index, securityContext))
+                                .timeField(timeField)
                                 .defaultExtractionPipeline(index.getDefaultExtractionPipeline())
                                 .build();
                     });

@@ -564,6 +564,7 @@ export interface DashboardConfig {
   layout?: LayoutConfig;
   parameters?: string;
   tabVisibility?: "SHOW_ALL" | "HIDE_SINGLE" | "HIDE_ALL";
+  timeRange?: TimeRange;
 }
 
 export interface DashboardDoc {
@@ -571,6 +572,7 @@ export interface DashboardDoc {
   createTimeMs?: number;
   createUser?: string;
   dashboardConfig?: DashboardConfig;
+  description?: string;
   name?: string;
   type?: string;
 
@@ -694,10 +696,32 @@ export interface DataRetentionRules {
 }
 
 export interface DataSource {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  defaultExtractionPipeline?: DocRef;
   fields?: AbstractField[];
+  timeField?: DateField;
 }
 
-export type DateField = AbstractField;
+export interface DateField {
+  conditions?: (
+    | "CONTAINS"
+    | "EQUALS"
+    | "GREATER_THAN"
+    | "GREATER_THAN_OR_EQUAL_TO"
+    | "LESS_THAN"
+    | "LESS_THAN_OR_EQUAL_TO"
+    | "BETWEEN"
+    | "IN"
+    | "IN_DICTIONARY"
+    | "IN_FOLDER"
+    | "IS_DOC_REF"
+    | "IS_NULL"
+    | "IS_NOT_NULL"
+    | "MATCHES_REGEX"
+  )[];
+  name?: string;
+  queryable?: boolean;
+}
 
 /**
  * The string formatting to apply to a date value
@@ -885,6 +909,9 @@ export interface ElasticIndexDoc {
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  defaultExtractionPipeline?: DocRef;
   description?: string;
   fields?: ElasticIndexField[];
   indexName?: string;
@@ -898,6 +925,7 @@ export interface ElasticIndexDoc {
 
   /** @format int32 */
   searchSlices?: number;
+  timeField?: string;
   type?: string;
 
   /** @format int64 */
@@ -1296,6 +1324,7 @@ export interface FindIndexShardCriteria {
   nodeNameSet?: SelectionString;
   pageRequest?: PageRequest;
   partition?: StringCriteria;
+  partitionTimeRange?: RangeLong;
   sort?: string;
   sortList?: CriteriaFieldSort[];
   volumeIdSet?: SelectionInteger;
@@ -1517,6 +1546,9 @@ export interface ImportState {
   /** @format int64 */
   enableFiltersFromTime?: number;
   messageList?: Message[];
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  rootDocRef?: DocRef;
   sourcePath?: string;
   state?: "NEW" | "UPDATE" | "EQUAL";
   updatedFieldList?: string[];
@@ -1528,6 +1560,9 @@ export interface IndexDoc {
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  defaultExtractionPipeline?: DocRef;
   description?: string;
   fields?: IndexField[];
 
@@ -1544,6 +1579,7 @@ export interface IndexDoc {
 
   /** @format int32 */
   shardsPerPartition?: number;
+  timeField?: string;
   type?: string;
 
   /** @format int64 */
@@ -1845,6 +1881,8 @@ export interface MetaRow {
   meta?: Meta;
   pipelineName?: string;
 }
+
+export type MultiInputComponentSettings = ComponentSettings & { text?: string };
 
 export interface Node {
   /** @format int64 */
@@ -2316,6 +2354,7 @@ export interface Query {
   /** A logical addOperator term in a query expression tree */
   expression: ExpressionOperator;
   params?: Param[];
+  timeRange?: TimeRange;
 }
 
 export type QueryComponentSettings = ComponentSettings & {
@@ -2337,6 +2376,7 @@ export interface QueryData {
   expression?: ExpressionOperator;
   limits?: Limits;
   params?: string;
+  timeRange?: TimeRange;
 }
 
 /**
@@ -2728,6 +2768,7 @@ export interface Search {
   incremental?: boolean;
   params?: Param[];
   queryInfo?: string;
+  timeRange?: TimeRange;
 }
 
 export interface SearchAccountRequest {
@@ -2909,6 +2950,9 @@ export interface SolrIndexDoc {
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  defaultExtractionPipeline?: DocRef;
   deletedFields?: SolrIndexField[];
   description?: string;
   fields?: SolrIndexField[];
@@ -2918,6 +2962,7 @@ export interface SolrIndexDoc {
   retentionExpression?: ExpressionOperator;
   solrConnectionConfig?: SolrConnectionConfig;
   solrSynchState?: SolrSynchState;
+  timeField?: string;
   type?: string;
 
   /** @format int64 */
@@ -3206,6 +3251,9 @@ export interface TabConfig {
 export type TabLayoutConfig = LayoutConfig & { selected?: number; tabs?: TabConfig[] };
 
 export interface TableComponentSettings {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  dataSourceRef?: DocRef;
+
   /** TODO */
   extractValues?: boolean;
 
@@ -3340,6 +3388,27 @@ export interface ThemeConfig {
   topMenuTextColour?: string;
   tubeOpacity?: string;
   tubeVisible?: string;
+}
+
+export interface TimeRange {
+  condition?:
+    | "CONTAINS"
+    | "EQUALS"
+    | "GREATER_THAN"
+    | "GREATER_THAN_OR_EQUAL_TO"
+    | "LESS_THAN"
+    | "LESS_THAN_OR_EQUAL_TO"
+    | "BETWEEN"
+    | "IN"
+    | "IN_DICTIONARY"
+    | "IN_FOLDER"
+    | "IS_DOC_REF"
+    | "IS_NULL"
+    | "IS_NOT_NULL"
+    | "MATCHES_REGEX";
+  from?: string;
+  name?: string;
+  to?: string;
 }
 
 /**
@@ -5269,7 +5338,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     fetchDataSourceFields: (data: DocRef, params: RequestParams = {}) =>
-      this.request<any, AbstractField[]>({
+      this.request<any, DataSource>({
         path: `/dataSource/v1/fetchFields`,
         method: "POST",
         body: data,

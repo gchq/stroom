@@ -20,8 +20,7 @@ package stroom.receive.rules.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.core.client.ContentManager.CloseCallback;
-import stroom.core.client.ContentManager.CloseHandler;
+import stroom.core.client.event.CloseContentEvent;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -49,7 +48,7 @@ import java.util.List;
 import javax.inject.Provider;
 
 public class DataRetentionPresenter extends ContentTabPresenter<DataRetentionPresenter.DataRetentionView>
-        implements HasDirtyHandlers, CloseHandler {
+        implements HasDirtyHandlers, CloseContentEvent.Handler {
 
     private static final TabData RULES_TAB = new TabDataImpl("Rules");
     private static final TabData IMPACT_SUMMARY_TAB = new TabDataImpl("Impact Summary");
@@ -210,18 +209,20 @@ public class DataRetentionPresenter extends ContentTabPresenter<DataRetentionPre
     }
 
     @Override
-    public void onCloseRequest(final CloseCallback callback) {
+    public void onCloseRequest(final CloseContentEvent event) {
         if (dirty) {
-            ConfirmEvent.fire(this,
-                    "There are unsaved changes. Are you sure you want to close this tab?",
-                    result -> {
-                        callback.closeTab(result);
-                        if (result) {
-                            unbind();
-                        }
-                    });
+            if (!event.isIgnoreIfDirty()) {
+                ConfirmEvent.fire(this,
+                        "There are unsaved changes. Are you sure you want to close this tab?",
+                        result -> {
+                            event.getCallback().closeTab(result);
+                            if (result) {
+                                unbind();
+                            }
+                        });
+            }
         } else {
-            callback.closeTab(true);
+            event.getCallback().closeTab(true);
             unbind();
         }
     }

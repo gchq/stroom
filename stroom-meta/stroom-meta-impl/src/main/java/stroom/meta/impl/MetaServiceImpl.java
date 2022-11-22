@@ -22,7 +22,6 @@ import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
-import stroom.processor.shared.ProcessorTaskFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionTerm;
@@ -265,7 +264,11 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     @Override
     public DataSource getDataSource() {
-        return DataSource.builder().fields(MetaFields.getAllFields()).build();
+        return DataSource
+                .builder()
+                .fields(MetaFields.getAllFields())
+                .timeField(MetaFields.CREATE_TIME)
+                .build();
     }
 
     @Override

@@ -21,8 +21,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.content.client.event.SelectContentTabEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.core.client.ContentManager;
-import stroom.core.client.ContentManager.CloseCallback;
-import stroom.core.client.ContentManager.CloseHandler;
+import stroom.core.client.event.CloseContentEvent;
 import stroom.core.client.presenter.Plugin;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
@@ -112,7 +111,7 @@ public abstract class AbstractTabPresenterPlugin<K, T extends ContentTabPresente
                 keyToPresenterMap.put(presenterKey, tabPresenter);
                 presenterToKeyMap.put(tabPresenter, presenterKey);
 
-                final CloseHandler closeHandler = createCloseHandler(tabPresenter);
+                final CloseContentEvent.Handler closeHandler = createCloseHandler(tabPresenter);
 
                 // Load the document and show the tab.
                 showTab(presenterKey, tabPresenter, closeHandler);
@@ -124,7 +123,7 @@ public abstract class AbstractTabPresenterPlugin<K, T extends ContentTabPresente
 
     protected void showTab(final K presenterKey,
                            final T tabPresenter,
-                           final CloseHandler closeHandler) {
+                           final CloseContentEvent.Handler closeHandler) {
 
         final Consumer<Throwable> errorConsumer = caught -> {
             AlertEvent.fireError(
@@ -160,15 +159,15 @@ public abstract class AbstractTabPresenterPlugin<K, T extends ContentTabPresente
         keyToPresenterMap.remove(presenterKey);
     }
 
-    private CloseHandler createCloseHandler(final T tabPresenter) {
-        return (CloseCallback closeCallback) -> {
+    private CloseContentEvent.Handler createCloseHandler(final T tabPresenter) {
+        return event -> {
             if (tabPresenter != null) {
                 // Tell the presenter we are closing.
 //                    sourceTabPresenter.onClose();
                 // Cleanup reference to this tab data.
                 removeTabData(tabPresenter);
                 // Tell the callback to close the tab if ok.
-                closeCallback.closeTab(true);
+                event.getCallback().closeTab(true);
             }
         };
     }

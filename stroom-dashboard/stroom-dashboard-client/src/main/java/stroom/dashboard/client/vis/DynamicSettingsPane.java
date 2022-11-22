@@ -223,7 +223,8 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
     }
 
     private MyDateBox createDateBox(final String id) {
-        final MyDateBox ctrl = new MyDateBox(utc);
+        final MyDateBox ctrl = new MyDateBox();
+        ctrl.setUtc(utc);
         ctrl.addStyleName("w-100");
 
         final HasReadAndWrite<JSONObject> hasReadAndWrite = new HasReadAndWrite<JSONObject>() {

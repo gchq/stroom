@@ -17,7 +17,8 @@
 package stroom.content.client;
 
 import stroom.core.client.ContentManager;
-import stroom.core.client.ContentManager.CloseHandler;
+import stroom.core.client.event.CloseContentEvent;
+import stroom.core.client.event.CloseContentEvent.Callback;
 import stroom.core.client.presenter.Plugin;
 import stroom.data.table.client.Refreshable;
 import stroom.widget.tab.client.presenter.TabData;
@@ -48,19 +49,22 @@ public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends Plug
             presenter = presenterProvider.get();
         }
 
-        final CloseHandler closeHandler = closeCallback -> {
-            if (presenter instanceof CloseHandler) {
-                ((CloseHandler) presenter).onCloseRequest(ok -> {
-                    closeCallback.closeTab(ok);
+        final CloseContentEvent.Handler closeHandler = (event) -> {
+            if (presenter instanceof CloseContentEvent.Handler) {
+                final Callback callback = ok -> {
+                    event.getCallback().closeTab(ok);
                     // After we close the tab set the presenter back to null so
                     // that we can open it again.
                     if (ok) {
                         presenter = null;
                     }
-                });
+                };
+
+                ((CloseContentEvent.Handler) presenter)
+                        .onCloseRequest(new CloseContentEvent(event.isIgnoreIfDirty(), callback));
                 // Give the content manager the ok to close the tab.
             } else {
-                closeCallback.closeTab(true);
+                event.getCallback().closeTab(true);
                 // After we close the tab set the presenter back to null so
                 // that we can open it again.
                 presenter = null;

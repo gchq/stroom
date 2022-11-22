@@ -19,11 +19,14 @@ package stroom.index.impl;
 import stroom.alert.api.AlertManager;
 import stroom.alert.api.AlertProcessor;
 import stroom.docref.DocRef;
+import stroom.index.shared.AllPartition;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldType;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.Partition;
+import stroom.index.shared.TimePartition;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ErrorStatistics;
@@ -48,7 +51,11 @@ import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.TreeMap;
 import javax.inject.Inject;
 
 /**
@@ -83,7 +90,10 @@ class IndexingFilter extends AbstractXMLFilter {
     private final CharBuffer debugBuffer = new CharBuffer(10);
     private IndexFieldsMap indexFieldsMap;
     private DocRef indexRef;
-    private IndexShardKey indexShardKey;
+    private IndexDoc index;
+    private final TimePartitionFactory timePartitionFactory = new TimePartitionFactory();
+    private final TreeMap<Long, TimePartition> timePartitionTreeMap = new TreeMap<>();
+    private final Map<Partition, IndexShardKey> indexShardKeyMap = new HashMap<>();
     private Document document;
 
     private int fieldsIndexed = 0;
@@ -92,6 +102,8 @@ class IndexingFilter extends AbstractXMLFilter {
 
 
     private AlertProcessor alertProcessor = null;
+    private Long currentEventTime = null;
+    private Partition defaultPartition = null;
 
     @Inject
     IndexingFilter(final MetaHolder metaHolder,
@@ -126,17 +138,24 @@ class IndexingFilter extends AbstractXMLFilter {
                 throw new LoggedException("Unable to load index");
             }
 
-            final IndexDoc index = indexStructure.getIndex();
+            index = indexStructure.getIndex();
             indexFieldsMap = indexStructure.getIndexFieldsMap();
 
             // Create a key to create shards with.
-            if (metaHolder == null || metaHolder.getMeta() == null) {
+            if (metaHolder == null || metaHolder.getMeta() == null || index.getPartitionBy() == null) {
                 // Many tests don't use streams so where this is the case just
                 // create a basic key.
-                indexShardKey = IndexShardKeyUtil.createTestKey(index);
+                final Partition partition = AllPartition.INSTANCE;
+                defaultPartition = partition;
+                final IndexShardKey indexShardKey = IndexShardKeyUtil.createKey(index, partition);
+                indexShardKeyMap.put(indexShardKey.getPartition(), indexShardKey);
             } else {
-                final long timeMs = metaHolder.getMeta().getCreateMs();
-                indexShardKey = IndexShardKeyUtil.createTimeBasedPartition(index, timeMs);
+                final long metaCreateMs = metaHolder.getMeta().getCreateMs();
+                final TimePartition timePartition = timePartitionFactory.create(index, metaCreateMs);
+                defaultPartition = timePartition;
+                final IndexShardKey indexShardKey = IndexShardKeyUtil.createKey(index, timePartition);
+                indexShardKeyMap.put(indexShardKey.getPartition(), indexShardKey);
+                timePartitionTreeMap.put(timePartition.getPartitionFromTime(), timePartition);
             }
         } finally {
             super.startProcessing();
@@ -191,6 +210,7 @@ class IndexingFilter extends AbstractXMLFilter {
         if (RECORD.equals(localName)) {
             processDocument();
             document = null;
+            currentEventTime = null;
 
             // Reset the count of how many fields we have indexed for the
             // current event.
@@ -210,6 +230,24 @@ class IndexingFilter extends AbstractXMLFilter {
         // have indexed some fields.
         if (fieldsIndexed > 0) {
             try {
+                Partition partition = defaultPartition;
+                if (currentEventTime != null) {
+                    final Entry<Long, TimePartition> entry = timePartitionTreeMap.floorEntry(currentEventTime);
+                    if (entry != null &&
+                            entry.getValue().getPartitionFromTime() <= currentEventTime &&
+                            entry.getValue().getPartitionToTime() > currentEventTime) {
+                        partition = entry.getValue();
+
+                    } else {
+                        final TimePartition timePartition = timePartitionFactory.create(index, currentEventTime);
+                        timePartitionTreeMap.put(timePartition.getPartitionFromTime(), timePartition);
+                        partition = timePartition;
+                    }
+                }
+
+                final IndexShardKey indexShardKey =
+                        indexShardKeyMap.computeIfAbsent(partition, k -> IndexShardKeyUtil.createKey(index, k));
+
                 checkAlerts();
                 indexer.addDocument(indexShardKey, document);
             } catch (final RuntimeException e) {
@@ -255,6 +293,12 @@ class IndexingFilter extends AbstractXMLFilter {
             } else if (IndexFieldType.DATE_FIELD.equals(indexField.getFieldType())) {
                 try {
                     final long val = DateUtil.parseUnknownString(value);
+
+                    // Set the current event time if this is a recognised event time field.
+                    if (currentEventTime == null && indexField.getFieldName().equals(index.getTimeField())) {
+                        currentEventTime = val;
+                    }
+
                     field = FieldFactory.create(indexField, val);
                 } catch (final RuntimeException e) {
                     LOGGER.trace(e.getMessage(), e);
@@ -300,11 +344,8 @@ class IndexingFilter extends AbstractXMLFilter {
             if (alertProcessor == null) {
                 final Optional<AlertProcessor> processor =
                         alertManager.createAlertProcessor(new DocRef(IndexDoc.DOCUMENT_TYPE,
-                                indexShardKey.getIndexUuid()));
-
-                if (processor.isPresent()) {
-                    alertProcessor = processor.get();
-                }
+                                indexRef.getUuid()));
+                processor.ifPresent(value -> alertProcessor = value);
             }
             if (alertProcessor != null) {
                 alertProcessor.addIfNeeded(document);
@@ -315,9 +356,7 @@ class IndexingFilter extends AbstractXMLFilter {
         }
     }
 
-
-
-    //For debug purposes, todo remove at some point
+    // For debug purposes, todo remove at some point
     private int numberOfEndProcessingCalls = 0;
 
     @Override

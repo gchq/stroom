@@ -1,6 +1,7 @@
 package stroom.node.client;
 
 import stroom.core.client.ContentManager;
+import stroom.core.client.event.CloseContentEvent;
 import stroom.data.table.client.Refreshable;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
@@ -34,9 +35,9 @@ public abstract class NodeToolsContentPlugin<P extends MyPresenterWidget<?>>
             presenter = presenterProvider.get();
         }
 
-        final ContentManager.CloseHandler closeHandler = callback -> {
+        final CloseContentEvent.Handler closeHandler = event -> {
             // Give the content manager the ok to close the tab.
-            callback.closeTab(true);
+            event.getCallback().closeTab(true);
 
             // After we close the tab set the presenter back to null so
             // that we can open it again.

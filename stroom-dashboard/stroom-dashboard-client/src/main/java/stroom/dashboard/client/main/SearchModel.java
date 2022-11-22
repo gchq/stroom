@@ -36,6 +36,7 @@ import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
+import stroom.query.api.v2.TimeRange;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.client.Console;
 
@@ -127,6 +128,7 @@ public class SearchModel {
      */
     public void startNewSearch(final ExpressionOperator expression,
                                final String params,
+                               final TimeRange timeRange,
                                final boolean incremental,
                                final boolean storeHistory,
                                final String queryInfo) {
@@ -151,6 +153,7 @@ public class SearchModel {
                         .expression(currentExpression)
                         .componentSettingsMap(resultComponentMap)
                         .params(getParams(currentParameterMap))
+                        .timeRange(timeRange)
                         .incremental(incremental)
                         .queryInfo(queryInfo)
                         .build();
@@ -198,6 +201,7 @@ public class SearchModel {
                             .expression(currentSearch.getExpression())
                             .componentSettingsMap(resultComponentMap)
                             .params(currentSearch.getParams())
+                            .timeRange(currentSearch.getTimeRange())
                             .incremental(true)
                             .build();
 
@@ -422,7 +426,8 @@ public class SearchModel {
      * the corresponding {@link DashboardSearchRequest} object
      */
     public DashboardSearchRequest createDownloadQueryRequest(final ExpressionOperator expression,
-                                                             final String params) {
+                                                             final String params,
+                                                             final TimeRange timeRange) {
         Search search = null;
         final Map<String, ComponentSettings> resultComponentMap = createComponentSettingsMap();
         if (resultComponentMap != null) {
@@ -440,6 +445,7 @@ public class SearchModel {
                         .expression(currentExpression)
                         .componentSettingsMap(resultComponentMap)
                         .params(getParams(currentParameterMap))
+                        .timeRange(timeRange)
                         .build();
             }
         }

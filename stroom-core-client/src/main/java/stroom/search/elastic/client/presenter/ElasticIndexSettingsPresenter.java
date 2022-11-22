@@ -64,8 +64,7 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
             final EntityDropDownPresenter clusterPresenter,
             final EditExpressionPresenter editExpressionPresenter,
             final EntityDropDownPresenter pipelinePresenter,
-            final RestFactory restFactory
-    ) {
+            final RestFactory restFactory) {
         super(eventBus, view);
 
         this.clusterPresenter = clusterPresenter;
@@ -139,7 +138,7 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
         getView().setIndexName(index.getIndexName());
         getView().setSearchSlices(index.getSearchSlices());
         getView().setSearchScrollSize(index.getSearchScrollSize());
-
+        getView().setTimeField(index.getTimeField());
 
         if (index.getRetentionExpression() == null) {
             index.setRetentionExpression(ExpressionOperator.builder().op(Op.AND).build());
@@ -167,6 +166,7 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
         index.setSearchSlices(getView().getSearchSlices());
         index.setSearchScrollSize(getView().getSearchScrollSize());
 
+        index.setTimeField(getView().getTimeField());
         index.setRetentionExpression(editExpressionPresenter.write());
         index.setDefaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference());
     }
@@ -193,6 +193,10 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
         void setSearchScrollSize(final int searchScrollSize);
 
         void setRetentionExpressionView(final View view);
+
+        String getTimeField();
+
+        void setTimeField(String partitionTimeField);
 
         void setDefaultExtractionPipelineView(View view);
     }

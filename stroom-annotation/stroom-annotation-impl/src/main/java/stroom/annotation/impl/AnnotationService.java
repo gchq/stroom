@@ -50,7 +50,11 @@ public class AnnotationService implements Searchable, AnnotationCreator {
     @Override
     public DataSource getDataSource() {
         checkPermission();
-        return DataSource.builder().fields(AnnotationFields.FIELDS).build();
+        return DataSource
+                .builder()
+                .fields(AnnotationFields.FIELDS)
+                .timeField(AnnotationFields.UPDATED_ON_FIELD)
+                .build();
     }
 
     @Override

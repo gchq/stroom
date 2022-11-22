@@ -1,6 +1,7 @@
 package stroom.search.solr;
 
 import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.DateField;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
@@ -35,9 +36,15 @@ public class SolrIndexServiceImpl implements SolrIndexService {
     public DataSource getDataSource(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
             final SolrIndexDoc index = solrIndexStore.readDocument(docRef);
+            DateField timeField = null;
+            if (index.getTimeField() != null && !index.getTimeField().isBlank()) {
+                timeField = new DateField(index.getTimeField());
+            }
+
             return DataSource
                     .builder()
                     .fields(SolrIndexDataSourceFieldUtil.getDataSourceFields(index))
+                    .timeField(timeField)
                     .defaultExtractionPipeline(index.getDefaultExtractionPipeline())
                     .build();
         });
