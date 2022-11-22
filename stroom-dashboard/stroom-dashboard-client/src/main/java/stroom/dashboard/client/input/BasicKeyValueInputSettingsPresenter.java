@@ -20,7 +20,6 @@ import stroom.dashboard.client.input.BasicKeyValueInputSettingsPresenter.BasicKe
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
 import stroom.dashboard.client.main.BasicSettingsView;
 import stroom.dashboard.shared.ComponentConfig;
-import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.KeyValueInputComponentSettings;
 
 import com.google.gwt.user.client.ui.Focus;
@@ -47,7 +46,6 @@ public class BasicKeyValueInputSettingsPresenter
         super.read(componentConfig);
 
 
-
 //        final KeyValueInputComponentSettings settings = (KeyValueInputComponentSettings) componentData.getSettings();
     }
 
@@ -71,7 +69,8 @@ public class BasicKeyValueInputSettingsPresenter
             return true;
         }
 
-        final KeyValueInputComponentSettings oldSettings = (KeyValueInputComponentSettings) componentConfig.getSettings();
+        final KeyValueInputComponentSettings oldSettings =
+                (KeyValueInputComponentSettings) componentConfig.getSettings();
         final KeyValueInputComponentSettings newSettings = writeSettings(oldSettings);
 
         final boolean equal = true;

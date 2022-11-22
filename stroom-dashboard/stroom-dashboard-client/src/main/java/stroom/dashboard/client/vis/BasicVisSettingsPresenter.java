@@ -17,9 +17,9 @@
 package stroom.dashboard.client.vis;
 
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
+import stroom.dashboard.client.main.BasicSettingsView;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.SettingsPresenter;
-import stroom.dashboard.client.main.BasicSettingsView;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.VisComponentSettings;

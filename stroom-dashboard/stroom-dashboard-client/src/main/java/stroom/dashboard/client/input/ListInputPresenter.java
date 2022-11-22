@@ -124,7 +124,8 @@ public class ListInputPresenter extends AbstractComponentPresenter<ListInputView
         if (settings.isUseDictionary() &&
                 settings.getDictionary() != null) {
             final Rest<List<String>> rest = restFactory.create();
-            rest.onSuccess(words -> {
+            rest
+                    .onSuccess(words -> {
                         if (words != null) {
                             getView().setValues(words);
                             getView().setSelectedValue(settings.getValue());

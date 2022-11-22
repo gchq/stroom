@@ -2,8 +2,8 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.Param;
+import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;

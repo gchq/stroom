@@ -17,8 +17,8 @@
 package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
-import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.BasicSettingsView;
+import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TableComponentSettings;

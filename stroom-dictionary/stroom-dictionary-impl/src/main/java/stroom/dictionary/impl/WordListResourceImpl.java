@@ -28,24 +28,27 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.List;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 @AutoLogged
 class WordListResourceImpl implements WordListResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WordListResourceImpl.class);
 
-    private final WordListProvider wordListProvider;
+    private final Provider<WordListProvider> wordListProviderProvider;
 
     @Inject
-    WordListResourceImpl(final WordListProvider wordListProvider) {
-        this.wordListProvider = wordListProvider;
+    WordListResourceImpl(final Provider<WordListProvider> wordListProviderProvider) {
+        this.wordListProviderProvider = wordListProviderProvider;
     }
 
     @Override
     public List<String> getWords(final String uuid) {
         List<String> list = Collections.emptyList();
         try {
-            final String[] arr = wordListProvider.getWords(new DocRef(DictionaryDoc.DOCUMENT_TYPE, uuid));
+            final String[] arr = wordListProviderProvider
+                    .get()
+                    .getWords(new DocRef(DictionaryDoc.DOCUMENT_TYPE, uuid));
             if (arr != null) {
                 list = List.of(arr);
             }

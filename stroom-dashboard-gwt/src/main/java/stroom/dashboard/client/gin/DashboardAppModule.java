@@ -62,6 +62,8 @@ import stroom.data.grid.client.WrapperViewImpl;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
 import stroom.editor.client.view.EditorViewImpl;
+import stroom.entity.client.presenter.LinkTabPanelView;
+import stroom.entity.client.view.LinkTabPanelViewImpl;
 import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.client.view.EntityTreeViewImpl;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
@@ -170,5 +172,6 @@ public class DashboardAppModule extends AbstractPresenterModule {
         bindSharedView(PagerView.class, PagerViewImpl.class);
         bindSharedView(WrapperView.class, WrapperViewImpl.class);
         bindSharedView(ClassificationWrapperView.class, ClassificationWrapperViewImpl.class);
+        bindSharedView(LinkTabPanelView.class, LinkTabPanelViewImpl.class);
     }
 }
