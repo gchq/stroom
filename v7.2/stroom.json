@@ -2356,10 +2356,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/AbstractField"
-                  }
+                  "$ref" : "#/components/schemas/DataSource"
                 }
               }
             },
@@ -8503,6 +8500,36 @@
         "tags" : [ "Welcome" ]
       }
     },
+    "/wordList/v1/{uuid}" : {
+      "get" : {
+        "operationId" : "getWords",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch a list of words from a dictionary by its UUID",
+        "tags" : [ "Word List (v1)" ]
+      }
+    },
     "/xmlSchema/v1/{uuid}" : {
       "get" : {
         "operationId" : "fetchXmlSchema",
@@ -9880,6 +9907,9 @@
           "tabVisibility" : {
             "type" : "string",
             "enum" : [ "SHOW_ALL", "HIDE_SINGLE", "HIDE_ALL" ]
+          },
+          "timeRange" : {
+            "$ref" : "#/components/schemas/TimeRange"
           }
         },
         "xml" : {
@@ -9898,6 +9928,9 @@
           },
           "dashboardConfig" : {
             "$ref" : "#/components/schemas/DashboardConfig"
+          },
+          "description" : {
+            "type" : "string"
           },
           "name" : {
             "type" : "string"
@@ -10164,19 +10197,37 @@
       "DataSource" : {
         "type" : "object",
         "properties" : {
+          "defaultExtractionPipeline" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
           "fields" : {
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/AbstractField"
             }
+          },
+          "timeField" : {
+            "$ref" : "#/components/schemas/DateField"
           }
         }
       },
       "DateField" : {
         "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/AbstractField"
-        } ]
+        "properties" : {
+          "conditions" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "CONTAINS", "EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
+            }
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "queryable" : {
+            "type" : "boolean"
+          }
+        }
       },
       "DateTimeFormatSettings" : {
         "type" : "object",
@@ -10587,6 +10638,9 @@
           "createUser" : {
             "type" : "string"
           },
+          "defaultExtractionPipeline" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
           "description" : {
             "type" : "string"
           },
@@ -10612,6 +10666,9 @@
           "searchSlices" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "timeField" : {
+            "type" : "string"
           },
           "type" : {
             "type" : "string"
@@ -11497,6 +11554,9 @@
           "partition" : {
             "$ref" : "#/components/schemas/StringCriteria"
           },
+          "partitionTimeRange" : {
+            "$ref" : "#/components/schemas/RangeLong"
+          },
           "sort" : {
             "type" : "string",
             "writeOnly" : true
@@ -12060,6 +12120,9 @@
           "createUser" : {
             "type" : "string"
           },
+          "defaultExtractionPipeline" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
           "description" : {
             "type" : "string"
           },
@@ -12091,6 +12154,9 @@
           "shardsPerPartition" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "timeField" : {
+            "type" : "string"
           },
           "type" : {
             "type" : "string"
@@ -12479,6 +12545,19 @@
           }
         }
       },
+      "KeyValueInputComponentSettings" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ComponentSettings"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "text" : {
+              "type" : "string"
+            }
+          }
+        } ]
+      },
       "LayoutConfig" : {
         "type" : "object",
         "discriminator" : {
@@ -12534,6 +12613,34 @@
             }
           }
         }
+      },
+      "ListInputComponentSettings" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ComponentSettings"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "dictionary" : {
+              "$ref" : "#/components/schemas/DocRef"
+            },
+            "key" : {
+              "type" : "string"
+            },
+            "useDictionary" : {
+              "type" : "boolean"
+            },
+            "value" : {
+              "type" : "string"
+            },
+            "values" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            }
+          }
+        } ]
       },
       "Location" : {
         "type" : "object",
@@ -13699,6 +13806,9 @@
             "items" : {
               "$ref" : "#/components/schemas/Param"
             }
+          },
+          "timeRange" : {
+            "$ref" : "#/components/schemas/TimeRange"
           }
         },
         "required" : [ "dataSource", "expression" ]
@@ -13749,7 +13859,13 @@
             "$ref" : "#/components/schemas/Limits"
           },
           "params" : {
-            "type" : "string"
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Param"
+            }
+          },
+          "timeRange" : {
+            "$ref" : "#/components/schemas/TimeRange"
           }
         },
         "xml" : {
@@ -14492,6 +14608,9 @@
           },
           "queryInfo" : {
             "type" : "string"
+          },
+          "timeRange" : {
+            "$ref" : "#/components/schemas/TimeRange"
           }
         }
       },
@@ -14916,6 +15035,9 @@
           "createUser" : {
             "type" : "string"
           },
+          "defaultExtractionPipeline" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
           "deletedFields" : {
             "type" : "array",
             "items" : {
@@ -14942,6 +15064,9 @@
           },
           "solrSynchState" : {
             "$ref" : "#/components/schemas/SolrSynchState"
+          },
+          "timeField" : {
+            "type" : "string"
           },
           "type" : {
             "type" : "string"
@@ -15593,6 +15718,9 @@
       "TableComponentSettings" : {
         "type" : "object",
         "properties" : {
+          "dataSourceRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
           "extractValues" : {
             "type" : "boolean",
             "description" : "TODO"
@@ -15938,6 +16066,24 @@
             "type" : "string"
           },
           "tubeVisible" : {
+            "type" : "string"
+          }
+        }
+      },
+      "TimeRange" : {
+        "type" : "object",
+        "properties" : {
+          "condition" : {
+            "type" : "string",
+            "enum" : [ "CONTAINS", "EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
+          },
+          "from" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "to" : {
             "type" : "string"
           }
         }
