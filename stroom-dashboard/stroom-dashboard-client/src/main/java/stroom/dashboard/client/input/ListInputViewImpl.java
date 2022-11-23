@@ -51,6 +51,7 @@ public class ListInputViewImpl extends ViewWithUiHandlers<ListInputUiHandlers> i
         final String selected = value.getSelectedValue();
         value.clear();
         if (values != null) {
+            value.addItem("");
             value.addItems(values);
         }
         value.setSelected(selected);
