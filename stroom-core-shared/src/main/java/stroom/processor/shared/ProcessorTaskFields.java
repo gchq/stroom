@@ -6,6 +6,7 @@ import stroom.datasource.api.v2.DocRefField;
 import stroom.datasource.api.v2.IdField;
 import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
+import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
 
 import java.util.ArrayList;
@@ -15,6 +16,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ProcessorTaskFields {
+
+    public static final DocRef PROCESSOR_TASK_PSEUDO_DOC_REF = new DocRef(
+            "Searchable",
+            "Processor Tasks",
+            "Processor Tasks");
 
     private static final List<AbstractField> FIELDS = new ArrayList<>();
     private static final Map<String, AbstractField> FIELD_MAP;
@@ -26,6 +32,7 @@ public class ProcessorTaskFields {
     public static final String FIELD_FEED = "Feed";
     public static final String FIELD_PRIORITY = "Priority";
     public static final String FIELD_PIPELINE = "Pipeline";
+    public static final String FIELD_PIPELINE_NAME = "Pipeline Name";
     public static final String FIELD_STATUS = "Status";
     public static final String FIELD_COUNT = "Count";
     public static final String FIELD_NODE = "Node";
@@ -41,11 +48,13 @@ public class ProcessorTaskFields {
     public static final DateField STATUS_TIME = new DateField("Status Time");
     public static final IdField META_ID = new IdField("Meta Id");
     public static final TextField NODE_NAME = new TextField("Node");
-    public static final DocRefField PIPELINE = new DocRefField(PipelineDoc.DOCUMENT_TYPE, "Pipeline");
+    public static final DocRefField PIPELINE = DocRefField.byUuid(PipelineDoc.DOCUMENT_TYPE, FIELD_PIPELINE);
+    public static final DocRefField PIPELINE_NAME = DocRefField.byNonUniqueName(
+            PipelineDoc.DOCUMENT_TYPE, FIELD_PIPELINE_NAME);
     public static final IdField PROCESSOR_FILTER_ID = new IdField("Processor Filter Id");
     public static final LongField PROCESSOR_FILTER_PRIORITY = new LongField("Processor Filter Priority");
     public static final IdField PROCESSOR_ID = new IdField("Processor Id");
-    public static final DocRefField FEED = new DocRefField("Feed", "Feed");
+    public static final DocRefField FEED = DocRefField.byUniqueName("Feed", "Feed");
     public static final TextField STATUS = new TextField("Status");
     public static final IdField TASK_ID = new IdField("Task Id");
 
@@ -61,13 +70,15 @@ public class ProcessorTaskFields {
         FIELDS.add(META_ID);
         FIELDS.add(NODE_NAME);
         FIELDS.add(PIPELINE);
+        FIELDS.add(PIPELINE_NAME);
         FIELDS.add(PROCESSOR_FILTER_ID);
         FIELDS.add(PROCESSOR_FILTER_PRIORITY);
         FIELDS.add(PROCESSOR_ID);
         FIELDS.add(FEED);
         FIELDS.add(STATUS);
         FIELDS.add(TASK_ID);
-        FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(AbstractField::getName, Function.identity()));
+        FIELD_MAP = FIELDS.stream()
+                .collect(Collectors.toMap(AbstractField::getName, Function.identity()));
     }
 
     public static List<AbstractField> getFields() {

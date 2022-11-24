@@ -199,6 +199,11 @@ class ScriptStoreImpl implements ScriptStore {
     }
 
     @Override
+    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
+        return store.findByNames(name, allowWildCards);
+    }
+
+    @Override
     public List<ScriptDoc> fetchLinkedScripts(final DocRef script, final Set<DocRef> loadedScripts) {
         return securityContext.secureResult(() -> {
             // Elevate the users permissions for the duration of this task so they can read the script if

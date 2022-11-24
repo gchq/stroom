@@ -244,4 +244,9 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
             return readDocument(docRef);
         });
     }
+
+    @Override
+    public List<DocRef> findByNames(final List<String> names, final boolean allowWildCards) {
+        return store.findByNames(names, allowWildCards);
+    }
 }

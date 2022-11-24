@@ -4,19 +4,16 @@ import stroom.bytebuffer.ByteBufferPool;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValInteger;
 import stroom.dashboard.expression.v1.ValLong;
+import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.data.shared.StreamTypeNames;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
-import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.DocRefField;
 import stroom.datasource.api.v2.FieldTypes;
-import stroom.datasource.api.v2.IdField;
-import stroom.datasource.api.v2.IntegerField;
-import stroom.datasource.api.v2.LongField;
-import stroom.datasource.api.v2.TextField;
+import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.api.FeedStore;
 import stroom.node.api.FindNodeCriteria;
@@ -29,7 +26,7 @@ import stroom.pipeline.refdata.store.RefDataValueConverter;
 import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
 import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory.Factory;
 import stroom.pipeline.refdata.store.RefStoreEntry;
-import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.ReferenceDataFields;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
@@ -41,6 +38,8 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.NullSafe;
+import stroom.util.PredicateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -80,82 +79,35 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReferenceDataServiceImpl.class);
 
-    private static final DocRef REF_STORE_PSEUDO_DOC_REF = new DocRef(
-            "Searchable",
-            "Reference Data Store",
-            "Reference Data Store (This Node Only)");
+    private static final DataSource DATA_SOURCE = new DataSource(ReferenceDataFields.FIELDS);
 
-    private static final List<Condition> SUPPORTED_STRING_CONDITIONS = List.of(Condition.EQUALS);
-    private static final List<Condition> SUPPORTED_DOC_REF_CONDITIONS = List.of(Condition.IS_DOC_REF, Condition.EQUALS);
-
-    private static final AbstractField KEY_FIELD = new TextField(
-            "Key", true, SUPPORTED_STRING_CONDITIONS);
-    private static final AbstractField VALUE_FIELD = new TextField(
-            "Value", true, SUPPORTED_STRING_CONDITIONS);
-    private static final AbstractField VALUE_REF_COUNT_FIELD = new IntegerField(
-            "Value Reference Count", false);
-    private static final AbstractField MAP_NAME_FIELD = new TextField(
-            "Map Name", true, SUPPORTED_STRING_CONDITIONS);
-    private static final AbstractField CREATE_TIME_FIELD = new DateField(
-            "Create Time", true);
-    private static final AbstractField EFFECTIVE_TIME_FIELD = new DateField(
-            "Effective Time", true);
-    private static final AbstractField LAST_ACCESSED_TIME_FIELD = new DateField(
-            "Last Accessed Time", true);
-    private static final AbstractField PIPELINE_FIELD = new DocRefField(PipelineDoc.DOCUMENT_TYPE,
-            "Reference Loader Pipeline", true, SUPPORTED_DOC_REF_CONDITIONS);
-    private static final AbstractField PROCESSING_STATE_FIELD = new TextField(
-            "Processing State", false);
-    private static final AbstractField STREAM_ID_FIELD = new IdField(
-            "Stream ID", false);
-    private static final AbstractField PART_NO_FIELD = new LongField(
-            "Part Number", false);
-    private static final AbstractField PIPELINE_VERSION_FIELD = new TextField(
-            "Pipeline Version", false);
-
-    private static final List<AbstractField> FIELDS = List.of(
-            KEY_FIELD,
-            VALUE_FIELD,
-            VALUE_REF_COUNT_FIELD,
-            MAP_NAME_FIELD,
-            CREATE_TIME_FIELD,
-            EFFECTIVE_TIME_FIELD,
-            LAST_ACCESSED_TIME_FIELD,
-            PIPELINE_FIELD,
-            PROCESSING_STATE_FIELD,
-            STREAM_ID_FIELD,
-            PART_NO_FIELD,
-            PIPELINE_VERSION_FIELD);
-
-    private static final DataSource DATA_SOURCE = new DataSource(FIELDS);
-
-    private static final Map<String, AbstractField> FIELD_NAME_TO_FIELD_MAP = FIELDS.stream()
+    private static final Map<String, AbstractField> FIELD_NAME_TO_FIELD_MAP = ReferenceDataFields.FIELDS.stream()
             .collect(Collectors.toMap(AbstractField::getName, Function.identity()));
 
     private static final Map<String, Function<RefStoreEntry, Object>> FIELD_TO_EXTRACTOR_MAP = Map.ofEntries(
-            Map.entry(KEY_FIELD.getName(),
+            Map.entry(ReferenceDataFields.KEY_FIELD.getName(),
                     RefStoreEntry::getKey),
-            Map.entry(VALUE_FIELD.getName(),
+            Map.entry(ReferenceDataFields.VALUE_FIELD.getName(),
                     RefStoreEntry::getValue),
-            Map.entry(VALUE_REF_COUNT_FIELD.getName(),
+            Map.entry(ReferenceDataFields.VALUE_REF_COUNT_FIELD.getName(),
                     RefStoreEntry::getValueReferenceCount),
-            Map.entry(MAP_NAME_FIELD.getName(), refStoreEntry ->
+            Map.entry(ReferenceDataFields.MAP_NAME_FIELD.getName(), refStoreEntry ->
                     refStoreEntry.getMapDefinition().getMapName()),
-            Map.entry(CREATE_TIME_FIELD.getName(), refStoreEntry ->
+            Map.entry(ReferenceDataFields.CREATE_TIME_FIELD.getName(), refStoreEntry ->
                     refStoreEntry.getRefDataProcessingInfo().getCreateTimeEpochMs()),
-            Map.entry(EFFECTIVE_TIME_FIELD.getName(), refStoreEntry ->
+            Map.entry(ReferenceDataFields.EFFECTIVE_TIME_FIELD.getName(), refStoreEntry ->
                     refStoreEntry.getRefDataProcessingInfo().getEffectiveTimeEpochMs()),
-            Map.entry(LAST_ACCESSED_TIME_FIELD.getName(), refStoreEntry ->
+            Map.entry(ReferenceDataFields.LAST_ACCESSED_TIME_FIELD.getName(), refStoreEntry ->
                     refStoreEntry.getRefDataProcessingInfo().getLastAccessedTimeEpochMs()),
-            Map.entry(PIPELINE_FIELD.getName(), refStoreEntry ->
+            Map.entry(ReferenceDataFields.PIPELINE_FIELD.getName(), refStoreEntry ->
                     refStoreEntry.getMapDefinition().getRefStreamDefinition().getPipelineDocRef()),
-            Map.entry(PROCESSING_STATE_FIELD.getName(), refStoreEntry ->
+            Map.entry(ReferenceDataFields.PROCESSING_STATE_FIELD.getName(), refStoreEntry ->
                     refStoreEntry.getRefDataProcessingInfo().getProcessingState().getDisplayName()),
-            Map.entry(STREAM_ID_FIELD.getName(), refStoreEntry ->
+            Map.entry(ReferenceDataFields.STREAM_ID_FIELD.getName(), refStoreEntry ->
                     refStoreEntry.getMapDefinition().getRefStreamDefinition().getStreamId()),
-            Map.entry(PART_NO_FIELD.getName(), refStoreEntry ->
+            Map.entry(ReferenceDataFields.PART_NO_FIELD.getName(), refStoreEntry ->
                     refStoreEntry.getMapDefinition().getRefStreamDefinition().getPartIndex() + 1),
-            Map.entry(PIPELINE_VERSION_FIELD.getName(), refStoreEntry ->
+            Map.entry(ReferenceDataFields.PIPELINE_VERSION_FIELD.getName(), refStoreEntry ->
                     refStoreEntry.getMapDefinition().getRefStreamDefinition().getPipelineVersion()));
 
     private final RefDataStore refDataStore;
@@ -168,6 +120,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     private final RefDataValueProxyConsumerFactory.Factory refDataValueProxyConsumerFactoryFactory;
     private final ByteBufferPool byteBufferPool;
     private final NodeService nodeService;
+    private final WordListProvider wordListProvider;
+    private final DocRefInfoService docRefInfoService;
 
     @Inject
     public ReferenceDataServiceImpl(final RefDataStoreFactory refDataStoreFactory,
@@ -179,7 +133,9 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                     final TaskContextFactory taskContextFactory,
                                     final Factory refDataValueProxyConsumerFactoryFactory,
                                     final ByteBufferPool byteBufferPool,
-                                    final NodeService nodeService) {
+                                    final NodeService nodeService,
+                                    final WordListProvider wordListProvider,
+                                    final DocRefInfoService docRefInfoService) {
         this.refDataStore = refDataStoreFactory.getOffHeapStore();
         this.securityContext = securityContext;
         this.feedStore = feedStore;
@@ -190,6 +146,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         this.refDataValueProxyConsumerFactoryFactory = refDataValueProxyConsumerFactoryFactory;
         this.byteBufferPool = byteBufferPool;
         this.nodeService = nodeService;
+        this.wordListProvider = wordListProvider;
+        this.docRefInfoService = docRefInfoService;
     }
 
     @Override
@@ -633,7 +591,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
     @Override
     public DocRef getDocRef() {
-        return REF_STORE_PSEUDO_DOC_REF;
+        return ReferenceDataFields.REF_STORE_PSEUDO_DOC_REF;
     }
 
     @Override
@@ -887,21 +845,17 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         // field => fieldType
         AbstractField abstractField = FIELD_NAME_TO_FIELD_MAP.get(expressionTerm.getField());
 
-        if (abstractField.getType().equals(FieldTypes.TEXT)) {
-            return buildTextFieldPredicate(expressionTerm, refStoreEntry ->
+        return switch (abstractField.getType()) {
+            case FieldTypes.TEXT -> buildTextFieldPredicate(expressionTerm, refStoreEntry ->
                     (String) FIELD_TO_EXTRACTOR_MAP.get(expressionTerm.getField()).apply(refStoreEntry));
-        } else if (abstractField.getType().equals(FieldTypes.LONG)) {
-            return buildLongFieldPredicate(expressionTerm, refStoreEntry ->
+            case FieldTypes.LONG -> buildLongFieldPredicate(expressionTerm, refStoreEntry ->
                     (Long) FIELD_TO_EXTRACTOR_MAP.get(expressionTerm.getField()).apply(refStoreEntry));
-        } else if (abstractField.getType().equals(FieldTypes.DATE)) {
-            return buildDateFieldPredicate(expressionTerm, refStoreEntry ->
+            case FieldTypes.DATE -> buildDateFieldPredicate(expressionTerm, refStoreEntry ->
                     (Long) FIELD_TO_EXTRACTOR_MAP.get(expressionTerm.getField()).apply(refStoreEntry));
-        } else if (abstractField.getType().equals(FieldTypes.DOC_REF)) {
-            return buildDocRefFieldPredicate(expressionTerm, refStoreEntry ->
+            case FieldTypes.DOC_REF -> buildDocRefFieldPredicate(expressionTerm, refStoreEntry ->
                     (DocRef) FIELD_TO_EXTRACTOR_MAP.get(expressionTerm.getField()).apply(refStoreEntry));
-        } else {
-            throw new RuntimeException("Unsupported term " + expressionTerm);
-        }
+            default -> throw new RuntimeException("Unsupported term " + expressionTerm);
+        };
 
 //        if (expressionTerm.getField().equals(KEY_FIELD.getName())) {
 //            // TODO @AT Implement
@@ -914,45 +868,45 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
     private Predicate<RefStoreEntry> buildTextFieldPredicate(final ExpressionTerm expressionTerm,
                                                              final Function<RefStoreEntry, String> valueExtractor) {
-        // TODO @AT Handle wildcarding in term
-        if (expressionTerm.getCondition().equals(Condition.EQUALS)) {
-            return rec -> {
-                final String termValue = expressionTerm.getValue();
-                final String entryValue = valueExtractor.apply(rec);
-                return Objects.equals(termValue, entryValue);
-            };
-        } else if (expressionTerm.getCondition().equals(Condition.CONTAINS)) {
-            return rec -> {
-                final String termValue = expressionTerm.getValue();
-                final String entryValue = valueExtractor.apply(rec);
-                return entryValue.contains(termValue);
-            };
+        final String termValue = NullSafe.get(expressionTerm.getValue(), String::trim);
+        if (termValue == null || termValue.isEmpty()) {
+            return val -> false;
         } else {
-            throw new RuntimeException("Unexpected condition " + expressionTerm.getCondition());
+            final Predicate<String> strPredicate = switch (expressionTerm.getCondition()) {
+                case EQUALS -> PredicateUtil.createWildCardedFilterPredicate(
+                        termValue, true, true);
+                case CONTAINS -> PredicateUtil.createWildCardedFilterPredicate(
+                        termValue, false, true);
+                case IN -> PredicateUtil.createWildCardedInPredicate(termValue, true);
+                case IN_DICTIONARY -> {
+                    final String[] words = wordListProvider.getWords(expressionTerm.getDocRef());
+                    yield PredicateUtil.createWildCardedInPredicate(words, true);
+                }
+                default -> throw new RuntimeException("Unexpected condition " + expressionTerm.getCondition());
+            };
+            return rec -> {
+                final String entryValue = valueExtractor.apply(rec);
+                return strPredicate.test(entryValue);
+            };
         }
     }
 
     private Predicate<RefStoreEntry> buildLongFieldPredicate(final ExpressionTerm expressionTerm,
                                                              final Function<RefStoreEntry, Long> valueExtractor) {
         final Long termValue = Long.valueOf(expressionTerm.getValue());
-        if (expressionTerm.getCondition().equals(Condition.EQUALS)) {
-            return rec ->
+        return switch (expressionTerm.getCondition()) {
+            case EQUALS -> rec ->
                     Objects.equals(valueExtractor.apply(rec), termValue);
-        } else if (expressionTerm.getCondition().equals(Condition.GREATER_THAN)) {
-            return rec ->
+            case GREATER_THAN -> rec ->
                     valueExtractor.apply(rec) > termValue;
-        } else if (expressionTerm.getCondition().equals(Condition.GREATER_THAN_OR_EQUAL_TO)) {
-            return rec ->
+            case GREATER_THAN_OR_EQUAL_TO -> rec ->
                     valueExtractor.apply(rec) >= termValue;
-        } else if (expressionTerm.getCondition().equals(Condition.LESS_THAN)) {
-            return rec ->
+            case LESS_THAN -> rec ->
                     valueExtractor.apply(rec) < termValue;
-        } else if (expressionTerm.getCondition().equals(Condition.LESS_THAN_OR_EQUAL_TO)) {
-            return rec ->
+            case LESS_THAN_OR_EQUAL_TO -> rec ->
                     valueExtractor.apply(rec) <= termValue;
-        } else {
-            throw new RuntimeException("Unexpected condition " + expressionTerm.getCondition());
-        }
+            default -> throw new RuntimeException("Unexpected condition " + expressionTerm.getCondition());
+        };
     }
 
     private Predicate<RefStoreEntry> buildDateFieldPredicate(final ExpressionTerm expressionTerm,
@@ -962,19 +916,19 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         final Long termValue = getDate(expressionTerm.getField(),
                 expressionTerm.getValue(),
                 Instant.now().toEpochMilli());
-        if (expressionTerm.getCondition().equals(Condition.EQUALS)) {
-            return rec -> Objects.equals(valueExtractor.apply(rec), termValue);
-        } else if (expressionTerm.getCondition().equals(Condition.GREATER_THAN)) {
-            return rec -> valueExtractor.apply(rec) > termValue;
-        } else if (expressionTerm.getCondition().equals(Condition.GREATER_THAN_OR_EQUAL_TO)) {
-            return rec -> valueExtractor.apply(rec) >= termValue;
-        } else if (expressionTerm.getCondition().equals(Condition.LESS_THAN)) {
-            return rec -> valueExtractor.apply(rec) < termValue;
-        } else if (expressionTerm.getCondition().equals(Condition.LESS_THAN_OR_EQUAL_TO)) {
-            return rec -> valueExtractor.apply(rec) <= termValue;
-        } else {
-            throw new RuntimeException("Unexpected condition " + expressionTerm.getCondition());
-        }
+        return switch (expressionTerm.getCondition()) {
+            case EQUALS -> rec ->
+                    Objects.equals(valueExtractor.apply(rec), termValue);
+            case GREATER_THAN -> rec ->
+                    valueExtractor.apply(rec) > termValue;
+            case GREATER_THAN_OR_EQUAL_TO -> rec ->
+                    valueExtractor.apply(rec) >= termValue;
+            case LESS_THAN -> rec ->
+                    valueExtractor.apply(rec) < termValue;
+            case LESS_THAN_OR_EQUAL_TO -> rec ->
+                    valueExtractor.apply(rec) <= termValue;
+            default -> throw new RuntimeException("Unexpected condition " + expressionTerm.getCondition());
+        };
     }
 
     private Predicate<RefStoreEntry> buildDocRefFieldPredicate(final ExpressionTerm expressionTerm,
@@ -985,7 +939,19 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         if (expressionTerm.getCondition().equals(Condition.IS_DOC_REF)) {
             return rec -> docRefsEqualOnUuid(valueExtractor.apply(rec), termValue);
         } else if (expressionTerm.getCondition().equals(Condition.EQUALS)) {
-            return rec -> docRefsEqualOnName(valueExtractor.apply(rec), termValue);
+            final Predicate<String> namePredicate = PredicateUtil.createWildCardedFilterPredicate(
+                    expressionTerm.getValue(), true, true);
+            return rec -> {
+                // docRef has no name at this point, so we need to find it
+                final DocRef docRef = valueExtractor.apply(rec);
+                if (docRef == null) {
+                    return false;
+                } else {
+                    return docRefInfoService.name(docRef)
+                            .map(namePredicate::test)
+                            .orElse(false);
+                }
+            };
         } else {
             throw new RuntimeException("Unexpected condition " + expressionTerm.getCondition());
         }
@@ -1005,34 +971,25 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         }
     }
 
-    private boolean docRefsEqualOnName(final DocRef docRef1, final DocRef docRef2) {
-        if (docRef1 == null && docRef2 == null) {
-            return false;
-        }
-        if (docRef1 == null) {
-            return false;
-        }
-        if (docRef2 == null) {
-            return false;
-        } else {
-            return Objects.equals(docRef1.getName(), docRef2.getName());
-        }
+    private Val convertToVal(final Object object, final AbstractField field) {
+        return switch (field.getType()) {
+            case FieldTypes.TEXT -> ValString.create((String) object);
+            case FieldTypes.INTEGER -> ValInteger.create((Integer) object);
+            case FieldTypes.LONG, FieldTypes.ID, FieldTypes.DATE -> ValLong.create((long) object);
+            case FieldTypes.DOC_REF -> getPipelineNameAsVal((DocRef) object);
+            default -> throw new RuntimeException("Unexpected field type " + field.getType());
+        };
     }
 
-    private Val convertToVal(final Object object, final AbstractField field) {
-        switch (field.getType()) {
-            case FieldTypes.TEXT:
-                return ValString.create((String) object);
-            case FieldTypes.INTEGER:
-                return ValInteger.create((Integer) object);
-            case FieldTypes.LONG:
-            case FieldTypes.ID:
-            case FieldTypes.DATE:
-                return ValLong.create((long) object);
-            case FieldTypes.DOC_REF:
-                return ValString.create(((DocRef) object).toInfoString());
-            default:
-                throw new RuntimeException("Unexpected field type " + field.getType());
+    private Val getPipelineNameAsVal(final DocRef docRef) {
+        if (docRef == null) {
+            return ValNull.INSTANCE;
+        } else {
+            String val = docRef.getUuid();
+            if (docRefInfoService != null) {
+                val = docRefInfoService.name(docRef).orElse(docRef.getUuid());
+            }
+            return ValString.create(val);
         }
     }
 

@@ -240,6 +240,7 @@ class DynamicTestBuilder {
         public CasesBuilder<I, O> withSimpleEqualityAssertion() {
             final Consumer<TestOutcome<I, O>> wrappedConsumer = wrapTestOutcomeConsumer(testOutcome ->
                     Assertions.assertThat(testOutcome.getActualOutput())
+                            .withFailMessage(testOutcome::buildFailMessage)
                             .isEqualTo(testOutcome.getExpectedOutput()));
             return new CasesBuilder<>(testAction, wrappedConsumer);
         }
@@ -287,6 +288,8 @@ class DynamicTestBuilder {
         // Use a default name function but let the user override it
         // TestCase.name takes precedence though.
         private Function<TestCase<I, O>, String> nameFunction = null;
+        private Runnable beforeCaseAction = null;
+        private Runnable afterCaseAction = null;
 
         private CasesBuilder(final Function<TestCase<I, O>, O> testAction,
                              final Consumer<TestOutcome<I, O>> testOutcomeConsumer) {
@@ -393,6 +396,28 @@ class DynamicTestBuilder {
         }
 
         /**
+         * Set an action to run before each test case. Note {@link org.junit.jupiter.api.BeforeEach}
+         * is NOT called before
+         * each case in a dynamic test, so this is an alternative. Note also that the same instance of the test
+         * class is used for each test case.
+         */
+        public CasesBuilder<I, O> withBeforeTestCaseAction(final Runnable action) {
+            this.beforeCaseAction = action;
+            return this;
+        }
+
+        /**
+         * Set an action to run after each test case. Note {@link org.junit.jupiter.api.AfterEach}
+         * is NOT called after
+         * each case in a dynamic test, so this is an alternative. Note also that the same instance of the test
+         * class is used for each test case.
+         */
+        public CasesBuilder<I, O> withAfterTestCaseAction(final Runnable action) {
+            this.afterCaseAction = action;
+            return this;
+        }
+
+        /**
          * Build the {@link Stream} of {@link DynamicTest} with all the added test cases.
          */
         @SuppressWarnings("unused")
@@ -443,6 +468,16 @@ class DynamicTestBuilder {
             return stringBuilder.toString();
         }
 
+        private void runAction(final Runnable action, final String name) {
+            LOGGER.debug("Running action: {}", name);
+            try {
+                action.run();
+            } catch (Exception e) {
+                throw new RuntimeException(
+                        LogUtil.message("Error running action: " + name + ". " + e.getMessage()), e);
+            }
+        }
+
         private Stream<DynamicTest> createDynamicTestStream() {
 
             AtomicInteger caseCounter = new AtomicInteger();
@@ -450,7 +485,6 @@ class DynamicTestBuilder {
             return testCases.stream()
                     .sequential()
                     .map(testCase -> {
-
                         // Name defined in the testCase overrides the name function
                         final String testName = buildTestName(
                                 testCase,
@@ -458,6 +492,9 @@ class DynamicTestBuilder {
                                 testCases.size());
 
                         return DynamicTest.dynamicTest(testName, () -> {
+                            NullSafe.consume(beforeCaseAction, action ->
+                                    runAction(action, "Before Test Case"));
+
                             if (LOGGER.isDebugEnabled()) {
                                 logCaseToDebug(testCase);
                             }
@@ -478,6 +515,9 @@ class DynamicTestBuilder {
                                     testCase, actualOutput, actualThrowable);
 
                             testOutcomeConsumer.accept(testOutcome);
+
+                            NullSafe.consume(afterCaseAction, action ->
+                                    runAction(action, "After Test Case"));
                         });
                     });
         }
@@ -503,12 +543,14 @@ class DynamicTestBuilder {
 
         private void logCaseToDebug(final TestCase<I, O> testCase) {
             if (testCase.isExpectedToThrow()) {
-                LOGGER.debug(() -> LogUtil.message("Input: '{}', expected to throw: '{}'",
-                        testCase.getInput(),
+                LOGGER.debug(() -> LogUtil.message(
+                        "Running test case - {}, expected to throw: '{}'",
+                        TestCase.valueToString("input", testCase.getInput()),
                         testCase.getExpectedThrowableType().getSimpleName()));
             } else {
-                LOGGER.debug(() -> LogUtil.message("Input: '{}', expectedOutput: '{}'",
-                        testCase.getInput(), testCase.getExpectedOutput()));
+                LOGGER.debug(() -> LogUtil.message("Running test case - {}, expected {}",
+                        TestCase.valueToString("input", testCase.getInput()),
+                        TestCase.valueToString("output", testCase.getExpectedOutput())));
             }
         }
     }

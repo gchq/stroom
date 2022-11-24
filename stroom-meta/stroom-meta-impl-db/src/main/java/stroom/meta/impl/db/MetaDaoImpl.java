@@ -34,11 +34,13 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.common.v2.DateExpressionParser;
+import stroom.util.NullSafe;
 import stroom.util.collections.BatchingIterator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -47,6 +49,7 @@ import stroom.util.shared.Clearable;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
 import stroom.util.shared.ResultPage;
+import stroom.util.string.PatternUtil;
 import stroom.util.time.TimePeriod;
 
 import io.vavr.Tuple;
@@ -108,10 +111,10 @@ class MetaDaoImpl implements MetaDao, Clearable {
 
     private static final int FIND_RECORD_LIMIT = 1000000;
 
-    private static final stroom.meta.impl.db.jooq.tables.Meta meta = META.as("m");
-    private static final MetaFeed metaFeed = META_FEED.as("f");
-    private static final MetaType metaType = META_TYPE.as("t");
-    private static final MetaProcessor metaProcessor = META_PROCESSOR.as("p");
+    static final stroom.meta.impl.db.jooq.tables.Meta meta = META.as("m");
+    static final MetaFeed metaFeed = META_FEED.as("f");
+    static final MetaType metaType = META_TYPE.as("t");
+    static final MetaProcessor metaProcessor = META_PROCESSOR.as("p");
 
     private static final stroom.meta.impl.db.jooq.tables.Meta parent = META.as("parent");
     private static final MetaFeed parentFeed = META_FEED.as("parentFeed");
@@ -159,8 +162,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
     private final MetaExpressionMapper metaExpressionMapper;
     private final ValueMapper valueMapper;
 
-    private final Map<String, List<Integer>> feedIdCache = new ConcurrentHashMap<>();
-    private final Map<String, List<Integer>> typeIdCache = new ConcurrentHashMap<>();
+    private final Map<String, List<Integer>> feedNameToIdsMap = new ConcurrentHashMap<>();
+    private final Map<String, List<Integer>> typeNameToIdsMap = new ConcurrentHashMap<>();
 
     @Inject
     MetaDaoImpl(final MetaDbConnProvider metaDbConnProvider,
@@ -201,7 +204,11 @@ class MetaDaoImpl implements MetaDao, Clearable {
         expressionMapper.map(MetaFields.META_PROCESSOR_TASK_ID, meta.PROCESSOR_TASK_ID, Long::valueOf);
         expressionMapper.multiMap(MetaFields.FEED, meta.FEED_ID, this::getFeedIds, true);
         expressionMapper.multiMap(MetaFields.TYPE, meta.TYPE_ID, this::getTypeIds);
-        expressionMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, value -> value);
+        // Get a uuid for the selected pipe doc
+        expressionMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, value -> value, false);
+        // Get 0-many uuids for a pipe name (partial/wild-carded)
+        expressionMapper.multiMap(
+                MetaFields.PIPELINE_NAME, metaProcessor.PIPELINE_UUID, this::getPipelineUuidsByName, true);
         expressionMapper.map(MetaFields.STATUS,
                 meta.STATUS,
                 value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase())));
@@ -221,13 +228,12 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 value -> getDate(MetaFields.PARENT_CREATE_TIME, value));
         expressionMapper.multiMap(MetaFields.PARENT_FEED, parent.FEED_ID, this::getFeedIds);
 
-
         valueMapper = new ValueMapper();
-
         valueMapper.map(MetaFields.ID, meta.ID, ValLong::create);
         valueMapper.map(MetaFields.FEED, metaFeed.NAME, ValString::create);
         valueMapper.map(MetaFields.TYPE, metaType.NAME, ValString::create);
         valueMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, this::getPipelineName);
+        valueMapper.map(MetaFields.PIPELINE_NAME, metaProcessor.PIPELINE_UUID, this::getPipelineName);
         valueMapper.map(MetaFields.PARENT_ID, meta.PARENT_ID, ValLong::create);
         valueMapper.map(MetaFields.META_INTERNAL_PROCESSOR_ID, meta.PROCESSOR_ID, ValInteger::create);
         valueMapper.map(MetaFields.META_PROCESSOR_FILTER_ID, meta.PROCESSOR_FILTER_ID, ValInteger::create);
@@ -258,17 +264,31 @@ class MetaDaoImpl implements MetaDao, Clearable {
     private Val getPipelineName(final String uuid) {
         String val = uuid;
         if (docRefInfoService != null) {
-            val = docRefInfoService.name(new DocRef("Pipeline", uuid)).orElse(uuid);
+            val = docRefInfoService.name(new DocRef(PipelineDoc.DOCUMENT_TYPE, uuid))
+                    .orElse(uuid);
         }
         return ValString.create(val);
     }
 
-    private List<Integer> getFeedIds(final String feedName) {
-        return getIds(feedName, feedIdCache, feedDao::find);
+    private List<Integer> getFeedIds(final List<String> feedNames) {
+        // Feeds cannot be renamed so is ok to cache them
+        return getIds(feedNames, feedNameToIdsMap, feedDao::find);
     }
 
-    private List<Integer> getTypeIds(final String typeName) {
-        return getIds(typeName, typeIdCache, metaTypeDao::find);
+    private List<Integer> getTypeIds(final List<String> typeNames) {
+        // In theory types could be renamed, e.g. changing the name of a custom meta type
+        // in config. This just means old names may linger in the cache until next reboot. An unlikely and low volume
+        // case so not worth worrying about.
+        return getIds(typeNames, typeNameToIdsMap, metaTypeDao::find);
+    }
+
+    private List<String> getPipelineUuidsByName(final List<String> pipelineNames) {
+        // Can't cache this in a simple map due to pipes being renamed, but
+        // docRefInfoService should cache most of this anyway.
+        return docRefInfoService.findByNames(PipelineDoc.DOCUMENT_TYPE, pipelineNames, true)
+                        .stream()
+                        .map(DocRef::getUuid)
+                        .collect(Collectors.toList());
     }
 
     /**
@@ -279,25 +299,44 @@ class MetaDaoImpl implements MetaDao, Clearable {
      * THIS MIGHT LEAD TO A FEW DUPLICATE ATTEMPTS TO FIND THE SAME ID LIST BUT THAT IS PREFERRED TO SYNCHRONIZING ON
      * THE MAP KEY DURING DB QUERY.
      */
-    private List<Integer> getIds(final String name,
-                                 final Map<String, List<Integer>> map,
-                                 final Function<String, List<Integer>> function) {
-        List<Integer> list;
+    private <T> List<T> getIds(final List<String> names,
+                               final Map<String, List<T>> map,
+                               final Function<List<String>, Map<String, List<T>>> function) {
+        final List<T> list = new ArrayList<>();
 
-        // We can't cache wildcard names as we don't know what they will match in the DB.
-        if (name.contains("*")) {
-            list = function.apply(name);
+        if (NullSafe.isEmptyCollection(names)) {
+            return Collections.emptyList();
         } else {
-            list = map.get(name);
-            if (list == null || list.size() == 0) {
-                list = function.apply(name);
-                if (list != null && list.size() > 0) {
-                    map.put(name, list);
+            final List<String> namesNotInCache = new ArrayList<>();
+            for (final String name : names) {
+
+                // We can't cache wildcard names as we don't know what they will match in the DB.
+                if (PatternUtil.containsWildCards(name)) {
+                    namesNotInCache.add(name);
+                } else {
+                    final List<T> mapResult = map.get(name);
+                    if (NullSafe.hasItems(mapResult)) {
+                        list.addAll(mapResult);
+                    } else {
+                        namesNotInCache.add(name);
+                    }
                 }
             }
-        }
 
-        return list;
+            if (!namesNotInCache.isEmpty()) {
+                // Use the function to get all the items that were not cached.
+                final Map<String, List<T>> functionResult = function.apply(namesNotInCache);
+                functionResult.forEach((name, items) -> {
+                    if (!PatternUtil.containsWildCards(name) && NullSafe.hasItems(items)) {
+                        map.put(name, items);
+                    }
+                    list.addAll(items);
+                });
+            }
+            LOGGER.trace(() -> LogUtil.message("Mapped names {} to {} IDs {}",
+                    names, list.size(), list));
+            return list;
+        }
     }
 
     @Override
@@ -454,7 +493,14 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 new HashSet<>());
 
         final int updateCount;
-        if (usedValKeys.isEmpty() && !containsPipelineCondition(criteria.getExpression())) {
+        final boolean containsPipelineCondition = NullSafe.test(
+                criteria.getExpression(),
+                expr ->
+                        expr.containsField(MetaFields.PIPELINE.getName(), MetaFields.PIPELINE_NAME.getName()));
+
+        // TODO: 20/10/2022 You can do joins in the update to avoid the sub-select.
+        //  See logicalDelete() above.
+        if (usedValKeys.isEmpty() && !containsPipelineCondition) {
             updateCount = JooqUtil.contextResult(metaDbConnProvider, context ->
                     context
                             .update(meta)
@@ -484,33 +530,6 @@ class MetaDaoImpl implements MetaDao, Clearable {
         }
         return updateCount;
     }
-
-    private boolean containsPipelineCondition(final ExpressionOperator expr) {
-        if (expr == null || expr.getChildren() == null) {
-            return false;
-        }
-        for (ExpressionItem child : expr.getChildren()) {
-            if (child instanceof ExpressionTerm) {
-                ExpressionTerm term = (ExpressionTerm) child;
-
-                if (MetaFields.PIPELINE.getName().equals(term.getField())) {
-                    return true;
-                }
-            } else if (child instanceof ExpressionOperator) {
-                if (containsPipelineCondition((ExpressionOperator) child)) {
-                    return true;
-                }
-            } else {
-                //Don't know what this is!
-                LOGGER.warn("Unknown ExpressionItem type " + child.getClass().getName() + " " +
-                        "unable to optimise meta query");
-                //Allow search to succeed without optimisation
-                return true;
-            }
-        }
-        return false;
-    }
-
 
     private Condition getFilterCriteriaCondition(final FindDataRetentionImpactCriteria criteria) {
         final Condition filterCondition;
@@ -581,8 +600,25 @@ class MetaDaoImpl implements MetaDao, Clearable {
             final Field<String> typeNameField = DSL.field("type_name", String.class);
             final Field<Long> metaCreateTimeField = DSL.field("meta_create_time_ms", Long.class);
 
+            activeRules.forEach(rule ->
+                    validateExpressionTerms(rule.getExpression()));
+
+            final boolean requiresMetaProcessorTable = rulesContainField(
+                    activeRules,
+                    MetaFields.PIPELINE.getName(),
+                    MetaFields.PIPELINE_NAME.getName());
+
             return JooqUtil.contextResult(metaDbConnProvider,
                             context -> {
+                                var fromClause = meta
+                                        .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                        .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID));
+                                // If any of the rules have a predicate on the Pipeline field then we need to
+                                // add the join to meta_processor
+                                if (requiresMetaProcessorTable) {
+                                    fromClause = fromClause.leftOuterJoin(metaProcessor)
+                                            .on(meta.PROCESSOR_ID.eq(metaProcessor.ID));
+                                }
                                 // Get all meta records that are impacted by a rule and for each determine
                                 // which rule wins and get its rule number, along with feed and type
                                 // The OR condition is here to try and help the DB use indexes.
@@ -592,9 +628,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                                 metaType.NAME.as(typeNameField),
                                                 ruleNoCaseField.as(ruleNoField),
                                                 meta.CREATE_TIME.as(metaCreateTimeField))
-                                        .from(meta)
-                                        .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                                        .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                        .from(fromClause)
                                         .where(meta.STATUS.notEqual(statusIdDeleted))
 //                                        .and(ruleNoCaseField.isNotNull()) // only want data that WILL be deleted
                                         .and(DSL.or(orConditions)) // Here to help use indexes
@@ -608,7 +642,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                         detailTable);
 
                                 // Now get counts grouped by feed, type and rule
-                                return context
+                                final var query = context
                                         .select(
                                                 detailTable.field(feedNameField),
                                                 detailTable.field(typeNameField),
@@ -623,8 +657,12 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                         .groupBy(
                                                 detailTable.field(ruleNoField),
                                                 detailTable.field(feedNameField),
-                                                detailTable.field(typeNameField))
-                                        .fetch();
+                                                detailTable.field(typeNameField));
+
+                                // Dump the query in case we want to run it in a mysql shell.
+                                LOGGER.debug("query:\n{}", query);
+
+                                return query.fetch();
                             })
                     .map(record -> {
                         int ruleNo = record.get(ruleNoField);
@@ -640,6 +678,30 @@ class MetaDaoImpl implements MetaDao, Clearable {
             result = Collections.emptyList();
         }
         return result;
+    }
+
+    /**
+     * @return True if any term in any expression uses field {@code field}.
+     */
+    private boolean ruleActionsContainField(final String field,
+                                            final List<DataRetentionRuleAction> ruleActions) {
+        return ruleActions.stream()
+                .anyMatch(ruleAction ->
+                        NullSafe.test(
+                                ruleAction.getRule(),
+                                DataRetentionRule::getExpression,
+                                expr -> expr.containsField(field)));
+    }
+
+    /**
+     * @return True if any term in any rule expression uses at least one of {@code fields}.
+     */
+    private boolean rulesContainField(final List<DataRetentionRule> rules, final String... fields) {
+        return rules.stream()
+                .anyMatch(rule ->
+                        NullSafe.test(
+                                rule.getExpression(),
+                                expr -> expr.containsField(fields)));
     }
 
     private List<Condition> getRuleAgeConditions(final List<DataRetentionRule> activeRules,
@@ -692,6 +754,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
             final byte statusIdDeleted = MetaStatusId.getPrimitiveValue(Status.DELETED);
 
             final List<Condition> baseConditions = createRetentionDeleteConditions(ruleActions);
+            final boolean rulesUsePipelineField = ruleActionsContainField(MetaFields.PIPELINE.getName(), ruleActions)
+                    || ruleActionsContainField(MetaFields.PIPELINE_NAME.getName(), ruleActions);
 
             final List<Condition> conditions = new ArrayList<>(baseConditions);
 
@@ -700,7 +764,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
             conditions.add(meta.CREATE_TIME.lessThan(period.getTo().toEpochMilli()));
 
             int lastUpdateCount;
-            AtomicInteger iteration = new AtomicInteger(1);
+            final AtomicInteger iteration = new AtomicInteger(1);
             Duration totalSelectDuration = Duration.ZERO;
             Duration totalUpdateDuration = Duration.ZERO;
             Instant startTime;
@@ -720,7 +784,9 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 // Get a sub period of period
 
                 startTime = Instant.now();
-                final Optional<TimePeriod> optSubPeriod = getTimeSlice(startTimeInc, batchSize, conditions);
+                final Optional<TimePeriod> optSubPeriod = getTimeSlice(
+                        startTimeInc, batchSize, conditions, rulesUsePipelineField);
+
                 totalSelectDuration = totalSelectDuration.plus(Duration.between(startTime,
                         Instant.now().plusMillis(1)));
 
@@ -728,19 +794,31 @@ class MetaDaoImpl implements MetaDao, Clearable {
                     LOGGER.debug("No time slice found");
                     break;
                 }
-                TimePeriod subPeriod = optSubPeriod.get();
+                final TimePeriod subPeriod = optSubPeriod.get();
                 LOGGER.debug("Iteration {}, using sub-period {}", iteration, subPeriod);
 
                 startTime = Instant.now();
                 lastUpdateCount = LOGGER.logDurationIfDebugEnabled(
-                        () -> JooqUtil.contextResult(metaDbConnProvider, context -> context
-                                .update(meta)
-                                .set(meta.STATUS, statusIdDeleted)
-                                .set(meta.STATUS_TIME, Instant.now().toEpochMilli())
-                                .where(conditions)
-                                .and(meta.CREATE_TIME.greaterOrEqual(subPeriod.getFrom().toEpochMilli()))
-                                .and(meta.CREATE_TIME.lessThan(subPeriod.getTo().toEpochMilli()))
-                                .execute()),
+                        () -> JooqUtil.contextResult(metaDbConnProvider, context -> {
+
+                            // If any of the rules have a predicate on the Pipeline field then we need to
+                            // add the join to meta_processor
+                            final var tableClause = rulesUsePipelineField
+                                    ? meta.leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
+                                    : meta;
+
+                            final var query = context
+                                    .update(tableClause)
+                                    .set(meta.STATUS, statusIdDeleted)
+                                    .set(meta.STATUS_TIME, Instant.now().toEpochMilli())
+                                    .where(conditions)
+                                    .and(meta.CREATE_TIME.greaterOrEqual(subPeriod.getFrom().toEpochMilli()))
+                                    .and(meta.CREATE_TIME.lessThan(subPeriod.getTo().toEpochMilli()));
+
+                            LOGGER.debug("update:\n{}", query);
+
+                            return query.execute();
+                        }),
                         cnt -> LogUtil.message(
                                 "Logically deleted {} meta records with approx. limit of {}. Iteration {}",
                                 cnt,
@@ -780,8 +858,9 @@ class MetaDaoImpl implements MetaDao, Clearable {
 
     private Optional<TimePeriod> getTimeSlice(final Instant startTimeInc,
                                               final int batchSize,
-                                              final List<Condition> conditions) {
-        LOGGER.debug("getTimeSlice({}, {}, {})", startTimeInc, batchSize, conditions);
+                                              final List<Condition> conditions,
+                                              final boolean includesMetaProcessorTbl) {
+        LOGGER.debug("getTimeSlice({}, {}, {}, {})", startTimeInc, batchSize, conditions, includesMetaProcessorTbl);
 
         final String createTimeCol = meta.CREATE_TIME.getName();
         final String minCreateTimeCol = "min_create_time";
@@ -792,9 +871,16 @@ class MetaDaoImpl implements MetaDao, Clearable {
         final Optional<TimePeriod> timePeriod =
                 LOGGER.logDurationIfDebugEnabled(() -> JooqUtil.contextResult(metaDbConnProvider,
                                 context -> {
+                                    // If any of the rules have a predicate on the Pipeline field then we need to
+                                    // add the join to meta_processor
+                                    final var fromClause = includesMetaProcessorTbl
+                                            ? meta.straightJoin(metaProcessor)
+                                            .on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
+                                            : meta;
+
                                     final Table<?> orderedFullSet = context
                                             .select(meta.CREATE_TIME)
-                                            .from(meta)
+                                            .from(fromClause)
                                             .where(conditions)
                                             .and(meta.CREATE_TIME.greaterOrEqual(startTimeInc.toEpochMilli()))
                                             .orderBy(meta.CREATE_TIME)
@@ -806,12 +892,15 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                             .limit(batchSize)
                                             .asTable("limitedSet");
 
-                                    return context
+                                    final var query = context
                                             .select(
                                                     DSL.min(limitedSet.field(createTimeCol)).as(minCreateTimeCol),
                                                     DSL.max(limitedSet.field(createTimeCol)).as(maxCreateTimeCol))
-                                            .from(limitedSet)
-                                            .fetchOne();
+                                            .from(limitedSet);
+
+                                    LOGGER.debug("query:\n{}", query);
+
+                                    return query.fetchOne();
                                 })
                         .map(record -> {
                             Object min = record.get(minCreateTimeCol);
@@ -1097,6 +1186,9 @@ class MetaDaoImpl implements MetaDao, Clearable {
     @Override
     public ResultPage<Meta> find(final FindMetaCriteria criteria) {
         final PageRequest pageRequest = criteria.getPageRequest();
+
+        validateExpressionTerms(criteria.getExpression());
+
         final Collection<Condition> conditions = createCondition(criteria);
         final Collection<OrderField<?>> orderFields = createOrderFields(criteria);
         final int offset = JooqUtil.getOffset(pageRequest);
@@ -1381,8 +1473,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
 
     @Override
     public void clear() {
-        feedIdCache.clear();
-        typeIdCache.clear();
+        feedNameToIdsMap.clear();
+        typeNameToIdsMap.clear();
     }
 
     private Collection<Condition> createCondition(final FindMetaCriteria criteria) {
@@ -1453,5 +1545,36 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                     .fetch();
                         })
                 .map(Record1::value1);
+    }
+
+    public boolean validateExpressionTerms(final ExpressionItem expressionItem) {
+        // TODO: 31/10/2022 Ideally this would be done in CommonExpressionMapper but we
+        //  seem to have a load of expressions using unsupported conditions so would get
+        //  exceptions all over the place.
+
+        if (expressionItem == null) {
+            return true;
+        } else {
+            final Map<String, AbstractField> fieldMap = MetaFields.getAllFieldMap();
+
+            return ExpressionUtil.validateExpressionTerms(expressionItem, term -> {
+                final AbstractField field = fieldMap.get(term.getField());
+                if (field == null) {
+                    throw new RuntimeException(LogUtil.message("Unknown field {} in term {}, in expression {}",
+                            term.getField(), term, expressionItem));
+                } else {
+                    final boolean isValid = field.supportsCondition(term.getCondition());
+                    if (!isValid) {
+                        throw new RuntimeException(LogUtil.message("Condition '{}' is not supported by field '{}' " +
+                                "of type {}. Term: {}",
+                                term.getCondition(),
+                                term.getField(),
+                                field.getType(), term));
+                    } else {
+                        return true;
+                    }
+                }
+            });
+        }
     }
 }
