@@ -1370,14 +1370,19 @@ export interface ImportState {
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   docRef?: DocRef;
-  enable?: boolean;
+  enableFilters?: boolean;
 
   /** @format int64 */
-  enableTime?: number;
+  enableFiltersFromTime?: number;
   messageList?: Message[];
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  rootDocRef?: DocRef;
   sourcePath?: string;
   state?: "NEW" | "UPDATE" | "EQUAL";
   updatedFieldList?: string[];
+  useImportFolders?: boolean;
+  useImportNames?: boolean;
 }
 
 export interface IndexDoc {
@@ -4115,25 +4120,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Application
-     * @name ApplicationInstanceKeepAlive
-     * @summary Keep an application instance alive
-     * @request POST:/application-instance/v1/keepAlive
-     * @secure
-     */
-    applicationInstanceKeepAlive: (data: ApplicationInstanceInfo, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/application-instance/v1/keepAlive`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Application
      * @name ApplicationInstanceRegister
      * @summary Register a new application instance
      * @request GET:/application-instance/v1/register
@@ -4581,7 +4567,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/content/v1/confirmImport
      * @secure
      */
-    confirmContentImport: (data: ResourceKey, params: RequestParams = {}) =>
+    confirmContentImport: (data: ImportConfigRequest, params: RequestParams = {}) =>
       this.request<any, ImportState[]>({
         path: `/content/v1/confirmImport`,
         method: "POST",

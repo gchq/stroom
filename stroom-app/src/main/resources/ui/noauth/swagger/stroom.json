@@ -719,36 +719,6 @@
         "tags" : [ "Annotations" ]
       }
     },
-    "/application-instance/v1/keepAlive" : {
-      "post" : {
-        "operationId" : "applicationInstanceKeepAlive",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ApplicationInstanceInfo"
-              }
-            }
-          },
-          "description" : "applicationInstanceInfo",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Keep an application instance alive",
-        "tags" : [ "Application" ]
-      }
-    },
     "/application-instance/v1/register" : {
       "get" : {
         "operationId" : "applicationInstanceRegister",
@@ -1464,11 +1434,11 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/ResourceKey"
+                "$ref" : "#/components/schemas/ImportConfigRequest"
               }
             }
           },
-          "description" : "resourceKey",
+          "description" : "request",
           "required" : true
         },
         "responses" : {
@@ -11361,10 +11331,10 @@
           "docRef" : {
             "$ref" : "#/components/schemas/DocRef"
           },
-          "enable" : {
+          "enableFilters" : {
             "type" : "boolean"
           },
-          "enableTime" : {
+          "enableFiltersFromTime" : {
             "type" : "integer",
             "format" : "int64"
           },
@@ -11373,6 +11343,9 @@
             "items" : {
               "$ref" : "#/components/schemas/Message"
             }
+          },
+          "rootDocRef" : {
+            "$ref" : "#/components/schemas/DocRef"
           },
           "sourcePath" : {
             "type" : "string"
@@ -11386,6 +11359,12 @@
             "items" : {
               "type" : "string"
             }
+          },
+          "useImportFolders" : {
+            "type" : "boolean"
+          },
+          "useImportNames" : {
+            "type" : "boolean"
           }
         }
       },

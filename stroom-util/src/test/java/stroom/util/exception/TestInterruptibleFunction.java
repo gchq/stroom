@@ -1,5 +1,7 @@
 package stroom.util.exception;
 
+import stroom.util.concurrent.UncheckedInterruptedException;
+
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -21,11 +23,13 @@ class TestInterruptibleFunction {
 
     @Test
     void unchecked_throws() {
-        Assertions.assertThatThrownBy(() ->
+        Assertions.setMaxStackTraceElementsDisplayed(10);
+        Assertions
+                .assertThatThrownBy(() ->
                         Stream.of(0)
-                                .map(ThrowingFunction.unchecked(this::addTen))
+                                .map(InterruptibleFunction.unchecked(this::addTen))
                                 .collect(Collectors.toList()))
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(UncheckedInterruptedException.class)
                 .getCause()
                 .isInstanceOf(InterruptedException.class);
     }

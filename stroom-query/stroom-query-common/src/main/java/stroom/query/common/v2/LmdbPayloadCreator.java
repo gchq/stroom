@@ -18,27 +18,27 @@ import org.lmdbjava.Txn;
 
 import java.io.ByteArrayInputStream;
 import java.nio.ByteBuffer;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class LmdbPayloadCreator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbPayloadCreator.class);
 
+    private final Serialisers serialisers;
     private final CompiledField[] compiledFields;
-    private final int minPayloadSize;
     private final int maxPayloadSize;
     private final QueryKey queryKey;
     private final LmdbDataStore lmdbDataStore;
     private final LmdbPayloadQueue currentPayload = new LmdbPayloadQueue(1);
 
-    LmdbPayloadCreator(final QueryKey queryKey,
+    LmdbPayloadCreator(final Serialisers serialisers,
+                       final QueryKey queryKey,
                        final LmdbDataStore lmdbDataStore,
                        final CompiledField[] compiledFields,
                        final ResultStoreConfig resultStoreConfig) {
+        this.serialisers = serialisers;
         this.queryKey = queryKey;
         this.lmdbDataStore = lmdbDataStore;
         this.compiledFields = compiledFields;
-        minPayloadSize = (int) resultStoreConfig.getMinPayloadSize().getBytes();
         maxPayloadSize = (int) resultStoreConfig.getMaxPayloadSize().getBytes();
     }
 
@@ -76,7 +76,7 @@ public class LmdbPayloadCreator {
                         }
 
                         final LmdbKV lmdbKV =
-                                new LmdbKV(rowKey, new LmdbValue(compiledFields, valueBuffer));
+                                new LmdbKV(rowKey, new LmdbValue(serialisers, compiledFields, valueBuffer));
                         lmdbDataStore.put(lmdbKV);
                     }
                 }
@@ -161,21 +161,23 @@ public class LmdbPayloadCreator {
 
         return Metrics.measure("createPayload", () -> {
             if (maxPayloadSize > 0) {
-                final PayloadOutput payloadOutput = new PayloadOutput(minPayloadSize, maxPayloadSize);
+                final PayloadOutput payloadOutput = serialisers.getOutputFactory().createPayloadOutput();
                 boolean finalPayload = complete;
-                final AtomicLong count = new AtomicLong();
+                long size = 0;
+                long count = 0;
                 try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(writeTxn)) {
                     for (final KeyVal<ByteBuffer> kv : cursorIterable) {
                         final ByteBuffer keyBuffer = kv.key();
                         final ByteBuffer valBuffer = kv.val();
 
                         // Add to the size of the current payload.
-                        count.addAndGet(4);
-                        count.addAndGet(keyBuffer.remaining());
-                        count.addAndGet(4);
-                        count.addAndGet(valBuffer.remaining());
+                        size += 4;
+                        size += keyBuffer.remaining();
+                        size += 4;
+                        size += valBuffer.remaining();
+                        count++;
 
-                        if (count.get() < maxPayloadSize) {
+                        if (size < maxPayloadSize || count == 1) {
                             payloadOutput.writeInt(keyBuffer.remaining());
                             payloadOutput.writeByteBuffer(keyBuffer);
                             payloadOutput.writeInt(valBuffer.remaining());
@@ -197,7 +199,7 @@ public class LmdbPayloadCreator {
                 return new LmdbPayload(finalPayload, payloadOutput.toBytes());
 
             } else {
-                final PayloadOutput payloadOutput = new PayloadOutput(minPayloadSize, -1);
+                final PayloadOutput payloadOutput = serialisers.getOutputFactory().createPayloadOutput();
                 try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(writeTxn)) {
                     for (final KeyVal<ByteBuffer> kv : cursorIterable) {
                         final ByteBuffer keyBuffer = kv.key();

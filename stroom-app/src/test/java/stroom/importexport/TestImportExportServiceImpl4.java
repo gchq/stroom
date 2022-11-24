@@ -1,0 +1,300 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+package stroom.importexport;
+
+
+import stroom.docref.DocRef;
+import stroom.explorer.api.ExplorerNodeService;
+import stroom.explorer.api.ExplorerService;
+import stroom.explorer.shared.ExplorerConstants;
+import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.PermissionInheritance;
+import stroom.importexport.impl.ImportExportService;
+import stroom.importexport.shared.ImportState;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.common.StroomCoreServerTestFileUtil;
+import stroom.util.zip.ZipUtil;
+
+import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import javax.inject.Inject;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestImportExportServiceImpl4 extends AbstractCoreIntegrationTest {
+
+    private static final DocRef PIPELINE_DOC_REF = new DocRef(
+            PipelineDoc.DOCUMENT_TYPE,
+            "d6fb12ff-fb94-437e-90c3-b95372572efd",
+            "DATA_SPLITTER-EVENTS");
+
+    @Inject
+    private ImportExportService importExportService;
+    @Inject
+    private ExplorerNodeService explorerNodeService;
+    @Inject
+    private ExplorerService explorerService;
+
+    @Test
+    void testAdvancedFeatures() throws IOException {
+        final Path rootTestDir = StroomCoreServerTestFileUtil.getTestResourcesDir();
+        final Path importDir = rootTestDir.resolve("samples/config");
+        final Path zipFile = getCurrentTestDir().resolve(UUID.randomUUID() + ".zip");
+
+        ZipUtil.zip(zipFile, importDir, Pattern.compile(".*DATA_SPLITTER.*"), null);
+        assertThat(Files.isRegularFile(zipFile)).isTrue();
+        assertThat(Files.isDirectory(importDir)).isTrue();
+
+        // Make sure doc doesn't exist in the explorer.
+        Optional<ExplorerNode> node = explorerNodeService.getNode(PIPELINE_DOC_REF);
+        assertThat(node.isPresent()).isFalse();
+
+        List<ImportState> confirmList = new ArrayList<>();
+        confirmList = performImport(
+                confirmList,
+                zipFile,
+                "Feeds and Translations/Test",
+                "DATA_SPLITTER-EVENTS");
+
+        /////////////////////////////////////////////////
+        // CHECK RENAME
+        /////////////////////////////////////////////////
+
+        // Rename doc.
+        final DocRef renamedPipelineDocRef = new DocRef(
+                PipelineDoc.DOCUMENT_TYPE,
+                "d6fb12ff-fb94-437e-90c3-b95372572efd",
+                "RENAMED_DATA_SPLITTER-EVENTS");
+        explorerNodeService.renameNode(renamedPipelineDocRef);
+
+        // Perform import again.
+        confirmList = performImport(
+                confirmList,
+                zipFile,
+                "Feeds and Translations/Test",
+                "RENAMED_DATA_SPLITTER-EVENTS");
+
+        // Now import with import name preservation.
+        confirmList.forEach(state -> {
+            state.setUseImportNames(true);
+        });
+        confirmList = performImport(
+                confirmList,
+                zipFile,
+                "Feeds and Translations/Test",
+                "DATA_SPLITTER-EVENTS");
+
+        /////////////////////////////////////////////////
+        // CHECK FOLDER MOVE
+        /////////////////////////////////////////////////
+
+        confirmList.forEach(state -> {
+            state.setUseImportNames(false);
+            state.setUseImportFolders(false);
+        });
+
+        // Now move the item.
+        // Create a new dest dir.
+        final Optional<ExplorerNode> rootNode = explorerNodeService.getRoot();
+        assertThat(rootNode).isNotNull();
+        assertThat(rootNode.isPresent()).isTrue();
+
+        final DocRef destFolder =
+                new DocRef(ExplorerConstants.FOLDER, UUID.randomUUID().toString(), "Destination Folder");
+        explorerNodeService.createNode(destFolder, rootNode.get().getDocRef(), PermissionInheritance.DESTINATION);
+        explorerNodeService.moveNode(PIPELINE_DOC_REF, destFolder, PermissionInheritance.DESTINATION);
+        explorerNodeService.renameNode(renamedPipelineDocRef);
+
+        // Import again.
+        confirmList = performImport(
+                confirmList,
+                zipFile,
+                "Destination Folder",
+                "RENAMED_DATA_SPLITTER-EVENTS");
+        confirmList.forEach(state -> {
+            state.setUseImportNames(false);
+            state.setUseImportFolders(true);
+        });
+        confirmList = performImport(
+                confirmList,
+                zipFile,
+                "Feeds and Translations/Test",
+                "RENAMED_DATA_SPLITTER-EVENTS");
+
+        // Move back.
+        explorerNodeService.moveNode(PIPELINE_DOC_REF, destFolder, PermissionInheritance.DESTINATION);
+        confirmList.forEach(state -> {
+            state.setUseImportNames(true);
+            state.setUseImportFolders(true);
+        });
+        confirmList = performImport(
+                confirmList,
+                zipFile,
+                "Feeds and Translations/Test",
+                "DATA_SPLITTER-EVENTS");
+
+        /////////////////////////////////////////////////
+        // CHECK NEW
+        /////////////////////////////////////////////////
+        explorerNodeService.renameNode(renamedPipelineDocRef);
+        explorerNodeService.moveNode(PIPELINE_DOC_REF, destFolder, PermissionInheritance.DESTINATION);
+        confirmList.forEach(state -> {
+            state.setUseImportNames(false);
+            state.setUseImportFolders(false);
+        });
+        confirmList = performImport(
+                confirmList,
+                zipFile,
+                "Destination Folder",
+                "RENAMED_DATA_SPLITTER-EVENTS");
+        explorerService.delete(Collections.singletonList(PIPELINE_DOC_REF));
+        confirmList = performImport(
+                confirmList,
+                zipFile,
+                "Feeds and Translations/Test",
+                "DATA_SPLITTER-EVENTS");
+
+        /////////////////////////////////////////////////
+        // CHECK NEW ROOT
+        /////////////////////////////////////////////////
+        final DocRef rootDocRef =
+                new DocRef(ExplorerConstants.FOLDER, UUID.randomUUID().toString(), "New Root");
+        explorerNodeService.createNode(rootDocRef, rootNode.get().getDocRef(), PermissionInheritance.DESTINATION);
+        confirmList.forEach(state -> {
+            state.setRootDocRef(rootDocRef);
+            state.setUseImportNames(false);
+            state.setUseImportFolders(false);
+        });
+        confirmList = performImport(
+                confirmList,
+                zipFile,
+                "Feeds and Translations/Test",
+                "DATA_SPLITTER-EVENTS");
+
+        explorerService.delete(Collections.singletonList(PIPELINE_DOC_REF));
+        confirmList.forEach(state -> {
+            state.setRootDocRef(rootDocRef);
+            state.setUseImportNames(false);
+            state.setUseImportFolders(false);
+        });
+        confirmList = performImport(
+                confirmList,
+                zipFile,
+                "New Root/Feeds and Translations/Test",
+                "DATA_SPLITTER-EVENTS");
+
+        explorerService.delete(Collections.singletonList(PIPELINE_DOC_REF));
+        confirmList.forEach(state -> {
+            state.setRootDocRef(rootDocRef);
+            state.setUseImportNames(false);
+            state.setUseImportFolders(true);
+        });
+        confirmList = performImport(
+                confirmList,
+                zipFile,
+                "New Root/Feeds and Translations/Test",
+                "DATA_SPLITTER-EVENTS",
+                "New Root/");
+
+        explorerService.delete(Collections.singletonList(PIPELINE_DOC_REF));
+        confirmList.forEach(state -> {
+            state.setRootDocRef(rootDocRef);
+            state.setUseImportNames(true);
+            state.setUseImportFolders(true);
+        });
+        confirmList = performImport(
+                confirmList,
+                zipFile,
+                "New Root/Feeds and Translations/Test",
+                "DATA_SPLITTER-EVENTS",
+                "New Root/");
+    }
+
+    private List<ImportState> performImport(final List<ImportState> in,
+                                            final Path zipFile,
+                                            final String expectedPath,
+                                            final String expectedName) {
+        return performImport(in, zipFile, expectedPath, expectedName, "");
+    }
+
+    private List<ImportState> performImport(final List<ImportState> in,
+                                            final Path zipFile,
+                                            final String expectedPath,
+                                            final String expectedName,
+                                            final String prefix) {
+        final List<ImportState> confirmList =
+                importExportService.createImportConfirmationList(zipFile, in);
+        assertThat(confirmList).isNotNull();
+        assertThat(confirmList.size()).isGreaterThan(0);
+        confirmList.forEach(state -> {
+            state.setAction(true);
+            if (state.getDocRef().getUuid().equals(PIPELINE_DOC_REF.getUuid())) {
+                assertThat(state.getDestPath()).isEqualTo(expectedPath + "/" + expectedName);
+            } else {
+                assertThat(prefix + state.getSourcePath()).isEqualTo(state.getDestPath());
+            }
+        });
+        importExportService.performImportWithConfirmation(zipFile, confirmList);
+
+        confirmList.forEach(state -> {
+            final DocRef docRef = state.getDocRef();
+            final Optional<ExplorerNode> node = explorerNodeService.getNode(docRef);
+            assertThat(node.isPresent()).isTrue();
+            final String currentPath = getParentPath(explorerNodeService.getPath(docRef));
+
+            if (docRef.getUuid().equals(PIPELINE_DOC_REF.getUuid())) {
+                assertThat(node.get().getName()).isEqualTo(expectedName);
+                assertThat(currentPath).isEqualTo(expectedPath);
+
+            } else {
+                assertThat(currentPath).startsWith(prefix);
+            }
+        });
+
+        return confirmList;
+    }
+
+    private String getParentPath(final List<ExplorerNode> parents) {
+        if (parents != null && parents.size() > 0) {
+            String parentPath = parents.stream()
+                    .map(ExplorerNode::getName)
+                    .collect(Collectors.joining("/"));
+            int index = parentPath.indexOf("System");
+            if (index == 0) {
+                parentPath = parentPath.substring(index + "System".length());
+            }
+            index = parentPath.indexOf("/");
+            if (index == 0) {
+                parentPath = parentPath.substring(1);
+            }
+            return parentPath;
+        }
+        return "";
+    }
+}

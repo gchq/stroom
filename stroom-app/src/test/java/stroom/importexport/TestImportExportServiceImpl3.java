@@ -71,7 +71,8 @@ class TestImportExportServiceImpl3 extends AbstractCoreIntegrationTest {
         assertThat(list.size())
                 .isEqualTo(expectedSize);
 
-        final List<ImportState> confirmList = importExportService.createImportConfirmationList(testFile);
+        final List<ImportState> confirmList =
+                importExportService.createImportConfirmationList(testFile, new ArrayList<>());
 
         assertThat(confirmList.size())
                 .isEqualTo(BATCH_SIZE);

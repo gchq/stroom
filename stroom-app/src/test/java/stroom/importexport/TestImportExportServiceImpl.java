@@ -36,6 +36,7 @@ import stroom.util.shared.ResourceKey;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -152,7 +153,7 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
 
         // Import
         final List<ImportState> confirmations = importExportService
-                .createImportConfirmationList(resourceStore.getTempFile(file));
+                .createImportConfirmationList(resourceStore.getTempFile(file), new ArrayList<>());
 
         for (final ImportState confirmation : confirmations) {
             confirmation.setAction(true);

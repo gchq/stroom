@@ -29,8 +29,9 @@ import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskContext;
 import stroom.util.AuditUtil;
 import stroom.util.config.AppConfigValidator;
-import stroom.util.config.ConfigValidator;
+import stroom.util.config.ConfigValidator.Result;
 import stroom.util.config.PropertyUtil;
+import stroom.util.config.PropertyUtil.ObjectInfo;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
@@ -42,11 +43,16 @@ import stroom.util.shared.CompareUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PropertyPath;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
+
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 public class GlobalConfigService {
@@ -139,10 +145,10 @@ public class GlobalConfigService {
                     FIELD_MAPPERS);
 
             return QuickFilterPredicateFactory.filterStream(
-                    criteria.getQuickFilterInput(),
-                    FIELD_MAPPERS,
-                    configMapper.getGlobalProperties().stream(),
-                    optConfigPropertyComparator.orElse(null))
+                            criteria.getQuickFilterInput(),
+                            FIELD_MAPPERS,
+                            configMapper.getGlobalProperties().stream(),
+                            optConfigPropertyComparator.orElse(null))
                     .collect(ListConfigResponse.collector(
                             pageRequest,
                             (configProperties, pageResponse) ->
@@ -296,9 +302,8 @@ public class GlobalConfigService {
 
         final PropertyPath propertyPath = configProperty.getName();
         final String effectiveValueStr = configProperty.getEffectiveValue().orElse(null);
-        final Object effectiveValue;
         try {
-            effectiveValue = configMapper.validateValueSerialisation(propertyPath, effectiveValueStr);
+            configMapper.validateValueSerialisation(propertyPath, effectiveValueStr);
         } catch (Exception e) {
             throw new ConfigPropertyValidationException(LogUtil.message("Error parsing [{}]: {}",
                     effectiveValueStr, e.getMessage(), e));
@@ -310,13 +315,14 @@ public class GlobalConfigService {
                                 configProperty.getName())));
 
         final AbstractConfig parentConfigObject = (AbstractConfig) prop.getParentObject();
-        final String propertyName = propertyPath.getPropertyName();
 
-        ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateValue(
-                parentConfigObject.getClass(), propertyName, effectiveValue);
+        final Result<AbstractConfig> validationResult = validateClassLevelConstraints(
+                propertyPath,
+                effectiveValueStr,
+                parentConfigObject);
 
         // TODO ideally we would handle warnings in some way, but that is probably a job for a new UI
-        if (result.hasErrors()) {
+        if (validationResult.hasErrors()) {
             // We may have more than one message for the one prop, as each prop can have many validation annotations
             final StringBuilder stringBuilder = new StringBuilder()
                     .append("Value [").append(effectiveValueStr).append("] ")
@@ -324,12 +330,43 @@ public class GlobalConfigService {
                     .append(propertyPath.toString())
                     .append(" is invalid:");
 
-            result.handleErrors(error -> {
+            validationResult.handleErrors(error -> {
                 stringBuilder
                         .append("\n")
                         .append(error.getMessage());
             });
             throw new ConfigPropertyValidationException(stringBuilder.toString());
         }
+    }
+
+    private Result<AbstractConfig> validateClassLevelConstraints(final PropertyPath propertyPath,
+                                                                 final String effectiveValueStr,
+                                                                 final AbstractConfig parentConfigObject) {
+        // This is the config object before we have applied the update, i.e. the before picture
+        final AbstractConfig config = configMapper.getConfigObject(parentConfigObject.getClass());
+
+        // Get info about the config class, i.e. ctor, prop names, etc.
+        final ObjectInfo<AbstractConfig> objectInfo = PropertyUtil.getObjectInfo(
+                new ObjectMapper(),
+                propertyPath.getParentPropertyName()
+                        .orElse(null),
+                config);
+
+        // Build a map of all the prop de-serialised values
+        final Map<String, Object> nameToValueMap = objectInfo.getPropertyMap()
+                .entrySet()
+                .stream()
+                .map(entry -> Tuple.of(entry.getKey(), entry.getValue().getValueFromConfigObject()))
+                .collect(Collectors.toMap(Tuple2::_1, Tuple2::_2));
+
+        final Object newValue = configMapper.convertValue(propertyPath, effectiveValueStr);
+        // Set the prop being validated to its new value
+        nameToValueMap.put(propertyPath.getPropertyName(), newValue);
+
+        // Create a new config obj using the new value so we can validate the whole thing, which
+        // allows us to get cross-property violations
+        final AbstractConfig configCopy = objectInfo.createInstance(nameToValueMap::get);
+
+        return appConfigValidator.validate(configCopy);
     }
 }

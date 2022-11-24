@@ -16,6 +16,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.websocket.CloseReason;
 import javax.websocket.Session;
@@ -34,14 +35,15 @@ public class ApplicationInstanceWebSocket extends AuthenticatedWebSocket impleme
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final SecurityContext securityContext;
-    private final ApplicationInstanceManager applicationInstanceManager;
+    private final ApplicationInstanceWebSocketSessions applicationInstanceWebSocketSessions;
 
     @Inject
     public ApplicationInstanceWebSocket(final SecurityContext securityContext,
-                                        final ApplicationInstanceManager applicationInstanceManager) {
+                                        final ApplicationInstanceWebSocketSessions
+                                                applicationInstanceWebSocketSessions) {
         super(securityContext);
         this.securityContext = securityContext;
-        this.applicationInstanceManager = applicationInstanceManager;
+        this.applicationInstanceWebSocketSessions = applicationInstanceWebSocketSessions;
     }
 
     public void onOpen(final Session session) throws IOException {
@@ -51,6 +53,7 @@ public class ApplicationInstanceWebSocket extends AuthenticatedWebSocket impleme
 
         // Keep alive forever.
         session.setMaxIdleTimeout(0);
+        applicationInstanceWebSocketSessions.putSession(session, Optional.empty());
 
         // You can use this in dev to test handling of unexpected ws closure
 //        CompletableFuture.delayedExecutor(new Random().nextInt(5), TimeUnit.SECONDS)
@@ -64,7 +67,7 @@ public class ApplicationInstanceWebSocket extends AuthenticatedWebSocket impleme
 //                });
     }
 
-    public synchronized void onMessage(final Session session, final String message) {
+    public void onMessage(final Session session, final String message) {
         LOGGER.debug(() ->
                 LogUtil.message("Web socket onMessage() called at {}, sessionId: {}, user: {}, message: '{}'",
                         PATH, session.getId(), securityContext.getUserId(), message));
@@ -80,7 +83,8 @@ public class ApplicationInstanceWebSocket extends AuthenticatedWebSocket impleme
                 final String key = ApplicationInstanceResource.WEB_SOCKET_MSG_KEY_UUID;
                 // May just be an informational message
                 getWebSocketMsgValue(webSocketMessage, key, String.class)
-                                .ifPresent(this::keepAlive);
+                        .ifPresent(uuid ->
+                                applicationInstanceWebSocketSessions.putSession(session, Optional.of(uuid)));
             } catch (IOException e) {
                 throw new RuntimeException(LogUtil.message(
                         "Unable to de-serialise web socket message: '{}'. Cause: {}",
@@ -89,20 +93,16 @@ public class ApplicationInstanceWebSocket extends AuthenticatedWebSocket impleme
         }
     }
 
-    private void keepAlive(final String uuid) {
-        LOGGER.debug(() -> "Keeping application instance alive with uuid = " + uuid);
-        applicationInstanceManager.keepAlive(uuid);
-    }
-
     public void onError(final Session session, final Throwable throwable) {
         LOGGER.error(LogUtil.message("Web socket onError() called at {}, sessionId: {}, user: {}, message: {}",
                 PATH, session.getId(), securityContext.getUserId(), throwable.getMessage()), throwable);
     }
 
-    public synchronized void onClose(final Session session, final CloseReason closeReason) {
+    public void onClose(final Session session, final CloseReason closeReason) {
+        applicationInstanceWebSocketSessions.removeSession(session);
         LOGGER.debug(() ->
                 LogUtil.message("Web socket onClose() called at {}, sessionId: {}, user: {}, closeReason: {}",
-                PATH, session.getId(), securityContext.getUserId(), closeReason));
+                        PATH, session.getId(), securityContext.getUserId(), closeReason));
     }
 
     private void checkLogin() {

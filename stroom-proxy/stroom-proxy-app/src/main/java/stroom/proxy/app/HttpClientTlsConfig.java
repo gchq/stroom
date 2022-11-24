@@ -23,6 +23,8 @@ import javax.annotation.Nullable;
  * so that we can extend {@link AbstractConfig} and have an equals method
  * Also {@link java.io.File} has been replaced with {@link String} for consistency
  * with our other config
+ * Values are extracted from this using reflection by {@link RestClientConfigConverter} so it is
+ * key that the method names match.
  */
 @NotInjectableConfig
 @JsonPropertyOrder(alphabetic = true)
@@ -195,17 +197,22 @@ public class HttpClientTlsConfig extends AbstractConfig implements IsProxyConfig
         return certAlias;
     }
 
+    @SuppressWarnings("unused") // Used by javax.validation
     @JsonIgnore
     @ValidationMethod(message = "keyStorePassword should not be null or empty if keyStorePath not null")
     public boolean isValidKeyStorePassword() {
-        return keyStorePath == null || keyStoreType.startsWith("Windows-") || !Strings.isNullOrEmpty(keyStorePassword);
+        return keyStorePath == null
+                || keyStoreType.startsWith("Windows-")
+                || !Strings.isNullOrEmpty(keyStorePassword);
     }
 
+    @SuppressWarnings("unused") // Used by javax.validation
     @JsonIgnore
     @ValidationMethod(message = "trustStorePassword should not be null or empty if trustStorePath not null")
     public boolean isValidTrustStorePassword() {
-        return trustStorePath == null || trustStoreType.startsWith("Windows-") || !Strings.isNullOrEmpty(
-                trustStorePassword);
+        return trustStorePath == null
+                || trustStoreType.startsWith("Windows-")
+                || !Strings.isNullOrEmpty(trustStorePassword);
     }
 
     public static Builder builder() {

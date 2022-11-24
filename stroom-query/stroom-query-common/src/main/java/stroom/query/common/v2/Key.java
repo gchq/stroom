@@ -2,7 +2,6 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValSerialiser;
-import stroom.util.io.ByteSizeUnit;
 import stroom.util.logging.Metrics;
 
 import com.esotericsoftware.kryo.io.Input;
@@ -17,31 +16,32 @@ import javax.annotation.Nonnull;
 
 public class Key implements Iterable<KeyPart> {
 
-    private static final int MIN_KEY_SIZE = (int) ByteSizeUnit.BYTE.longBytes(10);
-    private static final int MAX_KEY_SIZE = (int) ByteSizeUnit.MEBIBYTE.longBytes(1);
-    private static final Key ROOT_KEY = new Key(Collections.emptyList());
-
+    private final Serialisers serialisers;
     private byte[] bytes;
     private int hashCode;
     private List<KeyPart> keyParts;
 
-    public Key(final byte[] bytes) {
+    public Key(final Serialisers serialisers,
+               final byte[] bytes) {
+        this.serialisers = serialisers;
         this.bytes = bytes;
         this.hashCode = Arrays.hashCode(bytes);
     }
 
-    public Key(final List<KeyPart> keyParts) {
+    public Key(final Serialisers serialisers,
+               final List<KeyPart> keyParts) {
+        this.serialisers = serialisers;
         this.keyParts = keyParts;
     }
 
-    public static Key root() {
-        return ROOT_KEY;
+    public static Key createRoot(final Serialisers serialisers) {
+        return new Key(serialisers, Collections.emptyList());
     }
 
     public byte[] getBytes() {
         if (bytes == null) {
             Metrics.measure("Key getBytes", () -> {
-                try (final Output output = new Output(MIN_KEY_SIZE, MAX_KEY_SIZE)) {
+                try (final Output output = serialisers.getOutputFactory().createKeyOutput()) {
                     output.writeInt(keyParts.size());
                     for (final KeyPart keyPart : keyParts) {
                         output.writeBoolean(keyPart.isGrouped());
@@ -59,7 +59,7 @@ public class Key implements Iterable<KeyPart> {
     private List<KeyPart> getKeyParts() {
         if (keyParts == null) {
             Metrics.measure("Key getKeyParts", () -> {
-                try (final Input input = new Input(bytes)) {
+                try (final Input input = serialisers.getInputFactory().create(bytes)) {
                     final int size = input.readInt();
                     final List<KeyPart> list = new ArrayList<>(size);
                     for (int i = 0; i < size; i++) {
@@ -90,13 +90,13 @@ public class Key implements Iterable<KeyPart> {
         final List<KeyPart> parts = new ArrayList<>(keyParts.size() + 1);
         parts.addAll(keyParts);
         parts.add(keyPart);
-        return new Key(parts);
+        return new Key(serialisers, parts);
     }
 
     Key getParent() {
         final List<KeyPart> keyParts = getKeyParts();
         if (keyParts.size() > 0) {
-            return new Key(keyParts.subList(0, keyParts.size() - 1));
+            return new Key(serialisers, keyParts.subList(0, keyParts.size() - 1));
         }
         return null;
     }

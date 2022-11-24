@@ -149,9 +149,7 @@ public class UiConfig extends AbstractConfig {
         uiPreferences = new UiPreferences();
         source = new SourceConfig();
         requireReactWrapper = true;
-        // No point making this any less than 60s as chrome will throttle timers on inactive tabs
-        // to a max frequency of 1/min.
-        applicationInstanceKeepAliveIntervalMs = 60_000;
+        applicationInstanceKeepAliveIntervalMs = 10_000;
     }
 
     @JsonCreator

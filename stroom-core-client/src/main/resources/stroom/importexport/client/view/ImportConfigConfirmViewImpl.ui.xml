@@ -1,20 +1,47 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-  xmlns:g="urn:import:com.google.gwt.user.client.ui"
-  xmlns:c="urn:import:stroom.widget.customdatebox.client">
-  <g:FlowPanel styleName="importConfigContainer" width="100%" height="100%">
-    <g:Grid ui:field="grid" styleName="stroom-control-grid" >
-      <g:row>
-      <g:customCell>
-        <g:CheckBox styleName="itemCheckList" ui:field="enableFilters" />
-      </g:customCell>
-        <g:cell>Enable Processor Filters</g:cell>
-        <g:customCell>
-          <c:MyDateBox ui:field="enableFrom" />
-        </g:customCell>
-        <g:cell> from this date (or leave blank to process from first stream)</g:cell>
-      </g:row>
-    </g:Grid>
-    <g:SimplePanel ui:field="dataGridView" styleName="itemCheckList" height="100%"/>
-  </g:FlowPanel>
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:c="urn:import:stroom.widget.customdatebox.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:l="urn:import:stroom.widget.layout.client.view">
+    <g:DockLayoutPanel unit="PX" styleName="importConfigContainer" width="100%" height="100%">
+        <g:south size="115">
+            <g:Grid ui:field="grid" styleName="stroom-control-grid">
+                <g:row>
+                    <g:cell>Enable Processor Filters:</g:cell>
+                    <g:customCell>
+                        <tickbox:TickBox ui:field="enableFilters"/>
+                    </g:customCell>
+                </g:row>
+                <g:row>
+                    <g:cell>Enable Processor Filters From:</g:cell>
+                    <g:customCell>
+                        <c:MyDateBox ui:field="enableFrom"/>
+                    </g:customCell>
+                    <g:cell>from this date (or leave blank to process from first stream)</g:cell>
+                </g:row>
+                <g:row>
+                    <g:cell>Use Import Names:</g:cell>
+                    <g:customCell>
+                        <tickbox:TickBox ui:field="useImportNames"/>
+                    </g:customCell>
+                </g:row>
+                <g:row>
+                    <g:cell>Use Import Folders:</g:cell>
+                    <g:customCell>
+                        <tickbox:TickBox ui:field="useImportFolders"/>
+                    </g:customCell>
+                </g:row>
+                <g:row>
+                    <g:cell>Import To Root Folder:</g:cell>
+                    <g:customCell>
+                        <g:SimplePanel ui:field="rootFolder"/>
+                    </g:customCell>
+                </g:row>
+            </g:Grid>
+        </g:south>
+        <g:center>
+            <l:ResizeSimplePanel ui:field="dataGridView" styleName="itemCheckList" height="100%"/>
+        </g:center>
+    </g:DockLayoutPanel>
 </ui:UiBinder> 

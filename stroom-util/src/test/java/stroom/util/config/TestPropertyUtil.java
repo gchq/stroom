@@ -157,6 +157,14 @@ class TestPropertyUtil {
         doMergeValueTest("a", "c", "c", true, false, "a");
     }
 
+    @Test
+    void testCopy() {
+        final MyClass source = new MyClass();
+        source.setMyClass(new MyClass());
+        final MyClass copy = PropertyUtil.copyObject(source);
+        Assertions.assertThat(copy)
+                .isEqualTo(source);
+    }
 
     private void doMergeValueTest(final String thisValue,
                                   final String otherValue,
@@ -239,6 +247,26 @@ class TestPropertyUtil {
 
         public void setMyClass(final MyClass myClass) {
             this.myClass = myClass;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final MyClass myClass1 = (MyClass) o;
+            return myBoolean == myClass1.myBoolean && myInt == myClass1.myInt && Objects.equals(myString,
+                    myClass1.myString) && Objects.equals(myClass, myClass1.myClass) && Objects.equals(
+                    nonPublicString,
+                    myClass1.nonPublicString);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(myBoolean, myInt, myString, myClass, nonPublicString);
         }
     }
 

@@ -188,6 +188,9 @@ appConfig:
         deleteAge: "P30D"
         deleteBatchSize: 500
         flushBatchSize: 500
+      rawMetaTypes:
+      - "Raw Reference"
+      - "Raw Events"
     retention:
       deleteBatchSize: 1000
       useQueryOptimisation: true
@@ -509,7 +512,7 @@ appConfig:
   publicUri:
     hostname: null
     pathPrefix: null
-    port: 443
+    port: null
     scheme: "https"
   queryHistory:
     daysRetention: 365
@@ -552,9 +555,8 @@ appConfig:
         readAheadEnabled: true
       maxPayloadSize: "1G"
       maxPutsBeforeCommit: 100000
-      maxValueSize: "1M"
+      maxStringFieldLength: 1000
       minPayloadSize: "1M"
-      minValueSize: "1K"
       offHeapResults: true
       searchResultCache:
         expireAfterAccess: "PT10M"
@@ -687,6 +689,7 @@ appConfig:
         \ connect-src 'self' wss:; frame-ancestors 'self';"
       contentTypeOptions: "nosniff"
       frameOptions: "sameorigin"
+      strictTransportSecurity: "max-age=31536000; includeSubDomains; preload"
       xssProtection: "1; mode=block"
   serviceDiscovery:
     curatorBaseSleepTimeMs: 5000
@@ -882,7 +885,7 @@ appConfig:
       editorTitle: "Edit Activity"
       enabled: false
       managerTitle: "Choose Activity"
-    applicationInstanceKeepAliveIntervalMs: 60000
+    applicationInstanceKeepAliveIntervalMs: 10000
     defaultMaxResults: "1000000,100,10,1"
     helpSubPathExpressions: "/user-guide/dashboards/expressions/"
     helpSubPathJobs: "/user-guide/jobs/"
@@ -930,7 +933,7 @@ appConfig:
   uiUri:
     hostname: null
     pathPrefix: null
-    port: 443
+    port: null
     scheme: "https"
   volumes:
     createDefaultIndexVolumesOnStart: true

@@ -50,27 +50,26 @@ public class ImportExportServiceImpl implements ImportExportService {
     }
 
     @Override
-    public List<ImportState> createImportConfirmationList(final Path data) {
-        final List<ImportState> confirmList = new ArrayList<>();
+    public List<ImportState> createImportConfirmationList(final Path data,
+                                                          final List<ImportState> confirmList) {
         doImport(data, confirmList, ImportMode.CREATE_CONFIRMATION);
         confirmList.sort(Comparator.comparing(ImportState::getSourcePath));
         return confirmList;
     }
 
-    /**
-     * Import API.
-     */
     @Override
-    public void performImportWithConfirmation(final Path data, final List<ImportState> confirmList) {
+    public void performImportWithConfirmation(final Path data,
+                                              final List<ImportState> confirmList) {
         doImport(data, confirmList, ImportMode.ACTION_CONFIRMATION);
     }
 
     @Override
     public void performImportWithoutConfirmation(final Path data) {
-        doImport(data, null, ImportMode.IGNORE_CONFIRMATION);
+        doImport(data, new ArrayList<>(), ImportMode.IGNORE_CONFIRMATION);
     }
 
-    private void doImport(final Path zipFile, final List<ImportState> confirmList,
+    private void doImport(final Path zipFile,
+                          final List<ImportState> confirmList,
                           final ImportMode importMode) {
         final Path explodeDir = workingZipDir(zipFile);
         try {

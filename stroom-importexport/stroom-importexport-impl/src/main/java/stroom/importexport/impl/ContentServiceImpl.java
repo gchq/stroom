@@ -63,7 +63,8 @@ class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public ResourceKey performImport(final ResourceKey resourceKey, final List<ImportState> confirmList) {
+    public ResourceKey performImport(final ResourceKey resourceKey,
+                                     final List<ImportState> confirmList) {
         return securityContext.secureResult(PermissionNames.IMPORT_CONFIGURATION, () -> {
             // Import file.
             final Path file = resourceStore.getTempFile(resourceKey);
@@ -89,11 +90,11 @@ class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public List<ImportState> confirmImport(final ResourceKey resourceKey) {
+    public List<ImportState> confirmImport(final ResourceKey resourceKey, final List<ImportState> confirmList) {
         return securityContext.secureResult(PermissionNames.IMPORT_CONFIGURATION, () -> {
             try {
                 final Path tempPath = resourceStore.getTempFile(resourceKey);
-                return importExportService.createImportConfirmationList(tempPath);
+                return importExportService.createImportConfirmationList(tempPath, confirmList);
             } catch (final RuntimeException rex) {
                 // In case of error delete the temp file
                 resourceStore.deleteTempFile(resourceKey);

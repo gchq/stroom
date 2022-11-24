@@ -19,10 +19,9 @@ public class ResultStoreConfig extends AbstractConfig {
     private final boolean offHeapResults;
 
     private final int valueQueueSize;
-    private final ByteSize minValueSize;
-    private final ByteSize maxValueSize;
     private final ByteSize minPayloadSize;
     private final ByteSize maxPayloadSize;
+    private final int maxStringFieldLength;
 
     private final ResultStoreLmdbConfig lmdbConfig;
 
@@ -34,10 +33,9 @@ public class ResultStoreConfig extends AbstractConfig {
         offHeapResults = true;
 
         valueQueueSize = 1_000_000;
-        minValueSize = ByteSize.ofKibibytes(1);
-        maxValueSize = ByteSize.ofMebibytes(1);
         minPayloadSize = ByteSize.ofMebibytes(1);
         maxPayloadSize = ByteSize.ofGibibytes(1);
+        maxStringFieldLength = 1000;
 
         lmdbConfig = new ResultStoreLmdbConfig();
 
@@ -52,20 +50,18 @@ public class ResultStoreConfig extends AbstractConfig {
     @JsonCreator
     public ResultStoreConfig(@JsonProperty("maxPutsBeforeCommit") final int maxPutsBeforeCommit,
                              @JsonProperty("offHeapResults") final boolean offHeapResults,
-                             @JsonProperty("minValueSize") final ByteSize minValueSize,
-                             @JsonProperty("maxValueSize") final ByteSize maxValueSize,
                              @JsonProperty("minPayloadSize") final ByteSize minPayloadSize,
                              @JsonProperty("maxPayloadSize") final ByteSize maxPayloadSize,
+                             @JsonProperty("maxStringFieldLength") final int maxStringFieldLength,
                              @JsonProperty("valueQueueSize") final int valueQueueSize,
                              @JsonProperty("lmdb") final ResultStoreLmdbConfig lmdbConfig,
                              @JsonProperty("searchResultCache") final CacheConfig searchResultCache,
                              @JsonProperty("storeSize") final String storeSize) {
         this.maxPutsBeforeCommit = maxPutsBeforeCommit;
         this.offHeapResults = offHeapResults;
-        this.minValueSize = minValueSize;
-        this.maxValueSize = maxValueSize;
         this.minPayloadSize = minPayloadSize;
         this.maxPayloadSize = maxPayloadSize;
+        this.maxStringFieldLength = maxStringFieldLength;
         this.valueQueueSize = valueQueueSize;
         this.lmdbConfig = lmdbConfig;
         this.searchResultCache = searchResultCache;
@@ -88,16 +84,6 @@ public class ResultStoreConfig extends AbstractConfig {
         return offHeapResults;
     }
 
-    @JsonPropertyDescription("The minimum byte size of a value byte buffer.")
-    public ByteSize getMinValueSize() {
-        return minValueSize;
-    }
-
-    @JsonPropertyDescription("The maximum byte size of a value byte buffer.")
-    public ByteSize getMaxValueSize() {
-        return maxValueSize;
-    }
-
     @JsonPropertyDescription("The minimum byte size of a payload buffer.")
     public ByteSize getMinPayloadSize() {
         return minPayloadSize;
@@ -106,6 +92,11 @@ public class ResultStoreConfig extends AbstractConfig {
     @JsonPropertyDescription("The maximum byte size of a payload buffer.")
     public ByteSize getMaxPayloadSize() {
         return maxPayloadSize;
+    }
+
+    @JsonPropertyDescription("The maximum length of a string field value. Longer strings will be truncated.")
+    public int getMaxStringFieldLength() {
+        return maxStringFieldLength;
     }
 
     @JsonPropertyDescription("The size of the value queue.")
@@ -135,10 +126,9 @@ public class ResultStoreConfig extends AbstractConfig {
                 "maxPutsBeforeCommit=" + maxPutsBeforeCommit +
                 ", offHeapResults=" + offHeapResults +
                 ", valueQueueSize=" + valueQueueSize +
-                ", minValueSize=" + minValueSize +
-                ", maxValueSize=" + maxValueSize +
                 ", minPayloadSize=" + minPayloadSize +
                 ", maxPayloadSize=" + maxPayloadSize +
+                ", maxStringFieldLength=" + maxStringFieldLength +
                 ", lmdbConfig=" + lmdbConfig +
                 ", searchResultCache=" + searchResultCache +
                 ", storeSize='" + storeSize + '\'' +

@@ -27,11 +27,16 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
+import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.shared.ExplorerConstants;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.client.event.ImportConfigConfirmEvent;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportState;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Message;
@@ -68,6 +73,7 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class ImportConfigConfirmPresenter extends
         MyPresenter<ImportConfigConfirmPresenter.ImportConfigConfirmView,
@@ -82,15 +88,23 @@ public class ImportConfigConfirmPresenter extends
     private final DataGridView<ImportState> dataGridView;
     private final RestFactory restFactory;
     private ResourceKey resourceKey;
-    private List<ImportState> confirmList;
+    private List<ImportState> confirmList = new ArrayList<>();
+    private final EntityDropDownPresenter rootFolderPresenter;
 
     @Inject
     public ImportConfigConfirmPresenter(final EventBus eventBus,
                                         final ImportConfigConfirmView view,
                                         final ImportConfirmProxy proxy,
                                         final TooltipPresenter tooltipPresenter,
+                                        final EntityDropDownPresenter rootFolderPresenter,
                                         final RestFactory restFactory) {
         super(eventBus, view, proxy);
+        this.rootFolderPresenter = rootFolderPresenter;
+
+        rootFolderPresenter.setSelectedEntityReference(ExplorerConstants.ROOT_DOC_REF);
+        rootFolderPresenter.setIncludedTypes(ExplorerConstants.FOLDER);
+        rootFolderPresenter.setRequiredPermissions(DocumentPermissionNames.READ);
+        rootFolderPresenter.setAllowFolderSelection(true);
 
         this.tooltipPresenter = tooltipPresenter;
         this.restFactory = restFactory;
@@ -101,9 +115,48 @@ public class ImportConfigConfirmPresenter extends
                 DataGridViewImpl.MASSIVE_LIST_PAGE_SIZE);
 
         view.setDataGridView(this.dataGridView);
-        view.setEnableFilters(true);
+        view.setRootFolderView(rootFolderPresenter.getView());
+        view.setEnableFilters(false);
+        view.setEnableFromDate(System.currentTimeMillis());
+        view.setUseImportNames(false);
+        view.setUseImportFolders(false);
+        view.onUseImportNames(useImportNames -> {
+            for (final ImportState importState : confirmList) {
+                importState.setUseImportNames(useImportNames);
+            }
+            refresh();
+        });
+        view.onUseImportFolders(useImportFolders -> {
+            for (final ImportState importState : confirmList) {
+                importState.setUseImportFolders(useImportFolders);
+            }
+            refresh();
+        });
 
         addColumns();
+    }
+
+    private void setRootDocRef(final DocRef rootDocRef) {
+        for (final ImportState importState : confirmList) {
+            importState.setRootDocRef(rootDocRef);
+        }
+        refresh();
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+
+        registerHandler(rootFolderPresenter.addDataSelectionHandler(event -> {
+            if (event.getSelectedItem() != null &&
+                    event.getSelectedItem().getDocRef().compareTo(ExplorerConstants.ROOT_DOC_REF) != 0 &&
+                    event.getSelectedItem().getDocRef().getUuid().length() > 1) {
+                final ExplorerNode entityData = event.getSelectedItem();
+                setRootDocRef(entityData.getDocRef());
+            } else {
+                setRootDocRef(null);
+            }
+        }));
     }
 
     @ProxyEvent
@@ -111,21 +164,42 @@ public class ImportConfigConfirmPresenter extends
     public void onConfirmImport(final ImportConfigConfirmEvent event) {
         resourceKey = event.getResourceKey();
         confirmList = event.getConfirmList();
-
-        if (confirmList == null) {
-            dataGridView.setRowCount(0);
-        } else {
-            dataGridView.setRowData(0, confirmList);
-            dataGridView.setRowCount(confirmList.size());
-        }
+        dataGridView.setRowData(0, confirmList);
+        dataGridView.setRowCount(confirmList.size());
         forceReveal();
+    }
+
+    public void refresh() {
+        final Rest<List<ImportState>> rest = restFactory.create();
+        rest
+                .onSuccess(result -> {
+                    confirmList = result;
+                    if (result.isEmpty()) {
+                        warning("The import package contains nothing that can be imported into " +
+                                "this version of Stroom.");
+                    } else {
+                        dataGridView.setRowData(0, confirmList);
+                        dataGridView.setRowCount(confirmList.size());
+                    }
+                })
+                .onFailure(caught -> error(caught.getMessage()))
+                .call(CONTENT_RESOURCE)
+                .confirmImport(new ImportConfigRequest(resourceKey, confirmList));
+    }
+
+    private void warning(final String message) {
+        AlertEvent.fireWarn(this, message, null);
+    }
+
+    private void error(final String message) {
+        AlertEvent.fireError(this, message, null);
     }
 
     @Override
     protected void revealInParent() {
         final PopupSize popupSize = new PopupSize(
                 800,
-                400,
+                600,
                 300,
                 300,
                 2000,
@@ -152,8 +226,8 @@ public class ImportConfigConfirmPresenter extends
             boolean warnings = false;
             int count = 0;
             for (final ImportState importState : confirmList) {
-                importState.setEnableTime(getView().getEnableFromDate());
-                importState.setEnable(getView().isEnableFilters());
+                importState.setEnableFilters(getView().isEnableFilters());
+                importState.setEnableFiltersFromTime(getView().getEnableFromDate());
                 if (importState.isAction()) {
                     count++;
                     if (importState.getSeverity().greaterThan(Severity.INFO)) {
@@ -470,9 +544,21 @@ public class ImportConfigConfirmPresenter extends
 
         Long getEnableFromDate();
 
+        void setEnableFromDate(Long date);
+
         boolean isEnableFilters();
 
         void setEnableFilters(boolean enableFilters);
+
+        void setUseImportNames(boolean useImportNames);
+
+        void onUseImportNames(Consumer<Boolean> consumer);
+
+        void setUseImportFolders(boolean useImportFolders);
+
+        void onUseImportFolders(Consumer<Boolean> consumer);
+
+        void setRootFolderView(View view);
 
         Widget getDataGridViewWidget();
     }

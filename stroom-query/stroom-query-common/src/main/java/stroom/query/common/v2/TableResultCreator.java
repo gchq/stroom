@@ -45,13 +45,15 @@ public class TableResultCreator implements ResultCreator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TableResultCreator.class);
 
+    private final SerialisersFactory serialisersFactory;
     private final FieldFormatter fieldFormatter;
     private final Sizes defaultMaxResultsSizes;
     private volatile List<Field> latestFields;
 
-    public TableResultCreator(final FieldFormatter fieldFormatter,
+    public TableResultCreator(final SerialisersFactory serialisersFactory,
+                              final FieldFormatter fieldFormatter,
                               final Sizes defaultMaxResultsSizes) {
-
+        this.serialisersFactory = serialisersFactory;
         this.fieldFormatter = fieldFormatter;
         this.defaultMaxResultsSizes = defaultMaxResultsSizes;
     }
@@ -59,6 +61,7 @@ public class TableResultCreator implements ResultCreator {
     @Override
     public Result create(final DataStore dataStore, final ResultRequest resultRequest) {
         final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
+        final Serialisers serialisers = serialisersFactory.create(errorConsumer);
         final List<Row> resultList = new ArrayList<>();
         final AtomicInteger totalResults = new AtomicInteger();
 
@@ -78,7 +81,7 @@ public class TableResultCreator implements ResultCreator {
             //maxResults defines the max number of records to come back and the paging can happen up to
             //that maxResults threshold
 
-            Set<Key> openGroups = OpenGroupsConverter.convertSet(resultRequest.getOpenGroups());
+            Set<Key> openGroups = OpenGroupsConverter.convertSet(serialisers, resultRequest.getOpenGroups());
 
             TableSettings tableSettings = resultRequest.getMappings().get(0);
             latestFields = tableSettings != null

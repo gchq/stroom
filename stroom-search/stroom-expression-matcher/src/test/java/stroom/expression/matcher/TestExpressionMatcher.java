@@ -16,6 +16,7 @@
 
 package stroom.expression.matcher;
 
+import stroom.data.shared.StreamTypeNames;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DocRefField;
 import stroom.datasource.api.v2.TextField;
@@ -96,7 +97,7 @@ class TestExpressionMatcher {
     private Map<String, Object> createAttributeMap() {
         final Map<String, Object> attributeMap = new HashMap<>();
         attributeMap.put(FEED.getName(), "TEST_FEED");
-        attributeMap.put(TYPE.getName(), "Raw Events");
+        attributeMap.put(TYPE.getName(), StreamTypeNames.RAW_EVENTS);
         return attributeMap;
     }
 }

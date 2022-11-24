@@ -1005,7 +1005,7 @@ public class DataFetcher {
                         .build())
                 : highlight;
 
-        LOGGER.info("highlight: {}", actualHighlight);
+        LOGGER.debug("highlight: {}", actualHighlight);
 
         // Define the range that we are actually returning, which may be bigger or smaller than requested
         // e.g. if we have continued to the end of the line or we have hit a char limit

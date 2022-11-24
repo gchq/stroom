@@ -1,5 +1,7 @@
 package stroom.util.exception;
 
+import stroom.util.concurrent.UncheckedInterruptedException;
+
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -27,7 +29,7 @@ class TestInterruptibleRunnable {
                                 .get())
                 .isInstanceOf(ExecutionException.class)
                 .getCause()
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(UncheckedInterruptedException.class)
                 .getCause()
                 .isInstanceOf(InterruptedException.class);
 

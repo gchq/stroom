@@ -190,6 +190,20 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
         return parts.get(parts.size() - 1);
     }
 
+    /**
+     * @return The parent property name from a property path, i.e. "node" from "stroom.node.name".
+     * Throws a {@link RuntimeException} if the path is empty or there is no parent.
+     */
+    @JsonIgnore
+    public Optional<String> getParentPropertyName() {
+        if (parts.isEmpty()) {
+            throw new RuntimeException("Unable to get property name from empty path");
+        }
+        return parts.size() >= 2
+                ? Optional.ofNullable(parts.get(parts.size() - 2))
+                : Optional.empty();
+    }
+
     @Override
     public int compareTo(final PropertyPath other) {
         return toString().compareTo(other.toString());

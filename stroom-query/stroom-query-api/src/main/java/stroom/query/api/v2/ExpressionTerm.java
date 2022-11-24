@@ -18,6 +18,7 @@ package stroom.query.api.v2;
 
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
+import stroom.util.shared.StringUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -156,7 +157,9 @@ public final class ExpressionTerm extends ExpressionItem {
                 } else if (Condition.IS_DOC_REF.equals(condition)) {
                     appendDocRef(sb, docRef);
                 } else if (value != null) {
-                    sb.append(value);
+                    // This will dbl quote anything with leading/trailing whitespace and if it
+                    // does that it will escape any actual dbl quotes in the value.
+                    sb.append(StringUtil.addWhitespaceQuoting(value));
                 }
             }
         }

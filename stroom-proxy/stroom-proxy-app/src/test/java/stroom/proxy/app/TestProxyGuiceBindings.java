@@ -1,6 +1,7 @@
 package stroom.proxy.app;
 
 import stroom.proxy.app.guice.ProxyModule;
+import stroom.util.logging.LogUtil;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -10,6 +11,7 @@ import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ScanResult;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -34,9 +36,10 @@ public class TestProxyGuiceBindings extends AbstractApplicationTest {
     public void testAllGuiceBinds() {
         Injector injector = ((MyApp) DROPWIZARD.getApplication()).getInjector();
 
-        //test all the constructors to make sure guice can bind them
-        findConstructors(injector::getProvider, "stroom", javax.inject.Inject.class);
-        findConstructors(injector::getProvider, "stroom", com.google.inject.Inject.class);
+        // test all the constructors to make sure guice can bind them
+        // This assumes all injectable classes live in stroom.proxy which I'm not sure is the case.
+        findConstructors(injector::getProvider, "stroom.proxy", javax.inject.Inject.class);
+        findConstructors(injector::getProvider, "stroom.proxy", com.google.inject.Inject.class);
     }
 
     private void findConstructors(final Consumer<Class<?>> actionPerClass,
@@ -46,7 +49,7 @@ public class TestProxyGuiceBindings extends AbstractApplicationTest {
                 packagePrefix, annotationClass.getCanonicalName());
 
         ScanResult scanResult = new ClassGraph()
-                .whitelistPackages(packagePrefix)
+                .acceptPackages(packagePrefix)
                 .enableClassInfo()
                 .enableMethodInfo()
                 .enableAnnotationInfo()
@@ -62,6 +65,8 @@ public class TestProxyGuiceBindings extends AbstractApplicationTest {
                         // TODO At the moment we can only log an error and not fail the test as not all
                         //   visible classes are meant to be injectable. Leaving this test here in  case
                         //   this changes.
+                        Assertions.fail(LogUtil.message(
+                                "Unable to get instance of {} due to; ", clazz.getCanonicalName()), e);
                         LOGGER.error("    Unable to get instance of {} due to; ", clazz.getCanonicalName(), e);
                     }
                 });
