@@ -689,6 +689,7 @@ appConfig:
         \ connect-src 'self' wss:; frame-ancestors 'self';"
       contentTypeOptions: "nosniff"
       frameOptions: "sameorigin"
+      strictTransportSecurity: "max-age=31536000; includeSubDomains; preload"
       xssProtection: "1; mode=block"
   serviceDiscovery:
     curatorBaseSleepTimeMs: 5000
