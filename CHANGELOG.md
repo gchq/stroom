@@ -12,6 +12,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0.10] - 2022-11-24
+
+* Issue **#3066** : Make all responses set the HTTP header `Strict-Transport-Security` to force all HTTP traffic on the domain onto HTTPS. Also add property `stroom.security.webContent.strictTransportSecurity` to configure the header value.
+
+* Issue **#3074** : Fix data retention summary and purge job when condition includes a pipeline. Fix data viewer screen to allow filtering by pipeline. Fix filtering using the `in folder` condition. Add `<`, `<=`, `>`, `>=`, `between` conditions to ID fields, e.g. stream ID. **WARNING**: the expression field `Pipeline` has had the following conditions removed; `in`, `in dictionary`, `=`, `contains` and the field `Pipeline Name` has been added with the following conditions; `in`, `in dictionary`, `=`. This may impact processor filters or retention rules that use the `Pipeline` field. See the SQL at https://github.com/gchq/stroom/issues/3074 to find any processor filters using this field with a now un-supported condition. Change the Reference Data searchable data source to support `in`, `in dictionary` and wild carding.
+
+* Fix bug in quick filter when user enters two identical tokens into a quick filter, e.g. `bob bob`.
+
+* Issue **#3111** : Trim leading/trailing white space from term values in the expression tree builder. Users can keep leading/trailing white space if they double quote the value, e.g. `" some text "`. If the value needs to include a double quote then it can be escaped with a `\` like this `I said \"hello\"`.
+
+* Improve description for `useJvmSslConfig` property on `HttpAppender`.
+
+
 ## [v7.0.9] - 2022-11-11
 
 * Issue **#3091** : Add feature to optionally maintain import names and paths.
@@ -4662,7 +4675,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.9...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.10...HEAD
+[v7.0.10]: https://github.com/gchq/stroom/compare/v7.0.9...v7.0.10
 [v7.0.9]: https://github.com/gchq/stroom/compare/v7.0.8...v7.0.9
 [v7.0.8]: https://github.com/gchq/stroom/compare/v7.0.7...v7.0.8
 [v7.0.7]: https://github.com/gchq/stroom/compare/v7.0.6...v7.0.7
