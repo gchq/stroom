@@ -1,5 +1,6 @@
 package stroom.security.impl;
 
+import stroom.security.api.OpenIdConfiguration;
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -27,13 +28,13 @@ class StandardJwtContextFactory implements JwtContextFactory {
     private static final String AMZN_OIDC_DATA_HEADER = "x-amzn-oidc-data";
     private static final String AUTHORIZATION_HEADER = HttpHeaders.AUTHORIZATION;
 
-    private final ResolvedOpenIdConfig openIdConfig;
+    private final OpenIdConfiguration openIdConfiguration;
     private final OpenIdPublicKeysSupplier openIdPublicKeysSupplier;
 
     @Inject
-    StandardJwtContextFactory(final ResolvedOpenIdConfig openIdConfig,
+    StandardJwtContextFactory(final OpenIdConfiguration openIdConfiguration,
                               final OpenIdPublicKeysSupplier openIdPublicKeysSupplier) {
-        this.openIdConfig = openIdConfig;
+        this.openIdConfiguration = openIdConfiguration;
         this.openIdPublicKeysSupplier = openIdPublicKeysSupplier;
     }
 
@@ -99,13 +100,13 @@ class StandardJwtContextFactory implements JwtContextFactory {
                 //                                   for clock skew
                 .setRequireSubject() // the JWT must have a subject claim
                 .setVerificationKeyResolver(verificationKeyResolver)
-                .setExpectedAudience(openIdConfig.getClientId())
+                .setExpectedAudience(openIdConfiguration.getClientId())
                 .setRelaxVerificationKeyValidation() // relaxes key length requirement
 //                .setJwsAlgorithmConstraints(// only allow the expected signature algorithm(s) in the given context
 //                        new AlgorithmConstraints(
 //                                AlgorithmConstraints.ConstraintType.WHITELIST, // which is only RS256 here
 //                                AlgorithmIdentifiers.RSA_USING_SHA256))
-                .setExpectedIssuer(openIdConfig.getIssuer());
+                .setExpectedIssuer(openIdConfiguration.getIssuer());
         return builder.build();
     }
 }

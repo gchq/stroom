@@ -1,5 +1,6 @@
 package stroom.security.impl;
 
+import stroom.security.api.OpenIdConfiguration;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 
 import org.jose4j.base64url.Base64;
@@ -43,7 +44,7 @@ class TestJWTService {
     @Mock
     private OpenIdPublicKeysSupplier openIdPublicKeysSupplier;
     @Mock
-    private ResolvedOpenIdConfig resolvedOpenIdConfig;
+    private OpenIdConfiguration openIdConfiguration;
     private DefaultOpenIdCredentials defaultOpenIdCredentials = new DefaultOpenIdCredentials();
 
     /**
@@ -53,7 +54,7 @@ class TestJWTService {
     void verifyDefaultApiToken() throws JoseException {
         // Verify the hard coded default token
 
-        final StandardJwtContextFactory jwtService = new StandardJwtContextFactory(resolvedOpenIdConfig,
+        final StandardJwtContextFactory jwtService = new StandardJwtContextFactory(openIdConfiguration,
                 openIdPublicKeysSupplier);
 
         final String apiKey = defaultOpenIdCredentials.getApiKey();
@@ -61,7 +62,7 @@ class TestJWTService {
         Mockito.when(openIdPublicKeysSupplier.get())
                 .thenReturn(getPublicKeys());
 
-        Mockito.when(resolvedOpenIdConfig.getClientId())
+        Mockito.when(openIdConfiguration.getClientId())
                 .thenReturn(defaultOpenIdCredentials.getOauth2ClientId());
 
         final JwtClaims jwtClaims = jwtService

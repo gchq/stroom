@@ -29,6 +29,7 @@ public class OpenId {
     public static final String NONCE = "nonce";
     public static final String PROMPT = "prompt";
     public static final String REDIRECT_URI = "redirect_uri";
+    public static final String POST_LOGOUT_REDIRECT_URI = "post_logout_redirect_uri";
     public static final String REFRESH_TOKEN = "refresh_token";
     public static final String RESPONSE_TYPE = "response_type";
     public static final String SCOPE = "scope";

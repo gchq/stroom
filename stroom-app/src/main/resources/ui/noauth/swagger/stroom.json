@@ -12026,6 +12026,9 @@
               "$ref" : "#/components/schemas/Message"
             }
           },
+          "rootDocRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
           "sourcePath" : {
             "type" : "string"
           },

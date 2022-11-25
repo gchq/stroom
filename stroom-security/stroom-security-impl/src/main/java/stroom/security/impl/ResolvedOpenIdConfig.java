@@ -1,6 +1,7 @@
 package stroom.security.impl;
 
 import stroom.config.common.UriFactory;
+import stroom.security.api.OpenIdConfiguration;
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdClientFactory;
@@ -27,7 +28,7 @@ import javax.inject.Singleton;
 import javax.servlet.http.HttpServletResponse;
 
 @Singleton
-public class ResolvedOpenIdConfig {
+public class ResolvedOpenIdConfig implements OpenIdConfiguration {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResolvedOpenIdConfig.class);
 
@@ -54,7 +55,7 @@ public class ResolvedOpenIdConfig {
     private final Provider<CloseableHttpClient> httpClientProvider;
 
     private volatile String lastConfigurationEndpoint;
-    private volatile OpenIdConfigurationResponse openIdConfiguration;
+    private volatile OpenIdConfigurationResponse openIdConfigurationResp;
 
     @Inject
     public ResolvedOpenIdConfig(final UriFactory uriFactory,
@@ -67,12 +68,12 @@ public class ResolvedOpenIdConfig {
         this.httpClientProvider = httpClientProvider;
     }
 
-    private OpenIdConfigurationResponse getOpenIdConfiguration() {
+    private OpenIdConfigurationResponse getOpenIdConfigurationResp() {
         final OpenIdConfig openIdConfig = openIdConfigProvider.get();
         final String configurationEndpoint = openIdConfig.getOpenIdConfigurationEndpoint();
-        if (openIdConfiguration == null || !Objects.equals(lastConfigurationEndpoint, configurationEndpoint)) {
+        if (openIdConfigurationResp == null || !Objects.equals(lastConfigurationEndpoint, configurationEndpoint)) {
             if (openIdConfig.isUseInternal()) {
-                openIdConfiguration = OpenIdConfigurationResponse.builder()
+                openIdConfigurationResp = OpenIdConfigurationResponse.builder()
                         .issuer(INTERNAL_ISSUER)
                         .authorizationEndpoint(uriFactory.publicUri(INTERNAL_AUTH_ENDPOINT).toString())
                         .tokenEndpoint(uriFactory.nodeUri(INTERNAL_TOKEN_ENDPOINT).toString())
@@ -94,10 +95,10 @@ public class ResolvedOpenIdConfig {
 
                             final ObjectMapper mapper = new ObjectMapper();
                             mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-                            openIdConfiguration = mapper.readValue(msg, OpenIdConfigurationResponse.class);
+                            openIdConfigurationResp = mapper.readValue(msg, OpenIdConfigurationResponse.class);
 
                             // Overwrite configuration with any values we might have manually configured.
-                            Builder builder = openIdConfiguration.copy();
+                            Builder builder = openIdConfigurationResp.copy();
                             if (openIdConfig.getIssuer() != null &&
                                     !openIdConfig.getIssuer().isBlank()) {
                                 builder = builder.issuer(openIdConfig.getIssuer());
@@ -117,14 +118,14 @@ public class ResolvedOpenIdConfig {
                             if (openIdConfig.getLogoutEndpoint() != null &&
                                     !openIdConfig.getLogoutEndpoint().isBlank()) {
                                 builder = builder.logoutEndpoint(openIdConfig.getLogoutEndpoint());
-                            } else if (openIdConfiguration.getLogoutEndpoint() == null ||
-                                    openIdConfiguration.getLogoutEndpoint().isBlank()) {
+                            } else if (openIdConfigurationResp.getLogoutEndpoint() == null ||
+                                    openIdConfigurationResp.getLogoutEndpoint().isBlank()) {
                                 // If the IdP doesn't provide a logout endpoint then use the internal one to invalidate
                                 // the session and redirect to perform a a new auth flow.
                                 builder = builder.logoutEndpoint(
                                         uriFactory.publicUri(INTERNAL_LOGOUT_ENDPOINT).toString());
                             }
-                            openIdConfiguration = builder.build();
+                            openIdConfigurationResp = builder.build();
 
                         } else {
                             throw new AuthenticationException("Received status " + response.getStatusLine() +
@@ -136,8 +137,8 @@ public class ResolvedOpenIdConfig {
                 }
             }
 
-            if (openIdConfiguration == null) {
-                openIdConfiguration = OpenIdConfigurationResponse.builder()
+            if (openIdConfigurationResp == null) {
+                openIdConfigurationResp = OpenIdConfigurationResponse.builder()
                         .issuer(openIdConfig.getIssuer())
                         .authorizationEndpoint(openIdConfig.getAuthEndpoint())
                         .tokenEndpoint(openIdConfig.getTokenEndpoint())
@@ -149,27 +150,32 @@ public class ResolvedOpenIdConfig {
             lastConfigurationEndpoint = configurationEndpoint;
         }
 
-        return openIdConfiguration;
+        return openIdConfigurationResp;
+    }
+
+    @Override
+    public String getOpenIdConfigurationEndpoint() {
+        return openIdConfigProvider.get().getOpenIdConfigurationEndpoint();
     }
 
     public String getIssuer() {
-        return getOpenIdConfiguration().getIssuer();
+        return getOpenIdConfigurationResp().getIssuer();
     }
 
     public String getAuthEndpoint() {
-        return getOpenIdConfiguration().getAuthorizationEndpoint();
+        return getOpenIdConfigurationResp().getAuthorizationEndpoint();
     }
 
     public String getTokenEndpoint() {
-        return getOpenIdConfiguration().getTokenEndpoint();
+        return getOpenIdConfigurationResp().getTokenEndpoint();
     }
 
     public String getJwksUri() {
-        return getOpenIdConfiguration().getJwksUri();
+        return getOpenIdConfigurationResp().getJwksUri();
     }
 
     public String getLogoutEndpoint() {
-        return getOpenIdConfiguration().getLogoutEndpoint();
+        return getOpenIdConfigurationResp().getLogoutEndpoint();
     }
 
     public String getClientId() {
@@ -204,5 +210,10 @@ public class ResolvedOpenIdConfig {
             return DEFAULT_REQUEST_SCOPE;
         }
         return openIdConfig.getRequestScope();
+    }
+
+    @Override
+    public boolean isValidateAudience() {
+        return false;
     }
 }

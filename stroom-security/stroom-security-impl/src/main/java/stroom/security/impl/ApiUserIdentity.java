@@ -4,10 +4,13 @@ import stroom.docref.HasUuid;
 import stroom.security.api.HasJws;
 import stroom.security.api.HasSessionId;
 import stroom.security.api.UserIdentity;
+import stroom.util.NullSafe;
+import stroom.util.exception.ThrowingFunction;
 
 import org.jose4j.jwt.consumer.JwtContext;
 
 import java.util.Objects;
+import java.util.Optional;
 
 class ApiUserIdentity implements UserIdentity, HasSessionId, HasUuid, HasJws {
 
@@ -33,6 +36,17 @@ class ApiUserIdentity implements UserIdentity, HasSessionId, HasUuid, HasJws {
     @Override
     public String getId() {
         return id;
+    }
+
+    @Override
+    public Optional<String> getFullName() {
+        return getClaimValue("name");
+    }
+
+    @Override
+    public String getPreferredUsername() {
+        return getClaimValue("preferred_username")
+                .orElseGet(this::getId);
     }
 
     @Override
@@ -71,5 +85,13 @@ class ApiUserIdentity implements UserIdentity, HasSessionId, HasUuid, HasJws {
     @Override
     public String toString() {
         return getId();
+    }
+
+    Optional<String> getClaimValue(final String claim) {
+        return NullSafe.getAsOptional(
+                jwtContext,
+                JwtContext::getJwtClaims,
+                ThrowingFunction.unchecked(jwtClaims ->
+                        jwtClaims.getClaimValue(claim, String.class)));
     }
 }

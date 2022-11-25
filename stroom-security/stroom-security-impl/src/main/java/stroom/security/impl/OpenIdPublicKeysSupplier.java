@@ -1,5 +1,6 @@
 package stroom.security.impl;
 
+import stroom.security.api.OpenIdConfiguration;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -20,21 +21,21 @@ public class OpenIdPublicKeysSupplier implements Supplier<JsonWebKeySet> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OpenIdPublicKeysSupplier.class);
 
-    private final ResolvedOpenIdConfig openIdConfig;
+    private final OpenIdConfiguration openIdConfiguration;
     private final WebTargetFactory webTargetFactory;
 
     private final Map<String, JsonWebKeySet> cache = new ConcurrentHashMap<>();
 
     @Inject
-    OpenIdPublicKeysSupplier(final ResolvedOpenIdConfig openIdConfig,
+    OpenIdPublicKeysSupplier(final OpenIdConfiguration openIdConfiguration,
                              final WebTargetFactory webTargetFactory) {
-        this.openIdConfig = openIdConfig;
+        this.openIdConfiguration = openIdConfiguration;
         this.webTargetFactory = webTargetFactory;
     }
 
     @Override
     public JsonWebKeySet get() {
-        return get(openIdConfig.getJwksUri());
+        return get(openIdConfiguration.getJwksUri());
     }
 
     public JsonWebKeySet get(final String jwksUri) {

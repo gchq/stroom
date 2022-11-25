@@ -1,5 +1,6 @@
 package stroom.security.impl;
 
+import stroom.security.api.OpenIdConfiguration;
 import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.exception.AuthenticationException;
@@ -56,7 +57,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
     private final InternalJwtContextFactory internalJwtContextFactory;
     private final StandardJwtContextFactory standardJwtContextFactory;
     private final OpenIdConfig openIdConfig;
-    private final ResolvedOpenIdConfig resolvedOpenIdConfig;
+    private final OpenIdConfiguration openIdConfiguration;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final UserCache userCache;
     private final Provider<CloseableHttpClient> httpClientProvider;
@@ -66,7 +67,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
                             final InternalJwtContextFactory internalJwtContextFactory,
                             final StandardJwtContextFactory standardJwtContextFactory,
                             final OpenIdConfig openIdConfig,
-                            final ResolvedOpenIdConfig resolvedOpenIdConfig,
+                            final OpenIdConfiguration openIdConfiguration,
                             final DefaultOpenIdCredentials defaultOpenIdCredentials,
                             final UserCache userCache,
                             final Provider<CloseableHttpClient> httpClientProvider) {
@@ -74,7 +75,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
         this.internalJwtContextFactory = internalJwtContextFactory;
         this.standardJwtContextFactory = standardJwtContextFactory;
         this.openIdConfig = openIdConfig;
-        this.resolvedOpenIdConfig = resolvedOpenIdConfig;
+        this.openIdConfiguration = openIdConfiguration;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.userCache = userCache;
         this.httpClientProvider = httpClientProvider;
@@ -124,16 +125,16 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
         final HttpSession session = request.getSession(false);
 
         final ObjectMapper mapper = getMapper();
-        final String tokenEndpoint = resolvedOpenIdConfig.getTokenEndpoint();
+        final String tokenEndpoint = openIdConfiguration.getTokenEndpoint();
         final HttpPost httpPost = new HttpPost(tokenEndpoint);
 
         // AWS requires form content and not a JSON object.
-        if (resolvedOpenIdConfig.isFormTokenRequest()) {
+        if (openIdConfiguration.isFormTokenRequest()) {
             final List<NameValuePair> nvps = new ArrayList<>();
             nvps.add(new BasicNameValuePair(OpenId.CODE, code));
             nvps.add(new BasicNameValuePair(OpenId.GRANT_TYPE, OpenId.GRANT_TYPE__AUTHORIZATION_CODE));
-            nvps.add(new BasicNameValuePair(OpenId.CLIENT_ID, resolvedOpenIdConfig.getClientId()));
-            nvps.add(new BasicNameValuePair(OpenId.CLIENT_SECRET, resolvedOpenIdConfig.getClientSecret()));
+            nvps.add(new BasicNameValuePair(OpenId.CLIENT_ID, openIdConfiguration.getClientId()));
+            nvps.add(new BasicNameValuePair(OpenId.CLIENT_SECRET, openIdConfiguration.getClientSecret()));
             nvps.add(new BasicNameValuePair(OpenId.REDIRECT_URI, state.getUri()));
             setFormParams(httpPost, nvps);
 
@@ -142,8 +143,8 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
                 final TokenRequest tokenRequest = TokenRequest.builder()
                         .code(code)
                         .grantType(OpenId.GRANT_TYPE__AUTHORIZATION_CODE)
-                        .clientId(resolvedOpenIdConfig.getClientId())
-                        .clientSecret(resolvedOpenIdConfig.getClientSecret())
+                        .clientId(openIdConfiguration.getClientId())
+                        .clientSecret(openIdConfiguration.getClientSecret())
                         .redirectUri(state.getUri())
                         .build();
                 final String json = mapper.writeValueAsString(tokenRequest);
@@ -205,18 +206,18 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
             }
 
             final ObjectMapper mapper = getMapper();
-            final String tokenEndpoint = resolvedOpenIdConfig.getTokenEndpoint();
+            final String tokenEndpoint = openIdConfiguration.getTokenEndpoint();
             final HttpPost httpPost = new HttpPost(tokenEndpoint);
 
             // AWS requires form content and not a JSON object.
-            if (resolvedOpenIdConfig.isFormTokenRequest()) {
+            if (openIdConfiguration.isFormTokenRequest()) {
                 final List<NameValuePair> nvps = new ArrayList<>();
                 nvps.add(new BasicNameValuePair(OpenId.GRANT_TYPE, OpenId.REFRESH_TOKEN));
                 nvps.add(new BasicNameValuePair(OpenId.REFRESH_TOKEN,
                         identity.getTokenResponse().getRefreshToken()));
-                nvps.add(new BasicNameValuePair(OpenId.CLIENT_ID, resolvedOpenIdConfig.getClientId()));
+                nvps.add(new BasicNameValuePair(OpenId.CLIENT_ID, openIdConfiguration.getClientId()));
                 nvps.add(new BasicNameValuePair(OpenId.CLIENT_SECRET,
-                        resolvedOpenIdConfig.getClientSecret()));
+                        openIdConfiguration.getClientSecret()));
                 setFormParams(httpPost, nvps);
 
             } else {
@@ -278,7 +279,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
     private void setFormParams(final HttpPost httpPost,
                                final List<NameValuePair> nvps) {
         try {
-            String authorization = resolvedOpenIdConfig.getClientId() + ":" + resolvedOpenIdConfig.getClientSecret();
+            String authorization = openIdConfiguration.getClientId() + ":" + openIdConfiguration.getClientSecret();
             authorization = Base64.getEncoder().encodeToString(authorization.getBytes(StandardCharsets.UTF_8));
             authorization = "Basic " + authorization;
 

@@ -1,5 +1,7 @@
 package stroom.security.impl;
 
+import stroom.security.api.OpenIdConfiguration;
+import stroom.security.openid.api.OpenId;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 
@@ -8,9 +10,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import javax.validation.constraints.Pattern;
+
 
 @JsonPropertyOrder(alphabetic = true)
-public class OpenIdConfig extends AbstractConfig implements IsStroomConfig {
+public class OpenIdConfig extends AbstractConfig implements IsStroomConfig, OpenIdConfiguration {
 
     public static final String PROP_NAME_CLIENT_ID = "clientId";
     public static final String PROP_NAME_CLIENT_SECRET = "clientSecret";
@@ -61,6 +65,14 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig {
     private final String logoutEndpoint;
 
     /**
+     * Not provided by the configuration endpoint, must be configured manually.
+     * <p>
+     * The name of the URI parameter to use when passing the logout redirect URI to the IDP.
+     * This is here as the spec seems to have changed from 'redirect_uri' to 'post_logout_redirect_uri'.
+     */
+    private final String logoutRedirectParamName;
+
+    /**
      * Some OpenId providers, e.g. AWS Cognito, require a form to be used for token requests.
      */
     private final boolean formTokenRequest;
@@ -80,6 +92,12 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig {
      */
     private final String requestScope;
 
+    /**
+     * Whether to validate the audience in JWT token, when the audience is expected to be the clientId.
+     */
+    private final boolean validateAudience;
+
+
     public OpenIdConfig() {
         useInternal = true;
         openIdConfigurationEndpoint = null;
@@ -88,10 +106,12 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig {
         tokenEndpoint = null;
         jwksUri = null;
         logoutEndpoint = null;
+        logoutRedirectParamName = OpenId.POST_LOGOUT_REDIRECT_URI;
         formTokenRequest = false;
         clientSecret = null;
         clientId = null;
         requestScope = null;
+        validateAudience = true;
     }
 
     @JsonCreator
@@ -102,10 +122,12 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig {
                         @JsonProperty("tokenEndpoint") final String tokenEndpoint,
                         @JsonProperty("jwksUri") final String jwksUri,
                         @JsonProperty("logoutEndpoint") final String logoutEndpoint,
+                        @JsonProperty("logoutRedirectParamName") final String logoutRedirectParamName,
                         @JsonProperty("formTokenRequest") final boolean formTokenRequest,
                         @JsonProperty("clientId") final String clientId,
                         @JsonProperty("clientSecret") final String clientSecret,
-                        @JsonProperty("requestScope") final String requestScope) {
+                        @JsonProperty("requestScope") final String requestScope,
+                        @JsonProperty("validateAudience") final boolean validateAudience) {
         this.useInternal = useInternal;
         this.openIdConfigurationEndpoint = openIdConfigurationEndpoint;
         this.issuer = issuer;
@@ -113,10 +135,12 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig {
         this.tokenEndpoint = tokenEndpoint;
         this.jwksUri = jwksUri;
         this.logoutEndpoint = logoutEndpoint;
+        this.logoutRedirectParamName = logoutRedirectParamName;
         this.formTokenRequest = formTokenRequest;
         this.clientId = clientId;
         this.clientSecret = clientSecret;
         this.requestScope = requestScope;
+        this.validateAudience = validateAudience;
     }
 
     /**
@@ -130,6 +154,7 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig {
         return useInternal;
     }
 
+    @Override
     @JsonPropertyDescription("You can set an openid-configuration URL to automatically configure much of the openid " +
             "settings. Without this the other endpoints etc must be set manually.")
     @JsonProperty
@@ -137,6 +162,7 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig {
         return openIdConfigurationEndpoint;
     }
 
+    @Override
     @JsonProperty
     @JsonPropertyDescription("The issuer used in OpenId authentication." +
             "Should only be set if not using a configuration endpoint.")
@@ -144,6 +170,7 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig {
         return issuer;
     }
 
+    @Override
     @JsonProperty
     @JsonPropertyDescription("The authentication endpoint used in OpenId authentication." +
             "Should only be set if not using a configuration endpoint.")
@@ -151,6 +178,7 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig {
         return authEndpoint;
     }
 
+    @Override
     @JsonProperty
     @JsonPropertyDescription("The token endpoint used in OpenId authentication." +
             "Should only be set if not using a configuration endpoint.")
@@ -158,6 +186,7 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig {
         return tokenEndpoint;
     }
 
+    @Override
     @JsonProperty
     @JsonPropertyDescription("The URI to obtain the JSON Web Key Set from in OpenId authentication." +
             "Should only be set if not using a configuration endpoint.")
@@ -165,6 +194,7 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig {
         return jwksUri;
     }
 
+    @Override
     @JsonProperty
     @JsonPropertyDescription("The logout endpoint for the identity provider." +
             "This is not typically provided by the configuration endpoint.")
@@ -172,6 +202,16 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig {
         return logoutEndpoint;
     }
 
+    @Override
+    @Pattern(regexp = "(" + OpenId.REDIRECT_URI + "|" + OpenId.POST_LOGOUT_REDIRECT_URI + ")")
+    @JsonProperty
+    @JsonPropertyDescription("The name of the URI parameter to use when passing the logout redirect URI to the IDP. "
+            + "This is here as the spec seems to have changed from 'redirect_uri' to 'post_logout_redirect_uri'.")
+    public String getLogoutRedirectParamName() {
+        return logoutRedirectParamName;
+    }
+
+    @Override
     @JsonProperty(PROP_NAME_CLIENT_ID)
     @JsonPropertyDescription("The client ID used in OpenId authentication.")
     public String getClientId() {
@@ -180,22 +220,33 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig {
 
     // TODO Not sure we can add NotNull to this as it has no default and if useInternal is true
     //  it doesn't need a value
+    @Override
     @JsonProperty(PROP_NAME_CLIENT_SECRET)
     @JsonPropertyDescription("The client secret used in OpenId authentication.")
     public String getClientSecret() {
         return clientSecret;
     }
 
+    @Override
     @JsonProperty
     @JsonPropertyDescription("Some OpenId providers, e.g. AWS Cognito, require a form to be used for token requests.")
     public boolean isFormTokenRequest() {
         return formTokenRequest;
     }
 
+    @Override
     @JsonProperty
     @JsonPropertyDescription("If a custom auth flow request scope is required then this should be set.")
     public String getRequestScope() {
         return requestScope;
+    }
+
+    @Override
+    @JsonProperty
+    @JsonPropertyDescription("Whether to validate the audience in JWT token, when the audience is expected " +
+            "to be the clientId.")
+    public boolean isValidateAudience() {
+        return validateAudience;
     }
 
     @Override
@@ -212,6 +263,7 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig {
                 ", clientId='" + clientId + '\'' +
                 ", clientSecret='" + clientSecret + '\'' +
                 ", requestScope='" + requestScope + '\'' +
+                ", validateAudience=" + validateAudience +
                 '}';
     }
 }

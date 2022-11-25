@@ -43,6 +43,11 @@ public interface StandardHeaderArguments {
     String REMOTE_CERT_EXPIRY = "RemoteCertExpiry";
     String REMOTE_FILE = "RemoteFile";
 
+    // The unique identifier of the user on the IDP
+    String UPLOAD_USER_ID = "UploadUserId";
+    // Username of the user on the IDP, may not be unique
+    String UPLOAD_USER_USERNAME = "UploadUserUsername";
+
     String STREAM_SIZE = "StreamSize";
 
     String STROOM_STATUS = "Stroom-Status";

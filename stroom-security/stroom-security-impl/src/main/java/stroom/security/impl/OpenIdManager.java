@@ -1,5 +1,6 @@
 package stroom.security.impl;
 
+import stroom.security.api.OpenIdConfiguration;
 import stroom.security.api.UserIdentity;
 import stroom.security.openid.api.OpenId;
 import stroom.util.jersey.UriBuilderUtil;
@@ -21,13 +22,13 @@ class OpenIdManager {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OpenIdManager.class);
 
-    private final ResolvedOpenIdConfig openIdConfig;
+    private final OpenIdConfiguration openIdConfiguration;
     private final UserIdentityFactory userIdentityFactory;
 
     @Inject
-    public OpenIdManager(final ResolvedOpenIdConfig openIdConfig,
+    public OpenIdManager(final OpenIdConfiguration openIdConfiguration,
                          final UserIdentityFactory userIdentityFactory) {
-        this.openIdConfig = openIdConfig;
+        this.openIdConfiguration = openIdConfiguration;
         this.userIdentityFactory = userIdentityFactory;
     }
 
@@ -51,8 +52,8 @@ class OpenIdManager {
     }
 
     private String frontChannelOIDC(final HttpServletRequest request, final String postAuthRedirectUri) {
-        final String endpoint = openIdConfig.getAuthEndpoint();
-        final String clientId = openIdConfig.getClientId();
+        final String endpoint = openIdConfiguration.getAuthEndpoint();
+        final String clientId = openIdConfiguration.getClientId();
         Objects.requireNonNull(endpoint,
                 "To make an authentication request the OpenId config 'authEndpoint' must not be null");
         Objects.requireNonNull(clientId,
@@ -60,7 +61,7 @@ class OpenIdManager {
         // Create a state for this authentication request.
         final AuthenticationState state = AuthenticationStateSessionUtil.create(request, postAuthRedirectUri);
         LOGGER.debug(() -> "frontChannelOIDC state=" + state);
-        return createAuthUri(request, endpoint, clientId, state, false);
+        return createAuthUri(request, endpoint, clientId, state, false, false);
     }
 
     private String backChannelOIDC(final HttpServletRequest request,
@@ -133,28 +134,35 @@ class OpenIdManager {
 
     public String logout(final HttpServletRequest request, final String postAuthRedirectUri) {
         final String redirectUri = OpenId.removeReservedParams(postAuthRedirectUri);
-        final String endpoint = openIdConfig.getLogoutEndpoint();
-        final String clientId = openIdConfig.getClientId();
+        final String endpoint = openIdConfiguration.getLogoutEndpoint();
+        final String clientId = openIdConfiguration.getClientId();
         Objects.requireNonNull(endpoint,
                 "To make a logout request the OpenId config 'logoutEndpoint' must not be null");
         Objects.requireNonNull(clientId,
                 "To make an authentication request the OpenId config 'clientId' must not be null");
         final AuthenticationState state = AuthenticationStateSessionUtil.create(request, redirectUri);
         LOGGER.debug(() -> "logout state=" + state);
-        return createAuthUri(request, endpoint, clientId, state, true);
+        return createAuthUri(request, endpoint, clientId, state, true, true);
     }
 
     private String createAuthUri(final HttpServletRequest request,
                                  final String endpoint,
                                  final String clientId,
                                  final AuthenticationState state,
-                                 final boolean prompt) {
+                                 final boolean prompt,
+                                 final boolean isLogout) {
         // In some cases we might need to use an external URL as the current incoming one might have been proxied.
         // Use OIDC API.
         UriBuilder uriBuilder = UriBuilder.fromUri(endpoint);
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.RESPONSE_TYPE, OpenId.CODE);
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.CLIENT_ID, clientId);
-        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.REDIRECT_URI, state.getUri());
+        final String redirectParamName = isLogout
+                ? openIdConfiguration.getLogoutRedirectParamName()
+                : OpenId.REDIRECT_URI;
+        uriBuilder = UriBuilderUtil.addParam(
+                uriBuilder,
+                redirectParamName,
+                state.getUri());
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.SCOPE, OpenId.SCOPE__OPENID +
                 " " +
                 OpenId.SCOPE__EMAIL);

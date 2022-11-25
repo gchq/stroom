@@ -98,9 +98,14 @@ class ReceiveDataRequestHandler implements RequestHandler {
             final Optional<UserIdentity> optionalUserIdentity = requestAuthenticator.authenticate(request);
 
             // Add the user identified in the token (if present) to the attribute map.
+            // Use both ID and username as the ID will likely be a nasty UUID while the username will be more
+            // useful for a human to read.
             optionalUserIdentity
                     .map(UserIdentity::getId)
-                    .ifPresent(id -> attributeMap.put("UploadUser", id));
+                    .ifPresent(id -> attributeMap.put(StandardHeaderArguments.UPLOAD_USER_ID, id));
+            optionalUserIdentity
+                    .map(UserIdentity::getPreferredUsername)
+                    .ifPresent(username -> attributeMap.put(StandardHeaderArguments.UPLOAD_USER_USERNAME, username));
 
             if (receiveDataConfig.isRequireTokenAuthentication() && optionalUserIdentity.isEmpty()) {
                 // If token authentication is required, but we could not verify the token then error.
