@@ -6820,6 +6820,8 @@ components:
             wrapped: true
         layout:
           $ref: '#/components/schemas/LayoutConfig'
+        layoutConstraints:
+          $ref: '#/components/schemas/LayoutConstraints'
         parameters:
           type: string
         tabVisibility:
@@ -8834,6 +8836,13 @@ components:
           type: string
       required:
       - type
+    LayoutConstraints:
+      type: object
+      properties:
+        fitHeight:
+          type: boolean
+        fitWidth:
+          type: boolean
     Limits:
       type: object
       properties:

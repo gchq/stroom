@@ -23,39 +23,63 @@ import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Frame;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
 
-public class VisFrame extends Frame implements VisPane {
+public class VisFrame extends Composite implements VisPane {
 
     private final MessageSupport messageSupport;
     private VisFunction function;
+    private final SimplePanel container;
+    private final Frame frame;
 
     public VisFrame(final EventBus eventBus) {
-        super("vis.html"); // + "?time=" + System.currentTimeMillis());
+        frame = new Frame("vis.html");// + "?time=" + System.currentTimeMillis());
+        frame.addStyleName("VisFrame-frame");
+        messageSupport = new MessageSupport(eventBus, frame.getElement());
 
-        final Style style = getElement().getStyle();
-        style.setPosition(Position.ABSOLUTE);
-        style.setLeft(0, Unit.PX);
-        style.setRight(0, Unit.PX);
-        style.setTop(0, Unit.PX);
-        style.setBottom(0, Unit.PX);
-        style.setWidth(100, Unit.PCT);
-        style.setHeight(100, Unit.PCT);
-        style.setMargin(0, Unit.PX);
-        style.setPadding(0, Unit.PX);
-        style.setBorderWidth(0, Unit.PX);
+        container = new SimplePanel(frame);
+        container.addStyleName("VisFrame-container");
+        initWidget(container);
+    }
 
-        messageSupport = new MessageSupport(eventBus, getElement());
+    public void setContainerPositionAndSize(final int left, final int top, final int width, final int height) {
+        setPositionAndSize(
+                container.getElement().getStyle(),
+                left,
+                top,
+                width,
+                height);
+    }
+
+    public void setInnerPositionAndSize(final int left, final int top, final int width, final int height) {
+        setPositionAndSize(
+                frame.getElement().getStyle(),
+                left,
+                top,
+                width,
+                height);
+    }
+
+    private void setPositionAndSize(final Style style,
+                                    final int left,
+                                    final int top,
+                                    final int width,
+                                    final int height) {
+        style.setLeft(left, Unit.PX);
+        style.setTop(top, Unit.PX);
+        style.setWidth(width, Unit.PX);
+        style.setHeight(height, Unit.PX);
     }
 
     public void bind() {

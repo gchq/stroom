@@ -37,4 +37,32 @@ public class ElementUtil {
 
         return false;
     }
+
+    public static Rect getClientRect(Element el) {
+        return new Rect(getClientTop(el), getClientBottom(el), getClientLeft(el), getClientRight(el));
+    }
+
+    public static Rect getInnerClientRect(Element el) {
+        final int top = getClientTop(el);
+        final int bottom = top + el.getClientHeight();
+        final int left = getClientLeft(el);
+        final int right = left + el.getClientWidth();
+        return new Rect(top, bottom, left, right);
+    }
+
+    public static native int getClientLeft(Element el) /*-{
+     return window.pageXOffset + el.getBoundingClientRect().left;
+    }-*/;
+
+    public static native int getClientRight(Element el) /*-{
+     return window.pageXOffset + el.getBoundingClientRect().right;
+    }-*/;
+
+    public static native int getClientTop(Element el) /*-{
+     return window.pageYOffset + el.getBoundingClientRect().top;
+    }-*/;
+
+    public static native int getClientBottom(Element el) /*-{
+     return window.pageYOffset + el.getBoundingClientRect().bottom;
+    }-*/;
 }

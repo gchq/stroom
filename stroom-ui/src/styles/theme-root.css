@@ -97,7 +97,7 @@
      */
 
     /* Page */
-    --app__background-color: #fff;/*#d50101;*/
+    --app__background-color: rgba(0, 0, 0, 0.025);/*#d50101;*/
     --page__background-color: #fff;
     --page__text-color: rgba(0, 0, 0, 0.8);
 
@@ -111,7 +111,8 @@
 
     /* Dashboard */
     --dashboard-panel__background-color: #fff;
-    --dashboard-panel__border-color: rgba(0, 0, 0, 0.1);
+    --dashboard-panel__border-color: rgba(0, 0, 0, 0.06);
+    --dashboard-panel__grid-color: rgba(0, 0, 0, 0.03);
     --dashboard-splitter__background-color: #2196f3;
     --dashboard-splitter__border-color: #22252c;
 

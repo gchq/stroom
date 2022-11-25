@@ -1,14 +1,24 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:trs="urn:import:stroom.dashboard.client.main">
+             xmlns:trs="urn:import:stroom.dashboard.client.main"
+             xmlns:q="urn:import:stroom.dashboard.client.query">
     <g:FlowPanel styleName="DashboardViewImpl max dock-container-vertical DashboardViewImpl">
+        <g:FlowPanel styleName="DashboardViewImpl-top dock-min dock-container-horizontal">
+            <g:FlowPanel styleName="dock-max">
+                <g:Button ui:field="designModeButton" text="Enter Design Mode" width="200px"></g:Button>
+            </g:FlowPanel>
+            <g:FlowPanel styleName="DashboardViewImpl-top-buttons dock-min dock-container-horizontal">
+                <trs:TimeRangeSelector ui:field="timeRangeSelector" addStyleNames="dock-min"/>
+                <q:QueryButtons ui:field="queryButtons" addStyleNames="dock-min"/>
+            </g:FlowPanel>
+        </g:FlowPanel>
         <g:FlowPanel styleName="DashboardViewImpl-top dock-min dock-container-horizontal">
             <g:FlowPanel styleName="dock-min DashboardViewImpl-top-buttons">
                 <g:Button ui:field="addPanelButton" text="Add Panel"></g:Button>
                 <g:Button ui:field="addInputButton" text="Add Input"></g:Button>
+                <g:Button ui:field="constraintsButton" text="Constraints"></g:Button>
             </g:FlowPanel>
-            <trs:TimeRangeSelector ui:field="timeRangeSelector" addStyleNames="dock-min"/>
         </g:FlowPanel>
         <g:SimplePanel ui:field="content" styleName="dock-max DashboardViewImpl-content"/>
     </g:FlowPanel>

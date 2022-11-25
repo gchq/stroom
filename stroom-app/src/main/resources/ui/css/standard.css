@@ -191,6 +191,8 @@ a, a:visited, a:hover {
   border-left: 2px solid #666;
   border-right: 2px solid #bbb;
   border-bottom: 2px solid #bbb;
+
+  background-color: rgba(255,0,0,0.5);
 }
 
 .gwt-HorizontalSplitPanel {

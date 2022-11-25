@@ -1,9 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:q="urn:import:stroom.dashboard.client.query">
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <g:FlowPanel styleName="KeyValueInputView max dock-container-horizontal">
         <g:TextBox ui:field="params" addStyleNames="dock-max allow-focus"/>
-        <q:QueryButtons ui:field="queryButtons" addStyleNames="dock-min"/>
     </g:FlowPanel>
 </ui:UiBinder>

@@ -112,6 +112,7 @@
     /* Dashboard */
     --dashboard-panel__background-color: #131417;
     --dashboard-panel__border-color: #4d5250;
+    --dashboard-panel__grid-color: rgba(255, 255, 255, 0.04);
     --dashboard-splitter__background-color: #2196f3;
     --dashboard-splitter__border-color: #22252c;
 

@@ -19,12 +19,13 @@ package stroom.dashboard.client.gin;
 import stroom.core.client.gin.PluginModule;
 import stroom.dashboard.client.DashboardPlugin;
 import stroom.dashboard.client.main.ComponentRegistry;
-import stroom.dashboard.client.main.DashboardLayoutPresenter;
-import stroom.dashboard.client.main.DashboardLayoutViewImpl;
 import stroom.dashboard.client.main.DashboardPresenter;
 import stroom.dashboard.client.main.DashboardSettingsPresenter;
 import stroom.dashboard.client.main.DashboardSettingsViewImpl;
 import stroom.dashboard.client.main.DashboardViewImpl;
+import stroom.dashboard.client.main.LayoutConstraintPresenter;
+import stroom.dashboard.client.main.LayoutConstraintPresenter.LayoutConstraintView;
+import stroom.dashboard.client.main.LayoutConstraintViewImpl;
 import stroom.dashboard.client.main.RenameTabPresenter;
 import stroom.dashboard.client.main.RenameTabPresenter.RenameTabView;
 import stroom.dashboard.client.main.RenameTabViewImpl;
@@ -55,13 +56,13 @@ public class DashboardModule extends PluginModule {
                 DashboardPresenter.DashboardView.class,
                 DashboardViewImpl.class);
         bindPresenterWidget(
-                DashboardLayoutPresenter.class,
-                DashboardLayoutPresenter.DashboardLayoutView.class,
-                DashboardLayoutViewImpl.class);
-        bindPresenterWidget(
                 RenameTabPresenter.class,
                 RenameTabView.class,
                 RenameTabViewImpl.class);
+        bindPresenterWidget(
+                LayoutConstraintPresenter.class,
+                LayoutConstraintView.class,
+                LayoutConstraintViewImpl.class);
 
         bindSharedView(LinkTabsLayoutView.class, LinkTabsLayoutViewImpl.class);
         bindSharedView(HTMLView.class, HTMLViewImpl.class);

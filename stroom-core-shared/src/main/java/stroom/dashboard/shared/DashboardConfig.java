@@ -35,10 +35,24 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@JsonPropertyOrder({"parameters", "timeRange", "components", "layout", "tabVisibility"})
+@JsonPropertyOrder({
+        "parameters",
+        "timeRange",
+        "components",
+        "layout",
+        "layoutConstraints",
+        "tabVisibility"
+})
 @JsonInclude(Include.NON_NULL)
 @XmlRootElement(name = "dashboard")
-@XmlType(name = "DashboardConfig", propOrder = {"parameters", "timeRange", "components", "layout", "tabVisibility"})
+@XmlType(name = "DashboardConfig", propOrder = {
+        "parameters",
+        "timeRange",
+        "components",
+        "layout",
+        "layoutConstraints",
+        "tabVisibility"
+})
 public class DashboardConfig {
 
     @XmlElement(name = "parameters")
@@ -55,6 +69,8 @@ public class DashboardConfig {
             @XmlElement(name = "tabLayout", type = TabLayoutConfig.class)})
     @JsonProperty("layout")
     private LayoutConfig layout;
+    @JsonProperty("layoutConstraints")
+    private LayoutConstraints layoutConstraints;
     @XmlElement(name = "tabVisibility")
     @JsonProperty("tabVisibility")
     private TabVisibility tabVisibility;
@@ -68,11 +84,13 @@ public class DashboardConfig {
                            @JsonProperty("timeRange") final TimeRange timeRange,
                            @JsonProperty("components") final List<ComponentConfig> components,
                            @JsonProperty("layout") final LayoutConfig layout,
+                           @JsonProperty("layoutConstraints") LayoutConstraints layoutConstraints,
                            @JsonProperty("tabVisibility") final TabVisibility tabVisibility) {
         this.parameters = parameters;
         this.timeRange = timeRange;
         this.components = components;
         this.layout = layout;
+        this.layoutConstraints = layoutConstraints;
         this.tabVisibility = tabVisibility;
 
         if (this.tabVisibility == null) {
@@ -110,6 +128,14 @@ public class DashboardConfig {
 
     public void setLayout(final LayoutConfig layout) {
         this.layout = layout;
+    }
+
+    public LayoutConstraints getLayoutConstraints() {
+        return layoutConstraints;
+    }
+
+    public void setLayoutConstraints(final LayoutConstraints layoutConstraints) {
+        this.layoutConstraints = layoutConstraints;
     }
 
     public TabVisibility getTabVisibility() {

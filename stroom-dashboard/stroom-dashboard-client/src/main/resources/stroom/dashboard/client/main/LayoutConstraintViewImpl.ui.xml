@@ -1,0 +1,14 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form-page form">
+        <form:FormGroup identity="layoutConstraintFitWidth" label="Fit Width">
+            <tickbox:CustomCheckBox ui:field="fitWidth"/>
+        </form:FormGroup>
+        <form:FormGroup identity="layoutConstraintFitHeight" label="Fit Height">
+            <tickbox:CustomCheckBox ui:field="fitHeight"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

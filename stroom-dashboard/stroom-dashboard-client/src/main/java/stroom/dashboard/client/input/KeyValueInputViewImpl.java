@@ -36,8 +36,6 @@ public class KeyValueInputViewImpl extends ViewWithUiHandlers<KeyValueInputUiHan
 
     @UiField
     TextBox params;
-    @UiField
-    QueryButtons queryButtons;
 
     @Inject
     public KeyValueInputViewImpl(final Binder binder) {
@@ -57,11 +55,6 @@ public class KeyValueInputViewImpl extends ViewWithUiHandlers<KeyValueInputUiHan
     @Override
     public String getValue() {
         return params.getValue();
-    }
-
-    @Override
-    public QueryButtons getQueryButtons() {
-        return queryButtons;
     }
 
     @UiHandler("params")

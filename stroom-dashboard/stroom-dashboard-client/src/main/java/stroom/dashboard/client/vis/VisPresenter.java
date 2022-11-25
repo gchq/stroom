@@ -58,8 +58,6 @@ import stroom.visualisation.shared.VisualisationResource;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONValue;
@@ -91,7 +89,6 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     private final ScriptCache scriptCache;
     private final RestFactory restFactory;
     private final CurrentTheme currentTheme;
-    private final VisPane visPane;
     private final VisFrame visFrame;
 
     private VisFunction currentFunction;
@@ -125,15 +122,9 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         this.currentTheme = currentTheme;
 
         visFrame = new VisFrame(eventBus);
-        visPane = visFrame;
         visFrame.setUiHandlers(this);
-        view.setVisPane(visPane);
+        view.setVisFrame(visFrame);
         view.setUiHandlers(this);
-
-        final Style style = visFrame.getElement().getStyle();
-        style.setPosition(Position.ABSOLUTE);
-        style.setOpacity(0);
-        style.setZIndex(2);
 
         RootPanel.get().add(visFrame);
 
@@ -300,7 +291,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
 
         if (!searching) {
             searching = true;
-            visPane.start();
+            visFrame.start();
             updateStatusMessage();
         }
 
@@ -311,7 +302,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     public void endSearch() {
         if (searching) {
             searching = false;
-            visPane.end();
+            visFrame.end();
             updateStatusMessage();
         }
         getView().setRefreshing(false);
@@ -500,7 +491,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     private void startInjectingScripts(final List<ScriptDoc> scripts, final VisFunction function) {
         function.setStatus(LoadStatus.INJECTING_SCRIPT);
         // Inject returned scripts.
-        visPane.injectScripts(scripts, function);
+        visFrame.injectScripts(scripts, function);
     }
 
     @Override
@@ -511,7 +502,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
                 try {
                     if (loadedFunction == null || !loadedFunction.equals(function)) {
                         loadedFunction = function;
-                        visPane.setVisType(function.getFunctionName(), getClassName(currentTheme.getTheme()));
+                        visFrame.setVisType(function.getFunctionName(), getClassName(currentTheme.getTheme()));
                     }
 
                     if (currentData != null) {
@@ -637,7 +628,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     }
 
     private void refreshVisualisation() {
-        visPane.setData(getComponents().getContext(), currentSettings, currentData);
+        visFrame.setData(getComponents().getContext(), currentSettings, currentData);
     }
 
     @Override
@@ -751,6 +742,6 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
 
         void hideMessage();
 
-        void setVisPane(VisPane visPane);
+        void setVisFrame(VisFrame visFrame);
     }
 }

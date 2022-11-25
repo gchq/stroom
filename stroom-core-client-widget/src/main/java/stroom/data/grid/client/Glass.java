@@ -16,6 +16,8 @@
 
 package stroom.data.grid.client;
 
+import stroom.widget.util.client.Rect;
+
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
@@ -47,6 +49,14 @@ public class Glass {
         final int height = Math.max(Window.getClientHeight(), Document.get().getScrollHeight());
 
         show(0, 0, width, height);
+    }
+
+    public void show(final Rect rect) {
+        show(
+                rect.getLeft(),
+                rect.getTop(),
+                rect.getWidth(),
+                rect.getHeight());
     }
 
     public void show(final int left, final int top, final int width, final int height) {
@@ -88,6 +98,7 @@ public class Glass {
     }
 
     public Element getElement() {
+        ensureGlass();
         return glassElem;
     }
 }

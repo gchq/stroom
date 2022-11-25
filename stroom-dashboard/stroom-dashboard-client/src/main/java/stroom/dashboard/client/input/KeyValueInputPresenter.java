@@ -143,7 +143,5 @@ public class KeyValueInputPresenter extends AbstractComponentPresenter<KeyValueI
         void setValue(String value);
 
         String getValue();
-
-        QueryButtons getQueryButtons();
     }
 }

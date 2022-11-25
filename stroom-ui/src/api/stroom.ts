@@ -562,6 +562,7 @@ export interface DBTableStatus {
 export interface DashboardConfig {
   components?: ComponentConfig[];
   layout?: LayoutConfig;
+  layoutConstraints?: LayoutConstraints;
   parameters?: string;
   tabVisibility?: "SHOW_ALL" | "HIDE_SINGLE" | "HIDE_ALL";
   timeRange?: TimeRange;
@@ -1788,6 +1789,11 @@ export type KeyValueInputComponentSettings = ComponentSettings & { text?: string
 export interface LayoutConfig {
   preferredSize?: Size;
   type: string;
+}
+
+export interface LayoutConstraints {
+  fitHeight?: boolean;
+  fitWidth?: boolean;
 }
 
 export interface Limits {

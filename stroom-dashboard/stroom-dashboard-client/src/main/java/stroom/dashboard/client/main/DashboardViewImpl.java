@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.main;
 
+import stroom.dashboard.client.query.QueryButtons;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.v2.TimeRange;
 import stroom.widget.util.client.MouseUtil;
@@ -30,7 +31,6 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class DashboardViewImpl extends ViewWithUiHandlers<DashboardUiHandlers>
@@ -42,6 +42,12 @@ public class DashboardViewImpl extends ViewWithUiHandlers<DashboardUiHandlers>
     Button addPanelButton;
     @UiField
     Button addInputButton;
+    @UiField
+    Button constraintsButton;
+    @UiField
+    Button designModeButton;
+    @UiField
+    QueryButtons queryButtons;
     @UiField
     SimplePanel content;
     @UiField
@@ -71,8 +77,8 @@ public class DashboardViewImpl extends ViewWithUiHandlers<DashboardUiHandlers>
     }
 
     @Override
-    public void setContent(final View view) {
-        content.setWidget(view.asWidget());
+    public void setContent(final Widget content) {
+        this.content.setWidget(content);
     }
 
     @Override
@@ -89,6 +95,15 @@ public class DashboardViewImpl extends ViewWithUiHandlers<DashboardUiHandlers>
         addInputButton.setEnabled(!readOnly);
     }
 
+    @Override
+    public void setDesignMode(final boolean designMode) {
+        if (designMode) {
+            designModeButton.setText("Exit Design Mode");
+        } else {
+            designModeButton.setText("Enter Design Mode");
+        }
+    }
+
     @UiHandler("addPanelButton")
     public void onAddPanelButtonClick(final ClickEvent event) {
         if (MouseUtil.isPrimary(event)) {
@@ -103,6 +118,24 @@ public class DashboardViewImpl extends ViewWithUiHandlers<DashboardUiHandlers>
         if (MouseUtil.isPrimary(event)) {
             if (getUiHandlers() != null) {
                 getUiHandlers().onAddInput(event);
+            }
+        }
+    }
+
+    @UiHandler("constraintsButton")
+    public void onConstraintsButtonClick(final ClickEvent event) {
+        if (MouseUtil.isPrimary(event)) {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onConstraints(event);
+            }
+        }
+    }
+
+    @UiHandler("designModeButton")
+    public void onDesignModeButtonClick(final ClickEvent event) {
+        if (MouseUtil.isPrimary(event)) {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onDesign(event);
             }
         }
     }

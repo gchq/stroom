@@ -16,8 +16,8 @@
 
 package stroom.dashboard.client.flexlayout;
 
+import stroom.dashboard.shared.Dimension;
 import stroom.dashboard.shared.SplitLayoutConfig;
-import stroom.dashboard.shared.SplitLayoutConfig.Direction;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 
@@ -36,7 +36,7 @@ public class Splitter extends Widget {
         element = DOM.createDiv();
         element.setClassName("flexLayout-splitter");
 
-        if (splitInfo.layoutData.getDimension() == Direction.ACROSS.getDimension()) {
+        if (splitInfo.layoutConfig.getDimension() == Dimension.X) {
             element.addClassName("flexLayout-splitterAcross");
         } else {
             element.addClassName("flexLayout-splitterDown");
@@ -52,18 +52,18 @@ public class Splitter extends Widget {
     public static class SplitInfo {
 
         // private Widget widget;
-        private SplitLayoutConfig layoutData;
+        private SplitLayoutConfig layoutConfig;
         private int index;
 
-        public SplitInfo(final SplitLayoutConfig layoutData, final int index) {
-            this.layoutData = layoutData;
+        public SplitInfo(final SplitLayoutConfig layoutConfig, final int index) {
+            this.layoutConfig = layoutConfig;
             this.index = index;
         }
 
         @Override
         public int hashCode() {
             final HashCodeBuilder builder = new HashCodeBuilder();
-            builder.append(layoutData);
+            builder.append(layoutConfig);
             builder.append(index);
             return builder.toHashCode();
         }
@@ -78,13 +78,13 @@ public class Splitter extends Widget {
 
             final SplitInfo splitInfo = (SplitInfo) o;
             final EqualsBuilder builder = new EqualsBuilder();
-            builder.append(layoutData, splitInfo.layoutData);
+            builder.append(layoutConfig, splitInfo.layoutConfig);
             builder.append(index, splitInfo.index);
             return builder.isEquals();
         }
 
-        public SplitLayoutConfig getLayoutData() {
-            return layoutData;
+        public SplitLayoutConfig getLayoutConfig() {
+            return layoutConfig;
         }
 
         public int getIndex() {

@@ -27,8 +27,9 @@
 
 .DashboardViewImpl-top-buttons {
     display: flex;
+    gap: var(--control__gap--horizontal);
     align-items: center;
-    gap: var(--control__padding--horizontal);
+    justify-content: space-between;
 }
 
 .DashboardViewImpl-content {
@@ -61,10 +62,30 @@
 	-moz-user-select: none;
 }
 
+.dashboard-scrollPanel {
+    display: flex;
+    flex-grow: 1;
+    overflow: auto;
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+}
+
 .dashboard-layout {
     display: flex;
     flex-grow: 1;
 	position: relative;
+
+}
+
+.dashboard-designSurface {
+    position: absolute;
+}
+
+.dashboard-designSurface .dashboard-designSurface__designMode {
+	background-image:
+	repeating-linear-gradient(to bottom, transparent, transparent 29px, var(--dashboard-panel__grid-color) 1px,var(--dashboard-panel__grid-color) 30px),
+	repeating-linear-gradient(to right, transparent, transparent 29px, var(--dashboard-panel__grid-color) 30px, var(--dashboard-panel__grid-color) 1px);
 }
 
 .dashboard-panel {
@@ -98,9 +119,11 @@
 	top: 0px;
 	margin: 0px;
 	padding: 0px;
+	/*
 	border-width: 1px;
 	border-color: var(--dashboard-splitter__border-color);
 	border-style: solid;
+	*/
 	background-color: var(--dashboard-splitter__background-color);
 	opacity: 0.3;
 	z-index: 5;
@@ -124,20 +147,16 @@
 	cursor: row-resize;
 	height: var(--control__padding--vertical);
 
-    /* Debug *
 	opacity: 1 !important;
     background: green;
-    */
 }
 
 .flexLayout-splitterAcross {
 	cursor: col-resize;
 	width: var(--control__padding--horizontal);
 
-    /* Debug *
 	opacity: 1 !important;
 	background: red;
-	*/
 }
 
 .flexLayout-selected {
@@ -161,6 +180,8 @@
     display: flex;
     flex-direction: column;
     flex-grow: 1;
+
+    background-color: blue;
 }
 
 .tabLayout .tabLayout-barOuter {
@@ -522,6 +543,7 @@
 
 .KeyValueInputView {
     padding-left: 0.4rem;
+    padding-right: 0.4rem;
     height: auto;
 }
 
@@ -529,6 +551,23 @@
     padding-left: 0.4rem;
     padding-right: 0.4rem;
     height: auto;
+}
+
+.VisFrame-container {
+    position: absolute;
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    opacity: 0;
+    z-index: 2;
+    overflow: hidden;
+}
+
+.VisFrame-frame {
+    position: absolute;
+    margin: 0;
+    padding: 0;
+    border-width: 0;
 }
 
 
