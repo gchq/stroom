@@ -15,6 +15,7 @@ import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamStatus;
 import stroom.security.api.RequestAuthenticator;
 import stroom.security.api.UserIdentity;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.Metrics;
@@ -55,8 +56,8 @@ public class ReceiveDataHelper {
     }
 
     public String process(final HttpServletRequest request,
-                           final Handler consumeHandler,
-                           final Handler dropHandler) throws StroomStreamException {
+                          final Handler consumeHandler,
+                          final Handler dropHandler) throws StroomStreamException {
         final long startTimeMs = System.currentTimeMillis();
 
         // Create attribute map from headers.
@@ -134,35 +135,39 @@ public class ReceiveDataHelper {
 
     private void authorise(final HttpServletRequest request, final AttributeMap attributeMap) {
         final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
-        final String authorisationHeader = attributeMap.get(HttpHeaders.AUTHORIZATION);
 
         // If token authentication is required but no token is supplied then error.
-        if (receiveDataConfig.isRequireTokenAuthentication() &&
-                (authorisationHeader == null || authorisationHeader.isBlank())) {
-            throw new StroomStreamException(StroomStatusCode.CLIENT_TOKEN_REQUIRED, attributeMap);
+        if (receiveDataConfig.isRequireTokenAuthentication()) {
+            if (requestAuthenticator.hasAuthenticationToken(request)) {
+                // Authenticate the request token
+                final Optional<UserIdentity> optionalUserIdentity = requestAuthenticator.authenticate(request);
+
+                optionalUserIdentity.ifPresentOrElse(
+                        userIdentity -> {
+                            // Add the user identified in the token (if present) to the attribute map.
+                            // Use both ID and username as the ID will likely be a nasty UUID while the username will be more
+                            // useful for a human to read.
+                            NullSafe.consume(
+                                    userIdentity.getId(),
+                                    id ->
+                                            attributeMap.put(StandardHeaderArguments.UPLOAD_USER_ID, id));
+                            NullSafe.consume(
+                                    userIdentity.getPreferredUsername(),
+                                    username ->
+                                            attributeMap.put(StandardHeaderArguments.UPLOAD_USERNAME, username));
+                        },
+                        () -> {
+                            // If token authentication is required, but we could not verify the token then error.
+                            throw new StroomStreamException(StroomStatusCode.CLIENT_TOKEN_NOT_AUTHORISED, attributeMap);
+                        });
+
+            } else {
+                throw new StroomStreamException(StroomStatusCode.CLIENT_TOKEN_REQUIRED, attributeMap);
+            }
         }
-
-        // Authenticate the request token if there is one.
-        final Optional<UserIdentity> optionalUserIdentity = requestAuthenticator.authenticate(request);
-
-        // Add the user identified in the token (if present) to the attribute map.
-        // Use both ID and username as the ID will likely be a nasty UUID while the username will be more
-        // useful for a human to read.
-        optionalUserIdentity
-                .map(UserIdentity::getId)
-                .ifPresent(id -> attributeMap.put(StandardHeaderArguments.UPLOAD_USER_ID, id));
-        optionalUserIdentity
-                .map(UserIdentity::getPreferredUsername)
-                .ifPresent(username -> attributeMap.put(StandardHeaderArguments.UPLOAD_USER_USERNAME, username));
-
-        if (receiveDataConfig.isRequireTokenAuthentication() && optionalUserIdentity.isEmpty()) {
-            // If token authentication is required, but we could not verify the token then error.
-            throw new StroomStreamException(StroomStatusCode.CLIENT_TOKEN_NOT_AUTHORISED, attributeMap);
-
-        } else {
-            // Remove authorization header from attributes.
-            attributeMap.remove(HttpHeaders.AUTHORIZATION);
-        }
+        // Remove authorization header from attributes as it should not be stored or forwarded on.
+        requestAuthenticator.removeAuthorisationEntries(attributeMap);
+        attributeMap.remove(HttpHeaders.AUTHORIZATION);
     }
 
     public interface Handler {

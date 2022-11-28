@@ -25,4 +25,16 @@ public interface UserIdentity {
     default Optional<String> getFullName() {
         return Optional.empty();
     }
+
+    // TODO: 28/11/2022 Potentially worth introducing scopes, e.g. a datafeed scope so only tokens
+    //  with the datafeed scope can send data. Similarly we could have a scope per resource so people
+    //  can create tokens that are very limited in what they can do. May need an 'api-all' scope to
+    //  allow people to hit any resource.
+//    /**
+//     * @return The set of scopes that this user identity has. Scopes add restrictions
+//     * on top of the things that a user has permission to do.
+//     */
+//    default Set<String> getScopes() {
+//        return Collections.emptySet();
+//    };
 }

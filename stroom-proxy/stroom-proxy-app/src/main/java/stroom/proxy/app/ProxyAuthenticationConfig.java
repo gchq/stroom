@@ -3,7 +3,7 @@ package stroom.proxy.app;
 import stroom.security.openid.api.OpenIdConfig;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.IsStroomConfig;
+import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.validation.ValidationSeverity;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import javax.validation.constraints.AssertTrue;
 
 @JsonPropertyOrder(alphabetic = true)
-public class ProxyAuthenticationConfig extends AbstractConfig implements IsStroomConfig {
+public class ProxyAuthenticationConfig extends AbstractConfig implements IsProxyConfig {
 
     public static final String PROP_NAME_AUTHENTICATION_REQUIRED = "authenticationRequired";
     public static final String PROP_NAME_OPENID = "openId";

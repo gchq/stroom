@@ -1,7 +1,7 @@
 package stroom.security.impl;
 
 import stroom.security.api.SecurityContext;
-import stroom.security.impl.exception.AuthenticationException;
+import stroom.security.api.exception.AuthenticationException;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

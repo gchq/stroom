@@ -105,7 +105,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
                     .ifPresent(id -> attributeMap.put(StandardHeaderArguments.UPLOAD_USER_ID, id));
             optionalUserIdentity
                     .map(UserIdentity::getPreferredUsername)
-                    .ifPresent(username -> attributeMap.put(StandardHeaderArguments.UPLOAD_USER_USERNAME, username));
+                    .ifPresent(username -> attributeMap.put(StandardHeaderArguments.UPLOAD_USERNAME, username));
 
             if (receiveDataConfig.isRequireTokenAuthentication() && optionalUserIdentity.isEmpty()) {
                 // If token authentication is required, but we could not verify the token then error.

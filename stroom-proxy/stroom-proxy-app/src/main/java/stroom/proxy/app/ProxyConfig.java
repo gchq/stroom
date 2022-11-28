@@ -244,14 +244,12 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return threadConfig;
     }
 
-    @JsonPropertyDescription(PROP_NAME_FORWARD_RETRY)
-    @JsonProperty
+    @JsonProperty(PROP_NAME_FORWARD_RETRY)
     public ForwardRetryConfig getForwardRetry() {
         return forwardRetry;
     }
 
-    @JsonPropertyDescription(PROP_NAME_SECURITY)
-    @JsonProperty
+    @JsonProperty(PROP_NAME_SECURITY)
     public ProxySecurityConfig getProxySecurityConfig() {
         return proxySecurityConfig;
     }

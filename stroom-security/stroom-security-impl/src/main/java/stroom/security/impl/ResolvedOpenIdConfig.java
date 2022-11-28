@@ -2,7 +2,7 @@ package stroom.security.impl;
 
 import stroom.config.common.UriFactory;
 import stroom.security.openid.api.OpenIdConfiguration;
-import stroom.security.impl.exception.AuthenticationException;
+import stroom.security.api.exception.AuthenticationException;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.security.openid.api.OpenIdConfig;

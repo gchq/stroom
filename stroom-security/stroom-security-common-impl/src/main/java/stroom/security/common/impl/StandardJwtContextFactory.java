@@ -1,7 +1,8 @@
-package stroom.security.impl;
+package stroom.security.common.impl;
 
 import stroom.security.openid.api.OpenIdConfiguration;
-import stroom.security.impl.exception.AuthenticationException;
+import stroom.security.api.exception.AuthenticationException;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -13,13 +14,14 @@ import org.jose4j.jwt.consumer.JwtContext;
 import org.jose4j.keys.resolvers.JwksVerificationKeyResolver;
 import org.jose4j.keys.resolvers.VerificationKeyResolver;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.HttpHeaders;
 
-class StandardJwtContextFactory implements JwtContextFactory {
+public class StandardJwtContextFactory implements JwtContextFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StandardJwtContextFactory.class);
 
@@ -32,10 +34,26 @@ class StandardJwtContextFactory implements JwtContextFactory {
     private final OpenIdPublicKeysSupplier openIdPublicKeysSupplier;
 
     @Inject
-    StandardJwtContextFactory(final OpenIdConfiguration openIdConfiguration,
-                              final OpenIdPublicKeysSupplier openIdPublicKeysSupplier) {
+    public StandardJwtContextFactory(final OpenIdConfiguration openIdConfiguration,
+                                     final OpenIdPublicKeysSupplier openIdPublicKeysSupplier) {
         this.openIdConfiguration = openIdConfiguration;
         this.openIdPublicKeysSupplier = openIdPublicKeysSupplier;
+    }
+
+    @Override
+    public boolean hasToken(final HttpServletRequest request) {
+        return getTokenFromHeader(request)
+                .isPresent();
+    }
+
+    @Override
+    public void removeAuthorisationEntries(final Map<String, String> headers) {
+        if (NullSafe.hasEntries(headers)) {
+            headers.remove(AUTHORIZATION_HEADER);
+            headers.remove(AMZN_OIDC_ACCESS_TOKEN_HEADER);
+            headers.remove(AMZN_OIDC_DATA_HEADER);
+            headers.remove(AMZN_OIDC_IDENTITY_HEADER);
+        }
     }
 
     @Override
@@ -45,14 +63,18 @@ class StandardJwtContextFactory implements JwtContextFactory {
         LOGGER.debug(() -> AMZN_OIDC_DATA_HEADER + "=" + request.getHeader(AMZN_OIDC_DATA_HEADER));
         LOGGER.debug(() -> AUTHORIZATION_HEADER + "=" + request.getHeader(AUTHORIZATION_HEADER));
 
-        final Optional<String> optionalJws = JwtUtil.getJwsFromHeader(request, AMZN_OIDC_DATA_HEADER)
-                .or(() -> JwtUtil.getJwsFromHeader(request, AUTHORIZATION_HEADER));
+        final Optional<String> optionalJws = getTokenFromHeader(request);
         return optionalJws
                 .flatMap(this::getJwtContext)
                 .or(() -> {
                     LOGGER.debug(() -> "No JWS found in headers in request to " + request.getRequestURI());
                     return Optional.empty();
                 });
+    }
+
+    private Optional<String> getTokenFromHeader(final HttpServletRequest request) {
+        return JwtUtil.getJwsFromHeader(request, AMZN_OIDC_DATA_HEADER)
+                .or(() -> JwtUtil.getJwsFromHeader(request, AUTHORIZATION_HEADER));
     }
 
     /**

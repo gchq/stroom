@@ -1,7 +1,10 @@
 package stroom.security.impl;
 
+import stroom.security.common.impl.JwtContextFactory;
+import stroom.security.common.impl.JwtUtil;
 import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.security.openid.api.PublicJsonWebKeyProvider;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -17,6 +20,7 @@ import org.jose4j.keys.resolvers.JwksVerificationKeyResolver;
 import org.jose4j.keys.resolvers.VerificationKeyResolver;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -39,16 +43,33 @@ class InternalJwtContextFactory implements JwtContextFactory {
     }
 
     @Override
+    public boolean hasToken(final HttpServletRequest request) {
+        return getJwtFromHeader(request)
+                .isPresent();
+    }
+
+    @Override
+    public void removeAuthorisationEntries(final Map<String, String> headers) {
+        if (NullSafe.hasEntries(headers)) {
+            headers.remove(AUTHORIZATION_HEADER);
+        }
+    }
+
+    @Override
     public Optional<JwtContext> getJwtContext(final HttpServletRequest request) {
         LOGGER.debug(() -> AUTHORIZATION_HEADER + "=" + request.getHeader(AUTHORIZATION_HEADER));
 
-        final Optional<String> optionalJws = JwtUtil.getJwsFromHeader(request, AUTHORIZATION_HEADER);
+        final Optional<String> optionalJws = getJwtFromHeader(request);
         return optionalJws
                 .flatMap(this::getJwtContext)
                 .or(() -> {
                     LOGGER.debug(() -> "No JWS found in headers in request to " + request.getRequestURI());
                     return Optional.empty();
                 });
+    }
+
+    private Optional<String> getJwtFromHeader(final HttpServletRequest request) {
+        return JwtUtil.getJwsFromHeader(request, AUTHORIZATION_HEADER);
     }
 
     /**

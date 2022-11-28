@@ -6,7 +6,7 @@ import stroom.security.api.HasJws;
 import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
-import stroom.security.impl.exception.AuthenticationException;
+import stroom.security.api.exception.AuthenticationException;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;

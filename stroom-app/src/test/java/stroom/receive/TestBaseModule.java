@@ -14,6 +14,7 @@ import stroom.meta.mock.MockMetaModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.receive.rules.impl.ReceiveDataRuleSetModule;
 import stroom.security.api.RequestAuthenticator;
+import stroom.security.api.UserIdentity;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.impl.TaskContextModule;
 import stroom.util.entityevent.EntityEventBus;
@@ -23,7 +24,9 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.util.Providers;
 
+import java.util.Map;
 import java.util.Optional;
+import javax.servlet.http.HttpServletRequest;
 
 public class TestBaseModule extends AbstractModule {
 
@@ -56,6 +59,21 @@ public class TestBaseModule extends AbstractModule {
 
     @Provides
     RequestAuthenticator requestAuthenticator() {
-        return request -> Optional.empty();
+        return new RequestAuthenticator() {
+            @Override
+            public Optional<UserIdentity> authenticate(final HttpServletRequest request) {
+                return Optional.empty();
+            }
+
+            @Override
+            public boolean hasAuthenticationToken(final HttpServletRequest request) {
+                return false;
+            }
+
+            @Override
+            public void removeAuthorisationEntries(final Map<String, String> headers) {
+
+            }
+        };
     }
 }

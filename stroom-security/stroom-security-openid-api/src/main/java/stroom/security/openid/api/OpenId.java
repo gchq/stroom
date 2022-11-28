@@ -40,6 +40,27 @@ public class OpenId {
     public static final String SCOPE__OPENID = "openid";
     public static final String SCOPE__EMAIL = "email";
 
+    /**
+     * Subject - Identifier for the End-User at the Issuer.
+     */
+    public static final String CLAIM__SUBJECT = "sub";
+    /**
+     * End-User's preferred e-mail address.
+     */
+    public static final String CLAIM__EMAIL = "email";
+    /**
+     * Shorthand name by which the End-User wishes to be referred to at the RP, such as janedoe or j.doe.
+     * This value MAY be any valid JSON string including special characters such as @, /,
+     * or whitespace. The RP MUST NOT rely upon this value being unique
+     */
+    public static final String CLAIM__PREFERRED_USERNAME = "preferred_username";
+
+    /**
+     * End-User's full name in displayable form including all name parts, possibly including titles and suffixes,
+     * ordered according to the End-User's locale and preferences.
+     */
+    public static final String CLAIM__NAME = "name";
+
     public static final String ID_TOKEN = "id_token";
 
     private static final Set<String> RESERVED_PARAMS = Set.of(

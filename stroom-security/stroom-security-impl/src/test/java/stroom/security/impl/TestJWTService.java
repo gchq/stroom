@@ -1,5 +1,7 @@
 package stroom.security.impl;
 
+import stroom.security.common.impl.OpenIdPublicKeysSupplier;
+import stroom.security.common.impl.StandardJwtContextFactory;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 
@@ -54,7 +56,8 @@ class TestJWTService {
     void verifyDefaultApiToken() throws JoseException {
         // Verify the hard coded default token
 
-        final StandardJwtContextFactory jwtService = new StandardJwtContextFactory(openIdConfiguration,
+        final StandardJwtContextFactory jwtService = new StandardJwtContextFactory(
+                openIdConfiguration,
                 openIdPublicKeysSupplier);
 
         final String apiKey = defaultOpenIdCredentials.getApiKey();

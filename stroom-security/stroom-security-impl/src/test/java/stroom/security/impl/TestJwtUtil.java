@@ -1,5 +1,7 @@
 package stroom.security.impl;
 
+import stroom.security.common.impl.JwtUtil;
+
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

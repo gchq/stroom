@@ -1,4 +1,4 @@
-package stroom.security.impl;
+package stroom.proxy.app.security;
 
 import stroom.security.api.RequestAuthenticator;
 import stroom.security.api.UserIdentity;
@@ -9,27 +9,27 @@ import java.util.Optional;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 
-public class RequestAuthenticatorImpl implements RequestAuthenticator {
+public class OpenIdTokenAuthenticator implements RequestAuthenticator {
 
-    private final OpenIdManager openIdManager;
+    private final ApiUserIdentityFactory apiUserIdentityFactory;
 
     @Inject
-    public RequestAuthenticatorImpl(final OpenIdManager openIdManager) {
-        this.openIdManager = openIdManager;
+    public OpenIdTokenAuthenticator(final ApiUserIdentityFactory apiUserIdentityFactory) {
+        this.apiUserIdentityFactory = apiUserIdentityFactory;
     }
 
     @Override
     public Optional<UserIdentity> authenticate(final HttpServletRequest request) {
-        return openIdManager.loginWithRequestToken(request);
+        return apiUserIdentityFactory.getApiUserIdentity(request);
     }
 
     @Override
     public boolean hasAuthenticationToken(final HttpServletRequest request) {
-        return openIdManager.hasAuthenticationToken(request);
+        return apiUserIdentityFactory.hasAuthenticationToken(request);
     }
 
     @Override
     public void removeAuthorisationEntries(final Map<String, String> headers) {
-        NullSafe.consume(headers, openIdManager::removeAuthorisationEntries);
+        NullSafe.consume(headers, apiUserIdentityFactory::removeAuthorisationEntries);
     }
 }

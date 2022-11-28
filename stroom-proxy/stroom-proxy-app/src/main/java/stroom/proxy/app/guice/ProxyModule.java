@@ -23,13 +23,13 @@ import stroom.proxy.app.ContentSyncService;
 import stroom.proxy.app.ProxyConfigHealthCheck;
 import stroom.proxy.app.ProxyConfigHolder;
 import stroom.proxy.app.ProxyLifecycle;
-import stroom.proxy.app.RequestAuthenticatorImpl;
 import stroom.proxy.app.event.EventResourceImpl;
 import stroom.proxy.app.forwarder.FailureDestinationsImpl;
 import stroom.proxy.app.forwarder.ForwarderDestinationsImpl;
 import stroom.proxy.app.handler.ProxyId;
 import stroom.proxy.app.handler.ProxyRequestHandler;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
+import stroom.proxy.app.security.ProxySecurityModule;
 import stroom.proxy.app.servlet.ProxySecurityFilter;
 import stroom.proxy.app.servlet.ProxyStatusServlet;
 import stroom.proxy.app.servlet.ProxyWelcomeServlet;
@@ -57,7 +57,6 @@ import stroom.receive.rules.impl.DataReceiptPolicyAttributeMapFilterFactoryImpl;
 import stroom.receive.rules.impl.ReceiveDataRuleSetResourceImpl;
 import stroom.receive.rules.impl.ReceiveDataRuleSetService;
 import stroom.receive.rules.impl.ReceiveDataRuleSetServiceImpl;
-import stroom.security.api.RequestAuthenticator;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.impl.TaskContextModule;
@@ -71,6 +70,7 @@ import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.ServletBinder;
 import stroom.util.io.PathCreator;
+import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.BuildInfo;
 
 import com.codahale.metrics.health.HealthCheckRegistry;
@@ -122,6 +122,7 @@ public class ProxyModule extends AbstractModule {
         install(new RemoteFeedModule());
 
         install(new TaskContextModule());
+        install(new ProxySecurityModule());
 
         bind(BuildInfo.class).toProvider(BuildInfoProvider.class);
 //        bind(BufferFactory.class).to(BufferFactoryImpl.class);
@@ -129,7 +130,7 @@ public class ProxyModule extends AbstractModule {
         bind(DocumentResourceHelper.class).to(DocumentResourceHelperImpl.class);
         bind(ErrorReceiver.class).to(ErrorReceiverImpl.class);
         bind(FeedStatusService.class).to(RemoteFeedStatusService.class);
-        bind(RequestAuthenticator.class).to(RequestAuthenticatorImpl.class).asEagerSingleton();
+//        bind(RequestAuthenticator.class).to(RequestAuthenticatorImpl.class).asEagerSingleton();
         bind(ReceiveDataRuleSetService.class).to(ReceiveDataRuleSetServiceImpl.class);
         bind(RequestHandler.class).to(ProxyRequestHandler.class);
         bind(SecurityContext.class).to(MockSecurityContext.class);
@@ -199,5 +200,14 @@ public class ProxyModule extends AbstractModule {
     EntityEventBus entityEventBus() {
         return event -> {
         };
+    }
+
+    @SuppressWarnings("unused")
+    @Provides
+    @Singleton
+    WebTargetFactory provideJerseyRequestBuilder(final Client client,
+                                                 final SecurityContext securityContext) {
+        // TODO: 28/11/2022 Do we need to add the auth header like stroom does?
+        return client::target;
     }
 }

@@ -46,7 +46,7 @@ public interface StandardHeaderArguments {
     // The unique identifier of the user on the IDP
     String UPLOAD_USER_ID = "UploadUserId";
     // Username of the user on the IDP, may not be unique
-    String UPLOAD_USER_USERNAME = "UploadUserUsername";
+    String UPLOAD_USERNAME = "UploadUsername";
 
     String STREAM_SIZE = "StreamSize";
 

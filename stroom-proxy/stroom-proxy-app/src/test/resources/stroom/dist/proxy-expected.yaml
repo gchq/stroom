@@ -108,3 +108,20 @@ proxyConfig:
     forwardRetryThreadCount: 2
     forwardThreadCount: 10
   useDefaultOpenIdCredentials: false
+  proxySecurityConfig:
+    authentication:
+      authenticationRequired: true
+      openId:
+        authEndpoint: null
+        clientId: null
+        clientSecret: null
+        formTokenRequest: false
+        issuer: null
+        jwksUri: null
+        logoutEndpoint: null
+        logoutRedirectParamName: "post_logout_redirect_uri"
+        openIdConfigurationEndpoint: null
+        requestScope: null
+        tokenEndpoint: null
+        useInternal: true
+        validateAudience: true

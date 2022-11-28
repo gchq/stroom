@@ -1,6 +1,8 @@
-package stroom.security.impl;
+package stroom.security.common.impl;
 
 import stroom.security.openid.api.OpenId;
+import stroom.util.NullSafe;
+import stroom.util.exception.ThrowingFunction;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -9,6 +11,7 @@ import org.jose4j.json.internal.json_simple.parser.JSONParser;
 import org.jose4j.json.internal.json_simple.parser.ParseException;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
+import org.jose4j.jwt.consumer.JwtContext;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -123,5 +126,13 @@ public final class JwtUtil {
             LOGGER.debug(e.getMessage(), e);
         }
         return subject;
+    }
+
+    public static Optional<String> getClaimValue(final JwtContext jwtContext, final String claim) {
+        return NullSafe.getAsOptional(
+                jwtContext,
+                JwtContext::getJwtClaims,
+                ThrowingFunction.unchecked(jwtClaims ->
+                        jwtClaims.getClaimValue(claim, String.class)));
     }
 }

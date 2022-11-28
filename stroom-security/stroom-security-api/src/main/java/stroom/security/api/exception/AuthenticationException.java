@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.security.impl.exception;
+package stroom.security.api.exception;
 
 public class AuthenticationException extends RuntimeException {
     private static final long serialVersionUID = 3847329065404536825L;

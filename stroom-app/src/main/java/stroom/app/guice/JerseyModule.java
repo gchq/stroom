@@ -68,6 +68,7 @@ public class JerseyModule extends AbstractModule {
         return ClientBuilder.newClient(new ClientConfig().register(LoggingFeature.class));
     }
 
+    @SuppressWarnings("unused")
     @Provides
     @Singleton
     WebTargetFactory provideJerseyRequestBuilder(final Client client,

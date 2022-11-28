@@ -16,6 +16,7 @@ import stroom.proxy.app.guice.NoOpImportConverter;
 import stroom.proxy.app.guice.ProxyConfigModule;
 import stroom.proxy.app.handler.ProxyRequestHandler;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
+import stroom.proxy.app.security.OpenIdTokenAuthenticator;
 import stroom.proxy.repo.ErrorReceiver;
 import stroom.proxy.repo.ErrorReceiverImpl;
 import stroom.proxy.repo.ProgressLog;
@@ -83,7 +84,7 @@ public abstract class AbstractStoreAndForwardTestModule extends AbstractModule {
         bind(ErrorReceiver.class).to(ErrorReceiverImpl.class);
         bind(FeedStatusService.class).to(RemoteFeedStatusService.class);
         bind(ReceiveDataRuleSetService.class).to(ReceiveDataRuleSetServiceImpl.class);
-        bind(RequestAuthenticator.class).to(RequestAuthenticatorImpl.class).asEagerSingleton();
+        bind(RequestAuthenticator.class).to(OpenIdTokenAuthenticator.class).asEagerSingleton();
         bind(RequestHandler.class).to(ProxyRequestHandler.class);
         bind(SecurityContext.class).to(MockSecurityContext.class);
         bind(Serialiser2Factory.class).to(Serialiser2FactoryImpl.class);

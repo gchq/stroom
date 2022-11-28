@@ -1,4 +1,4 @@
-package stroom.security.impl;
+package stroom.proxy.app.security;
 
 import stroom.security.api.UserIdentity;
 
@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 
-public interface UserIdentityFactory {
+public interface ApiUserIdentityFactory {
 
     Optional<UserIdentity> getApiUserIdentity(HttpServletRequest request);
 
@@ -14,9 +14,6 @@ public interface UserIdentityFactory {
 
     void removeAuthorisationEntries(final Map<String, String> headers);
 
-    Optional<UserIdentity> getAuthFlowUserIdentity(HttpServletRequest request,
-                                                   String code,
-                                                   AuthenticationState state);
+//    void refresh(UserIdentity userIdentity);
 
-    void refresh(UserIdentity userIdentity);
 }
