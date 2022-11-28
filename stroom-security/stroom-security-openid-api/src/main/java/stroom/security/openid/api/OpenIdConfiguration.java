@@ -1,4 +1,4 @@
-package stroom.security.api;
+package stroom.security.openid.api;
 
 /**
  * Defines the configuration required to interact with an Open ID Connect IDP

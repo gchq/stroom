@@ -1,10 +1,11 @@
 package stroom.security.impl;
 
 import stroom.config.common.UriFactory;
-import stroom.security.api.OpenIdConfiguration;
+import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdClientFactory;
+import stroom.security.openid.api.OpenIdConfig;
 import stroom.security.openid.api.OpenIdConfigurationResponse;
 import stroom.security.openid.api.OpenIdConfigurationResponse.Builder;
 import stroom.util.io.StreamUtil;
@@ -176,6 +177,11 @@ public class ResolvedOpenIdConfig implements OpenIdConfiguration {
 
     public String getLogoutEndpoint() {
         return getOpenIdConfigurationResp().getLogoutEndpoint();
+    }
+
+    @Override
+    public String getLogoutRedirectParamName() {
+        return openIdConfigProvider.get().getLogoutRedirectParamName();
     }
 
     public String getClientId() {

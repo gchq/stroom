@@ -600,10 +600,12 @@ appConfig:
         issuer: null
         jwksUri: null
         logoutEndpoint: null
+        logoutRedirectParamName: "post_logout_redirect_uri"
         openIdConfigurationEndpoint: null
         requestScope: null
         tokenEndpoint: null
         useInternal: true
+        validateAudience: true
       preventLogin: false
     authorisation:
       db:

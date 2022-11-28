@@ -1,6 +1,6 @@
 package stroom.security.impl;
 
-import stroom.security.api.OpenIdConfiguration;
+import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 
 import org.jose4j.base64url.Base64;

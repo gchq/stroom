@@ -1,7 +1,5 @@
-package stroom.security.impl;
+package stroom.security.openid.api;
 
-import stroom.security.api.OpenIdConfiguration;
-import stroom.security.openid.api.OpenId;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 

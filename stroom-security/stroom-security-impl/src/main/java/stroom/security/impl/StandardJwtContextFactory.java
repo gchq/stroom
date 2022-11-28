@@ -1,6 +1,6 @@
 package stroom.security.impl;
 
-import stroom.security.api.OpenIdConfiguration;
+import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

@@ -17,7 +17,7 @@
 package stroom.security.impl;
 
 import stroom.security.api.DocumentPermissionService;
-import stroom.security.api.OpenIdConfiguration;
+import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.api.RequestAuthenticator;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventLifecycleModule;

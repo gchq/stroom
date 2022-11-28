@@ -1,6 +1,6 @@
 package stroom.security.impl;
 
-import stroom.security.api.OpenIdConfiguration;
+import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.api.UserIdentity;
 import stroom.security.openid.api.OpenId;
 import stroom.util.jersey.UriBuilderUtil;
