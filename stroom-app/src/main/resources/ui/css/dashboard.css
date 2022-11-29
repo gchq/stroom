@@ -82,7 +82,7 @@
     position: absolute;
 }
 
-.dashboard-designSurface .dashboard-designSurface__designMode {
+.dashboard-designSurface__designMode {
 	background-image:
 	repeating-linear-gradient(to bottom, transparent, transparent 29px, var(--dashboard-panel__grid-color) 1px,var(--dashboard-panel__grid-color) 30px),
 	repeating-linear-gradient(to right, transparent, transparent 29px, var(--dashboard-panel__grid-color) 30px, var(--dashboard-panel__grid-color) 1px);
@@ -558,7 +558,6 @@
     margin: 0;
     padding: 0;
     border-width: 0;
-    opacity: 0;
     z-index: 2;
     overflow: hidden;
 }

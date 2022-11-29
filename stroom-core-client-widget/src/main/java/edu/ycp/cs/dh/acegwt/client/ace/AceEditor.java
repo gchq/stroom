@@ -872,7 +872,7 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 		editor.getSession().setValue(output);
 	}-*/;
 
-    public native void setScrollMargin(int top, int bottom, int left, int right) /*-{
+    public native void setScrollMargin(double top, double bottom, double left, double right) /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 		editor.renderer.setScrollMargin(top, bottom, left, right);
 	}-*/;

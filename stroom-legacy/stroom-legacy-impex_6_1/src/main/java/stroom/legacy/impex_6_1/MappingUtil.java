@@ -132,7 +132,8 @@ public final class MappingUtil {
                 mapList(value.getComponents(), MappingUtil::map),
                 map(value.getLayout()),
                 null,
-                map(value.getTabVisibility()));
+                map(value.getTabVisibility()),
+                null);
     }
 
     public static stroom.dashboard.shared.ComponentConfig map(stroom.legacy.model_6_1.ComponentConfig value) {

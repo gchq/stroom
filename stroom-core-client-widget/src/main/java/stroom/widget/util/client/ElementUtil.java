@@ -39,30 +39,109 @@ public class ElementUtil {
     }
 
     public static Rect getClientRect(Element el) {
-        return new Rect(getClientTop(el), getClientBottom(el), getClientLeft(el), getClientRight(el));
-    }
-
-    public static Rect getInnerClientRect(Element el) {
-        final int top = getClientTop(el);
-        final int bottom = top + el.getClientHeight();
-        final int left = getClientLeft(el);
-        final int right = left + el.getClientWidth();
+        final double windowScrollY = getWindowScrollY();
+        final double windowScrollX = getWindowScrollX();
+        final double top = windowScrollY + getBoundingClientRectTop(el);
+        final double bottom = top + getSubPixelClientHeight(el);
+        final double left = windowScrollX + getBoundingClientRectLeft(el);
+        final double right = left + getSubPixelClientWidth(el);
         return new Rect(top, bottom, left, right);
     }
 
-    public static native int getClientLeft(Element el) /*-{
-     return window.pageXOffset + el.getBoundingClientRect().left;
+    public static Rect getBoundingClientRectPlusWindowScroll(final Element el) {
+        final double windowScrollY = getWindowScrollY();
+        final double windowScrollX = getWindowScrollX();
+        final double top = windowScrollY + getBoundingClientRectTop(el);
+        final double bottom = windowScrollY + getBoundingClientRectBottom(el);
+        final double left = windowScrollX + getBoundingClientRectLeft(el);
+        final double right = windowScrollX + getBoundingClientRectRight(el);
+        return new Rect(top, bottom, left, right);
+    }
+
+    public static Rect getBoundingClientRect(final Element el) {
+        final double left = getBoundingClientRectLeft(el);
+        final double right = getBoundingClientRectRight(el);
+        final double top = getBoundingClientRectTop(el);
+        final double bottom = getBoundingClientRectBottom(el);
+        return new Rect(top,
+                bottom,
+                left,
+                right);
+    }
+
+    public static double getClientLeft(Element el) {
+        return getWindowScrollX() + getBoundingClientRectLeft(el);
+    }
+
+    public static double getClientRight(Element el) {
+        return getWindowScrollX() + getBoundingClientRectRight(el);
+    }
+
+    public static double getClientTop(Element el) {
+        return getWindowScrollY() + getBoundingClientRectTop(el);
+    }
+
+    public static double getClientBottom(Element el) {
+        return getWindowScrollY() + getBoundingClientRectBottom(el);
+    }
+
+    public static native double getBoundingClientRectLeft(Element el) /*-{
+        return el.getBoundingClientRect().left || 0;
     }-*/;
 
-    public static native int getClientRight(Element el) /*-{
-     return window.pageXOffset + el.getBoundingClientRect().right;
+    public static native double getBoundingClientRectRight(Element el) /*-{
+        return el.getBoundingClientRect().right || 0;
     }-*/;
 
-    public static native int getClientTop(Element el) /*-{
-     return window.pageYOffset + el.getBoundingClientRect().top;
+    public static native double getBoundingClientRectTop(Element el) /*-{
+        return el.getBoundingClientRect().top || 0;
     }-*/;
 
-    public static native int getClientBottom(Element el) /*-{
-     return window.pageYOffset + el.getBoundingClientRect().bottom;
+    public static native double getBoundingClientRectBottom(Element el) /*-{
+        return el.getBoundingClientRect().bottom || 0;
+    }-*/;
+
+    public static native double getWindowScrollX() /*-{
+        return window.scrollX || 0;
+    }-*/;
+
+    public static native double getWindowScrollY() /*-{
+        return window.scrollY || 0;
+    }-*/;
+
+    public static native double getSubPixelClientHeight(Element el) /*-{
+        return el.clientHeight || 0;
+    }-*/;
+
+    public static native double getSubPixelClientWidth(Element el) /*-{
+        return el.clientWidth || 0;
+    }-*/;
+
+    public static native double getSubPixelOffsetHeight(Element el) /*-{
+        return el.offsetHeight || 0;
+    }-*/;
+
+    public static native double getSubPixelOffsetLeft(Element el) /*-{
+        return el.offsetLeft || 0;
+    }-*/;
+
+    public static native double getSubPixelOffsetTop(Element el) /*-{
+        return el.offsetTop || 0;
+    }-*/;
+
+    public static native double getSubPixelOffsetWidth(Element el) /*-{
+        return el.offsetWidth || 0;
+    }-*/;
+
+    public static native double getSubPixelScrollHeight(Element el) /*-{
+        return el.scrollHeight || 0;
+    }-*/;
+
+    public static native double getSubPixelScrollTop(Element el) /*-{
+        return el.scrollTop || 0;
+    }-*/;
+
+    public static native double getSubPixelScrollWidth(Element el) /*-{
+        return el.scrollWidth || 0;
     }-*/;
 }

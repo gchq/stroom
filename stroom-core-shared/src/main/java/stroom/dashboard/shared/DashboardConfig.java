@@ -41,7 +41,8 @@ import javax.xml.bind.annotation.XmlType;
         "components",
         "layout",
         "layoutConstraints",
-        "tabVisibility"
+        "tabVisibility",
+        "preferredSize"
 })
 @JsonInclude(Include.NON_NULL)
 @XmlRootElement(name = "dashboard")
@@ -51,7 +52,8 @@ import javax.xml.bind.annotation.XmlType;
         "components",
         "layout",
         "layoutConstraints",
-        "tabVisibility"
+        "tabVisibility",
+        "preferredSize"
 })
 public class DashboardConfig {
 
@@ -65,7 +67,8 @@ public class DashboardConfig {
     @XmlElements({@XmlElement(name = "component", type = ComponentConfig.class)})
     @JsonProperty("components")
     private List<ComponentConfig> components;
-    @XmlElements({@XmlElement(name = "splitLayout", type = SplitLayoutConfig.class),
+    @XmlElements({
+            @XmlElement(name = "splitLayout", type = SplitLayoutConfig.class),
             @XmlElement(name = "tabLayout", type = TabLayoutConfig.class)})
     @JsonProperty("layout")
     private LayoutConfig layout;
@@ -74,6 +77,8 @@ public class DashboardConfig {
     @XmlElement(name = "tabVisibility")
     @JsonProperty("tabVisibility")
     private TabVisibility tabVisibility;
+    @JsonProperty("preferredSize")
+    private Size preferredSize;
 
     public DashboardConfig() {
         tabVisibility = TabVisibility.SHOW_ALL;
@@ -85,13 +90,15 @@ public class DashboardConfig {
                            @JsonProperty("components") final List<ComponentConfig> components,
                            @JsonProperty("layout") final LayoutConfig layout,
                            @JsonProperty("layoutConstraints") LayoutConstraints layoutConstraints,
-                           @JsonProperty("tabVisibility") final TabVisibility tabVisibility) {
+                           @JsonProperty("tabVisibility") final TabVisibility tabVisibility,
+                           @JsonProperty("preferredSize") Size preferredSize) {
         this.parameters = parameters;
         this.timeRange = timeRange;
         this.components = components;
         this.layout = layout;
         this.layoutConstraints = layoutConstraints;
         this.tabVisibility = tabVisibility;
+        this.preferredSize = preferredSize;
 
         if (this.tabVisibility == null) {
             this.tabVisibility = TabVisibility.SHOW_ALL;
@@ -144,6 +151,14 @@ public class DashboardConfig {
 
     public void setTabVisibility(final TabVisibility tabVisibility) {
         this.tabVisibility = tabVisibility;
+    }
+
+    public Size getPreferredSize() {
+        return preferredSize;
+    }
+
+    public void setPreferredSize(final Size preferredSize) {
+        this.preferredSize = preferredSize;
     }
 
     public enum TabVisibility implements HasDisplayValue {

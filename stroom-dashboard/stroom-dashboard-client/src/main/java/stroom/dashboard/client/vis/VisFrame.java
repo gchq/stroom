@@ -53,7 +53,10 @@ public class VisFrame extends Composite implements VisPane {
         initWidget(container);
     }
 
-    public void setContainerPositionAndSize(final int left, final int top, final int width, final int height) {
+    public void setContainerPositionAndSize(final double left,
+                                            final double top,
+                                            final double width,
+                                            final double height) {
         setPositionAndSize(
                 container.getElement().getStyle(),
                 left,
@@ -62,7 +65,10 @@ public class VisFrame extends Composite implements VisPane {
                 height);
     }
 
-    public void setInnerPositionAndSize(final int left, final int top, final int width, final int height) {
+    public void setInnerPositionAndSize(final double left,
+                                        final double top,
+                                        final double width,
+                                        final double height) {
         setPositionAndSize(
                 frame.getElement().getStyle(),
                 left,
@@ -72,10 +78,10 @@ public class VisFrame extends Composite implements VisPane {
     }
 
     private void setPositionAndSize(final Style style,
-                                    final int left,
-                                    final int top,
-                                    final int width,
-                                    final int height) {
+                                    final double left,
+                                    final double top,
+                                    final double width,
+                                    final double height) {
         style.setLeft(left, Unit.PX);
         style.setTop(top, Unit.PX);
         style.setWidth(width, Unit.PX);

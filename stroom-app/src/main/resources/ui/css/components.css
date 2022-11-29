@@ -317,6 +317,18 @@
     height: 100%;
 }
 
+.layerContainer-layer--base {
+    opacity: 0;
+}
+
+.layerContainer-layer--fade {
+    transition: opacity 0.25s ease-in-out;
+}
+
+.layerContainer-layer--visible {
+    opacity: 1;
+}
+
 .linkTabBar {
     position: relative;
 	white-space: nowrap;

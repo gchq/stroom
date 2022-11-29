@@ -44,7 +44,7 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
     private final FlowPanel outer;
     private final List<StringListBox> fieldControls = new ArrayList<>();
     private final List<HasReadAndWrite<JSONObject>> controls = new ArrayList<>();
-    private double opacity;
+//    private double opacity;
 
     public DynamicSettingsPane(final boolean utc) {
         this.utc = utc;
@@ -355,23 +355,28 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
         }
     }
 
-    @Override
-    public double getOpacity() {
-        return opacity;
-    }
+//    @Override
+//    public double getOpacity() {
+//        return opacity;
+//    }
+//
+//    //*************
+//    // Start Layer
+//    //*************/
+//    @Override
+//    public void setOpacity(final double opacity) {
+//        this.opacity = opacity;
+//        getElement().getStyle().setOpacity(opacity);
+//    }
 
-    //*************
-    // Start Layer
-    //*************/
     @Override
-    public void setOpacity(final double opacity) {
-        this.opacity = opacity;
-        getElement().getStyle().setOpacity(opacity);
+    public void setLayerVisible(final boolean fade, final boolean visible) {
+        Layer.setLayerVisible(getWidget().getElement(), fade, visible);
     }
 
     @Override
     public void addLayer(final LayerContainer layerContainer) {
-        setOpacity(opacity);
+//        setOpacity(opacity);
         layerContainer.add(this);
     }
 

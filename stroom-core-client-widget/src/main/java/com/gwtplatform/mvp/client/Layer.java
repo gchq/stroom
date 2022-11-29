@@ -16,15 +16,38 @@
 
 package com.gwtplatform.mvp.client;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.RequiresResize;
 
 public interface Layer extends RequiresResize {
 
-    double getOpacity();
+    String BASE = "layerContainer-layer--base";
+    String VISIBLE = "layerContainer-layer--visible";
+    String FADE = "layerContainer-layer--fade";
 
-    void setOpacity(double opacity);
+//    double getOpacity();
+//
+//    void setOpacity(double opacity);
+
+    void setLayerVisible(boolean fade, boolean visible);
 
     void addLayer(LayerContainer container);
 
     boolean removeLayer();
+
+    static void setLayerVisible(final Element element,
+                                final boolean fade,
+                                final boolean visible) {
+        element.addClassName(Layer.BASE);
+        if (fade) {
+            element.addClassName(Layer.FADE);
+        } else {
+            element.removeClassName(Layer.FADE);
+        }
+        if (visible) {
+            element.addClassName(Layer.VISIBLE);
+        } else {
+            element.removeClassName(Layer.VISIBLE);
+        }
+    }
 }

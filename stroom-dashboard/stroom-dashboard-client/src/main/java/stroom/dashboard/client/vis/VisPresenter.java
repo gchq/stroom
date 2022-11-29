@@ -68,6 +68,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.Layer;
 import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.View;
 
@@ -102,7 +103,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     private long nextUpdate;
     private Timer updateTimer;
     private JavaScriptObject lastData;
-    private double opacity = 0;
+    //    private double opacity = 0;
     private TablePresenter linkedTablePresenter;
 
     private final Timer timer;
@@ -155,19 +156,25 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         }
     }
 
-    @Override
-    public double getOpacity() {
-        return this.opacity;
-    }
-
     /*****************
      * Start of Layout
      *****************/
+//    @Override
+//    public void setOpacity(final double opacity) {
+//        this.opacity = opacity;
+//        getWidget().getElement().getStyle().setOpacity(opacity);
+//        visFrame.getElement().getStyle().setOpacity(opacity);
+//    }
+
+//    @Override
+//    public double getOpacity() {
+//        return this.opacity;
+//    }
+//
     @Override
-    public void setOpacity(final double opacity) {
-        this.opacity = opacity;
-        getWidget().getElement().getStyle().setOpacity(opacity);
-        visFrame.getElement().getStyle().setOpacity(opacity);
+    public void setLayerVisible(final boolean fade, final boolean visible) {
+        super.setLayerVisible(fade, visible);
+        Layer.setLayerVisible(visFrame.getElement(), fade, visible);
     }
 
     @Override

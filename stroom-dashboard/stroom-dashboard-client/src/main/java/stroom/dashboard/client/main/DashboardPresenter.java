@@ -91,6 +91,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     private boolean queryOnOpen;
 
     private LayoutConstraints layoutConstraints = new LayoutConstraints(true, true);
+    private Size preferredSize = new Size();
     private boolean designMode;
 
     @Inject
@@ -244,6 +245,10 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                 if (layoutConstraints == null) {
                     layoutConstraints = new LayoutConstraints(true, true);
                 }
+                preferredSize = dashboardConfig.getPreferredSize();
+                if (preferredSize == null) {
+                    preferredSize = new Size();
+                }
                 final List<ComponentConfig> componentDataList = dashboardConfig.getComponents();
                 if (componentDataList != null) {
                     for (final ComponentConfig componentData : componentDataList) {
@@ -311,7 +316,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             // tabVisibility.setSelectedItem(dashboardData.getTabVisibility());
             // }
 
-            layoutPresenter.configure(layoutConfig, layoutConstraints);
+            layoutPresenter.configure(layoutConfig, layoutConstraints, preferredSize);
 
             // Tell all queryable components whether we want them to query on open.
             for (final Component component : components) {
@@ -386,6 +391,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         dashboardConfig.setComponents(componentDataList);
         dashboardConfig.setLayout(layoutPresenter.getLayoutConfig());
         dashboardConfig.setLayoutConstraints(layoutConstraints);
+        dashboardConfig.setPreferredSize(preferredSize);
         dashboardConfig.setTabVisibility(TabVisibility.SHOW_ALL);
         dashboard.setDashboardConfig(dashboardConfig);
     }
@@ -628,21 +634,21 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         final PositionAndSize positionAndSize = layoutPresenter.getPositionAndSize(parent);
         if (positionAndSize != null) {
             // Get the current height of the split layout.
-            final int height = positionAndSize.getHeight();
+            final double height = positionAndSize.getHeight();
 
-            final int totalHeight = getTotalHeight(parent);
+            final double totalHeight = getTotalHeight(parent);
             if (height > 0 && totalHeight > height) {
-                int amountToSave = totalHeight - height;
+                double amountToSave = totalHeight - height;
 
                 // Try and set heights to the default height to claw back
                 // space we want to save.
                 for (int i = parent.count() - 1; i >= 0; i--) {
                     final LayoutConfig ld = parent.get(i);
                     final Size size = ld.getPreferredSize();
-                    final int diff = size.getHeight() - defaultSize.getHeight();
+                    final double diff = size.getHeight() - defaultSize.getHeight();
                     if (diff > 0) {
                         if (diff > amountToSave) {
-                            size.setHeight(size.getHeight() - amountToSave);
+                            size.setHeight((int) (size.getHeight() - amountToSave));
                             amountToSave = 0;
                             break;
                         } else {
@@ -665,13 +671,13 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         }
     }
 
-    private void fairRedistribution(final SplitLayoutConfig parent, final int height) {
+    private void fairRedistribution(final SplitLayoutConfig parent, final double height) {
         // Find out how high each component could be if they were all the
         // same height.
-        int fairHeight = (height / parent.count());
-        fairHeight = Math.max(0, fairHeight);
+        double fairHeight = (height / parent.count());
+        fairHeight = Math.max(0D, fairHeight);
 
-        int used = 0;
+        double used = 0;
         int count = 0;
 
         // Try and find the components that are bigger than their fair size
@@ -689,12 +695,12 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         // Calculate the height to set all components that are bigger than
         // the available height.
         if (count > 0) {
-            final int newHeight = ((height - used) / count);
+            final double newHeight = ((height - used) / count);
             for (int i = parent.count() - 1; i >= 0; i--) {
                 final LayoutConfig ld = parent.get(i);
                 final Size size = ld.getPreferredSize();
                 if (size.getHeight() > fairHeight) {
-                    size.setHeight(newHeight);
+                    size.setHeight((int) newHeight);
                 }
             }
         }
@@ -711,8 +717,8 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         }
     }
 
-    private int getTotalHeight(final SplitLayoutConfig parent) {
-        int totalHeight = 0;
+    private double getTotalHeight(final SplitLayoutConfig parent) {
+        double totalHeight = 0;
         for (int i = parent.count() - 1; i >= 0; i--) {
             final LayoutConfig ld = parent.get(i);
             final Size size = ld.getPreferredSize();

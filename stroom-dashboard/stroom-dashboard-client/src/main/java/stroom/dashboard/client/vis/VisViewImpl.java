@@ -141,9 +141,9 @@ public class VisViewImpl extends ViewWithUiHandlers<VisUiHandlers>
             final Element dashboard = getParentByClass(ref, "dashboard-scrollPanel");
 
             if (ref != null) {
-                final Rect inner = ElementUtil.getInnerClientRect(ref);
+                final Rect inner = ElementUtil.getBoundingClientRectPlusWindowScroll(ref);
                 if (dashboard != null) {
-                    final Rect outer = ElementUtil.getInnerClientRect(dashboard);
+                    final Rect outer = ElementUtil.getClientRect(dashboard);
                     final Rect min = Rect.min(outer, inner);
 
                     visFrame.setContainerPositionAndSize(
