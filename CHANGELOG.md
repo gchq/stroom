@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-alpha.7] - 2022-11-30
+
+* Issue **#3121** : Add ability to change dashboard layout.
+
+
 ## [v7.2-alpha.6] - 2022-11-22
 
 * Issue **#3089** : Add default extraction pipeline to indexes.
@@ -4914,7 +4919,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-alpha.6...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-alpha.7...HEAD
+[v7.2-alpha.7]: https://github.com/gchq/stroom/compare/v7.2-alpha.6...v7.2-alpha.7
 [v7.2-alpha.6]: https://github.com/gchq/stroom/compare/v7.2-alpha.5...v7.2-alpha.6
 [v7.2-alpha.5]: https://github.com/gchq/stroom/compare/v7.2-alpha.4...v7.2-alpha.5
 [v7.2-alpha.4]: https://github.com/gchq/stroom/compare/v7.1-beta.14...v7.2-alpha.4
