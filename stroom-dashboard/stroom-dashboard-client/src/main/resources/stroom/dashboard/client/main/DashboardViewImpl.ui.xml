@@ -13,7 +13,7 @@
                 <q:QueryButtons ui:field="queryButtons" addStyleNames="dock-min"/>
             </g:FlowPanel>
         </g:FlowPanel>
-        <g:FlowPanel styleName="DashboardViewImpl-top dock-min dock-container-horizontal">
+        <g:FlowPanel styleName="DashboardViewImpl-top DashboardViewImpl-designButtons dock-min dock-container-horizontal">
             <g:FlowPanel styleName="dock-min DashboardViewImpl-top-buttons">
                 <g:Button ui:field="addPanelButton" text="Add Panel"></g:Button>
                 <g:Button ui:field="addInputButton" text="Add Input"></g:Button>

@@ -1,10 +1,20 @@
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
+@JsonPropertyOrder({
+        "fitWidth",
+        "fitHeight"
+})
+@JsonInclude(Include.NON_NULL)
 public class LayoutConstraints {
+
     @JsonProperty
     private final boolean fitWidth;
     @JsonProperty
@@ -15,8 +25,9 @@ public class LayoutConstraints {
         fitHeight = true;
     }
 
+    @JsonCreator
     public LayoutConstraints(@JsonProperty("fitWidth") final boolean fitWidth,
-                             @JsonProperty("fitHeight")final boolean fitHeight) {
+                             @JsonProperty("fitHeight") final boolean fitHeight) {
         this.fitWidth = fitWidth;
         this.fitHeight = fitHeight;
     }

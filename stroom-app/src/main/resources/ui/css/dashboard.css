@@ -25,6 +25,14 @@
     justify-content: space-between;
 }
 
+.DashboardViewImpl-designButtons {
+    display: none;
+}
+
+.dashboard__designMode .DashboardViewImpl-designButtons {
+    display: flex;
+}
+
 .DashboardViewImpl-top-buttons {
     display: flex;
     gap: var(--control__gap--horizontal);
@@ -82,7 +90,7 @@
     position: absolute;
 }
 
-.dashboard-designSurface__designMode {
+.dashboard__designMode .dashboard-designSurface {
 	background-image:
 	repeating-linear-gradient(to bottom, transparent, transparent 29px, var(--dashboard-panel__grid-color) 1px,var(--dashboard-panel__grid-color) 30px),
 	repeating-linear-gradient(to right, transparent, transparent 29px, var(--dashboard-panel__grid-color) 30px, var(--dashboard-panel__grid-color) 1px);
@@ -146,17 +154,13 @@
 .flexLayout-splitterDown {
 	cursor: row-resize;
 	height: var(--control__padding--vertical);
-
 	opacity: 1 !important;
-    background: green;
 }
 
 .flexLayout-splitterAcross {
 	cursor: col-resize;
 	width: var(--control__padding--horizontal);
-
 	opacity: 1 !important;
-	background: red;
 }
 
 .flexLayout-selected {
@@ -180,8 +184,6 @@
     display: flex;
     flex-direction: column;
     flex-grow: 1;
-
-    background-color: blue;
 }
 
 .tabLayout .tabLayout-barOuter {
@@ -569,5 +571,21 @@
     border-width: 0;
 }
 
+/** DEBUG **/
+/*
+.gwt-Frame {
+  background-color: rgba(255,255,0,0.5);
+}
 
+.tabLayout .tabLayout-contentInner {
+    background-color: blue;
+}
 
+.flexLayout-splitterAcross {
+	background: red;
+}
+
+.flexLayout-splitterDown {
+    background: green;
+}
+*/

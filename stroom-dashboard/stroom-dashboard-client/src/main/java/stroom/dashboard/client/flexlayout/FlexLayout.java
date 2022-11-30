@@ -1228,12 +1228,10 @@ public class FlexLayout extends Composite {
                 outerSize = new Size(width, height);
 
                 if (designMode) {
-                    designSurface.addStyleName("dashboard-designSurface__designMode");
                     designSurfaceSize = new Size(
                             Math.max(visibleWidth, designWidth),
                             Math.max(visibleHeight, designHeight));
                 } else {
-                    designSurface.removeStyleName("dashboard-designSurface__designMode");
                     designSurfaceSize = outerSize;
                 }
                 designSurface.setSize(

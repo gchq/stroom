@@ -67,11 +67,6 @@ public class DashboardViewImpl extends ViewWithUiHandlers<DashboardUiHandlers>
     }
 
     @Override
-    public TimeRange getTimeRange() {
-        return timeRangeSelector.getValue();
-    }
-
-    @Override
     public void setTimeRange(final TimeRange timeRange) {
         timeRangeSelector.setValue(timeRange);
     }
@@ -99,9 +94,16 @@ public class DashboardViewImpl extends ViewWithUiHandlers<DashboardUiHandlers>
     public void setDesignMode(final boolean designMode) {
         if (designMode) {
             designModeButton.setText("Exit Design Mode");
+            widget.addStyleName("dashboard__designMode");
         } else {
             designModeButton.setText("Enter Design Mode");
+            widget.removeStyleName("dashboard__designMode");
         }
+    }
+
+    @Override
+    public QueryButtons getQueryButtons() {
+        return queryButtons;
     }
 
     @UiHandler("addPanelButton")

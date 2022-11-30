@@ -25,6 +25,7 @@ import stroom.dashboard.client.flexlayout.PositionAndSize;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.DashboardPresenter.DashboardView;
+import stroom.dashboard.client.query.QueryButtons;
 import stroom.dashboard.client.query.QueryInfoPresenter;
 import stroom.dashboard.client.query.QueryUiHandlers;
 import stroom.dashboard.shared.ComponentConfig;
@@ -67,6 +68,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -117,7 +119,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         view.setContent(flexLayout);
         view.setUiHandlers(this);
 
-//        view.getQueryButtons().setUiHandlers(this);
+        view.getQueryButtons().setUiHandlers(this);
     }
 
     @Override
@@ -143,8 +145,11 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     public void onConstraints(final ClickEvent event) {
         final LayoutConstraintPresenter presenter = layoutConstraintPresenterProvider.get();
         final HandlerRegistration handlerRegistration = presenter.addValueChangeHandler(e -> {
-            layoutConstraints = e.getValue();
-            layoutPresenter.setLayoutConstraints(layoutConstraints);
+            if (!Objects.equals(e.getValue(), layoutConstraints)) {
+                setDirty(true);
+                layoutConstraints = e.getValue();
+                layoutPresenter.setLayoutConstraints(layoutConstraints);
+            }
         });
         presenter.read(layoutConstraints);
         ShowPopupEvent.builder(presenter)
@@ -351,13 +356,13 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     }
 
     private void enableQueryButtons() {
-//        getView().getQueryButtons().setEnabled(getQueryableComponents().size() > 0);
-//        getView().getQueryButtons().setMode(getCombinedMode());
+        getView().getQueryButtons().setEnabled(getQueryableComponents().size() > 0);
+        getView().getQueryButtons().setMode(getCombinedMode());
     }
 
     @Override
     public void accept(final Boolean mode) {
-//        getView().getQueryButtons().setMode(getCombinedMode());
+        getView().getQueryButtons().setMode(getCombinedMode());
     }
 
     private boolean getCombinedMode() {
@@ -539,8 +544,6 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
     public interface DashboardView extends View, HasUiHandlers<DashboardUiHandlers> {
 
-        TimeRange getTimeRange();
-
         void setTimeRange(TimeRange timeRange);
 
         void setContent(Widget view);
@@ -550,6 +553,8 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         void setReadOnly(boolean readOnly);
 
         void setDesignMode(boolean designMode);
+
+        QueryButtons getQueryButtons();
     }
 
     private void addComponent(final ComponentType type) {
