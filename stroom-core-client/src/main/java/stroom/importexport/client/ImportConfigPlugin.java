@@ -23,7 +23,6 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.MenuItem;
 import stroom.widget.menu.client.presenter.Separator;
 
 import com.google.inject.Inject;
@@ -45,24 +44,16 @@ public class ImportConfigPlugin extends Plugin {
 
     @Override
     public void onReveal(final BeforeRevealMenubarEvent event) {
-        super.onReveal(event);
-
-//        // Add items to the tools menu.
-//        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, new Separator(100));
-//
-//        if (securityContext.hasAppPermission("Import Configuration")) {
-//            event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, createImportMenuItem());
-//        }
-
+        // Add items to the tools menu.
+        if (securityContext.hasAppPermission("Import Configuration")) {
+            event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, new Separator(200));
+            event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
+                    new IconMenuItem.Builder()
+                            .priority(202)
+                            .icon(SvgPresets.UPLOAD)
+                            .text("Import")
+                            .command(() -> ImportConfigEvent.fire(ImportConfigPlugin.this))
+                            .build());
+        }
     }
-
-//    private MenuItem createImportMenuItem() {
-//        return new IconMenuItem(105,
-//                SvgPresets.UPLOAD,
-//                SvgPresets.UPLOAD,
-//                "Import",
-//                null,
-//                true,
-//                () -> ImportConfigEvent.fire(ImportConfigPlugin.this));
-//    }
 }

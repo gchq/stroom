@@ -44,7 +44,8 @@ public class VisFrame extends Composite implements VisPane {
     private final Frame frame;
 
     public VisFrame(final EventBus eventBus) {
-        frame = new Frame("vis.html");// + "?time=" + System.currentTimeMillis());
+        // + "?time=" + System.currentTimeMillis());
+        frame = new Frame("vis.html");
         frame.addStyleName("VisFrame-frame");
         messageSupport = new MessageSupport(eventBus, frame.getElement());
 

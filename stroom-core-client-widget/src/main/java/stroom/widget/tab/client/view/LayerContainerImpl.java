@@ -16,7 +16,6 @@
 
 package stroom.widget.tab.client.view;
 
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.IsWidget;
@@ -36,7 +35,7 @@ public class LayerContainerImpl extends Composite implements LayerContainer, Req
     private final FlowPanel panel;
     private final Set<Layer> layers = new HashSet<>();
     private boolean fade;
-//    private TransitionTimer transitionTimer;
+    //    private TransitionTimer transitionTimer;
     private Layer selectedLayer;
 
     public LayerContainerImpl() {
@@ -60,7 +59,7 @@ public class LayerContainerImpl extends Composite implements LayerContainer, Req
 //            if (fade) {
 //                fadeTransition();
 //            } else {
-                instantTransition();
+            instantTransition();
 //            }
         }
     }

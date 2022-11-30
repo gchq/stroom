@@ -9907,6 +9907,9 @@
           "parameters" : {
             "type" : "string"
           },
+          "preferredSize" : {
+            "$ref" : "#/components/schemas/Size"
+          },
           "tabVisibility" : {
             "type" : "string",
             "enum" : [ "SHOW_ALL", "HIDE_SINGLE", "HIDE_ALL" ]

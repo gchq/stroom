@@ -564,6 +564,7 @@ export interface DashboardConfig {
   layout?: LayoutConfig;
   layoutConstraints?: LayoutConstraints;
   parameters?: string;
+  preferredSize?: Size;
   tabVisibility?: "SHOW_ALL" | "HIDE_SINGLE" | "HIDE_ALL";
   timeRange?: TimeRange;
 }

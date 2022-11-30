@@ -6824,6 +6824,8 @@ components:
           $ref: '#/components/schemas/LayoutConstraints'
         parameters:
           type: string
+        preferredSize:
+          $ref: '#/components/schemas/Size'
         tabVisibility:
           type: string
           enum:
