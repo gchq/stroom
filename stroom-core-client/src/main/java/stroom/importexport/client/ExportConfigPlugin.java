@@ -49,7 +49,7 @@ public class ExportConfigPlugin extends Plugin {
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, new Separator(200));
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
                     new IconMenuItem.Builder()
-                            .priority(201)
+                            .priority(202)
                             .icon(SvgPresets.DOWNLOAD)
                             .text("Export")
                             .command(() -> ExportConfigEvent.fire(ExportConfigPlugin.this, null))

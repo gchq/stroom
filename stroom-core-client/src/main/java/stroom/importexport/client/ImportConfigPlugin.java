@@ -49,7 +49,7 @@ public class ImportConfigPlugin extends Plugin {
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, new Separator(200));
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
                     new IconMenuItem.Builder()
-                            .priority(202)
+                            .priority(201)
                             .icon(SvgPresets.UPLOAD)
                             .text("Import")
                             .command(() -> ImportConfigEvent.fire(ImportConfigPlugin.this))
