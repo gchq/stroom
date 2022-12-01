@@ -64,8 +64,9 @@ proxyConfig:
     home: null
     temp: null
   proxyId: null
-  receiveDataConfig:
-    clientId: null
+  receive:
+    authenticationRequired: true
+    certificateAuthenticationEnabled: true
     metaTypes:
     - "Context"
     - "Raw Reference"
@@ -78,9 +79,8 @@ proxyConfig:
     - "Detections"
     - "Meta Data"
     - "Records"
-    publicKey: null
     receiptPolicyUuid: null
-    requireTokenAuthentication: false
+    tokenAuthenticationEnabled: false
   repository:
     repoDir: "repo"
     storingEnabled: true
@@ -103,12 +103,7 @@ proxyConfig:
     userAgent: null
     validateAfterInactivityPeriod: "PT0S"
     workQueueSize: 8
-  threads:
-    examineSourceThreadCount: 3
-    forwardRetryThreadCount: 2
-    forwardThreadCount: 10
-  useDefaultOpenIdCredentials: false
-  proxySecurityConfig:
+  security:
     authentication:
       authenticationRequired: true
       openId:
@@ -125,3 +120,8 @@ proxyConfig:
         tokenEndpoint: null
         useInternal: true
         validateAudience: true
+  threads:
+    examineSourceThreadCount: 3
+    forwardRetryThreadCount: 2
+    forwardThreadCount: 10
+  useDefaultOpenIdCredentials: false

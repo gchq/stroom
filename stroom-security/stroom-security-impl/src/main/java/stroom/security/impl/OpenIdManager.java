@@ -1,9 +1,10 @@
 package stroom.security.impl;
 
-import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.api.UserIdentity;
+import stroom.security.common.impl.AuthenticationState;
+import stroom.security.common.impl.UserIdentityFactory;
 import stroom.security.openid.api.OpenId;
-import stroom.util.NullSafe;
+import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -12,7 +13,6 @@ import stroom.util.servlet.UserAgentSessionUtil;
 
 import com.google.common.base.Strings;
 
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -32,14 +32,6 @@ class OpenIdManager {
                          final UserIdentityFactory userIdentityFactory) {
         this.openIdConfiguration = openIdConfiguration;
         this.userIdentityFactory = userIdentityFactory;
-    }
-
-    boolean hasAuthenticationToken(final HttpServletRequest request) {
-        return userIdentityFactory.hasAuthenticationToken(request);
-    }
-
-    void removeAuthorisationEntries(final Map<String, String> headers) {
-        NullSafe.consume(headers, userIdentityFactory::removeAuthorisationEntries);
     }
 
     public String redirect(final HttpServletRequest request,

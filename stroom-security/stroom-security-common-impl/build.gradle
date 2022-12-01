@@ -1,10 +1,16 @@
 ext.moduleName = 'stroom.security.common.impl'
 
 dependencies {
+    implementation project(':stroom-docref')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-security:stroom-security-openid-api')
     implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
 
+    implementation libs.dropwizard_metrics_healthchecks
+    implementation libs.http_client
+    implementation libs.jackson_core
+    implementation libs.jackson_databind
     implementation libs.jose4j
     implementation libs.slf4j_api
     implementation libs.ws_rs_api

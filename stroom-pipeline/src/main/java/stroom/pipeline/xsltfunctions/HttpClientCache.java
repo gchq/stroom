@@ -58,7 +58,7 @@ public class HttpClientCache {
 
     private static final String CACHE_NAME = "Http Client Cache";
 
-    private final LoadingStroomCache<String, OkHttpClient> cache;
+    private final LoadingStroomCache<String, OkHttpClient> cache; // clientConfig => OkHttpClient
     private final PathCreator pathCreator;
 
     @Inject
@@ -92,10 +92,10 @@ public class HttpClientCache {
                         "Error parsing HTTP client configuration \"{}\". {}", clientConfigStr, e.getMessage()), e);
             }
 
-            addOptionalConfigurationValue(builder::followRedirects, clientConfig.getFollowRedirects());
-            addOptionalConfigurationValue(builder::followSslRedirects, clientConfig.getFollowSslRedirects());
+            addOptionalConfigurationValue(builder::followRedirects, clientConfig.isFollowRedirects());
+            addOptionalConfigurationValue(builder::followSslRedirects, clientConfig.isFollowSslRedirects());
             addOptionalConfigurationValue(builder::retryOnConnectionFailure,
-                    clientConfig.getRetryOnConnectionFailure());
+                    clientConfig.isRetryOnConnectionFailure());
             addOptionalConfigurationDuration(builder::callTimeout, clientConfig.getCallTimeout());
             addOptionalConfigurationDuration(builder::connectTimeout, clientConfig.getConnectionTimeout());
             addOptionalConfigurationDuration(builder::readTimeout, clientConfig.getReadTimeout());

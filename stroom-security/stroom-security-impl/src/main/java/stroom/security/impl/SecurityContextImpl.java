@@ -2,11 +2,12 @@ package stroom.security.impl;
 
 import stroom.docref.HasUuid;
 import stroom.security.api.ClientSecurityUtil;
-import stroom.security.api.HasJws;
+import stroom.security.api.HasJwt;
 import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.exception.AuthenticationException;
+import stroom.security.common.impl.UserIdentityFactory;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
@@ -541,13 +542,13 @@ class SecurityContextImpl implements SecurityContext {
         if (userIdentity == null) {
             LOGGER.debug("No user is currently logged in");
 
-        } else if (!(userIdentity instanceof HasJws)) {
+        } else if (!(userIdentity instanceof HasJwt)) {
             LOGGER.debug("Current user has no JWS");
             throw new RuntimeException("Current user has no token");
 
         } else {
             userIdentityFactory.refresh(userIdentity);
-            final String jws = ((HasJws) userIdentity).getJws();
+            final String jws = ((HasJwt) userIdentity).getJwt();
             if (jws == null) {
                 LOGGER.debug("The JWS is null for user '{}'", userIdentity.getId());
             } else {

@@ -1,5 +1,6 @@
 package stroom.security.impl;
 
+import stroom.security.common.impl.AuthenticationState;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;

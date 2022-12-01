@@ -1,18 +1,20 @@
-package stroom.security.impl;
+package stroom.security.common.impl;
 
 import stroom.docref.HasUuid;
-import stroom.security.api.HasJws;
+import stroom.security.api.HasJwt;
 import stroom.security.api.HasSessionId;
 import stroom.security.api.UserIdentity;
+import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.TokenResponse;
 
 import org.jose4j.jwt.JwtClaims;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.servlet.http.HttpSession;
 
-class UserIdentityImpl implements UserIdentity, HasSessionId, HasJws, HasUuid {
+public class UserIdentityImpl implements UserIdentity, HasSessionId, HasJwt, HasUuid {
 
     private final String userUuid;
     private final String id;
@@ -21,7 +23,7 @@ class UserIdentityImpl implements UserIdentity, HasSessionId, HasJws, HasUuid {
     private volatile TokenResponse tokenResponse;
     private volatile JwtClaims jwtClaims;
 
-    UserIdentityImpl(final String userUuid,
+    public UserIdentityImpl(final String userUuid,
                      final String id,
                      final HttpSession httpSession,
                      final TokenResponse tokenResponse,
@@ -45,7 +47,7 @@ class UserIdentityImpl implements UserIdentity, HasSessionId, HasJws, HasUuid {
     }
 
     @Override
-    public String getJws() {
+    public String getJwt() {
         return tokenResponse.getIdToken();
     }
 
@@ -79,6 +81,21 @@ class UserIdentityImpl implements UserIdentity, HasSessionId, HasJws, HasUuid {
     }
 
     @Override
+    public Optional<String> getFullName() {
+        return Optional.ofNullable(jwtClaims)
+                .flatMap(jwtClaims2 ->
+                        JwtUtil.getClaimValue(jwtClaims2, OpenId.CLAIM__NAME));
+    }
+
+    @Override
+    public String getPreferredUsername() {
+        return Optional.ofNullable(jwtClaims)
+                .flatMap(jwtClaims2 ->
+                        JwtUtil.getClaimValue(jwtClaims2, OpenId.CLAIM__PREFERRED_USERNAME))
+                .orElseGet(this::getId);
+    }
+
+    @Override
     public boolean equals(final Object o) {
         if (this == o) {
             return true;
@@ -98,6 +115,11 @@ class UserIdentityImpl implements UserIdentity, HasSessionId, HasJws, HasUuid {
 
     @Override
     public String toString() {
-        return getId();
+        return "UserIdentityImpl{" +
+                "userUuid='" + userUuid + '\'' +
+                ", id='" + id + '\'' +
+                ", fullName='" + getFullName() + '\'' +
+                ", preferredUsername='" + getPreferredUsername() + '\'' +
+                '}';
     }
 }

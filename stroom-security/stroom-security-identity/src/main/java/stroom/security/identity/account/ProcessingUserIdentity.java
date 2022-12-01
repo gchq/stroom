@@ -16,13 +16,14 @@
 
 package stroom.security.identity.account;
 
-import stroom.security.api.HasJws;
+import stroom.security.api.HasJwt;
 import stroom.security.api.UserIdentity;
 
 import java.util.Objects;
 
-public class ProcessingUserIdentity implements UserIdentity, HasJws {
+public class ProcessingUserIdentity implements UserIdentity, HasJwt {
 
+    // The subject of the processing user identity
     public static final String INTERNAL_PROCESSING_USER = "INTERNAL_PROCESSING_USER";
 
     private String jws;
@@ -40,7 +41,7 @@ public class ProcessingUserIdentity implements UserIdentity, HasJws {
     }
 
     @Override
-    public String getJws() {
+    public String getJwt() {
         return jws;
     }
 

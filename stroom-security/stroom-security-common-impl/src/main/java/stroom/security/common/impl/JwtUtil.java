@@ -135,4 +135,11 @@ public final class JwtUtil {
                 ThrowingFunction.unchecked(jwtClaims ->
                         jwtClaims.getClaimValue(claim, String.class)));
     }
+
+    public static Optional<String> getClaimValue(final JwtClaims jwtClaims, final String claim) {
+        return NullSafe.getAsOptional(
+                jwtClaims,
+                ThrowingFunction.unchecked(jwtClaims2 ->
+                        jwtClaims2.getClaimValue(claim, String.class)));
+    }
 }

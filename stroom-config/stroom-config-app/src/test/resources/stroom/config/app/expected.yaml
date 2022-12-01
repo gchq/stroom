@@ -549,10 +549,22 @@ appConfig:
         prepStmtCacheSqlLimit: 256
     itemsRetention: 100
   receive:
-    feedNamePattern: "^[A-Z0-9_-]{3,}$"
+    authenticationRequired: true
+    certificateAuthenticationEnabled: true
+    metaTypes:
+    - "Context"
+    - "Raw Reference"
+    - "Events"
+    - "Raw Events"
+    - "Reference"
+    - "Error"
+    - "Test Events"
+    - "Test Reference"
+    - "Detections"
+    - "Meta Data"
+    - "Records"
     receiptPolicyUuid: null
-    requireTokenAuthentication: false
-    unknownClassification: "UNKNOWN CLASSIFICATION"
+    tokenAuthenticationEnabled: false
   search:
     extraction:
       extractionDelayMs: 100

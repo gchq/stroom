@@ -104,27 +104,28 @@ public class OkHttpClientConfig {
 
     @JsonPropertyDescription("Configure this client to follow redirects. " +
             "If unset, redirects will be followed.")
-    public Boolean getFollowRedirects() {
+    public Boolean isFollowRedirects() {
         return followRedirects;
     }
 
     @JsonPropertyDescription("Configure this client to allow protocol redirects from HTTPS to HTTP and from " +
             "HTTP to HTTPS. Redirects are still first restricted by followRedirects. Defaults to true.")
-    public Boolean getFollowSslRedirects() {
+    public Boolean isFollowSslRedirects() {
         return followSslRedirects;
     }
 
-    @JsonPropertyDescription("Configure this client to retry or not when a connectivity problem is encountered. " +
-            "By default, this client silently recovers from the following problems:\n" +
-            "Unreachable IP addresses. If the URL's host has multiple IP addresses, failure to reach any individual " +
-            "IP address doesn't fail the overall request. This can increase availability of multi-homed services.\n" +
-            "Stale pooled connections. The ConnectionPool reuses sockets to decrease request latency, but these " +
-            "connections will occasionally time out.\n" +
-            "Unreachable proxy servers. A ProxySelector can be used to attempt multiple proxy servers in sequence, " +
-            "eventually falling back to a direct connection.\n" +
-            "Set this to false to avoid retrying requests when doing so is destructive. In this case the calling " +
-            "application should do its own recovery of connectivity failures.")
-    public Boolean getRetryOnConnectionFailure() {
+    @JsonPropertyDescription("""
+            Configure this client to retry or not when a connectivity problem is encountered. By default, \
+            this client silently recovers from the following problems:
+            Unreachable IP addresses. If the URL's host has multiple IP addresses, failure to reach any individual \
+            IP address doesn't fail the overall request. This can increase availability of multi-homed services.
+            Stale pooled connections. The ConnectionPool reuses sockets to decrease request latency, but these \
+            connections will occasionally time out.
+            Unreachable proxy servers. A ProxySelector can be used to attempt multiple proxy servers in sequence, \
+            eventually falling back to a direct connection.
+            Set this to false to avoid retrying requests when doing so is destructive. In this case the calling \
+            application should do its own recovery of connectivity failures.""")
+    public Boolean isRetryOnConnectionFailure() {
         return retryOnConnectionFailure;
     }
 

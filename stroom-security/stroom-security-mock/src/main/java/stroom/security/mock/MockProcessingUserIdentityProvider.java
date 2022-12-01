@@ -19,11 +19,18 @@ public class MockProcessingUserIdentityProvider implements ProcessingUserIdentit
         return USER_IDENTITY.equals(userIdentity);
     }
 
+    @Override
+    public boolean isProcessingUser(final String subject, final String issuer) {
+        return Objects.equals(subject, MockProcessingUserIdentity.INTERNAL_PROCESSING_USER_ID);
+    }
+
     private static class MockProcessingUserIdentity implements UserIdentity {
+
+        protected static final String INTERNAL_PROCESSING_USER_ID = "INTERNAL_PROCESSING_USER";
 
         @Override
         public String getId() {
-            return "INTERNAL_PROCESSING_USER";
+            return INTERNAL_PROCESSING_USER_ID;
         }
 
         @Override

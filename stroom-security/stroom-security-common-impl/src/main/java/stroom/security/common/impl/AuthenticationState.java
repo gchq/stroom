@@ -1,11 +1,12 @@
-package stroom.security.impl;
+package stroom.security.common.impl;
 
 public class AuthenticationState {
+
     private final String id;
     private final String uri;
     private final String nonce;
 
-    AuthenticationState(final String id, final String uri, final String nonce) {
+    public AuthenticationState(final String id, final String uri, final String nonce) {
         this.id = id;
         this.uri = uri;
         this.nonce = nonce;
@@ -26,6 +27,7 @@ public class AuthenticationState {
      * @return The URL of the originating request that this state is linked to.
      */
     public String getUri() {
+
         return uri;
     }
 

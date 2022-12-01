@@ -1,18 +1,11 @@
-package stroom.security.impl;
+package stroom.security.common.impl;
 
-import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.exception.AuthenticationException;
-import stroom.security.common.impl.JwtUtil;
-import stroom.security.common.impl.StandardJwtContextFactory;
 import stroom.security.openid.api.OpenId;
-import stroom.security.openid.api.OpenIdConfig;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenRequest;
 import stroom.security.openid.api.TokenResponse;
-import stroom.security.shared.User;
-import stroom.util.NullSafe;
-import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -43,108 +36,75 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
-@Singleton
-class UserIdentityFactoryImpl implements UserIdentityFactory {
+public class UserIdentityFactoryImpl implements UserIdentityFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UserIdentityFactoryImpl.class);
 
-    private final ProcessingUserIdentityProvider processingUserIdentityProvider;
-    private final InternalJwtContextFactory internalJwtContextFactory;
-    private final StandardJwtContextFactory standardJwtContextFactory;
-    private final OpenIdConfig openIdConfig;
-    private final OpenIdConfiguration openIdConfiguration;
-    private final DefaultOpenIdCredentials defaultOpenIdCredentials;
-    private final UserCache userCache;
+    private final JwtContextFactory jwtContextFactory;
+    private final Provider<OpenIdConfiguration> openIdConfigProvider;
     private final Provider<CloseableHttpClient> httpClientProvider;
+    private final IdpIdentityMapper idpIdentityMapper;
 
     @Inject
-    UserIdentityFactoryImpl(final ProcessingUserIdentityProvider processingUserIdentityProvider,
-                            final InternalJwtContextFactory internalJwtContextFactory,
-                            final StandardJwtContextFactory standardJwtContextFactory,
-                            final OpenIdConfig openIdConfig,
-                            final OpenIdConfiguration openIdConfiguration,
-                            final DefaultOpenIdCredentials defaultOpenIdCredentials,
-                            final UserCache userCache,
-                            final Provider<CloseableHttpClient> httpClientProvider) {
-        this.processingUserIdentityProvider = processingUserIdentityProvider;
-        this.internalJwtContextFactory = internalJwtContextFactory;
-        this.standardJwtContextFactory = standardJwtContextFactory;
-        this.openIdConfig = openIdConfig;
-        this.openIdConfiguration = openIdConfiguration;
-        this.defaultOpenIdCredentials = defaultOpenIdCredentials;
-        this.userCache = userCache;
+    public UserIdentityFactoryImpl(final JwtContextFactory jwtContextFactory,
+                                   final Provider<OpenIdConfiguration> openIdConfigProvider,
+                                   final Provider<CloseableHttpClient> httpClientProvider,
+                                   final IdpIdentityMapper idpIdentityMapper) {
+        this.jwtContextFactory = jwtContextFactory;
+        this.openIdConfigProvider = openIdConfigProvider;
         this.httpClientProvider = httpClientProvider;
-    }
-
-    private boolean useExternalIdentityProvider() {
-        return !openIdConfig.isUseInternal();
+        this.idpIdentityMapper = idpIdentityMapper;
     }
 
     @Override
     public Optional<UserIdentity> getApiUserIdentity(final HttpServletRequest request) {
-        Optional<UserIdentity> optionalUserIdentity = Optional.empty();
+        Optional<UserIdentity> optUserIdentity = Optional.empty();
 
         // See if we can login with a token if one is supplied.
         try {
-            // Always try the internal context factory first.
-            Optional<JwtContext> optionalContext = internalJwtContextFactory.getJwtContext(request);
-            if (optionalContext.isPresent()) {
-                optionalUserIdentity = getProcessingUser(optionalContext.get());
-            } else if (useExternalIdentityProvider()) {
-                optionalContext = standardJwtContextFactory.getJwtContext(request);
-            }
+            final Optional<JwtContext> optJwtContext = jwtContextFactory.getJwtContext(request);
 
-            if (optionalContext.isEmpty()) {
-                LOGGER.debug(() -> "No JWS found in headers in request to " + request.getRequestURI());
-
-            } else if (optionalUserIdentity.isEmpty()) {
-                optionalUserIdentity = getUserIdentity(request, optionalContext.get());
-            }
-
+            optUserIdentity = optJwtContext.flatMap(jwtContext ->
+                            idpIdentityMapper.mapApiIdentity(jwtContext, request))
+                    .or(() -> {
+                        LOGGER.debug(() ->
+                                "No JWS found in headers in request to " + request.getRequestURI());
+                        return Optional.empty();
+                    });
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
         }
 
-        if (optionalUserIdentity.isEmpty()) {
+        if (optUserIdentity.isEmpty()) {
             LOGGER.debug(() -> "Cannot get a valid JWS for API request to " + request.getRequestURI() + ". " +
                     "This may be due to Stroom being left open in a browser after Stroom was restarted.");
         }
 
-        return optionalUserIdentity;
+        return optUserIdentity;
     }
 
     @Override
     public boolean hasAuthenticationToken(final HttpServletRequest request) {
-        final boolean useExternalIdentityProvider = useExternalIdentityProvider();
-        return (useExternalIdentityProvider && standardJwtContextFactory.hasToken(request))
-                || internalJwtContextFactory.hasToken(request);
+        return jwtContextFactory.hasToken(request);
     }
 
     @Override
     public void removeAuthorisationEntries(final Map<String, String> headers) {
-        if (NullSafe.hasEntries(headers)) {
-            internalJwtContextFactory.removeAuthorisationEntries(headers);
-            if (useExternalIdentityProvider()) {
-                standardJwtContextFactory.removeAuthorisationEntries(headers);
-            }
-        }
+        jwtContextFactory.removeAuthorisationEntries(headers);
     }
 
     @Override
     public Optional<UserIdentity> getAuthFlowUserIdentity(final HttpServletRequest request,
                                                           final String code,
                                                           final AuthenticationState state) {
-        final HttpSession session = request.getSession(false);
+        final OpenIdConfiguration openIdConfiguration = openIdConfigProvider.get();
 
         final ObjectMapper mapper = getMapper();
         final String tokenEndpoint = openIdConfiguration.getTokenEndpoint();
@@ -179,21 +139,12 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
 
         final TokenResponse tokenResponse = getTokenResponse(mapper, httpPost, tokenEndpoint);
 
-        // Always try the internal context factory first.
-        Optional<JwtContext> optionalContext = internalJwtContextFactory.getJwtContext(tokenResponse.getIdToken());
-        if (optionalContext.isEmpty() && useExternalIdentityProvider()) {
-            optionalContext = standardJwtContextFactory.getJwtContext(tokenResponse.getIdToken());
-        }
-
-        final JwtClaims jwtClaims = optionalContext
-                .map(JwtContext::getJwtClaims)
-                .orElseThrow(() -> new RuntimeException("Unable to extract JWT claims"));
-
-        return createUserIdentity(
-                session,
-                state,
-                tokenResponse,
-                jwtClaims);
+        return jwtContextFactory.getJwtContext(tokenResponse.getIdToken())
+                .flatMap(jwtContext ->
+                        createUserIdentity(request, state, tokenResponse, jwtContext))
+                .or(() -> {
+                    throw new RuntimeException("Unable to extract JWT claims");
+                });
     }
 
     @Override
@@ -218,6 +169,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
     private void doRefresh(final UserIdentityImpl identity) {
         TokenResponse tokenResponse = null;
         JwtClaims jwtClaims = null;
+        final OpenIdConfiguration openIdConfiguration = openIdConfigProvider.get();
 
         try {
             LOGGER.debug("Refreshing token " + identity);
@@ -248,14 +200,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
 
             tokenResponse = getTokenResponse(mapper, httpPost, tokenEndpoint);
 
-            // Always try the internal context factory first.
-            Optional<JwtContext> optionalContext =
-                    internalJwtContextFactory.getJwtContext(tokenResponse.getIdToken());
-            if (optionalContext.isEmpty() && useExternalIdentityProvider()) {
-                optionalContext = standardJwtContextFactory.getJwtContext(tokenResponse.getIdToken());
-            }
-
-            jwtClaims = optionalContext
+            jwtClaims = jwtContextFactory.getJwtContext(tokenResponse.getIdToken())
                     .map(JwtContext::getJwtClaims)
                     .orElseThrow(() -> new RuntimeException("Unable to extract JWT claims"));
 
@@ -301,7 +246,10 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
     private void setFormParams(final HttpPost httpPost,
                                final List<NameValuePair> nvps) {
         try {
-            String authorization = openIdConfiguration.getClientId() + ":" + openIdConfiguration.getClientSecret();
+            final OpenIdConfiguration openIdConfiguration = openIdConfigProvider.get();
+            String authorization = openIdConfiguration.getClientId()
+                    + ":"
+                    + openIdConfiguration.getClientSecret();
             authorization = Base64.getEncoder().encodeToString(authorization.getBytes(StandardCharsets.UTF_8));
             authorization = "Basic " + authorization;
 
@@ -362,60 +310,18 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
         return mapper;
     }
 
-    private Optional<UserIdentity> getUserIdentity(final HttpServletRequest request,
-                                                   final JwtContext jwtContext) {
-        LOGGER.debug(() -> "Getting user identity from jwtContext=" + jwtContext);
-
-        String sessionId = null;
-        final HttpSession session = request.getSession(false);
-        if (session != null) {
-            sessionId = session.getId();
-        }
-
-        try {
-            final String userId = getUserId(jwtContext.getJwtClaims());
-            final User user;
-            if (jwtContext.getJwtClaims().getAudience().contains(defaultOpenIdCredentials.getOauth2ClientId())
-                    && userId.equals(defaultOpenIdCredentials.getApiKeyUserEmail())) {
-                LOGGER.warn(() ->
-                        "Authenticating using default API key. DO NOT USE IN PRODUCTION!");
-                // Using default creds so just fake a user
-                // TODO Not sure if this is enough info in the user
-                user = new User();
-                user.setName(userId);
-                user.setUuid(UUID.randomUUID().toString());
-            } else {
-                user = userCache.get(userId).orElseThrow(() ->
-                        new AuthenticationException("Unable to find user: " + userId));
-            }
-
-            return Optional.of(new ApiUserIdentity(user.getUuid(),
-                    userId,
-                    sessionId,
-                    jwtContext));
-
-        } catch (final MalformedClaimException e) {
-            LOGGER.error(() -> "Error extracting claims from token in request " + request.getRequestURI());
-            return Optional.empty();
-        }
-    }
-
-    private Optional<UserIdentity> createUserIdentity(final HttpSession session,
+    private Optional<UserIdentity> createUserIdentity(final HttpServletRequest request,
                                                       final AuthenticationState state,
                                                       final TokenResponse tokenResponse,
-                                                      final JwtClaims jwtClaims) {
-        Optional<UserIdentity> optional = Optional.empty();
+                                                      final JwtContext jwtContext) {
+        Optional<UserIdentity> optUserIdentity = Optional.empty();
+        final JwtClaims jwtClaims = jwtContext.getJwtClaims();
 
-        final String nonce = (String) jwtClaims.getClaimsMap().get(OpenId.NONCE);
+        final String nonce = (String) jwtClaims.getClaimsMap()
+                .get(OpenId.NONCE);
         final boolean match = nonce != null && nonce.equals(state.getNonce());
         if (match) {
-            final String userId = getUserId(jwtClaims);
-            final String sessionId = session.getId();
-            LOGGER.info(() -> "User " + userId + " is authenticated for sessionId " + sessionId);
-            final Optional<User> optionalUser = userCache.get(userId);
-            final User user = optionalUser.orElseThrow(() ->
-                    new AuthenticationException("Unable to find user: " + userId));
-            optional = Optional.of(new UserIdentityImpl(user.getUuid(), userId, session, tokenResponse, jwtClaims));
+            optUserIdentity = idpIdentityMapper.mapAuthFlowIdentity(jwtContext, request, tokenResponse);
 
         } else {
             // If the nonces don't match we need to redirect to log in again.
@@ -423,35 +329,6 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
             LOGGER.info(() -> "Received a bad nonce!");
         }
 
-        return optional;
-    }
-
-    private String getUserId(final JwtClaims jwtClaims) {
-        LOGGER.trace("getUserId");
-        String userId = JwtUtil.getEmail(jwtClaims);
-        if (userId == null) {
-            userId = JwtUtil.getUserIdFromIdentities(jwtClaims);
-        }
-        if (userId == null) {
-            userId = JwtUtil.getUserName(jwtClaims);
-        }
-        if (userId == null) {
-            userId = JwtUtil.getSubject(jwtClaims);
-        }
-
-        return userId;
-    }
-
-    private Optional<UserIdentity> getProcessingUser(final JwtContext jwtContext) {
-        try {
-            final JwtClaims jwtClaims = jwtContext.getJwtClaims();
-            final UserIdentity processingUser = processingUserIdentityProvider.get();
-            if (processingUser.getId().equals(jwtClaims.getSubject())) {
-                return Optional.of(processingUserIdentityProvider.get());
-            }
-        } catch (final MalformedClaimException e) {
-            LOGGER.debug(e.getMessage(), e);
-        }
-        return Optional.empty();
+        return optUserIdentity;
     }
 }

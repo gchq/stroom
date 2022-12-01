@@ -5,6 +5,7 @@ import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.exception.AuthenticationException;
+import stroom.security.common.impl.UserIdentityImpl;
 import stroom.security.shared.AppPermissionResource;
 import stroom.security.shared.ChangeSet;
 import stroom.security.shared.ChangeUserRequest;

@@ -153,15 +153,6 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.core.receive.ReceiveDataConfig getReceiveDataConfig(
-            final ConfigMapper configMapper) {
-        return configMapper.getConfigObject(
-                stroom.core.receive.ReceiveDataConfig.class);
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
     stroom.dashboard.impl.DashboardConfig getDashboardConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
@@ -463,6 +454,15 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.query.common.v2.ResultStoreLmdbConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.receive.common.ReceiveDataConfig getReceiveDataConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.receive.common.ReceiveDataConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")

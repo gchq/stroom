@@ -21,10 +21,8 @@ public final class UserIdentitySessionUtil {
     }
 
     public static Optional<UserIdentity> get(final HttpSession session) {
-        if (session == null) {
-            return Optional.empty();
-        }
-        return Optional.ofNullable((UserIdentity) session.getAttribute(SESSION_USER_IDENTITY));
+        return Optional.ofNullable(session)
+                .map(session2 -> (UserIdentity) session2.getAttribute(SESSION_USER_IDENTITY));
     }
 
     public static boolean requestHasSessionCookie(final HttpServletRequest request) {

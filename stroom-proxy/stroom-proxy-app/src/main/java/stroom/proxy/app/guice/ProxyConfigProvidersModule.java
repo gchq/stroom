@@ -72,15 +72,6 @@ public class ProxyConfigProvidersModule extends AbstractModule {
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.proxy.app.ReceiveDataConfig getReceiveDataConfig(
-            final ProxyConfigProvider proxyConfigProvider) {
-        return proxyConfigProvider.getConfigObject(
-                stroom.proxy.app.ReceiveDataConfig.class);
-    }
-
-    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
     stroom.proxy.app.RestClientConfig getRestClientConfig(
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
@@ -157,6 +148,15 @@ public class ProxyConfigProvidersModule extends AbstractModule {
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
                 stroom.proxy.repo.ProxyRepoConfig.class);
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.receive.common.ReceiveDataConfig getReceiveDataConfig(
+            final ProxyConfigProvider proxyConfigProvider) {
+        return proxyConfigProvider.getConfigObject(
+                stroom.receive.common.ReceiveDataConfig.class);
     }
 
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")

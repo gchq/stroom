@@ -63,6 +63,9 @@ public class User implements HasAuditInfo, HasIntegerId {
         this.group = group;
     }
 
+    /**
+     * @return The unique identifier for the user in the database. Un-related to any IDP value.
+     */
     @Override
     public Integer getId() {
         return id;
@@ -116,6 +119,11 @@ public class User implements HasAuditInfo, HasIntegerId {
         this.updateUser = updateUser;
     }
 
+    /**
+     * @return The unique identifier for this user on the IDP, i.e. the subject. May not be unique within stroom as
+     * we may be using an external IDP but still using the internal IDP for processing user.
+     * If isGroup is true then this is the name of the group.
+     */
     public String getName() {
         return name;
     }
@@ -124,6 +132,9 @@ public class User implements HasAuditInfo, HasIntegerId {
         this.name = name;
     }
 
+    /**
+     * @return A globally unique identifier for identifying this user in other areas of stroom code.
+     */
     public String getUuid() {
         return uuid;
     }
@@ -132,6 +143,9 @@ public class User implements HasAuditInfo, HasIntegerId {
         this.uuid = uuid;
     }
 
+    /**
+     * @return True if this object represents a named user-group instead of a user.
+     */
     public boolean isGroup() {
         return group;
     }
@@ -212,16 +226,27 @@ public class User implements HasAuditInfo, HasIntegerId {
             return this;
         }
 
+        /**
+         * The unique identifier for this user on the IDP, i.e. the subject. May not be unique within stroom as
+         * we may be using an external IDP but still using the internal IDP for processing user.
+         * If isGroup is true then this is the name of the group.
+         */
         public Builder name(final String value) {
             name = value;
             return this;
         }
 
+        /**
+         * A globally unique identifier for identifying this user in other areas of stroom code.
+         */
         public Builder uuid(final String value) {
             uuid = value;
             return this;
         }
 
+        /**
+         * If value is true marks this {@link User} as a named user-group.
+         */
         public Builder group(final boolean value) {
             group = value;
             return this;

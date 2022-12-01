@@ -57,7 +57,7 @@ class TestJWTService {
         // Verify the hard coded default token
 
         final StandardJwtContextFactory jwtService = new StandardJwtContextFactory(
-                openIdConfiguration,
+                () -> openIdConfiguration,
                 openIdPublicKeysSupplier);
 
         final String apiKey = defaultOpenIdCredentials.getApiKey();

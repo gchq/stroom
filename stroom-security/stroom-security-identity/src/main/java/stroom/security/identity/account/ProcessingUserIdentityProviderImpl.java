@@ -2,6 +2,7 @@ package stroom.security.identity.account;
 
 import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.UserIdentity;
+import stroom.security.identity.config.IdentityConfig;
 import stroom.security.identity.token.TokenBuilder;
 import stroom.security.identity.token.TokenBuilderFactory;
 import stroom.security.openid.api.OpenIdClientFactory;
@@ -11,9 +12,11 @@ import stroom.util.logging.LambdaLoggerFactory;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -24,15 +27,18 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
 
     private final TokenBuilderFactory tokenBuilderFactory;
     private final OpenIdClientFactory openIdClientDetailsFactory;
+    private final Provider<IdentityConfig> identityConfigProvider;
 
     private final AtomicLong lastFetchTime = new AtomicLong(0);
     private volatile UserIdentity userIdentity;
 
     @Inject
     ProcessingUserIdentityProviderImpl(final TokenBuilderFactory tokenBuilderFactory,
-                                       final OpenIdClientFactory openIdClientDetailsFactory) {
+                                       final OpenIdClientFactory openIdClientDetailsFactory,
+                                       final Provider<IdentityConfig> identityConfigProvider) {
         this.tokenBuilderFactory = tokenBuilderFactory;
         this.openIdClientDetailsFactory = openIdClientDetailsFactory;
+        this.identityConfigProvider = identityConfigProvider;
     }
 
     @Override
@@ -63,6 +69,23 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
             LOGGER.debug("Null userIdentity");
             return false;
         }
+    }
+
+    @Override
+    public boolean isProcessingUser(final String subject, final String issuer) {
+
+        // Compare both sub and issuer in case the id exists on the external IDP
+        final boolean isProcessingUser = Objects.equals(subject, ProcessingUserIdentity.INTERNAL_PROCESSING_USER)
+                && Objects.equals(issuer, identityConfigProvider.get().getTokenConfig().getJwsIssuer());
+
+        LOGGER.debug("Comparing subject: [{}|{}], issuer[{}|{}], result: {}",
+                subject,
+                ProcessingUserIdentity.INTERNAL_PROCESSING_USER,
+                issuer,
+                identityConfigProvider.get().getTokenConfig().getJwsIssuer(),
+                isProcessingUser);
+
+        return isProcessingUser;
     }
 
     private String createToken() {

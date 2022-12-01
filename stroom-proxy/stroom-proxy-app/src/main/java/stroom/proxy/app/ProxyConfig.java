@@ -10,6 +10,7 @@ import stroom.proxy.repo.ForwardRetryConfig;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.repo.ProxyDbConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
+import stroom.receive.common.ReceiveDataConfig;
 import stroom.util.config.annotations.RequiresProxyRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
@@ -39,7 +40,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     public static final String PROP_NAME_CONTENT_DIR = "contentDir";
     public static final String PROP_NAME_PATH = "path";
     public static final String PROP_NAME_DB = "db";
-    public static final String PROP_NAME_RECEIVE_DATA_CONFIG = "receiveDataConfig";
+    public static final String PROP_NAME_RECEIVE = "receive";
     public static final String PROP_NAME_REPOSITORY = "repository";
     public static final String PROP_NAME_EVENT_STORE = "eventStore";
     public static final String PROP_NAME_FILE_SCANNERS = "fileScanners";
@@ -111,7 +112,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             @JsonProperty(PROP_NAME_CONTENT_DIR) final String contentDir,
             @JsonProperty(PROP_NAME_PATH) final ProxyPathConfig pathConfig,
             @JsonProperty(PROP_NAME_DB) final ProxyDbConfig proxyDbConfig,
-            @JsonProperty(PROP_NAME_RECEIVE_DATA_CONFIG) final ReceiveDataConfig receiveDataConfig,
+            @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
             @JsonProperty(PROP_NAME_REPOSITORY) final ProxyRepoConfig proxyRepoConfig,
             @JsonProperty(PROP_NAME_EVENT_STORE) final EventStoreConfig eventStoreConfig,
             @JsonProperty(PROP_NAME_FILE_SCANNERS) final List<FileScannerConfig> fileScanners,
@@ -188,7 +189,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return proxyDbConfig;
     }
 
-    @JsonProperty(PROP_NAME_RECEIVE_DATA_CONFIG)
+    @JsonProperty(PROP_NAME_RECEIVE)
     public ReceiveDataConfig getReceiveDataConfig() {
         return receiveDataConfig;
     }

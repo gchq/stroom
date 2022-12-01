@@ -16,6 +16,8 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig, Open
 
     public static final String PROP_NAME_CLIENT_ID = "clientId";
     public static final String PROP_NAME_CLIENT_SECRET = "clientSecret";
+    public static final String PROP_NAME_CONFIGURATION_ENDPOINT = "openIdConfigurationEndpoint";
+    public static final String PROP_NAME_USE_INTERNAL = "useInternal";
 
     private final boolean useInternal;
 
@@ -113,8 +115,8 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig, Open
     }
 
     @JsonCreator
-    public OpenIdConfig(@JsonProperty("useInternal") final boolean useInternal,
-                        @JsonProperty("openIdConfigurationEndpoint") final String openIdConfigurationEndpoint,
+    public OpenIdConfig(@JsonProperty(PROP_NAME_USE_INTERNAL) final boolean useInternal,
+                        @JsonProperty(PROP_NAME_CONFIGURATION_ENDPOINT) final String openIdConfigurationEndpoint,
                         @JsonProperty("issuer") final String issuer,
                         @JsonProperty("authEndpoint") final String authEndpoint,
                         @JsonProperty("tokenEndpoint") final String tokenEndpoint,

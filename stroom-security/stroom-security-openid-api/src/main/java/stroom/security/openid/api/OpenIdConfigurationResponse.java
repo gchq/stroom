@@ -297,4 +297,5 @@ public class OpenIdConfigurationResponse {
                     logoutEndpoint);
         }
     }
+
 }

@@ -24,6 +24,7 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.AttributeMapValidator;
+import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.common.RequestHandler;
 import stroom.receive.common.StreamTargetStreamHandlers;
 import stroom.receive.common.StroomStreamException;
@@ -89,8 +90,10 @@ class ReceiveDataRequestHandler implements RequestHandler {
             final String authorisationHeader = attributeMap.get(HttpHeaders.AUTHORIZATION);
 
             // If token authentication is required but no token is supplied then error.
-            if (receiveDataConfig.isRequireTokenAuthentication() &&
-                    (authorisationHeader == null || authorisationHeader.isBlank())) {
+            // TODO: 29/11/2022 fix auth validation
+            if (receiveDataConfig.isAuthenticationRequired()
+                    && receiveDataConfig.isTokenAuthenticationEnabled()
+                    && (authorisationHeader == null || authorisationHeader.isBlank())) {
                 throw new StroomStreamException(StroomStatusCode.CLIENT_TOKEN_REQUIRED, attributeMap);
             }
 
@@ -107,7 +110,10 @@ class ReceiveDataRequestHandler implements RequestHandler {
                     .map(UserIdentity::getPreferredUsername)
                     .ifPresent(username -> attributeMap.put(StandardHeaderArguments.UPLOAD_USERNAME, username));
 
-            if (receiveDataConfig.isRequireTokenAuthentication() && optionalUserIdentity.isEmpty()) {
+            // TODO: 29/11/2022 fix auth validation
+            if (receiveDataConfig.isAuthenticationRequired()
+                    && receiveDataConfig.isTokenAuthenticationEnabled()
+                    && optionalUserIdentity.isEmpty()) {
                 // If token authentication is required, but we could not verify the token then error.
                 throw new StroomStreamException(StroomStatusCode.CLIENT_TOKEN_NOT_AUTHORISED, attributeMap);
 

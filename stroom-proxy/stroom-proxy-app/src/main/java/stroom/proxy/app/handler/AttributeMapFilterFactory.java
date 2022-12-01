@@ -17,11 +17,11 @@
 package stroom.proxy.app.handler;
 
 import stroom.docref.DocRef;
-import stroom.proxy.app.ReceiveDataConfig;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 import stroom.receive.common.FeedStatusAttributeMapFilter;
 import stroom.receive.common.PermissiveAttributeMapFilter;
+import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.rules.shared.ReceiveDataRules;
 
 import org.apache.commons.lang3.StringUtils;

@@ -3,6 +3,7 @@ package stroom.security.impl;
 import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.JwtUtil;
 import stroom.security.openid.api.OpenIdClientFactory;
+import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.PublicJsonWebKeyProvider;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
@@ -24,6 +25,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 
 class InternalJwtContextFactory implements JwtContextFactory {
@@ -34,12 +36,15 @@ class InternalJwtContextFactory implements JwtContextFactory {
 
     private final OpenIdClientFactory openIdClientDetailsFactory;
     private final PublicJsonWebKeyProvider publicJsonWebKeyProvider;
+    private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
 
     @Inject
     InternalJwtContextFactory(final OpenIdClientFactory openIdClientDetailsFactory,
-                              final PublicJsonWebKeyProvider publicJsonWebKeyProvider) {
+                              final PublicJsonWebKeyProvider publicJsonWebKeyProvider,
+                              final Provider<OpenIdConfiguration> openIdConfigurationProvider) {
         this.openIdClientDetailsFactory = openIdClientDetailsFactory;
         this.publicJsonWebKeyProvider = publicJsonWebKeyProvider;
+        this.openIdConfigurationProvider = openIdConfigurationProvider;
     }
 
     @Override
@@ -110,13 +115,17 @@ class InternalJwtContextFactory implements JwtContextFactory {
                 // to account for clock skew
                 .setRequireSubject() // the JWT must have a subject claim
                 .setVerificationKeyResolver(verificationKeyResolver)
-                .setExpectedAudience(openIdClientDetailsFactory.getClient().getClientId())
                 .setRelaxVerificationKeyValidation() // relaxes key length requirement
                 .setJwsAlgorithmConstraints(// only allow the expected signature algorithm(s) in the given context
                         new AlgorithmConstraints(
                                 AlgorithmConstraints.ConstraintType.WHITELIST, // which is only RS256 here
                                 AlgorithmIdentifiers.RSA_USING_SHA256))
-                .setExpectedIssuer(ResolvedOpenIdConfig.INTERNAL_ISSUER);
+                .setExpectedIssuer(InternalIdpConfigurationProvider.INTERNAL_ISSUER);
+
+        if (openIdConfigurationProvider.get().isValidateAudience()) {
+            // aud does not appear in access tokens by default it seems
+            builder.setExpectedAudience(openIdClientDetailsFactory.getClient().getClientId());
+        }
         return builder.build();
     }
 }

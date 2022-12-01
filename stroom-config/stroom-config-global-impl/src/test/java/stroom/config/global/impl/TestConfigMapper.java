@@ -18,7 +18,7 @@ import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.OverrideValue;
-import stroom.core.receive.ReceiveDataConfig;
+import stroom.receive.common.ReceiveDataConfig;
 import stroom.dashboard.impl.DashboardConfig;
 import stroom.dashboard.impl.datasource.DataSourceUrlConfig;
 import stroom.docref.DocRef;

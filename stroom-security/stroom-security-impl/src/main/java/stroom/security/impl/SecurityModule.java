@@ -17,16 +17,25 @@
 package stroom.security.impl;
 
 import stroom.security.api.DocumentPermissionService;
-import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.api.RequestAuthenticator;
+import stroom.security.common.impl.ExternalIdpConfigurationProvider;
+import stroom.security.common.impl.HttpClientProvider;
+import stroom.security.common.impl.IdpConfigurationProvider;
+import stroom.security.common.impl.IdpIdentityMapper;
+import stroom.security.common.impl.JwtContextFactory;
+import stroom.security.common.impl.RequestAuthenticatorImpl;
+import stroom.security.common.impl.UserIdentityFactory;
+import stroom.security.common.impl.UserIdentityFactoryImpl;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventLifecycleModule;
 import stroom.security.impl.event.PermissionChangeEventModule;
+import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.shared.UserNameProvider;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
 
@@ -48,7 +57,14 @@ public class SecurityModule extends AbstractModule {
         bind(UserIdentityFactory.class).to(UserIdentityFactoryImpl.class);
         bind(CloseableHttpClient.class).toProvider(HttpClientProvider.class);
         bind(RequestAuthenticator.class).to(RequestAuthenticatorImpl.class);
-        bind(OpenIdConfiguration.class).to(ResolvedOpenIdConfig.class);
+        bind(JwtContextFactory.class).to(CombinedJwtContextFactory.class);
+        bind(IdpIdentityMapper.class).to(IdpIdentityToStroomUserMapper.class);
+        bind(IdpConfigurationProvider.class).to(CombinedIdpConfigurationProvider.class);
+        // Now bind OpenIdConfiguration to the iface from prev bind
+        bind(OpenIdConfiguration.class).to(IdpConfigurationProvider.class);
+
+        HasHealthCheckBinder.create(binder())
+                        .bind(ExternalIdpConfigurationProvider.class);
 
         FilterBinder.create(binder())
                 .bind(new FilterInfo(ContentSecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),

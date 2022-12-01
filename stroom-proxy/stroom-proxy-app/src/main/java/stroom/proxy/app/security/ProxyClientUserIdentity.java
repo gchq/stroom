@@ -9,13 +9,18 @@ import org.jose4j.jwt.consumer.JwtContext;
 
 import java.util.Optional;
 
-public class ProxyUserIdentity implements UserIdentity {
+/**
+ * Identity for a client sending data to stroom-proxy
+ */
+public class ProxyClientUserIdentity implements UserIdentity {
 
     private final String id;
     private final String preferredUsername;
     private final String fullName;
+    // debatable whether it is worth holding this or not
+    private final JwtContext jwtContext;
 
-    public ProxyUserIdentity(final JwtContext jwtContext) {
+    public ProxyClientUserIdentity(final JwtContext jwtContext) {
         this.id = JwtUtil.getClaimValue(jwtContext, OpenId.CLAIM__SUBJECT)
                 .orElseThrow(() -> new AuthenticationException(
                         "Missing " + OpenId.CLAIM__SUBJECT));
@@ -23,6 +28,7 @@ public class ProxyUserIdentity implements UserIdentity {
                 .orElse(id);
         this.fullName = JwtUtil.getClaimValue(jwtContext, OpenId.CLAIM__NAME)
                 .orElse(null);
+        this.jwtContext = jwtContext;
     }
 
     @Override

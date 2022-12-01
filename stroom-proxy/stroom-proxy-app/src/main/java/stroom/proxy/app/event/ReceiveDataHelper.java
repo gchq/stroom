@@ -4,13 +4,13 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
-import stroom.proxy.app.ReceiveDataConfig;
 import stroom.proxy.app.handler.AttributeMapFilterFactory;
 import stroom.proxy.app.handler.ProxyId;
 import stroom.proxy.repo.CSVFormatter;
 import stroom.proxy.repo.LogStream;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.AttributeMapValidator;
+import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamStatus;
 import stroom.security.api.RequestAuthenticator;
@@ -137,7 +137,9 @@ public class ReceiveDataHelper {
         final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
 
         // If token authentication is required but no token is supplied then error.
-        if (receiveDataConfig.isRequireTokenAuthentication()) {
+        // TODO: 29/11/2022 Fix validation for cert/token, maybe move into ReqAuth
+        if (receiveDataConfig.isAuthenticationRequired()
+                && receiveDataConfig.isTokenAuthenticationEnabled()) {
             if (requestAuthenticator.hasAuthenticationToken(request)) {
                 // Authenticate the request token
                 final Optional<UserIdentity> optionalUserIdentity = requestAuthenticator.authenticate(request);

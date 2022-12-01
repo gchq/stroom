@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.HttpHeaders;
 
@@ -30,13 +31,13 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     private static final String AMZN_OIDC_DATA_HEADER = "x-amzn-oidc-data";
     private static final String AUTHORIZATION_HEADER = HttpHeaders.AUTHORIZATION;
 
-    private final OpenIdConfiguration openIdConfiguration;
+    private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
     private final OpenIdPublicKeysSupplier openIdPublicKeysSupplier;
 
     @Inject
-    public StandardJwtContextFactory(final OpenIdConfiguration openIdConfiguration,
+    public StandardJwtContextFactory(final Provider<OpenIdConfiguration> openIdConfigurationProvider,
                                      final OpenIdPublicKeysSupplier openIdPublicKeysSupplier) {
-        this.openIdConfiguration = openIdConfiguration;
+        this.openIdConfigurationProvider = openIdConfigurationProvider;
         this.openIdPublicKeysSupplier = openIdPublicKeysSupplier;
     }
 
@@ -63,8 +64,8 @@ public class StandardJwtContextFactory implements JwtContextFactory {
         LOGGER.debug(() -> AMZN_OIDC_DATA_HEADER + "=" + request.getHeader(AMZN_OIDC_DATA_HEADER));
         LOGGER.debug(() -> AUTHORIZATION_HEADER + "=" + request.getHeader(AUTHORIZATION_HEADER));
 
-        final Optional<String> optionalJws = getTokenFromHeader(request);
-        return optionalJws
+        final Optional<String> optionalJwt = getTokenFromHeader(request);
+        return optionalJwt
                 .flatMap(this::getJwtContext)
                 .or(() -> {
                     LOGGER.debug(() -> "No JWS found in headers in request to " + request.getRequestURI());
@@ -81,14 +82,14 @@ public class StandardJwtContextFactory implements JwtContextFactory {
      * Verify the JSON Web Signature and then extract the user identity from it
      */
     @Override
-    public Optional<JwtContext> getJwtContext(final String jws) {
-        Objects.requireNonNull(jws, "Null JWS");
-        LOGGER.debug(() -> "Found auth header in request. It looks like this: " + jws);
+    public Optional<JwtContext> getJwtContext(final String jwt) {
+        Objects.requireNonNull(jwt, "Null JWS");
+        LOGGER.debug(() -> "Found auth header in request. It looks like this: " + jwt);
 
         try {
             LOGGER.debug(() -> "Verifying token...");
             final JwtConsumer jwtConsumer = newJwtConsumer();
-            final JwtContext jwtContext = jwtConsumer.process(jws);
+            final JwtContext jwtContext = jwtConsumer.process(jwt);
 
             // TODO : @66 Check against blacklist to see if token has been revoked. Blacklist
             //  is a list of JWI (JWT IDs) on auth service. Only tokens with `jwi` claims are API
@@ -116,19 +117,24 @@ public class StandardJwtContextFactory implements JwtContextFactory {
 
         final VerificationKeyResolver verificationKeyResolver = new JwksVerificationKeyResolver(
                 publicJsonWebKey.getJsonWebKeys());
+        final OpenIdConfiguration openIdConfiguration = openIdConfigurationProvider.get();
 
         final JwtConsumerBuilder builder = new JwtConsumerBuilder()
                 .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account
                 //                                   for clock skew
                 .setRequireSubject() // the JWT must have a subject claim
                 .setVerificationKeyResolver(verificationKeyResolver)
-                .setExpectedAudience(openIdConfiguration.getClientId())
                 .setRelaxVerificationKeyValidation() // relaxes key length requirement
 //                .setJwsAlgorithmConstraints(// only allow the expected signature algorithm(s) in the given context
 //                        new AlgorithmConstraints(
 //                                AlgorithmConstraints.ConstraintType.WHITELIST, // which is only RS256 here
 //                                AlgorithmIdentifiers.RSA_USING_SHA256))
                 .setExpectedIssuer(openIdConfiguration.getIssuer());
+
+        if (openIdConfiguration.isValidateAudience()) {
+            // aud does not appear in access tokens by default it seems so make the check optional
+                builder.setExpectedAudience(openIdConfiguration.getClientId());
+        }
         return builder.build();
     }
 }

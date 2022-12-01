@@ -1,11 +1,11 @@
 package stroom.security.impl;
 
 import stroom.config.common.UriFactory;
-import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.api.exception.AuthenticationException;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.security.openid.api.OpenIdConfig;
+import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.OpenIdConfigurationResponse;
 import stroom.security.openid.api.OpenIdConfigurationResponse.Builder;
 import stroom.util.io.StreamUtil;
@@ -220,6 +220,7 @@ public class ResolvedOpenIdConfig implements OpenIdConfiguration {
 
     @Override
     public boolean isValidateAudience() {
-        return false;
+        return openIdConfigProvider.get().isValidateAudience();
     }
+
 }

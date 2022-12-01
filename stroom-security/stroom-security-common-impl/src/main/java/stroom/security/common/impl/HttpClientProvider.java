@@ -1,4 +1,4 @@
-package stroom.security.impl;
+package stroom.security.common.impl;
 
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -20,7 +20,7 @@ public class HttpClientProvider implements Provider<CloseableHttpClient> {
         // Increase default max connection per route to 20
         connectionManager.setDefaultMaxPerRoute(20);
         // Increase max connections for localhost:80 to 50
-        //        HttpHost localhost = new HttpHost("locahost", 80);
+        //        HttpHost localhost = new HttpHost("localhost", 80);
         //        cm.setMaxPerRoute(new HttpRoute(localhost), 50);
     }
 

@@ -10,7 +10,7 @@ import stroom.config.common.CommonDbConfig;
 import stroom.config.common.NodeUriConfig;
 import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
-import stroom.core.receive.ReceiveDataConfig;
+import stroom.receive.common.ReceiveDataConfig;
 import stroom.dashboard.impl.DashboardConfig;
 import stroom.dashboard.impl.datasource.DataSourceUrlConfig;
 import stroom.docstore.impl.db.DocStoreConfig;
