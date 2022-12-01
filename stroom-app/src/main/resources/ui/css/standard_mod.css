@@ -408,24 +408,35 @@ td.datePickerYear {
 	border: 1px solid var(--control__border-color);
 }
 
-.gwt-SplitLayoutPanel-HDragger {
+.gwt-SplitLayoutPanel-Dragger {
     background: none;
 	cursor: col-resize;
+	opacity: 0;
+	transition: opacity 0.3s;
+    border-style: solid;
+    border-color: var(--splitter__border-color);
+    background-color: var(--splitter__background-color);
+}
+
+.gwt-SplitLayoutPanel-Dragger:hover {
+    opacity: 1;
+}
+
+.gwt-SplitLayoutPanel-Dragger--dragging {
+    opacity: 1;
+}
+
+.gwt-SplitLayoutPanel-HDragger {
+	border-width: 0 1px 0 1px;
 }
 
 .gwt-SplitLayoutPanel-VDragger {
-    background: none;
-	cursor: row-resize;
+    border-width: 1px 0 1px 0;
 }
 
-.gwt-SplitLayoutPanel-EAST,.gwt-SplitLayoutPanel-WEST,.gwt-SplitLayoutPanel-NORTH,.gwt-SplitLayoutPanel-SOUTH,.gwt-SplitLayoutPanel-CENTER
-	{
+.gwt-SplitLayoutPanel-EAST,.gwt-SplitLayoutPanel-WEST,.gwt-SplitLayoutPanel-NORTH,.gwt-SplitLayoutPanel-SOUTH,.gwt-SplitLayoutPanel-CENTER {
 	border: 1px solid var(--border-color);
 }
-
-
-
-
 
 .gwt-SuggestBox {
 padding: 1px;

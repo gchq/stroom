@@ -1363,6 +1363,7 @@
     background-color: var(--navigation__background-color);
     color: var(--navigation__text-color);
     border-right: 1px solid var(--navigation__border-color);
+    overflow: hidden;
 }
 
 .navigation .cellTableSelectedRow {

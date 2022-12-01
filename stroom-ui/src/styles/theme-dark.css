@@ -17,13 +17,13 @@
     --focus-border--secondary: var(--pink-500);
     --focus-shadow--secondary: inset 0 1px 1px rgba(var(--black-rgb), .075), 0 0 8px rgba(var(--pink-500-rgb), .6); /* pink-500*/
 
-    --text-color: #e6e1dc;
+    --text-color: #abb0b6;
     --text-color--disabled: #666;
-    --border-color: transparent; /*#c5cde2;*/
+    --border-color: #14161b;
 
-    --header__border-color: #333;
-    --row__background-color--even: #282c31;
-    --row__background-color--odd: #1a1d21;
+    --header__border-color: transparent;//#35373b;
+    --row__background-color--even: #15161b;
+    --row__background-color--odd: #22252c;
     --row__background-color--hovered: rgb(45, 47, 53);
     --row__background-color--selected: rgb(0, 101, 167);
     --row__background-color--selected--hovered: rgb(0,120,199);
@@ -33,19 +33,19 @@
 
     --menu-separator__color: rgb(255 255 255 / 20%);
 
-    --tooltip__background-color: #3c3f41;
+    --tooltip__background-color: #1a1d21;
     --tooltip__text-color: #fff;
 
     --button__background-image: none;
-    --button__background-color: #454545;
-    --button__border-color: #555;
-    --button__text-color: #fff;
+    --button__background-color: #262a32;
+    --button__border-color: #14161b;
+    --button__text-color: #f1f8f8;
     --button__background-image--active: none;
-    --button__background-color--active: #555555;
+    --button__background-color--active: #262a32;
     --button__border-color--active: #444;
     --button__background-image--hover: none;
-    --button__background-color--hover: #505050;
-    --button__border-color--hover: #666;
+    --button__background-color--hover: #383d49;
+    --button__border-color--hover: #14161b;
     --button__text-color--disabled: #888;
     --button__border-color--disabled--hover: #000;
 
@@ -80,7 +80,7 @@
     --code-editor__background-color--highlight: #1164a3;
 
     --xsdbrowser-box__background-color: #19171d;
-    --xsdbrowser-box__border-color: #555;
+    --xsdbrowser-box__border-color: #15161b;
     --xsdbrowser-title__background-color: #555;
     --xsdbrowser-title__background-color--selected: #1164a3;
 
@@ -97,12 +97,16 @@
      */
 
     /* Page */
-    --app__background-color: #212121;/*#19171d;*/
-    --page__background-color: #212121;
+    --app__background-color: #1a1d21;
+    --page__background-color: #1a1d21;
     --page__text-color: #cacbcb;
 
+    /* Splitter */
+    --splitter__background-color: #1d9bd1;
+    --splitter__border-color: #22252c;
+
     /* Controls */
-    --control__background-color: #131417;
+    --control__background-color: #1c1f25;
     --control__background-color--disabled: transparent;
     --control__border-color: #4d5250;
     --control__border-color--disabled: transparent;
@@ -110,11 +114,9 @@
     --control__text-color--disabled: #666;
 
     /* Dashboard */
-    --dashboard-panel__background-color: #131417;
-    --dashboard-panel__border-color: #4d5250;
+    --dashboard-panel__background-color: #22252c;
+    --dashboard-panel__border-color: #2f333c;
     --dashboard-panel__grid-color: rgba(255, 255, 255, 0.04);
-    --dashboard-splitter__background-color: #2196f3;
-    --dashboard-splitter__border-color: #22252c;
 
     /* Items, e.g. rows for tables, drop downs lists etc. */
     --item__background-color--focus--highlighted: rgba(24, 94, 144, 0.3);
@@ -177,7 +179,7 @@
 
     /* Dialog */
     --dialog__background-color: #1a1d21;
-    --dialog__border-color: rgb(132 132 132 / 60%);
+    --dialog__border-color: #15161b;
     --dialog__shadow: 0 0 5px 2px rgb(0 0 0 / 100%);
     --popup__shadow: 0 0 5px 2px rgb(0 0 0 / 100%);
 

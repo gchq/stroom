@@ -199,19 +199,6 @@ public class FlexLayout extends Composite {
             // If the mouse isn't down then we want to highlight splitters if
             // the mouse moves over them.
             final Splitter splitter = getTargetSplitter(target);
-            if (splitter != null) {
-                if (!splitter.equals(selectedSplitter)) {
-                    splitter.getElement().addClassName("flexLayout-splitterVisible");
-
-                    if (selectedSplitter != null) {
-                        selectedSplitter.getElement().removeClassName("flexLayout-splitterVisible");
-                    }
-                }
-            } else {
-                if (selectedSplitter != null) {
-                    selectedSplitter.getElement().removeClassName("flexLayout-splitterVisible");
-                }
-            }
             selectedSplitter = splitter;
         }
     }
@@ -662,22 +649,35 @@ public class FlexLayout extends Composite {
     }
 
     private void setDefaultCursor() {
-        setMarkerCursor(Cursor.DEFAULT);
+        marker.getElement().removeClassName("flexLayout-splitter");
+        marker.getElement().removeClassName("flexLayout-splitterVisible");
+        marker.getElement().removeClassName("flexLayout-splitterDown");
+        marker.getElement().removeClassName("flexLayout-splitterAcross");
+        setGlassCursor(Cursor.DEFAULT);
     }
 
     private void setMoveCursor() {
-        setMarkerCursor(Cursor.MOVE);
+        marker.getElement().removeClassName("flexLayout-splitter");
+        marker.getElement().removeClassName("flexLayout-splitterVisible");
+        marker.getElement().removeClassName("flexLayout-splitterDown");
+        marker.getElement().removeClassName("flexLayout-splitterAcross");
+        setGlassCursor(Cursor.MOVE);
     }
 
     private void setMarkerCursor(final int dim) {
+        marker.getElement().addClassName("flexLayout-splitter");
+        marker.getElement().addClassName("flexLayout-splitterVisible");
+
         if (Dimension.X == dim) {
-            setMarkerCursor(Cursor.COL_RESIZE);
+            setGlassCursor(Cursor.COL_RESIZE);
+            marker.getElement().addClassName("flexLayout-splitterAcross");
         } else if (Dimension.Y == dim) {
-            setMarkerCursor(Cursor.ROW_RESIZE);
+            setGlassCursor(Cursor.ROW_RESIZE);
+            marker.getElement().addClassName("flexLayout-splitterDown");
         }
     }
 
-    private void setMarkerCursor(final Cursor cursor) {
+    private void setGlassCursor(final Cursor cursor) {
         glass.getElement().getStyle().setCursor(cursor);
     }
 

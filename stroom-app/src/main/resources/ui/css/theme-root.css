@@ -101,6 +101,10 @@
     --page__background-color: #fff;
     --page__text-color: rgba(0, 0, 0, 0.8);
 
+    /* Splitter */
+    --splitter__background-color: #1d9bd1;
+    --splitter__border-color: #fff;
+
     /* Controls */
     --control__background-color: #fff;
     --control__background-color--disabled: transparent;
@@ -113,8 +117,6 @@
     --dashboard-panel__background-color: #fff;
     --dashboard-panel__border-color: rgba(0, 0, 0, 0.06);
     --dashboard-panel__grid-color: rgba(0, 0, 0, 0.03);
-    --dashboard-splitter__background-color: #2196f3;
-    --dashboard-splitter__border-color: #22252c;
 
     /* Items, e.g. rows for tables, drop downs lists etc. */
     --item__background-color--focus--highlighted: rgba(144, 202, 249, 0.4);

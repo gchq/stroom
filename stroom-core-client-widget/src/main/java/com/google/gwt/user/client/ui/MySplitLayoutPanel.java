@@ -367,7 +367,7 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
         public HSplitter(final Widget target, final boolean reverse, final int index) {
             super(target, reverse, index, false);
             getElement().getStyle().setPropertyPx("width", SPLITTER_SIZE);
-            setStyleName("gwt-SplitLayoutPanel-HDragger");
+            setStyleName("gwt-SplitLayoutPanel-Dragger gwt-SplitLayoutPanel-HDragger");
         }
 
         @Override
@@ -421,6 +421,7 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
                     Event.setCapture(getElement());
                     event.preventDefault();
 
+                    setDragging(true);
                     startResizing(vertical);
                     break;
 
@@ -429,6 +430,7 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
                     Event.releaseCapture(getElement());
                     event.preventDefault();
 
+                    setDragging(false);
                     stopResizing();
                     break;
 
@@ -512,6 +514,14 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
                 Scheduler.get().scheduleDeferred(layoutCommand);
             }
         }
+
+        public void setDragging(final boolean dreagging) {
+            if (dreagging) {
+                getElement().addClassName("gwt-SplitLayoutPanel-Dragger--dragging");
+            } else {
+                getElement().removeClassName("gwt-SplitLayoutPanel-Dragger--dragging");
+            }
+        }
     }
 
     class VSplitter extends Splitter {
@@ -519,7 +529,7 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
         public VSplitter(final Widget target, final boolean reverse, final int index) {
             super(target, reverse, index, true);
             getElement().getStyle().setPropertyPx("height", SPLITTER_SIZE);
-            setStyleName("gwt-SplitLayoutPanel-VDragger");
+            setStyleName("gwt-SplitLayoutPanel-Dragger gwt-SplitLayoutPanel-VDragger");
         }
 
         @Override
