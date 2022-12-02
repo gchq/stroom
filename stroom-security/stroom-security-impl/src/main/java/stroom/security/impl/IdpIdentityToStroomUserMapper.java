@@ -64,12 +64,11 @@ public class IdpIdentityToStroomUserMapper implements IdpIdentityMapper {
         final String userId = getUserId(jwtClaims);
         final Optional<User> optUser = userCache.get(userId);
 
-        return optUser.flatMap(user -> {
-                            final UserIdentity userIdentity = createUserIdentity(
-                                    jwtClaims, request, tokenResponse, user);
-                            return Optional.of(userIdentity);
-                        }
-                )
+        return optUser
+                .flatMap(user -> {
+                    final UserIdentity userIdentity = createUserIdentity(jwtClaims, request, tokenResponse, user);
+                    return Optional.of(userIdentity);
+                })
                 .or(() -> {
                     throw new AuthenticationException("Unable to find user: " + userId);
                 });

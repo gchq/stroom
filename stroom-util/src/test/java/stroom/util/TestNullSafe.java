@@ -148,6 +148,13 @@ class TestNullSafe {
                         nonNullLevel1,
                         Level1::getLevel))
                 .isEqualTo(1L);
+
+        Assertions.assertThat(
+                        NullSafe.requireNonNull(
+                                nonNullLevel1,
+                                Level1::getLevel,
+                                () -> "foo"))
+                .isEqualTo(1L);
     }
 
     @Test
@@ -795,6 +802,65 @@ class TestNullSafe {
                                 Level2::getNullLevel3,
                                 Level3::getLevel),
                         -1L)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testRequireNonNull2() {
+        final var inputType = new TypeLiteral<Tuple2<
+                Level1,
+                Function<Level1, Level2>
+                >>() {
+        };
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(inputType)
+                .withOutputType(Long.class)
+                .withTestFunction(testCase -> {
+                    return NullSafe.requireNonNull(
+                            testCase.getInput()._1,
+                            testCase.getInput()._2,
+                            () -> "Oh dear!").getLevel();
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(nonNullLevel1, Level1::getNonNullLevel2), 2L)
+                .addThrowsCase(Tuple.of(nonNullLevel1, Level1::getNullLevel2), NullPointerException.class)
+                .addThrowsCase(Tuple.of(nullLevel1, Level1::getNonNullLevel2), NullPointerException.class)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testRequireNonNull3() {
+        final var inputType = new TypeLiteral<Tuple3<
+                Level1,
+                Function<Level1, Level2>,
+                Function<Level2, Level3>
+                >>() {
+        };
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(inputType)
+                .withOutputType(Long.class)
+                .withTestFunction(testCase -> {
+                    return NullSafe.requireNonNull(
+                            testCase.getInput()._1,
+                            testCase.getInput()._2,
+                            testCase.getInput()._3,
+                            () -> "Oh dear!").getLevel();
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(
+                        Tuple.of(nonNullLevel1, Level1::getNonNullLevel2, Level2::getNonNullLevel3),
+                        3L)
+                .addThrowsCase(
+                        Tuple.of(nonNullLevel1, Level1::getNonNullLevel2, Level2::getNullLevel3),
+                        NullPointerException.class)
+                .addThrowsCase(
+                        Tuple.of(nonNullLevel1, Level1::getNullLevel2, Level2::getNonNullLevel3),
+                        NullPointerException.class)
+                .addThrowsCase(
+                        Tuple.of(nullLevel1, Level1::getNonNullLevel2, Level2::getNonNullLevel3),
+                        NullPointerException.class)
                 .build();
     }
 

@@ -20,6 +20,7 @@ import stroom.config.common.UriFactory;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.exception.AuthenticationException;
+import stroom.security.common.impl.UserIdentitySessionUtil;
 import stroom.security.openid.api.OpenId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -150,11 +151,21 @@ class SecurityFilter implements Filter {
                 });
 
             } else {
-                // Try to get a token from the request for login.
-                Optional<UserIdentity> userIdentity = openIdManager.loginWithRequestToken(request);
-                userIdentity = openIdManager.getOrSetSessionUser(request, userIdentity);
-                if (userIdentity.isPresent()) {
-                    securityContext.asUser(userIdentity.get(), () -> process(request, response, chain));
+                // Try and get the token from the session if we have one
+                Optional<UserIdentity> optUserIdentity = UserIdentitySessionUtil.get(request);
+                if (optUserIdentity.isEmpty()) {
+                    // Api requests that are not from the front-end should have a token
+                    optUserIdentity = openIdManager.loginWithRequestToken(request);
+                }
+
+                if (optUserIdentity.isPresent()) {
+                    final UserIdentity userIdentity = optUserIdentity.get();
+                    // Set the identity in session if we have a session and cookie
+                    UserIdentitySessionUtil.set(request, userIdentity);
+
+                    // Now handle the request as this user
+                    securityContext.asUser(userIdentity, () ->
+                            process(request, response, chain));
 
                 } else if (shouldBypassAuthentication(fullPath)) {
                     // Some paths don't need authentication (they contain `/noauth/`.

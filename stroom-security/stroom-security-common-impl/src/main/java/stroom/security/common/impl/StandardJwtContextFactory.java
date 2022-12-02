@@ -1,11 +1,14 @@
 package stroom.security.common.impl;
 
-import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.api.exception.AuthenticationException;
+import stroom.security.openid.api.OpenId;
+import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
+import io.vavr.Tuple;
 import org.jose4j.jwk.JsonWebKeySet;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
@@ -17,6 +20,8 @@ import org.jose4j.keys.resolvers.VerificationKeyResolver;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
@@ -59,10 +64,20 @@ public class StandardJwtContextFactory implements JwtContextFactory {
 
     @Override
     public Optional<JwtContext> getJwtContext(final HttpServletRequest request) {
-        LOGGER.debug(() -> AMZN_OIDC_ACCESS_TOKEN_HEADER + "=" + request.getHeader(AMZN_OIDC_ACCESS_TOKEN_HEADER));
-        LOGGER.debug(() -> AMZN_OIDC_IDENTITY_HEADER + "=" + request.getHeader(AMZN_OIDC_IDENTITY_HEADER));
-        LOGGER.debug(() -> AMZN_OIDC_DATA_HEADER + "=" + request.getHeader(AMZN_OIDC_DATA_HEADER));
-        LOGGER.debug(() -> AUTHORIZATION_HEADER + "=" + request.getHeader(AUTHORIZATION_HEADER));
+
+        if (LOGGER.isDebugEnabled()) {
+            // Only output non-null ones
+            final String headers = Stream.of(
+                            AUTHORIZATION_HEADER,
+                            AMZN_OIDC_ACCESS_TOKEN_HEADER,
+                            AMZN_OIDC_IDENTITY_HEADER,
+                            AMZN_OIDC_DATA_HEADER)
+                    .map(key -> Tuple.of(key, request.getHeader(key)))
+                    .filter(keyValue -> keyValue._2 != null)
+                    .map(keyValue -> keyValue._1 + "=" + keyValue._2)
+                    .collect(Collectors.joining(" "));
+            LOGGER.debug("uri: {}, headers: {}", request.getRequestURI(), headers);
+        }
 
         final Optional<String> optionalJwt = getTokenFromHeader(request);
         return optionalJwt
@@ -90,6 +105,12 @@ public class StandardJwtContextFactory implements JwtContextFactory {
             LOGGER.debug(() -> "Verifying token...");
             final JwtConsumer jwtConsumer = newJwtConsumer();
             final JwtContext jwtContext = jwtConsumer.process(jwt);
+
+            LOGGER.debug(() -> LogUtil.message("Verified token - {}: '{}', {}: '{}'",
+                    OpenId.CLAIM__SUBJECT,
+                    JwtUtil.getClaimValue(jwtContext, OpenId.CLAIM__SUBJECT).orElse(""),
+                    OpenId.CLAIM__PREFERRED_USERNAME,
+                    JwtUtil.getClaimValue(jwtContext, OpenId.CLAIM__PREFERRED_USERNAME).orElse("")));
 
             // TODO : @66 Check against blacklist to see if token has been revoked. Blacklist
             //  is a list of JWI (JWT IDs) on auth service. Only tokens with `jwi` claims are API
@@ -133,7 +154,9 @@ public class StandardJwtContextFactory implements JwtContextFactory {
 
         if (openIdConfiguration.isValidateAudience()) {
             // aud does not appear in access tokens by default it seems so make the check optional
-                builder.setExpectedAudience(openIdConfiguration.getClientId());
+            builder.setExpectedAudience(openIdConfiguration.getClientId());
+        } else {
+            builder.setSkipDefaultAudienceValidation();
         }
         return builder.build();
     }

@@ -40,6 +40,7 @@ import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
+import io.dropwizard.lifecycle.Managed;
 import org.apache.http.impl.client.CloseableHttpClient;
 
 public class SecurityModule extends AbstractModule {
@@ -74,6 +75,9 @@ public class SecurityModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), UserNameProvider.class)
                 .addBinding(UserServiceImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), Managed.class)
+                .addBinding(UserIdentityFactoryImpl.class);
 
         // Provide object info to the logging service.
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)

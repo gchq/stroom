@@ -1,29 +1,38 @@
 package stroom.security.impl;
 
+import stroom.config.common.UriFactory;
 import stroom.security.common.impl.ExternalIdpConfigurationProvider;
 import stroom.security.common.impl.IdpConfigurationProvider;
 import stroom.security.openid.api.OpenIdConfig;
 import stroom.security.openid.api.OpenIdConfigurationResponse;
+import stroom.util.NullSafe;
 
 import java.util.function.Function;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
+/**
+ * A front for the internal and external OIDC config providers. The useInternal prop in local
+ * config controls which delegat is used.
+ */
 public class CombinedIdpConfigurationProvider implements IdpConfigurationProvider {
 
     private final InternalIdpConfigurationProvider internalIdpConfigurationResponseProvider;
     private final ExternalIdpConfigurationProvider externalIdpConfigurationResponseProvider;
     private final Provider<OpenIdConfig> openIdConfigProvider;
+    private final UriFactory uriFactory;
 
     @Inject
     public CombinedIdpConfigurationProvider(
             final InternalIdpConfigurationProvider internalIdpConfigurationResponseProvider,
             final ExternalIdpConfigurationProvider externalIdpConfigurationResponseProvider,
-            final Provider<OpenIdConfig> openIdConfigProvider) {
+            final Provider<OpenIdConfig> openIdConfigProvider,
+            final UriFactory uriFactory) {
 
         this.internalIdpConfigurationResponseProvider = internalIdpConfigurationResponseProvider;
         this.externalIdpConfigurationResponseProvider = externalIdpConfigurationResponseProvider;
         this.openIdConfigProvider = openIdConfigProvider;
+        this.uriFactory = uriFactory;
     }
 
     @Override
@@ -58,7 +67,13 @@ public class CombinedIdpConfigurationProvider implements IdpConfigurationProvide
 
     @Override
     public String getLogoutEndpoint() {
-        return getValueFromDelegate(IdpConfigurationProvider::getLogoutEndpoint);
+        final String logoutEndpoint = getValueFromDelegate(IdpConfigurationProvider::getLogoutEndpoint);
+        // If the IdP doesn't provide a logout endpoint then use the internal one to invalidate
+        // the session and redirect to perform a a new auth flow.
+
+        return NullSafe.isBlankString(logoutEndpoint)
+                ? uriFactory.publicUri(InternalIdpConfigurationProvider.INTERNAL_AUTH_ENDPOINT).toString()
+                : logoutEndpoint;
     }
 
     @Override

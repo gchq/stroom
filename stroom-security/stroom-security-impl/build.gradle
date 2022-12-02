@@ -20,6 +20,7 @@ dependencies {
 
     implementation libs.caffeine
     implementation libs.dropwizard_metrics_healthchecks
+    implementation libs.dropwizard_lifecycle
     implementation libs.eventLogging
     implementation libs.guava
     implementation libs.guice5

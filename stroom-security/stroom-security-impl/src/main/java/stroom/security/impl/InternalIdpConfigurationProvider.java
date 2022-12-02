@@ -17,17 +17,23 @@ import javax.inject.Singleton;
 @Singleton
 public class InternalIdpConfigurationProvider implements IdpConfigurationProvider {
 
-    public static final String INTERNAL_ISSUER = "stroom";
+    static final String INTERNAL_ISSUER = "stroom";
     // These paths must tally up with those in stroom.security.identity.openid.OpenIdResource
     private static final String OAUTH2_BASE_PATH = "/oauth2/v1/noauth";
-    public static final String INTERNAL_AUTH_ENDPOINT = ResourcePaths.buildAuthenticatedApiPath(
+    static final String INTERNAL_AUTH_ENDPOINT = ResourcePaths.buildAuthenticatedApiPath(
             OAUTH2_BASE_PATH, "/auth");
-    public static final String INTERNAL_TOKEN_ENDPOINT = ResourcePaths.buildAuthenticatedApiPath(
+    static final String INTERNAL_TOKEN_ENDPOINT = ResourcePaths.buildAuthenticatedApiPath(
             OAUTH2_BASE_PATH, "/token");
-    public static final String INTERNAL_JWKS_URI = ResourcePaths.buildAuthenticatedApiPath(
+    static final String INTERNAL_JWKS_URI = ResourcePaths.buildAuthenticatedApiPath(
             OAUTH2_BASE_PATH, "/certs");
 
-    public static final String DEFAULT_REQUEST_SCOPE = "" +
+    // These paths must tally up with those in
+    // stroom.security.identity.authenticate.AuthenticationResource
+    static final String AUTHENTICATION_BASE_PATH = "/authentication/v1/noauth";
+    static final String INTERNAL_LOGOUT_ENDPOINT = ResourcePaths.buildAuthenticatedApiPath(
+            AUTHENTICATION_BASE_PATH, "/logout");
+
+    static final String DEFAULT_REQUEST_SCOPE = "" +
             OpenId.SCOPE__OPENID +
             " " +
             OpenId.SCOPE__EMAIL;

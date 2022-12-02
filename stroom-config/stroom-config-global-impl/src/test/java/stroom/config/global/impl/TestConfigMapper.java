@@ -18,7 +18,6 @@ import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.OverrideValue;
-import stroom.receive.common.ReceiveDataConfig;
 import stroom.dashboard.impl.DashboardConfig;
 import stroom.dashboard.impl.datasource.DataSourceUrlConfig;
 import stroom.docref.DocRef;
@@ -40,6 +39,7 @@ import stroom.node.impl.NodeConfig;
 import stroom.pipeline.PipelineConfig;
 import stroom.pipeline.refdata.ReferenceDataLmdbConfig;
 import stroom.processor.impl.ProcessorConfig;
+import stroom.receive.common.ReceiveDataConfig;
 import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
@@ -633,9 +633,12 @@ class TestConfigMapper {
 
     @Test
     void testValidateDelimiter_bad() {
-        Assertions.assertThatThrownBy(() -> {
-            ConfigMapper.validateDelimiter("xxxx", 0, "first", "dummy example");
-        })
+        Assertions.assertThatThrownBy(() ->
+                        ConfigMapper.validateDelimiter(
+                                "xxxx",
+                                0,
+                                "first",
+                                "dummy example"))
                 .isInstanceOf(RuntimeException.class);
     }
 
@@ -778,10 +781,9 @@ class TestConfigMapper {
         if (shouldValidate) {
             configMapper.validateValueSerialisation(propertyPath, value);
         } else {
-            Assertions.assertThatThrownBy(() -> {
-                // no leading delimiter
-                configMapper.validateValueSerialisation(propertyPath, value);
-            })
+            // no leading delimiter
+            Assertions.assertThatThrownBy(() ->
+                            configMapper.validateValueSerialisation(propertyPath, value))
                     .isInstanceOf(RuntimeException.class);
         }
     }

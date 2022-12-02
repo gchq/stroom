@@ -107,7 +107,7 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig, Open
         jwksUri = null;
         logoutEndpoint = null;
         logoutRedirectParamName = OpenId.POST_LOGOUT_REDIRECT_URI;
-        formTokenRequest = false;
+        formTokenRequest = true;
         clientSecret = null;
         clientId = null;
         requestScope = null;

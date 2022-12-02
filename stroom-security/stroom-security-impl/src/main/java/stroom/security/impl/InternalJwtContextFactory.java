@@ -2,12 +2,14 @@ package stroom.security.impl;
 
 import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.JwtUtil;
+import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.PublicJsonWebKeyProvider;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import org.jose4j.jwa.AlgorithmConstraints;
 import org.jose4j.jwk.JsonWebKeySet;
@@ -88,12 +90,20 @@ class InternalJwtContextFactory implements JwtContextFactory {
         LOGGER.debug(() -> "Found auth header in request. It looks like this: " + jws);
 
         try {
-            LOGGER.debug(() -> "Verifying token...");
             final JwtConsumer jwtConsumer = newJwtConsumer();
             final JwtContext jwtContext = jwtConsumer.process(jws);
+
+            LOGGER.debug(() -> LogUtil.message("Verified token - {}: '{}', {}: '{}'",
+                    OpenId.CLAIM__SUBJECT,
+                    JwtUtil.getClaimValue(jwtContext, OpenId.CLAIM__SUBJECT).orElse(""),
+                    OpenId.CLAIM__PREFERRED_USERNAME,
+                    JwtUtil.getClaimValue(jwtContext, OpenId.CLAIM__PREFERRED_USERNAME).orElse("")));
+
             optionalJwtContext = Optional.ofNullable(jwtContext);
 
         } catch (final RuntimeException | InvalidJwtException e) {
+            // You will likely come in here when trying to decode an external IDP jws using the internal IDP
+            // first.
             LOGGER.debug(() -> "Unable to verify token: " + e.getMessage(), e);
         }
 
@@ -125,6 +135,8 @@ class InternalJwtContextFactory implements JwtContextFactory {
         if (openIdConfigurationProvider.get().isValidateAudience()) {
             // aud does not appear in access tokens by default it seems
             builder.setExpectedAudience(openIdClientDetailsFactory.getClient().getClientId());
+        } else {
+            builder.setSkipDefaultAudienceValidation();
         }
         return builder.build();
     }

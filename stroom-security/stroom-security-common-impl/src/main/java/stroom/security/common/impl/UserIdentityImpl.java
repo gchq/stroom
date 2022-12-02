@@ -1,54 +1,43 @@
 package stroom.security.common.impl;
 
 import stroom.docref.HasUuid;
-import stroom.security.api.HasJwt;
 import stroom.security.api.HasSessionId;
 import stroom.security.api.UserIdentity;
-import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.TokenResponse;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import org.jose4j.jwt.JwtClaims;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.locks.ReentrantLock;
 import javax.servlet.http.HttpSession;
 
-public class UserIdentityImpl implements UserIdentity, HasSessionId, HasJwt, HasUuid {
+public class UserIdentityImpl
+        extends AbstractTokenUserIdentity
+        implements HasSessionId, HasUuid {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UserIdentityImpl.class);
 
     private final String userUuid;
-    private final String id;
     private final HttpSession httpSession;
-    private final ReentrantLock lock = new ReentrantLock();
-    private volatile TokenResponse tokenResponse;
-    private volatile JwtClaims jwtClaims;
 
     public UserIdentityImpl(final String userUuid,
-                     final String id,
-                     final HttpSession httpSession,
-                     final TokenResponse tokenResponse,
-                     final JwtClaims jwtClaims) {
+                            final String id,
+                            final HttpSession httpSession,
+                            final TokenResponse tokenResponse,
+                            final JwtClaims jwtClaims) {
+        super(id, tokenResponse, jwtClaims);
         this.userUuid = userUuid;
-        this.id = id;
         this.httpSession = httpSession;
-
-        this.tokenResponse = tokenResponse;
-        this.jwtClaims = jwtClaims;
-    }
-
-    @Override
-    public String getId() {
-        return id;
     }
 
     @Override
     public String getUuid() {
         return userUuid;
-    }
-
-    @Override
-    public String getJwt() {
-        return tokenResponse.getIdToken();
     }
 
     @Override
@@ -60,39 +49,38 @@ public class UserIdentityImpl implements UserIdentity, HasSessionId, HasJwt, Has
         httpSession.invalidate();
     }
 
-    public ReentrantLock getLock() {
-        return lock;
-    }
+    /**
+     * @return True if this {@link UserIdentity} has a session and is an attribute value in that session
+     */
+    public boolean isInSession() {
+        if (httpSession == null) {
+            return false;
+        } else {
+            final Optional<UserIdentity> optUserIdentity;
 
-    public TokenResponse getTokenResponse() {
-        return tokenResponse;
-    }
+            try {
+                optUserIdentity = UserIdentitySessionUtil.get(httpSession);
+            } catch (Exception e) {
+                LOGGER.debug(() -> LogUtil.message(
+                        "Error getting identity from session, likely due to it being removed at logout: {}",
+                        e.getMessage()));
+                return false;
+            }
 
-    public void setTokenResponse(final TokenResponse tokenResponse) {
-        this.tokenResponse = tokenResponse;
-    }
+            if (optUserIdentity.isPresent()) {
+                final UserIdentity sessionUserIdentity = optUserIdentity.get();
 
-    public JwtClaims getJwtClaims() {
-        return jwtClaims;
-    }
-
-    public void setJwtClaims(final JwtClaims jwtClaims) {
-        this.jwtClaims = jwtClaims;
-    }
-
-    @Override
-    public Optional<String> getFullName() {
-        return Optional.ofNullable(jwtClaims)
-                .flatMap(jwtClaims2 ->
-                        JwtUtil.getClaimValue(jwtClaims2, OpenId.CLAIM__NAME));
-    }
-
-    @Override
-    public String getPreferredUsername() {
-        return Optional.ofNullable(jwtClaims)
-                .flatMap(jwtClaims2 ->
-                        JwtUtil.getClaimValue(jwtClaims2, OpenId.CLAIM__PREFERRED_USERNAME))
-                .orElseGet(this::getId);
+                if (sessionUserIdentity == this) {
+                    return true;
+                } else {
+                    LOGGER.debug("UserIdentity in session is different instance, {} vs {}",
+                            sessionUserIdentity, this);
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
     }
 
     @Override
@@ -103,23 +91,26 @@ public class UserIdentityImpl implements UserIdentity, HasSessionId, HasJwt, Has
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
+        if (!super.equals(o)) {
+            return false;
+        }
         final UserIdentityImpl that = (UserIdentityImpl) o;
-        return Objects.equals(userUuid, that.userUuid) && Objects.equals(id,
-                that.id) && Objects.equals(httpSession.getId(), that.httpSession.getId());
+        return Objects.equals(userUuid, that.userUuid) && Objects.equals(httpSession, that.httpSession);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(userUuid, id, httpSession.getId());
+        return Objects.hash(super.hashCode(), userUuid, httpSession);
     }
 
     @Override
     public String toString() {
         return "UserIdentityImpl{" +
                 "userUuid='" + userUuid + '\'' +
-                ", id='" + id + '\'' +
-                ", fullName='" + getFullName() + '\'' +
+                ", id='" + getId() + '\'' +
+                ", fullName='" + getFullName().orElse("") + '\'' +
                 ", preferredUsername='" + getPreferredUsername() + '\'' +
+                ", timeTilRefresh='" + Duration.between(Instant.now(), getRefreshTime()) + '\'' +
                 '}';
     }
 }

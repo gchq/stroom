@@ -128,6 +128,11 @@ public class User implements HasAuditInfo, HasIntegerId {
         return name;
     }
 
+    /**
+     * The unique identifier for this user on the IDP, i.e. the subject. May not be unique within stroom as
+     * we may be using an external IDP but still using the internal IDP for processing user.
+     * If isGroup is true then this is the name of the group.
+     */
     public void setName(String name) {
         this.name = name;
     }

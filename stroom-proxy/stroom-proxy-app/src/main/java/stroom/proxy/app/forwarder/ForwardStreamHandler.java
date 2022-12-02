@@ -91,7 +91,7 @@ public class ForwardStreamHandler implements StreamHandler {
 
         connection.addRequestProperty(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
 
-        AttributeMap sendHeader = AttributeMapUtil.cloneAllowable(attributeMap);
+        final AttributeMap sendHeader = AttributeMapUtil.cloneAllowable(attributeMap);
         for (Entry<String, String> entry : sendHeader.entrySet()) {
             connection.addRequestProperty(entry.getKey(), entry.getValue());
         }

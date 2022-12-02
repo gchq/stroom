@@ -30,6 +30,6 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
 
     @Override
     public void removeAuthorisationEntries(final Map<String, String> headers) {
-        NullSafe.consume(headers, userIdentityFactory::removeAuthorisationEntries);
+        NullSafe.consume(headers, userIdentityFactory::removeAuthEntries);
     }
 }

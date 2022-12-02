@@ -23,11 +23,18 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletResponse;
 
+/**
+ * Combines the values from {@link OpenIdConfig} with values obtained from the external
+ * Open ID Connect IDP server.
+ */
 @Singleton
 public class ExternalIdpConfigurationProvider
         implements IdpConfigurationProvider, HasHealthCheck {
@@ -70,13 +77,13 @@ public class ExternalIdpConfigurationProvider
                     .healthy()
                     .withMessage("Not using external IDP");
         } else if (NullSafe.isBlankString(configurationEndpoint)) {
-                resultBuilder
-                        .unhealthy()
-                        .withMessage(LogUtil.message("Property {} is false, but {} is unset. " +
-                                        "You must provide the configuration endpoint for the external IDP.",
-                                openIdConfig.getFullPathStr(OpenIdConfig.PROP_NAME_USE_INTERNAL),
-                                openIdConfig.getFullPathStr(OpenIdConfig.PROP_NAME_CONFIGURATION_ENDPOINT)
-                        ));
+            resultBuilder
+                    .unhealthy()
+                    .withMessage(LogUtil.message("Property {} is false, but {} is unset. " +
+                                    "You must provide the configuration endpoint for the external IDP.",
+                            openIdConfig.getFullPathStr(OpenIdConfig.PROP_NAME_USE_INTERNAL),
+                            openIdConfig.getFullPathStr(OpenIdConfig.PROP_NAME_CONFIGURATION_ENDPOINT)
+                    ));
         } else {
             // Hit the config endpoint to check the IDP is accessible.
             // Even if we already have the config from it, if we can't see the IDP we have problems.
@@ -103,30 +110,34 @@ public class ExternalIdpConfigurationProvider
                 || !Objects.equals(lastConfigurationEndpoint, configurationEndpoint);
     }
 
-    private synchronized OpenIdConfigurationResponse updateOpenIdConfigurationResponse(
+    private OpenIdConfigurationResponse updateOpenIdConfigurationResponse(
             final OpenIdConfig openIdConfig) {
         final String configurationEndpoint = openIdConfig.getOpenIdConfigurationEndpoint();
-        // Re-test under lock
-        if (isFetchRequired(configurationEndpoint)) {
-            LOGGER.info("Fetching open id configuration from: " + configurationEndpoint);
-            try {
-                openIdConfigurationResp = fetchOpenIdConfigurationResponse(configurationEndpoint);
-            } catch (final RuntimeException | IOException e) {
-                LOGGER.error(e.getMessage(), e);
-            }
 
-            if (openIdConfigurationResp == null) {
-                openIdConfigurationResp = OpenIdConfigurationResponse.builder()
-                        .issuer(openIdConfig.getIssuer())
-                        .authorizationEndpoint(openIdConfig.getAuthEndpoint())
-                        .tokenEndpoint(openIdConfig.getTokenEndpoint())
-                        .jwksUri(openIdConfig.getJwksUri())
-                        .logoutEndpoint(openIdConfig.getLogoutEndpoint())
-                        .build();
+        synchronized (this) {
+            // Re-test under lock
+            if (isFetchRequired(configurationEndpoint)) {
+                try {
+                    final OpenIdConfigurationResponse response = fetchOpenIdConfigurationResponse(
+                            configurationEndpoint);
+                    openIdConfigurationResp = mergeResponse(response, openIdConfig);
+                } catch (final RuntimeException | IOException e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+
+                if (openIdConfigurationResp == null) {
+                    openIdConfigurationResp = OpenIdConfigurationResponse.builder()
+                            .issuer(openIdConfig.getIssuer())
+                            .authorizationEndpoint(openIdConfig.getAuthEndpoint())
+                            .tokenEndpoint(openIdConfig.getTokenEndpoint())
+                            .jwksUri(openIdConfig.getJwksUri())
+                            .logoutEndpoint(openIdConfig.getLogoutEndpoint())
+                            .build();
+                }
+                lastConfigurationEndpoint = configurationEndpoint;
             }
-            lastConfigurationEndpoint = configurationEndpoint;
+            return openIdConfigurationResp;
         }
-        return openIdConfigurationResp;
     }
 
     private OpenIdConfigurationResponse fetchOpenIdConfigurationResponse(
@@ -161,26 +172,20 @@ public class ExternalIdpConfigurationProvider
         //  ought to just rely on the response from the idp
         // Overwrite configuration with any values we might have manually configured.
         final Builder builder = response.copy();
-        if (!NullSafe.isBlankString(openIdConfiguration.getIssuer())) {
-            builder.issuer(openIdConfiguration.getIssuer());
-        }
-        if (!NullSafe.isBlankString(openIdConfiguration.getAuthEndpoint())) {
-            builder.authorizationEndpoint(openIdConfiguration.getAuthEndpoint());
-        }
-        if (!NullSafe.isBlankString(openIdConfiguration.getTokenEndpoint())) {
-            builder.tokenEndpoint(openIdConfiguration.getTokenEndpoint());
-        }
-        if (!NullSafe.isBlankString(openIdConfiguration.getJwksUri())) {
-            builder.jwksUri(openIdConfiguration.getJwksUri());
-        }
-        if (!NullSafe.isBlankString(openIdConfiguration.getLogoutEndpoint())) {
-            builder.logoutEndpoint(openIdConfiguration.getLogoutEndpoint());
-//        } else if (NullSafe.isBlankString(response.getLogoutEndpoint())) {
-//            // If the IdP doesn't provide a logout endpoint then use the internal one to invalidate
-//            // the session and redirect to perform a a new auth flow.
-//            builder.logoutEndpoint(
-//                    uriFactory.publicUri(INTERNAL_LOGOUT_ENDPOINT).toString());
-        }
+
+        final BiConsumer<Consumer<String>, Supplier<String>> mergeFunc = (builderSetter, configGetter) -> {
+            final String val = configGetter.get();
+            if (!NullSafe.isBlankString(val)) {
+                builderSetter.accept(val);
+            }
+        };
+
+        mergeFunc.accept(builder::issuer, openIdConfiguration::getIssuer);
+        mergeFunc.accept(builder::authorizationEndpoint, openIdConfiguration::getAuthEndpoint);
+        mergeFunc.accept(builder::tokenEndpoint, openIdConfiguration::getTokenEndpoint);
+        mergeFunc.accept(builder::jwksUri, openIdConfiguration::getJwksUri);
+        mergeFunc.accept(builder::logoutEndpoint, openIdConfiguration::getLogoutEndpoint);
+
         return builder.build();
     }
 

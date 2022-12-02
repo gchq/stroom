@@ -147,8 +147,8 @@ public class ReceiveDataHelper {
                 optionalUserIdentity.ifPresentOrElse(
                         userIdentity -> {
                             // Add the user identified in the token (if present) to the attribute map.
-                            // Use both ID and username as the ID will likely be a nasty UUID while the username will be more
-                            // useful for a human to read.
+                            // Use both ID and username as the ID will likely be a nasty UUID while the
+                            // username will be more useful for a human to read.
                             NullSafe.consume(
                                     userIdentity.getId(),
                                     id ->

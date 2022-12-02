@@ -8,6 +8,7 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.dropwizard_metrics_healthchecks
+    implementation libs.dropwizard_lifecycle
     implementation libs.http_client
     implementation libs.jackson_core
     implementation libs.jackson_databind
@@ -16,4 +17,5 @@ dependencies {
     implementation libs.ws_rs_api
     implementation libs.jakarta_servlet_api
     implementation libs.javax_inject
+    implementation libs.vavr
 }

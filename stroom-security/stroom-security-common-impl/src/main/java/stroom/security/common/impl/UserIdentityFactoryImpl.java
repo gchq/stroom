@@ -5,14 +5,18 @@ import stroom.security.api.exception.AuthenticationException;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenRequest;
+import stroom.security.openid.api.TokenRequest.Builder;
 import stroom.security.openid.api.TokenResponse;
+import stroom.util.NullSafe;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.dropwizard.lifecycle.Managed;
 import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -31,19 +35,31 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.DelayQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
-public class UserIdentityFactoryImpl implements UserIdentityFactory {
+@Singleton
+public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UserIdentityFactoryImpl.class);
 
@@ -51,6 +67,15 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory {
     private final Provider<OpenIdConfiguration> openIdConfigProvider;
     private final Provider<CloseableHttpClient> httpClientProvider;
     private final IdpIdentityMapper idpIdentityMapper;
+
+    // A service account/user for communicating with other apps in the same OIDC realm,
+    // e.g. proxy => stroom. Created lazily.
+    // This is tied to stroom/proxy's clientId, and we have only one of them
+    private volatile ServiceUserIdentity serviceUserIdentity;
+
+    private final BlockingQueue<AbstractTokenUserIdentity> refreshTokensDelayQueue = new DelayQueue<>();
+    private ExecutorService refreshExecutorService = null;
+    private final AtomicBoolean isShutdownInProgress = new AtomicBoolean(false);
 
     @Inject
     public UserIdentityFactoryImpl(final JwtContextFactory jwtContextFactory,
@@ -67,14 +92,15 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory {
     public Optional<UserIdentity> getApiUserIdentity(final HttpServletRequest request) {
         Optional<UserIdentity> optUserIdentity = Optional.empty();
 
-        // See if we can login with a token if one is supplied.
+        // See if we can log in with a token if one is supplied. It is valid for it to not be present.
+        // e.g. the front end calling API methods, as the user is held in session.
         try {
             final Optional<JwtContext> optJwtContext = jwtContextFactory.getJwtContext(request);
 
             optUserIdentity = optJwtContext.flatMap(jwtContext ->
                             idpIdentityMapper.mapApiIdentity(jwtContext, request))
                     .or(() -> {
-                        LOGGER.debug(() ->
+                        LOGGER.trace(() ->
                                 "No JWS found in headers in request to " + request.getRequestURI());
                         return Optional.empty();
                     });
@@ -83,8 +109,12 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory {
         }
 
         if (optUserIdentity.isEmpty()) {
-            LOGGER.debug(() -> "Cannot get a valid JWS for API request to " + request.getRequestURI() + ". " +
-                    "This may be due to Stroom being left open in a browser after Stroom was restarted.");
+            LOGGER.trace(() -> "Cannot get a valid JWS for API request to " + request.getRequestURI());
+        } else {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Got API user identity "
+                        + optUserIdentity.map(Objects::toString).orElse("EMPTY"));
+            }
         }
 
         return optUserIdentity;
@@ -96,8 +126,25 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory {
     }
 
     @Override
-    public void removeAuthorisationEntries(final Map<String, String> headers) {
+    public void removeAuthEntries(final Map<String, String> headers) {
         jwtContextFactory.removeAuthorisationEntries(headers);
+    }
+
+    @Override
+    public Map<String, String> getAuthHeaders(final UserIdentity userIdentity) {
+        if (userIdentity instanceof final AbstractTokenUserIdentity tokenUserIdentity) {
+            // just in case the refresh queue is backed up
+            if (tokenUserIdentity.isRefreshRequired()) {
+                refresh(userIdentity);
+            }
+            final String accessToken = Objects.requireNonNull(tokenUserIdentity.getAccessToken(),
+                    () -> "Null access token for userIdentity " + userIdentity);
+            // Should be common to both intenal and external IDPs
+            return Map.of(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
+        } else {
+            LOGGER.debug(() -> "Wrong type of userIdentity " + userIdentity.getClass());
+            return Collections.emptyMap();
+        }
     }
 
     @Override
@@ -106,160 +153,172 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory {
                                                           final AuthenticationState state) {
         final OpenIdConfiguration openIdConfiguration = openIdConfigProvider.get();
 
-        final ObjectMapper mapper = getMapper();
+        final ObjectMapper mapper = getObjectMapper();
         final String tokenEndpoint = openIdConfiguration.getTokenEndpoint();
-        final HttpPost httpPost = new HttpPost(tokenEndpoint);
 
-        // AWS requires form content and not a JSON object.
-        if (openIdConfiguration.isFormTokenRequest()) {
-            final List<NameValuePair> nvps = new ArrayList<>();
-            nvps.add(new BasicNameValuePair(OpenId.CODE, code));
-            nvps.add(new BasicNameValuePair(OpenId.GRANT_TYPE, OpenId.GRANT_TYPE__AUTHORIZATION_CODE));
-            nvps.add(new BasicNameValuePair(OpenId.CLIENT_ID, openIdConfiguration.getClientId()));
-            nvps.add(new BasicNameValuePair(OpenId.CLIENT_SECRET, openIdConfiguration.getClientSecret()));
-            nvps.add(new BasicNameValuePair(OpenId.REDIRECT_URI, state.getUri()));
-            setFormParams(httpPost, nvps);
-
-        } else {
-            try {
-                final TokenRequest tokenRequest = TokenRequest.builder()
-                        .code(code)
-                        .grantType(OpenId.GRANT_TYPE__AUTHORIZATION_CODE)
-                        .clientId(openIdConfiguration.getClientId())
-                        .clientSecret(openIdConfiguration.getClientSecret())
-                        .redirectUri(state.getUri())
-                        .build();
-                final String json = mapper.writeValueAsString(tokenRequest);
-
-                httpPost.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-            } catch (final JsonProcessingException e) {
-                throw new AuthenticationException(e.getMessage(), e);
-            }
-        }
+        final HttpPost httpPost = new OpenIdPostBuilder(tokenEndpoint, openIdConfiguration, mapper)
+                .withCode(code)
+                .withGrantType(OpenId.GRANT_TYPE__AUTHORIZATION_CODE)
+                .withClientId(openIdConfiguration.getClientId())
+                .withClientSecret(openIdConfiguration.getClientSecret())
+                .withRedirectUri(state.getUri())
+                .build();
 
         final TokenResponse tokenResponse = getTokenResponse(mapper, httpPost, tokenEndpoint);
 
-        return jwtContextFactory.getJwtContext(tokenResponse.getIdToken())
+        final Optional<UserIdentity> optUserIdentity = jwtContextFactory.getJwtContext(tokenResponse.getIdToken())
                 .flatMap(jwtContext ->
                         createUserIdentity(request, state, tokenResponse, jwtContext))
                 .or(() -> {
                     throw new RuntimeException("Unable to extract JWT claims");
                 });
+
+        LOGGER.debug(() -> "Got auth flow user identity "
+                + optUserIdentity.map(Objects::toString).orElse("EMPTY"));
+
+        return optUserIdentity;
+    }
+
+    @Override
+    public UserIdentity getServiceUserIdentity() {
+        if (serviceUserIdentity == null) {
+            synchronized (this) {
+                if (serviceUserIdentity == null) {
+                    serviceUserIdentity = createServiceUserIdentity();
+                }
+            }
+        }
+        return serviceUserIdentity;
     }
 
     @Override
     public void refresh(final UserIdentity userIdentity) {
-        if (userIdentity instanceof UserIdentityImpl) {
-            final UserIdentityImpl identity = (UserIdentityImpl) userIdentity;
-
-            // Check to see if the user needs a token refresh.
-            if (hasTokenExpired(identity)) {
-                identity.getLock().lock();
-                try {
-                    if (hasTokenExpired(identity)) {
-                        doRefresh(identity);
-                    }
-                } finally {
-                    identity.getLock().unlock();
-                }
+        Objects.requireNonNull(userIdentity, "Null userIdentity");
+        if (userIdentity instanceof final AbstractTokenUserIdentity tokenUserIdentity) {
+            // Refresh the token if needed
+            final boolean doRefresh;
+            if (userIdentity instanceof final UserIdentityImpl userIdentityImpl) {
+                doRefresh = userIdentityImpl.isInSession();
+            } else {
+                doRefresh = true;
+            }
+            if (doRefresh) {
+                tokenUserIdentity.mutateUnderLock(this::hasTokenExpired, this::doRefresh);
+            } else {
+                LOGGER.debug("Not refreshing identity {}", userIdentity);
             }
         }
     }
 
-    private void doRefresh(final UserIdentityImpl identity) {
-        TokenResponse tokenResponse = null;
-        JwtClaims jwtClaims = null;
-        final OpenIdConfiguration openIdConfiguration = openIdConfigProvider.get();
+    private void addUserIdentityToRefreshQueueIfRequired(final UserIdentity userIdentity) {
+        if (userIdentity instanceof final AbstractTokenUserIdentity tokenUserIdentity) {
+            LOGGER.debug("Adding identity {} to the refresh queue", userIdentity);
+            refreshTokensDelayQueue.add(tokenUserIdentity);
+        }
+    }
 
+    private void doRefresh(final AbstractTokenUserIdentity identity) {
+        final TokenResponse currentTokenResponse = identity.getTokenResponse();
+        TokenResponse newTokenResponse = null;
+        JwtClaims jwtClaims = null;
         try {
             LOGGER.debug("Refreshing token " + identity);
 
-            if (identity.getTokenResponse() == null ||
-                    identity.getTokenResponse().getRefreshToken() == null) {
-                throw new NullPointerException("Unable to refresh token as no refresh token is available");
-            }
+            LOGGER.debug(LogUtil.message(
+                    "Current token expiry: {}, refresh token expiry: {}",
+                    NullSafe.toString(
+                            identity.getTokenResponse(),
+                            TokenResponse::getExpiresIn,
+                            Duration::ofSeconds),
+                    NullSafe.toString(
+                            identity.getTokenResponse(),
+                            TokenResponse::getRefreshTokenExpiresIn,
+                            Duration::ofSeconds)));
 
-            final ObjectMapper mapper = getMapper();
-            final String tokenEndpoint = openIdConfiguration.getTokenEndpoint();
-            final HttpPost httpPost = new HttpPost(tokenEndpoint);
-
-            // AWS requires form content and not a JSON object.
-            if (openIdConfiguration.isFormTokenRequest()) {
-                final List<NameValuePair> nvps = new ArrayList<>();
-                nvps.add(new BasicNameValuePair(OpenId.GRANT_TYPE, OpenId.REFRESH_TOKEN));
-                nvps.add(new BasicNameValuePair(OpenId.REFRESH_TOKEN,
-                        identity.getTokenResponse().getRefreshToken()));
-                nvps.add(new BasicNameValuePair(OpenId.CLIENT_ID, openIdConfiguration.getClientId()));
-                nvps.add(new BasicNameValuePair(OpenId.CLIENT_SECRET,
-                        openIdConfiguration.getClientSecret()));
-                setFormParams(httpPost, nvps);
-
-            } else {
-                throw new UnsupportedOperationException("JSON not supported for token refresh");
-            }
-
-            tokenResponse = getTokenResponse(mapper, httpPost, tokenEndpoint);
-
-            jwtClaims = jwtContextFactory.getJwtContext(tokenResponse.getIdToken())
-                    .map(JwtContext::getJwtClaims)
-                    .orElseThrow(() -> new RuntimeException("Unable to extract JWT claims"));
-
+            final RefreshResult refreshResult = refreshTokens(currentTokenResponse);
+            newTokenResponse = refreshResult.tokenResponse;
+            jwtClaims = refreshResult.jwtClaims;
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
-            identity.invalidateSession();
+            if (identity instanceof final UserIdentityImpl userIdentityImpl) {
+                userIdentityImpl.invalidateSession();
+            }
             throw e;
-
         } finally {
             // Some IDPs don't seem to send updated refresh tokens so keep the existing refresh token.
-            if (tokenResponse != null && tokenResponse.getRefreshToken() == null) {
-                tokenResponse = tokenResponse
+            if (newTokenResponse != null
+                    && newTokenResponse.getRefreshToken() == null
+                    && currentTokenResponse.getRefreshToken() != null) {
+                newTokenResponse = newTokenResponse
                         .copy()
-                        .refreshToken(identity.getTokenResponse().getRefreshToken())
+                        .refreshToken(currentTokenResponse.getRefreshToken())
+                        .refreshTokenExpiresIn(Objects.requireNonNullElseGet(
+                                newTokenResponse.getRefreshTokenExpiresIn(),
+                                currentTokenResponse::getRefreshTokenExpiresIn))
                         .build();
             }
 
-            identity.setTokenResponse(tokenResponse);
+            identity.setTokenResponse(newTokenResponse);
             identity.setJwtClaims(jwtClaims);
+
+            LOGGER.debug(LogUtil.message(
+                    "New token expiry: {}, refresh token expiry: {}",
+                    NullSafe.toString(
+                            newTokenResponse,
+                            TokenResponse::getExpiresIn,
+                            Duration::ofSeconds),
+                    NullSafe.toString(
+                            newTokenResponse,
+                            TokenResponse::getRefreshTokenExpiresIn,
+                            Duration::ofSeconds)));
         }
+
+        // Put the updated identity on the queue with its new refresh time
+        addUserIdentityToRefreshQueueIfRequired(identity);
     }
 
-    private boolean hasTokenExpired(final UserIdentityImpl userIdentity) {
-        try {
-            final JwtClaims jwtClaims = userIdentity.getJwtClaims();
-            if (jwtClaims == null) {
-                throw new NullPointerException("User identity has null claims");
-            }
-            if (jwtClaims.getExpirationTime() == null) {
-                throw new NullPointerException("User identity has null expiration time");
-            }
+    private RefreshResult refreshTokens(final TokenResponse existingTokenResponse) {
 
-            final NumericDate expirationTime = jwtClaims.getExpirationTime();
-            expirationTime.addSeconds(10);
+        final String refreshToken = NullSafe.requireNonNull(
+                existingTokenResponse,
+                TokenResponse::getRefreshToken,
+                () -> "Unable to refresh token as no existing refresh token is available");
+
+        final ObjectMapper mapper = getObjectMapper();
+        final OpenIdConfiguration openIdConfiguration = openIdConfigProvider.get();
+        final String tokenEndpoint = openIdConfiguration.getTokenEndpoint();
+
+        final HttpPost httpPost = new OpenIdPostBuilder(tokenEndpoint, openIdConfiguration, mapper)
+                .withGrantType(OpenId.GRANT_TYPE__REFRESH_TOKEN)
+                .withRefreshToken(refreshToken)
+                .withClientId(openIdConfiguration.getClientId())
+                .withClientSecret(openIdConfiguration.getClientSecret())
+                .build();
+
+        final TokenResponse newTokenResponse = getTokenResponse(mapper, httpPost, tokenEndpoint);
+
+        final JwtClaims jwtClaims = jwtContextFactory.getJwtContext(newTokenResponse.getIdToken())
+                .map(JwtContext::getJwtClaims)
+                .orElseThrow(() -> new RuntimeException("Unable to extract JWT claims"));
+
+        return new RefreshResult(newTokenResponse, jwtClaims);
+    }
+
+    private boolean hasTokenExpired(final AbstractTokenUserIdentity userIdentity) {
+        try {
+            final JwtClaims jwtClaims = Objects.requireNonNull(
+                    userIdentity.getJwtClaims(), "User identity has null claims");
+            final NumericDate expirationTime = Objects.requireNonNull(
+                    jwtClaims.getExpirationTime(), "User identity has null expiration time");
+
+            // Modify the expiry time to be a bit BEFORE it actually is, so we refresh ahead of time
+            expirationTime.addSeconds(-10);
             final NumericDate now = NumericDate.now();
-            return expirationTime.isBefore(now);
+            return now.isAfter(expirationTime);
         } catch (final MalformedClaimException e) {
             LOGGER.error(e.getMessage(), e);
         }
         return false;
-    }
-
-    private void setFormParams(final HttpPost httpPost,
-                               final List<NameValuePair> nvps) {
-        try {
-            final OpenIdConfiguration openIdConfiguration = openIdConfigProvider.get();
-            String authorization = openIdConfiguration.getClientId()
-                    + ":"
-                    + openIdConfiguration.getClientSecret();
-            authorization = Base64.getEncoder().encodeToString(authorization.getBytes(StandardCharsets.UTF_8));
-            authorization = "Basic " + authorization;
-
-            httpPost.setHeader(HttpHeaders.AUTHORIZATION, authorization);
-            httpPost.setHeader(HttpHeaders.ACCEPT, "*/*");
-            httpPost.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
-            httpPost.setEntity(new UrlEncodedFormEntity(nvps));
-        } catch (final UnsupportedEncodingException e) {
-            throw new AuthenticationException(e.getMessage(), e);
-        }
     }
 
     private TokenResponse getTokenResponse(final ObjectMapper mapper,
@@ -304,7 +363,7 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory {
         return msg;
     }
 
-    private ObjectMapper getMapper() {
+    private ObjectMapper getObjectMapper() {
         final ObjectMapper mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         return mapper;
@@ -322,7 +381,7 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory {
         final boolean match = nonce != null && nonce.equals(state.getNonce());
         if (match) {
             optUserIdentity = idpIdentityMapper.mapAuthFlowIdentity(jwtContext, request, tokenResponse);
-
+            optUserIdentity.ifPresent(this::addUserIdentityToRefreshQueueIfRequired);
         } else {
             // If the nonces don't match we need to redirect to log in again.
             // Maybe the request uses an out-of-date stroomSessionId?
@@ -330,5 +389,242 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory {
         }
 
         return optUserIdentity;
+    }
+
+    private ServiceUserIdentity createServiceUserIdentity() {
+
+        final OpenIdConfiguration openIdConfiguration = openIdConfigProvider.get();
+
+        final ObjectMapper mapper = getObjectMapper();
+        final String tokenEndpoint = openIdConfiguration.getTokenEndpoint();
+        final HttpPost httpPost = new OpenIdPostBuilder(tokenEndpoint, openIdConfiguration, mapper)
+                .withGrantType(OpenId.GRANT_TYPE__CLIENT_CREDENTIALS)
+                .withClientId(openIdConfiguration.getClientId())
+                .withClientSecret(openIdConfiguration.getClientSecret())
+                .addScope(OpenId.SCOPE__OPENID)
+                .build();
+
+        final TokenResponse tokenResponse = getTokenResponse(mapper, httpPost, tokenEndpoint);
+
+        final ServiceUserIdentity serviceUserIdentity = jwtContextFactory.getJwtContext(tokenResponse.getAccessToken())
+                .map(jwtContext ->
+                        new ServiceUserIdentity(tokenResponse, jwtContext.getJwtClaims()))
+                .orElseThrow(() -> {
+                    throw new RuntimeException("Unable to extract JWT claims for service user");
+                });
+        LOGGER.info("Created service user identity {}", serviceUserIdentity);
+        // Add the identity onto the queue so the tokens get refreshed
+        addUserIdentityToRefreshQueueIfRequired(serviceUserIdentity);
+        return serviceUserIdentity;
+    }
+
+    private void consumeFromRefreshQueue() {
+        try {
+            final AbstractTokenUserIdentity userIdentity = refreshTokensDelayQueue.take();
+            // It is possible that something else has refreshed the token
+            if (userIdentity.isRefreshRequired()) {
+                // TODO: 02/12/2022 Should not refresh if the user's session has ended.
+                //  Logout should stop this identity from being refreshed again.
+                LOGGER.debug("Refreshing userIdentity {} from refresh queue", userIdentity);
+                refresh(userIdentity);
+            } else {
+                LOGGER.debug(() -> LogUtil.message("Refresh not needed, refreshTime: {}",
+                        userIdentity.getRefreshTime()));
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.debug("Refresh delay queue interrupted, assuming shutdown is happening");
+        }
+    }
+
+    @Override
+    public void start() throws Exception {
+        if (refreshExecutorService == null) {
+            LOGGER.debug("Initialising token refresh executor");
+            refreshExecutorService = Executors.newSingleThreadExecutor();
+            refreshExecutorService.submit(() -> {
+                while (!Thread.currentThread().isInterrupted()
+                        && !isShutdownInProgress.get()) {
+                    consumeFromRefreshQueue();
+                }
+            });
+        }
+    }
+
+    @Override
+    public void stop() throws Exception {
+        isShutdownInProgress.set(true);
+        if (refreshExecutorService != null) {
+            LOGGER.debug("Shutting down refreshExecutorService");
+            refreshExecutorService.shutdownNow();
+            // No need to wait for termination the stuff on the queue has no value once
+            // we are shutting down
+            LOGGER.debug("Shut down refreshExecutorService");
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record RefreshResult(TokenResponse tokenResponse, JwtClaims jwtClaims) {
+
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static final class OpenIdPostBuilder {
+
+        private final String endpointUri;
+        private final OpenIdConfiguration openIdConfiguration;
+        private final ObjectMapper objectMapper;
+
+        private String clientId = null;
+        private String clientSecret = null;
+        private String code = null;
+        private String grantType = null;
+        private String redirectUri = null;
+        private String refreshToken = null;
+        private List<String> scopes = new ArrayList<>();
+
+        private OpenIdPostBuilder(final String endpointUri,
+                                  final OpenIdConfiguration openIdConfiguration,
+                                  final ObjectMapper objectMapper) {
+            this.endpointUri = endpointUri;
+            this.openIdConfiguration = openIdConfiguration;
+            this.objectMapper = objectMapper;
+        }
+
+        public OpenIdPostBuilder withClientId(final String clientId) {
+            this.clientId = clientId;
+            return this;
+        }
+
+        public OpenIdPostBuilder withClientSecret(final String clientSecret) {
+            this.clientSecret = clientSecret;
+            return this;
+        }
+
+        public OpenIdPostBuilder withCode(final String code) {
+            this.code = code;
+            return this;
+        }
+
+        public OpenIdPostBuilder withGrantType(final String grantType) {
+            this.grantType = grantType;
+            return this;
+        }
+
+        public OpenIdPostBuilder withRedirectUri(final String redirectUri) {
+            this.redirectUri = redirectUri;
+            return this;
+        }
+
+        public OpenIdPostBuilder withRefreshToken(final String refreshToken) {
+            this.refreshToken = refreshToken;
+            return this;
+        }
+
+        public OpenIdPostBuilder withScopes(final List<String> scopes) {
+            this.scopes = scopes;
+            return this;
+        }
+
+        public OpenIdPostBuilder addScope(final String scope) {
+            if (scopes == null) {
+                scopes = new ArrayList<>();
+            }
+            this.scopes.add(scope);
+            return this;
+        }
+
+        private void addBasicAuth(final HttpPost httpPost) {
+            // Some OIDC providers expect authentication using a basic auth header
+            // others expect the client(Id|Secret) to be in the form params and some cope
+            // with both. Therefore, put them in both places to cover all bases.
+            if (!NullSafe.isBlankString(clientId) && NullSafe.isBlankString(clientSecret)) {
+                String authorization = openIdConfiguration.getClientId()
+                        + ":"
+                        + openIdConfiguration.getClientSecret();
+                authorization = Base64.getEncoder().encodeToString(authorization.getBytes(StandardCharsets.UTF_8));
+                authorization = "Basic " + authorization;
+                httpPost.setHeader(HttpHeaders.AUTHORIZATION, authorization);
+            }
+        }
+
+        private void setFormParams(final HttpPost httpPost,
+                                   final List<NameValuePair> nvps) {
+            try {
+                httpPost.setHeader(HttpHeaders.ACCEPT, "*/*");
+                httpPost.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+                httpPost.setEntity(new UrlEncodedFormEntity(nvps));
+            } catch (final UnsupportedEncodingException e) {
+                throw new AuthenticationException(e.getMessage(), e);
+            }
+        }
+
+        private void buildFormPost(final HttpPost httpPost) {
+            final List<NameValuePair> pairs = new ArrayList<>();
+
+            final BiConsumer<String, String> addPair = (name, val) -> {
+                if (!NullSafe.isBlankString(val)) {
+                    pairs.add(new BasicNameValuePair(name, val));
+                }
+            };
+
+            final String scopesStr = String.join(" ", scopes);
+            addPair.accept(OpenId.CLIENT_ID, clientId);
+            addPair.accept(OpenId.CLIENT_SECRET, clientSecret);
+            addPair.accept(OpenId.CODE, code);
+            addPair.accept(OpenId.GRANT_TYPE, grantType);
+            addPair.accept(OpenId.REDIRECT_URI, redirectUri);
+            addPair.accept(OpenId.REFRESH_TOKEN, refreshToken);
+            addPair.accept(OpenId.SCOPE, scopesStr);
+
+            LOGGER.debug("Form name/value pairs: {}", pairs);
+
+            setFormParams(httpPost, pairs);
+        }
+
+        private void buildJsonPost(final HttpPost httpPost) {
+            try {
+                final Builder builder = TokenRequest.builder();
+                final BiConsumer<Consumer<String>, String> addValue = (func, val) -> {
+                    if (!NullSafe.isBlankString(val)) {
+                        func.accept(val);
+                    }
+                };
+                final String scopesStr = String.join(" ", scopes);
+                addValue.accept(builder::clientId, clientId);
+                addValue.accept(builder::clientSecret, clientId);
+                addValue.accept(builder::code, clientId);
+                addValue.accept(builder::grantType, clientId);
+                addValue.accept(builder::redirectUri, clientId);
+                addValue.accept(builder::refreshToken, refreshToken);
+                addValue.accept(builder::scope, scopesStr);
+
+                final TokenRequest tokenRequest = builder.build();
+                final String json = objectMapper.writeValueAsString(tokenRequest);
+
+                LOGGER.debug("json: {}", json);
+
+                httpPost.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
+            } catch (final JsonProcessingException e) {
+                throw new AuthenticationException(e.getMessage(), e);
+            }
+        }
+
+        public HttpPost build() {
+            final HttpPost httpPost = new HttpPost(endpointUri);
+            if (openIdConfiguration.isFormTokenRequest()) {
+                buildFormPost(httpPost);
+            } else {
+                buildJsonPost(httpPost);
+            }
+            addBasicAuth(httpPost);
+            return httpPost;
+        }
     }
 }

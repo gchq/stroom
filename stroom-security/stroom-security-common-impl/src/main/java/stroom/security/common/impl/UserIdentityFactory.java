@@ -22,6 +22,12 @@ public interface UserIdentityFactory {
                                                    final AuthenticationState state);
 
     /**
+     * Gets the user identity for a service user on the IDP, i.e. for stroom/proxy to call
+     * out to another system that is also using this IDP.
+     */
+    UserIdentity getServiceUserIdentity();
+
+    /**
      * True if the request contains the certs/headers needed to authenticate.
      * Does not perform authentication.
      */
@@ -30,8 +36,12 @@ public interface UserIdentityFactory {
     /**
      * Remove any authentication headers key/value pairs from the map
      */
-    void removeAuthorisationEntries(final Map<String, String> headers);
+    void removeAuthEntries(final Map<String, String> headers);
 
+    /**
+     * @return The authentication/authorisation headers to enable authentication with this user
+     */
+    Map<String, String> getAuthHeaders(final UserIdentity userIdentity);
 
     /**
      * Refresh the user identity including any tokens associated with that user.

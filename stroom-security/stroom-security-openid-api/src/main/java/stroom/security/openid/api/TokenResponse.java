@@ -4,14 +4,18 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+@JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class TokenResponse {
 
     @JsonProperty("id_token")
     private final String idToken;
+
     @JsonProperty("access_token")
     private final String accessToken;
+
     @JsonProperty("refresh_token")
     private final String refreshToken;
 
@@ -24,8 +28,10 @@ public class TokenResponse {
      */
     @JsonProperty("expires_in")
     private final Long expiresIn;
+
     @JsonProperty("refresh_token_expires_in")
     private final Long refreshTokenExpiresIn;
+
     @JsonProperty("token_type")
     private final String tokenType;
 
@@ -75,6 +81,21 @@ public class TokenResponse {
     public Builder copy() {
         return new Builder(this);
     }
+
+    @Override
+    public String toString() {
+        return "TokenResponse{" +
+                "idToken='" + idToken + '\'' +
+                ", accessToken='" + accessToken + '\'' +
+                ", refreshToken='" + refreshToken + '\'' +
+                ", expiresIn=" + expiresIn +
+                ", refreshTokenExpiresIn=" + refreshTokenExpiresIn +
+                ", tokenType='" + tokenType + '\'' +
+                '}';
+    }
+
+    // --------------------------------------------------------------------------------
+
 
     public static final class Builder {
 

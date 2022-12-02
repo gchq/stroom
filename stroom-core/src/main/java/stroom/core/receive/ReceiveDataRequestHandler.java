@@ -168,7 +168,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
     }
 
     private void logSuccess(final StroomStreamStatus stroomStreamStatus) {
-        LOGGER.info(() -> "Sending success response " + stroomStreamStatus);
+        LOGGER.info(() -> "Returning success response " + stroomStreamStatus);
     }
 
     private void debug(final String message, final AttributeMap attributeMap) {

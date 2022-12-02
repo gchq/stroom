@@ -1,6 +1,7 @@
 package stroom.proxy.app.forwarder;
 
 import stroom.proxy.repo.LogStream;
+import stroom.security.common.impl.UserIdentityFactory;
 import stroom.util.cert.SSLUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LogUtil;
@@ -22,18 +23,18 @@ public class ForwardHttpPostHandlersFactory {
     private static final String USER_AGENT_FORMAT = "stroom-proxy/{} java/{}";
 
     private final LogStream logStream;
-
     private final PathCreator pathCreator;
-
     private final String defaultUserAgent;
-
+    private final UserIdentityFactory userIdentityFactory;
 
     @Inject
     public ForwardHttpPostHandlersFactory(final LogStream logStream,
                                           final PathCreator pathCreator,
-                                          final Provider<BuildInfo> buildInfoProvider) {
+                                          final Provider<BuildInfo> buildInfoProvider,
+                                          final UserIdentityFactory userIdentityFactory) {
         this.logStream = logStream;
         this.pathCreator = pathCreator;
+        this.userIdentityFactory = userIdentityFactory;
 
         // Construct something like
         // stroom-proxy/v6.0-beta.46 java/1.8.0_181
@@ -62,6 +63,6 @@ public class ForwardHttpPostHandlersFactory {
                 "\" ForwardHttpPostHandlers with user agent string [" +
                 userAgentString +
                 "]");
-        return new ForwardHttpPostHandlers(logStream, config, userAgentString, sslSocketFactory);
+        return new ForwardHttpPostHandlers(logStream, config, userAgentString, sslSocketFactory, userIdentityFactory);
     }
 }

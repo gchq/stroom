@@ -21,6 +21,7 @@ import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.security.api.UserIdentity;
+import stroom.security.common.impl.UserIdentitySessionUtil;
 import stroom.security.shared.SessionDetails;
 import stroom.security.shared.SessionListResponse;
 import stroom.security.shared.SessionResource;

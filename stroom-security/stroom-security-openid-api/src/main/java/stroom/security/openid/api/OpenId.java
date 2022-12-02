@@ -36,6 +36,8 @@ public class OpenId {
     public static final String STATE = "state";
 
     public static final String GRANT_TYPE__AUTHORIZATION_CODE = "authorization_code";
+    public static final String GRANT_TYPE__CLIENT_CREDENTIALS = "client_credentials";
+    public static final String GRANT_TYPE__REFRESH_TOKEN = "refresh_token";
     public static final String RESPONSE_TYPE__CODE = "code";
     public static final String SCOPE__OPENID = "openid";
     public static final String SCOPE__EMAIL = "email";

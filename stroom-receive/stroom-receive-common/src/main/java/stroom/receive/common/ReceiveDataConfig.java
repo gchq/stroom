@@ -88,7 +88,8 @@ public class ReceiveDataConfig
         return certificateAuthenticationEnabled;
     }
 
-    @JsonPropertyDescription("If true, the sender will be authenticated using a certificate or token depending on the " +
+    @JsonPropertyDescription(
+            "If true, the sender will be authenticated using a certificate or token depending on the " +
             "state of tokenAuthenticationEnabled and certificateAuthenticationEnabled. If the sender " +
             "can't be authenticated an error will be returned to the client." +
             "If false, then no authentication will be performed and data will be accepted without a sender identity.")

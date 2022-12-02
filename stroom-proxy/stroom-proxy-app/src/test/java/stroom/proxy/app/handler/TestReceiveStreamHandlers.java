@@ -14,6 +14,7 @@ import stroom.proxy.repo.ProxyRepositoryStreamHandler;
 import stroom.proxy.repo.ProxyRepositoryStreamHandlers;
 import stroom.proxy.repo.store.Entries;
 import stroom.proxy.repo.store.SequentialFileStore;
+import stroom.security.common.impl.UserIdentityFactory;
 import stroom.test.common.TemporaryPathCreator;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
@@ -32,6 +33,7 @@ import org.mockito.quality.Strictness;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,6 +45,8 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
 
     @Mock
     private SequentialFileStore sequentialFileStore;
+    @Mock
+    private UserIdentityFactory userIdentityFactory;
 
     @Test
     void testStoreAndForward(@TempDir Path tempDir) {
@@ -120,11 +124,14 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
 
         try {
             final Entries mockStroomZipOutputStream = Mockito.mock(Entries.class);
-            Mockito.when(sequentialFileStore.getEntries(Mockito.any())).thenReturn(
-                    mockStroomZipOutputStream);
+            Mockito.when(sequentialFileStore.getEntries(Mockito.any()))
+                    .thenReturn(mockStroomZipOutputStream);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
+
+        Mockito.when(userIdentityFactory.getAuthHeaders(Mockito.any()))
+                .thenReturn(Collections.emptyMap());
 
         final ProxyRepositoryStreamHandlers proxyRepositoryRequestHandlerProvider =
                 new ProxyRepositoryStreamHandlers(sequentialFileStore);
@@ -142,7 +149,8 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
         ForwardHttpPostHandlersFactory forwardHttpPostHandlersFactory = new ForwardHttpPostHandlersFactory(
                 logStream,
                 pathCreator,
-                () -> buildInfo);
+                () -> buildInfo,
+                userIdentityFactory);
 
         final ForwarderDestinations forwarderDestinations = new ForwarderDestinationsImpl(
                 proxyConfig,

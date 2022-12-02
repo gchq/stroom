@@ -54,6 +54,7 @@ public class CombinedJwtContextFactory implements JwtContextFactory {
     public Optional<JwtContext> getJwtContext(final HttpServletRequest request) {
         // Always try the internal context factory first as the processing user only
         // uses the internal IDP
+        // TODO: 02/12/2022 Use a service account on the ext idp for proc user
         return internalJwtContextFactory.getJwtContext(request)
                 .or(() -> useExternalIdentityProvider()
                         ? standardJwtContextFactory.getJwtContext(request)

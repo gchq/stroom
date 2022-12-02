@@ -3,6 +3,7 @@ package stroom.security.impl;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.UserIdentity;
+import stroom.security.common.impl.UserIdentitySessionUtil;
 import stroom.security.openid.api.OpenId;
 import stroom.security.shared.SessionListResponse;
 import stroom.security.shared.SessionResource;

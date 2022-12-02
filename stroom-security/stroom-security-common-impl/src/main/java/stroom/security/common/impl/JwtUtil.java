@@ -5,6 +5,7 @@ import stroom.util.NullSafe;
 import stroom.util.exception.ThrowingFunction;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import org.jose4j.json.internal.json_simple.parser.ContainerFactory;
 import org.jose4j.json.internal.json_simple.parser.JSONParser;
@@ -129,17 +130,27 @@ public final class JwtUtil {
     }
 
     public static Optional<String> getClaimValue(final JwtContext jwtContext, final String claim) {
-        return NullSafe.getAsOptional(
-                jwtContext,
-                JwtContext::getJwtClaims,
-                ThrowingFunction.unchecked(jwtClaims ->
-                        jwtClaims.getClaimValue(claim, String.class)));
+        try {
+            return NullSafe.getAsOptional(
+                    jwtContext,
+                    JwtContext::getJwtClaims,
+                    ThrowingFunction.unchecked(jwtClaims ->
+                            jwtClaims.getClaimValue(claim, String.class)));
+        } catch (Exception e) {
+            LOGGER.debug(() -> LogUtil.message("Error getting claim {}: {}", claim, e.getMessage()), e);
+            return Optional.empty();
+        }
     }
 
     public static Optional<String> getClaimValue(final JwtClaims jwtClaims, final String claim) {
-        return NullSafe.getAsOptional(
-                jwtClaims,
-                ThrowingFunction.unchecked(jwtClaims2 ->
-                        jwtClaims2.getClaimValue(claim, String.class)));
+        try {
+            return NullSafe.getAsOptional(
+                    jwtClaims,
+                    ThrowingFunction.unchecked(jwtClaims2 ->
+                            jwtClaims2.getClaimValue(claim, String.class)));
+        } catch (Exception e) {
+            LOGGER.debug(() -> LogUtil.message("Error getting claim {}: {}", claim, e.getMessage()), e);
+            return Optional.empty();
+        }
     }
 }

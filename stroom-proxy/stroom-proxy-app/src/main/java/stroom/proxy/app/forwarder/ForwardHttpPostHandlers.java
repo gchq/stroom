@@ -7,6 +7,8 @@ import stroom.proxy.repo.LogStream;
 import stroom.receive.common.StreamHandler;
 import stroom.receive.common.StreamHandlers;
 import stroom.receive.common.StroomStreamException;
+import stroom.security.api.UserIdentity;
+import stroom.security.common.impl.UserIdentityFactory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -19,15 +21,18 @@ public class ForwardHttpPostHandlers implements StreamHandlers {
     private final String userAgentString;
     private final ForwardHttpPostConfig config;
     private final SSLSocketFactory sslSocketFactory;
+    private final UserIdentityFactory userIdentityFactory;
 
     public ForwardHttpPostHandlers(final LogStream logStream,
                                    final ForwardHttpPostConfig config,
                                    final String userAgentString,
-                                   final SSLSocketFactory sslSocketFactory) {
+                                   final SSLSocketFactory sslSocketFactory,
+                                   final UserIdentityFactory userIdentityFactory) {
         this.logStream = logStream;
         this.userAgentString = userAgentString;
         this.sslSocketFactory = sslSocketFactory;
         this.config = config;
+        this.userIdentityFactory = userIdentityFactory;
     }
 
     @Override
@@ -39,6 +44,10 @@ public class ForwardHttpPostHandlers implements StreamHandlers {
             throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED, attributeMap);
         }
         AttributeMapUtil.addFeedAndType(attributeMap, feedName, typeName);
+
+        // We need to add the authentication token to our headers
+        final UserIdentity serviceUserIdentity = userIdentityFactory.getServiceUserIdentity();
+        attributeMap.putAll(userIdentityFactory.getAuthHeaders(serviceUserIdentity));
 
         ForwardStreamHandler streamHandler = null;
         try {

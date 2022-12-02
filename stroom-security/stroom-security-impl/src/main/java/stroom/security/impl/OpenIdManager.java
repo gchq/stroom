@@ -3,6 +3,7 @@ package stroom.security.impl;
 import stroom.security.api.UserIdentity;
 import stroom.security.common.impl.AuthenticationState;
 import stroom.security.common.impl.UserIdentityFactory;
+import stroom.security.common.impl.UserIdentitySessionUtil;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.util.jersey.UriBuilderUtil;
@@ -111,7 +112,12 @@ class OpenIdManager {
      * This method attempts to get a token from the request headers and, if present, use that to login.
      */
     public Optional<UserIdentity> loginWithRequestToken(final HttpServletRequest request) {
-        return userIdentityFactory.getApiUserIdentity(request);
+        if (userIdentityFactory.hasAuthenticationToken(request)) {
+            return userIdentityFactory.getApiUserIdentity(request);
+        } else {
+            LOGGER.trace("No token on request. This is valid for API calls from the front-end");
+            return Optional.empty();
+        }
     }
 
     public Optional<UserIdentity> getOrSetSessionUser(final HttpServletRequest request,
@@ -123,7 +129,7 @@ class OpenIdManager {
             result = UserIdentitySessionUtil.get(request.getSession(false));
 
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("User identity from session: [{}]", userIdentity.orElse(null));
+                LOGGER.debug("User identity from session: [{}]", result.orElse(null));
             }
 
         } else if (UserIdentitySessionUtil.requestHasSessionCookie(request)) {
