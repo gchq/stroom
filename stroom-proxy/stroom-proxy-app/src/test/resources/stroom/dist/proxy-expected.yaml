@@ -110,7 +110,7 @@ proxyConfig:
         authEndpoint: null
         clientId: null
         clientSecret: null
-        formTokenRequest: false
+        formTokenRequest: true
         issuer: null
         jwksUri: null
         logoutEndpoint: null
