@@ -1,8 +1,6 @@
 package stroom.security.impl;
 
 import stroom.docref.HasUuid;
-import stroom.security.api.ClientSecurityUtil;
-import stroom.security.api.HasJwt;
 import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
@@ -22,7 +20,6 @@ import java.util.Set;
 import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.ws.rs.client.Invocation;
 
 @Singleton
 class SecurityContextImpl implements SecurityContext {
@@ -533,28 +530,6 @@ class SecurityContextImpl implements SecurityContext {
             return isAdmin();
         } finally {
             checkTypeThreadLocal.set(currentCheckType);
-        }
-    }
-
-    @Override
-    public void addAuthorisationHeader(final Invocation.Builder builder) {
-        final UserIdentity userIdentity = getUserIdentity();
-        if (userIdentity == null) {
-            LOGGER.debug("No user is currently logged in");
-
-        } else if (!(userIdentity instanceof HasJwt)) {
-            LOGGER.debug("Current user has no JWS");
-            throw new RuntimeException("Current user has no token");
-
-        } else {
-            userIdentityFactory.refresh(userIdentity);
-            final String jws = ((HasJwt) userIdentity).getJwt();
-            if (jws == null) {
-                LOGGER.debug("The JWS is null for user '{}'", userIdentity.getId());
-            } else {
-                LOGGER.debug("The JWS is '{}' for user '{}'", jws, userIdentity.getId());
-                ClientSecurityUtil.addAuthorisationHeader(builder, jws);
-            }
         }
     }
 }

@@ -10,13 +10,14 @@ import javax.servlet.http.HttpServletRequest;
 public interface RequestAuthenticator {
 
     /**
-     * Authenticate the request
+     * Authenticate an inbound request
      */
     Optional<UserIdentity> authenticate(final HttpServletRequest request);
 
     // TODO: 01/12/2022 Rename to canAuthenticate or similar so we can check for presence of certs
     /**
-     * @param request
+     * Check for presence of tokens/certs on an inbound request that determines if authentication
+     * is possible.
      * @return True if the request has the required heaader(s) for authentication.
      */
     boolean hasAuthenticationToken(final HttpServletRequest request);
@@ -26,4 +27,15 @@ public interface RequestAuthenticator {
      * from the passed map
      */
     void removeAuthorisationEntries(final Map<String, String> headers);
+
+    /**
+     * @return The authentication/authorisation headers to enable authentication with this user
+     */
+    Map<String, String> getAuthHeaders(final UserIdentity userIdentity);
+
+    /**
+     * @return The authentication/authorisation headers to enable authentication with the service
+     * account user
+     */
+    Map<String, String> getServiceUserAuthHeaders();
 }

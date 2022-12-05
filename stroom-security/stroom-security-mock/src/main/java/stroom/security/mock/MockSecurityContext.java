@@ -20,7 +20,6 @@ import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 
 import java.util.function.Supplier;
-import javax.ws.rs.client.Invocation.Builder;
 
 public class MockSecurityContext implements SecurityContext {
 
@@ -138,10 +137,6 @@ public class MockSecurityContext implements SecurityContext {
     @Override
     public <T> T insecureResult(final Supplier<T> supplier) {
         return supplier.get();
-    }
-
-    @Override
-    public void addAuthorisationHeader(final Builder builder) {
     }
 
     private static class MockAdminUserIdentity implements UserIdentity {

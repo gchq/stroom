@@ -1,6 +1,7 @@
 package stroom.security.openid.api;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -12,7 +13,7 @@ import javax.validation.constraints.Pattern;
 
 
 @JsonPropertyOrder(alphabetic = true)
-public class OpenIdConfig extends AbstractConfig implements IsStroomConfig, OpenIdConfiguration {
+public class OpenIdConfig extends AbstractConfig implements IsStroomConfig, IsProxyConfig, OpenIdConfiguration {
 
     public static final String PROP_NAME_CLIENT_ID = "clientId";
     public static final String PROP_NAME_CLIENT_SECRET = "clientSecret";

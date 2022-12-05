@@ -69,17 +69,14 @@ public abstract class AbstractTokenUserIdentity implements UserIdentity, HasJwt,
         return NullSafe.get(getTokenResponse(), TokenResponse::getRefreshToken);
     }
 
-    public void setTokenResponse(final TokenResponse tokenResponse) {
+    public void updateToken(final TokenResponse tokenResponse, final JwtClaims jwtClaims) {
         this.tokenResponse = Objects.requireNonNull(tokenResponse);
+        this.jwtClaims = Objects.requireNonNull(jwtClaims);
+        updateRefreshTime();
     }
 
     public JwtClaims getJwtClaims() {
         return jwtClaims;
-    }
-
-    public void setJwtClaims(final JwtClaims jwtClaims) {
-        this.jwtClaims = Objects.requireNonNull(jwtClaims);
-        updateRefreshTime();
     }
 
     /**
@@ -114,31 +111,28 @@ public abstract class AbstractTokenUserIdentity implements UserIdentity, HasJwt,
      * If isWorkRequiredPredicate returns true when tested against this, work will be
      * performed on this under synchronisation.
      */
-    public void mutateUnderLock(
+    public boolean mutateUnderLock(
             final Predicate<AbstractTokenUserIdentity> isWorkRequiredPredicate,
             final Consumer<AbstractTokenUserIdentity> work) {
+
         Objects.requireNonNull(isWorkRequiredPredicate, "Null isWorkRequiredPredicate");
-        if (isWorkRequiredPredicate.test(this) && work != null) {
+        final boolean didWork;
+        if (work != null && isWorkRequiredPredicate.test(this)) {
             synchronized (this) {
                 if (isWorkRequiredPredicate.test(this)) {
                     work.accept(this);
+                    didWork = true;
+                } else {
+                    LOGGER.debug("Work not required");
+                    didWork = false;
                 }
             }
+        } else {
+            LOGGER.debug("Work not required");
+            didWork = false;
         }
+        return didWork;
     }
-
-//    public <T extends AbstractTokenUserIdentity> void mutateUnderLock(
-//            final Predicate<T> isWorkRequiredPredicate,
-//            final Consumer<T> work) {
-//        Objects.requireNonNull(isWorkRequiredPredicate, "Null isWorkRequiredPredicate");
-//        if (isWorkRequiredPredicate.test(this) && work != null) {
-//            synchronized (this) {
-//                if (isWorkRequiredPredicate.test(this)) {
-//                    work.accept(this);
-//                }
-//            }
-//        }
-//    }
 
     @Override
     public Optional<String> getFullName() {

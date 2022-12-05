@@ -20,6 +20,7 @@ import stroom.config.common.UriFactory;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docref.DocRef;
+import stroom.security.api.RequestAuthenticator;
 import stroom.security.api.SecurityContext;
 
 import org.slf4j.Logger;
@@ -43,14 +44,17 @@ class SimpleDataSourceProviderRegistry {
     private final SecurityContext securityContext;
     private final Provider<Client> clientProvider;
     private final UriFactory uriFactory;
+    private final RequestAuthenticator requestAuthenticator;
 
     SimpleDataSourceProviderRegistry(final SecurityContext securityContext,
                                      final UriFactory uriFactory,
                                      final DataSourceUrlConfig dataSourceUrlConfig,
-                                     final Provider<Client> clientProvider) {
+                                     final Provider<Client> clientProvider,
+                                     final RequestAuthenticator requestAuthenticator) {
         this.securityContext = securityContext;
         this.clientProvider = clientProvider;
         this.uriFactory = uriFactory;
+        this.requestAuthenticator = requestAuthenticator;
 
         urlMap = new HashMap<>();
         urlMap.put("ElasticIndex", create(dataSourceUrlConfig::getElasticIndex));
@@ -83,7 +87,8 @@ class SimpleDataSourceProviderRegistry {
         return new RemoteDataSourceProvider(
                 securityContext,
                 uriSupplier,
-                clientProvider);
+                clientProvider,
+                requestAuthenticator);
     }
 
     /**

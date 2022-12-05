@@ -27,8 +27,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.jose4j.jwt.JwtClaims;
-import org.jose4j.jwt.MalformedClaimException;
-import org.jose4j.jwt.NumericDate;
 import org.jose4j.jwt.consumer.JwtContext;
 
 import java.io.IOException;
@@ -132,7 +130,10 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
 
     @Override
     public Map<String, String> getAuthHeaders(final UserIdentity userIdentity) {
-        if (userIdentity instanceof final AbstractTokenUserIdentity tokenUserIdentity) {
+        if (userIdentity == null) {
+            LOGGER.debug("Null user supplied");
+            return Collections.emptyMap();
+        } else if (userIdentity instanceof final AbstractTokenUserIdentity tokenUserIdentity) {
             // just in case the refresh queue is backed up
             if (tokenUserIdentity.isRefreshRequired()) {
                 refresh(userIdentity);
@@ -195,17 +196,14 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
     public void refresh(final UserIdentity userIdentity) {
         Objects.requireNonNull(userIdentity, "Null userIdentity");
         if (userIdentity instanceof final AbstractTokenUserIdentity tokenUserIdentity) {
-            // Refresh the token if needed
-            final boolean doRefresh;
-            if (userIdentity instanceof final UserIdentityImpl userIdentityImpl) {
-                doRefresh = userIdentityImpl.isInSession();
-            } else {
-                doRefresh = true;
-            }
-            if (doRefresh) {
-                tokenUserIdentity.mutateUnderLock(this::hasTokenExpired, this::doRefresh);
-            } else {
-                LOGGER.debug("Not refreshing identity {}", userIdentity);
+
+            // This takes care of calling isRefreshRequired before and after getting a lock
+            final boolean didRefresh = tokenUserIdentity.mutateUnderLock(
+                    this::isRefreshRequired,
+                    this::doRefresh);
+
+            if (!didRefresh) {
+                LOGGER.debug("Refresh not required at this time");
             }
         }
     }
@@ -258,8 +256,8 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
                         .build();
             }
 
-            identity.setTokenResponse(newTokenResponse);
-            identity.setJwtClaims(jwtClaims);
+            // Update the token in the mutable user identity which is held in session
+            identity.updateToken(newTokenResponse, jwtClaims);
 
             LOGGER.debug(LogUtil.message(
                     "New token expiry: {}, refresh token expiry: {}",
@@ -304,21 +302,20 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
         return new RefreshResult(newTokenResponse, jwtClaims);
     }
 
-    private boolean hasTokenExpired(final AbstractTokenUserIdentity userIdentity) {
-        try {
-            final JwtClaims jwtClaims = Objects.requireNonNull(
-                    userIdentity.getJwtClaims(), "User identity has null claims");
-            final NumericDate expirationTime = Objects.requireNonNull(
-                    jwtClaims.getExpirationTime(), "User identity has null expiration time");
+    private boolean isRefreshRequired(final AbstractTokenUserIdentity userIdentity) {
+        final boolean isRefreshRequired;
 
-            // Modify the expiry time to be a bit BEFORE it actually is, so we refresh ahead of time
-            expirationTime.addSeconds(-10);
-            final NumericDate now = NumericDate.now();
-            return now.isAfter(expirationTime);
-        } catch (final MalformedClaimException e) {
-            LOGGER.error(e.getMessage(), e);
+        // No point refreshing if the user no longer has a session, i.e. has been logged out
+        if (userIdentity instanceof final UserIdentityImpl userIdentityImpl) {
+            isRefreshRequired = userIdentityImpl.isInSession();
+            LOGGER.debug("User has session: {}", isRefreshRequired);
+        } else {
+            isRefreshRequired = true;
         }
-        return false;
+
+        LOGGER.debug(() -> LogUtil.message("Refresh time: {}", userIdentity.getRefreshTime()));
+
+        return isRefreshRequired && userIdentity.isRefreshRequired();
     }
 
     private TokenResponse getTokenResponse(final ObjectMapper mapper,
@@ -422,25 +419,19 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
         try {
             final AbstractTokenUserIdentity userIdentity = refreshTokensDelayQueue.take();
             // It is possible that something else has refreshed the token
-            if (userIdentity.isRefreshRequired()) {
-                // TODO: 02/12/2022 Should not refresh if the user's session has ended.
-                //  Logout should stop this identity from being refreshed again.
-                LOGGER.debug("Refreshing userIdentity {} from refresh queue", userIdentity);
-                refresh(userIdentity);
-            } else {
-                LOGGER.debug(() -> LogUtil.message("Refresh not needed, refreshTime: {}",
-                        userIdentity.getRefreshTime()));
-            }
+            LOGGER.debug("Consuming userIdentity {} from refresh queue (size after: {})",
+                    userIdentity, refreshTokensDelayQueue.size());
+            refresh(userIdentity);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            LOGGER.debug("Refresh delay queue interrupted, assuming shutdown is happening");
+            LOGGER.debug("Refresh delay queue interrupted, assume shutdown is happening so do no more");
         }
     }
 
     @Override
     public void start() throws Exception {
         if (refreshExecutorService == null) {
-            LOGGER.debug("Initialising token refresh executor");
+            LOGGER.info("Initialising OIDC token refresh executor");
             refreshExecutorService = Executors.newSingleThreadExecutor();
             refreshExecutorService.submit(() -> {
                 while (!Thread.currentThread().isInterrupted()
@@ -455,11 +446,11 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
     public void stop() throws Exception {
         isShutdownInProgress.set(true);
         if (refreshExecutorService != null) {
-            LOGGER.debug("Shutting down refreshExecutorService");
+            LOGGER.info("Shutting down OIDC token refresh executor");
             refreshExecutorService.shutdownNow();
             // No need to wait for termination the stuff on the queue has no value once
             // we are shutting down
-            LOGGER.debug("Shut down refreshExecutorService");
+            LOGGER.info("Successfully shut down OIDC token refresh executor");
         }
     }
 

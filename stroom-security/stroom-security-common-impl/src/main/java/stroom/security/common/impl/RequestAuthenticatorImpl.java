@@ -32,4 +32,14 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
     public void removeAuthorisationEntries(final Map<String, String> headers) {
         NullSafe.consume(headers, userIdentityFactory::removeAuthEntries);
     }
+
+    @Override
+    public Map<String, String> getAuthHeaders(final UserIdentity userIdentity) {
+        return userIdentityFactory.getAuthHeaders(userIdentity);
+    }
+
+    @Override
+    public Map<String, String> getServiceUserAuthHeaders() {
+        return userIdentityFactory.getAuthHeaders(userIdentityFactory.getServiceUserIdentity());
+    }
 }

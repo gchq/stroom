@@ -3,9 +3,12 @@ package stroom.app.guice;
 import stroom.app.errors.NodeCallExceptionMapper;
 import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.TokenExceptionMapper;
+import stroom.security.api.RequestAuthenticator;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.jersey.WebTargetFactory;
+import stroom.util.jersey.WebTargetProxy;
 import stroom.util.shared.BuildInfo;
 
 import com.google.inject.AbstractModule;
@@ -14,6 +17,7 @@ import com.google.inject.Singleton;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.logging.LoggingFeature;
 
+import java.util.Map;
 import javax.inject.Provider;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -46,6 +50,7 @@ public class JerseyModule extends AbstractModule {
                 .addBinding(TokenExceptionMapper.class);
     }
 
+    @SuppressWarnings("unused")
     @Provides
     @Singleton
     Client provideJerseyClient(final Provider<BuildInfo> buildInfoProvider) {
@@ -72,32 +77,38 @@ public class JerseyModule extends AbstractModule {
     @Provides
     @Singleton
     WebTargetFactory provideJerseyRequestBuilder(final Client client,
-                                                 final SecurityContext securityContext) {
+                                                 final SecurityContext securityContext,
+                                                 final RequestAuthenticator requestAuthenticator) {
         return url -> {
             final WebTarget webTarget = client.target(url);
-            final WebTarget webTargetProxy = new WebTargetProxy(webTarget) {
+            return (WebTarget) new WebTargetProxy(webTarget) {
                 @Override
                 public Builder request() {
                     final Builder builder = super.request();
-                    securityContext.addAuthorisationHeader(builder);
+                    addAuthHeader(builder);
                     return builder;
                 }
 
                 @Override
                 public Builder request(final String... acceptedResponseTypes) {
                     final Builder builder = super.request(acceptedResponseTypes);
-                    securityContext.addAuthorisationHeader(builder);
+                    addAuthHeader(builder);
                     return builder;
                 }
 
                 @Override
                 public Builder request(final MediaType... acceptedResponseTypes) {
                     final Builder builder = super.request(acceptedResponseTypes);
-                    securityContext.addAuthorisationHeader(builder);
+                    addAuthHeader(builder);
                     return builder;
                 }
+
+                private void addAuthHeader(final Builder builder) {
+                    final UserIdentity userIdentity = securityContext.getUserIdentity();
+                    final Map<String, String> authHeaders = requestAuthenticator.getAuthHeaders(userIdentity);
+                    authHeaders.forEach(builder::header);
+                }
             };
-            return webTargetProxy;
         };
     }
 }

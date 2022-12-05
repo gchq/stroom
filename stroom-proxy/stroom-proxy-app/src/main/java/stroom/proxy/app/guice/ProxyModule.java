@@ -70,7 +70,6 @@ import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.ServletBinder;
 import stroom.util.io.PathCreator;
-import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.BuildInfo;
 
 import com.codahale.metrics.health.HealthCheckRegistry;
@@ -83,7 +82,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
-import javax.ws.rs.client.Client;
 import javax.ws.rs.ext.ExceptionMapper;
 
 public class ProxyModule extends AbstractModule {
@@ -123,6 +121,7 @@ public class ProxyModule extends AbstractModule {
 
         install(new TaskContextModule());
         install(new ProxySecurityModule());
+        install(new ProxyJerseyModule());
 
         bind(BuildInfo.class).toProvider(BuildInfoProvider.class);
 //        bind(BufferFactory.class).to(BufferFactoryImpl.class);
@@ -146,8 +145,6 @@ public class ProxyModule extends AbstractModule {
 
         // Proxy doesn't do import so bind a dummy ImportConverter for the StoreImpl(s) to use
         bind(ImportConverter.class).to(NoOpImportConverter.class);
-
-        bind(Client.class).toProvider(ProxyJerseyClientProvider.class);
 
         HasHealthCheckBinder.create(binder())
                 .bind(ContentSyncService.class)
@@ -202,12 +199,4 @@ public class ProxyModule extends AbstractModule {
         };
     }
 
-    @SuppressWarnings("unused")
-    @Provides
-    @Singleton
-    WebTargetFactory provideJerseyRequestBuilder(final Client client,
-                                                 final SecurityContext securityContext) {
-        // TODO: 28/11/2022 Do we need to add the auth header like stroom does?
-        return client::target;
-    }
 }

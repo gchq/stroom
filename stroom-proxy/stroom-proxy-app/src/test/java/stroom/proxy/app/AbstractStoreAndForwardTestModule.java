@@ -16,6 +16,7 @@ import stroom.proxy.app.guice.NoOpImportConverter;
 import stroom.proxy.app.guice.ProxyConfigModule;
 import stroom.proxy.app.handler.ProxyRequestHandler;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
+import stroom.proxy.app.security.ProxySecurityModule;
 import stroom.proxy.repo.ErrorReceiver;
 import stroom.proxy.repo.ErrorReceiverImpl;
 import stroom.proxy.repo.ProgressLog;
@@ -32,19 +33,19 @@ import stroom.receive.common.RequestHandler;
 import stroom.receive.rules.impl.DataReceiptPolicyAttributeMapFilterFactoryImpl;
 import stroom.receive.rules.impl.ReceiveDataRuleSetService;
 import stroom.receive.rules.impl.ReceiveDataRuleSetServiceImpl;
-import stroom.security.api.RequestAuthenticator;
 import stroom.security.api.SecurityContext;
-import stroom.security.common.impl.RequestAuthenticatorImpl;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.impl.TaskContextModule;
 import stroom.util.BuildInfoProvider;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.io.PathCreator;
+import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.BuildInfo;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import org.mockito.Mockito;
 
 import java.nio.file.Path;
 import javax.ws.rs.client.Client;
@@ -71,6 +72,10 @@ public abstract class AbstractStoreAndForwardTestModule extends AbstractModule {
         install(new DbModule());
         install(new ProxyDbModule());
         install(new MockCollectionModule());
+        install(new ProxySecurityModule());
+
+        bind(Client.class).toInstance(Mockito.mock(Client.class));
+        bind(WebTargetFactory.class).toInstance(Mockito.mock(WebTargetFactory.class));
 
         install(new DictionaryModule());
         // Allow discovery of feed status from other proxies.
@@ -84,7 +89,7 @@ public abstract class AbstractStoreAndForwardTestModule extends AbstractModule {
         bind(ErrorReceiver.class).to(ErrorReceiverImpl.class);
         bind(FeedStatusService.class).to(RemoteFeedStatusService.class);
         bind(ReceiveDataRuleSetService.class).to(ReceiveDataRuleSetServiceImpl.class);
-        bind(RequestAuthenticator.class).to(RequestAuthenticatorImpl.class).asEagerSingleton();
+//        bind(RequestAuthenticator.class).to(RequestAuthenticatorImpl.class).asEagerSingleton();
         bind(RequestHandler.class).to(ProxyRequestHandler.class);
         bind(SecurityContext.class).to(MockSecurityContext.class);
         bind(Serialiser2Factory.class).to(Serialiser2FactoryImpl.class);
@@ -103,12 +108,6 @@ public abstract class AbstractStoreAndForwardTestModule extends AbstractModule {
     Persistence providePersistence(final PathCreator pathCreator) {
         final String path = configuration.getProxyConfig().getContentDir();
         return new FSPersistence(pathCreator.toAppPath(path));
-    }
-
-    @Provides
-    @Singleton
-    Client provideJerseyClient() {
-        return null;
     }
 
     @Provides

@@ -1,4 +1,4 @@
-package stroom.app.guice;
+package stroom.util.jersey;
 
 import java.net.URI;
 import java.util.Map;
@@ -8,11 +8,11 @@ import javax.ws.rs.core.Configuration;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
 
-class WebTargetProxy implements WebTarget {
+public class WebTargetProxy implements WebTarget {
 
     private WebTarget webTarget;
 
-    WebTargetProxy(final WebTarget webTarget) {
+    public WebTargetProxy(final WebTarget webTarget) {
         this.webTarget = webTarget;
     }
 

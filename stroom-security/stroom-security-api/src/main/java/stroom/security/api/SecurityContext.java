@@ -17,7 +17,6 @@
 package stroom.security.api;
 
 import java.util.function.Supplier;
-import javax.ws.rs.client.Invocation;
 
 public interface SecurityContext {
 
@@ -159,6 +158,4 @@ public interface SecurityContext {
      * insecurely even if it is often secured when executed from other entry points.
      */
     <T> T insecureResult(Supplier<T> supplier);
-
-    void addAuthorisationHeader(final Invocation.Builder builder);
 }

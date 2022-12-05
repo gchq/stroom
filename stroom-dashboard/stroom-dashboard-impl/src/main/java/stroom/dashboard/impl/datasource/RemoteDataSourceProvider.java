@@ -22,6 +22,7 @@ import stroom.docref.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
+import stroom.security.api.RequestAuthenticator;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -53,13 +54,16 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
     private final SecurityContext securityContext;
     private final Supplier<String> uriSupplier;
     private final Provider<Client> clientProvider;
+    private final RequestAuthenticator requestAuthenticator;
 
     RemoteDataSourceProvider(final SecurityContext securityContext,
                              final Supplier<String> uriSupplier,
-                             final Provider<Client> clientProvider) {
+                             final Provider<Client> clientProvider,
+                             final RequestAuthenticator requestAuthenticator) {
         this.securityContext = securityContext;
         this.uriSupplier = uriSupplier;
         this.clientProvider = clientProvider;
+        this.requestAuthenticator = requestAuthenticator;
     }
 
     public DataSource getDataSource(final DocRef docRef) {
@@ -107,7 +111,10 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
             WebTarget webTarget = client.target(uri).path(path);
 
             final Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-            securityContext.addAuthorisationHeader(invocationBuilder);
+
+            // Add auth headers to the request
+            requestAuthenticator.getAuthHeaders(securityContext.getUserIdentity())
+                    .forEach(invocationBuilder::header);
 
             final Response response = LOGGER.logDurationIfTraceEnabled(() ->
                             invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON)),

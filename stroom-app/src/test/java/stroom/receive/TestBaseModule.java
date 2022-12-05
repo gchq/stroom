@@ -24,6 +24,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.util.Providers;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
@@ -73,6 +74,16 @@ public class TestBaseModule extends AbstractModule {
             @Override
             public void removeAuthorisationEntries(final Map<String, String> headers) {
 
+            }
+
+            @Override
+            public Map<String, String> getAuthHeaders(final UserIdentity userIdentity) {
+                return Collections.emptyMap();
+            }
+
+            @Override
+            public Map<String, String> getServiceUserAuthHeaders() {
+                return Collections.emptyMap();
             }
         };
     }
