@@ -12,6 +12,7 @@ import stroom.security.openid.api.TokenResponse;
 import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.cert.CertificateUtil;
+import stroom.util.exception.ThrowingFunction;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -31,6 +32,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.jose4j.jwt.JwtClaims;
+import org.jose4j.jwt.NumericDate;
 import org.jose4j.jwt.consumer.JwtContext;
 
 import java.io.IOException;
@@ -214,19 +216,20 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
     }
 
     private boolean isNewServiceAccountTokenRequired() {
-        // If the token response doesn't have a refresh token then we need to create a new one
-        // when the access token is expired
-        return serviceUserIdentity == null ||
-                (serviceUserIdentity.hasTokenExpired() && !serviceUserIdentity.hasRefreshToken());
+        return serviceUserIdentity == null
+                || serviceUserIdentity.hasTokenExpired();
     }
 
     @Override
     public UserIdentity getServiceUserIdentity() {
 
+        // Ideally the token will get recreated by the refresh queue just before
+        // it expires so callers to this will find a token that is good to use and
+        // thus won't be contended.
         if (isNewServiceAccountTokenRequired()) {
             synchronized (this) {
                 if (isNewServiceAccountTokenRequired()) {
-                    serviceUserIdentity = createServiceUserIdentity();
+                    createOrUpdateServiceUserIdentity();
                 }
             }
         }
@@ -238,85 +241,116 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
         Objects.requireNonNull(userIdentity, "Null userIdentity");
         if (userIdentity instanceof final AbstractTokenUserIdentity tokenUserIdentity) {
 
-            // This takes care of calling isRefreshRequired before and after getting a lock
-            final boolean didRefresh = tokenUserIdentity.mutateUnderLock(
-                    this::isRefreshRequired,
-                    this::doRefresh);
-
+            final boolean didRefresh;
+            if (userIdentity instanceof ServiceUserIdentity) {
+                // service users do not have refresh tokens so just create new ones
+                didRefresh = tokenUserIdentity.mutateUnderLock(
+                        userIdentity2 -> createOrUpdateServiceUserIdentity(),
+                        this::doRefresh);
+            } else {
+                // This takes care of calling isRefreshRequired before and after getting a lock
+                didRefresh = tokenUserIdentity.mutateUnderLock(
+                        this::isRefreshRequired,
+                        this::doRefresh);
+            }
             if (!didRefresh) {
-                LOGGER.debug("Refresh not required at this time");
+                LOGGER.debug("Refresh not done for {}", userIdentity);
             }
         }
     }
 
-    private void addUserIdentityToRefreshQueueIfRequired(final UserIdentity userIdentity) {
-        if (userIdentity instanceof final AbstractTokenUserIdentity tokenUserIdentity) {
-            LOGGER.debug("Adding identity {} to the refresh queue", userIdentity);
-            refreshTokensDelayQueue.add(tokenUserIdentity);
+    private boolean hasRefreshTokenExpired(final TokenResponse tokenResponse) {
+        // At some point the refresh token itself will expire, so then we need to remove
+        // the identity from the session if there is one to force the user to re-authenticate
+        if (NullSafe.isBlankString(tokenResponse, TokenResponse::getRefreshToken)) {
+            return false;
+        } else {
+            return jwtContextFactory.getJwtContext(tokenResponse.getRefreshToken(), false)
+                    .map(JwtContext::getJwtClaims)
+                    .map(ThrowingFunction.unchecked(JwtClaims::getExpirationTime))
+                    .map(expireTime -> NumericDate.now().isAfter(expireTime))
+                    .orElse(false);
         }
     }
 
     private void doRefresh(final AbstractTokenUserIdentity identity) {
         final TokenResponse currentTokenResponse = identity.getTokenResponse();
-        TokenResponse newTokenResponse = null;
-        JwtClaims jwtClaims = null;
-        try {
-            LOGGER.debug("Refreshing token " + identity);
-
-            LOGGER.debug(LogUtil.message(
-                    "Current token expiry: {}, refresh token expiry: {}",
-                    NullSafe.toString(
-                            identity.getTokenResponse(),
-                            TokenResponse::getExpiresIn,
-                            Duration::ofSeconds),
-                    NullSafe.toString(
-                            identity.getTokenResponse(),
-                            TokenResponse::getRefreshTokenExpiresIn,
-                            Duration::ofSeconds)));
-
-            final RefreshResult refreshResult = refreshTokens(currentTokenResponse);
-            newTokenResponse = refreshResult.tokenResponse;
-            jwtClaims = refreshResult.jwtClaims;
-        } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
+        if (hasRefreshTokenExpired(currentTokenResponse)) {
             if (identity instanceof final UserIdentityImpl userIdentityImpl) {
-                userIdentityImpl.invalidateSession();
+                LOGGER.info("Refresh token has expired, removing user identity from " +
+                        "session to force re-authentication. userIdentity: {}", userIdentityImpl);
+                userIdentityImpl.removeUserFromSession();
+            } else {
+                LOGGER.warn("Refresh token has expired, can't refresh token or create new.");
             }
-            throw e;
-        } finally {
-            // Some IDPs don't seem to send updated refresh tokens so keep the existing refresh token.
-            if (newTokenResponse != null
-                    && newTokenResponse.getRefreshToken() == null
-                    && currentTokenResponse.getRefreshToken() != null) {
-                newTokenResponse = newTokenResponse
-                        .copy()
-                        .refreshToken(currentTokenResponse.getRefreshToken())
-                        .refreshTokenExpiresIn(Objects.requireNonNullElseGet(
-                                newTokenResponse.getRefreshTokenExpiresIn(),
-                                currentTokenResponse::getRefreshTokenExpiresIn))
-                        .build();
+        } else {
+            TokenResponse newTokenResponse = null;
+            JwtClaims jwtClaims = null;
+            try {
+                LOGGER.debug("Refreshing token " + identity);
+
+                LOGGER.debug(LogUtil.message(
+                        "Current token expiry max age: {}, refresh token expiry max age: {}",
+                        NullSafe.toString(identity.getTokenResponse(),
+                                TokenResponse::getExpiresIn,
+                                Duration::ofSeconds),
+                        NullSafe.toString(identity.getTokenResponse(),
+                                TokenResponse::getRefreshTokenExpiresIn,
+                                Duration::ofSeconds)));
+
+                final FetchTokenResult fetchTokenResult = refreshTokens(currentTokenResponse);
+                newTokenResponse = fetchTokenResult.tokenResponse;
+                jwtClaims = fetchTokenResult.jwtClaims;
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+                if (identity instanceof final UserIdentityImpl userIdentityImpl) {
+                    userIdentityImpl.invalidateSession();
+                }
+                throw e;
+            } finally {
+                // Some IDPs don't seem to send updated refresh tokens so keep the existing refresh token.
+                if (newTokenResponse != null
+                        && newTokenResponse.getRefreshToken() == null
+                        && currentTokenResponse.getRefreshToken() != null) {
+                    newTokenResponse = newTokenResponse
+                            .copy()
+                            .refreshToken(currentTokenResponse.getRefreshToken())
+                            .refreshTokenExpiresIn(Objects.requireNonNullElseGet(
+                                    newTokenResponse.getRefreshTokenExpiresIn(),
+                                    currentTokenResponse::getRefreshTokenExpiresIn))
+                            .build();
+                }
+
+                // Update the token in the mutable user identity which is held in session
+                identity.updateTokens(newTokenResponse, jwtClaims);
+
+                LOGGER.debug(LogUtil.message(
+                        "New token expiry max age: {}, refresh token expiry max age: {}",
+                        NullSafe.toString(newTokenResponse, TokenResponse::getExpiresIn, Duration::ofSeconds),
+                        NullSafe.toString(newTokenResponse,
+                                TokenResponse::getRefreshTokenExpiresIn,
+                                Duration::ofSeconds)));
             }
 
-            // Update the token in the mutable user identity which is held in session
-            identity.updateToken(newTokenResponse, jwtClaims);
-
-            LOGGER.debug(LogUtil.message(
-                    "New token expiry: {}, refresh token expiry: {}",
-                    NullSafe.toString(
-                            newTokenResponse,
-                            TokenResponse::getExpiresIn,
-                            Duration::ofSeconds),
-                    NullSafe.toString(
-                            newTokenResponse,
-                            TokenResponse::getRefreshTokenExpiresIn,
-                            Duration::ofSeconds)));
+            // Put the updated identity on the queue with its new refresh time
+            addUserIdentityToRefreshQueueIfRequired(identity);
         }
-
-        // Put the updated identity on the queue with its new refresh time
-        addUserIdentityToRefreshQueueIfRequired(identity);
     }
 
-    private RefreshResult refreshTokens(final TokenResponse existingTokenResponse) {
+    private void addUserIdentityToRefreshQueueIfRequired(final UserIdentity userIdentity) {
+        if (userIdentity instanceof final AbstractTokenUserIdentity tokenUserIdentity) {
+            LOGGER.debug("Adding identity to the refresh queue: {}", userIdentity);
+
+            if (tokenUserIdentity.hasRefreshToken()
+                    || tokenUserIdentity instanceof ServiceUserIdentity) {
+                refreshTokensDelayQueue.add(tokenUserIdentity);
+            } else {
+                LOGGER.warn("Unable to refresh userIdentity due to lack of refresh token {}", tokenUserIdentity);
+            }
+        }
+    }
+
+    private FetchTokenResult refreshTokens(final TokenResponse existingTokenResponse) {
 
         final String refreshToken = NullSafe.requireNonNull(
                 existingTokenResponse,
@@ -340,7 +374,7 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
                 .map(JwtContext::getJwtClaims)
                 .orElseThrow(() -> new RuntimeException("Unable to extract JWT claims"));
 
-        return new RefreshResult(newTokenResponse, jwtClaims);
+        return new FetchTokenResult(newTokenResponse, jwtClaims);
     }
 
     private boolean isRefreshRequired(final AbstractTokenUserIdentity userIdentity) {
@@ -376,7 +410,7 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
                 }
             }
         } catch (final IOException e) {
-            LOGGER.debug(e::getMessage, e);
+            throw new AuthenticationException("Error requesting token from " + tokenEndpoint);
         }
 
         if (tokenResponse == null || tokenResponse.getIdToken() == null) {
@@ -429,7 +463,7 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
         return optUserIdentity;
     }
 
-    private ServiceUserIdentity createServiceUserIdentity() {
+    private boolean createOrUpdateServiceUserIdentity() {
 
         final OpenIdConfiguration openIdConfiguration = openIdConfigProvider.get();
 
@@ -444,16 +478,24 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
 
         final TokenResponse tokenResponse = getTokenResponse(mapper, httpPost, tokenEndpoint);
 
-        final ServiceUserIdentity serviceUserIdentity = jwtContextFactory.getJwtContext(tokenResponse.getAccessToken())
+        final FetchTokenResult fetchTokenResult = jwtContextFactory.getJwtContext(tokenResponse.getAccessToken())
                 .map(jwtContext ->
-                        new ServiceUserIdentity(tokenResponse, jwtContext.getJwtClaims()))
+                        new FetchTokenResult(tokenResponse, jwtContext.getJwtClaims()))
                 .orElseThrow(() -> {
                     throw new RuntimeException("Unable to extract JWT claims for service user");
                 });
-        LOGGER.info("Created service user identity {}", serviceUserIdentity);
+
+        if (serviceUserIdentity == null) {
+            LOGGER.info("Created service user identity {}", serviceUserIdentity);
+            serviceUserIdentity = new ServiceUserIdentity(fetchTokenResult.tokenResponse, fetchTokenResult.jwtClaims);
+        } else {
+            LOGGER.info("Updated service user identity {}", serviceUserIdentity);
+            serviceUserIdentity.updateTokens(fetchTokenResult.tokenResponse, fetchTokenResult.jwtClaims);
+        }
+
         // Add the identity onto the queue so the tokens get refreshed
         addUserIdentityToRefreshQueueIfRequired(serviceUserIdentity);
-        return serviceUserIdentity;
+        return true;
     }
 
     private void consumeFromRefreshQueue() {
@@ -499,7 +541,7 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
     // --------------------------------------------------------------------------------
 
 
-    private record RefreshResult(TokenResponse tokenResponse, JwtClaims jwtClaims) {
+    private record FetchTokenResult(TokenResponse tokenResponse, JwtClaims jwtClaims) {
 
     }
 

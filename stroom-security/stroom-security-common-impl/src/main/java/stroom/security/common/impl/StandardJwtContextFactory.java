@@ -130,6 +130,25 @@ public class StandardJwtContextFactory implements JwtContextFactory {
         }
     }
 
+    @Override
+    public Optional<JwtContext> getJwtContext(final String jwt, final boolean doVerification) {
+        Optional<JwtContext> optJwtContext = Optional.empty();
+        if (doVerification) {
+            optJwtContext = getJwtContext(jwt);
+        } else {
+            final JwtConsumer simpleJwtConsumer = new JwtConsumerBuilder()
+                    .setSkipSignatureVerification()
+                    .setSkipDefaultAudienceValidation()
+                    .build();
+            try {
+                optJwtContext = Optional.of(simpleJwtConsumer.process(jwt));
+            } catch (Exception e) {
+                LOGGER.debug(() -> "Unable to extract token: " + e.getMessage(), e);
+            }
+        }
+        return optJwtContext;
+    }
+
     private JwtConsumer newJwtConsumer() {
         // If we don't have a JWK we can't create a consumer to verify anything.
         // Why might we not have one? If the remote authentication service was down when Stroom started

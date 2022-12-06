@@ -9,6 +9,7 @@ import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.net.UrlUtils;
 import stroom.util.servlet.UserAgentSessionUtil;
 
@@ -77,15 +78,14 @@ class OpenIdManager {
         String redirectUri = null;
 
         // If we have a state id then this should be a return from the auth service.
-        LOGGER.debug(() -> "We have the following state: " + stateId);
+        LOGGER.debug(() -> LogUtil.message("We have the following state: '{}'", stateId));
 
         // Check the state is one we requested.
         final AuthenticationState state = AuthenticationStateSessionUtil.pop(request, stateId);
         if (state == null) {
-            LOGGER.warn(() -> "Unexpected state: " + stateId);
-
+            LOGGER.warn(() -> LogUtil.message("Unexpected state: '{}'", stateId));
         } else {
-            LOGGER.debug(() -> "backChannelOIDC state=" + state);
+            LOGGER.debug(() -> LogUtil.message("backChannelOIDC state: '{}'", state));
             final HttpSession session = request.getSession(false);
             UserAgentSessionUtil.set(request);
 

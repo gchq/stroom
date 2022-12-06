@@ -163,8 +163,8 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
                         request.getFeedName(), url, statusInfo.getStatusCode(), statusInfo.getReasonPhrase());
             } else {
                 feedStatusResponse = response.readEntity(GetFeedStatusResponse.class);
-                LOGGER.info("Checked feed status for '{}' using url '{}', got response '{}'",
-                        request.getFeedName(), url, feedStatusResponse.getStatus());
+                LOGGER.info("Got feed status '{}' for '{}' using url '{}'",
+                        feedStatusResponse.getStatus(), request.getFeedName(), url);
             }
             if (feedStatusResponse == null) {
                 // If we can't get a feed status response then we will assume ok.
@@ -192,6 +192,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
                     request, feedStatusConfig.getFeedStatusUrl(), GET_FEED_STATUS_PATH, e.getMessage()), e);
         }
     }
+
     private WebTarget getFeedStatusWebTarget(final FeedStatusConfig feedStatusConfig) {
         return jerseyClientProvider.get()
                 .target(feedStatusConfig.getFeedStatusUrl())

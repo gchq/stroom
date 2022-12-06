@@ -50,6 +50,14 @@ public class UserIdentityImpl
     }
 
     /**
+     * Remove this {@link UserIdentity} from the HTTP session. This will require any future requests
+     * to re-authenticate with the IDP.
+     */
+    public void removeUserFromSession() {
+        UserIdentitySessionUtil.set(httpSession, null);
+    }
+
+    /**
      * @return True if this {@link UserIdentity} has a session and is an attribute value in that session
      */
     public boolean isInSession() {

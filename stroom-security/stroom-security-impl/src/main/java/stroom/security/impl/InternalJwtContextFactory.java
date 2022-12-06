@@ -83,15 +83,15 @@ class InternalJwtContextFactory implements JwtContextFactory {
      * Verify the JSON Web Signature and then extract the user identity from it
      */
     @Override
-    public Optional<JwtContext> getJwtContext(final String jws) {
+    public Optional<JwtContext> getJwtContext(final String jwt) {
         Optional<JwtContext> optionalJwtContext = Optional.empty();
 
-        Objects.requireNonNull(jws, "Null JWS");
-        LOGGER.debug(() -> "Found auth header in request. It looks like this: " + jws);
+        Objects.requireNonNull(jwt, "Null JWS");
+        LOGGER.debug(() -> "Found auth header in request. It looks like this: " + jwt);
 
         try {
             final JwtConsumer jwtConsumer = newJwtConsumer();
-            final JwtContext jwtContext = jwtConsumer.process(jws);
+            final JwtContext jwtContext = jwtConsumer.process(jwt);
 
             LOGGER.debug(() -> LogUtil.message("Verified token - {}: '{}', {}: '{}'",
                     OpenId.CLAIM__SUBJECT,
@@ -108,6 +108,25 @@ class InternalJwtContextFactory implements JwtContextFactory {
         }
 
         return optionalJwtContext;
+    }
+
+    @Override
+    public Optional<JwtContext> getJwtContext(final String jwt, final boolean doVerification) {
+        Optional<JwtContext> optJwtContext = Optional.empty();
+        if (doVerification) {
+            optJwtContext = getJwtContext(jwt);
+        } else {
+            final JwtConsumer simpleJwtConsumer = new JwtConsumerBuilder()
+                    .setSkipSignatureVerification()
+                    .setSkipDefaultAudienceValidation()
+                    .build();
+            try {
+                optJwtContext = Optional.of(simpleJwtConsumer.process(jwt));
+            } catch (Exception e) {
+                LOGGER.debug(() -> "Unable to extract token: " + e.getMessage(), e);
+            }
+        }
+        return optJwtContext;
     }
 
     private JwtConsumer newJwtConsumer() {

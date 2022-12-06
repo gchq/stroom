@@ -72,6 +72,16 @@ public class CombinedJwtContextFactory implements JwtContextFactory {
                         : Optional.empty());
     }
 
+    @Override
+    public Optional<JwtContext> getJwtContext(final String jwt, final boolean doVerification) {
+        // Always try the internal context factory first as the processing user only
+        // uses the internal IDP
+        return internalJwtContextFactory.getJwtContext(jwt, doVerification)
+                .or(() -> useExternalIdentityProvider()
+                        ? standardJwtContextFactory.getJwtContext(jwt, doVerification)
+                        : Optional.empty());
+    }
+
     private boolean useExternalIdentityProvider() {
         return IdpType.EXTERNAL.equals(openIdConfigProvider.get().getIdentityProviderType());
     }

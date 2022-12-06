@@ -12,7 +12,19 @@ public interface JwtContextFactory {
 
     void removeAuthorisationEntries(final Map<String, String> headers);
 
-    Optional<JwtContext> getJwtContext(HttpServletRequest request);
+    Optional<JwtContext> getJwtContext(final HttpServletRequest request);
 
-    Optional<JwtContext> getJwtContext(String jws);
+    /**
+     * Extract the {@link JwtContext} from the passed JSON web token.
+     * Will verify the jwt using the public keys and also check claims
+     * like audience and subject.
+     */
+    Optional<JwtContext> getJwtContext(final String jwt);
+
+    /**
+     * Extract the {@link JwtContext} from the passed JSON web token.
+     * Will verify the jwt using the public keys and also check claims
+     * like audience and subject only if doVerification is true.
+     */
+    Optional<JwtContext> getJwtContext(final String jwt, final boolean doVerification);
 }
