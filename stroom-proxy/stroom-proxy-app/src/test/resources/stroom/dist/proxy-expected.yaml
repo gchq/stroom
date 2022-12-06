@@ -36,7 +36,6 @@ proxyConfig:
     maxOpenFiles: 100
     rollFrequency: "PT10S"
   feedStatus:
-    apiKey: null
     feedStatusCache:
       expireAfterAccess: null
       expireAfterWrite: null
@@ -111,6 +110,7 @@ proxyConfig:
         clientId: null
         clientSecret: null
         formTokenRequest: true
+        identityProviderType: "INTERNAL"
         issuer: null
         jwksUri: null
         logoutEndpoint: null
@@ -118,7 +118,6 @@ proxyConfig:
         openIdConfigurationEndpoint: null
         requestScope: null
         tokenEndpoint: null
-        useInternal: true
         validateAudience: true
   threads:
     examineSourceThreadCount: 3

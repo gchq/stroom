@@ -72,10 +72,12 @@ public class ExternalIdpConfigurationProvider
         final HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
         final OpenIdConfig openIdConfig = openIdConfigProvider.get();
         final String configurationEndpoint = openIdConfig.getOpenIdConfigurationEndpoint();
-        if (openIdConfig.isUseInternal()) {
+
+        if (!IdpType.EXTERNAL.equals(openIdConfig.getIdentityProviderType())) {
             resultBuilder
                     .healthy()
-                    .withMessage("Not using external IDP");
+                    .withMessage("Not using external IDP (Using "
+                            + openIdConfig.getIdentityProviderType().toString().toLowerCase() + ")");
         } else if (NullSafe.isBlankString(configurationEndpoint)) {
             resultBuilder
                     .unhealthy()
@@ -187,6 +189,11 @@ public class ExternalIdpConfigurationProvider
         mergeFunc.accept(builder::logoutEndpoint, openIdConfiguration::getLogoutEndpoint);
 
         return builder.build();
+    }
+
+    @Override
+    public IdpType getIdentityProviderType() {
+        return openIdConfigProvider.get().getIdentityProviderType();
     }
 
     @Override

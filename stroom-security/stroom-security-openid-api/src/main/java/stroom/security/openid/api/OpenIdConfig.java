@@ -9,18 +9,21 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
 
 @JsonPropertyOrder(alphabetic = true)
-public class OpenIdConfig extends AbstractConfig implements IsStroomConfig, IsProxyConfig, OpenIdConfiguration {
+public class OpenIdConfig
+        extends AbstractConfig
+        implements IsStroomConfig, IsProxyConfig, OpenIdConfiguration {
 
     public static final String PROP_NAME_CLIENT_ID = "clientId";
     public static final String PROP_NAME_CLIENT_SECRET = "clientSecret";
     public static final String PROP_NAME_CONFIGURATION_ENDPOINT = "openIdConfigurationEndpoint";
-    public static final String PROP_NAME_USE_INTERNAL = "useInternal";
+    public static final String PROP_NAME_USE_INTERNAL = "identityProviderType";
 
-    private final boolean useInternal;
+    private final IdpType identityProviderType;
 
     /**
      * e.g. https://cognito-idp.{region}.amazonaws.com/{userPoolId}/.well-known/openid-configuration
@@ -100,7 +103,7 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig, IsPr
 
 
     public OpenIdConfig() {
-        useInternal = true;
+        identityProviderType = IdpType.INTERNAL;
         openIdConfigurationEndpoint = null;
         issuer = null;
         authEndpoint = null;
@@ -116,7 +119,7 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig, IsPr
     }
 
     @JsonCreator
-    public OpenIdConfig(@JsonProperty(PROP_NAME_USE_INTERNAL) final boolean useInternal,
+    public OpenIdConfig(@JsonProperty(PROP_NAME_USE_INTERNAL) final IdpType identityProviderType,
                         @JsonProperty(PROP_NAME_CONFIGURATION_ENDPOINT) final String openIdConfigurationEndpoint,
                         @JsonProperty("issuer") final String issuer,
                         @JsonProperty("authEndpoint") final String authEndpoint,
@@ -129,7 +132,7 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig, IsPr
                         @JsonProperty("clientSecret") final String clientSecret,
                         @JsonProperty("requestScope") final String requestScope,
                         @JsonProperty("validateAudience") final boolean validateAudience) {
-        this.useInternal = useInternal;
+        this.identityProviderType = identityProviderType;
         this.openIdConfigurationEndpoint = openIdConfigurationEndpoint;
         this.issuer = issuer;
         this.authEndpoint = authEndpoint;
@@ -148,11 +151,16 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig, IsPr
      * @return true if Stroom will handle the OpenId authentication, false if an external
      * OpenId provider is used.
      */
+    @NotNull
     @JsonProperty
-    @JsonPropertyDescription("True if Stroom will handle OpenId authentication, false if an " +
-            "external OpenId provider is to be used.")
-    public boolean isUseInternal() {
-        return useInternal;
+    @JsonPropertyDescription("The type of Open ID Connect identity provider that stroom/proxy" +
+            "will use for authentication. Valid values are: " +
+            "INTERNAL - Stroom's own built in IDP (not valid for stroom-proxy)," +
+            "EXTERNAL - An external IDP such as KeyCloak/Cognito (stroom's internal IDP can be used as " +
+            "stroom-proxy's external IDP) and" +
+            "TEST - Use hard-coded authentication credentials for test/demo only.")
+    public IdpType getIdentityProviderType() {
+        return identityProviderType;
     }
 
     @Override
@@ -253,7 +261,7 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig, IsPr
     @Override
     public String toString() {
         return "OpenIdConfig{" +
-                "useInternal=" + useInternal +
+                "useInternal=" + identityProviderType +
                 ", openIdConfigurationEndpoint='" + openIdConfigurationEndpoint + '\'' +
                 ", issuer='" + issuer + '\'' +
                 ", authEndpoint='" + authEndpoint + '\'' +
@@ -267,4 +275,9 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig, IsPr
                 ", validateAudience=" + validateAudience +
                 '}';
     }
+
+
+    // --------------------------------------------------------------------------------
+
+
 }

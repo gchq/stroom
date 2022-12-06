@@ -4,22 +4,24 @@ import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.receive.common.FeedStatusService;
+import stroom.security.common.impl.UserIdentityFactory;
 import stroom.util.HasHealthCheck;
 import stroom.util.HealthCheckUtils;
+import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.cache.CacheConfig;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
-import com.google.common.base.Strings;
 import io.dropwizard.lifecycle.Managed;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -33,15 +35,17 @@ import javax.inject.Singleton;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.Response.StatusType;
 
 @Singleton
 public class RemoteFeedStatusService implements FeedStatusService, HasHealthCheck, Managed {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RemoteFeedStatusService.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RemoteFeedStatusService.class);
 
     private static final String GET_FEED_STATUS_PATH = "/getFeedStatus";
 
@@ -50,17 +54,21 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     private final Provider<ProxyConfig> proxyConfigProvider;
     private final Provider<FeedStatusConfig> feedStatusConfigProvider;
     private final Provider<Client> jerseyClientProvider;
+    private final UserIdentityFactory userIdentityFactory;
+
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     @Inject
     RemoteFeedStatusService(final Provider<ProxyConfig> proxyConfigProvider,
                             final Provider<FeedStatusConfig> feedStatusConfigProvider,
                             final Provider<Client> jerseyClientProvider,
-                            final DefaultOpenIdCredentials defaultOpenIdCredentials) {
+                            final DefaultOpenIdCredentials defaultOpenIdCredentials,
+                            final UserIdentityFactory userIdentityFactory) {
         this.proxyConfigProvider = proxyConfigProvider;
         this.feedStatusConfigProvider = feedStatusConfigProvider;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.jerseyClientProvider = jerseyClientProvider;
+        this.userIdentityFactory = userIdentityFactory;
 
         final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
         Objects.requireNonNull(feedStatusConfig, "Feed status config is null");
@@ -95,18 +103,18 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         executorService.shutdownNow();
     }
 
-    private String getApiKey() {
-        // Allows us to use hard-coded open id creds / token to authenticate with stroom
-        // out of the box. ONLY for use in test/demo environments.
-        final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
-        if (proxyConfigProvider.get().isUseDefaultOpenIdCredentials()
-                && Strings.isNullOrEmpty(feedStatusConfig.getApiKey())) {
-            LOGGER.info("Using default authentication token, should only be used in test/demo environments.");
-            return Objects.requireNonNull(defaultOpenIdCredentials.getApiKey());
-        } else {
-            return feedStatusConfig.getApiKey();
-        }
-    }
+//    private String getApiKey() {
+//        // Allows us to use hard-coded open id creds / token to authenticate with stroom
+//        // out of the box. ONLY for use in test/demo environments.
+//        final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
+//        if (proxyConfigProvider.get().isUseDefaultOpenIdCredentials()
+//                && Strings.isNullOrEmpty(feedStatusConfig.getApiKey())) {
+//            LOGGER.info("Using default authentication token, should only be used in test/demo environments.");
+//            return Objects.requireNonNull(defaultOpenIdCredentials.getApiKey());
+//        } else {
+//            return feedStatusConfig.getApiKey();
+//        }
+//    }
 
     @Override
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest request) {
@@ -147,18 +155,16 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
             throw new RuntimeException("Missing remote status URL in feed status configuration");
         }
 
-        final String apiKey = getApiKey();
-        if (apiKey == null || apiKey.trim().length() == 0) {
-            throw new RuntimeException("Missing API key in the feed status configuration");
-        }
-
-        LOGGER.info("Checking feed status for {} using url '{}'", request.getFeedName(), url);
-        return sendRequest(url, apiKey, request, response -> {
+        return sendRequest(request, feedStatusConfig, response -> {
             GetFeedStatusResponse feedStatusResponse = null;
-            if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
-                LOGGER.error(response.getStatusInfo().getReasonPhrase());
+            final StatusType statusInfo = response.getStatusInfo();
+            if (statusInfo.getStatusCode() != Status.OK.getStatusCode()) {
+                LOGGER.error("Error checking feed status for '{}' using url '{}', got response {} - {}",
+                        request.getFeedName(), url, statusInfo.getStatusCode(), statusInfo.getReasonPhrase());
             } else {
                 feedStatusResponse = response.readEntity(GetFeedStatusResponse.class);
+                LOGGER.info("Checked feed status for '{}' using url '{}', got response '{}'",
+                        request.getFeedName(), url, feedStatusResponse.getStatus());
             }
             if (feedStatusResponse == null) {
                 // If we can't get a feed status response then we will assume ok.
@@ -168,52 +174,72 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         });
     }
 
-    private GetFeedStatusResponse sendRequest(final String url,
-                                              final String apiKey,
-                                              final GetFeedStatusRequest request,
-                                              final Function<Response, GetFeedStatusResponse> responseConsumer) {
+    private GetFeedStatusResponse sendRequest(
+            final GetFeedStatusRequest request,
+            final FeedStatusConfig feedStatusConfig,
+            final Function<Response, GetFeedStatusResponse> responseConsumer) {
+
         LOGGER.debug("Sending request {}", request);
 
-        final WebTarget feedStatusWebTarget = getFeedStatusWebTarget(url);
+        final WebTarget webTarget = getFeedStatusWebTarget(feedStatusConfig);
 
-        try (final Response response = feedStatusWebTarget
-                .request(MediaType.APPLICATION_JSON)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
-                .post(Entity.json(request))) {
+        try (final Response response = getFeedStatusResponse(feedStatusConfig, webTarget, request)) {
             LOGGER.debug("Received response {}", response);
             return responseConsumer.apply(response);
         } catch (Exception e) {
             throw new RuntimeException(LogUtil.message(
                     "Error sending request {} to {}{}: {}",
-                    request, url, GET_FEED_STATUS_PATH, e.getMessage()), e);
+                    request, feedStatusConfig.getFeedStatusUrl(), GET_FEED_STATUS_PATH, e.getMessage()), e);
         }
     }
-
-    private WebTarget getFeedStatusWebTarget(final String url) {
-        final WebTarget feedStatusWebTarget = jerseyClientProvider.get()
-                .target(url)
+    private WebTarget getFeedStatusWebTarget(final FeedStatusConfig feedStatusConfig) {
+        return jerseyClientProvider.get()
+                .target(feedStatusConfig.getFeedStatusUrl())
                 .path(GET_FEED_STATUS_PATH);
-        return feedStatusWebTarget;
+    }
+
+    private Response getFeedStatusResponse(final FeedStatusConfig feedStatusConfig,
+                                           final WebTarget webTarget,
+                                           final GetFeedStatusRequest feedStatusRequest) {
+        return webTarget
+                .request(MediaType.APPLICATION_JSON)
+                .headers(getHeaders(feedStatusConfig))
+                .post(Entity.json(feedStatusRequest));
+    }
+
+    private MultivaluedMap<String, Object> getHeaders(final FeedStatusConfig feedStatusConfig) {
+        final Map<String, String> headers;
+
+        if (!NullSafe.isBlankString(feedStatusConfig.getApiKey())) {
+            // Intended for when stroom is using its internal IDP. Create the API Key in stroom UI
+            // and add it to config.
+            LOGGER.debug(() -> LogUtil.message("Using API key from config prop {}",
+                    feedStatusConfig.getFullPathStr(FeedStatusConfig.PROP_NAME_API_KEY)));
+            headers = userIdentityFactory.getAuthHeaders(feedStatusConfig.getApiKey());
+        } else {
+            // Use a token from the external IDP
+            headers = userIdentityFactory.getAuthHeaders(userIdentityFactory.getServiceUserIdentity());
+        }
+        return new MultivaluedHashMap<>(headers);
     }
 
     @Override
     public HealthCheck.Result getHealth() {
         LOGGER.debug("getHealth called");
         final HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
-        final String apiKey = getApiKey();
-        final String url = feedStatusConfigProvider.get().getFeedStatusUrl();
-        resultBuilder.withDetail("url", getFeedStatusWebTarget(url).getUri().toString());
+        final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
+        final String url = feedStatusConfig.getFeedStatusUrl();
+        resultBuilder.withDetail("url", getFeedStatusWebTarget(feedStatusConfig).getUri().toString());
 
         if (url == null || url.trim().length() == 0) {
             // If no url is configured then no feed status checking is required so we consider this healthy
             resultBuilder.healthy();
-        } else if (apiKey == null || apiKey.trim().length() == 0) {
-            resultBuilder.unhealthy()
-                    .withMessage("Missing API key in the feed status configuration");
         } else {
-            final GetFeedStatusRequest request = new GetFeedStatusRequest("DUMMY_FEED", "dummy DN");
+            final GetFeedStatusRequest request = new GetFeedStatusRequest(
+                    "DUMMY_FEED",
+                    "dummy DN");
             try {
-                sendRequest(url, apiKey, request, response -> {
+                sendRequest(request, feedStatusConfig, response -> {
                     int responseCode = response.getStatusInfo().getStatusCode();
                     // Even though we have sent a dummy feed we should get back a 200 with something like
                     //{

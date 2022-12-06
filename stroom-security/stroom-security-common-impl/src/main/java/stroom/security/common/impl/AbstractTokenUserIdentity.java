@@ -32,7 +32,7 @@ public abstract class AbstractTokenUserIdentity implements UserIdentity, HasJwt,
     private volatile TokenResponse tokenResponse;
     private volatile JwtClaims jwtClaims;
     // The time we need to refresh the tokens which will be a bit BEFORE the token expiry time
-    private volatile long refreshTimeEpochMs;
+    private volatile long expireTimeWithBufferEpochMs;
 
     public AbstractTokenUserIdentity(final String id,
                                      final TokenResponse tokenResponse,
@@ -58,15 +58,19 @@ public abstract class AbstractTokenUserIdentity implements UserIdentity, HasJwt,
     }
 
     public String getIdToken() {
-        return NullSafe.get(getTokenResponse(), TokenResponse::getIdToken);
+        return NullSafe.get(tokenResponse, TokenResponse::getIdToken);
     }
 
     public String getAccessToken() {
-        return NullSafe.get(getTokenResponse(), TokenResponse::getAccessToken);
+        return NullSafe.get(tokenResponse, TokenResponse::getAccessToken);
     }
 
     public String getRefreshToken() {
-        return NullSafe.get(getTokenResponse(), TokenResponse::getRefreshToken);
+        return NullSafe.get(tokenResponse, TokenResponse::getRefreshToken);
+    }
+
+    public boolean hasRefreshToken() {
+        return !NullSafe.isBlankString(tokenResponse, TokenResponse::getRefreshToken);
     }
 
     public void updateToken(final TokenResponse tokenResponse, final JwtClaims jwtClaims) {
@@ -79,15 +83,24 @@ public abstract class AbstractTokenUserIdentity implements UserIdentity, HasJwt,
         return jwtClaims;
     }
 
+    public boolean hasTokenExpired() {
+        return System.currentTimeMillis() > expireTimeWithBufferEpochMs;
+    }
+
     /**
      * Allows for a small buffer before the actual expiry time
      */
-    public boolean isRefreshRequired() {
-        return System.currentTimeMillis() > refreshTimeEpochMs;
+    public boolean isTokenRefreshRequired() {
+        // Service account responses from KeyCloak don't have a refresh token, so nothing to refresh
+        return !NullSafe.isBlankString(tokenResponse.getRefreshToken())
+                && hasTokenExpired();
     }
 
-    public Instant getRefreshTime() {
-        return Instant.ofEpochMilli(refreshTimeEpochMs);
+    /**
+     * @return The time the token will expire (with a small buffer before the actual expiry included)
+     */
+    public Instant getExpireTime() {
+        return Instant.ofEpochMilli(expireTimeWithBufferEpochMs);
     }
 
     private void updateRefreshTime() {
@@ -95,12 +108,12 @@ public abstract class AbstractTokenUserIdentity implements UserIdentity, HasJwt,
             final Instant expiryTime = Instant.ofEpochMilli(jwtClaims.getExpirationTime().getValueInMillis());
             final Duration timeToExpire = Duration.between(Instant.now(), expiryTime);
             final long expiryBufferMs = Math.min(EXPIRY_BUFFER, timeToExpire.toMillis());
-            final Instant refreshTime = expiryTime.minusMillis(expiryBufferMs);
-            refreshTimeEpochMs = refreshTime.toEpochMilli();
+            final Instant expireTime = expiryTime.minusMillis(expiryBufferMs);
+            expireTimeWithBufferEpochMs = expireTime.toEpochMilli();
 
             LOGGER.debug("Updating refresh time - " +
                             "expiryTime: {}, timeToExpire: {}, expiryBufferMs: {}, refreshTime: {}",
-                    expiryTime, timeToExpire, expiryBufferMs, refreshTime);
+                    expiryTime, timeToExpire, expiryBufferMs, expireTime);
 
         } catch (MalformedClaimException e) {
             throw new RuntimeException("Unable to extract expiry time from jwtClaims " + jwtClaims, e);
@@ -173,18 +186,18 @@ public abstract class AbstractTokenUserIdentity implements UserIdentity, HasJwt,
                 "id='" + id + '\'' +
                 ", fullName='" + getFullName().orElse("") + '\'' +
                 ", preferredUsername='" + getPreferredUsername() + '\'' +
-                ", timeTilRefresh='" + Duration.between(Instant.now(), getRefreshTime()) + '\'' +
+                ", timeTilExpire='" + Duration.between(Instant.now(), getExpireTime()) + '\'' +
                 '}';
     }
 
     @Override
     public int compareTo(final Delayed other) {
-        return Math.toIntExact(this.refreshTimeEpochMs - ((AbstractTokenUserIdentity) other).refreshTimeEpochMs);
+        return Math.toIntExact(this.expireTimeWithBufferEpochMs - ((AbstractTokenUserIdentity) other).expireTimeWithBufferEpochMs);
     }
 
     @Override
     public long getDelay(final TimeUnit unit) {
-        long diff = refreshTimeEpochMs - System.currentTimeMillis();
+        long diff = expireTimeWithBufferEpochMs - System.currentTimeMillis();
         return unit.convert(diff, TimeUnit.MILLISECONDS);
     }
 }

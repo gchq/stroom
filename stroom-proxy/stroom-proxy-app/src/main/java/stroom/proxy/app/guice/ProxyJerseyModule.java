@@ -51,6 +51,10 @@ public class ProxyJerseyModule extends AbstractModule {
                     return builder;
                 }
 
+                /**
+                 * Add the auth headers for the service account user so all calls from proxy
+                 * have the auth header on them.
+                 */
                 private void addAuthHeader(final Builder builder) {
                     final Map<String, String> authHeaders = requestAuthenticator.getServiceUserAuthHeaders();
                     authHeaders.forEach(builder::header);

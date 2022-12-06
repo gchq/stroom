@@ -18,19 +18,17 @@ package stroom.proxy.app.servlet;
 
 import stroom.proxy.app.ContentSyncConfig;
 import stroom.proxy.app.ProxyConfig;
+import stroom.proxy.app.event.EventResource;
 import stroom.proxy.app.handler.FeedStatusConfig;
-import stroom.receive.common.FeedStatusResource;
-import stroom.receive.rules.shared.ReceiveDataRuleSetResource;
+import stroom.security.api.UserIdentity;
+import stroom.security.common.impl.UserIdentityFactory;
 import stroom.util.authentication.DefaultOpenIdCredentials;
-import stroom.util.logging.LogUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResourcePaths;
 
-import com.google.common.base.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -56,12 +54,13 @@ public class ProxySecurityFilter implements Filter {
     private static final String BEARER = "Bearer ";
     private static final String AUTHORIZATION_HEADER = "Authorization";
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProxySecurityFilter.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxySecurityFilter.class);
 
     private final Provider<ContentSyncConfig> contentSyncConfigProvider;
     private final Provider<FeedStatusConfig> feedStatusConfigProvider;
     private final Provider<ProxyConfig> proxyConfigProvider;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
+    private final UserIdentityFactory userIdentityFactory;
 
     private Pattern pattern = null;
 
@@ -69,11 +68,13 @@ public class ProxySecurityFilter implements Filter {
     public ProxySecurityFilter(final Provider<ContentSyncConfig> contentSyncConfigProvider,
                                final Provider<FeedStatusConfig> feedStatusConfigProvider,
                                final Provider<ProxyConfig> proxyConfigProvider,
-                               final DefaultOpenIdCredentials defaultOpenIdCredentials) {
+                               final DefaultOpenIdCredentials defaultOpenIdCredentials,
+                               final UserIdentityFactory userIdentityFactory) {
         this.contentSyncConfigProvider = contentSyncConfigProvider;
         this.feedStatusConfigProvider = feedStatusConfigProvider;
         this.proxyConfigProvider = proxyConfigProvider;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
+        this.userIdentityFactory = userIdentityFactory;
     }
 
     @Override
@@ -85,28 +86,41 @@ public class ProxySecurityFilter implements Filter {
     }
 
     @Override
-    public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain)
+    public void doFilter(final ServletRequest request,
+                         final ServletResponse response,
+                         final FilterChain chain)
+
             throws IOException, ServletException {
-        if (!(response instanceof HttpServletResponse)) {
+
+        if (!(response instanceof final HttpServletResponse httpServletResponse)) {
             final String message = "Unexpected response type: " + response.getClass().getName();
             LOGGER.error(message);
             return;
         }
-        final HttpServletResponse httpServletResponse = (HttpServletResponse) response;
 
-        if (!(request instanceof HttpServletRequest)) {
+        if (!(request instanceof final HttpServletRequest httpServletRequest)) {
             final String message = "Unexpected request type: " + request.getClass().getName();
             LOGGER.error(message);
             httpServletResponse.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, message);
             return;
         }
-        final HttpServletRequest httpServletRequest = (HttpServletRequest) request;
 
         filter(httpServletRequest, httpServletResponse, chain);
     }
 
-    private void filter(final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain)
+    private void filter(final HttpServletRequest request,
+                        final HttpServletResponse response,
+                        final FilterChain chain)
+
             throws IOException, ServletException {
+
+        final String servletPath = request.getServletPath().toLowerCase();
+        final String fullPath = request.getRequestURI().toLowerCase();
+
+        LOGGER.debug("Filtering fullPath: {}, servletPath: {}", fullPath, servletPath);
+
+        // TODO: 05/12/2022 Need to fugure out how we deal with chained proxies where the distant
+        //  proxies can only see the downstream and not the IDP.
 
         if (request.getMethod().equalsIgnoreCase(HttpMethod.OPTIONS)) {
             // We need to allow CORS preflight requests
@@ -116,74 +130,67 @@ public class ProxySecurityFilter implements Filter {
             // Allow some URIs to bypass authentication checks
             chain.doFilter(request, response);
 
+        } else if (shouldBypassAuthentication(fullPath)) {
+            // /noauth/ paths skip auth here but may handle it themselves
+            chain.doFilter(request, response);
+
         } else {
-            // We need to distinguish between requests from an API client and from the UI.
-            // If a request is from the UI and fails authentication then we need to redirect to the login page.
-            // If a request is from an API client and fails authentication then we need to return HTTP 403 UNAUTHORIZED.
-            final String requestURI = request.getRequestURI();
-            final boolean isApiRequest = requestURI.contains(ResourcePaths.API_ROOT_PATH);
+            final boolean isApiRequest = fullPath.contains(ResourcePaths.API_ROOT_PATH);
 
             if (isApiRequest) {
-                // Allow all event requests through as security is applied elsewhere.
-                if (requestURI.contains("/event")) {
+                if (fullPath.contains(EventResource.BASE_RESOURCE_PATH)) {
+                    // Allow all event requests through as security is applied elsewhere.
                     chain.doFilter(request, response);
-
                 } else {
-                    try {
-                        final String configuredApiKey = getConfiguredApiKey(requestURI);
-                        final String requestApiKey = getJWS(request);
+                    // All other rest API resources so authenticate them
+                    final Optional<UserIdentity> optUserIdentity = userIdentityFactory.getApiUserIdentity(request);
 
-                        if (!configuredApiKey.equals(requestApiKey)) {
-                            throw new RuntimeException(
-                                    LogUtil.message(
-                                            "Supplied API key from {} to {} is invalid",
-                                            request.getRemoteHost(), requestURI));
-                        }
-
+                    if (optUserIdentity.isPresent()) {
+                        LOGGER.debug("Authenticated request to fullPath: {}, servletPath: {}, userIdentity: {}",
+                                fullPath, servletPath, optUserIdentity.get());
                         chain.doFilter(request, response);
 
-                    } catch (final RuntimeException e) {
-                        LOGGER.error(e.getMessage(), e);
+                    } else {
+                        LOGGER.debug("Unauthorised request to fullPath: {}, servletPath: {}", fullPath, servletPath);
                         response.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
                     }
                 }
-
             } else {
                 chain.doFilter(request, response);
             }
         }
     }
 
-    private String getConfiguredApiKey(final String requestUri) {
-        // TODO it could be argued that we should have a single API key to use for all of these resources.
-        final String apiKey;
-        final ProxyConfig proxyConfig = proxyConfigProvider.get();
-        if (requestUri.startsWith(ResourcePaths.API_ROOT_PATH + FeedStatusResource.BASE_RESOURCE_PATH)) {
-            final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
-            if (proxyConfig.isUseDefaultOpenIdCredentials() && Strings.isNullOrEmpty(feedStatusConfig.getApiKey())) {
-                LOGGER.info("Authenticating using default API key. For production use, set up an API key in Stroom!");
-                apiKey = Objects.requireNonNull(defaultOpenIdCredentials.getApiKey());
-            } else {
-                apiKey = feedStatusConfig.getApiKey();
-            }
-        } else if (requestUri.startsWith(ResourcePaths.API_ROOT_PATH + ReceiveDataRuleSetResource.BASE_RESOURCE_PATH)) {
-            final ContentSyncConfig contentSyncConfig = contentSyncConfigProvider.get();
-            if (proxyConfig.isUseDefaultOpenIdCredentials() && Strings.isNullOrEmpty(contentSyncConfig.getApiKey())) {
-                LOGGER.info("Using default authentication token, should only be used in test/demo environments.");
-                apiKey = Objects.requireNonNull(defaultOpenIdCredentials.getApiKey());
-            } else {
-                apiKey = contentSyncConfig.getApiKey();
-            }
-        } else {
-            throw new RuntimeException(LogUtil.message(
-                    "Unable to determine which config to get API key from for requestURI {}", requestUri));
-        }
-        if (apiKey == null || apiKey.isEmpty()) {
-            throw new RuntimeException(LogUtil.message(
-                    "API key is empty, requestURI {}", requestUri));
-        }
-        return apiKey;
-    }
+//    private String getConfiguredApiKey(final String requestUri) {
+//        // TODO it could be argued that we should have a single API key to use for all of these resources.
+//        final String apiKey;
+//        final ProxyConfig proxyConfig = proxyConfigProvider.get();
+//        if (requestUri.startsWith(ResourcePaths.API_ROOT_PATH + FeedStatusResource.BASE_RESOURCE_PATH)) {
+//            final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
+//            if (proxyConfig.isUseDefaultOpenIdCredentials() && Strings.isNullOrEmpty(feedStatusConfig.getApiKey())) {
+//                LOGGER.info("Authenticating using default API key. For production use, set up an API key in Stroom!");
+//                apiKey = Objects.requireNonNull(defaultOpenIdCredentials.getApiKey());
+//            } else {
+//                apiKey = feedStatusConfig.getApiKey();
+//            }
+//        } else if (requestUri.startsWith(ResourcePaths.API_ROOT_PATH + ReceiveDataRuleSetResource.BASE_RESOURCE_PATH)) {
+//            final ContentSyncConfig contentSyncConfig = contentSyncConfigProvider.get();
+//            if (proxyConfig.isUseDefaultOpenIdCredentials() && Strings.isNullOrEmpty(contentSyncConfig.getApiKey())) {
+//                LOGGER.info("Using default authentication token, should only be used in test/demo environments.");
+//                apiKey = Objects.requireNonNull(defaultOpenIdCredentials.getApiKey());
+//            } else {
+//                apiKey = contentSyncConfig.getApiKey();
+//            }
+//        } else {
+//            throw new RuntimeException(LogUtil.message(
+//                    "Unable to determine which config to get API key from for requestURI {}", requestUri));
+//        }
+//        if (apiKey == null || apiKey.isEmpty()) {
+//            throw new RuntimeException(LogUtil.message(
+//                    "API key is empty, requestURI {}", requestUri));
+//        }
+//        return apiKey;
+//    }
 
     private boolean ignoreUri(final String uri) {
         return pattern != null && pattern.matcher(uri).matches();
@@ -202,6 +209,10 @@ public class ProxySecurityFilter implements Filter {
             LOGGER.debug("Found auth header in request. It looks like this: {}", jws);
         }
         return jws;
+    }
+
+    private boolean shouldBypassAuthentication(final String fullPath) {
+        return fullPath.contains(ResourcePaths.NO_AUTH + "/");
     }
 
     @Override

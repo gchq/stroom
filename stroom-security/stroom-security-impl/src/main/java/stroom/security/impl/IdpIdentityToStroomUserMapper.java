@@ -7,6 +7,7 @@ import stroom.security.common.impl.IdpIdentityMapper;
 import stroom.security.common.impl.JwtUtil;
 import stroom.security.common.impl.UserIdentityImpl;
 import stroom.security.openid.api.OpenIdConfig;
+import stroom.security.openid.api.OpenIdConfiguration.IdpType;
 import stroom.security.openid.api.TokenResponse;
 import stroom.security.shared.User;
 import stroom.util.NullSafe;
@@ -114,10 +115,6 @@ public class IdpIdentityToStroomUserMapper implements IdpIdentityMapper {
         return userId;
     }
 
-    private boolean useExternalIdentityProvider() {
-        return !openIdConfigProvider.get().isUseInternal();
-    }
-
     private Optional<UserIdentity> getApiUserIdentity(final JwtContext jwtContext,
                                                       final HttpServletRequest request) {
         LOGGER.debug(() -> "Getting user identity from jwtContext=" + jwtContext);
@@ -131,7 +128,8 @@ public class IdpIdentityToStroomUserMapper implements IdpIdentityMapper {
         try {
             final String userId = getUserId(jwtContext.getJwtClaims());
             final String userUuid;
-            if (jwtContext.getJwtClaims().getAudience().contains(defaultOpenIdCredentials.getOauth2ClientId())
+            if (IdpType.TEST.equals(openIdConfigProvider.get().getIdentityProviderType())
+                    && jwtContext.getJwtClaims().getAudience().contains(defaultOpenIdCredentials.getOauth2ClientId())
                     && userId.equals(defaultOpenIdCredentials.getApiKeyUserEmail())) {
                 LOGGER.warn(() ->
                         "Authenticating using default API key. DO NOT USE IN PRODUCTION!");

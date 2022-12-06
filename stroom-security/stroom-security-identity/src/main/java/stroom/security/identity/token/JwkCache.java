@@ -18,8 +18,12 @@ package stroom.security.identity.token;
 
 import stroom.security.identity.config.IdentityConfig;
 import stroom.security.openid.api.JsonWebKeyFactory;
+import stroom.security.openid.api.OpenIdConfig;
+import stroom.security.openid.api.OpenIdConfiguration.IdpType;
 import stroom.security.openid.api.PublicJsonWebKeyProvider;
 import stroom.util.authentication.DefaultOpenIdCredentials;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
@@ -35,6 +39,8 @@ import javax.inject.Singleton;
 @Singleton
 public class JwkCache implements PublicJsonWebKeyProvider {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JwkCache.class);
+
     private static final String KEY = "key";
     private final LoadingCache<String, List<PublicJsonWebKey>> cache;
 
@@ -42,7 +48,8 @@ public class JwkCache implements PublicJsonWebKeyProvider {
     JwkCache(final JwkDao jwkDao,
              final IdentityConfig authenticationConfig,
              final DefaultOpenIdCredentials defaultOpenIdCredentials,
-             final JsonWebKeyFactory jsonWebKeyFactory) {
+             final JsonWebKeyFactory jsonWebKeyFactory,
+             final Provider<OpenIdConfig> openIdConfigProvider) {
 
         cache = Caffeine.newBuilder()
                 .maximumSize(100)
@@ -50,7 +57,8 @@ public class JwkCache implements PublicJsonWebKeyProvider {
                 .build(k -> {
                     // Bypass the DB when we are using test default creds, i.e. in a test/demo
                     // environment. Not for prod use.
-                    if (authenticationConfig.isUseDefaultOpenIdCredentials()) {
+                    if (IdpType.TEST.equals(openIdConfigProvider.get().getIdentityProviderType())) {
+                        LOGGER.debug("Using default public json web key");
                         return Collections.singletonList(
                                 jsonWebKeyFactory.fromJson(defaultOpenIdCredentials.getPublicKeyJson()));
                     } else {

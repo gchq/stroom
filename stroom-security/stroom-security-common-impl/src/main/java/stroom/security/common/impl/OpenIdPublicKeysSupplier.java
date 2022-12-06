@@ -1,12 +1,16 @@
 package stroom.security.common.impl;
 
 import stroom.security.openid.api.OpenIdConfiguration;
+import stroom.security.openid.api.OpenIdConfiguration.IdpType;
+import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import org.jose4j.jwk.JsonWebKeySet;
+import org.jose4j.jwk.PublicJsonWebKey;
+import org.jose4j.jwk.PublicJsonWebKey.Factory;
 import org.jose4j.lang.JoseException;
 
 import java.time.Duration;
@@ -16,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.ws.rs.client.Client;
 import javax.ws.rs.core.Response;
 
 @Singleton
@@ -25,6 +30,8 @@ public class OpenIdPublicKeysSupplier implements Supplier<JsonWebKeySet> {
 
     private final OpenIdConfiguration openIdConfiguration;
     private final WebTargetFactory webTargetFactory;
+    private final Client jerseyClient;
+    private final DefaultOpenIdCredentials defaultOpenIdCredentials;
 
     private final Map<String, KeySetWrapper> cache = new ConcurrentHashMap<>();
 
@@ -35,9 +42,13 @@ public class OpenIdPublicKeysSupplier implements Supplier<JsonWebKeySet> {
 
     @Inject
     OpenIdPublicKeysSupplier(final OpenIdConfiguration openIdConfiguration,
-                             final WebTargetFactory webTargetFactory) {
+                             final WebTargetFactory webTargetFactory,
+                             final Client jerseyClient,
+                             final DefaultOpenIdCredentials defaultOpenIdCredentials) {
         this.openIdConfiguration = openIdConfiguration;
         this.webTargetFactory = webTargetFactory;
+        this.jerseyClient = jerseyClient;
+        this.defaultOpenIdCredentials = defaultOpenIdCredentials;
     }
 
     @Override
@@ -45,7 +56,19 @@ public class OpenIdPublicKeysSupplier implements Supplier<JsonWebKeySet> {
         return get(openIdConfiguration.getJwksUri());
     }
 
-    public JsonWebKeySet get(final String jwksUri) {
+    private KeySetWrapper buildHardCodedKeySet() {
+        final String json = defaultOpenIdCredentials.getPublicKeyJson();
+        try {
+            final PublicJsonWebKey publicJsonWebKey = Factory.newPublicJwk(json);
+            JsonWebKeySet jsonWebKeySet = new JsonWebKeySet(publicJsonWebKey);
+            return new KeySetWrapper(jsonWebKeySet, Long.MAX_VALUE);
+        } catch (JoseException e) {
+            LOGGER.error("Unable to create RsaJsonWebKey from json:\n{}", json, e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    private JsonWebKeySet get(final String jwksUri) {
         KeySetWrapper keySetWrapper = cache.computeIfAbsent(jwksUri, this::fetchKeys);
 
         if (keySetWrapper != null) {
@@ -66,25 +89,31 @@ public class OpenIdPublicKeysSupplier implements Supplier<JsonWebKeySet> {
     }
 
     private KeySetWrapper fetchKeys(final String jwksUri) {
-        String json = null;
-        try {
-            final Response res = webTargetFactory
-                    .create(jwksUri)
-                    .request()
-                    .get();
-            json = res.readEntity(String.class);
-            // Each call to the service should get the same result so we can overwrite
-            // the value from another thread, thus avoiding any locking.
-            final long expiryEpochMs = Instant.now().plus(MAX_KEY_SET_AGE).toEpochMilli();
-            LOGGER.info("Fetched jsonWebKeySet for uri {}", jwksUri);
-            return new KeySetWrapper(new JsonWebKeySet(json), expiryEpochMs);
-        } catch (JoseException e) {
-            LOGGER.error("Error building JsonWebKeySet from json: {}", json, e);
-        } catch (Exception e) {
-            throw new RuntimeException(LogUtil.message(
-                    "Error fetching Open ID public keys from {}", jwksUri), e);
+        if (IdpType.TEST.equals(openIdConfiguration.getIdentityProviderType())) {
+            LOGGER.debug("Using default public json web keys");
+            return buildHardCodedKeySet();
+        } else {
+            String json = null;
+            try {
+                // Use Client instead of WebTargetFactory so we do it un-authenticated
+                final Response res = jerseyClient
+                        .target(jwksUri)
+                        .request()
+                        .get();
+                json = res.readEntity(String.class);
+                // Each call to the service should get the same result so we can overwrite
+                // the value from another thread, thus avoiding any locking.
+                final long expiryEpochMs = Instant.now().plus(MAX_KEY_SET_AGE).toEpochMilli();
+                LOGGER.info("Fetched jsonWebKeySet for uri {}", jwksUri);
+                return new KeySetWrapper(new JsonWebKeySet(json), expiryEpochMs);
+            } catch (JoseException e) {
+                LOGGER.error("Error building JsonWebKeySet from json: {}", json, e);
+            } catch (Exception e) {
+                throw new RuntimeException(LogUtil.message(
+                        "Error fetching Open ID public keys from {}", jwksUri), e);
+            }
+            return null;
         }
-        return null;
     }
 
     private record KeySetWrapper(

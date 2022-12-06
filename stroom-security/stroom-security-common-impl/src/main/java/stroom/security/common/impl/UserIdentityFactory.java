@@ -33,6 +33,8 @@ public interface UserIdentityFactory {
      */
     boolean hasAuthenticationToken(final HttpServletRequest request);
 
+    boolean hasAuthenticationCertificate(final HttpServletRequest request);
+
     /**
      * Remove any authentication headers key/value pairs from the map
      */
@@ -42,6 +44,11 @@ public interface UserIdentityFactory {
      * @return The authentication/authorisation headers to enable authentication with this user
      */
     Map<String, String> getAuthHeaders(final UserIdentity userIdentity);
+
+    /**
+     * @return The authentication/authorisation headers to enable authentication with this token
+     */
+    Map<String, String> getAuthHeaders(final String jwt);
 
     /**
      * Refresh the user identity including any tokens associated with that user.

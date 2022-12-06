@@ -17,6 +17,7 @@
 package stroom.security.impl;
 
 import stroom.security.openid.api.OpenIdConfig;
+import stroom.security.openid.api.OpenIdConfiguration.IdpType;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.util.AuditUtil;
@@ -107,7 +108,7 @@ class AuthenticationService {
         try {
             optUser = userDao.getByName(username, false);
             if (optUser.isEmpty()
-                    && openIdConfigProvider.get().isUseInternal()
+                    && IdpType.INTERNAL.equals(openIdConfigProvider.get().getIdentityProviderType())
                     && User.ADMIN_USER_NAME.equals(username)) {
 
                 // TODO @AT Probably should be an explicit command to create this to avoid the accidental
@@ -144,7 +145,8 @@ class AuthenticationService {
                     final User userRef = create(name, isGroup);
 
                     // Creating the admin user so create its group too
-                    if (User.ADMIN_USER_NAME.equals(name) && openIdConfigProvider.get().isUseInternal()) {
+                    if (User.ADMIN_USER_NAME.equals(name)
+                            && IdpType.INTERNAL.equals(openIdConfigProvider.get().getIdentityProviderType())) {
                         try {
                             User userGroup = createOrRefreshAdminUserGroup();
                             userDao.addUserToGroup(userRef.getUuid(), userGroup.getUuid());

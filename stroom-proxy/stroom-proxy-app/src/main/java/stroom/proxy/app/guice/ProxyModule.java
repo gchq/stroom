@@ -193,6 +193,7 @@ public class ProxyModule extends AbstractModule {
         return new FSPersistence(pathCreator.toAppPath(path));
     }
 
+    @SuppressWarnings("unused")
     @Provides
     EntityEventBus entityEventBus() {
         return event -> {

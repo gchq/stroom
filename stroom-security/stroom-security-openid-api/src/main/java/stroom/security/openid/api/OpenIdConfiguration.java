@@ -5,6 +5,8 @@ package stroom.security.openid.api;
  */
 public interface OpenIdConfiguration {
 
+    IdpType getIdentityProviderType();
+
     String getOpenIdConfigurationEndpoint();
 
     String getIssuer();
@@ -28,4 +30,25 @@ public interface OpenIdConfiguration {
     boolean isValidateAudience();
 
     String getLogoutRedirectParamName();
+
+    /**
+     * The type of identity provider that stroom(-proxy) will use for authentication
+     */
+    enum IdpType {
+
+        /**
+         * Stroom's internal IDP. Not valid for stroom-proxy
+         */
+        INTERNAL,
+
+        /**
+         * An external IDP such as KeyCloak/Cognito
+         */
+        EXTERNAL,
+
+        /**
+         * Use hard-coded credentials for testing/demo only
+         */
+        TEST
+    }
 }

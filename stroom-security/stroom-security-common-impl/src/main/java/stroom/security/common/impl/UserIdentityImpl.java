@@ -110,7 +110,7 @@ public class UserIdentityImpl
                 ", id='" + getId() + '\'' +
                 ", fullName='" + getFullName().orElse("") + '\'' +
                 ", preferredUsername='" + getPreferredUsername() + '\'' +
-                ", timeTilRefresh='" + Duration.between(Instant.now(), getRefreshTime()) + '\'' +
+                ", timeTilExpire='" + Duration.between(Instant.now(), getExpireTime()) + '\'' +
                 '}';
     }
 }

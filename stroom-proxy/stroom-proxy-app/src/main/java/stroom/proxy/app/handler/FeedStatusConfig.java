@@ -15,6 +15,7 @@ import javax.validation.constraints.NotNull;
 @JsonPropertyOrder(alphabetic = true)
 public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
 
+    public static final String PROP_NAME_API_KEY = "apiKey";
     private final String feedStatusUrl;
     private final String apiKey;
     private final CacheConfig feedStatusCache;
@@ -28,7 +29,7 @@ public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
     @SuppressWarnings("unused")
     @JsonCreator
     public FeedStatusConfig(@JsonProperty("url") final String feedStatusUrl,
-                            @JsonProperty("apiKey") final String apiKey,
+                            @JsonProperty(PROP_NAME_API_KEY) final String apiKey,
                             @JsonProperty("feedStatusCache") final CacheConfig feedStatusCache) {
         this.feedStatusUrl = feedStatusUrl;
         this.apiKey = apiKey;
@@ -50,7 +51,7 @@ public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
         return feedStatusUrl;
     }
 
-    @JsonProperty("apiKey")
+    @JsonProperty(PROP_NAME_API_KEY)
     public String getApiKey() {
         return apiKey;
     }

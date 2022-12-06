@@ -609,6 +609,7 @@ appConfig:
         clientId: null
         clientSecret: null
         formTokenRequest: true
+        identityProviderType: "INTERNAL"
         issuer: null
         jwksUri: null
         logoutEndpoint: null
@@ -616,7 +617,6 @@ appConfig:
         openIdConfigurationEndpoint: null
         requestScope: null
         tokenEndpoint: null
-        useInternal: true
         validateAudience: true
       preventLogin: false
     authorisation:

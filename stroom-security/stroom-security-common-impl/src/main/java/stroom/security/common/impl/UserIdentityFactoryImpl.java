@@ -1,13 +1,17 @@
 package stroom.security.common.impl;
 
+import stroom.security.api.HasJwt;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.exception.AuthenticationException;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
+import stroom.security.openid.api.OpenIdConfiguration.IdpType;
 import stroom.security.openid.api.TokenRequest;
 import stroom.security.openid.api.TokenRequest.Builder;
 import stroom.security.openid.api.TokenResponse;
 import stroom.util.NullSafe;
+import stroom.util.authentication.DefaultOpenIdCredentials;
+import stroom.util.cert.CertificateUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -65,6 +69,7 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
     private final Provider<OpenIdConfiguration> openIdConfigProvider;
     private final Provider<CloseableHttpClient> httpClientProvider;
     private final IdpIdentityMapper idpIdentityMapper;
+    private final DefaultOpenIdCredentials defaultOpenIdCredentials;
 
     // A service account/user for communicating with other apps in the same OIDC realm,
     // e.g. proxy => stroom. Created lazily.
@@ -79,11 +84,13 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
     public UserIdentityFactoryImpl(final JwtContextFactory jwtContextFactory,
                                    final Provider<OpenIdConfiguration> openIdConfigProvider,
                                    final Provider<CloseableHttpClient> httpClientProvider,
-                                   final IdpIdentityMapper idpIdentityMapper) {
+                                   final IdpIdentityMapper idpIdentityMapper,
+                                   final DefaultOpenIdCredentials defaultOpenIdCredentials) {
         this.jwtContextFactory = jwtContextFactory;
         this.openIdConfigProvider = openIdConfigProvider;
         this.httpClientProvider = httpClientProvider;
         this.idpIdentityMapper = idpIdentityMapper;
+        this.defaultOpenIdCredentials = defaultOpenIdCredentials;
     }
 
     @Override
@@ -124,6 +131,11 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
     }
 
     @Override
+    public boolean hasAuthenticationCertificate(final HttpServletRequest request) {
+        return CertificateUtil.extractCertificate(request).isPresent();
+    }
+
+    @Override
     public void removeAuthEntries(final Map<String, String> headers) {
         jwtContextFactory.removeAuthorisationEntries(headers);
     }
@@ -133,18 +145,39 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
         if (userIdentity == null) {
             LOGGER.debug("Null user supplied");
             return Collections.emptyMap();
+        } else if (IdpType.TEST.equals(openIdConfigProvider.get().getIdentityProviderType())) {
+            LOGGER.debug("Using default token");
+            return buildHeaders(defaultOpenIdCredentials.getApiKey());
         } else if (userIdentity instanceof final AbstractTokenUserIdentity tokenUserIdentity) {
             // just in case the refresh queue is backed up
-            if (tokenUserIdentity.isRefreshRequired()) {
+            if (tokenUserIdentity.isTokenRefreshRequired()) {
                 refresh(userIdentity);
             }
             final String accessToken = Objects.requireNonNull(tokenUserIdentity.getAccessToken(),
                     () -> "Null access token for userIdentity " + userIdentity);
-            // Should be common to both intenal and external IDPs
-            return Map.of(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
+            return buildHeaders(accessToken);
+        } else if (userIdentity instanceof final HasJwt hasJwt) {
+            // This is for stroom's processing user identity which we don't need to refresh as
+            // ProcessingUserIdentityProviderImpl handles that
+            final String accessToken = Objects.requireNonNull(hasJwt.getJwt());
+            return buildHeaders(accessToken);
         } else {
             LOGGER.debug(() -> "Wrong type of userIdentity " + userIdentity.getClass());
             return Collections.emptyMap();
+        }
+    }
+
+    @Override
+    public Map<String, String> getAuthHeaders(final String jwt) {
+        return buildHeaders(jwt);
+    }
+
+    private Map<String, String> buildHeaders(final String accessToken) {
+        // Should be common to both internal and external IDPs
+        if (NullSafe.isBlankString(accessToken)) {
+            return Collections.emptyMap();
+        } else {
+            return Map.of(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
         }
     }
 
@@ -180,11 +213,19 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
         return optUserIdentity;
     }
 
+    private boolean isNewServiceAccountTokenRequired() {
+        // If the token response doesn't have a refresh token then we need to create a new one
+        // when the access token is expired
+        return serviceUserIdentity == null ||
+                (serviceUserIdentity.hasTokenExpired() && !serviceUserIdentity.hasRefreshToken());
+    }
+
     @Override
     public UserIdentity getServiceUserIdentity() {
-        if (serviceUserIdentity == null) {
+
+        if (isNewServiceAccountTokenRequired()) {
             synchronized (this) {
-                if (serviceUserIdentity == null) {
+                if (isNewServiceAccountTokenRequired()) {
                     serviceUserIdentity = createServiceUserIdentity();
                 }
             }
@@ -313,9 +354,9 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
             isRefreshRequired = true;
         }
 
-        LOGGER.debug(() -> LogUtil.message("Refresh time: {}", userIdentity.getRefreshTime()));
+        LOGGER.debug(() -> LogUtil.message("Refresh time: {}", userIdentity.getExpireTime()));
 
-        return isRefreshRequired && userIdentity.isRefreshRequired();
+        return isRefreshRequired && userIdentity.isTokenRefreshRequired();
     }
 
     private TokenResponse getTokenResponse(final ObjectMapper mapper,

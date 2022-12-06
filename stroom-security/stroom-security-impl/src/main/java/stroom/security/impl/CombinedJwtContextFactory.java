@@ -3,6 +3,7 @@ package stroom.security.impl;
 import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.StandardJwtContextFactory;
 import stroom.security.openid.api.OpenIdConfig;
+import stroom.security.openid.api.OpenIdConfiguration.IdpType;
 import stroom.util.NullSafe;
 
 import org.jose4j.jwt.consumer.JwtContext;
@@ -72,6 +73,6 @@ public class CombinedJwtContextFactory implements JwtContextFactory {
     }
 
     private boolean useExternalIdentityProvider() {
-        return !openIdConfigProvider.get().isUseInternal();
+        return IdpType.EXTERNAL.equals(openIdConfigProvider.get().getIdentityProviderType());
     }
 }

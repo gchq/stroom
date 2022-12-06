@@ -52,12 +52,14 @@ public class TestBaseModule extends AbstractModule {
         bind(DocumentEventLog.class).toProvider(Providers.of(null));
     }
 
+    @SuppressWarnings("unused")
     @Provides
     EntityEventBus entityEventBus() {
         return event -> {
         };
     }
 
+    @SuppressWarnings("unused")
     @Provides
     RequestAuthenticator requestAuthenticator() {
         return new RequestAuthenticator() {

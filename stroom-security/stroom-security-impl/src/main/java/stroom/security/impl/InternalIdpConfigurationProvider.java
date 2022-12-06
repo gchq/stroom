@@ -82,6 +82,11 @@ public class InternalIdpConfigurationProvider implements IdpConfigurationProvide
     }
 
     @Override
+    public IdpType getIdentityProviderType() {
+        return openIdConfigProvider.get().getIdentityProviderType();
+    }
+
+    @Override
     public String getOpenIdConfigurationEndpoint() {
         return openIdConfigProvider.get().getOpenIdConfigurationEndpoint();
     }

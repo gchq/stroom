@@ -13,7 +13,7 @@ import javax.inject.Provider;
 
 /**
  * A front for the internal and external OIDC config providers. The useInternal prop in local
- * config controls which delegat is used.
+ * config controls which delegate is used.
  */
 public class CombinedIdpConfigurationProvider implements IdpConfigurationProvider {
 
@@ -38,6 +38,11 @@ public class CombinedIdpConfigurationProvider implements IdpConfigurationProvide
     @Override
     public OpenIdConfigurationResponse getConfigurationResponse() {
         return getValueFromDelegate(IdpConfigurationProvider::getConfigurationResponse);
+    }
+
+    @Override
+    public IdpType getIdentityProviderType() {
+        return openIdConfigProvider.get().getIdentityProviderType();
     }
 
     @Override
@@ -107,10 +112,11 @@ public class CombinedIdpConfigurationProvider implements IdpConfigurationProvide
     }
 
     private <T> T getValueFromDelegate(final Function<IdpConfigurationProvider, T> function) {
-        if (openIdConfigProvider.get().isUseInternal()) {
-            return function.apply(internalIdpConfigurationResponseProvider);
-        } else {
-            return function.apply(externalIdpConfigurationResponseProvider);
-        }
+        return switch (openIdConfigProvider.get().getIdentityProviderType()) {
+            case INTERNAL, TEST ->
+                    function.apply(internalIdpConfigurationResponseProvider);
+            case EXTERNAL ->
+                    function.apply(externalIdpConfigurationResponseProvider);
+        };
     }
 }

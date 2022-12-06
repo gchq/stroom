@@ -14,6 +14,7 @@ import stroom.proxy.repo.ProxyRepositoryStreamHandler;
 import stroom.proxy.repo.ProxyRepositoryStreamHandlers;
 import stroom.proxy.repo.store.Entries;
 import stroom.proxy.repo.store.SequentialFileStore;
+import stroom.security.api.UserIdentity;
 import stroom.security.common.impl.UserIdentityFactory;
 import stroom.test.common.TemporaryPathCreator;
 import stroom.test.common.util.test.StroomUnitTest;
@@ -130,7 +131,7 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
             throw new UncheckedIOException(e);
         }
 
-        Mockito.when(userIdentityFactory.getAuthHeaders(Mockito.any()))
+        Mockito.when(userIdentityFactory.getAuthHeaders(Mockito.any(UserIdentity.class)))
                 .thenReturn(Collections.emptyMap());
 
         final ProxyRepositoryStreamHandlers proxyRepositoryRequestHandlerProvider =
@@ -142,8 +143,6 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
         final BuildInfo buildInfo = new BuildInfo(now, "test version", now);
 
         final PathCreator pathCreator = new TemporaryPathCreator(tempDir);
-//        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
-
         final ProxyConfig proxyConfig = builder.build();
 
         ForwardHttpPostHandlersFactory forwardHttpPostHandlersFactory = new ForwardHttpPostHandlersFactory(
