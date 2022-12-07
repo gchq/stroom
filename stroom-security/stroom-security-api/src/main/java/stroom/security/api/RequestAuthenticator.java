@@ -1,5 +1,7 @@
 package stroom.security.api;
 
+import stroom.meta.api.AttributeMap;
+
 import java.util.Map;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
@@ -12,7 +14,7 @@ public interface RequestAuthenticator {
     /**
      * Authenticate an inbound request
      */
-    Optional<UserIdentity> authenticate(final HttpServletRequest request);
+    Optional<UserIdentity> authenticate(final HttpServletRequest request, final AttributeMap attributeMap);
 
     // TODO: 01/12/2022 Rename to canAuthenticate or similar so we can check for presence of certs
     /**

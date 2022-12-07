@@ -98,17 +98,8 @@ class ReceiveDataRequestHandler implements RequestHandler {
             }
 
             // Authenticate the request token if there is one.
-            final Optional<UserIdentity> optionalUserIdentity = requestAuthenticator.authenticate(request);
-
-            // Add the user identified in the token (if present) to the attribute map.
-            // Use both ID and username as the ID will likely be a nasty UUID while the username will be more
-            // useful for a human to read.
-            optionalUserIdentity
-                    .map(UserIdentity::getId)
-                    .ifPresent(id -> attributeMap.put(StandardHeaderArguments.UPLOAD_USER_ID, id));
-            optionalUserIdentity
-                    .map(UserIdentity::getPreferredUsername)
-                    .ifPresent(username -> attributeMap.put(StandardHeaderArguments.UPLOAD_USERNAME, username));
+            final Optional<UserIdentity> optionalUserIdentity = requestAuthenticator.authenticate(
+                    request, attributeMap);
 
             // TODO: 29/11/2022 fix auth validation
             if (receiveDataConfig.isAuthenticationRequired()
@@ -118,9 +109,6 @@ class ReceiveDataRequestHandler implements RequestHandler {
                 throw new StroomStreamException(StroomStatusCode.CLIENT_TOKEN_NOT_AUTHORISED, attributeMap);
 
             } else {
-                // Remove authorization header from attributes as it should not be stored or forwarded on.
-                requestAuthenticator.removeAuthorisationEntries(attributeMap);
-
                 // Validate the supplied attributes.
                 AttributeMapValidator.validate(attributeMap, metaService::getTypes);
 

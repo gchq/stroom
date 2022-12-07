@@ -22,8 +22,8 @@ import stroom.docref.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
-import stroom.security.api.RequestAuthenticator;
 import stroom.security.api.SecurityContext;
+import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -32,10 +32,8 @@ import stroom.util.shared.PermissionException;
 import io.dropwizard.jersey.errors.ErrorMessage;
 
 import java.util.function.Supplier;
-import javax.inject.Provider;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
@@ -53,17 +51,14 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
 
     private final SecurityContext securityContext;
     private final Supplier<String> uriSupplier;
-    private final Provider<Client> clientProvider;
-    private final RequestAuthenticator requestAuthenticator;
+    private final WebTargetFactory webTargetFactory;
 
     RemoteDataSourceProvider(final SecurityContext securityContext,
                              final Supplier<String> uriSupplier,
-                             final Provider<Client> clientProvider,
-                             final RequestAuthenticator requestAuthenticator) {
+                             final WebTargetFactory webTargetFactory) {
         this.securityContext = securityContext;
         this.uriSupplier = uriSupplier;
-        this.clientProvider = clientProvider;
-        this.requestAuthenticator = requestAuthenticator;
+        this.webTargetFactory = webTargetFactory;
     }
 
     public DataSource getDataSource(final DocRef docRef) {
@@ -107,14 +102,10 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
         final String uri = uriSupplier.get();
         try {
             LOGGER.trace("Sending request {} to {}/{}", request, uri, path);
-            Client client = clientProvider.get();
-            WebTarget webTarget = client.target(uri).path(path);
 
+            final WebTarget webTarget = webTargetFactory.create(uri)
+                    .path(path);
             final Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-
-            // Add auth headers to the request
-            requestAuthenticator.getAuthHeaders(securityContext.getUserIdentity())
-                    .forEach(invocationBuilder::header);
 
             final Response response = LOGGER.logDurationIfTraceEnabled(() ->
                             invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON)),

@@ -1,6 +1,7 @@
 package stroom.proxy.app.guice;
 
-import stroom.security.api.RequestAuthenticator;
+import stroom.security.api.UserIdentity;
+import stroom.security.common.impl.UserIdentityFactory;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.jersey.WebTargetProxy;
 
@@ -26,7 +27,7 @@ public class ProxyJerseyModule extends AbstractModule {
     @Provides
     @Singleton
     WebTargetFactory provideJerseyRequestBuilder(final Client client,
-                                                 final RequestAuthenticator requestAuthenticator) {
+                                                 final UserIdentityFactory userIdentityFactory) {
         return url -> {
             final WebTarget webTarget = client.target(url);
             return (WebTarget) new WebTargetProxy(webTarget) {
@@ -56,7 +57,8 @@ public class ProxyJerseyModule extends AbstractModule {
                  * have the auth header on them.
                  */
                 private void addAuthHeader(final Builder builder) {
-                    final Map<String, String> authHeaders = requestAuthenticator.getServiceUserAuthHeaders();
+                    final UserIdentity serviceUserIdentity = userIdentityFactory.getServiceUserIdentity();
+                    final Map<String, String> authHeaders = userIdentityFactory.getAuthHeaders(serviceUserIdentity);
                     authHeaders.forEach(builder::header);
                 }
             };

@@ -1,6 +1,8 @@
 ext.moduleName = 'stroom.security.api'
 
 dependencies {
+    implementation project(':stroom-meta:stroom-meta-api')
+
     implementation libs.jakarta_servlet_api
     implementation libs.slf4j_api
     implementation libs.ws_rs_api

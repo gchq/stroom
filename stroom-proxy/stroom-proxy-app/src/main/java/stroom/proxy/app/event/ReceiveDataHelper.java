@@ -2,7 +2,6 @@ package stroom.proxy.app.event;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
-import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.proxy.app.handler.AttributeMapFilterFactory;
 import stroom.proxy.app.handler.ProxyId;
@@ -15,7 +14,6 @@ import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamStatus;
 import stroom.security.api.RequestAuthenticator;
 import stroom.security.api.UserIdentity;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.Metrics;
@@ -141,27 +139,13 @@ public class ReceiveDataHelper {
                 && receiveDataConfig.isTokenAuthenticationEnabled()) {
             if (requestAuthenticator.hasAuthenticationToken(request)) {
                 // Authenticate the request token
-                final Optional<UserIdentity> optionalUserIdentity = requestAuthenticator.authenticate(request);
+                final Optional<UserIdentity> optionalUserIdentity = requestAuthenticator.authenticate(
+                        request, attributeMap);
 
-                optionalUserIdentity.ifPresentOrElse(
-                        userIdentity -> {
-                            // Add the user identified in the token (if present) to the attribute map.
-                            // Use both ID and username as the ID will likely be a nasty UUID while the
-                            // username will be more useful for a human to read.
-                            NullSafe.consume(
-                                    userIdentity.getId(),
-                                    id ->
-                                            attributeMap.put(StandardHeaderArguments.UPLOAD_USER_ID, id));
-                            NullSafe.consume(
-                                    userIdentity.getPreferredUsername(),
-                                    username ->
-                                            attributeMap.put(StandardHeaderArguments.UPLOAD_USERNAME, username));
-                        },
-                        () -> {
-                            // If token authentication is required, but we could not verify the token then error.
-                            throw new StroomStreamException(StroomStatusCode.CLIENT_TOKEN_NOT_AUTHORISED, attributeMap);
-                        });
-
+                if (optionalUserIdentity.isEmpty()) {
+                    // If token authentication is required, but we could not verify the token then error.
+                    throw new StroomStreamException(StroomStatusCode.CLIENT_TOKEN_NOT_AUTHORISED, attributeMap);
+                }
             } else {
                 throw new StroomStreamException(StroomStatusCode.CLIENT_TOKEN_REQUIRED, attributeMap);
             }

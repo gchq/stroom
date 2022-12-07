@@ -10,6 +10,7 @@ import stroom.docstore.impl.memory.MemoryPersistenceModule;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.feed.impl.FeedModule;
 import stroom.legacy.impex_6_1.LegacyImpexModule;
+import stroom.meta.api.AttributeMap;
 import stroom.meta.mock.MockMetaModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.receive.rules.impl.ReceiveDataRuleSetModule;
@@ -64,7 +65,8 @@ public class TestBaseModule extends AbstractModule {
     RequestAuthenticator requestAuthenticator() {
         return new RequestAuthenticator() {
             @Override
-            public Optional<UserIdentity> authenticate(final HttpServletRequest request) {
+            public Optional<UserIdentity> authenticate(final HttpServletRequest request,
+                                                       final AttributeMap attributeMap) {
                 return Optional.empty();
             }
 

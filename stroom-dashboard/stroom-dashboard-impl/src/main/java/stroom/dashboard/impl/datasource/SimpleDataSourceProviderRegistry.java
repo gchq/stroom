@@ -20,8 +20,8 @@ import stroom.config.common.UriFactory;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docref.DocRef;
-import stroom.security.api.RequestAuthenticator;
 import stroom.security.api.SecurityContext;
+import stroom.util.jersey.WebTargetFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,8 +32,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.inject.Provider;
-import javax.ws.rs.client.Client;
 
 class SimpleDataSourceProviderRegistry {
 
@@ -42,19 +40,16 @@ class SimpleDataSourceProviderRegistry {
     private final Map<String, DataSourceProvider> urlMap;
 
     private final SecurityContext securityContext;
-    private final Provider<Client> clientProvider;
     private final UriFactory uriFactory;
-    private final RequestAuthenticator requestAuthenticator;
+    private final WebTargetFactory webTargetFactory;
 
     SimpleDataSourceProviderRegistry(final SecurityContext securityContext,
                                      final UriFactory uriFactory,
                                      final DataSourceUrlConfig dataSourceUrlConfig,
-                                     final Provider<Client> clientProvider,
-                                     final RequestAuthenticator requestAuthenticator) {
+                                     final WebTargetFactory webTargetFactory) {
         this.securityContext = securityContext;
-        this.clientProvider = clientProvider;
         this.uriFactory = uriFactory;
-        this.requestAuthenticator = requestAuthenticator;
+        this.webTargetFactory = webTargetFactory;
 
         urlMap = new HashMap<>();
         urlMap.put("ElasticIndex", create(dataSourceUrlConfig::getElasticIndex));
@@ -63,7 +58,7 @@ class SimpleDataSourceProviderRegistry {
         urlMap.put("SolrIndex", create(dataSourceUrlConfig::getSolrIndex));
         urlMap.put("StatisticStore", create(dataSourceUrlConfig::getStatisticStore));
 
-        //strooom-stats is not available as a local service as if you have stroom-stats you have zookeeper so
+        //stroom-stats is not available as a local service as if you have stroom-stats you have zookeeper so
         //you can run service discovery
 
         LOGGER.info("Using the following services:\n" +
@@ -87,8 +82,7 @@ class SimpleDataSourceProviderRegistry {
         return new RemoteDataSourceProvider(
                 securityContext,
                 uriSupplier,
-                clientProvider,
-                requestAuthenticator);
+                webTargetFactory);
     }
 
     /**

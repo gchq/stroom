@@ -18,31 +18,26 @@ package stroom.dashboard.impl.datasource;
 
 import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docref.DocRef;
-import stroom.security.api.RequestAuthenticator;
 import stroom.security.api.SecurityContext;
 import stroom.servicediscovery.api.ExternalService;
 import stroom.servicediscovery.api.ServiceDiscoverer;
+import stroom.util.jersey.WebTargetFactory;
 
 import java.util.Optional;
-import javax.inject.Provider;
-import javax.ws.rs.client.Client;
 
 class ServiceDiscoveryDataSourceProviderRegistry {
 
     private final SecurityContext securityContext;
     private final ServiceDiscoverer serviceDiscoverer;
-    private final Provider<Client> clientProvider;
-    private final RequestAuthenticator requestAuthenticator;
+    private final WebTargetFactory webTargetFactory;
 
     //    @Inject
     ServiceDiscoveryDataSourceProviderRegistry(final SecurityContext securityContext,
                                                final ServiceDiscoverer serviceDiscoverer,
-                                               final Provider<Client> clientProvider,
-                                               final RequestAuthenticator requestAuthenticator) {
+                                               final WebTargetFactory webTargetFactory) {
         this.securityContext = securityContext;
         this.serviceDiscoverer = serviceDiscoverer;
-        this.clientProvider = clientProvider;
-        this.requestAuthenticator = requestAuthenticator;
+        this.webTargetFactory = webTargetFactory;
     }
 
     /**
@@ -66,8 +61,7 @@ class ServiceDiscoveryDataSourceProviderRegistry {
                     return Optional.of(new RemoteDataSourceProvider(
                             securityContext,
                             () -> address,
-                            clientProvider,
-                            requestAuthenticator));
+                            webTargetFactory));
                 });
     }
 
