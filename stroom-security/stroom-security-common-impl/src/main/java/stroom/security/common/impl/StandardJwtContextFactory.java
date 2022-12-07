@@ -17,6 +17,7 @@ import org.jose4j.jwt.consumer.JwtContext;
 import org.jose4j.keys.resolvers.JwksVerificationKeyResolver;
 import org.jose4j.keys.resolvers.VerificationKeyResolver;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -59,6 +60,17 @@ public class StandardJwtContextFactory implements JwtContextFactory {
             headers.remove(AMZN_OIDC_ACCESS_TOKEN_HEADER);
             headers.remove(AMZN_OIDC_DATA_HEADER);
             headers.remove(AMZN_OIDC_IDENTITY_HEADER);
+        }
+    }
+
+    @Override
+    public Map<String, String> createAuthorisationEntries(final String accessToken) {
+        // Should be common to both internal and external IDPs
+        if (NullSafe.isBlankString(accessToken)) {
+            return Collections.emptyMap();
+        } else {
+            // TODO: 07/12/2022 Do we need to set the amzn headers?
+            return Map.of(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
         }
     }
 

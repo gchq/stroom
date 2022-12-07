@@ -22,6 +22,7 @@ import org.jose4j.jwt.consumer.JwtContext;
 import org.jose4j.keys.resolvers.JwksVerificationKeyResolver;
 import org.jose4j.keys.resolvers.VerificationKeyResolver;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -29,6 +30,7 @@ import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.HttpHeaders;
 
 class InternalJwtContextFactory implements JwtContextFactory {
 
@@ -59,6 +61,16 @@ class InternalJwtContextFactory implements JwtContextFactory {
     public void removeAuthorisationEntries(final Map<String, String> headers) {
         if (NullSafe.hasEntries(headers)) {
             headers.remove(AUTHORIZATION_HEADER);
+        }
+    }
+
+    @Override
+    public Map<String, String> createAuthorisationEntries(final String accessToken) {
+        // Should be common to both internal and external IDPs
+        if (NullSafe.isBlankString(accessToken)) {
+            return Collections.emptyMap();
+        } else {
+            return Map.of(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
         }
     }
 

@@ -44,7 +44,6 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.core.HttpHeaders;
 
 @Singleton
 public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
@@ -134,7 +133,7 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
             return Collections.emptyMap();
         } else if (IdpType.TEST.equals(openIdConfigProvider.get().getIdentityProviderType())) {
             LOGGER.debug("Using default token");
-            return buildHeaders(defaultOpenIdCredentials.getApiKey());
+            return jwtContextFactory.createAuthorisationEntries(defaultOpenIdCredentials.getApiKey());
         } else if (userIdentity instanceof final AbstractTokenUserIdentity tokenUserIdentity) {
             // just in case the refresh queue is backed up
             if (tokenUserIdentity.hasTokenExpired()) {
@@ -142,12 +141,12 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
             }
             final String accessToken = Objects.requireNonNull(tokenUserIdentity.getAccessToken(),
                     () -> "Null access token for userIdentity " + userIdentity);
-            return buildHeaders(accessToken);
+            return jwtContextFactory.createAuthorisationEntries(accessToken);
         } else if (userIdentity instanceof final HasJwt hasJwt) {
             // This is for stroom's processing user identity which we don't need to refresh as
             // ProcessingUserIdentityProviderImpl handles that
             final String accessToken = Objects.requireNonNull(hasJwt.getJwt());
-            return buildHeaders(accessToken);
+            return jwtContextFactory.createAuthorisationEntries(accessToken);
         } else {
             LOGGER.debug(() -> "Wrong type of userIdentity " + userIdentity.getClass());
             return Collections.emptyMap();
@@ -156,16 +155,7 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
 
     @Override
     public Map<String, String> getAuthHeaders(final String jwt) {
-        return buildHeaders(jwt);
-    }
-
-    private Map<String, String> buildHeaders(final String accessToken) {
-        // Should be common to both internal and external IDPs
-        if (NullSafe.isBlankString(accessToken)) {
-            return Collections.emptyMap();
-        } else {
-            return Map.of(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
-        }
+        return jwtContextFactory.createAuthorisationEntries(jwt);
     }
 
     @Override

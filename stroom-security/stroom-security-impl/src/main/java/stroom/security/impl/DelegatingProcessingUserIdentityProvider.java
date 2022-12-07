@@ -2,7 +2,7 @@ package stroom.security.impl;
 
 import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.UserIdentity;
-import stroom.security.openid.api.OpenIdConfiguration;
+import stroom.security.openid.api.OpenIdConfig;
 import stroom.security.openid.api.OpenIdConfiguration.IdpType;
 
 import java.util.Map;
@@ -17,13 +17,13 @@ import javax.inject.Provider;
 public class DelegatingProcessingUserIdentityProvider implements ProcessingUserIdentityProvider {
 
     private final Map<IdpType, ProcessingUserIdentityProvider> delegates;
-    private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
+    private final Provider<OpenIdConfig> openIdConfigProvider;
 
     @Inject // MapBinder injection
     public DelegatingProcessingUserIdentityProvider(final Map<IdpType, ProcessingUserIdentityProvider> delegates,
-                                                    final Provider<OpenIdConfiguration> openIdConfigurationProvider) {
+                                                    final Provider<OpenIdConfig> openIdConfigProvider) {
         this.delegates = delegates;
-        this.openIdConfigurationProvider = openIdConfigurationProvider;
+        this.openIdConfigProvider = openIdConfigProvider;
     }
 
     @Override
@@ -42,7 +42,7 @@ public class DelegatingProcessingUserIdentityProvider implements ProcessingUserI
     }
 
     private ProcessingUserIdentityProvider getDelegate() {
-        final IdpType idpType = openIdConfigurationProvider.get().getIdentityProviderType();
+        final IdpType idpType = openIdConfigProvider.get().getIdentityProviderType();
         final ProcessingUserIdentityProvider delegate = delegates.get(idpType);
 
         Objects.requireNonNull(delegate, () -> "No ProcessingUserIdentityProvider binding for type " + idpType);

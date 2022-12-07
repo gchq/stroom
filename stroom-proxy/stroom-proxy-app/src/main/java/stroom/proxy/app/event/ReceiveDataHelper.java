@@ -28,7 +28,6 @@ import java.util.UUID;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.HttpHeaders;
 
 public class ReceiveDataHelper {
 
@@ -169,7 +168,6 @@ public class ReceiveDataHelper {
         }
         // Remove authorization header from attributes as it should not be stored or forwarded on.
         requestAuthenticator.removeAuthorisationEntries(attributeMap);
-        attributeMap.remove(HttpHeaders.AUTHORIZATION);
     }
 
     public interface Handler {

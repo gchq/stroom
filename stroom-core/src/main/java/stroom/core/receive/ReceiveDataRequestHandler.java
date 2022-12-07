@@ -118,8 +118,8 @@ class ReceiveDataRequestHandler implements RequestHandler {
                 throw new StroomStreamException(StroomStatusCode.CLIENT_TOKEN_NOT_AUTHORISED, attributeMap);
 
             } else {
-                // Remove authorization header from attributes.
-                attributeMap.remove(HttpHeaders.AUTHORIZATION);
+                // Remove authorization header from attributes as it should not be stored or forwarded on.
+                requestAuthenticator.removeAuthorisationEntries(attributeMap);
 
                 // Validate the supplied attributes.
                 AttributeMapValidator.validate(attributeMap, metaService::getTypes);

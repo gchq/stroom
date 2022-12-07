@@ -5,21 +5,20 @@ import stroom.importexport.api.DocumentData;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.security.api.ClientSecurityUtil;
+import stroom.proxy.app.handler.FeedStatusConfig;
+import stroom.security.common.impl.UserIdentityFactory;
 import stroom.util.HasHealthCheck;
 import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.codahale.metrics.health.HealthCheck;
-import com.google.common.base.Strings;
 import io.dropwizard.lifecycle.Managed;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -34,22 +33,24 @@ import javax.inject.Singleton;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 @Singleton
 public class ContentSyncService implements Managed, HasHealthCheck {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ContentSyncService.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContentSyncService.class);
 
     private final Provider<ProxyConfig> proxyConfigProvider;
     private final Provider<ContentSyncConfig> contentSyncConfigProvider;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final Set<ImportExportActionHandler> importExportActionHandlers;
-    private final Provider<Client> clientProvider;
+    private final Provider<Client> jerseyClientProvider;
+    private final UserIdentityFactory userIdentityFactory;
 
     private volatile ScheduledExecutorService scheduledExecutorService;
 
@@ -58,11 +59,13 @@ public class ContentSyncService implements Managed, HasHealthCheck {
                               final Provider<ContentSyncConfig> contentSyncConfigProvider,
                               final DefaultOpenIdCredentials defaultOpenIdCredentials,
                               final Set<ImportExportActionHandler> importExportActionHandlers,
-                              final Provider<Client> clientProvider) {
+                              final Provider<Client> jerseyClientProvider,
+                              final UserIdentityFactory userIdentityFactory) {
         this.contentSyncConfigProvider = contentSyncConfigProvider;
         this.importExportActionHandlers = importExportActionHandlers;
-        this.clientProvider = clientProvider;
+        this.jerseyClientProvider = jerseyClientProvider;
         this.proxyConfigProvider = proxyConfigProvider;
+        this.userIdentityFactory = userIdentityFactory;
         contentSyncConfigProvider.get().validateConfiguration();
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
     }
@@ -111,13 +114,14 @@ public class ContentSyncService implements Managed, HasHealthCheck {
                     try {
                         if (url != null) {
                             LOGGER.info("Syncing content from '" + url + "'");
-                            final Response response = createClient(url, "/list").get();
+                            final Response response = createClient(url, "/list", contentSyncConfig).get();
                             if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
                                 LOGGER.error(response.getStatusInfo().getReasonPhrase());
                             } else {
                                 final Set<DocRef> docRefs = response.readEntity(new GenericType<Set<DocRef>>() {
                                 });
-                                docRefs.forEach(docRef -> importDocument(url, docRef, importHandler));
+                                docRefs.forEach(docRef ->
+                                        importDocument(url, docRef, importHandler, contentSyncConfig));
                                 LOGGER.info("Synced {} documents", docRefs.size());
                             }
                         }
@@ -131,9 +135,10 @@ public class ContentSyncService implements Managed, HasHealthCheck {
 
     private void importDocument(final String url,
                                 final DocRef docRef,
-                                final ImportExportActionHandler importExportActionHandler) {
+                                final ImportExportActionHandler importExportActionHandler,
+                                final ContentSyncConfig contentSyncConfig) {
         LOGGER.info("Fetching " + docRef.getType() + " " + docRef.getName() + " " + docRef.getUuid());
-        final Response response = createClient(url, "/export").post(Entity.json(docRef));
+        final Response response = createClient(url, "/export", contentSyncConfig).post(Entity.json(docRef));
         if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
             LOGGER.error(response.getStatusInfo().getReasonPhrase());
         } else {
@@ -149,28 +154,31 @@ public class ContentSyncService implements Managed, HasHealthCheck {
         }
     }
 
-    private Invocation.Builder createClient(final String url, final String path) {
-        final Client client = clientProvider.get();
-        final WebTarget webTarget = client.target(url)
-                .path(path);
-        final Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-        ClientSecurityUtil.addAuthorisationHeader(invocationBuilder, getApiKey());
-        return invocationBuilder;
+    private Invocation.Builder createClient(final String url,
+                                            final String path,
+                                            final ContentSyncConfig contentSyncConfig) {
+        return jerseyClientProvider.get()
+                .target(url)
+                .path(path)
+                .request(MediaType.APPLICATION_JSON)
+                .headers(getHeaders(contentSyncConfig));
     }
 
-    private String getApiKey() {
+    private MultivaluedMap<String, Object> getHeaders(final ContentSyncConfig contentSyncConfig) {
+        final Map<String, String> headers;
 
-        final ProxyConfig proxyConfig = proxyConfigProvider.get();
-        final ContentSyncConfig contentSyncConfig = contentSyncConfigProvider.get();
+        if (!NullSafe.isBlankString(contentSyncConfig.getApiKey())) {
+            // Intended for when stroom is using its internal IDP. Create the API Key in stroom UI
+            // and add it to config.
+            LOGGER.debug(() -> LogUtil.message("Using API key from config prop {}",
+                    contentSyncConfig.getFullPathStr(FeedStatusConfig.PROP_NAME_API_KEY)));
 
-        // Allows us to use hard-coded open id creds / token to authenticate with stroom
-        // out of the box. ONLY for use in test/demo environments.
-        if (proxyConfig.isUseDefaultOpenIdCredentials() && Strings.isNullOrEmpty(contentSyncConfig.getApiKey())) {
-            LOGGER.info("Using default authentication token, should only be used in test/demo environments.");
-            return Objects.requireNonNull(defaultOpenIdCredentials.getApiKey());
+            headers = userIdentityFactory.getAuthHeaders(contentSyncConfig.getApiKey());
         } else {
-            return contentSyncConfig.getApiKey();
+            // Use a token from the external IDP
+            headers = userIdentityFactory.getAuthHeaders(userIdentityFactory.getServiceUserIdentity());
         }
+        return new MultivaluedHashMap<>(headers);
     }
 
     @Override
@@ -193,7 +201,7 @@ public class ContentSyncService implements Managed, HasHealthCheck {
                             entry.getValue() != null)
                     .forEach(entry -> {
                         final String url = entry.getValue();
-                        final String msg = validatePost(url, path);
+                        final String msg = validatePost(url, path, contentSyncConfig);
 
                         if (!"200".equals(msg)) {
                             allHealthy.set(false);
@@ -214,10 +222,12 @@ public class ContentSyncService implements Managed, HasHealthCheck {
         return resultBuilder.build();
     }
 
-    private String validatePost(final String url, final String path) {
+    private String validatePost(final String url,
+                                final String path,
+                                final ContentSyncConfig contentSyncConfig) {
         final Response response;
         try {
-            response = createClient(url, path).get();
+            response = createClient(url, path, contentSyncConfig).get();
             if (response.getStatusInfo().getStatusCode() == Status.OK.getStatusCode()) {
                 return String.valueOf(Status.OK.getStatusCode());
             } else {

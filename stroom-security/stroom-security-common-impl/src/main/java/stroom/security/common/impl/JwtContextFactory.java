@@ -12,6 +12,8 @@ public interface JwtContextFactory {
 
     void removeAuthorisationEntries(final Map<String, String> headers);
 
+    Map<String, String> createAuthorisationEntries(final String accessToken);
+
     Optional<JwtContext> getJwtContext(final HttpServletRequest request);
 
     /**
