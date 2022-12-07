@@ -13,10 +13,10 @@ import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.SelectJoinStep;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
 
@@ -43,12 +43,14 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
             final TermHandler<Long> termHandler = termHandlerFactory.create(
                     dataSourceField,
                     valueField,
-                    value -> {
+                    values -> {
                         try {
-                            return List.of(Long.valueOf(value));
+                            return values.stream()
+                                    .map(Long::valueOf)
+                                    .collect(Collectors.toList());
                         } catch (final NumberFormatException e) {
                             throw new NumberFormatException("Error parsing value \"" +
-                                    value +
+                                    values +
                                     "\" as number for field '" +
                                     dataSourceField.getName() +
                                     "'");

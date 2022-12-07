@@ -7,6 +7,7 @@ import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.shared.ImportState;
 import stroom.util.shared.Message;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -72,7 +73,28 @@ public interface Store<D extends Doc> extends DocumentActionHandler<D> {
 
     List<DocRef> list();
 
-    List<DocRef> findByName(String name);
+    /**
+     * Find by exact case-sensitive match on the name
+     */
+    default List<DocRef> findByName(String name) {
+        return name != null
+                ? findByNames(List.of(name), false)
+                : Collections.emptyList();
+    }
+
+    /**
+     * Find by case-sensitive match on the name.
+     * If allowWildCards is true '*' can be used to denote a 0-many char wild card.
+     */
+    default List<DocRef> findByName(final String name,
+                                    final boolean allowWildCards) {
+        return name != null
+                ? findByNames(List.of(name), allowWildCards)
+                : Collections.emptyList();
+    }
+
+    List<DocRef> findByNames(final List<String> name,
+                             final boolean allowWildCards);
 
     interface DocumentCreator<D extends Doc> {
 

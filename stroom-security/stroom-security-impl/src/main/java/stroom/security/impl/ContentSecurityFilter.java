@@ -16,6 +16,7 @@
 
 package stroom.security.impl;
 
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -24,6 +25,7 @@ import com.google.common.net.HttpHeaders;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.servlet.Filter;
@@ -80,28 +82,47 @@ public class ContentSecurityFilter implements Filter {
         Objects.requireNonNull(response);
 
         final ContentSecurityConfig config = configProvider.get();
-        if (!Strings.isNullOrEmpty(config.getContentSecurityPolicy())) {
-            response.setHeader(HttpHeaders.CONTENT_SECURITY_POLICY, config.getContentSecurityPolicy());
+        final String contentSecurityPolicy = config.getContentSecurityPolicy();
 
-            String userAgent = request.getHeader(HttpHeaders.USER_AGENT);
-            if (userAgent != null) {
+        if (!Strings.isNullOrEmpty(contentSecurityPolicy)) {
+            response.setHeader(HttpHeaders.CONTENT_SECURITY_POLICY, contentSecurityPolicy);
+
+            NullSafe.consume(request.getHeader(HttpHeaders.USER_AGENT), userAgent -> {
                 // Send the CSP header so that IE10 and IE11 recognise it
                 if (userAgent.contains(USER_AGENT_IE_10) || userAgent.contains(USER_AGENT_IE_11)) {
-                    response.setHeader(HEADER_IE_X_CONTENT_SECURITY_POLICY, config.getContentSecurityPolicy());
+                    response.setHeader(HEADER_IE_X_CONTENT_SECURITY_POLICY, contentSecurityPolicy);
                 }
+            });
+        }
+        setResponseHeader(response, HttpHeaders.X_CONTENT_TYPE_OPTIONS, config::getContentTypeOptions);
+        setResponseHeader(response, HttpHeaders.X_FRAME_OPTIONS, config::getFrameOptions);
+        setResponseHeader(response, HttpHeaders.X_XSS_PROTECTION, config::getXssProtection);
+
+        // HTTP header: 'Strict-Transport-Security'
+        // Once the browser sees this header on an HTTPS request, ANY/ALL future HTTP requests on this domain
+        // will be redirected by the browser (307) to HTTPS. Clearing the browser cache will not clear it. In
+        // chrome visit chrome://net-internals/#hsts and use 'Query HSTS/PKP domain' and
+        // 'Delete domain security policies'.
+        // A note for dev testing. HSTS only works if the cert is valid and the domain cannot be an IP address.
+        // I.e. the public FQDN of stroom needs to be in the cert SAN list and the CA cert needs to be imported
+        // into the browser. Also, you can't test it with superdev. To test in a docker stack, add this
+        //   extra_hosts:
+        //     - "my-host-name:192.168.1.1" # Where 192.168.1.1 is the IP of your host & resolvable in containers
+        // To stroom.yml and nginx.yml docker compose files. Also, in the stack env file set
+        //   export HOST_IP="my-host-name"
+        // Also ensure my-host-name is in the SAN list of the server cert (see server.ssl.conf) and the CA cert
+        // is imported in the browser. Simples.
+        setResponseHeader(response, HttpHeaders.STRICT_TRANSPORT_SECURITY, config::getStrictTransportSecurity);
+    }
+
+    private void setResponseHeader(final HttpServletResponse response,
+                                   final String headerName,
+                                   final Supplier<String> valueSupplier) {
+        if (valueSupplier != null && !Strings.isNullOrEmpty(headerName)) {
+            final String headerValue = valueSupplier.get();
+            if (!Strings.isNullOrEmpty(headerValue)) {
+                response.setHeader(headerName, headerValue);
             }
-        }
-
-        if (!Strings.isNullOrEmpty(config.getContentTypeOptions())) {
-            response.setHeader(HttpHeaders.X_CONTENT_TYPE_OPTIONS, config.getContentTypeOptions());
-        }
-
-        if (!Strings.isNullOrEmpty(config.getFrameOptions())) {
-            response.setHeader(HttpHeaders.X_FRAME_OPTIONS, config.getFrameOptions());
-        }
-
-        if (!Strings.isNullOrEmpty(config.getXssProtection())) {
-            response.setHeader(HttpHeaders.X_XSS_PROTECTION, config.getXssProtection());
         }
     }
 }

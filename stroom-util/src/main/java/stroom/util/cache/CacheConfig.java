@@ -1,5 +1,6 @@
 package stroom.util.cache;
 
+import stroom.util.NullSafe;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.config.annotations.RequiresRestart.RestartScope;
 import stroom.util.shared.AbstractConfig;
@@ -129,7 +130,7 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig, IsPro
 
         public CacheConfig build() {
             final CacheConfig cacheConfig = new CacheConfig(maximumSize, expireAfterAccess, expireAfterWrite);
-            cacheConfig.setBasePath(basePath);
+            NullSafe.consume(basePath, cacheConfig::setBasePath);
             return cacheConfig;
         }
     }

@@ -18,6 +18,7 @@ import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.InclusiveRanges;
 import stroom.processor.api.InclusiveRanges.InclusiveRange;
 import stroom.processor.impl.CreatedTasks;
@@ -31,6 +32,7 @@ import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.processor.shared.TaskStatus;
+import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionUtil;
@@ -71,6 +73,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 import static java.util.Map.entry;
@@ -105,6 +108,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             entry(ProcessorTaskFields.FIELD_FEED, PROCESSOR_FEED.NAME),
             entry(ProcessorTaskFields.FIELD_PRIORITY, PROCESSOR_FILTER.PRIORITY),
             entry(ProcessorTaskFields.FIELD_PIPELINE, PROCESSOR.PIPELINE_UUID),
+            entry(ProcessorTaskFields.FIELD_PIPELINE_NAME, PROCESSOR.PIPELINE_UUID),
             entry(ProcessorTaskFields.FIELD_STATUS, PROCESSOR_TASK.STATUS),
             entry(ProcessorTaskFields.FIELD_COUNT, COUNT),
             entry(ProcessorTaskFields.FIELD_NODE, PROCESSOR_NODE.NAME),
@@ -173,7 +177,11 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         expressionMapper.map(ProcessorTaskFields.META_ID, PROCESSOR_TASK.META_ID, Long::valueOf);
         expressionMapper.map(ProcessorTaskFields.NODE_NAME, PROCESSOR_NODE.NAME, value -> value);
         expressionMapper.map(ProcessorTaskFields.FEED, PROCESSOR_FEED.NAME, value -> value, true);
-        expressionMapper.map(ProcessorTaskFields.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value);
+        // Get a uuid for the selected pipe doc
+        expressionMapper.map(ProcessorTaskFields.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value, false);
+        // Get 0-many uuids for a pipe name (partial/wild-carded)
+        expressionMapper.multiMap(
+                ProcessorTaskFields.PIPELINE_NAME, PROCESSOR.PIPELINE_UUID, this::getPipelineUuidsByName, true);
         expressionMapper.map(ProcessorTaskFields.PROCESSOR_FILTER_ID, PROCESSOR_FILTER.ID, Integer::valueOf);
         expressionMapper.map(ProcessorTaskFields.PROCESSOR_FILTER_PRIORITY,
                 PROCESSOR_FILTER.PRIORITY,
@@ -199,6 +207,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         valueMapper.map(ProcessorTaskFields.NODE_NAME, PROCESSOR_NODE.NAME, ValString::create);
         valueMapper.map(ProcessorTaskFields.FEED, PROCESSOR_FEED.NAME, ValString::create);
         valueMapper.map(ProcessorTaskFields.PIPELINE, PROCESSOR.PIPELINE_UUID, this::getPipelineName);
+        valueMapper.map(ProcessorTaskFields.PIPELINE_NAME, PROCESSOR.PIPELINE_UUID, this::getPipelineName);
         valueMapper.map(ProcessorTaskFields.PROCESSOR_FILTER_ID, PROCESSOR_FILTER.ID, ValInteger::create);
         valueMapper.map(ProcessorTaskFields.PROCESSOR_FILTER_PRIORITY, PROCESSOR_FILTER.PRIORITY, ValInteger::create);
         valueMapper.map(ProcessorTaskFields.PROCESSOR_ID, PROCESSOR.ID, ValInteger::create);
@@ -289,7 +298,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
      * Retain task ownership
      *
      * @param retainForNodes    A set of nodes to retain task ownership for.
-     * @param statusOlderThanMs Change task ownership for tasks that have a status older than this.
+     * @param statusOlderThan Change task ownership for tasks that have a status older than this.
      */
     @Override
     public void retainOwnedTasks(final Set<String> retainForNodes, final Instant statusOlderThan) {
@@ -777,6 +786,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 ProcessorTaskFields.PROCESSOR_FILTER_ID,
                 ProcessorTaskFields.PROCESSOR_FILTER_PRIORITY);
 
+        validateExpressionTerms(criteria.getExpression());
+
         final List<AbstractField> fieldList = Arrays.asList(fields);
         final boolean nodeUsed = isUsed(Set.of(ProcessorTaskFields.NODE_NAME), fieldList, criteria);
         final boolean feedUsed = isUsed(Set.of(ProcessorTaskFields.FEED), fieldList, criteria);
@@ -1029,6 +1040,46 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 record.getEndTimeMs(),
                 TaskStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.getStatus()),
                 processorFilter);
+    }
+
+    private boolean validateExpressionTerms(final ExpressionItem expressionItem) {
+        // TODO: 31/10/2022 Ideally this would be done in CommonExpressionMapper but we
+        //  seem to have a load of expressions using unsupported conditions so would get
+        //  exceptions all over the place.
+
+        if (expressionItem == null) {
+            return true;
+        } else {
+            final Map<String, AbstractField> fieldMap = ProcessorTaskFields.getFieldMap();
+
+            return ExpressionUtil.validateExpressionTerms(expressionItem, term -> {
+                final AbstractField field = fieldMap.get(term.getField());
+                if (field == null) {
+                    throw new RuntimeException(LogUtil.message("Unknown field {} in term {}, in expression {}",
+                            term.getField(), term, expressionItem));
+                } else {
+                    final boolean isValid = field.supportsCondition(term.getCondition());
+                    if (!isValid) {
+                        throw new RuntimeException(LogUtil.message("Condition '{}' is not supported by field '{}' " +
+                                        "of type {}. Term: {}",
+                                term.getCondition(),
+                                term.getField(),
+                                field.getType(), term));
+                    } else {
+                        return true;
+                    }
+                }
+            });
+        }
+    }
+
+    private List<String> getPipelineUuidsByName(final List<String> pipelineNames) {
+        // Can't cache this in a simple map due to pipes being renamed, but
+        // docRefInfoService should cache most of this anyway.
+        return docRefInfoService.findByNames(PipelineDoc.DOCUMENT_TYPE, pipelineNames, true)
+                .stream()
+                .map(DocRef::getUuid)
+                .collect(Collectors.toList());
     }
 
     private static class CreationState {

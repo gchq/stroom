@@ -178,4 +178,9 @@ public class IndexStoreImpl implements IndexStore {
     public List<DocRef> list() {
         return store.list();
     }
+
+    @Override
+    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
+        return store.findByNames(name, allowWildCards);
+    }
 }

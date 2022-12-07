@@ -36,6 +36,15 @@ public class NullSafe {
     }
 
     /**
+     * @return True if both str and subStr are non-null and str contains subStr
+     */
+    public static boolean contains(final String str, final String subStr) {
+        return str != null
+                && subStr != null
+                && str.contains(subStr);
+    }
+
+    /**
      * @return True if the collection is null or empty
      */
     public static <T> boolean isEmptyCollection(final Collection<T> collection) {
@@ -113,6 +122,24 @@ public class NullSafe {
      */
     public static <T1, T2> boolean hasEntries(final Map<T1, T2> map) {
         return map != null && !map.isEmpty();
+    }
+
+    /**
+     * @return The size of the collection or zero if null.
+     */
+    public static <T> int size(final Collection<T> collection) {
+        return collection != null
+                ? collection.size()
+                : 0;
+    }
+
+    /**
+     * @return The size of the collection or zero if null.
+     */
+    public static <K, V> int size(final Map<K, V> map) {
+        return map != null
+                ? map.size()
+                : 0;
     }
 
     /**
