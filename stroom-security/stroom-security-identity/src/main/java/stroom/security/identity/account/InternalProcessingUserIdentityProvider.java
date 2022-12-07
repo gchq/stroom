@@ -8,6 +8,7 @@ import stroom.security.identity.token.TokenBuilderFactory;
 import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -20,7 +21,7 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
-class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvider {
+class InternalProcessingUserIdentityProvider implements ProcessingUserIdentityProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessingUserIdentityProvider.class);
     private static final long ONE_DAY = TimeUnit.DAYS.toMillis(1);
@@ -33,9 +34,9 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
     private volatile UserIdentity userIdentity;
 
     @Inject
-    ProcessingUserIdentityProviderImpl(final TokenBuilderFactory tokenBuilderFactory,
-                                       final OpenIdClientFactory openIdClientDetailsFactory,
-                                       final Provider<IdentityConfig> identityConfigProvider) {
+    InternalProcessingUserIdentityProvider(final TokenBuilderFactory tokenBuilderFactory,
+                                           final OpenIdClientFactory openIdClientDetailsFactory,
+                                           final Provider<IdentityConfig> identityConfigProvider) {
         this.tokenBuilderFactory = tokenBuilderFactory;
         this.openIdClientDetailsFactory = openIdClientDetailsFactory;
         this.identityConfigProvider = identityConfigProvider;
@@ -50,6 +51,7 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
                 if (userIdentity == null || lastFetchTime.get() < now - ONE_DAY) {
                     final String token = createToken();
                     userIdentity = new ProcessingUserIdentity(token);
+                    LOGGER.info("Created internal processing user identity {}", userIdentity);
                     lastFetchTime.set(now);
                 }
             }
@@ -78,12 +80,12 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
         final boolean isProcessingUser = Objects.equals(subject, ProcessingUserIdentity.INTERNAL_PROCESSING_USER)
                 && Objects.equals(issuer, identityConfigProvider.get().getTokenConfig().getJwsIssuer());
 
-        LOGGER.debug("Comparing subject: [{}|{}], issuer[{}|{}], result: {}",
+        LOGGER.debug(() -> LogUtil.message("Comparing subject: [{}|{}], issuer[{}|{}], result: {}",
                 subject,
                 ProcessingUserIdentity.INTERNAL_PROCESSING_USER,
                 issuer,
                 identityConfigProvider.get().getTokenConfig().getJwsIssuer(),
-                isProcessingUser);
+                isProcessingUser));
 
         return isProcessingUser;
     }

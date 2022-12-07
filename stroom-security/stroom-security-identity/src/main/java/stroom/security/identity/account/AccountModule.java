@@ -18,6 +18,7 @@ package stroom.security.identity.account;
 
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.security.api.ProcessingUserIdentityProvider;
+import stroom.security.openid.api.OpenIdConfiguration.IdpType;
 import stroom.security.shared.UserNameProvider;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
@@ -35,7 +36,10 @@ public final class AccountModule extends AbstractModule {
     protected void configure() {
 
         bind(AccountService.class).to(AccountServiceImpl.class);
-        bind(ProcessingUserIdentityProvider.class).to(ProcessingUserIdentityProviderImpl.class);
+
+        GuiceUtil.buildMapBinder(binder(), IdpType.class, ProcessingUserIdentityProvider.class)
+                .addBinding(IdpType.INTERNAL, InternalProcessingUserIdentityProvider.class)
+                .addBinding(IdpType.TEST, InternalProcessingUserIdentityProvider.class);
 
         GuiceUtil.buildMultiBinder(binder(), UserNameProvider.class)
                 .addBinding(AccountServiceImpl.class);

@@ -1,7 +1,9 @@
 package stroom.proxy.app.security;
 
+import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.RequestAuthenticator;
 import stroom.security.common.impl.ExternalIdpConfigurationProvider;
+import stroom.security.common.impl.ExternalProcessingUserIdentityProvider;
 import stroom.security.common.impl.HttpClientProvider;
 import stroom.security.common.impl.IdpConfigurationProvider;
 import stroom.security.common.impl.IdpIdentityMapper;
@@ -31,5 +33,7 @@ public class ProxySecurityModule extends AbstractModule {
 
         HasHealthCheckBinder.create(binder())
                 .bind(ExternalIdpConfigurationProvider.class);
+
+        bind(ProcessingUserIdentityProvider.class).to(ExternalProcessingUserIdentityProvider.class);
     }
 }

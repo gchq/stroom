@@ -28,7 +28,7 @@ public abstract class AbstractTokenUserIdentity implements UserIdentity, HasJwt,
 
     private final String id;
 
-    // Should only mutate these using mutateUnderLock()
+    // Should only mutate all these volatiles using mutateUnderLock()
     private volatile TokenResponse tokenResponse;
     private volatile JwtClaims jwtClaims;
     // The time we need to refresh the tokens which will be a bit BEFORE the token expiry time
@@ -94,6 +94,9 @@ public abstract class AbstractTokenUserIdentity implements UserIdentity, HasJwt,
         return jwtClaims;
     }
 
+    /**
+     * @return True if the token has actually expired without any buffer period.
+     */
     public boolean hasTokenExpired() {
         return System.currentTimeMillis() >= expireTimeEpochMs;
     }
@@ -103,7 +106,7 @@ public abstract class AbstractTokenUserIdentity implements UserIdentity, HasJwt,
      * Either means we need to use the refresh token to get new tokens or if there is no
      * refresh token then we need to request new tokens without using a refresh token.
      */
-    public boolean isTokenRefreshRequired() {
+    boolean isTokenRefreshRequired() {
         return System.currentTimeMillis() >= expireTimeWithBufferEpochMs;
     }
 
@@ -118,7 +121,8 @@ public abstract class AbstractTokenUserIdentity implements UserIdentity, HasJwt,
         try {
             final Instant expireTime = Instant.ofEpochMilli(jwtClaims.getExpirationTime().getValueInMillis());
             final Duration timeToExpire = Duration.between(Instant.now(), expireTime);
-            final long expiryBufferMs = Math.min(EXPIRY_BUFFER, timeToExpire.toMillis());
+            final long timeToExpireMs = timeToExpire.toMillis();
+            final long expiryBufferMs = Math.min(EXPIRY_BUFFER, (long) (timeToExpireMs * 0.1));
             final Instant expireTimeWithBuffer = expireTime.minusMillis(expiryBufferMs);
             expireTimeEpochMs = expireTime.toEpochMilli();
             expireTimeWithBufferEpochMs = expireTimeWithBuffer.toEpochMilli();
@@ -174,6 +178,7 @@ public abstract class AbstractTokenUserIdentity implements UserIdentity, HasJwt,
                 .orElseGet(this::getId);
     }
 
+    // CUSTOM equals
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -183,13 +188,13 @@ public abstract class AbstractTokenUserIdentity implements UserIdentity, HasJwt,
             return false;
         }
         final AbstractTokenUserIdentity that = (AbstractTokenUserIdentity) o;
-        return Objects.equals(id, that.id) && Objects.equals(tokenResponse,
-                that.tokenResponse) && Objects.equals(jwtClaims, that.jwtClaims);
+        return Objects.equals(id, that.id);
     }
 
+    // CUSTOM hash
     @Override
     public int hashCode() {
-        return Objects.hash(id, tokenResponse, jwtClaims);
+        return Objects.hash(id);
     }
 
     @Override

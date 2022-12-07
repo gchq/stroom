@@ -7,7 +7,6 @@ import stroom.security.openid.api.OpenIdConfig;
 import stroom.security.openid.api.OpenIdConfigurationResponse;
 import stroom.util.NullSafe;
 
-import java.util.function.Function;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -15,7 +14,7 @@ import javax.inject.Provider;
  * A front for the internal and external OIDC config providers. The useInternal prop in local
  * config controls which delegate is used.
  */
-public class CombinedIdpConfigurationProvider implements IdpConfigurationProvider {
+public class DelegatingIdpConfigurationProvider implements IdpConfigurationProvider {
 
     private final InternalIdpConfigurationProvider internalIdpConfigurationResponseProvider;
     private final ExternalIdpConfigurationProvider externalIdpConfigurationResponseProvider;
@@ -23,7 +22,7 @@ public class CombinedIdpConfigurationProvider implements IdpConfigurationProvide
     private final UriFactory uriFactory;
 
     @Inject
-    public CombinedIdpConfigurationProvider(
+    public DelegatingIdpConfigurationProvider(
             final InternalIdpConfigurationProvider internalIdpConfigurationResponseProvider,
             final ExternalIdpConfigurationProvider externalIdpConfigurationResponseProvider,
             final Provider<OpenIdConfig> openIdConfigProvider,
@@ -37,7 +36,7 @@ public class CombinedIdpConfigurationProvider implements IdpConfigurationProvide
 
     @Override
     public OpenIdConfigurationResponse getConfigurationResponse() {
-        return getValueFromDelegate(IdpConfigurationProvider::getConfigurationResponse);
+        return getDelegate().getConfigurationResponse();
     }
 
     @Override
@@ -47,32 +46,32 @@ public class CombinedIdpConfigurationProvider implements IdpConfigurationProvide
 
     @Override
     public String getOpenIdConfigurationEndpoint() {
-        return getValueFromDelegate(IdpConfigurationProvider::getOpenIdConfigurationEndpoint);
+        return getDelegate().getOpenIdConfigurationEndpoint();
     }
 
     @Override
     public String getIssuer() {
-        return getValueFromDelegate(IdpConfigurationProvider::getIssuer);
+        return getDelegate().getIssuer();
     }
 
     @Override
     public String getAuthEndpoint() {
-        return getValueFromDelegate(IdpConfigurationProvider::getAuthEndpoint);
+        return getDelegate().getAuthEndpoint();
     }
 
     @Override
     public String getTokenEndpoint() {
-        return getValueFromDelegate(IdpConfigurationProvider::getTokenEndpoint);
+        return getDelegate().getTokenEndpoint();
     }
 
     @Override
     public String getJwksUri() {
-        return getValueFromDelegate(IdpConfigurationProvider::getJwksUri);
+        return getDelegate().getJwksUri();
     }
 
     @Override
     public String getLogoutEndpoint() {
-        final String logoutEndpoint = getValueFromDelegate(IdpConfigurationProvider::getLogoutEndpoint);
+        final String logoutEndpoint = getDelegate().getLogoutEndpoint();
         // If the IdP doesn't provide a logout endpoint then use the internal one to invalidate
         // the session and redirect to perform a a new auth flow.
 
@@ -83,40 +82,40 @@ public class CombinedIdpConfigurationProvider implements IdpConfigurationProvide
 
     @Override
     public String getClientId() {
-        return getValueFromDelegate(IdpConfigurationProvider::getClientId);
+        return getDelegate().getClientId();
     }
 
     @Override
     public String getClientSecret() {
-        return getValueFromDelegate(IdpConfigurationProvider::getClientSecret);
+        return getDelegate().getClientSecret();
     }
 
     @Override
     public boolean isFormTokenRequest() {
-        return getValueFromDelegate(IdpConfigurationProvider::isFormTokenRequest);
+        return getDelegate().isFormTokenRequest();
     }
 
     @Override
     public String getRequestScope() {
-        return getValueFromDelegate(IdpConfigurationProvider::getRequestScope);
+        return getDelegate().getRequestScope();
     }
 
     @Override
     public boolean isValidateAudience() {
-        return getValueFromDelegate(IdpConfigurationProvider::isValidateAudience);
+        return getDelegate().isValidateAudience();
     }
 
     @Override
     public String getLogoutRedirectParamName() {
-        return getValueFromDelegate(IdpConfigurationProvider::getLogoutRedirectParamName);
+        return getDelegate().getLogoutRedirectParamName();
     }
 
-    private <T> T getValueFromDelegate(final Function<IdpConfigurationProvider, T> function) {
+    private IdpConfigurationProvider getDelegate() {
         return switch (openIdConfigProvider.get().getIdentityProviderType()) {
             case INTERNAL, TEST ->
-                    function.apply(internalIdpConfigurationResponseProvider);
+                    internalIdpConfigurationResponseProvider;
             case EXTERNAL ->
-                    function.apply(externalIdpConfigurationResponseProvider);
+                    externalIdpConfigurationResponseProvider;
         };
     }
 }

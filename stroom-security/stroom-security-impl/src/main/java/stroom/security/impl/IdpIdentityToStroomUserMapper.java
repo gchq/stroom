@@ -51,8 +51,7 @@ public class IdpIdentityToStroomUserMapper implements IdpIdentityMapper {
     public Optional<UserIdentity> mapApiIdentity(final JwtContext jwtContext,
                                                  final HttpServletRequest request) {
 
-        // Always try to get the proc user identity as even if we are using an external IDP
-        // the proc user is on the internal one
+        // Always try to get the proc user identity as it is a bit of a special case
         return getProcessingUser(jwtContext)
                 .or(() -> getApiUserIdentity(jwtContext, request));
     }

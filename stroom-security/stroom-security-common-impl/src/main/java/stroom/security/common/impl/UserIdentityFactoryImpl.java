@@ -6,8 +6,6 @@ import stroom.security.api.exception.AuthenticationException;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.OpenIdConfiguration.IdpType;
-import stroom.security.openid.api.TokenRequest;
-import stroom.security.openid.api.TokenRequest.Builder;
 import stroom.security.openid.api.TokenResponse;
 import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
@@ -18,32 +16,21 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.lifecycle.Managed;
 import org.apache.http.HttpEntity;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.message.BasicNameValuePair;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.NumericDate;
 import org.jose4j.jwt.consumer.JwtContext;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -52,15 +39,12 @@ import java.util.concurrent.DelayQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
 
 @Singleton
 public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
@@ -112,14 +96,15 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
                         return Optional.empty();
                     });
         } catch (final RuntimeException e) {
-            LOGGER.debug(e::getMessage, e);
+            throw new AuthenticationException("Error authenticating request to "
+                    + request.getRequestURI() + " - " + e.getMessage(), e);
         }
 
         if (optUserIdentity.isEmpty()) {
             LOGGER.trace(() -> "Cannot get a valid JWS for API request to " + request.getRequestURI());
         } else {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Got API user identity "
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("Got API user identity "
                         + optUserIdentity.map(Objects::toString).orElse("EMPTY"));
             }
         }
@@ -152,7 +137,7 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
             return buildHeaders(defaultOpenIdCredentials.getApiKey());
         } else if (userIdentity instanceof final AbstractTokenUserIdentity tokenUserIdentity) {
             // just in case the refresh queue is backed up
-            if (tokenUserIdentity.isTokenRefreshRequired()) {
+            if (tokenUserIdentity.hasTokenExpired()) {
                 refresh(userIdentity);
             }
             final String accessToken = Objects.requireNonNull(tokenUserIdentity.getAccessToken(),
@@ -241,20 +226,26 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
         Objects.requireNonNull(userIdentity, "Null userIdentity");
         if (userIdentity instanceof final AbstractTokenUserIdentity tokenUserIdentity) {
 
+            // This will try and refresh/recreate the token just before it expires
+            // so that there is no delay for users of the token. They can explicitly call
+            // refresh after checking AbstractTokenUserIdentity.hasTokenExpired() if they don't trust
+            // the refresh queue, but it should always return false.
             final boolean didRefresh;
             if (userIdentity instanceof ServiceUserIdentity) {
                 // service users do not have refresh tokens so just create new ones
                 didRefresh = tokenUserIdentity.mutateUnderLock(
-                        userIdentity2 -> createOrUpdateServiceUserIdentity(),
-                        this::doRefresh);
+                       AbstractTokenUserIdentity::isTokenRefreshRequired,
+                        userIdentity2 -> createOrUpdateServiceUserIdentity());
             } else {
                 // This takes care of calling isRefreshRequired before and after getting a lock
                 didRefresh = tokenUserIdentity.mutateUnderLock(
                         this::isRefreshRequired,
                         this::doRefresh);
             }
-            if (!didRefresh) {
-                LOGGER.debug("Refresh not done for {}", userIdentity);
+            if (LOGGER.isTraceEnabled()) {
+                if (!didRefresh) {
+                    LOGGER.trace("Refresh not done for {}", userIdentity);
+                }
             }
         }
     }
@@ -302,7 +293,7 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
                 newTokenResponse = fetchTokenResult.tokenResponse;
                 jwtClaims = fetchTokenResult.jwtClaims;
             } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
+                LOGGER.error("Error refreshing token for {} - {}", identity, e.getMessage(), e);
                 if (identity instanceof final UserIdentityImpl userIdentityImpl) {
                     userIdentityImpl.invalidateSession();
                 }
@@ -383,12 +374,12 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
         // No point refreshing if the user no longer has a session, i.e. has been logged out
         if (userIdentity instanceof final UserIdentityImpl userIdentityImpl) {
             isRefreshRequired = userIdentityImpl.isInSession();
-            LOGGER.debug("User has session: {}", isRefreshRequired);
+            LOGGER.trace("User has session: {}", isRefreshRequired);
         } else {
             isRefreshRequired = true;
         }
 
-        LOGGER.debug(() -> LogUtil.message("Refresh time: {}", userIdentity.getExpireTime()));
+        LOGGER.trace(() -> LogUtil.message("Refresh time: {}", userIdentity.getExpireTime()));
 
         return isRefreshRequired && userIdentity.isTokenRefreshRequired();
     }
@@ -549,156 +540,4 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
     // --------------------------------------------------------------------------------
 
 
-    private static final class OpenIdPostBuilder {
-
-        private final String endpointUri;
-        private final OpenIdConfiguration openIdConfiguration;
-        private final ObjectMapper objectMapper;
-
-        private String clientId = null;
-        private String clientSecret = null;
-        private String code = null;
-        private String grantType = null;
-        private String redirectUri = null;
-        private String refreshToken = null;
-        private List<String> scopes = new ArrayList<>();
-
-        private OpenIdPostBuilder(final String endpointUri,
-                                  final OpenIdConfiguration openIdConfiguration,
-                                  final ObjectMapper objectMapper) {
-            this.endpointUri = endpointUri;
-            this.openIdConfiguration = openIdConfiguration;
-            this.objectMapper = objectMapper;
-        }
-
-        public OpenIdPostBuilder withClientId(final String clientId) {
-            this.clientId = clientId;
-            return this;
-        }
-
-        public OpenIdPostBuilder withClientSecret(final String clientSecret) {
-            this.clientSecret = clientSecret;
-            return this;
-        }
-
-        public OpenIdPostBuilder withCode(final String code) {
-            this.code = code;
-            return this;
-        }
-
-        public OpenIdPostBuilder withGrantType(final String grantType) {
-            this.grantType = grantType;
-            return this;
-        }
-
-        public OpenIdPostBuilder withRedirectUri(final String redirectUri) {
-            this.redirectUri = redirectUri;
-            return this;
-        }
-
-        public OpenIdPostBuilder withRefreshToken(final String refreshToken) {
-            this.refreshToken = refreshToken;
-            return this;
-        }
-
-        public OpenIdPostBuilder withScopes(final List<String> scopes) {
-            this.scopes = scopes;
-            return this;
-        }
-
-        public OpenIdPostBuilder addScope(final String scope) {
-            if (scopes == null) {
-                scopes = new ArrayList<>();
-            }
-            this.scopes.add(scope);
-            return this;
-        }
-
-        private void addBasicAuth(final HttpPost httpPost) {
-            // Some OIDC providers expect authentication using a basic auth header
-            // others expect the client(Id|Secret) to be in the form params and some cope
-            // with both. Therefore, put them in both places to cover all bases.
-            if (!NullSafe.isBlankString(clientId) && NullSafe.isBlankString(clientSecret)) {
-                String authorization = openIdConfiguration.getClientId()
-                        + ":"
-                        + openIdConfiguration.getClientSecret();
-                authorization = Base64.getEncoder().encodeToString(authorization.getBytes(StandardCharsets.UTF_8));
-                authorization = "Basic " + authorization;
-                httpPost.setHeader(HttpHeaders.AUTHORIZATION, authorization);
-            }
-        }
-
-        private void setFormParams(final HttpPost httpPost,
-                                   final List<NameValuePair> nvps) {
-            try {
-                httpPost.setHeader(HttpHeaders.ACCEPT, "*/*");
-                httpPost.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
-                httpPost.setEntity(new UrlEncodedFormEntity(nvps));
-            } catch (final UnsupportedEncodingException e) {
-                throw new AuthenticationException(e.getMessage(), e);
-            }
-        }
-
-        private void buildFormPost(final HttpPost httpPost) {
-            final List<NameValuePair> pairs = new ArrayList<>();
-
-            final BiConsumer<String, String> addPair = (name, val) -> {
-                if (!NullSafe.isBlankString(val)) {
-                    pairs.add(new BasicNameValuePair(name, val));
-                }
-            };
-
-            final String scopesStr = String.join(" ", scopes);
-            addPair.accept(OpenId.CLIENT_ID, clientId);
-            addPair.accept(OpenId.CLIENT_SECRET, clientSecret);
-            addPair.accept(OpenId.CODE, code);
-            addPair.accept(OpenId.GRANT_TYPE, grantType);
-            addPair.accept(OpenId.REDIRECT_URI, redirectUri);
-            addPair.accept(OpenId.REFRESH_TOKEN, refreshToken);
-            addPair.accept(OpenId.SCOPE, scopesStr);
-
-            LOGGER.debug("Form name/value pairs: {}", pairs);
-
-            setFormParams(httpPost, pairs);
-        }
-
-        private void buildJsonPost(final HttpPost httpPost) {
-            try {
-                final Builder builder = TokenRequest.builder();
-                final BiConsumer<Consumer<String>, String> addValue = (func, val) -> {
-                    if (!NullSafe.isBlankString(val)) {
-                        func.accept(val);
-                    }
-                };
-                final String scopesStr = String.join(" ", scopes);
-                addValue.accept(builder::clientId, clientId);
-                addValue.accept(builder::clientSecret, clientId);
-                addValue.accept(builder::code, clientId);
-                addValue.accept(builder::grantType, clientId);
-                addValue.accept(builder::redirectUri, clientId);
-                addValue.accept(builder::refreshToken, refreshToken);
-                addValue.accept(builder::scope, scopesStr);
-
-                final TokenRequest tokenRequest = builder.build();
-                final String json = objectMapper.writeValueAsString(tokenRequest);
-
-                LOGGER.debug("json: {}", json);
-
-                httpPost.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-            } catch (final JsonProcessingException e) {
-                throw new AuthenticationException(e.getMessage(), e);
-            }
-        }
-
-        public HttpPost build() {
-            final HttpPost httpPost = new HttpPost(endpointUri);
-            if (openIdConfiguration.isFormTokenRequest()) {
-                buildFormPost(httpPost);
-            } else {
-                buildJsonPost(httpPost);
-            }
-            addBasicAuth(httpPost);
-            return httpPost;
-        }
-    }
 }

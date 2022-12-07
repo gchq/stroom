@@ -1,0 +1,106 @@
+package stroom.security.impl;
+
+import stroom.security.common.impl.JwtContextFactory;
+import stroom.security.common.impl.StandardJwtContextFactory;
+import stroom.security.openid.api.OpenIdConfig;
+import stroom.util.NullSafe;
+
+import org.jose4j.jwt.consumer.JwtContext;
+
+import java.util.Map;
+import java.util.Optional;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.servlet.http.HttpServletRequest;
+
+///**
+// * A front for {@link InternalJwtContextFactory} and {@link StandardJwtContextFactory}
+// * that always tries the {@link InternalJwtContextFactory} first in case it is a processing
+// * user request which always uses the internal idp. It also takes into account whether
+// * an external IDP is in use.
+// */
+/**
+ * A front for {@link InternalJwtContextFactory} and {@link StandardJwtContextFactory}
+ * that picks the delegate based on the identity provider that has been configured, e.g.
+ * internal vs external IDP.
+ */
+public class DelegatingJwtContextFactory implements JwtContextFactory {
+
+    private final InternalJwtContextFactory internalJwtContextFactory;
+    private final StandardJwtContextFactory standardJwtContextFactory;
+    private final Provider<OpenIdConfig> openIdConfigProvider;
+
+    @Inject
+    public DelegatingJwtContextFactory(final InternalJwtContextFactory internalJwtContextFactory,
+                                       final StandardJwtContextFactory standardJwtContextFactory,
+                                       final Provider<OpenIdConfig> openIdConfigProvider) {
+        this.internalJwtContextFactory = internalJwtContextFactory;
+        this.standardJwtContextFactory = standardJwtContextFactory;
+        this.openIdConfigProvider = openIdConfigProvider;
+    }
+
+    @Override
+    public boolean hasToken(final HttpServletRequest request) {
+        return getDelegate().hasToken(request);
+//        return internalJwtContextFactory.hasToken(request)
+//                || (useExternalIdentityProvider() && standardJwtContextFactory.hasToken(request));
+    }
+
+    @Override
+    public void removeAuthorisationEntries(final Map<String, String> headers) {
+        if (NullSafe.hasEntries(headers)) {
+            getDelegate().removeAuthorisationEntries(headers);
+//            internalJwtContextFactory.removeAuthorisationEntries(headers);
+//            if (useExternalIdentityProvider()) {
+//                standardJwtContextFactory.removeAuthorisationEntries(headers);
+//            }
+        }
+    }
+
+    @Override
+    public Optional<JwtContext> getJwtContext(final HttpServletRequest request) {
+        return getDelegate().getJwtContext(request);
+        // Always try the internal context factory first as the processing user only
+        // uses the internal IDP
+        // TODO: 02/12/2022 Use a service account on the ext idp for proc user
+//        return internalJwtContextFactory.getJwtContext(request)
+//                .or(() -> useExternalIdentityProvider()
+//                        ? standardJwtContextFactory.getJwtContext(request)
+//                        : Optional.empty());
+    }
+
+    @Override
+    public Optional<JwtContext> getJwtContext(final String jwt) {
+        return getDelegate().getJwtContext(jwt);
+        // Always try the internal context factory first as the processing user only
+        // uses the internal IDP
+//        return internalJwtContextFactory.getJwtContext(jwt)
+//                .or(() -> useExternalIdentityProvider()
+//                        ? standardJwtContextFactory.getJwtContext(jwt)
+//                        : Optional.empty());
+    }
+
+    @Override
+    public Optional<JwtContext> getJwtContext(final String jwt, final boolean doVerification) {
+        return getDelegate().getJwtContext(jwt, doVerification);
+        // Always try the internal context factory first as the processing user only
+        // uses the internal IDP
+//        return internalJwtContextFactory.getJwtContext(jwt, doVerification)
+//                .or(() -> useExternalIdentityProvider()
+//                        ? standardJwtContextFactory.getJwtContext(jwt, doVerification)
+//                        : Optional.empty());
+    }
+
+//    private boolean useExternalIdentityProvider() {
+//        return IdpType.EXTERNAL.equals(openIdConfigProvider.get().getIdentityProviderType());
+//    }
+
+    private JwtContextFactory getDelegate() {
+        return switch (openIdConfigProvider.get().getIdentityProviderType()) {
+            case INTERNAL, TEST ->
+                    internalJwtContextFactory;
+            case EXTERNAL ->
+                    standardJwtContextFactory;
+        };
+    }
+}

@@ -13,7 +13,7 @@ public interface UserIdentity {
 
     /**
      * @return The non-unique username for the user, e.g. 'jbloggs'. In the absence of a specific
-     * value this should return the id.
+     * value this should just return the id.
      */
     default String getPreferredUsername() {
         return getId();

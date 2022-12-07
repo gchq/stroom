@@ -17,8 +17,10 @@
 package stroom.security.impl;
 
 import stroom.security.api.DocumentPermissionService;
+import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.RequestAuthenticator;
 import stroom.security.common.impl.ExternalIdpConfigurationProvider;
+import stroom.security.common.impl.ExternalProcessingUserIdentityProvider;
 import stroom.security.common.impl.HttpClientProvider;
 import stroom.security.common.impl.IdpConfigurationProvider;
 import stroom.security.common.impl.IdpIdentityMapper;
@@ -30,6 +32,7 @@ import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventLifecycleModule;
 import stroom.security.impl.event.PermissionChangeEventModule;
 import stroom.security.openid.api.OpenIdConfiguration;
+import stroom.security.openid.api.OpenIdConfiguration.IdpType;
 import stroom.security.shared.UserNameProvider;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.FilterBinder;
@@ -58,14 +61,18 @@ public class SecurityModule extends AbstractModule {
         bind(UserIdentityFactory.class).to(UserIdentityFactoryImpl.class);
         bind(CloseableHttpClient.class).toProvider(HttpClientProvider.class);
         bind(RequestAuthenticator.class).to(RequestAuthenticatorImpl.class);
-        bind(JwtContextFactory.class).to(CombinedJwtContextFactory.class);
+        bind(JwtContextFactory.class).to(DelegatingJwtContextFactory.class);
         bind(IdpIdentityMapper.class).to(IdpIdentityToStroomUserMapper.class);
-        bind(IdpConfigurationProvider.class).to(CombinedIdpConfigurationProvider.class);
+        bind(IdpConfigurationProvider.class).to(DelegatingIdpConfigurationProvider.class);
         // Now bind OpenIdConfiguration to the iface from prev bind
         bind(OpenIdConfiguration.class).to(IdpConfigurationProvider.class);
 
         HasHealthCheckBinder.create(binder())
                         .bind(ExternalIdpConfigurationProvider.class);
+
+        bind(ProcessingUserIdentityProvider.class).to(DelegatingProcessingUserIdentityProvider.class);
+        GuiceUtil.buildMapBinder(binder(), IdpType.class, ProcessingUserIdentityProvider.class)
+                .addBinding(IdpType.EXTERNAL, ExternalProcessingUserIdentityProvider.class);
 
         FilterBinder.create(binder())
                 .bind(new FilterInfo(ContentSecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),
