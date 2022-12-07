@@ -53,7 +53,7 @@ public class DelegatingJwtContextFactory implements JwtContextFactory {
 
     @Override
     public Map<String, String> createAuthorisationEntries(final String jwt) {
-        getDelegate().createAuthorisationEntries(jwt);
+        return getDelegate().createAuthorisationEntries(jwt);
     }
 
     @Override
