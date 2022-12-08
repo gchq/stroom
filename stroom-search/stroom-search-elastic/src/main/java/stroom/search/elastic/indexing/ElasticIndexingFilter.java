@@ -199,8 +199,11 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                     // If this is a reprocessing filter, delete any documents from the target index that have the same
                     // `StreamId` as the stream that's being reprocessed, or the source meta field
                     // `Reprocessed Stream Id`.
-                    if (purgeOnReprocess && reprocessStreamId != null) {
-                        purgeDocumentsForStream(elasticClient, reprocessStreamId);
+                    if (purgeOnReprocess) {
+                        if (!purgeDocumentsForStream(elasticClient, reprocessStreamId)) {
+                            throw new RuntimeException("Failed to purge existing documents for StreamIds: " +
+                                    reprocessStreamId);
+                        }
                     }
                 } catch (final RuntimeException e) {
                     fatalError(e.getMessage(), e);
@@ -471,9 +474,8 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     /**
      * Delete documents from the target index, where the indexed field `StreamId` matches one of the provided IDs
      */
-    private void purgeDocumentsForStream(final RestHighLevelClient elasticClient, final Long streamId)
-            throws RuntimeException {
-
+    private boolean purgeDocumentsForStream(final RestHighLevelClient elasticClient, final Long streamId)
+            throws LoggedException {
         final List<String> indexNames = getTargetIndexNames(elasticClient, streamId);
         if (indexNames != null && !indexNames.isEmpty()) {
             LOGGER.debug("Purging documents for StreamId {} from indices: {}", streamId, indexNames);
@@ -493,9 +495,11 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                             deletedCount, streamId, indexName, deleteResponse.getTook().getSecondsFrac());
                 }
             } catch (IOException e) {
-                throw new RuntimeException("Failed to purge documents for StreamId: " + streamId, e);
+                fatalError("Failed to purge documents for StreamId: " + streamId, e);
+                return false;
             }
         }
+        return true;
     }
 
     /**
