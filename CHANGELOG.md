@@ -12,6 +12,10 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.1-beta.16] - 2022-12-08
+
+* Issue **#3031** : Add connectors to poll from AWS SQS.
+
 * Issue **#3066** : Make all responses set the HTTP header `Strict-Transport-Security` to force all HTTP traffic on the domain onto HTTPS. Also add property `stroom.security.webContent.strictTransportSecurity` to configure the header value.
 
 * Issue **#3074** : Fix data retention summary and purge job when condition includes a pipeline. Fix data viewer screen to allow filtering by pipeline. Fix filtering using the `in folder` condition. Add `<`, `<=`, `>`, `>=`, `between` conditions to ID fields, e.g. stream ID. **WARNING**: the expression field `Pipeline` has had the following conditions removed; `in`, `in dictionary`, `=`, `contains` and the field `Pipeline Name` has been added with the following conditions; `in`, `in dictionary`, `=`. This may impact processor filters or retention rules that use the `Pipeline` field. See the SQL at https://github.com/gchq/stroom/issues/3074 to find any processor filters using this field with a now un-supported condition. Change the Reference Data searchable data source to support `in`, `in dictionary` and wild carding.
@@ -4423,7 +4427,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.15...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.16...HEAD
+[v7.1-beta.16]: https://github.com/gchq/stroom/compare/v7.1-beta.15...v7.1-beta.16
 [v7.1-beta.15]: https://github.com/gchq/stroom/compare/v7.1-beta.14...v7.1-beta.15
 [v7.1-beta.14]: https://github.com/gchq/stroom/compare/v7.1-beta.13...v7.1-beta.14
 [v7.1-beta.13]: https://github.com/gchq/stroom/compare/v7.1-beta.12...v7.1-beta.13
