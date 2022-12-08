@@ -8405,6 +8405,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Message'
+        rootDocRef:
+          $ref: '#/components/schemas/DocRef'
         sourcePath:
           type: string
         state:

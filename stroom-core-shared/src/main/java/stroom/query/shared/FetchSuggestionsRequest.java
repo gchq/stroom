@@ -59,4 +59,13 @@ public class FetchSuggestionsRequest {
     public String getText() {
         return text;
     }
+
+    @Override
+    public String toString() {
+        return "FetchSuggestionsRequest{" +
+                "dataSource=" + dataSource +
+                ", field=" + field +
+                ", text='" + text + '\'' +
+                '}';
+    }
 }

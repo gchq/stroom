@@ -1,6 +1,7 @@
 package stroom.explorer.impl.db;
 
 import stroom.db.util.JooqUtil;
+import stroom.db.util.JooqUtil.BooleanOperator;
 import stroom.explorer.impl.ExplorerTreeDao;
 import stroom.explorer.impl.ExplorerTreeNode;
 import stroom.explorer.impl.ExplorerTreePath;
@@ -8,6 +9,7 @@ import stroom.explorer.impl.TreeModel;
 import stroom.explorer.impl.db.jooq.tables.records.ExplorerNodeRecord;
 import stroom.explorer.shared.ExplorerNode;
 
+import org.jooq.Condition;
 import org.jooq.impl.DSL;
 
 import java.util.ArrayList;
@@ -596,7 +598,8 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                 .selectFrom(n)
                                 .where(n.UUID.eq(uuid))
                                 .fetch())
-                .map(r -> new ExplorerTreeNode(r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()));
+                .map(r -> new ExplorerTreeNode(
+                        r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()));
 
         if (list.size() == 0) {
             return null;
@@ -607,6 +610,33 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
         }
 
         return list.get(0);
+    }
+
+    @Override
+    public List<ExplorerTreeNode> findByNames(final List<String> names,
+                                              final boolean allowWildCards) {
+        final Condition nameConditions = JooqUtil.createWildCardedStringsCondition(
+                n.UUID, names, allowWildCards, BooleanOperator.OR);
+
+        return JooqUtil.contextResult(explorerDbConnProvider, context ->
+                        context
+                                .selectFrom(n)
+                                .where(nameConditions)
+                                .fetch())
+                .map(r -> new ExplorerTreeNode(
+                        r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()));
+    }
+
+    @Override
+    public List<ExplorerTreeNode> findByType(final String type) {
+
+        return JooqUtil.contextResult(explorerDbConnProvider, context ->
+                        context
+                                .selectFrom(n)
+                                .where(n.TYPE.eq(type))
+                                .fetch())
+                .map(r -> new ExplorerTreeNode(
+                        r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()));
     }
 
     private void assertInsertParameters(final ExplorerTreeNode parent,

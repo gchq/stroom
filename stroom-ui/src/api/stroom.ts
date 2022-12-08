@@ -1517,6 +1517,9 @@ export interface ImportState {
   /** @format int64 */
   enableFiltersFromTime?: number;
   messageList?: Message[];
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  rootDocRef?: DocRef;
   sourcePath?: string;
   state?: "NEW" | "UPDATE" | "EQUAL";
   updatedFieldList?: string[];

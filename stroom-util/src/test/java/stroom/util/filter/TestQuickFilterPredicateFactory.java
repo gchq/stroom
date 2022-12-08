@@ -194,6 +194,28 @@ class TestQuickFilterPredicateFactory {
     }
 
     @Test
+    void test_defaultFieldTwice_contains_dupTokens() {
+
+        // Two identical tokens
+        doTest("my my",
+                List.of(POJO_1,
+                        POJO_1_MISSING,
+                        POJO_1_NOT_MY_TYPE),
+                List.of(POJO_1_BAD_NAME));
+    }
+
+    @Test
+    void test_defaultFieldTwice_contains_dupQualifiedTokens() {
+
+        // Two identical tokens
+        doTest("status:ok status:ok",
+                List.of(POJO_1,
+                        POJO_1_BAD_NAME,
+                        POJO_1_NOT_MY_TYPE),
+                List.of(POJO_1_MISSING));
+    }
+
+    @Test
     void test_defaultFieldTwice_contains_noMatch() {
 
         // Need quotes to treat them as two tokens

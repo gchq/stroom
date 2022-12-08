@@ -1,6 +1,7 @@
 package stroom.core.query;
 
 import stroom.docref.DocRef;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.feed.api.FeedStore;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.MetaFields;
@@ -34,6 +35,9 @@ class TestSuggestionsServiceImpl {
 
     @Mock
     private PipelineStore pipelineStore;
+
+    @Mock
+    private DocRefInfoService docRefInfoService;
 
     private final TaskContextFactory taskContextFactory = new SimpleTaskContextFactory();
     private final SecurityContext securityContext = new MockSecurityContext();
@@ -126,16 +130,21 @@ class TestSuggestionsServiceImpl {
                 .isEmpty();
     }
 
-    private List<String> doFeedNameTest(final Set<String> metaFeedNames, final Set<String> storeFeedNames) {
+    private List<String> doFeedNameTest(final Set<String> metaFeedNames,
+                                        final Set<String> storeFeedNames) {
         final SuggestionsService suggestionsService = new SuggestionsServiceImpl(
-                metaService, pipelineStore, securityContext, feedStore, taskContextFactory);
+                metaService,
+                pipelineStore,
+                securityContext,
+                feedStore,
+                docRefInfoService,
+                taskContextFactory);
 
         final String userInput = "feed";
         final FetchSuggestionsRequest request = new FetchSuggestionsRequest(
                 MetaFields.STREAM_STORE_DOC_REF,
                 MetaFields.FEED,
                 userInput);
-
 
         Mockito.when(metaService.getFeeds())
                 .thenReturn(metaFeedNames);

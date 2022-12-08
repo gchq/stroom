@@ -180,4 +180,9 @@ public class ElasticClusterStoreImpl implements ElasticClusterStore {
     public List<DocRef> list() {
         return store.list();
     }
+
+    @Override
+    public List<DocRef> findByNames(final List<String> names, final boolean allowWildCards) {
+        return store.findByNames(names, allowWildCards);
+    }
 }

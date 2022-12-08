@@ -399,6 +399,24 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testSize_collection() {
+        final List<String> emptyList = Collections.emptyList();
+        final List<String> nonEmptyList = List.of("foo", "bar");
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<List<String>>() {
+                })
+                .withOutputType(int.class)
+                .withTestFunction(testCase ->
+                        NullSafe.size(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, 0)
+                .addCase(emptyList, 0)
+                .addCase(nonEmptyList, 2)
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testIsEmptyCollection2() {
         final ListWrapper nullListWrapper = null;
         final ListWrapper nonNullListWrapper = new ListWrapper();
@@ -483,6 +501,24 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testSize_map() {
+        final Map<String, String> emptyMap = Collections.emptyMap();
+        final Map<String, String> nonEmptyMap = Map.of("foo", "bar");
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Map<String, String>>() {
+                })
+                .withOutputType(int.class)
+                .withTestFunction(testCase ->
+                        NullSafe.size(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, 0)
+                .addCase(emptyMap, 0)
+                .addCase(nonEmptyMap, 1)
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testIsEmptyMap2() {
         final MapWrapper nullMapWrapper = null;
         final MapWrapper nonNullMapWrapper = new MapWrapper();
@@ -563,6 +599,26 @@ class TestNullSafe {
                 .addCase("\n", true)
                 .addCase("\t", true)
                 .addCase("foo", false)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testContains() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(String.class, String.class)
+                .withOutputType(Boolean.class)
+                .withTestFunction(testCase -> {
+                    var str = testCase.getInput()._1;
+                    var subStr = testCase.getInput()._2;
+                    return NullSafe.contains(str, subStr);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(null, null), false)
+                .addCase(Tuple.of("foorbar", null), false)
+                .addCase(Tuple.of(null, "foobar"), false)
+                .addCase(Tuple.of("foobar", "foo"), true)
+                .addCase(Tuple.of("foobar", "ob"), true)
+                .addCase(Tuple.of("foobar", "foobar"), true)
                 .build();
     }
 
