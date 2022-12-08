@@ -145,10 +145,6 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
     private Source streamSource;
 
     private long startTime;
-    private long totalTimeStart;
-    private long totalTime;
-    private long processingTime;
-    private long duplicatgeCheckTime;
 
     @Inject
     PipelineDataProcessorTaskExecutor(final PipelineFactory pipelineFactory,
