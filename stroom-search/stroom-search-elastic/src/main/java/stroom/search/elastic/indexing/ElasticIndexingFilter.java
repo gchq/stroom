@@ -118,7 +118,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     // Pipeline filter configuration options
     private int batchSize = 10000;
     private boolean purgeOnReprocess = true;
-    private String ingestPipelineName;
+    private String ingestPipelineName = null;
     private boolean refreshAfterEachBatch = false;
     private DocRef clusterRef;
     private String indexBaseName;
@@ -192,17 +192,18 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                     .getName();
             elasticCluster = elasticClusterStore.readDocument(clusterRef);
             final ElasticConnectionConfig connectionConfig = elasticCluster.getConnection();
-            final Long reprocessStreamId = getReprocessStreamId();
 
             elasticClientCache.context(connectionConfig, elasticClient -> {
                 try {
                     // If this is a reprocessing filter, delete any documents from the target index that have the same
-                    // `StreamId` as the stream that's being reprocessed, or the source meta field
-                    // `Reprocessed Stream Id`.
-                    if (purgeOnReprocess) {
-                        if (!purgeDocumentsForStream(elasticClient, reprocessStreamId)) {
-                            throw new RuntimeException("Failed to purge existing documents for StreamIds: " +
-                                    reprocessStreamId);
+                    // `StreamId` as the stream that's being reprocessed. This prevents duplicate documents.
+                    final ProcessorFilter processorFilter = this.streamProcessorHolder.getStreamTask()
+                            .getProcessorFilter();
+                    if (purgeOnReprocess && processorFilter.isReprocess()) {
+                        final Meta meta = this.metaHolder.getMeta();
+                        final long streamId = meta.getId();
+                        if (!purgeDocumentsForStream(elasticClient, streamId)) {
+                            throw new RuntimeException("Failed to purge existing documents for StreamId " + streamId);
                         }
                     }
                 } catch (final RuntimeException e) {
@@ -216,18 +217,6 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             fatalError("Failed to initialise JsonGenerator", e);
         } finally {
             super.startProcessing();
-        }
-    }
-
-    private Long getReprocessStreamId() throws RuntimeException {
-        final ProcessorFilter processorFilter = this.streamProcessorHolder.getStreamTask().getProcessorFilter();
-        final Meta meta = metaHolder.getMeta();
-        if (processorFilter.isReprocess()) {
-            // This is a reprocessing filter, so first delete the source stream's data from the target index
-            return meta.getId();
-        } else {
-            // Non-null if the source stream resulted from reprocessing
-            return meta.getReprocessedStreamId();
         }
     }
 
@@ -457,9 +446,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             fatalError("Failed to flush JSON to stream", e);
         } catch (Exception e) {
             fatalError(e.getMessage(), e);
+        } finally {
+            clearDocument();
         }
-
-        clearDocument();
     }
 
     private void clearDocument() {
