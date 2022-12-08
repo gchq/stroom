@@ -15,7 +15,7 @@ import stroom.proxy.repo.ProxyRepositoryStreamHandlers;
 import stroom.proxy.repo.store.Entries;
 import stroom.proxy.repo.store.SequentialFileStore;
 import stroom.security.api.UserIdentity;
-import stroom.security.common.impl.UserIdentityFactory;
+import stroom.security.api.UserIdentityFactory;
 import stroom.test.common.TemporaryPathCreator;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;

@@ -17,7 +17,7 @@
 package stroom.meta.api;
 
 import stroom.util.NullSafe;
-import stroom.util.cert.CertificateUtil;
+import stroom.util.cert.CertificateExtractor;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 
@@ -53,6 +53,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 
+// TODO: 08/12/2022 This should be an injectable class with instance methods to make test mocking possible
 public class AttributeMapUtil {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AttributeMapUtil.class);
@@ -90,9 +91,10 @@ public class AttributeMapUtil {
         return attributeMap;
     }
 
-    public static AttributeMap create(final HttpServletRequest httpServletRequest) {
+    public static AttributeMap create(final HttpServletRequest httpServletRequest,
+                                      final CertificateExtractor certificateExtractor) {
         final AttributeMap attributeMap = new AttributeMap();
-        addAllSecureTokens(httpServletRequest, attributeMap);
+        addAllSecureTokens(httpServletRequest, certificateExtractor, attributeMap);
         addAllHeaders(httpServletRequest, attributeMap);
         addAllQueryString(httpServletRequest, attributeMap);
         addRemoteClientDetails(httpServletRequest, attributeMap);
@@ -205,8 +207,9 @@ public class AttributeMapUtil {
     }
 
     private static void addAllSecureTokens(final HttpServletRequest httpServletRequest,
+                                           final CertificateExtractor certificateExtractor,
                                            final AttributeMap attributeMap) {
-        final Optional<X509Certificate> optional = CertificateUtil.extractCertificate(httpServletRequest);
+        final Optional<X509Certificate> optional = certificateExtractor.extractCertificate(httpServletRequest);
         optional.ifPresent(cert -> {
             // If we get here it means SSL has been terminated by DropWizard so we need to add meta items
             // from the certificate

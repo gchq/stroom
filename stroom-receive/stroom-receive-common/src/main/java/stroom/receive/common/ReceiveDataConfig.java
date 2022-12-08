@@ -106,6 +106,33 @@ public class ReceiveDataConfig
                 || (tokenAuthenticationEnabled || certificateAuthenticationEnabled);
     }
 
+    public ReceiveDataConfig withTokenAuthenticationEnabled(final boolean isTokenAuthenticationEnabled) {
+        return new ReceiveDataConfig(
+                receiptPolicyUuid,
+                metaTypes,
+                isTokenAuthenticationEnabled,
+                certificateAuthenticationEnabled,
+                authenticationRequired);
+    }
+
+    public ReceiveDataConfig withCertificateAuthenticationEnabled(final boolean isCertificateAuthenticationEnabled) {
+        return new ReceiveDataConfig(
+                receiptPolicyUuid,
+                metaTypes,
+                tokenAuthenticationEnabled,
+                isCertificateAuthenticationEnabled,
+                authenticationRequired);
+    }
+
+    public ReceiveDataConfig withAuthenticationRequired(final boolean isAuthenticationRequired) {
+        return new ReceiveDataConfig(
+                receiptPolicyUuid,
+                metaTypes,
+                tokenAuthenticationEnabled,
+                certificateAuthenticationEnabled,
+                isAuthenticationRequired);
+    }
+
     @Override
     public String toString() {
         return "ReceiveDataConfig{" +

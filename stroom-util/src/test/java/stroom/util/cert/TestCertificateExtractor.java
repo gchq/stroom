@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestCertificateUtil {
+class TestCertificateExtractor {
 
     @Test
     void testSpaceInCN() {
@@ -29,7 +29,7 @@ class TestCertificateUtil {
 
 //        Assertions.assertThat(CertificateUtil.dnToRfc2253(dn)).isEqualTo(
 //                "CN=John Smith (johnsmith),OU=ouCode1,OU=ouCode2,O=oValue,C=GB");
-        assertThat(CertificateUtil.extractCNFromDN(dn)).isEqualTo("John Smith (johnsmith)");
+        assertThat(CertificateExtractor.extractCNFromDN(dn)).isEqualTo("John Smith (johnsmith)");
 //        assertThat(CertificateUtil.extractUserIdFromCN(CertificateUtil.extractCNFromDN(dn))).isEqualTo("johnsmith");
 //
 //        final Pattern pattern = Pattern.compile("CN=[^ ]+ [^ ]+ \\(?([a-zA-Z0-9]+)\\)?");

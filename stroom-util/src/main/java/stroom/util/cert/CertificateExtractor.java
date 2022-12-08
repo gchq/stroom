@@ -27,7 +27,8 @@ import java.util.StringTokenizer;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 
-public class CertificateUtil {
+// Non-static methods to make mocking this possible in tests
+public class CertificateExtractor {
 
     /**
      * API into the request for the certificate details.
@@ -35,13 +36,13 @@ public class CertificateUtil {
     private static final String X_SSL_CERT = "X-SSL-CERT";
     private static final String SERVLET_CERT_ARG = "javax.servlet.request.X509Certificate";
     private static final String X_SSL_CLIENT_S_DN = "X-SSL-CLIENT-S-DN";
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CertificateUtil.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CertificateExtractor.class);
 
-    public static Optional<String> getCN(final HttpServletRequest request) {
-        return getDN(request).map(CertificateUtil::extractCNFromDN);
+    public Optional<String> getCN(final HttpServletRequest request) {
+        return getDN(request).map(CertificateExtractor::extractCNFromDN);
     }
 
-    public static Optional<String> getDN(final HttpServletRequest request) {
+    public Optional<String> getDN(final HttpServletRequest request) {
         // First see if we have a cert we can use.
         final Optional<X509Certificate> cert = extractCertificate(request);
         if (cert.isPresent()) {
@@ -58,8 +59,8 @@ public class CertificateUtil {
      * Pull out the Subject from the certificate. E.g.
      * "CN=some.server.co.uk, OU=servers, O=some organisation, C=GB"
      */
-    public static Optional<X509Certificate> extractCertificate(final ServletRequest request) {
-        return extractCertificate(request, CertificateUtil.X_SSL_CERT)
+    public Optional<X509Certificate> extractCertificate(final ServletRequest request) {
+        return extractCertificate(request, CertificateExtractor.X_SSL_CERT)
                 .or(() -> extractCertificate(request, SERVLET_CERT_ARG));
     }
 

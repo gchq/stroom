@@ -2,7 +2,7 @@ package stroom.security.impl;
 
 import stroom.security.api.UserIdentity;
 import stroom.security.common.impl.AuthenticationState;
-import stroom.security.common.impl.UserIdentityFactory;
+import stroom.security.common.impl.UserIdentityFactoryImpl;
 import stroom.security.common.impl.UserIdentitySessionUtil;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
@@ -27,11 +27,11 @@ class OpenIdManager {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OpenIdManager.class);
 
     private final OpenIdConfiguration openIdConfiguration;
-    private final UserIdentityFactory userIdentityFactory;
+    private final UserIdentityFactoryImpl userIdentityFactory;
 
     @Inject
     public OpenIdManager(final OpenIdConfiguration openIdConfiguration,
-                         final UserIdentityFactory userIdentityFactory) {
+                         final UserIdentityFactoryImpl userIdentityFactory) {
         this.openIdConfiguration = openIdConfiguration;
         this.userIdentityFactory = userIdentityFactory;
     }

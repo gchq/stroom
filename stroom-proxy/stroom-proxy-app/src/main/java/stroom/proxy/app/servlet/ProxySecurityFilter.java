@@ -21,7 +21,7 @@ import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.event.EventResource;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.security.api.UserIdentity;
-import stroom.security.common.impl.UserIdentityFactory;
+import stroom.security.api.UserIdentityFactory;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

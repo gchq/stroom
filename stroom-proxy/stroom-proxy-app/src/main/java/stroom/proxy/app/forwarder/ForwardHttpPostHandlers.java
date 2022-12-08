@@ -8,7 +8,7 @@ import stroom.receive.common.StreamHandler;
 import stroom.receive.common.StreamHandlers;
 import stroom.receive.common.StroomStreamException;
 import stroom.security.api.UserIdentity;
-import stroom.security.common.impl.UserIdentityFactory;
+import stroom.security.api.UserIdentityFactory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;

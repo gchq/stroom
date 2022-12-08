@@ -1,7 +1,7 @@
 package stroom.proxy.app.guice;
 
 import stroom.security.api.UserIdentity;
-import stroom.security.common.impl.UserIdentityFactory;
+import stroom.security.api.UserIdentityFactory;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.jersey.WebTargetProxy;
 

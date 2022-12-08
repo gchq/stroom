@@ -10,6 +10,7 @@ dependencies {
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-meta:stroom-meta-statistics-api')
     implementation project(':stroom-proxy:stroom-proxy-remote-api')
+    implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
     
@@ -27,9 +28,13 @@ dependencies {
     implementation libs.swagger_annotations
     implementation libs.ws_rs_api
 
+    testImplementation project(':stroom-test-common')
+
     testImplementation libs.assertj_core
     testImplementation libs.commons_lang
     testImplementation libs.junit_jupiter_api
+    testImplementation libs.mockito_core
+    testImplementation libs.mockito_junit_jupiter
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jakarta_activation

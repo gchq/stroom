@@ -1,7 +1,7 @@
 package stroom.proxy.app.forwarder;
 
 import stroom.proxy.repo.LogStream;
-import stroom.security.common.impl.UserIdentityFactory;
+import stroom.security.api.UserIdentityFactory;
 import stroom.util.cert.SSLUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LogUtil;

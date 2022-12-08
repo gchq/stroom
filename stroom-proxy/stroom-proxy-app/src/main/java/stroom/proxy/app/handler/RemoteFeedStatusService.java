@@ -4,7 +4,7 @@ import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.receive.common.FeedStatusService;
-import stroom.security.common.impl.UserIdentityFactory;
+import stroom.security.api.UserIdentityFactory;
 import stroom.util.HasHealthCheck;
 import stroom.util.HealthCheckUtils;
 import stroom.util.NullSafe;

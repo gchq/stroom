@@ -2,6 +2,7 @@ package stroom.security.common.impl;
 
 import stroom.security.api.HasJwt;
 import stroom.security.api.UserIdentity;
+import stroom.security.api.UserIdentityFactory;
 import stroom.security.api.exception.AuthenticationException;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
@@ -9,7 +10,7 @@ import stroom.security.openid.api.OpenIdConfiguration.IdpType;
 import stroom.security.openid.api.TokenResponse;
 import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
-import stroom.util.cert.CertificateUtil;
+import stroom.util.cert.CertificateExtractor;
 import stroom.util.exception.ThrowingFunction;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
@@ -55,6 +56,7 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
     private final Provider<CloseableHttpClient> httpClientProvider;
     private final IdpIdentityMapper idpIdentityMapper;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
+    private final CertificateExtractor certificateExtractor;
 
     // A service account/user for communicating with other apps in the same OIDC realm,
     // e.g. proxy => stroom. Created lazily.
@@ -70,12 +72,14 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
                                    final Provider<OpenIdConfiguration> openIdConfigProvider,
                                    final Provider<CloseableHttpClient> httpClientProvider,
                                    final IdpIdentityMapper idpIdentityMapper,
-                                   final DefaultOpenIdCredentials defaultOpenIdCredentials) {
+                                   final DefaultOpenIdCredentials defaultOpenIdCredentials,
+                                   final CertificateExtractor certificateExtractor) {
         this.jwtContextFactory = jwtContextFactory;
         this.openIdConfigProvider = openIdConfigProvider;
         this.httpClientProvider = httpClientProvider;
         this.idpIdentityMapper = idpIdentityMapper;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
+        this.certificateExtractor = certificateExtractor;
     }
 
     @Override
@@ -118,7 +122,7 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
 
     @Override
     public boolean hasAuthenticationCertificate(final HttpServletRequest request) {
-        return CertificateUtil.extractCertificate(request).isPresent();
+        return certificateExtractor.extractCertificate(request).isPresent();
     }
 
     @Override
@@ -158,7 +162,10 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
         return jwtContextFactory.createAuthorisationEntries(jwt);
     }
 
-    @Override
+    /**
+     * Extracts the authenticated user's identity from http request when that
+     * request is part of a UI based authentication flow with the IDP
+     */
     public Optional<UserIdentity> getAuthFlowUserIdentity(final HttpServletRequest request,
                                                           final String code,
                                                           final AuthenticationState state) {
@@ -211,7 +218,10 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
         return serviceUserIdentity;
     }
 
-    @Override
+    /**
+     * Refresh the user identity including any tokens associated with that user.
+     * @param userIdentity
+     */
     public void refresh(final UserIdentity userIdentity) {
         Objects.requireNonNull(userIdentity, "Null userIdentity");
         if (userIdentity instanceof final AbstractTokenUserIdentity tokenUserIdentity) {

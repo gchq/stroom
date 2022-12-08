@@ -3,7 +3,7 @@ package stroom.app.guice;
 import stroom.app.errors.NodeCallExceptionMapper;
 import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.TokenExceptionMapper;
-import stroom.security.api.RequestAuthenticator;
+import stroom.receive.common.RequestAuthenticator;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.util.guice.GuiceUtil;

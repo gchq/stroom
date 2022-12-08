@@ -18,15 +18,13 @@ package stroom.security.impl;
 
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.ProcessingUserIdentityProvider;
-import stroom.security.api.RequestAuthenticator;
+import stroom.security.api.UserIdentityFactory;
 import stroom.security.common.impl.ExternalIdpConfigurationProvider;
 import stroom.security.common.impl.ExternalProcessingUserIdentityProvider;
 import stroom.security.common.impl.HttpClientProvider;
 import stroom.security.common.impl.IdpConfigurationProvider;
 import stroom.security.common.impl.IdpIdentityMapper;
 import stroom.security.common.impl.JwtContextFactory;
-import stroom.security.common.impl.RequestAuthenticatorImpl;
-import stroom.security.common.impl.UserIdentityFactory;
 import stroom.security.common.impl.UserIdentityFactoryImpl;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventLifecycleModule;
@@ -60,7 +58,6 @@ public class SecurityModule extends AbstractModule {
         bind(UserService.class).to(UserServiceImpl.class);
         bind(UserIdentityFactory.class).to(UserIdentityFactoryImpl.class);
         bind(CloseableHttpClient.class).toProvider(HttpClientProvider.class);
-        bind(RequestAuthenticator.class).to(RequestAuthenticatorImpl.class);
         bind(JwtContextFactory.class).to(DelegatingJwtContextFactory.class);
         bind(IdpIdentityMapper.class).to(IdpIdentityToStroomUserMapper.class);
         bind(IdpConfigurationProvider.class).to(DelegatingIdpConfigurationProvider.class);

@@ -1,16 +1,16 @@
 package stroom.proxy.app.security;
 
 import stroom.security.api.ProcessingUserIdentityProvider;
-import stroom.security.api.RequestAuthenticator;
+import stroom.receive.common.RequestAuthenticator;
 import stroom.security.common.impl.ExternalIdpConfigurationProvider;
 import stroom.security.common.impl.ExternalProcessingUserIdentityProvider;
 import stroom.security.common.impl.HttpClientProvider;
 import stroom.security.common.impl.IdpConfigurationProvider;
 import stroom.security.common.impl.IdpIdentityMapper;
 import stroom.security.common.impl.JwtContextFactory;
-import stroom.security.common.impl.RequestAuthenticatorImpl;
+import stroom.receive.common.RequestAuthenticatorImpl;
 import stroom.security.common.impl.StandardJwtContextFactory;
-import stroom.security.common.impl.UserIdentityFactory;
+import stroom.security.api.UserIdentityFactory;
 import stroom.security.common.impl.UserIdentityFactoryImpl;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.util.guice.HasHealthCheckBinder;

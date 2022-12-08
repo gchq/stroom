@@ -32,11 +32,28 @@ public enum StroomStatusCode {
     CLIENT_TOKEN_REQUIRED(HttpServletResponse.SC_UNAUTHORIZED, 301, "Client Token Required",
             "A client token is required to send data"),
 
-    CLIENT_CERTIFICATE_NOT_AUTHORISED(HttpServletResponse.SC_FORBIDDEN, 310, "Client Certificate not authorised",
+    CLIENT_TOKEN_OR_CERT_REQUIRED(
+            HttpServletResponse.SC_UNAUTHORIZED,
+            302,
+            "Client Token or Certificate Required",
+            "The feed you have provided requires a client HTTPS certificate to send data"),
+
+    CLIENT_CERTIFICATE_NOT_AUTHORISED(
+            HttpServletResponse.SC_FORBIDDEN,
+            310,
+            "Client Certificate not authorised",
             "The feed you have provided does not allow your client certificate to send data"),
 
-    CLIENT_TOKEN_NOT_AUTHORISED(HttpServletResponse.SC_FORBIDDEN, 311, "Client Token not authorised",
+    CLIENT_TOKEN_NOT_AUTHORISED(
+            HttpServletResponse.SC_FORBIDDEN,
+            311,
+            "Client Token not authorised",
             "The provided client token cannot be authorised"),
+
+    CLIENT_TOKEN_OR_CERT_NOT_AUTHORISED(HttpServletResponse.SC_FORBIDDEN,
+            312,
+            "Client Token or Certificate not authorised",
+            "The provided client token or certificate cannot be authorised"),
 
     COMPRESSED_STREAM_INVALID(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
             400,
@@ -44,7 +61,10 @@ public enum StroomStatusCode {
             "The stream of data sent does not form a valid compressed file.  Maybe it terminated " +
                     "unexpectedly or is corrupt."),
 
-    UNKNOWN_ERROR(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 999, "Unknown error",
+    UNKNOWN_ERROR(
+            HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+            999,
+            "Unknown error",
             "An unknown unexpected error occurred");
 
     public static StroomStatusCode getStroomStatusCode(int code) {

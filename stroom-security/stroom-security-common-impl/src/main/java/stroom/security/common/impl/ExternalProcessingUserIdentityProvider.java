@@ -2,6 +2,7 @@ package stroom.security.common.impl;
 
 import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.UserIdentity;
+import stroom.security.api.UserIdentityFactory;
 import stroom.util.exception.ThrowingFunction;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

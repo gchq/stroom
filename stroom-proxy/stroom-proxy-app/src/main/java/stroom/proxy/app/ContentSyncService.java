@@ -6,7 +6,7 @@ import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.proxy.app.handler.FeedStatusConfig;
-import stroom.security.common.impl.UserIdentityFactory;
+import stroom.security.api.UserIdentityFactory;
 import stroom.util.HasHealthCheck;
 import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;

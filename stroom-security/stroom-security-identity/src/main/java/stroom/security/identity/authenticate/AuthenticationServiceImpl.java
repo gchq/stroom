@@ -13,7 +13,7 @@ import stroom.security.identity.exceptions.BadRequestException;
 import stroom.security.identity.token.TokenBuilderFactory;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdClientFactory;
-import stroom.util.cert.CertificateUtil;
+import stroom.util.cert.CertificateExtractor;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -28,7 +28,6 @@ import java.util.regex.Pattern;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.core.UriBuilder;
 
 
@@ -48,18 +47,20 @@ class AuthenticationServiceImpl implements AuthenticationService {
     private final OpenIdClientFactory openIdClientDetailsFactory;
     private final TokenBuilderFactory tokenBuilderFactory;
     private final TokenConfig tokenConfig;
+    private final CertificateExtractor certificateExtractor;
 
     @Inject
     public AuthenticationServiceImpl(
             final UriFactory uriFactory,
-            @NotNull final IdentityConfig config,
+            final IdentityConfig config,
             final EmailSender emailSender,
             final AccountDao accountDao,
             final AccountService accountService,
             final SecurityContext securityContext,
             final OpenIdClientFactory openIdClientDetailsFactory,
             final TokenBuilderFactory tokenBuilderFactory,
-            final TokenConfig tokenConfig) {
+            final TokenConfig tokenConfig,
+            final CertificateExtractor certificateExtractor) {
         this.uriFactory = uriFactory;
         this.config = config;
         this.emailSender = emailSender;
@@ -69,6 +70,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
         this.openIdClientDetailsFactory = openIdClientDetailsFactory;
         this.tokenBuilderFactory = tokenBuilderFactory;
         this.tokenConfig = tokenConfig;
+        this.certificateExtractor = certificateExtractor;
     }
 
     public AuthenticationState getAuthenticationState(final HttpServletRequest request) {
@@ -129,7 +131,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
 
     private AuthStatus loginWithCertificate(final HttpServletRequest request) {
         LOGGER.debug("loginWithCertificate");
-        final Optional<String> optionalCN = CertificateUtil.getCN(request);
+        final Optional<String> optionalCN = certificateExtractor.getCN(request);
         if (optionalCN.isPresent()) {
             final String cn = optionalCN.get();
             // Check for a certificate

@@ -13,8 +13,8 @@ import stroom.legacy.impex_6_1.LegacyImpexModule;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.mock.MockMetaModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
+import stroom.receive.common.RequestAuthenticator;
 import stroom.receive.rules.impl.ReceiveDataRuleSetModule;
-import stroom.security.api.RequestAuthenticator;
 import stroom.security.api.UserIdentity;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.impl.TaskContextModule;
@@ -27,7 +27,6 @@ import com.google.inject.util.Providers;
 
 import java.util.Collections;
 import java.util.Map;
-import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 
 public class TestBaseModule extends AbstractModule {
@@ -65,9 +64,9 @@ public class TestBaseModule extends AbstractModule {
     RequestAuthenticator requestAuthenticator() {
         return new RequestAuthenticator() {
             @Override
-            public Optional<UserIdentity> authenticate(final HttpServletRequest request,
-                                                       final AttributeMap attributeMap) {
-                return Optional.empty();
+            public UserIdentity authenticate(final HttpServletRequest request,
+                                             final AttributeMap attributeMap) {
+                return null;
             }
 
             @Override

@@ -12,8 +12,9 @@ import stroom.receive.common.AttributeMapValidator;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamStatus;
-import stroom.security.api.RequestAuthenticator;
+import stroom.receive.common.RequestAuthenticator;
 import stroom.security.api.UserIdentity;
+import stroom.util.cert.CertificateExtractor;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.Metrics;
@@ -21,7 +22,6 @@ import stroom.util.logging.Metrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
 import java.util.UUID;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -36,6 +36,7 @@ public class ReceiveDataHelper {
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
     private final RequestAuthenticator requestAuthenticator;
     private final AttributeMapFilter attributeMapFilter;
+    private final CertificateExtractor certificateExtractor;
     private final ProxyId proxyId;
     private final LogStream logStream;
 
@@ -43,11 +44,13 @@ public class ReceiveDataHelper {
     public ReceiveDataHelper(final Provider<ReceiveDataConfig> receiveDataConfigProvider,
                              final RequestAuthenticator requestAuthenticator,
                              final AttributeMapFilterFactory attributeMapFilterFactory,
+                             final CertificateExtractor certificateExtractor,
                              final ProxyId proxyId,
                              final LogStream logStream) {
         this.receiveDataConfigProvider = receiveDataConfigProvider;
         this.requestAuthenticator = requestAuthenticator;
         this.attributeMapFilter = attributeMapFilterFactory.create();
+        this.certificateExtractor = certificateExtractor;
         this.proxyId = proxyId;
         this.logStream = logStream;
     }
@@ -58,7 +61,7 @@ public class ReceiveDataHelper {
         final long startTimeMs = System.currentTimeMillis();
 
         // Create attribute map from headers.
-        final AttributeMap attributeMap = AttributeMapUtil.create(request);
+        final AttributeMap attributeMap = AttributeMapUtil.create(request, certificateExtractor);
 
         // Create a new proxy id for the request so we can track progress and report back the UUID to the sender,
         final String requestUuid = UUID.randomUUID().toString();
@@ -70,7 +73,7 @@ public class ReceiveDataHelper {
                 final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
 
                 // Authorise request.
-                authorise(request, attributeMap);
+                final UserIdentity userIdentity = requestAuthenticator.authenticate(request, attributeMap);
 
                 Metrics.measure("ProxyRequestHandler - handle1", () -> {
                     // Validate the supplied attributes.
@@ -95,7 +98,8 @@ public class ReceiveDataHelper {
             if (e instanceof StroomStreamException) {
                 stroomStreamException = (StroomStreamException) e;
             } else {
-                stroomStreamException = StroomStreamException.create(e, AttributeMapUtil.create(request));
+                stroomStreamException = StroomStreamException.create(
+                        e, AttributeMapUtil.create(request, certificateExtractor));
             }
 
             final StroomStreamStatus status = stroomStreamException.getStroomStreamStatus();
@@ -128,30 +132,6 @@ public class ReceiveDataHelper {
         }
 
         return result;
-    }
-
-    private void authorise(final HttpServletRequest request, final AttributeMap attributeMap) {
-        final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
-
-        // If token authentication is required but no token is supplied then error.
-        // TODO: 29/11/2022 Fix validation for cert/token, maybe move into ReqAuth
-        if (receiveDataConfig.isAuthenticationRequired()
-                && receiveDataConfig.isTokenAuthenticationEnabled()) {
-            if (requestAuthenticator.hasAuthenticationToken(request)) {
-                // Authenticate the request token
-                final Optional<UserIdentity> optionalUserIdentity = requestAuthenticator.authenticate(
-                        request, attributeMap);
-
-                if (optionalUserIdentity.isEmpty()) {
-                    // If token authentication is required, but we could not verify the token then error.
-                    throw new StroomStreamException(StroomStatusCode.CLIENT_TOKEN_NOT_AUTHORISED, attributeMap);
-                }
-            } else {
-                throw new StroomStreamException(StroomStatusCode.CLIENT_TOKEN_REQUIRED, attributeMap);
-            }
-        }
-        // Remove authorization header from attributes as it should not be stored or forwarded on.
-        requestAuthenticator.removeAuthorisationEntries(attributeMap);
     }
 
     public interface Handler {

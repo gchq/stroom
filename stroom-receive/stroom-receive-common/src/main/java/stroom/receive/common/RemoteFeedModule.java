@@ -25,6 +25,8 @@ public class RemoteFeedModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        bind(RequestAuthenticator.class).to(RequestAuthenticatorImpl.class);
+
         RestResourcesBinder.create(binder())
                 .bind(FeedStatusResourceImpl.class);
 

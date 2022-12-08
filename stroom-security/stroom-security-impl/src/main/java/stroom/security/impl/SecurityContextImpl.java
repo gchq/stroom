@@ -5,7 +5,7 @@ import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.exception.AuthenticationException;
-import stroom.security.common.impl.UserIdentityFactory;
+import stroom.security.common.impl.UserIdentityFactoryImpl;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
@@ -33,7 +33,7 @@ class SecurityContextImpl implements SecurityContext {
     private final UserAppPermissionsCache userAppPermissionsCache;
     private final UserCache userCache;
     private final ProcessingUserIdentityProvider processingUserIdentityProvider;
-    private final UserIdentityFactory userIdentityFactory;
+    private final UserIdentityFactoryImpl userIdentityFactory;
 
     @Inject
     SecurityContextImpl(
@@ -42,7 +42,7 @@ class SecurityContextImpl implements SecurityContext {
             final UserAppPermissionsCache userAppPermissionsCache,
             final UserCache userCache,
             final ProcessingUserIdentityProvider processingUserIdentityProvider,
-            final UserIdentityFactory userIdentityFactory) {
+            final UserIdentityFactoryImpl userIdentityFactory) {
         this.userDocumentPermissionsCache = userDocumentPermissionsCache;
         this.userGroupsCache = userGroupsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
