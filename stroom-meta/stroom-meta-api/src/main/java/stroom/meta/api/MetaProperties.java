@@ -11,7 +11,6 @@ public class MetaProperties {
     private final String pipelineUuid;
     private final Integer processorFilterId;
     private final Long processorTaskId;
-    private final Long reprocessedStreamId;
     private final Long createMs;
     private final Long effectiveMs;
     private final Long statusMs;
@@ -23,7 +22,6 @@ public class MetaProperties {
                           final String pipelineUuid,
                           final Integer processorFilterId,
                           final Long processorTaskId,
-                          final Long reprocessedStreamId,
                           final Long createMs,
                           final Long effectiveMs,
                           final Long statusMs) {
@@ -34,7 +32,6 @@ public class MetaProperties {
         this.processorFilterId = processorFilterId;
         this.processorTaskId = processorTaskId;
         this.pipelineUuid = pipelineUuid;
-        this.reprocessedStreamId = reprocessedStreamId;
         this.createMs = createMs;
         this.effectiveMs = effectiveMs;
         this.statusMs = statusMs;
@@ -68,10 +65,6 @@ public class MetaProperties {
         return processorTaskId;
     }
 
-    public Long getReprocessedStreamId() {
-        return reprocessedStreamId;
-    }
-
     public Long getCreateMs() {
         return createMs;
     }
@@ -101,7 +94,6 @@ public class MetaProperties {
         private String pipelineUuid;
         private Integer processorFilterId;
         private Long processorTaskId;
-        private Long reprocessedStreamId;
         private Long createMs;
         private Long effectiveMs;
         private Long statusMs;
@@ -117,7 +109,6 @@ public class MetaProperties {
             this.pipelineUuid = metaProperties.pipelineUuid;
             this.processorFilterId = metaProperties.processorFilterId;
             this.processorTaskId = metaProperties.processorTaskId;
-            this.reprocessedStreamId = metaProperties.reprocessedStreamId;
             this.createMs = metaProperties.createMs;
             this.effectiveMs = metaProperties.effectiveMs;
             this.statusMs = metaProperties.statusMs;
@@ -183,11 +174,6 @@ public class MetaProperties {
             return this;
         }
 
-        public Builder reprocessedStreamId(final Long reprocessedStreamId) {
-            this.reprocessedStreamId = reprocessedStreamId;
-            return this;
-        }
-
         public Builder createMs(final Long createMs) {
             this.createMs = createMs;
             return this;
@@ -217,7 +203,6 @@ public class MetaProperties {
                     pipelineUuid,
                     processorFilterId,
                     processorTaskId,
-                    reprocessedStreamId,
                     timeMs,
                     effectiveMs != null
                             ? effectiveMs

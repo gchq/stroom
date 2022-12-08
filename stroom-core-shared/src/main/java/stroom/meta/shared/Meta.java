@@ -43,8 +43,6 @@ public class Meta {
     @JsonProperty
     private Long parentMetaId;
     @JsonProperty
-    private Long reprocessedStreamId;
-    @JsonProperty
     private Status status;
     @JsonProperty
     private Long statusMs;
@@ -65,7 +63,6 @@ public class Meta {
                 @JsonProperty("processorFilterId") final Integer processorFilterId,
                 @JsonProperty("processorTaskId") final Long processorTaskId,
                 @JsonProperty("parentMetaId") final Long parentMetaId,
-                @JsonProperty("reprocessedStreamId") final Long reprocessedStreamId,
                 @JsonProperty("status") final Status status,
                 @JsonProperty("statusMs") final Long statusMs,
                 @JsonProperty("createMs") final long createMs,
@@ -78,7 +75,6 @@ public class Meta {
         this.processorFilterId = processorFilterId;
         this.processorTaskId = processorTaskId;
         this.parentMetaId = parentMetaId;
-        this.reprocessedStreamId = reprocessedStreamId;
         this.status = status;
         this.statusMs = statusMs;
         this.createMs = createMs;
@@ -147,14 +143,6 @@ public class Meta {
 
     public void setParentMetaId(final Long parentMetaId) {
         this.parentMetaId = parentMetaId;
-    }
-
-    public Long getReprocessedStreamId() {
-        return reprocessedStreamId;
-    }
-
-    public void setReprocessedStreamId(final Long reprocessedStreamId) {
-        this.reprocessedStreamId = reprocessedStreamId;
     }
 
     public Status getStatus() {
@@ -229,7 +217,6 @@ public class Meta {
         private Integer processorFilterId;
         private Long processorTaskId;
         private Long parentMetaId;
-        private Long reprocessedStreamId;
         private Status status;
         private Long statusMs;
         private long createMs;
@@ -247,7 +234,6 @@ public class Meta {
             this.processorFilterId = meta.processorFilterId;
             this.processorTaskId = meta.processorTaskId;
             this.parentMetaId = meta.parentMetaId;
-            this.reprocessedStreamId = meta.reprocessedStreamId;
             this.status = meta.status;
             this.statusMs = meta.statusMs;
             this.createMs = meta.createMs;
@@ -294,11 +280,6 @@ public class Meta {
             return this;
         }
 
-        public Builder reprocessedStreamId(final Long reprocessedStreamId) {
-            this.reprocessedStreamId = reprocessedStreamId;
-            return this;
-        }
-
         public Builder status(final Status status) {
             this.status = status;
             return this;
@@ -329,7 +310,6 @@ public class Meta {
                     processorFilterId,
                     processorTaskId,
                     parentMetaId,
-                    reprocessedStreamId,
                     status,
                     statusMs,
                     createMs,

@@ -159,7 +159,6 @@ public class MockPipelineElementRegistryFactory implements ElementRegistryFactor
                         null,
                         null,
                         null,
-                        null,
                         null);
             }
             if (elementClass.equals(FileAppender.class)) {

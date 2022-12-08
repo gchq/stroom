@@ -198,11 +198,6 @@ class FsStore implements Store, AttributeMapFactory {
                     String.valueOf(meta.getParentMetaId()));
         }
 
-        if (meta.getReprocessedStreamId() != null) {
-            updateAttribute(target, MetaFields.META_REPROCESSED_STREAM_ID,
-                    String.valueOf(meta.getReprocessedStreamId()));
-        }
-
         updateAttribute(target, MetaFields.FEED, meta.getFeedName());
         updateAttribute(target, MetaFields.TYPE, meta.getTypeName());
         updateAttribute(target, MetaFields.CREATE_TIME, String.valueOf(meta.getCreateMs()));
