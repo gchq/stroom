@@ -51,6 +51,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     public static final String PROP_NAME_REST_CLIENT = "restClient";
     public static final String PROP_NAME_THREADS = "threads";
     public static final String PROP_NAME_FORWARD_RETRY = "forwardRetry";
+    public static final String PROP_NAME_SQS_CONNECTORS = "sqsConnectors";
 
     protected static final boolean DEFAULT_USE_DEFAULT_OPEN_ID_CREDENTIALS = false;
     protected static final boolean DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = true;
@@ -75,6 +76,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     private final RestClientConfig restClientConfig;
     private final ThreadConfig threadConfig;
     private final ForwardRetryConfig forwardRetry;
+    private final List<SqsConnectorConfig> sqsConnectors;
 
     public ProxyConfig() {
         useDefaultOpenIdCredentials = DEFAULT_USE_DEFAULT_OPEN_ID_CREDENTIALS;
@@ -96,6 +98,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         restClientConfig = new RestClientConfig();
         threadConfig = new ThreadConfig();
         forwardRetry = new ForwardRetryConfig();
+        sqsConnectors = new ArrayList<>();
     }
 
 
@@ -119,7 +122,8 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             @JsonProperty(PROP_NAME_FEED_STATUS) final FeedStatusConfig feedStatusConfig,
             @JsonProperty(PROP_NAME_REST_CLIENT) final RestClientConfig restClientConfig,
             @JsonProperty(PROP_NAME_THREADS) final ThreadConfig threadConfig,
-            @JsonProperty(PROP_NAME_FORWARD_RETRY) final ForwardRetryConfig forwardRetry) {
+            @JsonProperty(PROP_NAME_FORWARD_RETRY) final ForwardRetryConfig forwardRetry,
+            @JsonProperty(PROP_NAME_SQS_CONNECTORS) final List<SqsConnectorConfig> sqsConnectors) {
 
         this.useDefaultOpenIdCredentials = useDefaultOpenIdCredentials;
         this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
@@ -139,6 +143,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         this.restClientConfig = restClientConfig;
         this.threadConfig = threadConfig;
         this.forwardRetry = forwardRetry;
+        this.sqsConnectors = sqsConnectors;
     }
 
     @AssertTrue(
@@ -254,6 +259,12 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                 || (forwardDestinations != null && !forwardDestinations.isEmpty());
     }
 
+    @JsonPropertyDescription("Configurations for AWS SQS connectors")
+    @JsonProperty
+    public List<SqsConnectorConfig> getSqsConnectors() {
+        return sqsConnectors;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -290,6 +301,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         private RestClientConfig restClientConfig = new RestClientConfig();
         private ThreadConfig threadConfig = new ThreadConfig();
         private ForwardRetryConfig forwardRetry = new ForwardRetryConfig();
+        private List<SqsConnectorConfig> sqsConnectors = new ArrayList<>();
 
         private Builder() {
 
@@ -385,6 +397,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             return this;
         }
 
+        public Builder addSqsConnector(final SqsConnectorConfig sqsConnector) {
+            this.sqsConnectors.add(sqsConnector);
+            return this;
+        }
+
         public ProxyConfig build() {
             return new ProxyConfig(
                     useDefaultOpenIdCredentials,
@@ -404,7 +421,8 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                     feedStatusConfig,
                     restClientConfig,
                     threadConfig,
-                    forwardRetry);
+                    forwardRetry,
+                    sqsConnectors);
         }
     }
 }
