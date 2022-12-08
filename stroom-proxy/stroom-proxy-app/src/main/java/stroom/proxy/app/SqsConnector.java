@@ -6,94 +6,99 @@ import stroom.proxy.app.event.EventStore;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import com.amazonaws.auth.EC2ContainerCredentialsProviderWrapper;
-import com.amazonaws.auth.InstanceProfileCredentialsProvider;
-import com.amazonaws.auth.profile.ProfileCredentialsProvider;
-import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
-import com.amazonaws.services.sqs.model.AmazonSQSException;
-import com.amazonaws.services.sqs.model.CreateQueueResult;
-import com.amazonaws.services.sqs.model.Message;
-import com.amazonaws.services.sqs.model.SendMessageBatchRequest;
-import com.amazonaws.services.sqs.model.SendMessageBatchRequestEntry;
-import com.amazonaws.services.sqs.model.SendMessageRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
+import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 
-import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 public class SqsConnector {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SqsConnector.class);
 
     private final EventStore eventStore;
+    private final SqsClient sqsClient;
 
-    public SqsConnector(final EventStore eventStore) {
+    private final String queueUrl;
+    private final int waitTimeSeconds;
+
+    public SqsConnector(final EventStore eventStore,
+                        final SqsConnectorConfig config) {
         this.eventStore = eventStore;
+        try {
+            LOGGER.debug(() -> "Creating SQS client");
+            sqsClient = SqsClient.builder()
+                    .region(Region.of(config.getAwsRegionName()))
+                    .credentialsProvider(DefaultCredentialsProvider.create())
+                    .build();
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
+            throw e;
+        }
+        queueUrl = config.getQueueUrl();
+        waitTimeSeconds = (int) config.getPollFrequency().getDuration().toSeconds();
     }
 
-    public void poll(final SqsConnectorConfig config) {
+    public void poll() {
         try {
-            LOGGER.debug(() -> "Getting sqs client");
-            final AmazonSQS sqs = AmazonSQSClientBuilder.standard()
-                    .withRegion(config.getAwsRegionName())
-                    .withCredentials(new InstanceProfileCredentialsProvider(false))
-                    .build();
-
-//            try {
-//                CreateQueueResult create_result = sqs.createQueue(QUEUE_NAME);
-//            } catch (AmazonSQSException e) {
-//                if (!e.getErrorCode().equals("QueueAlreadyExists")) {
-//                    throw e;
-//                }
+//            if (queueUrl == null) {
+//                LOGGER.debug(() -> "Getting queue name");
+//                final String queueName = config.getQueueName();
+//                LOGGER.debug(() -> "Getting queue URL for queue: " + queueName);
+//                queueUrl = sqs.getQueueUrl(queueName).getQueueUrl();
 //            }
-
-            String queueUrl = config.getQueueUrl();
-            if (queueUrl == null) {
-                LOGGER.debug(() -> "Getting queue name");
-                final String queueName = config.getQueueName();
-                LOGGER.debug(() -> "Getting queue URL for queue: " + queueName);
-                queueUrl = sqs.getQueueUrl(queueName).getQueueUrl();
-            }
-            LOGGER.debug("Got queue URL: " + queueUrl);
-
-//    SendMessageRequest send_msg_request = new SendMessageRequest()
-//            .withQueueUrl(queueUrl)
-//            .withMessageBody("hello world")
-//            .withDelaySeconds(5);
-//    sqs.sendMessage(send_msg_request);
-//
-//
-//    // Send multiple messages to the queue
-//    SendMessageBatchRequest send_batch_request = new SendMessageBatchRequest()
-//            .withQueueUrl(queueUrl)
-//            .withEntries(
-//                    new SendMessageBatchRequestEntry(
-//                            "msg_1", "Hello from message 1"),
-//                    new SendMessageBatchRequestEntry(
-//                            "msg_2", "Hello from message 2")
-//                            .withDelaySeconds(10));
-//    sqs.sendMessageBatch(send_batch_request);
+            LOGGER.debug(() -> "Got queue URL: " + queueUrl);
 
             List<Message> messages;
             do {
                 // receive messages from the queue
                 LOGGER.debug(() -> "Getting messages");
-                messages = sqs.receiveMessage(queueUrl).getMessages();
+                // long polling and wait for waitTimeSeconds before timed out
+                final ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest.builder()
+                        .queueUrl(queueUrl)
+                        .waitTimeSeconds(waitTimeSeconds)  // forces long polling
+                        .messageAttributeNames("All") // Message attribute wildcard.
+                        .build();
+
+                messages = sqsClient.receiveMessage(receiveMessageRequest).messages();
 
                 // delete messages from the queue
                 for (final Message message : messages) {
                     try {
                         final AttributeMap attributeMap = new AttributeMap();
-                        if (message.getAttributes() != null) {
-                            attributeMap.putAll(message.getAttributes());
+
+                        LOGGER.debug(() -> "Has Attributes: " + message.hasAttributes());
+                        if (message.hasAttributes()) {
+                            final Map<String, String> attributesAsStrings = message.attributesAsStrings();
+                            LOGGER.debug(() -> "Attributes: " + attributesAsStrings);
+                            attributeMap.putAll(attributesAsStrings);
                         }
 
-                        attributeMap.putIfAbsent(StandardHeaderArguments.FEED, "TEST");
+                        LOGGER.debug(() -> "Has Message Attributes: " + message.hasMessageAttributes());
+                        if (message.hasMessageAttributes()) {
+                            final Map<String, MessageAttributeValue> messageAttributes = message.messageAttributes();
+                            LOGGER.debug(() -> "Message Attributes: " + messageAttributes);
+                            messageAttributes.forEach((k, v) -> attributeMap.put(k, v.stringValue()));
+                        }
 
-                        eventStore.consume(attributeMap, message.getMessageId(), message.getBody());
-                        sqs.deleteMessage(queueUrl, message.getReceiptHandle());
+                        // FALLBACK
+                        if (!attributeMap.containsKey(StandardHeaderArguments.FEED)) {
+                            LOGGER.debug(() -> "Adding fallback feed TEST");
+                            attributeMap.putIfAbsent(StandardHeaderArguments.FEED, "TEST");
+                        }
+
+                        eventStore.consume(attributeMap, message.messageId(), message.body());
+
+                        final DeleteMessageRequest deleteMessageRequest = DeleteMessageRequest.builder()
+                                .queueUrl(queueUrl)
+                                .receiptHandle(message.receiptHandle())
+                                .build();
+                        sqsClient.deleteMessage(deleteMessageRequest);
                     } catch (final RuntimeException e) {
                         LOGGER.error(e::getMessage, e);
                     }
