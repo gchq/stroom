@@ -12,6 +12,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.1-beta.17] - 2022-12-09
+
+* Relax validation requiring proxy repo and failed retry directories to exist before proxy boots. Now checks they exist (creating if they don't) at time of use.
+
+
 ## [v7.1-beta.16] - 2022-12-08
 
 * Issue **#3031** : Add connectors to poll from AWS SQS.
@@ -4427,7 +4432,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.16...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.17...HEAD
+[v7.1-beta.17]: https://github.com/gchq/stroom/compare/v7.1-beta.16...v7.1-beta.17
 [v7.1-beta.16]: https://github.com/gchq/stroom/compare/v7.1-beta.15...v7.1-beta.16
 [v7.1-beta.15]: https://github.com/gchq/stroom/compare/v7.1-beta.14...v7.1-beta.15
 [v7.1-beta.14]: https://github.com/gchq/stroom/compare/v7.1-beta.13...v7.1-beta.14
