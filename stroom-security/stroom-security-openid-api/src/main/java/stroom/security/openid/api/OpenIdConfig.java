@@ -21,7 +21,7 @@ public class OpenIdConfig
     public static final String PROP_NAME_CLIENT_ID = "clientId";
     public static final String PROP_NAME_CLIENT_SECRET = "clientSecret";
     public static final String PROP_NAME_CONFIGURATION_ENDPOINT = "openIdConfigurationEndpoint";
-    public static final String PROP_NAME_USE_INTERNAL = "identityProviderType";
+    public static final String PROP_NAME_IDP_TYPE = "identityProviderType";
 
     private final IdpType identityProviderType;
 
@@ -119,7 +119,7 @@ public class OpenIdConfig
     }
 
     @JsonCreator
-    public OpenIdConfig(@JsonProperty(PROP_NAME_USE_INTERNAL) final IdpType identityProviderType,
+    public OpenIdConfig(@JsonProperty(PROP_NAME_IDP_TYPE) final IdpType identityProviderType,
                         @JsonProperty(PROP_NAME_CONFIGURATION_ENDPOINT) final String openIdConfigurationEndpoint,
                         @JsonProperty("issuer") final String issuer,
                         @JsonProperty("authEndpoint") final String authEndpoint,

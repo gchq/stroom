@@ -6,6 +6,7 @@ import stroom.dropwizard.common.TokenExceptionMapper;
 import stroom.receive.common.RequestAuthenticator;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
+import stroom.security.api.UserIdentityFactory;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.jersey.WebTargetProxy;
@@ -78,7 +79,7 @@ public class JerseyModule extends AbstractModule {
     @Singleton
     WebTargetFactory provideJerseyRequestBuilder(final Client client,
                                                  final SecurityContext securityContext,
-                                                 final RequestAuthenticator requestAuthenticator) {
+                                                 final UserIdentityFactory userIdentityFactory) {
         return url -> {
             final WebTarget webTarget = client.target(url);
             return (WebTarget) new WebTargetProxy(webTarget) {
@@ -105,7 +106,7 @@ public class JerseyModule extends AbstractModule {
 
                 private void addAuthHeader(final Builder builder) {
                     final UserIdentity userIdentity = securityContext.getUserIdentity();
-                    final Map<String, String> authHeaders = requestAuthenticator.getAuthHeaders(userIdentity);
+                    final Map<String, String> authHeaders = userIdentityFactory.getAuthHeaders(userIdentity);
                     authHeaders.forEach(builder::header);
                 }
             };

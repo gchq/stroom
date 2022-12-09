@@ -446,25 +446,26 @@ class DynamicTestBuilder {
 
             if (value == null) {
                 stringBuilder.append("null");
-            } else if (value instanceof Double) {
-                stringBuilder.append(ModelStringUtil.formatCsv(
-                                (Double) value, 5, true))
+            } else if (value instanceof final Double valDbl) {
+                stringBuilder.append(ModelStringUtil.formatCsv(valDbl, 5, true))
                         .append("D");
-            } else if (value instanceof Integer) {
-                stringBuilder.append(ModelStringUtil.formatCsv(((Integer) value).longValue()));
-            } else if (value instanceof Long) {
-                stringBuilder.append(ModelStringUtil.formatCsv((Long) value))
+            } else if (value instanceof final Integer valInt) {
+                stringBuilder.append(ModelStringUtil.formatCsv(valInt.longValue()));
+            } else if (value instanceof final Long valLong) {
+                stringBuilder.append(ModelStringUtil.formatCsv(valLong))
                         .append("L");
-            } else if (value instanceof Tuple) {
-                final Tuple tuple = (Tuple) value;
-                final String tupleStr = tuple.toSeq()
+            } else if (value instanceof final Tuple valTuple) {
+                final String tupleContentsStr = valTuple.toSeq()
                         .toStream()
                         .map(this::valueToStr)
                         .collect(Collectors.joining(", "));
 
                 stringBuilder.append("(")
-                        .append(tupleStr)
+                        .append(tupleContentsStr)
                         .append(")");
+            } else if (value.toString().contains("$$Lambda")) {
+                // Not sure if there is anything useful we can show for the lambda so just do this
+                stringBuilder.append("lambda");
             } else {
                 final String valStr = value.toString();
                 stringBuilder.append("'")
@@ -488,11 +489,12 @@ class DynamicTestBuilder {
                             if (LOGGER.isDebugEnabled()) {
                                 if (testCase.isExpectedToThrow()) {
                                     LOGGER.debug(() -> LogUtil.message("Input: '{}', expected to throw: '{}'",
-                                            testCase.getInput(),
+                                            valueToStr(testCase.getInput()),
                                             testCase.getExpectedThrowableType().getSimpleName()));
                                 } else {
                                     LOGGER.debug(() -> LogUtil.message("Input: '{}', expectedOutput: '{}'",
-                                            testCase.getInput(), testCase.getExpectedOutput()));
+                                            valueToStr(testCase.getInput()),
+                                            valueToStr(testCase.getExpectedOutput())));
                                 }
                             }
                             O actualOutput = null;

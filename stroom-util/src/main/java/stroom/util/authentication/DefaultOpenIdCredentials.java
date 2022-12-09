@@ -14,7 +14,7 @@ package stroom.util.authentication;
 @SuppressWarnings("checkstyle:LineLength")
 public class DefaultOpenIdCredentials {
 
-    // Made with a public ctor so it is injectable and mockable, if required.
+    // Made with a public ctor, so it is injectable and mockable, if required.
     public DefaultOpenIdCredentials() {
     }
 

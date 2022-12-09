@@ -127,6 +127,7 @@ public class IdpIdentityToStroomUserMapper implements IdpIdentityMapper {
         try {
             final String userId = getUserId(jwtContext.getJwtClaims());
             final String userUuid;
+
             if (IdpType.TEST.equals(openIdConfigProvider.get().getIdentityProviderType())
                     && jwtContext.getJwtClaims().getAudience().contains(defaultOpenIdCredentials.getOauth2ClientId())
                     && userId.equals(defaultOpenIdCredentials.getApiKeyUserEmail())) {

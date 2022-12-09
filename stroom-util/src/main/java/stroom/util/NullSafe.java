@@ -613,6 +613,41 @@ public class NullSafe {
         }
     }
 
+    /**
+     * Apply each getter to the value of <code>value</code> or the result from the previous
+     * getter while the result is non-null. The <code>predicate</code> is applied to the result of
+     * the last getter.
+     *
+     * @return false if any of the values/results are null, else return the value of the predicate when applied
+     * to the result of the last getter.
+     */
+    public static <T1, T2, T3, R> boolean test(final T1 value,
+                                               final Function<T1, T2> getter1,
+                                               final Function<T2, T3> getter2,
+                                               final Function<T3, R> getter3,
+                                               final Predicate<R> predicate) {
+        if (value == null) {
+            return false;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1)
+                    .apply(value);
+            if (value2 == null) {
+                return false;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2)
+                        .apply(value2);
+                if (value3 == null) {
+                    return false;
+                } else {
+                    final R result = Objects.requireNonNull(getter3).apply(value3);
+                    return result != null
+                            && Objects.requireNonNull(predicate)
+                            .test(result);
+                }
+            }
+        }
+    }
+
     public static <T1, T2, T3> String toString(final T1 value,
                                                final Function<T1, T2> getter1,
                                                final Function<T2, T3> getter2,

@@ -1,6 +1,7 @@
 package stroom.security.common.impl;
 
 import stroom.security.api.HasJwt;
+import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
 import stroom.security.api.exception.AuthenticationException;
@@ -57,6 +58,7 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
     private final IdpIdentityMapper idpIdentityMapper;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final CertificateExtractor certificateExtractor;
+    private final ProcessingUserIdentityProvider processingUserIdentityProvider;
 
     // A service account/user for communicating with other apps in the same OIDC realm,
     // e.g. proxy => stroom. Created lazily.
@@ -73,13 +75,15 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
                                    final Provider<CloseableHttpClient> httpClientProvider,
                                    final IdpIdentityMapper idpIdentityMapper,
                                    final DefaultOpenIdCredentials defaultOpenIdCredentials,
-                                   final CertificateExtractor certificateExtractor) {
+                                   final CertificateExtractor certificateExtractor,
+                                   final ProcessingUserIdentityProvider processingUserIdentityProvider) {
         this.jwtContextFactory = jwtContextFactory;
         this.openIdConfigProvider = openIdConfigProvider;
         this.httpClientProvider = httpClientProvider;
         this.idpIdentityMapper = idpIdentityMapper;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.certificateExtractor = certificateExtractor;
+        this.processingUserIdentityProvider = processingUserIdentityProvider;
     }
 
     @Override
@@ -132,25 +136,34 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
 
     @Override
     public Map<String, String> getAuthHeaders(final UserIdentity userIdentity) {
+
         if (userIdentity == null) {
             LOGGER.debug("Null user supplied");
             return Collections.emptyMap();
-        } else if (IdpType.TEST.equals(openIdConfigProvider.get().getIdentityProviderType())) {
+
+        } else if (IdpType.TEST.equals(openIdConfigProvider.get().getIdentityProviderType())
+                && !processingUserIdentityProvider.isProcessingUser(userIdentity)) {
+            // The processing user is a bit special so even when using hard-coded default open id
+            // creds the proc user uses tokens created by the internal IDP.
             LOGGER.debug("Using default token");
             return jwtContextFactory.createAuthorisationEntries(defaultOpenIdCredentials.getApiKey());
+
         } else if (userIdentity instanceof final AbstractTokenUserIdentity tokenUserIdentity) {
-            // just in case the refresh queue is backed up
+            // Ensure the token hasn't gone off, just in case the refresh queue (which refreshes ahead of the
+            // expiry time) is busy, so the call to refresh is unlikely.
             if (tokenUserIdentity.hasTokenExpired()) {
                 refresh(userIdentity);
             }
             final String accessToken = Objects.requireNonNull(tokenUserIdentity.getAccessToken(),
                     () -> "Null access token for userIdentity " + userIdentity);
             return jwtContextFactory.createAuthorisationEntries(accessToken);
+
         } else if (userIdentity instanceof final HasJwt hasJwt) {
             // This is for stroom's processing user identity which we don't need to refresh as
             // ProcessingUserIdentityProviderImpl handles that
             final String accessToken = Objects.requireNonNull(hasJwt.getJwt());
             return jwtContextFactory.createAuthorisationEntries(accessToken);
+
         } else {
             LOGGER.debug(() -> "Wrong type of userIdentity " + userIdentity.getClass());
             return Collections.emptyMap();

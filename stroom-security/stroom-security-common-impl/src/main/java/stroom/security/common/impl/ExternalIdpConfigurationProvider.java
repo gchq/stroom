@@ -83,7 +83,7 @@ public class ExternalIdpConfigurationProvider
                     .unhealthy()
                     .withMessage(LogUtil.message("Property {} is false, but {} is unset. " +
                                     "You must provide the configuration endpoint for the external IDP.",
-                            openIdConfig.getFullPathStr(OpenIdConfig.PROP_NAME_USE_INTERNAL),
+                            openIdConfig.getFullPathStr(OpenIdConfig.PROP_NAME_IDP_TYPE),
                             openIdConfig.getFullPathStr(OpenIdConfig.PROP_NAME_CONFIGURATION_ENDPOINT)
                     ));
         } else {

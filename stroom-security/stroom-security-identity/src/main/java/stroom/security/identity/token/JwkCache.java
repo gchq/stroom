@@ -16,7 +16,6 @@
 
 package stroom.security.identity.token;
 
-import stroom.security.identity.config.IdentityConfig;
 import stroom.security.openid.api.JsonWebKeyFactory;
 import stroom.security.openid.api.OpenIdConfig;
 import stroom.security.openid.api.OpenIdConfiguration.IdpType;
@@ -46,7 +45,6 @@ public class JwkCache implements PublicJsonWebKeyProvider {
 
     @Inject
     JwkCache(final JwkDao jwkDao,
-             final IdentityConfig authenticationConfig,
              final DefaultOpenIdCredentials defaultOpenIdCredentials,
              final JsonWebKeyFactory jsonWebKeyFactory,
              final Provider<OpenIdConfig> openIdConfigProvider) {
