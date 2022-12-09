@@ -1,0 +1,52 @@
+before "test of inner \" strings " after
+-----
+"test of inner \" strings " after
+-----
+ "test of inner \" strings " after
+-----
+before "test of inner \" strings "
+-----
+before "test of inner \" strings "
+-----
+before 'test of inner \' strings ' after
+-----
+'test of inner \' strings ' after
+-----
+ 'test of inner \' strings ' after
+-----
+before 'test of inner \' strings '
+-----
+before 'test of inner \' strings '
+-----
+table | where this = that | and foo = 'test of inner \' strings '
+-----
+Test Index
+| where UserId = user5 and Description = e0567
+| and EventTime <= 2000-01-01T00:00:00.000Z
+| and EventTime >= 2016-01-02T00:00:00.000Z
+-----
+Test Index
+| where UserId = user5 and Description = e0567
+| and EventTime <= now()
+-----
+Test Index
+| where UserId = user5 and Description = e0567
+| and EventTime <= now() + 3d
+-----
+Test Index
+| where UserId = user5 and Description = e0567
+| and EventTime <= now() + 3
+-----
+Events
+| where Name = "Start"
+| project City, ClientIp, StartTime = timestamp
+| join  kind=inner
+    (Events
+    | where Name = "Stop"
+    | project StopTime = timestamp, ClientIp)
+    on ClientIp
+| extend duration = StopTime - StartTime
+    // Remove matches with earlier stops:
+| where  duration > 0
+    // Pick out the earliest stop for each start and client:
+| summarize arg_min(duration, *) by bin(StartTime,1s), ClientIp

@@ -114,7 +114,7 @@ ext.versions = [
         elasticsearch     : '7.17.1',
         httpcore          : '4.4.12', // Transient dependency of Elasticsearch
         guice5            : '5.1.0',
-        gwt               : '2.9.0',
+        gwt               : '2.10.0',
         hikari            : '5.0.0',
         jackson_swagger   : '2.11.1', // Specific version of jackson for use with the swagger plugin
         jooq              : '3.16.4',
@@ -188,9 +188,9 @@ ext.libs = [
         guice_extension                     : "name.falgout.jeffrey.testing.junit5:guice-extension:1.2.1",
         guice_multibindings                 : "com.google.inject.extensions:guice-multibindings:$versions.guice5",
         guice_grapher                       : "com.google.inject.extensions:guice-grapher:$versions.guice5",
-        gwt_dev                             : "com.google.gwt:gwt-dev:$versions.gwt",
-        gwt_servlet                         : "com.google.gwt:gwt-servlet:$versions.gwt",
-        gwt_user                            : "com.google.gwt:gwt-user:$versions.gwt",
+        gwt_dev                             : "org.gwtproject:gwt-dev:$versions.gwt",
+        gwt_servlet                         : "org.gwtproject:gwt-servlet:$versions.gwt",
+        gwt_user                            : "org.gwtproject:gwt-user:$versions.gwt",
         gwtp_mvp_client                     : "com.gwtplatform:gwtp-mvp-client:0.7",
         gson                                : 'com.google.code.gson:gson:2.6.2',
         hbase                               : "org.apache.hbase:hbase-common:2.1.5", // should be set to be consistent with CDH version

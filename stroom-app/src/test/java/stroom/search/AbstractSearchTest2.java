@@ -17,6 +17,7 @@
 package stroom.search;
 
 
+import stroom.dashboard.impl.Parser;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
@@ -56,14 +57,16 @@ import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
+public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSearchTest.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSearchTest2.class);
 
     @Inject
     private SearchResponseCreatorManager searchResponseCreatorManager;
     @Inject
     private LuceneSearchStoreFactory storeFactory;
+    @Inject
+    private Parser parser;
 
     protected static SearchResponse search(final SearchRequest searchRequest,
                                            final StoreFactory storeFactory,
@@ -86,8 +89,8 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
         return mapper;
     }
 
-    public static void testInteractive(
-            final ExpressionOperator.Builder expressionIn,
+    public void testInteractive(
+            final String queryString,
             final int expectResultCount,
             final List<String> componentIds,
             final Function<Boolean, TableSettings> tableSettingsCreator,
@@ -116,12 +119,13 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
         }
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final Query query = Query.builder().dataSource(indexRef).expression(expressionIn.build()).build();
-        final SearchRequest searchRequest = new SearchRequest(queryKey,
+        final Query query = Query.builder().dataSource(indexRef).build();
+        SearchRequest searchRequest = new SearchRequest(queryKey,
                 query,
                 resultRequests,
                 DateTimeSettings.builder().build(),
                 false);
+        searchRequest = parser.parse(queryString, searchRequest);
 
         try {
             final ObjectMapper mapper = createMapper(true);
@@ -131,7 +135,7 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             LOGGER.error(e.getMessage(), e);
         }
 
-        final SearchResponse searchResponse = AbstractSearchTest
+        final SearchResponse searchResponse = AbstractSearchTest2
                 .search(searchRequest, storeFactory, searchResponseCreatorManager);
 
         assertThat(searchResponse).as("Search response is null").isNotNull();
@@ -173,14 +177,14 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
     }
 
     public void testInteractive(
-            final ExpressionOperator.Builder expressionIn,
+            final String queryString,
             final int expectResultCount,
             final List<String> componentIds,
             final Function<Boolean, TableSettings> tableSettingsCreator,
             final boolean extractValues,
             final Consumer<Map<String, List<Row>>> resultMapConsumer,
             final IndexStore indexStore) {
-        testInteractive(expressionIn, expectResultCount, componentIds, tableSettingsCreator,
+        testInteractive(queryString, expectResultCount, componentIds, tableSettingsCreator,
                 extractValues, resultMapConsumer, indexStore, storeFactory, searchResponseCreatorManager);
     }
 }
