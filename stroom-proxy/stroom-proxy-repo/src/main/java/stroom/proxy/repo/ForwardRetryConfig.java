@@ -2,7 +2,6 @@ package stroom.proxy.repo;
 
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
-import stroom.util.shared.validation.ValidDirectoryPath;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -16,6 +15,7 @@ import javax.validation.constraints.NotNull;
 @JsonPropertyOrder(alphabetic = true)
 public class ForwardRetryConfig extends AbstractConfig implements IsProxyConfig {
 
+    public static final String PROP_NAME_FAILED_FORWARD_DIR = "failedForwardDir";
     private final StroomDuration retryFrequency;
     private final StroomDuration maxRetryDelay;
     private final int maxTries;
@@ -33,7 +33,7 @@ public class ForwardRetryConfig extends AbstractConfig implements IsProxyConfig 
     public ForwardRetryConfig(@JsonProperty("retryFrequency") final StroomDuration retryFrequency,
                               @JsonProperty("maxRetryDelay") final StroomDuration maxRetryDelay,
                               @JsonProperty("maxTries") final int maxTries,
-                              @JsonProperty("failedForwardDir") final String failedForwardDir) {
+                              @JsonProperty(PROP_NAME_FAILED_FORWARD_DIR) final String failedForwardDir) {
 
         this.retryFrequency = retryFrequency;
         this.maxRetryDelay = maxRetryDelay;
@@ -63,7 +63,6 @@ public class ForwardRetryConfig extends AbstractConfig implements IsProxyConfig 
     }
 
     @NotNull
-    @ValidDirectoryPath
     @JsonPropertyDescription("The directory to put failed forward data in.")
     @JsonProperty
     public String getFailedForwardDir() {
