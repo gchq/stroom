@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
@@ -258,16 +259,34 @@ public class OpenIdConfig
         return validateAudience;
     }
 
+    public OpenIdConfig withIdentityProviderType(final IdpType identityProviderType) {
+        return new OpenIdConfig(
+                identityProviderType,
+                openIdConfigurationEndpoint,
+                issuer,
+                authEndpoint,
+                tokenEndpoint,
+                jwksUri,
+                logoutEndpoint,
+                logoutRedirectParamName,
+                formTokenRequest,
+                clientSecret,
+                clientId,
+                requestScope,
+                validateAudience);
+    }
+
     @Override
     public String toString() {
         return "OpenIdConfig{" +
-                "useInternal=" + identityProviderType +
+                "identityProviderType=" + identityProviderType +
                 ", openIdConfigurationEndpoint='" + openIdConfigurationEndpoint + '\'' +
                 ", issuer='" + issuer + '\'' +
                 ", authEndpoint='" + authEndpoint + '\'' +
                 ", tokenEndpoint='" + tokenEndpoint + '\'' +
                 ", jwksUri='" + jwksUri + '\'' +
                 ", logoutEndpoint='" + logoutEndpoint + '\'' +
+                ", logoutRedirectParamName='" + logoutRedirectParamName + '\'' +
                 ", formTokenRequest=" + formTokenRequest +
                 ", clientId='" + clientId + '\'' +
                 ", clientSecret='" + clientSecret + '\'' +
@@ -276,6 +295,45 @@ public class OpenIdConfig
                 '}';
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final OpenIdConfig that = (OpenIdConfig) o;
+        return formTokenRequest == that.formTokenRequest && validateAudience == that.validateAudience && identityProviderType == that.identityProviderType && Objects.equals(
+                openIdConfigurationEndpoint,
+                that.openIdConfigurationEndpoint) && Objects.equals(issuer,
+                that.issuer) && Objects.equals(authEndpoint, that.authEndpoint) && Objects.equals(
+                tokenEndpoint,
+                that.tokenEndpoint) && Objects.equals(jwksUri, that.jwksUri) && Objects.equals(
+                logoutEndpoint,
+                that.logoutEndpoint) && Objects.equals(logoutRedirectParamName,
+                that.logoutRedirectParamName) && Objects.equals(clientId,
+                that.clientId) && Objects.equals(clientSecret, that.clientSecret) && Objects.equals(
+                requestScope,
+                that.requestScope);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(identityProviderType,
+                openIdConfigurationEndpoint,
+                issuer,
+                authEndpoint,
+                tokenEndpoint,
+                jwksUri,
+                logoutEndpoint,
+                logoutRedirectParamName,
+                formTokenRequest,
+                clientId,
+                clientSecret,
+                requestScope,
+                validateAudience);
+    }
 
     // --------------------------------------------------------------------------------
 

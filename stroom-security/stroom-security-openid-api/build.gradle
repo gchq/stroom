@@ -7,4 +7,17 @@ dependencies {
     implementation libs.jakarta_validation_api
     implementation libs.jose4j
     implementation libs.ws_rs_api
+
+    testImplementation libs.assertj_core
+    testImplementation libs.jackson_core
+    testImplementation libs.jackson_databind
+    testImplementation libs.junit_jupiter_api
+    testImplementation libs.slf4j_api
+
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
 }

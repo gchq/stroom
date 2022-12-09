@@ -1,6 +1,7 @@
 package stroom.security.common.impl;
 
 import stroom.security.api.exception.AuthenticationException;
+import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfig;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.OpenIdConfigurationResponse;

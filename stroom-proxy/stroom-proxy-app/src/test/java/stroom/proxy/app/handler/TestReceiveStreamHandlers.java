@@ -121,7 +121,8 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
                 .withStoringEnabled(isStoringEnabled);
 
         final ProxyConfig.Builder builder = ProxyConfig.builder();
-        forwardUrlList.forEach(url -> builder.addForwardDestination(ForwardHttpPostConfig.withForwardUrl(url, url)));
+        forwardUrlList.forEach(url ->
+                builder.addForwardDestination(ForwardHttpPostConfig.withForwardUrl(url, url)));
 
         try {
             final Entries mockStroomZipOutputStream = Mockito.mock(Entries.class);

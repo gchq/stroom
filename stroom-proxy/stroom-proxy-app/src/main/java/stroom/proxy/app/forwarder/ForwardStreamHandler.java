@@ -6,6 +6,7 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.repo.LogStream;
 import stroom.receive.common.StreamHandler;
 import stroom.receive.common.StroomStreamException;
+import stroom.security.api.UserIdentityFactory;
 import stroom.util.cert.SSLUtil;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.io.StreamUtil;
@@ -51,7 +52,8 @@ public class ForwardStreamHandler implements StreamHandler {
                                 final ForwardHttpPostConfig config,
                                 final SSLSocketFactory sslSocketFactory,
                                 final String userAgent,
-                                final AttributeMap attributeMap) throws IOException {
+                                final AttributeMap attributeMap,
+                                final UserIdentityFactory userIdentityFactory) throws IOException {
         this.logStream = logStream;
         this.forwardUrl = config.getForwardUrl();
         this.forwardDelay = config.getForwardDelay();
@@ -96,6 +98,15 @@ public class ForwardStreamHandler implements StreamHandler {
             connection.addRequestProperty(entry.getKey(), entry.getValue());
         }
 
+        // Allows sending to systems on the same OpenId realm as us using an access token
+        if (config.isAddOpenIdAccessToken()) {
+            userIdentityFactory.getAuthHeaders(userIdentityFactory.getServiceUserIdentity())
+                    .forEach((key, value) -> {
+                        LOGGER.debug("Setting request prop {}: {}", key, value);
+                        connection.setRequestProperty(key, value);
+                    });
+        }
+
         if (forwardChunkSize != null) {
             LOGGER.debug(() -> "handleHeader() - setting ChunkedStreamingMode = " + forwardChunkSize);
             connection.setChunkedStreamingMode(forwardChunkSize);
@@ -114,7 +125,7 @@ public class ForwardStreamHandler implements StreamHandler {
         final long bytesSent = StreamUtil.streamToStream(inputStream, zipOutputStream, buffer, progressHandler);
         totalBytesSent += bytesSent;
 
-        if (forwardDelay != null) {
+        if (forwardDelay != null && !forwardDelay.isZero()) {
             LOGGER.debug(() -> "handleEntryData() - adding delay " + forwardDelay);
             ThreadUtil.sleep(forwardDelay);
         }

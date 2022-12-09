@@ -18,7 +18,7 @@ package stroom.security.identity.account;
 
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.security.api.ProcessingUserIdentityProvider;
-import stroom.security.openid.api.OpenIdConfiguration.IdpType;
+import stroom.security.openid.api.IdpType;
 import stroom.security.shared.UserNameProvider;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;

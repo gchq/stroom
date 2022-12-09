@@ -130,7 +130,6 @@ proxyConfig:
   #      Dictionary: "http://localhost/api/dictionary/v1"
   #    syncFrequency: 30000
   #    apiKey: ""
-  useDefaultOpenIdCredentials: true
 
   feedStatus:
     url: "http://localhost:8080/api/feedStatus/v1"

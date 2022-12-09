@@ -39,7 +39,7 @@ import stroom.dropwizard.common.WebSockets;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.openid.api.OpenIdConfig;
-import stroom.security.openid.api.OpenIdConfiguration.IdpType;
+import stroom.security.openid.api.IdpType;
 import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.config.AppConfigValidator;

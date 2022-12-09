@@ -63,6 +63,11 @@ public class ForwardHttpPostHandlersFactory {
                 "\" ForwardHttpPostHandlers with user agent string [" +
                 userAgentString +
                 "]");
-        return new ForwardHttpPostHandlers(logStream, config, userAgentString, sslSocketFactory, userIdentityFactory);
+        return new ForwardHttpPostHandlers(
+                logStream,
+                config,
+                userAgentString,
+                sslSocketFactory,
+                userIdentityFactory);
     }
 }

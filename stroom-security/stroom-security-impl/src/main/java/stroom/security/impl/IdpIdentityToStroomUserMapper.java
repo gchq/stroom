@@ -7,7 +7,7 @@ import stroom.security.common.impl.IdpIdentityMapper;
 import stroom.security.common.impl.JwtUtil;
 import stroom.security.common.impl.UserIdentityImpl;
 import stroom.security.openid.api.OpenIdConfig;
-import stroom.security.openid.api.OpenIdConfiguration.IdpType;
+import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.TokenResponse;
 import stroom.security.shared.User;
 import stroom.util.NullSafe;

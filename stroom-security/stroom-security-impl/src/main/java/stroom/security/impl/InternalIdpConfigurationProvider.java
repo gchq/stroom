@@ -2,6 +2,7 @@ package stroom.security.impl;
 
 import stroom.config.common.UriFactory;
 import stroom.security.common.impl.IdpConfigurationProvider;
+import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.security.openid.api.OpenIdConfig;

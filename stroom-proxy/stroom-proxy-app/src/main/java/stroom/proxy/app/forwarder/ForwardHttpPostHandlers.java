@@ -56,7 +56,9 @@ public class ForwardHttpPostHandlers implements StreamHandlers {
                     config,
                     sslSocketFactory,
                     userAgentString,
-                    attributeMap);
+                    attributeMap,
+                    userIdentityFactory);
+
             consumer.accept(streamHandler);
             streamHandler.close();
         } catch (final RuntimeException e) {

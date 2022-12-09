@@ -192,10 +192,6 @@ proxyConfig:
 #    syncFrequency: 30000
 #    apiKey: ""
 
-  {% if distribution == "docker" %}
-  useDefaultOpenIdCredentials: {{ false | envVar('USE_DEFAULT_OPEN_ID_CREDENTIALS') }}
-  {% endif %}
-
   feedStatus:
     url: "{{ 'http://stroom:8080/api/feedStatus/v1' | envVar('FEED_STATUS_URL') }}"
     apiKey: ""
@@ -212,5 +208,16 @@ proxyConfig:
       keyStorePassword: "password"
       trustStorePath: "certs/ca.jks"
       trustStorePassword: "password"
+
+  {% if distribution == "docker" %}
+  security:
+    authentication:
+      openId:
+        # (EXTERNAL|INTERNAL|TEST), Only use TEST for test/demo installs
+        # INTERNAL - Use API Keys generated in Stroom for feed status check. No support for token
+        #            authentication on data receipt.
+        # EXTERNAL - Usa an external IDP for receipt token auth and for outbound HTTP connections
+        identityProviderType: "{{ INTERNAL | envVar('IDENTITY_PROVIDER_TYPE') }}"
+  {% endif %}
 
 # vim: set filetype=yaml tabstop=2 shiftwidth=2 expandtab:

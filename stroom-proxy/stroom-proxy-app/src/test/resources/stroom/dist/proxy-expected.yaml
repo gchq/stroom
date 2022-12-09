@@ -36,6 +36,7 @@ proxyConfig:
     maxOpenFiles: 100
     rollFrequency: "PT10S"
   feedStatus:
+    apiKey: null
     feedStatusCache:
       expireAfterAccess: null
       expireAfterWrite: null
@@ -123,4 +124,3 @@ proxyConfig:
     examineSourceThreadCount: 3
     forwardRetryThreadCount: 2
     forwardThreadCount: 10
-  useDefaultOpenIdCredentials: false

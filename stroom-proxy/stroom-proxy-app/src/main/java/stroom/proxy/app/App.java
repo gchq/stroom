@@ -25,7 +25,7 @@ import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.proxy.app.guice.ProxyModule;
 import stroom.security.openid.api.OpenIdConfig;
-import stroom.security.openid.api.OpenIdConfiguration.IdpType;
+import stroom.security.openid.api.IdpType;
 import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.config.ConfigValidator;
