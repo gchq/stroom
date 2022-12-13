@@ -141,6 +141,7 @@
 }
 
 .flexLayout-splitter {
+	display: none;
 	position: absolute;
 	margin: 0px;
 	padding: 0px;
@@ -151,11 +152,17 @@
     background-color: var(--splitter__background-color);
 }
 
-.flexLayout-splitter:hover {
+.dashboard__designMode .flexLayout-splitter {
+	display: block;
+}
+
+.dashboard__designMode .flexLayout-splitter:hover {
+	display: block;
 	opacity: 1;
 }
 
 .flexLayout-splitterVisible {
+	display: block;
 	opacity: 1;
 }
 
@@ -219,12 +226,22 @@
 
 .tabLayout .tabLayout-buttons {
 	z-index: 5;
-	transition: opacity 0.25s ease-in-out;
-    opacity: 0.2;
+    display: none;
 }
 
-.tabLayout:hover .tabLayout-buttons {
+/*
+.tabLayout-buttons button {
+	transition: opacity 0.25s ease-in-out;
+    opacity: 0.5;
+}
+
+.tabLayout-buttons button:hover {
     opacity: 1;
+}
+*/
+
+.dashboard__designMode .tabLayout .tabLayout-buttons {
+    display: flex;
 }
 
 .tabLayout .tabLayout-button svg {

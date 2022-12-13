@@ -148,14 +148,16 @@ public class FlexLayout extends Composite {
 
     @Override
     public void onBrowserEvent(final Event event) {
-        final int eventType = event.getTypeInt();
-        if (Event.ONMOUSEMOVE == eventType) {
-            onMouseMove(event);
-        } else if (MouseUtil.isPrimary(event)) {
-            if (Event.ONMOUSEDOWN == eventType) {
-                onMouseDown(event);
-            } else if (Event.ONMOUSEUP == eventType) {
-                onMouseUp(event);
+        if (designMode) {
+            final int eventType = event.getTypeInt();
+            if (Event.ONMOUSEMOVE == eventType) {
+                onMouseMove(event);
+            } else if (MouseUtil.isPrimary(event)) {
+                if (Event.ONMOUSEDOWN == eventType) {
+                    onMouseDown(event);
+                } else if (Event.ONMOUSEUP == eventType) {
+                    onMouseUp(event);
+                }
             }
         }
     }

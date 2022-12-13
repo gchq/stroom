@@ -21,14 +21,20 @@ import stroom.query.api.v2.TimeRange;
 import stroom.widget.customdatebox.client.MyDateBox;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
-public class TimeRangePopup {
+public class TimeRangePopup implements HasValue<TimeRange>, Focus {
 
     private final Widget widget;
 
@@ -71,17 +77,18 @@ public class TimeRangePopup {
         this.quickSettings.setWidget(quickSettingsPanel);
     }
 
+    @Override
+    public void focus() {
+        timeFrom.focus();
+    }
+
     public void setUtc(final boolean utc) {
         timeFrom.setUtc(utc);
         timeTo.setUtc(utc);
     }
 
-    public void read(final TimeRange timeRange) {
-        timeFrom.setValue(timeRange.getFrom());
-        timeTo.setValue(timeRange.getTo());
-    }
-
-    public TimeRange write() {
+    @Override
+    public TimeRange getValue() {
         final String from = normalise(timeFrom.getValue());
         final String to = normalise(timeTo.getValue());
 
@@ -104,6 +111,30 @@ public class TimeRangePopup {
         return range;
     }
 
+    @Override
+    public void setValue(final TimeRange value) {
+        setValue(value, false);
+    }
+
+    @Override
+    public void setValue(final TimeRange value, final boolean fireEvents) {
+        timeFrom.setValue(value.getFrom());
+        timeTo.setValue(value.getTo());
+        if (fireEvents) {
+            ValueChangeEvent.fire(this, value);
+        }
+    }
+
+    @Override
+    public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<TimeRange> handler) {
+        return widget.addHandler(handler, ValueChangeEvent.getType());
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> event) {
+        widget.fireEvent(event);
+    }
+
     private String normalise(final String string) {
         if (string != null && string.trim().length() > 0) {
             return string.trim();
@@ -124,7 +155,7 @@ public class TimeRangePopup {
         final Label label = new Label(timeRange.getName(), false);
         label.addStyleName("timeRange-quickSetting");
         label.addClickHandler(event -> {
-            read(timeRange);
+            setValue(timeRange, true);
         });
         return label;
     }
