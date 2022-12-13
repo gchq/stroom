@@ -112,7 +112,12 @@ class IndexShardDaoImpl implements IndexShardDao {
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.of(
             FindIndexShardCriteria.FIELD_ID, INDEX_SHARD.ID,
-            FindIndexShardCriteria.FIELD_PARTITION, INDEX_SHARD.PARTITION_NAME);
+            FindIndexShardCriteria.FIELD_NODE, INDEX_SHARD.NODE_NAME,
+            FindIndexShardCriteria.FIELD_PARTITION, INDEX_SHARD.PARTITION_NAME,
+            FindIndexShardCriteria.FIELD_STATUS, INDEX_SHARD.STATUS,
+            FindIndexShardCriteria.FIELD_DOC_COUNT, INDEX_SHARD.DOCUMENT_COUNT,
+            FindIndexShardCriteria.FIELD_LAST_COMMIT, INDEX_SHARD.COMMIT_MS,
+            FindIndexShardCriteria.FIELD_FILE_SIZE, INDEX_SHARD.FILE_SIZE);
 
     private final IndexDbConnProvider indexDbConnProvider;
     private final GenericDao<IndexShardRecord, IndexShard, Long> genericDao;
