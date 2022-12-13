@@ -13,6 +13,10 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-alpha.8] - 2022-12-13
+
+* Issue **#3135** : Add column sortring to index shards.
+
 * Relax validation requiring proxy repo and failed retry directories to exist before proxy boots. Now checks they exist (creating if they don't) at time of use.
 
 * Issue **#3031** : Add connectors to poll from AWS SQS.
@@ -4936,7 +4940,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-alpha.7...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-alpha.8...HEAD
+[v7.2-alpha.8]: https://github.com/gchq/stroom/compare/v7.2-alpha.7...v7.2-alpha.8
 [v7.2-alpha.7]: https://github.com/gchq/stroom/compare/v7.2-alpha.6...v7.2-alpha.7
 [v7.2-alpha.6]: https://github.com/gchq/stroom/compare/v7.2-alpha.5...v7.2-alpha.6
 [v7.2-alpha.5]: https://github.com/gchq/stroom/compare/v7.2-alpha.4...v7.2-alpha.5
