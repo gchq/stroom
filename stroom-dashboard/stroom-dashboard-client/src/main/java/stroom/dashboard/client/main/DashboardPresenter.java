@@ -610,7 +610,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                 fixHeights(parent);
             }
 
-            layoutPresenter.setLayoutData(layoutConfig);
+            layoutPresenter.configure(layoutConfig, layoutConstraints, preferredSize);
             setDirty(true);
         }
     }
