@@ -1,7 +1,6 @@
 package stroom.util.config;
 
 import java.nio.file.Path;
-import java.util.Objects;
 import javax.inject.Singleton;
 
 /**
@@ -13,7 +12,7 @@ public class ConfigLocation {
     private final Path configFilePath;
 
     public ConfigLocation(final Path configFilePath) {
-        this.configFilePath = Objects.requireNonNull(configFilePath);
+        this.configFilePath = configFilePath;
     }
 
     public Path getConfigFilePath() {

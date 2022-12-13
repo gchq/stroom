@@ -7,6 +7,7 @@ import stroom.datasource.api.v2.IdField;
 import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
+import stroom.pipeline.shared.PipelineDoc;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,8 +36,19 @@ public class MetaFields {
     private static final Map<String, AbstractField> ALL_FIELD_MAP;
 
     // Non grouped fields
-    public static final DocRefField FEED = new DocRefField("Feed", "Feed");
-    public static final DocRefField PIPELINE = new DocRefField("Pipeline", "Pipeline");
+    // Maps to the docref name (which is unique)
+    public static final DocRefField FEED = DocRefField.byUniqueName("Feed", "Feed");
+
+    // Maps to the docref uuid
+    public static final DocRefField PIPELINE = DocRefField.byUuid(
+            PipelineDoc.DOCUMENT_TYPE,
+            "Pipeline");
+
+    // Maps to the docref name (which is not unique)
+    public static final DocRefField PIPELINE_NAME = DocRefField.byNonUniqueName(
+            PipelineDoc.DOCUMENT_TYPE,
+            "Pipeline Name");
+
     public static final TextField STATUS = new TextField("Status");
     public static final TextField TYPE = new TextField("Type");
 
@@ -67,12 +79,13 @@ public class MetaFields {
     public static final IdField PARENT_ID = new IdField("Parent Id");
     public static final TextField PARENT_STATUS = new TextField("Parent Status");
     public static final DateField PARENT_CREATE_TIME = new DateField("Parent Create Time");
-    public static final DocRefField PARENT_FEED = new DocRefField("Feed", FIELD_PARENT_FEED);
+    public static final DocRefField PARENT_FEED = DocRefField.byUniqueName("Feed", FIELD_PARENT_FEED);
 
     static {
         // Non grouped fields
         FIELDS.add(FEED);
         FIELDS.add(PIPELINE);
+        FIELDS.add(PIPELINE_NAME);
         FIELDS.add(STATUS);
         FIELDS.add(TYPE);
 

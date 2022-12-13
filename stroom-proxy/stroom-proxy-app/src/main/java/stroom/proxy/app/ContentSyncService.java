@@ -7,6 +7,7 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.security.api.ClientSecurityUtil;
 import stroom.util.HasHealthCheck;
+import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LogUtil;
 
@@ -75,7 +76,7 @@ public class ContentSyncService implements Managed, HasHealthCheck {
                 scheduledExecutorService.scheduleWithFixedDelay(
                         this::sync,
                         0,
-                        contentSyncConfig.getSyncFrequency(),
+                        contentSyncConfig.getSyncFrequency().toMillis(),
                         TimeUnit.MILLISECONDS);
             }
         }
@@ -97,7 +98,7 @@ public class ContentSyncService implements Managed, HasHealthCheck {
 
         final ContentSyncConfig contentSyncConfig = contentSyncConfigProvider.get();
 
-        if (contentSyncConfig.getUpstreamUrl() != null) {
+        if (NullSafe.hasEntries(contentSyncConfig, ContentSyncConfig::getUpstreamUrl)) {
             contentSyncConfig.getUpstreamUrl().forEach((type, url) -> {
                 final ImportExportActionHandler importHandler = typeToHandlerMap.get(type);
                 if (importHandler == null) {
@@ -150,7 +151,8 @@ public class ContentSyncService implements Managed, HasHealthCheck {
 
     private Invocation.Builder createClient(final String url, final String path) {
         final Client client = clientProvider.get();
-        final WebTarget webTarget = client.target(url).path(path);
+        final WebTarget webTarget = client.target(url)
+                .path(path);
         final Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         ClientSecurityUtil.addAuthorisationHeader(invocationBuilder, getApiKey());
         return invocationBuilder;
@@ -181,8 +183,12 @@ public class ContentSyncService implements Managed, HasHealthCheck {
         final ContentSyncConfig contentSyncConfig = contentSyncConfigProvider.get();
 
         // parallelStream so we can hit multiple URLs concurrently
-        if (contentSyncConfig.isContentSyncEnabled()) {
-            contentSyncConfig.getUpstreamUrl().entrySet().parallelStream()
+        if (contentSyncConfig.isContentSyncEnabled()
+                && NullSafe.hasEntries(contentSyncConfig.getUpstreamUrl())) {
+
+            contentSyncConfig.getUpstreamUrl()
+                    .entrySet()
+                    .parallelStream()
                     .filter(entry ->
                             entry.getValue() != null)
                     .forEach(entry -> {

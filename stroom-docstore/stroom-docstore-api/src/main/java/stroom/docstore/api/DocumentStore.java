@@ -20,6 +20,7 @@ package stroom.docstore.api;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 
-public interface DocumentStore<D> extends ExplorerActionHandler, ImportExportActionHandler, DocumentActionHandler<D> {
+public interface DocumentStore<D>
+        extends ExplorerActionHandler, ImportExportActionHandler, DocumentActionHandler<D> {
 
 }

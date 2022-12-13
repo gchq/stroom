@@ -4,6 +4,7 @@ import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.repo.ForwarderDestinations;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.receive.common.StreamHandlers;
+import stroom.util.io.PathCreator;
 
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
@@ -28,12 +29,15 @@ public class ForwarderDestinationsImpl implements ForwarderDestinations {
     private static final Logger LOGGER = LoggerFactory.getLogger(ForwarderDestinationsImpl.class);
 
     private final Map<String, StreamHandlers> providers;
+    private final PathCreator pathCreator;
 
     @Inject
     public ForwarderDestinationsImpl(final ProxyConfig proxyConfig,
                                      final ProxyRepoConfig proxyRepoConfig,
                                      final ForwardHttpPostHandlersFactory forwardHttpPostHandlersFactory,
-                                     final ForwardFileHandlersFactory forwardFileHandlersFactory) {
+                                     final ForwardFileHandlersFactory forwardFileHandlersFactory,
+                                     final PathCreator pathCreator) {
+        this.pathCreator = pathCreator;
         // Get forwarding destinations.
         List<ForwardConfig> forwardDestinations = proxyConfig.getForwardDestinations();
         if (forwardDestinations != null) {
@@ -50,21 +54,24 @@ public class ForwarderDestinationsImpl implements ForwarderDestinations {
             });
 
             // Filter out disabled.
-            forwardDestinations = forwardDestinations.stream().filter(ForwardConfig::isEnabled).toList();
+            forwardDestinations = forwardDestinations.stream()
+                    .filter(ForwardConfig::isEnabled)
+                    .toList();
         } else {
             forwardDestinations = Collections.emptyList();
         }
 
         if (forwardDestinations.size() > 0) {
-            this.providers = forwardDestinations
+            providers = forwardDestinations
                     .stream()
                     .collect(Collectors.toMap(ForwardConfig::getName, f -> {
-                        if (f instanceof ForwardHttpPostConfig) {
-                            return forwardHttpPostHandlersFactory.create((ForwardHttpPostConfig) f);
-                        } else if (f instanceof ForwardFileConfig) {
-                            return forwardFileHandlersFactory.create((ForwardFileConfig) f);
+                        if (f instanceof final ForwardHttpPostConfig forwardHttpPostConfig) {
+                            return forwardHttpPostHandlersFactory.create(forwardHttpPostConfig);
+                        } else if (f instanceof final ForwardFileConfig forwardFileConfig) {
+                            return forwardFileHandlersFactory.create(forwardFileConfig, pathCreator);
+                        } else {
+                            throw new RuntimeException("Unknown config type");
                         }
-                        throw new RuntimeException("Unknown config type");
                     }));
         } else {
             LOGGER.info("Forwarding of streams is disabled");

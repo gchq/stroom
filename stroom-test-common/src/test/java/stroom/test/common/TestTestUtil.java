@@ -16,6 +16,7 @@ import java.time.Month;
 import java.time.format.TextStyle;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -87,6 +88,51 @@ class TestTestUtil {
                 .build();
     }
 
+    @TestFactory
+    Stream<DynamicTest> testBuildDynamicTestStream_multipleInputs_throwsExpectedException() {
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(Integer.class, Long.class)
+                .withOutputType(Long.class)
+                .withTestFunction(testCase ->
+                        addNumbers(
+                                testCase.getInput()._1,
+                                testCase.getInput()._2))
+                .withSimpleEqualityAssertion()
+                .addThrowsCase(Tuple.of(-1, 10L), IllegalArgumentException.class)
+                .addCase(Tuple.of(1, 2L), 3L)
+                .addCase(Tuple.of(2, 2L), 4L)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testBuildDynamicTestStream_beforeAfterActions() {
+
+        final AtomicInteger caseCounter = new AtomicInteger();
+        final AtomicInteger beforeCounter = new AtomicInteger();
+        final AtomicInteger afterCounter = new AtomicInteger();
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(String.class)
+                .withTestFunction(testCase -> {
+                    caseCounter.incrementAndGet();
+                    return testCase.getInput().toUpperCase();
+                })
+                .withSimpleEqualityAssertion()
+                .addCase("a", "A")
+                .addCase("b", "B")
+                .addCase("C", "C")
+                .withBeforeTestCaseAction(() -> {
+                    Assertions.assertThat(beforeCounter.incrementAndGet())
+                            .isEqualTo(caseCounter.get() + 1);
+                })
+                .withAfterTestCaseAction(() -> {
+                    Assertions.assertThat(afterCounter.incrementAndGet())
+                            .isEqualTo(caseCounter.get());
+                })
+                .build();
+    }
+
     @Disabled // This is to make sure the handling of an unexpected exception in a test
     // is handled properly by junit. As the test case fails it can only be a manual test.
     @TestFactory
@@ -126,5 +172,13 @@ class TestTestUtil {
                                 .containsExactlyElementsOf(testOutcome.getExpectedOutput()))
                 .addCase(Tuple.of(0, 2), List.of("January", "February"))
                 .build();
+    }
+
+    private long addNumbers(final Integer i1, final Long i2) {
+        if (i1 < 0L || i2 < 0) {
+            throw new IllegalArgumentException("Negative numbers scare me!");
+        } else {
+            return (long) i1 + i2;
+        }
     }
 }

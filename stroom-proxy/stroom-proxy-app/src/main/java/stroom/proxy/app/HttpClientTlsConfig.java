@@ -219,6 +219,69 @@ public class HttpClientTlsConfig extends AbstractConfig implements IsProxyConfig
         return new Builder();
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final HttpClientTlsConfig that = (HttpClientTlsConfig) o;
+        return trustSelfSignedCertificates == that.trustSelfSignedCertificates
+                && verifyHostname == that.verifyHostname && Objects.equals(
+                protocol,
+                that.protocol) && Objects.equals(provider,
+                that.provider) && Objects.equals(keyStorePath, that.keyStorePath) && Objects.equals(
+                keyStorePassword,
+                that.keyStorePassword) && Objects.equals(keyStoreType,
+                that.keyStoreType) && Objects.equals(trustStorePath,
+                that.trustStorePath) && Objects.equals(trustStorePassword,
+                that.trustStorePassword) && Objects.equals(trustStoreType,
+                that.trustStoreType) && Objects.equals(supportedProtocols,
+                that.supportedProtocols) && Objects.equals(supportedCiphers,
+                that.supportedCiphers) && Objects.equals(certAlias, that.certAlias);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(protocol,
+                provider,
+                keyStorePath,
+                keyStorePassword,
+                keyStoreType,
+                trustStorePath,
+                trustStorePassword,
+                trustStoreType,
+                trustSelfSignedCertificates,
+                verifyHostname,
+                supportedProtocols,
+                supportedCiphers,
+                certAlias);
+    }
+
+    @Override
+    public String toString() {
+        return "HttpClientTlsConfig{" +
+                "protocol='" + protocol + '\'' +
+                ", provider='" + provider + '\'' +
+                ", keyStorePath='" + keyStorePath + '\'' +
+                ", keyStorePassword='" + keyStorePassword + '\'' +
+                ", keyStoreType='" + keyStoreType + '\'' +
+                ", trustStorePath='" + trustStorePath + '\'' +
+                ", trustStorePassword='" + trustStorePassword + '\'' +
+                ", trustStoreType='" + trustStoreType + '\'' +
+                ", trustSelfSignedCertificates=" + trustSelfSignedCertificates +
+                ", verifyHostname=" + verifyHostname +
+                ", supportedProtocols=" + supportedProtocols +
+                ", supportedCiphers=" + supportedCiphers +
+                ", certAlias='" + certAlias + '\'' +
+                '}';
+    }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
     public static class Builder {
 
         private String protocol;

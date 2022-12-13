@@ -19,13 +19,13 @@ import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.impl.IndexShardDao;
-import stroom.index.impl.IndexShardFields;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.db.jooq.tables.records.IndexShardRecord;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
+import stroom.index.shared.IndexShardFields;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.Partition;
@@ -56,8 +56,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -419,35 +417,9 @@ class IndexShardDaoImpl implements IndexShardDao {
             expressionMapper.map(IndexShardFields.FIELD_VOLUME_GROUP, INDEX_VOLUME_GROUP.NAME, value -> value);
         }
 
-        private List<String> getIndexUuids(final String indexName) {
-            final Predicate<DocRef> predicate;
-            if (indexName.contains("*")) {
-                // Split on the wildcard char so we can make the literal parts
-                // safe for regex, e.g. escape meta chars, then join them back up with
-                // .* in between each one.
-                final String[] parts = indexName.split("\\*");
-                String patternStr = Arrays.stream(parts)
-                        .map(Pattern::quote)
-                        .collect(Collectors.joining(".*"));
-                // Add any prefix/suffix wild cards back on
-                if (indexName.startsWith("*")) {
-                    patternStr = ".*" + patternStr;
-                }
-                if (indexName.endsWith("*")) {
-                    patternStr = patternStr + ".*";
-                }
-                final Pattern pattern = Pattern.compile(patternStr);
-                predicate = docRef ->
-                        pattern.matcher(docRef.getName()).matches();
-            } else {
-                predicate = docRef ->
-                        Objects.equals(docRef.getName(), indexName);
-            }
-
-            // TODO AT: This is not very efficient, need to push the predicate down to the db really
-            return indexStore.list()
+        private List<String> getIndexUuids(final List<String> indexNames) {
+            return indexStore.findByNames(indexNames, true)
                     .stream()
-                    .filter(predicate)
                     .map(DocRef::getUuid)
                     .collect(Collectors.toList());
         }

@@ -72,8 +72,8 @@ public class ProxyYamlUtil {
         try {
             config = configurationFactory.build(configurationSourceProvider, configFile.toAbsolutePath().toString());
         } catch (ConfigurationException e) {
-            throw new RuntimeException(LogUtil.message("Error parsing configuration from file {}",
-                    configFile.toAbsolutePath()), e);
+            throw new RuntimeException(LogUtil.message("Error parsing configuration file {}\n{}",
+                    configFile.toAbsolutePath(), e.getMessage()), e);
         }
 
         return config;

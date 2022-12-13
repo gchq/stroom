@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.dropwizard.validation.ValidationMethod;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import java.util.Objects;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 
@@ -95,11 +96,13 @@ public class RestClientConfig extends HttpClientConfig implements IsProxyConfig 
         this.chunkedEncodingEnabled = chunkedEncodingEnabled;
     }
 
+    @Min(0)
     @JsonProperty
     public int getMinThreads() {
         return minThreads;
     }
 
+    @Min(0)
     @JsonProperty
     public int getMaxThreads() {
         return maxThreads;
@@ -120,18 +123,20 @@ public class RestClientConfig extends HttpClientConfig implements IsProxyConfig 
         return chunkedEncodingEnabled;
     }
 
+    @Min(0)
     @JsonProperty
     public int getWorkQueueSize() {
         return workQueueSize;
     }
 
+    @SuppressWarnings("unused")
     @JsonIgnore
     @ValidationMethod(message = ".minThreads must be less than or equal to maxThreads")
-
     public boolean isThreadPoolSizedCorrectly() {
         return minThreads <= maxThreads;
     }
 
+    @SuppressWarnings("unused")
     @JsonIgnore
     @ValidationMethod(message = ".gzipEnabledForRequests requires gzipEnabled set to true")
     public boolean isCompressionConfigurationValid() {
@@ -141,6 +146,49 @@ public class RestClientConfig extends HttpClientConfig implements IsProxyConfig 
     public static Builder builder() {
         return new Builder();
     }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final RestClientConfig that = (RestClientConfig) o;
+        return minThreads == that.minThreads
+                && maxThreads == that.maxThreads
+                && workQueueSize == that.workQueueSize
+                && gzipEnabled == that.gzipEnabled
+                && gzipEnabledForRequests == that.gzipEnabledForRequests
+                && chunkedEncodingEnabled == that.chunkedEncodingEnabled;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(minThreads,
+                maxThreads,
+                workQueueSize,
+                gzipEnabled,
+                gzipEnabledForRequests,
+                chunkedEncodingEnabled);
+    }
+
+    @Override
+    public String toString() {
+        return "RestClientConfig{" +
+                "minThreads=" + minThreads +
+                ", maxThreads=" + maxThreads +
+                ", workQueueSize=" + workQueueSize +
+                ", gzipEnabled=" + gzipEnabled +
+                ", gzipEnabledForRequests=" + gzipEnabledForRequests +
+                ", chunkedEncodingEnabled=" + chunkedEncodingEnabled +
+                '}';
+    }
+
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
     public static class Builder extends HttpClientConfig.Builder<Builder> {
 

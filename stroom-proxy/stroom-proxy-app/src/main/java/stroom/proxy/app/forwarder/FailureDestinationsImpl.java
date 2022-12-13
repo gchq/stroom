@@ -6,6 +6,7 @@ import stroom.proxy.repo.ForwardRetryConfig;
 import stroom.receive.common.StreamHandlers;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
+import stroom.util.logging.LogUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,12 +33,14 @@ public class FailureDestinationsImpl implements FailureDestinations {
     private static final Logger LOGGER = LoggerFactory.getLogger(FailureDestinationsImpl.class);
 
     private final Map<String, StreamHandlers> providers;
+    private final PathCreator pathCreator;
 
     @Inject
     public FailureDestinationsImpl(final ProxyConfig proxyConfig,
                                    final ForwardRetryConfig forwardRetryConfig,
                                    final PathCreator pathCreator,
                                    final ForwardFileHandlersFactory forwardFileHandlersFactory) {
+        this.pathCreator = pathCreator;
         // Get forwarding destinations.
         List<ForwardConfig> forwardDestinations = proxyConfig.getForwardDestinations();
         if (forwardDestinations != null) {
@@ -65,8 +68,12 @@ public class FailureDestinationsImpl implements FailureDestinations {
             try {
                 Files.createDirectories(failedForwardPath);
             } catch (final IOException e) {
-                LOGGER.error("Failed to create directory to store failed forward data: " + FileUtil.getCanonicalPath(
-                        failedForwardPath));
+                LOGGER.error(LogUtil.message(
+                        "Failed to create directory '{}' to store failed forward data. This is configured using " +
+                                "property {}. {}",
+                        FileUtil.getCanonicalPath(failedForwardPath),
+                        forwardRetryConfig.getFullPathStr(ForwardRetryConfig.PROP_NAME_FAILED_FORWARD_DIR),
+                        e.getMessage()));
                 throw new UncheckedIOException(e);
             }
 
@@ -84,7 +91,7 @@ public class FailureDestinationsImpl implements FailureDestinations {
                         f.getName(),
                         FileUtil.getCanonicalPath(path));
 
-                return forwardFileHandlersFactory.create(forwardFileConfig);
+                return forwardFileHandlersFactory.create(forwardFileConfig, pathCreator);
             }));
         } else {
             this.providers = Collections.emptyMap();

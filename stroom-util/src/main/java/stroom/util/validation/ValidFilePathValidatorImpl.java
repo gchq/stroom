@@ -64,7 +64,7 @@ public class ValidFilePathValidatorImpl implements ValidFilePathValidator {
             if (!isValid) {
                 String msg = context.getDefaultConstraintMessageTemplate();
                 if (!modifiedFile.toString().equals(file)) {
-                    msg += " (as absolute path: [" + modifiedFile + "]";
+                    msg += " (as absolute path: " + modifiedFile + ")";
                 }
                 context.disableDefaultConstraintViolation();
                 context
