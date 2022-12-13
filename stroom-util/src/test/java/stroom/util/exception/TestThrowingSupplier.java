@@ -33,10 +33,13 @@ class TestThrowingSupplier {
         Assertions.assertThat(val)
                 .isEqualTo(0);
 
-        Assertions.assertThatThrownBy(() ->
-                        Objects.requireNonNullElseGet(
-                                null,
-                                ThrowingSupplier.unchecked(this::getNext)))
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            //noinspection ResultOfMethodCallIgnored
+                            Objects.requireNonNullElseGet(
+                                    null,
+                                    ThrowingSupplier.unchecked(this::getNext));
+                        })
                 .isInstanceOf(RuntimeException.class);
     }
 

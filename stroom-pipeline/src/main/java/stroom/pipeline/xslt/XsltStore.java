@@ -19,11 +19,10 @@ package stroom.pipeline.xslt;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentStore;
-import stroom.docstore.api.HasFindByName;
 import stroom.pipeline.shared.XsltDoc;
 
 import java.util.List;
 
-public interface XsltStore extends DocumentStore<XsltDoc>, HasFindByName {
+public interface XsltStore extends DocumentStore<XsltDoc> {
     List<DocRef> list();
 }

@@ -13,6 +13,21 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Relax validation requiring proxy repo and failed retry directories to exist before proxy boots. Now checks they exist (creating if they don't) at time of use.
+
+* Issue **#3031** : Add connectors to poll from AWS SQS.
+
+* Issue **#3066** : Make all responses set the HTTP header `Strict-Transport-Security` to force all HTTP traffic on the domain onto HTTPS. Also add property `stroom.security.webContent.strictTransportSecurity` to configure the header value.
+
+* Issue **#3074** : Fix data retention summary and purge job when condition includes a pipeline. Fix data viewer screen to allow filtering by pipeline. Fix filtering using the `in folder` condition. Add `<`, `<=`, `>`, `>=`, `between` conditions to ID fields, e.g. stream ID. **WARNING**: the expression field `Pipeline` has had the following conditions removed; `in`, `in dictionary`, `=`, `contains` and the field `Pipeline Name` has been added with the following conditions; `in`, `in dictionary`, `=`. This may impact processor filters or retention rules that use the `Pipeline` field. See the SQL at https://github.com/gchq/stroom/issues/3074 to find any processor filters using this field with a now un-supported condition. Change the Reference Data searchable data source to support `in`, `in dictionary` and wild carding.
+
+* Fix bug in quick filter when user enters two identical tokens into a quick filter, e.g. `bob bob`.
+
+* Issue **#3111** : Trim leading/trailing white space from term values in the expression tree builder. Users can keep leading/trailing white space if they double quote the value, e.g. `" some text "`. If the value needs to include a double quote then it can be escaped with a `\` like this `I said \"hello\"`.
+
+* Improve description for `useJvmSslConfig` property on `HttpAppender`.
+
+
 ## [v7.2-alpha.5] - 2022-11-14
 
 * Issue **#3091** : Add feature to optionally maintain import names and paths.
@@ -73,37 +88,12 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Add trace logging to volume selectors.
 
-* Issue **#3002** : Fix bootstrap process for deployment of a new version.
-
-* Issue **#3001** : Fix the Source display when stepping context data.
-
-* Issue **#2988** : Remove mention of hex viewer in the error message when viewing raw data that can't be decoded in the
-  stepper. Also ensure stepping up to the un-decodable data works ok.
-
-* Issue **#3018** : Fix incorrect cast of a SQLException to an InterruptedException.
-
-* Issue **#3011** : Fix issue of data being truncated in text pane before the pipeline is run.
-
-* Issue **#3008** : Fix `current-user()` call not returning anything when used in a pipeline on a dash text pane.
-
-* Issue **#2993** : Add sorting to columns on Nodes screen.
-
-* Issue **#2993** : Add column sorting to Jobs screen. Set default sort to node name.
-
-* Issue **#2867** : Stop the XML formatter used in the data preview from formatting non-XML data as XML when it finds
-  angle brackets in the data.
-
 * Issue **#3014** : Add `Index Shards` searchable datasource so you can search shards on a dashboard.
 
 * Issue **#3016** : Evict items from XSLT pool cache when an XSLT doc is changed. Also evict XSLTs that import/include
   the one that has changed.
 
 * Improve warning message for ref streams with the same effective date.
-
-* Change the hex dump display to render single bytes using US_ASCII instead of UTF8.
-
-* Issue **#3028** : Catch entity change events so modified feed entities are removed from the cache. Also update the
-  data display if a feed's encoding is changed.
 
 * Issue **#3027** : Replace processor_task index on status with one on status and create_time_ms.
 
@@ -142,6 +132,33 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
   entity to `User App Permissions Cache` & `User Cache`.
 
 * Issue **#3057** : Change InvalidXmlCharFilterReader to filter out restricted control characters.
+
+
+## [v7.1-beta.15] - 2022-08-17
+
+* Issue **#3002** : Fix bootstrap process for deployment of a new version.
+
+* Issue **#3001** : Fix the Source display when stepping context data.
+
+* Issue **#2988** : Remove mention of hex viewer in the error message when viewing raw data that can't be decoded in the stepper. Also ensure stepping up to the un-decodable data works ok.
+
+* Issue **#3018** : Fix incorrect cast of a SQLException to an InterruptedException.
+
+* Issue **#3011** : Fix issue of data being truncated in text pane before the pipeline is run.
+
+* Issue **#3008** : Fix `current-user()` call not returning anything when used in a pipeline on a dash text pane.
+
+* Issue **#2993** : Add sorting to columns on Nodes screen.
+
+* Issue **#2993** : Add column sorting to Jobs screen. Set default sort to node name.
+
+* Issue **#2867** : Stop the XML formatter used in the data preview from formatting non-XML data as XML when it finds angle brackets in the data.
+
+* Change the hex dump display to render single bytes using US_ASCII instead of UTF8.
+
+* Issue **#3028** : Catch entity change events so modified feed entities are removed from the cache. Also update the data display if a feed's encoding is changed.
+
+* Issue **#3031** : Add connectors to poll from AWS SQS.
 
 * Add system info for pool caches, e.g. XSLT pool cache.
 

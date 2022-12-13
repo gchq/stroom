@@ -125,7 +125,7 @@ logging:
 {% endif %}
 #
 # This section contains the Stroom Proxy configuration properties
-# For mor information see:
+# For more information see:
 # https://gchq.github.io/stroom-docs/user-guide/properties.html
 
 proxyConfig:
@@ -173,7 +173,15 @@ proxyConfig:
         {% endif %}
 
   logStream:
-    metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"
+    metaKeys:
+      - "guid"
+      - "feed"
+      - "system"
+      - "environment"
+      - "remotehost"
+      - "remoteaddress"
+      - "remotedn"
+      - "remotecertexpiry"
 
   contentDir: "{{ (rootPath + 'content') | envVar('CONTENT_DIR') }}"
 #  contentSync:

@@ -16,6 +16,7 @@
 
 package stroom.meta.api;
 
+import stroom.util.NullSafe;
 import stroom.util.cert.CertificateUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
@@ -48,6 +49,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.StringTokenizer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 
@@ -97,22 +99,41 @@ public class AttributeMapUtil {
         return attributeMap;
     }
 
+    public static AttributeMap create(final InputStream inputStream) throws IOException {
+        final AttributeMap attributeMap = new AttributeMap();
+        if (inputStream != null) {
+            read(inputStream, attributeMap);
+        }
+        return attributeMap;
+    }
+
     public static void read(final InputStream inputStream, final AttributeMap attributeMap) throws IOException {
         final String data = StreamUtil.streamToString(inputStream, DEFAULT_CHARSET, false);
-        final String[] lines = data.split("\n");
-        for (String line : lines) {
-            line = line.trim();
-            if (line.length() > 0) {
-                final int splitPos = line.indexOf(HEADER_DELIMITER);
-                if (splitPos != -1) {
-                    final String key = line.substring(0, splitPos);
-                    final String value = line.substring(splitPos + 1);
-                    attributeMap.put(key.trim(), value.trim());
-                } else {
-                    attributeMap.put(line, null);
-                }
-            }
+        read(data, attributeMap);
+    }
+
+    public static AttributeMap create(final String data) {
+        final AttributeMap attributeMap = new AttributeMap();
+        if (!NullSafe.isBlankString(data)) {
+            read(data, attributeMap);
         }
+        return attributeMap;
+    }
+
+    public static void read(final String data, final AttributeMap attributeMap) {
+        data.lines()
+                .map(String::trim)
+                .filter(Predicate.not(String::isEmpty))
+                .forEach(line -> {
+                    final int splitPos = line.indexOf(HEADER_DELIMITER);
+                    if (splitPos != -1) {
+                        final String key = line.substring(0, splitPos);
+                        final String value = line.substring(splitPos + 1);
+                        attributeMap.put(key.trim(), value.trim());
+                    } else {
+                        attributeMap.put(line, null);
+                    }
+                });
     }
 
     public static void read(final byte[] data, final AttributeMap attributeMap) throws IOException {

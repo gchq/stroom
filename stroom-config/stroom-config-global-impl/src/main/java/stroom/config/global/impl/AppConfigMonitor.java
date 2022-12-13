@@ -39,7 +39,11 @@ public class AppConfigMonitor extends AbstractFileChangeMonitor implements Manag
 
     @Override
     protected void onFileChange() {
-        updateAppConfigFromFile();
+        if (configFile != null) {
+            updateAppConfigFromFile();
+        } else {
+            LOGGER.warn("configFile is null, unable to update config from file");
+        }
     }
 
     private void updateAppConfigFromFile() {

@@ -19,6 +19,7 @@ ext.moduleName = 'stroom.query.api'
 dependencies {
     //--------Stroom libs------
     implementation project(':stroom-docref')
+    implementation project(':stroom-util-shared')
 
     //--------3rd party--------
     implementation libs.jackson_annotations
@@ -32,6 +33,7 @@ dependencies {
     testImplementation project(':stroom-test-common')
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter_api
+    testImplementation libs.vavr
 
     testRuntimeOnly libs.junit_jupiter_engine
 }

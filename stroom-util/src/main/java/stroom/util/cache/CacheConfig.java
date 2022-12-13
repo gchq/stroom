@@ -1,5 +1,6 @@
 package stroom.util.cache;
 
+import stroom.util.NullSafe;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.config.annotations.RequiresRestart.RestartScope;
 import stroom.util.shared.AbstractConfig;
@@ -14,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
 import javax.validation.constraints.Min;
 
 // The descriptions have mostly been taken from the Caffine javadoc
@@ -87,6 +89,24 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig, IsPro
                 '}';
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final CacheConfig that = (CacheConfig) o;
+        return Objects.equals(maximumSize, that.maximumSize) && Objects.equals(expireAfterAccess,
+                that.expireAfterAccess) && Objects.equals(expireAfterWrite, that.expireAfterWrite);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(maximumSize, expireAfterAccess, expireAfterWrite);
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -94,6 +114,10 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig, IsPro
     public Builder copy() {
         return new Builder(this);
     }
+
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
     public static final class Builder {
 
@@ -129,7 +153,7 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig, IsPro
 
         public CacheConfig build() {
             final CacheConfig cacheConfig = new CacheConfig(maximumSize, expireAfterAccess, expireAfterWrite);
-            cacheConfig.setBasePath(basePath);
+            NullSafe.consume(basePath, cacheConfig::setBasePath);
             return cacheConfig;
         }
     }

@@ -19,6 +19,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class ExpressionUtil {
@@ -255,5 +257,54 @@ public class ExpressionUtil {
             }
         }
         return builder.build();
+    }
+
+    public static boolean validateExpressionTerms(final ExpressionItem expressionItem,
+                                           final Predicate<ExpressionTerm> predicate) {
+        final AtomicBoolean isValid = new AtomicBoolean(false);
+        walkExpressionTree(expressionItem, expressionItem2 -> {
+            if (expressionItem2 instanceof ExpressionTerm) {
+                isValid.set(predicate.test((ExpressionTerm) expressionItem2));
+                return isValid.get();
+            } else {
+                return true;
+            }
+        });
+        return isValid.get();
+    }
+
+    public static boolean walkExpressionTree(final ExpressionItem expressionItem,
+                                      final ExpressionItemVisitor itemVisitor) {
+
+        boolean continueWalking = true;
+        if (expressionItem != null) {
+            if (itemVisitor != null) {
+                continueWalking = itemVisitor.visit(expressionItem);
+            }
+            if (continueWalking) {
+                if (expressionItem instanceof ExpressionOperator) {
+                    final ExpressionOperator expressionOperator = (ExpressionOperator) expressionItem;
+                    final List<ExpressionItem> children = expressionOperator.getChildren();
+                    if (children != null && !children.isEmpty()) {
+                        for (final ExpressionItem child : children) {
+                            continueWalking = walkExpressionTree(child, itemVisitor);
+                            if (!continueWalking) {
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return continueWalking;
+    }
+
+    public interface ExpressionItemVisitor {
+
+        /**
+         * @param expressionItem
+         * @return False to stop walking the tree
+         */
+        boolean visit(final ExpressionItem expressionItem);
     }
 }

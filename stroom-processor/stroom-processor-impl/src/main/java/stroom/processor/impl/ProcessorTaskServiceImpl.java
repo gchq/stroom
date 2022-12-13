@@ -42,10 +42,6 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
 
     private static final String PERMISSION = PermissionNames.MANAGE_PROCESSORS_PERMISSION;
 
-    private static final DocRef PROCESSOR_TASK_PSEUDO_DOC_REF = new DocRef("Searchable",
-            "Processor Tasks",
-            "Processor Tasks");
-
     private final ProcessorTaskDao processorTaskDao;
     private final DocRefInfoService docRefInfoService;
     private final SecurityContext securityContext;
@@ -90,7 +86,7 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
     @Override
     public DocRef getDocRef() {
         if (securityContext.hasAppPermission(PERMISSION)) {
-            return PROCESSOR_TASK_PSEUDO_DOC_REF;
+            return ProcessorTaskFields.PROCESSOR_TASK_PSEUDO_DOC_REF;
         }
         return null;
     }

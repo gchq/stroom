@@ -33,6 +33,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -42,8 +43,8 @@ public class EventStore implements EventConsumer, RemovalListener<FeedKey, Event
 
     private final ReceiveStreamHandlers receiveStreamHandlerProvider;
     private final Path dir;
-    private final ProxyConfig proxyConfig;
-    private final EventStoreConfig eventStoreConfig;
+    private final Provider<ProxyConfig> proxyConfigProvider;
+    private final Provider<EventStoreConfig> eventStoreConfigProvider;
     private final Cache<FeedKey, EventAppender> openAppenders;
     private final Map<FeedKey, EventAppender> stores;
     private final EventSerialiser eventSerialiser;
@@ -51,10 +52,11 @@ public class EventStore implements EventConsumer, RemovalListener<FeedKey, Event
 
     @Inject
     public EventStore(final ReceiveStreamHandlers receiveStreamHandlerProvider,
-                      final ProxyConfig proxyConfig,
-                      final EventStoreConfig eventStoreConfig,
+                      final Provider<ProxyConfig> proxyConfigProvider,
+                      final Provider<EventStoreConfig> eventStoreConfigProvider,
                       final RepoDirProvider repoDirProvider) {
-        this.eventStoreConfig = eventStoreConfig;
+        this.eventStoreConfigProvider = eventStoreConfigProvider;
+        final EventStoreConfig eventStoreConfig = eventStoreConfigProvider.get();
         this.forwardQueue = new LinkedBlockingQueue<>(eventStoreConfig.getForwardQueueSize());
         final Path repoDir = repoDirProvider.get();
 
@@ -66,7 +68,7 @@ public class EventStore implements EventConsumer, RemovalListener<FeedKey, Event
         ensureDirExists(dir);
 
         this.receiveStreamHandlerProvider = receiveStreamHandlerProvider;
-        this.proxyConfig = proxyConfig;
+        this.proxyConfigProvider = proxyConfigProvider;
         final Caffeine<Object, Object> cacheBuilder = Caffeine.newBuilder();
         cacheBuilder.maximumSize(eventStoreConfig.getMaxOpenFiles());
         cacheBuilder.removalListener(this);
@@ -214,7 +216,7 @@ public class EventStore implements EventConsumer, RemovalListener<FeedKey, Event
 
             final String string = eventSerialiser.serialise(
                     requestUuid,
-                    proxyConfig.getProxyId(),
+                    proxyConfigProvider.get().getProxyId(),
                     feedKey,
                     attributeMap,
                     data) + "\n";
@@ -263,7 +265,8 @@ public class EventStore implements EventConsumer, RemovalListener<FeedKey, Event
                     }
                 }
 
-                eventAppender = new EventAppender(file, now, eventStoreConfig);
+                // Config is fixed until next roll
+                eventAppender = new EventAppender(file, now, eventStoreConfigProvider.get());
                 openAppenders.put(k, eventAppender);
 
             } else {

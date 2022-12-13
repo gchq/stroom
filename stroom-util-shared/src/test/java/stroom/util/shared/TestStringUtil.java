@@ -1,15 +1,19 @@
 package stroom.util.shared;
 
 import stroom.docref.DocRef;
+import stroom.test.common.TestUtil;
 
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
+import java.util.stream.Stream;
 
 class TestStringUtil {
 
@@ -74,5 +78,101 @@ class TestStringUtil {
         final String output = StringUtil.blankAsNull(input);
         Assertions.assertThat(output)
                 .isEqualTo(expectedOutput);
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testRemoveWhitespaceQuoting() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(String.class)
+                .withTestFunction(testCase ->
+                        StringUtil.removeWhitespaceQuoting(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, null)
+                .addCase("", "")
+                .addCase(" ", "")
+                .addCase("      ", "")
+                .addCase("   \\\"   ", "\"")
+                .addCase("\t", "")
+                .addCase("abc", "abc")
+                .addCase(" abc", "abc")
+                .addCase("abc ", "abc")
+                .addCase(" abc ", "abc")
+                .addCase("    abc    ", "abc")
+                .addCase("\tabc\t", "abc")
+                .addCase("\"abc\"", "abc")
+                .addCase("\\\"abc\\\"", "\"abc\"")
+                .addCase(" \"abc\" ", "abc")
+                .addCase(" \\\"abc\\\" ", "\"abc\"")
+                .addCase(" \" abc \" ", " abc ")
+                .addCase(" \\\" abc \\\" ", "\" abc \"")
+                .addCase(" \" abc  ", "\" abc")
+                .addCase(" \" my name is \\\"Bob\\\". \" ", " my name is \"Bob\". ")
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testAddWhitespaceQuoting() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(String.class)
+                .withTestFunction(testCase ->
+                        StringUtil.addWhitespaceQuoting(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, null)
+                .addCase("", "")
+                .addCase(" ", "\" \"")
+                .addCase("      ", "\"      \"")
+                .addCase("abc", "abc")
+                .addCase(" abc", "\" abc\"")
+                .addCase("abc ", "\"abc \"")
+                .addCase(" abc ", "\" abc \"")
+                .addCase("    abc    ", "\"    abc    \"")
+                .addCase("\tabc\t", "\"\tabc\t\"")
+                .addCase("\"abc\"", "\\\"abc\\\"")
+                .addCase(" \"abc\" ", "\" \\\"abc\\\" \"")
+                .addCase(" \" abc \" ", "\" \\\" abc \\\" \"")
+                .addCase(" \" abc  ", "\" \\\" abc  \"")
+                .addCase("  a\"bc  ", "\"  a\\\"bc  \"")
+                .addCase("a\"bc", "a\\\"bc")
+                .addCase(" my name is \"Bob\". ", "\" my name is \\\"Bob\\\". \"")
+                .build();
+    }
+
+    /**
+     * Make sure the two functions are reversible
+     */
+    @TestFactory
+    Stream<DynamicTest> testAddAndRemoveWhitespaceQuoting() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(String.class)
+                .withTestFunction(testCase -> {
+                    var quotedInput = StringUtil.addWhitespaceQuoting(testCase.getInput());
+                    LOGGER.debug("quotedInput: '{}'", quotedInput);
+                    return StringUtil.removeWhitespaceQuoting(quotedInput);
+                })
+                .withAssertions(testOutcome -> {
+                    // Expected output ignored
+                    Assertions.assertThat(testOutcome.getActualOutput())
+                            .isEqualTo(testOutcome.getInput());
+                })
+                .addCase(null, null)
+                .addCase("", null)
+                .addCase(" ", null)
+                .addCase("      ", null)
+                .addCase("   \"   ", null)
+                .addCase("abc", null)
+                .addCase(" abc", null)
+                .addCase("abc ", null)
+                .addCase(" abc ", null)
+                .addCase("    abc    ", null)
+                .addCase("\tabc\t", null)
+                .addCase("\"abc\"", null)
+                .addCase(" \"abc\" ", null)
+                .addCase(" \" abc \" ", null)
+                .addCase(" \" abc  ", null)
+                .addCase("  a\"bc  ", null)
+                .addCase("  a\"bc  ", null)
+                .addCase("a\"bc", null)
+                .addCase(" my name is \"Bob\". ", null)
+                .build();
     }
 }

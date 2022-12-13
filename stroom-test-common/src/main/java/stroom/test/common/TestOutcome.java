@@ -1,5 +1,7 @@
 package stroom.test.common;
 
+import stroom.util.logging.LogUtil;
+
 import java.util.Optional;
 
 public class TestOutcome<I, O> {
@@ -43,6 +45,18 @@ public class TestOutcome<I, O> {
     public boolean isExpectedToThrow() {
         return testCase.getExpectedThrowableType() != null;
     }
+
+    public String buildFailMessage() {
+        return buildFailMessage(this);
+    }
+
+    public static <I, O> String buildFailMessage(final TestOutcome<I, O> testOutcome) {
+        return LogUtil.message("Expected {} but got actual {} for {}",
+                TestCase.valueToString("output", testOutcome.testCase.getExpectedOutput()),
+                TestCase.valueToString("output", testOutcome.actualOutput),
+                TestCase.valueToString("input", testOutcome.testCase.getInput()));
+    }
+
 
     @Override
     public String toString() {

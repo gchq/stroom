@@ -112,7 +112,15 @@ proxyConfig:
     retryFrequency: "PT10S"
 
   logStream:
-    metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"
+    metaKeys:
+      - "guid"
+      - "feed"
+      - "system"
+      - "environment"
+      - "remotehost"
+      - "remoteaddress"
+      - "remotedn"
+      - "remotecertexpiry"
 
   contentDir: "content"
   #  contentSync:

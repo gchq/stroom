@@ -32,6 +32,9 @@ public class AtomicSequence {
         this(Integer.MAX_VALUE);
     }
 
+    /**
+     * @param limit Exclusive
+     */
     public AtomicSequence(final int limit) {
         if (limit <= 0) {
             throw new IllegalArgumentException("Limit must be greater than zero ");

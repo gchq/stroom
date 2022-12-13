@@ -4,6 +4,8 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.RWLockFactory;
 import stroom.docstore.impl.Persistence;
+import stroom.util.logging.LogUtil;
+import stroom.util.string.PatternUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -162,6 +164,48 @@ public class DBPersistence implements Persistence {
                     "ORDER BY uuid";
             try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
                 preparedStatement.setString(1, type);
+
+                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        final String uuid = resultSet.getString(1);
+                        final String name = resultSet.getString(2);
+                        list.add(new DocRef(type, uuid, name));
+                    }
+                }
+            }
+        } catch (final SQLException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+        }
+
+        return list;
+    }
+
+    @Override
+    public List<DocRef> find(final String type,
+                             final String nameFilter,
+                             final boolean allowWildCards) {
+        final List<DocRef> list = new ArrayList<>();
+
+        final String nameFilterSqlValue = allowWildCards
+                ? PatternUtil.createSqlLikeStringFromWildCardFilter(nameFilter)
+                : nameFilter;
+        final String condition = allowWildCards
+                ? "like"
+                : "=";
+
+        try (final Connection connection = dataSource.getConnection()) {
+            final String sql = LogUtil.message("""
+                SELECT DISTINCT
+                  uuid,
+                  name
+                FROM doc
+                WHERE type = ?
+                AND name {} ?
+                ORDER BY uuid""", condition);
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setString(1, type);
+                preparedStatement.setString(2, nameFilterSqlValue);
 
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {

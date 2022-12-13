@@ -1,7 +1,7 @@
 package stroom.pipeline.filter;
 
 import stroom.docref.DocRef;
-import stroom.docstore.api.HasFindByName;
+import stroom.docref.HasFindDocRefsByName;
 import stroom.docstore.shared.Doc;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.util.io.PathCreator;
@@ -17,14 +17,14 @@ public class DocFinder<D extends Doc> {
 
     private final String type;
     private final PathCreator pathCreator;
-    private final HasFindByName hasFindByName;
+    private final HasFindDocRefsByName hasFindDocRefsByName;
 
     public DocFinder(final String type,
                      final PathCreator pathCreator,
-                     final HasFindByName hasFindByName) {
+                     final HasFindDocRefsByName hasFindDocRefsByName) {
         this.type = type;
         this.pathCreator = pathCreator;
-        this.hasFindByName = hasFindByName;
+        this.hasFindDocRefsByName = hasFindDocRefsByName;
     }
 
     public DocRef findDoc(final DocRef defaultRef,
@@ -64,7 +64,7 @@ public class DocFinder<D extends Doc> {
             }
 
             LOGGER.debug("Finding " + type + " with resolved name '{}' from pattern '{}'", resolvedName, namePattern);
-            final List<DocRef> docs = hasFindByName.findByName(resolvedName);
+            final List<DocRef> docs = hasFindDocRefsByName.findByName(resolvedName);
             if (docs == null || docs.size() == 0) {
                 if (errorConsumer != null && !suppressNotFoundWarnings) {
                     final StringBuilder sb = new StringBuilder();

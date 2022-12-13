@@ -46,30 +46,24 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     private static final String GET_FEED_STATUS_PATH = "/getFeedStatus";
 
     private final LoadingCache<GetFeedStatusRequest, FeedStatusUpdater> updaters;
-    private final WebTarget feedStatusWebTarget;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final Provider<ProxyConfig> proxyConfigProvider;
     private final Provider<FeedStatusConfig> feedStatusConfigProvider;
+    private final Provider<Client> jerseyClientProvider;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
-
 
     @Inject
     RemoteFeedStatusService(final Provider<ProxyConfig> proxyConfigProvider,
                             final Provider<FeedStatusConfig> feedStatusConfigProvider,
-                            final Client jerseyClient,
+                            final Provider<Client> jerseyClientProvider,
                             final DefaultOpenIdCredentials defaultOpenIdCredentials) {
         this.proxyConfigProvider = proxyConfigProvider;
         this.feedStatusConfigProvider = feedStatusConfigProvider;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
+        this.jerseyClientProvider = jerseyClientProvider;
 
         final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
         Objects.requireNonNull(feedStatusConfig, "Feed status config is null");
-        final String url = feedStatusConfig.getFeedStatusUrl();
-        Objects.requireNonNull(url, "The feed status URL is null");
-
-        this.feedStatusWebTarget = jerseyClient
-                .target(url)
-                .path(GET_FEED_STATUS_PATH);
 
         final CacheConfig cacheConfig = feedStatusConfig.getFeedStatusCache();
         Objects.requireNonNull(cacheConfig, "Feed status cache config is null");
@@ -179,6 +173,9 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
                                               final GetFeedStatusRequest request,
                                               final Function<Response, GetFeedStatusResponse> responseConsumer) {
         LOGGER.debug("Sending request {}", request);
+
+        final WebTarget feedStatusWebTarget = getFeedStatusWebTarget(url);
+
         try (final Response response = feedStatusWebTarget
                 .request(MediaType.APPLICATION_JSON)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
@@ -192,6 +189,12 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         }
     }
 
+    private WebTarget getFeedStatusWebTarget(final String url) {
+        final WebTarget feedStatusWebTarget = jerseyClientProvider.get()
+                .target(url)
+                .path(GET_FEED_STATUS_PATH);
+        return feedStatusWebTarget;
+    }
 
     @Override
     public HealthCheck.Result getHealth() {
@@ -199,7 +202,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         final HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
         final String apiKey = getApiKey();
         final String url = feedStatusConfigProvider.get().getFeedStatusUrl();
-        resultBuilder.withDetail("url", feedStatusWebTarget.getUri().toString());
+        resultBuilder.withDetail("url", getFeedStatusWebTarget(url).getUri().toString());
 
         if (url == null || url.trim().length() == 0) {
             // If no url is configured then no feed status checking is required so we consider this healthy

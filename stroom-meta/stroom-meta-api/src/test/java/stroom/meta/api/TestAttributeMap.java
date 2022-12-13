@@ -1,6 +1,12 @@
 package stroom.meta.api;
 
+import stroom.test.common.TestUtil;
+
+import io.vavr.Tuple;
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -8,6 +14,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -125,5 +134,199 @@ class TestAttributeMap {
 
         final AttributeMap attributeMap = new AttributeMap();
         AttributeMapUtil.read(is, attributeMap);
+    }
+
+    @Test
+    void testEquality1() {
+        final AttributeMap attributeMap1 = new AttributeMap();
+        attributeMap1.putAll(Map.of(
+                "foo", "123",
+                "bar", "456"));
+        final AttributeMap attributeMap2 = new AttributeMap();
+        attributeMap2.putAll(Map.of(
+                "FOO", "123",
+                "BAR", "456"));
+
+        Assertions.assertThat(attributeMap1)
+                .isEqualTo(attributeMap2);
+    }
+
+    @Test
+    void testEquality2() {
+        final AttributeMap attributeMap1 = new AttributeMap();
+        attributeMap1.putAll(Map.of(
+                "fooXXX", "123",
+                "bar", "456"));
+        final AttributeMap attributeMap2 = new AttributeMap();
+        attributeMap2.putAll(Map.of(
+                "FOO", "123",
+                "BAR", "456"));
+
+        Assertions.assertThat(attributeMap1)
+                .isNotEqualTo(attributeMap2);
+    }
+
+    @Test
+    void testEquality3() {
+        final AttributeMap attributeMap1 = new AttributeMap();
+        attributeMap1.putAll(Map.of(
+                "foo", "value1",
+                "bar", "value2"));
+        final AttributeMap attributeMap2 = new AttributeMap();
+        attributeMap2.putAll(Map.of(
+                "foo", "VALUE1",
+                "bar", "VALUE2"));
+
+        // Value cases not same
+        Assertions.assertThat(attributeMap1)
+                .isNotEqualTo(attributeMap2);
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testGet() {
+        final AttributeMap attributeMap1 = new AttributeMap();
+        attributeMap1.putAll(Map.of(
+                "foo", "123",
+                "bar", "456"));
+        final AttributeMap attributeMapEmpty = new AttributeMap();
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(AttributeMap.class, String.class)
+                .withOutputType(String.class)
+                .withTestFunction(testCase -> {
+                    var attrMap = testCase.getInput()._1;
+                    return attrMap.get(testCase.getInput()._2);
+                })
+                .withSimpleEqualityAssertion()
+                .addThrowsCase(Tuple.of(attributeMapEmpty, null), NullPointerException.class)
+                .addCase(Tuple.of(attributeMapEmpty, "foo"), null)
+                .addCase(Tuple.of(attributeMap1, ""), null)
+                .addCase(Tuple.of(attributeMap1, "foo"), "123")
+                .addCase(Tuple.of(attributeMap1, "FOO"), "123")
+                .addCase(Tuple.of(attributeMap1, "Foo"), "123")
+                .addCase(Tuple.of(attributeMap1, " Foo"), "123")
+                .addCase(Tuple.of(attributeMap1, "Foo "), "123")
+                .addCase(Tuple.of(attributeMap1, " Foo "), "123")
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testContainsKey() {
+        final AttributeMap attributeMap1 = new AttributeMap();
+        attributeMap1.putAll(Map.of(
+                "foo", "123",
+                "bar", "456"));
+        final AttributeMap attributeMapEmpty = new AttributeMap();
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(AttributeMap.class, String.class)
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    var attrMap = testCase.getInput()._1;
+                    return attrMap.containsKey(testCase.getInput()._2);
+                })
+                .withSimpleEqualityAssertion()
+                .addThrowsCase(Tuple.of(attributeMapEmpty, null), NullPointerException.class)
+                .addCase(Tuple.of(attributeMapEmpty, "foo"), false)
+                .addCase(Tuple.of(attributeMap1, ""), false)
+                .addCase(Tuple.of(attributeMap1, "foo"), true)
+                .addCase(Tuple.of(attributeMap1, "FOO"), true)
+                .addCase(Tuple.of(attributeMap1, "Foo"), true)
+                .addCase(Tuple.of(attributeMap1, " Foo"), true)
+                .addCase(Tuple.of(attributeMap1, "Foo "), true)
+                .addCase(Tuple.of(attributeMap1, " Foo "), true)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testContainsValue() {
+        final AttributeMap attributeMap1 = new AttributeMap();
+        attributeMap1.putAll(Map.of(
+                "foo", "value1",
+                "bar", "value2"));
+        attributeMap1.put("NULL", null);
+
+        final AttributeMap attributeMapEmpty = new AttributeMap();
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(AttributeMap.class, String.class)
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    var attrMap = testCase.getInput()._1;
+                    return attrMap.containsValue(testCase.getInput()._2);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(attributeMapEmpty, "value1"), false)
+                .addCase(Tuple.of(attributeMap1, null), true)
+                .addCase(Tuple.of(attributeMap1, ""), false)
+                .addCase(Tuple.of(attributeMap1, "value1"), true)
+                .addCase(Tuple.of(attributeMap1, "value2"), true)
+                .addCase(Tuple.of(attributeMap1, "VALUE1"), false) // wrong case
+                .build();
+    }
+
+    @Test
+    void testPut() {
+        final AttributeMap attributeMap1 = new AttributeMap();
+
+        Assertions.assertThat(attributeMap1)
+                .isEmpty();
+
+        attributeMap1.put("foo", "value1a");
+        Assertions.assertThat(attributeMap1)
+                .hasSize(1);
+        Assertions.assertThat(attributeMap1.get("Foo"))
+                .isEqualTo("value1a");
+
+        attributeMap1.put("FOO", "value1b"); // 'same' key, new val
+        Assertions.assertThat(attributeMap1)
+                .hasSize(1);
+        Assertions.assertThat(attributeMap1.get("Foo"))
+                .isEqualTo("value1b");
+
+        attributeMap1.put("bar", "value2a");
+        Assertions.assertThat(attributeMap1)
+                .hasSize(2);
+        Assertions.assertThat(attributeMap1.get("BAR"))
+                .isEqualTo("value2a");
+    }
+
+    @Test
+    void testComputeIfAbsent1() {
+
+        final AttributeMap attributeMap1 = new AttributeMap();
+        Assertions.assertThat(attributeMap1)
+                .isEmpty();
+        final AtomicInteger callCount = new AtomicInteger();
+
+        final String computedVal = attributeMap1.computeIfAbsent("foo", k -> {
+            callCount.incrementAndGet();
+            return "value(" + k + ")";
+        });
+
+        Assertions.assertThat(computedVal)
+                .isEqualTo("value(foo)");
+        Assertions.assertThat(callCount)
+                .hasValue(1);
+    }
+
+    @Test
+    void testComputeIfAbsent2() {
+
+        final AttributeMap attributeMap1 = new AttributeMap();
+        attributeMap1.put("foo", "value(initial)");
+        Assertions.assertThat(attributeMap1)
+                .hasSize(1);
+        final AtomicInteger callCount = new AtomicInteger();
+
+        final String computedVal = attributeMap1.computeIfAbsent("foo", k -> {
+            callCount.incrementAndGet();
+            return "value(" + k + ")";
+        });
+
+        Assertions.assertThat(computedVal)
+                .isEqualTo("value(initial)");
+        Assertions.assertThat(callCount)
+                .hasValue(0);
     }
 }

@@ -15,6 +15,7 @@ public class SuperDevUtil {
 
     private static final String GWT_SUPER_DEV_SYSTEM_PROP_NAME = "gwtSuperDevMode";
     private static final String SUPER_DEV_CONTENT_SECURITY_POLICY_VALUE = "";
+    private static final String SUPER_DEV_STRICT_TRANSPORT_SECURITY_VALUE = "";
     private static final boolean SUPER_DEV_SESSION_COOKIE_SECURE_VALUE = false;
 
     private static final boolean IS_IN_SUPER_DEV_MODE = Boolean.getBoolean(GWT_SUPER_DEV_SYSTEM_PROP_NAME);
@@ -41,6 +42,10 @@ public class SuperDevUtil {
                     .appendCyan(ContentSecurityConfig.PROP_NAME_CONTENT_SECURITY_POLICY)
                     .appendRed(" to [")
                     .appendCyan(SUPER_DEV_CONTENT_SECURITY_POLICY_VALUE)
+                    .appendRed("], ")
+                    .appendCyan(ContentSecurityConfig.PROP_NAME_STRICT_TRANSPORT_SECURITY)
+                    .appendRed(" to [")
+                    .appendCyan(SUPER_DEV_STRICT_TRANSPORT_SECURITY_VALUE)
                     .appendRed("] and ")
                     .appendCyan(AppConfig.PROP_NAME_SESSION_COOKIE)
                     .appendRed(" to [")
@@ -55,7 +60,8 @@ public class SuperDevUtil {
     public static AbstractConfig relaxSecurityInSuperDevMode(final AbstractConfig config) {
         if (config instanceof ContentSecurityConfig && IS_IN_SUPER_DEV_MODE) {
             final ContentSecurityConfig newContentSecurityConfig = ((ContentSecurityConfig) config)
-                    .withContentSecurityPolicy(SUPER_DEV_CONTENT_SECURITY_POLICY_VALUE);
+                    .withContentSecurityPolicy(SUPER_DEV_CONTENT_SECURITY_POLICY_VALUE)
+                    .withStrictTransportSecurity(SUPER_DEV_STRICT_TRANSPORT_SECURITY_VALUE);
             LOGGER.debug("newContentSecurityConfig: {}", newContentSecurityConfig);
             return newContentSecurityConfig;
 
