@@ -22,11 +22,16 @@ import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.index.impl.IndexShardService;
+import stroom.index.impl.IndexStore;
+import stroom.index.impl.TimePartitionFactory;
 import stroom.index.shared.FindIndexShardCriteria;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
+import stroom.index.shared.TimePartition;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.common.v2.DateExpressionParser;
@@ -61,6 +66,7 @@ class AsyncSearchTaskHandler {
     public static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Search");
 
     private final TargetNodeSetFactory targetNodeSetFactory;
+    private final IndexStore indexStore;
     private final IndexShardService indexShardService;
     private final TaskManager taskManager;
     private final ClusterTaskTerminator clusterTaskTerminator;
@@ -71,8 +77,11 @@ class AsyncSearchTaskHandler {
     private final Provider<LocalNodeSearch> localNodeSearchProvider;
     private final Provider<RemoteNodeSearch> remoteNodeSearchProvider;
 
+    private final TimePartitionFactory timePartitionFactory = new TimePartitionFactory();
+
     @Inject
     AsyncSearchTaskHandler(final TargetNodeSetFactory targetNodeSetFactory,
+                           final IndexStore indexStore,
                            final IndexShardService indexShardService,
                            final TaskManager taskManager,
                            final ClusterTaskTerminator clusterTaskTerminator,
@@ -83,6 +92,7 @@ class AsyncSearchTaskHandler {
                            final Provider<LocalNodeSearch> localNodeSearchProvider,
                            final Provider<RemoteNodeSearch> remoteNodeSearchProvider) {
         this.targetNodeSetFactory = targetNodeSetFactory;
+        this.indexStore = indexStore;
         this.indexShardService = indexShardService;
         this.taskManager = taskManager;
         this.clusterTaskTerminator = clusterTaskTerminator;
@@ -123,12 +133,8 @@ class AsyncSearchTaskHandler {
                     findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_PARTITION, true, false);
                     findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_ID, true, false);
 
-                    final TimeRange timeRange = query.getTimeRange();
-                    final Range<Long> range = DateExpressionParser.parse(
-                            timeRange,
-                            task.getDateTimeSettings(),
-                            task.getNow());
-                    findIndexShardCriteria.setPartitionTimeRange(range);
+                    // Set the partition time range.
+                    setPartitionTimeRange(findIndexShardCriteria, task, query);
 
                     final ResultPage<IndexShard> indexShards = indexShardService.find(findIndexShardCriteria);
 
@@ -205,6 +211,45 @@ class AsyncSearchTaskHandler {
                 }
             }
         }));
+    }
+
+    private void setPartitionTimeRange(final FindIndexShardCriteria findIndexShardCriteria,
+                                       final AsyncSearchTask task,
+                                       final Query query) {
+        // Get the index doc.
+        final IndexDoc indexDoc = indexStore.readDocument(query.getDataSource());
+        if (indexDoc == null) {
+            throw new SearchException("Index not found");
+        }
+
+        final TimeRange timeRange = query.getTimeRange();
+        Long partitionFrom = null;
+        Long partitionTo = null;
+
+        if (timeRange != null) {
+            if (timeRange.getFrom() != null && !timeRange.getFrom().isBlank()) {
+                final long ms = getMs(timeRange.getFrom(), task.getDateTimeSettings(), task.getNow());
+                final TimePartition timePartition = timePartitionFactory.create(indexDoc, ms);
+                partitionFrom = timePartition.getPartitionFromTime();
+            }
+            if (timeRange.getTo() != null && !timeRange.getTo().isBlank()) {
+                final long ms = getMs(timeRange.getTo(), task.getDateTimeSettings(), task.getNow());
+                final TimePartition timePartition = timePartitionFactory.create(indexDoc, ms);
+                partitionTo = timePartition.getPartitionToTime();
+            }
+        }
+        final Range<Long> range = new Range<>(partitionFrom, partitionTo);
+        findIndexShardCriteria.setPartitionTimeRange(range);
+    }
+
+    private Long getMs(final String expression,
+                       final DateTimeSettings dateTimeSettings,
+                       final long nowEpochMilli) {
+        return DateExpressionParser.parse(
+                        expression,
+                        dateTimeSettings,
+                        nowEpochMilli)
+                .map(time -> time.toInstant().toEpochMilli()).orElse(null);
     }
 
     private void awaitCompletionAndTerminate(final ClusterSearchResultCollector resultCollector,

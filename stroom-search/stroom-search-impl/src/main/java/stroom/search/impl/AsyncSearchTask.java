@@ -16,6 +16,7 @@
 
 package stroom.search.impl;
 
+import stroom.index.impl.TimePartitionFactory;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;

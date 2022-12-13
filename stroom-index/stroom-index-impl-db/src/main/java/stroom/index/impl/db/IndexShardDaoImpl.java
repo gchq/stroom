@@ -173,7 +173,7 @@ class IndexShardDaoImpl implements IndexShardDao {
                         .map(INDEX_SHARD.PARTITION_FROM_MS::greaterOrEqual),
                 Optional.ofNullable(criteria.getPartitionTimeRange())
                         .map(Range::getTo)
-                        .map(INDEX_SHARD.PARTITION_TO_MS::lessThan)
+                        .map(INDEX_SHARD.PARTITION_TO_MS::lessOrEqual)
         );
 
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
