@@ -6,12 +6,16 @@ public enum TokenType {
     // Uncategorized content.
     UNKNOWN,
 
-    // Structure
-    BRACKET_GROUP,
+    PIPE,
     OPEN_BRACKET,
     CLOSE_BRACKET,
+
+    // Structure
     PIPE_GROUP,
-    PIPE,
+    TOKEN_GROUP,
+    FUNCTION_GROUP,
+    FUNCTION_NAME,
+    COMMAND_NAME,
 
     // Strings
     WHITESPACE,
@@ -44,6 +48,7 @@ public enum TokenType {
 
     // Commands
     WHERE,
+    TABLE,
 
     // Logic
     AND,
@@ -57,11 +62,15 @@ public enum TokenType {
 
 
 
-    FUNCTION,
+
 
     // Comments
     COMMENT,
     BLOCK_COMMENT;
 
-    public static Set<TokenType> COMMANDS = Set.of(WHERE, AND, OR, NOT);
+    public static Set<TokenType> COMMANDS = Set.of(WHERE, TABLE);
+
+    public static Set<TokenType> QUERY = Set.of(WHERE, AND, OR, NOT);
+
+    public static Set<TokenType> LOGIC = Set.of(AND, OR, NOT);
 }

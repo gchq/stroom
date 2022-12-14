@@ -104,25 +104,25 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
         final IndexDoc index = indexStore.readDocument(indexRef);
         assertThat(index).as("Index is null").isNotNull();
 
-        final List<ResultRequest> resultRequests = new ArrayList<>(componentIds.size());
-
-        for (final String componentId : componentIds) {
-            final TableSettings tableSettings = tableSettingsCreator.apply(extractValues);
-
-            final ResultRequest tableResultRequest = new ResultRequest(componentId,
-                    Collections.singletonList(tableSettings),
-                    null,
-                    null,
-                    ResultRequest.ResultStyle.TABLE,
-                    Fetch.CHANGES);
-            resultRequests.add(tableResultRequest);
-        }
+//        final List<ResultRequest> resultRequests = new ArrayList<>(componentIds.size());
+//
+//        for (final String componentId : componentIds) {
+//            final TableSettings tableSettings = tableSettingsCreator.apply(extractValues);
+//
+//            final ResultRequest tableResultRequest = new ResultRequest(componentId,
+//                    Collections.singletonList(tableSettings),
+//                    null,
+//                    null,
+//                    ResultRequest.ResultStyle.TABLE,
+//                    Fetch.CHANGES);
+//            resultRequests.add(tableResultRequest);
+//        }
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final Query query = Query.builder().dataSource(indexRef).build();
+//        final Query query = Query.builder().dataSource(indexRef).build();
         SearchRequest searchRequest = new SearchRequest(queryKey,
-                query,
-                resultRequests,
+                null,
+                null,
                 DateTimeSettings.builder().build(),
                 false);
         searchRequest = parser.parse(queryString, searchRequest);

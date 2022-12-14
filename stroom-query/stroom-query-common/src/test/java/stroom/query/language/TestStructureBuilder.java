@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
-public class TestTokeniser {
+public class TestStructureBuilder {
 
     // If we are editing the input or behaviour then we don't want to test the validity but instead create the expected
     // test output. 
@@ -24,7 +24,7 @@ public class TestTokeniser {
 
     @TestFactory
     Stream<DynamicTest> buildTests() throws IOException {
-        final Path dir = TestFileUtil.getTestResourcesDir().resolve("TestTokeniser");
+        final Path dir = TestFileUtil.getTestResourcesDir().resolve("TestStructureBuilder");
         final Path expectedFile = dir.resolve("expected.txt");
         final Path inFile = dir.resolve("in.txt");
         final Path outFile = dir.resolve("out.txt");
@@ -57,12 +57,8 @@ public class TestTokeniser {
         SoftAssertions.assertSoftly(softAssertions -> {
             try {
                 final List<Token> tokens = Tokeniser.parse(input);
-                final StringBuilder sb = new StringBuilder();
-                for (final Token token : tokens) {
-                    token.append(sb, false, 0);
-                }
-
-                final String tokenString = sb.toString();
+                final TokenGroup tokenGroup = StructureBuilder.create(tokens);
+                final String tokenString = tokenGroup.toTokenString(true);
                 appendToFile(outFile, input, tokenString);
 
                 if (CREATE_MODE) {
@@ -73,8 +69,8 @@ public class TestTokeniser {
                     final String allExpected = Files.readString(expectedFile);
                     final String allOut = Files.readString(outFile);
 
-                    final String[] expectedParts = allExpected.split("\n\n");
-                    final String[] outParts = allOut.split("\n\n");
+                    final String[] expectedParts = allExpected.split("\n\n\n");
+                    final String[] outParts = allOut.split("\n\n\n");
 
                     softAssertions.assertThat(expectedParts.length).isGreaterThanOrEqualTo(testNum);
                     softAssertions.assertThat(outParts.length).isEqualTo(testNum);

@@ -20,7 +20,7 @@ public class QuotedStringToken extends Token {
         return unescaped;
     }
 
-    public static class Builder extends Token.AbstractBuilder<QuotedStringToken, Builder> {
+    public static class Builder extends AbstractTokenBuilder<QuotedStringToken, Builder> {
 
         @Override
         Builder self() {

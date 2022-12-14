@@ -97,9 +97,10 @@ class TestInteractiveSearch2 extends AbstractSearchTest2 {
     void positiveCaseInsensitiveTest() {
         String queryString =
                 "Test Index\n" +
-                        "| where UserId == user5 and Description == e0567\n" +
+                        "| where UserId = user5 and Description = e0567\n" +
                         "| and EventTime <= 2000-01-01T00:00:00.000Z\n" +
-                        "| and EventTime >= 2016-01-02T00:00:00.000Z\n";
+                        "| and EventTime >= 2016-01-02T00:00:00.000Z\n" +
+                        "| table \"StreamId\", \"EventId\", \"EventTime\", \"Status\"\n";
         test(queryString, 5);
     }
 

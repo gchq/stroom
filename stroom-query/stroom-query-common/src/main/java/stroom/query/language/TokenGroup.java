@@ -1,59 +1,50 @@
 package stroom.query.language;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class TokenGroup extends Token {
+public class TokenGroup extends AbstractTokenGroup {
 
-    private final List<Token> children;
+    private final String name;
 
     public TokenGroup(final TokenType tokenType,
                       final char[] chars,
                       final int start,
                       final int end,
-                      final List<Token> children) {
-        super(tokenType, chars, start, end);
-        this.children = children;
+                      final List<AbstractToken> children,
+                      final String name) {
+        super(tokenType, chars, start, end, children);
+        this.name = name;
     }
 
-    public List<Token> getChildren() {
-        return children;
+    public String getName() {
+        return name;
     }
 
-    @Override
-    public void append(final StringBuilder sb, final boolean indent, final int depth) {
-        appendIndent(sb, depth);
-        appendOpenType(sb);
-        if (indent) {
-            sb.append("\n");
+    void append(final StringBuilder sb, final boolean indent, final int depth) {
+        appendIndent(indent, sb, depth);
+        sb.append("<");
+        sb.append(tokenType);
+        if (name != null) {
+            sb.append(" NAME=\"");
+            sb.append(name);
+            sb.append("\"");
         }
-        for (final Token child : children) {
-            child.append(sb, indent, depth + 1);
-        }
-        appendIndent(sb, depth);
+        sb.append(">");
+        appendNewLine(indent, sb);
+        appendChildren(sb, indent, depth + 1);
+        appendIndent(indent, sb, depth);
         appendCloseType(sb);
-        if (indent) {
-            sb.append("\n");
-        }
+        appendNewLine(indent, sb);
     }
 
-    public static class Builder extends Token.AbstractBuilder<TokenGroup, Builder> {
+    public static class Builder extends AbstractTokenGroupBuilder<TokenGroup, Builder> {
 
-        private final List<Token> children = new ArrayList<>();
+        private String name;
 
-        public Builder addAll(final List<Token> tokens) {
-            this.children.addAll(tokens);
+        public Builder name(final String name) {
+            this.name = name;
             return self();
-        }
-
-        public Builder add(final Token token) {
-            this.children.add(token);
-            return self();
-        }
-
-        public boolean isEmpty() {
-            return children.isEmpty();
         }
 
         @Override
@@ -65,10 +56,11 @@ public class TokenGroup extends Token {
         public TokenGroup build() {
             Objects.requireNonNull(tokenType, "Null token type");
             Objects.requireNonNull(chars, "Null chars");
+            Objects.requireNonNull(children, "Null children");
             if (start == -1 || end == -1) {
                 throw new IndexOutOfBoundsException();
             }
-            return new TokenGroup(tokenType, chars, start, end, new ArrayList<>(children));
+            return new TokenGroup(tokenType, chars, start, end, children, name);
         }
     }
 }

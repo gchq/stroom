@@ -1,0 +1,288 @@
+before "test of inner \" strings " after
+=====
+<TOKEN_GROUP>
+   <STRING>before</STRING>
+   <DOUBLE_QUOTED_STRING>"test of inner \" strings "</DOUBLE_QUOTED_STRING>
+   <STRING>after</STRING>
+</TOKEN_GROUP>
+
+
+"test of inner \" strings " after
+=====
+<TOKEN_GROUP>
+   <DOUBLE_QUOTED_STRING>"test of inner \" strings "</DOUBLE_QUOTED_STRING>
+   <STRING>after</STRING>
+</TOKEN_GROUP>
+
+
+ "test of inner \" strings " after
+=====
+<TOKEN_GROUP>
+   <DOUBLE_QUOTED_STRING>"test of inner \" strings "</DOUBLE_QUOTED_STRING>
+   <STRING>after</STRING>
+</TOKEN_GROUP>
+
+
+before "test of inner \" strings "
+=====
+<TOKEN_GROUP>
+   <STRING>before</STRING>
+   <DOUBLE_QUOTED_STRING>"test of inner \" strings "</DOUBLE_QUOTED_STRING>
+</TOKEN_GROUP>
+
+
+before "test of inner \" strings "
+=====
+<TOKEN_GROUP>
+   <STRING>before</STRING>
+   <DOUBLE_QUOTED_STRING>"test of inner \" strings "</DOUBLE_QUOTED_STRING>
+</TOKEN_GROUP>
+
+
+before 'test of inner \' strings ' after
+=====
+<TOKEN_GROUP>
+   <STRING>before</STRING>
+   <SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
+   <STRING>after</STRING>
+</TOKEN_GROUP>
+
+
+'test of inner \' strings ' after
+=====
+<TOKEN_GROUP>
+   <SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
+   <STRING>after</STRING>
+</TOKEN_GROUP>
+
+
+ 'test of inner \' strings ' after
+=====
+<TOKEN_GROUP>
+   <SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
+   <STRING>after</STRING>
+</TOKEN_GROUP>
+
+
+before 'test of inner \' strings '
+=====
+<TOKEN_GROUP>
+   <STRING>before</STRING>
+   <SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
+</TOKEN_GROUP>
+
+
+before 'test of inner \' strings '
+=====
+<TOKEN_GROUP>
+   <STRING>before</STRING>
+   <SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
+</TOKEN_GROUP>
+
+
+table | where this = that | and foo = 'test of inner \' strings '
+=====
+<TOKEN_GROUP>
+   <STRING>table</STRING>
+   <PIPE_GROUP NAME="where">
+      <STRING>this</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>that</STRING>
+   </PIPE_GROUP>
+   <PIPE_GROUP NAME="and">
+      <STRING>foo</STRING>
+      <EQUALS>=</EQUALS>
+      <SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
+   </PIPE_GROUP>
+</TOKEN_GROUP>
+
+
+Test Index
+| where UserId = user5 and Description = e0567
+| and EventTime <= 2000-01-01T00:00:00.000Z
+| and EventTime >= 2016-01-02T00:00:00.000Z
+=====
+<TOKEN_GROUP>
+   <STRING>Test</STRING>
+   <STRING>Index</STRING>
+   <PIPE_GROUP NAME="where">
+      <STRING>UserId</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>user5</STRING>
+      <AND>and</AND>
+      <STRING>Description</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>e0567</STRING>
+   </PIPE_GROUP>
+   <PIPE_GROUP NAME="and">
+      <STRING>EventTime</STRING>
+      <LESS_THAN_OR_EQUAL_TO><=</LESS_THAN_OR_EQUAL_TO>
+      <STRING>2000-01-01T00:00:00.000Z</STRING>
+   </PIPE_GROUP>
+   <PIPE_GROUP NAME="and">
+      <STRING>EventTime</STRING>
+      <GREATER_THAN_OR_EQUAL_TO>>=</GREATER_THAN_OR_EQUAL_TO>
+      <STRING>2016-01-02T00:00:00.000Z</STRING>
+   </PIPE_GROUP>
+</TOKEN_GROUP>
+
+
+Test Index
+| where UserId = user5 and Description = e0567
+| and EventTime <= now()
+=====
+<TOKEN_GROUP>
+   <STRING>Test</STRING>
+   <STRING>Index</STRING>
+   <PIPE_GROUP NAME="where">
+      <STRING>UserId</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>user5</STRING>
+      <AND>and</AND>
+      <STRING>Description</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>e0567</STRING>
+   </PIPE_GROUP>
+   <PIPE_GROUP NAME="and">
+      <STRING>EventTime</STRING>
+      <LESS_THAN_OR_EQUAL_TO><=</LESS_THAN_OR_EQUAL_TO>
+      <FUNCTION_GROUP NAME="now">
+      </FUNCTION_GROUP>
+   </PIPE_GROUP>
+</TOKEN_GROUP>
+
+
+Test Index
+| where UserId = user5 and Description = e0567
+| and EventTime <= now() + 3d
+=====
+<TOKEN_GROUP>
+   <STRING>Test</STRING>
+   <STRING>Index</STRING>
+   <PIPE_GROUP NAME="where">
+      <STRING>UserId</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>user5</STRING>
+      <AND>and</AND>
+      <STRING>Description</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>e0567</STRING>
+   </PIPE_GROUP>
+   <PIPE_GROUP NAME="and">
+      <STRING>EventTime</STRING>
+      <LESS_THAN_OR_EQUAL_TO><=</LESS_THAN_OR_EQUAL_TO>
+      <FUNCTION_GROUP NAME="now">
+      </FUNCTION_GROUP>
+      <PLUS>+</PLUS>
+      <STRING>3d</STRING>
+   </PIPE_GROUP>
+</TOKEN_GROUP>
+
+
+Test Index
+| where UserId = user5 and Description = e0567
+| and EventTime <= now() + 3
+=====
+<TOKEN_GROUP>
+   <STRING>Test</STRING>
+   <STRING>Index</STRING>
+   <PIPE_GROUP NAME="where">
+      <STRING>UserId</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>user5</STRING>
+      <AND>and</AND>
+      <STRING>Description</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>e0567</STRING>
+   </PIPE_GROUP>
+   <PIPE_GROUP NAME="and">
+      <STRING>EventTime</STRING>
+      <LESS_THAN_OR_EQUAL_TO><=</LESS_THAN_OR_EQUAL_TO>
+      <FUNCTION_GROUP NAME="now">
+      </FUNCTION_GROUP>
+      <PLUS>+</PLUS>
+      <NUMBER>3</NUMBER>
+   </PIPE_GROUP>
+</TOKEN_GROUP>
+
+
+Events
+| where Name = "Start"
+| project City, ClientIp, StartTime = timestamp
+| join  kind=inner
+    (Events
+    | where Name = "Stop"
+    | project StopTime = timestamp, ClientIp)
+    on ClientIp
+| extend duration = StopTime - StartTime
+    // Remove matches with earlier stops:
+| where  duration > 0
+    // Pick out the earliest stop for each start and client:
+| summarize arg_min(duration, *) by bin(StartTime,1s), ClientIp
+=====
+<TOKEN_GROUP>
+   <STRING>Events</STRING>
+   <PIPE_GROUP NAME="where">
+      <STRING>Name</STRING>
+      <EQUALS>=</EQUALS>
+      <DOUBLE_QUOTED_STRING>"Start"</DOUBLE_QUOTED_STRING>
+   </PIPE_GROUP>
+   <PIPE_GROUP NAME="project">
+      <STRING>City</STRING>
+      <COMMA>,</COMMA>
+      <STRING>ClientIp</STRING>
+      <COMMA>,</COMMA>
+      <STRING>StartTime</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>timestamp</STRING>
+   </PIPE_GROUP>
+   <PIPE_GROUP NAME="join">
+      <STRING>kind=inner</STRING>
+      <TOKEN_GROUP>
+         <STRING>Events</STRING>
+         <PIPE_GROUP NAME="where">
+            <STRING>Name</STRING>
+            <EQUALS>=</EQUALS>
+            <DOUBLE_QUOTED_STRING>"Stop"</DOUBLE_QUOTED_STRING>
+         </PIPE_GROUP>
+         <PIPE_GROUP NAME="project">
+            <STRING>StopTime</STRING>
+            <EQUALS>=</EQUALS>
+            <STRING>timestamp</STRING>
+            <COMMA>,</COMMA>
+            <STRING>ClientIp</STRING>
+         </PIPE_GROUP>
+      </TOKEN_GROUP>
+      <STRING>on</STRING>
+      <STRING>ClientIp</STRING>
+   </PIPE_GROUP>
+   <PIPE_GROUP NAME="extend">
+      <STRING>duration</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>StopTime</STRING>
+      <MINUS>-</MINUS>
+      <STRING>StartTime</STRING>
+   </PIPE_GROUP>
+   <PIPE_GROUP NAME="where">
+      <STRING>duration</STRING>
+      <GREATER_THAN>></GREATER_THAN>
+      <NUMBER>0</NUMBER>
+   </PIPE_GROUP>
+   <PIPE_GROUP NAME="summarize">
+      <FUNCTION_GROUP NAME="arg_min">
+         <STRING>duration</STRING>
+         <COMMA>,</COMMA>
+         <MULTIPLICATION>*</MULTIPLICATION>
+      </FUNCTION_GROUP>
+      <BY>by</BY>
+      <FUNCTION_GROUP NAME="bin">
+         <STRING>StartTime</STRING>
+         <COMMA>,</COMMA>
+         <STRING>1s</STRING>
+      </FUNCTION_GROUP>
+      <COMMA>,</COMMA>
+      <STRING>ClientIp</STRING>
+   </PIPE_GROUP>
+</TOKEN_GROUP>
+
+

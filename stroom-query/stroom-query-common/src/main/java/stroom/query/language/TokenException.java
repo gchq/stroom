@@ -1,9 +1,9 @@
 package stroom.query.language;
 
 public class TokenException extends RuntimeException {
-    private final Token token;
+    private final AbstractToken token;
 
-    public TokenException(final Token token, final String message) {
+    public TokenException(final AbstractToken token, final String message) {
         super(message);
         this.token = token;
     }
