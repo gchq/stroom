@@ -14,7 +14,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 public class TestSearchRequestBuilder extends AbstractQueryTest {
 
