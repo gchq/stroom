@@ -171,9 +171,12 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
 
             // Set up the effective streams to be used for each
             final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
-            streamSet.add(new EffectiveStream(1, DateUtil.parseNormalDateTimeString("2008-01-01T09:47:00.000Z")));
-            streamSet.add(new EffectiveStream(2, DateUtil.parseNormalDateTimeString("2009-01-01T09:47:00.000Z")));
-            streamSet.add(new EffectiveStream(3, DateUtil.parseNormalDateTimeString("2010-01-01T09:47:00.000Z")));
+            streamSet.add(new EffectiveStream(
+                    1, DateUtil.parseNormalDateTimeString("2008-01-01T09:47:00.000Z")));
+            streamSet.add(new EffectiveStream(
+                    2, DateUtil.parseNormalDateTimeString("2009-01-01T09:47:00.000Z")));
+            streamSet.add(new EffectiveStream(
+                    3, DateUtil.parseNormalDateTimeString("2010-01-01T09:47:00.000Z")));
 
             try (CacheManager cacheManager = new CacheManagerImpl()) {
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(
@@ -297,14 +300,14 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         mockLoaderActionsMap);
 
                 // set up the mock loader to load the appropriate data when triggered by a lookup call
-                Mockito.doAnswer(invocation -> {
-                            RefStreamDefinition refStreamDefinition = invocation.getArgument(0);
+                Mockito.doAnswer(
+                                invocation -> {
+                                    RefStreamDefinition refStreamDefinition = invocation.getArgument(0);
 
-                            Runnable action = mockLoaderActionsMap.get(refStreamDefinition);
-                            action.run();
-                            return null;
-                        })
-                        .when(mockReferenceDataLoader)
+                                    Runnable action = mockLoaderActionsMap.get(refStreamDefinition);
+                                    action.run();
+                                    return null;
+                                }).when(mockReferenceDataLoader)
                         .load(Mockito.any(RefStreamDefinition.class));
 
                 // perform lookups (which will trigger a load if required) and assert the result

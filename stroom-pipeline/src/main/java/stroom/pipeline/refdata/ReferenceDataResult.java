@@ -246,13 +246,13 @@ public class ReferenceDataResult implements ErrorReceiver {
         }
 
         private static Object[] convertMessageArgs(final Supplier<List<Object>> messageArgsSupplier) {
-                final List<Object> argsList = NullSafe.getOrElseGet(
-                        messageArgsSupplier,
-                        Supplier::get,
-                        Collections::emptyList);
-                return argsList != null
-                        ? argsList.toArray(new Object[0])
-                        : null;
+            final List<Object> argsList = NullSafe.getOrElseGet(
+                    messageArgsSupplier,
+                    Supplier::get,
+                    Collections::emptyList);
+            return argsList != null
+                    ? argsList.toArray(new Object[0])
+                    : null;
         }
 
         private void append(final StringBuilder sb) {
