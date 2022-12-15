@@ -17,17 +17,13 @@
 package stroom.search;
 
 
-import stroom.dashboard.impl.Parser;
+import stroom.query.language.SearchRequestBuilder;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
 import stroom.query.api.v2.DateTimeSettings;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
-import stroom.query.api.v2.ResultRequest;
-import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
@@ -46,7 +42,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +61,7 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
     @Inject
     private LuceneSearchStoreFactory storeFactory;
     @Inject
-    private Parser parser;
+    private SearchRequestBuilder parser;
 
     protected static SearchResponse search(final SearchRequest searchRequest,
                                            final StoreFactory storeFactory,
@@ -125,7 +120,7 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
                 null,
                 DateTimeSettings.builder().build(),
                 false);
-        searchRequest = parser.parse(queryString, searchRequest);
+        searchRequest = parser.create(queryString, searchRequest);
 
         try {
             final ObjectMapper mapper = createMapper(true);

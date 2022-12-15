@@ -1,4 +1,4 @@
-package stroom.dashboard.impl;
+package stroom.query.language;
 
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
@@ -12,24 +12,16 @@ import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.language.AbstractToken;
-import stroom.query.language.PipeGroup;
 import stroom.query.language.PipeGroup.PipeOperation;
-import stroom.query.language.StructureBuilder;
-import stroom.query.language.Token;
-import stroom.query.language.TokenException;
-import stroom.query.language.TokenGroup;
-import stroom.query.language.TokenType;
-import stroom.query.language.Tokeniser;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class Parser {
+public class SearchRequestBuilder {
 
-    public SearchRequest parse(final String string, final SearchRequest in) {
+    public SearchRequest create(final String string, final SearchRequest in) {
         // Get a list of tokens.
         final List<Token> tokens = Tokeniser.parse(string);
         if (tokens.size() == 0) {

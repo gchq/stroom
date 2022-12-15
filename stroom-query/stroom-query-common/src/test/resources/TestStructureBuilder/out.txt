@@ -6,14 +6,12 @@ before "test of inner \" strings " after
    <STRING>after</STRING>
 </TOKEN_GROUP>
 
-
 "test of inner \" strings " after
 =====
 <TOKEN_GROUP>
    <DOUBLE_QUOTED_STRING>"test of inner \" strings "</DOUBLE_QUOTED_STRING>
    <STRING>after</STRING>
 </TOKEN_GROUP>
-
 
  "test of inner \" strings " after
 =====
@@ -22,7 +20,6 @@ before "test of inner \" strings " after
    <STRING>after</STRING>
 </TOKEN_GROUP>
 
-
 before "test of inner \" strings "
 =====
 <TOKEN_GROUP>
@@ -30,14 +27,12 @@ before "test of inner \" strings "
    <DOUBLE_QUOTED_STRING>"test of inner \" strings "</DOUBLE_QUOTED_STRING>
 </TOKEN_GROUP>
 
-
 before "test of inner \" strings "
 =====
 <TOKEN_GROUP>
    <STRING>before</STRING>
    <DOUBLE_QUOTED_STRING>"test of inner \" strings "</DOUBLE_QUOTED_STRING>
 </TOKEN_GROUP>
-
 
 before 'test of inner \' strings ' after
 =====
@@ -47,14 +42,12 @@ before 'test of inner \' strings ' after
    <STRING>after</STRING>
 </TOKEN_GROUP>
 
-
 'test of inner \' strings ' after
 =====
 <TOKEN_GROUP>
    <SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
    <STRING>after</STRING>
 </TOKEN_GROUP>
-
 
  'test of inner \' strings ' after
 =====
@@ -63,7 +56,6 @@ before 'test of inner \' strings ' after
    <STRING>after</STRING>
 </TOKEN_GROUP>
 
-
 before 'test of inner \' strings '
 =====
 <TOKEN_GROUP>
@@ -71,14 +63,12 @@ before 'test of inner \' strings '
    <SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
 </TOKEN_GROUP>
 
-
 before 'test of inner \' strings '
 =====
 <TOKEN_GROUP>
    <STRING>before</STRING>
    <SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
 </TOKEN_GROUP>
-
 
 table | where this = that | and foo = 'test of inner \' strings '
 =====
@@ -95,7 +85,6 @@ table | where this = that | and foo = 'test of inner \' strings '
       <SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
    </PIPE_GROUP>
 </TOKEN_GROUP>
-
 
 Test Index
 | where UserId = user5 and Description = e0567
@@ -126,7 +115,6 @@ Test Index
    </PIPE_GROUP>
 </TOKEN_GROUP>
 
-
 Test Index
 | where UserId = user5 and Description = e0567
 | and EventTime <= now()
@@ -150,7 +138,6 @@ Test Index
       </FUNCTION_GROUP>
    </PIPE_GROUP>
 </TOKEN_GROUP>
-
 
 Test Index
 | where UserId = user5 and Description = e0567
@@ -178,7 +165,6 @@ Test Index
    </PIPE_GROUP>
 </TOKEN_GROUP>
 
-
 Test Index
 | where UserId = user5 and Description = e0567
 | and EventTime <= now() + 3
@@ -204,7 +190,6 @@ Test Index
       <NUMBER>3</NUMBER>
    </PIPE_GROUP>
 </TOKEN_GROUP>
-
 
 Events
 | where Name = "Start"
@@ -284,5 +269,4 @@ Events
       <STRING>ClientIp</STRING>
    </PIPE_GROUP>
 </TOKEN_GROUP>
-
 

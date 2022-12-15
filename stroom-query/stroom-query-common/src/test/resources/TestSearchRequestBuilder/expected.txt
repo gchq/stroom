@@ -1,0 +1,96 @@
+'Test Index'
+| where UserId = user5 and Description = e0567
+| and EventTime <= 2000-01-01T00:00:00.000Z
+| and EventTime >= 2016-01-02T00:00:00.000Z
+| table "Stream Id", "Event Id", "Event Time", "Status"
+=====
+{
+  "key" : {
+    "uuid" : "test"
+  },
+  "query" : {
+    "dataSource" : {
+      "name" : "Test Index"
+    },
+    "expression" : {
+      "type" : "operator",
+      "children" : [ {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "operator",
+          "children" : [ {
+            "type" : "operator",
+            "children" : [ {
+              "type" : "operator",
+              "children" : [ {
+                "type" : "term",
+                "field" : "UserId",
+                "condition" : "EQUALS",
+                "value" : "user5"
+              } ]
+            }, {
+              "type" : "operator",
+              "children" : [ {
+                "type" : "term",
+                "field" : "Description",
+                "condition" : "EQUALS",
+                "value" : "e0567"
+              } ]
+            } ]
+          } ]
+        }, {
+          "type" : "operator",
+          "children" : [ {
+            "type" : "term",
+            "field" : "EventTime",
+            "condition" : "LESS_THAN_OR_EQUAL_TO",
+            "value" : "2000-01-01T00:00:00.000Z"
+          } ]
+        } ]
+      }, {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "term",
+          "field" : "EventTime",
+          "condition" : "GREATER_THAN_OR_EQUAL_TO",
+          "value" : "2016-01-02T00:00:00.000Z"
+        } ]
+      } ]
+    }
+  },
+  "resultRequests" : [ {
+    "componentId" : "1234",
+    "mappings" : [ {
+      "fields" : [ {
+        "name" : "Event Id",
+        "expression" : "${Event Id}",
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "name" : "Event Time",
+        "expression" : "${Event Time}",
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "name" : "Status",
+        "expression" : "${Status}",
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      } ]
+    } ],
+    "resultStyle" : "TABLE",
+    "fetch" : "CHANGES"
+  } ],
+  "incremental" : false,
+  "dateTimeSettings" : {
+    "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+    "localZoneId" : "Z",
+    "timeZone" : {
+      "use" : "UTC"
+    }
+  }
+}
+
