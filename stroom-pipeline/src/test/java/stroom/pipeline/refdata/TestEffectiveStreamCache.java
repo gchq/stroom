@@ -42,10 +42,10 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestEffectiveStreamPool extends StroomUnitTest {
+class TestEffectiveStreamCache extends StroomUnitTest {
 
     // Actually 11.5 days but this is fine for the purposes of reference data.
-    private static final long APPROX_TEN_DAYS = 1000000000;
+//    private static final long APPROX_TEN_DAYS = 1000000000;
 
     private long findEffectiveStreamSourceCount = 0;
 
@@ -80,19 +80,19 @@ class TestEffectiveStreamPool extends StroomUnitTest {
         };
 
         try (CacheManager cacheManager = new CacheManagerImpl()) {
-            final EffectiveStreamCache effectiveStreamPool = new EffectiveStreamCache(cacheManager,
+            final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager,
                     metaService,
                     new EffectiveStreamInternPool(),
                     new MockSecurityContext(),
                     ReferenceDataConfig::new);
 
-            assertThat(effectiveStreamPool.size()).as("No pooled times yet").isEqualTo(0);
+            assertThat(effectiveStreamCache.size()).as("No pooled times yet").isEqualTo(0);
             assertThat(findEffectiveStreamSourceCount).as("No calls to the database yet").isEqualTo(0);
 
             long time = DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z");
             long fromMs = getFromMs(time);
             long toMs = getToMs(fromMs);
-            effectiveStreamPool
+            effectiveStreamCache
                     .get(new EffectiveStreamKey(refFeedName, StreamTypeNames.REFERENCE, fromMs, toMs));
             assertThat(findEffectiveStreamSourceCount).as("Database call").isEqualTo(1);
 
@@ -100,7 +100,7 @@ class TestEffectiveStreamPool extends StroomUnitTest {
             time = DateUtil.parseNormalDateTimeString("2010-01-01T13:00:00.000Z");
             fromMs = getFromMs(time);
             toMs = getToMs(fromMs);
-            effectiveStreamPool
+            effectiveStreamCache
                     .get(new EffectiveStreamKey(refFeedName, StreamTypeNames.REFERENCE, fromMs, toMs));
             assertThat(findEffectiveStreamSourceCount).as("Database call").isEqualTo(1);
 
@@ -108,7 +108,7 @@ class TestEffectiveStreamPool extends StroomUnitTest {
             time = DateUtil.parseNormalDateTimeString("2010-01-15T13:00:00.000Z");
             fromMs = getFromMs(time);
             toMs = getToMs(fromMs);
-            effectiveStreamPool
+            effectiveStreamCache
                     .get(new EffectiveStreamKey(refFeedName, StreamTypeNames.REFERENCE, fromMs, toMs));
             assertThat(findEffectiveStreamSourceCount).as("Database call").isEqualTo(2);
 
@@ -116,7 +116,7 @@ class TestEffectiveStreamPool extends StroomUnitTest {
             time = DateUtil.parseNormalDateTimeString("2009-12-15T13:00:00.000Z");
             fromMs = getFromMs(time);
             toMs = getToMs(fromMs);
-            effectiveStreamPool
+            effectiveStreamCache
                     .get(new EffectiveStreamKey(refFeedName, StreamTypeNames.REFERENCE, fromMs, toMs));
             assertThat(findEffectiveStreamSourceCount).as("Database call").isEqualTo(3);
         } catch (final RuntimeException e) {
@@ -199,11 +199,11 @@ class TestEffectiveStreamPool extends StroomUnitTest {
     }
 
     private long getFromMs(final long time) {
-        return (time / APPROX_TEN_DAYS) * APPROX_TEN_DAYS;
+        return (time / ReferenceData.APPROX_TEN_DAYS) * ReferenceData.APPROX_TEN_DAYS;
     }
 
     private long getToMs(final long fromMs) {
-        return fromMs + APPROX_TEN_DAYS;
+        return fromMs + ReferenceData.APPROX_TEN_DAYS;
     }
 
     private static class InnerStreamMetaService extends MockMetaService {

@@ -1,8 +1,8 @@
 package stroom.pipeline.refdata;
 
-import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -101,7 +101,8 @@ public class RefDataLookupRequest {
         return "RefDataLookupRequest{" +
                 "mapName='" + mapName + '\'' +
                 ", key='" + key + '\'' +
-                ", effectiveTimeEpochMs=" + Instant.ofEpochMilli(effectiveTimeEpochMs) +
+                ", effectiveTimeEpochMs="
+                + NullSafe.toStringOrElse(effectiveTimeEpochMs, Instant::ofEpochMilli, "null") +
                 ", referenceLoaders=" + referenceLoaders +
                 '}';
     }

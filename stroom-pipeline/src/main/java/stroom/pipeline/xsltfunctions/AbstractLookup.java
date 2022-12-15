@@ -26,7 +26,6 @@ import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.MetaHolder;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 
@@ -141,6 +140,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
 
                 // If we have got the date then continue to do the lookup.
                 try {
+                    LOGGER.debug("doLookup for {}", lookupIdentifier);
                     result = doLookup(context, ignoreWarnings, traceLookup, lookupIdentifier);
                 } catch (final RuntimeException e) {
                     createLookupFailError(context, lookupIdentifier, e);
@@ -174,11 +174,11 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         LOGGER.trace("getReferenceData({})", lookupIdentifier);
         final ReferenceDataResult result = new ReferenceDataResult();
 
-        result.log(
+        result.logLazyTemplate(
                 Severity.INFO,
-                () -> LogUtil.message("Doing lookup - " +
-                                "key: {}, map: {}, event time: {} (primary map: {}, secondary map: {})",
-                        lookupIdentifier.getKey(),
+                "Doing lookup - " +
+                        "key: {}, map: {}, event time: {} (primary map: {}, secondary map: {})",
+                () -> List.of(lookupIdentifier.getKey(),
                         lookupIdentifier.getMap(),
                         Instant.ofEpochMilli(lookupIdentifier.getEventTime()),
                         lookupIdentifier.getPrimaryMapName(),
@@ -186,9 +186,9 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
 
         final List<PipelineReference> pipelineReferences = getPipelineReferences();
         if (pipelineReferences == null || pipelineReferences.size() == 0) {
-            result.log(
+            result.logSimpleTemplate(
                     Severity.ERROR,
-                    () -> "No pipeline references have been added to this XSLT step to perform a lookup");
+                    "No pipeline references have been added to this XSLT step to perform a lookup");
         } else {
             referenceData.ensureReferenceDataAvailability(pipelineReferences, lookupIdentifier, result);
         }
@@ -239,7 +239,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                     sb.append(StoredError.MESSAGE_CAUSE_DELIMITER);
                     sb.append(lazyMessage.getSeverity().getDisplayValue());
                     sb.append(": ");
-                    sb.append(lazyMessage.getMessage().get());
+                    sb.append(lazyMessage.getMessage());
                 });
 
         final String message = sb.toString();
