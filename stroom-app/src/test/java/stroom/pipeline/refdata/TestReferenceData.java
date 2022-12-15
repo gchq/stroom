@@ -311,7 +311,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         .load(Mockito.any(RefStreamDefinition.class));
 
                 // perform lookups (which will trigger a load if required) and assert the result
-                List<Tuple3<String, String, Boolean>> cases = List.of(
+                final List<Tuple3<String, String, Boolean>> cases = List.of(
                         Tuple.of("2008-01-01T09:47:00.000Z", SID_TO_PF_2, false), // map not in this stream
                         Tuple.of("2009-01-01T09:47:00.111Z", SID_TO_PF_2, true), // Map found in this stream
                         Tuple.of("2010-01-01T09:47:00.111Z", SID_TO_PF_2, true),
@@ -320,10 +320,8 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         Tuple.of("2009-01-01T09:47:00.111Z", SID_TO_PF_1, true),
                         Tuple.of("2010-01-01T09:47:00.111Z", SID_TO_PF_1, true));
 
-                Optional<String> optFoundValue;
-
                 for (final Tuple3<String, String, Boolean> testCase : cases) {
-                    optFoundValue = lookup(
+                    final Optional<String> optFoundValue = lookup(
                             referenceData,
                             pipelineReferences,
                             testCase._1,
