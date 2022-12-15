@@ -102,6 +102,10 @@ public final class ExpressionOperator extends ExpressionItem {
         return children;
     }
 
+    public boolean hasChildren() {
+        return children != null && children.size() > 0;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

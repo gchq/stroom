@@ -84,12 +84,12 @@ table | where this = that | and foo = 'test of inner \' strings '
 =====
 <TOKEN_GROUP>
    <STRING>table</STRING>
-   <PIPE_GROUP NAME="where">
+   <PIPE_GROUP PIPE_OPERATION="where">
       <STRING>this</STRING>
       <EQUALS>=</EQUALS>
       <STRING>that</STRING>
    </PIPE_GROUP>
-   <PIPE_GROUP NAME="and">
+   <PIPE_GROUP PIPE_OPERATION="and">
       <STRING>foo</STRING>
       <EQUALS>=</EQUALS>
       <SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
@@ -105,7 +105,7 @@ Test Index
 <TOKEN_GROUP>
    <STRING>Test</STRING>
    <STRING>Index</STRING>
-   <PIPE_GROUP NAME="where">
+   <PIPE_GROUP PIPE_OPERATION="where">
       <STRING>UserId</STRING>
       <EQUALS>=</EQUALS>
       <STRING>user5</STRING>
@@ -114,12 +114,12 @@ Test Index
       <EQUALS>=</EQUALS>
       <STRING>e0567</STRING>
    </PIPE_GROUP>
-   <PIPE_GROUP NAME="and">
+   <PIPE_GROUP PIPE_OPERATION="and">
       <STRING>EventTime</STRING>
       <LESS_THAN_OR_EQUAL_TO><=</LESS_THAN_OR_EQUAL_TO>
       <STRING>2000-01-01T00:00:00.000Z</STRING>
    </PIPE_GROUP>
-   <PIPE_GROUP NAME="and">
+   <PIPE_GROUP PIPE_OPERATION="and">
       <STRING>EventTime</STRING>
       <GREATER_THAN_OR_EQUAL_TO>>=</GREATER_THAN_OR_EQUAL_TO>
       <STRING>2016-01-02T00:00:00.000Z</STRING>
@@ -134,7 +134,7 @@ Test Index
 <TOKEN_GROUP>
    <STRING>Test</STRING>
    <STRING>Index</STRING>
-   <PIPE_GROUP NAME="where">
+   <PIPE_GROUP PIPE_OPERATION="where">
       <STRING>UserId</STRING>
       <EQUALS>=</EQUALS>
       <STRING>user5</STRING>
@@ -143,10 +143,10 @@ Test Index
       <EQUALS>=</EQUALS>
       <STRING>e0567</STRING>
    </PIPE_GROUP>
-   <PIPE_GROUP NAME="and">
+   <PIPE_GROUP PIPE_OPERATION="and">
       <STRING>EventTime</STRING>
       <LESS_THAN_OR_EQUAL_TO><=</LESS_THAN_OR_EQUAL_TO>
-      <FUNCTION_GROUP NAME="now">
+      <FUNCTION_GROUP FUNCTION_NAME="now">
       </FUNCTION_GROUP>
    </PIPE_GROUP>
 </TOKEN_GROUP>
@@ -159,7 +159,7 @@ Test Index
 <TOKEN_GROUP>
    <STRING>Test</STRING>
    <STRING>Index</STRING>
-   <PIPE_GROUP NAME="where">
+   <PIPE_GROUP PIPE_OPERATION="where">
       <STRING>UserId</STRING>
       <EQUALS>=</EQUALS>
       <STRING>user5</STRING>
@@ -168,10 +168,10 @@ Test Index
       <EQUALS>=</EQUALS>
       <STRING>e0567</STRING>
    </PIPE_GROUP>
-   <PIPE_GROUP NAME="and">
+   <PIPE_GROUP PIPE_OPERATION="and">
       <STRING>EventTime</STRING>
       <LESS_THAN_OR_EQUAL_TO><=</LESS_THAN_OR_EQUAL_TO>
-      <FUNCTION_GROUP NAME="now">
+      <FUNCTION_GROUP FUNCTION_NAME="now">
       </FUNCTION_GROUP>
       <PLUS>+</PLUS>
       <STRING>3d</STRING>
@@ -186,7 +186,7 @@ Test Index
 <TOKEN_GROUP>
    <STRING>Test</STRING>
    <STRING>Index</STRING>
-   <PIPE_GROUP NAME="where">
+   <PIPE_GROUP PIPE_OPERATION="where">
       <STRING>UserId</STRING>
       <EQUALS>=</EQUALS>
       <STRING>user5</STRING>
@@ -195,10 +195,10 @@ Test Index
       <EQUALS>=</EQUALS>
       <STRING>e0567</STRING>
    </PIPE_GROUP>
-   <PIPE_GROUP NAME="and">
+   <PIPE_GROUP PIPE_OPERATION="and">
       <STRING>EventTime</STRING>
       <LESS_THAN_OR_EQUAL_TO><=</LESS_THAN_OR_EQUAL_TO>
-      <FUNCTION_GROUP NAME="now">
+      <FUNCTION_GROUP FUNCTION_NAME="now">
       </FUNCTION_GROUP>
       <PLUS>+</PLUS>
       <NUMBER>3</NUMBER>
@@ -222,12 +222,12 @@ Events
 =====
 <TOKEN_GROUP>
    <STRING>Events</STRING>
-   <PIPE_GROUP NAME="where">
+   <PIPE_GROUP PIPE_OPERATION="where">
       <STRING>Name</STRING>
       <EQUALS>=</EQUALS>
       <DOUBLE_QUOTED_STRING>"Start"</DOUBLE_QUOTED_STRING>
    </PIPE_GROUP>
-   <PIPE_GROUP NAME="project">
+   <PIPE_GROUP PIPE_OPERATION="project">
       <STRING>City</STRING>
       <COMMA>,</COMMA>
       <STRING>ClientIp</STRING>
@@ -236,16 +236,16 @@ Events
       <EQUALS>=</EQUALS>
       <STRING>timestamp</STRING>
    </PIPE_GROUP>
-   <PIPE_GROUP NAME="join">
+   <PIPE_GROUP PIPE_OPERATION="join">
       <STRING>kind=inner</STRING>
       <TOKEN_GROUP>
          <STRING>Events</STRING>
-         <PIPE_GROUP NAME="where">
+         <PIPE_GROUP PIPE_OPERATION="where">
             <STRING>Name</STRING>
             <EQUALS>=</EQUALS>
             <DOUBLE_QUOTED_STRING>"Stop"</DOUBLE_QUOTED_STRING>
          </PIPE_GROUP>
-         <PIPE_GROUP NAME="project">
+         <PIPE_GROUP PIPE_OPERATION="project">
             <STRING>StopTime</STRING>
             <EQUALS>=</EQUALS>
             <STRING>timestamp</STRING>
@@ -256,26 +256,26 @@ Events
       <STRING>on</STRING>
       <STRING>ClientIp</STRING>
    </PIPE_GROUP>
-   <PIPE_GROUP NAME="extend">
+   <PIPE_GROUP PIPE_OPERATION="extend">
       <STRING>duration</STRING>
       <EQUALS>=</EQUALS>
       <STRING>StopTime</STRING>
       <MINUS>-</MINUS>
       <STRING>StartTime</STRING>
    </PIPE_GROUP>
-   <PIPE_GROUP NAME="where">
+   <PIPE_GROUP PIPE_OPERATION="where">
       <STRING>duration</STRING>
       <GREATER_THAN>></GREATER_THAN>
       <NUMBER>0</NUMBER>
    </PIPE_GROUP>
-   <PIPE_GROUP NAME="summarize">
-      <FUNCTION_GROUP NAME="arg_min">
+   <PIPE_GROUP PIPE_OPERATION="summarize">
+      <FUNCTION_GROUP FUNCTION_NAME="arg_min">
          <STRING>duration</STRING>
          <COMMA>,</COMMA>
          <MULTIPLICATION>*</MULTIPLICATION>
       </FUNCTION_GROUP>
       <BY>by</BY>
-      <FUNCTION_GROUP NAME="bin">
+      <FUNCTION_GROUP FUNCTION_NAME="bin">
          <STRING>StartTime</STRING>
          <COMMA>,</COMMA>
          <STRING>1s</STRING>

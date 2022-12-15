@@ -23,13 +23,29 @@ public abstract class AbstractTokenGroup extends AbstractToken {
 
     void append(final StringBuilder sb, final boolean indent, final int depth) {
         appendIndent(indent, sb, depth);
-        appendOpenType(sb);
+        sb.append("<");
+        sb.append(tokenType);
+        appendAttributes(sb);
+        sb.append(">");
         appendNewLine(indent, sb);
         appendChildren(sb, indent, depth + 1);
         appendIndent(indent, sb, depth);
         appendCloseType(sb);
         appendNewLine(indent, sb);
     }
+
+    void appendAttributes(final StringBuilder sb) {
+    }
+//
+//    void append(final StringBuilder sb, final boolean indent, final int depth) {
+//        appendIndent(indent, sb, depth);
+//        appendOpenType(sb);
+//        appendNewLine(indent, sb);
+//        appendChildren(sb, indent, depth + 1);
+//        appendIndent(indent, sb, depth);
+//        appendCloseType(sb);
+//        appendNewLine(indent, sb);
+//    }
 
     void appendChildren(final StringBuilder sb, final boolean indent, final int depth) {
         for (final AbstractToken child : children) {

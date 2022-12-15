@@ -3,7 +3,7 @@ package stroom.query.language;
 public class QuotedStringUtil {
     public static String unescape(final char[] chars, final int start, final int end, final char escapeChar) {
         // Break the string into quoted text blocks.
-        final char[] out = new char[start - end + 1];
+        final char[] out = new char[end - start + 1];
         boolean escape = false;
         int index = 0;
         for (int i = start + 1; i < end; i++) {

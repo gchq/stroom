@@ -39,10 +39,10 @@ public class StructureBuilder {
     }
 
     private static int createStructure(final List<Token> tokens,
-                                       final TokenGroup.Builder out,
+                                       final AbstractTokenGroup.AbstractTokenGroupBuilder<?, ?> out,
                                        final int start) {
 
-        TokenGroup.Builder currentGroup = out;
+        AbstractTokenGroup.AbstractTokenGroupBuilder<?, ?> currentGroup = out;
 
         int index = start;
         for (; index < tokens.size(); index++) {
@@ -57,7 +57,7 @@ public class StructureBuilder {
 
                 if (index > 0 && TokenType.FUNCTION_NAME.equals(tokens.get(index - 1).getTokenType())) {
                     final AbstractToken functionName = tokens.get(index - 1);
-                    final TokenGroup.Builder function = new TokenGroup.Builder()
+                    final FunctionGroup.Builder function = new FunctionGroup.Builder()
                             .tokenType(TokenType.FUNCTION_GROUP)
                             .chars(functionName.getChars())
                             .start(functionName.getStart())
@@ -79,21 +79,21 @@ public class StructureBuilder {
 
                 if (index + 1 < tokens.size()) {
                     index++;
-                    final AbstractToken command = tokens.get(index);
-                    if (!TokenType.COMMAND_NAME.equals(command.getTokenType())) {
-                        throw new TokenException(command, "Expected pipe command");
+                    final AbstractToken operation = tokens.get(index);
+                    if (!TokenType.PIPE_OPERATION.equals(operation.getTokenType())) {
+                        throw new TokenException(operation, "Expected pipe operation");
                     }
 
                     if (currentGroup != null && currentGroup != out) {
                         out.add(currentGroup.build());
                     }
 
-                    final TokenGroup.Builder pipe = new TokenGroup.Builder()
+                    final PipeGroup.Builder pipe = new PipeGroup.Builder()
                             .tokenType(TokenType.PIPE_GROUP)
                             .chars(token.getChars())
                             .start(token.getStart())
                             .end(token.getEnd())
-                            .name(command.getText());
+                            .name(operation.getText());
                     currentGroup = pipe;
                 } else {
                     currentGroup.add(token);

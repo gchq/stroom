@@ -1,509 +1,340 @@
 package stroom.dashboard.impl;
 
+import stroom.docref.DocRef;
+import stroom.query.api.v2.ExpressionItem;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.v2.Field;
+import stroom.query.api.v2.ParamSubstituteUtil;
+import stroom.query.api.v2.Query;
+import stroom.query.api.v2.ResultRequest;
+import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.TableSettings;
+import stroom.query.language.AbstractToken;
+import stroom.query.language.PipeGroup;
+import stroom.query.language.PipeGroup.PipeOperation;
+import stroom.query.language.StructureBuilder;
+import stroom.query.language.Token;
+import stroom.query.language.TokenException;
+import stroom.query.language.TokenGroup;
+import stroom.query.language.TokenType;
+import stroom.query.language.Tokeniser;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Consumer;
 
 public class Parser {
 
     public SearchRequest parse(final String string, final SearchRequest in) {
-        return null;
+        // Get a list of tokens.
+        final List<Token> tokens = Tokeniser.parse(string);
+        if (tokens.size() == 0) {
+            throw new TokenException(null, "No tokens");
+        }
 
-//        // Get a list of tokens.
-//        AbstractTokenGroup tokenGroup = new Tokeniser().extractTokens(string);
-//
-//        // Remove whitespace.
-//        tokenGroup = removeWhitespace(tokenGroup);
-//
-//        // Assume we have a root bracket group.
-//        final List<Token> tokens = tokenGroup.getChildren();
-//
-//        // Nested within this we should have one or more pipe groups.
-//        if (tokens.size() == 0) {
-//            throw new TokenException(tokenGroup, "No tokens");
-//        }
-//
-//        // Resolve data source.
-//        final Token firstPipeGroup = tokens.get(0);
-//        if (!TokenType.PIPE.equals(firstPipeGroup.getTokenType())) {
-//            throw new TokenException(firstPipeGroup, "Expected pipe group");
-//        }
-//        final String dataSourceName = getDataSourceString((TokenGroup) tokens.get(0));
-//        final DocRef dataSource = new DocRef(null, null, dataSourceName);
-//        //resolveDataSource((TokenGroup) tokens.get(0));
-//
-//        // Get remaining tokens.
-//        List<Token> remaining = tokens.subList(1, tokens.size());
-//
-//        // Look for a where grouping.
-//        ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.AND);
-//        remaining = getExpression(remaining, builder);
-//
-//        // Create expression.
-//        final ExpressionOperator expression = builder.build();
-//
-//        // Try to make a query.
-//        Query query = new Query(
-//                dataSource,
-//                expression,
-//                in.getQuery().getParams(),
-//                in.getQuery().getTimeRange());
-//
-//        // Create result requests.
-//        final List<ResultRequest> resultRequests = new ArrayList<>();
-//        remaining = addTableSettings(remaining, true, resultRequests);
-//
-//        final Token token = getNext(remaining);
-//        final TokenType command = getCommand(token);
-//        if (command != null) {
-//            throw new TokenException(token, "Unexpected token");
-//        }
-//
-//        return new SearchRequest(in.getKey(),
-//                query,
-//                resultRequests,
-//                in.getDateTimeSettings(),
-//                in.incremental(),
-//                in.getTimeout());
+        // Create structure.
+        final TokenGroup tokenGroup = StructureBuilder.create(tokens);
+
+        // Assume we have a root bracket group.
+        final List<AbstractToken> childTokens = tokenGroup.getChildren();
+
+        final Query.Builder queryBuilder = Query.builder();
+        if (in != null && in.getQuery() != null) {
+            queryBuilder.params(in.getQuery().getParams());
+            queryBuilder.timeRange(in.getQuery().getTimeRange());
+        }
+
+        // Add data source.
+        List<AbstractToken> remaining = addDataSource(childTokens, queryBuilder::dataSource);
+
+        // Add expression.
+        remaining = addExpression(remaining, queryBuilder::expression);
+
+        // Try to make a query.
+        Query query = queryBuilder.build();
+
+        // Create result requests.
+        final List<ResultRequest> resultRequests = new ArrayList<>();
+        remaining = addTableSettings(remaining, true, resultRequests);
+
+        return new SearchRequest(in.getKey(),
+                query,
+                resultRequests,
+                in.getDateTimeSettings(),
+                in.incremental(),
+                in.getTimeout());
     }
 
-//    private List<Token> addTableSettings(final List<Token> tokens,
-//                                         final boolean extractValues,
-//                                         final List<ResultRequest> resultRequests) {
-//        List<Token> remaining = tokens;
-//        Token token = getNext(remaining);
-//        TokenType command = getCommand(token);
-//        while (TokenType.TABLE.equals(command)) {
-//            TableSettings.Builder builder = TableSettings.builder();
-//            // Split on commas.
-//            final TokenGroup table = (TokenGroup) token;
-//            // Skip command.
-//            final List<Token> children = table.getChildren();
-//            boolean first = true;
-//            for (final Token t : children) {
-//                if (first) {
-//                    first = false;
-//                } else if (!TokenType.COMMA.equals(t.getTokenType())) {
-//                    final String name = t.getText();
-//                    final Field field = Field.builder()
-//                            .name(name)
-//                            .expression(ParamSubstituteUtil.makeParam(name))
-//                            .build();
-//                    builder.addFields(field);
-//                }
-//            }
-//
-//            //        final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();
-//            final TableSettings tableSettings = builder
-//                    .extractValues(extractValues)
-////                .extractionPipeline(resultPipeline)
-//                    .build();
-//
-//            final ResultRequest tableResultRequest = new ResultRequest("1234",
-//                    Collections.singletonList(tableSettings),
-//                    null,
-//                    null,
-//                    ResultRequest.ResultStyle.TABLE,
-//                    Fetch.CHANGES);
-//            resultRequests.add(tableResultRequest);
-//
-//            token = getNext(remaining);
-//            command = getCommand(token);
-//            remaining = remaining.subList(1, remaining.size());
-//        }
-//        return remaining;
-//    }
-//
-//    private List<Token> getExpression(final List<Token> tokens,
-//                                      final ExpressionOperator.Builder builder) {
-//        List<Token> remaining = tokens;
-//        Token token = getNext(remaining);
-//        if (token != null) {
-//            TokenType command = getCommand(token);
-//            final List<Token> whereGroup = new ArrayList<>();
-//            if (TokenType.WHERE.equals(command)) {
-//                whereGroup.add(token);
-//                remaining = remaining.subList(1, remaining.size());
-//
-//                token = getNext(remaining);
-//                while (token != null) {
-//                    command = getCommand(token);
-//                    if (TokenType.QUERY.contains(command)) {
-//                        whereGroup.add(token);
-//                        remaining = remaining.subList(1, remaining.size());
-//                    } else {
-//                        break;
-//                    }
-//                    token = getNext(remaining);
-//                }
-//            }
-//
-//            createExpression(whereGroup, builder);
-//        }
-//        return remaining;
-//    }
-//
-//    private Token getNext(final List<Token> tokens) {
-//        if (tokens.size() == 0) {
-//            return null;
-//        }
-//        return tokens.get(0);
-//    }
-//
-//    private String getCommand(final AbstractToken token) {
-//        if (token != null) {
-//            if (token instanceof PipeToken) {
-//                final PipeToken tokenGroup = (PipeToken) token;
-//                return tokenGroup.getCommand();
-//            } else {
-//                throw new TokenException(token, "Expected pipe");
-//            }
-//        }
-//        return null;
-//    }
-//
-//    private void error(final List<Token> tokens, final int index, final String message) {
-//        if (tokens.size() < index) {
-//            throw new TokenException(tokens.get(index), message);
-//        }
-//        throw new TokenException(null, message);
-//    }
-//
-//    private void createExpression(final List<Token> tokens,
-//                                  final ExpressionOperator.Builder parentBuilder) {
-//        for (final Token token : tokens) {
-//            // This should be a pipe group.
-//            if (!TokenType.PIPE.equals(token.getTokenType())) {
-//                throw new TokenException(token, "Expected pipe group");
-//            }
-//
-//            processLogic(((TokenGroup) token).getChildren(), parentBuilder, TokenType.QUERY);
-//        }
-//    }
-//
-//    private void processLogic(
-//            final List<Token> tokens,
-//            final ExpressionOperator.Builder parentBuilder,
-//            final Set<TokenType> expectedCommands) {
-//        for (final Token token : tokens) {
-//            final TokenType tokenType = token.getTokenType();
-//
-//            // The first token is expected to be a command.
-//            if (expectedCommands.contains(tokenType)) {
-//                processLogic(tokenType, tokens.subList(1, tokens.size()), parentBuilder);
-//                break;
-//            } else {
-//                throw new TokenException(token, "Unexpected command");
-//            }
-//        }
-//    }
-//
-//    private AbstractTokenGroup removeWhitespace(final AbstractTokenGroup tokenGroup) {
-//        final TokenGroup.Builder builder = new Builder()
-//                .tokenType(tokenGroup.getTokenType())
-//                .chars(tokenGroup.getChars())
-//                .start(tokenGroup.getStart())
-//                .end(tokenGroup.getEnd());
-//
-//        // Remove whitespace.
-//        for (final AbstractToken token : tokenGroup.getChildren()) {
-//            if (token instanceof AbstractTokenGroup) {
-//                builder.add(removeWhitespace(((AbstractTokenGroup) token)));
-//            } else if (!TokenType.WHITESPACE.equals(token.getTokenType())) {
-//                builder.add(token);
-//            }
-//        }
-//        return builder.build();
-//    }
-//
-////    private List<Token> removeWhitespace(final List<Token> tokens) {
-////        // Remove whitespace.
-////        final List<Token> cleaned = new ArrayList<>(tokens.size());
-////        for (final Token token : tokens) {
-////            if (!TokenType.WHITESPACE.equals(token.getTokenType())) {
-////                cleaned.add(token);
-////            }
-////        }
-////        return cleaned;
-////    }
-//
-//    private void addTermGroup(
-//            final TokenGroup tokenGroup,
-//            final ExpressionOperator.Builder parentBuilder) {
-//        final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.AND);
-//        final List<Token> remaining = addTerm(tokenGroup.getChildren(), builder);
-//        processLogic(remaining, builder, TokenType.LOGIC);
-//        parentBuilder.addOperator(builder.build());
-//    }
-//
-//    private List<Token> addTerm(
-//            final List<Token> tokens,
-//            final ExpressionOperator.Builder parentBuilder) {
-//        List<Token> remaining = tokens;
-//        if (tokens.size() > 0 && tokens.get(0) instanceof TokenGroup) {
-//            addTermGroup(((TokenGroup) tokens.get(0)), parentBuilder);
-//            remaining = tokens.subList(1, tokens.size());
-//        }
-//
-//        if (remaining.size() > 0) {
-//            final Token field = remaining.get(0);
-//
-//            if (remaining.size() == 1) {
-//                throw new TokenException(field, field.getText() + " has no condition");
-//            }
-//            if (remaining.size() == 2) {
-//                throw new TokenException(field, field.getText() + " has no value");
-//            }
-//
-//            final Token condition = remaining.get(1);
-//            final Token value = remaining.get(2);
-//
-//            // If we have a where clause then we expect the next token to contain an expression.
-//            Condition cond;
-//            boolean not = false;
-//            switch (condition.getTokenType()) {
-//                case EQUALS:
-//                    cond = Condition.EQUALS;
-//                    break;
-//                case NOT_EQUALS:
-//                    cond = Condition.EQUALS;
-//                    not = true;
-//                    break;
-//                case GREATER_THAN:
-//                    cond = Condition.GREATER_THAN;
-//                    break;
-//                case GREATER_THAN_OR_EQUAL_TO:
-//                    cond = Condition.GREATER_THAN_OR_EQUAL_TO;
-//                    break;
-//                case LESS_THAN:
-//                    cond = Condition.LESS_THAN;
-//                    break;
-//                case LESS_THAN_OR_EQUAL_TO:
-//                    cond = Condition.LESS_THAN_OR_EQUAL_TO;
-//                    break;
-//                case IS_NULL:
-//                    cond = Condition.IS_NULL;
-//                    break;
-//                case IS_NOT_NULL:
-//                    cond = Condition.IS_NOT_NULL;
-//                    break;
-//                default:
-//                    throw new TokenException(condition, "Unknown condition: " + condition);
-//            }
-//
-//            final ExpressionTerm expressionTerm = ExpressionTerm
-//                    .builder()
-//                    .field(field.getText())
-//                    .condition(cond)
-//                    .value(value.getText())
-//                    .build();
-//
-//            if (not) {
-//                parentBuilder
-//                        .addOperator(ExpressionOperator
-//                                .builder()
-//                                .op(Op.NOT)
-//                                .addTerm(expressionTerm)
-//                                .build());
-//            } else {
-//                parentBuilder.addTerm(expressionTerm);
-//            }
-//
-//            remaining = remaining.subList(3, remaining.size());
-//        }
-//        return remaining;
-//    }
-//
-//    private void processLogic(
-//            final TokenType command,
-//            final List<Token> tokens,
-//            final ExpressionOperator.Builder parentBuilder) {
-//        List<Token> remaining;
-//
-//        ExpressionOperator.Builder builder = parentBuilder;
-//        if (command.equals(TokenType.NOT)) {
-//            builder = ExpressionOperator.builder().op(Op.NOT);
-//        } else if (command.equals(TokenType.OR)) {
-//            parentBuilder.op(Op.OR);
-//        }
-//
-//        // Expect next token to be a group or a field, condition, value combination.
-//        if (tokens.size() > 0 && (tokens.get(0) instanceof TokenGroup)) {
-//            addTermGroup((TokenGroup) tokens.get(0), parentBuilder);
-//            remaining = tokens.subList(1, tokens.size());
-//        } else {
-//            remaining = addTerm(tokens, parentBuilder);
-//        }
-//
-//        if (command.equals(TokenType.NOT)) {
-//            parentBuilder.addOperator(builder.build());
-//        }
-//
-//        processLogic(remaining, parentBuilder, TokenType.LOGIC);
-//    }
-//
-//    //
-////    private static final Set<TokenType> ALL_LOGIC_TYPES = Set.of(
-////            TokenType.WHERE,
-////            TokenType.AND,
-////            TokenType.OR,
-////            TokenType.NOT);
-////    private static final Set<TokenType> WHERE_ONLY = Set.of(
-////            TokenType.WHERE);
-////    private static final Set<TokenType> INNER_LOGIC_TYPES = Set.of(
-////            TokenType.AND,
-////            TokenType.OR,
-////            TokenType.NOT);
-////    private static final Set<TokenType> PIPE_ONLY = Set.of(
-////            TokenType.PIPE);
-////    private static final Set<TokenType> WHITESPACE_ONLY = Set.of(
-////            TokenType.WHITESPACE);
-////
-////    private int addTerm(final ExpressionOperator.Builder parentBuilder,
-////                        final Token parentToken,
-////                        final List<Token> tokens,
-////                        final int start,
-////                        final int end) {
-////        final Set<TokenType> valueTypes = Set.of(
-////                TokenType.UNKNOWN,
-////                TokenType.SINGLE_QUOTED_STRING,
-////                TokenType.DOUBLE_QUOTED_STRING,
-////                TokenType.STRING);
-////        final Set<TokenType> conditionTypes = Set.of(
-////                TokenType.EQUALS,
-////                TokenType.NOT_EQUALS,
-////                TokenType.GREATER_THAN,
-////                TokenType.GREATER_THAN_OR_EQUAL_TO,
-////                TokenType.LESS_THAN,
-////                TokenType.LESS_THAN_OR_EQUAL_TO,
-////                TokenType.IS_NULL,
-////                TokenType.IS_NOT_NULL);
-////
-////        final int fieldIndex = next(tokens, start, end, valueTypes, Set.of(TokenType.WHITESPACE));
-////        if (fieldIndex == -1) {
-////            throw new TokenException(parentToken, parentToken.toString() + " has no field: " + parentToken);
-////        }
-////        final int conditionIndex = next(tokens, fieldIndex + 1, end, conditionTypes, Set.of(TokenType.WHITESPACE));
-////        if (conditionIndex == -1) {
-////            throw new TokenException(parentToken, parentToken.toString() + " has no condition: " + parentToken);
-////        }
-////        final int valueIndex = next(tokens, conditionIndex + 1, end, valueTypes, Set.of(TokenType.WHITESPACE));
-////        if (valueIndex == -1) {
-////            throw new TokenException(parentToken, parentToken.toString() + " has no value: " + parentToken);
-////        }
-////
-////        final Token field = tokens.get(fieldIndex);
-////        final Token condition = tokens.get(conditionIndex);
-////        final Token value = tokens.get(valueIndex);
-////
-////        // If we have a where clause then we expect the next token to contain an expression.
-////        Condition cond;
-////        boolean not = false;
-////        switch (condition.getTokenType()) {
-////            case EQUALS:
-////                cond = Condition.EQUALS;
-////                break;
-////            case NOT_EQUALS:
-////                cond = Condition.EQUALS;
-////                not = true;
-////                break;
-////            case GREATER_THAN:
-////                cond = Condition.GREATER_THAN;
-////                break;
-////            case GREATER_THAN_OR_EQUAL_TO:
-////                cond = Condition.GREATER_THAN_OR_EQUAL_TO;
-////                break;
-////            case LESS_THAN:
-////                cond = Condition.LESS_THAN;
-////                break;
-////            case LESS_THAN_OR_EQUAL_TO:
-////                cond = Condition.LESS_THAN_OR_EQUAL_TO;
-////                break;
-////            case IS_NULL:
-////                cond = Condition.IS_NULL;
-////                break;
-////            case IS_NOT_NULL:
-////                cond = Condition.IS_NOT_NULL;
-////                break;
-////            default:
-////                throw new TokenException(condition, "Unknown condition: " + condition);
-////        }
-////
-////        final ExpressionTerm expressionTerm = ExpressionTerm
-////                .builder()
-////                .field(field.getText())
-////                .condition(cond)
-////                .value(value.getText())
-////                .build();
-////
-////        if (not) {
-////            parentBuilder
-////                    .addOperator(ExpressionOperator
-////                            .builder()
-////                            .op(Op.NOT)
-////                            .addTerm(expressionTerm)
-////                            .build());
-////        } else {
-////            parentBuilder.addTerm(expressionTerm);
-////        }
-////
-////        return valueIndex + 1;
-////    }
-////
-////    private int next(final List<Token> tokens,
-////                     final int start,
-////                     final int end,
-////                     final Set<TokenType> expectedType,
-////                     final Set<TokenType> skip) {
-////        int result = -1;
-////        for (int i = start; i <= end; i++) {
-////            final Token token = tokens.get(i);
-////            if (expectedType.contains(token.getTokenType())) {
-////                result = i;
-////            } else if (!skip.contains(token.getTokenType())) {
-////                throw new TokenException(token, "Unexpected token: " + token);
-////            }
-////        }
-////        return result;
-////    }
-////
-////    private DocRef resolveDataSource(final TokenGroup tokenGroup) {
-////        final String dataSource = getDataSourceString(tokenGroup);
-////        if (dataSource == null) {
-////            throw new RuntimeException("No datasource specified");
-////        }
-////
-////        final List<ExplorerNode> explorerNodes = explorerNodeService.getDescendants(null);
-////        final List<ExplorerNode> filteredNodes =
-////                explorerNodes
-////                        .stream()
-////                        .filter(node -> (
-////                                node.getType().equals(IndexDoc.DOCUMENT_TYPE) ||
-////                                        node.getType().equals(StatisticStoreDoc.DOCUMENT_TYPE) ||
-////                                        node.getType().equals(StroomStatsStoreDoc.DOCUMENT_TYPE) ||
-////                                        node.getType().equals(ElasticIndexDoc.DOCUMENT_TYPE) ||
-////                                        node.getType().equals(SolrIndexDoc.DOCUMENT_TYPE)) &&
-////                                node.getName().equals(dataSource))
-////                        .toList();
-////
-////        // TODO : Also consider 'searchables' such as meta.
-////
-////        if (filteredNodes.size() == 0) {
-////            throw new RuntimeException("No datasource found with name '" + dataSource + "'");
-////        }
-////        return filteredNodes.stream().findFirst().get().getDocRef();
-////    }
-////
-//    private String getDataSourceString(final TokenGroup tokenGroup) {
-//        String dataSource = null;
-//        for (final Token token : tokenGroup.getChildren()) {
-//            if (token instanceof TokenGroup) {
-//                return getDataSourceString((TokenGroup) token);
-//            } else {
-//                dataSource = token.getText();
-//                dataSource = dataSource.trim();
-//                break;
-//
-//            }
-//        }
-//        return dataSource;
-//    }
+    private List<AbstractToken> addDataSource(final List<AbstractToken> tokens, final Consumer<DocRef> consumer) {
+        final AbstractToken firstToken = tokens.get(0);
+        if (!TokenType.STRING.equals(firstToken.getTokenType()) &&
+                !TokenType.SINGLE_QUOTED_STRING.equals(firstToken.getTokenType()) &&
+                !TokenType.DOUBLE_QUOTED_STRING.equals(firstToken.getTokenType())) {
+            throw new TokenException(firstToken, "Expected string");
+        }
+        final String dataSourceName = firstToken.getText();
+        final DocRef dataSource = new DocRef(null, null, dataSourceName);
+        consumer.accept(dataSource);
+        return tokens.subList(1, tokens.size());
+    }
+
+    private List<AbstractToken> addExpression(final List<AbstractToken> tokens,
+                                              final Consumer<ExpressionOperator> expressionConsumer) {
+        List<AbstractToken> whereGroup = null;
+        int i = 0;
+        for (; i < tokens.size(); i++) {
+            final AbstractToken token = tokens.get(i);
+            if (token instanceof PipeGroup) {
+                final PipeGroup pipeGroup = (PipeGroup) token;
+                if (PipeOperation.WHERE.equals(pipeGroup.getPipeOperation())) {
+                    if (whereGroup == null) {
+                        whereGroup = new ArrayList<>();
+                    }
+                    whereGroup.add(pipeGroup);
+                } else if (PipeOperation.AND.equals(pipeGroup.getPipeOperation()) ||
+                        PipeOperation.OR.equals(pipeGroup.getPipeOperation()) ||
+                        PipeOperation.NOT.equals(pipeGroup.getPipeOperation())) {
+                    if (whereGroup == null) {
+                        throw new TokenException(token, "Unexpected token");
+                    }
+                    whereGroup.add(pipeGroup);
+                } else {
+                    break;
+                }
+            }
+        }
+
+        if (whereGroup != null && whereGroup.size() > 0) {
+            final ExpressionOperator expressionOperator = processLogic(whereGroup);
+            expressionConsumer.accept(expressionOperator);
+        }
+
+        if (i < tokens.size()) {
+            return tokens.subList(i, tokens.size());
+        }
+        return Collections.emptyList();
+    }
+
+    private void addTerm(
+            final List<AbstractToken> tokens,
+            final ExpressionOperator.Builder parentBuilder) {
+        final AbstractToken field = tokens.get(0);
+        final AbstractToken condition = tokens.get(1);
+        final AbstractToken value = tokens.get(2);
+
+        // If we have a where clause then we expect the next token to contain an expression.
+        Condition cond;
+        boolean not = false;
+        switch (condition.getTokenType()) {
+            case EQUALS:
+                cond = Condition.EQUALS;
+                break;
+            case NOT_EQUALS:
+                cond = Condition.EQUALS;
+                not = true;
+                break;
+            case GREATER_THAN:
+                cond = Condition.GREATER_THAN;
+                break;
+            case GREATER_THAN_OR_EQUAL_TO:
+                cond = Condition.GREATER_THAN_OR_EQUAL_TO;
+                break;
+            case LESS_THAN:
+                cond = Condition.LESS_THAN;
+                break;
+            case LESS_THAN_OR_EQUAL_TO:
+                cond = Condition.LESS_THAN_OR_EQUAL_TO;
+                break;
+            case IS_NULL:
+                cond = Condition.IS_NULL;
+                break;
+            case IS_NOT_NULL:
+                cond = Condition.IS_NOT_NULL;
+                break;
+            default:
+                throw new TokenException(condition, "Unknown condition: " + condition);
+        }
+
+        final ExpressionTerm expressionTerm = ExpressionTerm
+                .builder()
+                .field(field.getText())
+                .condition(cond)
+                .value(value.getText())
+                .build();
+
+        if (not) {
+            parentBuilder
+                    .addOperator(ExpressionOperator
+                            .builder()
+                            .op(Op.NOT)
+                            .addTerm(expressionTerm)
+                            .build());
+        } else {
+            parentBuilder.addTerm(expressionTerm);
+        }
+    }
+
+    private ExpressionOperator processLogic(final List<AbstractToken> tokens) {
+        ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.AND);
+        int i = 0;
+        for (; i < tokens.size(); i++) {
+            final AbstractToken token = tokens.get(i);
+            if (token instanceof PipeGroup) {
+                final PipeGroup pipeGroup = (PipeGroup) token;
+                final PipeOperation pipeOperation = pipeGroup.getPipeOperation();
+                if (PipeOperation.WHERE.equals(pipeOperation) ||
+                        PipeOperation.AND.equals(pipeOperation)) {
+                    builder = addAnd(builder, pipeGroup.getChildren());
+
+                } else if (PipeOperation.OR.equals(pipeOperation)) {
+                    builder = addOr(builder, pipeGroup.getChildren());
+
+                } else if (PipeOperation.NOT.equals(pipeOperation)) {
+                    builder = addNot(builder, pipeGroup.getChildren());
+
+                } else {
+                    throw new TokenException(token, "Unexpected pipe operation in query");
+                }
+
+            } else if (token instanceof TokenGroup) {
+                TokenGroup tokenGroup = (TokenGroup) token;
+                builder = addAnd(builder, tokenGroup.getChildren());
+
+            } else if (TokenType.AND.equals(token.getTokenType())) {
+                final List<AbstractToken> remaining = tokens.subList(i + 1, tokens.size());
+                i = tokens.size();
+                builder = addAnd(builder, remaining);
+
+            } else if (TokenType.OR.equals(token.getTokenType())) {
+                final List<AbstractToken> remaining = tokens.subList(i + 1, tokens.size());
+                i = tokens.size();
+                builder = addOr(builder, remaining);
+
+            } else if (TokenType.NOT.equals(token.getTokenType())) {
+                final List<AbstractToken> remaining = tokens.subList(i + 1, tokens.size());
+                i = tokens.size();
+                builder = addNot(builder, remaining);
+
+            } else {
+                // This should be the start token for a term.
+                // We must have at least 3 regular tokens.
+                final List<AbstractToken> termTokens = tokens.subList(i, Math.min(i + 3, tokens.size()));
+                for (final AbstractToken t : termTokens) {
+                    if (!(t instanceof Token)) {
+                        throw new TokenException(t, "Unexpected token for term");
+                    }
+                }
+
+                i += 2;
+                if (termTokens.size() == 3) {
+                    addTerm(termTokens, builder);
+                }
+            }
+        }
+
+        return builder.build();
+    }
+
+    private ExpressionOperator.Builder addAnd(final ExpressionOperator.Builder builder,
+                                              final List<AbstractToken> tokens) {
+        ExpressionOperator.Builder nextBuilder = builder;
+        final ExpressionOperator childOperator = processLogic(tokens);
+        if (childOperator.hasChildren()) {
+            nextBuilder = ExpressionOperator.builder().op(Op.AND);
+            final ExpressionOperator current = builder.build();
+            if (current.hasChildren()) {
+                nextBuilder.addOperator(current);
+            }
+            nextBuilder.addOperator(childOperator);
+        }
+        return nextBuilder;
+    }
+
+    private ExpressionOperator.Builder addOr(final ExpressionOperator.Builder builder,
+                                             final List<AbstractToken> tokens) {
+        ExpressionOperator.Builder nextBuilder = builder;
+        final ExpressionOperator childOperator = processLogic(tokens);
+        if (childOperator.hasChildren()) {
+            nextBuilder = ExpressionOperator.builder().op(Op.OR);
+            final ExpressionOperator current = builder.build();
+            if (current.hasChildren()) {
+                nextBuilder.addOperator(current);
+            }
+            nextBuilder.addOperator(childOperator);
+        }
+        return nextBuilder;
+    }
+
+    private ExpressionOperator.Builder addNot(final ExpressionOperator.Builder builder,
+                                              final List<AbstractToken> tokens) {
+        final ExpressionOperator childOperator = processLogic(tokens);
+        if (childOperator.hasChildren()) {
+            final ExpressionOperator not = ExpressionOperator
+                    .builder()
+                    .op(Op.NOT)
+                    .addOperator(childOperator)
+                    .build();
+            builder.addOperator(not);
+        }
+        return builder;
+    }
+
+    private List<AbstractToken> addTableSettings(final List<AbstractToken> tokens,
+                                                 final boolean extractValues,
+                                                 final List<ResultRequest> resultRequests) {
+        int i = 0;
+        for (; i < tokens.size(); i++) {
+            final AbstractToken token = tokens.get(i);
+            if (token instanceof PipeGroup) {
+                final PipeGroup pipeGroup = (PipeGroup) token;
+                if (PipeOperation.TABLE.equals(pipeGroup.getPipeOperation())) {
+                    TableSettings.Builder builder = TableSettings.builder();
+
+                    final List<AbstractToken> children = pipeGroup.getChildren();
+                    boolean first = true;
+                    for (final AbstractToken t : children) {
+                        if (first) {
+                            first = false;
+                        } else if (!TokenType.COMMA.equals(t.getTokenType())) {
+                            final String name = t.getText();
+                            final Field field = Field.builder()
+                                    .name(name)
+                                    .expression(ParamSubstituteUtil.makeParam(name))
+                                    .build();
+                            builder.addFields(field);
+                        }
+                    }
+
+                    //        final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();
+                    final TableSettings tableSettings = builder
+                            .extractValues(extractValues)
+//                .extractionPipeline(resultPipeline)
+                            .build();
+
+                    final ResultRequest tableResultRequest = new ResultRequest("1234",
+                            Collections.singletonList(tableSettings),
+                            null,
+                            null,
+                            ResultRequest.ResultStyle.TABLE,
+                            Fetch.CHANGES);
+                    resultRequests.add(tableResultRequest);
+
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+
+        if (i < tokens.size()) {
+            return tokens.subList(i, tokens.size());
+        }
+        return Collections.emptyList();
+    }
 }

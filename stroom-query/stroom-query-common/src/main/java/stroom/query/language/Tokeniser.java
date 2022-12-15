@@ -1,5 +1,7 @@
 package stroom.query.language;
 
+import stroom.query.language.QuotedStringToken.Builder;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -23,7 +25,7 @@ public class Tokeniser {
         extractQuotedTokens(TokenType.SINGLE_QUOTED_STRING, '\'', '\\');
 
         // Tag commands and functions.
-        split("(\\|[\\s]*)([a-z-A-Z_]+)(\\s|$)", 2, TokenType.COMMAND_NAME);
+        split("(\\|[\\s]*)([a-z-A-Z_]+)(\\s|$)", 2, TokenType.PIPE_OPERATION);
         split("(^|\\s)([a-z-A-Z_]+)([\\s]*\\()", 2, TokenType.FUNCTION_NAME);
 
         // Tag brackets.
@@ -153,7 +155,13 @@ public class Tokeniser {
                             } else if (c == quoteChar) {
                                 inQuote = false;
                                 if (lastPos < i) {
-                                    out.add(new Token(outputType, token.getChars(), lastPos, i));
+                                    final QuotedStringToken quotedStringToken = new Builder()
+                                            .tokenType(outputType)
+                                            .chars(token.getChars())
+                                            .start(lastPos)
+                                            .end(i)
+                                            .build();
+                                    out.add(quotedStringToken);
                                 }
                                 lastPos = i + 1;
                             }

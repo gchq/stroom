@@ -15,7 +15,7 @@ public enum TokenType {
     TOKEN_GROUP,
     FUNCTION_GROUP,
     FUNCTION_NAME,
-    COMMAND_NAME,
+    PIPE_OPERATION,
 
     // Strings
     WHITESPACE,
@@ -46,9 +46,9 @@ public enum TokenType {
     IS_NULL,
     IS_NOT_NULL,
 
-    // Commands
-    WHERE,
-    TABLE,
+//    // Commands
+//    WHERE,
+//    TABLE,
 
     // Logic
     AND,
@@ -68,9 +68,9 @@ public enum TokenType {
     COMMENT,
     BLOCK_COMMENT;
 
-    public static Set<TokenType> COMMANDS = Set.of(WHERE, TABLE);
-
-    public static Set<TokenType> QUERY = Set.of(WHERE, AND, OR, NOT);
+//    public static Set<TokenType> COMMANDS = Set.of(WHERE, TABLE);
+//
+//    public static Set<TokenType> QUERY = Set.of(WHERE, AND, OR, NOT);
 
     public static Set<TokenType> LOGIC = Set.of(AND, OR, NOT);
 }

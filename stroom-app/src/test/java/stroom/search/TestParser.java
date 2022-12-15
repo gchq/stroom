@@ -27,7 +27,7 @@ public class TestParser {
     @Test
     void test() throws Exception {
         String queryString =
-                "Test Index\n" +
+                "'Test Index'\n" +
                         "| where UserId = user5 and Description = e0567\n" +
                         "| and EventTime <= 2000-01-01T00:00:00.000Z\n" +
                         "| and EventTime >= 2016-01-02T00:00:00.000Z\n" +
