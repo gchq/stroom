@@ -18,13 +18,16 @@ import java.util.stream.Stream;
 
 class TestReferenceDataResult {
 
+    private final LookupIdentifier lookupIdentifier = LookupIdentifier.of(
+            "map", "key", 123L);
+
     @TestFactory
     Stream<DynamicTest> testLog2() {
         return TestUtil.buildDynamicTestStream()
                 .withInputTypes(String.class, Object[].class)
                 .withOutputType(String.class)
                 .withTestFunction(testCase -> {
-                    final ReferenceDataResult referenceDataResult = new ReferenceDataResult();
+                    final ReferenceDataResult referenceDataResult = new ReferenceDataResult(lookupIdentifier);
                     final String template = testCase.getInput()._1;
                     final Object[] args = testCase.getInput()._2;
 
@@ -70,7 +73,7 @@ class TestReferenceDataResult {
                 .withWrappedInputType(new TypeLiteral<Tuple2<String, Supplier<List<Object>>>>(){})
                 .withOutputType(String.class)
                 .withTestFunction(testCase -> {
-                    final ReferenceDataResult referenceDataResult = new ReferenceDataResult();
+                    final ReferenceDataResult referenceDataResult = new ReferenceDataResult(lookupIdentifier);
                     final String template = testCase.getInput()._1;
                     final Supplier<List<Object>> argsSupplier = testCase.getInput()._2;
 
@@ -112,7 +115,7 @@ class TestReferenceDataResult {
 
     @Test
     void testThrowable() {
-        final ReferenceDataResult referenceDataResult = new ReferenceDataResult();
+        final ReferenceDataResult referenceDataResult = new ReferenceDataResult(lookupIdentifier);
 
         referenceDataResult.logTemplate(
                 Severity.ERROR,
@@ -136,7 +139,7 @@ class TestReferenceDataResult {
 
     @Test
     void testThrowable2() {
-        final ReferenceDataResult referenceDataResult = new ReferenceDataResult();
+        final ReferenceDataResult referenceDataResult = new ReferenceDataResult(lookupIdentifier);
 
         referenceDataResult.logTemplate(
                 Severity.ERROR,

@@ -19,6 +19,7 @@ package stroom.pipeline.xsltfunctions;
 import stroom.pipeline.refdata.LookupIdentifier;
 import stroom.pipeline.refdata.ReferenceData;
 import stroom.pipeline.refdata.ReferenceDataResult;
+import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
 import stroom.pipeline.state.MetaHolder;
 import stroom.util.logging.LambdaLogger;
@@ -48,7 +49,7 @@ class Lookup extends AbstractLookup {
     protected Sequence doLookup(final XPathContext context,
                                 final boolean ignoreWarnings,
                                 final boolean trace,
-                                final LookupIdentifier lookupIdentifier) throws XPathException {
+                                final LookupIdentifier lookupIdentifier) {
 
         LOGGER.debug(() -> LogUtil.message("Looking up {}, {}",
                 lookupIdentifier, Instant.ofEpochMilli(lookupIdentifier.getEventTime())));
@@ -60,61 +61,20 @@ class Lookup extends AbstractLookup {
 
         final SequenceMaker sequenceMaker = new SequenceMaker(context, getRefDataValueProxyConsumerFactoryFactory());
 
-
-        boolean wasFound = false;
+        // Note, for a nested lookup the (effective|qualifying)Streams will contain the streams for the last
+        // level of the nested lookup, but the messages will cover all levels.
         try {
             if (result.getRefDataValueProxy().isPresent()) {
-                sequenceMaker.open();
-
-                wasFound = sequenceMaker.consume(result.getRefDataValueProxy().get());
-
-                sequenceMaker.close();
-
-                if (wasFound && trace) {
-                    outputInfo(
-                            Severity.INFO,
-                            "Success ",
-                            lookupIdentifier,
-                            trace,
-                            ignoreWarnings,
-                            result,
-                            context);
-                } else if (!wasFound && !ignoreWarnings) {
-                    outputInfo(
-                            Severity.WARNING,
-                            "Key not found ",
-                            lookupIdentifier,
-                            trace,
-                            ignoreWarnings,
-                            result,
-                            context);
-                }
-            } else if (!ignoreWarnings && !result.getEffectiveStreams().isEmpty()) {
-                // We have effective streams so as there is no proxy present then the map was not found
-                // in the loaded streams
-                outputInfo(
-                        Severity.WARNING,
-                        "Map not found in streams [" + getEffectiveStreamIds(result) + "] ",
-                        lookupIdentifier,
-                        trace,
-                        ignoreWarnings,
-                        result,
-                        context);
-            } else if (!ignoreWarnings && result.getEffectiveStreams().isEmpty()) {
-                // No effective streams were found to lookup from
-                outputInfo(
-                        Severity.WARNING,
-                        "No effective streams found ",
-                        lookupIdentifier,
-                        trace,
-                        ignoreWarnings,
-                        result,
-                        context);
+                // Map exists in one/more eff streams so try looking up the key
+                consumeValue(context, ignoreWarnings, trace, result, sequenceMaker);
+            } else {
+                // No value proxy so log the reason
+                logFailureReason(result, context, ignoreWarnings, trace);
             }
-        } catch (XPathException e) {
+        } catch (final Exception e) {
             outputInfo(
                     Severity.ERROR,
-                    "Lookup errored: " + e.getMessage(),
+                    "Error during lookup: " + e.getMessage(),
                     lookupIdentifier,
                     trace,
                     ignoreWarnings,
@@ -124,4 +84,25 @@ class Lookup extends AbstractLookup {
 
         return sequenceMaker.toSequence();
     }
+
+    private void consumeValue(final XPathContext context,
+                              final boolean ignoreWarnings,
+                              final boolean trace,
+                              final ReferenceDataResult result,
+                              final SequenceMaker sequenceMaker) throws XPathException {
+        boolean wasFound;
+        sequenceMaker.open();
+
+        //noinspection OptionalGetWithoutIsPresent // checked outside method
+        final RefDataValueProxy refDataValueProxy = result.getRefDataValueProxy().get();
+
+        logMapLocations(result, refDataValueProxy);
+
+        wasFound = sequenceMaker.consume(refDataValueProxy);
+
+        logLookupValue(wasFound, result, context, ignoreWarnings, trace);
+
+        sequenceMaker.close();
+    }
+
 }

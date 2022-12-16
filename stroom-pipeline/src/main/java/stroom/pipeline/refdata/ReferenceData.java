@@ -25,18 +25,17 @@ import stroom.pipeline.PipelineStore;
 import stroom.pipeline.cache.DocumentPermissionCache;
 import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.refdata.store.MapDefinition;
-import stroom.pipeline.refdata.store.MultiRefDataValueProxy;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
-import stroom.pipeline.refdata.store.SingleRefDataValueProxy;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.security.api.SecurityContext;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -47,6 +46,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -125,6 +125,7 @@ public class ReferenceData {
         //   way with the bytebuffer of the lookup value being used as the key for the next lookup.
         //   You would still need to have code here to ensure that the data for all maps in the chain was loaded.
 
+
         // Do we have a nested map e.g a map of 'USER_ID_TO_MANAGER/USER_ID_TO_LOCATION' to get the location of a
         // user's manager using a chained lookup
         if (lookupIdentifier.isMapNested()) {
@@ -147,14 +148,31 @@ public class ReferenceData {
                 try {
                     final String nextKey = ((StringValue) refDataValue).getValue();
                     LOGGER.trace("Found value to use as next key {}", nextKey);
+
+                    logMapLocations(result);
+
                     // use the value from this lookup as the key for the nested map
                     final LookupIdentifier nestedIdentifier = lookupIdentifier.getNestedLookupIdentifier(nextKey);
 
+                    // As we are recursing, make sure the result is in a clean state for the next level of
+                    // the recursion
+                    result.setCurrentLookupIdentifier(nestedIdentifier);
+
+                    result.logLazyTemplate(
+                            Severity.INFO,
+                            "Doing nested lookup using previous lookup value as new key: '{}' - " +
+                                    "(primary map: {}, secondary map: {})",
+                            () -> Arrays.asList(
+                                    nextKey,
+                                    nestedIdentifier.getPrimaryMapName(),
+                                    nestedIdentifier.getSecondaryMapName()));
+
+                    // Recurse with the nested lookup
                     ensureReferenceDataAvailability(pipelineReferences, nestedIdentifier, result);
                 } catch (ClassCastException e) {
                     result.logLazyTemplate(Severity.ERROR,
                             "Value is the wrong type, expected: {}, found: {}",
-                            () -> List.of(StringValue.class.getName(),
+                            () -> Arrays.asList(StringValue.class.getName(),
                                     refDataValue.getClass().getName()));
                 }
             }
@@ -165,23 +183,53 @@ public class ReferenceData {
         }
     }
 
+    private void logMapLocations(final ReferenceDataResult result) {
+        // We need to compute these values now rather than in the lamba, else
+        // they will change when the ReferenceDataResult is changed during recursion.
+        // May want to consider storing the chain of results so we can get at any of the
+        // result levels.
+        final String mapName = result.getRefDataValueProxy()
+                .map(RefDataValueProxy::getMapName)
+                .orElse(null);
+        final List<RefStreamDefinition> qualifyingStreams = new ArrayList<>(result.getQualifyingStreams());
+        final int effectiveStreamCount = result.getEffectiveStreams().size();
+
+        result.logLazyTemplate(Severity.INFO,
+                "Map '{}' found in {} out of {} effective streams: [{}]",
+                () -> {
+                    final String streamsStr = qualifyingStreams
+                            .stream()
+                            .map(RefStreamDefinition::getStreamId)
+                            .map(String::valueOf)
+                            .collect(Collectors.joining(", "));
+                    return Arrays.asList(
+                            mapName,
+                            qualifyingStreams.size(),
+                            effectiveStreamCount,
+                            streamsStr);
+                });
+    }
+
     private void doGetValue(final List<PipelineReference> pipelineReferences,
                             final LookupIdentifier lookupIdentifier,
                             final ReferenceDataResult referenceDataResult) {
 
-        final List<SingleRefDataValueProxy> refDataValueProxies = new ArrayList<>();
-
-        // A data feed can have multiple ref pipelines associated with it and initially we don't know which
-        // contains the map/key we are after. None or all could. Once we have done a successful load we record
-        // in pipeline scope the maps for each pipelineReference
+        // An event pipeline can have multiple ref loader pipelines (PipelineReference) associated with it.
+        // Each PipelineReference defines a feed to look for an effective stream in, based on the effective
+        // date of the stream. Each ref stream can contain zero-many maps and a map may exist in a stream with
+        // one effective date, but not in another.
+        // Feeds for different PipelineReferences may contain the same maps and keys so the PipelineReferences
+        // are used in strict order, with the result being taken from the first hit.
+        // Once a stream has been loaded we can find out the distinct set of maps it contains and then
+        // use this information to ignore it based on the lookupIdentifier. This state is held in
+        // RefDataLoaderHolder.
         for (final PipelineReference pipelineReference : pipelineReferences) {
 
             LOGGER.trace("doGetValue - processing pipelineReference {} for {}",
                     pipelineReference, lookupIdentifier);
 
             // Handle context data differently loading it from the current stream context.
-            if (pipelineReference.getStreamType() != null
-                    && StreamTypeNames.CONTEXT.equals(pipelineReference.getStreamType())) {
+            if (NullSafe.test(pipelineReference.getStreamType(), StreamTypeNames.CONTEXT::equals)) {
 
                 getValueFromNestedContextStream(
                         pipelineReference,
@@ -197,37 +245,42 @@ public class ReferenceData {
                         referenceDataResult);
             }
 
+            // If a lookup is viable a RefDataValueProxy will have been added to the result
+
+            LAMBDA_LOGGER.trace(() -> LogUtil.message("refDataValueProxy: {}",
+                    referenceDataResult.getRefDataValueProxy().orElse(null)));
+
             // We are dealing with multiple ref pipelines so collect the value proxy for
             // each one
-            if (pipelineReferences.size() > 1) {
-                // If a proxy has been set on the result then it means this pipeline reference
-                // contains the requested map, i.e. these is no point in doing a lookup on the
-                // map def if the map is know to not exist for that ref stream
-                referenceDataResult.getRefDataValueProxy().ifPresent(refDataValueProxy -> {
-                    if (refDataValueProxy instanceof SingleRefDataValueProxy) {
-                        // Add it to a list and remove it from the result so we
-                        // can add it back once we have checked all pipe refs
-                        refDataValueProxies.add((SingleRefDataValueProxy) refDataValueProxy);
-                        referenceDataResult.setRefDataValueProxy(null);
-                    } else {
-                        throw new RuntimeException("Unexpected type " +
-                                refDataValueProxy.getClass().getName());
-                    }
-                });
-            }
+//            if (referenceDataResult.getQualifyingStreams().size() > 1) {
+//                // If a proxy has been set on the result then it means this pipeline reference
+//                // contains the requested map, i.e. there is no point in doing a lookup on the
+//                // map def if the map is known to not exist for that ref stream
+//                referenceDataResult.getRefDataValueProxy().ifPresent(refDataValueProxy -> {
+//                    if (refDataValueProxy instanceof SingleRefDataValueProxy) {
+//                        // Add it to a list and remove it from the result so we
+//                        // can add it back once we have checked all pipe refs
+//                        refDataValueProxies.add((SingleRefDataValueProxy) refDataValueProxy);
+//                        referenceDataResult.clearRefDataValueProxy();
+//                    } else {
+//                        throw new RuntimeException("Unexpected type " +
+//                                refDataValueProxy.getClass().getName());
+//                    }
+//                });
+//            }
         }
 
         // We are dealing with multiple ref pipelines so replace the current value proxy with a
         // multi one that will perform a lookup on each one in turn until it finds a hit
-        if (!refDataValueProxies.isEmpty()) {
-            if (refDataValueProxies.size() > 1) {
-                LAMBDA_LOGGER.trace(() -> LogUtil.message(
-                        "Replacing value proxy with multi proxy ({})", refDataValueProxies.size()));
-                referenceDataResult.setRefDataValueProxy(new MultiRefDataValueProxy(refDataValueProxies));
-            } else {
-                referenceDataResult.setRefDataValueProxy(refDataValueProxies.get(0));
-            }
-        }
+//        if (!refDataValueProxies.isEmpty()) {
+//            if (refDataValueProxies.size() > 1) {
+//                LAMBDA_LOGGER.trace(() -> LogUtil.message(
+//                        "Replacing value proxy with multi proxy ({})", refDataValueProxies.size()));
+//                referenceDataResult.setRefDataValueProxy(new MultiRefDataValueProxy(refDataValueProxies));
+//            } else {
+//                referenceDataResult.setRefDataValueProxy(refDataValueProxies.get(0));
+//            }
+//        }
     }
 
 
@@ -264,6 +317,7 @@ public class ReferenceData {
                 metaHolder.getMeta().getId(),
                 partIndex);
 
+        // This is a context stream so the context stream is the effective stream
         result.addEffectiveStream(refStreamDefinition);
 
         // Establish if we have the data for the context stream in the store
@@ -283,10 +337,10 @@ public class ReferenceData {
             throw new RuntimeException(LogUtil.message(
                     "Reference stream {} has been loaded previously but failed, unable to lookup key {} in map {}",
                     refStreamDefinition.getStreamId(), keyName, mapName));
-        } else if (!refDataStoreHolder.isLookupNeeded(refStreamDefinition, mapName)) {
+        } else if (!refDataStoreHolder.isLookupNeeded(pipelineReference, refStreamDefinition, mapName)) {
             result.logLazyTemplate(Severity.INFO,
                     "Map '{}' is known not to exist in pipeline: '{}' feed: '{}', stream: {} ",
-                    () -> List.of(
+                    () -> Arrays.asList(
                             mapName,
                             pipelineReference.getPipeline().getName(),
                             pipelineReference.getFeed().getName(),
@@ -313,6 +367,7 @@ public class ReferenceData {
             }
 
             // Now the data is known to be loaded, record the maps available in the stream
+            // for subsequent lookups
             refDataStoreHolder.addKnownMapNames(
                     onHeapRefDataStore,
                     refStreamDefinition);
@@ -347,10 +402,13 @@ public class ReferenceData {
             // Define a proxy object to allow callers to get the required value from the store
             // now that we know that the stream that may contain it is in there.
             final RefDataValueProxy refDataValueProxy = refDataStore.getValueProxy(mapDefinition, keyName);
-            result.setRefDataValueProxy(refDataValueProxy);
+            LOGGER.trace("Adding refDataValueProxy {} for map {}, refStreamDefinition {}",
+                    refDataValueProxy, mapName, refStreamDefinition);
+            result.addRefDataValueProxy(refDataValueProxy);
         } else {
             // this stream doesn't have this map so return a null proxy to save a pointless lookup
-            result.setRefDataValueProxy(null);
+            LOGGER.trace("No mapDefinition for map {}, refStreamDefinition {} so no proxy to add",
+                    mapName, refStreamDefinition);
         }
     }
 
@@ -406,7 +464,9 @@ public class ReferenceData {
                 pipelineReference.getStreamType() == null ||
                 pipelineReference.getStreamType().isEmpty()) {
 
-            result.logSimpleTemplate(Severity.ERROR, "pipelineReference is not fully formed, {}", pipelineReference);
+            result.logSimpleTemplate(Severity.ERROR,
+                    "pipelineReference is not fully formed, {}",
+                    pipelineReference);
         }
 
         // Check that the current user has permission to read the ref stream.
@@ -423,8 +483,8 @@ public class ReferenceData {
             if (effectiveStream != null) {
 
                 result.logLazyTemplate(Severity.INFO,
-                        "Using stream: {} (effective date: {}) for event time: {}, feed: {}",
-                        () -> List.of(effectiveStream.getStreamId(),
+                        "Using stream: {} (effective time: {}) for lookup time: {}, feed: '{}'",
+                        () -> Arrays.asList(effectiveStream.getStreamId(),
                                 Instant.ofEpochMilli(effectiveStream.getEffectiveMs()).toString(),
                                 Instant.ofEpochMilli(time).toString(),
                                 pipelineReference.getFeed().getName()));
@@ -436,7 +496,9 @@ public class ReferenceData {
 
                 result.addEffectiveStream(refStreamDefinition);
 
-                if (refDataStoreHolder.isLookupNeeded(refStreamDefinition, mapName)) {
+                if (refDataStoreHolder.isLookupNeeded(pipelineReference, refStreamDefinition, mapName)) {
+                    // Stream is known to hold the map we are trying to hit, or we don't yet know the
+                    // contents so have to do the lookup in case.
                     final RefDataStore offHeapRefDataStore = refDataStoreHolder.getOffHeapRefDataStore();
 
                     // load the ref stream into the store if not already there
@@ -461,9 +523,10 @@ public class ReferenceData {
             } else {
                 result.logLazyTemplate(
                         Severity.WARNING,
-                        "No effective streams can be found in the returned set (" +
-                                "feed: {}, event time: {})",
-                        () -> List.of(pipelineReference.getFeed().getName(),
+                        "No effective stream can be found for feed '{}' and lookup time '{}'. " +
+                                "Check a reference data stream exists with an effective time that is before the " +
+                                "lookup time.",
+                        () -> Arrays.asList(pipelineReference.getFeed().getName(),
                                 Instant.ofEpochMilli(time).toString()));
             }
         } else {
@@ -576,8 +639,9 @@ public class ReferenceData {
 
         if (effectiveStreams != null && effectiveStreams.size() > 0) {
             result.logLazyTemplate(Severity.INFO,
-                    "Got {} effective streams (from {} to {}) for effective stream key: {}",
-                    () -> List.of(
+                    "Got {} potential effective stream(s) (from {} to {}) " +
+                            "for effective stream key: {}",
+                    () -> Arrays.asList(
                             effectiveStreams.size(),
                             Instant.ofEpochMilli(effectiveStreams.last().getEffectiveMs()),
                             Instant.ofEpochMilli(effectiveStreams.first().getEffectiveMs()),
@@ -595,16 +659,9 @@ public class ReferenceData {
             // than or equal to it.
             effectiveStream = effectiveStreams.floor(new EffectiveStream(0, time));
         } else {
-            result.logLazyTemplate(
-                    Severity.WARNING,
-                    "No effective stream can be found (" +
-                            "feed: {}, event time {})",
-                    () -> List.of(
-                            pipelineReference.getFeed().getName(),
-                            Instant.ofEpochMilli(time).toString()));
+            // No need to log here as it will get logged by the caller
             effectiveStream = null;
         }
-
         return effectiveStream;
     }
 

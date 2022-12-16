@@ -17,10 +17,12 @@
 
 package stroom.pipeline.refdata;
 
+import stroom.docref.DocRef;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.shared.data.PipelineReference;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -78,7 +80,8 @@ class RefDataStoreHolder {
      * doing a lookup. If we haven't loaded refStreamDefinition yet then return true.
      * This saves having to do multiple pointless gets on the store to find there is no map
      */
-    boolean isLookupNeeded(final RefStreamDefinition refStreamDefinition,
+    boolean isLookupNeeded(final PipelineReference pipelineReference,
+                           final RefStreamDefinition refStreamDefinition,
                            final String mapName) {
         // This map is populated post load once the maps in the stream are known.
         // A stream may contain 1-* map names.
@@ -94,11 +97,14 @@ class RefDataStoreHolder {
         }
 
         LOGGER.trace(() -> LogUtil.message(
-                "isLookupNeeded: {}, mapName: {}, mapNames: {} for refStreamDefinition: {}",
+                "isLookupNeeded: {}, map: {}, available maps: {}, feed: {}, type: {}, stream: {}, partIdx: {}",
                 isLookupNeeded,
                 mapName,
                 NullSafe.toStringOrElse(mapNames, "<NOT YET KNOWN>"),
-                refStreamDefinition));
+                NullSafe.get(pipelineReference, PipelineReference::getFeed, DocRef::getName),
+                NullSafe.get(pipelineReference, PipelineReference::getStreamType),
+                NullSafe.get(refStreamDefinition, RefStreamDefinition::getStreamId),
+                NullSafe.get(refStreamDefinition, RefStreamDefinition::getPartIndex)));
 
         return isLookupNeeded;
     }

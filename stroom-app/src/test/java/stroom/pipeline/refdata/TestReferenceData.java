@@ -670,10 +670,11 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                                     final long time,
                                     final String mapName,
                                     final String key) {
-        final ReferenceDataResult result = new ReferenceDataResult();
+        final LookupIdentifier lookupIdentifier = LookupIdentifier.of(mapName, key, time);
+        final ReferenceDataResult result = new ReferenceDataResult(lookupIdentifier);
 
         referenceData.ensureReferenceDataAvailability(pipelineReferences,
-                LookupIdentifier.of(mapName, key, time),
+                lookupIdentifier,
                 result);
 
         if (result.getRefDataValueProxy() != null) {

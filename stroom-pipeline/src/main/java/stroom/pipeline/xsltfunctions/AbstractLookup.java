@@ -16,6 +16,7 @@
 
 package stroom.pipeline.xsltfunctions;
 
+import stroom.docref.DocRef;
 import stroom.pipeline.refdata.LookupIdentifier;
 import stroom.pipeline.refdata.ReferenceData;
 import stroom.pipeline.refdata.ReferenceDataResult;
@@ -25,7 +26,9 @@ import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.MetaHolder;
+import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 
@@ -41,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -147,11 +151,11 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                 }
             } catch (RuntimeException e) {
                 final StringBuilder sb = new StringBuilder();
-                sb.append("Identifier must have a map and a key (map = ");
+                sb.append("Identifier must have a map and a key (map: ");
                 sb.append(map);
-                sb.append(", key = ");
+                sb.append(", key: ");
                 sb.append(key);
-                sb.append(", eventTime = ");
+                sb.append(", lookup time: ");
                 sb.append(ms);
                 log(context, Severity.ERROR, e.getMessage(), e);
             }
@@ -172,13 +176,13 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
 
     ReferenceDataResult getReferenceData(final LookupIdentifier lookupIdentifier) {
         LOGGER.trace("getReferenceData({})", lookupIdentifier);
-        final ReferenceDataResult result = new ReferenceDataResult();
+        final ReferenceDataResult result = new ReferenceDataResult(lookupIdentifier);
 
         result.logLazyTemplate(
                 Severity.INFO,
                 "Doing lookup - " +
-                        "key: {}, map: {}, event time: {} (primary map: {}, secondary map: {})",
-                () -> List.of(lookupIdentifier.getKey(),
+                        "key: '{}', map: '{}', lookup time: {} (primary map: '{}', secondary map: '{}')",
+                () -> Arrays.asList(lookupIdentifier.getKey(),
                         lookupIdentifier.getMap(),
                         Instant.ofEpochMilli(lookupIdentifier.getEventTime()),
                         lookupIdentifier.getPrimaryMapName(),
@@ -192,7 +196,6 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         } else {
             referenceData.ensureReferenceDataAvailability(pipelineReferences, lookupIdentifier, result);
         }
-
         return result;
     }
 
@@ -225,8 +228,12 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                     final boolean ignoreWarnings,
                     final ReferenceDataResult result,
                     final XPathContext context) {
+
         final StringBuilder sb = new StringBuilder();
         sb.append(msg);
+        if (!msg.endsWith(" ")) {
+            sb.append(" ");
+        }
         lookupIdentifier.append(sb);
 
         result.getMessages()
@@ -256,6 +263,104 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                 .collect(Collectors.joining(", "));
     }
 
+    String getQualifyingStreamIds(final ReferenceDataResult result) {
+        Objects.requireNonNull(result);
+        return result.getQualifyingStreams()
+                .stream()
+                .map(RefStreamDefinition::getStreamId)
+                .map(String::valueOf)
+                .collect(Collectors.joining(", "));
+    }
+
+    void logMapLocations(final ReferenceDataResult result,
+                         final RefDataValueProxy refDataValueProxy) {
+        result.logLazyTemplate(Severity.INFO,
+                "Map '{}' found in {} out of {} effective streams: [{}]",
+                () -> {
+                    final String mapName = refDataValueProxy.getMapName();
+                    final String streamsStr = getQualifyingStreamIds(result);
+                    final int qualifyingStreamCount = result.getQualifyingStreams().size();
+                    final int effectiveStreamCount = result.getEffectiveStreams().size();
+
+                    return Arrays.asList(
+                            mapName,
+                            qualifyingStreamCount,
+                            effectiveStreamCount,
+                            streamsStr);
+                });
+    }
+
+    void logFailureReason(final ReferenceDataResult result,
+                          final XPathContext context,
+                          final boolean ignoreWarnings,
+                          final boolean trace) {
+
+        if (!ignoreWarnings && result.getEffectiveStreams().isEmpty()) {
+            // No effective streams were found to lookup from
+            final List<PipelineReference> pipelineReferences = NullSafe.nonNullList(getPipelineReferences());
+
+            if (pipelineReferences.size() > 1) {
+                final String feeds = pipelineReferences.stream()
+                        .map(pipeRef -> NullSafe.get(pipeRef, PipelineReference::getFeed, DocRef::getName))
+                        .filter(Objects::nonNull)
+                        .map(name -> "'" + name + "'")
+                        .collect(Collectors.joining(", "));
+
+                outputInfo(
+                        Severity.WARNING,
+                        LogUtil.message(
+                                "No effective streams found in any of the reference loaders (feeds: [{}]). " +
+                                        "Do reference data streams exist for the lookup time?",
+                                feeds),
+                        result.getCurrentLookupIdentifier(),
+                        trace,
+                        ignoreWarnings,
+                        result,
+                        context);
+            }
+        } else if (!ignoreWarnings && result.getQualifyingStreams().isEmpty()) {
+            // None of the effective streams contains the map
+            outputInfo(
+                    Severity.WARNING,
+                    "Map not found in effective streams [" + getEffectiveStreamIds(result) + "] ",
+                    result.getCurrentLookupIdentifier(),
+                    trace,
+                    ignoreWarnings,
+                    result,
+                    context);
+        }
+    }
+
+    void logLookupValue(final boolean wasValueFound,
+                        final ReferenceDataResult result,
+                        final XPathContext context,
+                        final boolean ignoreWarnings,
+                        final boolean trace) {
+
+        if (wasValueFound && trace) {
+            outputInfo(
+                    Severity.INFO,
+                    "Success ",
+                    result.getCurrentLookupIdentifier(),
+                    trace,
+                    ignoreWarnings,
+                    result,
+                    context);
+        } else if (!wasValueFound && !ignoreWarnings) {
+            outputInfo(
+                    Severity.WARNING,
+                    "Key not found ",
+                    result.getCurrentLookupIdentifier(),
+                    trace,
+                    ignoreWarnings,
+                    result,
+                    context);
+        }
+    }
+
+// --------------------------------------------------------------------------------
+
+
     static class SequenceMaker {
 
         private final XPathContext context;
@@ -274,7 +379,6 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
             LOGGER.trace("open()");
             // Make sure we have made a consumer.
             ensureConsumer();
-
             consumer.startDocument();
         }
 
