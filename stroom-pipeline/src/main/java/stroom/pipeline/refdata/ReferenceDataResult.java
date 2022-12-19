@@ -44,21 +44,10 @@ public class ReferenceDataResult implements ErrorReceiver {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceDataResult.class);
 
     private RefDataValueProxy refDataValueProxy;
-
     private LookupIdentifier currentLookupIdentifier;
-
     private List<LazyMessage> messages = new ArrayList<>();
-
     // 0-1 stream(s) per ref loader based on the effective datetime of the stream and the lookup datetime
     private final List<RefStreamDefinition> effectiveStreams = new ArrayList<>();
-
-    // 0-1 stream(s) per ref loader. Contains those 'effectiveStreams' that are known to contain the map
-    // being looked up or where the content of the stream is currently unknown. A sub-set of effectiveStreams
-    // or equal to it.
-//    private final List<RefStreamDefinition> qualifyingStreams = new ArrayList<>();
-
-//    private Set<String> missingMaps = null;
-
 
     public ReferenceDataResult(final LookupIdentifier lookupIdentifier) {
         this.currentLookupIdentifier = Objects.requireNonNull(lookupIdentifier);
@@ -91,37 +80,6 @@ public class ReferenceDataResult implements ErrorReceiver {
     }
 
     /**
-     * An effective stream that is known to contain the map being looked up against or where
-     * the content of the effective stream is currently unknown.
-     */
-//    public void addQualifyingStream(final RefStreamDefinition refStreamDefinition) {
-//        Objects.requireNonNull(refStreamDefinition);
-//        // Doing contains on a list not ideal but there are probably only a handful of items in there.
-//        if (effectiveStreams.contains(refStreamDefinition)) {
-//            LOGGER.trace("Adding qualifyingStream {}", refStreamDefinition);
-//            qualifyingStreams.add(refStreamDefinition);
-//        } else {
-//            throw new RuntimeException("Adding a qualifying stream that is not an effective stream "
-//                    + refStreamDefinition);
-//        }
-//    }
-
-    /**
-     * Call this when it is conclusively known that the stream does not contain the required map.
-     */
-//    public void removeQualifyingStream(final RefStreamDefinition refStreamDefinition) {
-//        Objects.requireNonNull(refStreamDefinition);
-//        qualifyingStreams.remove(refStreamDefinition);
-//    }
-
-//    public void addMissingMap(final String mapName) {
-//        if (missingMaps == null) {
-//            missingMaps = new HashSet<>();
-//        }
-//        missingMaps.add(mapName);
-//    }
-
-    /**
      * 0-1 stream(s) per ref loader based on the effective datetime of the stream and the lookup datetime
      */
     public List<RefStreamDefinition> getEffectiveStreams() {
@@ -142,11 +100,6 @@ public class ReferenceDataResult implements ErrorReceiver {
                         .collect(Collectors.toList());
     }
 
-//    public Set<String> getMissingMaps() {
-//        return NullSafe.nonNullSet(missingMaps);
-//    }
-
-
     public LookupIdentifier getCurrentLookupIdentifier() {
         return currentLookupIdentifier;
     }
@@ -160,8 +113,6 @@ public class ReferenceDataResult implements ErrorReceiver {
         // Switched identifier so clear out the existing state
 
         effectiveStreams.clear();
-//        qualifyingStreams.clear();
-//        NullSafe.consume(missingMaps, Set::clear);
         refDataValueProxy = null;
     }
 

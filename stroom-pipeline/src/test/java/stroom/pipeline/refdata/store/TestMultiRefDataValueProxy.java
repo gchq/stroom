@@ -161,9 +161,8 @@ class TestMultiRefDataValueProxy {
         final SingleRefDataValueProxy singleRefDataValueProxy2 = createSingleRefDataValueProxy(
                 OTHER_KEY, A_MAP, 2L, true);
 
-        Assertions.assertThatThrownBy(() -> {
-                    MultiRefDataValueProxy.merge(singleRefDataValueProxy1, singleRefDataValueProxy2);
-                })
+        Assertions.assertThatThrownBy(() ->
+                        MultiRefDataValueProxy.merge(singleRefDataValueProxy1, singleRefDataValueProxy2))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("key");
     }
@@ -175,9 +174,8 @@ class TestMultiRefDataValueProxy {
         final SingleRefDataValueProxy singleRefDataValueProxy2 = createSingleRefDataValueProxy(
                 A_KEY, OTHER_MAP, 2L, true);
 
-        Assertions.assertThatThrownBy(() -> {
-                    MultiRefDataValueProxy.merge(singleRefDataValueProxy1, singleRefDataValueProxy2);
-                })
+        Assertions.assertThatThrownBy(() ->
+                        MultiRefDataValueProxy.merge(singleRefDataValueProxy1, singleRefDataValueProxy2))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("map");
     }
