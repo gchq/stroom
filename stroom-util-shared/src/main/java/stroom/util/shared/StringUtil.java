@@ -104,4 +104,10 @@ public class StringUtil {
         }
         return userText;
     }
+
+    public static String pluralSuffix(final int count) {
+        return count > 1
+                ? "s"
+                : "";
+    }
 }
