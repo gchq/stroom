@@ -16,6 +16,7 @@
 
 package stroom.pipeline.errorhandler;
 
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
@@ -23,5 +24,26 @@ import stroom.util.shared.Severity;
  * An interface to deal with all error reporting and handling during processing.
  */
 public interface ErrorReceiver {
-    void log(Severity severity, Location location, String elementId, String message, Throwable e);
+
+    void log(
+            Severity severity,
+            Location location,
+            String elementId,
+            String message,
+            Throwable e);
+
+    // Different name to avoid confusion with varargs
+    default void logTemplate(
+            Severity severity,
+            Location location,
+            String elementId,
+            String messageTemplate,
+            Throwable e,
+            Object... messageArgs) {
+        if (messageArgs == null || messageArgs.length == 0) {
+            log(severity, location, elementId, messageTemplate, e);
+        } else {
+            log(severity, location, elementId, LogUtil.message(messageTemplate, messageArgs), e);
+        }
+    }
 }

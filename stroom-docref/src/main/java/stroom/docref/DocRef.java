@@ -204,6 +204,9 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, Has
 
     @Override
     public String toString() {
+        // TODO: 15/12/2022 I Think we ought to change the output to this shorter form, but not sure
+        //  if we have any code that relies on the format.
+//        return "{" + name + ":" + type + ":" + uuid + "}";
         return "DocRef{" +
                 "type='" + type + '\'' +
                 ", uuid='" + uuid + '\'' +
