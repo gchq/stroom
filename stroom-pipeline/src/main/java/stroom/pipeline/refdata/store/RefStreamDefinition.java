@@ -109,10 +109,10 @@ public class RefStreamDefinition {
     @Override
     public String toString() {
         return "RefStreamDefinition{" +
-                "pipelineDocRef=" + pipelineDocRef +
+                "streamId=" + streamId +
+                ", partIdx=" + partIndex +
+                ", pipeline=" + pipelineDocRef +
                 ", pipelineVersion='" + pipelineVersion + '\'' +
-                ", streamId=" + streamId +
-                ", partIndex=" + partIndex +
                 '}';
     }
 

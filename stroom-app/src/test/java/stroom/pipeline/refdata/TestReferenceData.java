@@ -44,6 +44,7 @@ import stroom.util.shared.Range;
 
 import io.vavr.Tuple;
 import io.vavr.Tuple3;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -170,9 +171,12 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
 
             // Set up the effective streams to be used for each
             final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
-            streamSet.add(new EffectiveStream(1, DateUtil.parseNormalDateTimeString("2008-01-01T09:47:00.000Z")));
-            streamSet.add(new EffectiveStream(2, DateUtil.parseNormalDateTimeString("2009-01-01T09:47:00.000Z")));
-            streamSet.add(new EffectiveStream(3, DateUtil.parseNormalDateTimeString("2010-01-01T09:47:00.000Z")));
+            streamSet.add(new EffectiveStream(
+                    1, DateUtil.parseNormalDateTimeString("2008-01-01T09:47:00.000Z")));
+            streamSet.add(new EffectiveStream(
+                    2, DateUtil.parseNormalDateTimeString("2009-01-01T09:47:00.000Z")));
+            streamSet.add(new EffectiveStream(
+                    3, DateUtil.parseNormalDateTimeString("2010-01-01T09:47:00.000Z")));
 
             try (CacheManager cacheManager = new CacheManagerImpl()) {
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(
@@ -225,6 +229,107 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                 checkData(referenceData, pipelineReferences, SID_TO_PF_3);
                 checkData(referenceData, pipelineReferences, SID_TO_PF_4);
 
+            } catch (final RuntimeException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        });
+    }
+
+    /**
+     * Make sure that it copes with a map not being in an early stream but is in a later one.
+     */
+    @Test
+    void testMissingMaps() {
+        pipelineScopeRunnable.scopeRunnable(() -> {
+            final DocRef feed1Ref = feedStore.createDocument("TEST_FEED_1");
+            final DocRef pipeline1Ref = pipelineStore.createDocument("TEST_PIPELINE_1");
+
+            final List<PipelineReference> pipelineReferences = new ArrayList<>();
+            pipelineReferences.add(new PipelineReference(pipeline1Ref, feed1Ref, StreamTypeNames.REFERENCE));
+
+            // Set up the effective streams to be used for each
+            final EffectiveStream stream1 = new EffectiveStream(
+                    1, DateUtil.parseNormalDateTimeString("2008-01-01T09:47:00.000Z"));
+            final EffectiveStream stream2 = new EffectiveStream(
+                    2, DateUtil.parseNormalDateTimeString("2009-01-01T09:47:00.000Z"));
+            final EffectiveStream stream3 = new EffectiveStream(
+                    3, DateUtil.parseNormalDateTimeString("2010-01-01T09:47:00.000Z"));
+
+            final TreeSet<EffectiveStream> streamSet1 = new TreeSet<>();
+            streamSet1.add(stream1);
+            final TreeSet<EffectiveStream> streamSet2and3 = new TreeSet<>();
+            streamSet2and3.add(stream2);
+            streamSet2and3.add(stream3);
+            final TreeSet<EffectiveStream> streamSetAll = new TreeSet<>();
+            streamSetAll.addAll(streamSet1);
+            streamSetAll.addAll(streamSet2and3);
+
+            try (CacheManager cacheManager = new CacheManagerImpl()) {
+                final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(
+                        cacheManager, null, null, null, ReferenceDataConfig::new) {
+                    @Override
+                    protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
+                        return streamSetAll;
+                    }
+                };
+
+                final ReferenceData referenceData = new ReferenceData(
+                        effectiveStreamCache,
+                        new FeedHolder(),
+                        null,
+                        null,
+                        mockDocumentPermissionCache,
+                        mockReferenceDataLoader,
+                        refDataStoreHolderProvider.get(),
+                        new RefDataLoaderHolder(),
+                        pipelineStore,
+                        new MockSecurityContext());
+
+                Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();
+
+                // Add multiple reference data items to prove that looping over maps works.
+                addUserDataToMockReferenceDataLoader(
+                        pipeline1Ref,
+                        streamSet1,
+                        List.of(SID_TO_PF_1),
+                        mockLoaderActionsMap);
+                addUserDataToMockReferenceDataLoader(
+                        pipeline1Ref,
+                        streamSet2and3,
+                        List.of(SID_TO_PF_1, SID_TO_PF_2),
+                        mockLoaderActionsMap);
+
+                // set up the mock loader to load the appropriate data when triggered by a lookup call
+                Mockito.doAnswer(
+                                invocation -> {
+                                    RefStreamDefinition refStreamDefinition = invocation.getArgument(0);
+
+                                    Runnable action = mockLoaderActionsMap.get(refStreamDefinition);
+                                    action.run();
+                                    return null;
+                                }).when(mockReferenceDataLoader)
+                        .load(Mockito.any(RefStreamDefinition.class));
+
+                // perform lookups (which will trigger a load if required) and assert the result
+                final List<Tuple3<String, String, Boolean>> cases = List.of(
+                        Tuple.of("2008-01-01T09:47:00.000Z", SID_TO_PF_2, false), // map not in this stream
+                        Tuple.of("2009-01-01T09:47:00.111Z", SID_TO_PF_2, true), // Map found in this stream
+                        Tuple.of("2010-01-01T09:47:00.111Z", SID_TO_PF_2, true),
+
+                        Tuple.of("2008-01-01T09:47:00.000Z", SID_TO_PF_1, true),
+                        Tuple.of("2009-01-01T09:47:00.111Z", SID_TO_PF_1, true),
+                        Tuple.of("2010-01-01T09:47:00.111Z", SID_TO_PF_1, true));
+
+                for (final Tuple3<String, String, Boolean> testCase : cases) {
+                    final Optional<String> optFoundValue = lookup(
+                            referenceData,
+                            pipelineReferences,
+                            testCase._1,
+                            testCase._2, // Map is NOT in the stream
+                            USER_1);
+                    Assertions.assertThat(optFoundValue.isPresent())
+                            .isEqualTo(testCase._3);
+                }
             } catch (final RuntimeException e) {
                 throw new RuntimeException(e.getMessage(), e);
             }
@@ -332,7 +437,8 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
         );
     }
 
-    private void checkData(final ReferenceData data, final List<PipelineReference> pipelineReferences,
+    private void checkData(final ReferenceData data,
+                           final List<PipelineReference> pipelineReferences,
                            final String mapName) {
         String expectedValuePart = VALUE_1;
 
@@ -564,10 +670,11 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                                     final long time,
                                     final String mapName,
                                     final String key) {
-        final ReferenceDataResult result = new ReferenceDataResult();
+        final LookupIdentifier lookupIdentifier = LookupIdentifier.of(mapName, key, time);
+        final ReferenceDataResult result = new ReferenceDataResult(lookupIdentifier);
 
         referenceData.ensureReferenceDataAvailability(pipelineReferences,
-                LookupIdentifier.of(mapName, key, time),
+                lookupIdentifier,
                 result);
 
         if (result.getRefDataValueProxy() != null) {

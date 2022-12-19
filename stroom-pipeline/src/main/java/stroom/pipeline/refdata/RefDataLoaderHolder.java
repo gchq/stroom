@@ -19,7 +19,6 @@ package stroom.pipeline.refdata;
 
 import stroom.docref.DocRef;
 import stroom.pipeline.PipelineStore;
-import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.shared.data.PipelineReference;
@@ -44,8 +43,6 @@ public class RefDataLoaderHolder {
     // to be already loaded within this pipeline processing instance
     private final Set<RefStreamDefinition> availableRefStreamDefinitions = new HashSet<>();
 
-    private final Map<MapDefinition, Boolean> availableMapDefinitions = new HashMap<>();
-
     // Used to cache the pipeline versions for the life of the pipeline to prevent
     // repeated DB hits during lookups
     private final Map<DocRef, String> pipelineDocRefToVersionCache = new HashMap<>();
@@ -65,19 +62,6 @@ public class RefDataLoaderHolder {
     public boolean isRefStreamAvailable(final RefStreamDefinition refStreamDefinition) {
         return availableRefStreamDefinitions.contains(refStreamDefinition);
     }
-
-    public void markMapDefinitionAvailability(final MapDefinition mapDefinition, final boolean isAvailable) {
-        availableMapDefinitions.put(mapDefinition, isAvailable);
-    }
-
-    /**
-     * @param mapDefinition
-     * @return Whether the M
-     */
-    public Boolean isMapDefinitionAvailable(final MapDefinition mapDefinition) {
-        return availableMapDefinitions.get(mapDefinition);
-    }
-
 
     public String getPipelineVersion(final PipelineReference pipelineReference, final PipelineStore pipelineStore) {
         try {
