@@ -46,6 +46,7 @@ import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskTerminatedException;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
 import org.slf4j.Logger;
@@ -120,7 +121,8 @@ class ReferenceDataLoadTaskHandler {
      * Loads reference data that meets the supplied criteria into the current
      * reference data key, value maps.
      */
-    public StoredErrorReceiver exec(final TaskContext taskContext, final RefStreamDefinition refStreamDefinition) {
+    public StoredErrorReceiver exec(final TaskContext taskContext,
+                                    final RefStreamDefinition refStreamDefinition) {
         this.taskContext = taskContext;
         final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
         securityContext.secure(() -> {
@@ -229,8 +231,18 @@ class ReferenceDataLoadTaskHandler {
                 }
 
                 if (taskContext.isTerminated()) {
+                    log(Severity.WARNING,
+                            LogUtil.message("Load terminated while loading stream {} from feed '{}'",
+                                    refStreamDefinition.getStreamId(),
+                                    feedName),
+                            null);
                     refDataLoader.completeProcessing(ProcessingState.TERMINATED);
                 } else {
+                    log(Severity.INFO,
+                            LogUtil.message("Successfully loaded stream {} from feed: '{}'",
+                                    refStreamDefinition.getStreamId(),
+                                    feedName),
+                            null);
                     refDataLoader.completeProcessing(ProcessingState.COMPLETE);
                 }
             } catch (TaskTerminatedException e) {

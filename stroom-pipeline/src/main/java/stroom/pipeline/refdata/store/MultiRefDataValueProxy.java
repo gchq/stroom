@@ -18,14 +18,17 @@
 package stroom.pipeline.refdata.store;
 
 import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * A wrapper for multiple {@link RefDataValueProxy} objects. A lookup (consumeBytes or supplyValue)
@@ -37,12 +40,97 @@ import java.util.function.Consumer;
  */
 public class MultiRefDataValueProxy implements RefDataValueProxy {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MultiRefDataValueProxy.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MultiRefDataValueProxy.class);
 
     private final List<SingleRefDataValueProxy> refDataValueProxies;
 
-    public MultiRefDataValueProxy(final List<SingleRefDataValueProxy> refDataValueProxies) {
+    private MultiRefDataValueProxy(final List<SingleRefDataValueProxy> refDataValueProxies) {
         this.refDataValueProxies = Objects.requireNonNull(refDataValueProxies);
+
+        if (refDataValueProxies.size() < 2) {
+            throw new RuntimeException("Must provide at least two proxy values.");
+        }
+    }
+
+    @Override
+    public String getKey() {
+        // Ctor ensure we have at least one proxy and all keys are the same.
+        return refDataValueProxies.get(0)
+                .getKey();
+    }
+
+    @Override
+    public String getMapName() {
+        // Ctor ensure we have at least one proxy and all map names are the same.
+        return refDataValueProxies.get(0)
+                .getMapName();
+    }
+
+    @Override
+    public List<MapDefinition> getMapDefinitions() {
+        return refDataValueProxies.stream()
+                .flatMap(refDataValueProxy -> refDataValueProxy.getMapDefinitions().stream())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Merge the two proxies into one combined one that will use each contained proxy to try to get a value.
+     * Argument order is CRITICAL to ensure lookups are done in the correct order.
+     *
+     * @param existingRefDataValueProxy The existing
+     * @param newRefDataValueProxy
+     * @return
+     */
+    public static MultiRefDataValueProxy merge(final RefDataValueProxy existingRefDataValueProxy,
+                                               final RefDataValueProxy newRefDataValueProxy) {
+        Objects.requireNonNull(existingRefDataValueProxy);
+        Objects.requireNonNull(newRefDataValueProxy);
+
+        if (!Objects.equals(existingRefDataValueProxy.getKey(), newRefDataValueProxy.getKey())) {
+            throw new RuntimeException(LogUtil.message("All keys should be the same. Found '{}' and '{}'",
+                    existingRefDataValueProxy.getKey(),
+                    newRefDataValueProxy.getKey()));
+        }
+
+        if (!Objects.equals(existingRefDataValueProxy.getMapName(), newRefDataValueProxy.getMapName())) {
+            throw new RuntimeException(LogUtil.message("All map names should be the same. Found '{}' and '{}'",
+                    existingRefDataValueProxy.getMapName(),
+                    newRefDataValueProxy.getMapName()));
+        }
+
+        // Order is CRITICAL here, so we attempt lookups in the right order
+        final List<SingleRefDataValueProxy> existingProxies = getContainedProxies(existingRefDataValueProxy);
+        final List<SingleRefDataValueProxy> newProxies = getContainedProxies(newRefDataValueProxy);
+        final ArrayList<SingleRefDataValueProxy> combinedList = new ArrayList<>(
+                existingProxies.size() + newProxies.size());
+
+        // Order is CRITICAL here, so we attempt lookups in the right order
+        combinedList.addAll(existingProxies);
+        combinedList.addAll(newProxies);
+
+        LOGGER.trace(() -> LogUtil.message("Merging {} proxies in this order\n{}",
+                combinedList.size(),
+                combinedList.stream()
+                        .map(proxy -> "  " + proxy.toString())
+                        .collect(Collectors.joining("\n"))));
+
+        return new MultiRefDataValueProxy(Collections.unmodifiableList(combinedList));
+    }
+
+    @Override
+    public RefDataValueProxy merge(final RefDataValueProxy additionalProxy) {
+        return merge(this, additionalProxy);
+    }
+
+    private static List<SingleRefDataValueProxy> getContainedProxies(final RefDataValueProxy refDataValueProxy) {
+        Objects.requireNonNull(refDataValueProxy);
+        if (refDataValueProxy instanceof SingleRefDataValueProxy) {
+            return List.of((SingleRefDataValueProxy) refDataValueProxy);
+        } else if (refDataValueProxy instanceof MultiRefDataValueProxy) {
+            return ((MultiRefDataValueProxy) refDataValueProxy).refDataValueProxies;
+        } else {
+            throw new RuntimeException(LogUtil.message("Unexpected type " + refDataValueProxy.getClass().getName()));
+        }
     }
 
     @Override
