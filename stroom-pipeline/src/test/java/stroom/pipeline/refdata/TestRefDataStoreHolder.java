@@ -56,7 +56,8 @@ class TestRefDataStoreHolder {
                 "pipeUUID", "pipeVer", 1L);
 
         final String mapName = "foo";
-        MapAvailability mapAvailability = refDataStoreHolder.getMapAvailabilityInStream(pipelineReference, refStreamDefinition, mapName);
+        MapAvailability mapAvailability = refDataStoreHolder.getMapAvailabilityInStream(
+                pipelineReference, refStreamDefinition, mapName);
 
         // Always true at this point as it doesn't know either way
         Assertions.assertThat(mapAvailability)
@@ -66,7 +67,8 @@ class TestRefDataStoreHolder {
 
         refDataStoreHolder.addKnownMapNames(mockRefDataStore, refStreamDefinition);
 
-        mapAvailability = refDataStoreHolder.getMapAvailabilityInStream(pipelineReference, refStreamDefinition, mapName);
+        mapAvailability = refDataStoreHolder.getMapAvailabilityInStream(
+                pipelineReference, refStreamDefinition, mapName);
 
         // The map is there so true
         Assertions.assertThat(mapAvailability)
@@ -91,7 +93,8 @@ class TestRefDataStoreHolder {
 
         final String mapName = "UNKNOWN_MAP";
 
-        MapAvailability mapAvailability = refDataStoreHolder.getMapAvailabilityInStream(pipelineReference, refStreamDefinition, mapName);
+        MapAvailability mapAvailability = refDataStoreHolder.getMapAvailabilityInStream(
+                pipelineReference, refStreamDefinition, mapName);
 
         // Always true at this point as it doesn't know either way
         Assertions.assertThat(mapAvailability)
@@ -101,7 +104,8 @@ class TestRefDataStoreHolder {
 
         refDataStoreHolder.addKnownMapNames(mockRefDataStore, refStreamDefinition);
 
-        mapAvailability = refDataStoreHolder.getMapAvailabilityInStream(pipelineReference, refStreamDefinition, mapName);
+        mapAvailability = refDataStoreHolder.getMapAvailabilityInStream(
+                pipelineReference, refStreamDefinition, mapName);
 
         // The map is there so true
         Assertions.assertThat(mapAvailability)
@@ -132,19 +136,23 @@ class TestRefDataStoreHolder {
         final String mapName = "foo";
 
         // Always true at this point as it doesn't know either way
-        Assertions.assertThat(refDataStoreHolder.getMapAvailabilityInStream(pipelineReference, refStreamDefinition1, mapName))
+        Assertions.assertThat(refDataStoreHolder.getMapAvailabilityInStream(
+                pipelineReference, refStreamDefinition1, mapName))
                 .isEqualTo(MapAvailability.UNKNOWN);
-        Assertions.assertThat(refDataStoreHolder.getMapAvailabilityInStream(pipelineReference, refStreamDefinition2, mapName))
+        Assertions.assertThat(refDataStoreHolder.getMapAvailabilityInStream(
+                pipelineReference, refStreamDefinition2, mapName))
                 .isEqualTo(MapAvailability.UNKNOWN);
 
         refDataStoreHolder.addKnownMapNames(mockRefDataStore, refStreamDefinition1);
         refDataStoreHolder.addKnownMapNames(mockRefDataStore, refStreamDefinition2);
 
         // The map is there
-        Assertions.assertThat(refDataStoreHolder.getMapAvailabilityInStream(pipelineReference, refStreamDefinition1, mapName))
+        Assertions.assertThat(refDataStoreHolder.getMapAvailabilityInStream(
+                pipelineReference, refStreamDefinition1, mapName))
                 .isEqualTo(MapAvailability.PRESENT);
         // The map is not there
-        Assertions.assertThat(refDataStoreHolder.getMapAvailabilityInStream(pipelineReference, refStreamDefinition2, mapName))
+        Assertions.assertThat(refDataStoreHolder.getMapAvailabilityInStream(
+                pipelineReference, refStreamDefinition2, mapName))
                 .isEqualTo(MapAvailability.NOT_PRESENT);
     }
 }
