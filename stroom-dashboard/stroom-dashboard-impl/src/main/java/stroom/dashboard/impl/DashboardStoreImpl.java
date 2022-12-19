@@ -291,10 +291,10 @@ class DashboardStoreImpl implements DashboardStore {
     }
 
     @Override
-    public ImpexDetails importDocument(final DocRef docRef,
-                                       final Map<String, byte[]> dataMap,
-                                       final ImportState importState,
-                                       final ImportMode importMode) {
+    public DocRef importDocument(final DocRef docRef,
+                                 final Map<String, byte[]> dataMap,
+                                 final ImportState importState,
+                                 final ImportMode importMode) {
         return store.importDocument(docRef, dataMap, importState, importMode);
     }
 

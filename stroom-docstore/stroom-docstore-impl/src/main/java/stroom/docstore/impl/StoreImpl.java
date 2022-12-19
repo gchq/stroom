@@ -26,7 +26,6 @@ import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Store;
 import stroom.docstore.shared.Doc;
 import stroom.importexport.api.ImportConverter;
-import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.importexport.shared.ImportState.State;
@@ -321,10 +320,10 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     }
 
     @Override
-    public ImportExportActionHandler.ImpexDetails importDocument(DocRef docRef,
-                                                                 final Map<String, byte[]> dataMap,
-                                                                 final ImportState importState,
-                                                                 final ImportMode importMode) {
+    public DocRef importDocument(DocRef docRef,
+                                 final Map<String, byte[]> dataMap,
+                                 final ImportState importState,
+                                 final ImportMode importMode) {
         // Convert legacy import format to the new format if necessary.
         final Map<String, byte[]> convertedDataMap = importConverter.convert(
                 docRef,
@@ -382,7 +381,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
             }
         }
 
-        return new ImportExportActionHandler.ImpexDetails(docRef);
+        return docRef;
     }
 
     private void importDocument(final DocRef docRef,

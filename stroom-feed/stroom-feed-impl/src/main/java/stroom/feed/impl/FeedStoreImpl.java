@@ -178,10 +178,10 @@ public class FeedStoreImpl implements FeedStore {
     }
 
     @Override
-    public ImpexDetails importDocument(final DocRef docRef,
-                                       final Map<String, byte[]> dataMap,
-                                       final ImportState importState,
-                                       final ImportMode importMode) {
+    public DocRef importDocument(final DocRef docRef,
+                                 final Map<String, byte[]> dataMap,
+                                 final ImportState importState,
+                                 final ImportMode importMode) {
         DocRef newDocRef = docRef;
 
         if (ImportState.State.NEW.equals(importState.getState())) {

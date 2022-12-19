@@ -19,10 +19,10 @@ public interface ImportExportActionHandler extends HasDependencies {
      * @param importMode
      * @return a tuple containing the imported DocRef and a String location where it is imported to
      */
-    ImpexDetails importDocument(DocRef docRef,
-                                Map<String, byte[]> dataMap,
-                                ImportState importState,
-                                ImportMode importMode);
+    DocRef importDocument(DocRef docRef,
+                          Map<String, byte[]> dataMap,
+                          ImportState importState,
+                          ImportMode importMode);
 
     Map<String, byte[]> exportDocument(DocRef docRef, boolean omitAuditFields, List<Message> messageList);
 
@@ -31,61 +31,4 @@ public interface ImportExportActionHandler extends HasDependencies {
     String getType();
 
     Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef);
-
-    ///////////////////////////////////////////////
-    //End of ImportExportActionHandler interface //
-    ///////////////////////////////////////////////
-
-
-    /**
-     * Class used to represent the result of operations of ImportExportActionHandler
-     */
-    class ImpexDetails {
-
-        private String locationRef;
-        private DocRef docRef;
-        private boolean ignore;
-
-        public ImpexDetails() {
-        }
-
-        public ImpexDetails(DocRef docRef) {
-            this.docRef = docRef;
-        }
-
-        public ImpexDetails(final DocRef docRef, final String locationRef) {
-            this.docRef = docRef;
-            this.locationRef = locationRef;
-        }
-
-        public ImpexDetails(final DocRef docRef, final String locationRef, final boolean ignore) {
-            this.docRef = docRef;
-            this.locationRef = locationRef;
-            this.ignore = ignore;
-        }
-
-        public void setDocRef(DocRef docRef) {
-            this.docRef = docRef;
-        }
-
-        public void setIgnore(boolean ignore) {
-            this.ignore = ignore;
-        }
-
-        public void setLocationRef(String locationRef) {
-            this.locationRef = locationRef;
-        }
-
-        public String getLocationRef() {
-            return locationRef;
-        }
-
-        public DocRef getDocRef() {
-            return docRef;
-        }
-
-        public boolean isIgnore() {
-            return ignore;
-        }
-    }
 }

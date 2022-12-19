@@ -21,7 +21,6 @@ import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.importexport.api.DocumentData;
-import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.shared.Base64EncodedDocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
@@ -80,16 +79,11 @@ public class ReceiveDataRuleSetResourceImpl implements ReceiveDataRuleSetResourc
         final DocumentData documentData = DocumentData.fromBase64EncodedDocumentData(encodedDocumentData);
         final ImportState importState = new ImportState(documentData.getDocRef(),
                 documentData.getDocRef().getName());
-        final ImportExportActionHandler.ImpexDetails result = ruleSetServiceProvider.get().importDocument(
+        return ruleSetServiceProvider.get().importDocument(
                 documentData.getDocRef(),
                 documentData.getDataMap(),
                 importState,
                 ImportMode.IGNORE_CONFIRMATION);
-        if (result != null) {
-            return result.getDocRef();
-        } else {
-            return null;
-        }
     }
 
     @Override

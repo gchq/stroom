@@ -232,7 +232,8 @@ public class ImportState {
     public enum State implements HasDisplayValue {
         NEW("New"),
         UPDATE("Update"),
-        EQUAL("Equal");
+        EQUAL("Equal"),
+        IGNORE("Ignore");
 
         private final String displayValue;
 
