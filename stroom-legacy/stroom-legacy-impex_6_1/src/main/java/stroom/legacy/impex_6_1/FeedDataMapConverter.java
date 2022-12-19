@@ -3,6 +3,7 @@ package stroom.legacy.impex_6_1;
 import stroom.docref.DocRef;
 import stroom.feed.impl.FeedSerialiser;
 import stroom.feed.shared.FeedDoc;
+import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.legacy.model_6_1.Feed;
 import stroom.legacy.model_6_1.StreamType;
@@ -36,7 +37,7 @@ class FeedDataMapConverter implements DataMapConverter {
     public Map<String, byte[]> convert(final DocRef docRef,
                                        final Map<String, byte[]> dataMap,
                                        final ImportState importState,
-                                       final ImportState.ImportMode importMode,
+                                       final ImportSettings importSettings,
                                        final String userId) {
         Map<String, byte[]> result = dataMap;
         if (dataMap.size() > 0 && !dataMap.containsKey("meta")) {

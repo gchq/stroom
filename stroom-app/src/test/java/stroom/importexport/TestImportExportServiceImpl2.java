@@ -19,6 +19,7 @@ package stroom.importexport;
 
 
 import stroom.importexport.impl.ImportExportService;
+import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.StroomCoreServerTestFileUtil;
@@ -53,10 +54,10 @@ class TestImportExportServiceImpl2 extends AbstractCoreIntegrationTest {
         assertThat(Files.isDirectory(importDir)).isTrue();
 
         final List<ImportState> confirmList =
-                importExportService.createImportConfirmationList(zipFile, new ArrayList<>());
+                importExportService.importConfig(zipFile, ImportSettings.createConfirmation(), new ArrayList<>());
         assertThat(confirmList).isNotNull();
         assertThat(confirmList.size()).isGreaterThan(0);
 
-        importExportService.performImportWithoutConfirmation(zipFile);
+        importExportService.importConfig(zipFile, ImportSettings.auto(), new ArrayList<>());
     }
 }

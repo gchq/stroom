@@ -18,8 +18,8 @@ import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.TokenExceptionMapper;
 import stroom.importexport.api.ImportConverter;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
-import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.proxy.app.BufferFactoryImpl;
 import stroom.proxy.app.Config;
 import stroom.proxy.app.ContentSyncService;
@@ -264,7 +264,7 @@ public class ProxyModule extends AbstractModule {
         public Map<String, byte[]> convert(final DocRef docRef,
                                            final Map<String, byte[]> dataMap,
                                            final ImportState importState,
-                                           final ImportMode importMode,
+                                           final ImportSettings importSettings,
                                            final String userId) {
             throw new UnsupportedOperationException("Import is not supported in proxy.");
         }

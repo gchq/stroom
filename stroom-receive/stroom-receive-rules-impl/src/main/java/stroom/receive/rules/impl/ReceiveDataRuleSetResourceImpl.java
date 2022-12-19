@@ -22,8 +22,8 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.importexport.api.DocumentData;
 import stroom.importexport.shared.Base64EncodedDocumentData;
+import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
-import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.receive.rules.shared.ReceiveDataRuleSetResource;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.util.shared.EntityServiceException;
@@ -83,7 +83,7 @@ public class ReceiveDataRuleSetResourceImpl implements ReceiveDataRuleSetResourc
                 documentData.getDocRef(),
                 documentData.getDataMap(),
                 importState,
-                ImportMode.IGNORE_CONFIRMATION);
+                ImportSettings.auto());
     }
 
     @Override

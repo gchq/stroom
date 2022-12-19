@@ -27,6 +27,8 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.api.ImportExportDocumentEventLog;
 import stroom.importexport.api.NonExplorerDocRefProvider;
+import stroom.importexport.shared.ImportSettings;
+import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.State;
 import stroom.pipeline.shared.PipelineDoc;
@@ -112,7 +114,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
     public DocRef importDocument(final DocRef docRef,
                                  final Map<String, byte[]> dataMap,
                                  final ImportState importState,
-                                 final ImportState.ImportMode importMode) {
+                                 final ImportSettings importSettings) {
         if (dataMap.get(META) == null) {
             throw new IllegalArgumentException("Unable to import Processor with no meta file.  DocRef is " + docRef);
         }
@@ -136,9 +138,9 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
                 LOGGER.warn("Not importing processor filter " + docRef.getUuid() + " because it contains id fields");
                 importState.setState(State.IGNORE);
 
-            } else if (importMode != ImportState.ImportMode.CREATE_CONFIRMATION) {
-                final boolean enableFilters = importState.isEnableFilters();
-                final Long minMetaCreateTimeMs = importState.getEnableFiltersFromTime();
+            } else if (!ImportMode.CREATE_CONFIRMATION.equals(importSettings.getImportMode())) {
+                final boolean enableFilters = importSettings.isEnableFilters();
+                final Long minMetaCreateTimeMs = importSettings.getEnableFiltersFromTime();
 
                 processorFilter.setProcessor(findProcessorForFilter(processorFilter));
 

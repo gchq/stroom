@@ -1,8 +1,8 @@
 package stroom.importexport.api;
 
 import stroom.docref.DocRef;
+import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
-import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.util.shared.HasDependencies;
 import stroom.util.shared.Message;
 
@@ -22,7 +22,7 @@ public interface ImportExportActionHandler extends HasDependencies {
     DocRef importDocument(DocRef docRef,
                           Map<String, byte[]> dataMap,
                           ImportState importState,
-                          ImportMode importMode);
+                          ImportSettings importSettings);
 
     Map<String, byte[]> exportDocument(DocRef docRef, boolean omitAuditFields, List<Message> messageList);
 

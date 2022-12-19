@@ -1,21 +1,23 @@
 package stroom.legacy.impex_6_1;
 
 import stroom.docref.DocRef;
+import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.legacy.model_6_1.PipelineEntity;
 import stroom.pipeline.PipelineSerialiser;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 @Deprecated
 class PipelineDataMapConverter implements DataMapConverter {
+
     private final PipelineSerialiser serialiser;
 
     @Inject
@@ -27,7 +29,7 @@ class PipelineDataMapConverter implements DataMapConverter {
     public Map<String, byte[]> convert(final DocRef docRef,
                                        final Map<String, byte[]> dataMap,
                                        final ImportState importState,
-                                       final ImportState.ImportMode importMode,
+                                       final ImportSettings importSettings,
                                        final String userId) {
         Map<String, byte[]> result = dataMap;
         if (dataMap.size() > 0 && !dataMap.containsKey("meta")) {
@@ -47,10 +49,13 @@ class PipelineDataMapConverter implements DataMapConverter {
 
                 document.setDescription(oldPipeline.getDescription());
 
-                final stroom.legacy.model_6_1.DocRef pipelineRef = LegacyXmlSerialiser.getDocRefFromLegacyXml(oldPipeline.getParentPipelineXML());
+                final stroom.legacy.model_6_1.DocRef pipelineRef = LegacyXmlSerialiser.getDocRefFromLegacyXml(
+                        oldPipeline.getParentPipelineXML());
                 document.setParentPipeline(MappingUtil.map(pipelineRef));
 
-                final stroom.legacy.model_6_1.PipelineData pipelineData = LegacyXmlSerialiser.getPipelineDataFromLegacyXml(oldPipeline.getData());
+                final stroom.legacy.model_6_1.PipelineData pipelineData =
+                        LegacyXmlSerialiser.getPipelineDataFromLegacyXml(
+                        oldPipeline.getData());
                 document.setPipelineData(MappingUtil.map(pipelineData));
 
 //                if (dataMap.containsKey("data.xml")) {

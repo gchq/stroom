@@ -49,16 +49,6 @@ public class ImportState {
     @JsonProperty
     private final List<String> updatedFieldList;
     @JsonProperty
-    private boolean enableFilters;
-    @JsonProperty
-    private Long enableFiltersFromTime;
-    @JsonProperty
-    private boolean useImportNames;
-    @JsonProperty
-    private boolean useImportFolders;
-    @JsonProperty
-    private DocRef rootDocRef;
-    @JsonProperty
     private State state;
 
     @JsonCreator
@@ -68,11 +58,6 @@ public class ImportState {
                        @JsonProperty("action") final boolean action,
                        @JsonProperty("messageList") final List<Message> messageList,
                        @JsonProperty("updatedFieldList") final List<String> updatedFieldList,
-                       @JsonProperty("enableFilters") final boolean enableFilters,
-                       @JsonProperty("enableFiltersFromTime") final Long enableFiltersFromTime,
-                       @JsonProperty("useImportNames") final boolean useImportNames,
-                       @JsonProperty("useImportFolders") final boolean useImportFolders,
-                       @JsonProperty("rootDocRef") final DocRef rootDocRef,
                        @JsonProperty("state") final State state) {
         this.docRef = docRef;
         this.sourcePath = sourcePath;
@@ -80,11 +65,6 @@ public class ImportState {
         this.action = action;
         this.messageList = messageList;
         this.updatedFieldList = updatedFieldList;
-        this.enableFilters = enableFilters;
-        this.enableFiltersFromTime = enableFiltersFromTime;
-        this.useImportNames = useImportNames;
-        this.useImportFolders = useImportFolders;
-        this.rootDocRef = rootDocRef;
         this.state = state;
     }
 
@@ -113,11 +93,6 @@ public class ImportState {
 
     public void setDestPath(final String destPath) {
         this.destPath = destPath;
-    }
-
-    public boolean ok(final ImportMode importMode) {
-        return importMode == ImportMode.IGNORE_CONFIRMATION
-                || (importMode == ImportMode.ACTION_CONFIRMATION && action);
     }
 
     public boolean isAction() {
@@ -151,46 +126,6 @@ public class ImportState {
         return updatedFieldList;
     }
 
-    public boolean isEnableFilters() {
-        return enableFilters;
-    }
-
-    public void setEnableFilters(final boolean enableFilters) {
-        this.enableFilters = enableFilters;
-    }
-
-    public Long getEnableFiltersFromTime() {
-        return enableFiltersFromTime;
-    }
-
-    public void setEnableFiltersFromTime(final Long enableFiltersFromTime) {
-        this.enableFiltersFromTime = enableFiltersFromTime;
-    }
-
-    public boolean isUseImportNames() {
-        return useImportNames;
-    }
-
-    public void setUseImportNames(final boolean useImportNames) {
-        this.useImportNames = useImportNames;
-    }
-
-    public boolean isUseImportFolders() {
-        return useImportFolders;
-    }
-
-    public void setUseImportFolders(final boolean useImportFolders) {
-        this.useImportFolders = useImportFolders;
-    }
-
-    public DocRef getRootDocRef() {
-        return rootDocRef;
-    }
-
-    public void setRootDocRef(final DocRef rootDocRef) {
-        this.rootDocRef = rootDocRef;
-    }
-
     public State getState() {
         return state;
     }
@@ -221,12 +156,6 @@ public class ImportState {
     @Override
     public String toString() {
         return docRef.toString();
-    }
-
-    public enum ImportMode {
-        CREATE_CONFIRMATION,
-        ACTION_CONFIRMATION,
-        IGNORE_CONFIRMATION
     }
 
     public enum State implements HasDisplayValue {

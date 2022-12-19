@@ -24,8 +24,8 @@ import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
+import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
-import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.search.solr.shared.SolrIndexFieldType;
@@ -379,8 +379,8 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
     public DocRef importDocument(final DocRef docRef,
                                  final Map<String, byte[]> dataMap,
                                  final ImportState importState,
-                                 final ImportMode importMode) {
-        return store.importDocument(docRef, dataMap, importState, importMode);
+                                 final ImportSettings importSettings) {
+        return store.importDocument(docRef, dataMap, importState, importSettings);
     }
 
     @Override

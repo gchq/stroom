@@ -24,8 +24,8 @@ import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
+import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
-import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.util.shared.Message;
 
@@ -145,8 +145,8 @@ class XsltStoreImpl implements XsltStore {
     public DocRef importDocument(final DocRef docRef,
                                  final Map<String, byte[]> dataMap,
                                  final ImportState importState,
-                                 final ImportMode importMode) {
-        return store.importDocument(docRef, dataMap, importState, importMode);
+                                 final ImportSettings importSettings) {
+        return store.importDocument(docRef, dataMap, importState, importSettings);
     }
 
     @Override
