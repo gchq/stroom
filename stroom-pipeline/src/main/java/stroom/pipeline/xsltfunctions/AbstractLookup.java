@@ -305,7 +305,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
 
         if (!ignoreWarnings && result.getEffectiveStreams().isEmpty()) {
             // No effective streams were found to lookup from
-            final List<PipelineReference> pipelineReferences = NullSafe.nonNullList(getPipelineReferences());
+            final List<PipelineReference> pipelineReferences = NullSafe.list(getPipelineReferences());
 
             if (pipelineReferences.size() > 1) {
                 final String feeds = pipelineReferences.stream()
