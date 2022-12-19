@@ -43,6 +43,8 @@ public class ReferenceDataResult implements ErrorReceiver {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceDataResult.class);
 
+    private final boolean isTraceEnabled;
+    private final boolean isIgnoreWarnings;
     private RefDataValueProxy refDataValueProxy;
     private LookupIdentifier currentLookupIdentifier;
     private List<LazyMessage> messages = new ArrayList<>();
@@ -50,6 +52,16 @@ public class ReferenceDataResult implements ErrorReceiver {
     private final List<RefStreamDefinition> effectiveStreams = new ArrayList<>();
 
     public ReferenceDataResult(final LookupIdentifier lookupIdentifier) {
+        this.isTraceEnabled = false;
+        this.isIgnoreWarnings = true;
+        this.currentLookupIdentifier = Objects.requireNonNull(lookupIdentifier);
+    }
+
+    public ReferenceDataResult(final LookupIdentifier lookupIdentifier,
+                               final boolean isTraceEnabled,
+                               final boolean isIgnoreWarnings) {
+        this.isTraceEnabled = isTraceEnabled;
+        this.isIgnoreWarnings = isIgnoreWarnings;
         this.currentLookupIdentifier = Objects.requireNonNull(lookupIdentifier);
     }
 
@@ -128,13 +140,15 @@ public class ReferenceDataResult implements ErrorReceiver {
             LOGGER.trace(messageTemplate, (Object[]) messageArguments);
         }
 
-        if (messageTemplate != null && !messageTemplate.isBlank()) {
-            messages.add(new LazyMessage(
-                    severity,
-                    null,
-                    null,
-                    messageTemplate,
-                    messageArguments));
+        if (shouldLog(severity, isTraceEnabled, isIgnoreWarnings)) {
+            if (messageTemplate != null && !messageTemplate.isBlank()) {
+                messages.add(new LazyMessage(
+                        severity,
+                        null,
+                        null,
+                        messageTemplate,
+                        messageArguments));
+            }
         }
     }
 
@@ -150,13 +164,15 @@ public class ReferenceDataResult implements ErrorReceiver {
             LOGGER.trace(messageTemplate, LazyMessage.convertMessageArgs(messageArgumentsSupplier));
         }
 
-        if (messageTemplate != null && !messageTemplate.isBlank()) {
-            messages.add(new LazyMessage(
-                    severity,
-                    null,
-                    null,
-                    messageTemplate,
-                    messageArgumentsSupplier));
+        if (shouldLog(severity, isTraceEnabled, isIgnoreWarnings)) {
+            if (messageTemplate != null && !messageTemplate.isBlank()) {
+                messages.add(new LazyMessage(
+                        severity,
+                        null,
+                        null,
+                        messageTemplate,
+                        messageArgumentsSupplier));
+            }
         }
     }
 
@@ -191,14 +207,25 @@ public class ReferenceDataResult implements ErrorReceiver {
             }
         }
 
-        if (messageTemplate != null && !messageTemplate.isBlank()) {
-            messages.add(new LazyMessage(
-                    severity,
-                    location,
-                    elementId,
-                    messageTemplate,
-                    messageArgs));
+        if (shouldLog(severity, isTraceEnabled, isIgnoreWarnings)) {
+            if (messageTemplate != null && !messageTemplate.isBlank()) {
+                messages.add(new LazyMessage(
+                        severity,
+                        location,
+                        elementId,
+                        messageTemplate,
+                        messageArgs));
+            }
         }
+    }
+
+    private boolean shouldLog(final Severity severity,
+                              final boolean isTraceEnable,
+                              final boolean isIgnoreWarnings) {
+
+        return severity.greaterThan(Severity.WARNING)
+                || (!isIgnoreWarnings && severity.equals(Severity.WARNING))
+                || isTraceEnabled;
     }
 
     @Override

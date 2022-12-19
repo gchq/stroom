@@ -24,6 +24,7 @@ import stroom.meta.shared.Meta;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.cache.DocumentPermissionCache;
 import stroom.pipeline.errorhandler.StoredErrorReceiver;
+import stroom.pipeline.refdata.RefDataStoreHolder.MapAvailability;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataStore;
@@ -40,6 +41,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
+import stroom.util.shared.StringUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +53,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -160,12 +163,13 @@ public class ReferenceData {
 
                     result.logLazyTemplate(
                             Severity.INFO,
-                            "Doing nested lookup using previous lookup value as new key: '{}' - " +
-                                    "(primary map: {}, secondary map: {})",
+                            "Nested lookup using previous lookup value as new key: '{}' - " +
+                                    "(primary map: {}, secondary map: {}, nested lookup: {})",
                             () -> Arrays.asList(
                                     nextKey,
                                     nestedIdentifier.getPrimaryMapName(),
-                                    nestedIdentifier.getSecondaryMapName()));
+                                    Objects.requireNonNullElse(nestedIdentifier.getSecondaryMapName(), ""),
+                                    nestedIdentifier.isMapNested()));
 
                     // Recurse with the nested lookup
                     ensureReferenceDataAvailability(pipelineReferences, nestedIdentifier, result);
@@ -246,41 +250,9 @@ public class ReferenceData {
             }
 
             // If a lookup is viable a RefDataValueProxy will have been added to the result
-
             LAMBDA_LOGGER.trace(() -> LogUtil.message("refDataValueProxy: {}",
                     referenceDataResult.getRefDataValueProxy().orElse(null)));
-
-            // We are dealing with multiple ref pipelines so collect the value proxy for
-            // each one
-//            if (referenceDataResult.getQualifyingStreams().size() > 1) {
-//                // If a proxy has been set on the result then it means this pipeline reference
-//                // contains the requested map, i.e. there is no point in doing a lookup on the
-//                // map def if the map is known to not exist for that ref stream
-//                referenceDataResult.getRefDataValueProxy().ifPresent(refDataValueProxy -> {
-//                    if (refDataValueProxy instanceof SingleRefDataValueProxy) {
-//                        // Add it to a list and remove it from the result so we
-//                        // can add it back once we have checked all pipe refs
-//                        refDataValueProxies.add((SingleRefDataValueProxy) refDataValueProxy);
-//                        referenceDataResult.clearRefDataValueProxy();
-//                    } else {
-//                        throw new RuntimeException("Unexpected type " +
-//                                refDataValueProxy.getClass().getName());
-//                    }
-//                });
-//            }
         }
-
-        // We are dealing with multiple ref pipelines so replace the current value proxy with a
-        // multi one that will perform a lookup on each one in turn until it finds a hit
-//        if (!refDataValueProxies.isEmpty()) {
-//            if (refDataValueProxies.size() > 1) {
-//                LAMBDA_LOGGER.trace(() -> LogUtil.message(
-//                        "Replacing value proxy with multi proxy ({})", refDataValueProxies.size()));
-//                referenceDataResult.setRefDataValueProxy(new MultiRefDataValueProxy(refDataValueProxies));
-//            } else {
-//                referenceDataResult.setRefDataValueProxy(refDataValueProxies.get(0));
-//            }
-//        }
     }
 
 
@@ -337,48 +309,79 @@ public class ReferenceData {
             throw new RuntimeException(LogUtil.message(
                     "Reference stream {} has been loaded previously but failed, unable to lookup key {} in map {}",
                     refStreamDefinition.getStreamId(), keyName, mapName));
-        } else if (!refDataStoreHolder.isLookupNeeded(pipelineReference, refStreamDefinition, mapName)) {
-            result.logLazyTemplate(Severity.INFO,
-                    "Map '{}' is known not to exist in pipeline: '{}' feed: '{}', stream: {} ",
-                    () -> Arrays.asList(
-                            mapName,
-                            pipelineReference.getPipeline().getName(),
-                            pipelineReference.getFeed().getName(),
-                            refStreamDefinition.getStreamId()));
 
-            LOGGER.trace("Map '{}' known not to exist in refStreamDefinition {}", mapName, refStreamDefinition);
-            // A previous lookup has established the map is not in there so no point going further
         } else {
-            if (isRefLoadRequired) {
-                // data is not in the store so load it
-                final InputStreamProvider provider = metaHolder.getInputStreamProvider();
-                // There may not be a provider for this stream type if we do not
-                // have any context data stream.
-                if (provider != null) {
-                    final SizeAwareInputStream inputStream = provider.get(pipelineReference.getStreamType());
-                    loadContextData(
-                            metaHolder.getMeta(),
-                            inputStream,
-                            pipelineReference.getPipeline(),
-                            refStreamDefinition,
-                            onHeapRefDataStore);
+            MapAvailability mapAvailability = refDataStoreHolder.getMapAvailabilityInStream(
+                    pipelineReference, refStreamDefinition, mapName);
+            logMapAvailability(pipelineReference, mapName, result, refStreamDefinition, mapAvailability);
 
+            if (mapAvailability.isLookupRequired()) {
+                if (isRefLoadRequired) {
+                    // data is not in the store so load it
+                    final InputStreamProvider provider = metaHolder.getInputStreamProvider();
+                    // There may not be a provider for this stream type if we do not
+                    // have any context data stream.
+                    if (provider != null) {
+                        final SizeAwareInputStream inputStream = provider.get(pipelineReference.getStreamType());
+                        loadContextData(
+                                metaHolder.getMeta(),
+                                inputStream,
+                                pipelineReference.getPipeline(),
+                                refStreamDefinition,
+                                onHeapRefDataStore);
+
+                    }
+                } else {
+                    LOGGER.trace("Data already loaded for {}", refStreamDefinition);
+                }
+
+                // Now the data is known to be loaded, record the maps available in the stream
+                // for subsequent lookups
+                refDataStoreHolder.addKnownMapNames(
+                        onHeapRefDataStore,
+                        refStreamDefinition);
+
+                if (MapAvailability.UNKNOWN.equals(mapAvailability)) {
+                    // Re-check the availability now we have the facts
+                    mapAvailability = refDataStoreHolder.getMapAvailabilityInStream(
+                            pipelineReference, refStreamDefinition, mapName);
+                    logMapAvailability(pipelineReference, mapName, result, refStreamDefinition, mapAvailability);
+                }
+
+                // Now we have established the available maps in the stream check again whether we need to
+                // lookup or not
+                if (mapAvailability.isLookupRequired()) {
+                    // Add a proxy to the lookup value now we know it is loaded
+                    setValueProxyOnResult(
+                            onHeapRefDataStore,
+                            mapName,
+                            keyName,
+                            result,
+                            refStreamDefinition);
                 }
             }
-
-            // Now the data is known to be loaded, record the maps available in the stream
-            // for subsequent lookups
-            refDataStoreHolder.addKnownMapNames(
-                    onHeapRefDataStore,
-                    refStreamDefinition);
-
-            // Add a proxy to the lookup value now we know it is loaded
-            setValueProxyOnResult(onHeapRefDataStore, mapName, keyName, result, refStreamDefinition);
         }
 
         return refStreamDefinition;
     }
 
+    private void logMapAvailability(final PipelineReference pipelineReference,
+                                    final String mapName,
+                                    final ReferenceDataResult result,
+                                    final RefStreamDefinition refStreamDefinition,
+                                    final MapAvailability mapAvailability) {
+
+        result.logLazyTemplate(Severity.INFO,
+                "Availability of map '{}' is '{}' in pipeline: '{}' feed: '{}', stream: {}, " +
+                        "lookup required: {}",
+                () -> Arrays.asList(
+                        mapName,
+                        mapAvailability,
+                        pipelineReference.getPipeline().getName(),
+                        pipelineReference.getFeed().getName(),
+                        refStreamDefinition.getStreamId(),
+                        mapAvailability.isLookupRequired()));
+    }
 
     private void setValueProxyOnResult(final RefDataStore refDataStore,
                                        final String mapName,
@@ -388,28 +391,12 @@ public class ReferenceData {
 
         final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
 
-        // This stream def may/may not have this map name. To save us hitting the DB each time to
-        // find out we hold the result in pipeline scope. This assumes we have already determined
-        // that the refStreamDef is fully loaded
-        Boolean doesMapDefExist = refDataLoaderHolder.isMapDefinitionAvailable(mapDefinition);
-
-        if (doesMapDefExist == null) {
-            // existence unknown so do a lookup in the DB
-            doesMapDefExist = refDataStore.exists(mapDefinition);
-            refDataLoaderHolder.markMapDefinitionAvailability(mapDefinition, doesMapDefExist);
-        }
-        if (doesMapDefExist) {
-            // Define a proxy object to allow callers to get the required value from the store
-            // now that we know that the stream that may contain it is in there.
-            final RefDataValueProxy refDataValueProxy = refDataStore.getValueProxy(mapDefinition, keyName);
-            LOGGER.trace("Adding refDataValueProxy {} for map {}, refStreamDefinition {}",
-                    refDataValueProxy, mapName, refStreamDefinition);
-            result.addRefDataValueProxy(refDataValueProxy);
-        } else {
-            // this stream doesn't have this map so return a null proxy to save a pointless lookup
-            LOGGER.trace("No mapDefinition for map {}, refStreamDefinition {} so no proxy to add",
-                    mapName, refStreamDefinition);
-        }
+        // Define a proxy object to allow callers to get the required value from the store
+        // now that we know that the stream that may contain it is in there.
+        final RefDataValueProxy refDataValueProxy = refDataStore.getValueProxy(mapDefinition, keyName);
+        LOGGER.trace("Adding refDataValueProxy {} for map {}, refStreamDefinition {}",
+                refDataValueProxy, mapName, refStreamDefinition);
+        result.addRefDataValueProxy(refDataValueProxy);
     }
 
     private String getPipelineVersion(final PipelineReference pipelineReference) {
@@ -483,11 +470,13 @@ public class ReferenceData {
             if (effectiveStream != null) {
 
                 result.logLazyTemplate(Severity.INFO,
-                        "Using stream: {} (effective time: {}) for lookup time: {}, feed: '{}'",
+                        "Checking stream: {} from feed: '{}' for presence of map '{}' " +
+                                "(effective time: {}, lookup time: {})",
                         () -> Arrays.asList(effectiveStream.getStreamId(),
+                                pipelineReference.getFeed().getName(),
+                                mapName,
                                 Instant.ofEpochMilli(effectiveStream.getEffectiveMs()).toString(),
-                                Instant.ofEpochMilli(time).toString(),
-                                pipelineReference.getFeed().getName()));
+                                Instant.ofEpochMilli(time).toString()));
 
                 final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                         pipelineReference.getPipeline(),
@@ -496,7 +485,11 @@ public class ReferenceData {
 
                 result.addEffectiveStream(refStreamDefinition);
 
-                if (refDataStoreHolder.isLookupNeeded(pipelineReference, refStreamDefinition, mapName)) {
+                MapAvailability mapAvailability = refDataStoreHolder.getMapAvailabilityInStream(
+                        pipelineReference, refStreamDefinition, mapName);
+                logMapAvailability(pipelineReference, mapName, result, refStreamDefinition, mapAvailability);
+
+                if (mapAvailability.isLookupRequired()) {
                     // Stream is known to hold the map we are trying to hit, or we don't yet know the
                     // contents so have to do the lookup in case.
                     final RefDataStore offHeapRefDataStore = refDataStoreHolder.getOffHeapRefDataStore();
@@ -514,11 +507,26 @@ public class ReferenceData {
                         // may have two ref loaders on it.  When a lookup is done it must try the lookup against the two
                         // effective streams as it cannot know which ref streams contain (if at all) the map name of
                         // interest.
-                        setValueProxyOnResult(offHeapRefDataStore, mapName, keyName, result, refStreamDefinition);
+                        if (MapAvailability.UNKNOWN.equals(mapAvailability)) {
+                            // Re-check the availability now we have the facts
+                            mapAvailability = refDataStoreHolder.getMapAvailabilityInStream(
+                                    pipelineReference, refStreamDefinition, mapName);
+                            logMapAvailability(pipelineReference,
+                                    mapName,
+                                    result,
+                                    refStreamDefinition,
+                                    mapAvailability);
+                        }
+
+                        if (mapAvailability.isLookupRequired()) {
+                            setValueProxyOnResult(
+                                    offHeapRefDataStore,
+                                    mapName,
+                                    keyName,
+                                    result,
+                                    refStreamDefinition);
+                        }
                     }
-                } else {
-                    LOGGER.trace("Map '{}' known not to exist in refStreamDefinition {}", mapName, refStreamDefinition);
-                    // A previous lookup has established the map is not in there so no point going further
                 }
             } else {
                 result.logLazyTemplate(
@@ -557,6 +565,14 @@ public class ReferenceData {
             // (unless the purge age is very small) a purge from removing the data we are about to use
             final Optional<ProcessingState> optLoadState =
                     offHeapRefDataStore.getLoadState(refStreamDefinition);
+
+            result.logLazyTemplate(Severity.INFO,
+                    "Load status of stream '{}' is '{}' for pipeline: '{}' feed: '{}'",
+                    () -> Arrays.asList(
+                            refStreamDefinition.getStreamId(),
+                            optLoadState.map(ProcessingState::toString).orElse("NOT_LOADED"),
+                            pipelineReference.getPipeline().getName(),
+                            pipelineReference.getFeed().getName()));
 
             final boolean isRefLoadRequired = optLoadState
                     .filter(loadState ->
@@ -606,7 +622,9 @@ public class ReferenceData {
                 }
 
                 if (isAvailableForLookups) {
-                    // Now the data is loaded record the maps in the stream
+                    // Now the data is loaded, query the DB to record the list of maps available
+                    // in this stream so future lookups in this pipe scope can decide whether to
+                    // perform a lookup on a stream or not.
                     refDataStoreHolder.addKnownMapNames(
                             offHeapRefDataStore,
                             refStreamDefinition);
@@ -639,10 +657,11 @@ public class ReferenceData {
 
         if (effectiveStreams != null && effectiveStreams.size() > 0) {
             result.logLazyTemplate(Severity.INFO,
-                    "Got {} potential effective stream(s) (from {} to {}) " +
+                    "Found {} cached effective stream{} (from {} to {}) " +
                             "for effective stream key: {}",
                     () -> Arrays.asList(
                             effectiveStreams.size(),
+                            StringUtil.pluralSuffix(effectiveStreams.size()),
                             Instant.ofEpochMilli(effectiveStreams.last().getEffectiveMs()),
                             Instant.ofEpochMilli(effectiveStreams.first().getEffectiveMs()),
                             effectiveStreamKey));

@@ -137,7 +137,7 @@ class BitmapLookup extends AbstractLookup {
         final String key = String.valueOf(bit);
         LOGGER.trace("Looking up bit '{}', key '{}'", bit, key);
         final LookupIdentifier bitIdentifier = lookupIdentifier.cloneWithNewKey(key);
-        final ReferenceDataResult result = getReferenceData(bitIdentifier);
+        final ReferenceDataResult result = getReferenceData(bitIdentifier, trace, ignoreWarnings);
 
         try {
             // Rather than doing individual lookups for each key (bit position) we could pass all the keys

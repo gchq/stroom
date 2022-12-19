@@ -57,7 +57,7 @@ class Lookup extends AbstractLookup {
         // TODO rather than putting the proxy in the result we could just put the refStreamDefinition
         // in there and then do the actual lookup in the sequenceMaker by passing an injected RefDataStore
         // into it.
-        final ReferenceDataResult result = getReferenceData(lookupIdentifier);
+        final ReferenceDataResult result = getReferenceData(lookupIdentifier, trace, ignoreWarnings);
 
         final SequenceMaker sequenceMaker = new SequenceMaker(context, getRefDataValueProxyConsumerFactoryFactory());
 

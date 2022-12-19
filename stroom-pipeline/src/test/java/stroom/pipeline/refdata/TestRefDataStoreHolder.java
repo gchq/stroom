@@ -2,6 +2,7 @@ package stroom.pipeline.refdata;
 
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
+import stroom.pipeline.refdata.RefDataStoreHolder.MapAvailability;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
@@ -55,18 +56,22 @@ class TestRefDataStoreHolder {
                 "pipeUUID", "pipeVer", 1L);
 
         final String mapName = "foo";
-        boolean isLookupNeeded = refDataStoreHolder.isLookupNeeded(pipelineReference, refStreamDefinition, mapName);
+        MapAvailability mapAvailability = refDataStoreHolder.getMapAvailabilityInStream(pipelineReference, refStreamDefinition, mapName);
 
         // Always true at this point as it doesn't know either way
-        Assertions.assertThat(isLookupNeeded)
+        Assertions.assertThat(mapAvailability)
+                .isEqualTo(MapAvailability.UNKNOWN);
+        Assertions.assertThat(mapAvailability.isLookupRequired())
                 .isTrue();
 
         refDataStoreHolder.addKnownMapNames(mockRefDataStore, refStreamDefinition);
 
-        isLookupNeeded = refDataStoreHolder.isLookupNeeded(pipelineReference, refStreamDefinition, mapName);
+        mapAvailability = refDataStoreHolder.getMapAvailabilityInStream(pipelineReference, refStreamDefinition, mapName);
 
         // The map is there so true
-        Assertions.assertThat(isLookupNeeded)
+        Assertions.assertThat(mapAvailability)
+                .isEqualTo(MapAvailability.PRESENT);
+        Assertions.assertThat(mapAvailability.isLookupRequired())
                 .isTrue();
     }
 
@@ -86,18 +91,22 @@ class TestRefDataStoreHolder {
 
         final String mapName = "UNKNOWN_MAP";
 
-        boolean isLookupNeeded = refDataStoreHolder.isLookupNeeded(pipelineReference, refStreamDefinition, mapName);
+        MapAvailability mapAvailability = refDataStoreHolder.getMapAvailabilityInStream(pipelineReference, refStreamDefinition, mapName);
 
         // Always true at this point as it doesn't know either way
-        Assertions.assertThat(isLookupNeeded)
-                .isTrue();
+        Assertions.assertThat(mapAvailability)
+                .isEqualTo(MapAvailability.UNKNOWN);
+        Assertions.assertThat(mapAvailability.isLookupRequired())
+                        .isTrue();
 
         refDataStoreHolder.addKnownMapNames(mockRefDataStore, refStreamDefinition);
 
-        isLookupNeeded = refDataStoreHolder.isLookupNeeded(pipelineReference, refStreamDefinition, mapName);
+        mapAvailability = refDataStoreHolder.getMapAvailabilityInStream(pipelineReference, refStreamDefinition, mapName);
 
         // The map is there so true
-        Assertions.assertThat(isLookupNeeded)
+        Assertions.assertThat(mapAvailability)
+                .isEqualTo(MapAvailability.NOT_PRESENT);
+        Assertions.assertThat(mapAvailability.isLookupRequired())
                 .isFalse();
     }
 
@@ -123,19 +132,19 @@ class TestRefDataStoreHolder {
         final String mapName = "foo";
 
         // Always true at this point as it doesn't know either way
-        Assertions.assertThat(refDataStoreHolder.isLookupNeeded(pipelineReference, refStreamDefinition1, mapName))
-                .isTrue();
-        Assertions.assertThat(refDataStoreHolder.isLookupNeeded(pipelineReference, refStreamDefinition2, mapName))
-                .isTrue();
+        Assertions.assertThat(refDataStoreHolder.getMapAvailabilityInStream(pipelineReference, refStreamDefinition1, mapName))
+                .isEqualTo(MapAvailability.UNKNOWN);
+        Assertions.assertThat(refDataStoreHolder.getMapAvailabilityInStream(pipelineReference, refStreamDefinition2, mapName))
+                .isEqualTo(MapAvailability.UNKNOWN);
 
         refDataStoreHolder.addKnownMapNames(mockRefDataStore, refStreamDefinition1);
         refDataStoreHolder.addKnownMapNames(mockRefDataStore, refStreamDefinition2);
 
         // The map is there
-        Assertions.assertThat(refDataStoreHolder.isLookupNeeded(pipelineReference, refStreamDefinition1, mapName))
-                .isTrue();
+        Assertions.assertThat(refDataStoreHolder.getMapAvailabilityInStream(pipelineReference, refStreamDefinition1, mapName))
+                .isEqualTo(MapAvailability.PRESENT);
         // The map is not there
-        Assertions.assertThat(refDataStoreHolder.isLookupNeeded(pipelineReference, refStreamDefinition2, mapName))
-                .isFalse();
+        Assertions.assertThat(refDataStoreHolder.getMapAvailabilityInStream(pipelineReference, refStreamDefinition2, mapName))
+                .isEqualTo(MapAvailability.NOT_PRESENT);
     }
 }

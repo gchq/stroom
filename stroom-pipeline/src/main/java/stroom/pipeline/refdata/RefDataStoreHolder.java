@@ -80,25 +80,28 @@ class RefDataStoreHolder {
      * doing a lookup. If we haven't loaded refStreamDefinition yet then return true.
      * This saves having to do multiple pointless gets on the store to find there is no map
      */
-    boolean isLookupNeeded(final PipelineReference pipelineReference,
-                           final RefStreamDefinition refStreamDefinition,
-                           final String mapName) {
+    MapAvailability getMapAvailabilityInStream(final PipelineReference pipelineReference,
+                                               final RefStreamDefinition refStreamDefinition,
+                                               final String mapName) {
         // This map is populated post load once the maps in the stream are known.
         // A stream may contain 1-* map names.
         final Set<String> mapNames = refStreamDefToMapNamesMap.get(refStreamDefinition);
-        final boolean isLookupNeeded;
+        final MapAvailability mapAvailability;
         if (mapNames == null) {
             // Not done a lookup yet so can't be sure what maps are in the stream, therefore
-            // we must do a lookup
-            isLookupNeeded = true;
+            // we must assume that a lookup is required.
+            mapAvailability = MapAvailability.UNKNOWN;
         } else {
-            // A previous lookup has discovered what maps are in the stream so use that info
-            isLookupNeeded = mapNames.contains(mapName);
+            // The DB has been queried to find out what maps exist, so we can be sure whether a lookup
+            // is needed or not.  If the map is known to not exist then no point in doing a lookup.
+            mapAvailability = mapNames.contains(mapName)
+                    ? MapAvailability.PRESENT
+                    : MapAvailability.NOT_PRESENT;
         }
 
         LOGGER.trace(() -> LogUtil.message(
-                "isLookupNeeded: {}, map: {}, available maps: {}, feed: {}, type: {}, stream: {}, partIdx: {}",
-                isLookupNeeded,
+                "mapAvailability: {}, map: {}, available maps: {}, feed: {}, type: {}, stream: {}, partIdx: {}",
+                mapAvailability,
                 mapName,
                 NullSafe.toStringOrElse(mapNames, "<NOT YET KNOWN>"),
                 NullSafe.get(pipelineReference, PipelineReference::getFeed, DocRef::getName),
@@ -106,7 +109,7 @@ class RefDataStoreHolder {
                 NullSafe.get(refStreamDefinition, RefStreamDefinition::getStreamId),
                 NullSafe.get(refStreamDefinition, RefStreamDefinition::getPartIndex)));
 
-        return isLookupNeeded;
+        return mapAvailability;
     }
 
     /**
@@ -116,7 +119,8 @@ class RefDataStoreHolder {
                           final RefStreamDefinition refStreamDefinition) {
 
         if (!refStreamDefToMapNamesMap.containsKey(refStreamDefinition)) {
-            final Optional<ProcessingState> optLoadState = refDataStore.getLoadState(refStreamDefinition);
+            final Optional<ProcessingState> optLoadState = refDataStore.getLoadState(
+                    refStreamDefinition);
 
             // Make sure the load was good
             if (optLoadState.filter(ProcessingState.COMPLETE::equals).isPresent()) {
@@ -135,6 +139,45 @@ class RefDataStoreHolder {
         } else {
             LOGGER.trace(() -> LogUtil.message("RefStreamDefinition {} already known, available maps: {}",
                     refStreamDefinition, refStreamDefToMapNamesMap.get(refStreamDefinition)));
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * The availability of a named map in a reference data stream (i.e. {@link RefStreamDefinition}).
+     */
+    public enum MapAvailability {
+
+        /**
+         * We have established, via querying the DB that the map is present in the stream
+         */
+        PRESENT(true),
+
+        /**
+         * We have established, via querying the DB that the map is NOT present in the stream
+         */
+        NOT_PRESENT(false),
+
+        /**
+         * We don't yet know if the map is in the stream or not.
+         */
+        UNKNOWN(true);
+
+        private final boolean isLookupRequired;
+
+        MapAvailability(final boolean isLookupRequired) {
+            this.isLookupRequired = isLookupRequired;
+        }
+
+        /**
+         * @return True if this {@link MapAvailability} means that a lookup in the database
+         * is required.
+         */
+        public boolean isLookupRequired() {
+            return isLookupRequired;
         }
     }
 }

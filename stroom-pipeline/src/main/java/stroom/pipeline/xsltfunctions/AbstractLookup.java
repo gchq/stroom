@@ -31,6 +31,7 @@ import stroom.util.date.DateUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
+import stroom.util.shared.StringUtil;
 
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.Builder;
@@ -174,19 +175,24 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
             throws XPathException;
 
 
-    ReferenceDataResult getReferenceData(final LookupIdentifier lookupIdentifier) {
+    ReferenceDataResult getReferenceData(final LookupIdentifier lookupIdentifier,
+                                         final boolean isTraceEnabled,
+                                         final boolean isIgnoreWarnings) {
         LOGGER.trace("getReferenceData({})", lookupIdentifier);
-        final ReferenceDataResult result = new ReferenceDataResult(lookupIdentifier);
+        final ReferenceDataResult result = new ReferenceDataResult(
+                lookupIdentifier, isTraceEnabled, isIgnoreWarnings);
 
         result.logLazyTemplate(
                 Severity.INFO,
-                "Doing lookup - " +
-                        "key: '{}', map: '{}', lookup time: {} (primary map: '{}', secondary map: '{}')",
+                "Lookup - " +
+                        "key: '{}', map: '{}', lookup time: {} (primary map: '{}', secondary map: '{}', " +
+                        "nested lookup: {})",
                 () -> Arrays.asList(lookupIdentifier.getKey(),
                         lookupIdentifier.getMap(),
                         Instant.ofEpochMilli(lookupIdentifier.getEventTime()),
                         lookupIdentifier.getPrimaryMapName(),
-                        lookupIdentifier.getSecondaryMapName()));
+                        Objects.requireNonNullElse(lookupIdentifier.getSecondaryMapName(), ""),
+                        lookupIdentifier.isMapNested()));
 
         final List<PipelineReference> pipelineReferences = getPipelineReferences();
         if (pipelineReferences == null || pipelineReferences.size() == 0) {
@@ -275,17 +281,19 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
     void logMapLocations(final ReferenceDataResult result,
                          final RefDataValueProxy refDataValueProxy) {
         result.logLazyTemplate(Severity.INFO,
-                "Map '{}' found in {} out of {} effective streams: [{}]",
+                "Executing lookup of key: '{}' in map '{}' in {} out of {} effective stream{}: [{}]",
                 () -> {
-                    final String mapName = refDataValueProxy.getMapName();
                     final String streamsStr = getQualifyingStreamIds(result);
                     final int qualifyingStreamCount = result.getQualifyingStreams().size();
                     final int effectiveStreamCount = result.getEffectiveStreams().size();
+                    final String pluralSuffix = StringUtil.pluralSuffix(effectiveStreamCount);
 
                     return Arrays.asList(
-                            mapName,
+                            refDataValueProxy.getKey(),
+                            refDataValueProxy.getMapName(),
                             qualifyingStreamCount,
                             effectiveStreamCount,
+                            pluralSuffix,
                             streamsStr);
                 });
     }
