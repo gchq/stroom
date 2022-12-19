@@ -36,9 +36,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.annotation.concurrent.NotThreadSafe;
 
-@NotThreadSafe
 public class ReferenceDataResult implements ErrorReceiver {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceDataResult.class);
