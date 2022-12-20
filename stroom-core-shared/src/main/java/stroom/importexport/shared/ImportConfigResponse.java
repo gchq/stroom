@@ -26,30 +26,22 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
-public class ImportConfigRequest {
+public class ImportConfigResponse {
 
     @JsonProperty
     private final ResourceKey resourceKey;
     @JsonProperty
-    private final ImportSettings importSettings;
-    @JsonProperty
     private final List<ImportState> confirmList;
 
     @JsonCreator
-    public ImportConfigRequest(@JsonProperty("resourceKey") final ResourceKey resourceKey,
-                               @JsonProperty("importSettings") final ImportSettings importSettings,
-                               @JsonProperty("confirmList") final List<ImportState> confirmList) {
+    public ImportConfigResponse(@JsonProperty("resourceKey") final ResourceKey resourceKey,
+                                @JsonProperty("confirmList") final List<ImportState> confirmList) {
         this.resourceKey = resourceKey;
-        this.importSettings = importSettings;
         this.confirmList = confirmList;
     }
 
     public ResourceKey getResourceKey() {
         return resourceKey;
-    }
-
-    public ImportSettings getImportSettings() {
-        return importSettings;
     }
 
     public List<ImportState> getConfirmList() {

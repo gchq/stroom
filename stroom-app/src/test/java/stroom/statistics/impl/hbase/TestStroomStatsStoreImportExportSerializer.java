@@ -21,7 +21,7 @@ package stroom.statistics.impl.hbase;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerService;
 import stroom.importexport.impl.ImportExportSerializer;
-import stroom.importexport.shared.ImportState;
+import stroom.importexport.shared.ImportSettings;
 import stroom.statistics.impl.hbase.entity.StroomStatsStoreStore;
 import stroom.statistics.impl.hbase.shared.StatisticField;
 import stroom.statistics.impl.hbase.shared.StatisticType;
@@ -83,7 +83,7 @@ class TestStroomStatsStoreImportExportSerializer extends AbstractCoreIntegration
 
         assertThat(stroomStatsStoreStore.list().size()).isEqualTo(0);
 
-        importExportSerializer.read(testDataDir, null, ImportState.ImportMode.IGNORE_CONFIRMATION);
+        importExportSerializer.read(testDataDir, null, ImportSettings.auto());
 
         final List<DocRef> dataSources = stroomStatsStoreStore.list();
 

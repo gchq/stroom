@@ -1,6 +1,7 @@
 package stroom.legacy.impex_6_1;
 
 import stroom.docref.DocRef;
+import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.util.shared.Severity;
@@ -13,6 +14,7 @@ import javax.inject.Singleton;
 @Singleton
 @Deprecated
 class SolrIndexDataMapConverter implements DataMapConverter {
+
     private final SolrIndexSerialiser serialiser;
 
     @Inject
@@ -24,7 +26,7 @@ class SolrIndexDataMapConverter implements DataMapConverter {
     public Map<String, byte[]> convert(final DocRef docRef,
                                        final Map<String, byte[]> dataMap,
                                        final ImportState importState,
-                                       final ImportState.ImportMode importMode,
+                                       final ImportSettings importSettings,
                                        final String userId) {
         Map<String, byte[]> result = dataMap;
 

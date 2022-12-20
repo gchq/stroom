@@ -18,7 +18,6 @@ package stroom.importexport.shared;
 
 import stroom.util.shared.DocRefs;
 import stroom.util.shared.ResourceGeneration;
-import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
@@ -28,7 +27,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
-import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -47,15 +45,7 @@ public interface ContentResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Import content",
             operationId = "importContent")
-    ResourceKey importContent(
-            @NotNull @Parameter(description = "request", required = true) ImportConfigRequest request);
-
-    @POST
-    @Path("confirmImport")
-    @Operation(
-            summary = "Get import confirmation state",
-            operationId = "confirmContentImport")
-    List<ImportState> confirmImport(
+    ImportConfigResponse importContent(
             @NotNull @Parameter(description = "request", required = true) ImportConfigRequest request);
 
     @POST
