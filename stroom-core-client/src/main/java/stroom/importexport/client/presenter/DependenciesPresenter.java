@@ -172,15 +172,26 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
         // Hold map of doc type icons keyed on type to save constructing for each row
         final Rest<DocumentTypes> rest = restFactory.create();
         rest
-                .onSuccess(documentTypes ->
-                        typeToSvgMap = documentTypes.getVisibleTypes().stream()
-                                .collect(Collectors.toMap(
-                                        DocumentType::getType,
-                                        documentType ->
-                                                new SvgPreset(
-                                                        ImageUtil.getImageURL() + documentType.getIconUrl(),
-                                                        documentType.getDisplayType(),
-                                                        true))))
+                .onSuccess(documentTypes -> {
+                    typeToSvgMap = documentTypes.getVisibleTypes().stream()
+                            .collect(Collectors.toMap(
+                                    DocumentType::getType,
+                                    documentType ->
+                                            new SvgPreset(
+                                                    ImageUtil.getImageURL() + documentType.getIconUrl(),
+                                                    documentType.getDisplayType(),
+                                                    true)));
+
+                    // Special case for Searchable as it is not a normal doc type
+                    // Not ideal defining it here but adding it fetchDocumentTypes causes problems
+                    // with the explorer context menus.
+                    typeToSvgMap.putIfAbsent(
+                            "Searchable",
+                            new SvgPreset(
+                                    ImageUtil.getImageURL() + DocumentType.DOC_IMAGE_URL + "searchable.svg",
+                                    "Searchable",
+                                    true));
+                })
                 .call(EXPLORER_RESOURCE)
                 .fetchDocumentTypes();
     }
