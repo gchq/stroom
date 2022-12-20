@@ -53,6 +53,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -410,13 +411,14 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                             explorerNodeService.createNode(imported,
                                     folderRef,
                                     PermissionInheritance.DESTINATION);
+                            explorerService.rebuildTree();
                         } else {
                             if (importSettings.isUseImportNames()) {
-                                explorerNodeService.renameNode(docRef);
+                                explorerService.rename(docRef, docRef.getName());
                             }
                             if (moving) {
-                                explorerNodeService.moveNode(
-                                        docRef,
+                                explorerService.move(
+                                        Collections.singletonList(docRef),
                                         folderRef,
                                         PermissionInheritance.DESTINATION);
                             }
