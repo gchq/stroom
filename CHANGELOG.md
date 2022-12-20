@@ -13,6 +13,14 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#3136** : Fix the reference data lookup logic that determines if a ref stream contains a given map or not. Fix NPE in `RefDataLookupRequest#toString()`. Change `ReferenceDataResult` to hold message templates to reduce memory use. Change `RefDataStoreHolder` to only add available maps once per ref stream. Improve in app logging of lookups.
+
+* Issue **#3140** : Ignore processor filter updates on import.
+
+* Issue **#3125** : Fix import rename and move so that imported items end up renamed in explorer and store.
+
+* Issue **#3148** : Fix dependencies screen showing status of Missing for the Ref Data and Dual Searchables. Also fix the missing icon on that screen for Searchables.
+
 * Relax validation requiring proxy repo and failed retry directories to exist before proxy boots. Now checks they exist (creating if they don't) at time of use.
 
 * Issue **#3031** : Add connectors to poll from AWS SQS.

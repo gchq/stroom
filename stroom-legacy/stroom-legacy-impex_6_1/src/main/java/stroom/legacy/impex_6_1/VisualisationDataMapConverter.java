@@ -2,20 +2,22 @@ package stroom.legacy.impex_6_1;
 
 import stroom.dashboard.impl.visualisation.VisualisationSerialiser;
 import stroom.docref.DocRef;
+import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.legacy.model_6_1.Visualisation;
 import stroom.util.shared.Severity;
 import stroom.visualisation.shared.VisualisationDoc;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 @Deprecated
 class VisualisationDataMapConverter implements DataMapConverter {
+
     private final VisualisationSerialiser serialiser;
 
     @Inject
@@ -27,7 +29,7 @@ class VisualisationDataMapConverter implements DataMapConverter {
     public Map<String, byte[]> convert(final DocRef docRef,
                                        final Map<String, byte[]> dataMap,
                                        final ImportState importState,
-                                       final ImportState.ImportMode importMode,
+                                       final ImportSettings importSettings,
                                        final String userId) {
         Map<String, byte[]> result = dataMap;
         if (dataMap.size() > 0 && !dataMap.containsKey("meta")) {
@@ -49,7 +51,8 @@ class VisualisationDataMapConverter implements DataMapConverter {
                 document.setFunctionName(oldVisualisation.getFunctionName());
                 document.setSettings(oldVisualisation.getSettings());
 
-                final stroom.legacy.model_6_1.DocRef scriptRef = LegacyXmlSerialiser.getDocRefFromLegacyXml(oldVisualisation.getScriptRefXML());
+                final stroom.legacy.model_6_1.DocRef scriptRef = LegacyXmlSerialiser.getDocRefFromLegacyXml(
+                        oldVisualisation.getScriptRefXML());
                 document.setScriptRef(MappingUtil.map(scriptRef));
 
                 result = serialiser.write(document);

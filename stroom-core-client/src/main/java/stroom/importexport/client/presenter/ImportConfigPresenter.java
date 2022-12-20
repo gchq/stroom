@@ -24,7 +24,8 @@ import stroom.importexport.client.event.ImportConfigConfirmEvent;
 import stroom.importexport.client.event.ImportConfigEvent;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.ImportConfigRequest;
-import stroom.importexport.shared.ImportState;
+import stroom.importexport.shared.ImportConfigResponse;
+import stroom.importexport.shared.ImportSettings;
 import stroom.util.shared.ResourceKey;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
@@ -45,7 +46,6 @@ import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class ImportConfigPresenter
         extends MyPresenter<ImportConfigPresenter.ImportConfigView, ImportConfigPresenter.ImportProxy>
@@ -76,21 +76,23 @@ public class ImportConfigPresenter
 
             @Override
             protected void onSuccess(final ResourceKey resourceKey) {
-                final Rest<List<ImportState>> rest = restFactory.create();
+                final Rest<ImportConfigResponse> rest = restFactory.create();
                 rest
-                        .onSuccess(result -> {
-                            if (result.isEmpty()) {
+                        .onSuccess(response -> {
+                            if (response.getConfirmList().isEmpty()) {
                                 warning("The import package contains nothing that can be imported into " +
                                         "this version of Stroom.");
                             } else {
                                 HidePopupEvent.builder(ImportConfigPresenter.this).fire();
                                 enableButtons();
-                                ImportConfigConfirmEvent.fire(ImportConfigPresenter.this, resourceKey, result);
+                                ImportConfigConfirmEvent.fire(ImportConfigPresenter.this, response);
                             }
                         })
                         .onFailure(caught -> error(caught.getMessage()))
                         .call(CONTENT_RESOURCE)
-                        .confirmImport(new ImportConfigRequest(resourceKey, new ArrayList<>()));
+                        .importContent(new ImportConfigRequest(resourceKey,
+                                ImportSettings.createConfirmation(),
+                                new ArrayList<>()));
             }
 
             @Override

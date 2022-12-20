@@ -34,6 +34,9 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.client.event.ImportConfigConfirmEvent;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.ImportConfigRequest;
+import stroom.importexport.shared.ImportConfigResponse;
+import stroom.importexport.shared.ImportSettings;
+import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.Preset;
@@ -90,6 +93,8 @@ public class ImportConfigConfirmPresenter extends
     private List<ImportState> confirmList = new ArrayList<>();
     private final EntityDropDownPresenter rootFolderPresenter;
 
+    private final ImportSettings.Builder importSettingsBuilder = ImportSettings.builder();
+
     @Inject
     public ImportConfigConfirmPresenter(final EventBus eventBus,
                                         final ImportConfigConfirmView view,
@@ -119,15 +124,11 @@ public class ImportConfigConfirmPresenter extends
         view.setUseImportNames(false);
         view.setUseImportFolders(false);
         view.onUseImportNames(useImportNames -> {
-            for (final ImportState importState : confirmList) {
-                importState.setUseImportNames(useImportNames);
-            }
+            importSettingsBuilder.useImportNames(useImportNames);
             refresh();
         });
         view.onUseImportFolders(useImportFolders -> {
-            for (final ImportState importState : confirmList) {
-                importState.setUseImportFolders(useImportFolders);
-            }
+            importSettingsBuilder.useImportFolders(useImportFolders);
             refresh();
         });
 
@@ -135,9 +136,7 @@ public class ImportConfigConfirmPresenter extends
     }
 
     private void setRootDocRef(final DocRef rootDocRef) {
-        for (final ImportState importState : confirmList) {
-            importState.setRootDocRef(rootDocRef);
-        }
+        importSettingsBuilder.rootDocRef(rootDocRef);
         refresh();
     }
 
@@ -160,8 +159,8 @@ public class ImportConfigConfirmPresenter extends
     @ProxyEvent
     @Override
     public void onConfirmImport(final ImportConfigConfirmEvent event) {
-        resourceKey = event.getResourceKey();
-        confirmList = event.getConfirmList();
+        resourceKey = event.getResponse().getResourceKey();
+        confirmList = event.getResponse().getConfirmList();
         updateList();
         forceReveal();
     }
@@ -179,11 +178,12 @@ public class ImportConfigConfirmPresenter extends
     }
 
     public void refresh() {
-        final Rest<List<ImportState>> rest = restFactory.create();
+        importSettingsBuilder.importMode(ImportMode.CREATE_CONFIRMATION);
+        final Rest<ImportConfigResponse> rest = restFactory.create();
         rest
                 .onSuccess(result -> {
-                    confirmList = result;
-                    if (result == null || result.isEmpty()) {
+                    confirmList = result.getConfirmList();
+                    if (confirmList.isEmpty()) {
                         warning("The import package contains nothing that can be imported into " +
                                 "this version of Stroom.");
                     }
@@ -191,7 +191,7 @@ public class ImportConfigConfirmPresenter extends
                 })
                 .onFailure(caught -> error(caught.getMessage()))
                 .call(CONTENT_RESOURCE)
-                .confirmImport(new ImportConfigRequest(resourceKey, confirmList));
+                .importContent(new ImportConfigRequest(resourceKey, importSettingsBuilder.build(), confirmList));
     }
 
     private void updateList() {
@@ -219,9 +219,9 @@ public class ImportConfigConfirmPresenter extends
         if (e.isOk()) {
             boolean warnings = false;
             int count = 0;
+            importSettingsBuilder.enableFilters(getView().isEnableFilters());
+            importSettingsBuilder.enableFiltersFromTime(getView().getEnableFromDate());
             for (final ImportState importState : confirmList) {
-                importState.setEnableFilters(getView().isEnableFilters());
-                importState.setEnableFiltersFromTime(getView().getEnableFromDate());
                 if (importState.isAction()) {
                     count++;
                     if (importState.getSeverity().greaterThan(Severity.INFO)) {
@@ -459,8 +459,13 @@ public class ImportConfigConfirmPresenter extends
     }
 
     public void abortImport() {
-        // Abort ... set the confirm list to blank
-        final Rest<ResourceKey> rest = restFactory.create();
+        // Abort ... use a blank confirm list to perform an import that imports nothing.
+        importSettingsBuilder.importMode(ImportMode.ACTION_CONFIRMATION);
+        importSettingsBuilder.useImportNames(false);
+        importSettingsBuilder.useImportFolders(false);
+        importSettingsBuilder.enableFilters(false);
+
+        final Rest<ImportConfigResponse> rest = restFactory.create();
         rest
                 .onSuccess(result2 -> AlertEvent.fireWarn(ImportConfigConfirmPresenter.this,
                         "Import Aborted",
@@ -469,11 +474,12 @@ public class ImportConfigConfirmPresenter extends
                         caught.getMessage(),
                         () -> HidePopupEvent.builder(ImportConfigConfirmPresenter.this).ok(false).fire()))
                 .call(CONTENT_RESOURCE)
-                .importContent(new ImportConfigRequest(resourceKey, new ArrayList<>()));
+                .importContent(new ImportConfigRequest(resourceKey, importSettingsBuilder.build(), new ArrayList<>()));
     }
 
     public void importData() {
-        final Rest<ResourceKey> rest = restFactory.create();
+        importSettingsBuilder.importMode(ImportMode.ACTION_CONFIRMATION);
+        final Rest<ImportConfigResponse> rest = restFactory.create();
         rest
                 .onSuccess(result2 ->
                         AlertEvent.fireInfo(
@@ -497,12 +503,11 @@ public class ImportConfigConfirmPresenter extends
                     clearCaches();
                 })
                 .call(CONTENT_RESOURCE)
-                .importContent(new ImportConfigRequest(resourceKey, confirmList));
+                .importContent(new ImportConfigRequest(resourceKey, importSettingsBuilder.build(), confirmList));
     }
 
     private void clearCaches() {
         // TODO : Add cache clearing functionality.
-
         // ClearScriptCacheEvent.fire(this);
         // ClearFunctionCacheEvent.fire(this);
     }

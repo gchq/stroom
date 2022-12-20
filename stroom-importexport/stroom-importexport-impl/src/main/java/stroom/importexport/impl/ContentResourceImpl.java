@@ -11,13 +11,13 @@ import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.importexport.shared.ImportConfigRequest;
+import stroom.importexport.shared.ImportConfigResponse;
 import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
 import stroom.util.rest.RestUtil;
 import stroom.util.shared.DocRefs;
 import stroom.util.shared.QuickFilterResultPage;
 import stroom.util.shared.ResourceGeneration;
-import stroom.util.shared.ResourceKey;
 
 import com.google.common.base.Strings;
 import event.logging.AdvancedQuery;
@@ -63,7 +63,7 @@ public class ContentResourceImpl implements ContentResource {
 
     @Override
     @AutoLogged(OperationType.MANUALLY_LOGGED)
-    public ResourceKey importContent(final ImportConfigRequest request) {
+    public ImportConfigResponse importContent(final ImportConfigRequest request) {
         if (request.getConfirmList() == null) {
             throw RestUtil.badRequest("Missing confirm list");
         }
@@ -74,8 +74,7 @@ public class ContentResourceImpl implements ContentResource {
                 .withDefaultEventAction(buildImportEventAction(request))
                 .withSimpleLoggedResult(() ->
                         contentServiceProvider.get()
-                                .performImport(request.getResourceKey(),
-                                        request.getConfirmList()))
+                                .importContent(request))
                 .getResultAndLog();
     }
 
@@ -98,15 +97,6 @@ public class ContentResourceImpl implements ContentResource {
                                 .collect(Collectors.toList()))
                         .build())
                 .build();
-    }
-
-
-    @AutoLogged(OperationType.IMPORT)
-    @Override
-    public List<ImportState> confirmImport(final ImportConfigRequest importConfigRequest) {
-        return contentServiceProvider.get().confirmImport(
-                importConfigRequest.getResourceKey(),
-                importConfigRequest.getConfirmList());
     }
 
     @AutoLogged(OperationType.MANUALLY_LOGGED)

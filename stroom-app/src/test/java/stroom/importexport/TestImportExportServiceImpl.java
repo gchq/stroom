@@ -26,6 +26,7 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.impl.ImportExportService;
+import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
@@ -152,14 +153,19 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         assertThat(feedStore.list().size()).isEqualTo(startFeedSize - 1);
 
         // Import
-        final List<ImportState> confirmations = importExportService
-                .createImportConfirmationList(resourceStore.getTempFile(file), new ArrayList<>());
+        final List<ImportState> confirmations = importExportService.importConfig(
+                resourceStore.getTempFile(file),
+                ImportSettings.createConfirmation(),
+                new ArrayList<>());
 
         for (final ImportState confirmation : confirmations) {
             confirmation.setAction(true);
         }
 
-        importExportService.performImportWithConfirmation(resourceStore.getTempFile(file), confirmations);
+        importExportService.importConfig(
+                resourceStore.getTempFile(file),
+                ImportSettings.actionConfirmation(),
+                confirmations);
 
         assertThat(feedStore.list().size()).isEqualTo(startFeedSize);
         assertThat(pipelineStore.list().size()).isEqualTo(startTranslationSize);
