@@ -44,12 +44,4 @@ public interface NonExplorerDocRefProvider {
      * @return A string that represents a suitable name for this docref.
      */
     String findNameOfDocRef(final DocRef docRef);
-
-    /**
-     * Check whether this DocRef is already known to this instance
-     *
-     * @param docRef non-explorer based docref that might be known to this instance
-     * @return true if the non-explorer based docref is known to this instance
-     */
-    boolean docExists(DocRef docRef);
 }

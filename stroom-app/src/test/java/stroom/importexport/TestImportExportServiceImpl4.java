@@ -25,6 +25,8 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.importexport.impl.ImportExportService;
+import stroom.importexport.shared.ImportSettings;
+import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -66,6 +68,7 @@ class TestImportExportServiceImpl4 extends AbstractCoreIntegrationTest {
         final Path rootTestDir = StroomCoreServerTestFileUtil.getTestResourcesDir();
         final Path importDir = rootTestDir.resolve("samples/config");
         final Path zipFile = getCurrentTestDir().resolve(UUID.randomUUID() + ".zip");
+        final ImportSettings.Builder builder = ImportSettings.builder();
 
         ZipUtil.zip(zipFile, importDir, Pattern.compile(".*DATA_SPLITTER.*"), null);
         assertThat(Files.isRegularFile(zipFile)).isTrue();
@@ -80,7 +83,8 @@ class TestImportExportServiceImpl4 extends AbstractCoreIntegrationTest {
                 confirmList,
                 zipFile,
                 "Feeds and Translations/Test",
-                "DATA_SPLITTER-EVENTS");
+                "DATA_SPLITTER-EVENTS",
+                builder);
 
         /////////////////////////////////////////////////
         // CHECK RENAME
@@ -98,26 +102,24 @@ class TestImportExportServiceImpl4 extends AbstractCoreIntegrationTest {
                 confirmList,
                 zipFile,
                 "Feeds and Translations/Test",
-                "RENAMED_DATA_SPLITTER-EVENTS");
+                "RENAMED_DATA_SPLITTER-EVENTS",
+                builder);
 
         // Now import with import name preservation.
-        confirmList.forEach(state -> {
-            state.setUseImportNames(true);
-        });
+        builder.useImportNames(true);
         confirmList = performImport(
                 confirmList,
                 zipFile,
                 "Feeds and Translations/Test",
-                "DATA_SPLITTER-EVENTS");
+                "DATA_SPLITTER-EVENTS",
+                builder);
 
         /////////////////////////////////////////////////
         // CHECK FOLDER MOVE
         /////////////////////////////////////////////////
 
-        confirmList.forEach(state -> {
-            state.setUseImportNames(false);
-            state.setUseImportFolders(false);
-        });
+        builder.useImportNames(false);
+        builder.useImportFolders(false);
 
         // Now move the item.
         // Create a new dest dir.
@@ -136,49 +138,48 @@ class TestImportExportServiceImpl4 extends AbstractCoreIntegrationTest {
                 confirmList,
                 zipFile,
                 "Destination Folder",
-                "RENAMED_DATA_SPLITTER-EVENTS");
-        confirmList.forEach(state -> {
-            state.setUseImportNames(false);
-            state.setUseImportFolders(true);
-        });
+                "RENAMED_DATA_SPLITTER-EVENTS",
+                builder);
+        builder.useImportNames(false);
+        builder.useImportFolders(true);
         confirmList = performImport(
                 confirmList,
                 zipFile,
                 "Feeds and Translations/Test",
-                "RENAMED_DATA_SPLITTER-EVENTS");
+                "RENAMED_DATA_SPLITTER-EVENTS",
+                builder);
 
         // Move back.
         explorerNodeService.moveNode(PIPELINE_DOC_REF, destFolder, PermissionInheritance.DESTINATION);
-        confirmList.forEach(state -> {
-            state.setUseImportNames(true);
-            state.setUseImportFolders(true);
-        });
+        builder.useImportNames(true);
+        builder.useImportFolders(true);
         confirmList = performImport(
                 confirmList,
                 zipFile,
                 "Feeds and Translations/Test",
-                "DATA_SPLITTER-EVENTS");
+                "DATA_SPLITTER-EVENTS",
+                builder);
 
         /////////////////////////////////////////////////
         // CHECK NEW
         /////////////////////////////////////////////////
         explorerNodeService.renameNode(renamedPipelineDocRef);
         explorerNodeService.moveNode(PIPELINE_DOC_REF, destFolder, PermissionInheritance.DESTINATION);
-        confirmList.forEach(state -> {
-            state.setUseImportNames(false);
-            state.setUseImportFolders(false);
-        });
+        builder.useImportNames(false);
+        builder.useImportFolders(false);
         confirmList = performImport(
                 confirmList,
                 zipFile,
                 "Destination Folder",
-                "RENAMED_DATA_SPLITTER-EVENTS");
+                "RENAMED_DATA_SPLITTER-EVENTS",
+                builder);
         explorerService.delete(Collections.singletonList(PIPELINE_DOC_REF));
         confirmList = performImport(
                 confirmList,
                 zipFile,
                 "Feeds and Translations/Test",
-                "DATA_SPLITTER-EVENTS");
+                "DATA_SPLITTER-EVENTS",
+                builder);
 
         /////////////////////////////////////////////////
         // CHECK NEW ROOT
@@ -186,70 +187,71 @@ class TestImportExportServiceImpl4 extends AbstractCoreIntegrationTest {
         final DocRef rootDocRef =
                 new DocRef(ExplorerConstants.FOLDER, UUID.randomUUID().toString(), "New Root");
         explorerNodeService.createNode(rootDocRef, rootNode.get().getDocRef(), PermissionInheritance.DESTINATION);
-        confirmList.forEach(state -> {
-            state.setRootDocRef(rootDocRef);
-            state.setUseImportNames(false);
-            state.setUseImportFolders(false);
-        });
+        builder.rootDocRef(rootDocRef);
+        builder.useImportNames(false);
+        builder.useImportFolders(false);
         confirmList = performImport(
                 confirmList,
                 zipFile,
                 "Feeds and Translations/Test",
-                "DATA_SPLITTER-EVENTS");
+                "DATA_SPLITTER-EVENTS",
+                builder);
 
         explorerService.delete(Collections.singletonList(PIPELINE_DOC_REF));
-        confirmList.forEach(state -> {
-            state.setRootDocRef(rootDocRef);
-            state.setUseImportNames(false);
-            state.setUseImportFolders(false);
-        });
-        confirmList = performImport(
-                confirmList,
-                zipFile,
-                "New Root/Feeds and Translations/Test",
-                "DATA_SPLITTER-EVENTS");
-
-        explorerService.delete(Collections.singletonList(PIPELINE_DOC_REF));
-        confirmList.forEach(state -> {
-            state.setRootDocRef(rootDocRef);
-            state.setUseImportNames(false);
-            state.setUseImportFolders(true);
-        });
+        builder.rootDocRef(rootDocRef);
+        builder.useImportNames(false);
+        builder.useImportFolders(false);
         confirmList = performImport(
                 confirmList,
                 zipFile,
                 "New Root/Feeds and Translations/Test",
                 "DATA_SPLITTER-EVENTS",
-                "New Root/");
+                builder);
 
         explorerService.delete(Collections.singletonList(PIPELINE_DOC_REF));
-        confirmList.forEach(state -> {
-            state.setRootDocRef(rootDocRef);
-            state.setUseImportNames(true);
-            state.setUseImportFolders(true);
-        });
+        builder.rootDocRef(rootDocRef);
+        builder.useImportNames(false);
+        builder.useImportFolders(true);
         confirmList = performImport(
                 confirmList,
                 zipFile,
                 "New Root/Feeds and Translations/Test",
                 "DATA_SPLITTER-EVENTS",
-                "New Root/");
-    }
+                "New Root/",
+                builder);
 
-    private List<ImportState> performImport(final List<ImportState> in,
-                                            final Path zipFile,
-                                            final String expectedPath,
-                                            final String expectedName) {
-        return performImport(in, zipFile, expectedPath, expectedName, "");
+        explorerService.delete(Collections.singletonList(PIPELINE_DOC_REF));
+        builder.rootDocRef(rootDocRef);
+        builder.useImportNames(true);
+        builder.useImportFolders(true);
+        confirmList = performImport(
+                confirmList,
+                zipFile,
+                "New Root/Feeds and Translations/Test",
+                "DATA_SPLITTER-EVENTS",
+                "New Root/",
+                builder);
     }
 
     private List<ImportState> performImport(final List<ImportState> in,
                                             final Path zipFile,
                                             final String expectedPath,
                                             final String expectedName,
-                                            final String prefix) {
+                                            final ImportSettings.Builder builder) {
+        return performImport(in, zipFile, expectedPath, expectedName, "", builder);
+    }
+
+    private List<ImportState> performImport(final List<ImportState> in,
+                                            final Path zipFile,
+                                            final String expectedPath,
+                                            final String expectedName,
+                                            final String prefix,
+                                            final ImportSettings.Builder builder) {
         final List<ImportState> confirmList =
-                importExportService.createImportConfirmationList(zipFile, in);
+                importExportService.importConfig(
+                        zipFile,
+                        builder.importMode(ImportMode.CREATE_CONFIRMATION).build(),
+                        in);
         assertThat(confirmList).isNotNull();
         assertThat(confirmList.size()).isGreaterThan(0);
         confirmList.forEach(state -> {
@@ -260,7 +262,10 @@ class TestImportExportServiceImpl4 extends AbstractCoreIntegrationTest {
                 assertThat(prefix + state.getSourcePath()).isEqualTo(state.getDestPath());
             }
         });
-        importExportService.performImportWithConfirmation(zipFile, confirmList);
+        importExportService.importConfig(
+                zipFile,
+                builder.importMode(ImportMode.ACTION_CONFIRMATION).build(),
+                confirmList);
 
         confirmList.forEach(state -> {
             final DocRef docRef = state.getDocRef();
