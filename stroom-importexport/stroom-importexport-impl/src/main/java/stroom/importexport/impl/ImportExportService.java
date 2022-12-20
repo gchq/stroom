@@ -31,8 +31,8 @@ import java.util.Set;
 public interface ImportExportService {
 
     List<ImportState> importConfig(Path data,
-                                    ImportSettings importSettings,
-                                    List<ImportState> confirmList);
+                                   ImportSettings importSettings,
+                                   List<ImportState> confirmList);
 
     /**
      * Export a Stroom repository
@@ -40,5 +40,7 @@ public interface ImportExportService {
      * Also in the zip file output content that can be exploded and stored in
      * source control. Used for tracking changes with XSLT and feeds.
      */
-    void exportConfig(Set<DocRef> docRefs, Path data, List<Message> messageList);
+    void exportConfig(Set<DocRef> docRefs,
+                      Path data,
+                      List<Message> messageList);
 }

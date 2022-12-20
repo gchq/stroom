@@ -8,6 +8,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
 public class ImportSettings {
@@ -89,6 +91,33 @@ public class ImportSettings {
 
     public static ImportSettings actionConfirmation() {
         return builder().importMode(ImportMode.ACTION_CONFIRMATION).build();
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final ImportSettings that = (ImportSettings) o;
+        return enableFilters == that.enableFilters &&
+                useImportNames == that.useImportNames &&
+                useImportFolders == that.useImportFolders &&
+                importMode == that.importMode &&
+                Objects.equals(enableFiltersFromTime, that.enableFiltersFromTime) &&
+                Objects.equals(rootDocRef, that.rootDocRef);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(importMode,
+                enableFilters,
+                enableFiltersFromTime,
+                useImportNames,
+                useImportFolders,
+                rootDocRef);
     }
 
     public enum ImportMode {

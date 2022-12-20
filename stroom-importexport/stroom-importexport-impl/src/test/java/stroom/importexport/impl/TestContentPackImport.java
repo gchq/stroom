@@ -259,10 +259,9 @@ class TestContentPackImport {
         Mockito.when(contentPackImportConfig.isEnabled()).thenReturn(true);
         ContentPackImport contentPackImport = getContentPackImport();
 
-        final ImportSettings importSettings = ImportSettings.auto();
         Mockito.doThrow(new RuntimeException("Error thrown by mock import service for test"))
                 .when(importExportService)
-                .importConfig(ArgumentMatchers.any(), importSettings, new ArrayList<>());
+                .importConfig(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
 
         FileUtil.touch(testPack1);
 
