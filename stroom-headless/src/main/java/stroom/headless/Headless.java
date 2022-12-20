@@ -21,6 +21,7 @@ import stroom.data.zip.StroomZipFileType;
 import stroom.data.zip.StroomZipNameSet;
 import stroom.docstore.impl.fs.FSPersistenceConfig;
 import stroom.importexport.impl.ImportExportService;
+import stroom.importexport.shared.ImportSettings;
 import stroom.pipeline.filter.SafeXMLFilter;
 import stroom.proxy.repo.StroomZipRepository;
 import stroom.task.api.SimpleTaskContext;
@@ -53,6 +54,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -300,7 +302,7 @@ public class Headless extends AbstractCommandLineTool {
 
     private void readConfig() {
         LOGGER.info("Reading configuration from: " + FileUtil.getCanonicalPath(configFile));
-        importExportService.performImportWithoutConfirmation(configFile);
+        importExportService.importConfig(configFile, ImportSettings.auto(), new ArrayList<>());
     }
 
     private void createInjector() {

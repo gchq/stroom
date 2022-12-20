@@ -16,6 +16,7 @@
 
 package stroom.importexport.impl;
 
+import stroom.importexport.shared.ImportSettings;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.shared.User;
@@ -32,6 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 
@@ -140,7 +142,9 @@ public class ContentPackImport {
             //It is possible to import a content pack (or packs) with missing dependencies
             //so the onus is on the person putting the file in the import directory to
             //ensure the packs they import are complete
-            importExportService.performImportWithoutConfirmation(contentPack);
+            importExportService.importConfig(contentPack,
+                    ImportSettings.auto(),
+                    new ArrayList<>());
             moveFile(contentPack, contentPack.getParent().resolve(IMPORTED_DIR));
 
             LOGGER.info("Completed import of content pack {}", FileUtil.getCanonicalPath(contentPack));

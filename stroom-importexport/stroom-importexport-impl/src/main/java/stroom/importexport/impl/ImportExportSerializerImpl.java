@@ -26,8 +26,9 @@ import stroom.explorer.shared.PermissionInheritance;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.api.ImportExportDocumentEventLog;
 import stroom.importexport.api.NonExplorerDocRefProvider;
+import stroom.importexport.shared.ImportSettings;
+import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
-import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.importexport.shared.ImportState.State;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -96,8 +97,8 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
     @Override
     public Set<DocRef> read(final Path dir,
                             List<ImportState> importStateList,
-                            final ImportMode importMode) {
-        if (importStateList == null || ImportMode.IGNORE_CONFIRMATION.equals(importMode)) {
+                            final ImportSettings importSettings) {
+        if (importStateList == null || ImportMode.IGNORE_CONFIRMATION.equals(importSettings.getImportMode())) {
             importStateList = new ArrayList<>();
         }
 
@@ -109,14 +110,14 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 .collect(Collectors.toMap(ImportState::getDocRef, Function.identity()));
 
         // Find all of the paths to import.
-        final Set<DocRef> result = processDir(dir, confirmMap, importMode);
+        final Set<DocRef> result = processDir(dir, confirmMap, importSettings);
 
         // Rebuild the list
         importStateList.clear();
         importStateList.addAll(confirmMap.values());
 
         // Rebuild the tree,
-        if (!ImportMode.CREATE_CONFIRMATION.equals(importMode)) {
+        if (!ImportMode.CREATE_CONFIRMATION.equals(importSettings.getImportMode())) {
             explorerService.rebuildTree();
         }
 
@@ -128,7 +129,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
     private Set<DocRef> processDir(final Path dir,
                                    final Map<DocRef, ImportState> confirmMap,
-                                   final ImportMode importMode) {
+                                   final ImportSettings importSettings) {
         HashSet<DocRef> result = new HashSet<>();
 
         try {
@@ -141,7 +142,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                             try {
                                 final String fileName = file.getFileName().toString();
                                 if (fileName.endsWith(".node") && !fileName.startsWith(".")) {
-                                    final DocRef imported = performImport(file, confirmMap, importMode);
+                                    final DocRef imported = performImport(file, confirmMap, importSettings);
                                     if (imported != null) {
                                         result.add(imported);
                                     }
@@ -160,7 +161,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
     private DocRef performImport(final Path nodeFile,
                                  final Map<DocRef, ImportState> confirmMap,
-                                 final ImportMode importMode) {
+                                 final ImportSettings importSettings) {
         DocRef imported = null;
         try {
             // Read the node file.
@@ -215,7 +216,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                             dataMap,
                             importState,
                             confirmMap,
-                            importMode);
+                            importSettings);
 
                 } else {
                     imported = importExplorerDoc(importExportActionHandler,
@@ -225,7 +226,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                             dataMap,
                             importState,
                             confirmMap,
-                            importMode);
+                            importSettings);
                 }
             } catch (final IOException | PermissionException e) {
                 LOGGER.error("Error importing file {}", nodeFile.toAbsolutePath(), e);
@@ -245,11 +246,11 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                                         final Map<String, byte[]> dataMap,
                                         final ImportState importState,
                                         final Map<DocRef, ImportState> confirmMap,
-                                        final ImportMode importMode) {
+                                        final ImportSettings importSettings) {
         final NonExplorerDocRefProvider nonExplorerDocRefProvider =
                 (NonExplorerDocRefProvider) importExportActionHandler;
 
-        final String importPath = resolvePath(path, importState);
+        final String importPath = resolvePath(path, importSettings);
 
         final DocRef ownerDocument = nonExplorerDocRefProvider.getOwnerDocument(docRef, dataMap);
         final Optional<ExplorerNode> existingExplorerNode = explorerNodeService.getNode(ownerDocument);
@@ -257,10 +258,10 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         String destName = ownerDocument.getName();
         if (existingExplorerNode.isPresent()) {
             final List<ExplorerNode> parents = explorerNodeService.getPath(ownerDocument);
-            if (!importState.isUseImportNames()) {
+            if (!importSettings.isUseImportNames()) {
                 destName = existingExplorerNode.get().getName();
             }
-            if (!importState.isUseImportFolders()) {
+            if (!importSettings.isUseImportFolders()) {
                 destPath = getParentPath(parents);
             }
         }
@@ -269,47 +270,29 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         importState.setSourcePath(createPath(path, ownerDocument.getName()) + nameSuffix);
         importState.setDestPath(createPath(destPath, destName) + nameSuffix);
 
-        final boolean docExists = nonExplorerDocRefProvider.docExists(docRef);
-        if (docExists) {
-            // This is a pre-existing item so make sure we are allowed to update it.
-            if (!securityContext.hasDocumentPermission(ownerDocument.getUuid(),
-                    DocumentPermissionNames.UPDATE)) {
-                throw new PermissionException(
-                        securityContext.getUserId(),
-                        "You do not have permission to update '" + ownerDocument + "'");
-            }
-
-            importState.setState(State.UPDATE);
-
-        } else {
-            importState.setState(State.NEW);
-        }
-
         try {
             // Import the item via the appropriate handler.
-            if (ImportMode.CREATE_CONFIRMATION.equals(importMode) ||
-                    ImportMode.IGNORE_CONFIRMATION.equals(importMode) ||
+            if (ImportMode.CREATE_CONFIRMATION.equals(importSettings.getImportMode()) ||
+                    ImportMode.IGNORE_CONFIRMATION.equals(importSettings.getImportMode()) ||
                     importState.isAction()) {
 
-                final ImportExportActionHandler.ImpexDetails importDetails =
-                        importExportActionHandler.importDocument(
-                                docRef,
-                                dataMap,
-                                importState,
-                                importMode);
+                final DocRef imported = importExportActionHandler.importDocument(
+                        docRef,
+                        dataMap,
+                        importState,
+                        importSettings);
 
-                if (importDetails.isIgnore()) {
+                if (State.IGNORE.equals(importState.getState())) {
                     // Should skip this item so remove it from the map.
                     confirmMap.remove(docRef);
                 } else {
-                    final DocRef imported = importDetails.getDocRef();
                     if (imported == null) {
                         throw new RuntimeException("Import failed - no DocRef returned");
                     }
 
                     // Add explorer node afterwards on successful import as they won't be controlled by
                     // doc service.
-                    if (importState.ok(importMode)) {
+                    if (ImportSettings.ok(importSettings, importState)) {
                         importExportDocumentEventLog.importDocument(
                                 docRef.getType(),
                                 imported.getUuid(),
@@ -342,8 +325,8 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                                      final Map<String, byte[]> dataMap,
                                      final ImportState importState,
                                      final Map<DocRef, ImportState> confirmMap,
-                                     final ImportMode importMode) {
-        final String importPath = resolvePath(path, importState);
+                                     final ImportSettings importSettings) {
+        final String importPath = resolvePath(path, importSettings);
 
         String destPath = importPath;
         String destName = docRef.getName();
@@ -365,10 +348,10 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
             importState.setState(State.UPDATE);
             final List<ExplorerNode> parents = explorerNodeService.getPath(docRef);
             final String currentPath = getParentPath(parents);
-            if (!importState.isUseImportNames()) {
+            if (!importSettings.isUseImportNames()) {
                 destName = existingNode.get().getName();
             }
-            if (!importState.isUseImportFolders()) {
+            if (!importSettings.isUseImportFolders()) {
                 destPath = currentPath;
             }
             if (!destPath.equals(currentPath)) {
@@ -387,7 +370,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
             final ExplorerNode parent = explorerNodeService.getRoot().orElse(null);
             final ExplorerNode parentNode = getOrCreateParentFolder(parent,
                     importPath,
-                    importState.ok(importMode));
+                    ImportSettings.ok(importSettings, importState));
 
             // Check permissions on the parent folder.
             folderRef = new DocRef(parentNode.getType(), parentNode.getUuid(), parentNode.getName());
@@ -401,36 +384,34 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         try {
             // Import the item via the appropriate handler.
             if (importExportActionHandler != null && (
-                    ImportMode.CREATE_CONFIRMATION.equals(importMode) ||
-                            ImportMode.IGNORE_CONFIRMATION.equals(importMode) ||
+                    ImportMode.CREATE_CONFIRMATION.equals(importSettings.getImportMode()) ||
+                            ImportMode.IGNORE_CONFIRMATION.equals(importSettings.getImportMode()) ||
                             importState.isAction())) {
 
-                final ImportExportActionHandler.ImpexDetails importDetails =
-                        importExportActionHandler.importDocument(
-                                docRef,
-                                dataMap,
-                                importState,
-                                importMode);
+                final DocRef imported = importExportActionHandler.importDocument(
+                        docRef,
+                        dataMap,
+                        importState,
+                        importSettings);
 
-                if (importDetails.isIgnore()) {
+                if (State.IGNORE.equals(importState.getState())) {
                     // Should skip this item so remove it from the map.
                     confirmMap.remove(docRef);
                 } else {
-                    final DocRef imported = importDetails.getDocRef();
                     if (imported == null) {
                         throw new RuntimeException("Import failed - no DocRef returned");
                     }
 
                     // Add explorer node afterwards on successful import as they won't be controlled by
                     // doc service.
-                    if (importState.ok(importMode)) {
+                    if (ImportSettings.ok(importSettings, importState)) {
                         // Create, rename and/or move explorer node.
                         if (existingNode.isEmpty()) {
                             explorerNodeService.createNode(imported,
                                     folderRef,
                                     PermissionInheritance.DESTINATION);
                         } else {
-                            if (importState.isUseImportNames()) {
+                            if (importSettings.isUseImportNames()) {
                                 explorerNodeService.renameNode(docRef);
                             }
                             if (moving) {
@@ -465,14 +446,14 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         return docRef;
     }
 
-    private String resolvePath(final String path, final ImportState importState) {
+    private String resolvePath(final String path, final ImportSettings importSettings) {
         String result = path;
-        if (importState.getRootDocRef() != null) {
+        if (importSettings.getRootDocRef() != null) {
             final Optional<ExplorerNode> optionalExplorerNode =
-                    explorerNodeService.getNode(importState.getRootDocRef());
+                    explorerNodeService.getNode(importSettings.getRootDocRef());
             if (optionalExplorerNode.isPresent()) {
                 final ExplorerNode rootNode = optionalExplorerNode.get();
-                final List<ExplorerNode> nodes = explorerNodeService.getPath(importState.getRootDocRef());
+                final List<ExplorerNode> nodes = explorerNodeService.getPath(importSettings.getRootDocRef());
                 nodes.add(rootNode);
                 // Remove root node.
                 explorerNodeService.getRoot().ifPresent(root -> {
@@ -629,7 +610,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
             } else {
                 docRef = initialDocRef;
                 explorerDocRef = docRef;
-                explorerNode = explorerNodeService.getNode(explorerDocRef).get();
+                explorerNode = explorerNodeService.getNode(explorerDocRef).orElse(null);
             }
 
             // Get the explorer path to this doc ref.

@@ -29,7 +29,7 @@ import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.impl.ImportExportSerializer;
-import stroom.importexport.shared.ImportState.ImportMode;
+import stroom.importexport.shared.ImportSettings;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
@@ -190,7 +190,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final Path samplesDir = getSamplesDir();
         final Path configDir = samplesDir.resolve("config");
 
-        importExportSerializer.read(configDir, null, ImportMode.IGNORE_CONFIRMATION);
+        importExportSerializer.read(configDir, null, ImportSettings.auto());
 
         contentImportService.importStandardPacks();
     }
