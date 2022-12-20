@@ -83,9 +83,12 @@ public class DependencyServiceImpl implements DependencyService {
     //todo maybe better to introduce dependencies between packages in order to avoid this duplication
     private static final DocRef[] ALL_PSEUDO_DOCREFS = {
             new DocRef("Searchable", "Annotations", "Annotations"),
+            new DocRef("Searchable", "Dual", "Dual"),
             new DocRef("Searchable", "Meta Store", "Meta Store"),
             new DocRef("Searchable", "Processor Tasks", "Processor Tasks"),
-            new DocRef("Searchable", "Task Manager", "Task Manager")};
+            new DocRef("Searchable", "Reference Data Store", "Reference Data Store (This Node Only)"),
+            new DocRef("Searchable", "Task Manager", "Task Manager"),
+    };
 
     @Inject
     public DependencyServiceImpl(final ImportExportActionHandlers importExportActionHandlers,
