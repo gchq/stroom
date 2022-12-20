@@ -283,23 +283,18 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                         importState,
                         importSettings);
 
-                if (State.IGNORE.equals(importState.getState())) {
-                    // Should skip this item so remove it from the map.
-                    confirmMap.remove(docRef);
-                } else {
-                    if (imported == null) {
-                        throw new RuntimeException("Import failed - no DocRef returned");
-                    }
+                if (imported == null) {
+                    throw new RuntimeException("Import failed - no DocRef returned");
+                }
 
-                    // Add explorer node afterwards on successful import as they won't be controlled by
-                    // doc service.
-                    if (ImportSettings.ok(importSettings, importState)) {
-                        importExportDocumentEventLog.importDocument(
-                                docRef.getType(),
-                                imported.getUuid(),
-                                docRef.getName(),
-                                null);
-                    }
+                // Add explorer node afterwards on successful import as they won't be controlled by
+                // doc service.
+                if (ImportSettings.ok(importSettings, importState)) {
+                    importExportDocumentEventLog.importDocument(
+                            docRef.getType(),
+                            imported.getUuid(),
+                            docRef.getName(),
+                            null);
                 }
             } else {
                 // We can't import this item so remove it from the map.
@@ -395,41 +390,36 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                         importState,
                         importSettings);
 
-                if (State.IGNORE.equals(importState.getState())) {
-                    // Should skip this item so remove it from the map.
-                    confirmMap.remove(docRef);
-                } else {
-                    if (imported == null) {
-                        throw new RuntimeException("Import failed - no DocRef returned");
-                    }
+                if (imported == null) {
+                    throw new RuntimeException("Import failed - no DocRef returned");
+                }
 
-                    // Add explorer node afterwards on successful import as they won't be controlled by
-                    // doc service.
-                    if (ImportSettings.ok(importSettings, importState)) {
-                        // Create, rename and/or move explorer node.
-                        if (existingNode.isEmpty()) {
-                            explorerNodeService.createNode(imported,
+                // Add explorer node afterwards on successful import as they won't be controlled by
+                // doc service.
+                if (ImportSettings.ok(importSettings, importState)) {
+                    // Create, rename and/or move explorer node.
+                    if (existingNode.isEmpty()) {
+                        explorerNodeService.createNode(imported,
+                                folderRef,
+                                PermissionInheritance.DESTINATION);
+                        explorerService.rebuildTree();
+                    } else {
+                        if (importSettings.isUseImportNames()) {
+                            explorerService.rename(docRef, docRef.getName());
+                        }
+                        if (moving) {
+                            explorerService.move(
+                                    Collections.singletonList(docRef),
                                     folderRef,
                                     PermissionInheritance.DESTINATION);
-                            explorerService.rebuildTree();
-                        } else {
-                            if (importSettings.isUseImportNames()) {
-                                explorerService.rename(docRef, docRef.getName());
-                            }
-                            if (moving) {
-                                explorerService.move(
-                                        Collections.singletonList(docRef),
-                                        folderRef,
-                                        PermissionInheritance.DESTINATION);
-                            }
                         }
-
-                        importExportDocumentEventLog.importDocument(
-                                docRef.getType(),
-                                imported.getUuid(),
-                                docRef.getName(),
-                                null);
                     }
+
+                    importExportDocumentEventLog.importDocument(
+                            docRef.getType(),
+                            imported.getUuid(),
+                            docRef.getName(),
+                            null);
                 }
             } else {
                 // We can't import this item so remove it from the map.

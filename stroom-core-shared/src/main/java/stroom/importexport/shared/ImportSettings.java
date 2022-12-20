@@ -1,6 +1,7 @@
 package stroom.importexport.shared;
 
 import stroom.docref.DocRef;
+import stroom.importexport.shared.ImportState.State;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -68,6 +69,10 @@ public class ImportSettings {
 
     public static boolean ok(final ImportSettings importSettings,
                              final ImportState importState) {
+        if (State.IGNORE.equals(importState.getState())) {
+            return false;
+        }
+
         return ImportMode.IGNORE_CONFIRMATION.equals(importSettings.getImportMode())
                 || (ImportMode.ACTION_CONFIRMATION.equals(importSettings.getImportMode()) && importState.isAction());
     }

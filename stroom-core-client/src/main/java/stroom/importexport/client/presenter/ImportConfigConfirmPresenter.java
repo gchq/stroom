@@ -35,6 +35,7 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.client.event.ImportConfigConfirmEvent;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.ImportConfigRequest;
+import stroom.importexport.shared.ImportConfigResponse;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
@@ -93,9 +94,7 @@ public class ImportConfigConfirmPresenter extends
     private List<ImportState> confirmList = new ArrayList<>();
     private final EntityDropDownPresenter rootFolderPresenter;
 
-    private final ImportSettings.Builder importSettingsBuilder = ImportSettings
-            .builder()
-            .importMode(ImportMode.ACTION_CONFIRMATION);
+    private final ImportSettings.Builder importSettingsBuilder = ImportSettings.builder();
 
     @Inject
     public ImportConfigConfirmPresenter(final EventBus eventBus,
@@ -170,11 +169,12 @@ public class ImportConfigConfirmPresenter extends
     }
 
     public void refresh() {
-        final Rest<List<ImportState>> rest = restFactory.create();
+        importSettingsBuilder.importMode(ImportMode.CREATE_CONFIRMATION);
+        final Rest<ImportConfigResponse> rest = restFactory.create();
         rest
                 .onSuccess(result -> {
-                    confirmList = result;
-                    if (result.isEmpty()) {
+                    confirmList = result.getConfirmList();
+                    if (confirmList.isEmpty()) {
                         warning("The import package contains nothing that can be imported into " +
                                 "this version of Stroom.");
                     } else {
@@ -482,8 +482,13 @@ public class ImportConfigConfirmPresenter extends
     }
 
     public void abortImport() {
-        // Abort ... set the confirm list to blank
-        final Rest<ResourceKey> rest = restFactory.create();
+        // Abort ... use a blank confirm list to perform an import that imports nothing.
+        importSettingsBuilder.importMode(ImportMode.ACTION_CONFIRMATION);
+        importSettingsBuilder.useImportNames(false);
+        importSettingsBuilder.useImportFolders(false);
+        importSettingsBuilder.enableFilters(false);
+
+        final Rest<ImportConfigResponse> rest = restFactory.create();
         rest
                 .onSuccess(result2 -> AlertEvent.fireWarn(ImportConfigConfirmPresenter.this,
                         "Import Aborted",
@@ -498,7 +503,8 @@ public class ImportConfigConfirmPresenter extends
     }
 
     public void importData() {
-        final Rest<ResourceKey> rest = restFactory.create();
+        importSettingsBuilder.importMode(ImportMode.ACTION_CONFIRMATION);
+        final Rest<ImportConfigResponse> rest = restFactory.create();
         rest
                 .onSuccess(result2 ->
                         AlertEvent.fireInfo(
@@ -533,7 +539,6 @@ public class ImportConfigConfirmPresenter extends
 
     private void clearCaches() {
         // TODO : Add cache clearing functionality.
-
         // ClearScriptCacheEvent.fire(this);
         // ClearFunctionCacheEvent.fire(this);
     }
