@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.main;
+package stroom.view.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.shared.DataSourceResource;
 import stroom.dispatch.client.Rest;
@@ -27,7 +26,6 @@ import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.HasChangeDataHandlers;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.web.bindery.event.shared.EventBus;

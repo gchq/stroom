@@ -163,6 +163,7 @@ dependencies {
     implementation project(':stroom-query:stroom-expression')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
+    implementation project(':stroom-query:stroom-query-impl')
     implementation project(':stroom-receive:stroom-receive-common')
     implementation project(':stroom-receive:stroom-receive-rules-impl')
     implementation project(':stroom-resource:stroom-resource-api')
@@ -184,6 +185,7 @@ dependencies {
     implementation project(':stroom-security:stroom-security-openid-api')
     implementation project(':stroom-servicediscovery:stroom-servicediscovery-api')
     implementation project(':stroom-servicediscovery:stroom-servicediscovery-impl')
+    implementation project(':stroom-sigmarule:stroom-sigmarule-impl')
     implementation project(':stroom-statistics:stroom-statistics-api')
     implementation project(':stroom-statistics:stroom-statistics-impl')
     implementation project(':stroom-statistics:stroom-statistics-impl-hbase')
@@ -192,6 +194,7 @@ dependencies {
     implementation project(':stroom-task:stroom-task-impl')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
+    implementation project(':stroom-view:stroom-view-impl')
 
     implementation libs.dropwizard_assets
     implementation libs.dropwizard_client

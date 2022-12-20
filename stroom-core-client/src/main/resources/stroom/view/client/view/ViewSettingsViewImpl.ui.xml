@@ -1,0 +1,19 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="viewSettingsDescription" label="Description">
+            <g:TextArea ui:field="description" width="400px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="viewSettingsDataSource" label="Data Source">
+            <g:SimplePanel ui:field="dataSource" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="viewSettingsPipeline" label="Pipeline">
+            <g:SimplePanel ui:field="pipeline" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="viewSettingsFilterExpression" label="Filter" addStyleNames="dock-max">
+            <g:SimplePanel ui:field="expression" styleName="max default-min-sizes"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder> 

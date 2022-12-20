@@ -1,0 +1,45 @@
+/*
+ * Copyright 2022 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+ext.moduleName = 'stroom.view.impl'
+
+dependencies {
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-event-logging:stroom-event-logging-api')
+    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+
+    implementation libs.eventLogging
+    implementation libs.guice5
+    implementation libs.restygwt
+    implementation libs.slf4j_api
+
+    //--------testing----------
+    testImplementation libs.assertj_core
+    testCompileOnly libs.junit_jupiter_api
+    testImplementation libs.jaxb_api
+    testImplementation libs.mockito_core
+
+    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
+}

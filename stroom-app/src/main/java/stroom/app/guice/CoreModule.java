@@ -74,6 +74,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.pipeline.xsltfunctions.DataStoreXsltFunctionModule());
         install(new stroom.processor.impl.ProcessorModule());
         install(new stroom.processor.impl.db.ProcessorDaoModule());
+        install(new stroom.query.impl.QueryModule());
         install(new stroom.receive.common.RemoteFeedModule());
         install(new stroom.receive.rules.impl.ReceiveDataRuleSetModule());
         install(new stroom.search.extraction.ExtractionModule());
@@ -88,6 +89,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.security.impl.SessionSecurityModule());
         install(new stroom.security.impl.db.SecurityDaoModule());
         install(new stroom.servicediscovery.impl.ServiceDiscoveryModule());
+        install(new stroom.sigmarule.impl.SigmaRuleModule());
         install(new stroom.statistics.impl.InternalStatisticsModule());
         install(new stroom.statistics.impl.hbase.entity.StroomStatsStoreModule());
         install(new stroom.statistics.impl.hbase.internal.InternalModule());
@@ -103,5 +105,6 @@ public class CoreModule extends AbstractModule {
         install(new stroom.storedquery.impl.db.StoredQueryDaoModule());
         install(new stroom.task.impl.TaskModule());
         install(new stroom.util.pipeline.scope.PipelineScopeModule());
+        install(new stroom.view.impl.ViewModule());
     }
 }

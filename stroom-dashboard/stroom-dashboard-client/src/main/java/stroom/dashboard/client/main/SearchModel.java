@@ -38,6 +38,7 @@ import stroom.query.api.v2.Result;
 import stroom.query.api.v2.TimeRange;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.client.Console;
+import stroom.view.client.presenter.IndexLoader;
 
 import com.google.gwt.core.client.GWT;
 

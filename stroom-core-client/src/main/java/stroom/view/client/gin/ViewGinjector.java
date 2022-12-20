@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.query.client;
+package stroom.view.client.gin;
 
-import stroom.query.client.ExpressionTreePresenter.ExpressionTreeView;
+import stroom.view.client.ViewPlugin;
+import stroom.view.client.presenter.ViewPresenter;
 
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import com.google.gwt.inject.client.AsyncProvider;
 
-public class QueryModule extends AbstractPresenterModule {
+public interface ViewGinjector {
 
-    @Override
-    protected void configure() {
-        bindPresenterWidget(ExpressionTreePresenter.class, ExpressionTreeView.class, ExpressionTreeViewImpl.class);
-    }
+    AsyncProvider<ViewPlugin> getViewPlugin();
+
+    AsyncProvider<ViewPresenter> getViewPresenter();
 }

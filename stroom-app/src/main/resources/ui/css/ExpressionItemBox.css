@@ -25,6 +25,11 @@
 	min-width: 50px;
 }
 
+.expressionItemBox-background select, .expressionItemBox-background input {
+    height: 20px;
+    padding: 1px 0px 0px 4px;
+}
+
 .expressionItemBox-selectable {
 	transition: box-shadow .3s, border .3s, background-color .3s;
 	-webkit-transition: box-shadow .3s, border .3s, background-color .3s;

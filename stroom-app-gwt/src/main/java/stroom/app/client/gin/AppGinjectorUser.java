@@ -28,6 +28,7 @@ import stroom.content.client.presenter.ContentTabPanePresenter;
 import stroom.core.client.presenter.CorePresenter;
 import stroom.dashboard.client.gin.DashboardGinjector;
 import stroom.dashboard.client.gin.DashboardModule;
+import stroom.dashboard.client.query.gin.QueryGinjector;
 import stroom.dashboard.client.vis.gin.VisGinjector;
 import stroom.dashboard.client.vis.gin.VisModule;
 import stroom.data.client.gin.StreamStoreGinjector;
@@ -60,7 +61,7 @@ import stroom.pipeline.client.gin.PipelineGinjector;
 import stroom.pipeline.client.gin.PipelineModule;
 import stroom.preferences.client.gin.UserPreferencesGinjector;
 import stroom.preferences.client.gin.UserPreferencesModule;
-import stroom.query.client.QueryModule;
+import stroom.query.client.gin.QueryModule;
 import stroom.receive.rules.client.gin.PolicyModule;
 import stroom.script.client.gin.ScriptGinjector;
 import stroom.script.client.gin.ScriptModule;
@@ -72,12 +73,16 @@ import stroom.search.solr.client.gin.SolrIndexGinjector;
 import stroom.search.solr.client.gin.SolrIndexModule;
 import stroom.security.client.gin.SecurityGinjector;
 import stroom.security.client.gin.SecurityModule;
+import stroom.sigmarule.client.gin.SigmaRuleGinjector;
+import stroom.sigmarule.client.gin.SigmaRuleModule;
 import stroom.statistics.impl.hbase.client.gin.StroomStatsStoreGinjector;
 import stroom.statistics.impl.hbase.client.gin.StroomStatsStoreModule;
 import stroom.statistics.impl.sql.client.gin.StatisticsGinjector;
 import stroom.statistics.impl.sql.client.gin.StatisticsModule;
 import stroom.task.client.gin.TaskGinjector;
 import stroom.task.client.gin.TaskModule;
+import stroom.view.client.gin.ViewGinjector;
+import stroom.view.client.gin.ViewModule;
 import stroom.visualisation.client.gin.VisualisationGinjector;
 import stroom.visualisation.client.gin.VisualisationModule;
 import stroom.welcome.client.gin.WelcomeGinjector;
@@ -122,6 +127,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         SecurityModule.class,
         ElasticClusterModule.class,
         ElasticIndexModule.class,
+        SigmaRuleModule.class,
         SolrIndexModule.class,
         StatisticsModule.class,
         StreamStoreModule.class,
@@ -129,6 +135,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         TaskModule.class,
         VisModule.class,
         VisualisationModule.class,
+        ViewModule.class,
         WelcomeModule.class,
         XMLSchemaModule.class
 })
@@ -150,9 +157,11 @@ public interface AppGinjectorUser extends
         PipelineGinjector,
         PluginsGinjector,
         PopupGinjector,
+        QueryGinjector,
         UserPreferencesGinjector,
         ScriptGinjector,
         SecurityGinjector,
+        SigmaRuleGinjector,
         ElasticClusterGinjector,
         ElasticIndexGinjector,
         SolrIndexGinjector,
@@ -160,6 +169,7 @@ public interface AppGinjectorUser extends
         StreamStoreGinjector,
         StroomStatsStoreGinjector,
         TaskGinjector,
+        ViewGinjector,
         VisGinjector,
         VisualisationGinjector,
         WelcomeGinjector,

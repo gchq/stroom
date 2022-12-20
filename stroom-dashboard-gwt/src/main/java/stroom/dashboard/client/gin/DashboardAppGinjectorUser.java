@@ -31,7 +31,7 @@ import stroom.instance.client.InstanceGinjector;
 import stroom.instance.client.InstanceModule;
 import stroom.preferences.client.gin.UserPreferencesGinjector;
 import stroom.preferences.client.gin.UserPreferencesModule;
-import stroom.query.client.QueryModule;
+import stroom.query.client.gin.QueryModule;
 import stroom.security.client.gin.SecurityGinjector;
 import stroom.security.client.gin.SecurityModule;
 import stroom.widget.popup.client.gin.PopupGinjector;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.main;
+package stroom.view.client.presenter;
 
 import stroom.datasource.api.v2.AbstractField;
 

@@ -42,7 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * This is not currently a test. It is a way of exercising the query api, i.e. it is support for manual testing.
  */
 //@ExtendWith(DropwizardExtensionsSupport.class)
-class TestStroomIndexQueryResource {
+class TestStroomIndexViewResource {
 
     // local.yml is not in source control and is created using local.yml.sh
     public static final DropwizardAppExtension<Config> RULE = new DropwizardAppExtension<>(App.class, "../local.yml");

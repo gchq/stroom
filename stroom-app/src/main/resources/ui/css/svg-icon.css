@@ -363,6 +363,9 @@
 .svgIcon-document-Pipeline {
   background-image: url("../images/document/Pipeline.svg");
 }
+.svgIcon-document-Query {
+  background-image: url("../images/document/Query.svg");
+}
 .svgIcon-document-ReceiveDataRuleSet {
   background-image: url("../images/document/ReceiveDataRuleSet.svg");
 }
@@ -374,6 +377,9 @@
 }
 .svgIcon-document-SelectAllOrNone {
   background-image: url("../images/document/SelectAllOrNone.svg");
+}
+.svgIcon-document-SigmaRule {
+  background-image: url("../images/document/SigmaRule.svg");
 }
 .svgIcon-document-SolrIndex {
   background-image: url("../images/document/SolrIndex.svg");
@@ -392,6 +398,9 @@
 }
 .stroom-theme-dark .svgIcon-document-TextConverter {
   background-image: url("../images/document/TextConverter-dark.svg");
+}
+.svgIcon-document-View {
+  background-image: url("../images/document/View.svg");
 }
 .svgIcon-document-Visualisation {
   background-image: url("../images/document/Visualisation.svg");
