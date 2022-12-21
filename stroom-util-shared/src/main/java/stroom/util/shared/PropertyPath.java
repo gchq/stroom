@@ -162,11 +162,22 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
     /**
      * Merge part onto the end of this and return a new {@link PropertyPath}
      */
-    public PropertyPath merge(final String part) {
-        if (part == null || part.isEmpty()) {
+    public PropertyPath merge(final String otherPart) {
+        if (otherPart == null || otherPart.isEmpty()) {
             return this;
         } else {
-            return new PropertyPath(this.parts, part);
+            return new PropertyPath(this.parts, otherPart);
+        }
+    }
+
+    /**
+     * Merge parts onto the end of this and return a new {@link PropertyPath}
+     */
+    public PropertyPath merge(final String... parts) {
+        if (parts == null || parts.length == 0) {
+            return this;
+        } else {
+            return new PropertyPath(this.parts, Arrays.asList(parts));
         }
     }
 
@@ -188,6 +199,20 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
             throw new RuntimeException("Unable to get property name from empty path");
         }
         return parts.get(parts.size() - 1);
+    }
+
+    /**
+     * @return The parent property name from a property path, i.e. "node" from "stroom.node.name".
+     * Throws a {@link RuntimeException} if the path is empty or there is no parent.
+     */
+    @JsonIgnore
+    public Optional<String> getParentPropertyName() {
+        if (parts.isEmpty()) {
+            throw new RuntimeException("Unable to get property name from empty path");
+        }
+        return parts.size() >= 2
+                ? Optional.ofNullable(parts.get(parts.size() - 2))
+                : Optional.empty();
     }
 
     @Override
@@ -260,6 +285,10 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
     public String getName() {
         return this.toString();
     }
+
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
     public static final class Builder {
 

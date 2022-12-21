@@ -1,6 +1,7 @@
 package stroom.test.common;
 
 import stroom.test.common.DynamicTestBuilder.InitialBuilder;
+import stroom.util.NullSafe;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.LambdaLogger;
@@ -69,23 +70,52 @@ public class TestUtil {
      * @param timeout         The timeout duration after which waitForIt will give up and throw
      *                        a {@link RuntimeException}.
      * @param pollFrequency   The time between calls to valueSupplier.
+     * @param showProgressFrequency The time between progress update logged to info, set to zero to not show any.
+     * @throws stroom.util.concurrent.UncheckedInterruptedException If sleep is interrupted
      */
     public static <T> void waitForIt(final Supplier<T> valueSupplier,
                                      final T requiredValue,
                                      final Supplier<String> messageSupplier,
                                      final Duration timeout,
-                                     final Duration pollFrequency) {
+                                     final Duration pollFrequency,
+                                     final Duration showProgressFrequency) {
 
         final Instant startTime = Instant.now();
         final Instant endTime = startTime.plus(timeout);
+        Instant lastProgressUpdateTime = null;
         T currValue = null;
+        boolean firstIteration = true;
         while (Instant.now().isBefore(endTime)) {
             currValue = valueSupplier.get();
             if (Objects.equals(currValue, requiredValue)) {
                 LOGGER.debug("Waited {}", Duration.between(startTime, Instant.now()));
                 return;
             } else {
-                ThreadUtil.sleepIgnoringInterrupts(pollFrequency.toMillis());
+                if (firstIteration) {
+                    firstIteration = false;
+                } else {
+                    if (!showProgressFrequency.equals(Duration.ZERO)) {
+                        final Duration timeSinceLastUpdate = Duration.between(
+                                NullSafe.coalesce(lastProgressUpdateTime, startTime)
+                                        .orElseThrow(), // startTime never null, so should not happen
+                                Instant.now());
+
+                        if (timeSinceLastUpdate.compareTo(showProgressFrequency) > 0) {
+                            LOGGER.info("Still waiting for '{}' to be '{} ({})'. " +
+                                            "Last value '{} ({})'. Waited {} so far.",
+                                    messageSupplier.get(),
+                                    requiredValue,
+                                    NullSafe.getOrElse(
+                                            requiredValue, Object::getClass, Class::getSimpleName, "null"),
+                                    currValue,
+                                    NullSafe.getOrElse(
+                                            currValue, Object::getClass, Class::getSimpleName, "null"),
+                                    Duration.between(startTime, Instant.now()));
+                            lastProgressUpdateTime = Instant.now();
+                        }
+                    }
+                }
+                ThreadUtil.sleep(pollFrequency.toMillis());
             }
         }
 
@@ -116,7 +146,8 @@ public class TestUtil {
                 requiredValue,
                 messageSupplier,
                 Duration.ofSeconds(5),
-                Duration.ofMillis(1));
+                Duration.ofMillis(1),
+                Duration.ofSeconds(1));
     }
 
     /**
@@ -137,6 +168,7 @@ public class TestUtil {
                 requiredValue,
                 () -> message,
                 Duration.ofSeconds(5),
-                Duration.ofMillis(1));
+                Duration.ofMillis(1),
+                Duration.ofSeconds(1));
     }
 }

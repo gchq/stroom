@@ -9,9 +9,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
+
 @JsonPropertyOrder(alphabetic = true)
 public class ForwardRetryConfig extends AbstractConfig implements IsProxyConfig {
 
+    public static final String PROP_NAME_FAILED_FORWARD_DIR = "failedForwardDir";
     private final StroomDuration retryFrequency;
     private final StroomDuration maxRetryDelay;
     private final int maxTries;
@@ -29,7 +33,7 @@ public class ForwardRetryConfig extends AbstractConfig implements IsProxyConfig 
     public ForwardRetryConfig(@JsonProperty("retryFrequency") final StroomDuration retryFrequency,
                               @JsonProperty("maxRetryDelay") final StroomDuration maxRetryDelay,
                               @JsonProperty("maxTries") final int maxTries,
-                              @JsonProperty("failedForwardDir") final String failedForwardDir) {
+                              @JsonProperty(PROP_NAME_FAILED_FORWARD_DIR) final String failedForwardDir) {
 
         this.retryFrequency = retryFrequency;
         this.maxRetryDelay = maxRetryDelay;
@@ -37,6 +41,7 @@ public class ForwardRetryConfig extends AbstractConfig implements IsProxyConfig 
         this.failedForwardDir = failedForwardDir;
     }
 
+    @NotNull
     @JsonPropertyDescription("How often do we want to retry forwarding data that fails to forward?")
     @JsonProperty
     public StroomDuration getRetryFrequency() {
@@ -49,6 +54,7 @@ public class ForwardRetryConfig extends AbstractConfig implements IsProxyConfig 
         return maxRetryDelay;
     }
 
+    @Min(0)
     @JsonPropertyDescription("The maximum number of retries to attempt before sending to the failed forward data " +
             "directory.")
     @JsonProperty
@@ -56,6 +62,7 @@ public class ForwardRetryConfig extends AbstractConfig implements IsProxyConfig 
         return maxTries;
     }
 
+    @NotNull
     @JsonPropertyDescription("The directory to put failed forward data in.")
     @JsonProperty
     public String getFailedForwardDir() {
@@ -65,6 +72,10 @@ public class ForwardRetryConfig extends AbstractConfig implements IsProxyConfig 
     public static Builder builder() {
         return new Builder();
     }
+
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
     public static class Builder {
 

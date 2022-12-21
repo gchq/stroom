@@ -30,8 +30,8 @@ public class TestEventStore {
         final RepoDirProvider repoDirProvider = () -> dir;
         final EventStore eventStore = new EventStore(
                 receiveStreamHandlers,
-                proxyConfig,
-                eventStoreConfig,
+                () -> proxyConfig,
+                () -> eventStoreConfig,
                 repoDirProvider);
 
         for (int i = 0; i < 10; i++) {

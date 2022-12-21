@@ -1,12 +1,9 @@
 package stroom.dictionary.api;
 
 import stroom.docref.DocRef;
+import stroom.docref.HasFindDocRefsByName;
 
-import java.util.List;
-
-public interface WordListProvider {
-
-    List<DocRef> findByName(String dictionaryName);
+public interface WordListProvider extends HasFindDocRefsByName {
 
     String getCombinedData(DocRef dictionaryRef);
 

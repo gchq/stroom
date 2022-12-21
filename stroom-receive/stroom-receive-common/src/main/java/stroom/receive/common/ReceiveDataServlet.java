@@ -43,7 +43,11 @@ public class ReceiveDataServlet extends HttpServlet implements IsServlet {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ReceiveDataServlet.class);
 
-    private static final Set<String> PATH_SPECS = Set.of("/datafeed", "/datafeed/*");
+    public static final String DATA_FEED_PATH_PART = "datafeed";
+
+    private static final Set<String> PATH_SPECS = Set.of(
+            "/" + DATA_FEED_PATH_PART,
+            "/" + DATA_FEED_PATH_PART + "/*");
 
     private final Provider<RequestHandler> requestHandlerProvider;
 

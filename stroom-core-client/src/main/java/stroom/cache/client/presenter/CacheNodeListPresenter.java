@@ -108,7 +108,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
         addIconButtonColumn(
                 SvgPresets.of(SvgPresets.DELETE, "Clear and rebuild cache", true),
                 (row, nativeEvent) -> {
-                    final Rest<Boolean> rest = restFactory.create();
+                    final Rest<Long> rest = restFactory.create();
                     rest
                             .onSuccess(result -> {
                                 dataProvider.refresh();

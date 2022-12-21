@@ -194,7 +194,7 @@ class UriFactoryImpl implements UriFactory {
             }
         }
 
-        if (path != null && !path.isEmpty()) {
+        if (path != null && !path.isEmpty() && !path.equals("/")) {
             if (!path.startsWith("/")) {
                 sb.append("/");
             }

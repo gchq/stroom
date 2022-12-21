@@ -27,7 +27,10 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.api.ImportExportDocumentEventLog;
 import stroom.importexport.api.NonExplorerDocRefProvider;
+import stroom.importexport.shared.ImportSettings;
+import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
+import stroom.importexport.shared.ImportState.State;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorFilterUtil;
@@ -80,86 +83,103 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
     }
 
     @Override
-    public ImpexDetails importDocument(final DocRef docRef,
-                                       Map<String, byte[]> dataMap,
-                                       ImportState importState,
-                                       ImportState.ImportMode importMode) {
+    public DocRef getOwnerDocument(final DocRef docRef,
+                                   final Map<String, byte[]> dataMap) {
         if (dataMap.get(META) == null) {
-            throw new IllegalArgumentException("Unable to import Processor with no meta file.  Docref is " + docRef);
+            throw new IllegalArgumentException("Unable to import Processor with no meta file. DocRef is " + docRef);
         }
 
-        final ProcessorFilter processorFilter;
         try {
-            processorFilter = delegate.read(dataMap.get(META));
-        } catch (IOException ex) {
+            final ProcessorFilter processorFilter = delegate.read(dataMap.get(META));
+            if (processorFilter != null) {
+                final Processor processor = processorFilter.getProcessor();
+                if (processor != null) {
+                    return new DocRef(PipelineDoc.DOCUMENT_TYPE,
+                            processor.getPipelineUuid(),
+                            processor.getPipelineName());
+                } else {
+                    return new DocRef(PipelineDoc.DOCUMENT_TYPE,
+                            processorFilter.getPipelineUuid(),
+                            processorFilter.getPipelineName());
+                }
+            }
+        } catch (final IOException ex) {
             throw new RuntimeException("Unable to read meta file associated with processor " + docRef, ex);
         }
 
-        boolean ignore = !ProcessorFilterUtil.shouldImport(processorFilter);
+        return null;
+    }
 
-        if (ignore) {
-            LOGGER.warn("Not importing processor filter " + docRef.getUuid() + " because it contains id fields");
+    @Override
+    public DocRef importDocument(final DocRef docRef,
+                                 final Map<String, byte[]> dataMap,
+                                 final ImportState importState,
+                                 final ImportSettings importSettings) {
+        if (dataMap.get(META) == null) {
+            throw new IllegalArgumentException("Unable to import Processor with no meta file.  DocRef is " + docRef);
         }
 
-        if (importMode != ImportState.ImportMode.CREATE_CONFIRMATION) {
-            processorFilter.setProcessor(findProcessorForFilter(processorFilter));
+        final ProcessorFilter filter = findProcessorFilter(docRef);
+        if (filter != null) {
+            // Ignore filters that already exist as we really don't want to mess with them.
+            LOGGER.warn("Not importing processor filter because it already exists");
+            importState.setState(State.IGNORE);
 
-            if (ImportState.State.NEW.equals(importState.getState())) {
-                final boolean enable;
-                final Long minMetaCreateTimeMs;
-                if (importState.getEnable() != null) {
-                    enable = importState.getEnable();
-                    minMetaCreateTimeMs = importState.getEnableTime();
+        } else {
+            importState.setState(State.NEW);
+            final ProcessorFilter processorFilter;
+            try {
+                processorFilter = delegate.read(dataMap.get(META));
+            } catch (IOException ex) {
+                throw new RuntimeException("Unable to read meta file associated with processor filter " + docRef, ex);
+            }
+
+            if (!ProcessorFilterUtil.shouldImport(processorFilter)) {
+                LOGGER.warn("Not importing processor filter " + docRef.getUuid() + " because it contains id fields");
+                importState.setState(State.IGNORE);
+
+            } else if (!ImportMode.CREATE_CONFIRMATION.equals(importSettings.getImportMode())) {
+                final boolean enableFilters = importSettings.isEnableFilters();
+                final Long minMetaCreateTimeMs = importSettings.getEnableFiltersFromTime();
+
+                processorFilter.setProcessor(findProcessorForFilter(processorFilter));
+
+                // Make sure we can get the processor for this filter.
+                final Processor processor = findProcessor(docRef.getUuid(),
+                        processorFilter.getProcessorUuid(),
+                        processorFilter.getPipelineUuid(),
+                        processorFilter.getPipelineName());
+
+                if (processor != null) {
+                    final DocRef processorFilterRef = new DocRef(ProcessorFilter.ENTITY_TYPE,
+                            processorFilter.getUuid(),
+                            null);
+                    final CreateProcessFilterRequest request = CreateProcessFilterRequest
+                            .builder()
+                            .queryData(processorFilter.getQueryData())
+                            .priority(processorFilter.getPriority())
+                            .autoPriority(false)
+                            .reprocess(processorFilter.isReprocess())
+                            .enabled(enableFilters)
+                            .minMetaCreateTimeMs(minMetaCreateTimeMs)
+                            .maxMetaCreateTimeMs(processorFilter.getMaxMetaCreateTimeMs())
+                            .build();
+                    processorFilterService.importFilter(
+                            processor,
+                            processorFilterRef,
+                            request);
                 } else {
-                    enable = processorFilter.isEnabled();
-                    minMetaCreateTimeMs = null;
+                    LOGGER.error("Processor not found on pipeline " +
+                            processorFilter.getPipelineName() +
+                            "(" +
+                            processorFilter.getPipelineUuid() +
+                            ")" +
+                            " and failed to create");
                 }
-
-                ProcessorFilter filter = findProcessorFilter(docRef);
-                if (filter == null) {
-                    final Processor processor = findProcessor(docRef.getUuid(),
-                            processorFilter.getProcessorUuid(),
-                            processorFilter.getPipelineUuid(),
-                            processorFilter.getPipelineName());
-
-                    if (processor != null) {
-                        final DocRef processorFilterRef = new DocRef(ProcessorFilter.ENTITY_TYPE,
-                                processorFilter.getUuid(),
-                                null);
-                        final CreateProcessFilterRequest request = CreateProcessFilterRequest
-                                .builder()
-                                .queryData(processorFilter.getQueryData())
-                                .priority(processorFilter.getPriority())
-                                .autoPriority(false)
-                                .reprocess(processorFilter.isReprocess())
-                                .enabled(enable)
-                                .minMetaCreateTimeMs(minMetaCreateTimeMs)
-                                .maxMetaCreateTimeMs(processorFilter.getMaxMetaCreateTimeMs())
-                                .build();
-                        processorFilterService.importFilter(
-                                processor,
-                                processorFilterRef,
-                                request);
-                    } else {
-                        LOGGER.error("Processor not found on pipeline " +
-                                processorFilter.getPipelineName() +
-                                "(" +
-                                processorFilter.getPipelineUuid() +
-                                ")" +
-                                " and failed to create");
-                    }
-                }
-
-            } else if (ImportState.State.UPDATE.equals(importState.getState())) {
-                ProcessorFilter currentVersion = findProcessorFilter(docRef);
-                if (currentVersion != null) {
-                    processorFilter.setId(currentVersion.getId());
-                    processorFilter.setVersion(currentVersion.getVersion());
-                }
-                processorFilterService.update(processorFilter);
             }
         }
-        return new ImpexDetails(docRef, processorFilter.getPipelineName(), ignore);
+
+        return docRef;
     }
 
     private ProcessorFilter findProcessorFilter(final DocRef docRef) {
@@ -256,25 +276,14 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
             ProcessorFilter processorFilter = findProcessorFilter(docRef);
 
             final String name = docRef.getUuid().substring(0, 7);
-
             final String pipelineName = processorFilter.getPipelineName();
             if (pipelineName != null) {
-                return pipelineName + " Pipeline-" + "Filter " + name;
+                return pipelineName + " " + ProcessorFilter.ENTITY_TYPE + " " + name;
             } else {
-                return "Unknown Pipeline-Filter " + name;
+                return "Unknown " + ProcessorFilter.ENTITY_TYPE + " " + name;
             }
         }
         return null;
-    }
-
-    @Override
-    public boolean docExists(final DocRef docRef) {
-        DocRef associatedExplorerDocRef = findNearestExplorerDocRef(docRef);
-        if (associatedExplorerDocRef != null) {
-            return true;
-        } else {
-            return findProcessorFilter(docRef) != null;
-        }
     }
 
     private Processor findProcessorForFilter(final ProcessorFilter filter) {

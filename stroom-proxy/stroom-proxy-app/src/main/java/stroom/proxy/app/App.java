@@ -24,6 +24,7 @@ import stroom.dropwizard.common.ManagedServices;
 import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.proxy.app.guice.ProxyModule;
+import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.config.ConfigValidator;
 import stroom.util.config.PropertyPathDecorator;
@@ -55,7 +56,6 @@ import org.eclipse.jetty.servlets.CrossOriginFilter;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.Objects;
 import javax.inject.Inject;
@@ -98,14 +98,16 @@ public class App extends Application<Config> {
     //  then we don't have to bind it twice
     private final Injector validationOnlyInjector;
 
-    // Needed for DropwizardExtensionsSupport
+    @SuppressWarnings("unused") // Used by DropwizardExtensionsSupport in AbstractApplicationTest
     public App() {
-        configFile = Paths.get("proxy-dev.yml");
+        configFile = null; // No config file. Test will create the Config obj
         validationOnlyInjector = createValidationInjector();
     }
 
 
     App(final Path configFile) {
+        Objects.requireNonNull(configFile, () ->
+                LogUtil.message("No config YAML file supplied in arguments"));
         this.configFile = configFile;
         validationOnlyInjector = createValidationInjector();
     }
@@ -132,11 +134,8 @@ public class App extends Application<Config> {
 
     @Override
     public void run(final Config configuration, final Environment environment) {
-        Objects.requireNonNull(configFile, () ->
-                LogUtil.message("No config YAML file supplied in arguments"));
-
         LOGGER.info("Using application configuration file {}",
-                configFile.toAbsolutePath().normalize());
+                NullSafe.get(configFile, Path::toAbsolutePath, Path::normalize));
 
         validateAppConfig(configuration, configFile);
 
@@ -241,16 +240,22 @@ public class App extends Application<Config> {
         try {
             // We need to read the AppConfig in the same way that dropwiz will so we can get the
             // possibly substituted values for stroom.(home|temp) for use with PathCreator
-            LOGGER.info("Parsing config file to establish home and temp");
-            final ProxyConfig proxyConfig = ProxyYamlUtil.readProxyConfig(configFile);
-
-            LOGGER.debug(() -> "proxyPathConfig " + proxyConfig.getPathConfig());
-
-            // Allow for someone having pathConfig set to null in the yaml, e.g. just
-            //   pathConfig:
-            final PathConfig effectivePathConfig = Objects.requireNonNullElse(
-                    proxyConfig.getPathConfig(),
-                    new ProxyPathConfig());
+            final PathConfig effectivePathConfig;
+            if (configFile != null) {
+                final ProxyConfig proxyConfig;
+                LOGGER.info("Parsing config file to establish home and temp");
+                proxyConfig = ProxyYamlUtil.readProxyConfig(configFile);
+                LOGGER.debug(() -> "proxyPathConfig " + proxyConfig.getPathConfig());
+                // Allow for someone having pathConfig set to null in the yaml, e.g. just
+                //   pathConfig:
+                effectivePathConfig = Objects.requireNonNullElse(
+                        proxyConfig.getPathConfig(),
+                        new ProxyPathConfig());
+            } else {
+                // Go in here when using AbstractApplicationTest as that does not use a physical config file
+                // The test can set the system props to override the home/temp locations
+                effectivePathConfig = new ProxyPathConfig();
+            }
 
             return Guice.createInjector(
                     new ValidationModule(),
@@ -278,7 +283,7 @@ public class App extends Application<Config> {
         final ProxyConfigValidator appConfigValidator = validationOnlyInjector.getInstance(ProxyConfigValidator.class);
 
         LOGGER.info("Validating application configuration file {}",
-                configFile.toAbsolutePath().normalize().toString());
+                NullSafe.get(configFile, Path::toAbsolutePath, Path::normalize));
 
         final ConfigValidator.Result<IsProxyConfig> result = appConfigValidator.validateRecursively(proxyConfig);
 

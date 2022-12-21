@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 public class PublicUriConfig extends UriConfig {
 
     public PublicUriConfig() {
-        super("https", null, 443, null);
+        super("https", null, null, null);
     }
 
     @JsonCreator

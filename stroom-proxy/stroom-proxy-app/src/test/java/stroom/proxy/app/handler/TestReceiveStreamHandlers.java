@@ -129,7 +129,7 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
         final ProxyRepositoryStreamHandlers proxyRepositoryRequestHandlerProvider =
                 new ProxyRepositoryStreamHandlers(sequentialFileStore);
 
-        final LogStream logStream = new LogStream(logRequestConfig);
+        final LogStream logStream = new LogStream(() -> logRequestConfig);
 
         final long now = System.currentTimeMillis();
         final BuildInfo buildInfo = new BuildInfo(now, "test version", now);
@@ -148,7 +148,8 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
                 proxyConfig,
                 proxyRepoConfig,
                 forwardHttpPostHandlersFactory,
-                null);
+                null,
+                pathCreator);
 
         return new ReceiveStreamHandlers(
                 proxyRepoConfig,

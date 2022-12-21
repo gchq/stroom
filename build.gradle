@@ -109,6 +109,7 @@ ext.versions = [
         // 6.1.x - https://www.cloudera.com/documentation/enterprise/6/release-notes/topics/rg_cdh_61_maven_artifacts.html
 
         //------------3rd-party------------
+        aws               : '2.17.253',
         curator           : '4.2.0', // Curator 4 works with ZK 3.4.x in soft compatibility mode, i.e. you must exlude its dep on ZK and explicitly add one for 3.4.x
         dropwizard        : '2.0.28', // used to set the dropwizard-bom version, that controls lots of dependency versions
         elasticsearch     : '7.17.8',
@@ -117,6 +118,7 @@ ext.versions = [
         gwt               : '2.9.0',
         hikari            : '5.0.0',
         jackson_swagger   : '2.11.1', // Specific version of jackson for use with the swagger plugin
+        jmh               : '1.35',
         jooq              : '3.16.4',
         junit_jupiter     : '5.8.2',
         kafka             : '2.2.1', // CDH 6.3 uses kafka 2.2.1
@@ -140,7 +142,9 @@ ext.libs = [
         stroomTestData                 : "uk.gov.gchq.stroom.testdata:stroom-test-data:$versions.stroomTestData",
 
         //------3rd Party-libs---------------
-        assertj_core                   : "org.assertj:assertj-core", // version controlled by dropwizard-dependencies
+        assertj_core                   : "org.assertj:assertj-core", // version controlled by DW BOM
+        aws_dependencies               : "software.amazon.awssdk:bom:$versions.aws",
+        aws_sqs                        : "software.amazon.awssdk:sqs", // version controlled by AWS BOM
         bcrypt                         : 'de.svenkubiak:jBCrypt:0.4.1',
         caffeine                       : "com.github.ben-manes.caffeine:caffeine", // version controlled by dropwizard-dependencies
         commons_beanutils              : "commons-beanutils:commons-beanutils:1.9.4",
@@ -229,6 +233,8 @@ ext.libs = [
         jetty_servlet                  : "org.eclipse.jetty:jetty-servlet", // version controlled by dropwizard-dependencies
         jetty_servlets                 : "org.eclipse.jetty:jetty-servlets", // version controlled by dropwizard-dependencies
         jinjava                        : "com.hubspot.jinjava:jinjava:2.6.0",
+        jmh_core                       : "org.openjdk.jmh:jmh-core:$versions.jmh",
+        jmh_generator_annprocess       : "org.openjdk.jmh:jmh-generator-annprocess:$versions.jmh",
         jooq                           : "org.jooq:jooq:$versions.jooq",
         jooq_codegen                   : "org.jooq:jooq-codegen:$versions.jooq",
         jooq_meta                      : "org.jooq:jooq-meta:$versions.jooq",
@@ -270,7 +276,7 @@ ext.libs = [
         swagger_annotations            : "io.swagger.core.v3:swagger-annotations:$versions.swagger",
         unirest                        : "com.mashape.unirest:unirest-java:$versions.unirest",
         vavr                           : "io.vavr:vavr:0.10.4",
-        wiremock                       : 'com.github.tomakehurst:wiremock-jre8:2.33.1',
+        wiremock                       : 'com.github.tomakehurst:wiremock-jre8:2.35.0',
         wix_embedded_mysql             : "com.wix:wix-embedded-mysql:4.6.1",
         ws_rs_api                      : "javax.ws.rs:javax.ws.rs-api:2.1.1",
         xml_apis                       : "xml-apis:xml-apis:2.0.2",
@@ -338,6 +344,7 @@ subprojects {
     // This bit makes all sub projects have access to the BOMs for the dependency versions
     dependencies {
         implementation platform(libs.dropwizard_dependencies)
+        implementation platform(libs.aws_dependencies)
     }
 
     //println project.getConfigurations().getByName("implementation").getAllDependencies()
@@ -647,7 +654,7 @@ subprojects {
     checkstyle {
         ignoreFailures false
         showViolations true
-        toolVersion = "8.40"
+        toolVersion = "10.4"
     }
 
     // These work in tandem with the suppression.xml

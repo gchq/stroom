@@ -192,6 +192,9 @@ appConfig:
         deleteAge: "P30D"
         deleteBatchSize: 500
         flushBatchSize: 500
+      rawMetaTypes:
+      - "Raw Reference"
+      - "Raw Events"
     retention:
       deleteBatchSize: 1000
       useQueryOptimisation: true
@@ -529,7 +532,7 @@ appConfig:
   publicUri:
     hostname: null
     pathPrefix: null
-    port: 443
+    port: null
     scheme: "https"
   queryHistory:
     daysRetention: 365
@@ -713,6 +716,7 @@ appConfig:
         \ connect-src 'self' wss:; frame-ancestors 'self';"
       contentTypeOptions: "nosniff"
       frameOptions: "sameorigin"
+      strictTransportSecurity: "max-age=31536000; includeSubDomains; preload"
       xssProtection: "1; mode=block"
   serviceDiscovery:
     curatorBaseSleepTimeMs: 5000
@@ -954,7 +958,7 @@ appConfig:
   uiUri:
     hostname: null
     pathPrefix: null
-    port: 443
+    port: null
     scheme: "https"
   volumes:
     createDefaultIndexVolumesOnStart: true

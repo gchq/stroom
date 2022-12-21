@@ -1,17 +1,16 @@
 package stroom.proxy.app;
 
 import stroom.proxy.app.guice.ProxyModule;
+import stroom.util.logging.LogUtil;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.dropwizard.Application;
 import io.dropwizard.setup.Environment;
-import io.dropwizard.testing.junit5.DropwizardAppExtension;
-import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ScanResult;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,24 +18,19 @@ import java.lang.annotation.Annotation;
 import java.nio.file.Path;
 import java.util.function.Consumer;
 
-@ExtendWith(DropwizardExtensionsSupport.class)
 public class TestProxyGuiceBindings extends AbstractApplicationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestProxyGuiceBindings.class);
 
-
-    private static final MyApp myApp = new MyApp();
-
-    private static final DropwizardAppExtension<Config> DROPWIZARD = new DropwizardAppExtension<Config>(
-            MyApp.class, getConfig());
-
     @Test
     public void testAllGuiceBinds() {
-        Injector injector = ((MyApp) DROPWIZARD.getApplication()).getInjector();
+        Injector injector = ((MyApp) getDropwizard().getApplication()).getInjector();
 
-        //test all the constructors to make sure guice can bind them
-        findConstructors(injector::getProvider, "stroom", javax.inject.Inject.class);
-        findConstructors(injector::getProvider, "stroom", com.google.inject.Inject.class);
+        // Test all the constructors to make sure guice can bind them
+        // As proxy shares classes with stroom we have no way of knowing which shared classes are used
+        // by proxy, so we have to make do with just checking all the non-shared classes.
+        findConstructors(injector::getProvider, "stroom.proxy", javax.inject.Inject.class);
+        findConstructors(injector::getProvider, "stroom.proxy", com.google.inject.Inject.class);
     }
 
     private void findConstructors(final Consumer<Class<?>> actionPerClass,
@@ -62,9 +56,16 @@ public class TestProxyGuiceBindings extends AbstractApplicationTest {
                         // TODO At the moment we can only log an error and not fail the test as not all
                         //   visible classes are meant to be injectable. Leaving this test here in  case
                         //   this changes.
+                        Assertions.fail(LogUtil.message(
+                                "Unable to get instance of {} due to; ", clazz.getCanonicalName()), e);
                         LOGGER.error("    Unable to get instance of {} due to; ", clazz.getCanonicalName(), e);
                     }
                 });
+    }
+
+    @Override
+    protected Class<? extends Application<Config>> getAppClass() {
+        return MyApp.class;
     }
 
     public static class MyApp extends Application<Config> {

@@ -12,13 +12,14 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder(alphabetic = true)
 public abstract class PathConfig extends AbstractConfig implements IsProxyConfig, IsStroomConfig {
 
-    @JsonProperty
-    // TODO 01/12/2021 AT: make final
-    private String home;
+    public static final String PROP_NAME_HOME = "home";
+    public static final String PROP_NAME_TEMP = "temp";
 
-    @JsonProperty
-    // TODO 01/12/2021 AT: make final
-    private String temp;
+    @JsonProperty(PROP_NAME_HOME)
+    private final String home;
+
+    @JsonProperty(PROP_NAME_TEMP)
+    private final String temp;
 
     public PathConfig() {
         home = null;
@@ -26,8 +27,8 @@ public abstract class PathConfig extends AbstractConfig implements IsProxyConfig
     }
 
     @JsonCreator
-    public PathConfig(@JsonProperty("home") final String home,
-                      @JsonProperty("temp") final String temp) {
+    public PathConfig(@JsonProperty(PROP_NAME_HOME) final String home,
+                      @JsonProperty(PROP_NAME_TEMP) final String temp) {
         this.home = home;
         this.temp = temp;
     }
@@ -36,18 +37,8 @@ public abstract class PathConfig extends AbstractConfig implements IsProxyConfig
         return home;
     }
 
-    @Deprecated(forRemoval = true)
-    public void setHome(final String home) {
-        this.home = home;
-    }
-
     public String getTemp() {
         return temp;
-    }
-
-    @Deprecated(forRemoval = true)
-    public void setTemp(final String temp) {
-        this.temp = temp;
     }
 
     @Override

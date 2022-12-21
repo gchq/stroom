@@ -12,9 +12,11 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.PermissionException;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 class FolderExplorerActionHandler implements ExplorerActionHandler {
@@ -144,4 +146,21 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
     ////////////////////////////////////////////////////////////////////////
     // END OF HasDependencies
     ////////////////////////////////////////////////////////////////////////
+
+
+    @Override
+    public List<DocRef> findByNames(final List<String> names, final boolean allowWildCards) {
+        return explorerTreeDao.findByNames(names, allowWildCards)
+                .stream()
+                .map(ExplorerTreeNode::getDocRef)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Set<DocRef> listDocuments() {
+        return explorerTreeDao.findByType(FOLDER)
+                .stream()
+                .map(ExplorerTreeNode::getDocRef)
+                .collect(Collectors.toSet());
+    }
 }

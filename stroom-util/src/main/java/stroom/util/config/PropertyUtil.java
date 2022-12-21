@@ -30,8 +30,10 @@ import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition;
+import com.fasterxml.jackson.databind.util.TokenBuffer;
 import com.google.common.base.CaseFormat;
 
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
@@ -278,6 +280,17 @@ public final class PropertyUtil {
             }
         } else {
             return thisValue;
+        }
+    }
+
+    public static <T> T copyObject(final T source) {
+        final ObjectMapper objectMapper = new ObjectMapper();
+        final TokenBuffer tb = new TokenBuffer(objectMapper, false); // or one of factory methods
+        try {
+            objectMapper.writeValue(tb, source);
+            return (T) objectMapper.readValue(tb.asParser(), source.getClass());
+        } catch (IOException e) {
+            throw new RuntimeException(LogUtil.message("Error copying object {}: {}", source, e.getMessage()), e);
         }
     }
 
@@ -695,11 +708,20 @@ public final class PropertyUtil {
             }
         }
 
-        public void setValueOnConfigObject(final Object value) {
+        public void setValueOnConfigObject(final Object newValue) {
             try {
-                setter.invoke(parentObject, value);
+                setter.invoke(parentObject, newValue);
             } catch (IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeException(LogUtil.message("Error setting value for prop {}", name), e);
+            }
+        }
+
+        public void setValueOnConfigObject(final Object parentObject, final Object newValue) {
+            try {
+                setter.invoke(parentObject, newValue);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException(LogUtil.message("Error setting value for prop {} on {}",
+                        name, parentObject), e);
             }
         }
 

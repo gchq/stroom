@@ -5,6 +5,7 @@ import stroom.data.retention.api.DataRetentionTracker;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
+import stroom.data.shared.StreamTypeNames;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.EffectiveMetaDataCriteria;
@@ -34,15 +35,17 @@ import javax.inject.Singleton;
 @Singleton
 public class MockMetaService implements MetaService, Clearable {
 
-    private static final Set<String> STANDARD_TYPES = Set.of("Raw Events",
-            "Raw Reference",
-            "Events",
-            "Reference",
-            "Records",
-            "Error");
+    private static final Set<String> STANDARD_TYPES = Set.of(
+            StreamTypeNames.RAW_EVENTS,
+            StreamTypeNames.RAW_REFERENCE,
+            StreamTypeNames.EVENTS,
+            StreamTypeNames.REFERENCE,
+            StreamTypeNames.RECORDS,
+            StreamTypeNames.ERROR);
 
     private final Set<String> feeds = new HashSet<>();
     private final Set<String> types = new HashSet<>(STANDARD_TYPES);
+    private final Set<String> rawTypes = new HashSet<>(StreamTypeNames.ALL_HARD_CODED_RAW_STREAM_TYPE_NAMES);
     private final Map<Long, Meta> metaMap = new HashMap<>();
 
     /**
@@ -163,6 +166,11 @@ public class MockMetaService implements MetaService, Clearable {
     @Override
     public Set<String> getTypes() {
         return types;
+    }
+
+    @Override
+    public Set<String> getRawTypes() {
+        return rawTypes;
     }
 
     @Override

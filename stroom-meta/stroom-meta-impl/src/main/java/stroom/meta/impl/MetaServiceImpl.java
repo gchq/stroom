@@ -471,6 +471,11 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     @Override
+    public Set<String> getRawTypes() {
+        return metaServiceConfigProvider.get().getRawMetaTypes();
+    }
+
+    @Override
     public int getLockCount() {
         return metaDao.getLockCount();
     }
@@ -714,7 +719,15 @@ public class MetaServiceImpl implements MetaService, Searchable {
                     LOGGER.debug("Query cancelled");
                     summaries = Collections.emptyList();
                 } catch (ExecutionException e) {
-                    throw new RuntimeException(e);
+                    if (e.getCause() != null) {
+                        if (e.getCause() instanceof RuntimeException) {
+                            throw (RuntimeException) e.getCause();
+                        } else {
+                            throw new RuntimeException(e);
+                        }
+                    } else {
+                        throw new RuntimeException(e);
+                    }
                 }
             } finally {
                 userQueryRegistry.deRegisterQuery(userId, queryId);

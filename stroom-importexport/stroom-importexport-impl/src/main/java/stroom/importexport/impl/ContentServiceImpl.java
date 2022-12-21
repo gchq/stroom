@@ -20,6 +20,9 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.api.ContentService;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
+import stroom.importexport.shared.ImportConfigRequest;
+import stroom.importexport.shared.ImportConfigResponse;
+import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
@@ -63,44 +66,55 @@ class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public ResourceKey performImport(final ResourceKey resourceKey, final List<ImportState> confirmList) {
-        return securityContext.secureResult(PermissionNames.IMPORT_CONFIGURATION, () -> {
-            // Import file.
-            final Path file = resourceStore.getTempFile(resourceKey);
-
-            boolean foundOneAction = false;
-            for (final ImportState importState : confirmList) {
-                if (importState.isAction()) {
-                    foundOneAction = true;
-                    break;
-                }
-            }
-            if (!foundOneAction) {
-                return resourceKey;
-            }
-
-            importExportService.performImportWithConfirmation(file, confirmList);
-
-            // Delete the import if it was successful
-            resourceStore.deleteTempFile(resourceKey);
-
-            return resourceKey;
-        });
-    }
-
-    @Override
-    public List<ImportState> confirmImport(final ResourceKey resourceKey) {
+    public ImportConfigResponse importContent(final ImportConfigRequest request) {
         return securityContext.secureResult(PermissionNames.IMPORT_CONFIGURATION, () -> {
             try {
-                final Path tempPath = resourceStore.getTempFile(resourceKey);
-                return importExportService.createImportConfirmationList(tempPath);
+                // Import file.
+                final Path file = resourceStore.getTempFile(request.getResourceKey());
+
+                //            boolean foundOneAction = false;
+                //            for (final ImportState importState : confirmList) {
+                //                if (importState.isAction()) {
+                //                    foundOneAction = true;
+                //                    break;
+                //                }
+                //            }
+                //            if (!foundOneAction) {
+                //                return resourceKey;
+                //            }
+
+                final List<ImportState> result =
+                        importExportService.importConfig(file, request.getImportSettings(), request.getConfirmList());
+
+                if (!ImportMode.CREATE_CONFIRMATION.equals(request.getImportSettings().getImportMode())) {
+                    // Delete the import if it was successful
+                    resourceStore.deleteTempFile(request.getResourceKey());
+                }
+
+                return new ImportConfigResponse(request.getResourceKey(), result);
             } catch (final RuntimeException rex) {
                 // In case of error delete the temp file
-                resourceStore.deleteTempFile(resourceKey);
+                resourceStore.deleteTempFile(request.getResourceKey());
                 throw rex;
             }
         });
     }
+
+//    @Override
+//    public List<ImportState> confirmImport(final ResourceKey resourceKey,
+//                                           final ImportSettings importSettings,
+//                                           final List<ImportState> confirmList) {
+//        return securityContext.secureResult(PermissionNames.IMPORT_CONFIGURATION, () -> {
+//            try {
+//                final Path tempPath = resourceStore.getTempFile(resourceKey);
+//                return importExportService.importConfig(tempPath, importSettings, confirmList);
+//            } catch (final RuntimeException rex) {
+//                // In case of error delete the temp file
+//                resourceStore.deleteTempFile(resourceKey);
+//                throw rex;
+//            }
+//        });
+//    }
 
     @Override
     public ResourceGeneration exportContent(final DocRefs docRefs) {

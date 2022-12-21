@@ -2,6 +2,7 @@ ext.moduleName = 'stroom.docrefinfo.api'
 
 dependencies {
     implementation project(':stroom-docref')
+    implementation project(':stroom-util-shared')
 
     implementation libs.jackson_annotations
     implementation libs.jaxb_api

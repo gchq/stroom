@@ -97,13 +97,11 @@ public abstract class UriConfig extends AbstractConfig implements IsStroomConfig
             sb.append(":").append(port);
         }
 
-        if (pathPrefix != null && !pathPrefix.isBlank()) {
+        if (pathPrefix != null && !pathPrefix.isBlank() && !pathPrefix.equals("/")) {
             if (!pathPrefix.startsWith("/")) {
                 sb.append("/");
             }
             sb.append(pathPrefix);
-        } else {
-            sb.append("/");
         }
 
         return sb.toString();

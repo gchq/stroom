@@ -23,6 +23,8 @@ import javax.validation.constraints.NotEmpty;
  * so that we can extend {@link AbstractConfig} and have an equals method
  * Also {@link java.io.File} has been replaced with {@link String} for consistency
  * with our other config
+ * Values are extracted from this using reflection by {@link RestClientConfigConverter} so it is
+ * key that the method names match.
  */
 @NotInjectableConfig
 @JsonPropertyOrder(alphabetic = true)
@@ -195,22 +197,90 @@ public class HttpClientTlsConfig extends AbstractConfig implements IsProxyConfig
         return certAlias;
     }
 
+    @SuppressWarnings("unused") // Used by javax.validation
     @JsonIgnore
     @ValidationMethod(message = "keyStorePassword should not be null or empty if keyStorePath not null")
     public boolean isValidKeyStorePassword() {
-        return keyStorePath == null || keyStoreType.startsWith("Windows-") || !Strings.isNullOrEmpty(keyStorePassword);
+        return keyStorePath == null
+                || keyStoreType.startsWith("Windows-")
+                || !Strings.isNullOrEmpty(keyStorePassword);
     }
 
+    @SuppressWarnings("unused") // Used by javax.validation
     @JsonIgnore
     @ValidationMethod(message = "trustStorePassword should not be null or empty if trustStorePath not null")
     public boolean isValidTrustStorePassword() {
-        return trustStorePath == null || trustStoreType.startsWith("Windows-") || !Strings.isNullOrEmpty(
-                trustStorePassword);
+        return trustStorePath == null
+                || trustStoreType.startsWith("Windows-")
+                || !Strings.isNullOrEmpty(trustStorePassword);
     }
 
     public static Builder builder() {
         return new Builder();
     }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final HttpClientTlsConfig that = (HttpClientTlsConfig) o;
+        return trustSelfSignedCertificates == that.trustSelfSignedCertificates
+                && verifyHostname == that.verifyHostname && Objects.equals(
+                protocol,
+                that.protocol) && Objects.equals(provider,
+                that.provider) && Objects.equals(keyStorePath, that.keyStorePath) && Objects.equals(
+                keyStorePassword,
+                that.keyStorePassword) && Objects.equals(keyStoreType,
+                that.keyStoreType) && Objects.equals(trustStorePath,
+                that.trustStorePath) && Objects.equals(trustStorePassword,
+                that.trustStorePassword) && Objects.equals(trustStoreType,
+                that.trustStoreType) && Objects.equals(supportedProtocols,
+                that.supportedProtocols) && Objects.equals(supportedCiphers,
+                that.supportedCiphers) && Objects.equals(certAlias, that.certAlias);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(protocol,
+                provider,
+                keyStorePath,
+                keyStorePassword,
+                keyStoreType,
+                trustStorePath,
+                trustStorePassword,
+                trustStoreType,
+                trustSelfSignedCertificates,
+                verifyHostname,
+                supportedProtocols,
+                supportedCiphers,
+                certAlias);
+    }
+
+    @Override
+    public String toString() {
+        return "HttpClientTlsConfig{" +
+                "protocol='" + protocol + '\'' +
+                ", provider='" + provider + '\'' +
+                ", keyStorePath='" + keyStorePath + '\'' +
+                ", keyStorePassword='" + keyStorePassword + '\'' +
+                ", keyStoreType='" + keyStoreType + '\'' +
+                ", trustStorePath='" + trustStorePath + '\'' +
+                ", trustStorePassword='" + trustStorePassword + '\'' +
+                ", trustStoreType='" + trustStoreType + '\'' +
+                ", trustSelfSignedCertificates=" + trustSelfSignedCertificates +
+                ", verifyHostname=" + verifyHostname +
+                ", supportedProtocols=" + supportedProtocols +
+                ", supportedCiphers=" + supportedCiphers +
+                ", certAlias='" + certAlias + '\'' +
+                '}';
+    }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
     public static class Builder {
 

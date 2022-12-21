@@ -108,7 +108,7 @@ appConfig:
   # Comment out the publicUri block if you are not running with nginx
   publicUri:
     hostname: ${API_GATEWAY_HOST:-localhost}
-    port: ${API_GATEWAY_PORT:-443}
+    port: ${API_GATEWAY_PORT:-}
   security:
     identity:
       useDefaultOpenIdCredentials: ${USE_DEFAULT_OPEN_ID_CREDENTIALS:-true}

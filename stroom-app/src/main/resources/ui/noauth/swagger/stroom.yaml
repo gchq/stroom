@@ -1151,28 +1151,6 @@ paths:
       summary: Fetch a property by its name, e.g. 'stroom.path.home'
       tags:
       - Global Config
-  /content/v1/confirmImport:
-    post:
-      operationId: confirmContentImport
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ResourceKey'
-        description: resourceKey
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ImportState'
-          description: default response
-      summary: Get import confirmation state
-      tags:
-      - Content
   /content/v1/export:
     post:
       operationId: exportContent
@@ -1228,7 +1206,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResourceKey'
+                $ref: '#/components/schemas/ImportConfigResponse'
           description: default response
       summary: Import content
       tags:
@@ -1427,26 +1405,6 @@ paths:
       summary: Download matching data
       tags:
       - Data
-  /data/v1/downloadZip:
-    post:
-      operationId: downloadZip
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/FindMetaCriteria'
-        description: criteria
-        required: true
-      responses:
-        default:
-          content:
-            application/octet-stream:
-              schema:
-                type: object
-          description: Returns Stroom content data as a zip file
-      summary: Retrieve the content matching the provided criteria as a zip file
-      tags:
-      - Data
   /data/v1/fetch:
     post:
       operationId: fetchData
@@ -1538,6 +1496,22 @@ paths:
       summary: List child types for a stream
       tags:
       - Data
+  /dataDownload/v1/downloadZip:
+    post:
+      operationId: downloadZip
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindMetaCriteria'
+        description: criteria
+        required: true
+      responses:
+        default:
+          description: Returns Stroom content data as a zip file
+      summary: Retrieve content matching the provided criteria as a zip file
+      tags:
+      - Data Download
   /dataRetentionRules/v1:
     get:
       operationId: fetchDataRetentionRules
@@ -8389,8 +8363,39 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ImportState'
+        importSettings:
+          $ref: '#/components/schemas/ImportSettings'
         resourceKey:
           $ref: '#/components/schemas/ResourceKey'
+    ImportConfigResponse:
+      type: object
+      properties:
+        confirmList:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImportState'
+        resourceKey:
+          $ref: '#/components/schemas/ResourceKey'
+    ImportSettings:
+      type: object
+      properties:
+        enableFilters:
+          type: boolean
+        enableFiltersFromTime:
+          type: integer
+          format: int64
+        importMode:
+          type: string
+          enum:
+          - CREATE_CONFIRMATION
+          - ACTION_CONFIRMATION
+          - IGNORE_CONFIRMATION
+        rootDocRef:
+          $ref: '#/components/schemas/DocRef'
+        useImportFolders:
+          type: boolean
+        useImportNames:
+          type: boolean
     ImportState:
       type: object
       properties:
@@ -8400,11 +8405,6 @@ components:
           type: string
         docRef:
           $ref: '#/components/schemas/DocRef'
-        enable:
-          type: boolean
-        enableTime:
-          type: integer
-          format: int64
         messageList:
           type: array
           items:
@@ -8417,6 +8417,7 @@ components:
           - NEW
           - UPDATE
           - EQUAL
+          - IGNORE
         updatedFieldList:
           type: array
           items:
