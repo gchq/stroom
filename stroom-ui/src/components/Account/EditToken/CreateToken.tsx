@@ -103,6 +103,7 @@ export const CreateTokenFormik: React.FunctionComponent<CreateTokenProps> = ({
 
   return (
     <Formik<CreateTokenFormValues>
+      enableReinitialize
       initialValues={initialValues}
       validationSchema={newTokenValidationSchema}
       onSubmit={onSubmit}
@@ -123,15 +124,20 @@ export const CreateToken: React.FunctionComponent<{
   onClose: (success: boolean) => void;
 }> = ({ onClose }) => {
   const { exec } = useStroomApi();
-  const [expiryTime, setExpiryTime] = useState<number>(525600); // 365 days
+  const [expiresOnMs, setExpiresOnMs] = useState<number>(
+    moment().add(365, "d").valueOf(),
+  );
+
   useEffect(() => {
-    if (expiryTime === undefined) {
-      exec(
-        (api) => api.apikey.getDefaultApiKeyExpirySeconds(),
-        (response: number) => setExpiryTime(response),
-      );
-    }
-  }, [expiryTime, setExpiryTime, exec]);
+    exec(
+      (api) => api.apikey.getDefaultApiKeyExpirySeconds(),
+      (response: number) => {
+        console.log("response: " + response);
+        setExpiresOnMs(moment().add(response, "s").valueOf());
+        console.log("expiresOnMs: " + expiresOnMs);
+      },
+    );
+  }, [exec]);
 
   const onSubmit = (
     values: CreateTokenFormValues,
@@ -160,14 +166,6 @@ export const CreateToken: React.FunctionComponent<{
     };
     exec((api) => api.apikey.createApiKey(request), handleResponse);
   };
-
-  if (expiryTime === undefined) {
-    return (
-      <CustomLoader title="Stroom" message="Loading Config. Please wait..." />
-    );
-  }
-
-  const expiresOnMs = moment().add(expiryTime, "s").valueOf();
 
   return (
     <ResizableDialog
