@@ -6,8 +6,10 @@ import stroom.util.shared.IsStroomConfig;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.elasticsearch.client.RestClientBuilder;
 
+@JsonPropertyOrder(alphabetic = true)
 public class ElasticClientConfig extends AbstractConfig implements IsStroomConfig {
 
     private final int maxConnectionsPerRoute;
