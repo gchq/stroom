@@ -476,7 +476,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             final List<PipelineReference> pipelineReferences = convertReferenceLoaders(
                     refDataLookupRequest.getReferenceLoaders());
 
-            final ReferenceDataResult referenceDataResult = new ReferenceDataResult();
+            final ReferenceDataResult referenceDataResult = new ReferenceDataResult(
+                    lookupIdentifier);
 
             LOGGER.logDurationIfDebugEnabled(() ->
                             pipelineScopeRunnable.scopeRunnable(() ->

@@ -1151,28 +1151,6 @@ paths:
       summary: Fetch a property by its name, e.g. 'stroom.path.home'
       tags:
       - Global Config
-  /content/v1/confirmImport:
-    post:
-      operationId: confirmContentImport
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ImportConfigRequest'
-        description: request
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ImportState'
-          description: default response
-      summary: Get import confirmation state
-      tags:
-      - Content
   /content/v1/export:
     post:
       operationId: exportContent
@@ -1228,7 +1206,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResourceKey'
+                $ref: '#/components/schemas/ImportConfigResponse'
           description: default response
       summary: Import content
       tags:
@@ -8444,8 +8422,39 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ImportState'
+        importSettings:
+          $ref: '#/components/schemas/ImportSettings'
         resourceKey:
           $ref: '#/components/schemas/ResourceKey'
+    ImportConfigResponse:
+      type: object
+      properties:
+        confirmList:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImportState'
+        resourceKey:
+          $ref: '#/components/schemas/ResourceKey'
+    ImportSettings:
+      type: object
+      properties:
+        enableFilters:
+          type: boolean
+        enableFiltersFromTime:
+          type: integer
+          format: int64
+        importMode:
+          type: string
+          enum:
+          - CREATE_CONFIRMATION
+          - ACTION_CONFIRMATION
+          - IGNORE_CONFIRMATION
+        rootDocRef:
+          $ref: '#/components/schemas/DocRef'
+        useImportFolders:
+          type: boolean
+        useImportNames:
+          type: boolean
     ImportState:
       type: object
       properties:
@@ -8455,17 +8464,10 @@ components:
           type: string
         docRef:
           $ref: '#/components/schemas/DocRef'
-        enableFilters:
-          type: boolean
-        enableFiltersFromTime:
-          type: integer
-          format: int64
         messageList:
           type: array
           items:
             $ref: '#/components/schemas/Message'
-        rootDocRef:
-          $ref: '#/components/schemas/DocRef'
         sourcePath:
           type: string
         state:
@@ -8474,14 +8476,11 @@ components:
           - NEW
           - UPDATE
           - EQUAL
+          - IGNORE
         updatedFieldList:
           type: array
           items:
             type: string
-        useImportFolders:
-          type: boolean
-        useImportNames:
-          type: boolean
     IndexDoc:
       type: object
       properties:

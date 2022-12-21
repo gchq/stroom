@@ -44,7 +44,7 @@ public class DefaultLoggingFilter extends LoggingFeature implements ContainerReq
 
     public static final String ENTITY_LOGGER_PROPERTY = LoggingFeature.class.getName();
     private static final int MAX_ENTITY_SIZE = 8 * 1024;
-    private static final Logger logger = Logger.getLogger(ENTITY_LOGGER_PROPERTY);
+    private static final Logger LOGGER = Logger.getLogger(ENTITY_LOGGER_PROPERTY);
 
     public DefaultLoggingFilter(Logger logger, Level level, Verbosity verbosity, Integer maxEntitySize) {
         super(logger, level, verbosity, maxEntitySize);
@@ -71,7 +71,7 @@ public class DefaultLoggingFilter extends LoggingFeature implements ContainerReq
             requestContext.setEntityStream(loggingStream);
         }
 
-        logger.info(sb.toString());
+        LOGGER.info(sb.toString());
     }
 
     /**
@@ -93,7 +93,7 @@ public class DefaultLoggingFilter extends LoggingFeature implements ContainerReq
             responseContext.setEntityStream(outputStream);
             requestContext.setProperty(ENTITY_LOGGER_PROPERTY, outputStream);
         } else {
-            logger.info(sb.toString());
+            LOGGER.info(sb.toString());
         }
     }
 
@@ -110,7 +110,7 @@ public class DefaultLoggingFilter extends LoggingFeature implements ContainerReq
             requestContext.setEntityStream(outputStream);
             requestContext.setProperty(ENTITY_LOGGER_PROPERTY, outputStream);
         } else {
-            logger.info(sb.toString());
+            LOGGER.info(sb.toString());
         }
     }
 
@@ -129,7 +129,7 @@ public class DefaultLoggingFilter extends LoggingFeature implements ContainerReq
                     MessageUtils.getCharset(responseContext.getMediaType()));
             responseContext.setEntityStream(loggingStream);
         } else {
-            logger.info(sb.toString());
+            LOGGER.info(sb.toString());
         }
     }
 
@@ -139,7 +139,7 @@ public class DefaultLoggingFilter extends LoggingFeature implements ContainerReq
         final LoggingStream stream = (LoggingStream) writerInterceptorContext.getProperty(ENTITY_LOGGER_PROPERTY);
         writerInterceptorContext.proceed();
         if (stream != null) {
-            logger.info(stream.getStringBuilder(MessageUtils.getCharset(writerInterceptorContext.getMediaType()))
+            LOGGER.info(stream.getStringBuilder(MessageUtils.getCharset(writerInterceptorContext.getMediaType()))
                     .toString());
         }
     }

@@ -19,10 +19,17 @@ package stroom.pipeline.refdata.store;
 
 import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
 public interface RefDataValueProxy {
+
+    String getKey();
+
+    String getMapName();
+
+    List<MapDefinition> getMapDefinitions();
 
     /**
      * Materialise the value that this is proxying. The consumeValue() method should be preferred
@@ -41,4 +48,12 @@ public interface RefDataValueProxy {
     boolean consumeBytes(Consumer<TypedByteBuffer> typedByteBufferConsumer);
 
     boolean consumeValue(final RefDataValueProxyConsumerFactory refDataValueProxyConsumerFactory);
+
+    /**
+     * Merge additionalProxy with this to return proxy that combines both.
+     * additionalProxy will be used after all existing proxies.
+     * Does not mutate this or additionalProxy.
+     * @return A combined proxy.
+     */
+    RefDataValueProxy merge(final RefDataValueProxy additionalProxy);
 }

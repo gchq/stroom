@@ -20,6 +20,7 @@ package stroom.importexport;
 import stroom.explorer.api.ExplorerService;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.impl.ImportExportService;
+import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
@@ -71,8 +72,10 @@ class TestImportExportServiceImpl3 extends AbstractCoreIntegrationTest {
         assertThat(list.size())
                 .isEqualTo(expectedSize);
 
-        final List<ImportState> confirmList =
-                importExportService.createImportConfirmationList(testFile, new ArrayList<>());
+        final List<ImportState> confirmList = importExportService.importConfig(
+                testFile,
+                ImportSettings.createConfirmation(),
+                new ArrayList<>());
 
         assertThat(confirmList.size())
                 .isEqualTo(BATCH_SIZE);
