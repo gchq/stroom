@@ -50,4 +50,8 @@ public interface ExplorerTreeDao {
     void move(ExplorerTreeNode node, ExplorerTreeNode parent);
 
     ExplorerTreeNode findByUUID(final String uuid);
+
+    List<ExplorerTreeNode> findByNames(final List<String> names, final boolean allowWildCards);
+
+    List<ExplorerTreeNode> findByType(final String type);
 }

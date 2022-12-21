@@ -8,6 +8,7 @@ import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
 
 import com.google.common.reflect.ClassPath;
+import com.google.common.reflect.ClassPath.ClassInfo;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.assertj.core.api.Assertions;
@@ -63,7 +64,14 @@ class TestProxyConfigModule {
                 .getAllClasses()
                 .stream()
                 .filter(classInfo -> packageNameFilter.test(classInfo.getPackageName()))
-                .map(ClassPath.ClassInfo::load)
+                .map((ClassInfo classInfo2) -> {
+                    try {
+                        return classInfo2.load();
+                    } catch (Exception e) {
+                        throw new RuntimeException(LogUtil.message(
+                                "Unable to load class {}", classInfo2), e);
+                    }
+                })
                 .filter(classFilter)
                 .filter(clazz -> {
                     boolean isAbstract = Modifier.isAbstract(clazz.getModifiers());

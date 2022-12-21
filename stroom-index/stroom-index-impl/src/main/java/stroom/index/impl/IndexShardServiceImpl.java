@@ -25,6 +25,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexShardFields;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
 import stroom.searchable.api.Searchable;
@@ -44,9 +45,6 @@ import javax.inject.Singleton;
 public class IndexShardServiceImpl implements IndexShardService, Searchable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardServiceImpl.class);
-
-    private static final DocRef INDEX_SHARDS_PSEUDO_DOC_REF = new DocRef(
-            "Searchable", "Index Shards", "Index Shards");
 
     private static final String PERMISSION = PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION;
 
@@ -137,7 +135,7 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
 
     @Override
     public DocRef getDocRef() {
-        return INDEX_SHARDS_PSEUDO_DOC_REF;
+        return IndexShardFields.INDEX_SHARDS_PSEUDO_DOC_REF;
     }
 
     @Override

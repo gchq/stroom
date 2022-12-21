@@ -27,8 +27,8 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
+import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
-import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Message;
@@ -179,10 +179,10 @@ public class FeedStoreImpl implements FeedStore {
     }
 
     @Override
-    public ImpexDetails importDocument(final DocRef docRef,
-                                       final Map<String, byte[]> dataMap,
-                                       final ImportState importState,
-                                       final ImportMode importMode) {
+    public DocRef importDocument(final DocRef docRef,
+                                 final Map<String, byte[]> dataMap,
+                                 final ImportState importState,
+                                 final ImportSettings importSettings) {
         DocRef newDocRef = docRef;
 
         if (ImportState.State.NEW.equals(importState.getState())) {
@@ -190,7 +190,7 @@ public class FeedStoreImpl implements FeedStore {
             newDocRef = new DocRef(docRef.getType(), docRef.getUuid(), newName);
         }
 
-        return store.importDocument(newDocRef, dataMap, importState, importMode);
+        return store.importDocument(newDocRef, dataMap, importState, importSettings);
     }
 
     @Override
@@ -218,8 +218,8 @@ public class FeedStoreImpl implements FeedStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public List<DocRef> findByName(final String name) {
-        return store.findByName(name);
+    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
+        return store.findByNames(name, allowWildCards);
     }
 
     @Override

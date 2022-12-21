@@ -24,7 +24,7 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.impl.ImportExportSerializer;
-import stroom.importexport.shared.ImportState.ImportMode;
+import stroom.importexport.shared.ImportSettings;
 import stroom.statistics.impl.sql.entity.StatisticStoreStore;
 import stroom.statistics.impl.sql.entity.StatisticsDataSourceProvider;
 import stroom.statistics.impl.sql.shared.StatisticField;
@@ -97,7 +97,7 @@ class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegra
 
         assertThat(statisticStoreStore.list().size()).isEqualTo(0);
 
-        importExportSerializer.read(testDataDir, null, ImportMode.IGNORE_CONFIRMATION);
+        importExportSerializer.read(testDataDir, null, ImportSettings.auto());
 
         final List<DocRef> dataSources = statisticStoreStore.list();
 

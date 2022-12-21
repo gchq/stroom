@@ -19,19 +19,31 @@ package stroom.pipeline.xsltfunctions;
 import stroom.pipeline.refdata.LookupIdentifier;
 import stroom.pipeline.refdata.ReferenceData;
 import stroom.pipeline.refdata.ReferenceDataResult;
+import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
 import stroom.pipeline.state.MetaHolder;
 import stroom.util.date.DateUtil;
+import stroom.util.exception.ThrowingFunction;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.inject.Inject;
 
 class BitmapLookup extends AbstractLookup {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BitmapLookup.class);
 
     @Inject
     BitmapLookup(final ReferenceData referenceData,
@@ -40,14 +52,135 @@ class BitmapLookup extends AbstractLookup {
         super(referenceData, metaHolder, consumerFactoryFactory);
     }
 
+    private SequenceMaker getOrCreateSequenceMaker(final AtomicReference<SequenceMaker> sequenceMakerRef,
+                                                   final XPathContext xPathContext) throws XPathException {
+        Objects.requireNonNull(sequenceMakerRef);
+        Objects.requireNonNull(xPathContext);
+        if (sequenceMakerRef.get() == null) {
+            final SequenceMaker sequenceMaker = new SequenceMaker(
+                    xPathContext,
+                    getRefDataValueProxyConsumerFactoryFactory());
+            sequenceMaker.open();
+            sequenceMakerRef.set(sequenceMaker);
+        }
+        return sequenceMakerRef.get();
+    }
+
+    private Sequence generateSequence(final AtomicReference<SequenceMaker> sequenceMakerRef,
+                                      final XPathContext xPathContext) {
+        Objects.requireNonNull(sequenceMakerRef);
+        Objects.requireNonNull(xPathContext);
+
+        return Optional.ofNullable(sequenceMakerRef.get())
+                .map(ThrowingFunction.unchecked(sequenceMaker -> {
+                    sequenceMaker.close();
+                    return sequenceMaker.toSequence();
+                }))
+                .orElseGet(EmptyAtomicSequence::getInstance);
+    }
+
     @Override
-    protected Sequence doLookup(final XPathContext context,
+    protected Sequence doLookup(final XPathContext xPathContext,
                                 final boolean ignoreWarnings,
                                 final boolean trace,
-                                final LookupIdentifier lookupIdentifier) throws XPathException {
-        SequenceMaker sequenceMaker = null;
+                                final LookupIdentifier lookupIdentifier) {
 
-        String key = lookupIdentifier.getKey();
+        try {
+            final int[] bits = convertToBits(lookupIdentifier);
+            final AtomicReference<SequenceMaker> sequenceMakerRef = new AtomicReference<>(null);
+
+            if (bits.length > 0) {
+                final List<String> failedKeys = new ArrayList<>();
+                // Now treat each bit position as a key and perform a lookup for each.
+                for (final int bit : bits) {
+                    lookupBit(xPathContext,
+                            ignoreWarnings,
+                            trace,
+                            lookupIdentifier,
+                            sequenceMakerRef,
+                            failedKeys,
+                            bit);
+                }
+
+                if (!failedKeys.isEmpty()) {
+                    // Create the message.
+                    final StringBuilder sb = new StringBuilder();
+                    sb.append("Lookup failed ");
+                    sb.append("(map = ");
+                    sb.append(lookupIdentifier.getPrimaryMapName());
+                    sb.append(", keys = {");
+                    sb.append(String.join(",", failedKeys.toString()));
+                    sb.append("}, eventTime = ");
+                    sb.append(DateUtil.createNormalDateTimeString(lookupIdentifier.getEventTime()));
+                    sb.append(")");
+                    outputWarning(xPathContext, sb, null);
+                }
+            }
+
+            return generateSequence(sequenceMakerRef, xPathContext);
+        } catch (Exception e) {
+            log(xPathContext,
+                    Severity.ERROR,
+                    "Error during lookup: " + e.getMessage(),
+                    e);
+            return EmptyAtomicSequence.getInstance();
+        }
+    }
+
+    private void lookupBit(final XPathContext xPathContext,
+                           final boolean ignoreWarnings,
+                           final boolean trace,
+                           final LookupIdentifier lookupIdentifier,
+                           final AtomicReference<SequenceMaker> sequenceMakerRef,
+                           final List<String> failedKeys,
+                           final int bit) {
+        final String key = String.valueOf(bit);
+        LOGGER.trace("Looking up bit '{}', key '{}'", bit, key);
+        final LookupIdentifier bitIdentifier = lookupIdentifier.cloneWithNewKey(key);
+        final ReferenceDataResult result = getReferenceData(bitIdentifier, trace, ignoreWarnings);
+
+        try {
+            // Rather than doing individual lookups for each key (bit position) we could pass all the keys
+            // (bit positions) to the store and get it to open a cursor on the first key then scan over the
+            // keys concatenating the values of the matched keys.  Debatable if this is much quicker given
+            // the bitmap could be quite large so there would be a lot of keys to skip over.
+            // In fact this would only work if the data was stored in a store that was keyed by integer rather
+            // than string as the ordering would be wrong for a string keyed store.
+            if (result.getRefDataValueProxy().isPresent()) {
+                final SequenceMaker sequenceMaker = getOrCreateSequenceMaker(sequenceMakerRef, xPathContext);
+
+                // When multiple values are consumed they appear to be separated with a ' '.
+                // Not really sure why as it is not something we are doing explicitly.  May be something to
+                // do with how we call characters() on the TinyBuilder deeper down.
+                // receiver.characters(
+                // str, RefDataValueProxyConsumer.NULL_LOCATION, ReceiverOptions.WHOLE_TEXT_NODE);
+
+                final RefDataValueProxy refDataValueProxy = result.getRefDataValueProxy().get();
+
+                logMapLocations(result, refDataValueProxy);
+
+                final boolean wasFound = sequenceMaker.consume(refDataValueProxy);
+
+                logLookupValue(wasFound, result, xPathContext, ignoreWarnings, trace);
+            } else {
+                // No value proxy so log the reason
+                logFailureReason(result, xPathContext, ignoreWarnings, trace);
+            }
+        } catch (XPathException e) {
+            outputInfo(
+                    Severity.ERROR,
+                    "Error during lookup: " + e.getMessage(),
+                    lookupIdentifier,
+                    trace,
+                    ignoreWarnings,
+                    result,
+                    xPathContext);
+        }
+    }
+
+    @NotNull
+    private int[] convertToBits(final LookupIdentifier lookupIdentifier) {
+        final String key = lookupIdentifier.getKey();
         int val;
         try {
             if (key.startsWith("0x")) {
@@ -63,123 +196,6 @@ class BitmapLookup extends AbstractLookup {
 
         // Convert the (decimal/hex) input value into a bitmap then into an array of the bit positions
         // that are set to 1.
-        final int[] bits = Bitmap.getBits(val);
-        StringBuilder failedBits = null;
-
-        if (bits.length > 0) {
-            // Now treat each bit position as a key and perform a lookup for each.
-            for (final int bit : bits) {
-                final String k = String.valueOf(bit);
-                final LookupIdentifier bitIdentifier = lookupIdentifier.cloneWithNewKey(k);
-                final ReferenceDataResult result = getReferenceData(bitIdentifier);
-
-                boolean wasFound = false;
-
-                try {
-                    // Rather than doing individual lookups for each key (bit position) we could pass all the keys
-                    // (bit positions) to the store and get it to open a cursor on the first key then scan over the
-                    // keys concatenating the values of the matched keys.  Debatable if this is much quicker given
-                    // the bitmap could be quite large so there would be a lot of keys to skip over.
-                    // In fact this would only work if the data was stored in a store that was keyed by integer rather
-                    // than string as the ordering would be wrong for a string keyed store.
-                    if (result.getRefDataValueProxy().isPresent()) {
-                        if (sequenceMaker == null) {
-                            sequenceMaker = new SequenceMaker(context, getRefDataValueProxyConsumerFactoryFactory());
-                            sequenceMaker.open();
-                        }
-                        // When multiple values are consumed they appear to be separated with a ' '.
-                        // Not really sure why as it is not something we are doing explicitly.  May be something to
-                        // do with how we call characters() on the TinyBuilder deeper down.
-                        // receiver.characters(
-                        // str, RefDataValueProxyConsumer.NULL_LOCATION, ReceiverOptions.WHOLE_TEXT_NODE);
-                        wasFound = sequenceMaker.consume(result.getRefDataValueProxy().get());
-
-                        if (trace && wasFound) {
-                            outputInfo(
-                                    Severity.INFO,
-                                    "Success ",
-                                    lookupIdentifier,
-                                    trace,
-                                    ignoreWarnings,
-                                    result,
-                                    context);
-                        }
-
-                        if (!wasFound && !ignoreWarnings) {
-                            if (trace) {
-                                outputInfo(
-                                        Severity.WARNING,
-                                        "Key not found ",
-                                        lookupIdentifier,
-                                        trace,
-                                        ignoreWarnings,
-                                        result,
-                                        context);
-                            }
-
-                            if (failedBits == null) {
-                                failedBits = new StringBuilder();
-                            }
-                            failedBits.append(k);
-                            failedBits.append(",");
-                        }
-                    } else if (!ignoreWarnings && !result.getEffectiveStreams().isEmpty()) {
-                        // We have effective streams so if there is no proxy present then the map was not found
-                        outputInfo(
-                                Severity.WARNING,
-                                "Map not found in streams [" + getEffectiveStreamIds(result) + "] ",
-                                lookupIdentifier,
-                                trace,
-                                ignoreWarnings,
-                                result,
-                                context);
-                    } else if (!ignoreWarnings && result.getEffectiveStreams().isEmpty()) {
-                        // No effective streams were found to lookup from
-                        outputInfo(
-                                Severity.WARNING,
-                                "No effective streams found ",
-                                lookupIdentifier,
-                                trace,
-                                ignoreWarnings,
-                                result,
-                                context);
-                    }
-                } catch (XPathException e) {
-                    outputInfo(
-                            Severity.ERROR,
-                            "Lookup errored: " + e.getMessage(),
-                            lookupIdentifier,
-                            trace,
-                            ignoreWarnings,
-                            result,
-                            context);
-                }
-            }
-
-            if (failedBits != null) {
-                failedBits.setLength(failedBits.length() - 1);
-                failedBits.insert(0, "{");
-                failedBits.append("}");
-
-                // Create the message.
-                final StringBuilder sb = new StringBuilder();
-                sb.append("Lookup failed ");
-                sb.append("(map = ");
-                sb.append(lookupIdentifier.getPrimaryMapName());
-                sb.append(", key = ");
-                sb.append(failedBits.toString());
-                sb.append(", eventTime = ");
-                sb.append(DateUtil.createNormalDateTimeString(lookupIdentifier.getEventTime()));
-                sb.append(")");
-                outputWarning(context, sb, null);
-            }
-
-            if (sequenceMaker != null) {
-                sequenceMaker.close();
-                return sequenceMaker.toSequence();
-            }
-        }
-
-        return EmptyAtomicSequence.getInstance();
+        return Bitmap.getBits(val);
     }
 }

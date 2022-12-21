@@ -54,7 +54,15 @@ class TestPropertyPath {
     void merge2() {
         PropertyPath propertyPath1 = PropertyPath.fromParts("stroom", "node");
         String part2 = "name";
-        Assertions.assertThat(propertyPath1.merge(part2).toString()).isEqualTo("stroom.node.name");
+        Assertions.assertThat(propertyPath1.merge(part2).toString())
+                .isEqualTo("stroom.node.name");
+    }
+
+    @Test
+    void merge3() {
+        PropertyPath propertyPath1 = PropertyPath.fromParts("stroom", "node");
+        Assertions.assertThat(propertyPath1.merge("name", "other").toString())
+                .isEqualTo("stroom.node.name.other");
     }
 
     @Test

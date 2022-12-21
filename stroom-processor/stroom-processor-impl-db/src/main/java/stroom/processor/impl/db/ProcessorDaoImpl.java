@@ -43,7 +43,7 @@ class ProcessorDaoImpl implements ProcessorDao {
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(ProcessorFields.ID, PROCESSOR.ID, Integer::valueOf);
         expressionMapper.map(ProcessorFields.CREATE_USER, PROCESSOR_FILTER.CREATE_USER, value -> value);
-        expressionMapper.map(ProcessorFields.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value);
+        expressionMapper.map(ProcessorFields.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value, false);
         expressionMapper.map(ProcessorFields.ENABLED, PROCESSOR.ENABLED, Boolean::valueOf);
         expressionMapper.map(ProcessorFields.DELETED, PROCESSOR.DELETED, Boolean::valueOf);
         expressionMapper.map(ProcessorFields.UUID, PROCESSOR.UUID, value -> value);

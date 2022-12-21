@@ -3,10 +3,12 @@ package stroom.test;
 import stroom.content.ContentPack;
 import stroom.content.ContentPacks;
 import stroom.importexport.impl.ImportExportService;
+import stroom.importexport.shared.ImportSettings;
 import stroom.test.common.util.test.ContentPackDownloader;
 import stroom.test.common.util.test.FileSystemTestUtil;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.inject.Inject;
@@ -45,7 +47,7 @@ public class ContentImportService {
                     pack,
                     FileSystemTestUtil.getContentPackDownloadsDir());
 
-            importExportService.performImportWithoutConfirmation(packPath);
+            importExportService.importConfig(packPath, ImportSettings.auto(), new ArrayList<>());
         });
     }
 }

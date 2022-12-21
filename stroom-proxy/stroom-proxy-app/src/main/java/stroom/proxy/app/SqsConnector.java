@@ -1,0 +1,111 @@
+package stroom.proxy.app;
+
+import stroom.meta.api.AttributeMap;
+import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.app.event.EventStore;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
+import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
+
+import java.util.List;
+import java.util.Map;
+
+public class SqsConnector {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SqsConnector.class);
+
+    private final EventStore eventStore;
+    private final SqsClient sqsClient;
+
+    private final String queueUrl;
+    private final int waitTimeSeconds;
+
+    public SqsConnector(final EventStore eventStore,
+                        final SqsConnectorConfig config) {
+        this.eventStore = eventStore;
+        try {
+            LOGGER.debug(() -> "Creating SQS client");
+            sqsClient = SqsClient.builder()
+                    .region(Region.of(config.getAwsRegionName()))
+                    .credentialsProvider(DefaultCredentialsProvider.create())
+                    .build();
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
+            throw e;
+        }
+        queueUrl = config.getQueueUrl();
+        waitTimeSeconds = (int) config.getPollFrequency().getDuration().toSeconds();
+    }
+
+    public void poll() {
+        try {
+//            if (queueUrl == null) {
+//                LOGGER.debug(() -> "Getting queue name");
+//                final String queueName = config.getQueueName();
+//                LOGGER.debug(() -> "Getting queue URL for queue: " + queueName);
+//                queueUrl = sqs.getQueueUrl(queueName).getQueueUrl();
+//            }
+            LOGGER.debug(() -> "Got queue URL: " + queueUrl);
+
+            List<Message> messages;
+            do {
+                // receive messages from the queue
+                LOGGER.debug(() -> "Getting messages");
+                // long polling and wait for waitTimeSeconds before timed out
+                final ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest.builder()
+                        .queueUrl(queueUrl)
+                        .waitTimeSeconds(waitTimeSeconds)  // forces long polling
+                        .messageAttributeNames("All") // Message attribute wildcard.
+                        .build();
+
+                messages = sqsClient.receiveMessage(receiveMessageRequest).messages();
+
+                // delete messages from the queue
+                for (final Message message : messages) {
+                    try {
+                        final AttributeMap attributeMap = new AttributeMap();
+
+                        LOGGER.debug(() -> "Has Attributes: " + message.hasAttributes());
+                        if (message.hasAttributes()) {
+                            final Map<String, String> attributesAsStrings = message.attributesAsStrings();
+                            LOGGER.debug(() -> "Attributes: " + attributesAsStrings);
+                            attributeMap.putAll(attributesAsStrings);
+                        }
+
+                        LOGGER.debug(() -> "Has Message Attributes: " + message.hasMessageAttributes());
+                        if (message.hasMessageAttributes()) {
+                            final Map<String, MessageAttributeValue> messageAttributes = message.messageAttributes();
+                            LOGGER.debug(() -> "Message Attributes: " + messageAttributes);
+                            messageAttributes.forEach((k, v) -> attributeMap.put(k, v.stringValue()));
+                        }
+
+                        // FALLBACK
+                        if (!attributeMap.containsKey(StandardHeaderArguments.FEED)) {
+                            LOGGER.debug(() -> "Adding fallback feed TEST");
+                            attributeMap.putIfAbsent(StandardHeaderArguments.FEED, "TEST");
+                        }
+
+                        eventStore.consume(attributeMap, message.messageId(), message.body());
+
+                        final DeleteMessageRequest deleteMessageRequest = DeleteMessageRequest.builder()
+                                .queueUrl(queueUrl)
+                                .receiptHandle(message.receiptHandle())
+                                .build();
+                        sqsClient.deleteMessage(deleteMessageRequest);
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e::getMessage, e);
+                    }
+                }
+            } while (messages.size() > 0);
+        } catch (final Exception e) {
+            LOGGER.error(e::getMessage, e);
+        }
+    }
+}

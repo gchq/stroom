@@ -373,7 +373,10 @@ public class HTTPAppender extends AbstractAppender {
         metaKeySet = getMetaKeySet(string);
     }
 
-    @PipelineProperty(description = "Use JVM SSL config",
+    @PipelineProperty(description = "Use JVM SSL config. " +
+            "Set this to true if the Stroom node has been configured with key/trust stores using java system " +
+            "properties like 'javax.net.ssl.keyStore'." +
+            "Set this to false if you are explicitly setting key/trust store properties on this HttpAppender.",
             defaultValue = "true",
             displayPriority = 11)
     public void setUseJvmSslConfig(final boolean useJvmSslConfig) {

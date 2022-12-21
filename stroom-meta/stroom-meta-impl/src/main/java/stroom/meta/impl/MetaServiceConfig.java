@@ -173,7 +173,7 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
     public boolean isValidRawTypesSet() {
         LOGGER.debug("metaTypes: {}, rawMetaTypes: {}", metaTypes, rawMetaTypes);
         return metaTypes != null
-                && metaTypes.containsAll(NullSafe.nonNullSet(rawMetaTypes));
+                && metaTypes.containsAll(NullSafe.set(rawMetaTypes));
     }
 
     @BootStrapConfig

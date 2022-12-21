@@ -110,6 +110,23 @@ class CIStringHashMap implements Map<String, String> {
         return map.toString();
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final CIStringHashMap that = (CIStringHashMap) o;
+        return Objects.equals(map, that.map);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(map);
+    }
+
     protected static class CIString implements Comparable<CIString>, Serializable {
 
         private final String key;

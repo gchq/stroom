@@ -19,13 +19,11 @@ package stroom.pipeline.textconverter;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentStore;
-import stroom.docstore.api.HasFindByName;
 import stroom.pipeline.shared.TextConverterDoc;
 
 import java.util.List;
 
-public interface TextConverterStore extends DocumentStore<TextConverterDoc>, HasFindByName {
-    List<DocRef> findByName(String name);
+public interface TextConverterStore extends DocumentStore<TextConverterDoc> {
 
     List<DocRef> list();
 }
