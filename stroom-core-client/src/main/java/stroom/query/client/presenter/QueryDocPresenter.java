@@ -70,6 +70,8 @@ public class QueryDocPresenter
 
         view.setQueryEditor(codePresenter.getView());
         view.setTable(tablePresenter.getView());
+        view.getQueryButtons().setUiHandlers(this);
+        view.setUiHandlers(this);
     }
 
     @Override
@@ -81,13 +83,14 @@ public class QueryDocPresenter
 
     @Override
     public void onTimeRange(final TimeRange timeRange) {
-        setTimeRange(timeRange);
+//        setTimeRange(timeRange);
+        start();
     }
 
-    private void setTimeRange(final TimeRange timeRange) {
-//        getEntity().dashboardContext.setTimeRange(timeRange);
-        getView().setTimeRange(timeRange);
-    }
+//    private void setTimeRange(final TimeRange timeRange) {
+////        getEntity().dashboardContext.setTimeRange(timeRange);
+//        getView().setTimeRange(timeRange);
+//    }
 
     @Override
     public void start() {

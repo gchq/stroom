@@ -31,6 +31,7 @@ public class QueryModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(QueryStore.class).to(QueryStoreImpl.class);
+        bind(QueryService.class).to(QueryServiceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
                 .addBinding(QueryStoreImpl.class);
