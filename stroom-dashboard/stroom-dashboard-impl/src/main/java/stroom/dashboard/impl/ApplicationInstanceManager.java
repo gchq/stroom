@@ -45,7 +45,7 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
-class ApplicationInstanceManager implements Clearable, HasSystemInfo {
+public class ApplicationInstanceManager implements Clearable, HasSystemInfo {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ApplicationInstanceManager.class);
     private static final String CACHE_NAME = "Application Instance";

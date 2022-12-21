@@ -21,10 +21,13 @@ import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionTreePresenter.ExpressionTreeView;
 import stroom.query.client.ExpressionTreeViewImpl;
 import stroom.query.client.QueryPlugin;
-import stroom.query.client.presenter.QueryPresenter;
-import stroom.query.client.presenter.QuerySettingsPresenter;
-import stroom.query.client.presenter.QuerySettingsPresenter.QuerySettingsView;
-import stroom.query.client.view.QuerySettingsViewImpl;
+import stroom.query.client.presenter.QueryDocSuperPresenter;
+import stroom.query.client.presenter.QueryDocPresenter;
+import stroom.query.client.presenter.QueryDocPresenter.QueryDocView;
+import stroom.query.client.presenter.QueryDocSettingsPresenter;
+import stroom.query.client.presenter.QueryDocSettingsPresenter.QueryDocSettingsView;
+import stroom.query.client.view.QueryDocSettingsViewImpl;
+import stroom.query.client.view.QueryDocViewImpl;
 
 public class QueryModule extends PluginModule {
 
@@ -32,11 +35,20 @@ public class QueryModule extends PluginModule {
     protected void configure() {
         bindPlugin(QueryPlugin.class);
 
-        bind(QueryPresenter.class);
+        bind(QueryDocSuperPresenter.class);
 
-        bindSharedView(QuerySettingsView.class, QuerySettingsViewImpl.class);
-        bind(QuerySettingsPresenter.class);
+        bindPresenterWidget(
+                QueryDocPresenter.class,
+                QueryDocView.class,
+                QueryDocViewImpl.class);
+        bindPresenterWidget(
+                QueryDocSettingsPresenter.class,
+                QueryDocSettingsView.class,
+                QueryDocSettingsViewImpl.class);
 
-        bindPresenterWidget(ExpressionTreePresenter.class, ExpressionTreeView.class, ExpressionTreeViewImpl.class);
+        bindPresenterWidget(
+                ExpressionTreePresenter.class,
+                ExpressionTreeView.class,
+                ExpressionTreeViewImpl.class);
     }
 }

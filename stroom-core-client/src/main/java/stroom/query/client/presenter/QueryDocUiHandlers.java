@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.query;
+package stroom.query.client.presenter;
+
+import stroom.query.api.v2.TimeRange;
 
 import com.gwtplatform.mvp.client.UiHandlers;
 
-public interface QueryUiHandlers extends UiHandlers {
+public interface QueryDocUiHandlers extends UiHandlers {
 
-    void start();
+    void onTimeRange(TimeRange timeRange);
 }

@@ -18,6 +18,7 @@ ext.moduleName = 'stroom.query.impl'
 
 dependencies {
     implementation project(':stroom-core-shared')
+    implementation project(':stroom-dashboard:stroom-dashboard-impl')
 //    implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
@@ -26,10 +27,14 @@ dependencies {
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
 //    implementation project(':stroom-lmdb')
 //    implementation project(':stroom-query:stroom-expression')
-//    implementation project(':stroom-query:stroom-query-api')
+
+    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-resource:stroom-resource-api')
     implementation project(':stroom-security:stroom-security-api')
-//    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-dashboard:stroom-storedquery-api')
+    implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
@@ -41,8 +46,9 @@ dependencies {
 //    implementation libs.jackson_core
 //    implementation libs.jackson_databind
 //    implementation libs.jackson_core
+    implementation libs.jakarta_servlet_api
 //    implementation libs.jakarta_validation_api
-//    implementation libs.javax_inject
+    implementation libs.javax_inject
 //    implementation libs.jaxb_api
 //    implementation libs.kryo
 //    implementation libs.lmdbjava

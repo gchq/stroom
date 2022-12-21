@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.main;
+package stroom.query.client.view;
 
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.TimeRange;

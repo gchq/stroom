@@ -19,7 +19,7 @@ package stroom.query.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
-import stroom.query.client.presenter.QuerySettingsPresenter.QuerySettingsView;
+import stroom.query.client.presenter.QueryDocSettingsPresenter.QueryDocSettingsView;
 import stroom.query.shared.QueryDoc;
 
 import com.google.gwt.event.dom.client.InputEvent;
@@ -29,16 +29,23 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
-public class QuerySettingsPresenter extends DocumentSettingsPresenter<QuerySettingsView, QueryDoc> {
+public class QueryDocSettingsPresenter extends DocumentSettingsPresenter<QueryDocSettingsView, QueryDoc> {
 
     @Inject
-    public QuerySettingsPresenter(final EventBus eventBus,
-                                  final QuerySettingsView view) {
+    public QueryDocSettingsPresenter(final EventBus eventBus,
+                                     final QueryDocSettingsView view) {
         super(eventBus, view);
+
+
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
 
         // Add listeners for dirty events.
         final InputHandler inputHandler = event -> setDirty(true);
-        registerHandler(view.getDescription().addDomHandler(inputHandler, InputEvent.getType()));
+        registerHandler(getView().getDescription().addDomHandler(inputHandler, InputEvent.getType()));
     }
 
     @Override
@@ -56,7 +63,7 @@ public class QuerySettingsPresenter extends DocumentSettingsPresenter<QuerySetti
         return QueryDoc.DOCUMENT_TYPE;
     }
 
-    public interface QuerySettingsView extends View {
+    public interface QueryDocSettingsView extends View {
 
         TextArea getDescription();
     }

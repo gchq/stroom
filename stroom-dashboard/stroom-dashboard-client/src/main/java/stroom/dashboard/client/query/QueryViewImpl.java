@@ -17,6 +17,7 @@
 package stroom.dashboard.client.query;
 
 import stroom.dashboard.client.query.QueryPresenter.QueryView;
+import stroom.query.client.view.QueryButtons;
 import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;

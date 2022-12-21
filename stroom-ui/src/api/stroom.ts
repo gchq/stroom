@@ -2394,6 +2394,22 @@ export interface QueryData {
   timeRange?: TimeRange;
 }
 
+export interface QueryDoc {
+  /** @format int64 */
+  createTimeMs?: number;
+  createUser?: string;
+  description?: string;
+  name?: string;
+  query?: string;
+  type?: string;
+
+  /** @format int64 */
+  updateTimeMs?: number;
+  updateUser?: string;
+  uuid?: string;
+  version?: string;
+}
+
 /**
  * A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode.
  */
@@ -2931,6 +2947,22 @@ export interface SharedElementData {
 export interface SharedStepData {
   elementMap?: Record<string, SharedElementData>;
   sourceLocation?: SourceLocation;
+}
+
+export interface SigmaRuleDoc {
+  /** @format int64 */
+  createTimeMs?: number;
+  createUser?: string;
+  description?: string;
+  name?: string;
+  sigmaRule?: string;
+  type?: string;
+
+  /** @format int64 */
+  updateTimeMs?: number;
+  updateUser?: string;
+  uuid?: string;
+  version?: string;
 }
 
 export interface SimpleUser {
@@ -3571,6 +3603,30 @@ export interface ValidateSessionResponse {
 export interface ValidationResult {
   message?: string;
   severity?: "INFO" | "WARN" | "ERROR" | "FATAL";
+}
+
+export interface ViewDoc {
+  /** @format int64 */
+  createTimeMs?: number;
+  createUser?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  dataSource?: DocRef;
+  description?: string;
+
+  /** A logical addOperator term in a query expression tree */
+  filter?: ExpressionOperator;
+  name?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  pipeline?: DocRef;
+  type?: string;
+
+  /** @format int64 */
+  updateTimeMs?: number;
+  updateUser?: string;
+  uuid?: string;
+  version?: string;
 }
 
 export type VisComponentSettings = ComponentSettings & {
@@ -7539,6 +7595,43 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         ...params,
       }),
   };
+  query = {
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name FetchQuery
+     * @summary Fetch a query doc by its UUID
+     * @request GET:/query/v1/{uuid}
+     * @secure
+     */
+    fetchQuery: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, QueryDoc>({
+        path: `/query/v1/${uuid}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name UpdateQuery
+     * @summary Update a query doc
+     * @request PUT:/query/v1/{uuid}
+     * @secure
+     */
+    updateQuery: (uuid: string, data: QueryDoc, params: RequestParams = {}) =>
+      this.request<any, QueryDoc>({
+        path: `/query/v1/${uuid}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
   refData = {
     /**
      * No description
@@ -8026,6 +8119,43 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         path: `/sessionInfo/v1`,
         method: "GET",
         secure: true,
+        ...params,
+      }),
+  };
+  sigmaRule = {
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name FetchSigmaRule
+     * @summary Fetch a sigma rule doc by its UUID
+     * @request GET:/sigmaRule/v1/{uuid}
+     * @secure
+     */
+    fetchSigmaRule: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, SigmaRuleDoc>({
+        path: `/sigmaRule/v1/${uuid}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name UpdateSigmaRule
+     * @summary Update a sigma rule doc
+     * @request PUT:/sigmaRule/v1/{uuid}
+     * @secure
+     */
+    updateSigmaRule: (uuid: string, data: SigmaRuleDoc, params: RequestParams = {}) =>
+      this.request<any, SigmaRuleDoc>({
+        path: `/sigmaRule/v1/${uuid}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         ...params,
       }),
   };
@@ -9111,6 +9241,43 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         path: `/users/v1/${uuid}`,
         method: "DELETE",
         secure: true,
+        ...params,
+      }),
+  };
+  view = {
+    /**
+     * No description
+     *
+     * @tags Views
+     * @name FetchView
+     * @summary Fetch a view doc by its UUID
+     * @request GET:/view/v1/{uuid}
+     * @secure
+     */
+    fetchView: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, ViewDoc>({
+        path: `/view/v1/${uuid}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Views
+     * @name UpdateView
+     * @summary Update a view doc
+     * @request PUT:/view/v1/{uuid}
+     * @secure
+     */
+    updateView: (uuid: string, data: ViewDoc, params: RequestParams = {}) =>
+      this.request<any, ViewDoc>({
+        path: `/view/v1/${uuid}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         ...params,
       }),
   };

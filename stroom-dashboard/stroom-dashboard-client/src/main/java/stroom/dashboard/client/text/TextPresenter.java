@@ -23,7 +23,7 @@ import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.table.TablePresenter;
-import stroom.dashboard.client.table.TableRow;
+import stroom.query.client.presenter.TableRow;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.IndexConstants;

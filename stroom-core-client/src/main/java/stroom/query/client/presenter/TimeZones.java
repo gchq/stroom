@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.table;
+package stroom.query.client.presenter;
 
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dispatch.client.Rest;

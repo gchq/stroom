@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.query;
+package stroom.query.client.view;
 
+import stroom.query.client.presenter.QueryUiHandlers;
 import stroom.svg.client.SvgImages;
 
 import com.google.gwt.core.client.GWT;

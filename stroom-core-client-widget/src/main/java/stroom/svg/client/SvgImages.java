@@ -385,15 +385,87 @@ public class SvgImages {
             "";
 
     public static String DASHBOARD = "" +
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
-            "1792 1792\">\n" +
-            "    <path style=\"fill:#2196f3\"\n" +
-            "          d=\"M1216 832q0-185-131.5-316.5t-316.5-131.5-316.5 131.5-131.5 316.5 13" +
-            "1.5 316.5 316.5 131.5 316.5-131.5 131.5-316.5zm512 832q0 52-38 90t-90 38q-54 0-9" +
-            "0-38l-343-342q-179 124-399 124-143 0-273.5-55.5t-225-150-150-225-55.5-273.5 55.5" +
-            "-273.5 150-225 225-150 273.5-55.5 273.5 55.5 225 150 150 225 55.5 273.5q0 220-12" +
-            "4 399l343 343q37 37 37 90z\"/>\n" +
+            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+            "<!-- Created with Inkscape (http://www.inkscape.org/) -->\n" +
+            "\n" +
+            "<svg\n" +
+            "   version=\"1.1\"\n" +
+            "   id=\"svg4591\"\n" +
+            "   width=\"512\"\n" +
+            "   height=\"512\"\n" +
+            "   viewBox=\"0 0 512 512\"\n" +
+            "   sodipodi:docname=\"Dashboard.svg\"\n" +
+            "   inkscape:version=\"1.2.1 (9c6d41e410, 2022-07-14, custom)\"\n" +
+            "   xmlns:inkscape=\"http://www.inkscape.org/namespaces/inkscape\"\n" +
+            "   xmlns:sodipodi=\"http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd\"\n" +
+            "   xmlns=\"http://www.w3.org/2000/svg\"\n" +
+            "   xmlns:svg=\"http://www.w3.org/2000/svg\">\n" +
+            "  <defs\n" +
+            "     id=\"defs4595\" />\n" +
+            "  <sodipodi:namedview\n" +
+            "     id=\"namedview4593\"\n" +
+            "     pagecolor=\"#ffffff\"\n" +
+            "     bordercolor=\"#666666\"\n" +
+            "     borderopacity=\"1.0\"\n" +
+            "     inkscape:showpageshadow=\"2\"\n" +
+            "     inkscape:pageopacity=\"0.0\"\n" +
+            "     inkscape:pagecheckerboard=\"0\"\n" +
+            "     inkscape:deskcolor=\"#d1d1d1\"\n" +
+            "     showgrid=\"false\"\n" +
+            "     inkscape:zoom=\"0.35458919\"\n" +
+            "     inkscape:cx=\"530.191\"\n" +
+            "     inkscape:cy=\"589.41447\"\n" +
+            "     inkscape:window-width=\"2560\"\n" +
+            "     inkscape:window-height=\"1403\"\n" +
+            "     inkscape:window-x=\"2560\"\n" +
+            "     inkscape:window-y=\"0\"\n" +
+            "     inkscape:window-maximized=\"1\"\n" +
+            "     inkscape:current-layer=\"g4597\" />\n" +
+            "  <g\n" +
+            "     inkscape:groupmode=\"layer\"\n" +
+            "     inkscape:label=\"Image\"\n" +
+            "     id=\"g4597\">\n" +
+            "    <rect\n" +
+            "       style=\"fill:#ff8f00;fill-opacity:1;stroke:#ff8f00;stroke-width:18.0000242" +
+            "5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacit" +
+            "y:1;paint-order:fill markers stroke\"\n" +
+            "       id=\"rect4655\"\n" +
+            "       width=\"151.83469\"\n" +
+            "       height=\"195.54515\"\n" +
+            "       x=\"73.71109\"\n" +
+            "       y=\"73.244606\"\n" +
+            "       transform=\"matrix(1,0,-0.00232161,0.99999731,0,0)\" />\n" +
+            "    <rect\n" +
+            "       style=\"fill:#ffeb3b;fill-opacity:1;stroke:#ffeb3b;stroke-width:18.0000242" +
+            "5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacit" +
+            "y:1;paint-order:fill markers stroke\"\n" +
+            "       id=\"rect4655-5\"\n" +
+            "       width=\"151.83469\"\n" +
+            "       height=\"195.54515\"\n" +
+            "       x=\"287.34845\"\n" +
+            "       y=\"243.71935\"\n" +
+            "       transform=\"matrix(1,0,-0.00232161,0.99999731,0,0)\" />\n" +
+            "    <rect\n" +
+            "       style=\"fill:#4caf50;fill-opacity:1;stroke:#4caf50;stroke-width:18.0000749" +
+            "7;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacit" +
+            "y:1;paint-order:fill markers stroke\"\n" +
+            "       id=\"rect4655-5-9\"\n" +
+            "       width=\"155.95563\"\n" +
+            "       height=\"108.24628\"\n" +
+            "       x=\"285.01883\"\n" +
+            "       y=\"71.178368\"\n" +
+            "       transform=\"matrix(1,0,-0.00408154,0.99999167,0,0)\" />\n" +
+            "    <rect\n" +
+            "       style=\"fill:#2196f3;fill-opacity:1;stroke:#2196f3;stroke-width:18.0000749" +
+            "7;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacit" +
+            "y:1;paint-order:fill markers stroke\"\n" +
+            "       id=\"rect4655-5-9-2\"\n" +
+            "       width=\"155.95563\"\n" +
+            "       height=\"108.24628\"\n" +
+            "       x=\"72.821693\"\n" +
+            "       y=\"331.08734\"\n" +
+            "       transform=\"matrix(1,0,-0.00408154,0.99999167,0,0)\" />\n" +
+            "  </g>\n" +
             "</svg>\n" +
             "";
 
@@ -1261,7 +1333,7 @@ public class SvgImages {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#388e3c\"\n" +
+            "    <path style=\"fill:#4caf50\"\n" +
             "          d=\"m 938.50195,211.41007 c -5.56299,0.0388 -11.74705,1.29983 -18.55468" +
             ",3.7832 -18.1537,6.6223 -30.41561,18.62426 -36.78321,36.00781 L 781.2832,529.337" +
             "8 l -636.59961,0 c -11.58903,0 -22.47327,3.72569 -32.65234,11.17578 -10.17907,7." +
@@ -3390,6 +3462,58 @@ public class SvgImages {
             "</svg>\n" +
             "";
 
+    public static String MONO_BACKWARD = "" +
+            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+            "<!-- Created with Inkscape (http://www.inkscape.org/) -->\n" +
+            "\n" +
+            "<svg\n" +
+            "   width=\"3.6472924mm\"\n" +
+            "   height=\"3.6400001mm\"\n" +
+            "   viewBox=\"0 0 3.6472924 3.6400001\"\n" +
+            "   version=\"1.1\"\n" +
+            "   id=\"svg5\"\n" +
+            "   xml:space=\"preserve\"\n" +
+            "   inkscape:version=\"1.2.1 (9c6d41e410, 2022-07-14, custom)\"\n" +
+            "   sodipodi:docname=\"mono-back.svg\"\n" +
+            "   xmlns:inkscape=\"http://www.inkscape.org/namespaces/inkscape\"\n" +
+            "   xmlns:sodipodi=\"http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd\"\n" +
+            "   xmlns=\"http://www.w3.org/2000/svg\"\n" +
+            "   xmlns:svg=\"http://www.w3.org/2000/svg\"><sodipodi:namedview\n" +
+            "     id=\"namedview7\"\n" +
+            "     pagecolor=\"#ffffff\"\n" +
+            "     bordercolor=\"#666666\"\n" +
+            "     borderopacity=\"1.0\"\n" +
+            "     inkscape:showpageshadow=\"2\"\n" +
+            "     inkscape:pageopacity=\"0.0\"\n" +
+            "     inkscape:pagecheckerboard=\"0\"\n" +
+            "     inkscape:deskcolor=\"#d1d1d1\"\n" +
+            "     inkscape:document-units=\"mm\"\n" +
+            "     showgrid=\"true\"\n" +
+            "     inkscape:zoom=\"16.976892\"\n" +
+            "     inkscape:cx=\"-2.0910777\"\n" +
+            "     inkscape:cy=\"1.9732705\"\n" +
+            "     inkscape:window-width=\"1444\"\n" +
+            "     inkscape:window-height=\"1236\"\n" +
+            "     inkscape:window-x=\"3178\"\n" +
+            "     inkscape:window-y=\"61\"\n" +
+            "     inkscape:window-maximized=\"0\"\n" +
+            "     inkscape:current-layer=\"layer1\"><inkscape:grid\n" +
+            "       type=\"xygrid\"\n" +
+            "       id=\"grid179\"\n" +
+            "       originx=\"-148.19876\"\n" +
+            "       originy=\"-54.536249\" /></sodipodi:namedview><defs\n" +
+            "     id=\"defs2\" /><g\n" +
+            "     inkscape:label=\"Layer 1\"\n" +
+            "     inkscape:groupmode=\"layer\"\n" +
+            "     id=\"layer1\"\n" +
+            "     transform=\"translate(-148.19876,-54.536249)\"><path\n" +
+            "       id=\"path237\"\n" +
+            "       style=\"fill:none;stroke:currentColor;stroke-width:0.449904;stroke-linecap" +
+            ":round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1\"\n" +
+            "       d=\"m 148.6489,56.356249 h 2.9722 v 0 m -1.60235,-1.5875 -1.5875,1.5875 1." +
+            "5875,1.5875\" /></g></svg>\n" +
+            "";
+
     public static String MONO_CLOSE = "" +
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
@@ -3486,6 +3610,58 @@ public class SvgImages {
             "          d=\"M1595 295q17 41-14 70l-493 493v742q0 42-39 59-13 5-25 5-27 0-45-19l" +
             "-256-256q-19-19-19-45v-486l-493-493q-31-29-14-70 17-39 59-39h1280q42 0 59 39z\"/>\n" +
             "</svg>\n" +
+            "";
+
+    public static String MONO_FORWARD = "" +
+            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+            "<!-- Created with Inkscape (http://www.inkscape.org/) -->\n" +
+            "\n" +
+            "<svg\n" +
+            "   width=\"3.6472924mm\"\n" +
+            "   height=\"3.6400001mm\"\n" +
+            "   viewBox=\"0 0 3.6472924 3.6400001\"\n" +
+            "   version=\"1.1\"\n" +
+            "   id=\"svg5\"\n" +
+            "   xml:space=\"preserve\"\n" +
+            "   sodipodi:docname=\"mono-forward.svg\"\n" +
+            "   inkscape:version=\"1.2.1 (9c6d41e410, 2022-07-14, custom)\"\n" +
+            "   xmlns:inkscape=\"http://www.inkscape.org/namespaces/inkscape\"\n" +
+            "   xmlns:sodipodi=\"http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd\"\n" +
+            "   xmlns=\"http://www.w3.org/2000/svg\"\n" +
+            "   xmlns:svg=\"http://www.w3.org/2000/svg\"><sodipodi:namedview\n" +
+            "     id=\"namedview7\"\n" +
+            "     pagecolor=\"#ffffff\"\n" +
+            "     bordercolor=\"#666666\"\n" +
+            "     borderopacity=\"1.0\"\n" +
+            "     inkscape:showpageshadow=\"2\"\n" +
+            "     inkscape:pageopacity=\"0.0\"\n" +
+            "     inkscape:pagecheckerboard=\"0\"\n" +
+            "     inkscape:deskcolor=\"#d1d1d1\"\n" +
+            "     inkscape:document-units=\"mm\"\n" +
+            "     showgrid=\"true\"\n" +
+            "     inkscape:zoom=\"16.976892\"\n" +
+            "     inkscape:cx=\"-2.0321741\"\n" +
+            "     inkscape:cy=\"1.9143669\"\n" +
+            "     inkscape:window-width=\"1444\"\n" +
+            "     inkscape:window-height=\"1236\"\n" +
+            "     inkscape:window-x=\"3178\"\n" +
+            "     inkscape:window-y=\"61\"\n" +
+            "     inkscape:window-maximized=\"0\"\n" +
+            "     inkscape:current-layer=\"layer1\"><inkscape:grid\n" +
+            "       type=\"xygrid\"\n" +
+            "       id=\"grid179\"\n" +
+            "       originx=\"-148.19876\"\n" +
+            "       originy=\"-54.536249\" /></sodipodi:namedview><defs\n" +
+            "     id=\"defs2\" /><g\n" +
+            "     inkscape:label=\"Layer 1\"\n" +
+            "     inkscape:groupmode=\"layer\"\n" +
+            "     id=\"layer1\"\n" +
+            "     transform=\"translate(-148.19876,-54.536249)\"><path\n" +
+            "       id=\"path237\"\n" +
+            "       style=\"fill:none;stroke:currentColor;stroke-width:0.449904;stroke-linecap" +
+            ":round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1\"\n" +
+            "       d=\"m 151.40346,56.356243 h -2.9722 v 0 m 1.60235,1.5875 1.5875,-1.5875 -1" +
+            ".5875,-1.5875\" /></g></svg>\n" +
             "";
 
     public static String MONO_HIDE_MENU = "" +
@@ -3820,7 +3996,7 @@ public class SvgImages {
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\">\n" +
-            "    <path style=\"fill:#1976d2\"\n" +
+            "    <path style=\"fill:#2196f3\"\n" +
             "          d=\"m 1440,95.339844 c -9.3333,0 -17,2.999997 -23,8.999996 -6,6 -9,13.6" +
             "6667 -9,23 l 0,192 -256,0 c -45.3333,0 -88,5.5 -128,16.5 -40.00001,11 -75.50001," +
             "25 -106.50001,42 -31,17 -61,39.83333 -90,68.5 -29,28.66667 -53.66667,56.33333 -7" +
@@ -3838,7 +4014,7 @@ public class SvgImages {
             " 3.1667,16.16667 9.5,22.5 6.3333,6.33333 13.8333,9.5 22.5,9.5 9.3333,0 17,-3 23," +
             "-9 l 320,-320 c 6,-6 9,-13.66667 9,-23 0,-9.33333 -3,-17 -9,-23 l -319,-319 c -8" +
             ",-6.666666 -16,-9.999996 -24,-9.999996 z\"/>\n" +
-            "    <path style=\"fill:#388e3c\"\n" +
+            "    <path style=\"fill:#4caf50\"\n" +
             "          d=\"M 32 608.88672 C 22.666667 608.88672 15 611.88672 9 617.88672 C 3.0" +
             "000001 623.88672 0 631.55342 0 640.88672 L 0 832.88672 C -2.3684758e-15 842.2200" +
             "5 3.0000001 849.88672 9 855.88672 C 14.999999 861.88672 22.666667 864.88672 32 8" +
@@ -3961,6 +4137,19 @@ public class SvgImages {
             "91-38 16-136 29-186 7-28 36-28h222q14 0 24.5 8.5t11.5 21.5l28 184q49 16 90 37l14" +
             "2-107q9-9 24-9 13 0 25 10 129 119 165 170 7 8 7 22 0 12-8 23-15 21-51 66.5t-54 7" +
             "0.5q26 50 41 98l183 28q13 2 21 12.5t8 23.5z\"/>\n" +
+            "</svg>\n" +
+            "";
+
+    public static String QUERY = "" +
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
+            "1792 1792\">\n" +
+            "  <path style=\"fill:#2196f3\"\n" +
+            "        d=\"M1216 832q0-185-131.5-316.5t-316.5-131.5-316.5 131.5-131.5 316.5 131." +
+            "5 316.5 316.5 131.5 316.5-131.5 131.5-316.5zm512 832q0 52-38 90t-90 38q-54 0-90-" +
+            "38l-343-342q-179 124-399 124-143 0-273.5-55.5t-225-150-150-225-55.5-273.5 55.5-2" +
+            "73.5 150-225 225-150 273.5-55.5 273.5 55.5 225 150 150 225 55.5 273.5q0 220-124 " +
+            "399l343 343q37 37 37 90z\"/>\n" +
             "</svg>\n" +
             "";
 
@@ -4570,6 +4759,77 @@ public class SvgImages {
             "t147-61q20 0 34-14t14-34zm848 384q0 34-20 69-140 230-376.5 368.5t-499.5 138.5-49" +
             "9.5-139-376.5-368q-20-35-20-69t20-69q140-229 376.5-368t499.5-139 499.5 139 376.5" +
             " 368q20 35 20 69z\"/></svg>\n" +
+            "";
+
+    public static String SIGMA_RULE = "" +
+            "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+            "<!-- Created with Inkscape (http://www.inkscape.org/) -->\n" +
+            "\n" +
+            "<svg\n" +
+            "        width=\"94.138962mm\"\n" +
+            "        height=\"110.23809mm\"\n" +
+            "        viewBox=\"0 0 94.138962 110.23809\"\n" +
+            "        version=\"1.1\"\n" +
+            "        id=\"svg5\"\n" +
+            "        xml:space=\"preserve\"\n" +
+            "        inkscape:version=\"1.2.1 (9c6d41e410, 2022-07-14, custom)\"\n" +
+            "        sodipodi:docname=\"sigma.svg\"\n" +
+            "        xmlns:inkscape=\"http://www.inkscape.org/namespaces/inkscape\"\n" +
+            "        xmlns:sodipodi=\"http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd\"\n" +
+            "        xmlns=\"http://www.w3.org/2000/svg\"\n" +
+            "        xmlns:svg=\"http://www.w3.org/2000/svg\"><sodipodi:namedview\n" +
+            "     id=\"namedview7\"\n" +
+            "     pagecolor=\"#ffffff\"\n" +
+            "     bordercolor=\"#666666\"\n" +
+            "     borderopacity=\"1.0\"\n" +
+            "     inkscape:showpageshadow=\"2\"\n" +
+            "     inkscape:pageopacity=\"0.0\"\n" +
+            "     inkscape:pagecheckerboard=\"0\"\n" +
+            "     inkscape:deskcolor=\"#d1d1d1\"\n" +
+            "     inkscape:document-units=\"mm\"\n" +
+            "     showgrid=\"true\"\n" +
+            "     showguides=\"true\"\n" +
+            "     inkscape:zoom=\"1.2938725\"\n" +
+            "     inkscape:cx=\"243.84165\"\n" +
+            "     inkscape:cy=\"215.24532\"\n" +
+            "     inkscape:window-width=\"1444\"\n" +
+            "     inkscape:window-height=\"1236\"\n" +
+            "     inkscape:window-x=\"3018\"\n" +
+            "     inkscape:window-y=\"94\"\n" +
+            "     inkscape:window-maximized=\"0\"\n" +
+            "     inkscape:current-layer=\"layer1\"><sodipodi:guide\n" +
+            "       position=\"-45.336428,102.85559\"\n" +
+            "       orientation=\"0,793.70079\"\n" +
+            "       id=\"guide437\"\n" +
+            "       inkscape:locked=\"false\" /><sodipodi:guide\n" +
+            "        position=\"173.72521,152.90333\"\n" +
+            "        orientation=\"1122.5197,0\"\n" +
+            "        id=\"guide439\"\n" +
+            "        inkscape:locked=\"false\" /><sodipodi:guide\n" +
+            "        position=\"173.72521,-144.09667\"\n" +
+            "        orientation=\"0,-793.70079\"\n" +
+            "        id=\"guide441\"\n" +
+            "        inkscape:locked=\"false\" /><sodipodi:guide\n" +
+            "        position=\"-36.274787,-144.09667\"\n" +
+            "        orientation=\"-1122.5197,0\"\n" +
+            "        id=\"guide443\"\n" +
+            "        inkscape:locked=\"false\" /><inkscape:grid\n" +
+            "        type=\"xygrid\"\n" +
+            "        id=\"grid445\"\n" +
+            "        originx=\"-36.274786\"\n" +
+            "        originy=\"-42.665242\" /></sodipodi:namedview><defs\n" +
+            "        id=\"defs2\" /><g\n" +
+            "        inkscape:label=\"Layer 1\"\n" +
+            "        inkscape:groupmode=\"layer\"\n" +
+            "        id=\"layer1\"\n" +
+            "        transform=\"translate(-36.274787,-42.66524)\"><path\n" +
+            "       style=\"fill:none;stroke:#ff8f00;stroke-width:14.765;stroke-linecap:round;" +
+            "stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:fill ma" +
+            "rkers stroke\"\n" +
+            "       d=\"m 123.03125,66.145833 0,-16.098092 h -79.375 l 47.625,47.848092 -47.62" +
+            "5,47.624997 h 79.375 l 0,-15.875\"\n" +
+            "       id=\"path231\"\n" +
+            "       sodipodi:nodetypes=\"ccccccc\" /></g></svg>\n" +
             "";
 
     public static String SOLR = "" +
@@ -5395,6 +5655,77 @@ public class SvgImages {
             "-85 8.5-160.5t31.5-152 58.5-131 94-89 134.5-34.5q131 128 313 128t313-128q76 0 13" +
             "4.5 34.5t94 89 58.5 131 31.5 152 8.5 160.5zm-256-887q0 159-112.5 271.5t-271.5 11" +
             "2.5-271.5-112.5-112.5-271.5 112.5-271.5 271.5-112.5 271.5 112.5 112.5 271.5z\"/>\n" +
+            "</svg>\n" +
+            "";
+
+    public static String VIEW = "" +
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
+            "1792 1792\">\n" +
+            "    <!--\n" +
+            "    <path\n" +
+            "            style=\"fill:#ff8f00\"\n" +
+            "            d=\"m 896,0 q 208,0 385,34.5 177,34.5 280,93.5 103,59 103,128 v 128 q" +
+            " 0,69 -103,128 -103,59 -280,93.5 Q 1104,640 896,640 688,640 511,605.5 334,571 23" +
+            "1,512 128,453 128,384 V 256 Q 128,187 231,128 334,69 511,34.5 688,0 896,0 Z\"\n" +
+            "            id=\"path246\" />\n" +
+            "    <path\n" +
+            "            style=\"fill:#4caf50\"\n" +
+            "            d=\"m 896,1152 q 237,0 443,-43 206,-43 325,-127 v 170 q 0,69 -103,128" +
+            " -103,59 -280,93.5 -177,34.5 -385,34.5 -208,0 -385,-34.5 Q 334,1339 231,1280 128" +
+            ",1221 128,1152 V 982 q 119,84 325,127 206,43 443,43 z\"\n" +
+            "            id=\"path244\" />\n" +
+            "    <path\n" +
+            "            style=\"fill:#2196f3\"\n" +
+            "            d=\"m 896,1536 q 237,0 443,-43 206,-43 325,-127 v 170 q 0,69 -103,128" +
+            " -103,59 -280,93.5 -177,34.5 -385,34.5 -208,0 -385,-34.5 Q 334,1723 231,1664 128" +
+            ",1605 128,1536 v -170 q 119,84 325,127 206,43 443,43 z\"\n" +
+            "            id=\"path242\" />\n" +
+            "    <path\n" +
+            "            style=\"fill:#ffeb3b\"\n" +
+            "            d=\"m 896,768 q 237,0 443,-43 206,-43 325,-127 v 170 q 0,69 -103,128 " +
+            "-103,59 -280,93.5 Q 1104,1024 896,1024 688,1024 511,989.5 334,955 231,896 128,83" +
+            "7 128,768 V 598 q 119,84 325,127 206,43 443,43 z\"\n" +
+            "            id=\"path74\" />\n" +
+            "    <path style=\"fill:#000000;stroke:red;stroke-width:22\"\n" +
+            "          d=\"M1595 295q17 41-14 70l-493 493v742q0 42-39 59-13 5-25 5-27 0-45-19l" +
+            "-256-256q-19-19-19-45v-486l-493-493q-31-29-14-70 17-39 59-39h1280q42 0 59 39z\"/>\n" +
+            "-->\n" +
+            "\n" +
+            "<!--\n" +
+            "\n" +
+            "    <path\n" +
+            "            style=\"fill:#2196f3\"\n" +
+            "            d=\"m 896,0 q 208,0 385,34.5 177,34.5 280,93.5 103,59 103,128 v 128 q" +
+            " 0,69 -103,128 -103,59 -280,93.5 Q 1104,640 896,640 688,640 511,605.5 334,571 23" +
+            "1,512 128,453 128,384 V 256 Q 128,187 231,128 334,69 511,34.5 688,0 896,0 Z\"\n" +
+            "            id=\"path246\" />\n" +
+            "    <path\n" +
+            "            style=\"fill:#2196f3\"\n" +
+            "            d=\"m 896,1152 q 237,0 443,-43 206,-43 325,-127 v 170 q 0,69 -103,128" +
+            " -103,59 -280,93.5 -177,34.5 -385,34.5 -208,0 -385,-34.5 Q 334,1339 231,1280 128" +
+            ",1221 128,1152 V 982 q 119,84 325,127 206,43 443,43 z\"\n" +
+            "            id=\"path244\" />\n" +
+            "    <path\n" +
+            "            style=\"fill:#2196f3\"\n" +
+            "            d=\"m 896,1536 q 237,0 443,-43 206,-43 325,-127 v 170 q 0,69 -103,128" +
+            " -103,59 -280,93.5 -177,34.5 -385,34.5 -208,0 -385,-34.5 Q 334,1723 231,1664 128" +
+            ",1605 128,1536 v -170 q 119,84 325,127 206,43 443,43 z\"\n" +
+            "            id=\"path242\" />\n" +
+            "    <path\n" +
+            "            style=\"fill:#2196f3\"\n" +
+            "            d=\"m 896,768 q 237,0 443,-43 206,-43 325,-127 v 170 q 0,69 -103,128 " +
+            "-103,59 -280,93.5 Q 1104,1024 896,1024 688,1024 511,989.5 334,955 231,896 128,83" +
+            "7 128,768 V 598 q 119,84 325,127 206,43 443,43 z\"\n" +
+            "            id=\"path74\" />\n" +
+            "    <path style=\"fill:#ffeb3b\"\n" +
+            "          d=\"M1595 295q17 41-14 70l-493 493v742q0 42-39 59-13 5-25 5-27 0-45-19l" +
+            "-256-256q-19-19-19-45v-486l-493-493q-31-29-14-70 17-39 59-39h1280q42 0 59 39z\"/>\n" +
+            "-->\n" +
+            "\n" +
+            "    <path style=\"fill:#4caf50\"\n" +
+            "          d=\"M1595 295q17 41-14 70l-493 493v742q0 42-39 59-13 5-25 5-27 0-45-19l" +
+            "-256-256q-19-19-19-45v-486l-493-493q-31-29-14-70 17-39 59-39h1280q42 0 59 39z\"/>\n" +
             "</svg>\n" +
             "";
 

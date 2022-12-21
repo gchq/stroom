@@ -5874,6 +5874,69 @@
         "tags" : [ "Processor Tasks" ]
       }
     },
+    "/query/v1/{uuid}" : {
+      "get" : {
+        "operationId" : "fetchQuery",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/QueryDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch a query doc by its UUID",
+        "tags" : [ "Queries" ]
+      },
+      "put" : {
+        "operationId" : "updateQuery",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/QueryDoc"
+              }
+            }
+          },
+          "description" : "doc",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/QueryDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Update a query doc",
+        "tags" : [ "Queries" ]
+      }
+    },
     "/refData/v1/clearBufferPool" : {
       "delete" : {
         "operationId" : "clearBufferPool",
@@ -6646,6 +6709,69 @@
         },
         "summary" : "Get information for the current session",
         "tags" : [ "Session Info" ]
+      }
+    },
+    "/sigmaRule/v1/{uuid}" : {
+      "get" : {
+        "operationId" : "fetchSigmaRule",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SigmaRuleDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch a sigma rule doc by its UUID",
+        "tags" : [ "Queries" ]
+      },
+      "put" : {
+        "operationId" : "updateSigmaRule",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SigmaRuleDoc"
+              }
+            }
+          },
+          "description" : "doc",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SigmaRuleDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Update a sigma rule doc",
+        "tags" : [ "Queries" ]
       }
     },
     "/solrIndex/v1/fetchSolrTypes" : {
@@ -8416,6 +8542,69 @@
         },
         "summary" : "Deletes the user with the supplied UUID",
         "tags" : [ "Authorisation" ]
+      }
+    },
+    "/view/v1/{uuid}" : {
+      "get" : {
+        "operationId" : "fetchView",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ViewDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch a view doc by its UUID",
+        "tags" : [ "Views" ]
+      },
+      "put" : {
+        "operationId" : "updateView",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ViewDoc"
+              }
+            }
+          },
+          "description" : "doc",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ViewDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Update a view doc",
+        "tags" : [ "Views" ]
       }
     },
     "/visualisation/v1/{uuid}" : {
@@ -13889,6 +14078,43 @@
           "name" : "query"
         }
       },
+      "QueryDoc" : {
+        "type" : "object",
+        "properties" : {
+          "createTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createUser" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "query" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "updateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "updateUser" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        }
+      },
       "QueryKey" : {
         "type" : "object",
         "description" : "A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode.",
@@ -14968,6 +15194,43 @@
           },
           "sourceLocation" : {
             "$ref" : "#/components/schemas/SourceLocation"
+          }
+        }
+      },
+      "SigmaRuleDoc" : {
+        "type" : "object",
+        "properties" : {
+          "createTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createUser" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "sigmaRule" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "updateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "updateUser" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
           }
         }
       },
@@ -16400,6 +16663,49 @@
           "severity" : {
             "type" : "string",
             "enum" : [ "INFO", "WARN", "ERROR", "FATAL" ]
+          }
+        }
+      },
+      "ViewDoc" : {
+        "type" : "object",
+        "properties" : {
+          "createTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createUser" : {
+            "type" : "string"
+          },
+          "dataSource" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "filter" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "pipeline" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "updateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "updateUser" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
           }
         }
       },

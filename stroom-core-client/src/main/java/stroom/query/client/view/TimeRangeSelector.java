@@ -1,4 +1,4 @@
-package stroom.dashboard.client.main;
+package stroom.query.client.view;
 
 import stroom.query.api.v2.TimeRange;
 

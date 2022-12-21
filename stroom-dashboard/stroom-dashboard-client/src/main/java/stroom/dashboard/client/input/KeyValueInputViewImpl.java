@@ -17,7 +17,6 @@
 package stroom.dashboard.client.input;
 
 import stroom.dashboard.client.input.KeyValueInputPresenter.KeyValueInputView;
-import stroom.dashboard.client.query.QueryButtons;
 
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.KeyCodes;

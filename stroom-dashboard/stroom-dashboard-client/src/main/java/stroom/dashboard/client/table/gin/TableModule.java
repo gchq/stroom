@@ -38,7 +38,7 @@ import stroom.dashboard.client.table.TablePlugin;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.client.table.TablePresenter.TableView;
 import stroom.dashboard.client.table.TableViewImpl;
-import stroom.dashboard.client.table.TimeZones;
+import stroom.query.client.presenter.TimeZones;
 import stroom.dashboard.client.table.cf.EditExpressionPresenter;
 import stroom.dashboard.client.table.cf.EditExpressionViewImpl;
 import stroom.dashboard.client.table.cf.RulePresenter;

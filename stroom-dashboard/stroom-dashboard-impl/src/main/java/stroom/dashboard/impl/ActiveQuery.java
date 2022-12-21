@@ -24,7 +24,7 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-class ActiveQuery {
+public class ActiveQuery {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ActiveQuery.class);
 
@@ -34,7 +34,7 @@ class ActiveQuery {
     private final String userId;
     private final long creationTime;
 
-    ActiveQuery(final QueryKey queryKey,
+    public ActiveQuery(final QueryKey queryKey,
                 final DocRef docRef,
                 final DataSourceProvider dataSourceProvider,
                 final String userId) {

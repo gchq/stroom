@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
-             xmlns:q="urn:import:stroom.dashboard.client.query">
+             xmlns:q="urn:import:stroom.query.client.view">
     <g:FlowPanel styleName="QueryViewImpl dock-max dock-container-vertical">
         <g:FlowPanel styleName="dock-min dock-container-horizontal">
             <b:ButtonPanel ui:field="buttonPanelLeft"/>

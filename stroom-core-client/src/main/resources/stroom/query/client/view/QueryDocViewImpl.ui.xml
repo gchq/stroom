@@ -5,20 +5,21 @@
     <g:FlowPanel styleName="DashboardViewImpl max dock-container-vertical DashboardViewImpl">
         <g:FlowPanel styleName="DashboardViewImpl-top dock-min dock-container-horizontal">
             <g:FlowPanel styleName="dock-max">
-                <g:Button ui:field="designModeButton" text="Enter Design Mode" width="200px"></g:Button>
+                <q:NavButtons ui:field="navButtons" addStyleNames="dock-min"/>
             </g:FlowPanel>
             <g:FlowPanel styleName="DashboardViewImpl-top-buttons dock-min dock-container-horizontal">
                 <q:TimeRangeSelector ui:field="timeRangeSelector" addStyleNames="dock-min"/>
                 <q:QueryButtons ui:field="queryButtons" addStyleNames="dock-min"/>
             </g:FlowPanel>
         </g:FlowPanel>
-        <g:FlowPanel styleName="DashboardViewImpl-top DashboardViewImpl-designButtons dock-min dock-container-horizontal">
-            <g:FlowPanel styleName="dock-min DashboardViewImpl-top-buttons">
-                <g:Button ui:field="addPanelButton" text="Add Panel"></g:Button>
-                <g:Button ui:field="addInputButton" text="Add Input"></g:Button>
-                <g:Button ui:field="constraintsButton" text="Constraints"></g:Button>
-            </g:FlowPanel>
-        </g:FlowPanel>
-        <g:SimplePanel ui:field="content" styleName="dock-max DashboardViewImpl-content"/>
+        <g:MySplitLayoutPanel styleName="max">
+            <g:north size="200">
+                <g:SimplePanel ui:field="queryEditorContainer" styleName="max control__padding-right"/>
+            </g:north>
+            <g:center>
+                <g:SimplePanel ui:field="tableContainer"
+                               styleName="max control__padding-right control__padding-bottom"/>
+            </g:center>
+        </g:MySplitLayoutPanel>
     </g:FlowPanel>
 </ui:UiBinder>

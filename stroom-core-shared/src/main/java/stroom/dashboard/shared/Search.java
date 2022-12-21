@@ -31,7 +31,6 @@ import java.util.Objects;
         "params",
         "timeRange",
         "incremental",
-        "storeHistory",
         "queryInfo"})
 @JsonInclude(Include.NON_NULL)
 public class Search {

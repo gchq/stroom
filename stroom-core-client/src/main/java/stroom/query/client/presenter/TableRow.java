@@ -1,4 +1,4 @@
-package stroom.dashboard.client.table;
+package stroom.query.client.presenter;
 
 import stroom.hyperlink.client.Hyperlink;
 import stroom.util.shared.Expander;

@@ -16,7 +16,10 @@
 
 package stroom.query.shared;
 
+import stroom.dashboard.shared.DashboardSearchResponse;
+import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.util.shared.FetchWithUuid;
+import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -25,8 +28,10 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
+import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -54,58 +59,42 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
     QueryDoc update(
             @PathParam("uuid") String uuid, @Parameter(description = "doc", required = true) QueryDoc doc);
 
-//    @POST
-//    @Path("/validateExpression")
-//    @Operation(
-//            summary = "Validate an expression",
-//            operationId = "validateQueryExpression")
-//    ValidateExpressionResult validateExpression(
-//            @Parameter(description = "expression", required = true) String expression);
-//
-//    @POST
-//    @Path("/downloadQuery")
-//    @Operation(
-//            summary = "Download a query",
-//            operationId = "downloadQueryQuery")
-//    ResourceGeneration downloadQuery(
-//            @Parameter(description = "downloadQueryRequest", required = true)
-//            QuerySearchRequest request);
-//
-//    @POST
-//    @Path("/downloadSearchResults")
-//    @Operation(
-//            summary = "Download search results",
-//            operationId = "downloadQuerySearchResults")
-//    ResourceGeneration downloadSearchResults(
-//            @Parameter(description = "request", required = true) DownloadSearchResultsRequest request);
-//
-//    @POST
-//    @Path("/search")
-//    @Operation(
-//            summary = "Perform a new search or get new results",
-//            operationId = "querySearch")
-//    QuerySearchResponse search(
-//            @Parameter(description = "request", required = true) QuerySearchRequest request);
-//
-//    @POST
-//    @Path("/destroy")
-//    @Operation(
-//            summary = "Destroy a running search",
-//            operationId = "queryDestroySearch")
-//    Boolean destroy(
-//            @Parameter(description = "request", required = true) DestroySearchRequest request);
-//
-//    @GET
-//    @Path("/fetchTimeZones")
-//    @Operation(
-//            summary = "Fetch time zone data from the server",
-//            operationId = "fetchTimeZones")
-//    List<String> fetchTimeZones();
-//
-//    @GET
-//    @Path("/functions")
-//    @Operation(
-//            summary = "Fetch all expression functions",
-//            operationId = "fetchQueryFunctions")
-//    List<FunctionSignature> fetchFunctions();
+    @POST
+    @Path("/validateQuery")
+    @Operation(
+            summary = "Validate an expression",
+            operationId = "validateQuery")
+    ValidateExpressionResult validateQuery(
+            @Parameter(description = "query", required = true) String query);
+
+    @POST
+    @Path("/downloadSearchResults")
+    @Operation(
+            summary = "Download search results",
+            operationId = "downloadQuerySearchResults")
+    ResourceGeneration downloadSearchResults(
+            @Parameter(description = "request", required = true) DownloadQueryResultsRequest request);
+
+    @POST
+    @Path("/search")
+    @Operation(
+            summary = "Perform a new search or get new results",
+            operationId = "querySearch")
+    DashboardSearchResponse search(
+            @Parameter(description = "request", required = true) QuerySearchRequest request);
+
+    @POST
+    @Path("/destroy")
+    @Operation(
+            summary = "Destroy a running query",
+            operationId = "queryDestroySearch")
+    Boolean destroy(
+            @Parameter(description = "request", required = true) DestroyQueryRequest request);
+
+    @GET
+    @Path("/fetchTimeZones")
+    @Operation(
+            summary = "Fetch time zone data from the server",
+            operationId = "fetchTimeZones")
+    List<String> fetchTimeZones();
 }
