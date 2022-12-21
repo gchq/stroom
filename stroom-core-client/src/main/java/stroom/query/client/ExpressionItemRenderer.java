@@ -62,7 +62,7 @@ public final class ExpressionItemRenderer implements CellRenderer2<Item>, NodeEx
             stopEditing();
         }
 
-        final double height = 20;
+        final double height = 25;
         final double x = bounds.getX();
         final double y = bounds.getY() + ((bounds.getHeight() - height) / 2);
 
