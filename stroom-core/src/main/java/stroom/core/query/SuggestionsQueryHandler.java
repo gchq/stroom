@@ -1,12 +1,10 @@
 package stroom.core.query;
 
-import stroom.datasource.api.v2.AbstractField;
-import stroom.docref.DocRef;
+import stroom.query.shared.FetchSuggestionsRequest;
 
 import java.util.List;
 
 public interface SuggestionsQueryHandler {
 
-    List<String> getSuggestions(final DocRef dataSource, final AbstractField field,
-                                                   final String query);
+    List<String> getSuggestions(final FetchSuggestionsRequest request);
 }

@@ -40,8 +40,7 @@ public class SuggestionsServiceImpl implements SuggestionsService {
         return securityContext.secureResult(() -> {
             if (dataSourceType != null && queryHandlerMap.containsKey(dataSourceType)) {
                 final SuggestionsQueryHandler queryHandler = queryHandlerMap.get(dataSourceType);
-                return queryHandler.getSuggestions(request.getDataSource(), request.getField(),
-                        request.getText());
+                return queryHandler.getSuggestions(request);
             }
             return Collections.emptyList();
         });

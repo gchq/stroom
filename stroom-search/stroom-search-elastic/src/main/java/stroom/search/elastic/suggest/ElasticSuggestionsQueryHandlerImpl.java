@@ -2,7 +2,7 @@ package stroom.search.elastic.suggest;
 
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.FieldTypes;
-import stroom.docref.DocRef;
+import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.util.LambdaLogger;
 import stroom.query.util.LambdaLoggerFactory;
 import stroom.search.elastic.ElasticClientCache;
@@ -59,13 +59,14 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
     }
 
     @Override
-    public List<String> getSuggestions(final DocRef indexDoc, final AbstractField field,
-                                       final String query) {
-        final ElasticIndexDoc elasticIndex = elasticIndexStore.readDocument(indexDoc);
+    public List<String> getSuggestions(final FetchSuggestionsRequest request) {
+        final ElasticIndexDoc elasticIndex = elasticIndexStore.readDocument(request.getDataSource());
         final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
+        final AbstractField field = request.getField();
+        final String query = request.getText();
 
         CompletableFuture<List<String>> future = CompletableFuture.supplyAsync(taskContextFactory.contextResult(
-                "Query suggestions for Elasticsearch index '" + indexDoc.getName() + "'",
+                "Query suggestions for Elasticsearch index '" + elasticIndex.getName() + "'",
                 taskContext -> elasticClientCache.contextResult(elasticCluster.getConnection(), elasticClient -> {
                     try {
                         if (!elasticSuggestConfig.getEnabled() || query == null || query.length() == 0) {
