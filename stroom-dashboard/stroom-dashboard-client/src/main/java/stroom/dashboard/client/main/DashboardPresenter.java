@@ -195,7 +195,10 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
     @Override
     public void onTimeRange(final TimeRange timeRange) {
-        setTimeRange(timeRange);
+        if (!Objects.equals(dashboardContext.getTimeRange(), timeRange)) {
+            setTimeRange(timeRange);
+            start();
+        }
     }
 
     private void setTimeRange(final TimeRange timeRange) {
@@ -421,7 +424,9 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
     @Override
     public void onDirty() {
-        setDirty(true);
+        if (designMode) {
+            setDirty(true);
+        }
     }
 
     @Override
@@ -605,7 +610,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                 fixHeights(parent);
             }
 
-            layoutPresenter.setLayoutData(layoutConfig);
+            layoutPresenter.configure(layoutConfig, layoutConstraints, preferredSize);
             setDirty(true);
         }
     }

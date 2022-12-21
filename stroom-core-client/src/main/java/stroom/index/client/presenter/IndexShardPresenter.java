@@ -26,6 +26,7 @@ import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.Rest;
@@ -98,6 +99,14 @@ public class IndexShardPresenter extends MyPresenterWidget<PagerView>
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>();
+        dataGrid.addColumnSortHandler(event -> {
+            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
+                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
+                queryCriteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
+                dataProvider.refresh();
+            }
+        });
+
         view.setDataWidget(dataGrid);
 
         this.tooltipPresenter = tooltipPresenter;
@@ -274,21 +283,23 @@ public class IndexShardPresenter extends MyPresenterWidget<PagerView>
     }
 
     private void addNodeColumn() {
-        dataGrid.addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new OrderByColumn<IndexShard, String>(
+                new TextCell(), FindIndexShardCriteria.FIELD_NODE, true) {
             @Override
             public String getValue(final IndexShard indexShard) {
                 return indexShard.getNodeName();
             }
-        }, "Node", 100);
+        }, FindIndexShardCriteria.FIELD_NODE, 100);
     }
 
     private void addPartitionColumn() {
-        dataGrid.addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new OrderByColumn<IndexShard, String>(
+                new TextCell(), FindIndexShardCriteria.FIELD_PARTITION, true) {
             @Override
             public String getValue(final IndexShard indexShard) {
                 return indexShard.getPartition();
             }
-        }, "Partition", 100);
+        }, FindIndexShardCriteria.FIELD_PARTITION, 100);
     }
 
     private void addPathColumn() {
@@ -301,30 +312,33 @@ public class IndexShardPresenter extends MyPresenterWidget<PagerView>
     }
 
     private void addStatusColumn() {
-        dataGrid.addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new OrderByColumn<IndexShard, String>(
+                new TextCell(), FindIndexShardCriteria.FIELD_STATUS, true) {
             @Override
             public String getValue(final IndexShard indexShard) {
                 return indexShard.getStatus().getDisplayValue();
             }
-        }, "Status", 100);
+        }, FindIndexShardCriteria.FIELD_STATUS, 100);
     }
 
     private void addDocCountColumn() {
-        dataGrid.addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new OrderByColumn<IndexShard, String>(
+                new TextCell(), FindIndexShardCriteria.FIELD_DOC_COUNT, true) {
             @Override
             public String getValue(final IndexShard indexShard) {
                 return intToString(indexShard.getDocumentCount());
             }
-        }, "Doc Count", 100);
+        }, FindIndexShardCriteria.FIELD_DOC_COUNT, 100);
     }
 
     private void addFileSizeColumn() {
-        dataGrid.addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new OrderByColumn<IndexShard, String>(
+                new TextCell(), FindIndexShardCriteria.FIELD_FILE_SIZE, true) {
             @Override
             public String getValue(final IndexShard indexShard) {
                 return indexShard.getFileSizeString();
             }
-        }, "File Size", 100);
+        }, FindIndexShardCriteria.FIELD_FILE_SIZE, 100);
     }
 
     private void addBytesPDColumn() {
@@ -337,12 +351,13 @@ public class IndexShardPresenter extends MyPresenterWidget<PagerView>
     }
 
     private void addCommitColumn() {
-        dataGrid.addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new OrderByColumn<IndexShard, String>(
+                new TextCell(), FindIndexShardCriteria.FIELD_LAST_COMMIT, true) {
             @Override
             public String getValue(final IndexShard indexShard) {
                 return dateTimeFormatter.format(indexShard.getCommitMs());
             }
-        }, "Last Commit", 170);
+        }, FindIndexShardCriteria.FIELD_LAST_COMMIT, 170);
     }
 
 //    private void addCommitDurationColumn() {

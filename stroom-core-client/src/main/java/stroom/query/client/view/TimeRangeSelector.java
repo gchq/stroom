@@ -31,8 +31,9 @@ public class TimeRangeSelector extends Composite implements HasValue<TimeRange>,
         popup.setWidget(timeRangePopup.asWidget());
         popup.setStyleName("simplePopup-background timeRange-popup");
         popup.addCloseHandler(event -> {
-            setValue(timeRangePopup.write(), true);
+            setValue(timeRangePopup.getValue(), true);
         });
+        timeRangePopup.addValueChangeHandler(timeRange -> popup.hide(false));
 
         label.addClickHandler(event -> popup.showRelativeTo(label));
 
@@ -49,6 +50,11 @@ public class TimeRangeSelector extends Composite implements HasValue<TimeRange>,
     }
 
     @Override
+    public TimeRange getValue() {
+        return value;
+    }
+
+    @Override
     public void setValue(final TimeRange value) {
         this.value = value;
     }
@@ -60,11 +66,6 @@ public class TimeRangeSelector extends Composite implements HasValue<TimeRange>,
         if (fireEvents) {
             ValueChangeEvent.fire(this, value);
         }
-    }
-
-    @Override
-    public TimeRange getValue() {
-        return value;
     }
 
     @Override

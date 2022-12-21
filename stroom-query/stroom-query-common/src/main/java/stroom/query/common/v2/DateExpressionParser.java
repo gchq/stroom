@@ -61,25 +61,6 @@ public class DateExpressionParser {
                 nowEpochMilli);
     }
 
-    public static Range<Long> parse(final TimeRange timeRange,
-                                    final DateTimeSettings dateTimeSettings,
-                                    final long nowEpochMilli) {
-        if (timeRange == null) {
-            return null;
-        }
-        Long from = null;
-        Long to = null;
-        if (timeRange.getFrom() != null) {
-            from = parse(timeRange.getFrom(), dateTimeSettings, nowEpochMilli)
-                    .map(time -> time.toInstant().toEpochMilli()).orElse(null);
-        }
-        if (timeRange.getTo() != null) {
-            to = parse(timeRange.getTo(), dateTimeSettings, nowEpochMilli)
-                    .map(time -> time.toInstant().toEpochMilli()).orElse(null);
-        }
-        return new Range<>(from, to);
-    }
-
     public static Optional<ZonedDateTime> parse(final String expression,
                                                 final DateTimeSettings dateTimeSettings,
                                                 final long nowEpochMilli) {

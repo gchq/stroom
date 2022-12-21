@@ -36,7 +36,12 @@ import java.util.Objects;
 public class FindIndexShardCriteria extends BaseCriteria {
 
     public static final String FIELD_ID = "Id";
+    public static final String FIELD_NODE = "Node";
     public static final String FIELD_PARTITION = "Partition";
+    public static final String FIELD_STATUS = "Status";
+    public static final String FIELD_DOC_COUNT = "Doc Count";
+    public static final String FIELD_FILE_SIZE = "File Size";
+    public static final String FIELD_LAST_COMMIT = "Last Commit";
 
     @JsonProperty
     private Range<Integer> documentCountRange;
