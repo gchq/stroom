@@ -35,6 +35,7 @@ import stroom.pipeline.xml.converter.json.JSONParser;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.search.elastic.ElasticClientCache;
 import stroom.search.elastic.ElasticClusterStore;
+import stroom.search.elastic.ElasticConfig;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.search.elastic.shared.ElasticIndexConstants;
@@ -88,6 +89,7 @@ import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.NotFoundException;
 
 /**
@@ -108,7 +110,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     // Dependencies
     private final LocationFactoryProxy locationFactory;
     private final ErrorReceiverProxy errorReceiverProxy;
-    private final ElasticIndexingConfig elasticIndexingConfig;
+    private final Provider<ElasticConfig> elasticConfigProvider;
     private final ElasticClientCache elasticClientCache;
     private final ElasticClusterStore elasticClusterStore;
     private final PipelineStore pipelineStore;
@@ -150,7 +152,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     ElasticIndexingFilter(
             final LocationFactoryProxy locationFactory,
             final ErrorReceiverProxy errorReceiverProxy,
-            final ElasticIndexingConfig elasticIndexingConfig,
+            final Provider<ElasticConfig> elasticConfigProvider,
             final ElasticClientCache elasticClientCache,
             final ElasticClusterStore elasticClusterStore,
             final PipelineStore pipelineStore,
@@ -158,7 +160,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             final MetaHolder metaHolder) {
         this.locationFactory = locationFactory;
         this.errorReceiverProxy = errorReceiverProxy;
-        this.elasticIndexingConfig = elasticIndexingConfig;
+        this.elasticConfigProvider = elasticConfigProvider;
         this.elasticClientCache = elasticClientCache;
         this.elasticClusterStore = elasticClusterStore;
         this.pipelineStore = pipelineStore;
@@ -289,7 +291,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     }
 
     private void incrementDepth() {
-        final int maxDepth = elasticIndexingConfig.getMaxNestedElementDepth();
+        final int maxDepth = elasticConfigProvider.get().getIndexingConfig().getMaxNestedElementDepth();
 
         currentDepth++;
 
@@ -594,37 +596,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                                     response.getTook().getSecondsFrac());
                         }
                     } catch (ElasticsearchStatusException | ElasticsearchOverloadedException e) {
-                        // Elasticsearch rejected the indexing request, because it is overloaded and
-                        // cannot queue the batched payload. Retry after a delay, if we haven't exceeded the retry
-                        // limit. Otherwise terminate this thread and create an `Error` stream.
-                        String statusName = "";
-                        if (e instanceof ElasticsearchStatusException) {
-                            statusName = ((ElasticsearchStatusException) e).status().name();
-                        }
-                        final String errorDetailMsg = e.getMessage() != null ? e.getMessage().substring(0,
-                                Math.min(ES_MAX_EXCEPTION_CHARS, e.getMessage().length())) : "";
-                        if (e instanceof ElasticsearchOverloadedException ||
-                                ES_TOO_MANY_REQUESTS_STATUS.equals(statusName)) {
-                            if (currentRetry < elasticIndexingConfig.getRetryCount()) {
-                                final long sleepDurationMs = elasticIndexingConfig.getInitialRetryBackoffPeriodMs() *
-                                        ((long) currentRetry + 1);
-                                try {
-                                    LOGGER.warn("Indexing request by pipeline '" + pipelineName + "' was rejected by " +
-                                            "Elasticsearch. Retrying in " + sleepDurationMs + " milliseconds " +
-                                            "(retries: " + currentRetry + ")");
-                                    Thread.sleep(sleepDurationMs);
-                                } catch (InterruptedException ex) {
-                                    fatalError("Indexing terminated after " + currentRetry + " retries: " +
-                                            errorDetailMsg, ex);
-                                }
-                            } else {
-                                fatalError("Indexing failed to complete after " + currentRetry +
-                                        " retries: " + errorDetailMsg, null);
-                            }
-                        } else {
-                            fatalError("Indexing failed to complete after " + currentRetry +
-                                    " retries: " + errorDetailMsg, null);
-                        }
+                        handleElasticsearchException(e);
                     } catch (RuntimeException | IOException e) {
                         fatalError(e.getMessage() != null ? e.getMessage().substring(0,
                                         Math.min(ES_MAX_EXCEPTION_CHARS, e.getMessage().length())) : "", e);
@@ -640,8 +612,45 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     }
 
     /**
+     * Elasticsearch rejected the indexing request, because it is overloaded and
+     * cannot queue the batched payload. Retry after a delay, if we haven't exceeded the retry
+     * limit. Otherwise, terminate this thread and create an `Error` stream.
+     * @param e
+     */
+    private void handleElasticsearchException(final RuntimeException e) {
+        String statusName = "";
+        if (e instanceof ElasticsearchStatusException) {
+            statusName = ((ElasticsearchStatusException) e).status().name();
+        }
+        final String errorDetailMsg = e.getMessage() != null ? e.getMessage().substring(0,
+                Math.min(ES_MAX_EXCEPTION_CHARS, e.getMessage().length())) : "";
+        if (e instanceof ElasticsearchOverloadedException || ES_TOO_MANY_REQUESTS_STATUS.equals(statusName)) {
+            final ElasticIndexingConfig indexingConfig = elasticConfigProvider.get().getIndexingConfig();
+            if (currentRetry < indexingConfig.getRetryCount()) {
+                final long sleepDurationMs = indexingConfig.getInitialRetryBackoffPeriodMs() *
+                        ((long) currentRetry + 1);
+                try {
+                    LOGGER.warn("Indexing request by pipeline '" + pipelineName + "' was rejected by " +
+                            "Elasticsearch. Retrying in " + sleepDurationMs + " milliseconds " +
+                            "(retries: " + currentRetry + ")");
+                    Thread.sleep(sleepDurationMs);
+                } catch (InterruptedException ex) {
+                    fatalError("Indexing terminated after " + currentRetry + " retries: " +
+                            errorDetailMsg, ex);
+                }
+            } else {
+                fatalError("Indexing failed to complete after " + currentRetry +
+                        " retries: " + errorDetailMsg, null);
+            }
+        } else {
+            fatalError("Indexing failed to complete after " + currentRetry +
+                    " retries: " + errorDetailMsg, null);
+        }
+    }
+
+    /**
      * Where an index name date pattern is specified, formats the value of the document timestamp field
-     * using the date pattern. Otherwise the index base name is returned.
+     * using the date pattern. Otherwise, the index base name is returned.
      * @return Index base name appended with the formatted document timestamp
      */
     private String formatIndexName() {

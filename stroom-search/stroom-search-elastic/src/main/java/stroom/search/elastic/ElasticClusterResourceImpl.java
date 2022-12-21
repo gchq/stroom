@@ -77,7 +77,7 @@ class ElasticClusterResourceImpl implements ElasticClusterResource, FetchWithUui
     public ElasticClusterTestResponse testCluster(final ElasticClusterDoc cluster) {
         try {
             final ElasticConnectionConfig connectionConfig = cluster.getConnection();
-            final ElasticClientConfig elasticClientConfig = elasticConfigProvider.get().getElasticClientConfig();
+            final ElasticClientConfig elasticClientConfig = elasticConfigProvider.get().getClientConfig();
             final RestHighLevelClient elasticClient = new ElasticClientFactory()
                     .create(connectionConfig, elasticClientConfig);
 

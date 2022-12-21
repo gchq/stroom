@@ -62,7 +62,7 @@ public class ElasticClientCacheImpl implements ElasticClientCache, Clearable {
 
         // Create a new instance of `RestHighLevelClient`
         return new ElasticClientFactory().create(elasticConnectionConfig,
-                elasticConfigProvider.get().getElasticClientConfig());
+                elasticConfigProvider.get().getClientConfig());
     }
 
     private void destroy(final ElasticConnectionConfig key, final RestHighLevelClient value) {
