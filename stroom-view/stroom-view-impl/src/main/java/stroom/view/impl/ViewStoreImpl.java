@@ -25,11 +25,11 @@ import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
+import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
-import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.view.shared.ViewDoc;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
+import stroom.view.shared.ViewDoc;
 
 import java.util.List;
 import java.util.Map;
@@ -45,8 +45,8 @@ class ViewStoreImpl implements ViewStore {
 
     @Inject
     ViewStoreImpl(final StoreFactory storeFactory,
-                   final ViewSerialiser serialiser,
-                   final SecurityContext securityContext) {
+                  final ViewSerialiser serialiser,
+                  final SecurityContext securityContext) {
         this.store = storeFactory.createStore(serialiser, ViewDoc.DOCUMENT_TYPE, ViewDoc.class);
         this.securityContext = securityContext;
     }
@@ -157,11 +157,11 @@ class ViewStoreImpl implements ViewStore {
     }
 
     @Override
-    public ImpexDetails importDocument(final DocRef docRef,
-                                       final Map<String, byte[]> dataMap,
-                                       final ImportState importState,
-                                       final ImportMode importMode) {
-        return store.importDocument(docRef, dataMap, importState, importMode);
+    public DocRef importDocument(final DocRef docRef,
+                                 final Map<String, byte[]> dataMap,
+                                 final ImportState importState,
+                                 final ImportSettings importSettings) {
+        return store.importDocument(docRef, dataMap, importState, importSettings);
     }
 
     @Override
@@ -191,5 +191,10 @@ class ViewStoreImpl implements ViewStore {
     @Override
     public List<DocRef> list() {
         return store.list();
+    }
+
+    @Override
+    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
+        return store.findByNames(name, allowWildCards);
     }
 }

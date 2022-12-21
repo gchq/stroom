@@ -46,7 +46,7 @@ public class QueryDocPresenter
     private EditorPresenter codePresenter;
     private final QueryResultTablePresenter tablePresenter;
     private boolean readOnly = true;
-    private final QueryModel searchModel;
+    private final QueryModel queryModel;
 
     @Inject
     public QueryDocPresenter(final EventBus eventBus,
@@ -61,9 +61,9 @@ public class QueryDocPresenter
         super(eventBus, view, securityContext);
         this.tablePresenter = tablePresenter;
 
-        searchModel = new QueryModel(restFactory, applicationInstance, indexLoader, dateTimeSettingsFactory);
-        tablePresenter.setCurrentSearchModel(searchModel);
-        searchModel.addComponent("table", tablePresenter);
+        queryModel = new QueryModel(restFactory, applicationInstance, indexLoader, dateTimeSettingsFactory);
+        tablePresenter.setCurrentSearchModel(queryModel);
+        queryModel.addComponent("table", tablePresenter);
 
         codePresenter = editorPresenterProvider.get();
         codePresenter.setMode(AceEditorMode.STROOM_QUERY);
@@ -107,34 +107,35 @@ public class QueryDocPresenter
     private void run(final boolean incremental,
                      final boolean storeHistory,
                      final Function<ExpressionOperator, ExpressionOperator> expressionDecorator) {
-        final DocRef dataSourceRef = getQuerySettings().getDataSource();
+//        final DocRef dataSourceRef = getQuerySettings().getDataSource();
+//
+//        if (dataSourceRef == null) {
+//            warnNoDataSource();
+//        } else {
+//            currentWarnings = null;
+//            expressionPresenter.clearSelection();
+//
+//            warningsButton.setVisible(false);
+//
+//            // Write expression.
+//            final ExpressionOperator root = expressionPresenter.write();
+//            final ExpressionOperator decorated = expressionDecorator.apply(root);
 
-        if (dataSourceRef == null) {
-            warnNoDataSource();
-        } else {
-            currentWarnings = null;
-            expressionPresenter.clearSelection();
-
-            warningsButton.setVisible(false);
-
-            // Write expression.
-            final ExpressionOperator root = expressionPresenter.write();
-            final ExpressionOperator decorated = expressionDecorator.apply(root);
-
-            // Start search.
-            searchModel.reset();
-            searchModel.startNewSearch(
-                    decorated,
-                    null,//getDashboardContext().getCombinedParams(),
-                    getView().getTimeRange(),
-                    incremental,
-                    storeHistory,
-                    null);
-        }
+        // Start search.
+        queryModel.reset();
+        queryModel.startNewSearch(
+                codePresenter.getText(),
+                null,//getDashboardContext().getCombinedParams(),
+                getView().getTimeRange(),
+                incremental,
+                storeHistory,
+                null);
+//        }
     }
 
     @Override
     public void onRead(final DocRef docRef, final QueryDoc entity) {
+        queryModel.init(docRef.getUuid(), "query");
         if (entity.getQuery() != null) {
             codePresenter.setText(entity.getQuery());
         }

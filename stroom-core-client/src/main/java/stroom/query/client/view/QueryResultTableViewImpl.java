@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.query.client.presenter;
+package stroom.query.client.view;
 
-import stroom.dashboard.client.table.TablePresenter.TableView;
+import stroom.query.client.presenter.QueryResultTablePresenter.QueryResultTableView;
+import stroom.query.client.presenter.TableUiHandlers;
 import stroom.svg.client.SvgImages;
 import stroom.widget.spinner.client.SpinnerSmall;
 
@@ -30,8 +31,8 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class TableViewImpl extends ViewWithUiHandlers<TableUiHandlers>
-        implements TableView {
+public class QueryResultTableViewImpl extends ViewWithUiHandlers<TableUiHandlers>
+        implements QueryResultTableView {
 
     private final Widget widget;
     private final SpinnerSmall spinnerSmall;
@@ -41,7 +42,7 @@ public class TableViewImpl extends ViewWithUiHandlers<TableUiHandlers>
     FlowPanel layout;
 
     @Inject
-    public TableViewImpl(final Binder binder) {
+    public QueryResultTableViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
 
         spinnerSmall = new SpinnerSmall();
@@ -96,7 +97,7 @@ public class TableViewImpl extends ViewWithUiHandlers<TableUiHandlers>
         }
     }
 
-    public interface Binder extends UiBinder<Widget, TableViewImpl> {
+    public interface Binder extends UiBinder<Widget, QueryResultTableViewImpl> {
 
     }
 }

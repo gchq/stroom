@@ -22,6 +22,7 @@ dependencies {
 //    implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-explorer:stroom-docrefinfo-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')

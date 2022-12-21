@@ -34,6 +34,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import javax.inject.Inject;
 
 public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
 
@@ -47,6 +48,7 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
     private DocRef defaultExtractionPipeline;
     private DataSourceFieldsMap dataSourceFieldsMap;
 
+    @Inject
     public IndexLoader(final EventBus eventBus, final RestFactory restFactory) {
         this.eventBus = eventBus;
         this.restFactory = restFactory;

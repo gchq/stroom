@@ -17,7 +17,7 @@ public interface QueryService {
 
     QueryDoc update(QueryDoc doc);
 
-    ValidateExpressionResult validateExpression(String expressionString);
+    ValidateExpressionResult validateQuery(String expressionString);
 
     ResourceGeneration downloadSearchResults(DownloadQueryResultsRequest request);
 

@@ -29,7 +29,7 @@ import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableResult;
-import stroom.query.client.presenter.QueryResultTablePresenter.TableView;
+import stroom.query.client.presenter.QueryResultTablePresenter.QueryResultTableView;
 import stroom.query.client.presenter.TableRow.Cell;
 import stroom.util.shared.Expander;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -51,7 +51,7 @@ import java.util.List;
 import java.util.Map;
 
 public class QueryResultTablePresenter
-        extends MyPresenterWidget<TableView>
+        extends MyPresenterWidget<QueryResultTableView>
         implements ResultConsumer {
 
     private static final int MIN_EXPANDER_COL_WIDTH = 0;
@@ -72,7 +72,7 @@ public class QueryResultTablePresenter
 
     @Inject
     public QueryResultTablePresenter(final EventBus eventBus,
-                                     final TableView tableView,
+                                     final QueryResultTableView tableView,
                                      final PagerView pagerView,
                                      final RestFactory restFactory,
                                      final DateTimeFormatter dateTimeFormatter) {
@@ -371,7 +371,7 @@ public class QueryResultTablePresenter
         });
     }
 
-    public interface TableView extends View, HasUiHandlers<TableUiHandlers> {
+    public interface QueryResultTableView extends View, HasUiHandlers<TableUiHandlers> {
 
         void setTableView(View view);
 

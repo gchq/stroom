@@ -24,13 +24,8 @@ import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.Components;
-import stroom.query.client.view.QueryButtons;
-import stroom.query.client.presenter.QueryUiHandlers;
-import stroom.view.client.presenter.DataSourceFieldsMap;
-import stroom.view.client.presenter.IndexLoader;
 import stroom.dashboard.client.main.Queryable;
 import stroom.dashboard.client.main.SearchModel;
-import stroom.query.client.presenter.TimeZones;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSelectionHandler;
@@ -51,7 +46,6 @@ import stroom.explorer.client.presenter.EntityChooser;
 import stroom.instance.client.ClientApplicationInstance;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.preferences.client.UserPreferencesManager;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.Limits;
 import stroom.processor.shared.ProcessorFilter;
@@ -62,6 +56,9 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
+import stroom.query.client.presenter.DateTimeSettingsFactory;
+import stroom.query.client.presenter.QueryUiHandlers;
+import stroom.query.client.view.QueryButtons;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
@@ -71,6 +68,8 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResourceGeneration;
+import stroom.view.client.presenter.DataSourceFieldsMap;
+import stroom.view.client.presenter.IndexLoader;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -144,12 +143,12 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                           final Provider<EntityChooser> pipelineSelection,
                           final Provider<QueryInfoPresenter> queryInfoPresenterProvider,
                           final ProcessorLimitsPresenter processorLimitsPresenter,
+                          final IndexLoader indexLoader,
                           final RestFactory restFactory,
                           final ClientSecurityContext securityContext,
                           final UiConfigCache clientPropertyCache,
                           final LocationManager locationManager,
-                          final TimeZones timeZones,
-                          final UserPreferencesManager userPreferencesManager) {
+                          final DateTimeSettingsFactory dateTimeSettingsFactory) {
         super(eventBus, view, settingsPresenterProvider);
         this.expressionPresenter = expressionPresenter;
         this.historyPresenter = historyPresenter;
@@ -157,6 +156,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         this.pipelineSelection = pipelineSelection;
         this.queryInfoPresenterProvider = queryInfoPresenterProvider;
         this.processorLimitsPresenter = processorLimitsPresenter;
+        this.indexLoader = indexLoader;
         this.restFactory = restFactory;
         this.locationManager = locationManager;
 
@@ -205,13 +205,11 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         warningsButton = view.addButton(SvgPresets.ALERT.title("Show Warnings"));
         warningsButton.setVisible(false);
 
-        indexLoader = new IndexLoader(getEventBus(), restFactory);
         searchModel = new SearchModel(
                 restFactory,
                 applicationInstance,
                 indexLoader,
-                timeZones,
-                userPreferencesManager);
+                dateTimeSettingsFactory);
         searchModel.addErrorListener(this::setErrors);
         searchModel.addModeListener(this::setMode);
 

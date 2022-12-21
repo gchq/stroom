@@ -21,11 +21,14 @@ import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionTreePresenter.ExpressionTreeView;
 import stroom.query.client.ExpressionTreeViewImpl;
 import stroom.query.client.QueryPlugin;
-import stroom.query.client.presenter.QueryDocSuperPresenter;
 import stroom.query.client.presenter.QueryDocPresenter;
 import stroom.query.client.presenter.QueryDocPresenter.QueryDocView;
 import stroom.query.client.presenter.QueryDocSettingsPresenter;
 import stroom.query.client.presenter.QueryDocSettingsPresenter.QueryDocSettingsView;
+import stroom.query.client.presenter.QueryDocSuperPresenter;
+import stroom.query.client.presenter.QueryResultTablePresenter;
+import stroom.query.client.presenter.QueryResultTablePresenter.QueryResultTableView;
+import stroom.query.client.view.QueryResultTableViewImpl;
 import stroom.query.client.view.QueryDocSettingsViewImpl;
 import stroom.query.client.view.QueryDocViewImpl;
 
@@ -45,6 +48,10 @@ public class QueryModule extends PluginModule {
                 QueryDocSettingsPresenter.class,
                 QueryDocSettingsView.class,
                 QueryDocSettingsViewImpl.class);
+        bindPresenterWidget(
+                QueryResultTablePresenter.class,
+                QueryResultTableView.class,
+                QueryResultTableViewImpl.class);
 
         bindPresenterWidget(
                 ExpressionTreePresenter.class,

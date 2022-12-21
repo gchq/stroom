@@ -53,11 +53,13 @@ public class ViewSettingsPresenter extends DocumentSettingsPresenter<ViewSetting
     @Inject
     public ViewSettingsPresenter(final EventBus eventBus,
                                  final ViewSettingsView view,
+                                 final IndexLoader indexLoader,
                                  final RestFactory restFactory,
                                  final EntityDropDownPresenter dataSourceSelectionPresenter,
                                  final EntityDropDownPresenter pipelineSelectionPresenter,
                                  final EditExpressionPresenter expressionPresenter) {
         super(eventBus, view);
+        this.indexLoader = indexLoader;
         this.restFactory = restFactory;
         this.dataSourceSelectionPresenter = dataSourceSelectionPresenter;
         this.pipelineSelectionPresenter = pipelineSelectionPresenter;
@@ -76,8 +78,6 @@ public class ViewSettingsPresenter extends DocumentSettingsPresenter<ViewSetting
         // Add listeners for dirty events.
         final InputHandler inputHandler = event -> setDirty(true);
         registerHandler(view.getDescription().addDomHandler(inputHandler, InputEvent.getType()));
-
-        indexLoader = new IndexLoader(getEventBus(), restFactory);
     }
 
     @Override

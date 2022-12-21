@@ -16,32 +16,37 @@
 
 package stroom.query.impl;
 
+import stroom.dashboard.shared.DashboardSearchResponse;
+import stroom.dashboard.shared.FunctionSignature;
+import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
-import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.query.shared.DestroyQueryRequest;
+import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryResource;
+import stroom.query.shared.QuerySearchRequest;
 import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.ResourceGeneration;
 
+import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 @AutoLogged
 class QueryResourceImpl implements QueryResource {
 
-    private final Provider<QueryStore> queryStoreProvider;
-    private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
+    private final Provider<QueryService> queryServiceProvider;
 
     @Inject
-    QueryResourceImpl(final Provider<QueryStore> queryStoreProvider,
-                      final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
-        this.queryStoreProvider = queryStoreProvider;
-        this.documentResourceHelperProvider = documentResourceHelperProvider;
+    QueryResourceImpl(final Provider<QueryService> dashboardServiceProvider) {
+        this.queryServiceProvider = dashboardServiceProvider;
     }
 
     @Override
     public QueryDoc fetch(final String uuid) {
-        return documentResourceHelperProvider.get().read(queryStoreProvider.get(), getDocRef(uuid));
+        return queryServiceProvider.get().read(getDocRef(uuid));
     }
 
     @Override
@@ -49,7 +54,7 @@ class QueryResourceImpl implements QueryResource {
         if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
             throw new EntityServiceException("The document UUID must match the update UUID");
         }
-        return documentResourceHelperProvider.get().update(queryStoreProvider.get(), doc);
+        return queryServiceProvider.get().update(doc);
     }
 
     private DocRef getDocRef(final String uuid) {
@@ -58,4 +63,44 @@ class QueryResourceImpl implements QueryResource {
                 .type(QueryDoc.DOCUMENT_TYPE)
                 .build();
     }
+
+    @Override
+    @AutoLogged(OperationType.UNLOGGED)
+    public ValidateExpressionResult validateQuery(final String query) {
+        return queryServiceProvider.get().validateQuery(query);
+    }
+
+//    @Override
+//    public ResourceGeneration downloadQuery(final DashboardSearchRequest request) {
+//        return queryServiceProvider.get().downloadQuery(request);
+//    }
+
+    @Override
+    public ResourceGeneration downloadSearchResults(final DownloadQueryResultsRequest request) {
+        return queryServiceProvider.get().downloadSearchResults(request);
+    }
+
+    @Override
+    @AutoLogged(OperationType.UNLOGGED)
+    public DashboardSearchResponse search(final QuerySearchRequest request) {
+        return queryServiceProvider.get().search(request);
+    }
+
+    @Override
+    @AutoLogged(OperationType.UNLOGGED)
+    public Boolean destroy(final DestroyQueryRequest request) {
+        return queryServiceProvider.get().destroy(request);
+    }
+
+    @Override
+    @AutoLogged(OperationType.UNLOGGED)
+    public List<String> fetchTimeZones() {
+        return queryServiceProvider.get().fetchTimeZones();
+    }
+
+//    @Override
+//    @AutoLogged(OperationType.UNLOGGED)
+//    public List<FunctionSignature> fetchFunctions() {
+//        return queryServiceProvider.get().fetchFunctions();
+//    }
 }

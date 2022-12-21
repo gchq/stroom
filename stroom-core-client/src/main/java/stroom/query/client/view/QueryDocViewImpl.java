@@ -66,6 +66,11 @@ public class QueryDocViewImpl
     }
 
     @Override
+    public TimeRange getTimeRange() {
+        return timeRangeSelector.getValue();
+    }
+
+    @Override
     public QueryButtons getQueryButtons() {
         return queryButtons;
     }

@@ -25,8 +25,8 @@ import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
+import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
-import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.query.shared.QueryDoc;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
@@ -157,11 +157,11 @@ class QueryStoreImpl implements QueryStore {
     }
 
     @Override
-    public ImpexDetails importDocument(final DocRef docRef,
-                                       final Map<String, byte[]> dataMap,
-                                       final ImportState importState,
-                                       final ImportMode importMode) {
-        return store.importDocument(docRef, dataMap, importState, importMode);
+    public DocRef importDocument(final DocRef docRef,
+                                 final Map<String, byte[]> dataMap,
+                                 final ImportState importState,
+                                 final ImportSettings importSettings) {
+        return store.importDocument(docRef, dataMap, importState, importSettings);
     }
 
     @Override
@@ -191,5 +191,10 @@ class QueryStoreImpl implements QueryStore {
     @Override
     public List<DocRef> list() {
         return store.list();
+    }
+
+    @Override
+    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
+        return store.findByNames(name, allowWildCards);
     }
 }

@@ -25,18 +25,14 @@ import stroom.dashboard.impl.SearchRequestMapper;
 import stroom.dashboard.impl.SearchResponseMapper;
 import stroom.dashboard.impl.datasource.DataSourceProviderRegistry;
 import stroom.dashboard.impl.logging.SearchEventLog;
-import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DashboardSearchResponse;
-import stroom.dashboard.shared.FunctionSignature;
-import stroom.dashboard.shared.Search;
-import stroom.dashboard.shared.StoredQuery;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.datasource.api.v2.DateField;
 import stroom.docref.DocRef;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
-import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -47,10 +43,6 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.language.SearchRequestBuilder;
-import stroom.query.language.StructureBuilder;
-import stroom.query.language.Token;
-import stroom.query.language.TokenGroup;
-import stroom.query.language.Tokeniser;
 import stroom.query.shared.DestroyQueryRequest;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryContext;
@@ -107,6 +99,7 @@ class QueryServiceImpl implements QueryService {
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
     private final Provider<FunctionService> functionServiceProvider;
+    private final DocRefInfoService docRefInfoService;
 
     @Inject
     QueryServiceImpl(final QueryStore queryStore,
@@ -121,7 +114,8 @@ class QueryServiceImpl implements QueryService {
                      final HttpServletRequestHolder httpServletRequestHolder,
                      final ExecutorProvider executorProvider,
                      final TaskContextFactory taskContextFactory,
-                     final Provider<FunctionService> functionServiceProvider) {
+                     final Provider<FunctionService> functionServiceProvider,
+                     final DocRefInfoService docRefInfoService) {
         this.queryStore = queryStore;
         this.queryService = queryService;
         this.documentResourceHelper = documentResourceHelper;
@@ -135,6 +129,7 @@ class QueryServiceImpl implements QueryService {
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
         this.functionServiceProvider = functionServiceProvider;
+        this.docRefInfoService = docRefInfoService;
     }
 
     @Override
@@ -148,7 +143,7 @@ class QueryServiceImpl implements QueryService {
     }
 
     @Override
-    public ValidateExpressionResult validateExpression(final String expressionString) {
+    public ValidateExpressionResult validateQuery(final String expressionString) {
         return null;
 //        try {
 //            final FieldIndex fieldIndex = new FieldIndex();
@@ -413,11 +408,9 @@ class QueryServiceImpl implements QueryService {
                         searchRequest.isIncremental());
                 final SearchRequestBuilder builder = new SearchRequestBuilder();
                 SearchRequest mappedRequest = builder.create(query, sampleRequest);
-
-                // TODO : Need to fix docref.
+                mappedRequest = resolveDataSource(mappedRequest);
 
                 final DocRef dataSourceRef = mappedRequest.getQuery().getDataSource();
-
                 synchronized (QueryServiceImpl.class) {
                     final ActiveQueries activeQueries = getActiveQueries(searchRequest);
 
@@ -503,6 +496,44 @@ class QueryServiceImpl implements QueryService {
         }
 
         return result;
+    }
+
+    private SearchRequest resolveDataSource(SearchRequest request) {
+        String dataSourceName = null;
+        if (request != null &&
+                request.getQuery() != null &&
+                request.getQuery().getDataSource() != null) {
+            dataSourceName = request.getQuery().getDataSource().getName();
+        }
+        if (dataSourceName == null) {
+            throw new RuntimeException("Null data source name");
+        }
+
+        final List<DocRef> docRefs = docRefInfoService.findByName(
+                null,
+                dataSourceName,
+                false);
+        if (docRefs == null || docRefs.size() == 0) {
+            throw new RuntimeException("Data source \"" + dataSourceName + "\" not found");
+        }
+
+        // TODO : Deal with duplicate names.
+
+        DocRef resolved = null;
+        for (final DocRef docRef : docRefs) {
+            final Optional<DataSourceProvider> optional =
+                    searchDataSourceProviderRegistry.getDataSourceProvider(docRef);
+            if (optional.isPresent()) {
+                resolved = docRef;
+                break;
+            }
+        }
+
+        if (resolved == null) {
+            throw new RuntimeException("Unable to find data source \"" + dataSourceName + "\"");
+        }
+
+        return request.copy().query(request.getQuery().copy().dataSource(resolved).build()).build();
     }
 
     private SearchRequest addTimeRangeExpression(final DateField partitionTimeField,
