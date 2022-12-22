@@ -27,6 +27,7 @@ import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.QueryDocPresenter.QueryDocView;
 import stroom.query.client.view.QueryButtons;
+import stroom.query.client.view.TimeRanges;
 import stroom.query.shared.QueryDoc;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.view.client.presenter.IndexLoader;
@@ -50,6 +51,7 @@ public class QueryDocPresenter
     private final QueryResultTablePresenter tablePresenter;
     private boolean readOnly = true;
     private final QueryModel queryModel;
+    private TimeRange currentTimeRange = TimeRanges.ALL_TIME;
 
     @Inject
     public QueryDocPresenter(final EventBus eventBus,
@@ -95,8 +97,11 @@ public class QueryDocPresenter
 
     @Override
     public void onTimeRange(final TimeRange timeRange) {
+        if (!currentTimeRange.equals(timeRange)) {
+            currentTimeRange = timeRange;
 //        setTimeRange(timeRange);
-        start();
+            start();
+        }
     }
 
 //    private void setTimeRange(final TimeRange timeRange) {
@@ -141,7 +146,7 @@ public class QueryDocPresenter
         queryModel.startNewSearch(
                 codePresenter.getText(),
                 null,//getDashboardContext().getCombinedParams(),
-                getView().getTimeRange(),
+                currentTimeRange,
                 incremental,
                 storeHistory,
                 null);
@@ -155,6 +160,7 @@ public class QueryDocPresenter
             codePresenter.setText(entity.getQuery());
         }
         getView().getQueryButtons().setEnabled(true);
+        getView().setTimeRange(currentTimeRange);
     }
 
     @Override
