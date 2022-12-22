@@ -28,9 +28,9 @@ import stroom.query.client.presenter.QueryDocSettingsPresenter.QueryDocSettingsV
 import stroom.query.client.presenter.QueryDocSuperPresenter;
 import stroom.query.client.presenter.QueryResultTablePresenter;
 import stroom.query.client.presenter.QueryResultTablePresenter.QueryResultTableView;
-import stroom.query.client.view.QueryResultTableViewImpl;
 import stroom.query.client.view.QueryDocSettingsViewImpl;
 import stroom.query.client.view.QueryDocViewImpl;
+import stroom.query.client.view.QueryResultTableViewImpl;
 
 public class QueryModule extends PluginModule {
 

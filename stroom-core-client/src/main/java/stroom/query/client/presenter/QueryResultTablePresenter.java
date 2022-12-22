@@ -17,12 +17,9 @@
 package stroom.query.client.presenter;
 
 import stroom.cell.expander.client.ExpanderCell;
-import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.RestFactory;
-import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Result;
@@ -38,14 +35,6 @@ import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.logical.shared.HasOpenHandlers;
-import com.google.gwt.event.logical.shared.HasShowRangeHandlers;
-import com.google.gwt.event.logical.shared.OpenEvent;
-import com.google.gwt.event.logical.shared.OpenHandler;
-import com.google.gwt.event.logical.shared.ShowRangeEvent;
-import com.google.gwt.event.logical.shared.ShowRangeHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
@@ -58,7 +47,6 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -84,8 +72,6 @@ public class QueryResultTablePresenter
 
     private OffsetRange requestedRange = new OffsetRange(0, 100);
     private Set<String> openGroups = null;
-
-
 
 
     @Inject
@@ -395,7 +381,7 @@ public class QueryResultTablePresenter
         // See if any fields have more than 1 level. If they do then we will add
         // an expander column.
         int maxGroup = -1;
-        final boolean showDetail = true;//getTableSettings().showDetail();
+        final boolean showDetail = true; //getTableSettings().showDetail();
         for (final Field field : fields) {
             if (field.getGroup() != null) {
                 final int group = field.getGroup();
@@ -470,7 +456,6 @@ public class QueryResultTablePresenter
 
         return processed;
     }
-
 
 
 //    private void refresh() {

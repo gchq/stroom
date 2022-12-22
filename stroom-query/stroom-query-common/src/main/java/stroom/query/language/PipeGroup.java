@@ -5,7 +5,7 @@ import java.util.Objects;
 
 public class PipeGroup extends AbstractTokenGroup {
     public enum PipeOperation {
-        WHERE, AND, OR, NOT, TABLE;
+        WHERE, AND, OR, NOT, RENAME, TABLE;
     }
 
     private final String name;

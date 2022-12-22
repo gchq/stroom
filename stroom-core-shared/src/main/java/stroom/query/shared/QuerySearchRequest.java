@@ -41,8 +41,8 @@ public class QuerySearchRequest {
     @JsonProperty
     private final QueryContext queryContext;
 
-    @JsonPropertyDescription("If true the response will contain all results found so far, typically no results on the " +
-            "first request. Future requests for the same query key may return more results. Intended for use on " +
+    @JsonPropertyDescription("If true the response will contain all results found so far, typically no results on " +
+            "the first request. Future requests for the same query key may return more results. Intended for use on " +
             "longer running searches to allow partial result sets to be returned as soon as they are " +
             "available rather than waiting for the full result set.")
     @JsonProperty

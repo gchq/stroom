@@ -5841,6 +5841,148 @@
         "tags" : [ "Processor Tasks" ]
       }
     },
+    "/query/v1/destroy" : {
+      "post" : {
+        "operationId" : "queryDestroySearch",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DestroyQueryRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Destroy a running query",
+        "tags" : [ "Queries" ]
+      }
+    },
+    "/query/v1/downloadSearchResults" : {
+      "post" : {
+        "operationId" : "downloadQuerySearchResults",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DownloadQueryResultsRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResourceGeneration"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Download search results",
+        "tags" : [ "Queries" ]
+      }
+    },
+    "/query/v1/fetchTimeZones" : {
+      "get" : {
+        "operationId" : "fetchTimeZones_1",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch time zone data from the server",
+        "tags" : [ "Queries" ]
+      }
+    },
+    "/query/v1/search" : {
+      "post" : {
+        "operationId" : "querySearch",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/QuerySearchRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DashboardSearchResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Perform a new search or get new results",
+        "tags" : [ "Queries" ]
+      }
+    },
+    "/query/v1/validateQuery" : {
+      "post" : {
+        "operationId" : "validateQuery",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          },
+          "description" : "query",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ValidateExpressionResult"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Validate an expression",
+        "tags" : [ "Queries" ]
+      }
+    },
     "/query/v1/{uuid}" : {
       "get" : {
         "operationId" : "fetchQuery",
@@ -10473,6 +10615,23 @@
           }
         }
       },
+      "DestroyQueryRequest" : {
+        "type" : "object",
+        "properties" : {
+          "applicationInstanceUuid" : {
+            "type" : "string"
+          },
+          "componentId" : {
+            "type" : "string"
+          },
+          "queryDocUuid" : {
+            "type" : "string"
+          },
+          "queryKey" : {
+            "$ref" : "#/components/schemas/QueryKey"
+          }
+        }
+      },
       "DestroyRequest" : {
         "type" : "object",
         "properties" : {
@@ -10689,6 +10848,28 @@
         "allOf" : [ {
           "$ref" : "#/components/schemas/AbstractField"
         } ]
+      },
+      "DownloadQueryResultsRequest" : {
+        "type" : "object",
+        "properties" : {
+          "componentId" : {
+            "type" : "string"
+          },
+          "fileType" : {
+            "type" : "string",
+            "enum" : [ "EXCEL", "CSV", "TSV" ]
+          },
+          "percent" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "sample" : {
+            "type" : "boolean"
+          },
+          "searchRequest" : {
+            "$ref" : "#/components/schemas/QuerySearchRequest"
+          }
+        }
       },
       "DownloadSearchResultsRequest" : {
         "type" : "object",
@@ -14045,6 +14226,26 @@
           }
         }
       },
+      "QueryContext" : {
+        "type" : "object",
+        "properties" : {
+          "dateTimeSettings" : {
+            "$ref" : "#/components/schemas/DateTimeSettings"
+          },
+          "params" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Param"
+            }
+          },
+          "queryInfo" : {
+            "type" : "string"
+          },
+          "timeRange" : {
+            "$ref" : "#/components/schemas/TimeRange"
+          }
+        }
+      },
       "QueryData" : {
         "type" : "object",
         "properties" : {
@@ -14119,6 +14320,49 @@
           }
         },
         "required" : [ "uuid" ]
+      },
+      "QuerySearchRequest" : {
+        "type" : "object",
+        "properties" : {
+          "applicationInstanceUuid" : {
+            "type" : "string"
+          },
+          "componentId" : {
+            "type" : "string"
+          },
+          "incremental" : {
+            "type" : "boolean"
+          },
+          "openGroups" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          },
+          "query" : {
+            "type" : "string"
+          },
+          "queryContext" : {
+            "$ref" : "#/components/schemas/QueryContext"
+          },
+          "queryDocUuid" : {
+            "type" : "string"
+          },
+          "queryKey" : {
+            "$ref" : "#/components/schemas/QueryKey"
+          },
+          "requestedRange" : {
+            "$ref" : "#/components/schemas/OffsetRange"
+          },
+          "storeHistory" : {
+            "type" : "boolean"
+          },
+          "timeout" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
       },
       "RangeInteger" : {
         "type" : "object",

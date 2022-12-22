@@ -23,7 +23,6 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.instance.client.ClientApplicationInstance;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.QueryDocPresenter.QueryDocView;
 import stroom.query.client.view.QueryButtons;
@@ -38,8 +37,6 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.function.Function;
 import javax.inject.Provider;
 
@@ -93,8 +90,6 @@ public class QueryDocPresenter
     }
 
 
-
-
     @Override
     public void onTimeRange(final TimeRange timeRange) {
         if (!currentTimeRange.equals(timeRange)) {
@@ -145,7 +140,7 @@ public class QueryDocPresenter
         queryModel.reset();
         queryModel.startNewSearch(
                 codePresenter.getText(),
-                null,//getDashboardContext().getCombinedParams(),
+                null, //getDashboardContext().getCombinedParams(),
                 currentTimeRange,
                 incremental,
                 storeHistory,

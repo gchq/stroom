@@ -766,6 +766,15 @@ export interface DependencyCriteria {
   sortList?: CriteriaFieldSort[];
 }
 
+export interface DestroyQueryRequest {
+  applicationInstanceUuid?: string;
+  componentId?: string;
+  queryDocUuid?: string;
+
+  /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
+  queryKey?: QueryKey;
+}
+
 export interface DestroyRequest {
   applicationInstanceInfo?: ApplicationInstanceInfo;
   reason?: string;
@@ -860,6 +869,16 @@ export interface DocumentTypes {
 }
 
 export type DoubleField = AbstractField;
+
+export interface DownloadQueryResultsRequest {
+  componentId?: string;
+  fileType?: "EXCEL" | "CSV" | "TSV";
+
+  /** @format int32 */
+  percent?: number;
+  sample?: boolean;
+  searchRequest?: QuerySearchRequest;
+}
 
 export interface DownloadSearchResultsRequest {
   componentId?: string;
@@ -2393,6 +2412,14 @@ export interface QueryConfig {
   infoPopup?: InfoPopupConfig;
 }
 
+export interface QueryContext {
+  /** The client date/time settings */
+  dateTimeSettings?: DateTimeSettings;
+  params?: Param[];
+  queryInfo?: string;
+  timeRange?: TimeRange;
+}
+
 export interface QueryData {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSource?: DocRef;
@@ -2429,6 +2456,26 @@ export interface QueryKey {
    * @example 7740bcd0-a49e-4c22-8540-044f85770716
    */
   uuid: string;
+}
+
+export interface QuerySearchRequest {
+  applicationInstanceUuid?: string;
+  componentId?: string;
+  incremental?: boolean;
+  openGroups?: string[];
+  query?: string;
+  queryContext?: QueryContext;
+  queryDocUuid?: string;
+
+  /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
+  queryKey?: QueryKey;
+
+  /** The offset and length of a range of data in a sub-set of a query result set */
+  requestedRange?: OffsetRange;
+  storeHistory?: boolean;
+
+  /** @format int64 */
+  timeout?: number;
 }
 
 export interface RangeInteger {
@@ -7587,6 +7634,99 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       }),
   };
   query = {
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name QueryDestroySearch
+     * @summary Destroy a running query
+     * @request POST:/query/v1/destroy
+     * @secure
+     */
+    queryDestroySearch: (data: DestroyQueryRequest, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/query/v1/destroy`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name DownloadQuerySearchResults
+     * @summary Download search results
+     * @request POST:/query/v1/downloadSearchResults
+     * @secure
+     */
+    downloadQuerySearchResults: (data: DownloadQueryResultsRequest, params: RequestParams = {}) =>
+      this.request<any, ResourceGeneration>({
+        path: `/query/v1/downloadSearchResults`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name FetchTimeZones1
+     * @summary Fetch time zone data from the server
+     * @request GET:/query/v1/fetchTimeZones
+     * @secure
+     */
+    fetchTimeZones1: (params: RequestParams = {}) =>
+      this.request<any, string[]>({
+        path: `/query/v1/fetchTimeZones`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name QuerySearch
+     * @summary Perform a new search or get new results
+     * @request POST:/query/v1/search
+     * @secure
+     */
+    querySearch: (data: QuerySearchRequest, params: RequestParams = {}) =>
+      this.request<any, DashboardSearchResponse>({
+        path: `/query/v1/search`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name ValidateQuery
+     * @summary Validate an expression
+     * @request POST:/query/v1/validateQuery
+     * @secure
+     */
+    validateQuery: (data: string, params: RequestParams = {}) =>
+      this.request<any, ValidateExpressionResult>({
+        path: `/query/v1/validateQuery`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
     /**
      * No description
      *

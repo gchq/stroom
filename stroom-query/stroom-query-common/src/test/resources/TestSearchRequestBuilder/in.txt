@@ -3,3 +3,12 @@
 | and EventTime <= 2000-01-01T00:00:00.000Z
 | and EventTime >= 2016-01-02T00:00:00.000Z
 | table "Stream Id", "Event Id", "Event Time", "Status"
+-----
+'Test Index'
+| where UserId = user5 and Description = e0567
+| and EventTime <= 2000-01-01T00:00:00.000Z
+| and EventTime >= 2016-01-02T00:00:00.000Z
+| rename EventTime as "Event Time"
+| rename StreamId as "Stream Id"
+| rename EventId as "Event Id"
+| table "Stream Id", "Event Id", "Event Time", "Status"

@@ -16,7 +16,9 @@ import stroom.query.language.PipeGroup.PipeOperation;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 public class SearchRequestBuilder {
@@ -278,40 +280,18 @@ public class SearchRequestBuilder {
     private List<AbstractToken> addTableSettings(final List<AbstractToken> tokens,
                                                  final boolean extractValues,
                                                  final List<ResultRequest> resultRequests) {
+        final Map<String, String> columnNames = new HashMap<>();
+
         int i = 0;
         for (; i < tokens.size(); i++) {
             final AbstractToken token = tokens.get(i);
             if (token instanceof PipeGroup) {
                 final PipeGroup pipeGroup = (PipeGroup) token;
-                if (PipeOperation.TABLE.equals(pipeGroup.getPipeOperation())) {
-                    TableSettings.Builder builder = TableSettings.builder();
+                if (PipeOperation.RENAME.equals(pipeGroup.getPipeOperation())) {
+                    processRenamePipeOperation(pipeGroup, columnNames);
 
-                    final List<AbstractToken> children = pipeGroup.getChildren();
-                    for (final AbstractToken t : children) {
-                        if (!TokenType.COMMA.equals(t.getTokenType())) {
-                            final String name = t.getText();
-                            final Field field = Field.builder()
-                                    .id(name)
-                                    .name(name)
-                                    .expression(ParamSubstituteUtil.makeParam(name))
-                                    .build();
-                            builder.addFields(field);
-                        }
-                    }
-
-                    //        final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();
-                    final TableSettings tableSettings = builder
-                            .extractValues(extractValues)
-//                .extractionPipeline(resultPipeline)
-                            .build();
-
-                    final ResultRequest tableResultRequest = new ResultRequest("1234",
-                            Collections.singletonList(tableSettings),
-                            null,
-                            null,
-                            ResultRequest.ResultStyle.TABLE,
-                            Fetch.ALL);
-                    resultRequests.add(tableResultRequest);
+                } else if (PipeOperation.TABLE.equals(pipeGroup.getPipeOperation())) {
+                    processTablePipeOperation(pipeGroup, columnNames, extractValues, resultRequests);
 
                 } else {
                     break;
@@ -325,5 +305,69 @@ public class SearchRequestBuilder {
             return tokens.subList(i, tokens.size());
         }
         return Collections.emptyList();
+    }
+
+    private void processRenamePipeOperation(final PipeGroup pipeGroup,
+                                            final Map<String, String> columnNames) {
+        final List<AbstractToken> children = pipeGroup.getChildren();
+        String field = null;
+        boolean afterAs = false;
+        for (final AbstractToken t : children) {
+            if (TokenType.isString(t)) {
+                if (afterAs) {
+                    if (field == null) {
+                        throw new TokenException(t, "Syntax exception");
+                    }
+                    columnNames.put(t.getText(), field);
+                    field = null;
+                    afterAs = false;
+                } else if (field != null) {
+                    throw new TokenException(t, "Syntax exception");
+                } else {
+                    field = t.getText();
+                }
+            } else if (TokenType.AS.equals(t.getTokenType())) {
+                afterAs = true;
+            } else if (TokenType.COMMA.equals(t.getTokenType())) {
+                field = null;
+            } else {
+                throw new TokenException(t, "Unexpected token");
+            }
+        }
+    }
+
+    private void processTablePipeOperation(final PipeGroup pipeGroup,
+                                           final Map<String, String> columnNames,
+                                           final boolean extractValues,
+                                           final List<ResultRequest> resultRequests) {
+        TableSettings.Builder builder = TableSettings.builder();
+
+        final List<AbstractToken> children = pipeGroup.getChildren();
+        for (final AbstractToken t : children) {
+            if (!TokenType.COMMA.equals(t.getTokenType())) {
+                final String columnName = t.getText();
+                final String fieldName = columnNames.getOrDefault(columnName, columnName);
+                final Field field = Field.builder()
+                        .id(fieldName)
+                        .name(columnName)
+                        .expression(ParamSubstituteUtil.makeParam(fieldName))
+                        .build();
+                builder.addFields(field);
+            }
+        }
+
+        //        final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();
+        final TableSettings tableSettings = builder
+                .extractValues(extractValues)
+//                .extractionPipeline(resultPipeline)
+                .build();
+
+        final ResultRequest tableResultRequest = new ResultRequest("1234",
+                Collections.singletonList(tableSettings),
+                null,
+                null,
+                ResultRequest.ResultStyle.TABLE,
+                Fetch.ALL);
+        resultRequests.add(tableResultRequest);
     }
 }

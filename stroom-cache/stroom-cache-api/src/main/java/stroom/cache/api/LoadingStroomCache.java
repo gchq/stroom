@@ -31,11 +31,11 @@ public interface LoadingStroomCache<K, V> extends StroomCache<K, V> {
     @Override
     V get(K key, Function<K, V> valueProvider);
 
-    @Override
     /**
      * If key exists in the cache returns an {@link Optional} containing the value
      * associated with key, else returns an empty optional.
      * It will NOT call the loadFunction.
      */
+    @Override
     Optional<V> getIfPresent(K key);
 }
