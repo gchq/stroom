@@ -31,6 +31,8 @@ import stroom.docref.DocRef;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.EffectiveMeta;
+import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.impl.MetaValueDao;
 import stroom.meta.shared.FindMetaCriteria;
@@ -48,6 +50,7 @@ import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.mock.MockTaskModule;
 import stroom.test.common.TestUtil;
 import stroom.test.common.util.db.DbTestModule;
+import stroom.util.Period;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LambdaLogger;
@@ -57,14 +60,23 @@ import stroom.util.time.TimePeriod;
 
 import com.google.common.base.Strings;
 import com.google.inject.Guice;
+import com.google.inject.TypeLiteral;
+import io.vavr.Tuple;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -83,15 +95,22 @@ class TestMetaDaoImpl {
 
     private static final String RAW_STREAM_TYPE_NAME = "RAW_TEST_STREAM_TYPE";
     private static final String PROCESSED_STREAM_TYPE_NAME = "TEST_STREAM_TYPE";
+    private static final String RAW_REF_STREAM_TYPE_NAME = "RAW_REF_STREAM_TYPE";
+    private static final String REF_STREAM_TYPE_NAME = "REF_STREAM_TYPE";
+
     private static final String TEST1_FEED_NAME = "TEST1";
     private static final String TEST2_FEED_NAME = "TEST2";
     private static final String TEST3_FEED_NAME = "TEST3";
+    private static final String REF1_FEED_NAME = "REF1";
+
     private static final DocRef TEST1_FEED =
             new DocRef(FeedDoc.DOCUMENT_TYPE, UUID.randomUUID().toString(), TEST1_FEED_NAME);
     private static final DocRef TEST2_FEED =
             new DocRef(FeedDoc.DOCUMENT_TYPE, UUID.randomUUID().toString(), TEST2_FEED_NAME);
     private static final DocRef TEST3_FEED =
             new DocRef(FeedDoc.DOCUMENT_TYPE, UUID.randomUUID().toString(), TEST3_FEED_NAME);
+    private static final DocRef REF1_FEED =
+            new DocRef(FeedDoc.DOCUMENT_TYPE, UUID.randomUUID().toString(), REF1_FEED_NAME);
 
 
     @Inject
@@ -161,10 +180,40 @@ class TestMetaDaoImpl {
 
         metaValueDao.flush();
         // Unlock all streams.
+        unlockAllStreams();
+    }
+
+    private void unlockAllStreams() {
         metaDao.updateStatus(new FindMetaCriteria(ExpressionOperator.builder().build()),
                 Status.LOCKED,
                 Status.UNLOCKED,
                 System.currentTimeMillis());
+    }
+
+    private List<EffectiveMeta> populateDbWithRefStreams(final Instant baseEffectiveTime) {
+
+
+        final List<EffectiveMeta> effectiveMetaList = new ArrayList<>();
+        // 10 raw + 10 cooked ref with effective times 1 day apart
+        for (int i = 0; i < 10; i++) {
+
+            final Meta parent = metaDao.create(createRawRefProperties(
+                    REF1_FEED_NAME,
+                    baseEffectiveTime.plus(i, ChronoUnit.DAYS)));
+            final Meta myMeta = metaDao.create(createProcessedRefMetaProperties(parent, REF1_FEED_NAME));
+            final EffectiveMeta effectiveMeta = new EffectiveMeta(myMeta);
+            effectiveMetaList.add(effectiveMeta);
+
+            final AttributeMap attributeMap = new AttributeMap();
+            attributeMap.put(MetaFields.REC_READ.getName(), "" + 100 * i);
+            attributeMap.put(MetaFields.REC_WRITE.getName(), "" + 10 * i);
+            metaValueDao.addAttributes(myMeta, attributeMap);
+            totalMetaCount += 2; // parent + myMeta
+            test1FeedCount += 2; // parent + myMeta
+        }
+        unlockAllStreams();
+
+        return effectiveMetaList;
     }
 
     private void makeCreateTimesOlder() {
@@ -238,6 +287,7 @@ class TestMetaDaoImpl {
                     .select(
                             meta.ID,
                             meta.CREATE_TIME,
+                            meta.EFFECTIVE_TIME,
                             meta.PARENT_ID,
                             meta.STATUS,
                             meta.FEED_ID,
@@ -256,8 +306,11 @@ class TestMetaDaoImpl {
                     AsciiTable.builder(metaRows)
                             .withColumn(Column.of("Id", row -> row.get(meta.ID)))
                             .withColumn(Column.of("Create Time", row ->
-                                    Instant.ofEpochMilli(row.get(meta.CREATE_TIME))))
-                            .withColumn(Column.of("Create Time ms", row -> row.get(meta.CREATE_TIME)))
+                                    Instant.ofEpochMilli(row.get(meta.CREATE_TIME))
+                                            + " (" + row.get(meta.CREATE_TIME) + ")"))
+                            .withColumn(Column.of("Effective Time", row ->
+                                    Instant.ofEpochMilli(row.get(meta.EFFECTIVE_TIME))
+                                            + " (" + row.get(meta.EFFECTIVE_TIME) + ")"))
                             .withColumn(Column.of("Parent Id", row -> row.get(meta.PARENT_ID)))
                             .withColumn(Column.of("Status", row -> row.get(meta.STATUS)))
                             .withColumn(Column.of("Feed", row ->
@@ -267,6 +320,7 @@ class TestMetaDaoImpl {
                             .build());
         });
     }
+
 
     private List<DataRetentionRuleAction> buildRuleActions(final ExpressionOperator expressionOperator) {
         final DataRetentionRuleAction dataRetentionRuleAction = new DataRetentionRuleAction(
@@ -437,10 +491,7 @@ class TestMetaDaoImpl {
 
         metaValueDao.flush();
         // Unlock all streams.
-        metaDao.updateStatus(new FindMetaCriteria(ExpressionOperator.builder().build()),
-                Status.LOCKED,
-                Status.UNLOCKED,
-                System.currentTimeMillis());
+        unlockAllStreams();
 
         ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.STATUS, Condition.EQUALS, "Unlocked")
@@ -580,10 +631,7 @@ class TestMetaDaoImpl {
 
         metaValueDao.flush();
         // Unlock all streams.
-        metaDao.updateStatus(new FindMetaCriteria(ExpressionOperator.builder().build()),
-                Status.LOCKED,
-                Status.UNLOCKED,
-                System.currentTimeMillis());
+        unlockAllStreams();
 
         ResultPage<Meta> resultPage = metaDao.findReprocess(
                 new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(TEST1_FEED_NAME)));
@@ -665,11 +713,102 @@ class TestMetaDaoImpl {
                 .isEqualTo(0);
     }
 
+    @TestFactory
+    Stream<DynamicTest> testGetEffectiveStreams() {
+        final Instant baseEffectiveTime = LocalDateTime.of(2022, 1, 1, 1, 0)
+                .toInstant(ZoneOffset.UTC);
+        // Starting at the above time, creates 10 ref streams each a day apart
+        final List<EffectiveMeta> allEffectiveMetaData = populateDbWithRefStreams(baseEffectiveTime);
+        final Set<Instant> allTimes = allEffectiveMetaData.stream()
+                .map(EffectiveMeta::getEffectiveMs)
+                .map(Instant::ofEpochMilli)
+                .collect(Collectors.toSet());
+
+        final Instant time1 = baseEffectiveTime.plus(1, ChronoUnit.DAYS);
+        final Instant time2 = baseEffectiveTime.plus(2, ChronoUnit.DAYS);
+        final Instant time3 = baseEffectiveTime.plus(3, ChronoUnit.DAYS);
+
+        LOGGER.doIfDebugEnabled(this::dumpMetaTableToDebug);
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(Instant.class, Instant.class)
+                .withWrappedOutputType(new TypeLiteral<Set<Instant>>() {
+                })
+                .withTestFunction(testCase -> {
+                    final EffectiveMetaDataCriteria criteria = new EffectiveMetaDataCriteria(
+                            new Period(testCase.getInput()._1.toEpochMilli(), testCase.getInput()._2.toEpochMilli()),
+                            REF1_FEED_NAME,
+                            REF_STREAM_TYPE_NAME);
+
+                    return metaDao.getEffectiveStreams(criteria)
+                            .stream()
+                            .map(EffectiveMeta::getEffectiveMs)
+                            .map(Instant::ofEpochMilli)
+                            .collect(Collectors.toSet());
+                })
+                .withAssertions(testOutcome -> {
+                    Assertions.assertThat(testOutcome.getActualOutput())
+                            .containsAll(testOutcome.getExpectedOutput());
+                })
+                .addNamedCase(
+                        "No effective streams", // Range before all streams
+                        Tuple.of(
+                                baseEffectiveTime.minus(10, ChronoUnit.DAYS),
+                                baseEffectiveTime.minus(5, ChronoUnit.DAYS)),
+                        Collections.emptySet())
+                .addNamedCase(
+                        "No streams in range", // Will get one stream prior
+                        Tuple.of(
+                                time1.plusSeconds(5),
+                                time1.plusSeconds(10)),
+                        Set.of(time1))
+                .addNamedCase(
+                        "One in range", // Will get one stream prior + one in range
+                        Tuple.of(
+                                time1.plusSeconds(5),
+                                time1.plusSeconds(5).plus(1, ChronoUnit.DAYS)),
+                        Set.of(
+                                time1,
+                                time2))
+                .addNamedCase(
+                        "Two in range", // Will get one stream prior + two in range
+                        Tuple.of(
+                                time1.plusSeconds(5),
+                                time1.plusSeconds(5).plus(2, ChronoUnit.DAYS)),
+                        Set.of(
+                                time1,
+                                time2,
+                                time3))
+                .build();
+    }
+
     private MetaProperties createRawProperties(final String feedName) {
         return MetaProperties.builder()
                 .createMs(System.currentTimeMillis())
                 .feedName(feedName)
                 .typeName(RAW_STREAM_TYPE_NAME)
+                .build();
+    }
+
+    private MetaProperties createRawRefProperties(final String feedName, final Instant effectiveTime) {
+        return MetaProperties.builder()
+                .createMs(System.currentTimeMillis())
+                .effectiveMs(effectiveTime.toEpochMilli())
+                .feedName(feedName)
+                .typeName(RAW_REF_STREAM_TYPE_NAME)
+                .build();
+    }
+
+    private MetaProperties createProcessedRefMetaProperties(final Meta parent,
+                                                            final String feedName) {
+        Objects.requireNonNull(parent.getEffectiveMs());
+        return MetaProperties.builder()
+                .parent(parent)
+                .effectiveMs(parent.getEffectiveMs())
+                .feedName(feedName)
+                .processorUuid(getProcessorUuid(feedName))
+                .pipelineUuid(getPipelineUuid(feedName))
+                .typeName(REF_STREAM_TYPE_NAME)
                 .build();
     }
 

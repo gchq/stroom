@@ -20,12 +20,14 @@ package stroom.pipeline.refdata;
 import stroom.cache.api.CacheManager;
 import stroom.cache.impl.CacheManagerImpl;
 import stroom.data.shared.StreamTypeNames;
+import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.mock.MockMetaService;
 import stroom.meta.shared.Meta;
 import stroom.security.mock.MockSecurityContext;
 import stroom.test.common.util.test.StroomUnitTest;
+import stroom.util.NullSafe;
 import stroom.util.cache.CacheConfig;
 import stroom.util.date.DateUtil;
 import stroom.util.time.StroomDuration;
@@ -56,19 +58,21 @@ class TestEffectiveStreamCache extends StroomUnitTest {
         final InnerStreamMetaService metaService = new InnerStreamMetaService() {
 
             @Override
-            public Set<Meta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
+            public Set<EffectiveMeta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
                 findEffectiveStreamSourceCount++;
-                final Set<Meta> results = new HashSet<>();
+                final Set<EffectiveMeta> results = new HashSet<>();
                 long workingDate = criteria.getEffectivePeriod().getFrom();
                 while (workingDate < criteria.getEffectivePeriod().getTo()) {
                     final Meta meta = create(
                             MetaProperties.builder()
                                     .feedName(refFeedName)
-                                    .typeName(StreamTypeNames.RAW_REFERENCE)
-                                    .createMs(workingDate)
+                                    .typeName(StreamTypeNames.REFERENCE)
+                                    .effectiveMs(workingDate)
                                     .build());
 
-                    results.add(meta);
+                    final EffectiveMeta effectiveMeta = new EffectiveMeta(meta);
+
+                    results.add(effectiveMeta);
                     workingDate = Instant.ofEpochMilli(workingDate)
                             .atZone(ZoneOffset.UTC)
                             .plusDays(1)
@@ -216,13 +220,17 @@ class TestEffectiveStreamCache extends StroomUnitTest {
         }
 
         @Override
-        public Set<Meta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
+        public Set<EffectiveMeta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
             callCount++;
 
             return streams.stream()
                     .filter(stream ->
-                            stream.getEffectiveMs() >= criteria.getEffectivePeriod().getFromMs()
-                                    && stream.getEffectiveMs() <= criteria.getEffectivePeriod().getToMs())
+                                    NullSafe.test(
+                                            stream.getEffectiveMs(),
+                                            effMs ->
+                                                    effMs >= criteria.getEffectivePeriod().getFromMs()
+                                            && effMs <= criteria.getEffectivePeriod().getToMs()))
+                    .map(EffectiveMeta::new)
                     .collect(Collectors.toSet());
         }
 
@@ -230,7 +238,7 @@ class TestEffectiveStreamCache extends StroomUnitTest {
             final Meta meta = create(
                     MetaProperties.builder()
                             .feedName(feedName)
-                            .typeName(StreamTypeNames.RAW_REFERENCE)
+                            .typeName(StreamTypeNames.REFERENCE)
                             .createMs(effectiveTimeMs)
                             .build());
             streams.add(meta);

@@ -196,7 +196,7 @@ public class Meta {
 
     @Override
     public String toString() {
-        return String.valueOf(id);
+        return id + " - " + feedName + " - " + typeName;
     }
 
     public static Builder builder() {
