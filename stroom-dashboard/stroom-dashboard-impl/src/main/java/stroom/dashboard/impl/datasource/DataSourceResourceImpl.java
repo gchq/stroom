@@ -21,6 +21,7 @@ import stroom.datasource.shared.DataSourceResource;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.meta.shared.MetaFields;
+import stroom.query.common.v2.DataSourceProviderRegistry;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

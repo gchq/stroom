@@ -287,13 +287,11 @@ public class SearchRequestBuilder {
                     TableSettings.Builder builder = TableSettings.builder();
 
                     final List<AbstractToken> children = pipeGroup.getChildren();
-                    boolean first = true;
                     for (final AbstractToken t : children) {
-                        if (first) {
-                            first = false;
-                        } else if (!TokenType.COMMA.equals(t.getTokenType())) {
+                        if (!TokenType.COMMA.equals(t.getTokenType())) {
                             final String name = t.getText();
                             final Field field = Field.builder()
+                                    .id(name)
                                     .name(name)
                                     .expression(ParamSubstituteUtil.makeParam(name))
                                     .build();
@@ -312,7 +310,7 @@ public class SearchRequestBuilder {
                             null,
                             null,
                             ResultRequest.ResultStyle.TABLE,
-                            Fetch.CHANGES);
+                            Fetch.ALL);
                     resultRequests.add(tableResultRequest);
 
                 } else {

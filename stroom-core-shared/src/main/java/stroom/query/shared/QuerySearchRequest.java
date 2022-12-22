@@ -16,6 +16,7 @@
 
 package stroom.query.shared;
 
+import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.QueryKey;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -24,6 +25,10 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
@@ -63,6 +68,10 @@ public class QuerySearchRequest {
     private final String componentId;
     @JsonProperty
     private final boolean storeHistory;
+    @JsonProperty
+    private final OffsetRange requestedRange;
+    @JsonProperty
+    private final Set<String> openGroups;
 
     @JsonCreator
     public QuerySearchRequest(
@@ -74,7 +83,9 @@ public class QuerySearchRequest {
             @JsonProperty("applicationInstanceUuid") final String applicationInstanceUuid,
             @JsonProperty("queryDocUuid") final String queryDocUuid,
             @JsonProperty("componentId") final String componentId,
-            @JsonProperty("storeHistory") final boolean storeHistory) {
+            @JsonProperty("storeHistory") final boolean storeHistory,
+            @JsonProperty("requestedRange") final OffsetRange requestedRange,
+            @JsonProperty("openGroups") final Set<String> openGroups) {
         this.queryKey = queryKey;
         this.query = query;
         this.queryContext = queryContext;
@@ -84,6 +95,8 @@ public class QuerySearchRequest {
         this.queryDocUuid = queryDocUuid;
         this.componentId = componentId;
         this.storeHistory = storeHistory;
+        this.requestedRange = requestedRange;
+        this.openGroups = openGroups;
     }
 
     public QueryKey getQueryKey() {
@@ -122,6 +135,55 @@ public class QuerySearchRequest {
         return storeHistory;
     }
 
+    public OffsetRange getRequestedRange() {
+        return requestedRange;
+    }
+
+    public Set<String> getOpenGroups() {
+        return openGroups;
+    }
+
+    public boolean isGroupOpen(final String group) {
+        return openGroups != null && openGroups.contains(group);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final QuerySearchRequest that = (QuerySearchRequest) o;
+        return incremental == that.incremental &&
+                timeout == that.timeout &&
+                storeHistory == that.storeHistory &&
+                Objects.equals(queryKey, that.queryKey) &&
+                Objects.equals(query, that.query) &&
+                Objects.equals(queryContext, that.queryContext) &&
+                Objects.equals(applicationInstanceUuid, that.applicationInstanceUuid) &&
+                Objects.equals(queryDocUuid, that.queryDocUuid) &&
+                Objects.equals(componentId, that.componentId) &&
+                Objects.equals(requestedRange, that.requestedRange) &&
+                Objects.equals(openGroups, that.openGroups);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(queryKey,
+                query,
+                queryContext,
+                incremental,
+                timeout,
+                applicationInstanceUuid,
+                queryDocUuid,
+                componentId,
+                storeHistory,
+                requestedRange,
+                openGroups);
+    }
+
     @Override
     public String toString() {
         return "QuerySearchRequest{" +
@@ -134,6 +196,8 @@ public class QuerySearchRequest {
                 ", queryDocUuid='" + queryDocUuid + '\'' +
                 ", componentId='" + componentId + '\'' +
                 ", storeHistory=" + storeHistory +
+                ", requestedRange=" + requestedRange +
+                ", openGroups=" + openGroups +
                 '}';
     }
 
@@ -156,6 +220,8 @@ public class QuerySearchRequest {
         private String queryDocUuid;
         private String componentId;
         private boolean storeHistory;
+        private OffsetRange requestedRange = new OffsetRange(0, 100);
+        private Set<String> openGroups;
 
         private Builder() {
         }
@@ -217,6 +283,30 @@ public class QuerySearchRequest {
             return this;
         }
 
+        public Builder requestedRange(final OffsetRange requestedRange) {
+            this.requestedRange = requestedRange;
+            return this;
+        }
+
+        public Builder openGroups(final Set<String> openGroups) {
+            this.openGroups = openGroups;
+            return this;
+        }
+
+        public Builder openGroup(final String group, final boolean open) {
+            if (openGroups == null) {
+                openGroups = new HashSet<>();
+            }
+
+            if (open) {
+                openGroups.add(group);
+            } else {
+                openGroups.remove(group);
+            }
+
+            return this;
+        }
+
         public QuerySearchRequest build() {
             return new QuerySearchRequest(
                     queryKey,
@@ -227,7 +317,9 @@ public class QuerySearchRequest {
                     applicationInstanceUuid,
                     queryDocUuid,
                     componentId,
-                    storeHistory);
+                    storeHistory,
+                    requestedRange,
+                    openGroups);
         }
     }
 }

@@ -4,6 +4,7 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.explorer.api.ExplorerActionHandler;
+import stroom.explorer.shared.DocumentType;
 import stroom.security.api.SecurityContext;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
@@ -59,14 +60,25 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
     public List<DocRef> findByName(final String type,
                                    final String nameFilter,
                                    final boolean allowWildCards) {
-        Objects.requireNonNull(type);
         if (NullSafe.isEmptyString(nameFilter)) {
             return Collections.emptyList();
         } else {
             return securityContext.asProcessingUserResult(() -> {
-                final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);
-                Objects.requireNonNull(handler, () -> "No handler for type " + type);
-                return handler.findByName(nameFilter, allowWildCards);
+                if (type == null) {
+                    final List<DocRef> result = new ArrayList<>();
+                    for (final DocumentType documentType : explorerActionHandlers.getNonSystemTypes()) {
+                        final ExplorerActionHandler handler =
+                                explorerActionHandlers.getHandler(documentType.toString());
+                        if (handler != null) {
+                            result.addAll(handler.findByName(nameFilter, allowWildCards));
+                        }
+                    }
+                    return result;
+                } else {
+                    final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);
+                    Objects.requireNonNull(handler, () -> "No handler for type " + type);
+                    return handler.findByName(nameFilter, allowWildCards);
+                }
             });
         }
     }

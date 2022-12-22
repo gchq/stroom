@@ -18,15 +18,22 @@ package stroom.query.client.presenter;
 
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
+import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Result;
+
+import java.util.Set;
 
 public interface ResultConsumer {
 
 //    ComponentSettings getSettings();
 
-    ComponentResultRequest getResultRequest(boolean ignorePause);
+//    ComponentResultRequest getResultRequest(boolean ignorePause);
 
 //    ComponentResultRequest createDownloadQueryRequest();
+
+    OffsetRange getRequestedRange();
+
+    Set<String> getOpenGroups();
 
     void reset();
 

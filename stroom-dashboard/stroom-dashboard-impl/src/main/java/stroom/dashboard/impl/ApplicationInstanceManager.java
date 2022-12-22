@@ -104,7 +104,7 @@ public class ApplicationInstanceManager implements Clearable, HasSystemInfo {
     }
 
     public Optional<ApplicationInstance> getOptApplicationInstance(final String uuid) {
-        final Optional<ApplicationInstance> optApplicationInstance = cache.getOptional(uuid);
+        final Optional<ApplicationInstance> optApplicationInstance = cache.getIfPresent(uuid);
         optApplicationInstance.ifPresentOrElse(
                 applicationInstance ->
                         LOGGER.debug(() -> LogUtil.message("Getting application instance: {}",
@@ -207,7 +207,7 @@ public class ApplicationInstanceManager implements Clearable, HasSystemInfo {
      */
     public void keepAlive(final String uuid) {
         LOGGER.trace(() -> "KeepAlive called for application instance " + uuid);
-        final Optional<ApplicationInstance> optApplicationInstance = cache.getOptional(uuid);
+        final Optional<ApplicationInstance> optApplicationInstance = cache.getIfPresent(uuid);
         if (LOGGER.isDebugEnabled()) {
             dumpRecordedDebugInfo(uuid, appInstanceDebugMap.get(uuid), "keepAlive");
         }
@@ -222,7 +222,7 @@ public class ApplicationInstanceManager implements Clearable, HasSystemInfo {
 
     public boolean remove(final String uuid) {
         LOGGER.trace(() -> "Remove called for application instance " + uuid);
-        return cache.getOptional(uuid)
+        return cache.getIfPresent(uuid)
                 .map(applicationInstance -> {
                     LOGGER.debug(() -> "Explicitly remove application instance from cache: " +
                             applicationInstanceToStr(applicationInstance));

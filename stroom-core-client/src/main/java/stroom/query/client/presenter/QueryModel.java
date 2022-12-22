@@ -16,9 +16,7 @@
 
 package stroom.query.client.presenter;
 
-import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.DashboardSearchResponse;
-import stroom.dashboard.shared.Search;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.instance.client.ClientApplicationInstance;
@@ -37,10 +35,7 @@ import com.google.gwt.core.client.GWT;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.function.Consumer;
 
 public class QueryModel {
@@ -53,7 +48,9 @@ public class QueryModel {
     private String queryUuid;
     private String componentId;
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
-    private Map<String, ResultConsumer> componentMap = new HashMap<>();
+
+    private final ResultConsumer tablePresenter;
+
     private DashboardSearchResponse currentResponse;
     private QueryKey currentQueryKey;
     private QueryContext currentQueryContext;
@@ -64,14 +61,17 @@ public class QueryModel {
     private final List<Consumer<Boolean>> modeListeners = new ArrayList<>();
     private final List<Consumer<List<String>>> errorListeners = new ArrayList<>();
 
+
     public QueryModel(final RestFactory restFactory,
                       final ClientApplicationInstance applicationInstance,
                       final IndexLoader indexLoader,
-                      final DateTimeSettingsFactory dateTimeSettingsFactory) {
+                      final DateTimeSettingsFactory dateTimeSettingsFactory,
+                      final QueryResultTablePresenter tablePresenter) {
         this.restFactory = restFactory;
         this.applicationInstance = applicationInstance;
         this.indexLoader = indexLoader;
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
+        this.tablePresenter = tablePresenter;
     }
 
     public void init(final String queryUuid,
@@ -79,6 +79,7 @@ public class QueryModel {
         this.queryUuid = queryUuid;
         this.componentId = componentId;
     }
+
 
     /**
      * Stop searching, set the search mode to inactive and tell all components
@@ -94,9 +95,7 @@ public class QueryModel {
 
         // Stop the spinner from spinning and tell components that they no
         // longer want data.
-        for (final ResultConsumer resultComponent : componentMap.values()) {
-            resultComponent.endSearch();
-        }
+        tablePresenter.endSearch();
 
         // Stop polling.
         searching = false;
@@ -148,6 +147,8 @@ public class QueryModel {
                 .query(query)
                 .queryContext(currentQueryContext)
                 .incremental(incremental)
+                .applicationInstanceUuid(applicationInstance.getInstanceUuid())
+                .queryDocUuid(queryUuid)
                 .build();
 //            }
 //        }
@@ -155,20 +156,17 @@ public class QueryModel {
         if (query != null) {
 //            final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
 //            if (dataSourceRef != null && expression != null) {
-                // Let the query presenter know search is active.
-                setMode(true);
+            // Let the query presenter know search is active.
+            setMode(true);
 
-                // Reset all result components and tell them that search is
-                // starting.
-                for (final Entry<String, ResultConsumer> entry : componentMap.entrySet()) {
-                    final ResultConsumer resultComponent = entry.getValue();
-                    resultComponent.reset();
-                    resultComponent.startSearch();
-                }
+            // Reset all result components and tell them that search is
+            // starting.
+            tablePresenter.reset();
+            tablePresenter.startSearch();
 
-                // Start polling.
-                searching = true;
-                poll(storeHistory);
+            // Start polling.
+            searching = true;
+            poll(storeHistory);
 //            }
         }
     }
@@ -176,16 +174,15 @@ public class QueryModel {
     /**
      * Refresh the search data for the specified component.
      */
-    public void refresh(final String componentId, final Consumer<Result> resultConsumer) {
+    public void refresh() {
         final QueryKey queryKey = currentQueryKey;
-        final ResultConsumer resultComponent = componentMap.get(componentId);
-        if (resultComponent != null && queryKey != null) {
+        if (queryKey != null) {
 //            final Map<String, ComponentSettings> resultComponentMap = createComponentSettingsMap();
 //            if (resultComponentMap != null) {
 //                final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
 //                if (dataSourceRef != null) {
             // Tell the refreshing component that it should want data.
-            resultComponent.startSearch();
+            tablePresenter.startSearch();
 
 //                    final QuerySearchRequest search = Search
 //                            .builder()
@@ -196,36 +193,38 @@ public class QueryModel {
 //                            .timeRange(currentSearch.getTimeRange())
 //                            .incremental(true)
 //                            .build();
-
-            final List<ComponentResultRequest> requests = new ArrayList<>();
-            final ComponentResultRequest componentResultRequest = resultComponent.getResultRequest(true);
-            requests.add(componentResultRequest);
+//
+//            final List<ComponentResultRequest> requests = new ArrayList<>();
+//            final ComponentResultRequest componentResultRequest = tablePresenter.getResultRequest(true);
+//            requests.add(componentResultRequest);
 
             final QuerySearchRequest request = currentSearch
                     .copy()
                     .queryKey(queryKey)
-                    .applicationInstanceUuid(applicationInstance.getInstanceUuid())
-                    .queryDocUuid(queryUuid)
-                    .componentId(componentId)
+                    .storeHistory(false)
+                    .openGroups(tablePresenter.getOpenGroups())
+                    .requestedRange(tablePresenter.getRequestedRange())
                     .build();
 
             final Rest<DashboardSearchResponse> rest = restFactory.create();
             rest
                     .onSuccess(response -> {
-                        Result result = null;
+//                        Result result = null;
                         try {
 
                             if (response != null && response.getResults() != null) {
                                 for (final Result componentResult : response.getResults()) {
-                                    if (componentId.equals(componentResult.getComponentId())) {
-                                        result = componentResult;
-                                    }
+                                    tablePresenter.setData(componentResult);
+                                    tablePresenter.endSearch();
+//                                    if (componentId.equals(componentResult.getComponentId())) {
+//                                        result = componentResult;
+//                                    }
                                 }
                             }
                         } catch (final RuntimeException e) {
                             GWT.log(e.getMessage());
                         }
-                        resultConsumer.accept(result);
+//                        tablePresenter.setData(result);
                     })
                     .onFailure(throwable -> {
                         try {
@@ -235,7 +234,7 @@ public class QueryModel {
                         } catch (final RuntimeException e) {
                             GWT.log(e.getMessage());
                         }
-                        resultConsumer.accept(null);
+                        tablePresenter.setData(null);
                     })
                     .call(QUERY_RESOURCE)
                     .search(request);
@@ -273,7 +272,13 @@ public class QueryModel {
 //                final ComponentResultRequest componentResultRequest = resultComponent.getResultRequest(false);
 //                requests.add(componentResultRequest);
 //            }
-            final QuerySearchRequest request = currentSearch.copy().build();
+            final QuerySearchRequest request = currentSearch
+                    .copy()
+                    .queryKey(queryKey)
+                    .storeHistory(storeHistory)
+                    .openGroups(tablePresenter.getOpenGroups())
+                    .requestedRange(tablePresenter.getRequestedRange())
+                    .build();
 
 //            QuerySearchRequest
 //                    .builder()
@@ -290,6 +295,8 @@ public class QueryModel {
             final Rest<DashboardSearchResponse> rest = restFactory.create();
             rest
                     .onSuccess(response -> {
+                        GWT.log(response.toString());
+
                         if (search == currentSearch) {
                             currentQueryKey = response.getQueryKey();
 
@@ -307,6 +314,8 @@ public class QueryModel {
                         }
                     })
                     .onFailure(throwable -> {
+                        GWT.log(throwable.getMessage());
+
                         try {
                             if (search == currentSearch) {
                                 setErrors(Collections.singletonList(throwable.toString()));
@@ -356,10 +365,12 @@ public class QueryModel {
         // Give results to the right components.
         if (response.getResults() != null) {
             for (final Result componentResult : response.getResults()) {
-                final ResultConsumer resultComponent = componentMap.get(componentResult.getComponentId());
-                if (resultComponent != null) {
-                    resultComponent.setData(componentResult);
-                }
+                tablePresenter.setData(componentResult);
+
+//                final ResultConsumer resultComponent = componentMap.get(componentResult.getComponentId());
+//                if (resultComponent != null) {
+//                    resultComponent.setData(componentResult);
+//                }
             }
         }
 
@@ -367,7 +378,7 @@ public class QueryModel {
         if (response.isComplete()) {
             // Stop the spinner from spinning and tell components that they
             // no longer want data.
-            componentMap.values().forEach(ResultConsumer::endSearch);
+            tablePresenter.endSearch();
         }
 
         setErrors(response.getErrors());
@@ -415,12 +426,12 @@ public class QueryModel {
 //        return currentResponse;
 //    }
 
-    public void addComponent(final String componentId, final ResultConsumer resultComponent) {
-        // Create and assign a new map here to prevent concurrent modification exceptions.
-        final Map<String, ResultConsumer> componentMap = new HashMap<>(this.componentMap);
-        componentMap.put(componentId, resultComponent);
-        this.componentMap = componentMap;
-    }
+//    public void addComponent(final String componentId, final ResultConsumer resultComponent) {
+//        // Create and assign a new map here to prevent concurrent modification exceptions.
+//        final Map<String, ResultConsumer> componentMap = new HashMap<>(this.componentMap);
+//        componentMap.put(componentId, resultComponent);
+//        this.componentMap = componentMap;
+//    }
 
 //    public void removeComponent(final String componentId) {
 //        // Create and assign a new map here to prevent concurrent modification exceptions.

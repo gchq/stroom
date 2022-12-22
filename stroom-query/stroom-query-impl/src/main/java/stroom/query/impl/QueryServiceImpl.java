@@ -23,7 +23,6 @@ import stroom.dashboard.impl.ApplicationInstanceManager;
 import stroom.dashboard.impl.FunctionService;
 import stroom.dashboard.impl.SearchRequestMapper;
 import stroom.dashboard.impl.SearchResponseMapper;
-import stroom.dashboard.impl.datasource.DataSourceProviderRegistry;
 import stroom.dashboard.impl.logging.SearchEventLog;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
@@ -39,9 +38,11 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TimeRange;
+import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.language.SearchRequestBuilder;
 import stroom.query.shared.DestroyQueryRequest;
 import stroom.query.shared.DownloadQueryResultsRequest;
@@ -93,7 +94,7 @@ class QueryServiceImpl implements QueryService {
     private final ResourceStore resourceStore;
     private final SearchEventLog searchEventLog;
     private final ApplicationInstanceManager applicationInstanceManager;
-    private final DataSourceProviderRegistry searchDataSourceProviderRegistry;
+    private final DataSourceProviderRegistry dataSourceProviderRegistry;
     private final SecurityContext securityContext;
     private final HttpServletRequestHolder httpServletRequestHolder;
     private final ExecutorProvider executorProvider;
@@ -109,7 +110,7 @@ class QueryServiceImpl implements QueryService {
                      final ResourceStore resourceStore,
                      final SearchEventLog searchEventLog,
                      final ApplicationInstanceManager applicationInstanceManager,
-                     final DataSourceProviderRegistry searchDataSourceProviderRegistry,
+                     final DataSourceProviderRegistry dataSourceProviderRegistry,
                      final SecurityContext securityContext,
                      final HttpServletRequestHolder httpServletRequestHolder,
                      final ExecutorProvider executorProvider,
@@ -123,7 +124,7 @@ class QueryServiceImpl implements QueryService {
         this.resourceStore = resourceStore;
         this.searchEventLog = searchEventLog;
         this.applicationInstanceManager = applicationInstanceManager;
-        this.searchDataSourceProviderRegistry = searchDataSourceProviderRegistry;
+        this.dataSourceProviderRegistry = dataSourceProviderRegistry;
         this.securityContext = securityContext;
         this.httpServletRequestHolder = httpServletRequestHolder;
         this.executorProvider = executorProvider;
@@ -410,6 +411,23 @@ class QueryServiceImpl implements QueryService {
                 SearchRequest mappedRequest = builder.create(query, sampleRequest);
                 mappedRequest = resolveDataSource(mappedRequest);
 
+
+                // Fix table result requests.
+                final List<ResultRequest> resultRequests = mappedRequest.getResultRequests();
+                if (resultRequests != null) {
+                    List<ResultRequest> modifiedResultRequests = new ArrayList<>();
+                    for (final ResultRequest resultRequest : resultRequests) {
+                        modifiedResultRequests.add(
+                                resultRequest
+                                        .copy()
+                                        .openGroups(searchRequest.getOpenGroups())
+                                        .requestedRange(searchRequest.getRequestedRange())
+                                        .build()
+                        );
+                    }
+                    mappedRequest = mappedRequest.copy().resultRequests(modifiedResultRequests).build();
+                }
+
                 final DocRef dataSourceRef = mappedRequest.getQuery().getDataSource();
                 synchronized (QueryServiceImpl.class) {
                     final ActiveQueries activeQueries = getActiveQueries(searchRequest);
@@ -435,7 +453,7 @@ class QueryServiceImpl implements QueryService {
                         }
 
                         // Get the data source provider for this query.
-                        final DataSourceProvider dataSourceProvider = searchDataSourceProviderRegistry
+                        final DataSourceProvider dataSourceProvider = dataSourceProviderRegistry
                                 .getDataSourceProvider(dataSourceRef)
                                 .orElseThrow(() ->
                                         new RuntimeException(
@@ -522,7 +540,7 @@ class QueryServiceImpl implements QueryService {
         DocRef resolved = null;
         for (final DocRef docRef : docRefs) {
             final Optional<DataSourceProvider> optional =
-                    searchDataSourceProviderRegistry.getDataSourceProvider(docRef);
+                    dataSourceProviderRegistry.getDataSourceProvider(docRef);
             if (optional.isPresent()) {
                 resolved = docRef;
                 break;

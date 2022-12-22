@@ -39,7 +39,7 @@ public interface StroomCache<K, V> {
      *
      * @return The cached value or an empty {@link Optional} if not found in the cache.
      */
-    Optional<V> getOptional(K key);
+    Optional<V> getIfPresent(K key);
 
     /**
      * Gets a value from the cache. If key is not found in the cache then valueProvider

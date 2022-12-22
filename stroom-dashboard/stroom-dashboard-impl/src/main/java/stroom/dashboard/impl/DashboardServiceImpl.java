@@ -20,7 +20,7 @@ import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.ExpressionParser;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.ParamFactory;
-import stroom.dashboard.impl.datasource.DataSourceProviderRegistry;
+import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.dashboard.impl.download.DelimitedTarget;
 import stroom.dashboard.impl.download.ExcelTarget;
 import stroom.dashboard.impl.download.SearchResultWriter;

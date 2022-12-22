@@ -27,6 +27,7 @@ import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
+import stroom.query.client.presenter.FieldHeader;
 import stroom.query.client.presenter.TimeZones;
 import stroom.query.client.presenter.TableRow;
 import stroom.view.client.presenter.DataSourceFieldsMap;

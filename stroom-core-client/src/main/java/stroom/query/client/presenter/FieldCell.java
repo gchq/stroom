@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.table;
+package stroom.query.client.presenter;
 
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Filter;

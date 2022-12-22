@@ -23,6 +23,7 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.instance.client.ClientApplicationInstance;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.QueryDocPresenter.QueryDocView;
 import stroom.query.client.view.QueryButtons;
@@ -36,6 +37,8 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Function;
 import javax.inject.Provider;
 
@@ -61,9 +64,13 @@ public class QueryDocPresenter
         super(eventBus, view, securityContext);
         this.tablePresenter = tablePresenter;
 
-        queryModel = new QueryModel(restFactory, applicationInstance, indexLoader, dateTimeSettingsFactory);
-        tablePresenter.setCurrentSearchModel(queryModel);
-        queryModel.addComponent("table", tablePresenter);
+        queryModel = new QueryModel(
+                restFactory,
+                applicationInstance,
+                indexLoader,
+                dateTimeSettingsFactory,
+                tablePresenter);
+//        queryModel.addComponent("table", tablePresenter);
 
         codePresenter = editorPresenterProvider.get();
         codePresenter.setMode(AceEditorMode.STROOM_QUERY);
@@ -79,7 +86,12 @@ public class QueryDocPresenter
         super.onBind();
         registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
         registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
+        registerHandler(tablePresenter.addExpanderHandler(event -> queryModel.refresh()));
+        registerHandler(tablePresenter.addRangeChangeHandler(event -> queryModel.refresh()));
     }
+
+
+
 
     @Override
     public void onTimeRange(final TimeRange timeRange) {

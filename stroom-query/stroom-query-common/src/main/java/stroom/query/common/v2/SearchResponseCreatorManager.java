@@ -225,7 +225,7 @@ public final class SearchResponseCreatorManager implements Clearable {
     public Boolean keepAlive(final QueryKey queryKey) {
         LOGGER.trace(() -> "keepAlive() " + queryKey);
         final Optional<SearchResponseCreator> optionalSearchResponseCreator = cache
-                .getOptional(new Key(queryKey));
+                .getIfPresent(new Key(queryKey));
         return optionalSearchResponseCreator
                 .map(SearchResponseCreator::keepAlive)
                 .orElse(Boolean.FALSE);

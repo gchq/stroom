@@ -1,4 +1,4 @@
-package stroom.dashboard.impl.datasource;
+package stroom.query.common.v2;
 
 import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docref.DocRef;

@@ -18,7 +18,6 @@ package stroom.query.client.presenter;
 
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.dashboard.shared.ComponentResultRequest;
-import stroom.dashboard.shared.TableResultRequest;
 import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -32,23 +31,40 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.client.presenter.QueryResultTablePresenter.QueryResultTableView;
 import stroom.query.client.presenter.TableRow.Cell;
 import stroom.util.shared.Expander;
+import stroom.widget.util.client.ExpanderEvent;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
+import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.logical.shared.HasOpenHandlers;
+import com.google.gwt.event.logical.shared.HasShowRangeHandlers;
+import com.google.gwt.event.logical.shared.OpenEvent;
+import com.google.gwt.event.logical.shared.OpenHandler;
+import com.google.gwt.event.logical.shared.ShowRangeEvent;
+import com.google.gwt.event.logical.shared.ShowRangeHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.view.client.RangeChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 public class QueryResultTablePresenter
         extends MyPresenterWidget<QueryResultTableView>
@@ -64,18 +80,18 @@ public class QueryResultTablePresenter
     private boolean ignoreRangeChange;
     private boolean pause;
     private int currentRequestCount;
-    private QueryModel currentSearchModel;
+//    private QueryModel currentSearchModel;
 
-    private TableResultRequest tableResultRequest = TableResultRequest.builder()
-            .requestedRange(new OffsetRange(0, 100))
-            .build();
+    private OffsetRange requestedRange = new OffsetRange(0, 100);
+    private Set<String> openGroups = null;
+
+
+
 
     @Inject
     public QueryResultTablePresenter(final EventBus eventBus,
                                      final QueryResultTableView tableView,
-                                     final PagerView pagerView,
-                                     final RestFactory restFactory,
-                                     final DateTimeFormatter dateTimeFormatter) {
+                                     final PagerView pagerView) {
         super(eventBus, tableView);
 
         this.dataGrid = new MyDataGrid<>();
@@ -97,30 +113,55 @@ public class QueryResultTablePresenter
             }
         };
         expanderColumn.setFieldUpdater((index, result, value) -> {
-            tableResultRequest = tableResultRequest
-                    .copy()
-                    .openGroup(result.getGroupKey(), !value.isExpanded())
-                    .build();
-            refresh();
+            toggleOpenGroup(result.getGroupKey());
+            ExpanderEvent.fire(this, result.getGroupKey());
         });
     }
 
-    public void setCurrentSearchModel(final QueryModel currentSearchModel) {
-        this.currentSearchModel = currentSearchModel;
+    private void toggleOpenGroup(final String group) {
+        openGroup(group, !isGroupOpen(group));
+    }
+
+    private void openGroup(final String group, final boolean open) {
+        if (openGroups == null) {
+            openGroups = new HashSet<>();
+        }
+
+        if (open) {
+            openGroups.add(group);
+        } else {
+            openGroups.remove(group);
+        }
+    }
+
+    private boolean isGroupOpen(final String group) {
+        return openGroups != null && openGroups.contains(group);
+    }
+
+//    public void setRequestedRange(final OffsetRange requestedRange) {
+//        this.requestedRange = requestedRange;
+//    }
+
+    @Override
+    public Set<String> getOpenGroups() {
+        return openGroups;
+    }
+
+    @Override
+    public OffsetRange getRequestedRange() {
+        return requestedRange;
     }
 
     @Override
     protected void onBind() {
         registerHandler(dataGrid.addRangeChangeHandler(event -> {
             final com.google.gwt.view.client.Range range = event.getNewRange();
-            tableResultRequest = tableResultRequest
-                    .copy()
-                    .requestedRange(new OffsetRange(range.getStart(), range.getLength()))
-                    .build();
+            requestedRange = new OffsetRange(range.getStart(), range.getLength());
             if (!ignoreRangeChange) {
-                refresh();
+                fireEvent(event);
             }
         }));
+        registerHandler(dataGrid.addHyperlinkHandler(event -> getEventBus().fireEvent(event)));
 
 //        registerHandler(dataGrid.addColumnSortHandler(event -> {
 //            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
@@ -192,24 +233,21 @@ public class QueryResultTablePresenter
 //    }
 
 
-    @Override
-    public ComponentResultRequest getResultRequest(final boolean ignorePause) {
-        return null;
-    }
+//    @Override
+//    public ComponentResultRequest getResultRequest(final boolean ignorePause) {
+//        return null;
+//    }
 
     @Override
     public void reset() {
-        final long length = Math.max(1, tableResultRequest.getRequestedRange().getLength());
+        final long length = Math.max(1, requestedRange.getLength());
 
         // Reset the data grid paging.
         if (dataGrid.getVisibleRange().getStart() > 0) {
             dataGrid.setVisibleRange(0, (int) length);
         }
 
-        tableResultRequest = tableResultRequest
-                .copy()
-                .requestedRange(new OffsetRange(0L, length))
-                .build();
+        requestedRange = new OffsetRange(0L, length);
     }
 
     @Override
@@ -232,18 +270,44 @@ public class QueryResultTablePresenter
 
     @Override
     public void setData(final Result componentResult) {
+        GWT.log("setData");
+
         if (!pause) {
             setDataInternal(componentResult);
         }
     }
 
+    private List<Field> currentFields;
+    private final List<Column<TableRow, ?>> existingColumns = new ArrayList<>();
+
     private void setDataInternal(final Result componentResult) {
+        GWT.log("setDataInternal");
+
         ignoreRangeChange = true;
 
         try {
             if (componentResult != null) {
                 // Don't refresh the table unless the results have changed.
                 final TableResult tableResult = (TableResult) componentResult;
+
+                if (!Objects.equals(currentFields, tableResult.getFields())) {
+//                    final Set<String> newIdSet = tableResult
+//                            .getFields()
+//                            .stream()
+//                            .map(Field::getId)
+//                            .collect(Collectors.toSet());
+
+                    // First remove stale fields.
+                    updateColumns(tableResult.getFields());
+
+//                    removeAllColumns();
+//
+//                    // Add new columns.
+//                    for (final Field field : tableResult.getFields()) {
+//                        addColumn(field);
+//                    }
+                    currentFields = tableResult.getFields();
+                }
 
                 final List<TableRow> values = processData(tableResult.getFields(), tableResult.getRows());
                 final OffsetRange valuesRange = tableResult.getResultRange();
@@ -271,6 +335,60 @@ public class QueryResultTablePresenter
         }
 
         ignoreRangeChange = false;
+    }
+
+    private void removeAllColumns() {
+        for (Column<TableRow, ?> column : existingColumns) {
+            dataGrid.removeColumn(column);
+        }
+        existingColumns.clear();
+    }
+
+    void updateColumns(final List<Field> fields) {
+//        // Now make sure special fields exist for stream id and event id.
+//        ensureSpecialFields(IndexConstants.STREAM_ID, IndexConstants.EVENT_ID, "Id");
+
+        // Remove existing columns.
+        for (final Column<TableRow, ?> column : existingColumns) {
+            dataGrid.removeColumn(column);
+        }
+        existingColumns.clear();
+
+//        final List<Field> fields = getTableSettings().getFields();
+        addExpanderColumn();
+//        fieldsManager.setFieldsStartIndex(1);
+
+        // Add fields as columns.
+        for (final Field field : fields) {
+            // Only include the field if it is supposed to be visible.
+            if (field.isVisible()) {
+                addColumn(field);
+            }
+        }
+
+        dataGrid.resizeTableToFitColumns();
+    }
+
+    private void addExpanderColumn() {
+        dataGrid.addColumn(expanderColumn, "<br/>", expanderColumnWidth);
+        existingColumns.add(expanderColumn);
+    }
+
+    private void addColumn(final Field field) {
+        final Column<TableRow, SafeHtml> column = new Column<TableRow, SafeHtml>(new SafeHtmlCell()) {
+            @Override
+            public SafeHtml getValue(final TableRow row) {
+                if (row == null) {
+                    return null;
+                }
+
+                return row.getValue(field.getId());
+            }
+        };
+
+        final FieldHeader fieldHeader = new FieldHeader(field);
+        dataGrid.addResizableColumn(column, fieldHeader, field.getWidth());
+        existingColumns.add(column);
     }
 
     private List<TableRow> processData(final List<Field> fields, final List<Row> values) {
@@ -333,7 +451,7 @@ public class QueryResultTablePresenter
             // Create an expander for the row.
             Expander expander = null;
             if (row.getDepth() < maxDepth) {
-                final boolean open = tableResultRequest.isGroupOpen(row.getGroupKey());
+                final boolean open = isGroupOpen(row.getGroupKey());
                 expander = new Expander(row.getDepth(), open, false);
             } else if (row.getDepth() > 0) {
                 expander = new Expander(row.getDepth(), false, true);
@@ -353,22 +471,32 @@ public class QueryResultTablePresenter
         return processed;
     }
 
-    private void refresh() {
-        currentRequestCount++;
-        getView().setPaused(pause && currentRequestCount == 0);
-        getView().setRefreshing(true);
-        currentSearchModel.refresh("table", result -> {
-            try {
-                if (result != null) {
-                    setDataInternal(result);
-                }
-            } catch (final Exception e) {
-                GWT.log(e.getMessage());
-            }
-            currentRequestCount--;
-            getView().setPaused(pause && currentRequestCount == 0);
-            getView().setRefreshing(currentSearchModel.getMode());
-        });
+
+
+//    private void refresh() {
+//        currentRequestCount++;
+//        getView().setPaused(pause && currentRequestCount == 0);
+//        getView().setRefreshing(true);
+//        currentSearchModel.refresh("table", result -> {
+//            try {
+//                if (result != null) {
+//                    setDataInternal(result);
+//                }
+//            } catch (final Exception e) {
+//                GWT.log(e.getMessage());
+//            }
+//            currentRequestCount--;
+//            getView().setPaused(pause && currentRequestCount == 0);
+//            getView().setRefreshing(currentSearchModel.getMode());
+//        });
+//    }
+
+    public HandlerRegistration addRangeChangeHandler(RangeChangeEvent.Handler handler) {
+        return addHandler(RangeChangeEvent.getType(), handler);
+    }
+
+    public HandlerRegistration addExpanderHandler(final ExpanderEvent.Handler handler) {
+        return addHandler(ExpanderEvent.getType(), handler);
     }
 
     public interface QueryResultTableView extends View, HasUiHandlers<TableUiHandlers> {
