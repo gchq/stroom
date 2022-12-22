@@ -4,6 +4,7 @@ import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ScanResult;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +56,17 @@ class TestFunctionFactory {
                                     () ->
                                             examineFunctionClass(functionClass)));
         }
+    }
+
+    @Test
+    void printFunctionNames() {
+        final List<FunctionDef> functionDefs = FunctionFactory.getFunctionDefinitions();
+        final StringBuilder sb = new StringBuilder();
+        System.out.println(
+                functionDefs
+                        .stream()
+                        .map(FunctionDef::name)
+                        .sorted().collect(Collectors.joining("|")));
     }
 
     private void examineFunctionClass(final Class<? extends Function> functionClass) {

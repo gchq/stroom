@@ -20,6 +20,10 @@ public class QuotedStringToken extends Token {
         return unescaped;
     }
 
+    public String getRawText() {
+        return super.getText();
+    }
+
     public static class Builder extends AbstractTokenBuilder<QuotedStringToken, Builder> {
 
         @Override

@@ -281,6 +281,7 @@ public class SearchRequestBuilder {
                                                  final boolean extractValues,
                                                  final List<ResultRequest> resultRequests) {
         final Map<String, String> columnNames = new HashMap<>();
+        final Map<String, String> functions = new HashMap<>();
 
         int i = 0;
         for (; i < tokens.size(); i++) {
@@ -290,8 +291,11 @@ public class SearchRequestBuilder {
                 if (PipeOperation.RENAME.equals(pipeGroup.getPipeOperation())) {
                     processRenamePipeOperation(pipeGroup, columnNames);
 
+                } else if (PipeOperation.EVAL.equals(pipeGroup.getPipeOperation())) {
+                    processEvalPipeOperation(pipeGroup, functions);
+
                 } else if (PipeOperation.TABLE.equals(pipeGroup.getPipeOperation())) {
-                    processTablePipeOperation(pipeGroup, columnNames, extractValues, resultRequests);
+                    processTablePipeOperation(pipeGroup, columnNames, functions, extractValues, resultRequests);
 
                 } else {
                     break;
@@ -336,8 +340,74 @@ public class SearchRequestBuilder {
         }
     }
 
+    private void processEvalPipeOperation(final PipeGroup pipeGroup,
+                                          final Map<String, String> functions) {
+        final List<AbstractToken> children = pipeGroup.getChildren();
+
+        String field = null;
+        if (children.size() > 0) {
+            AbstractToken token = children.get(0);
+            if (!TokenType.isString(token)) {
+                throw new TokenException(token, "Syntax exception");
+            }
+            field = token.getText();
+        }
+
+        if (children.size() > 1) {
+            AbstractToken token = children.get(1);
+            if (!TokenType.EQUALS.equals(token.getTokenType())) {
+                throw new TokenException(token, "Syntax exception, expected equals");
+            }
+        }
+
+        if (children.size() > 2) {
+            final StringBuilder sb = new StringBuilder();
+
+            // Turn the rest into a string.
+            for (int i = 2; i < children.size(); i++) {
+                AbstractToken token = children.get(i);
+                if (token instanceof FunctionGroup) {
+                    processFunction((FunctionGroup) token, sb, functions);
+                } else {
+                    sb.append(token.getText());
+                }
+            }
+
+            functions.put(field, sb.toString());
+        }
+    }
+
+    private void processFunction(final FunctionGroup functionGroup,
+                                 final StringBuilder sb,
+                                 final Map<String, String> functions) {
+        sb.append(functionGroup.getName());
+        sb.append("(");
+        final List<AbstractToken> functionGroupChildren = functionGroup.getChildren();
+        for (final AbstractToken token : functionGroupChildren) {
+            if (token instanceof FunctionGroup) {
+                processFunction(((FunctionGroup) token), sb, functions);
+            } else if (TokenType.STRING.equals(token.getTokenType())) {
+                // Non quoted strings are identifiers.
+                // See if there is already a mapping to the string.
+                final String innerFunction = functions.get(token.getText());
+                if (innerFunction != null) {
+                    sb.append(innerFunction);
+                } else {
+                    // Adapt the string into a param substitute fcr compatibility.
+                    sb.append(ParamSubstituteUtil.makeParam(token.getText()));
+                }
+            } else if (token instanceof QuotedStringToken) {
+                sb.append(((QuotedStringToken) token).getRawText());
+            } else {
+                sb.append(token.getText());
+            }
+        }
+        sb.append(")");
+    }
+
     private void processTablePipeOperation(final PipeGroup pipeGroup,
                                            final Map<String, String> columnNames,
+                                           final Map<String, String> functions,
                                            final boolean extractValues,
                                            final List<ResultRequest> resultRequests) {
         TableSettings.Builder builder = TableSettings.builder();
@@ -347,10 +417,16 @@ public class SearchRequestBuilder {
             if (!TokenType.COMMA.equals(t.getTokenType())) {
                 final String columnName = t.getText();
                 final String fieldName = columnNames.getOrDefault(columnName, columnName);
+
+                String expression = functions.get(fieldName);
+                if (expression == null) {
+                    expression = ParamSubstituteUtil.makeParam(fieldName);
+                }
+
                 final Field field = Field.builder()
                         .id(fieldName)
                         .name(columnName)
-                        .expression(ParamSubstituteUtil.makeParam(fieldName))
+                        .expression(expression)
                         .build();
                 builder.addFields(field);
             }
