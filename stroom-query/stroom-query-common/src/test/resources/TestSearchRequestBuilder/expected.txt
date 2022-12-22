@@ -62,18 +62,28 @@
     "componentId" : "1234",
     "mappings" : [ {
       "fields" : [ {
+        "id" : "Stream Id",
+        "name" : "Stream Id",
+        "expression" : "${Stream Id}",
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "Event Id",
         "name" : "Event Id",
         "expression" : "${Event Id}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
+        "id" : "Event Time",
         "name" : "Event Time",
         "expression" : "${Event Time}",
         "width" : 200,
         "visible" : true,
         "special" : false
       }, {
+        "id" : "Status",
         "name" : "Status",
         "expression" : "${Status}",
         "width" : 200,
@@ -82,7 +92,7 @@
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "CHANGES"
+    "fetch" : "ALL"
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
