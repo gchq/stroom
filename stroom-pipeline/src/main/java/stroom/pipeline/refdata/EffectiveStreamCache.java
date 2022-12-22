@@ -83,8 +83,8 @@ public class EffectiveStreamCache implements Clearable {
         }
 
         final NavigableSet<EffectiveStream> effectiveStreams = cache.get(effectiveStreamKey);
-        LOGGER.trace(() -> LogUtil.message("get({}) - returned {} streams",
-                effectiveStreamKey, effectiveStreams.size()));
+//        LOGGER.trace(() -> LogUtil.message("get({}) - returned {} streams",
+//                effectiveStreamKey, effectiveStreams.size()));
         return effectiveStreams;
     }
 
