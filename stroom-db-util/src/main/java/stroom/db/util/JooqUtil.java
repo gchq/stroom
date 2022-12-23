@@ -1,6 +1,9 @@
 package stroom.db.util;
 
 import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.logging.AsciiTable;
+import stroom.util.logging.AsciiTable.Column;
+import stroom.util.logging.AsciiTable.TableBuilder;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -714,6 +717,32 @@ public final class JooqUtil {
                 return new RuntimeException(e.getMessage(), e);
             }
         }
+    }
+
+    /**
+     * Dumps the collection of records to an ASCII table or "NO DATA" if the collection is empty/null
+     */
+    public static <T extends Record> String toAsciiTable(final Collection<T> collection,
+                                                         final boolean qualifiedFields) {
+        final TableBuilder<T> builder = AsciiTable.builder(collection);
+        if (collection.isEmpty()) {
+            return "NO DATA";
+        } else {
+            // Grab any record to figure out what fields we have
+            final T aRecord = collection.stream()
+                    .findAny()
+                    .orElseThrow();
+
+            for (int i = 0; i < aRecord.fields().length; i++) {
+                final Field<?> field = aRecord.field(i);
+                final int iCopy = i;
+                final String fieldName = qualifiedFields
+                        ? field.getName()
+                        : field.getQualifiedName().toString();
+                builder.withColumn(Column.of(fieldName, rec -> rec.get(iCopy)));
+            }
+        }
+        return builder.build();
     }
 
     /**
