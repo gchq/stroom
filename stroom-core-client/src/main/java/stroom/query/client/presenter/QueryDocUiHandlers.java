@@ -23,4 +23,6 @@ import com.gwtplatform.mvp.client.UiHandlers;
 public interface QueryDocUiHandlers extends UiHandlers {
 
     void onTimeRange(TimeRange timeRange);
+
+    void showWarnings();
 }

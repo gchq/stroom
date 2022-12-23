@@ -6,11 +6,14 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Filter;
 import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.Sort;
+import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.language.PipeGroup.PipeOperation;
 
@@ -18,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -280,30 +284,76 @@ public class SearchRequestBuilder {
     private List<AbstractToken> addTableSettings(final List<AbstractToken> tokens,
                                                  final boolean extractValues,
                                                  final List<ResultRequest> resultRequests) {
-        final Map<String, String> columnNames = new HashMap<>();
+//        final Map<String, String> columnNames = new HashMap<>();
         final Map<String, String> functions = new HashMap<>();
+        final Map<String, Sort> sortMap = new HashMap<>();
+        final Map<String, Integer> groupMap = new HashMap<>();
+        final Map<String, Filter> filterMap = new HashMap<>();
+        int groupDepth = 0;
+
+        final TableSettings.Builder tableSettingsBuilder = TableSettings.builder();
 
         int i = 0;
         for (; i < tokens.size(); i++) {
             final AbstractToken token = tokens.get(i);
             if (token instanceof PipeGroup) {
                 final PipeGroup pipeGroup = (PipeGroup) token;
-                if (PipeOperation.RENAME.equals(pipeGroup.getPipeOperation())) {
-                    processRenamePipeOperation(pipeGroup, columnNames);
-
-                } else if (PipeOperation.EVAL.equals(pipeGroup.getPipeOperation())) {
-                    processEvalPipeOperation(pipeGroup, functions);
-
-                } else if (PipeOperation.TABLE.equals(pipeGroup.getPipeOperation())) {
-                    processTablePipeOperation(pipeGroup, columnNames, functions, extractValues, resultRequests);
-
-                } else {
-                    break;
+                switch (pipeGroup.getPipeOperation()) {
+                    case EVAL -> processEvalPipeOperation(
+                            pipeGroup,
+                            functions);
+                    case SORT -> processSortPipeOperation(
+                            pipeGroup,
+                            sortMap);
+                    case GROUP -> {
+                        processGroupPipeOperation(
+                                pipeGroup,
+                                groupMap,
+                                groupDepth);
+                        groupDepth++;
+                    }
+                    case TABLE -> processTablePipeOperation(
+                            pipeGroup,
+                            functions,
+                            sortMap,
+                            groupMap,
+                            filterMap,
+                            tableSettingsBuilder);
+                    case LIMIT -> processLimitPipeOperation(
+                            pipeGroup,
+                            tableSettingsBuilder);
                 }
+
+//                if (PipeOperation.RENAME.equals(pipeGroup.getPipeOperation())) {
+//                    processRenamePipeOperation(pipeGroup, columnNames);
+//
+//                } else if (PipeOperation.EVAL.equals(pipeGroup.getPipeOperation())) {
+//                    processEvalPipeOperation(pipeGroup, functions);
+//
+//                } else if (PipeOperation.TABLE.equals(pipeGroup.getPipeOperation())) {
+//                    processTablePipeOperation(pipeGroup, columnNames, functions, extractValues, resultRequests);
+//
+//                } else {
+//                    break;
+//                }
             } else {
                 break;
             }
         }
+
+        //        final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();
+        final TableSettings tableSettings = tableSettingsBuilder
+                .extractValues(extractValues)
+//                .extractionPipeline(resultPipeline)
+                .build();
+
+        final ResultRequest tableResultRequest = new ResultRequest("1234",
+                Collections.singletonList(tableSettings),
+                null,
+                null,
+                ResultRequest.ResultStyle.TABLE,
+                Fetch.ALL);
+        resultRequests.add(tableResultRequest);
 
         if (i < tokens.size()) {
             return tokens.subList(i, tokens.size());
@@ -311,34 +361,34 @@ public class SearchRequestBuilder {
         return Collections.emptyList();
     }
 
-    private void processRenamePipeOperation(final PipeGroup pipeGroup,
-                                            final Map<String, String> columnNames) {
-        final List<AbstractToken> children = pipeGroup.getChildren();
-        String field = null;
-        boolean afterAs = false;
-        for (final AbstractToken t : children) {
-            if (TokenType.isString(t)) {
-                if (afterAs) {
-                    if (field == null) {
-                        throw new TokenException(t, "Syntax exception");
-                    }
-                    columnNames.put(t.getText(), field);
-                    field = null;
-                    afterAs = false;
-                } else if (field != null) {
-                    throw new TokenException(t, "Syntax exception");
-                } else {
-                    field = t.getText();
-                }
-            } else if (TokenType.AS.equals(t.getTokenType())) {
-                afterAs = true;
-            } else if (TokenType.COMMA.equals(t.getTokenType())) {
-                field = null;
-            } else {
-                throw new TokenException(t, "Unexpected token");
-            }
-        }
-    }
+//    private void processRenamePipeOperation(final PipeGroup pipeGroup,
+//                                            final Map<String, String> columnNames) {
+//        final List<AbstractToken> children = pipeGroup.getChildren();
+//        String field = null;
+//        boolean afterAs = false;
+//        for (final AbstractToken t : children) {
+//            if (TokenType.isString(t)) {
+//                if (afterAs) {
+//                    if (field == null) {
+//                        throw new TokenException(t, "Syntax exception");
+//                    }
+//                    columnNames.put(t.getText(), field);
+//                    field = null;
+//                    afterAs = false;
+//                } else if (field != null) {
+//                    throw new TokenException(t, "Syntax exception");
+//                } else {
+//                    field = t.getText();
+//                }
+//            } else if (TokenType.AS.equals(t.getTokenType())) {
+//                afterAs = true;
+//            } else if (TokenType.COMMA.equals(t.getTokenType())) {
+//                field = null;
+//            } else {
+//                throw new TokenException(t, "Unexpected token");
+//            }
+//        }
+//    }
 
     private void processEvalPipeOperation(final PipeGroup pipeGroup,
                                           final Map<String, String> functions) {
@@ -406,44 +456,181 @@ public class SearchRequestBuilder {
     }
 
     private void processTablePipeOperation(final PipeGroup pipeGroup,
-                                           final Map<String, String> columnNames,
                                            final Map<String, String> functions,
-                                           final boolean extractValues,
-                                           final List<ResultRequest> resultRequests) {
-        TableSettings.Builder builder = TableSettings.builder();
-
+                                           final Map<String, Sort> sortMap,
+                                           final Map<String, Integer> groupMap,
+                                           final Map<String, Filter> filterMap,
+                                           final TableSettings.Builder tableSettingsBuilder) {
         final List<AbstractToken> children = pipeGroup.getChildren();
-        for (final AbstractToken t : children) {
-            if (!TokenType.COMMA.equals(t.getTokenType())) {
-                final String columnName = t.getText();
-                final String fieldName = columnNames.getOrDefault(columnName, columnName);
+        String fieldName = null;
+        String columnName = null;
+        boolean afterAs = false;
 
-                String expression = functions.get(fieldName);
-                if (expression == null) {
-                    expression = ParamSubstituteUtil.makeParam(fieldName);
+        for (final AbstractToken t : children) {
+            if (TokenType.isString(t)) {
+                if (afterAs) {
+                    if (fieldName == null) {
+                        throw new TokenException(t, "Syntax exception, expected field name");
+                    } else if (columnName != null) {
+                        throw new TokenException(t, "Syntax exception, duplicate column name");
+                    } else {
+                        columnName = t.getText();
+                    }
+                } else if (fieldName == null) {
+                    fieldName = t.getText();
+                } else {
+                    throw new TokenException(t, "Syntax exception, expected AS");
+                }
+            } else if (fieldName != null && TokenType.AS.equals(t.getTokenType())) {
+                afterAs = true;
+
+            } else if (TokenType.COMMA.equals(t.getTokenType())) {
+                if (fieldName == null) {
+                    throw new TokenException(t, "Syntax exception, expected field name");
                 }
 
-                final Field field = Field.builder()
-                        .id(fieldName)
-                        .name(columnName)
-                        .expression(expression)
-                        .build();
-                builder.addFields(field);
+                addField(fieldName, columnName, functions, sortMap, groupMap, filterMap, tableSettingsBuilder);
+
+                fieldName = null;
+                columnName = null;
+                afterAs = false;
             }
         }
 
-        //        final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();
-        final TableSettings tableSettings = builder
-                .extractValues(extractValues)
-//                .extractionPipeline(resultPipeline)
-                .build();
+        // Add final field if we have one.
+        if (fieldName != null) {
+            addField(fieldName, columnName, functions, sortMap, groupMap, filterMap, tableSettingsBuilder);
+        }
+    }
 
-        final ResultRequest tableResultRequest = new ResultRequest("1234",
-                Collections.singletonList(tableSettings),
-                null,
-                null,
-                ResultRequest.ResultStyle.TABLE,
-                Fetch.ALL);
-        resultRequests.add(tableResultRequest);
+    private void addField(final String fieldName,
+                          final String columnName,
+                          final Map<String, String> functions,
+                          final Map<String, Sort> sortMap,
+                          final Map<String, Integer> groupMap,
+                          final Map<String, Filter> filterMap,
+                          final TableSettings.Builder tableSettingsBuilder) {
+        String expression = functions.get(fieldName);
+        if (expression == null) {
+            expression = ParamSubstituteUtil.makeParam(fieldName);
+        }
+
+        final Field field = Field.builder()
+                .id(fieldName)
+                .name(columnName != null
+                        ? columnName
+                        : fieldName)
+                .expression(expression)
+                .sort(sortMap.get(fieldName))
+                .group(groupMap.get(fieldName))
+                .filter(filterMap.get(fieldName))
+                .build();
+        tableSettingsBuilder.addFields(field);
+    }
+
+    private void processLimitPipeOperation(final PipeGroup pipeGroup,
+                                           final TableSettings.Builder tableSettingsBuilder) {
+        final List<AbstractToken> children = pipeGroup.getChildren();
+        for (final AbstractToken t : children) {
+            if (TokenType.isString(t) || TokenType.NUMBER.equals(t.getTokenType())) {
+                try {
+                    tableSettingsBuilder.addMaxResults(Integer.parseInt(t.getText()));
+                } catch (final NumberFormatException e) {
+                    throw new TokenException(t, "Syntax exception, expected number");
+                }
+            } else if (TokenType.COMMA.equals(t.getTokenType())) {
+                // Expected.
+            } else {
+                throw new TokenException(t, "Syntax exception, expected number");
+            }
+        }
+    }
+
+    private void processSortPipeOperation(final PipeGroup pipeGroup,
+                                          final Map<String, Sort> sortMap) {
+        String fieldName = null;
+        SortDirection direction = null;
+        final List<AbstractToken> children = pipeGroup.getChildren();
+        boolean first = true;
+        for (final AbstractToken t : children) {
+            if (first && TokenType.BY.equals(t.getTokenType())) {
+
+            } else {
+                if (TokenType.isString(t)) {
+                    if (fieldName == null) {
+                        fieldName = t.getText();
+                    } else if (direction == null) {
+                        try {
+                            if (t.getText().toLowerCase(Locale.ROOT).equalsIgnoreCase("asc")) {
+                                direction = SortDirection.ASCENDING;
+                            } else if (t.getText().toLowerCase(Locale.ROOT).equalsIgnoreCase("desc")) {
+                                direction = SortDirection.DESCENDING;
+                            } else {
+                                direction = SortDirection.valueOf(t.getText());
+                            }
+                        } catch (final IllegalArgumentException e) {
+                            throw new TokenException(t, "Syntax exception, expected sort direction 'asc' or 'desc'");
+                        }
+                    }
+                } else if (TokenType.COMMA.equals(t.getTokenType())) {
+                    if (fieldName == null) {
+                        throw new TokenException(t, "Syntax exception, expected field name");
+                    }
+                    final Sort sort = new Sort(sortMap.size(),
+                            direction != null
+                                    ? direction
+                                    : SortDirection.ASCENDING);
+                    sortMap.put(fieldName, sort);
+                    fieldName = null;
+                    direction = null;
+                } else {
+                    throw new TokenException(t, "Syntax exception, expected string");
+                }
+            }
+
+            first = false;
+        }
+
+        if (fieldName != null) {
+            final Sort sort = new Sort(sortMap.size(),
+                    direction != null
+                            ? direction
+                            : SortDirection.ASCENDING);
+            sortMap.put(fieldName, sort);
+        }
+    }
+
+    private void processGroupPipeOperation(final PipeGroup pipeGroup,
+                                           final Map<String, Integer> groupMap,
+                                           final int groupDepth) {
+        String fieldName = null;
+        final List<AbstractToken> children = pipeGroup.getChildren();
+        boolean first = true;
+        for (final AbstractToken t : children) {
+            if (first && TokenType.BY.equals(t.getTokenType())) {
+
+            } else {
+                if (TokenType.isString(t)) {
+                    if (fieldName == null) {
+                        fieldName = t.getText();
+                    } else {
+                        throw new TokenException(t, "Syntax exception, expected comma");
+                    }
+                } else if (TokenType.COMMA.equals(t.getTokenType())) {
+                    if (fieldName == null) {
+                        throw new TokenException(t, "Syntax exception, expected field name");
+                    }
+                    groupMap.put(fieldName, groupDepth);
+                    fieldName = null;
+                } else {
+                    throw new TokenException(t, "Syntax exception, expected field name");
+                }
+            }
+
+            first = false;
+        }
+        if (fieldName != null) {
+            groupMap.put(fieldName, groupDepth);
+        }
     }
 }

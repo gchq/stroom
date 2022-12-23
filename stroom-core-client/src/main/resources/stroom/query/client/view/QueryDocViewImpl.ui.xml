@@ -9,6 +9,7 @@
             </g:FlowPanel>
             <g:FlowPanel styleName="DashboardViewImpl-top-buttons dock-min dock-container-horizontal">
                 <q:TimeRangeSelector ui:field="timeRangeSelector" addStyleNames="dock-min"/>
+                <g:Button ui:field="warnings" title="Show Warnings" styleName="svg-image-button"/>
                 <q:QueryButtons ui:field="queryButtons" addStyleNames="dock-min"/>
             </g:FlowPanel>
         </g:FlowPanel>

@@ -20,11 +20,15 @@ import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.QueryDocPresenter.QueryDocView;
 import stroom.query.client.presenter.QueryDocUiHandlers;
+import stroom.svg.client.SvgImages;
+import stroom.widget.util.client.MouseUtil;
 
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -40,6 +44,8 @@ public class QueryDocViewImpl
     @UiField
     NavButtons navButtons;
     @UiField
+    Button warnings;
+    @UiField
     QueryButtons queryButtons;
     @UiField
     SimplePanel queryEditorContainer;
@@ -53,6 +59,7 @@ public class QueryDocViewImpl
                             final UserPreferencesManager userPreferencesManager) {
         widget = binder.createAndBindUi(this);
         timeRangeSelector.setUtc(userPreferencesManager.isUtc());
+        warnings.getElement().setInnerHTML(SvgImages.WARNING);
     }
 
     @Override
@@ -71,6 +78,11 @@ public class QueryDocViewImpl
     }
 
     @Override
+    public void setWarningsVisible(final boolean show) {
+        warnings.getElement().getStyle().setOpacity(show ? 1 : 0);
+    }
+
+    @Override
     public QueryButtons getQueryButtons() {
         return queryButtons;
     }
@@ -85,6 +97,13 @@ public class QueryDocViewImpl
     public void setTable(final View view) {
         view.asWidget().addStyleName("dashboard-panel overflow-hidden");
         tableContainer.setWidget(view.asWidget());
+    }
+
+    @UiHandler("warnings")
+    public void onWarnings(final ClickEvent event) {
+        if (getUiHandlers() != null && MouseUtil.isPrimary(event)) {
+            getUiHandlers().showWarnings();
+        }
     }
 
     @UiHandler("timeRangeSelector")

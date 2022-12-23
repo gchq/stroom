@@ -7,9 +7,10 @@ var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 var StroomQueryHighlightRules = function() {
 
     var keywords = (
-        "select|insert|update|delete|from|where|and|or|group|by|order|limit|offset|having|as|case|" +
-        "when|then|else|end|type|left|right|join|on|outer|desc|asc|union|create|table|primary|key|if|" +
-        "foreign|not|references|default|null|inner|cross|natural|database|drop|grant"
+//        "select|insert|update|delete|from|where|and|or|group|by|order|limit|offset|having|as|case|" +
+//        "when|then|else|end|type|left|right|join|on|outer|desc|asc|union|create|table|primary|key|if|" +
+//        "foreign|not|references|default|null|inner|cross|natural|database|drop|grant|" +
+        "where|and|or|not|eval|table|limit|sort|group|by|as|asc|ascending|desc|descending"
     );
 
     var builtinConstants = (
@@ -17,8 +18,10 @@ var StroomQueryHighlightRules = function() {
     );
 
     var builtinFunctions = (
-        "avg|count|first|last|max|min|sum|ucase|lcase|mid|len|round|rank|now|format|" + 
-        "coalesce|ifnull|isnull|nvl"
+//        "avg|count|first|last|max|min|sum|ucase|lcase|mid|len|round|rank|now|format|" +
+//        "coalesce|ifnull|isnull|nvl"
+
+        "%|*|-|/|<|<=|=|>|>=|^|add|annotation|any|average|bottom|ceiling|ceilingDay|ceilingHour|ceilingMinute|ceilingMonth|ceilingSecond|ceilingYear|concat|count|countGroups|countUnique|currentUser|dashboard|data|decode|decodeUrl|encodeUrl|err|exclude|extractAuthorityFromUri|extractFragmentFromUri|extractHostFromUri|extractPathFromUri|extractPortFromUri|extractQueryFromUri|extractSchemeFromUri|extractSchemeSpecificPartFromUri|extractUserInfoFromUri|false|first|floor|floorDay|floorHour|floorMinute|floorMonth|floorSecond|floorYear|formatDate|hash|if|include|indexOf|isBoolean|isDouble|isError|isInteger|isLong|isNull|isNumber|isString|isValue|joining|last|lastIndexOf|link|lowerCase|match|max|min|negate|not|nth|null|param|params|parseDate|random|replace|round|roundDay|roundHour|roundMinute|roundMonth|roundSecond|roundYear|stDev|stepping|stringLength|substring|substringAfter|substringBefore|sum|toBoolean|toDouble|toInteger|toLong|toString|top|true|typeOf|upperCase|variance"
     );
 
     var dataTypes = (
@@ -119,7 +122,8 @@ var Mode = function() {
 oop.inherits(Mode, TextMode);
 
 (function() {
-
+    this.lineCommentStart = "//";
+    this.blockComment = {start: "/*", end: "*/"};
 //    this.lineCommentStart = "--";
 
     this.$id = "ace/mode/stroom_query";

@@ -17,6 +17,7 @@
 
 package stroom.query.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
@@ -30,6 +31,7 @@ import stroom.query.client.view.TimeRanges;
 import stroom.query.shared.QueryDoc;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.view.client.presenter.IndexLoader;
+import stroom.widget.button.client.ButtonView;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -37,6 +39,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
+import java.util.List;
 import java.util.function.Function;
 import javax.inject.Provider;
 
@@ -44,6 +47,7 @@ public class QueryDocPresenter
         extends DocumentEditPresenter<QueryDocView, QueryDoc>
         implements QueryDocUiHandlers, QueryUiHandlers {
 
+    private List<String> currentWarnings;
     private EditorPresenter codePresenter;
     private final QueryResultTablePresenter tablePresenter;
     private boolean readOnly = true;
@@ -69,7 +73,9 @@ public class QueryDocPresenter
                 indexLoader,
                 dateTimeSettingsFactory,
                 tablePresenter);
-//        queryModel.addComponent("table", tablePresenter);
+        queryModel.addErrorListener(this::setErrors);
+        getView().setWarningsVisible(false);
+        //        queryModel.addComponent("table", tablePresenter);
 
         codePresenter = editorPresenterProvider.get();
         codePresenter.setMode(AceEditorMode.STROOM_QUERY);
@@ -89,6 +95,22 @@ public class QueryDocPresenter
         registerHandler(tablePresenter.addRangeChangeHandler(event -> queryModel.refresh()));
     }
 
+    public void setErrors(final List<String> errors) {
+        currentWarnings = errors;
+        getView().setWarningsVisible(currentWarnings != null && !currentWarnings.isEmpty());
+    }
+
+    @Override
+    public void showWarnings() {
+        if (currentWarnings != null && !currentWarnings.isEmpty()) {
+            final String msg = currentWarnings.size() == 1
+                    ? ("The following warning was created while running this search:")
+                    : ("The following " + currentWarnings.size()
+                            + " warnings have been created while running this search:");
+            final String errors = String.join("\n", currentWarnings);
+            AlertEvent.fireWarn(this, msg, errors, null);
+        }
+    }
 
     @Override
     public void onTimeRange(final TimeRange timeRange) {
@@ -178,6 +200,8 @@ public class QueryDocPresenter
     }
 
     public interface QueryDocView extends View, HasUiHandlers<QueryDocUiHandlers> {
+
+        void setWarningsVisible(boolean show);
 
         QueryButtons getQueryButtons();
 

@@ -24,6 +24,11 @@ public class Tokeniser {
         extractQuotedTokens(TokenType.DOUBLE_QUOTED_STRING, '\"', '\\');
         extractQuotedTokens(TokenType.SINGLE_QUOTED_STRING, '\'', '\\');
 
+        // Tag Comments
+        split("//.*", 0, TokenType.COMMENT);
+//        split("/\\*[^*]*\\*/", 0, TokenType.BLOCK_COMMENT);
+        split("/\\*([^*]|[\\r\\n]|(\\*+([^*/]|[\\r\\n])))*\\*+/", 0, TokenType.BLOCK_COMMENT);
+
         // Tag commands and functions.
         split("(\\|[\\s]*)([a-z-A-Z_]+)(\\s|$)", 2, TokenType.PIPE_OPERATION);
         split("(^|\\s)([a-z-A-Z_]+)([\\s]*\\()", 2, TokenType.FUNCTION_NAME);
@@ -31,10 +36,6 @@ public class Tokeniser {
         // Tag brackets.
         split("\\(", 0, TokenType.OPEN_BRACKET);
         split("\\)", 0, TokenType.CLOSE_BRACKET);
-
-        // Tag Comments
-        split("//[^\n]*", 0, TokenType.COMMENT);
-        split("/\\*[^*]*\\*/", 0, TokenType.BLOCK_COMMENT);
 
         // Tag whitespace.
         split("(^|\\s)(is[\\s]+null)(\\s|$)", 2, TokenType.IS_NULL);

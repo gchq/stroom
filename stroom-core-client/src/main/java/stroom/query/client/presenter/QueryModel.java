@@ -448,9 +448,9 @@ public class QueryModel {
 //        modeListeners.remove(consumer);
 //    }
 //
-//    public void addErrorListener(final Consumer<List<String>> consumer) {
-//        errorListeners.add(consumer);
-//    }
+    public void addErrorListener(final Consumer<List<String>> consumer) {
+        errorListeners.add(consumer);
+    }
 //
 //    public void removeErrorListener(final Consumer<List<String>> consumer) {
 //        errorListeners.remove(consumer);
