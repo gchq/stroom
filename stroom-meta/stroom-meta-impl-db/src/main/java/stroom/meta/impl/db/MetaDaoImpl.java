@@ -68,6 +68,7 @@ import org.jooq.Record1;
 import org.jooq.Record4;
 import org.jooq.Result;
 import org.jooq.Select;
+import org.jooq.SelectConditionStep;
 import org.jooq.SelectJoinStep;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
@@ -1536,6 +1537,24 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 .map(Record1::value1);
     }
 
+    private SelectConditionStep<Record4<Long, String, String, Long>> createBaseEffectiveStreamsQuery(
+            final DSLContext context,
+            final EffectiveMetaDataCriteria criteria) {
+
+        final byte unlockedId = MetaStatusId.getPrimitiveValue(Status.UNLOCKED);
+        return context.select(
+                        meta.ID,
+                        metaFeed.NAME,
+                        metaType.NAME,
+                        meta.EFFECTIVE_TIME)
+                .from(meta)
+                .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                .where(metaFeed.NAME.eq(criteria.getFeed()))
+                .and(metaType.NAME.eq(criteria.getType()))
+                .and(meta.STATUS.eq(unlockedId));
+    }
+
     @Override
     public Set<EffectiveMeta> getEffectiveStreams(final EffectiveMetaDataCriteria effectiveMetaDataCriteria) {
 
@@ -1545,7 +1564,6 @@ class MetaDaoImpl implements MetaDao, Clearable {
         final Period period = Objects.requireNonNull(effectiveMetaDataCriteria.getEffectivePeriod());
         final long fromMs = Objects.requireNonNull(period.getFromMs());
         final long toMs = Objects.requireNonNull(period.getToMs());
-        final byte unlockedId = MetaStatusId.getPrimitiveValue(Status.UNLOCKED);
 
         final Function<Record4<Long, String, String, Long>, EffectiveMeta> mapper = rec ->
                 new EffectiveMeta(
@@ -1554,20 +1572,14 @@ class MetaDaoImpl implements MetaDao, Clearable {
                         rec.get(metaType.NAME),
                         rec.get(meta.EFFECTIVE_TIME));
 
-        // Try to get a single stream that is just before our range
+        // Try to get a single stream that is just before our range.  This is so that we always
+        // have a stream (unless there are no streams at all) that was effective at the start
+        // of our range.
         final Optional<EffectiveMeta> optStreamPriorToRange = JooqUtil.contextResult(metaDbConnProvider,
                 context -> {
-                    final var select = context.select(
-                                    meta.ID,
-                                    metaFeed.NAME,
-                                    metaType.NAME,
-                                    meta.EFFECTIVE_TIME)
-                            .from(meta)
-                            .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                            .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
-                            .where(metaFeed.NAME.eq(effectiveMetaDataCriteria.getFeed()))
-                            .and(metaType.NAME.eq(effectiveMetaDataCriteria.getType()))
-                            .and(meta.STATUS.eq(unlockedId))
+                    final var select = createBaseEffectiveStreamsQuery(
+                            context,
+                            effectiveMetaDataCriteria)
                             .and(meta.EFFECTIVE_TIME.lessOrEqual(fromMs))
                             .orderBy(meta.EFFECTIVE_TIME.desc())
                             .limit(1);
@@ -1585,17 +1597,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
 
         final List<EffectiveMeta> streamsInRange = JooqUtil.contextResult(metaDbConnProvider,
                 context -> {
-                    final var select = context.select(
-                                    meta.ID,
-                                    metaFeed.NAME,
-                                    metaType.NAME,
-                                    meta.EFFECTIVE_TIME)
-                            .from(meta)
-                            .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                            .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
-                            .where(metaFeed.NAME.eq(effectiveMetaDataCriteria.getFeed()))
-                            .and(metaType.NAME.eq(effectiveMetaDataCriteria.getType()))
-                            .and(meta.STATUS.eq(unlockedId))
+                    final var select = createBaseEffectiveStreamsQuery(
+                            context, effectiveMetaDataCriteria)
                             .and(meta.EFFECTIVE_TIME.greaterThan(fromMs))
                             .and(meta.EFFECTIVE_TIME.lessThan(toMs));
 

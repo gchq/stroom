@@ -231,7 +231,6 @@ class TestMetaDaoImpl {
     Stream<DynamicTest> testLogicalDelete() {
         final TimePeriod allTimePeriod = TimePeriod.fromEpochTo(Instant.now());
 
-
         LOGGER.doIfDebugEnabled(this::dumpMetaTableToDebug);
 
         return TestUtil.buildDynamicTestStream()

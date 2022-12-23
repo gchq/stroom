@@ -32,6 +32,7 @@ import stroom.util.shared.Clearable;
 
 import java.time.Instant;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
@@ -95,14 +96,14 @@ public class EffectiveStreamCache implements Clearable {
             try {
                 LOGGER.debug("Creating effective stream set, key: {}", key);
 
-                // Only find streams for the supplied feed and stream type.
-                final EffectiveMetaDataCriteria criteria = new EffectiveMetaDataCriteria();
-                criteria.setFeed(key.getFeed());
-                criteria.setType(key.getStreamType());
-
                 // Limit the stream set to the requested effective time window.
                 final Period window = new Period(key.getFromMs(), key.getToMs());
-                criteria.setEffectivePeriod(window);
+
+                // Only find streams for the supplied feed and stream type.
+                final EffectiveMetaDataCriteria criteria = new EffectiveMetaDataCriteria(
+                        window,
+                        key.getFeed(),
+                        key.getStreamType());
 
                 LOGGER.debug("Using criteria: {}", criteria);
 
@@ -179,18 +180,21 @@ public class EffectiveStreamCache implements Clearable {
             map.forEach((effectiveMs, effectiveMetaList) -> {
                 final int countPerEffectiveMs = effectiveMetaList.size();
                 if (countPerEffectiveMs > 0) {
-                    final EffectiveMeta effectiveMeta = effectiveMetaList.get(0);
+                    // Get the latest stream from the list of dups
+                    final EffectiveMeta effectiveMeta = effectiveMetaList.stream()
+                            .max(Comparator.comparing(EffectiveMeta::getId))
+                            .get();
 
                     if (countPerEffectiveMs > 1) {
-                        LOGGER.warn("Multiple reference streams [{}] found with the same effective time {}. " +
-                                        "Only stream {} will be used.",
+                        LOGGER.warn("Multiple reference streams [{}] from feed '{}' found with the same " +
+                                        "effective time {}. Only the latest stream, {}, will be used.",
                                 effectiveMetaList.stream()
                                         .map(EffectiveMeta::getId)
                                         .map(val -> Long.toString(val))
                                         .collect(Collectors.joining(", ")),
+                                key.getFeed(),
                                 Instant.ofEpochMilli(effectiveMs),
                                 effectiveMeta.getId());
-
                     }
 
                     LOGGER.trace("Adding effective stream {} against key {}", effectiveMeta, key);

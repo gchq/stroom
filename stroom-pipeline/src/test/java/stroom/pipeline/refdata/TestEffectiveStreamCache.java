@@ -23,6 +23,7 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.api.MetaProperties;
+import stroom.meta.api.MetaService;
 import stroom.meta.mock.MockMetaService;
 import stroom.meta.shared.Meta;
 import stroom.security.mock.MockSecurityContext;
@@ -32,19 +33,25 @@ import stroom.util.cache.CacheConfig;
 import stroom.util.date.DateUtil;
 import stroom.util.time.StroomDuration;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.NavigableSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestEffectiveStreamCache extends StroomUnitTest {
+
+    private static final String FEED_NAME = "MY_FEED";
+    private static final String TYPE_NAME = StreamTypeNames.REFERENCE;
 
     // Actually 11.5 days but this is fine for the purposes of reference data.
 //    private static final long APPROX_TEN_DAYS = 1000000000;
@@ -202,12 +209,62 @@ class TestEffectiveStreamCache extends StroomUnitTest {
         }
     }
 
+    @Test
+    void testDuplicateStreams() {
+
+        final List<EffectiveMeta> effectiveMetaList = List.of(
+                createEffectiveMeta(1L, 1000L),
+                createEffectiveMeta(11L, 1000L), // dup
+                createEffectiveMeta(2L, 1100L),
+                createEffectiveMeta(22L, 1100L), // dup
+                createEffectiveMeta(222L, 1100L), // dup
+                createEffectiveMeta(3L, 1200L),
+                createEffectiveMeta(4L, 1300L),
+                createEffectiveMeta(5L, 1400L)
+        );
+
+        final MetaService mockMetaService = Mockito.mock(MetaService.class);
+        Mockito.when(mockMetaService.findEffectiveData(Mockito.any()))
+                .thenReturn(new HashSet<>(effectiveMetaList));
+
+        try (CacheManager cacheManager = new CacheManagerImpl()) {
+            final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(
+                    cacheManager,
+                    mockMetaService,
+                    new EffectiveStreamInternPool(),
+                    new MockSecurityContext(),
+                    ReferenceDataConfig::new);
+
+            final NavigableSet<EffectiveStream> effectiveStreams = effectiveStreamCache.get(new EffectiveStreamKey(
+                    FEED_NAME,
+                    TYPE_NAME,
+                    0,
+                    1_000_000));
+
+            Assertions.assertThat(effectiveStreams)
+                    .hasSize(5); // 5 non-dups
+
+            final List<Long> streamIds = effectiveStreams.stream()
+                    .map(EffectiveStream::getStreamId)
+                    .collect(Collectors.toList());
+
+            // The latest stream Id from each dup set is used
+            Assertions.assertThat(streamIds)
+                    .containsExactly(11L, 222L, 3L, 4L, 5L);
+        }
+    }
+
     private long getFromMs(final long time) {
         return (time / ReferenceData.APPROX_TEN_DAYS) * ReferenceData.APPROX_TEN_DAYS;
     }
 
     private long getToMs(final long fromMs) {
         return fromMs + ReferenceData.APPROX_TEN_DAYS;
+    }
+
+    private EffectiveMeta createEffectiveMeta(final long streamId,
+                                              final long effectiveTimeMs) {
+        return new EffectiveMeta(streamId, FEED_NAME, TYPE_NAME, effectiveTimeMs);
     }
 
     private static class InnerStreamMetaService extends MockMetaService {
