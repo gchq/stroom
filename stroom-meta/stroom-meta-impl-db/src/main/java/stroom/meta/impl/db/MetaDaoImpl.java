@@ -24,6 +24,8 @@ import stroom.db.util.ValueMapper.Mapper;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.meta.api.EffectiveMeta;
+import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.impl.MetaDao;
 import stroom.meta.impl.db.jooq.tables.MetaFeed;
@@ -41,6 +43,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.util.NullSafe;
+import stroom.util.Period;
 import stroom.util.collections.BatchingIterator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -65,6 +68,7 @@ import org.jooq.Record1;
 import org.jooq.Record4;
 import org.jooq.Result;
 import org.jooq.Select;
+import org.jooq.SelectConditionStep;
 import org.jooq.SelectJoinStep;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
@@ -286,9 +290,9 @@ class MetaDaoImpl implements MetaDao, Clearable {
         // Can't cache this in a simple map due to pipes being renamed, but
         // docRefInfoService should cache most of this anyway.
         return docRefInfoService.findByNames(PipelineDoc.DOCUMENT_TYPE, pipelineNames, true)
-                        .stream()
-                        .map(DocRef::getUuid)
-                        .collect(Collectors.toList());
+                .stream()
+                .map(DocRef::getUuid)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -1447,20 +1451,6 @@ class MetaDaoImpl implements MetaDao, Clearable {
     }
 
     @Override
-    public Optional<Long> getLatestIdByEffectiveDate(final FindMetaCriteria criteria) {
-        final Condition condition = expressionMapper.apply(criteria.getExpression());
-
-        return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                        .select(meta.ID)
-                        .from(meta)
-                        .where(condition)
-                        .orderBy(meta.EFFECTIVE_TIME.desc())
-                        .limit(1)
-                        .fetchOptional())
-                .map(Record1::value1);
-    }
-
-    @Override
     public int getLockCount() {
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
                         .selectCount()
@@ -1547,6 +1537,84 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 .map(Record1::value1);
     }
 
+    private SelectConditionStep<Record4<Long, String, String, Long>> createBaseEffectiveStreamsQuery(
+            final DSLContext context,
+            final EffectiveMetaDataCriteria criteria) {
+
+        final byte unlockedId = MetaStatusId.getPrimitiveValue(Status.UNLOCKED);
+        return context.select(
+                        meta.ID,
+                        metaFeed.NAME,
+                        metaType.NAME,
+                        meta.EFFECTIVE_TIME)
+                .from(meta)
+                .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                .where(metaFeed.NAME.eq(criteria.getFeed()))
+                .and(metaType.NAME.eq(criteria.getType()))
+                .and(meta.STATUS.eq(unlockedId));
+    }
+
+    @Override
+    public Set<EffectiveMeta> getEffectiveStreams(final EffectiveMetaDataCriteria effectiveMetaDataCriteria) {
+
+        LOGGER.debug("getEffectiveStreams({})", effectiveMetaDataCriteria);
+
+        Objects.requireNonNull(effectiveMetaDataCriteria);
+        final Period period = Objects.requireNonNull(effectiveMetaDataCriteria.getEffectivePeriod());
+        final long fromMs = Objects.requireNonNull(period.getFromMs());
+        final long toMs = Objects.requireNonNull(period.getToMs());
+
+        final Function<Record4<Long, String, String, Long>, EffectiveMeta> mapper = rec ->
+                new EffectiveMeta(
+                        rec.get(meta.ID),
+                        rec.get(metaFeed.NAME),
+                        rec.get(metaType.NAME),
+                        rec.get(meta.EFFECTIVE_TIME));
+
+        // Try to get a single stream that is just before our range.  This is so that we always
+        // have a stream (unless there are no streams at all) that was effective at the start
+        // of our range.
+        final Optional<EffectiveMeta> optStreamPriorToRange = JooqUtil.contextResult(metaDbConnProvider,
+                context -> {
+                    final var select = createBaseEffectiveStreamsQuery(
+                            context,
+                            effectiveMetaDataCriteria)
+                            .and(meta.EFFECTIVE_TIME.lessOrEqual(fromMs))
+                            .orderBy(meta.EFFECTIVE_TIME.desc())
+                            .limit(1);
+
+                    LOGGER.debug("select: {}", select);
+
+                    return select.fetchOptional()
+                            .map(mapper);
+                });
+
+        LOGGER.debug("optStreamPriorToRange {}", optStreamPriorToRange);
+
+        final Set<EffectiveMeta> effectiveMetaSet = new HashSet<>();
+        optStreamPriorToRange.ifPresent(effectiveMetaSet::add);
+
+        final List<EffectiveMeta> streamsInRange = JooqUtil.contextResult(metaDbConnProvider,
+                context -> {
+                    final var select = createBaseEffectiveStreamsQuery(
+                            context, effectiveMetaDataCriteria)
+                            .and(meta.EFFECTIVE_TIME.greaterThan(fromMs))
+                            .and(meta.EFFECTIVE_TIME.lessThan(toMs));
+
+                    LOGGER.debug("select: {}", select);
+
+                    return select.fetch()
+                            .map(mapper::apply);
+                });
+
+        LOGGER.debug(() -> LogUtil.message("returning {} streams for criteria: {}",
+                streamsInRange.size(), effectiveMetaDataCriteria));
+        effectiveMetaSet.addAll(streamsInRange);
+
+        return effectiveMetaSet;
+    }
+
     public boolean validateExpressionTerms(final ExpressionItem expressionItem) {
         // TODO: 31/10/2022 Ideally this would be done in CommonExpressionMapper but we
         //  seem to have a load of expressions using unsupported conditions so would get
@@ -1566,7 +1634,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
                     final boolean isValid = field.supportsCondition(term.getCondition());
                     if (!isValid) {
                         throw new RuntimeException(LogUtil.message("Condition '{}' is not supported by field '{}' " +
-                                "of type {}. Term: {}",
+                                        "of type {}. Term: {}",
                                 term.getCondition(),
                                 term.getField(),
                                 field.getType(), term));
