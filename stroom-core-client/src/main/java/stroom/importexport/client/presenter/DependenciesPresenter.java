@@ -59,6 +59,11 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
     private static final int COL_WIDTH_NAME = 300;
     private static final int COL_WIDTH_UUID = 270;
 
+    private static final Preset SEARCHABLE_PRESET = new Preset(
+            DocumentType.DOC_IMAGE_CLASS_NAME + "searchable.svg",
+            "Searchable",
+            true);
+
     private final RestFactory restFactory;
     private final DependencyCriteria criteria;
     private final RestDataProvider<Dependency, ResultPage<Dependency>> dataProvider;
@@ -193,10 +198,7 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                     // with the explorer context menus.
                     typeToSvgMap.putIfAbsent(
                             "Searchable",
-                            new Preset(
-                                    DocumentType.DOC_IMAGE_CLASS_NAME + "searchable",
-                                    "Searchable",
-                                    true));
+                            SEARCHABLE_PRESET);
                 })
                 .call(EXPLORER_RESOURCE)
                 .fetchDocumentTypes();

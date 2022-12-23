@@ -12,6 +12,7 @@ import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaSecurityFilter;
@@ -26,14 +27,12 @@ import stroom.processor.shared.ProcessorTaskFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
-import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
@@ -406,59 +405,11 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     @Override
-    public Set<Meta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
-        // See if we can find a data that exists before the earliest specified time.
-        final Optional<Long> optionalId = getMaxEffectiveDataIdBeforePeriod(criteria);
+    public Set<EffectiveMeta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
+        LOGGER.debug("findEffectiveData({})", criteria);
 
-        final Set<Meta> set = new HashSet<>();
-        if (optionalId.isPresent()) {
-            // Get the data that occurs just before or ast the start of the period.
-            final ExpressionOperator expression = ExpressionOperator.builder()
-                    .addTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, optionalId.get())
-                    .build();
-            // There is no need to apply security here are is has been applied when finding the data id above.
-            final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(expression);
-            findMetaCriteria.setPageRequest(new PageRequest(0, 1000));
-            set.addAll(secureFind(findMetaCriteria).getValues());
-        }
-
-        // Now add all data that occurs within the requested period.
-        final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.EFFECTIVE_TIME,
-                        ExpressionTerm.Condition.GREATER_THAN,
-                        DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getFromMs()))
-                .addTerm(MetaFields.EFFECTIVE_TIME,
-                        ExpressionTerm.Condition.LESS_THAN,
-                        DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getToMs()))
-                .addTerm(MetaFields.FEED, Condition.EQUALS, criteria.getFeed())
-                .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, criteria.getType())
-                .addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
-                .build();
-
-        final ExpressionOperator secureExpression = addPermissionConstraints(expression,
-                DocumentPermissionNames.READ,
-                FEED_FIELDS);
-        final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(secureExpression);
-        findMetaCriteria.setPageRequest(new PageRequest(0, 1000));
-        set.addAll(secureFind(findMetaCriteria).getValues());
-
-        return set;
-    }
-
-    private Optional<Long> getMaxEffectiveDataIdBeforePeriod(final EffectiveMetaDataCriteria criteria) {
-        final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.EFFECTIVE_TIME,
-                        ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO,
-                        DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getFromMs()))
-                .addTerm(MetaFields.FEED, Condition.EQUALS, criteria.getFeed())
-                .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, criteria.getType())
-                .addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
-                .build();
-
-        final ExpressionOperator secureExpression = addPermissionConstraints(expression,
-                DocumentPermissionNames.READ,
-                FEED_FIELDS);
-        return metaDao.getLatestIdByEffectiveDate(new FindMetaCriteria(secureExpression));
+        return securityContext.asProcessingUserResult(() ->
+                metaDao.getEffectiveStreams(criteria));
     }
 
     @Override

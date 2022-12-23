@@ -28,6 +28,15 @@ public class EffectiveMetaDataCriteria {
     private String feed;
     private String type;
 
+    public EffectiveMetaDataCriteria() {
+    }
+
+    public EffectiveMetaDataCriteria(final Period effectivePeriod, final String feed, final String type) {
+        this.effectivePeriod = effectivePeriod;
+        this.feed = feed;
+        this.type = type;
+    }
+
     public String getFeed() {
         return feed;
     }
@@ -50,5 +59,14 @@ public class EffectiveMetaDataCriteria {
 
     public void setEffectivePeriod(final Period effectivePeriod) {
         this.effectivePeriod = effectivePeriod;
+    }
+
+    @Override
+    public String toString() {
+        return "EffectiveMetaDataCriteria{" +
+                "effectivePeriod=" + effectivePeriod +
+                ", feed='" + feed + '\'' +
+                ", type='" + type + '\'' +
+                '}';
     }
 }

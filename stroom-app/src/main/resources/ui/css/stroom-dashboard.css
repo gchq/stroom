@@ -17,6 +17,11 @@
 .stroom-dashboard-query {
 }
 
+.stroom-dashboard-query > .max {
+	display: flex;
+	flex-direction: column;
+}
+
 .stroom-dashboard-query-buttons {
 	position: absolute;
 	top: 18px;
