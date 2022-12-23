@@ -3,7 +3,7 @@ package stroom.docstore.api;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.shared.Doc;
-import stroom.importexport.api.ImportExportActionHandler;
+import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.util.shared.Message;
 
@@ -61,11 +61,11 @@ public interface Store<D extends Doc> extends DocumentActionHandler<D> {
 
     Set<DocRef> listDocuments();
 
-    ImportExportActionHandler.ImpexDetails importDocument(
+    DocRef importDocument(
             DocRef docRef,
             Map<String, byte[]> dataMap,
             ImportState importState,
-            ImportState.ImportMode importMode);
+            ImportSettings importSettings);
 
     Map<String, byte[]> exportDocument(DocRef docRef,
                                        List<Message> messageList,

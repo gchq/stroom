@@ -18,26 +18,20 @@ package stroom.importexport.api;
 
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
-import stroom.importexport.shared.ImportState;
+import stroom.importexport.shared.ImportConfigRequest;
+import stroom.importexport.shared.ImportConfigResponse;
 import stroom.util.shared.DocRefs;
 import stroom.util.shared.QuickFilterResultPage;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
-import java.util.List;
-
 public interface ContentService {
 
-    ResourceKey performImport(final ResourceKey resourceKey,
-                              final List<ImportState> confirmList);
+    ImportConfigResponse importContent(ImportConfigRequest request);
 
-    List<ImportState> confirmImport(final ResourceKey resourceKey,
-                                    final List<ImportState> confirmList);
+    ResourceGeneration exportContent(DocRefs docRefs);
 
-    ResourceGeneration exportContent(final DocRefs docRefs);
-
-    QuickFilterResultPage<Dependency> fetchDependencies(final DependencyCriteria criteria);
+    QuickFilterResultPage<Dependency> fetchDependencies(DependencyCriteria criteria);
 
     ResourceKey exportAll();
-
 }

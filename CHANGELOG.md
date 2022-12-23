@@ -12,6 +12,14 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#3136** : Fix the reference data lookup logic that determines if a ref stream contains a given map or not. Fix NPE in `RefDataLookupRequest#toString()`. Change `ReferenceDataResult` to hold message templates to reduce memory use. Change `RefDataStoreHolder` to only add available maps once per ref stream. Improve in app logging of lookups.
+
+* Issue **#3140** : Ignore processor filter updates on import.
+
+* Issue **#3125** : Fix import rename and move so that imported items end up renamed in explorer and store.
+
+* Issue **#3148** : Fix dependencies screen showing status of Missing for the Ref Data and Dual Searchables. Also fix the missing icon on that screen for Searchables.
+
 * Issue **#3066** : Make all responses set the HTTP header `Strict-Transport-Security` to force all HTTP traffic on the domain onto HTTPS. Also add property `stroom.security.webContent.strictTransportSecurity` to configure the header value.
 
 * Issue **#3074** : Fix data retention summary and purge job when condition includes a pipeline. Fix data viewer screen to allow filtering by pipeline. Fix filtering using the `in folder` condition. Add `<`, `<=`, `>`, `>=`, `between` conditions to ID fields, e.g. stream ID. **WARNING**: the expression field `Pipeline` has had the following conditions removed; `in`, `in dictionary`, `=`, `contains` and the field `Pipeline Name` has been added with the following conditions; `in`, `in dictionary`, `=`. This may impact processor filters or retention rules that use the `Pipeline` field. See the SQL at https://github.com/gchq/stroom/issues/3074 to find any processor filters using this field with a now un-supported condition. Change the Reference Data searchable data source to support `in`, `in dictionary` and wild carding.

@@ -17,6 +17,8 @@
 
 package stroom.importexport.impl;
 
+
+import stroom.importexport.shared.ImportSettings;
 import stroom.security.api.SecurityContext;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
@@ -41,6 +43,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -180,13 +183,14 @@ class TestContentPackImport {
         FileUtil.touch(testPack3);
 
         contentPackImport.startup();
+        final ImportSettings importSettings = ImportSettings.auto();
         Mockito.verify(importExportService, Mockito.times(1))
-                .performImportWithoutConfirmation(testPack1);
+                .importConfig(testPack1, importSettings, new ArrayList<>());
         Mockito.verify(importExportService, Mockito.times(1))
-                .performImportWithoutConfirmation(testPack2);
+                .importConfig(testPack2, importSettings, new ArrayList<>());
         //not a zip extension so should not be called
         Mockito.verify(importExportService, Mockito.times(0))
-                .performImportWithoutConfirmation(testPack3);
+                .importConfig(testPack3, importSettings, new ArrayList<>());
 
         assertThat(Files.exists(testPack1))
                 .isFalse();
@@ -216,8 +220,9 @@ class TestContentPackImport {
         FileUtil.touch(packFile);
 
         contentPackImport.startup();
+        final ImportSettings importSettings = ImportSettings.auto();
         Mockito.verify(importExportService, Mockito.times(1))
-                .performImportWithoutConfirmation(packFile);
+                .importConfig(packFile, importSettings, new ArrayList<>());
 
         assertThat(Files.exists(packFile)).isFalse();
 
@@ -235,7 +240,7 @@ class TestContentPackImport {
 
         Mockito.doThrow(new RuntimeException("Error thrown by mock import service for test"))
                 .when(importExportService)
-                .performImportWithoutConfirmation(ArgumentMatchers.any());
+                .importConfig(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
 
         FileUtil.touch(testPack1);
 

@@ -1669,39 +1669,6 @@
         "tags" : [ "Global Config" ]
       }
     },
-    "/content/v1/confirmImport" : {
-      "post" : {
-        "operationId" : "confirmContentImport",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ImportConfigRequest"
-              }
-            }
-          },
-          "description" : "request",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/ImportState"
-                  }
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Get import confirmation state",
-        "tags" : [ "Content" ]
-      }
-    },
     "/content/v1/export" : {
       "post" : {
         "operationId" : "exportContent",
@@ -1781,7 +1748,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ResourceKey"
+                  "$ref" : "#/components/schemas/ImportConfigResponse"
                 }
               }
             },
@@ -11996,8 +11963,50 @@
               "$ref" : "#/components/schemas/ImportState"
             }
           },
+          "importSettings" : {
+            "$ref" : "#/components/schemas/ImportSettings"
+          },
           "resourceKey" : {
             "$ref" : "#/components/schemas/ResourceKey"
+          }
+        }
+      },
+      "ImportConfigResponse" : {
+        "type" : "object",
+        "properties" : {
+          "confirmList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ImportState"
+            }
+          },
+          "resourceKey" : {
+            "$ref" : "#/components/schemas/ResourceKey"
+          }
+        }
+      },
+      "ImportSettings" : {
+        "type" : "object",
+        "properties" : {
+          "enableFilters" : {
+            "type" : "boolean"
+          },
+          "enableFiltersFromTime" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "importMode" : {
+            "type" : "string",
+            "enum" : [ "CREATE_CONFIRMATION", "ACTION_CONFIRMATION", "IGNORE_CONFIRMATION" ]
+          },
+          "rootDocRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "useImportFolders" : {
+            "type" : "boolean"
+          },
+          "useImportNames" : {
+            "type" : "boolean"
           }
         }
       },
@@ -12013,40 +12022,24 @@
           "docRef" : {
             "$ref" : "#/components/schemas/DocRef"
           },
-          "enableFilters" : {
-            "type" : "boolean"
-          },
-          "enableFiltersFromTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "messageList" : {
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/Message"
             }
           },
-          "rootDocRef" : {
-            "$ref" : "#/components/schemas/DocRef"
-          },
           "sourcePath" : {
             "type" : "string"
           },
           "state" : {
             "type" : "string",
-            "enum" : [ "NEW", "UPDATE", "EQUAL" ]
+            "enum" : [ "NEW", "UPDATE", "EQUAL", "IGNORE" ]
           },
           "updatedFieldList" : {
             "type" : "array",
             "items" : {
               "type" : "string"
             }
-          },
-          "useImportFolders" : {
-            "type" : "boolean"
-          },
-          "useImportNames" : {
-            "type" : "boolean"
           }
         }
       },

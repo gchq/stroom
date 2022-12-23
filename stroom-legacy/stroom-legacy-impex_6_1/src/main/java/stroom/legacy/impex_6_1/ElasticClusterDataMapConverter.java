@@ -1,6 +1,7 @@
 package stroom.legacy.impex_6_1;
 
 import stroom.docref.DocRef;
+import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.util.shared.Severity;
@@ -24,7 +25,7 @@ class ElasticClusterDataMapConverter implements DataMapConverter {
     public Map<String, byte[]> convert(final DocRef docRef,
                                        final Map<String, byte[]> dataMap,
                                        final ImportState importState,
-                                       final ImportState.ImportMode importMode,
+                                       final ImportSettings importSettings,
                                        final String userId) {
         Map<String, byte[]> result = dataMap;
 

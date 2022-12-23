@@ -26,8 +26,8 @@ import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.impl.ImportExportFileNameUtil;
 import stroom.importexport.impl.ImportExportSerializer;
+import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
-import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.importexport.shared.ImportState.State;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.PipelineStore;
@@ -120,7 +120,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true, new ArrayList<>());
 
         List<ImportState> list = new ArrayList<>();
-        importExportSerializer.read(testDataDir, list, ImportMode.CREATE_CONFIRMATION);
+        importExportSerializer.read(testDataDir, list, ImportSettings.createConfirmation());
         assertThat(list.size() > 0).isTrue();
 
         // Should all be relative
@@ -143,7 +143,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         }
 
         list = new ArrayList<>();
-        importExportSerializer.read(testDataDir, list, ImportMode.CREATE_CONFIRMATION);
+        importExportSerializer.read(testDataDir, list, ImportSettings.createConfirmation());
 
         map = new HashMap<>();
         for (final ImportState confirmation : list) {
@@ -158,13 +158,13 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         commonTestControl.clear();
 
         list = new ArrayList<>();
-        importExportSerializer.read(testDataDir, list, ImportMode.CREATE_CONFIRMATION);
+        importExportSerializer.read(testDataDir, list, ImportSettings.createConfirmation());
 
         assertThat(list.size() > 0).isTrue();
         assertThat(list.get(0).getState()).isEqualTo(State.NEW);
         assertThat(list.get(1).getState()).isEqualTo(State.NEW);
 
-        importExportSerializer.read(testDataDir, list, ImportMode.IGNORE_CONFIRMATION);
+        importExportSerializer.read(testDataDir, list, ImportSettings.auto());
         allSchemas = xmlSchemaStore.list();
 
         for (final DocRef ref : allSchemas) {
@@ -215,7 +215,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         importExportSerializer.write(testDataDir, forExport, true, new ArrayList<>());
 
 
-        importExportSerializer.read(testDataDir, null, ImportMode.IGNORE_CONFIRMATION);
+        importExportSerializer.read(testDataDir, null, ImportSettings.auto());
 
         System.out.println("Exported to " + testDataDir);
     }
@@ -256,7 +256,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         assertThat(pipelineStore.list().size())
                 .isEqualTo(0);
 
-        importExportSerializer.read(testDataDir, null, ImportMode.IGNORE_CONFIRMATION);
+        importExportSerializer.read(testDataDir, null, ImportSettings.auto());
 
         assertThat(pipelineStore.list().size())
                 .isEqualTo(2);
@@ -273,7 +273,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
         // Read input.
         final Set<DocRef> exported =
-                importExportSerializer.read(inDir, null, ImportMode.IGNORE_CONFIRMATION);
+                importExportSerializer.read(inDir, null, ImportSettings.auto());
 
         // Write to output.
         List<Message> messageList = new ArrayList<>();

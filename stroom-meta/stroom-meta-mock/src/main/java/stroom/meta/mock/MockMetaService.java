@@ -8,6 +8,7 @@ import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.data.shared.StreamTypeNames;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
@@ -17,6 +18,7 @@ import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
+import stroom.util.NullSafe;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
@@ -30,6 +32,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Singleton;
 
 @Singleton
@@ -280,29 +283,23 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
-    public Set<Meta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
-        final Set<Meta> results = new HashSet<>();
+    public Set<EffectiveMeta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
+        Set<EffectiveMeta> results = new HashSet<>();
 
         try {
-            for (final Meta meta : metaMap.values()) {
-                boolean match = true;
+            results = metaMap.values()
+                    .stream()
+                    .filter(meta ->
+                            NullSafe.test(criteria.getType(), type -> type.equals(meta.getTypeName())))
+                    .filter(meta ->
+                            NullSafe.test(criteria.getFeed(), feed -> feed.equals(meta.getFeedName())))
+                    .map(EffectiveMeta::new)
+                    .collect(Collectors.toSet());
 
-                if (criteria.getType() != null && !criteria.getType().equals(meta.getTypeName())) {
-                    match = false;
-                }
-                if (criteria.getFeed() != null && !criteria.getFeed().equals(meta.getFeedName())) {
-                    match = false;
-                }
-
-                if (match) {
-                    results.add(meta);
-                }
-            }
         } catch (final RuntimeException e) {
             System.out.println(e.getMessage());
             // Ignore ... just a mock
         }
-
         return results;
     }
 
