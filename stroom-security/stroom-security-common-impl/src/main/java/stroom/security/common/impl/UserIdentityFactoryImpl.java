@@ -5,9 +5,10 @@ import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
 import stroom.security.api.exception.AuthenticationException;
-import stroom.security.openid.api.OpenId;
-import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.IdpType;
+import stroom.security.openid.api.OpenId;
+import stroom.security.openid.api.OpenIdConfig;
+import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenResponse;
 import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
@@ -63,7 +64,7 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
     // A service account/user for communicating with other apps in the same OIDC realm,
     // e.g. proxy => stroom. Created lazily.
     // This is tied to stroom/proxy's clientId, and we have only one of them
-    private volatile ServiceUserIdentity serviceUserIdentity;
+    private volatile UserIdentity serviceUserIdentity;
 
     private final BlockingQueue<AbstractTokenUserIdentity> refreshTokensDelayQueue = new DelayQueue<>();
     private ExecutorService refreshExecutorService = null;
@@ -90,32 +91,43 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
     public Optional<UserIdentity> getApiUserIdentity(final HttpServletRequest request) {
         Optional<UserIdentity> optUserIdentity = Optional.empty();
 
-        // See if we can log in with a token if one is supplied. It is valid for it to not be present.
-        // e.g. the front end calling API methods, as the user is held in session.
-        try {
-            final Optional<JwtContext> optJwtContext = jwtContextFactory.getJwtContext(request);
-
-            optUserIdentity = optJwtContext.flatMap(jwtContext ->
-                            idpIdentityMapper.mapApiIdentity(jwtContext, request))
-                    .or(() -> {
-                        LOGGER.trace(() ->
-                                "No JWS found in headers in request to " + request.getRequestURI());
-                        return Optional.empty();
-                    });
-        } catch (final RuntimeException e) {
-            throw new AuthenticationException("Error authenticating request to "
-                    + request.getRequestURI() + " - " + e.getMessage(), e);
-        }
-
-        if (optUserIdentity.isEmpty()) {
-            LOGGER.trace(() -> "Cannot get a valid JWS for API request to " + request.getRequestURI());
+        final IdpType idpType = openIdConfigProvider.get().getIdentityProviderType();
+        if (IdpType.NONE.equals(idpType)) {
+            throw new IllegalStateException(
+                    "Attempting to get user identity from tokens in request when " +
+                            "identityProviderType set to NONE.");
+//        } else if (IdpType.TEST.equals(idpType)) {
+//
+//            return
+//
         } else {
-            if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace("Got API user identity "
-                        + optUserIdentity.map(Objects::toString).orElse("EMPTY"));
-            }
-        }
+            // See if we can log in with a token if one is supplied. It is valid for it to not be present.
+            // e.g. the front end calling API methods, as the user is held in session.
+            try {
+                final Optional<JwtContext> optJwtContext = jwtContextFactory.getJwtContext(request);
 
+                optUserIdentity = optJwtContext.flatMap(jwtContext ->
+                                idpIdentityMapper.mapApiIdentity(jwtContext, request))
+                        .or(() -> {
+                            LOGGER.trace(() ->
+                                    "No JWS found in headers in request to " + request.getRequestURI());
+                            return Optional.empty();
+                        });
+            } catch (final RuntimeException e) {
+                throw new AuthenticationException("Error authenticating request to "
+                        + request.getRequestURI() + " - " + e.getMessage(), e);
+            }
+
+            if (optUserIdentity.isEmpty()) {
+                LOGGER.trace(() -> "Cannot get a valid JWS for API request to " + request.getRequestURI());
+            } else {
+                if (LOGGER.isTraceEnabled()) {
+                    LOGGER.trace("Got API user identity "
+                            + optUserIdentity.map(Objects::toString).orElse("EMPTY"));
+                }
+            }
+
+        }
         return optUserIdentity;
     }
 
@@ -135,10 +147,25 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
     }
 
     @Override
+    public Map<String, String> getServiceUserAuthHeaders() {
+        if (IdpType.NONE.equals(openIdConfigProvider.get().getIdentityProviderType())) {
+            LOGGER.debug("IdpType is NONE");
+            return Collections.emptyMap();
+        } else {
+            final UserIdentity serviceUserIdentity = getServiceUserIdentity();
+            return getAuthHeaders(serviceUserIdentity);
+        }
+    }
+
+    @Override
     public Map<String, String> getAuthHeaders(final UserIdentity userIdentity) {
 
         if (userIdentity == null) {
             LOGGER.debug("Null user supplied");
+            return Collections.emptyMap();
+
+        } else if (IdpType.NONE.equals(openIdConfigProvider.get().getIdentityProviderType())) {
+            LOGGER.debug("IdpType is NONE");
             return Collections.emptyMap();
 
         } else if (IdpType.TEST.equals(openIdConfigProvider.get().getIdentityProviderType())
@@ -184,6 +211,11 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
                                                           final AuthenticationState state) {
         final OpenIdConfiguration openIdConfiguration = openIdConfigProvider.get();
 
+        if (IdpType.NONE.equals(openIdConfigProvider.get().getIdentityProviderType())) {
+            throw new IllegalStateException(
+                    "Attempting to do OIDC auth flow with identityProviderType set to NONE.");
+        }
+
         final ObjectMapper mapper = getObjectMapper();
         final String tokenEndpoint = openIdConfiguration.getTokenEndpoint();
 
@@ -212,7 +244,8 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
 
     private boolean isNewServiceAccountTokenRequired() {
         return serviceUserIdentity == null
-                || serviceUserIdentity.hasTokenExpired();
+                || (serviceUserIdentity instanceof final ServiceUserIdentity serviceUserIdentity2
+                && serviceUserIdentity2.hasTokenExpired());
     }
 
     @Override
@@ -233,6 +266,7 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
 
     /**
      * Refresh the user identity including any tokens associated with that user.
+     *
      * @param userIdentity
      */
     public void refresh(final UserIdentity userIdentity) {
@@ -247,7 +281,7 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
             if (userIdentity instanceof ServiceUserIdentity) {
                 // service users do not have refresh tokens so just create new ones
                 didRefresh = tokenUserIdentity.mutateUnderLock(
-                       AbstractTokenUserIdentity::isTokenRefreshRequired,
+                        AbstractTokenUserIdentity::isTokenRefreshRequired,
                         userIdentity2 -> createOrUpdateServiceUserIdentity());
             } else {
                 // This takes care of calling isRefreshRequired before and after getting a lock
@@ -468,9 +502,41 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
     }
 
     private boolean createOrUpdateServiceUserIdentity() {
-
         final OpenIdConfiguration openIdConfiguration = openIdConfigProvider.get();
+        final IdpType idpType = openIdConfiguration.getIdentityProviderType();
 
+        switch (idpType) {
+            case NONE:
+                serviceUserIdentity = new UserIdentity() {
+                    @Override
+                    public String getId() {
+                        return "NONE SERVICE USER";
+                    }
+                };
+                return true;
+            case TEST:
+                createOrUpdateTestServiceUser();
+                return true;
+            case EXTERNAL:
+                createOrUpdateExternalServiceUser(openIdConfiguration);
+                return true;
+            default:
+                throw new RuntimeException(LogUtil.message("{} is not supported for property {}.",
+                        openIdConfiguration.getIdentityProviderType(),
+                        OpenIdConfig.PROP_NAME_IDP_TYPE));
+        }
+    }
+
+    private void createOrUpdateTestServiceUser() {
+        if (serviceUserIdentity == null) {
+            LOGGER.info("Created service user identity {}", serviceUserIdentity);
+            serviceUserIdentity = new DefaultOpenIdCredsUserIdentity(
+                    defaultOpenIdCredentials.getApiKeyUserEmail(),
+                    defaultOpenIdCredentials.getApiKey());
+        }
+    }
+
+    private void createOrUpdateExternalServiceUser(final OpenIdConfiguration openIdConfiguration) {
         final ObjectMapper mapper = getObjectMapper();
         final String tokenEndpoint = openIdConfiguration.getTokenEndpoint();
         final HttpPost httpPost = new OpenIdPostBuilder(tokenEndpoint, openIdConfiguration, mapper)
@@ -493,13 +559,16 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
             LOGGER.info("Created service user identity {}", serviceUserIdentity);
             serviceUserIdentity = new ServiceUserIdentity(fetchTokenResult.tokenResponse, fetchTokenResult.jwtClaims);
         } else {
+            if (!(serviceUserIdentity instanceof final ServiceUserIdentity serviceUserIdentity2)) {
+                throw new RuntimeException(LogUtil.message("Unexpected type {}",
+                        serviceUserIdentity.getClass().getSimpleName()));
+            }
             LOGGER.info("Updated service user identity {}", serviceUserIdentity);
-            serviceUserIdentity.updateTokens(fetchTokenResult.tokenResponse, fetchTokenResult.jwtClaims);
+            serviceUserIdentity2.updateTokens(fetchTokenResult.tokenResponse, fetchTokenResult.jwtClaims);
         }
 
         // Add the identity onto the queue so the tokens get refreshed
         addUserIdentityToRefreshQueueIfRequired(serviceUserIdentity);
-        return true;
     }
 
     private void consumeFromRefreshQueue() {

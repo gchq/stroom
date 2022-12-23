@@ -54,6 +54,15 @@ public class ReceiveDataConfig
         this.authenticationRequired = authenticationRequired;
     }
 
+    private ReceiveDataConfig(final Builder builder) {
+        receiptPolicyUuid = builder.receiptPolicyUuid;
+        metaTypes = builder.metaTypes;
+        tokenAuthenticationEnabled = builder.tokenAuthenticationEnabled;
+        certificateAuthenticationEnabled = builder.certificateAuthenticationEnabled;
+        authenticationRequired = builder.authenticationRequired;
+    }
+
+
     @JsonPropertyDescription("The UUID of the data receipt policy to use")
     public String getReceiptPolicyUuid() {
         return receiptPolicyUuid;
@@ -141,5 +150,68 @@ public class ReceiveDataConfig
                 ", certificateAuthenticationEnabled=" + certificateAuthenticationEnabled +
                 ", authenticationRequired=" + authenticationRequired +
                 '}';
+    }
+
+    public static Builder copy(final ReceiveDataConfig receiveDataConfig) {
+        Builder builder = new Builder();
+        builder.receiptPolicyUuid = receiveDataConfig.getReceiptPolicyUuid();
+        builder.metaTypes = receiveDataConfig.getMetaTypes();
+        builder.tokenAuthenticationEnabled = receiveDataConfig.isTokenAuthenticationEnabled();
+        builder.certificateAuthenticationEnabled = receiveDataConfig.isCertificateAuthenticationEnabled();
+        builder.authenticationRequired = receiveDataConfig.isAuthenticationRequired();
+        return builder;
+    }
+
+    public static Builder builder() {
+        return copy(new ReceiveDataConfig());
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static final class Builder {
+
+        private String receiptPolicyUuid;
+        private Set<String> metaTypes;
+        private boolean tokenAuthenticationEnabled;
+        private boolean certificateAuthenticationEnabled;
+        private boolean authenticationRequired;
+
+        private Builder() {
+        }
+
+        public static Builder builder() {
+            return new Builder();
+        }
+
+        public Builder withReceiptPolicyUuid(final String val) {
+            receiptPolicyUuid = val;
+            return this;
+        }
+
+        public Builder withMetaTypes(final Set<String> val) {
+            metaTypes = val;
+            return this;
+        }
+
+        public Builder withTokenAuthenticationEnabled(final boolean val) {
+            tokenAuthenticationEnabled = val;
+            return this;
+        }
+
+        public Builder withCertificateAuthenticationEnabled(final boolean val) {
+            certificateAuthenticationEnabled = val;
+            return this;
+        }
+
+        public Builder withAuthenticationRequired(final boolean val) {
+            authenticationRequired = val;
+            return this;
+        }
+
+        public ReceiveDataConfig build() {
+            return new ReceiveDataConfig(this);
+        }
     }
 }

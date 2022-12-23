@@ -1,6 +1,5 @@
 package stroom.proxy.app;
 
-import stroom.security.openid.api.OpenIdConfig;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
@@ -20,17 +19,17 @@ public class ProxyAuthenticationConfig extends AbstractConfig implements IsProxy
     public static final String PROP_NAME_OPENID = "openId";
 
     private final boolean authenticationRequired;
-    private final OpenIdConfig openIdConfig;
+    private final ProxyOpenIdConfig openIdConfig;
 
     public ProxyAuthenticationConfig() {
         authenticationRequired = true;
-        openIdConfig = new OpenIdConfig();
+        openIdConfig = new ProxyOpenIdConfig();
     }
 
     @JsonCreator
     public ProxyAuthenticationConfig(
             @JsonProperty(PROP_NAME_AUTHENTICATION_REQUIRED) final boolean authenticationRequired,
-            @JsonProperty(PROP_NAME_OPENID) final OpenIdConfig openIdConfig) {
+            @JsonProperty(PROP_NAME_OPENID) final ProxyOpenIdConfig openIdConfig) {
 
         this.authenticationRequired = authenticationRequired;
         this.openIdConfig = openIdConfig;
@@ -48,7 +47,7 @@ public class ProxyAuthenticationConfig extends AbstractConfig implements IsProxy
     }
 
     @JsonProperty(PROP_NAME_OPENID)
-    public OpenIdConfig getOpenIdConfig() {
+    public ProxyOpenIdConfig getOpenIdConfig() {
         return openIdConfig;
     }
 
@@ -58,4 +57,38 @@ public class ProxyAuthenticationConfig extends AbstractConfig implements IsProxy
                 ", authenticationRequired=" + authenticationRequired +
                 '}';
     }
+
+    public static Builder builder() {
+        return new Builder(new ProxyAuthenticationConfig());
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static class Builder {
+
+        private boolean isAuthenticationRequired;
+        private ProxyOpenIdConfig openIdConfig;
+
+        public Builder(final ProxyAuthenticationConfig proxyAuthenticationConfig) {
+            this.isAuthenticationRequired = proxyAuthenticationConfig.authenticationRequired;
+            this.openIdConfig = proxyAuthenticationConfig.openIdConfig;
+        }
+
+        public Builder authenticationRequired(final boolean isAuthenticationRequired) {
+            this.isAuthenticationRequired = isAuthenticationRequired;
+            return this;
+        }
+
+        public Builder openIdConfig(final ProxyOpenIdConfig openIdConfig) {
+            this.openIdConfig = openIdConfig;
+            return this;
+        }
+
+        public ProxyAuthenticationConfig build() {
+            return new ProxyAuthenticationConfig(isAuthenticationRequired, openIdConfig);
+        }
+    }
+
 }

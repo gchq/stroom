@@ -1,9 +1,11 @@
 package stroom.security.common.impl;
 
 import stroom.security.api.exception.AuthenticationException;
+import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.util.NullSafe;
+import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -39,12 +41,15 @@ public class StandardJwtContextFactory implements JwtContextFactory {
 
     private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
     private final OpenIdPublicKeysSupplier openIdPublicKeysSupplier;
+    private final DefaultOpenIdCredentials defaultOpenIdCredentials;
 
     @Inject
     public StandardJwtContextFactory(final Provider<OpenIdConfiguration> openIdConfigurationProvider,
-                                     final OpenIdPublicKeysSupplier openIdPublicKeysSupplier) {
+                                     final OpenIdPublicKeysSupplier openIdPublicKeysSupplier,
+                                     final DefaultOpenIdCredentials defaultOpenIdCredentials) {
         this.openIdConfigurationProvider = openIdConfigurationProvider;
         this.openIdPublicKeysSupplier = openIdPublicKeysSupplier;
+        this.defaultOpenIdCredentials = defaultOpenIdCredentials;
     }
 
     @Override
@@ -171,6 +176,15 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                 publicJsonWebKey.getJsonWebKeys());
         final OpenIdConfiguration openIdConfiguration = openIdConfigurationProvider.get();
 
+        final boolean useTestCreds = NullSafe.test(
+                openIdConfiguration,
+                OpenIdConfiguration::getIdentityProviderType,
+                IdpType.TEST::equals);
+
+        final String issuer = useTestCreds
+                ? defaultOpenIdCredentials.getOauth2Issuer()
+                : openIdConfiguration.getIssuer();
+
         final JwtConsumerBuilder builder = new JwtConsumerBuilder()
                 .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account
                 //                                   for clock skew
@@ -181,11 +195,14 @@ public class StandardJwtContextFactory implements JwtContextFactory {
 //                        new AlgorithmConstraints(
 //                                AlgorithmConstraints.ConstraintType.WHITELIST, // which is only RS256 here
 //                                AlgorithmIdentifiers.RSA_USING_SHA256))
-                .setExpectedIssuer(openIdConfiguration.getIssuer());
+                .setExpectedIssuer(issuer);
 
         if (openIdConfiguration.isValidateAudience()) {
             // aud does not appear in access tokens by default it seems so make the check optional
-            builder.setExpectedAudience(openIdConfiguration.getClientId());
+            final String clientId = useTestCreds
+                    ? defaultOpenIdCredentials.getOauth2ClientId()
+                    : openIdConfiguration.getClientId();
+            builder.setExpectedAudience(clientId);
         } else {
             builder.setSkipDefaultAudienceValidation();
         }

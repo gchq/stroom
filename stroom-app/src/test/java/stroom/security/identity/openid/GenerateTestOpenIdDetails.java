@@ -4,6 +4,7 @@ import stroom.security.identity.config.IdentityConfig;
 import stroom.security.identity.token.JwkFactoryImpl;
 import stroom.security.identity.token.TokenBuilder;
 import stroom.security.identity.token.TokenBuilderFactory;
+import stroom.security.impl.StroomOpenIdConfig;
 import stroom.security.openid.api.JsonWebKeyFactory;
 import stroom.security.openid.api.OpenIdClient;
 import stroom.security.openid.api.PublicJsonWebKeyProvider;
@@ -54,6 +55,7 @@ public class GenerateTestOpenIdDetails {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GenerateTestOpenIdDetails.class);
 
+    private static final String ISSUER = "default-test-only-issuer";
     private static final String CLIENT_NAME = "Stroom Client Internal (TEST ONLY)";
     private static final String API_KEY_USER_EMAIL = "default-test-only-api-key-user";
 
@@ -91,17 +93,18 @@ public class GenerateTestOpenIdDetails {
 
         final TokenBuilderFactory tokenBuilderFactory = new TokenBuilderFactory(
                 IdentityConfig::new,
-                publicJsonWebKeyProvider);
+                publicJsonWebKeyProvider,
+                StroomOpenIdConfig::new);
 
         final TokenBuilder tokenBuilder = tokenBuilderFactory
                 .builder()
                 .expirationTime(ZonedDateTime.now(ZoneId.from(ZoneOffset.UTC)).plus(20, ChronoUnit.YEARS)
                         .toInstant())
                 .clientId(oAuth2Client.getClientId())
-                .subject(API_KEY_USER_EMAIL);
+                .subject(API_KEY_USER_EMAIL)
+                .issuer(ISSUER);
 
         final String apiKey = tokenBuilder.build();
-
 
         final String escapedPublicKeyAsJsonStr = publicKeyAsJsonStr.replace("\"", "\\\"");
 
@@ -129,6 +132,8 @@ public class GenerateTestOpenIdDetails {
                 "\n    // ALL the content between these dashed lines was generated and inserted using" +
                 "\n    // " + this.getClass().getName() + " at " + Instant.now().toString() +
                 "\n    // The dashed lines are important, don't remove them!" +
+                "\n    private static final String OAUTH2_ISSUER = \"" +
+                ISSUER + "\";" +
                 "\n    private static final String OAUTH2_CLIENT_ID = \"" +
                 oAuth2Client.getClientId() + "\";" +
                 "\n    private static final String OAUTH2_CLIENT_NAME = \"" +

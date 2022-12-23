@@ -1,5 +1,8 @@
 package stroom.config.global.impl;
 
+import stroom.security.impl.StroomOpenIdConfig;
+import stroom.security.openid.api.OpenIdConfig;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.AbstractConfig;
@@ -33,6 +36,12 @@ public class GenerateConfigProvidersModule {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GenerateConfigProvidersModule.class);
 
     static final String THROWING_METHOD_SUFFIX = "ButThrow";
+
+    // extra impl => iface mappings where we map a config class to another iface
+    // (Stroom)PathConfig is not bound in ConfigProvidersModule, it is bound in AppConfigModule
+    static final Map<Class<? extends AbstractConfig>, Class<? extends AbstractConfig>> CUSTOM_CLASS_MAPPINGS = Map.of(
+            StroomOpenIdConfig.class, OpenIdConfig.class
+    );
 
     private static final String CLASS_HEADER = """
             package stroom.config.global.impl;
@@ -70,8 +79,17 @@ public class GenerateConfigProvidersModule {
         final String methodsStr = configMapper.getInjectableConfigClasses()
                 .stream()
                 .sorted(Comparator.comparing(Class::getName))
-                .map(clazz ->
-                        buildMethod(simpleNames, simpleNameToFullNamesMap, clazz))
+                .map(clazz -> {
+                    final StringBuilder stringBuilder = new StringBuilder();
+                    stringBuilder.append(buildMethod(simpleNames, simpleNameToFullNamesMap, clazz));
+                    NullSafe.consume(CUSTOM_CLASS_MAPPINGS.get(clazz), interfaceClass ->
+                            stringBuilder.append(buildMethod(
+                                    simpleNames,
+                                    simpleNameToFullNamesMap,
+                                    clazz,
+                                    interfaceClass)));
+                    return stringBuilder.toString();
+                })
                 .collect(Collectors.joining("\n"));
 
         final Predicate<String> packageNameFilter = name ->
@@ -96,22 +114,9 @@ public class GenerateConfigProvidersModule {
                                 (Class<? extends AbstractConfig>) clazz))
                 .collect(Collectors.joining("\n"));
 
-//        final String repoConfigMethodStr = buildMethod(
-//                simpleNames,
-//                simpleNameToFullNamesMap,
-//                ProxyAggregationConfig.class,
-//                RepoConfig.class);
-//        final String repoDbConfigMethodStr = buildMethod(
-//                simpleNames,
-//                simpleNameToFullNamesMap,
-//                ProxyAggregationRepoDbConfig.class,
-//                RepoDbConfig.class);
-
         final String fileContent = String.join(
                 "\n",
                 header,
-//                repoConfigMethodStr,
-//                repoDbConfigMethodStr,
                 SEPARATOR,
                 methodsStr,
                 """

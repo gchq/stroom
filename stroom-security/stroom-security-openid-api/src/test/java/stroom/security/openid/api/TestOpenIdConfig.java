@@ -21,8 +21,13 @@ class TestOpenIdConfig {
 
         for (final IdpType idpType : IdpType.values()) {
             LOGGER.info("idpType: {}", idpType);
-            final OpenIdConfig openIdConfig = new OpenIdConfig()
-                    .withIdentityProviderType(idpType);
+
+            final OpenIdConfig openIdConfig = new OpenIdConfig() {
+                @Override
+                public IdpType getDefaultIdpType() {
+                    return idpType;
+                }
+            };
 
             Assertions.assertThat(openIdConfig.getIdentityProviderType())
                     .isNotNull()

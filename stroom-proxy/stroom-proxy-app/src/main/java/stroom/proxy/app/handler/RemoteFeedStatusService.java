@@ -1,6 +1,5 @@
 package stroom.proxy.app.handler;
 
-import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.receive.common.FeedStatusService;
@@ -8,7 +7,6 @@ import stroom.security.api.UserIdentityFactory;
 import stroom.util.HasHealthCheck;
 import stroom.util.HealthCheckUtils;
 import stroom.util.NullSafe;
-import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.cache.CacheConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -50,8 +48,6 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     private static final String GET_FEED_STATUS_PATH = "/getFeedStatus";
 
     private final LoadingCache<GetFeedStatusRequest, FeedStatusUpdater> updaters;
-    private final DefaultOpenIdCredentials defaultOpenIdCredentials;
-    private final Provider<ProxyConfig> proxyConfigProvider;
     private final Provider<FeedStatusConfig> feedStatusConfigProvider;
     private final Provider<Client> jerseyClientProvider;
     private final UserIdentityFactory userIdentityFactory;
@@ -59,14 +55,10 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     @Inject
-    RemoteFeedStatusService(final Provider<ProxyConfig> proxyConfigProvider,
-                            final Provider<FeedStatusConfig> feedStatusConfigProvider,
+    RemoteFeedStatusService(final Provider<FeedStatusConfig> feedStatusConfigProvider,
                             final Provider<Client> jerseyClientProvider,
-                            final DefaultOpenIdCredentials defaultOpenIdCredentials,
                             final UserIdentityFactory userIdentityFactory) {
-        this.proxyConfigProvider = proxyConfigProvider;
         this.feedStatusConfigProvider = feedStatusConfigProvider;
-        this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.jerseyClientProvider = jerseyClientProvider;
         this.userIdentityFactory = userIdentityFactory;
 
@@ -102,19 +94,6 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     public void stop() {
         executorService.shutdownNow();
     }
-
-//    private String getApiKey() {
-//        // Allows us to use hard-coded open id creds / token to authenticate with stroom
-//        // out of the box. ONLY for use in test/demo environments.
-//        final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
-//        if (proxyConfigProvider.get().isUseDefaultOpenIdCredentials()
-//                && Strings.isNullOrEmpty(feedStatusConfig.getApiKey())) {
-//            LOGGER.info("Using default authentication token, should only be used in test/demo environments.");
-//            return Objects.requireNonNull(defaultOpenIdCredentials.getApiKey());
-//        } else {
-//            return feedStatusConfig.getApiKey();
-//        }
-//    }
 
     @Override
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest request) {
@@ -219,7 +198,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
             headers = userIdentityFactory.getAuthHeaders(feedStatusConfig.getApiKey());
         } else {
             // Use a token from the external IDP
-            headers = userIdentityFactory.getAuthHeaders(userIdentityFactory.getServiceUserIdentity());
+            headers = userIdentityFactory.getServiceUserAuthHeaders();
         }
         return new MultivaluedHashMap<>(headers);
     }

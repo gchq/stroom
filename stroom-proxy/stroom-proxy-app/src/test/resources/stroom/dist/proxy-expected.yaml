@@ -43,7 +43,8 @@ proxyConfig:
       maximumSize: 1000
     url: null
   fileScanners: []
-  forwardDestinations: []
+  forwardFileDestinations: []
+  forwardHttpDestinations: []
   forwardRetry:
     failedForwardDir: "failures"
     maxRetryDelay: "PT1H"

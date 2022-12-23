@@ -100,7 +100,7 @@ public class ForwardStreamHandler implements StreamHandler {
 
         // Allows sending to systems on the same OpenId realm as us using an access token
         if (config.isAddOpenIdAccessToken()) {
-            userIdentityFactory.getAuthHeaders(userIdentityFactory.getServiceUserIdentity())
+            userIdentityFactory.getServiceUserAuthHeaders()
                     .forEach((key, value) -> {
                         LOGGER.debug("Setting request prop {}: {}", key, value);
                         connection.setRequestProperty(key, value);
@@ -153,7 +153,14 @@ public class ForwardStreamHandler implements StreamHandler {
                 responseCode = StroomStreamException.checkConnectionResponse(connection, attributeMap);
             } finally {
                 final long duration = System.currentTimeMillis() - startTimeMs;
-                logStream.log(SEND_LOG, attributeMap, "SEND", forwardUrl, responseCode, totalBytesSent, duration);
+                logStream.log(
+                        SEND_LOG,
+                        attributeMap,
+                        "SEND",
+                        forwardUrl,
+                        responseCode,
+                        totalBytesSent,
+                        duration);
 
                 connection.disconnect();
                 connection = null;

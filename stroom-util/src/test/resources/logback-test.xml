@@ -11,6 +11,8 @@
     <logger name="stroom" level="debug" />
 
 <!--    <logger name="stroom.util.io.capacity" level="trace" />-->
+<!--    <logger name="stroom.util.config.PropertyUtil" level="trace" />-->
+
 
     <root level="error">
         <appender-ref ref="STDOUT" />

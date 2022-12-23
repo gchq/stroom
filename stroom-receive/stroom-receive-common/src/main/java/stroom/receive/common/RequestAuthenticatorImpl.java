@@ -151,6 +151,6 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
 
     @Override
     public Map<String, String> getServiceUserAuthHeaders() {
-        return userIdentityFactory.getAuthHeaders(userIdentityFactory.getServiceUserIdentity());
+        return userIdentityFactory.getServiceUserAuthHeaders();
     }
 }

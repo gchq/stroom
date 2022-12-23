@@ -83,6 +83,7 @@ public final class PropertyUtil {
 
         // Only care about stroom pojos
         final Map<String, Prop> propMap = getProperties(object);
+//        System.out.println(object.getClass().getSimpleName() + " => " + String.join(", ", propMap.keySet()));
 
         propMap.values().stream()
                 .filter(propFilter)
@@ -165,7 +166,10 @@ public final class PropertyUtil {
                 objectMapper.getSerializationConfig().introspect(userType);
 
         final List<BeanPropertyDefinition> beanPropDefs = beanDescription.findProperties();
+        // enum types seem to have a declaringClass prop that results in a stack overflow
         final Map<String, Prop> propMap = beanPropDefs.stream()
+                .filter(propDef ->
+                        !((object instanceof Enum<?>) && propDef.getName().equals("declaringClass")))
                 .map(propDef -> {
                     final Prop prop = new Prop(propDef.getName(), object);
                     if (propDef.getField() != null) {

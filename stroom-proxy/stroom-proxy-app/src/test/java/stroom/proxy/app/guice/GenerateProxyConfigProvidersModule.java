@@ -1,7 +1,10 @@
 package stroom.proxy.app.guice;
 
 import stroom.proxy.app.ProxyConfig;
+import stroom.proxy.app.ProxyOpenIdConfig;
 import stroom.proxy.app.ProxyPathConfig;
+import stroom.security.openid.api.OpenIdConfig;
+import stroom.util.NullSafe;
 import stroom.util.io.PathConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -36,6 +39,12 @@ public class GenerateProxyConfigProvidersModule {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GenerateProxyConfigProvidersModule.class);
 
     static final String THROWING_METHOD_SUFFIX = "ButThrow";
+
+    // extra impl => iface mappings where we map a config class to another iface
+    static final Map<Class<? extends AbstractConfig>, Class<? extends AbstractConfig>> CUSTOM_CLASS_MAPPINGS = Map.of(
+            ProxyPathConfig.class, PathConfig.class,
+            ProxyOpenIdConfig.class, OpenIdConfig.class
+    );
 
     private static final String CLASS_HEADER = """
             package stroom.proxy.app.guice;
@@ -72,29 +81,20 @@ public class GenerateProxyConfigProvidersModule {
                 GenerateProxyConfigProvidersModule.class.getName(),
                 GenerateProxyConfigProvidersModule.class.getName());
 
-        // Special case to allow ProxyPathConfig to be injected as itself or as
-        // PathConfig
-        final String pathConfigMethodStr = buildMethod(
-                simpleNames,
-                simpleNameToFullNamesMap,
-                ProxyPathConfig.class,
-                PathConfig.class);
-//        final String repoConfigMethodStr = buildMethod(
-//                simpleNames,
-//                simpleNameToFullNamesMap,
-//                ProxyRepoConfig.class,
-//                RepoConfig.class);
-//        final String repoDbConfigMethodStr = buildMethod(
-//                simpleNames,
-//                simpleNameToFullNamesMap,
-//                RepoDbConfig.class,
-//                RepoDbConfig.class);
-
         final String methodsStr = injectableClasses
                 .stream()
                 .sorted(Comparator.comparing(Class::getName))
-                .map(clazz ->
-                        buildMethod(simpleNames, simpleNameToFullNamesMap, clazz))
+                .map(clazz -> {
+                    final StringBuilder stringBuilder = new StringBuilder();
+                    stringBuilder.append(buildMethod(simpleNames, simpleNameToFullNamesMap, clazz));
+                    NullSafe.consume(CUSTOM_CLASS_MAPPINGS.get(clazz), interfaceClass ->
+                            stringBuilder.append(buildMethod(
+                                    simpleNames,
+                                    simpleNameToFullNamesMap,
+                                    clazz,
+                                    interfaceClass)));
+                    return stringBuilder.toString();
+                })
                 .collect(Collectors.joining("\n"));
 
         final Predicate<String> packageNameFilter = name ->
@@ -122,9 +122,6 @@ public class GenerateProxyConfigProvidersModule {
         final String fileContent = String.join(
                 "\n",
                 header,
-                pathConfigMethodStr,
-//                repoConfigMethodStr,
-//                repoDbConfigMethodStr,
                 SEPARATOR,
                 methodsStr,
                 """

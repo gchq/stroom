@@ -1,13 +1,13 @@
 package stroom.security.openid.api;
 
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.IsProxyConfig;
-import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.dropwizard.validation.ValidationMethod;
 
 import java.util.Objects;
 import javax.validation.constraints.NotNull;
@@ -15,9 +15,9 @@ import javax.validation.constraints.Pattern;
 
 
 @JsonPropertyOrder(alphabetic = true)
-public class OpenIdConfig
+public abstract class OpenIdConfig
         extends AbstractConfig
-        implements IsStroomConfig, IsProxyConfig, OpenIdConfiguration {
+        implements OpenIdConfiguration {
 
     public static final String PROP_NAME_CLIENT_ID = "clientId";
     public static final String PROP_NAME_CLIENT_SECRET = "clientSecret";
@@ -104,7 +104,7 @@ public class OpenIdConfig
 
 
     public OpenIdConfig() {
-        identityProviderType = IdpType.INTERNAL;
+        identityProviderType = getDefaultIdpType();
         openIdConfigurationEndpoint = null;
         issuer = null;
         authEndpoint = null;
@@ -118,6 +118,9 @@ public class OpenIdConfig
         requestScope = null;
         validateAudience = true;
     }
+
+    @JsonIgnore
+    public abstract IdpType getDefaultIdpType();
 
     @JsonCreator
     public OpenIdConfig(@JsonProperty(PROP_NAME_IDP_TYPE) final IdpType identityProviderType,
@@ -149,8 +152,7 @@ public class OpenIdConfig
     }
 
     /**
-     * @return true if Stroom will handle the OpenId authentication, false if an external
-     * OpenId provider is used.
+     * @return The type of Open ID Connnect identity provider in use.
      */
     @NotNull
     @JsonProperty
@@ -259,21 +261,13 @@ public class OpenIdConfig
         return validateAudience;
     }
 
-    public OpenIdConfig withIdentityProviderType(final IdpType identityProviderType) {
-        return new OpenIdConfig(
-                identityProviderType,
-                openIdConfigurationEndpoint,
-                issuer,
-                authEndpoint,
-                tokenEndpoint,
-                jwksUri,
-                logoutEndpoint,
-                logoutRedirectParamName,
-                formTokenRequest,
-                clientSecret,
-                clientId,
-                requestScope,
-                validateAudience);
+    @JsonIgnore
+    @SuppressWarnings("unused")
+    @ValidationMethod(message = "If " + PROP_NAME_IDP_TYPE + " is set to 'EXTERNAL', property "
+            + PROP_NAME_CONFIGURATION_ENDPOINT + " must be set.")
+    public boolean isConfigurationEndpointValid() {
+        return !IdpType.EXTERNAL.equals(identityProviderType)
+                || (openIdConfigurationEndpoint != null && !openIdConfigurationEndpoint.isBlank());
     }
 
     @Override

@@ -17,20 +17,23 @@ import javax.inject.Provider;
  */
 public class DelegatingIdpConfigurationProvider implements IdpConfigurationProvider {
 
-    private final InternalIdpConfigurationProvider internalIdpConfigurationResponseProvider;
-    private final ExternalIdpConfigurationProvider externalIdpConfigurationResponseProvider;
+    private final InternalIdpConfigurationProvider internalIdpConfigurationProvider;
+    private final ExternalIdpConfigurationProvider externalIdpConfigurationProvider;
+    private final StroomTestIdpConfigurationProvider stroomTestIdpConfigurationProvider;
     private final Provider<OpenIdConfig> openIdConfigProvider;
     private final UriFactory uriFactory;
 
     @Inject
     public DelegatingIdpConfigurationProvider(
-            final InternalIdpConfigurationProvider internalIdpConfigurationResponseProvider,
-            final ExternalIdpConfigurationProvider externalIdpConfigurationResponseProvider,
+            final InternalIdpConfigurationProvider internalIdpConfigurationProvider,
+            final ExternalIdpConfigurationProvider externalIdpConfigurationProvider,
+            final StroomTestIdpConfigurationProvider stroomTestIdpConfigurationProvider,
             final Provider<OpenIdConfig> openIdConfigProvider,
             final UriFactory uriFactory) {
 
-        this.internalIdpConfigurationResponseProvider = internalIdpConfigurationResponseProvider;
-        this.externalIdpConfigurationResponseProvider = externalIdpConfigurationResponseProvider;
+        this.internalIdpConfigurationProvider = internalIdpConfigurationProvider;
+        this.externalIdpConfigurationProvider = externalIdpConfigurationProvider;
+        this.stroomTestIdpConfigurationProvider = stroomTestIdpConfigurationProvider;
         this.openIdConfigProvider = openIdConfigProvider;
         this.uriFactory = uriFactory;
     }
@@ -74,7 +77,7 @@ public class DelegatingIdpConfigurationProvider implements IdpConfigurationProvi
     public String getLogoutEndpoint() {
         final String logoutEndpoint = getDelegate().getLogoutEndpoint();
         // If the IdP doesn't provide a logout endpoint then use the internal one to invalidate
-        // the session and redirect to perform a a new auth flow.
+        // the session and redirect to perform a new auth flow.
 
         return NullSafe.isBlankString(logoutEndpoint)
                 ? uriFactory.publicUri(InternalIdpConfigurationProvider.INTERNAL_AUTH_ENDPOINT).toString()
@@ -113,10 +116,12 @@ public class DelegatingIdpConfigurationProvider implements IdpConfigurationProvi
 
     private IdpConfigurationProvider getDelegate() {
         return switch (openIdConfigProvider.get().getIdentityProviderType()) {
-            case INTERNAL, TEST ->
-                    internalIdpConfigurationResponseProvider;
-            case EXTERNAL ->
-                    externalIdpConfigurationResponseProvider;
+
+            case INTERNAL -> internalIdpConfigurationProvider;
+            case EXTERNAL -> externalIdpConfigurationProvider;
+            case TEST -> stroomTestIdpConfigurationProvider;
+            case NONE -> throw new UnsupportedOperationException(
+                    "No delegate when IDP type is " + IdpType.NONE);
         };
     }
 }

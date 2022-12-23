@@ -7,11 +7,11 @@ import stroom.proxy.repo.LogStream;
 import stroom.receive.common.StreamHandler;
 import stroom.receive.common.StreamHandlers;
 import stroom.receive.common.StroomStreamException;
-import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.Map;
 import java.util.function.Consumer;
 import javax.net.ssl.SSLSocketFactory;
 
@@ -46,8 +46,8 @@ public class ForwardHttpPostHandlers implements StreamHandlers {
         AttributeMapUtil.addFeedAndType(attributeMap, feedName, typeName);
 
         // We need to add the authentication token to our headers
-        final UserIdentity serviceUserIdentity = userIdentityFactory.getServiceUserIdentity();
-        attributeMap.putAll(userIdentityFactory.getAuthHeaders(serviceUserIdentity));
+        final Map<String, String> authHeaders = userIdentityFactory.getServiceUserAuthHeaders();
+        attributeMap.putAll(authHeaders);
 
         ForwardStreamHandler streamHandler = null;
         try {

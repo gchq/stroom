@@ -92,7 +92,7 @@ public class ExternalIdpConfigurationProvider
             // Even if we already have the config from it, if we can't see the IDP we have problems.
             try {
                 OpenIdConfigurationResponse response = fetchOpenIdConfigurationResponse(
-                        configurationEndpoint);
+                        configurationEndpoint, openIdConfig);
                 if (response != null) {
                     resultBuilder.healthy();
                 } else {
@@ -122,7 +122,7 @@ public class ExternalIdpConfigurationProvider
             if (isFetchRequired(configurationEndpoint)) {
                 try {
                     final OpenIdConfigurationResponse response = fetchOpenIdConfigurationResponse(
-                            configurationEndpoint);
+                            configurationEndpoint, openIdConfig);
                     openIdConfigurationResp = mergeResponse(response, openIdConfig);
                 } catch (final RuntimeException | IOException e) {
                     LOGGER.error(e.getMessage(), e);
@@ -144,7 +144,13 @@ public class ExternalIdpConfigurationProvider
     }
 
     private OpenIdConfigurationResponse fetchOpenIdConfigurationResponse(
-            final String configurationEndpoint) throws IOException {
+            final String configurationEndpoint,
+            final OpenIdConfig openIdConfig) throws IOException {
+
+        Objects.requireNonNull(configurationEndpoint,
+                "Property "
+                        + openIdConfig.getFullPathStr(OpenIdConfig.PROP_NAME_CONFIGURATION_ENDPOINT)
+                + " has not been set");
         LOGGER.info("Fetching open id configuration from: " + configurationEndpoint);
         try (final CloseableHttpClient httpClient = httpClientProvider.get()) {
             final HttpGet httpGet = new HttpGet(configurationEndpoint);

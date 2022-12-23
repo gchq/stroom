@@ -621,10 +621,18 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.security.impl.StroomOpenIdConfig getStroomOpenIdConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.security.impl.StroomOpenIdConfig.class);
+    }
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.security.openid.api.OpenIdConfig getOpenIdConfig2(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
-                stroom.security.openid.api.OpenIdConfig.class);
+                stroom.security.impl.StroomOpenIdConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")

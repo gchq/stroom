@@ -3,6 +3,7 @@ ext.moduleName = 'stroom.security.openid.api'
 dependencies {
     implementation project(':stroom-util-shared')
 
+    implementation libs.dropwizard_validation
     implementation libs.jackson_annotations
     implementation libs.jakarta_validation_api
     implementation libs.jose4j

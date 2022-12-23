@@ -1,6 +1,7 @@
-package stroom.util.validation;
+package stroom.test.common;
 
 import stroom.test.common.util.test.TestingHomeAndTempProvidersModule;
+import stroom.util.validation.ValidationModule;
 
 import com.google.inject.Guice;
 import org.assertj.core.api.Assertions;
@@ -11,12 +12,12 @@ import java.util.Set;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 
-abstract class AbstractValidatorTest {
+public abstract class AbstractValidatorTest {
 
     @TempDir
     Path tempDir;
 
-    Validator getValidator() {
+    public Validator getValidator() {
 
         return Guice.createInjector(
                 new TestingHomeAndTempProvidersModule(tempDir),
@@ -24,18 +25,18 @@ abstract class AbstractValidatorTest {
         ).getInstance(Validator.class);
     }
 
-    <T> Set<ConstraintViolation<T>> validate(T object) {
+    public <T> Set<ConstraintViolation<T>> validate(T object) {
         return getValidator().validate(object);
     }
 
-    <T> Set<ConstraintViolation<T>> validateValidValue(T object) {
+    public <T> Set<ConstraintViolation<T>> validateValidValue(T object) {
         final Set<ConstraintViolation<T>> violations = getValidator().validate(object);
         Assertions.assertThat(violations)
                 .isEmpty();
         return violations;
     }
 
-    <T> Set<ConstraintViolation<T>> validateInvalidValue(T object) {
+    public <T> Set<ConstraintViolation<T>> validateInvalidValue(T object) {
         final Set<ConstraintViolation<T>> violations = getValidator().validate(object);
         Assertions.assertThat(violations)
                 .hasSize(1);

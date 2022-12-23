@@ -1,14 +1,17 @@
 package stroom.security.identity.openid;
 
 import stroom.security.identity.config.IdentityConfig;
+import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdClient;
 import stroom.security.openid.api.OpenIdClientFactory;
+import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LogUtil;
 
 import java.security.SecureRandom;
 import java.util.Objects;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class OpenIdClientDetailsFactoryImpl implements OpenIdClientFactory {
 
@@ -20,20 +23,23 @@ public class OpenIdClientDetailsFactoryImpl implements OpenIdClientFactory {
     private static final int ALLOWED_CHARS_COUNT = ALLOWED_CHARS.length;
 
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
+    private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
     private final OpenIdClient oAuth2Client;
 
     @Inject
     public OpenIdClientDetailsFactoryImpl(final OpenIdClientDao dao,
                                           final IdentityConfig authenticationConfig,
-                                          final DefaultOpenIdCredentials defaultOpenIdCredentials) {
+                                          final DefaultOpenIdCredentials defaultOpenIdCredentials,
+                                          final Provider<OpenIdConfiguration> openIdConfigurationProvider) {
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
+        this.openIdConfigurationProvider = openIdConfigurationProvider;
 
         // TODO The way this is implemented means we are limited to a single client when using our
         //   internal auth provider.  Not sure this is what we want when we have stroom-stats in the
         //   mix. However to manage multiple client IDs we would probably need UI pages to do the CRUD on them.
 
         final OpenIdClient oAuth2Client;
-        if (authenticationConfig.isUseDefaultOpenIdCredentials()) {
+        if (IdpType.TEST.equals(openIdConfigurationProvider.get().getIdentityProviderType())) {
             oAuth2Client = createDefaultOAuthClient();
         } else {
             oAuth2Client = dao.getClientByName(INTERNAL_STROOM_CLIENT)

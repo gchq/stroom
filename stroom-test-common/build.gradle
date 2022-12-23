@@ -10,6 +10,7 @@ dependencies {
     implementation libs.assertj_core
     implementation libs.commons_lang
     implementation libs.dropwizard_testing
+    implementation libs.dropwizard_jersey
     implementation libs.guava
     implementation libs.guice5
     implementation libs.hikari

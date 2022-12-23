@@ -176,7 +176,7 @@ public class ContentSyncService implements Managed, HasHealthCheck {
             headers = userIdentityFactory.getAuthHeaders(contentSyncConfig.getApiKey());
         } else {
             // Use a token from the external IDP
-            headers = userIdentityFactory.getAuthHeaders(userIdentityFactory.getServiceUserIdentity());
+            headers = userIdentityFactory.getServiceUserAuthHeaders();
         }
         return new MultivaluedHashMap<>(headers);
     }

@@ -1,6 +1,5 @@
 package stroom.security.impl;
 
-import stroom.security.openid.api.OpenIdConfig;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
@@ -21,19 +20,19 @@ public class AuthenticationConfig extends AbstractConfig implements IsStroomConf
     public static final String PROP_NAME_PREVENT_LOGIN = "preventLogin";
 
     private final boolean authenticationRequired;
-    private final OpenIdConfig openIdConfig;
+    private final StroomOpenIdConfig openIdConfig;
     private final boolean preventLogin;
 
     public AuthenticationConfig() {
         authenticationRequired = true;
-        openIdConfig = new OpenIdConfig();
+        openIdConfig = new StroomOpenIdConfig();
         preventLogin = false;
     }
 
     @JsonCreator
     public AuthenticationConfig(
             @JsonProperty(PROP_NAME_AUTHENTICATION_REQUIRED) final boolean authenticationRequired,
-            @JsonProperty(PROP_NAME_OPENID) final OpenIdConfig openIdConfig,
+            @JsonProperty(PROP_NAME_OPENID) final StroomOpenIdConfig openIdConfig,
             @JsonProperty(PROP_NAME_PREVENT_LOGIN) final boolean preventLogin) {
 
         this.authenticationRequired = authenticationRequired;
@@ -53,7 +52,7 @@ public class AuthenticationConfig extends AbstractConfig implements IsStroomConf
     }
 
     @JsonProperty(PROP_NAME_OPENID)
-    public OpenIdConfig getOpenIdConfig() {
+    public StroomOpenIdConfig getOpenIdConfig() {
         return openIdConfig;
     }
 

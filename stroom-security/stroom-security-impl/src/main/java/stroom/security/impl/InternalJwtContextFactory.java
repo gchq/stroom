@@ -76,7 +76,7 @@ class InternalJwtContextFactory implements JwtContextFactory {
 
     @Override
     public Optional<JwtContext> getJwtContext(final HttpServletRequest request) {
-        LOGGER.debug(() -> AUTHORIZATION_HEADER + "=" + request.getHeader(AUTHORIZATION_HEADER));
+        LOGGER.trace(() -> AUTHORIZATION_HEADER + "=" + request.getHeader(AUTHORIZATION_HEADER));
 
         final Optional<String> optionalJws = getJwtFromHeader(request);
         return optionalJws
@@ -99,13 +99,13 @@ class InternalJwtContextFactory implements JwtContextFactory {
         Optional<JwtContext> optionalJwtContext = Optional.empty();
 
         Objects.requireNonNull(jwt, "Null JWS");
-        LOGGER.debug(() -> "Found auth header in request. It looks like this: " + jwt);
+        LOGGER.trace(() -> "Found auth header in request. It looks like this: " + jwt);
 
         try {
             final JwtConsumer jwtConsumer = newJwtConsumer();
             final JwtContext jwtContext = jwtConsumer.process(jwt);
 
-            LOGGER.debug(() -> LogUtil.message("Verified token - {}: '{}', {}: '{}'",
+            LOGGER.trace(() -> LogUtil.message("Verified token - {}: '{}', {}: '{}'",
                     OpenId.CLAIM__SUBJECT,
                     JwtUtil.getClaimValue(jwtContext, OpenId.CLAIM__SUBJECT).orElse(""),
                     OpenId.CLAIM__PREFERRED_USERNAME,
@@ -151,6 +151,10 @@ class InternalJwtContextFactory implements JwtContextFactory {
         final VerificationKeyResolver verificationKeyResolver = new JwksVerificationKeyResolver(
                 publicJsonWebKey.getJsonWebKeys());
 
+        final OpenIdConfiguration openIdConfiguration = openIdConfigurationProvider.get();
+        final String issuer = openIdConfiguration.getIssuer();
+        LOGGER.debug("Using issuer: {}", issuer);
+
         final JwtConsumerBuilder builder = new JwtConsumerBuilder()
                 .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims
                 // to account for clock skew
@@ -161,9 +165,10 @@ class InternalJwtContextFactory implements JwtContextFactory {
                         new AlgorithmConstraints(
                                 AlgorithmConstraints.ConstraintType.WHITELIST, // which is only RS256 here
                                 AlgorithmIdentifiers.RSA_USING_SHA256))
-                .setExpectedIssuer(InternalIdpConfigurationProvider.INTERNAL_ISSUER);
+//                .setExpectedIssuer(InternalIdpConfigurationProvider.INTERNAL_ISSUER);
+                .setExpectedIssuer(issuer);
 
-        if (openIdConfigurationProvider.get().isValidateAudience()) {
+        if (openIdConfiguration.isValidateAudience()) {
             // aud does not appear in access tokens by default it seems
             builder.setExpectedAudience(openIdClientDetailsFactory.getClient().getClientId());
         } else {

@@ -3,7 +3,6 @@ package stroom.proxy.app;
 import stroom.data.zip.StroomZipFileType;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
-import stroom.proxy.app.forwarder.ForwardConfig;
 import stroom.proxy.app.forwarder.ForwardFileConfig;
 import stroom.proxy.app.forwarder.ForwardHttpPostConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
@@ -189,16 +188,14 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
      * A count of all the meta files in the {@link ForwardFileConfig} locations.
      */
     public long getForwardFileMetaCount() {
-        final List<ForwardConfig> forwardConfigs = NullSafe.getOrElseGet(
+        final List<ForwardFileConfig> forwardConfigs = NullSafe.getOrElseGet(
                 getConfig(),
                 Config::getProxyConfig,
-                ProxyConfig::getForwardDestinations,
+                ProxyConfig::getForwardFileDestinations,
                 Collections::emptyList);
 
         if (!forwardConfigs.isEmpty()) {
             return forwardConfigs.stream()
-                    .filter(forwardConfig -> forwardConfig instanceof ForwardFileConfig)
-                    .map(ForwardFileConfig.class::cast)
                     .mapToLong(forwardConfig -> {
                         if (!forwardConfig.getPath().isBlank()) {
                             try (Stream<Path> pathStream = Files.walk(
@@ -225,15 +222,13 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
      */
     public List<ForwardFileItem> getForwardFiles() {
 
-        final List<ForwardConfig> forwardConfigs = NullSafe.getOrElseGet(
+        final List<ForwardFileConfig> forwardConfigs = NullSafe.getOrElseGet(
                 getConfig(),
                 Config::getProxyConfig,
-                ProxyConfig::getForwardDestinations,
+                ProxyConfig::getForwardFileDestinations,
                 Collections::emptyList);
 
         final List<ForwardFileItem> allForwardFileItems = forwardConfigs.stream()
-                .filter(forwardConfig -> forwardConfig instanceof ForwardFileConfig)
-                .map(ForwardFileConfig.class::cast)
                 .flatMap(forwardFileConfig -> {
                     final Path forwardDir = getPathCreator().toAppPath(forwardFileConfig.getPath());
                     final SequentialFileStore sequentialFileStore = new SequentialFileStore(() -> forwardDir);
@@ -640,10 +635,11 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
 
     /**
      * Represents a meta + zip pair as created by the file forwarder
+     *
      * @param name
      * @param basePath
      * @param metaContent
-     * @param zipItems One for each item in the zip
+     * @param zipItems    One for each item in the zip
      */
     public record ForwardFileItem(String name,
                                   String basePath,

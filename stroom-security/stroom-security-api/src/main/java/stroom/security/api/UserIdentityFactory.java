@@ -36,6 +36,12 @@ public interface UserIdentityFactory {
     Map<String, String> getAuthHeaders(final UserIdentity userIdentity);
 
     /**
+     * @return The authentication/authorisation headers to enable authentication with the service
+     * user.
+     */
+    Map<String, String> getServiceUserAuthHeaders();
+
+    /**
      * @return The authentication/authorisation headers to enable authentication with this token
      */
     Map<String, String> getAuthHeaders(final String jwt);

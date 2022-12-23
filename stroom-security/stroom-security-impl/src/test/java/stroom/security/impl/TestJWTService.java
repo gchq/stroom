@@ -58,7 +58,8 @@ class TestJWTService {
 
         final StandardJwtContextFactory jwtService = new StandardJwtContextFactory(
                 () -> openIdConfiguration,
-                openIdPublicKeysSupplier);
+                openIdPublicKeysSupplier,
+                defaultOpenIdCredentials);
 
         final String apiKey = defaultOpenIdCredentials.getApiKey();
 

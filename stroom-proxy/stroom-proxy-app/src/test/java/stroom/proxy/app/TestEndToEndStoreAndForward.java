@@ -4,6 +4,8 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
+import stroom.receive.common.ReceiveDataConfig;
+import stroom.security.openid.api.IdpType;
 import stroom.test.common.TestUtil;
 import stroom.util.time.StroomDuration;
 
@@ -29,12 +31,15 @@ public class TestEndToEndStoreAndForward extends AbstractEndToEndTest {
     @Override
     protected ProxyConfig getProxyConfigOverride() {
         return ProxyConfig.builder()
-                .useDefaultOpenIdCredentials(true)
                 .proxyId("TestProxy")
                 .pathConfig(createProxyPathConfig())
                 .proxyRepoConfig(ProxyRepoConfig.builder()
                         .storingEnabled(true)
                         .build())
+                .securityConfig(new ProxySecurityConfig(ProxyAuthenticationConfig.builder()
+                        .openIdConfig(new ProxyOpenIdConfig()
+                                .withIdentityProviderType(IdpType.TEST))
+                        .build()))
                 .aggregatorConfig(AggregatorConfig.builder()
                         .maxItemsPerAggregate(1000)
                         .maxUncompressedByteSizeString("1G")
@@ -45,6 +50,9 @@ public class TestEndToEndStoreAndForward extends AbstractEndToEndTest {
                 .addForwardDestination(createForwardHttpPostConfig())
                 .restClientConfig(RestClientConfig.builder()
                         .withTlsConfiguration(null)
+                        .build())
+                .receiveDataConfig(ReceiveDataConfig.builder()
+                        .withAuthenticationRequired(false)
                         .build())
                 .feedStatusConfig(createFeedStatusConfig())
                 .build();

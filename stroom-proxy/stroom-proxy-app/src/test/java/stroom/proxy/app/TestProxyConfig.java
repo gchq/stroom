@@ -11,6 +11,7 @@ import stroom.util.shared.IsProxyConfig;
 import stroom.util.time.StroomDuration;
 import stroom.util.validation.ValidationModule;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.assertj.core.api.Assertions;
@@ -117,7 +118,7 @@ class TestProxyConfig {
         // list any config values that are null.  This may be valid so no assertions used.
         PropertyUtil.walkObjectTree(
                 new ProxyConfig(),
-                prop -> true,
+                prop -> !prop.hasAnnotation(JsonIgnore.class),
                 prop -> {
                     if (prop.getValueFromConfigObject() == null) {
                         LOGGER.warn("{} => {} is null",
