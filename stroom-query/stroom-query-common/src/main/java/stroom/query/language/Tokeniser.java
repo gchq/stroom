@@ -31,7 +31,7 @@ public class Tokeniser {
 
         // Tag commands and functions.
         split("(\\|[\\s]*)([a-z-A-Z_]+)(\\s|$)", 2, TokenType.PIPE_OPERATION);
-        split("(^|\\s)([a-z-A-Z_]+)([\\s]*\\()", 2, TokenType.FUNCTION_NAME);
+        split("([a-z-A-Z_]+)([\\s]*\\()", 1, TokenType.FUNCTION_NAME);
 
         // Tag brackets.
         split("\\(", 0, TokenType.OPEN_BRACKET);

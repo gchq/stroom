@@ -19,7 +19,7 @@ public abstract class AbstractQueryTest {
 
     // If we are editing the input or behaviour then we don't want to test the validity but instead create the expected
     // test output.
-    private static final boolean CREATE_MODE = true;
+    private static final boolean CREATE_MODE = false;
 
     abstract String getTestDirName();
 
