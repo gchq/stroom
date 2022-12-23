@@ -18,7 +18,6 @@ package stroom.dashboard.client.query;
 
 import stroom.dashboard.client.query.QueryInfoPresenter.QueryInfoView;
 
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.TextArea;

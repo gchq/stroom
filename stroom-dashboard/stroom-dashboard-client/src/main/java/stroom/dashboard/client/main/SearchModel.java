@@ -27,13 +27,13 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.instance.client.ClientApplicationInstance;
-import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.TimeRange;
+import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.util.client.Console;
 import stroom.view.client.presenter.IndexLoader;
 

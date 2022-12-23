@@ -38,13 +38,13 @@ import stroom.dashboard.client.table.TablePlugin;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.client.table.TablePresenter.TableView;
 import stroom.dashboard.client.table.TableViewImpl;
-import stroom.query.client.presenter.TimeZones;
 import stroom.dashboard.client.table.cf.EditExpressionPresenter;
 import stroom.dashboard.client.table.cf.EditExpressionViewImpl;
 import stroom.dashboard.client.table.cf.RulePresenter;
 import stroom.dashboard.client.table.cf.RuleViewImpl;
 import stroom.dashboard.client.table.cf.RulesPresenter;
 import stroom.dashboard.client.table.cf.RulesViewImpl;
+import stroom.query.client.presenter.TimeZones;
 
 import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 

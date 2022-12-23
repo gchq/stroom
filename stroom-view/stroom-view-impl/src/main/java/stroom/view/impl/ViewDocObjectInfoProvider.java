@@ -22,7 +22,6 @@ import stroom.view.shared.ViewDoc;
 
 import event.logging.BaseObject;
 import event.logging.OtherObject;
-import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

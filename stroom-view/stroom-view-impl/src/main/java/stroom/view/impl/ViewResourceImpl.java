@@ -19,9 +19,9 @@ package stroom.view.impl;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.util.shared.EntityServiceException;
 import stroom.view.shared.ViewDoc;
 import stroom.view.shared.ViewResource;
-import stroom.util.shared.EntityServiceException;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

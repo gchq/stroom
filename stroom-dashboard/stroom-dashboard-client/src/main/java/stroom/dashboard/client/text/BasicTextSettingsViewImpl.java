@@ -22,7 +22,6 @@ import stroom.docref.HasDisplayValue;
 import stroom.item.client.ItemListBox;
 import stroom.query.api.v2.Field;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
-import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;

@@ -92,7 +92,7 @@ public abstract class AbstractToken {
         return toTokenString(false);
     }
 
-    static abstract class AbstractTokenBuilder<T extends AbstractToken, B extends AbstractTokenBuilder<T, ?>> {
+    abstract static class AbstractTokenBuilder<T extends AbstractToken, B extends AbstractTokenBuilder<T, ?>> {
 
         TokenType tokenType;
         char[] chars;

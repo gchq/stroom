@@ -501,7 +501,8 @@ class QueryServiceImpl implements QueryService {
 
                 if (newSearch) {
                     // FIXME : FIX
-//                    searchEventLog.search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo(), e);
+//                    searchEventLog
+//                    .search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo(), e);
                 }
 
                 result = new DashboardSearchResponse(

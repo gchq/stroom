@@ -18,7 +18,6 @@ package stroom.dashboard.client.main;
 
 import stroom.dashboard.client.main.RenameTabPresenter.RenameTabView;
 
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;

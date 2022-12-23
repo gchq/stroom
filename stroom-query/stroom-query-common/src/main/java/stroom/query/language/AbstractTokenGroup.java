@@ -2,7 +2,6 @@ package stroom.query.language;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public abstract class AbstractTokenGroup extends AbstractToken {
 
@@ -53,7 +52,7 @@ public abstract class AbstractTokenGroup extends AbstractToken {
         }
     }
 
-    public static abstract class AbstractTokenGroupBuilder
+    public abstract static class AbstractTokenGroupBuilder
             <T extends AbstractTokenGroup, B extends AbstractTokenGroupBuilder<T, B>>
             extends AbstractTokenBuilder<T, B> {
 

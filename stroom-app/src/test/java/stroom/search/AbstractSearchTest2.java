@@ -17,7 +17,6 @@
 package stroom.search;
 
 
-import stroom.query.language.SearchRequestBuilder;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
@@ -31,6 +30,7 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.query.common.v2.StoreFactory;
+import stroom.query.language.SearchRequestBuilder;
 import stroom.search.impl.LuceneSearchStoreFactory;
 import stroom.test.AbstractCoreIntegrationTest;
 

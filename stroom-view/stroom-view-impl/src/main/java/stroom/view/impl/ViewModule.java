@@ -21,9 +21,9 @@ import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
-import stroom.view.shared.ViewDoc;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
+import stroom.view.shared.ViewDoc;
 
 import com.google.inject.AbstractModule;
 

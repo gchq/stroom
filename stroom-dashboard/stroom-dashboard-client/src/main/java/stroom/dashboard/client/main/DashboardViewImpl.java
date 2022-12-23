@@ -16,9 +16,9 @@
 
 package stroom.dashboard.client.main;
 
-import stroom.query.client.view.QueryButtons;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.v2.TimeRange;
+import stroom.query.client.view.QueryButtons;
 import stroom.query.client.view.TimeRangeSelector;
 import stroom.widget.util.client.MouseUtil;
 

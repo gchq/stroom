@@ -59,11 +59,6 @@ public enum TokenType {
     AS,
 
 
-
-
-
-
-
     // Comments
     COMMENT,
     BLOCK_COMMENT;

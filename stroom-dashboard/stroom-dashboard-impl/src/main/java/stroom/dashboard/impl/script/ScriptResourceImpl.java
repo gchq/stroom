@@ -22,13 +22,9 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.script.shared.FetchLinkedScriptRequest;
 import stroom.script.shared.ScriptDoc;
 import stroom.script.shared.ScriptResource;
-import stroom.security.api.SecurityContext;
 import stroom.util.shared.EntityServiceException;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
