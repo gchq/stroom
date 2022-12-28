@@ -112,7 +112,7 @@ proxyConfig:
         clientId: null
         clientSecret: null
         formTokenRequest: true
-        identityProviderType: "NONE"
+        identityProviderType: "NO_IDP"
         issuer: null
         jwksUri: null
         logoutEndpoint: null

@@ -609,7 +609,7 @@ appConfig:
         clientId: null
         clientSecret: null
         formTokenRequest: true
-        identityProviderType: "INTERNAL"
+        identityProviderType: "INTERNAL_IDP"
         issuer: null
         jwksUri: null
         logoutEndpoint: null
