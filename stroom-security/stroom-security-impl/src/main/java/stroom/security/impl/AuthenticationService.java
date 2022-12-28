@@ -108,7 +108,7 @@ class AuthenticationService {
         try {
             optUser = userDao.getByName(username, false);
             if (optUser.isEmpty()
-                    && IdpType.INTERNAL.equals(openIdConfigProvider.get().getIdentityProviderType())
+                    && IdpType.INTERNAL_IDP.equals(openIdConfigProvider.get().getIdentityProviderType())
                     && User.ADMIN_USER_NAME.equals(username)) {
 
                 // TODO @AT Probably should be an explicit command to create this to avoid the accidental
@@ -146,7 +146,7 @@ class AuthenticationService {
 
                     // Creating the admin user so create its group too
                     if (User.ADMIN_USER_NAME.equals(name)
-                            && IdpType.INTERNAL.equals(openIdConfigProvider.get().getIdentityProviderType())) {
+                            && IdpType.INTERNAL_IDP.equals(openIdConfigProvider.get().getIdentityProviderType())) {
                         try {
                             User userGroup = createOrRefreshAdminUserGroup();
                             userDao.addUserToGroup(userRef.getUuid(), userGroup.getUuid());

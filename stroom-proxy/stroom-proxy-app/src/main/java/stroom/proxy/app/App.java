@@ -196,7 +196,7 @@ public class App extends Application<Config> {
                 ProxySecurityConfig::getAuthenticationConfig,
                 ProxyAuthenticationConfig::getOpenIdConfig,
                 openIdConfig ->
-                        IdpType.TEST.equals(openIdConfig.getIdentityProviderType()));
+                        IdpType.TEST_CREDENTIALS.equals(openIdConfig.getIdentityProviderType()));
 
         if (areDefaultOpenIdCredsInUse) {
             final DefaultOpenIdCredentials defaultOpenIdCredentials = injector.getInstance(
@@ -213,7 +213,7 @@ public class App extends Application<Config> {
                     "\n  " +
                     "\n   Using default and publicly available Open ID authentication credentials. " +
                     "\n   These should only be used in test/demo environments. " +
-                    "\n   Set " + propPath + " to INTERNAL/EXTERNAL for production environments." +
+                    "\n   Set " + propPath + " to EXTERNAL/NO_IDP for production environments." +
                     "The API key in use is:" +
                     "\n" +
                     "\n   " + defaultOpenIdCredentials.getApiKey() +

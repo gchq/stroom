@@ -38,8 +38,8 @@ public final class AccountModule extends AbstractModule {
         bind(AccountService.class).to(AccountServiceImpl.class);
 
         GuiceUtil.buildMapBinder(binder(), IdpType.class, ProcessingUserIdentityProvider.class)
-                .addBinding(IdpType.INTERNAL, InternalProcessingUserIdentityProvider.class)
-                .addBinding(IdpType.TEST, InternalProcessingUserIdentityProvider.class);
+                .addBinding(IdpType.INTERNAL_IDP, InternalProcessingUserIdentityProvider.class)
+                .addBinding(IdpType.TEST_CREDENTIALS, InternalProcessingUserIdentityProvider.class);
 
         GuiceUtil.buildMultiBinder(binder(), UserNameProvider.class)
                 .addBinding(AccountServiceImpl.class);

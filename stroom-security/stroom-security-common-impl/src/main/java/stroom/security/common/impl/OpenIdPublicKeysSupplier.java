@@ -54,7 +54,7 @@ public class OpenIdPublicKeysSupplier implements Supplier<JsonWebKeySet> {
     @Override
     public JsonWebKeySet get() {
         final OpenIdConfiguration openIdConfiguration = openIdConfigProvider.get();
-        if (IdpType.TEST.equals(openIdConfiguration.getIdentityProviderType())) {
+        if (IdpType.TEST_CREDENTIALS.equals(openIdConfiguration.getIdentityProviderType())) {
             return buildHardCodedKeySet();
         } else {
             return get(openIdConfiguration.getJwksUri());

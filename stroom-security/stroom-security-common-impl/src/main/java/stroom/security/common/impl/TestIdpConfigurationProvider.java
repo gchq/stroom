@@ -35,7 +35,7 @@ public class TestIdpConfigurationProvider implements IdpConfigurationProvider {
     @Override
     public IdpType getIdentityProviderType() {
         showWarning();
-        return IdpType.TEST;
+        return IdpType.TEST_CREDENTIALS;
     }
 
     @Override
@@ -110,7 +110,7 @@ public class TestIdpConfigurationProvider implements IdpConfigurationProvider {
                 if (now.isAfter(nextWarningTime)) {
                     LOGGER.warn("Using default and publicly available Open ID authentication credentials. " +
                             "This is totally insecure! Set property " + OpenIdConfig.PROP_NAME_IDP_TYPE +
-                            " to " + IdpType.EXTERNAL + "/" + IdpType.INTERNAL + ".");
+                            " to " + IdpType.EXTERNAL_IDP + "/" + IdpType.INTERNAL_IDP + ".");
                     nextWarningTime = Instant.now().plus(TIME_BETWEEN_WARNINGS);
                 }
             }

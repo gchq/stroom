@@ -117,11 +117,11 @@ public class DelegatingIdpConfigurationProvider implements IdpConfigurationProvi
     private IdpConfigurationProvider getDelegate() {
         return switch (openIdConfigProvider.get().getIdentityProviderType()) {
 
-            case INTERNAL -> internalIdpConfigurationProvider;
-            case EXTERNAL -> externalIdpConfigurationProvider;
-            case TEST -> stroomTestIdpConfigurationProvider;
-            case NONE -> throw new UnsupportedOperationException(
-                    "No delegate when IDP type is " + IdpType.NONE);
+            case INTERNAL_IDP -> internalIdpConfigurationProvider;
+            case EXTERNAL_IDP -> externalIdpConfigurationProvider;
+            case TEST_CREDENTIALS -> stroomTestIdpConfigurationProvider;
+            case NO_IDP -> throw new UnsupportedOperationException(
+                    "No delegate when IDP type is " + IdpType.NO_IDP);
         };
     }
 }

@@ -55,7 +55,7 @@ public class JwkCache implements PublicJsonWebKeyProvider {
                 .build(k -> {
                     // Bypass the DB when we are using test default creds, i.e. in a test/demo
                     // environment. Not for prod use.
-                    if (IdpType.TEST.equals(openIdConfigProvider.get().getIdentityProviderType())) {
+                    if (IdpType.TEST_CREDENTIALS.equals(openIdConfigProvider.get().getIdentityProviderType())) {
                         LOGGER.debug("Using default public json web key");
                         return Collections.singletonList(
                                 jsonWebKeyFactory.fromJson(defaultOpenIdCredentials.getPublicKeyJson()));

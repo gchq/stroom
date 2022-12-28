@@ -179,7 +179,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
         final boolean useTestCreds = NullSafe.test(
                 openIdConfiguration,
                 OpenIdConfiguration::getIdentityProviderType,
-                IdpType.TEST::equals);
+                IdpType.TEST_CREDENTIALS::equals);
 
         final String issuer = useTestCreds
                 ? defaultOpenIdCredentials.getOauth2Issuer()

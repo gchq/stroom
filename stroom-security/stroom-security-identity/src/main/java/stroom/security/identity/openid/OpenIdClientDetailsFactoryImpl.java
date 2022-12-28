@@ -39,7 +39,7 @@ public class OpenIdClientDetailsFactoryImpl implements OpenIdClientFactory {
         //   mix. However to manage multiple client IDs we would probably need UI pages to do the CRUD on them.
 
         final OpenIdClient oAuth2Client;
-        if (IdpType.TEST.equals(openIdConfigurationProvider.get().getIdentityProviderType())) {
+        if (IdpType.TEST_CREDENTIALS.equals(openIdConfigurationProvider.get().getIdentityProviderType())) {
             oAuth2Client = createDefaultOAuthClient();
         } else {
             oAuth2Client = dao.getClientByName(INTERNAL_STROOM_CLIENT)

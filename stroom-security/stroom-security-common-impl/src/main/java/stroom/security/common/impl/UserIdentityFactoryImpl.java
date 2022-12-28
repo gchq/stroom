@@ -92,7 +92,7 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
         Optional<UserIdentity> optUserIdentity = Optional.empty();
 
         final IdpType idpType = openIdConfigProvider.get().getIdentityProviderType();
-        if (IdpType.NONE.equals(idpType)) {
+        if (IdpType.NO_IDP.equals(idpType)) {
             throw new IllegalStateException(
                     "Attempting to get user identity from tokens in request when " +
                             "identityProviderType set to NONE.");
@@ -148,8 +148,9 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
 
     @Override
     public Map<String, String> getServiceUserAuthHeaders() {
-        if (IdpType.NONE.equals(openIdConfigProvider.get().getIdentityProviderType())) {
-            LOGGER.debug("IdpType is NONE");
+        final IdpType idpType = openIdConfigProvider.get().getIdentityProviderType();
+        if (IdpType.NO_IDP.equals(idpType)) {
+            LOGGER.debug("IdpType is {}", idpType);
             return Collections.emptyMap();
         } else {
             final UserIdentity serviceUserIdentity = getServiceUserIdentity();
@@ -164,36 +165,41 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
             LOGGER.debug("Null user supplied");
             return Collections.emptyMap();
 
-        } else if (IdpType.NONE.equals(openIdConfigProvider.get().getIdentityProviderType())) {
-            LOGGER.debug("IdpType is NONE");
-            return Collections.emptyMap();
-
-        } else if (IdpType.TEST.equals(openIdConfigProvider.get().getIdentityProviderType())
-                && !processingUserIdentityProvider.isProcessingUser(userIdentity)) {
-            // The processing user is a bit special so even when using hard-coded default open id
-            // creds the proc user uses tokens created by the internal IDP.
-            LOGGER.debug("Using default token");
-            return jwtContextFactory.createAuthorisationEntries(defaultOpenIdCredentials.getApiKey());
-
-        } else if (userIdentity instanceof final AbstractTokenUserIdentity tokenUserIdentity) {
-            // Ensure the token hasn't gone off, just in case the refresh queue (which refreshes ahead of the
-            // expiry time) is busy, so the call to refresh is unlikely.
-            if (tokenUserIdentity.hasTokenExpired()) {
-                refresh(userIdentity);
-            }
-            final String accessToken = Objects.requireNonNull(tokenUserIdentity.getAccessToken(),
-                    () -> "Null access token for userIdentity " + userIdentity);
-            return jwtContextFactory.createAuthorisationEntries(accessToken);
-
-        } else if (userIdentity instanceof final HasJwt hasJwt) {
-            // This is for stroom's processing user identity which we don't need to refresh as
-            // ProcessingUserIdentityProviderImpl handles that
-            final String accessToken = Objects.requireNonNull(hasJwt.getJwt());
-            return jwtContextFactory.createAuthorisationEntries(accessToken);
-
         } else {
-            LOGGER.debug(() -> "Wrong type of userIdentity " + userIdentity.getClass());
-            return Collections.emptyMap();
+            final IdpType idpType = openIdConfigProvider.get().getIdentityProviderType();
+            LOGGER.debug(() -> LogUtil.message("IdpType: {}, userIdentity type: {}",
+                    idpType, userIdentity.getClass().getSimpleName()));
+
+            if (IdpType.NO_IDP.equals(idpType)) {
+                return Collections.emptyMap();
+
+            } else if (IdpType.TEST_CREDENTIALS.equals(idpType)
+                    && !processingUserIdentityProvider.isProcessingUser(userIdentity)) {
+                // The processing user is a bit special so even when using hard-coded default open id
+                // creds the proc user uses tokens created by the internal IDP.
+                LOGGER.debug("Using default token");
+                return jwtContextFactory.createAuthorisationEntries(defaultOpenIdCredentials.getApiKey());
+
+            } else if (userIdentity instanceof final AbstractTokenUserIdentity tokenUserIdentity) {
+                // Ensure the token hasn't gone off, just in case the refresh queue (which refreshes ahead of the
+                // expiry time) is busy, so the call to refresh is unlikely.
+                if (tokenUserIdentity.hasTokenExpired()) {
+                    refresh(userIdentity);
+                }
+                final String accessToken = Objects.requireNonNull(tokenUserIdentity.getAccessToken(),
+                        () -> "Null access token for userIdentity " + userIdentity);
+                return jwtContextFactory.createAuthorisationEntries(accessToken);
+
+            } else if (userIdentity instanceof final HasJwt hasJwt) {
+                // This is for stroom's processing user identity which we don't need to refresh as
+                // ProcessingUserIdentityProviderImpl handles that
+                final String accessToken = Objects.requireNonNull(hasJwt.getJwt());
+                return jwtContextFactory.createAuthorisationEntries(accessToken);
+
+            } else {
+                LOGGER.debug(() -> "Wrong type of userIdentity " + userIdentity.getClass());
+                return Collections.emptyMap();
+            }
         }
     }
 
@@ -211,7 +217,7 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
                                                           final AuthenticationState state) {
         final OpenIdConfiguration openIdConfiguration = openIdConfigProvider.get();
 
-        if (IdpType.NONE.equals(openIdConfigProvider.get().getIdentityProviderType())) {
+        if (IdpType.NO_IDP.equals(openIdConfigProvider.get().getIdentityProviderType())) {
             throw new IllegalStateException(
                     "Attempting to do OIDC auth flow with identityProviderType set to NONE.");
         }
@@ -506,18 +512,18 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
         final IdpType idpType = openIdConfiguration.getIdentityProviderType();
 
         switch (idpType) {
-            case NONE:
+            case NO_IDP:
                 serviceUserIdentity = new UserIdentity() {
                     @Override
                     public String getId() {
-                        return "NONE SERVICE USER";
+                        return "NO_IDP SERVICE USER";
                     }
                 };
                 return true;
-            case TEST:
+            case TEST_CREDENTIALS:
                 createOrUpdateTestServiceUser();
                 return true;
-            case EXTERNAL:
+            case EXTERNAL_IDP:
                 createOrUpdateExternalServiceUser(openIdConfiguration);
                 return true;
             default:

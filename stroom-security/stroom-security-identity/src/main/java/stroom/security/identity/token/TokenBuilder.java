@@ -19,6 +19,8 @@
 package stroom.security.identity.token;
 
 import stroom.security.openid.api.OpenId;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import org.jose4j.jwk.PublicJsonWebKey;
 import org.jose4j.jws.AlgorithmIdentifiers;
@@ -26,14 +28,12 @@ import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.NumericDate;
 import org.jose4j.lang.JoseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 
 public class TokenBuilder {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TokenBuilder.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TokenBuilder.class);
 
     private Instant expirationTime;
     private String issuer;
@@ -112,7 +112,7 @@ public class TokenBuilder {
 
         // TODO need to pass this in as it may not be the default one
         if (publicJsonWebKey.getKeyId() != null && !publicJsonWebKey.getKeyId().isEmpty()) {
-            LOGGER.info("Setting KeyIdHeaderValue to " + publicJsonWebKey.getKeyId());
+            LOGGER.debug(() -> "Setting KeyIdHeaderValue to " + publicJsonWebKey.getKeyId());
             jws.setKeyIdHeaderValue(publicJsonWebKey.getKeyId());
         }
 

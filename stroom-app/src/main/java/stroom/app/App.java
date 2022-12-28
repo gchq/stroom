@@ -316,7 +316,7 @@ public class App extends Application<Config> {
                 SecurityConfig::getAuthenticationConfig,
                 AuthenticationConfig::getOpenIdConfig,
                 openIdConfig ->
-                        IdpType.TEST.equals(openIdConfig.getIdentityProviderType()));
+                        IdpType.TEST_CREDENTIALS.equals(openIdConfig.getIdentityProviderType()));
 
         if (areDefaultOpenIdCredsInUse) {
             final DefaultOpenIdCredentials defaultOpenIdCredentials = injector.getInstance(
@@ -334,7 +334,7 @@ public class App extends Application<Config> {
                     "\n  " +
                     "\n   Using default and publicly available Open ID authentication credentials. " +
                     "\n   This is insecure! These should only be used in test/demo environments. " +
-                    "\n   Set " + propPath + " to INTERNAL/EXTERNAL for production environments." +
+                    "\n   Set " + propPath + " to INTERNAL_IDP/EXTERNAL_IDP for production environments." +
                     "\n" +
                     "\n   " + defaultOpenIdCredentials.getApiKey() +
                     "\n  -----------------------------------------------------------------------------" +

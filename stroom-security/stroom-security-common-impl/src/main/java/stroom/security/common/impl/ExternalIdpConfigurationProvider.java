@@ -74,7 +74,7 @@ public class ExternalIdpConfigurationProvider
         final OpenIdConfig openIdConfig = openIdConfigProvider.get();
         final String configurationEndpoint = openIdConfig.getOpenIdConfigurationEndpoint();
 
-        if (!IdpType.EXTERNAL.equals(openIdConfig.getIdentityProviderType())) {
+        if (!IdpType.EXTERNAL_IDP.equals(openIdConfig.getIdentityProviderType())) {
             resultBuilder
                     .healthy()
                     .withMessage("Not using external IDP (Using "

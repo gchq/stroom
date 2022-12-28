@@ -158,10 +158,10 @@ public abstract class OpenIdConfig
     @JsonProperty
     @JsonPropertyDescription("The type of Open ID Connect identity provider that stroom/proxy" +
             "will use for authentication. Valid values are: " +
-            "INTERNAL - Stroom's own built in IDP (not valid for stroom-proxy)," +
-            "EXTERNAL - An external IDP such as KeyCloak/Cognito (stroom's internal IDP can be used as " +
+            "INTERNAL_IDP - Stroom's own built in IDP (not valid for stroom-proxy)," +
+            "EXTERNAL_IDP - An external IDP such as KeyCloak/Cognito (stroom's internal IDP can be used as " +
             "stroom-proxy's external IDP) and" +
-            "TEST - Use hard-coded authentication credentials for test/demo only.")
+            "TEST_CREDENTIALS - Use hard-coded authentication credentials for test/demo only.")
     public IdpType getIdentityProviderType() {
         return identityProviderType;
     }
@@ -266,7 +266,7 @@ public abstract class OpenIdConfig
     @ValidationMethod(message = "If " + PROP_NAME_IDP_TYPE + " is set to 'EXTERNAL', property "
             + PROP_NAME_CONFIGURATION_ENDPOINT + " must be set.")
     public boolean isConfigurationEndpointValid() {
-        return !IdpType.EXTERNAL.equals(identityProviderType)
+        return !IdpType.EXTERNAL_IDP.equals(identityProviderType)
                 || (openIdConfigurationEndpoint != null && !openIdConfigurationEndpoint.isBlank());
     }
 

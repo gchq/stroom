@@ -128,11 +128,10 @@ public class IdpIdentityToStroomUserMapper implements IdpIdentityMapper {
             final String userId = getUserId(jwtContext.getJwtClaims());
             final String userUuid;
 
-            if (IdpType.TEST.equals(openIdConfigProvider.get().getIdentityProviderType())
+            if (IdpType.TEST_CREDENTIALS.equals(openIdConfigProvider.get().getIdentityProviderType())
                     && jwtContext.getJwtClaims().getAudience().contains(defaultOpenIdCredentials.getOauth2ClientId())
                     && userId.equals(defaultOpenIdCredentials.getApiKeyUserEmail())) {
-                LOGGER.warn(() ->
-                        "Authenticating using default API key. DO NOT USE IN PRODUCTION!");
+                LOGGER.debug("Authenticating using default API key. DO NOT USE IN PRODUCTION!");
                 // Using default creds so just fake a user
                 userUuid = UUID.randomUUID().toString();
             } else {

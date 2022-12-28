@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.dropwizard.validation.ValidationMethod;
 
 @JsonPropertyOrder(alphabetic = true)
 public class StroomOpenIdConfig extends OpenIdConfig implements IsStroomConfig {
@@ -47,7 +48,18 @@ public class StroomOpenIdConfig extends OpenIdConfig implements IsStroomConfig {
 
     @JsonIgnore
     public IdpType getDefaultIdpType() {
-        return IdpType.INTERNAL;
+        return IdpType.INTERNAL_IDP;
+    }
+
+    @SuppressWarnings("unused")
+    @JsonIgnore
+    @ValidationMethod(message = "Invalid value for identityProviderType. Supported values are EXTERNAL_IDP, " +
+            "INTERNAL_IDP and TEST_CREDENTIALS.")
+    public boolean isIdentityProviderTypeValid() {
+        final IdpType idpType = getIdentityProviderType();
+        return IdpType.EXTERNAL_IDP.equals(idpType)
+                || IdpType.INTERNAL_IDP.equals(idpType)
+                || IdpType.TEST_CREDENTIALS.equals(idpType);
     }
 
     public StroomOpenIdConfig withIdentityProviderType(final IdpType identityProviderType) {

@@ -74,12 +74,12 @@ public class DelegatingJwtContextFactory implements JwtContextFactory {
 
     private JwtContextFactory getDelegate() {
         return switch (openIdConfigProvider.get().getIdentityProviderType()) {
-            case INTERNAL, TEST ->
+            case INTERNAL_IDP, TEST_CREDENTIALS ->
                     internalJwtContextFactory;
-            case EXTERNAL ->
+            case EXTERNAL_IDP ->
                     standardJwtContextFactory;
-            case NONE ->
-                    throw new UnsupportedOperationException("No JwtContextFactory when IDP type is " + IdpType.NONE);
+            case NO_IDP ->
+                    throw new UnsupportedOperationException("No JwtContextFactory when IDP type is " + IdpType.NO_IDP);
         };
     }
 }

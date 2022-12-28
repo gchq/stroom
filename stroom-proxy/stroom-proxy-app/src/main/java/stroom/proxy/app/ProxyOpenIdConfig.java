@@ -51,7 +51,7 @@ public class ProxyOpenIdConfig extends OpenIdConfig implements IsProxyConfig {
 
     @JsonIgnore
     public IdpType getDefaultIdpType() {
-        return IdpType.NONE;
+        return IdpType.NO_IDP;
     }
 
     /**
@@ -61,9 +61,9 @@ public class ProxyOpenIdConfig extends OpenIdConfig implements IsProxyConfig {
     @JsonProperty
     @JsonPropertyDescription("The type of Open ID Connect identity provider that stroom/proxy" +
             "will use for authentication. Valid values are: " +
-            "EXTERNAL - An external IDP such as KeyCloak/Cognito, " +
-            "TEST - Use hard-coded authentication credentials for test/demo only and " +
-            "NONE - No IDP is used. API keys are set in config for feed status checks.")
+            "EXTERNAL_IDP - An external IDP such as KeyCloak/Cognito, " +
+            "TEST_CREDENTIALS - Use hard-coded authentication credentials for test/demo only and " +
+            "NO_IDP - No IDP is used. API keys are set in config for feed status checks.")
     @Override
     public IdpType getIdentityProviderType() {
         return super.getIdentityProviderType();
@@ -73,7 +73,7 @@ public class ProxyOpenIdConfig extends OpenIdConfig implements IsProxyConfig {
     @JsonIgnore
     @ValidationMethod(message = "INTERNAL is not a valid value for identityProviderType in stroom-proxy.")
     public boolean isIdentityProviderTypeValid() {
-        return !IdpType.INTERNAL.equals(getIdentityProviderType());
+        return !IdpType.INTERNAL_IDP.equals(getIdentityProviderType());
     }
 
     public ProxyOpenIdConfig withIdentityProviderType(final IdpType identityProviderType) {

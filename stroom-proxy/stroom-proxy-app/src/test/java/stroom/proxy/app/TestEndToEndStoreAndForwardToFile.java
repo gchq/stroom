@@ -39,7 +39,7 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
                         .build())
                 .securityConfig(new ProxySecurityConfig(ProxyAuthenticationConfig.builder()
                         .openIdConfig(new ProxyOpenIdConfig()
-                                .withIdentityProviderType(IdpType.TEST))
+                                .withIdentityProviderType(IdpType.TEST_CREDENTIALS))
                         .build()))
                 .aggregatorConfig(AggregatorConfig.builder()
                         .maxItemsPerAggregate(1000)

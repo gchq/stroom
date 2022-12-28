@@ -69,7 +69,7 @@ public class SecurityModule extends AbstractModule {
 
         bind(ProcessingUserIdentityProvider.class).to(DelegatingProcessingUserIdentityProvider.class);
         GuiceUtil.buildMapBinder(binder(), IdpType.class, ProcessingUserIdentityProvider.class)
-                .addBinding(IdpType.EXTERNAL, ExternalProcessingUserIdentityProvider.class);
+                .addBinding(IdpType.EXTERNAL_IDP, ExternalProcessingUserIdentityProvider.class);
 
         FilterBinder.create(binder())
                 .bind(new FilterInfo(ContentSecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),

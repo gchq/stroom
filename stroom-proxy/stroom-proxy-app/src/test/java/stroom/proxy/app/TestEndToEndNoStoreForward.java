@@ -37,7 +37,7 @@ public class TestEndToEndNoStoreForward extends AbstractEndToEndTest {
                         .build())
                 .securityConfig(new ProxySecurityConfig(ProxyAuthenticationConfig.builder()
                         .openIdConfig(new ProxyOpenIdConfig()
-                                .withIdentityProviderType(IdpType.TEST))
+                                .withIdentityProviderType(IdpType.TEST_CREDENTIALS))
                         .build()))
                 .addForwardDestination(createForwardHttpPostConfig())
                 .restClientConfig(RestClientConfig.builder()

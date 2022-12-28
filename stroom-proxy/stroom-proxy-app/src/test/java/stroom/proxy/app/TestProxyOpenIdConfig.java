@@ -103,7 +103,7 @@ class TestProxyOpenIdConfig extends AbstractValidatorTest {
     void testValidation_invalidIdpType() {
 
         final ProxyOpenIdConfig stroomOpenIdConfig = new ProxyOpenIdConfig()
-                .withIdentityProviderType(IdpType.INTERNAL);
+                .withIdentityProviderType(IdpType.INTERNAL_IDP);
 
         final Set<ConstraintViolation<ProxyOpenIdConfig>> constraintViolations = validateInvalidValue(
                 stroomOpenIdConfig);
