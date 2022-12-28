@@ -3,6 +3,8 @@ package stroom.config.global.impl;
 import stroom.config.app.AppConfig;
 import stroom.config.app.AppConfigModule;
 import stroom.config.app.ConfigHolder;
+import stroom.security.impl.StroomOpenIdConfig;
+import stroom.security.openid.api.OpenIdConfig;
 import stroom.util.io.PathConfig;
 import stroom.util.io.StroomPathConfig;
 import stroom.util.logging.LambdaLogger;
@@ -29,7 +31,8 @@ public class TestConfigProvidersModule {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestConfigProvidersModule.class);
 
     private static final Set<Class<?>> SPECIAL_CASE_CLASSES = Set.of(
-            PathConfig.class);
+            PathConfig.class,
+            OpenIdConfig.class);
 
     @Test
     void testProviderMethodPresence() {
@@ -138,6 +141,9 @@ public class TestConfigProvidersModule {
                                 // StroomPathConfig is also mapped to PathConfig
                                 softAssertions.assertThat(config.getClass())
                                         .isEqualTo(StroomPathConfig.class);
+                            } else if (method.getName().equals("getOpenIdConfig2")) {
+                                softAssertions.assertThat(config.getClass())
+                                        .isEqualTo(StroomOpenIdConfig.class);
 //                            } else if (method.getName().equals("getRepoConfig")) {
 //                                // StroomPathConfig is also mapped to PathConfig
 //                                softAssertions.assertThat(config.getClass())
