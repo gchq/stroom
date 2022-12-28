@@ -50,7 +50,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     public static final String PROP_NAME_EVENT_STORE = "eventStore";
     public static final String PROP_NAME_FILE_SCANNERS = "fileScanners";
     public static final String PROP_NAME_AGGREGATOR = "aggregator";
-    //    public static final String PROP_NAME_FORWARD_DESTINATIONS = "forwardDestinations";
     public static final String PROP_NAME_FORWARD_FILE_DESTINATIONS = "forwardFileDestinations";
     public static final String PROP_NAME_FORWARD_HTTP_DESTINATIONS = "forwardHttpDestinations";
     public static final String PROP_NAME_LOG_STREAM = "logStream";
@@ -77,7 +76,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     private final EventStoreConfig eventStoreConfig;
     private final List<FileScannerConfig> fileScanners;
     private final AggregatorConfig aggregatorConfig;
-    //    private final List<ForwardConfig> forwardDestinations;
     private final List<ForwardFileConfig> forwardFileDestinations;
     private final List<ForwardHttpPostConfig> forwardHttpDestinations;
     private final LogStreamConfig logStreamConfig;
@@ -128,7 +126,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             @JsonProperty(PROP_NAME_EVENT_STORE) final EventStoreConfig eventStoreConfig,
             @JsonProperty(PROP_NAME_FILE_SCANNERS) final List<FileScannerConfig> fileScanners,
             @JsonProperty(PROP_NAME_AGGREGATOR) final AggregatorConfig aggregatorConfig,
-//            @JsonProperty(PROP_NAME_FORWARD_DESTINATIONS) final List<ForwardConfig> forwardDestinations,
             @JsonProperty(PROP_NAME_FORWARD_FILE_DESTINATIONS) final List<ForwardFileConfig> forwardFileDestinations,
             @JsonProperty(PROP_NAME_FORWARD_HTTP_DESTINATIONS) final List<ForwardHttpPostConfig> forwardHttpDestinations,
             @JsonProperty(PROP_NAME_LOG_STREAM) final LogStreamConfig logStreamConfig,
@@ -150,7 +147,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         this.eventStoreConfig = eventStoreConfig;
         this.fileScanners = fileScanners;
         this.aggregatorConfig = aggregatorConfig;
-//        this.forwardDestinations = forwardDestinations;
         this.forwardFileDestinations = forwardFileDestinations;
         this.forwardHttpDestinations = forwardHttpDestinations;
         this.logStreamConfig = logStreamConfig;
