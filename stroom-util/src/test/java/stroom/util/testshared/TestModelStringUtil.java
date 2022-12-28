@@ -198,7 +198,6 @@ class TestModelStringUtil {
                         ModelStringUtil.formatIECByteSizeString(testCase.getInput()))
                 .withSimpleEqualityAssertion()
                 .addCase(1L, "1.0B")
-                .addCase(1L, "1.0B")
                 .addCase(999L, "999B")
                 .addCase(1_024L, "1.0K")
                 .addCase(1_126L, "1.1K") // 1.099K
