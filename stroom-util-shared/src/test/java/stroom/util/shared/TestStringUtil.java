@@ -170,7 +170,6 @@ class TestStringUtil {
                 .addCase(" \" abc \" ", null)
                 .addCase(" \" abc  ", null)
                 .addCase("  a\"bc  ", null)
-                .addCase("  a\"bc  ", null)
                 .addCase("a\"bc", null)
                 .addCase(" my name is \"Bob\". ", null)
                 .build();
