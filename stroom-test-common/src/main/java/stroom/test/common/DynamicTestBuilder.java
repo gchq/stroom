@@ -419,10 +419,12 @@ class DynamicTestBuilder {
                 Assertions.fail("No test cases provided");
             }
             final Set<I> inputs = new HashSet<>();
-            for (final TestCase<I, O> testCase : testCases) {
+            for (int i = 0; i < testCases.size(); i++) {
+                final TestCase<I, O> testCase = testCases.get(i);
                 final I input = testCase.getInput();
                 if (inputs.contains(input)) {
-                    Assertions.fail("Multiple tests have the same input: " + valueToStr(input));
+                    Assertions.fail(LogUtil.message("Test case {} has the same input has another case: {}",
+                            (i + 1), valueToStr(input)));
                 }
                 inputs.add(input);
             }

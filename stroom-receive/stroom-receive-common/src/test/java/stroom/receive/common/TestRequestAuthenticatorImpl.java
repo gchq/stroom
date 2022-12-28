@@ -142,7 +142,7 @@ class TestRequestAuthenticatorImpl {
                         new Input(
                                 configTokenOnly,
                                 TokenState.NOT_FOUND,
-                                CertState.NOT_FOUND,
+                                CertState.FOUND,
                                 Optional.empty()),
                         Tuple.of(null, StroomStatusCode.CLIENT_TOKEN_REQUIRED))
                 .addNamedCase(
