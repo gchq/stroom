@@ -43,9 +43,6 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StringUtil;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -60,8 +57,7 @@ import javax.inject.Inject;
 
 public class ReferenceData {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceData.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ReferenceData.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReferenceData.class);
 
     // Actually 11.5 days but this is fine for the purposes of reference data.
     static final long APPROX_TEN_DAYS = 1000000000;
@@ -250,7 +246,7 @@ public class ReferenceData {
             }
 
             // If a lookup is viable a RefDataValueProxy will have been added to the result
-            LAMBDA_LOGGER.trace(() -> LogUtil.message("refDataValueProxy: {}",
+            LOGGER.trace(() -> LogUtil.message("refDataValueProxy: {}",
                     referenceDataResult.getRefDataValueProxy().orElse(null)));
         }
     }
@@ -267,7 +263,7 @@ public class ReferenceData {
                                                                 final String keyName,
                                                                 final ReferenceDataResult result) {
 
-        LAMBDA_LOGGER.trace(() -> LogUtil.message(
+        LOGGER.trace(() -> LogUtil.message(
                 "getNestedStreamEventList called, pipe: {}, feed: {}, streamType: {}, map: {}, key: {}",
                 pipelineReference.getName(),
                 pipelineReference.getFeed().getName(),
@@ -278,7 +274,7 @@ public class ReferenceData {
         // Get nested stream part.
         final long partIndex = metaHolder.getPartIndex();
 
-        LAMBDA_LOGGER.trace(() -> LogUtil.message("StreamId: {}, parentStreamId: {}",
+        LOGGER.trace(() -> LogUtil.message("StreamId: {}, parentStreamId: {}",
                 metaHolder.getMeta().getId(),
                 metaHolder.getMeta().getParentMetaId()));
 
@@ -603,7 +599,7 @@ public class ReferenceData {
                         storedErrorReceiver.replay(result);
                     }
 
-                    LAMBDA_LOGGER.debug(() -> LogUtil.message(
+                    LOGGER.debug(() -> LogUtil.message(
                             "Loaded {} refStreamDefinition", refStreamDefinition));
 
                     if (storedErrorReceiver == null
@@ -638,6 +634,8 @@ public class ReferenceData {
                                                      final long time,
                                                      final ReferenceDataResult result) {
 
+        LOGGER.trace(() -> LogUtil.message("determineEffectiveStream({}, {})",
+                pipelineReference, Instant.ofEpochMilli(time)));
         // Create a window of approx 10 days to cache effective streams.
         // First round down the time to the nearest 10 days approx (actually more like 11.5, one billion milliseconds).
         final long fromMs = (time / APPROX_TEN_DAYS) * APPROX_TEN_DAYS;
@@ -662,8 +660,8 @@ public class ReferenceData {
                     () -> Arrays.asList(
                             effectiveStreams.size(),
                             StringUtil.pluralSuffix(effectiveStreams.size()),
-                            Instant.ofEpochMilli(effectiveStreams.last().getEffectiveMs()),
                             Instant.ofEpochMilli(effectiveStreams.first().getEffectiveMs()),
+                            Instant.ofEpochMilli(effectiveStreams.last().getEffectiveMs()),
                             effectiveStreamKey));
 
             if (LOGGER.isTraceEnabled()) {
