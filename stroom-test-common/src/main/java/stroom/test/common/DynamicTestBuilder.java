@@ -15,9 +15,10 @@ import org.junit.jupiter.api.DynamicTest;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -417,20 +418,14 @@ class DynamicTestBuilder {
             if (NullSafe.isEmptyCollection(testCases)) {
                 Assertions.fail("No test cases provided");
             }
-            final String dupTestNames = testCases.stream()
-                    .map(this::getEffectiveName)
-                    .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
-                    .entrySet()
-                    .stream()
-                    .filter(e -> e.getValue() > 1)
-                    .map(Entry::getKey)
-                    .map(val -> "'" + val + "'")
-                    .collect(Collectors.joining(", "));
-            if (!NullSafe.isBlankString(dupTestNames)) {
-                Assertions.fail("Test names (explicit or derived) must be unique. Duplicate test names: "
-                        + dupTestNames);
+            final Set<I> inputs = new HashSet<>();
+            for (final TestCase<I, O> testCase : testCases) {
+                final I input = testCase.getInput();
+                if (inputs.contains(input)) {
+                    Assertions.fail("Multiple tests have the same input: " + valueToStr(input));
+                }
+                inputs.add(input);
             }
-
             return createDynamicTestStream();
         }
 
