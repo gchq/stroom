@@ -6,6 +6,7 @@ import stroom.proxy.repo.ForwardRetryConfig;
 import stroom.receive.common.StreamHandlers;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
+import stroom.util.logging.LogUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,8 +68,12 @@ public class FailureDestinationsImpl implements FailureDestinations {
             try {
                 Files.createDirectories(failedForwardPath);
             } catch (final IOException e) {
-                LOGGER.error("Failed to create directory to store failed forward data: " + FileUtil.getCanonicalPath(
-                        failedForwardPath));
+                LOGGER.error(LogUtil.message(
+                        "Failed to create directory '{}' to store failed forward data. This is configured using " +
+                                "property {}. {}",
+                        FileUtil.getCanonicalPath(failedForwardPath),
+                        forwardRetryConfig.getFullPathStr(ForwardRetryConfig.PROP_NAME_FAILED_FORWARD_DIR),
+                        e.getMessage()));
                 throw new UncheckedIOException(e);
             }
 

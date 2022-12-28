@@ -423,7 +423,8 @@ public class QuickFilterPredicateFactory {
         return defaultFieldMappers;
     }
 
-    static List<MatchToken> extractMatchTokens(final String userInput, final FilterFieldMappers<?> filterFieldMappers) {
+    static List<MatchToken> extractMatchTokens(final String userInput,
+                                               final FilterFieldMappers<?> filterFieldMappers) {
         if (userInput == null || userInput.isBlank()) {
             return Collections.emptyList();
         } else {
@@ -472,6 +473,7 @@ public class QuickFilterPredicateFactory {
             } else {
                 return tokens.stream()
                         .filter(token -> !token.isTermBlank()) // no point doing anything with 'name:'
+                        .distinct() // dup matchTokens break collectors downstream and add no benefit
                         .collect(Collectors.toList());
             }
         }

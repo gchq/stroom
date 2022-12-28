@@ -33,11 +33,13 @@ import stroom.util.shared.PermissionException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
 public class PipelineServiceImpl implements PipelineService {
+
     private final PipelineStore pipelineStore;
     private final DocumentResourceHelper documentResourceHelper;
     private final PipelineStackLoader pipelineStackLoader;
@@ -140,4 +142,12 @@ public class PipelineServiceImpl implements PipelineService {
         });
     }
 
+    @Override
+    public List<String> findUuidsByName(final String nameFilter) {
+        return securityContext.secureResult(() ->
+                pipelineStore.findByName(nameFilter, true)
+                        .stream()
+                        .map(DocRef::getUuid)
+                        .collect(Collectors.toList()));
+    }
 }

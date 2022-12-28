@@ -41,9 +41,14 @@ CMD id
 # or not so we need to test for their existence and create a user and/or group
 # as needed.
 # Lots of echo to help debug in travis
+# Apk add build-base, python3 and make for node-sass, which is deprecated, so we should really
+# use 'sass' but it is not a direct dep of ours.
 RUN apk add --no-cache \
       bash \
+      build-base \
       git \
+      make \
+      python3 \
       su-exec \
       tini \
     && echo "USER_ID: [$USER_ID]" \

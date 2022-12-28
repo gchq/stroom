@@ -29,6 +29,8 @@ import stroom.pipeline.filter.TestSAXEventFilter;
 import stroom.pipeline.refdata.store.ByteBufferConsumerId;
 import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.GenericRefDataValueProxyConsumer;
+import stroom.pipeline.refdata.store.MapDefinition;
+import stroom.pipeline.refdata.store.MultiRefDataValueProxy;
 import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefDataStore.StorageType;
 import stroom.pipeline.refdata.store.RefDataValue;
@@ -499,6 +501,22 @@ class TestReferenceDataFilter extends StroomUnitTest {
                 xmlEmitter, pipelineConfiguration, refDataValueProxyConsumerFactory);
 
         final RefDataValueProxy refDataValueProxy = new RefDataValueProxy() {
+
+            @Override
+            public String getKey() {
+                return null;
+            }
+
+            @Override
+            public String getMapName() {
+                return null;
+            }
+
+            @Override
+            public List<MapDefinition> getMapDefinitions() {
+                return null;
+            }
+
             @Override
             public Optional<RefDataValue> supplyValue() {
                 return Optional.of(fastInfosetValue);
@@ -522,6 +540,11 @@ class TestReferenceDataFilter extends StroomUnitTest {
                     throw new RuntimeException(LogUtil.message(
                             "Error handling reference data value: {}", e.getMessage()), e);
                 }
+            }
+
+            @Override
+            public RefDataValueProxy merge(final RefDataValueProxy additionalProxy) {
+                return MultiRefDataValueProxy.merge(this, additionalProxy);
             }
         };
 

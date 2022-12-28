@@ -12,6 +12,7 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.PermissionException;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -99,4 +100,19 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
     ////////////////////////////////////////////////////////////////////////
     // END OF HasDependencies
     ////////////////////////////////////////////////////////////////////////
+
+
+    @Override
+    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
+        throw new PermissionException(
+                securityContext.getUserId(),
+                "You cannot perform findByNames on the System node handler");
+    }
+
+    @Override
+    public Set<DocRef> listDocuments() {
+        throw new PermissionException(
+                securityContext.getUserId(),
+                "You cannot perform listDocuments on the System node handler");
+    }
 }

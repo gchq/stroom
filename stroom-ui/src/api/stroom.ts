@@ -1503,7 +1503,26 @@ export type IdField = AbstractField;
 
 export interface ImportConfigRequest {
   confirmList?: ImportState[];
+  importSettings?: ImportSettings;
   resourceKey?: ResourceKey;
+}
+
+export interface ImportConfigResponse {
+  confirmList?: ImportState[];
+  resourceKey?: ResourceKey;
+}
+
+export interface ImportSettings {
+  enableFilters?: boolean;
+
+  /** @format int64 */
+  enableFiltersFromTime?: number;
+  importMode?: "CREATE_CONFIRMATION" | "ACTION_CONFIRMATION" | "IGNORE_CONFIRMATION";
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  rootDocRef?: DocRef;
+  useImportFolders?: boolean;
+  useImportNames?: boolean;
 }
 
 export interface ImportState {
@@ -1512,19 +1531,13 @@ export interface ImportState {
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   docRef?: DocRef;
-  enableFilters?: boolean;
-
-  /** @format int64 */
-  enableFiltersFromTime?: number;
   messageList?: Message[];
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   rootDocRef?: DocRef;
   sourcePath?: string;
-  state?: "NEW" | "UPDATE" | "EQUAL";
+  state?: "NEW" | "UPDATE" | "EQUAL" | "IGNORE";
   updatedFieldList?: string[];
-  useImportFolders?: boolean;
-  useImportNames?: boolean;
 }
 
 export interface IndexDoc {
@@ -4838,25 +4851,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Content
-     * @name ConfirmContentImport
-     * @summary Get import confirmation state
-     * @request POST:/content/v1/confirmImport
-     * @secure
-     */
-    confirmContentImport: (data: ImportConfigRequest, params: RequestParams = {}) =>
-      this.request<any, ImportState[]>({
-        path: `/content/v1/confirmImport`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Content
      * @name ExportContent
      * @summary Export content
      * @request POST:/content/v1/export
@@ -4901,7 +4895,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     importContent: (data: ImportConfigRequest, params: RequestParams = {}) =>
-      this.request<any, ResourceKey>({
+      this.request<any, ImportConfigResponse>({
         path: `/content/v1/import`,
         method: "POST",
         body: data,

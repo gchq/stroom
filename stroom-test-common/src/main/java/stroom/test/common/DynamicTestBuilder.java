@@ -6,6 +6,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 
+import com.google.common.base.Strings;
 import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
@@ -19,6 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -258,6 +260,7 @@ class DynamicTestBuilder {
         public CasesBuilder<I, O> withSimpleEqualityAssertion() {
             final Consumer<TestOutcome<I, O>> wrappedConsumer = wrapTestOutcomeConsumer(testOutcome ->
                     Assertions.assertThat(testOutcome.getActualOutput())
+                            .withFailMessage(testOutcome::buildFailMessage)
                             .isEqualTo(testOutcome.getExpectedOutput()));
             return new CasesBuilder<>(testAction, wrappedConsumer);
         }
@@ -304,7 +307,9 @@ class DynamicTestBuilder {
         private final List<TestCase<I, O>> testCases = new ArrayList<>();
         // Use a default name function but let the user override it
         // TestCase.name takes precedence though.
-        private Function<TestCase<I, O>, String> nameFunction = this::buildTestNameFromInput;
+        private Function<TestCase<I, O>, String> nameFunction = null;
+        private Runnable beforeCaseAction = null;
+        private Runnable afterCaseAction = null;
 
         private CasesBuilder(final Function<TestCase<I, O>, O> testAction,
                              final Consumer<TestOutcome<I, O>> testOutcomeConsumer) {
@@ -411,6 +416,28 @@ class DynamicTestBuilder {
         }
 
         /**
+         * Set an action to run before each test case. Note {@link org.junit.jupiter.api.BeforeEach}
+         * is NOT called before
+         * each case in a dynamic test, so this is an alternative. Note also that the same instance of the test
+         * class is used for each test case.
+         */
+        public CasesBuilder<I, O> withBeforeTestCaseAction(final Runnable action) {
+            this.beforeCaseAction = action;
+            return this;
+        }
+
+        /**
+         * Set an action to run after each test case. Note {@link org.junit.jupiter.api.AfterEach}
+         * is NOT called after
+         * each case in a dynamic test, so this is an alternative. Note also that the same instance of the test
+         * class is used for each test case.
+         */
+        public CasesBuilder<I, O> withAfterTestCaseAction(final Runnable action) {
+            this.afterCaseAction = action;
+            return this;
+        }
+
+        /**
          * Build the {@link Stream} of {@link DynamicTest} with all the added test cases.
          */
         @SuppressWarnings("unused")
@@ -472,24 +499,36 @@ class DynamicTestBuilder {
             return stringBuilder.toString();
         }
 
+        private void runAction(final Runnable action, final String name) {
+            LOGGER.debug("Running action: {}", name);
+            try {
+                action.run();
+            } catch (Exception e) {
+                throw new RuntimeException(
+                        LogUtil.message("Error running action: " + name + ". " + e.getMessage()), e);
+            }
+        }
+
         private Stream<DynamicTest> createDynamicTestStream() {
 
+            AtomicInteger caseCounter = new AtomicInteger();
+
             return testCases.stream()
+                    .sequential()
                     .map(testCase -> {
 
-                        final String testName = getEffectiveName(testCase);
+                        // Name defined in the testCase overrides the name function
+                        final String testName = buildTestName(
+                                testCase,
+                                caseCounter.incrementAndGet(),
+                                testCases.size());
 
                         return DynamicTest.dynamicTest(testName, () -> {
+                            NullSafe.consume(beforeCaseAction, action ->
+                                    runAction(action, "Before Test Case"));
+
                             if (LOGGER.isDebugEnabled()) {
-                                if (testCase.isExpectedToThrow()) {
-                                    LOGGER.debug(() -> LogUtil.message("Input: '{}', expected to throw: '{}'",
-                                            valueToStr(testCase.getInput()),
-                                            testCase.getExpectedThrowableType().getSimpleName()));
-                                } else {
-                                    LOGGER.debug(() -> LogUtil.message("Input: '{}', expectedOutput: '{}'",
-                                            valueToStr(testCase.getInput()),
-                                            valueToStr(testCase.getExpectedOutput())));
-                                }
+                                logCaseToDebug(testCase);
                             }
                             O actualOutput = null;
                             Throwable actualThrowable = null;
@@ -508,16 +547,43 @@ class DynamicTestBuilder {
                                     testCase, actualOutput, actualThrowable);
 
                             testOutcomeConsumer.accept(testOutcome);
+
+                            NullSafe.consume(afterCaseAction, action ->
+                                    runAction(action, "After Test Case"));
                         });
                     });
         }
 
-        private String getEffectiveName(final TestCase<I, O> testCase) {
-            // Name defined in the testCase overrides the name function
-            final String testName = Objects.requireNonNullElseGet(
-                    testCase.getName(),
-                    () -> nameFunction.apply(testCase));
-            return testName;
+        private String buildTestName(final TestCase<I, O> testCase,
+                                     final int caseNo,
+                                     final int casesCount) {
+
+            final Function<TestCase<I, O>, String> nameFunc;
+            if (!NullSafe.isBlankString(testCase.getName())) {
+                nameFunc = TestCase::getName;
+            } else if (nameFunction != null) {
+                nameFunc = nameFunction;
+            } else {
+                // No name or namefunc provided so build a name from the case number and the input
+                // Case number may help in linking a failed test to the source
+                final int padLen = Integer.toString(casesCount).length();
+                final String paddedCaseNo = Strings.padStart(Integer.toString(caseNo), padLen, '0');
+                nameFunc = testCase2 -> paddedCaseNo + " " + buildTestNameFromInput(testCase2);
+            }
+            return nameFunc.apply(testCase);
+        }
+
+        private void logCaseToDebug(final TestCase<I, O> testCase) {
+            if (testCase.isExpectedToThrow()) {
+                LOGGER.debug(() -> LogUtil.message(
+                        "Running test case - {}, expected to throw: '{}'",
+                        TestCase.valueToString("input", testCase.getInput()),
+                        testCase.getExpectedThrowableType().getSimpleName()));
+            } else {
+                LOGGER.debug(() -> LogUtil.message("Running test case - {}, expected {}",
+                        TestCase.valueToString("input", testCase.getInput()),
+                        TestCase.valueToString("output", testCase.getExpectedOutput())));
+            }
         }
     }
 }

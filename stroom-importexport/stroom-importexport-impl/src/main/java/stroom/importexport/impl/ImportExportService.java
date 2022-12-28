@@ -17,6 +17,7 @@
 package stroom.importexport.impl;
 
 import stroom.docref.DocRef;
+import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.util.shared.Message;
 
@@ -29,20 +30,9 @@ import java.util.Set;
  */
 public interface ImportExportService {
 
-    /**
-     * Get a list of entities for Stroom to be able to import.
-     */
-    List<ImportState> createImportConfirmationList(Path data, List<ImportState> confirmList);
-
-    /**
-     * Perform an import using a confirmation list.
-     */
-    void performImportWithConfirmation(Path data, List<ImportState> confirmList);
-
-    /**
-     * Perform an import without using a confirmation list.
-     */
-    void performImportWithoutConfirmation(Path data);
+    List<ImportState> importConfig(Path data,
+                                   ImportSettings importSettings,
+                                   List<ImportState> confirmList);
 
     /**
      * Export a Stroom repository
@@ -50,5 +40,7 @@ public interface ImportExportService {
      * Also in the zip file output content that can be exploded and stored in
      * source control. Used for tracking changes with XSLT and feeds.
      */
-    void exportConfig(Set<DocRef> docRefs, Path data, List<Message> messageList);
+    void exportConfig(Set<DocRef> docRefs,
+                      Path data,
+                      List<Message> messageList);
 }

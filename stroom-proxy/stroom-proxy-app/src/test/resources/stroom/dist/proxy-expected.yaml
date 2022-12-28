@@ -121,6 +121,7 @@ proxyConfig:
         requestScope: null
         tokenEndpoint: null
         validateAudience: true
+  sqsConnectors: []
   threads:
     examineSourceThreadCount: 3
     forwardRetryThreadCount: 2

@@ -16,6 +16,7 @@ dependencies {
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-explorer:stroom-docrefinfo-api')
     implementation project(':stroom-feed:stroom-feed-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')

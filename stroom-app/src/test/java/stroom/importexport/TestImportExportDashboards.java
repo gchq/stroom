@@ -37,6 +37,7 @@ import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.impl.ImportExportService;
+import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
@@ -239,14 +240,17 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         }
 
         // Import All
-        final List<ImportState> confirmations = importExportService
-                .createImportConfirmationList(resourceStore.getTempFile(file), new ArrayList<>());
-
+        final List<ImportState> confirmations = importExportService.importConfig(
+                resourceStore.getTempFile(file),
+                ImportSettings.createConfirmation(),
+                new ArrayList<>());
         for (final ImportState confirmation : confirmations) {
             confirmation.setAction(true);
         }
-
-        importExportService.performImportWithConfirmation(resourceStore.getTempFile(file), confirmations);
+        importExportService.importConfig(
+                resourceStore.getTempFile(file),
+                ImportSettings.actionConfirmation(),
+                confirmations);
 
         assertThat(visualisationStore.list().size()).isEqualTo(startVisualisationSize);
         assertThat(pipelineStore.list().size()).isEqualTo(startPipelineSize);

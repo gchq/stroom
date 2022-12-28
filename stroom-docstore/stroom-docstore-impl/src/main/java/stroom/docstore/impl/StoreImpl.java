@@ -26,9 +26,9 @@ import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Store;
 import stroom.docstore.shared.Doc;
 import stroom.importexport.api.ImportConverter;
-import stroom.importexport.api.ImportExportActionHandler;
+import stroom.importexport.shared.ImportSettings;
+import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
-import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.importexport.shared.ImportState.State;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -321,16 +321,16 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     }
 
     @Override
-    public ImportExportActionHandler.ImpexDetails importDocument(DocRef docRef,
-                                                                 final Map<String, byte[]> dataMap,
-                                                                 final ImportState importState,
-                                                                 final ImportMode importMode) {
+    public DocRef importDocument(DocRef docRef,
+                                 final Map<String, byte[]> dataMap,
+                                 final ImportState importState,
+                                 final ImportSettings importSettings) {
         // Convert legacy import format to the new format if necessary.
         final Map<String, byte[]> convertedDataMap = importConverter.convert(
                 docRef,
                 dataMap,
                 importState,
-                importMode,
+                importSettings,
                 securityContext.getUserId());
 
         if (convertedDataMap != null) {
@@ -340,7 +340,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                 // See if this document already exists and try and read it.
                 final D existingDocument = getExistingDocument(docRef);
 
-                if (ImportMode.CREATE_CONFIRMATION.equals(importMode)) {
+                if (ImportMode.CREATE_CONFIRMATION.equals(importSettings.getImportMode())) {
                     // See if the new document is the same as the old one.
                     if (existingDocument == null) {
                         importState.setState(State.NEW);
@@ -364,7 +364,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                         }
                     }
 
-                } else if (importState.ok(importMode)) {
+                } else if (ImportSettings.ok(importSettings, importState)) {
                     if (existingDocument != null) {
                         docRef = docRef.copy().name(existingDocument.getName()).build();
                         if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.UPDATE)) {
@@ -382,7 +382,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
             }
         }
 
-        return new ImportExportActionHandler.ImpexDetails(docRef);
+        return docRef;
     }
 
     private void importDocument(final DocRef docRef,
@@ -652,13 +652,10 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     }
 
     @Override
-    public List<DocRef> findByName(final String name) {
-        if (name == null) {
-            return Collections.emptyList();
-        }
-        return list()
+    public List<DocRef> findByNames(final List<String> names, final boolean allowWildCards) {
+        return persistence.find(type, names, allowWildCards)
                 .stream()
-                .filter(docRef -> name.equals(docRef.getName()))
+                .filter(this::canRead)
                 .collect(Collectors.toList());
     }
 

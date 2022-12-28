@@ -168,6 +168,16 @@ public class ProxyLifecycle implements Managed {
         addFrequencyExecutor("Event Store - forward",
                 () -> eventStore::forwardAll,
                 eventStoreConfig.getRollFrequency().toMillis());
+
+        if (proxyConfig.getSqsConnectors() != null) {
+            for (final SqsConnectorConfig sqsConnectorConfig : proxyConfig.getSqsConnectors()) {
+                final SqsConnector sqsConnector = new SqsConnector(eventStore, sqsConnectorConfig);
+                // Add executor to forward event store.
+                addFrequencyExecutor("SQS - poll",
+                        () -> sqsConnector::poll,
+                        sqsConnectorConfig.getPollFrequency().toMillis());
+            }
+        }
     }
 
     private void addParallelExecutor(final String threadName,

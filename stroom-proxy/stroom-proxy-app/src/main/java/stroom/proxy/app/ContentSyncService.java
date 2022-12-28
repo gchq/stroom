@@ -3,8 +3,8 @@ package stroom.proxy.app;
 import stroom.docref.DocRef;
 import stroom.importexport.api.DocumentData;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
-import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.security.api.UserIdentityFactory;
 import stroom.util.HasHealthCheck;
@@ -150,7 +150,7 @@ public class ContentSyncService implements Managed, HasHealthCheck {
                     documentData.getDocRef(),
                     documentData.getDataMap(),
                     importState,
-                    ImportMode.IGNORE_CONFIRMATION);
+                    ImportSettings.auto());
         }
     }
 

@@ -244,6 +244,9 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
   elastic:
+    client:
+      maxConnections: 30
+      maxConnectionsPerRoute: 10
     indexCache:
       expireAfterAccess: null
       expireAfterWrite: "PT10M"
@@ -253,7 +256,9 @@ appConfig:
       expireAfterWrite: null
       maximumSize: 100
     indexing:
+      initialRetryBackoffPeriodMs: 1000
       maxNestedElementDepth: 10
+      retryCount: 10
     search:
       scrollDuration: "PT1M"
       searchResultCache:
@@ -725,6 +730,7 @@ appConfig:
         \ connect-src 'self' wss:; frame-ancestors 'self';"
       contentTypeOptions: "nosniff"
       frameOptions: "sameorigin"
+      strictTransportSecurity: "max-age=31536000; includeSubDomains; preload"
       xssProtection: "1; mode=block"
   serviceDiscovery:
     curatorBaseSleepTimeMs: 5000

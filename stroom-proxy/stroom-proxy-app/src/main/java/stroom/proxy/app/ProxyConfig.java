@@ -60,6 +60,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     public static final String PROP_NAME_THREADS = "threads";
     public static final String PROP_NAME_FORWARD_RETRY = "forwardRetry";
     public static final String PROP_NAME_SECURITY = "security";
+    public static final String PROP_NAME_SQS_CONNECTORS = "sqsConnectors";
 
     protected static final boolean DEFAULT_USE_DEFAULT_OPEN_ID_CREDENTIALS = false;
     protected static final boolean DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = true;
@@ -86,6 +87,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     private final ThreadConfig threadConfig;
     private final ForwardRetryConfig forwardRetry;
     private final ProxySecurityConfig proxySecurityConfig;
+    private final List<SqsConnectorConfig> sqsConnectors;
 
     public ProxyConfig() {
         haltBootOnConfigValidationFailure = DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE;
@@ -109,6 +111,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         threadConfig = new ThreadConfig();
         forwardRetry = new ForwardRetryConfig();
         proxySecurityConfig = new ProxySecurityConfig();
+        sqsConnectors = new ArrayList<>();
     }
 
 
@@ -134,7 +137,8 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             @JsonProperty(PROP_NAME_REST_CLIENT) final RestClientConfig restClientConfig,
             @JsonProperty(PROP_NAME_THREADS) final ThreadConfig threadConfig,
             @JsonProperty(PROP_NAME_FORWARD_RETRY) final ForwardRetryConfig forwardRetry,
-            @JsonProperty(PROP_NAME_SECURITY) final ProxySecurityConfig proxySecurityConfig) {
+            @JsonProperty(PROP_NAME_SECURITY) final ProxySecurityConfig proxySecurityConfig,
+            @JsonProperty(PROP_NAME_SQS_CONNECTORS) final List<SqsConnectorConfig> sqsConnectors) {
 
         this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
         this.proxyId = proxyId;
@@ -156,6 +160,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         this.threadConfig = threadConfig;
         this.forwardRetry = forwardRetry;
         this.proxySecurityConfig = proxySecurityConfig;
+        this.sqsConnectors = sqsConnectors;
     }
 
     @AssertTrue(
@@ -279,6 +284,12 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return proxySecurityConfig;
     }
 
+    @JsonPropertyDescription("Configurations for AWS SQS connectors")
+    @JsonProperty
+    public List<SqsConnectorConfig> getSqsConnectors() {
+        return sqsConnectors;
+    }
+
     @JsonIgnore
     @SuppressWarnings("unused")
     @ValidationMethod(message = "If repository.storingEnabled is not true, then forwardFileDestinations " +
@@ -347,6 +358,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         private ThreadConfig threadConfig = new ThreadConfig();
         private ForwardRetryConfig forwardRetry = new ForwardRetryConfig();
         private ProxySecurityConfig proxySecurityConfig = new ProxySecurityConfig();
+        private List<SqsConnectorConfig> sqsConnectors = new ArrayList<>();
 
         private Builder() {
 
@@ -458,6 +470,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             return this;
         }
 
+        public Builder addSqsConnector(final SqsConnectorConfig sqsConnector) {
+            this.sqsConnectors.add(sqsConnector);
+            return this;
+        }
+
         public ProxyConfig build() {
             return new ProxyConfig(
                     haltBootOnConfigValidationFailure,
@@ -478,7 +495,8 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                     restClientConfig,
                     threadConfig,
                     forwardRetry,
-                    proxySecurityConfig);
+                    proxySecurityConfig,
+                    sqsConnectors);
         }
     }
 }
