@@ -38,8 +38,8 @@ import stroom.dropwizard.common.SessionListeners;
 import stroom.dropwizard.common.WebSockets;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
 import stroom.security.impl.AuthenticationConfig;
-import stroom.security.openid.api.OpenIdConfig;
 import stroom.security.openid.api.IdpType;
+import stroom.security.openid.api.OpenIdConfig;
 import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.config.AppConfigValidator;
@@ -319,7 +319,8 @@ public class App extends Application<Config> {
                         IdpType.TEST.equals(openIdConfig.getIdentityProviderType()));
 
         if (areDefaultOpenIdCredsInUse) {
-            final DefaultOpenIdCredentials defaultOpenIdCredentials = injector.getInstance(DefaultOpenIdCredentials.class);
+            final DefaultOpenIdCredentials defaultOpenIdCredentials = injector.getInstance(
+                    DefaultOpenIdCredentials.class);
             final String propPath = configuration.getYamlAppConfig()
                     .getSecurityConfig()
                     .getAuthenticationConfig()

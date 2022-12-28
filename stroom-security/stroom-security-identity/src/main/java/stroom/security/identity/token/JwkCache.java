@@ -16,9 +16,9 @@
 
 package stroom.security.identity.token;
 
+import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.JsonWebKeyFactory;
 import stroom.security.openid.api.OpenIdConfig;
-import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.PublicJsonWebKeyProvider;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LambdaLogger;

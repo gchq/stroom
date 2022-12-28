@@ -16,8 +16,8 @@
 
 package stroom.security.impl;
 
-import stroom.security.openid.api.OpenIdConfig;
 import stroom.security.openid.api.IdpType;
+import stroom.security.openid.api.OpenIdConfig;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.util.AuditUtil;

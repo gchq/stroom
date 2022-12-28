@@ -83,11 +83,18 @@ public class GenerateConfigProvidersModule {
                     final StringBuilder stringBuilder = new StringBuilder();
                     stringBuilder.append(buildMethod(simpleNames, simpleNameToFullNamesMap, clazz));
                     NullSafe.consume(CUSTOM_CLASS_MAPPINGS.get(clazz), interfaceClass ->
-                            stringBuilder.append(buildMethod(
-                                    simpleNames,
-                                    simpleNameToFullNamesMap,
-                                    clazz,
-                                    interfaceClass)));
+                            stringBuilder
+                                    .append("\n")
+                                    .append("    // Binding ")
+                                    .append(clazz.getSimpleName())
+                                    .append(" to additional interface ")
+                                    .append(interfaceClass.getSimpleName())
+                                    .append("\n")
+                                    .append(buildMethod(
+                                            simpleNames,
+                                            simpleNameToFullNamesMap,
+                                            clazz,
+                                            interfaceClass)));
                     return stringBuilder.toString();
                 })
                 .collect(Collectors.joining("\n"));

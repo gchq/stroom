@@ -626,6 +626,8 @@ public class ConfigProvidersModule extends AbstractModule {
         return configMapper.getConfigObject(
                 stroom.security.impl.StroomOpenIdConfig.class);
     }
+
+    // Binding StroomOpenIdConfig to additional interface OpenIdConfig
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")

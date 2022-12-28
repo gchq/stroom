@@ -298,7 +298,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     @ValidationMethod(message = "identityProviderType must be set to EXTERNAL if tokenAuthenticationEnabled is true")
     public boolean isTokenAuthenticationEnabledValid() {
         if (NullSafe.test(receiveDataConfig, ReceiveDataConfig::isTokenAuthenticationEnabled)) {
-                return !NullSafe.test(
+            return !NullSafe.test(
                     proxySecurityConfig,
                     ProxySecurityConfig::getAuthenticationConfig,
                     ProxyAuthenticationConfig::getOpenIdConfig,

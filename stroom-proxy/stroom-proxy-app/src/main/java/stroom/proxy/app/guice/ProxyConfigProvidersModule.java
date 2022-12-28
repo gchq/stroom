@@ -50,6 +50,8 @@ public class ProxyConfigProvidersModule extends AbstractModule {
         return proxyConfigProvider.getConfigObject(
                 stroom.proxy.app.ProxyOpenIdConfig.class);
     }
+
+    // Binding ProxyOpenIdConfig to additional interface OpenIdConfig
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
@@ -67,6 +69,8 @@ public class ProxyConfigProvidersModule extends AbstractModule {
         return proxyConfigProvider.getConfigObject(
                 stroom.proxy.app.ProxyPathConfig.class);
     }
+
+    // Binding ProxyPathConfig to additional interface PathConfig
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")

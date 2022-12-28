@@ -24,8 +24,8 @@ import stroom.dropwizard.common.ManagedServices;
 import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.proxy.app.guice.ProxyModule;
-import stroom.security.openid.api.OpenIdConfig;
 import stroom.security.openid.api.IdpType;
+import stroom.security.openid.api.OpenIdConfig;
 import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.config.ConfigValidator;
@@ -199,7 +199,8 @@ public class App extends Application<Config> {
                         IdpType.TEST.equals(openIdConfig.getIdentityProviderType()));
 
         if (areDefaultOpenIdCredsInUse) {
-            final DefaultOpenIdCredentials defaultOpenIdCredentials = injector.getInstance(DefaultOpenIdCredentials.class);
+            final DefaultOpenIdCredentials defaultOpenIdCredentials = injector.getInstance(
+                    DefaultOpenIdCredentials.class);
             final String propPath = configuration.getProxyConfig()
                     .getProxySecurityConfig()
                     .getAuthenticationConfig()

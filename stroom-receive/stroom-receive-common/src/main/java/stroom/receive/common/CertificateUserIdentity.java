@@ -5,7 +5,7 @@ import stroom.security.api.UserIdentity;
 import java.util.Objects;
 
 public class CertificateUserIdentity implements UserIdentity {
-    
+
     private final String commonName;
 
     public CertificateUserIdentity(final String commonName) {

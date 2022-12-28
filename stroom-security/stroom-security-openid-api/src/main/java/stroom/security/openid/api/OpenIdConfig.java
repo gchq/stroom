@@ -298,18 +298,19 @@ public abstract class OpenIdConfig
             return false;
         }
         final OpenIdConfig that = (OpenIdConfig) o;
-        return formTokenRequest == that.formTokenRequest && validateAudience == that.validateAudience && identityProviderType == that.identityProviderType && Objects.equals(
-                openIdConfigurationEndpoint,
-                that.openIdConfigurationEndpoint) && Objects.equals(issuer,
-                that.issuer) && Objects.equals(authEndpoint, that.authEndpoint) && Objects.equals(
-                tokenEndpoint,
-                that.tokenEndpoint) && Objects.equals(jwksUri, that.jwksUri) && Objects.equals(
-                logoutEndpoint,
-                that.logoutEndpoint) && Objects.equals(logoutRedirectParamName,
-                that.logoutRedirectParamName) && Objects.equals(clientId,
-                that.clientId) && Objects.equals(clientSecret, that.clientSecret) && Objects.equals(
-                requestScope,
-                that.requestScope);
+        return formTokenRequest == that.formTokenRequest
+                && validateAudience == that.validateAudience
+                && identityProviderType == that.identityProviderType
+                && Objects.equals(openIdConfigurationEndpoint, that.openIdConfigurationEndpoint)
+                && Objects.equals(issuer, that.issuer)
+                && Objects.equals(authEndpoint, that.authEndpoint)
+                && Objects.equals(tokenEndpoint, that.tokenEndpoint)
+                && Objects.equals(jwksUri, that.jwksUri)
+                && Objects.equals(logoutEndpoint, that.logoutEndpoint)
+                && Objects.equals(logoutRedirectParamName, that.logoutRedirectParamName)
+                && Objects.equals(clientId, that.clientId)
+                && Objects.equals(clientSecret, that.clientSecret)
+                && Objects.equals(requestScope, that.requestScope);
     }
 
     @Override

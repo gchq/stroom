@@ -29,8 +29,8 @@ import stroom.security.common.impl.UserIdentityFactoryImpl;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventLifecycleModule;
 import stroom.security.impl.event.PermissionChangeEventModule;
-import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.IdpType;
+import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.shared.UserNameProvider;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.FilterBinder;
@@ -65,7 +65,7 @@ public class SecurityModule extends AbstractModule {
         bind(OpenIdConfiguration.class).to(IdpConfigurationProvider.class);
 
         HasHealthCheckBinder.create(binder())
-                        .bind(ExternalIdpConfigurationProvider.class);
+                .bind(ExternalIdpConfigurationProvider.class);
 
         bind(ProcessingUserIdentityProvider.class).to(DelegatingProcessingUserIdentityProvider.class);
         GuiceUtil.buildMapBinder(binder(), IdpType.class, ProcessingUserIdentityProvider.class)

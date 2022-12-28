@@ -173,7 +173,8 @@ public class ProxySecurityFilter implements Filter {
 //            } else {
 //                apiKey = feedStatusConfig.getApiKey();
 //            }
-//        } else if (requestUri.startsWith(ResourcePaths.API_ROOT_PATH + ReceiveDataRuleSetResource.BASE_RESOURCE_PATH)) {
+//        } else if (requestUri.startsWith(ResourcePaths.API_ROOT_PATH
+//        + ReceiveDataRuleSetResource.BASE_RESOURCE_PATH)) {
 //            final ContentSyncConfig contentSyncConfig = contentSyncConfigProvider.get();
 //            if (proxyConfig.isUseDefaultOpenIdCredentials() && Strings.isNullOrEmpty(contentSyncConfig.getApiKey())) {
 //                LOGGER.info("Using default authentication token, should only be used in test/demo environments.");

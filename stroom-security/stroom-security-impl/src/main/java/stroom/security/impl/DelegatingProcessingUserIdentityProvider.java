@@ -2,8 +2,8 @@ package stroom.security.impl;
 
 import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.UserIdentity;
-import stroom.security.openid.api.OpenIdConfig;
 import stroom.security.openid.api.IdpType;
+import stroom.security.openid.api.OpenIdConfig;
 
 import java.util.Map;
 import java.util.Objects;
