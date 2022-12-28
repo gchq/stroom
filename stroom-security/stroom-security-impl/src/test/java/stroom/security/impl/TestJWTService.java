@@ -66,9 +66,6 @@ class TestJWTService {
         Mockito.when(openIdPublicKeysSupplier.get())
                 .thenReturn(getPublicKeys());
 
-        Mockito.when(openIdConfiguration.getClientId())
-                .thenReturn(defaultOpenIdCredentials.getOauth2ClientId());
-
         final JwtClaims jwtClaims = jwtService
                 .getJwtContext(apiKey)
                 .map(JwtContext::getJwtClaims)
