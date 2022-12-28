@@ -418,7 +418,7 @@ class DynamicTestBuilder {
                 Assertions.fail("No test cases provided");
             }
             final String dupTestNames = testCases.stream()
-                    .map(TestCase::getName)
+                    .map(this::getEffectiveName)
                     .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
                     .entrySet()
                     .stream()
@@ -427,7 +427,7 @@ class DynamicTestBuilder {
                     .map(val -> "'" + val + "'")
                     .collect(Collectors.joining(", "));
             if (!NullSafe.isBlankString(dupTestNames)) {
-                Assertions.fail("Test names must be unique. Test names with duplicates: "
+                Assertions.fail("Test names (explicit or derived) must be unique. Duplicate test names: "
                         + dupTestNames);
             }
 
@@ -480,10 +480,7 @@ class DynamicTestBuilder {
             return testCases.stream()
                     .map(testCase -> {
 
-                        // Name defined in the testCase overrides the name function
-                        final String testName = Objects.requireNonNullElseGet(
-                                testCase.getName(),
-                                () -> nameFunction.apply(testCase));
+                        final String testName = getEffectiveName(testCase);
 
                         return DynamicTest.dynamicTest(testName, () -> {
                             if (LOGGER.isDebugEnabled()) {
@@ -516,6 +513,14 @@ class DynamicTestBuilder {
                             testOutcomeConsumer.accept(testOutcome);
                         });
                     });
+        }
+
+        private String getEffectiveName(final TestCase<I, O> testCase) {
+            // Name defined in the testCase overrides the name function
+            final String testName = Objects.requireNonNullElseGet(
+                    testCase.getName(),
+                    () -> nameFunction.apply(testCase));
+            return testName;
         }
     }
 }
