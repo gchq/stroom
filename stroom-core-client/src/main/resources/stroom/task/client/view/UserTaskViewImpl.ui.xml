@@ -3,7 +3,7 @@
     <g:HorizontalPanel ui:field="layout" styleName="userTaskView-layout">
         <g:cell>
             <g:FlowPanel>
-                <g:Label ui:field="taskName"/>
+                <g:Label ui:field="taskName" addStyleNames="userTaskView-taskName"/>
                 <g:Label ui:field="taskAge"/>
                 <g:Label ui:field="taskStatus"/>
             </g:FlowPanel>
