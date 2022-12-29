@@ -23,13 +23,11 @@ import stroom.config.common.AbstractDbConfig;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
-import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.validation.ValidRegex;
-import stroom.util.shared.validation.ValidationSeverity;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -37,7 +35,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-import javax.validation.constraints.AssertFalse;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
@@ -49,7 +46,6 @@ public class IdentityConfig extends AbstractConfig implements IsStroomConfig, Ha
     public static final String PROP_NAME_OPENID = "openid";
     public static final String PROP_NAME_PASSWORD_POLICY = "passwordPolicy";
 
-    private final boolean useDefaultOpenIdCredentials;
     private final boolean allowCertificateAuthentication;
     private final String certificateCnPattern;
     private final int certificateCnCaptureGroupIndex;
@@ -62,7 +58,6 @@ public class IdentityConfig extends AbstractConfig implements IsStroomConfig, Ha
     private final IdentityDbConfig dbConfig;
 
     public IdentityConfig() {
-        useDefaultOpenIdCredentials = false;
         allowCertificateAuthentication = false;
         certificateCnPattern = ".*\\((.*)\\)";
         certificateCnCaptureGroupIndex = 1;
@@ -77,8 +72,7 @@ public class IdentityConfig extends AbstractConfig implements IsStroomConfig, Ha
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public IdentityConfig(@JsonProperty("useDefaultOpenIdCredentials") final boolean useDefaultOpenIdCredentials,
-                          @JsonProperty("allowCertificateAuthentication") final boolean allowCertificateAuthentication,
+    public IdentityConfig(@JsonProperty("allowCertificateAuthentication") final boolean allowCertificateAuthentication,
                           @JsonProperty("certificateCnPattern") final String certificateCnPattern,
                           @JsonProperty("certificateCnCaptureGroupIndex") final int certificateCnCaptureGroupIndex,
                           @JsonProperty("failedLoginLockThreshold") final Integer failedLoginLockThreshold,
@@ -87,7 +81,6 @@ public class IdentityConfig extends AbstractConfig implements IsStroomConfig, Ha
                           @JsonProperty(PROP_NAME_OPENID) final OpenIdConfig openIdConfig,
                           @JsonProperty(PROP_NAME_PASSWORD_POLICY) final PasswordPolicyConfig passwordPolicyConfig,
                           @JsonProperty("db") final IdentityDbConfig dbConfig) {
-        this.useDefaultOpenIdCredentials = useDefaultOpenIdCredentials;
         this.allowCertificateAuthentication = allowCertificateAuthentication;
         this.certificateCnPattern = certificateCnPattern;
         this.certificateCnCaptureGroupIndex = certificateCnCaptureGroupIndex;
@@ -97,20 +90,6 @@ public class IdentityConfig extends AbstractConfig implements IsStroomConfig, Ha
         this.openIdConfig = openIdConfig;
         this.passwordPolicyConfig = passwordPolicyConfig;
         this.dbConfig = dbConfig;
-    }
-
-    @AssertFalse(
-            message = "Using default OpenId authentication credentials. These should only be used " +
-                    "in test/demo environments. Set stroom.authentication.useDefaultOpenIdCredentials to false for " +
-                    "production environments.",
-            payload = ValidationSeverity.Warning.class)
-    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @ReadOnly
-    @JsonProperty()
-    @JsonPropertyDescription("If true, stroom will use a set of default authentication credentials to allow" +
-            "API calls from stroom-proxy. For test or demonstration purposes only, leave as false for production")
-    public boolean isUseDefaultOpenIdCredentials() {
-        return useDefaultOpenIdCredentials;
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
@@ -184,6 +163,20 @@ public class IdentityConfig extends AbstractConfig implements IsStroomConfig, Ha
         return dbConfig;
     }
 
+    @Override
+    public String toString() {
+        return "IdentityConfig{" +
+                "allowCertificateAuthentication=" + allowCertificateAuthentication +
+                ", certificateCnPattern='" + certificateCnPattern + '\'' +
+                ", certificateCnCaptureGroupIndex=" + certificateCnCaptureGroupIndex +
+                ", failedLoginLockThreshold=" + failedLoginLockThreshold +
+                ", emailConfig=" + emailConfig +
+                ", tokenConfig=" + tokenConfig +
+                ", openIdConfig=" + openIdConfig +
+                ", passwordPolicyConfig=" + passwordPolicyConfig +
+                ", dbConfig=" + dbConfig +
+                '}';
+    }
 
     @BootStrapConfig
     public static class IdentityDbConfig extends AbstractDbConfig {

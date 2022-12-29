@@ -723,7 +723,6 @@ appConfig:
         idTokenExpiration: "PT1H"
         jwsIssuer: "stroom"
         refreshTokenExpiration: "P30D"
-      useDefaultOpenIdCredentials: false
     webContent:
       contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-eval'\
         \ 'unsafe-inline'; img-src 'self' data:; style-src 'self' 'unsafe-inline';\
