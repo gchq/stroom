@@ -194,11 +194,11 @@ appConfig:
   security:
     authentication:
       openId:
-        # (EXTERNAL|INTERNAL|TEST), Only use TEST for test/demo installs
-        # INTERNAL - Use API Keys generated in Stroom for feed status check. No support for token
+        # (EXTERNAL_IDP|INTERNAL_IDP|TEST_CREDENTIALS), Only use TEST_CREDENTIALS for test/demo installs
+        # INTERNAL_IDP - Use API Keys generated in Stroom for feed status check. No support for token
         #            authentication on data receipt.
-        # EXTERNAL - Usa an external IDP for receipt token auth and for outbound HTTP connections
-        identityProviderType: "{{ INTERNAL | envVar('IDENTITY_PROVIDER_TYPE') }}"
+        # EXTERNAL_IDP - Usa an external IDP for receipt token auth and for outbound HTTP connections
+        identityProviderType: "{{ INTERNAL_IDP | envVar('IDENTITY_PROVIDER_TYPE') }}"
   {% endif %}
   serviceDiscovery:
     enabled: "{{ 'false' | envVar('STROOM_SERVICE_DISCOVERY_ENABLED') }}"

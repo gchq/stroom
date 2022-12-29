@@ -111,10 +111,12 @@ appConfig:
     port: ${API_GATEWAY_PORT:-}
   security:
     identity:
-      useDefaultOpenIdCredentials: ${USE_DEFAULT_OPEN_ID_CREDENTIALS:-true}
       passwordPolicy:
         minimumPasswordStrength: 1
         minimumPasswordLength: 1
+    authentication:
+      openId:
+        identityProviderType: ${IDP_TYPE:-TEST_CREDENTIALS}
 
 #   Uncomment the following to develop React code with `yarn start`
 #      webContent:
