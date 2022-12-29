@@ -14,6 +14,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.codahale.metrics.health.HealthCheck;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpEntity;
@@ -23,6 +24,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Duration;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -41,6 +43,7 @@ public class ExternalIdpConfigurationProvider
         implements IdpConfigurationProvider, HasHealthCheck {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExternalIdpConfigurationProvider.class);
+    private static final long MAX_SLEEP_TIME_MS = 30_000;
 
     private final Provider<CloseableHttpClient> httpClientProvider;
     private final Provider<OpenIdConfig> openIdConfigProvider;
@@ -109,6 +112,7 @@ public class ExternalIdpConfigurationProvider
     }
 
     private boolean isFetchRequired(final String configurationEndpoint) {
+        // Debatable if we need to re-fetch in case any of the config has changed.
         return openIdConfigurationResp == null
                 || !Objects.equals(lastConfigurationEndpoint, configurationEndpoint);
     }
@@ -117,7 +121,9 @@ public class ExternalIdpConfigurationProvider
             final OpenIdConfig openIdConfig) {
         final String configurationEndpoint = openIdConfig.getOpenIdConfigurationEndpoint();
 
+        LOGGER.debug("About to get lock to update open id configuration");
         synchronized (this) {
+            LOGGER.debug("Got lock");
             // Re-test under lock
             if (isFetchRequired(configurationEndpoint)) {
                 try {
@@ -150,27 +156,90 @@ public class ExternalIdpConfigurationProvider
         Objects.requireNonNull(configurationEndpoint,
                 "Property "
                         + openIdConfig.getFullPathStr(OpenIdConfig.PROP_NAME_CONFIGURATION_ENDPOINT)
-                + " has not been set");
+                        + " has not been set");
         LOGGER.info("Fetching open id configuration from: " + configurationEndpoint);
         try (final CloseableHttpClient httpClient = httpClientProvider.get()) {
             final HttpGet httpGet = new HttpGet(configurationEndpoint);
-            try (final CloseableHttpResponse response = httpClient.execute(httpGet)) {
-                if (HttpServletResponse.SC_OK == response.getStatusLine().getStatusCode()) {
-                    final HttpEntity entity = response.getEntity();
-                    String msg;
-                    try (final InputStream is = entity.getContent()) {
-                        msg = StreamUtil.streamToString(is);
+            long sleepMs = 500;
+            Throwable lastThrowable = null;
+
+            while (true) {
+                try (final CloseableHttpResponse response = httpClient.execute(httpGet)) {
+                    if (HttpServletResponse.SC_OK == response.getStatusLine().getStatusCode()) {
+                        final HttpEntity entity = response.getEntity();
+                        String msg;
+                        try (final InputStream is = entity.getContent()) {
+                            msg = StreamUtil.streamToString(is);
+                        }
+
+                        final OpenIdConfigurationResponse openIdConfigurationResponse = parseConfigurationResponse(
+                                configurationEndpoint,
+                                msg);
+                        LOGGER.info("Successfully fetched open id configuration from: " + configurationEndpoint);
+                        return openIdConfigurationResponse;
+                    } else {
+                        throw new AuthenticationException("Received status " + response.getStatusLine() +
+                                " from " + configurationEndpoint);
+                    }
+                } catch (AuthenticationException e) {
+                    // This is not a connection issue so just bubble it up and likely crash the app
+                    // if this is happening as part of the guice injector init.
+                    throw e;
+                } catch (Exception e) {
+                    // The app is pretty dead without a connection to the IDP so keep retrying
+                    LOGGER.warn(LogUtil.message(
+                            "Unable to establish connection to {} to fetch Open ID configuration. " +
+                                    "Will try again in {}. Enable debug to see stack trace. Error: {}",
+                            configurationEndpoint, Duration.ofMillis(sleepMs), e.getMessage()));
+
+                    if (LOGGER.isDebugEnabled()) {
+                        if (lastThrowable == null || !e.getMessage().equals(lastThrowable.getMessage())) {
+                            // Only log the stack when it changes, else it fills up the log pretty quickly
+                            LOGGER.debug("Unable to establish connection to {} to fetch Open ID configuration.",
+                                    configurationEndpoint, e);
+                        }
+                        lastThrowable = e;
+                    }
+                    try {
+                        Thread.sleep(sleepMs);
+                    } catch (InterruptedException ie) {
+                        // Nothing to do here as the
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException(LogUtil.message("Thread interrupted waiting to connect to {}",
+                                configurationEndpoint), e);
                     }
 
-                    final ObjectMapper mapper = new ObjectMapper();
-                    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-                    return mapper.readValue(msg, OpenIdConfigurationResponse.class);
-                } else {
-                    throw new AuthenticationException("Received status " + response.getStatusLine() +
-                            " from " + configurationEndpoint);
+                    // Gradually increase the sleep time up to a maximum
+                    sleepMs = (long) (sleepMs * 1.3);
+                    if (sleepMs >= MAX_SLEEP_TIME_MS) {
+                        sleepMs = MAX_SLEEP_TIME_MS;
+                    }
                 }
             }
         }
+    }
+
+    private OpenIdConfigurationResponse parseConfigurationResponse(final String configurationEndpoint,
+                                                                   final String msg) {
+        final ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+        final OpenIdConfigurationResponse openIdConfigurationResponse;
+        try {
+            openIdConfigurationResponse = mapper.readValue(
+                    msg,
+                    OpenIdConfigurationResponse.class);
+        } catch (JsonProcessingException e) {
+            throw new AuthenticationException(LogUtil.message("Unable to parse open ID configuration " +
+                    "from {}. {}", configurationEndpoint, e.getMessage()), e);
+        }
+        // Spec says issue must match the config endpoint base
+        // https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationRequest
+        if (!configurationEndpoint.startsWith(openIdConfigurationResponse.getIssuer())) {
+            throw new AuthenticationException(LogUtil.message("Invalid issuer '{}' for endpoint {}",
+                    openIdConfigurationResponse.getIssuer(), configurationEndpoint));
+        }
+        return openIdConfigurationResponse;
     }
 
     private static OpenIdConfigurationResponse mergeResponse(

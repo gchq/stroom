@@ -18,6 +18,12 @@ import javax.inject.Singleton;
 @Singleton
 public class InternalIdpConfigurationProvider implements IdpConfigurationProvider {
 
+    // TODO: 29/12/2022 According to the spec:
+    //  The issuer value returned MUST be identical to the Issuer URL that was directly used to
+    //  retrieve the configuration information.
+    //  https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationRequest
+    //  Thus it prob ought to be our public URI + '/oauth2/v1/noauth' however if only stroom is using
+    //  it then it probably doesn't matter.
     static final String INTERNAL_ISSUER = "stroom";
     // These paths must tally up with those in stroom.security.identity.openid.OpenIdResource
     private static final String OAUTH2_BASE_PATH = "/oauth2/v1/noauth";
