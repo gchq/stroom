@@ -129,7 +129,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
 
     /**
      * If true, add Open ID authentication headers to the request. Only works if the identityProviderType
-     * is EXTERNAL and the destination is in the same Open ID Connect realm as the OIDC client that this
+     * is EXTERNAL_IDP and the destination is in the same Open ID Connect realm as the OIDC client that this
      * proxy instance is using.
      */
     @JsonProperty
