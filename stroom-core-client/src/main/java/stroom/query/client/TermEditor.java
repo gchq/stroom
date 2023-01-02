@@ -22,6 +22,7 @@ import stroom.datasource.api.v2.FieldTypes;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.item.client.AutocompleteListBox;
 import stroom.item.client.ItemListBox;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.shared.EqualsUtil;
@@ -51,7 +52,7 @@ public class TermEditor extends Composite {
     private static final int NARROW_VALUE = 175;
 
     private final FlowPanel layout;
-    private final ItemListBox<AbstractField> fieldListBox;
+    private final AutocompleteListBox<AbstractField> fieldListBox;
     private final ItemListBox<Condition> conditionListBox;
     private final Label andLabel;
     private final SuggestBox value;
@@ -557,8 +558,8 @@ public class TermEditor extends Composite {
         registrations.add(handlerRegistration);
     }
 
-    private ItemListBox<AbstractField> createFieldBox() {
-        final ItemListBox<AbstractField> fieldListBox = new ItemListBox<>();
+    private AutocompleteListBox<AbstractField> createFieldBox() {
+        final AutocompleteListBox<AbstractField> fieldListBox = new AutocompleteListBox<>();
         fixStyle(fieldListBox, 160);
         return fieldListBox;
     }
