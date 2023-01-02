@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 public class AutocompleteListBox<T extends HasDisplayValue> extends Composite implements ItemListBoxDisplay<T> {
 
-    private final int DEFAULT_VISIBLE_ITEM_COUNT = 10;
+    private static final int DEFAULT_VISIBLE_ITEM_COUNT = 10;
 
     private final TextBox textBox;
     private final PopupPanel popupPanel;
