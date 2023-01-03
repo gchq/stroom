@@ -345,6 +345,7 @@ public class SearchRequestBuilder {
         final TableSettings tableSettings = tableSettingsBuilder
                 .extractValues(extractValues)
 //                .extractionPipeline(resultPipeline)
+                .showDetail(true)
                 .build();
 
         final ResultRequest tableResultRequest = new ResultRequest("1234",
@@ -416,14 +417,32 @@ public class SearchRequestBuilder {
             // Turn the rest into a string.
             for (int i = 2; i < children.size(); i++) {
                 AbstractToken token = children.get(i);
-                if (token instanceof FunctionGroup) {
-                    processFunction((FunctionGroup) token, sb, functions);
-                } else {
-                    sb.append(token.getText());
-                }
+                addFunctionToken(token, sb, functions);
             }
 
             functions.put(field, sb.toString());
+        }
+    }
+
+    private void addFunctionToken(final AbstractToken token,
+                                  final StringBuilder sb,
+                                  final Map<String, String> functions) {
+        if (token instanceof FunctionGroup) {
+            processFunction(((FunctionGroup) token), sb, functions);
+        } else if (TokenType.STRING.equals(token.getTokenType())) {
+            // Non quoted strings are identifiers.
+            // See if there is already a mapping to the string.
+            final String innerFunction = functions.get(token.getText());
+            if (innerFunction != null) {
+                sb.append(innerFunction);
+            } else {
+                // Adapt the string into a param substitute for compatibility.
+                sb.append(ParamSubstituteUtil.makeParam(token.getText()));
+            }
+        } else if (token instanceof QuotedStringToken) {
+            sb.append(((QuotedStringToken) token).getRawText());
+        } else {
+            sb.append(token.getText());
         }
     }
 
@@ -434,23 +453,7 @@ public class SearchRequestBuilder {
         sb.append("(");
         final List<AbstractToken> functionGroupChildren = functionGroup.getChildren();
         for (final AbstractToken token : functionGroupChildren) {
-            if (token instanceof FunctionGroup) {
-                processFunction(((FunctionGroup) token), sb, functions);
-            } else if (TokenType.STRING.equals(token.getTokenType())) {
-                // Non quoted strings are identifiers.
-                // See if there is already a mapping to the string.
-                final String innerFunction = functions.get(token.getText());
-                if (innerFunction != null) {
-                    sb.append(innerFunction);
-                } else {
-                    // Adapt the string into a param substitute fcr compatibility.
-                    sb.append(ParamSubstituteUtil.makeParam(token.getText()));
-                }
-            } else if (token instanceof QuotedStringToken) {
-                sb.append(((QuotedStringToken) token).getRawText());
-            } else {
-                sb.append(token.getText());
-            }
+            addFunctionToken(token, sb, functions);
         }
         sb.append(")");
     }

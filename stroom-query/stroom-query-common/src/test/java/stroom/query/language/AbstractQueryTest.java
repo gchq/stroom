@@ -16,6 +16,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 public abstract class AbstractQueryTest {
+    private static final String PART_DELIMITER = "\n-----\n";
+    private static final String IO_DELIMITER = "\n=====\n";
 
     // If we are editing the input or behaviour then we don't want to test the validity but instead create the expected
     // test output.
@@ -36,7 +38,7 @@ public abstract class AbstractQueryTest {
         }
 
         final String in = Files.readString(inFile);
-        final String[] inputs = in.split("\n-----\n");
+        final String[] inputs = in.split(PART_DELIMITER);
 
         final AtomicInteger count = new AtomicInteger();
         return Arrays
@@ -70,8 +72,8 @@ public abstract class AbstractQueryTest {
                     final String allExpected = Files.readString(expectedFile);
                     final String allOut = Files.readString(outFile);
 
-                    final String[] expectedParts = allExpected.split("\n\n");
-                    final String[] outParts = allOut.split("\n\n");
+                    final String[] expectedParts = allExpected.split(PART_DELIMITER);
+                    final String[] outParts = allOut.split(PART_DELIMITER);
 
                     softAssertions.assertThat(expectedParts.length).isGreaterThanOrEqualTo(testNum);
                     softAssertions.assertThat(outParts.length).isEqualTo(testNum);
@@ -94,10 +96,9 @@ public abstract class AbstractQueryTest {
                 StandardOpenOption.CREATE,
                 StandardOpenOption.APPEND)) {
             writer.write(input);
-            writer.write("\n");
-            writer.write("=====\n");
+            writer.write(IO_DELIMITER);
             writer.write(output);
-            writer.write("\n\n");
+            writer.write(PART_DELIMITER);
         }
     }
 }

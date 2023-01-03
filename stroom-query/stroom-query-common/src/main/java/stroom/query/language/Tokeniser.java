@@ -20,14 +20,14 @@ public class Tokeniser {
         final Token unknown = new Token(TokenType.UNKNOWN, chars, 0, chars.length - 1);
         tokens = Collections.singletonList(unknown);
 
-        // Tag quoted strings.
-        extractQuotedTokens(TokenType.DOUBLE_QUOTED_STRING, '\"', '\\');
-        extractQuotedTokens(TokenType.SINGLE_QUOTED_STRING, '\'', '\\');
-
         // Tag Comments
         split("//.*", 0, TokenType.COMMENT);
 //        split("/\\*[^*]*\\*/", 0, TokenType.BLOCK_COMMENT);
         split("/\\*([^*]|[\\r\\n]|(\\*+([^*/]|[\\r\\n])))*\\*+/", 0, TokenType.BLOCK_COMMENT);
+
+        // Tag quoted strings.
+        extractQuotedTokens(TokenType.DOUBLE_QUOTED_STRING, '\"', '\\');
+        extractQuotedTokens(TokenType.SINGLE_QUOTED_STRING, '\'', '\\');
 
         // Tag commands and functions.
         split("(\\|[\\s]*)([a-z-A-Z_]+)(\\s|$)", 2, TokenType.PIPE_OPERATION);

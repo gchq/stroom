@@ -89,7 +89,8 @@
         "width" : 200,
         "visible" : true,
         "special" : false
-      } ]
+      } ],
+      "showDetail" : true
     } ],
     "resultStyle" : "TABLE",
     "fetch" : "ALL"
@@ -103,15 +104,12 @@
     }
   }
 }
-
+-----
 'Test Index'
 | where UserId = user5 and Description = e0567
 | and EventTime <= 2000-01-01T00:00:00.000Z
 | and EventTime >= 2016-01-02T00:00:00.000Z
-| rename EventTime as "Event Time"
-| rename StreamId as "Stream Id"
-| rename EventId as "Event Id"
-| table "Stream Id", "Event Id", "Event Time", "Status"
+| table StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", "Status"
 =====
 {
   "key" : {
@@ -198,7 +196,8 @@
         "width" : 200,
         "visible" : true,
         "special" : false
-      } ]
+      } ],
+      "showDetail" : true
     } ],
     "resultStyle" : "TABLE",
     "fetch" : "ALL"
@@ -212,17 +211,13 @@
     }
   }
 }
-
+-----
 'Test Index'
 | where UserId = user5 and Description = e0567
 | and EventTime <= 2000-01-01T00:00:00.000Z
 | and EventTime >= 2016-01-02T00:00:00.000Z
 | eval UserId = upperCase(UserId)
-| rename EventTime as "Event Time"
-| rename StreamId as "Stream Id"
-| rename EventId as "Event Id"
-| rename UserId as "User Id"
-| table "Stream Id", "Event Id", "Event Time", "Status", "User Id"
+| table StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", "Status", UserId as "User Id"
 =====
 {
   "key" : {
@@ -316,7 +311,8 @@
         "width" : 200,
         "visible" : true,
         "special" : false
-      } ]
+      } ],
+      "showDetail" : true
     } ],
     "resultStyle" : "TABLE",
     "fetch" : "ALL"
@@ -330,4 +326,4 @@
     }
   }
 }
-
+-----

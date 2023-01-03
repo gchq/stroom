@@ -5,35 +5,35 @@ before "test of inner \" strings " after
    <DOUBLE_QUOTED_STRING>"test of inner \" strings "</DOUBLE_QUOTED_STRING>
    <STRING>after</STRING>
 </TOKEN_GROUP>
-
+-----
 "test of inner \" strings " after
 =====
 <TOKEN_GROUP>
    <DOUBLE_QUOTED_STRING>"test of inner \" strings "</DOUBLE_QUOTED_STRING>
    <STRING>after</STRING>
 </TOKEN_GROUP>
-
+-----
  "test of inner \" strings " after
 =====
 <TOKEN_GROUP>
    <DOUBLE_QUOTED_STRING>"test of inner \" strings "</DOUBLE_QUOTED_STRING>
    <STRING>after</STRING>
 </TOKEN_GROUP>
-
+-----
 before "test of inner \" strings "
 =====
 <TOKEN_GROUP>
    <STRING>before</STRING>
    <DOUBLE_QUOTED_STRING>"test of inner \" strings "</DOUBLE_QUOTED_STRING>
 </TOKEN_GROUP>
-
+-----
 before "test of inner \" strings "
 =====
 <TOKEN_GROUP>
    <STRING>before</STRING>
    <DOUBLE_QUOTED_STRING>"test of inner \" strings "</DOUBLE_QUOTED_STRING>
 </TOKEN_GROUP>
-
+-----
 before 'test of inner \' strings ' after
 =====
 <TOKEN_GROUP>
@@ -41,35 +41,35 @@ before 'test of inner \' strings ' after
    <SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
    <STRING>after</STRING>
 </TOKEN_GROUP>
-
+-----
 'test of inner \' strings ' after
 =====
 <TOKEN_GROUP>
    <SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
    <STRING>after</STRING>
 </TOKEN_GROUP>
-
+-----
  'test of inner \' strings ' after
 =====
 <TOKEN_GROUP>
    <SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
    <STRING>after</STRING>
 </TOKEN_GROUP>
-
+-----
 before 'test of inner \' strings '
 =====
 <TOKEN_GROUP>
    <STRING>before</STRING>
    <SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
 </TOKEN_GROUP>
-
+-----
 before 'test of inner \' strings '
 =====
 <TOKEN_GROUP>
    <STRING>before</STRING>
    <SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
 </TOKEN_GROUP>
-
+-----
 table | where this = that | and foo = 'test of inner \' strings '
 =====
 <TOKEN_GROUP>
@@ -85,7 +85,7 @@ table | where this = that | and foo = 'test of inner \' strings '
       <SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
    </PIPE_GROUP>
 </TOKEN_GROUP>
-
+-----
 Test Index
 | where UserId = user5 and Description = e0567
 | and EventTime <= 2000-01-01T00:00:00.000Z
@@ -114,7 +114,7 @@ Test Index
       <STRING>2016-01-02T00:00:00.000Z</STRING>
    </PIPE_GROUP>
 </TOKEN_GROUP>
-
+-----
 Test Index
 | where UserId = user5 and Description = e0567
 | and EventTime <= now()
@@ -138,7 +138,7 @@ Test Index
       </FUNCTION_GROUP>
    </PIPE_GROUP>
 </TOKEN_GROUP>
-
+-----
 Test Index
 | where UserId = user5 and Description = e0567
 | and EventTime <= now() + 3d
@@ -164,7 +164,7 @@ Test Index
       <STRING>3d</STRING>
    </PIPE_GROUP>
 </TOKEN_GROUP>
-
+-----
 Test Index
 | where UserId = user5 and Description = e0567
 | and EventTime <= now() + 3
@@ -190,7 +190,7 @@ Test Index
       <NUMBER>3</NUMBER>
    </PIPE_GROUP>
 </TOKEN_GROUP>
-
+-----
 Events
 | where Name = "Start"
 | project City, ClientIp, StartTime = timestamp
@@ -222,8 +222,8 @@ Events
       <STRING>timestamp</STRING>
    </PIPE_GROUP>
    <PIPE_GROUP PIPE_OPERATION="join">
-      <STRING>kind=inner</STRING>
-      <TOKEN_GROUP>
+      <STRING>kind=</STRING>
+      <FUNCTION_GROUP FUNCTION_NAME="inner">
          <STRING>Events</STRING>
          <PIPE_GROUP PIPE_OPERATION="where">
             <STRING>Name</STRING>
@@ -237,7 +237,7 @@ Events
             <COMMA>,</COMMA>
             <STRING>ClientIp</STRING>
          </PIPE_GROUP>
-      </TOKEN_GROUP>
+      </FUNCTION_GROUP>
       <STRING>on</STRING>
       <STRING>ClientIp</STRING>
    </PIPE_GROUP>
@@ -269,4 +269,4 @@ Events
       <STRING>ClientIp</STRING>
    </PIPE_GROUP>
 </TOKEN_GROUP>
-
+-----
