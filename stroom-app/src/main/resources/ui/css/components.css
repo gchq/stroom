@@ -1226,8 +1226,8 @@
 }
 
 .globalPropertyEditViewImpl-textArea {
-    width:100%;
-    height:80px;
+    width: 100%;
+    height: 100px;
 }
 .globalPropertyEditViewImpl-textAreaReducedHeight {
     width:100%;
