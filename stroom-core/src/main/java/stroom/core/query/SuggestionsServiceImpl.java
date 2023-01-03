@@ -7,10 +7,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -19,18 +19,15 @@ public class SuggestionsServiceImpl implements SuggestionsService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SuggestionsServiceImpl.class);
 
+    private final Map<String, Provider<SuggestionsQueryHandler>> providerMap;
     private final SecurityContext securityContext;
 
-    private final Map<String, SuggestionsQueryHandler> queryHandlerMap = new HashMap<>();
-
     @Inject
-    SuggestionsServiceImpl(final SecurityContext securityContext) {
+    SuggestionsServiceImpl(
+            final Map<String, Provider<SuggestionsQueryHandler>> providerMap,
+            final SecurityContext securityContext) {
+        this.providerMap = providerMap;
         this.securityContext = securityContext;
-    }
-
-    @Override
-    public void registerHandler(final String dataSourceType, final SuggestionsQueryHandler handler) {
-        queryHandlerMap.putIfAbsent(dataSourceType, handler);
     }
 
     @Override
@@ -38,8 +35,8 @@ public class SuggestionsServiceImpl implements SuggestionsService {
         final String dataSourceType = request.getDataSource().getType();
 
         return securityContext.secureResult(() -> {
-            if (dataSourceType != null && queryHandlerMap.containsKey(dataSourceType)) {
-                final SuggestionsQueryHandler queryHandler = queryHandlerMap.get(dataSourceType);
+            if (dataSourceType != null && providerMap.containsKey(dataSourceType)) {
+                final SuggestionsQueryHandler queryHandler = providerMap.get(dataSourceType).get();
                 return queryHandler.getSuggestions(request);
             }
             return Collections.emptyList();

@@ -1,11 +1,13 @@
 package stroom.meta.impl;
 
+import stroom.core.query.SuggestionsServiceBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.meta.api.MetaSecurityFilter;
 import stroom.meta.api.MetaService;
 import stroom.meta.api.PhysicalDelete;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFields;
 import stroom.searchable.api.Searchable;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
@@ -37,6 +39,9 @@ public class MetaModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(MetaResourceImpl.class);
+
+        SuggestionsServiceBinder.create(binder())
+                .bind(MetaFields.STREAM_STORE_TYPE, MetaSuggestionsQueryHandler.class);
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(FlushDataMetaDb.class, builder -> builder

@@ -16,6 +16,7 @@
 
 package stroom.search.elastic;
 
+import stroom.core.query.SuggestionsServiceBinder;
 import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
@@ -49,6 +50,9 @@ public class ElasticSearchModule extends AbstractModule {
 
         bind(ElasticIndexService.class).to(ElasticIndexServiceImpl.class);
         bind(ElasticSuggestionsQueryHandler.class).to(ElasticSuggestionsQueryHandlerImpl.class);
+
+        SuggestionsServiceBinder.create(binder())
+                .bind(ElasticIndexDoc.DOCUMENT_TYPE, ElasticSuggestionsQueryHandler.class);
 
         // Caches
 
