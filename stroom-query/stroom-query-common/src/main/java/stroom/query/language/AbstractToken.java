@@ -78,6 +78,10 @@ public abstract class AbstractToken {
         appendNewLine(indent, sb);
     }
 
+    public String getUnescapedText() {
+        return getText();
+    }
+
     public String getText() {
         return new String(chars, start, end - start + 1);
     }

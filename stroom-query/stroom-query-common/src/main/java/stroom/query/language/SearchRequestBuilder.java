@@ -74,7 +74,7 @@ public class SearchRequestBuilder {
                 !TokenType.DOUBLE_QUOTED_STRING.equals(firstToken.getTokenType())) {
             throw new TokenException(firstToken, "Expected string");
         }
-        final String dataSourceName = firstToken.getText();
+        final String dataSourceName = firstToken.getUnescapedText();
         final DocRef dataSource = new DocRef(null, null, dataSourceName);
         consumer.accept(dataSource);
         return tokens.subList(1, tokens.size());
@@ -120,9 +120,17 @@ public class SearchRequestBuilder {
     private void addTerm(
             final List<AbstractToken> tokens,
             final ExpressionOperator.Builder parentBuilder) {
-        final AbstractToken field = tokens.get(0);
+        if (tokens.size() < 3) {
+            return;
+        }
+
+        final String field = tokens.get(0).getUnescapedText();
         final AbstractToken condition = tokens.get(1);
-        final AbstractToken value = tokens.get(2);
+        final StringBuilder value = new StringBuilder();
+        for (int i = 2; i < tokens.size(); i++) {
+            value.append(" ");
+            value.append(tokens.get(i).getText());
+        }
 
         // If we have a where clause then we expect the next token to contain an expression.
         Condition cond;
@@ -159,9 +167,9 @@ public class SearchRequestBuilder {
 
         final ExpressionTerm expressionTerm = ExpressionTerm
                 .builder()
-                .field(field.getText())
+                .field(field)
                 .condition(cond)
-                .value(value.getText())
+                .value(value.toString().trim())
                 .build();
 
         if (not) {
@@ -178,61 +186,61 @@ public class SearchRequestBuilder {
 
     private ExpressionOperator processLogic(final List<AbstractToken> tokens) {
         ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.AND);
+        final List<AbstractToken> termTokens = new ArrayList<>();
+
         int i = 0;
         for (; i < tokens.size(); i++) {
             final AbstractToken token = tokens.get(i);
-            if (token instanceof PipeGroup) {
-                final PipeGroup pipeGroup = (PipeGroup) token;
-                final PipeOperation pipeOperation = pipeGroup.getPipeOperation();
-                if (PipeOperation.WHERE.equals(pipeOperation) ||
-                        PipeOperation.AND.equals(pipeOperation)) {
-                    builder = addAnd(builder, pipeGroup.getChildren());
+            final TokenType tokenType = token.getTokenType();
 
-                } else if (PipeOperation.OR.equals(pipeOperation)) {
-                    builder = addOr(builder, pipeGroup.getChildren());
+            final boolean logic =
+                    TokenType.AND.equals(tokenType) ||
+                            TokenType.OR.equals(tokenType) ||
+                            TokenType.NOT.equals(tokenType);
 
-                } else if (PipeOperation.NOT.equals(pipeOperation)) {
-                    builder = addNot(builder, pipeGroup.getChildren());
+            if (!(token instanceof PipeGroup) &&
+                    !(token instanceof TokenGroup) &&
+                    !logic) {
 
-                } else {
-                    throw new TokenException(token, "Unexpected pipe operation in query");
-                }
-
-            } else if (token instanceof TokenGroup) {
-                TokenGroup tokenGroup = (TokenGroup) token;
-                builder = addAnd(builder, tokenGroup.getChildren());
-
-            } else if (TokenType.AND.equals(token.getTokenType())) {
-                final List<AbstractToken> remaining = tokens.subList(i + 1, tokens.size());
-                i = tokens.size();
-                builder = addAnd(builder, remaining);
-
-            } else if (TokenType.OR.equals(token.getTokenType())) {
-                final List<AbstractToken> remaining = tokens.subList(i + 1, tokens.size());
-                i = tokens.size();
-                builder = addOr(builder, remaining);
-
-            } else if (TokenType.NOT.equals(token.getTokenType())) {
-                final List<AbstractToken> remaining = tokens.subList(i + 1, tokens.size());
-                i = tokens.size();
-                builder = addNot(builder, remaining);
+                // Treat token as part of a term.
+                termTokens.add(token);
 
             } else {
-                // This should be the start token for a term.
-                // We must have at least 3 regular tokens.
-                final List<AbstractToken> termTokens = tokens.subList(i, Math.min(i + 3, tokens.size()));
-                for (final AbstractToken t : termTokens) {
-                    if (!(t instanceof Token)) {
-                        throw new TokenException(t, "Unexpected token for term");
-                    }
-                }
+                // Add current term.
+                addTerm(termTokens, builder);
+                termTokens.clear();
 
-                i += 2;
-                if (termTokens.size() == 3) {
-                    addTerm(termTokens, builder);
+                if (token instanceof PipeGroup) {
+                    final PipeGroup pipeGroup = (PipeGroup) token;
+                    final PipeOperation pipeOperation = pipeGroup.getPipeOperation();
+                    switch (pipeOperation) {
+                        case WHERE, AND -> builder = addAnd(builder, pipeGroup.getChildren());
+                        case OR -> builder = addOr(builder, pipeGroup.getChildren());
+                        case NOT -> builder = addNot(builder, pipeGroup.getChildren());
+                        default -> throw new TokenException(token, "Unexpected pipe operation in query");
+                    }
+
+                } else if (token instanceof TokenGroup) {
+                    TokenGroup tokenGroup = (TokenGroup) token;
+                    builder = addAnd(builder, tokenGroup.getChildren());
+
+                } else if (logic) {
+                    final List<AbstractToken> remaining = tokens.subList(i + 1, tokens.size());
+                    i = tokens.size();
+
+                    switch (tokenType) {
+                        case AND -> builder = addAnd(builder, remaining);
+                        case OR -> builder = addOr(builder, remaining);
+                        case NOT -> builder = addNot(builder, remaining);
+                        default -> throw new TokenException(token, "Unexpected token");
+                    }
                 }
             }
         }
+
+        // Add remaining term.
+        addTerm(termTokens, builder);
+        termTokens.clear();
 
         return builder.build();
     }
@@ -401,7 +409,7 @@ public class SearchRequestBuilder {
             if (!TokenType.isString(token)) {
                 throw new TokenException(token, "Syntax exception");
             }
-            field = token.getText();
+            field = token.getUnescapedText();
         }
 
         if (children.size() > 1) {
@@ -432,17 +440,17 @@ public class SearchRequestBuilder {
         } else if (TokenType.STRING.equals(token.getTokenType())) {
             // Non quoted strings are identifiers.
             // See if there is already a mapping to the string.
-            final String innerFunction = functions.get(token.getText());
+            final String innerFunction = functions.get(token.getUnescapedText());
             if (innerFunction != null) {
                 sb.append(innerFunction);
             } else {
                 // Adapt the string into a param substitute for compatibility.
-                sb.append(ParamSubstituteUtil.makeParam(token.getText()));
+                sb.append(ParamSubstituteUtil.makeParam(token.getUnescapedText()));
             }
         } else if (token instanceof QuotedStringToken) {
-            sb.append(((QuotedStringToken) token).getRawText());
+            sb.append(((QuotedStringToken) token).getText());
         } else {
-            sb.append(token.getText());
+            sb.append(token.getUnescapedText());
         }
     }
 
@@ -477,10 +485,10 @@ public class SearchRequestBuilder {
                     } else if (columnName != null) {
                         throw new TokenException(t, "Syntax exception, duplicate column name");
                     } else {
-                        columnName = t.getText();
+                        columnName = t.getUnescapedText();
                     }
                 } else if (fieldName == null) {
-                    fieldName = t.getText();
+                    fieldName = t.getUnescapedText();
                 } else {
                     throw new TokenException(t, "Syntax exception, expected AS");
                 }
@@ -537,7 +545,7 @@ public class SearchRequestBuilder {
         for (final AbstractToken t : children) {
             if (TokenType.isString(t) || TokenType.NUMBER.equals(t.getTokenType())) {
                 try {
-                    tableSettingsBuilder.addMaxResults(Integer.parseInt(t.getText()));
+                    tableSettingsBuilder.addMaxResults(Integer.parseInt(t.getUnescapedText()));
                 } catch (final NumberFormatException e) {
                     throw new TokenException(t, "Syntax exception, expected number");
                 }
@@ -561,15 +569,15 @@ public class SearchRequestBuilder {
             } else {
                 if (TokenType.isString(t)) {
                     if (fieldName == null) {
-                        fieldName = t.getText();
+                        fieldName = t.getUnescapedText();
                     } else if (direction == null) {
                         try {
-                            if (t.getText().toLowerCase(Locale.ROOT).equalsIgnoreCase("asc")) {
+                            if (t.getUnescapedText().toLowerCase(Locale.ROOT).equalsIgnoreCase("asc")) {
                                 direction = SortDirection.ASCENDING;
-                            } else if (t.getText().toLowerCase(Locale.ROOT).equalsIgnoreCase("desc")) {
+                            } else if (t.getUnescapedText().toLowerCase(Locale.ROOT).equalsIgnoreCase("desc")) {
                                 direction = SortDirection.DESCENDING;
                             } else {
-                                direction = SortDirection.valueOf(t.getText());
+                                direction = SortDirection.valueOf(t.getUnescapedText());
                             }
                         } catch (final IllegalArgumentException e) {
                             throw new TokenException(t, "Syntax exception, expected sort direction 'asc' or 'desc'");
@@ -615,7 +623,7 @@ public class SearchRequestBuilder {
             } else {
                 if (TokenType.isString(t)) {
                     if (fieldName == null) {
-                        fieldName = t.getText();
+                        fieldName = t.getUnescapedText();
                     } else {
                         throw new TokenException(t, "Syntax exception, expected comma");
                     }

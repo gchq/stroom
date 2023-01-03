@@ -62,7 +62,7 @@ public class StructureBuilder {
                             .chars(functionName.getChars())
                             .start(functionName.getStart())
                             .end(token.getEnd())
-                            .name(functionName.getText());
+                            .name(functionName.getUnescapedText());
                     index = createStructure(tokens, function, index + 1);
                     currentGroup.add(function.build());
 
@@ -93,7 +93,7 @@ public class StructureBuilder {
                             .chars(token.getChars())
                             .start(token.getStart())
                             .end(token.getEnd())
-                            .name(operation.getText());
+                            .name(operation.getUnescapedText());
                     currentGroup = pipe;
                 } else {
                     currentGroup.add(token);
