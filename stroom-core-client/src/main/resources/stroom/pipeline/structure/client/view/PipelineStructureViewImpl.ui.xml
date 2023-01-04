@@ -1,7 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:v="urn:import:stroom.widget.button.client">
-    <g:FlowPanel addStyleNames="dock-container-vertical control__padding-right control__padding-bottom">
+    <g:SimplePanel addStyleNames="dock-container-vertical control__padding-right control__padding-bottom">
         <g:MySplitLayoutPanel vSplits="0.4" styleName="dock-max">
             <g:north size="200">
                 <g:FlowPanel styleName="max dashboard-panel dock-container-vertical">
@@ -34,6 +34,6 @@
                 </g:MySplitLayoutPanel>
             </g:center>
         </g:MySplitLayoutPanel>
-    </g:FlowPanel>
+    </g:SimplePanel>
 </ui:UiBinder>
  

@@ -1,23 +1,22 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
-    <g:MySplitLayoutPanel styleName="max">
-        <g:north size="200">
-            <g:SimplePanel ui:field="streamList"
-                           styleName="max control__padding-right"/>
-        </g:north>
-        <g:center>
-            <g:MySplitLayoutPanel styleName="max">
-                <g:north size="150">
-                    <g:SimplePanel ui:field="streamRelationList"
-                                   styleName="max control__padding-right">
-                    </g:SimplePanel>
-                </g:north>
-                <g:center>
-                    <g:SimplePanel ui:field="data"
-                                   styleName="max control__padding-right control__padding-bottom"/>
-                </g:center>
-            </g:MySplitLayoutPanel>
-        </g:center>
-    </g:MySplitLayoutPanel>
+    <g:SimplePanel styleName="max control__padding-right control__padding-bottom">
+        <g:MySplitLayoutPanel styleName="max">
+            <g:north size="200">
+                <g:SimplePanel ui:field="streamList" styleName="max"/>
+            </g:north>
+            <g:center>
+                <g:MySplitLayoutPanel styleName="max">
+                    <g:north size="150">
+                        <g:SimplePanel ui:field="streamRelationList" styleName="max">
+                        </g:SimplePanel>
+                    </g:north>
+                    <g:center>
+                        <g:SimplePanel ui:field="data" styleName="max"/>
+                    </g:center>
+                </g:MySplitLayoutPanel>
+            </g:center>
+        </g:MySplitLayoutPanel>
+    </g:SimplePanel>
 </ui:UiBinder>

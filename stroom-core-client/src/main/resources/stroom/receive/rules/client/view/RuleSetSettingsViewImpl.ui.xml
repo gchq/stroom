@@ -1,12 +1,14 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
-    <g:MySplitLayoutPanel unit="PX" vSplits="0.5" styleName="max">
-        <g:north size="200">
-            <g:SimplePanel ui:field="table" styleName="max stroom-border-bottom"/>
-        </g:north>
-        <g:center>
-            <g:SimplePanel ui:field="expression" styleName="max stroom-border-top"/>
-        </g:center>
-    </g:MySplitLayoutPanel>
+    <g:SimplePanel styleName="max control__padding-right control__padding-bottom">
+        <g:MySplitLayoutPanel unit="PX" vSplits="0.5" styleName="max">
+            <g:north size="200">
+                <g:SimplePanel ui:field="table" styleName="max dashboard-panel dock-container-vertical"/>
+            </g:north>
+            <g:center>
+                <g:SimplePanel ui:field="expression" styleName="max dashboard-panel dock-container-vertical"/>
+            </g:center>
+        </g:MySplitLayoutPanel>
+    </g:SimplePanel>
 </ui:UiBinder> 
