@@ -9,7 +9,6 @@ import stroom.pipeline.source.SourceElement;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.ModelStringUtil;
 
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
@@ -128,7 +127,7 @@ public class GeneratePipelineElementsDoc {
      */
     @Disabled // Manual only
     @Test
-    void generatePipeElmShortcodeContent() {
+    void generatePipeElmShortcodeNames() {
         try (ScanResult scanResult =
                 new ClassGraph()
                         .enableAllInfo()             // Scan classes, methods, fields, annotations
@@ -145,14 +144,8 @@ public class GeneratePipelineElementsDoc {
                     .sequential()
                     .sorted(Comparator.comparing(ElementInfo::getType))
                     .map(elementInfo -> {
-                        final String template = """
-                                {{ else if eq (lower $elm_name) "{}" }}
-                                  {{ $filename = "{}" }}
-                                  {{ $elm_name = "{}" }}""";
-                        return LogUtil.message(template,
-                                elementInfo.type.toLowerCase(),
-                                elementInfo.iconFilename,
-                                ModelStringUtil.toCamelCase(elementInfo.type));
+                        final String template = "\"{}\" \"{}\"";
+                        return LogUtil.message(template, elementInfo.type, elementInfo.iconFilename);
                     })
                     .forEach(System.out::println);
         }
@@ -190,8 +183,7 @@ public class GeneratePipelineElementsDoc {
                     // Add the &nbsp; at the end so the markdown processor treats the line as a <p>
                     final String iconText = elementInfo.iconFilename != null
                             ? LogUtil.message("""
-                                    {{< pipe-elm "{}" >}}&nbsp;""",
-                            ModelStringUtil.toCamelCase(elementInfo.type))
+                                    {{< pipe-elm "{}" >}}&nbsp;""", elementInfo.type)
                             : "";
 
                     final String rolesText = buildRolesText(elementInfo.roles);
