@@ -18,6 +18,8 @@ package stroom.data.grid.client;
 
 import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
+import stroom.widget.util.client.DoubleClickTester;
+import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -25,16 +27,21 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Node;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.TableCellElement;
+import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.Header;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
+import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.RangeChangeEvent.Handler;
@@ -57,6 +64,8 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     private ResizeHandle<R> resizeHandle;
     private MoveHandle<R> moveHandle;
     private Heading moveHeading;
+
+    private final DoubleClickTester doubleClickTester = new DoubleClickTester();
 
     public MyDataGrid() {
         this(DEFAULT_LIST_PAGE_SIZE);
@@ -124,7 +133,8 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                     // Show the resize handle immediately before
                     // attaching the native event preview handler.
                     final ResizeHandle<R> resizeHandle = getResizeHandle();
-                    if (!isBusy() && resizeHandle.update(event, heading)) {
+                    if (resizeHandle.update(event, heading)) {
+                        doubleClickTester.clear();
                         resizeHandle.show();
                     }
 
@@ -141,37 +151,35 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
         final NativeEvent event = nativePreviewEvent.getNativeEvent();
         if (Event.ONMOUSEMOVE == nativePreviewEvent.getTypeInt()) {
-            if (!isBusy()) {
-                final ResizeHandle<R> resizeHandle = getResizeHandle();
-                final MoveHandle<R> moveHandle = getMoveHandle();
+            final ResizeHandle<R> resizeHandle = getResizeHandle();
+            final MoveHandle<R> moveHandle = getMoveHandle();
 
-                if (resizeHandle.isResizing()) {
-                    resizeHandle.resize(event);
+            if (resizeHandle.isResizing()) {
+                resizeHandle.resize(event);
+
+            } else {
+                if (moveHandle.isMoving()) {
+                    moveHandle.move(event);
 
                 } else {
+                    // Try and start moving the current column.
+                    moveHandle.startMove(event);
+
+                    // Hide the resize handle if we are dragging a column.
                     if (moveHandle.isMoving()) {
-                        moveHandle.move(event);
+                        resizeHandle.hide();
 
                     } else {
-                        // Try and start moving the current column.
-                        moveHandle.startMove(event);
-
-                        // Hide the resize handle if we are dragging a column.
-                        if (moveHandle.isMoving()) {
-                            resizeHandle.hide();
-
-                        } else {
-                            // Update the resize handle position.
-                            final Heading heading = getHeading(event);
-                            resizeHandle.update(event, heading);
-                        }
+                        // Update the resize handle position.
+                        final Heading heading = getHeading(event);
+                        resizeHandle.update(event, heading);
                     }
                 }
-
-                nativePreviewEvent.cancel();
-                nativePreviewEvent.getNativeEvent().preventDefault();
-                nativePreviewEvent.getNativeEvent().stopPropagation();
             }
+
+            nativePreviewEvent.cancel();
+            nativePreviewEvent.getNativeEvent().preventDefault();
+            nativePreviewEvent.getNativeEvent().stopPropagation();
 
         } else if (Event.ONMOUSEDOWN == nativePreviewEvent.getTypeInt()) {
             if (MouseUtil.isPrimary(event)) {
@@ -180,19 +188,17 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
                 moveHeading = null;
 
-                if (!isBusy()) {
-                    final Heading heading = getHeading(event);
-                    if (headingListener != null) {
-                        headingListener.onMouseDown(event, heading);
-                    }
+                final Heading heading = getHeading(event);
+                if (headingListener != null) {
+                    headingListener.onMouseDown(event, heading);
+                }
 
-                    if (!resizeHandle.isResizing()
-                            && MouseHelper.mouseIsOverElement(event, resizeHandle.getElement())) {
-                        resizeHandle.startResize(event);
+                if (!resizeHandle.isResizing()
+                        && MouseHelper.mouseIsOverElement(event, resizeHandle.getElement())) {
+                    resizeHandle.startResize(event);
 
-                    } else {
-                        moveHeading = heading;
-                    }
+                } else {
+                    moveHeading = heading;
                 }
 
                 // Set the heading that the move handle will use.
@@ -201,36 +207,58 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
         } else if (Event.ONMOUSEUP == nativePreviewEvent.getTypeInt()) {
             if (MouseUtil.isPrimary(event)) {
-                if (!isBusy()) {
-                    final ResizeHandle<R> resizeHandle = getResizeHandle();
-                    final MoveHandle<R> moveHandle = getMoveHandle();
+                final ResizeHandle<R> resizeHandle = getResizeHandle();
+                final MoveHandle<R> moveHandle = getMoveHandle();
 
-                    if (resizeHandle.isResizing()) {
-                        // Stop resizing.
-                        resizeHandle.endResize(event);
+                if (resizeHandle.isResizing()) {
 
-                        // If the mouse is no longer over a viable handle then
-                        // remove it.
-                        final Heading heading = getHeading(event);
-                        if (!resizeHandle.update(event, heading)) {
-                            // Detach event preview handler.
-                            resizeHandle.hide();
-                            if (handlerRegistration != null) {
-                                handlerRegistration.removeHandler();
-                                handlerRegistration = null;
-                            }
-                        }
-                    } else if (moveHandle.isMoving()) {
-                        // Stop moving column.
-                        moveHandle.endMove(event);
+                    if (doubleClickTester.isDoubleClick(resizeHandle)) {
+                        final int colNo = resizeHandle.getColNo();
+
+                        final Element tempDiv = DOM.createDiv();
+                        tempDiv.setClassName("stroom-dashboard-text-measurement");
+
+                        RootPanel.get().getElement().appendChild(tempDiv);
+
+                        final double minHeaderWidth = getMinHeaderWidth(colNo, tempDiv);
+                        final double minBodyWidth = getMinBodyWidth(colNo, tempDiv);
+                        final double minWidth = Math.max(minHeaderWidth, minBodyWidth);
+
+                        RootPanel.get().getElement().removeChild(tempDiv);
+
+                        final int existingWidth = resizeHandle.getExistingWidth();
+                        final int diff = (int) minWidth - existingWidth;
+                        resizeHandle.endResize(diff);
+
                     } else {
-                        if (headingListener != null) {
-                            final Heading heading = getHeading(event);
-                            headingListener.onMouseUp(event, heading);
+                        // Find out how far we moved.
+                        final int diff = resizeHandle.getDiff(event);
 
-                            // Detach event preview handler.
-                            resizeHandle.hide();
+                        // Stop resizing.
+                        resizeHandle.endResize(diff);
+
+                        // If we have moved then we don't want to test for double click.
+                        if (diff != 0) {
+                            doubleClickTester.clear();
                         }
+
+                        final Element target = event.getEventTarget().cast();
+                        final boolean isOverHandle = resizeHandle.getElement().isOrHasChild(target);
+
+                        if (!isOverHandle) {
+                            hideResizeHandle();
+                        }
+                    }
+                } else if (moveHandle.isMoving()) {
+                    // Stop moving column.
+                    moveHandle.endMove(event);
+                } else {
+                    if (headingListener != null) {
+                        final Heading heading = getHeading(event);
+                        headingListener.onMouseUp(event, heading);
+
+                        // Detach event preview handler.
+                        resizeHandle.hide();
                     }
                 }
 
@@ -246,22 +274,89 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
             // grid.
             if (!resizeHandle.isResizing() && moveHeading == null
                     && !MouseHelper.mouseIsOverElement(event, resizeHandle.getElement())) {
-                // Detach event preview handler.
-                resizeHandle.hide();
-                if (handlerRegistration != null) {
-                    handlerRegistration.removeHandler();
-                    handlerRegistration = null;
+                final Element rel = event.getRelatedEventTarget().cast();
+                final Heading heading = getHeading(rel, event.getClientX());
+                if (heading != null) {
+                    if (handlerRegistration != null) {
+                        handlerRegistration.removeHandler();
+                        handlerRegistration = null;
+                    }
+
+                    // Show the resize handle immediately before
+                    // attaching the native event preview handler.
+                    if (resizeHandle.update(event, heading)) {
+                        doubleClickTester.clear();
+                        resizeHandle.show();
+                    }
+
+                    handlerRegistration = Event.addNativePreviewHandler(this);
+
+                } else {
+                    hideResizeHandle();
                 }
             }
         }
     }
 
-    private boolean isBusy() {
-        boolean busy = false;
-        if (headingListener != null) {
-//            busy = headingListener.isBusy();
+    private double getMinHeaderWidth(final int colNo, final Element tempDiv) {
+        double minWidth = 3;
+
+        // Get the col element.
+        final Element col = getTableHeadElement()
+                .getFirstChildElement()
+                .getChild(colNo)
+                .getFirstChild()
+                .cast();
+
+        // Look for spans used by dashboard tables.
+        for (int i = 0; i < col.getChildCount(); i++) {
+            final Element span = col.getChild(i).cast();
+            minWidth += ElementUtil.getSubPixelOffsetWidth(span);
         }
-        return busy;
+
+        // If we still have a narrow col see if there is any text content.
+        if (minWidth < 10) {
+            String text = col.getInnerText();
+            tempDiv.setInnerHTML(text);
+            double scrollWidth = ElementUtil.getSubPixelOffsetWidth(tempDiv);
+            minWidth = Math.max(minWidth, scrollWidth);
+        }
+
+        return minWidth;
+    }
+
+    private double getMinBodyWidth(final int colNo, final Element tempDiv) {
+        double minWidth = 3;
+
+        for (int row = 0; row < getRowCount(); row++) {
+            final TableRowElement tableRowElement = getRowElement(row);
+            final NodeList<TableCellElement> cells = tableRowElement.getCells();
+            final TableCellElement tableCellElement = cells.getItem(colNo);
+
+            Element el = tableCellElement;
+            while (el.getFirstChildElement() != null) {
+                el = el.getFirstChildElement();
+            }
+
+            String text = el.getInnerText();
+
+            if (text.length() > 0) {
+                tempDiv.setInnerHTML(text);
+                double offsetWidth = ElementUtil.getSubPixelOffsetWidth(tempDiv) + 1;
+                minWidth = Math.max(minWidth, offsetWidth);
+            }
+        }
+
+        return minWidth;
+    }
+
+    private void hideResizeHandle() {
+        resizeHandle.hide();
+        if (handlerRegistration != null) {
+            // Detach event preview handler.
+            handlerRegistration.removeHandler();
+            handlerRegistration = null;
+        }
     }
 
     private ResizeHandle<R> getResizeHandle() {
@@ -281,6 +376,10 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
     private Heading getHeading(final NativeEvent event) {
         final Element target = event.getEventTarget().cast();
+        return getHeading(target, event.getClientX());
+    }
+
+    private Heading getHeading(final Element target, final int initialX) {
         int childIndex;
         Element th = target;
         Element headerRow;
@@ -301,7 +400,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                     }
                 }
 
-                return new Heading(getElement(), th, childIndex, event.getClientX());
+                return new Heading(getElement(), th, childIndex, initialX);
             }
         }
 

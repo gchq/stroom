@@ -134,10 +134,14 @@ public class ResizeHandle<R> extends Widget {
         resizing = true;
     }
 
-    public void endResize(final NativeEvent event) {
-        int diff = event.getClientX() - startPos;
+    public int getDiff(final NativeEvent event) {
+        return event.getClientX() - startPos;
+    }
 
+    public void endResize(int diff) {
         if (diff != 0) {
+            resize(startPos + diff - offset);
+
             for (int i = colNo; i >= 0; i--) {
                 final Element col = headerRow.getChild(i).cast();
                 final int existingWidth = col.getOffsetWidth();
@@ -177,9 +181,18 @@ public class ResizeHandle<R> extends Widget {
         Event.releaseCapture(getElement());
     }
 
+    public int getExistingWidth() {
+        final Element col = headerRow.getChild(colNo).cast();
+        return col.getOffsetWidth();
+    }
+
     public void resize(final NativeEvent event) {
+        int left = event.getClientX() - offset;
+        resize(left);
+    }
+
+    private void resize(final int left) {
         if (resizing) {
-            final int left = event.getClientX() - offset;
             getElement().getStyle().setLeft(left, Unit.PX);
             resizeLine.getStyle().setLeft(left + HALF_HANDLE_WIDTH - HALF_LINE_WIDTH, Unit.PX);
         }
@@ -191,6 +204,10 @@ public class ResizeHandle<R> extends Widget {
 
     private void setColNo(final int colNo) {
         this.colNo = colNo;
+    }
+
+    public int getColNo() {
+        return colNo;
     }
 
     public boolean isResizing() {
