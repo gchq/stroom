@@ -27,7 +27,14 @@ import java.util.function.Consumer;
 
 public class SearchRequestBuilder {
 
-    public SearchRequest create(final String string, final SearchRequest in) {
+    private SearchRequestBuilder() {
+    }
+
+    public static SearchRequest create(final String string, final SearchRequest in) {
+        return new SearchRequestBuilder().doCreate(string, in);
+    }
+
+    private SearchRequest doCreate(final String string, final SearchRequest in) {
         // Get a list of tokens.
         final List<Token> tokens = Tokeniser.parse(string);
         if (tokens.size() == 0) {

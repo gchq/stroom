@@ -19,40 +19,25 @@ package stroom.search;
 
 import stroom.annotation.api.AnnotationFields;
 import stroom.dictionary.impl.DictionaryStore;
-import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexConstants;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.ParamSubstituteUtil;
-import stroom.query.api.v2.Query;
-import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.common.v2.EventRef;
-import stroom.query.common.v2.EventRefs;
-import stroom.search.impl.EventSearchTask;
 import stroom.search.impl.EventSearchTaskHandler;
 import stroom.task.api.TaskContextFactory;
-import stroom.task.api.TerminateHandlerFactory;
 import stroom.task.impl.ExecutorProviderImpl;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -96,11 +81,15 @@ class TestInteractiveSearch2 extends AbstractSearchTest2 {
     @Test
     void positiveCaseInsensitiveTest() {
         String queryString =
-                "Test Index\n" +
+                "\"Test index\"\n" +
                         "| where UserId = user5 and Description = e0567\n" +
-                        "| and EventTime <= 2000-01-01T00:00:00.000Z\n" +
-                        "| and EventTime >= 2016-01-02T00:00:00.000Z\n" +
-                        "| table \"StreamId\", \"EventId\", \"EventTime\", \"Status\"\n";
+                        "| and EventTime >= 2000-01-01T00:00:00.000Z\n" +
+                        "| and EventTime <= 2016-01-02T00:00:00.000Z\n" +
+                        "| table " +
+                        "StreamId as \"Stream Id\", " +
+                        "EventId as \"Event Id\", " +
+                        "EventTime as \"Event Time\", " +
+                        "\"annotation:Status\" as Status";
         test(queryString, 5);
     }
 

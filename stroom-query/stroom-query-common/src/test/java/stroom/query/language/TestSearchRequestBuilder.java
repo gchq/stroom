@@ -34,7 +34,7 @@ public class TestSearchRequestBuilder extends AbstractQueryTest {
                 resultRequests,
                 DateTimeSettings.builder().build(),
                 false);
-        searchRequest = new SearchRequestBuilder().create(input, searchRequest);
+        searchRequest = SearchRequestBuilder.create(input, searchRequest);
 
         try {
             return OBJECT_MAPPER.writeValueAsString(searchRequest);

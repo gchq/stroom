@@ -23,6 +23,7 @@ import stroom.index.shared.IndexDoc;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
+import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
@@ -30,6 +31,7 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.query.common.v2.StoreFactory;
+import stroom.query.language.DataSourceResolver;
 import stroom.query.language.SearchRequestBuilder;
 import stroom.search.impl.LuceneSearchStoreFactory;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -42,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,11 +60,13 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSearchTest2.class);
 
     @Inject
+    private CommonIndexingTestHelper commonIndexingTestHelper;
+    @Inject
     private SearchResponseCreatorManager searchResponseCreatorManager;
     @Inject
     private LuceneSearchStoreFactory storeFactory;
     @Inject
-    private SearchRequestBuilder parser;
+    private DataSourceResolver dataSourceResolver;
 
     protected static SearchResponse search(final SearchRequest searchRequest,
                                            final StoreFactory storeFactory,
@@ -120,13 +125,23 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
                 null,
                 DateTimeSettings.builder().build(),
                 false);
-        searchRequest = parser.create(queryString, searchRequest);
+        searchRequest = SearchRequestBuilder.create(queryString, searchRequest);
+        searchRequest = dataSourceResolver.resolveDataSource(searchRequest);
+
+        // Add extraction pipeline.
+        // TODO : @66 REPLACE WITH VIEW BASED EXTRACTION
+        final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();
+        ResultRequest resultRequest = searchRequest.getResultRequests().get(0);
+        TableSettings tableSettings = resultRequest.getMappings().get(0);
+        tableSettings = tableSettings.copy().extractionPipeline(resultPipeline).build();
+        resultRequest = resultRequest.copy().mappings(Collections.singletonList(tableSettings)).build();
+        searchRequest = searchRequest.copy().resultRequests(Collections.singletonList(resultRequest)).build();
 
         try {
             final ObjectMapper mapper = createMapper(true);
             final String json = mapper.writeValueAsString(searchRequest);
             LOGGER.info(json);
-        } catch (final Exception e)  {
+        } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
 

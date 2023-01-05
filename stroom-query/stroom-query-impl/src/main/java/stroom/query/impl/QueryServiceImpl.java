@@ -43,6 +43,7 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.common.v2.DataSourceProviderRegistry;
+import stroom.query.language.DataSourceResolver;
 import stroom.query.language.SearchRequestBuilder;
 import stroom.query.shared.DestroyQueryRequest;
 import stroom.query.shared.DownloadQueryResultsRequest;
@@ -100,7 +101,7 @@ class QueryServiceImpl implements QueryService {
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
     private final Provider<FunctionService> functionServiceProvider;
-    private final DocRefInfoService docRefInfoService;
+    private final DataSourceResolver dataSourceResolver;
 
     @Inject
     QueryServiceImpl(final QueryStore queryStore,
@@ -116,7 +117,7 @@ class QueryServiceImpl implements QueryService {
                      final ExecutorProvider executorProvider,
                      final TaskContextFactory taskContextFactory,
                      final Provider<FunctionService> functionServiceProvider,
-                     final DocRefInfoService docRefInfoService) {
+                     final DataSourceResolver dataSourceResolver) {
         this.queryStore = queryStore;
         this.queryService = queryService;
         this.documentResourceHelper = documentResourceHelper;
@@ -130,7 +131,7 @@ class QueryServiceImpl implements QueryService {
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
         this.functionServiceProvider = functionServiceProvider;
-        this.docRefInfoService = docRefInfoService;
+        this.dataSourceResolver = dataSourceResolver;
     }
 
     @Override
@@ -407,9 +408,8 @@ class QueryServiceImpl implements QueryService {
                         null,
                         queryContext.getDateTimeSettings(),
                         searchRequest.isIncremental());
-                final SearchRequestBuilder builder = new SearchRequestBuilder();
-                SearchRequest mappedRequest = builder.create(query, sampleRequest);
-                mappedRequest = resolveDataSource(mappedRequest);
+                SearchRequest mappedRequest = SearchRequestBuilder.create(query, sampleRequest);
+                mappedRequest = dataSourceResolver.resolveDataSource(mappedRequest);
 
 
                 // Fix table result requests.
@@ -517,43 +517,43 @@ class QueryServiceImpl implements QueryService {
         return result;
     }
 
-    private SearchRequest resolveDataSource(SearchRequest request) {
-        String dataSourceName = null;
-        if (request != null &&
-                request.getQuery() != null &&
-                request.getQuery().getDataSource() != null) {
-            dataSourceName = request.getQuery().getDataSource().getName();
-        }
-        if (dataSourceName == null) {
-            throw new RuntimeException("Null data source name");
-        }
-
-        final List<DocRef> docRefs = docRefInfoService.findByName(
-                null,
-                dataSourceName,
-                false);
-        if (docRefs == null || docRefs.size() == 0) {
-            throw new RuntimeException("Data source \"" + dataSourceName + "\" not found");
-        }
-
-        // TODO : Deal with duplicate names.
-
-        DocRef resolved = null;
-        for (final DocRef docRef : docRefs) {
-            final Optional<DataSourceProvider> optional =
-                    dataSourceProviderRegistry.getDataSourceProvider(docRef);
-            if (optional.isPresent()) {
-                resolved = docRef;
-                break;
-            }
-        }
-
-        if (resolved == null) {
-            throw new RuntimeException("Unable to find data source \"" + dataSourceName + "\"");
-        }
-
-        return request.copy().query(request.getQuery().copy().dataSource(resolved).build()).build();
-    }
+//    private SearchRequest resolveDataSource(SearchRequest request) {
+//        String dataSourceName = null;
+//        if (request != null &&
+//                request.getQuery() != null &&
+//                request.getQuery().getDataSource() != null) {
+//            dataSourceName = request.getQuery().getDataSource().getName();
+//        }
+//        if (dataSourceName == null) {
+//            throw new RuntimeException("Null data source name");
+//        }
+//
+//        final List<DocRef> docRefs = docRefInfoService.findByName(
+//                null,
+//                dataSourceName,
+//                false);
+//        if (docRefs == null || docRefs.size() == 0) {
+//            throw new RuntimeException("Data source \"" + dataSourceName + "\" not found");
+//        }
+//
+//        // TODO : Deal with duplicate names.
+//
+//        DocRef resolved = null;
+//        for (final DocRef docRef : docRefs) {
+//            final Optional<DataSourceProvider> optional =
+//                    dataSourceProviderRegistry.getDataSourceProvider(docRef);
+//            if (optional.isPresent()) {
+//                resolved = docRef;
+//                break;
+//            }
+//        }
+//
+//        if (resolved == null) {
+//            throw new RuntimeException("Unable to find data source \"" + dataSourceName + "\"");
+//        }
+//
+//        return request.copy().query(request.getQuery().copy().dataSource(resolved).build()).build();
+//    }
 
     private SearchRequest addTimeRangeExpression(final DateField partitionTimeField,
                                                  final SearchRequest searchRequest) {
