@@ -565,7 +565,7 @@ public class SearchRequestBuilder {
         boolean first = true;
         for (final AbstractToken t : children) {
             if (first && TokenType.BY.equals(t.getTokenType())) {
-
+                // Ignore
             } else {
                 if (TokenType.isString(t)) {
                     if (fieldName == null) {
@@ -619,7 +619,7 @@ public class SearchRequestBuilder {
         boolean first = true;
         for (final AbstractToken t : children) {
             if (first && TokenType.BY.equals(t.getTokenType())) {
-
+                // Ignore
             } else {
                 if (TokenType.isString(t)) {
                     if (fieldName == null) {
