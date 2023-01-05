@@ -13,6 +13,12 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-alpha.9] - 2023-01-05
+
+* Issue **#3127** : Fix ClassCastException when clearing a cache on the Caches screen.
+
+* Issue **#3165** : Auto size table columns to fit content with double click on resize handle.
+
 * Issue **#3136** : Fix the reference data lookup logic that determines if a ref stream contains a given map or not. Fix NPE in `RefDataLookupRequest#toString()`. Change `ReferenceDataResult` to hold message templates to reduce memory use. Change `RefDataStoreHolder` to only add available maps once per ref stream. Improve in app logging of lookups.
 
 * Issue **#3140** : Ignore processor filter updates on import.
@@ -20,6 +26,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3125** : Fix import rename and move so that imported items end up renamed in explorer and store.
 
 * Issue **#3148** : Fix dependencies screen showing status of Missing for the Ref Data and Dual Searchables. Also fix the missing icon on that screen for Searchables.
+
 
 ## [v7.2-alpha.8] - 2022-12-13
 
@@ -4948,7 +4955,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-alpha.8...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-alpha.9...HEAD
+[v7.2-alpha.9]: https://github.com/gchq/stroom/compare/v7.2-alpha.8...v7.2-alpha.9
 [v7.2-alpha.8]: https://github.com/gchq/stroom/compare/v7.2-alpha.7...v7.2-alpha.8
 [v7.2-alpha.7]: https://github.com/gchq/stroom/compare/v7.2-alpha.6...v7.2-alpha.7
 [v7.2-alpha.6]: https://github.com/gchq/stroom/compare/v7.2-alpha.5...v7.2-alpha.6
