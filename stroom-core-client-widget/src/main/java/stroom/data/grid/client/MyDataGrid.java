@@ -327,8 +327,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
     private double getMinBodyWidth(final int colNo, final Element tempDiv) {
         double minWidth = 3;
-
-        for (int row = 0; row < getRowCount(); row++) {
+        for (int row = 0; row < getVisibleItemCount(); row++) {
             final TableRowElement tableRowElement = getRowElement(row);
             final NodeList<TableCellElement> cells = tableRowElement.getCells();
             final TableCellElement tableCellElement = cells.getItem(colNo);
