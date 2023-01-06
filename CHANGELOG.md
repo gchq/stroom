@@ -12,6 +12,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.1-beta.18-test-open-id] - 2023-01-06
+
+* Issue **#3112** : Change meta key `UploadUser` to `UploadUserId`. Add meta key `UploadUserUsername` to hold the `preferred_username` from the IDP. **NOTE**: the stroom property `receive.requireTokenAuthentication` and proxy property `receivedDataConfig.requireTokenAuthentication` have both been replaced by `tokenAuthenticationEnabled`, `certificateAuthenticationEnabled` and `authenticationRequired`, allowing authentication to be disabled and the mechanism to be controlled on data receipt. Remove properties `receive.unknownClassification` and `receive.feedNamePattern` as they are unused and duplicates of other properties. Replace property `security.authentication.useInternal` (boolean) with `security.authentication.identityProviderType` (`INTERNAL`|`EXTERNAL`|`TEST`). Add property `addOpenIdAccessToken` to the HTTP forward config. Remove property `useDefaultOpenIdCredentials` as this is now covered by `security.authentication.identityProviderType`. In proxy YAML config, replaced `forwardDestinations` with `forwardFileDestinations` and `forwardHttpDestinations`; replaced `receiveDataConfig` with `receive`.
+
+
 ## [v7.1-beta.18] - 2023-01-06
 
 * Issue **#2819** : Scale query expression panel height so all items can be viewed on scroll.
@@ -4461,7 +4466,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.18...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.18-test-open-id...HEAD
+[v7.1-beta.18-test-open-id]: https://github.com/gchq/stroom/compare/v7.1-beta.18...v7.1-beta.18-test-open-id
 [v7.1-beta.18]: https://github.com/gchq/stroom/compare/v7.1-beta.17...v7.1-beta.18
 [v7.1-beta.17]: https://github.com/gchq/stroom/compare/v7.1-beta.16...v7.1-beta.17
 [v7.1-beta.16]: https://github.com/gchq/stroom/compare/v7.1-beta.15...v7.1-beta.16
