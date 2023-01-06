@@ -1,5 +1,8 @@
 package stroom.data.zip;
 
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 
@@ -11,6 +14,8 @@ import java.nio.file.Path;
 import java.util.Enumeration;
 
 public class StroomZipFile implements Closeable {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomZipFile.class);
 
     private static final String SINGLE_ENTRY_ZIP_BASE_NAME = "001";
 
@@ -48,6 +53,7 @@ public class StroomZipFile implements Closeable {
 
                 // Skip Dir's
                 if (!entry.isDirectory()) {
+                    LOGGER.debug("File entry: {}", entry);
                     String fileName = entry.getName();
                     stroomZipNameSet.add(fileName);
                 }

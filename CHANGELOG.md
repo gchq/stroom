@@ -12,6 +12,26 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.1-beta.18] - 2023-01-06
+
+* Issue **#2819** : Scale query expression panel height so all items can be viewed on scroll.
+
+* Issue **#2860** : Retry (with backoff) when indexing to an Elasticsearch cluster and the cluster reports it is overloaded. This improves indexing success rate, reducing the chance of  streams being generated when a cluster is under heavy load.
+
+* Issue **#3127** : Fix ClassCastException when clearing a cache on the Caches screen.
+
+* Issue **#3143** : Fix NPE when modifying a property value.
+
+* Issue **#3145** : Fix initial API Key expiry so it picks up the default value from config.
+
+* Issue **#3136** : Simplify code that finds effective reference data streams. Add more debug logging.
+
+* Issue **#3159** : Improve appearance of user Task Manager.
+
+* Issue **#3141** : Increase default width of global property editor dialog.
+
+* Issue **#3166** : Fix stream import when the zip contains a mix of single-part and multi-part streams.
+
 * Issue **#3136** : Fix the reference data lookup logic that determines if a ref stream contains a given map or not. Fix NPE in `RefDataLookupRequest#toString()`. Change `ReferenceDataResult` to hold message templates to reduce memory use. Change `RefDataStoreHolder` to only add available maps once per ref stream. Improve in app logging of lookups.
 
 * Issue **#3140** : Ignore processor filter updates on import.
@@ -4441,7 +4461,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.17...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.18...HEAD
+[v7.1-beta.18]: https://github.com/gchq/stroom/compare/v7.1-beta.17...v7.1-beta.18
 [v7.1-beta.17]: https://github.com/gchq/stroom/compare/v7.1-beta.16...v7.1-beta.17
 [v7.1-beta.16]: https://github.com/gchq/stroom/compare/v7.1-beta.15...v7.1-beta.16
 [v7.1-beta.15]: https://github.com/gchq/stroom/compare/v7.1-beta.14...v7.1-beta.15
