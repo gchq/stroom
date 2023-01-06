@@ -17,17 +17,18 @@
 package stroom.alert.api;
 
 
-import stroom.dashboard.shared.TableComponentSettings;
+import stroom.query.api.v2.TableSettings;
 
 import java.util.Map;
 
 public class AlertDefinition {
+
     private final Map<String, String> attributes;
-    private final TableComponentSettings tableComponentSettings;
+    private final TableSettings tableSettings;
     private boolean disabled = false;
 
-    public AlertDefinition(final TableComponentSettings tableComponentSettings, final Map<String, String> attributes) {
-        this.tableComponentSettings = tableComponentSettings;
+    public AlertDefinition(final TableSettings tableSettings, final Map<String, String> attributes) {
+        this.tableSettings = tableSettings;
         if (attributes != null) {
             this.attributes = attributes;
         } else {
@@ -39,8 +40,8 @@ public class AlertDefinition {
         return attributes;
     }
 
-    public final TableComponentSettings getTableComponentSettings() {
-        return tableComponentSettings;
+    public final TableSettings getTableSettings() {
+        return tableSettings;
     }
 
     public boolean isDisabled() {

@@ -321,6 +321,9 @@
   height: 18px;
 }
 
+.svgIcon-document-AlertRule {
+  background-image: url("../images/document/ReceiveDataRuleSet.svg");
+}
 .svgIcon-document-AnalyticOutputStore {
   background-image: url("../images/document/AnalyticOutputStore.svg");
 }
@@ -377,9 +380,6 @@
 }
 .svgIcon-document-SelectAllOrNone {
   background-image: url("../images/document/SelectAllOrNone.svg");
-}
-.svgIcon-document-SigmaRule {
-  background-image: url("../images/document/SigmaRule.svg");
 }
 .svgIcon-document-SolrIndex {
   background-image: url("../images/document/SolrIndex.svg");

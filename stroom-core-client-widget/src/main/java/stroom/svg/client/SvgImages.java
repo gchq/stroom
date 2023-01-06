@@ -4761,7 +4761,7 @@ public class SvgImages {
             " 368q20 35 20 69z\"/></svg>\n" +
             "";
 
-    public static String SIGMA_RULE = "" +
+    public static String ALERT_RULE = "" +
             "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
             "<!-- Created with Inkscape (http://www.inkscape.org/) -->\n" +
             "\n" +

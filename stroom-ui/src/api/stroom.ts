@@ -141,6 +141,24 @@ export type AddPermissionEvent = PermissionChangeEvent & {
   userUuid?: string;
 };
 
+export interface AlertRuleDoc {
+  /** @format int64 */
+  createTimeMs?: number;
+  createUser?: string;
+  description?: string;
+  enabled?: boolean;
+  languageVersion?: "STROOM_QL_VERSION_0_1" | "SIGMA";
+  name?: string;
+  query?: string;
+  type?: string;
+
+  /** @format int64 */
+  updateTimeMs?: number;
+  updateUser?: string;
+  uuid?: string;
+  version?: string;
+}
+
 export interface Annotation {
   assignedTo?: string;
   comment?: string;
@@ -3006,22 +3024,6 @@ export interface SharedStepData {
   sourceLocation?: SourceLocation;
 }
 
-export interface SigmaRuleDoc {
-  /** @format int64 */
-  createTimeMs?: number;
-  createUser?: string;
-  description?: string;
-  name?: string;
-  sigmaRule?: string;
-  type?: string;
-
-  /** @format int64 */
-  updateTimeMs?: number;
-  updateUser?: string;
-  uuid?: string;
-  version?: string;
-}
-
 export interface SimpleUser {
   name?: string;
   uuid?: string;
@@ -4251,6 +4253,43 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     updateActivity: (id: number, data: Activity, params: RequestParams = {}) =>
       this.request<any, Activity>({
         path: `/activity/v1/${id}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
+  alertRule = {
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name FetchAlertRule
+     * @summary Fetch an alert rule doc by its UUID
+     * @request GET:/alertRule/v1/{uuid}
+     * @secure
+     */
+    fetchAlertRule: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, AlertRuleDoc>({
+        path: `/alertRule/v1/${uuid}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name UpdateAlertRule
+     * @summary Update an alert rule doc
+     * @request PUT:/alertRule/v1/{uuid}
+     * @secure
+     */
+    updateAlertRule: (uuid: string, data: AlertRuleDoc, params: RequestParams = {}) =>
+      this.request<any, AlertRuleDoc>({
+        path: `/alertRule/v1/${uuid}`,
         method: "PUT",
         body: data,
         secure: true,
@@ -8250,43 +8289,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         path: `/sessionInfo/v1`,
         method: "GET",
         secure: true,
-        ...params,
-      }),
-  };
-  sigmaRule = {
-    /**
-     * No description
-     *
-     * @tags Queries
-     * @name FetchSigmaRule
-     * @summary Fetch a sigma rule doc by its UUID
-     * @request GET:/sigmaRule/v1/{uuid}
-     * @secure
-     */
-    fetchSigmaRule: (uuid: string, params: RequestParams = {}) =>
-      this.request<any, SigmaRuleDoc>({
-        path: `/sigmaRule/v1/${uuid}`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Queries
-     * @name UpdateSigmaRule
-     * @summary Update a sigma rule doc
-     * @request PUT:/sigmaRule/v1/{uuid}
-     * @secure
-     */
-    updateSigmaRule: (uuid: string, data: SigmaRuleDoc, params: RequestParams = {}) =>
-      this.request<any, SigmaRuleDoc>({
-        path: `/sigmaRule/v1/${uuid}`,
-        method: "PUT",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
         ...params,
       }),
   };

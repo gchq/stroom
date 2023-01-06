@@ -1,0 +1,21 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:item="urn:import:stroom.item.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="alertRuleSettingsDescription" label="Description">
+            <g:TextArea ui:field="description" width="400px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="alertRuleSettingsLanguageVersion" label="Language Version">
+            <item:ItemListBox ui:field="languageVersion" width="400px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="alertRuleSettingsQuery" label="Query">
+            <g:SimplePanel ui:field="query" width="800px" height="600px" addStyleNames="stroom-control"/>
+        </form:FormGroup>
+        <form:FormGroup identity="alertRuleSettingsEnabled" label="Enabled">
+            <tickbox:CustomCheckBox ui:field="enabled"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder> 

@@ -45,7 +45,7 @@ public class MockAlertManager implements AlertManager {
     }
 
     @Override
-    public void initialiseCache() {
+    public void refreshRules() {
 
     }
 }

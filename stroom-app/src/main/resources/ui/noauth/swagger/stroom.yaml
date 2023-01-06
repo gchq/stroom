@@ -310,6 +310,50 @@ paths:
       summary: Update an Activity
       tags:
       - Activities
+  /alertRule/v1/{uuid}:
+    get:
+      operationId: fetchAlertRule
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertRuleDoc'
+          description: default response
+      summary: Fetch an alert rule doc by its UUID
+      tags:
+      - Queries
+    put:
+      operationId: updateAlertRule
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertRuleDoc'
+        description: doc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertRuleDoc'
+          description: default response
+      summary: Update an alert rule doc
+      tags:
+      - Queries
   /annotation/v1:
     get:
       operationId: getAnnotationDetail
@@ -4691,50 +4735,6 @@ paths:
       summary: Get information for the current session
       tags:
       - Session Info
-  /sigmaRule/v1/{uuid}:
-    get:
-      operationId: fetchSigmaRule
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SigmaRuleDoc'
-          description: default response
-      summary: Fetch a sigma rule doc by its UUID
-      tags:
-      - Queries
-    put:
-      operationId: updateSigmaRule
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SigmaRuleDoc'
-        description: doc
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SigmaRuleDoc'
-          description: default response
-      summary: Update a sigma rule doc
-      tags:
-      - Queries
   /solrIndex/v1/fetchSolrTypes:
     post:
       operationId: fetchSolrTypes
@@ -6355,6 +6355,38 @@ components:
             type: string
           userUuid:
             type: string
+    AlertRuleDoc:
+      type: object
+      properties:
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+        languageVersion:
+          type: string
+          enum:
+          - STROOM_QL_VERSION_0_1
+          - SIGMA
+        name:
+          type: string
+        query:
+          type: string
+        type:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        uuid:
+          type: string
+        version:
+          type: string
     Annotation:
       type: object
       properties:
@@ -10934,31 +10966,6 @@ components:
             $ref: '#/components/schemas/SharedElementData'
         sourceLocation:
           $ref: '#/components/schemas/SourceLocation'
-    SigmaRuleDoc:
-      type: object
-      properties:
-        createTimeMs:
-          type: integer
-          format: int64
-        createUser:
-          type: string
-        description:
-          type: string
-        name:
-          type: string
-        sigmaRule:
-          type: string
-        type:
-          type: string
-        updateTimeMs:
-          type: integer
-          format: int64
-        updateUser:
-          type: string
-        uuid:
-          type: string
-        version:
-          type: string
     SimpleUser:
       type: object
       properties:

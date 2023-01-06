@@ -97,7 +97,7 @@
 <!--    <inherits name="stroom.monitoring.Monitoring" />-->
     <inherits name="stroom.job.Job" />
     <inherits name="stroom.importexport.ImportExport" />
-    <inherits name="stroom.sigmarule.SigmaRule" />
+    <inherits name="stroom.alert.rule.AlertRule" />
     <inherits name="stroom.view.View" />
 
     <!-- Include new data controls -->

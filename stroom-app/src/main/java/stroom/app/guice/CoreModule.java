@@ -1,5 +1,7 @@
 package stroom.app.guice;
 
+import stroom.alert.rule.impl.AlertRuleModule;
+
 import com.google.inject.AbstractModule;
 
 public class CoreModule extends AbstractModule {
@@ -89,7 +91,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.security.impl.SessionSecurityModule());
         install(new stroom.security.impl.db.SecurityDaoModule());
         install(new stroom.servicediscovery.impl.ServiceDiscoveryModule());
-        install(new stroom.sigmarule.impl.SigmaRuleModule());
+        install(new AlertRuleModule());
         install(new stroom.statistics.impl.InternalStatisticsModule());
         install(new stroom.statistics.impl.hbase.entity.StroomStatsStoreModule());
         install(new stroom.statistics.impl.hbase.internal.InternalModule());

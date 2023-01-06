@@ -28,6 +28,7 @@ include 'stroom-activity:stroom-activity-mock'
 include 'stroom-alert:stroom-alert-api'
 include 'stroom-alert:stroom-alert-impl'
 include 'stroom-alert:stroom-alert-mock'
+include 'stroom-alert:stroom-alert-rule-impl'
 
 // Annotations project.
 include 'stroom-annotation:stroom-annotation-api'
@@ -247,9 +248,6 @@ include 'stroom-security:stroom-security-openid-api'
 // Service discovery
 include 'stroom-servicediscovery:stroom-servicediscovery-api'
 include 'stroom-servicediscovery:stroom-servicediscovery-impl'
-
-// Sigma rules
-include 'stroom-sigmarule:stroom-sigmarule-impl'
 
 // Statistics
 include 'stroom-statistics:stroom-statistics-api'

@@ -73,8 +73,8 @@ import stroom.search.solr.client.gin.SolrIndexGinjector;
 import stroom.search.solr.client.gin.SolrIndexModule;
 import stroom.security.client.gin.SecurityGinjector;
 import stroom.security.client.gin.SecurityModule;
-import stroom.sigmarule.client.gin.SigmaRuleGinjector;
-import stroom.sigmarule.client.gin.SigmaRuleModule;
+import stroom.alert.rule.client.gin.AlertRuleGinjector;
+import stroom.alert.rule.client.gin.AlertRuleModule;
 import stroom.statistics.impl.hbase.client.gin.StroomStatsStoreGinjector;
 import stroom.statistics.impl.hbase.client.gin.StroomStatsStoreModule;
 import stroom.statistics.impl.sql.client.gin.StatisticsGinjector;
@@ -127,7 +127,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         SecurityModule.class,
         ElasticClusterModule.class,
         ElasticIndexModule.class,
-        SigmaRuleModule.class,
+        AlertRuleModule.class,
         SolrIndexModule.class,
         StatisticsModule.class,
         StreamStoreModule.class,
@@ -161,7 +161,7 @@ public interface AppGinjectorUser extends
         UserPreferencesGinjector,
         ScriptGinjector,
         SecurityGinjector,
-        SigmaRuleGinjector,
+        AlertRuleGinjector,
         ElasticClusterGinjector,
         ElasticIndexGinjector,
         SolrIndexGinjector,

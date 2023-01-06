@@ -19,6 +19,8 @@ package stroom.alert.impl;
 import stroom.alert.api.AlertDefinition;
 import stroom.alert.api.AlertManager;
 import stroom.alert.api.AlertProcessor;
+import stroom.alert.rule.impl.AlertRuleStore;
+import stroom.alert.rule.shared.AlertRuleDoc;
 import stroom.dashboard.impl.DashboardStore;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.DashboardDoc;
@@ -35,12 +37,21 @@ import stroom.pipeline.PipelineStore;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.Query;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.TableSettings;
+import stroom.query.language.DataSourceResolver;
+import stroom.query.language.SearchRequestBuilder;
 import stroom.search.extraction.ExtractionTaskHandler;
 import stroom.search.impl.SearchConfig;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.view.impl.ViewStore;
+import stroom.view.shared.ViewDoc;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -66,9 +77,12 @@ public class AlertManagerImpl implements AlertManager {
     private final Provider<ExtractionTaskHandler> handlerProvider;
     private final Provider<AlertConfig> alertConfigProvider;
     private final Provider<SearchConfig> searchConfigProvider;
+    private final Provider<AlertRuleStore> alertRuleStoreProvider;
+    private final DataSourceResolver dataSourceResolver;
+    private final Provider<ViewStore> viewStoreProvider;
 
-    private Map<DocRef, List<RuleConfig>> indexToRules = new HashMap<>();
-    private boolean initialised = false;
+    private volatile Map<DocRef, List<RuleConfig>> currentRules = new HashMap<>();
+    private volatile Instant lastCacheUpdateTimeMs;
 
     @Inject
     AlertManagerImpl(final TaskContext taskContext,
@@ -80,7 +94,10 @@ public class AlertManagerImpl implements AlertManager {
                      final IndexStructureCache indexStructureCache,
                      final PipelineStore pipelineStore,
                      final PipelineDataCache pipelineDataCache,
-                     final Provider<ExtractionTaskHandler> handlerProvider) {
+                     final Provider<ExtractionTaskHandler> handlerProvider,
+                     final Provider<AlertRuleStore> alertRuleStoreProvider,
+                     final DataSourceResolver dataSourceResolver,
+                     final Provider<ViewStore> viewStoreProvider) {
         this.taskContext = taskContext;
         this.alertConfigProvider = alertConfigProvider;
         this.explorerNodeService = explorerNodeService;
@@ -91,19 +108,15 @@ public class AlertManagerImpl implements AlertManager {
         this.pipelineStore = pipelineStore;
         this.pipelineDataCache = pipelineDataCache;
         this.handlerProvider = handlerProvider;
+        this.alertRuleStoreProvider = alertRuleStoreProvider;
+        this.dataSourceResolver = dataSourceResolver;
+        this.viewStoreProvider = viewStoreProvider;
     }
 
     @Override
     public Optional<AlertProcessor> createAlertProcessor(final DocRef indexDocRef) {
-        if (!initialised) {
-            initialiseCache();
-            initialised = true;
-        }
-
-        List<RuleConfig> rules = indexToRules.get(indexDocRef);
-
+        final List<RuleConfig> rules = getRules().get(indexDocRef);
         if (rules != null && rules.size() > 0) {
-
             IndexStructure indexStructure = indexStructureCache.get(indexDocRef);
 
             if (indexStructure == null) {
@@ -129,12 +142,41 @@ public class AlertManagerImpl implements AlertManager {
         return Optional.empty();
     }
 
+    private Map<DocRef, List<RuleConfig>> getRules() {
+        Map<DocRef, List<RuleConfig>> rules = currentRules;
+        if (lastCacheUpdateTimeMs == null) {
+            rules = updateRules();
+        }
+        return rules;
+    }
+
+    @Override
+    public void refreshRules() {
+        updateRules();
+    }
+
+    private synchronized Map<DocRef, List<RuleConfig>> updateRules() {
+        Map<DocRef, List<RuleConfig>> rules = currentRules;
+        if (lastCacheUpdateTimeMs == null
+                || lastCacheUpdateTimeMs.isBefore(Instant.now().minus(Duration.ofMinutes(1)))) {
+            rules = new HashMap<>();
+            // Add the special folder rules.
+            addSpecialFolderRules(rules);
+            // Add rules based on alert rule entities.
+            addAlertRules(rules);
+
+            currentRules = rules;
+            lastCacheUpdateTimeMs = Instant.now();
+        }
+        return rules;
+    }
+
     @Override
     public String getTimeZoneId() {
         return alertConfigProvider.get().getTimezone();
     }
 
-    private final List<String> findRulesPaths() {
+    private List<String> findRulesPaths() {
         return alertConfigProvider.get().getRulesFolderList();
     }
 
@@ -155,7 +197,7 @@ public class AlertManagerImpl implements AlertManager {
         for (String name : path) {
             List<ExplorerNode> matchingChildren =
                     explorerNodeService.getNodesByName(currentNode, name).stream().filter(explorerNode ->
-                            ExplorerConstants.FOLDER.equals(explorerNode.getDocRef().getType()))
+                                    ExplorerConstants.FOLDER.equals(explorerNode.getDocRef().getType()))
                             .collect(Collectors.toList());
 
             if (matchingChildren.size() == 0) {
@@ -180,10 +222,7 @@ public class AlertManagerImpl implements AlertManager {
         return new HashMap<>();
     }
 
-    @Override
-    public void initialiseCache() {
-        Map<DocRef, List<RuleConfig>> indexToRules = new HashMap<>();
-
+    private void addSpecialFolderRules(final Map<DocRef, List<RuleConfig>> indexToRules) {
         List<String> rulesPaths = findRulesPaths();
         if (rulesPaths == null) {
             return;
@@ -194,7 +233,7 @@ public class AlertManagerImpl implements AlertManager {
             final DocRef rulesFolder = getFolderForPath(rulesPath);
 
             if (rulesFolder == null) {
-                LOGGER.warn("The specified ruled folder \"" + rulesPath + "\" does not exist.");
+                LOGGER.warn("The specified rule folder \"" + rulesPath + "\" does not exist.");
                 continue;
             }
             LOGGER.info("Loading alerting rules from " + rulesPath);
@@ -204,7 +243,10 @@ public class AlertManagerImpl implements AlertManager {
             for (ExplorerNode childNode : childNodes) {
                 if (DashboardDoc.DOCUMENT_TYPE.equals(childNode.getDocRef().getType())) {
                     DashboardDoc dashboard = dashboardStore.readDocument(childNode.getDocRef());
-                    String childPath = explorerNodeService.getPath(childNode.getDocRef()).stream().map(n -> n.getName())
+                    String childPath = explorerNodeService
+                            .getPath(childNode.getDocRef())
+                            .stream()
+                            .map(ExplorerNode::getName)
                             .collect(Collectors.joining("/"));
                     Map<String, String> paramMap = parseParms(dashboard.getDashboardConfig().getParameters());
 
@@ -219,7 +261,7 @@ public class AlertManagerImpl implements AlertManager {
 
                             Map<DocRef, List<AlertDefinition>> pipelineTableSettings = new HashMap<>();
 
-                            //Find all the tables associated with this query
+                            // Find all the tables associated with this query
                             for (ComponentConfig associatedComponentConfig : componentConfigs) {
                                 if (associatedComponentConfig.getSettings() instanceof TableComponentSettings) {
                                     TableComponentSettings tableComponentSettings =
@@ -231,7 +273,16 @@ public class AlertManagerImpl implements AlertManager {
                                             pipelineTableSettings.put(pipeline, new ArrayList<>());
                                         }
 
-                                        AlertDefinition alertDefinition = new AlertDefinition(tableComponentSettings,
+                                        final TableSettings tableSettings = TableSettings.builder()
+                                                .queryId(tableComponentSettings.getQueryId())
+                                                .addFields(tableComponentSettings.getFields())
+                                                .extractValues(tableComponentSettings.extractValues())
+                                                .extractionPipeline(tableComponentSettings.getExtractionPipeline())
+                                                .addMaxResults(tableComponentSettings.getMaxResults())
+                                                .showDetail(tableComponentSettings.getShowDetail())
+                                                .build();
+
+                                        AlertDefinition alertDefinition = new AlertDefinition(tableSettings,
                                                 Map.of(AlertManager.DASHBOARD_NAME_KEY, dashboard.getName(),
                                                         AlertManager.RULES_FOLDER_KEY, childPath,
                                                         AlertManager.TABLE_NAME_KEY,
@@ -241,7 +292,7 @@ public class AlertManagerImpl implements AlertManager {
                                 }
                             }
 
-                            //Now split out by pipeline
+                            // Now split out by pipeline
                             for (DocRef pipeline : pipelineTableSettings.keySet()) {
                                 final RuleConfig rule = new RuleConfig(dashboard.getUuid(),
                                         queryId, expression, pipeline,
@@ -255,11 +306,67 @@ public class AlertManagerImpl implements AlertManager {
                     }
                 }
             }
-
         }
+    }
 
-        this.indexToRules = indexToRules;
-        this.initialised = true;
+    private void addAlertRules(final Map<DocRef, List<RuleConfig>> indexToRules) {
+        final AlertRuleStore alertRuleStore = alertRuleStoreProvider.get();
+        final List<DocRef> list = alertRuleStore.list();
+        for (final DocRef docRef : list) {
+            try {
+                final AlertRuleDoc alertRuleDoc = alertRuleStore.readDocument(docRef);
+                addAlertRule(alertRuleDoc, indexToRules);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        }
+    }
+
+    private void addAlertRule(final AlertRuleDoc alertRule,
+                              final Map<DocRef, List<RuleConfig>> indexToRules) {
+        if (alertRule.isEnabled()) {
+            // Map the rule query
+            Query sampleQuery = Query.builder().build();
+            SearchRequest sampleRequest = new SearchRequest(
+                    null,
+                    sampleQuery,
+                    null,
+                    null,
+                    false);
+            SearchRequest mappedRequest = SearchRequestBuilder.create(alertRule.getQuery(), sampleRequest);
+            mappedRequest = dataSourceResolver.resolveDataSource(mappedRequest);
+
+            // If the datasource is a view then resolve underlying data source and extraction.
+            DocRef dataSource = mappedRequest.getQuery().getDataSource();
+            DocRef extractionPipeline = null;
+            if (dataSource != null) {
+                if (ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
+                    final ViewDoc viewDoc = viewStoreProvider.get().readDocument(dataSource);
+                    if (viewDoc != null) {
+                        dataSource = viewDoc.getDataSource();
+                        extractionPipeline = viewDoc.getPipeline();
+                    }
+                }
+
+                Map<String, String> paramMap = new HashMap<>();
+
+                final String queryId = alertRule.getUuid();
+                ExpressionOperator expression = mappedRequest.getQuery().getExpression();
+
+                if (extractionPipeline != null) {
+                    final TableSettings tableSettings = mappedRequest.getResultRequests().get(0).getMappings().get(0);
+                    AlertDefinition alertDefinition = new AlertDefinition(tableSettings,
+                            Map.of(AlertManager.DASHBOARD_NAME_KEY, alertRule.getName(),
+                                    AlertManager.RULES_FOLDER_KEY, alertRule.getUuid(),
+                                    AlertManager.TABLE_NAME_KEY, alertRule.getName()));
+
+                    final RuleConfig rule = new RuleConfig(alertRule.getUuid(),
+                            queryId, expression, extractionPipeline,
+                            List.of(alertDefinition), paramMap);
+                    indexToRules.computeIfAbsent(dataSource, k -> new ArrayList<>()).add(rule);
+                }
+            }
+        }
     }
 
     @Override

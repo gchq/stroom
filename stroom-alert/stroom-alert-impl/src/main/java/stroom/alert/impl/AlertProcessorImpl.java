@@ -330,7 +330,7 @@ public class AlertProcessorImpl implements AlertProcessor {
         AlertProcessorReceiver(final List<AlertDefinition> alertDefinitions,
                                final Map<String, String> paramMap) {
 
-            final List<Field> fields = alertDefinitions.stream().map(a -> a.getTableComponentSettings().getFields())
+            final List<Field> fields = alertDefinitions.stream().map(a -> a.getTableSettings().getFields())
                     .reduce(new ArrayList<>(), (a, b) -> {
                         a.addAll(b);
                         return a;
