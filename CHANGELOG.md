@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-alpha.10] - 2023-01-06
+
+* Issue **#3169** : Integrate alert entities with alerting process.
+
+
 ## [v7.2-alpha.9] - 2023-01-05
 
 * Issue **#3127** : Fix ClassCastException when clearing a cache on the Caches screen.
@@ -4955,7 +4960,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-alpha.9...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-alpha.10...HEAD
+[v7.2-alpha.10]: https://github.com/gchq/stroom/compare/v7.2-alpha.9...v7.2-alpha.10
 [v7.2-alpha.9]: https://github.com/gchq/stroom/compare/v7.2-alpha.8...v7.2-alpha.9
 [v7.2-alpha.8]: https://github.com/gchq/stroom/compare/v7.2-alpha.7...v7.2-alpha.8
 [v7.2-alpha.7]: https://github.com/gchq/stroom/compare/v7.2-alpha.6...v7.2-alpha.7
