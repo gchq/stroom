@@ -222,7 +222,8 @@ Events
       <STRING>timestamp</STRING>
    </PIPE_GROUP>
    <PIPE_GROUP PIPE_OPERATION="join">
-      <STRING>kind=</STRING>
+      <STRING>kind</STRING>
+      <EQUALS>=</EQUALS>
       <FUNCTION_GROUP FUNCTION_NAME="inner">
          <STRING>Events</STRING>
          <PIPE_GROUP PIPE_OPERATION="where">

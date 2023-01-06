@@ -52,19 +52,23 @@ public class Tokeniser {
         split("(^|\\s|\\))(not)(\\s|\\(|$)", 2, TokenType.NOT);
         split("(^|\\s|\\))(by)(\\s|\\(|$)", 2, TokenType.BY);
         split("(^|\\s|\\))(as)(\\s|\\(|$)", 2, TokenType.AS);
+
+        // Tag dates.
+        split("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z?", 0, TokenType.STRING);
+
         split(",", 0, TokenType.COMMA);
-        split("(^|\\s|\\))(\\^)(\\s|\\(|$)", 2, TokenType.ORDER);
-        split("(^|\\s|\\))(/)(\\s|\\(|$)", 2, TokenType.DIVISION);
-        split("(^|\\s|\\))(\\*)(\\s|\\(|$)", 2, TokenType.MULTIPLICATION);
-        split("(^|\\s|\\))(%)(\\s|\\(|$)", 2, TokenType.MODULUS);
-        split("(^|\\s|\\))(\\+)(\\s|\\(|$)", 2, TokenType.PLUS);
-        split("(^|\\s|\\))(\\-)(\\s|\\(|$)", 2, TokenType.MINUS);
-        split("(^|\\s)(!=)(\\s|$)", 2, TokenType.NOT_EQUALS);
-        split("(^|\\s)(<=)(\\s|$)", 2, TokenType.LESS_THAN_OR_EQUAL_TO);
-        split("(^|\\s)(>=)(\\s|$)", 2, TokenType.GREATER_THAN_OR_EQUAL_TO);
-        split("(^|\\s)(<)(\\s|$)", 2, TokenType.LESS_THAN);
-        split("(^|\\s)(>)(\\s|$)", 2, TokenType.GREATER_THAN);
-        split("(^|\\s)(=)(\\s|$)", 2, TokenType.EQUALS);
+        split("\\^", 0, TokenType.ORDER);
+        split("/", 0, TokenType.DIVISION);
+        split("\\*", 0, TokenType.MULTIPLICATION);
+        split("%", 0, TokenType.MODULUS);
+        split("\\+", 0, TokenType.PLUS);
+        split("\\-", 0, TokenType.MINUS);
+        split("!=", 0, TokenType.NOT_EQUALS);
+        split("<=", 0, TokenType.LESS_THAN_OR_EQUAL_TO);
+        split(">=", 0, TokenType.GREATER_THAN_OR_EQUAL_TO);
+        split("<", 0, TokenType.LESS_THAN);
+        split(">", 0, TokenType.GREATER_THAN);
+        split("=", 0, TokenType.EQUALS);
 
         // Tag numbers.
         split("(^|\\s|\\))([-]?[0-9]+(\\.[0-9]+)?)(\\s|\\(|$)", 2, TokenType.NUMBER);
