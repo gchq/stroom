@@ -100,3 +100,20 @@ doc comment
 | sort by StreamId
 | table StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", UserId as "User Id", FirstName, count
 | limit 10
+-----
+/*
+doc comment
+*/
+
+"index_view" // view
+// add a where
+| where EventTime > 2000-01-01T00:00:00.000Z
+| and StreamId=1210
+| eval UserId = upperCase(UserId)
+| eval FirstName = UserId//lowerCase(substringBefore(UserId, '.'))
+//| eval FirstName = top(FirstName)
+| eval count = count()
+// | group by StreamId
+| sort by StreamId
+| table StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", UserId as "User Id", FirstName, count
+| limit 10
