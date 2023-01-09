@@ -12,6 +12,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0.12] - 2023-01-09
+
+* Issue **#3136** : Simplify code that finds effective reference data streams. Add more debug logging.
+
+* Issue **#3171** : Fix stroom booting successfully when there have been failed migrations.
+
+
 ## [v7.0.11] - 2022-12-20
 
 * Issue **#3136** : Fix the reference data lookup logic that determines if a ref stream contains a given map or not. Fix NPE in `RefDataLookupRequest#toString()`. Change `ReferenceDataResult` to hold message templates to reduce memory use. Change `RefDataStoreHolder` to only add available maps once per ref stream. Improve in app logging of lookups.
@@ -4686,7 +4693,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.11...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.12...HEAD
+[v7.0.12]: https://github.com/gchq/stroom/compare/v7.0.11...v7.0.12
 [v7.0.11]: https://github.com/gchq/stroom/compare/v7.0.10...v7.0.11
 [v7.0.10]: https://github.com/gchq/stroom/compare/v7.0.9...v7.0.10
 [v7.0.9]: https://github.com/gchq/stroom/compare/v7.0.8...v7.0.9
