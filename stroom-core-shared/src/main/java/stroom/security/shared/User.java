@@ -11,6 +11,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 
+/**
+ * Represents a user or a named group of users.
+ */
 @JsonInclude(Include.NON_NULL)
 public class User implements HasAuditInfo, HasIntegerId {
 
@@ -32,6 +35,10 @@ public class User implements HasAuditInfo, HasIntegerId {
     private String name;
     @JsonProperty
     private String uuid;
+    @JsonProperty
+    private String preferredUsername;
+    @JsonProperty
+    private String fullName;
 
     /**
      * Is this user a user group or a regular user?
@@ -51,7 +58,9 @@ public class User implements HasAuditInfo, HasIntegerId {
                 @JsonProperty("updateUser") final String updateUser,
                 @JsonProperty("name") final String name,
                 @JsonProperty("uuid") final String uuid,
-                @JsonProperty("group") final boolean group) {
+                @JsonProperty("group") final boolean group,
+                @JsonProperty("preferredUsername") final String preferredUsername,
+                @JsonProperty("fullName") final String fullName) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -61,6 +70,8 @@ public class User implements HasAuditInfo, HasIntegerId {
         this.name = name;
         this.uuid = uuid;
         this.group = group;
+        this.preferredUsername = preferredUsername;
+        this.fullName = fullName;
     }
 
     /**
@@ -120,25 +131,68 @@ public class User implements HasAuditInfo, HasIntegerId {
     }
 
     /**
-     * @return The unique identifier for this user on the IDP, i.e. the subject. May not be unique within stroom as
-     * we may be using an external IDP but still using the internal IDP for processing user.
-     * If isGroup is true then this is the name of the group.
+     * <p>If this is a user then {@code name} is also the unique identifier for the user on the
+     * OpenIdConnect IDP, i.e. the subject. The value may be a UUID or a more human friendly form
+     * depending on the IDP in use (internal/external).</p>
+     *
+     * <p>If {@code isGroup} is {@code true} then this is the unique name of the group.
+     * A group name is defined by the user so is likely to be human friendly.
+     * A user and a group can share the same name.</p>
+     * @return The unique identifier for this user or group.
      */
     public String getName() {
         return name;
     }
 
     /**
-     * The unique identifier for this user on the IDP, i.e. the subject. May not be unique within stroom as
-     * we may be using an external IDP but still using the internal IDP for processing user.
-     * If isGroup is true then this is the name of the group.
+     * See {@link User#getName()}
      */
     public void setName(String name) {
         this.name = name;
     }
 
     /**
+     * @return An optional, non-unique, more human friendly username for the user.
+     * Will be null if this is a group or the IDP does not provide a preferred username
+     * or one has not been set for the user.
+     * Intended for display purposes only or to aid in identifying the user where {@code name}
+     * is an unfriendly UUID.
+     */
+    public String getPreferredUsername() {
+        return preferredUsername;
+    }
+
+    /**
+     * See {@link User#getPreferredUsername()}
+     */
+    public void setPreferredUsername(final String preferredUsername) {
+        this.preferredUsername = preferredUsername;
+    }
+
+    /**
+     * @return An optional, non-unique, full name in displayable form including all name parts,
+     * possibly including titles and suffixes, ordered according to the End-User's locale and
+     * preferences.
+     * Will be null if this is a group or the IDP does not provide a full-name
+     * or one has not been set for the user.
+     * Intended for display purposes only or to aid in identifying the user where {@code name}
+     * is an unfriendly UUID.
+     */
+    public String getFullName() {
+        return fullName;
+    }
+
+    /**
+     * See {@link User#getFullName()}
+     */
+    public void setFullName(final String fullName) {
+        this.fullName = fullName;
+    }
+
+    /**
      * @return A globally unique identifier for identifying this user in other areas of stroom code.
+     * Unrelated to any UUID that an IDP may use to identify the user.
+     * Unique across both users and groups, unlike {@code name}.
      */
     public String getUuid() {
         return uuid;
@@ -170,6 +224,8 @@ public class User implements HasAuditInfo, HasIntegerId {
                 ", updateUser='" + updateUser + '\'' +
                 ", name='" + name + '\'' +
                 ", uuid='" + uuid + '\'' +
+                ", preferredUsername='" + preferredUsername + '\'' +
+                ", fullName='" + fullName + '\'' +
                 ", group=" + group +
                 '}';
     }
@@ -199,6 +255,10 @@ public class User implements HasAuditInfo, HasIntegerId {
         return new Builder(this);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static final class Builder {
 
         private Integer id;
@@ -210,6 +270,8 @@ public class User implements HasAuditInfo, HasIntegerId {
         private String name;
         private String uuid;
         private boolean group;
+        private String preferredUsername;
+        private String fullName;
 
         private Builder() {
         }
@@ -224,6 +286,8 @@ public class User implements HasAuditInfo, HasIntegerId {
             this.name = user.name;
             this.uuid = user.uuid;
             this.group = user.group;
+            this.preferredUsername = user.preferredUsername;
+            this.fullName = user.fullName;
         }
 
         public Builder id(final int value) {
@@ -266,7 +330,9 @@ public class User implements HasAuditInfo, HasIntegerId {
                     updateUser,
                     name,
                     uuid,
-                    group);
+                    group,
+                    preferredUsername,
+                    fullName);
         }
     }
 }
