@@ -17,8 +17,8 @@
 
 package stroom.alert.rule.impl;
 
-import stroom.event.logging.api.ObjectInfoProvider;
 import stroom.alert.rule.shared.AlertRuleDoc;
+import stroom.event.logging.api.ObjectInfoProvider;
 
 import event.logging.BaseObject;
 import event.logging.OtherObject;

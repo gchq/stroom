@@ -16,11 +16,11 @@
 
 package stroom.alert.rule.impl;
 
+import stroom.alert.rule.shared.AlertRuleDoc;
+import stroom.alert.rule.shared.AlertRuleResource;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
-import stroom.alert.rule.shared.AlertRuleDoc;
-import stroom.alert.rule.shared.AlertRuleResource;
 import stroom.util.shared.EntityServiceException;
 
 import javax.inject.Inject;
@@ -34,7 +34,7 @@ class AlertRuleResourceImpl implements AlertRuleResource {
 
     @Inject
     AlertRuleResourceImpl(final Provider<AlertRuleStore> alertRuleStoreProvider,
-                      final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
+                          final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
         this.alertRuleStoreProvider = alertRuleStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
     }

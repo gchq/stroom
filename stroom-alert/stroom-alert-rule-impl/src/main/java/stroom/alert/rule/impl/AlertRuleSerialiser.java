@@ -1,9 +1,9 @@
 package stroom.alert.rule.impl;
 
+import stroom.alert.rule.shared.AlertRuleDoc;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
-import stroom.alert.rule.shared.AlertRuleDoc;
 
 import java.io.IOException;
 import java.util.Map;

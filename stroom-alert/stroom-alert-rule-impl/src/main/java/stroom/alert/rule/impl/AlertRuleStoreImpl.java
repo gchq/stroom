@@ -17,6 +17,7 @@
 
 package stroom.alert.rule.impl;
 
+import stroom.alert.rule.shared.AlertRuleDoc;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
@@ -28,7 +29,6 @@ import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
-import stroom.alert.rule.shared.AlertRuleDoc;
 import stroom.util.shared.Message;
 
 import java.util.List;

@@ -17,9 +17,9 @@
 
 package stroom.alert.rule.impl;
 
+import stroom.alert.rule.shared.AlertRuleDoc;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentStore;
-import stroom.alert.rule.shared.AlertRuleDoc;
 
 import java.util.List;
 

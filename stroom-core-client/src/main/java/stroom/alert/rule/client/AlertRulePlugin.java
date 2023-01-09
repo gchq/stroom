@@ -17,6 +17,9 @@
 
 package stroom.alert.rule.client;
 
+import stroom.alert.rule.client.presenter.AlertRulePresenter;
+import stroom.alert.rule.shared.AlertRuleDoc;
+import stroom.alert.rule.shared.AlertRuleResource;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -25,9 +28,6 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.alert.rule.client.presenter.AlertRulePresenter;
-import stroom.alert.rule.shared.AlertRuleDoc;
-import stroom.alert.rule.shared.AlertRuleResource;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;

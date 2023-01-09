@@ -16,12 +16,12 @@
 
 package stroom.alert.rule.client.gin;
 
-import stroom.core.client.gin.PluginModule;
 import stroom.alert.rule.client.AlertRulePlugin;
 import stroom.alert.rule.client.presenter.AlertRulePresenter;
 import stroom.alert.rule.client.presenter.AlertRuleSettingsPresenter;
 import stroom.alert.rule.client.presenter.AlertRuleSettingsPresenter.AlertRuleSettingsView;
 import stroom.alert.rule.client.view.AlertRuleSettingsViewImpl;
+import stroom.core.client.gin.PluginModule;
 
 public class AlertRuleModule extends PluginModule {
 

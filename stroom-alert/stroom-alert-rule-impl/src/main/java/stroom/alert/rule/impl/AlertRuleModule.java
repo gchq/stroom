@@ -16,11 +16,11 @@
 
 package stroom.alert.rule.impl;
 
+import stroom.alert.rule.shared.AlertRuleDoc;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
-import stroom.alert.rule.shared.AlertRuleDoc;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
