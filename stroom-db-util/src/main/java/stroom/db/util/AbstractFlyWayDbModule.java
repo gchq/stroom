@@ -7,7 +7,11 @@ import stroom.util.logging.LambdaLoggerFactory;
 import com.zaxxer.hikari.HikariDataSource;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
+import org.flywaydb.core.api.MigrationInfo;
 
+import java.util.Arrays;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import javax.sql.DataSource;
 
 /**
@@ -31,22 +35,6 @@ public abstract class AbstractFlyWayDbModule<T_CONFIG extends AbstractDbConfig, 
 
     @Override
     protected void performMigration(final DataSource dataSource) {
-//        final String lockTableName = "lock_" + getModuleName()
-//                .toLowerCase()
-//                .replaceAll("[^a-z]", "_");
-
-//        JooqUtil.transaction(dataSource, context -> {
-//
-//            LOGGER.info("Creating lock table " + lockTableName);
-//            context.createTableIfNotExists(lockTableName)
-//                    .column("dummy", SQLDataType.INTEGER)
-//                    .execute();
-//            LOGGER.info("Created lock table " + lockTableName);
-//
-//            LOGGER.info("Acquiring lock for flyway");
-//            context.selectFrom(lockTableName)
-//                    .forUpdate();
-//            LOGGER.info("Got lock for flyway");
         LOGGER.info(""
                 + "\n-----------------------------------------------------------"
                 + "\n  Migrating database module: " + getModuleName()
@@ -59,30 +47,39 @@ public abstract class AbstractFlyWayDbModule<T_CONFIG extends AbstractDbConfig, 
                 .baselineOnMigrate(true)
                 .load();
 
-        int pendingMigrations = flyway.info()
-                .pending()
-                .length;
+        final String statesInfo = Arrays.stream(flyway.info().all())
+                .collect(Collectors.groupingBy(MigrationInfo::getState))
+                .entrySet()
+                .stream()
+                .sorted(Entry.comparingByKey())
+                .map(entry -> entry.getKey() + ":" + entry.getValue().size())
+                .collect(Collectors.joining(", "));
 
-        if (pendingMigrations > 0) {
-            try {
-                LOGGER.info("{} - Applying {} Flyway DB migration(s) using history table '{}' from path {}",
-                        getModuleName(),
-                        pendingMigrations,
-                        getFlyWayTableName(),
-                        getFlyWayLocation());
-                flyway.migrate();
-                LOGGER.info("{} - Completed Flyway DB migration for using history table '{}'",
-                        getModuleName(),
-                        getFlyWayTableName());
-            } catch (FlywayException e) {
-                LOGGER.error("{} - Error migrating database", getModuleName(), e);
-                throw e;
-            }
-        } else {
-            LOGGER.info("{} - No pending Flyway DB migration(s) in path {}",
+        try {
+            LOGGER.info("{} - Validating existing and pending Flyway DB migration(s) ({}) " +
+                            "using history table '{}' from path {}",
                     getModuleName(),
+                    statesInfo,
+                    getFlyWayTableName(),
                     getFlyWayLocation());
+
+            // This will see if anything needs doing
+            final int migrationsApplied = flyway.migrate();
+
+            if (migrationsApplied > 0) {
+                LOGGER.info("{} - Successfully applied {} Flyway DB migrations using history table '{}'",
+                        getModuleName(),
+                        migrationsApplied,
+                        getFlyWayTableName());
+            } else {
+                LOGGER.info("{} - No Flyway DB migration(s) applied in path {}",
+                        getModuleName(),
+                        getFlyWayLocation());
+            }
+
+        } catch (FlywayException e) {
+            LOGGER.error("{} - Error migrating database: {}", getModuleName(), e.getMessage(), e);
+            throw e;
         }
-//        });
     }
 }
