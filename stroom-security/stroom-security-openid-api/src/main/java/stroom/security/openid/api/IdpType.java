@@ -12,19 +12,19 @@ public enum IdpType {
      * Stroom's internal IDP. Not valid for stroom-proxy
      */
     @JsonPropertyDescription("Stroom's internal IDP. Not valid for stroom-proxy.")
-    INTERNAL_IDP,
+    INTERNAL_IDP(false),
 
     /**
      * An external IDP such as KeyCloak/Cognito
      */
     @JsonPropertyDescription("An external IDP such as KeyCloak/Cognito")
-    EXTERNAL_IDP,
+    EXTERNAL_IDP(true),
 
     /**
      * Use hard-coded credentials for testing/demo only
      */
     @JsonPropertyDescription("Use hard-coded credentials for testing/demo only")
-    TEST_CREDENTIALS,
+    TEST_CREDENTIALS(false),
 
     /**
      * No Open ID Connect identity provider. This may be used for remote proxies with no OIDC
@@ -32,7 +32,13 @@ public enum IdpType {
      */
     @JsonPropertyDescription("No Open ID Connect identity provider. This may be used for remote proxies with no OIDC " +
             "infrastructure that only talk to downstream proxies, forwarding with certificates.")
-    NO_IDP;
+    NO_IDP(false);
+
+    private final boolean isExternal;
+
+    IdpType(final boolean isExternal) {
+        this.isExternal = isExternal;
+    }
 
     // Support case-insensitive de-ser, but default to uppercase for ser
     @JsonCreator
@@ -41,5 +47,9 @@ public enum IdpType {
         return (type == null || type.equalsIgnoreCase("null"))
                 ? null
                 : IdpType.valueOf(type.toUpperCase());
+    }
+
+    public boolean isExternal() {
+        return isExternal;
     }
 }

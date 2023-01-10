@@ -198,6 +198,9 @@ public class User implements HasAuditInfo, HasIntegerId {
         return uuid;
     }
 
+    /**
+     * See {@link User#getUuid()}
+     */
     public void setUuid(String uuid) {
         this.uuid = uuid;
     }

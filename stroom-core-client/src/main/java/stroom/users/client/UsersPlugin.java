@@ -32,11 +32,17 @@ public class UsersPlugin extends NodeToolsPlugin {
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
             clientPropertyCache.get()
                     .onSuccess(uiConfig -> {
-                        addManageUsers(event, uiConfig);
+                        if (!uiConfig.isExternalIdentityProvider()) {
+                            addManageUsers(event, uiConfig);
+                        }
 //                        addManageUserAuthorisations(event, uiConfig);
 //                        addManageGroupAuthorisations(event, uiConfig);
                     })
-                    .onFailure(caught -> AlertEvent.fireError(UsersPlugin.this, caught.getMessage(), null));
+                    .onFailure(caught ->
+                            AlertEvent.fireError(
+                                    UsersPlugin.this,
+                                    caught.getMessage(),
+                                    null));
         }
     }
 

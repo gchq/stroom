@@ -26,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -35,14 +35,20 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public class FindUserCriteria extends BaseCriteria {
 
-    public static final String FIELD_NAME = "Name";
-    public static final String FIELD_STATUS = "Status";
-    public static final String FIELD_LAST_LOGIN = "Last Login";
+    public static final String FIELD_NAME = "Unique Identity";
+    public static final String FIELD_PREFERRED_USERNAME = "Preferred Username";
+    public static final String FIELD_FULL_NAME = "Full Name";
 
     public static final FilterFieldDefinition FIELD_DEF_NAME = FilterFieldDefinition.defaultField(FIELD_NAME);
+    public static final FilterFieldDefinition FIELD_DEF_PREFERRED_USERNAME = FilterFieldDefinition.defaultField(
+            FIELD_PREFERRED_USERNAME);
+    public static final FilterFieldDefinition FIELD_DEF_FULL_NAME = FilterFieldDefinition.qualifiedField(
+            FIELD_FULL_NAME);
 
-    public static final List<FilterFieldDefinition> FILTER_FIELD_DEFINITIONS = Collections.singletonList(
-            FIELD_DEF_NAME);
+    public static final List<FilterFieldDefinition> FILTER_FIELD_DEFINITIONS = Arrays.asList(
+            FIELD_DEF_NAME,
+            FIELD_DEF_PREFERRED_USERNAME,
+            FIELD_DEF_FULL_NAME);
 
     /**
      * Find user groups

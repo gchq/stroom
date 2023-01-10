@@ -45,7 +45,15 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.function.Consumer;
 
-public class SelectUserPresenter extends MyPresenterWidget<UserListView> implements UserListUiHandlers {
+/**
+ * For selecting a username to add a user to a permissions set or selecting a user to add to a group.
+ * For internal IDP this will list users from account and stroom_user combined.
+ * For external IDP this will list users from stroom_user only and users on the IDP but not in
+ * stroom_user will have to be manually added to the list.
+ */
+public class SelectUserPresenter
+        extends MyPresenterWidget<UserListView>
+        implements UserListUiHandlers {
 
     private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 

@@ -1,6 +1,5 @@
 package stroom.widget.tab.client.view;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 
 import java.util.HashMap;
@@ -28,7 +27,7 @@ public class GlobalResizeObserver {
     }
 
     private static void elementResize(final Element element) {
-        GWT.log("GlobalResizeObserver " + element.toString());
+//        GWT.log("GlobalResizeObserver " + element.toString());
         final ResizeListener listener = listeners.get(element);
         if (listener != null) {
             listener.onResize(element);

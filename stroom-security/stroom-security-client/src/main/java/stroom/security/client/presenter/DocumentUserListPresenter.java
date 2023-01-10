@@ -22,6 +22,7 @@ import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.FilterUsersRequest;
 import stroom.security.shared.SimpleUser;
 import stroom.security.shared.User;
+import stroom.ui.config.client.UiConfigCache;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -45,12 +46,14 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
 
     private String filter;
     private final RestFactory restFactory;
+    private boolean isGroup = true;
 
     @Inject
     public DocumentUserListPresenter(final EventBus eventBus,
                                      final UserListView userListView,
-                                     final RestFactory restFactory) {
-        super(eventBus, userListView);
+                                     final RestFactory restFactory,
+                                     final UiConfigCache uiConfigCache) {
+        super(eventBus, userListView, uiConfigCache);
         this.restFactory = restFactory;
     }
 
@@ -69,8 +72,12 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
         }
     }
 
-    public void setDocumentPermissions(final List<User> userList) {
+    public void setDocumentPermissions(final List<User> userList, final boolean isGroup) {
 
+        GWT.log("Setting userList: "
+                + userList.stream().map(User::getName).collect(Collectors.joining(", ")));
+
+        this.isGroup = isGroup;
         this.uuidToUserMap = userList == null
                 ? Collections.emptyMap()
                 : userList.stream()
@@ -80,12 +87,20 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
         refresh();
     }
 
+    @Override
+    public boolean includeAdditionalUserInfo() {
+        return !isGroup;
+    }
+
     public void refresh() {
+        super.refresh();
         if (filter != null && !filter.isEmpty()) {
             filterUsers(userList);
             // async update of the grid
         } else {
-            final List<User> users = new ArrayList<>(userList);
+            final List<User> users = userList != null
+                    ? new ArrayList<>(userList)
+                    : Collections.emptyList();
             updateGrid(users);
         }
     }
@@ -108,21 +123,26 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
         final Rest<List<SimpleUser>> rest = restFactory.create();
 
         // Convert our users to a simpler object to avoid sending a lot of rich
-        // objects over the network when all we need is to filter on the user name
-        final List<SimpleUser> allSimpleUsers = users.stream()
+        // objects over the network when all we need is to filter on the username
+        final List<SimpleUser> allSimpleUsers = users != null
+                ? users.stream()
                 .map(SimpleUser::new)
-                .collect(Collectors.toList());
+                .collect(Collectors.toList())
+                : Collections.emptyList();
 
-        rest
-                .onSuccess(filteredSimpleUsers -> {
-                    // Map the users back again
-                    final List<User> filteredUsers = filteredSimpleUsers.stream()
-                            .map(simpleUser -> uuidToUserMap.get(simpleUser.getUuid()))
-                            .collect(Collectors.toList());
-                    updateGrid(filteredUsers);
-                })
-                .call(DOC_PERMISSION_RESOURCE)
-                .filterUsers(new FilterUsersRequest(allSimpleUsers, filter));
+        if (!allSimpleUsers.isEmpty()) {
+            rest
+                    .onSuccess(filteredSimpleUsers -> {
+                        // Map the users back again
+                        final List<User> filteredUsers = filteredSimpleUsers.stream()
+                                .map(simpleUser -> uuidToUserMap.get(simpleUser.getUuid()))
+                                .collect(Collectors.toList());
+                        updateGrid(filteredUsers);
+                    })
+                    .call(DOC_PERMISSION_RESOURCE)
+                    .filterUsers(new FilterUsersRequest(allSimpleUsers, filter));
+        } else {
+            updateGrid(Collections.emptyList());
+        }
     }
-
 }

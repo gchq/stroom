@@ -13,6 +13,9 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
+import stroom.security.openid.api.IdpType;
+import stroom.security.openid.api.OpenIdConfig;
+import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -51,6 +54,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     private final Provider<UiConfig> uiConfig;
     private final Provider<UriFactory> uriFactory;
     private final Provider<NodeInfo> nodeInfoProvider;
+    private final Provider<OpenIdConfig> openIdConfigProvider;
 
     @Inject
     GlobalConfigResourceImpl(final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
@@ -58,7 +62,8 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                              final Provider<NodeService> nodeServiceProvider,
                              final Provider<UiConfig> uiConfig,
                              final Provider<UriFactory> uriFactory,
-                             final Provider<NodeInfo> nodeInfoProvider) {
+                             final Provider<NodeInfo> nodeInfoProvider,
+                             final Provider<OpenIdConfig> openIdConfigProvider) {
 
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
         this.globalConfigServiceProvider = Objects.requireNonNull(globalConfigServiceProvider);
@@ -66,6 +71,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         this.uiConfig = uiConfig;
         this.uriFactory = uriFactory;
         this.nodeInfoProvider = nodeInfoProvider;
+        this.openIdConfigProvider = openIdConfigProvider;
     }
 
 
@@ -261,8 +267,15 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     @AutoLogged(OperationType.UNLOGGED) // Called constantly by UI code not user. No need to log.
     @Timed
     @Override
-    public UiConfig fetchUiConfig() {
-        return uiConfig.get();
+    public ExtendedUiConfig fetchUiConfig() {
+        final IdpType idpType = openIdConfigProvider.get().getIdentityProviderType();
+        final boolean isExternalIdp = idpType != null && idpType.isExternal();
+
+        // Add additional back-end config that is also need in the UI without having to expose
+        // the back-end config classes.
+        return new ExtendedUiConfig(
+                uiConfig.get(),
+                isExternalIdp);
     }
 
     private Query buildRawQuery(final String userInput) {

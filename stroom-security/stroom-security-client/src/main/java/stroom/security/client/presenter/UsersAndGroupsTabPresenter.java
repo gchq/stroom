@@ -38,8 +38,13 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import javax.inject.Inject;
 
-public class UsersAndGroupsTabPresenter extends
-        MyPresenterWidget<UserListView> implements HasHandlers {
+/**
+ * The presenter for the tab content of the {@link UsersAndGroupsPresenter}. Will show either
+ * users or groups depending on what was passed to {@link UsersAndGroupsTabPresenter#setGroup(boolean)}
+ */
+public class UsersAndGroupsTabPresenter
+        extends MyPresenterWidget<UserListView>
+        implements HasHandlers {
 
     private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
@@ -116,6 +121,9 @@ public class UsersAndGroupsTabPresenter extends
         super.onBind();
     }
 
+    /**
+     * Sets whether this presenter is showing users or groups
+     */
     public void setGroup(final boolean group) {
         criteria.setGroup(group);
         listPresenter.setup(criteria);

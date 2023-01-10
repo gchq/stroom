@@ -98,6 +98,7 @@ public class DocumentPermissionsTabPresenter
 
     private void add() {
         final Consumer<User> consumer = user -> {
+            //GWT.log("user: " + user.getName());
             if (!documentPermissions.containsUserOrGroup(user.getUuid(), isGroup)) {
                 // This will ensure a perm map exists for the user/group
                 documentPermissions.addUser(user, isGroup);
@@ -132,15 +133,25 @@ public class DocumentPermissionsTabPresenter
                                        final DocumentPermissions documentPermissions,
                                        final boolean group,
                                        final Changes changes) {
+//        GWT.log("setDocumentPermissions(isGroup: " + group
+//                + " documentPermissions (groups): "
+//                + (documentPermissions != null
+//                ? documentPermissions.getGroups().stream().map(User::getName).collect(Collectors.joining(", "))
+//                : "null")
+//                + " documentPermissions (users): "
+//                + (documentPermissions != null
+//                ? documentPermissions.getUsers().stream().map(User::getName).collect(Collectors.joining(", "))
+//                : "null"));
+
         this.documentPermissions = documentPermissions;
         this.isGroup = group;
 
         if (group) {
             getView().setUsersLabelText("Groups:");
-            userListPresenter.setDocumentPermissions(documentPermissions.getGroups());
+            userListPresenter.setDocumentPermissions(documentPermissions.getGroups(), true);
         } else {
             getView().setUsersLabelText("Users:");
-            userListPresenter.setDocumentPermissions(documentPermissions.getUsers());
+            userListPresenter.setDocumentPermissions(documentPermissions.getUsers(), false);
         }
 
         final List<String> permissions = new ArrayList<>();

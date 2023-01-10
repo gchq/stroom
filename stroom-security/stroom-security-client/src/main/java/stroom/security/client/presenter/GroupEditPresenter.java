@@ -66,8 +66,8 @@ public class GroupEditPresenter extends MyPresenterWidget<UserGroupEditView> {
         final PopupSize popupSize = PopupSize.builder()
                 .width(Size
                         .builder()
-                        .initial(500)
-                        .min(500)
+                        .initial(1000)
+                        .min(1000)
                         .resizable(true)
                         .build())
                 .height(Size
@@ -78,8 +78,13 @@ public class GroupEditPresenter extends MyPresenterWidget<UserGroupEditView> {
                         .build())
                 .build();
         final String caption = "Group - " + userRef.getName();
-        ShowPopupEvent.fire(GroupEditPresenter.this, GroupEditPresenter.this, PopupView.PopupType.CLOSE_DIALOG,
-                popupSize, caption, internalPopupUiHandlers);
+        ShowPopupEvent.fire(
+                GroupEditPresenter.this,
+                GroupEditPresenter.this,
+                PopupView.PopupType.CLOSE_DIALOG,
+                popupSize,
+                caption,
+                internalPopupUiHandlers);
     }
 
     private void read(User userRef) {

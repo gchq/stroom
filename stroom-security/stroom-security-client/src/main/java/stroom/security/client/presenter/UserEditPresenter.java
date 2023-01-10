@@ -74,8 +74,8 @@ public class UserEditPresenter extends MyPresenterWidget<UserEditView>
         final PopupSize popupSize = PopupSize.builder()
                 .width(Size
                         .builder()
-                        .initial(500)
-                        .min(500)
+                        .initial(1000)
+                        .min(1000)
                         .resizable(true)
                         .build())
                 .height(Size
@@ -85,9 +85,17 @@ public class UserEditPresenter extends MyPresenterWidget<UserEditView>
                         .resizable(true)
                         .build())
                 .build();
-        final String caption = "User - " + userRef.getName();
-        ShowPopupEvent.fire(UserEditPresenter.this, UserEditPresenter.this, PopupView.PopupType.CLOSE_DIALOG,
-                popupSize, caption, internalPopupUiHandlers);
+        final String captionSuffix = userRef.getPreferredUsername() != null
+                ? " (" + userRef.getPreferredUsername() + ")"
+                : "";
+        final String caption = "User - " + userRef.getName() + captionSuffix;
+        ShowPopupEvent.fire(
+                UserEditPresenter.this,
+                UserEditPresenter.this,
+                PopupView.PopupType.CLOSE_DIALOG,
+                popupSize,
+                caption,
+                internalPopupUiHandlers);
     }
 
     private void read(User userRef) {

@@ -9,6 +9,7 @@ import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.mock.MockStroomEventLoggingService;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
+import stroom.security.impl.StroomOpenIdConfig;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.filter.FilterFieldMapper;
@@ -402,6 +403,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 () -> nodeService,
                 UiConfig::new,
                 null,
-                () -> nodeInfo);
+                () -> nodeInfo,
+                StroomOpenIdConfig::new);
     }
 }

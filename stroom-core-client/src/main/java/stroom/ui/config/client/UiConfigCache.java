@@ -20,7 +20,7 @@ import stroom.config.global.shared.GlobalConfigResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.ui.config.shared.UiConfig;
+import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
 
@@ -42,7 +42,7 @@ public class UiConfigCache implements HasHandlers {
     private static final int ONE_MINUTE = 1000 * 60;
 
     private final RestFactory restFactory;
-    private UiConfig clientProperties;
+    private ExtendedUiConfig clientProperties;
     private boolean refreshing;
     private EventBus eventBus;
 
@@ -73,9 +73,9 @@ public class UiConfigCache implements HasHandlers {
         refreshTimer.scheduleRepeating(ONE_MINUTE);
     }
 
-    public Future<UiConfig> refresh() {
-        final FutureImpl<UiConfig> future = new FutureImpl<>();
-        final Rest<UiConfig> rest = restFactory.create();
+    public Future<ExtendedUiConfig> refresh() {
+        final FutureImpl<ExtendedUiConfig> future = new FutureImpl<>();
+        final Rest<ExtendedUiConfig> rest = restFactory.create();
         rest
                 .onSuccess(result -> {
                     clientProperties = result;
@@ -87,13 +87,13 @@ public class UiConfigCache implements HasHandlers {
         return future;
     }
 
-    public Future<UiConfig> get() {
-        final UiConfig props = clientProperties;
+    public Future<ExtendedUiConfig> get() {
+        final ExtendedUiConfig props = clientProperties;
         if (props == null) {
             return refresh();
         }
 
-        final FutureImpl<UiConfig> future = new FutureImpl<>();
+        final FutureImpl<ExtendedUiConfig> future = new FutureImpl<>();
         future.setResult(props);
         return future;
     }

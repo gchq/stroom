@@ -19,6 +19,7 @@ package stroom.security.client.presenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
@@ -39,8 +40,9 @@ public class SelectGroupPresenter extends AbstractDataUserListPresenter {
     @Inject
     public SelectGroupPresenter(final EventBus eventBus,
                                 final UserListView userListView,
-                                final RestFactory restFactory) {
-        super(eventBus, userListView, restFactory);
+                                final RestFactory restFactory,
+                                final UiConfigCache uiConfigCache) {
+        super(eventBus, userListView, restFactory, uiConfigCache);
     }
 
     @Override
@@ -66,14 +68,14 @@ public class SelectGroupPresenter extends AbstractDataUserListPresenter {
         final PopupSize popupSize = PopupSize.builder()
                 .width(Size
                         .builder()
-                        .initial(400)
-                        .min(400)
+                        .initial(1000)
+                        .min(1000)
                         .resizable(true)
                         .build())
                 .height(Size
                         .builder()
-                        .initial(400)
-                        .min(400)
+                        .initial(600)
+                        .min(600)
                         .resizable(true)
                         .build())
                 .build();

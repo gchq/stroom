@@ -31,18 +31,20 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
             clientPropertyCache.get()
                     .onSuccess(result -> {
-                        final IconMenuItem apiKeysMenuItem;
-                        final Preset icon = SvgPresets.KEY;
-                        apiKeysMenuItem = new IconMenuItem(
-                                5,
-                                icon,
-                                null,
-                                "API Keys",
-                                null,
-                                true,
-                                () ->
-                                        postMessage("manageTokens"));
-                        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, apiKeysMenuItem);
+                        if (!result.isExternalIdentityProvider()) {
+                            final IconMenuItem apiKeysMenuItem;
+                            final Preset icon = SvgPresets.KEY;
+                            apiKeysMenuItem = new IconMenuItem(
+                                    5,
+                                    icon,
+                                    null,
+                                    "API Keys",
+                                    null,
+                                    true,
+                                    () ->
+                                            postMessage("manageTokens"));
+                            event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, apiKeysMenuItem);
+                        }
                     })
                     .onFailure(caught ->
                             AlertEvent.fireError(

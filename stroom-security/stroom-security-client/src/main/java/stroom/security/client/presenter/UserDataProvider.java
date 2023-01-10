@@ -26,7 +26,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
-import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
 import com.google.gwt.core.client.GWT;
@@ -45,7 +44,9 @@ public class UserDataProvider implements Refreshable {
     private RestDataProvider<User, ResultPage<User>> dataProvider;
     private FindUserCriteria criteria = new FindUserCriteria();
 
-    public UserDataProvider(final EventBus eventBus, final RestFactory restFactory, final DataGridView<User> view) {
+    public UserDataProvider(final EventBus eventBus,
+                            final RestFactory restFactory,
+                            final DataGridView<User> view) {
         this.eventBus = eventBus;
         this.restFactory = restFactory;
         this.view = view;

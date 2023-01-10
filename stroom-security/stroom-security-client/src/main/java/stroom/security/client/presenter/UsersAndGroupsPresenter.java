@@ -25,6 +25,10 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Provider;
 
+/**
+ * This is the top level dialog accessed from the Tools => User Permissions menu item for
+ * managing the perms of users/groups
+ */
 public class UsersAndGroupsPresenter extends LinkTabsPresenter {
 
     @Inject

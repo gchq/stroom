@@ -62,7 +62,9 @@ class DocPermissionResourceImpl implements DocPermissionResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(DocPermissionResourceImpl.class);
 
     private static final FilterFieldMappers<SimpleUser> SIMPLE_USERS_FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
-            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_NAME, SimpleUser::getName));
+            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_NAME, SimpleUser::getName),
+            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_PREFERRED_USERNAME, SimpleUser::getPreferredUsername),
+            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_FULL_NAME, SimpleUser::getFullName));
 
     private final Provider<UserService> userServiceProvider;
     private final Provider<DocumentPermissionServiceImpl> documentPermissionServiceProvider;

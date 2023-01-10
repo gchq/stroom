@@ -13,7 +13,9 @@ import java.util.function.Consumer;
 public interface UserDao {
 
     FilterFieldMappers<User> FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
-            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_NAME, User::getName));
+            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_NAME, User::getName),
+            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_PREFERRED_USERNAME, User::getPreferredUsername),
+            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_FULL_NAME, User::getFullName));
 
     User create(User user);
 

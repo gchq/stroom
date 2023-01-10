@@ -2,6 +2,7 @@ package stroom.security.client.presenter;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.FindUserCriteria;
+import stroom.ui.config.client.UiConfigCache;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -9,15 +10,19 @@ import com.google.web.bindery.event.shared.EventBus;
 public abstract class AbstractDataUserListPresenter extends AbstractUserListPresenter {
 
     private final RestFactory restFactory;
+    private final UiConfigCache uiConfigCache;
     private UserDataProvider dataProvider;
     FindUserCriteria findUserCriteria;
 
     @Inject
     public AbstractDataUserListPresenter(final EventBus eventBus,
                                          final UserListView userListView,
-                                         final RestFactory restFactory) {
-        super(eventBus, userListView);
+                                         final RestFactory restFactory,
+                                         final UiConfigCache uiConfigCache) {
+        super(eventBus, userListView, uiConfigCache);
         this.restFactory = restFactory;
+        this.uiConfigCache = uiConfigCache;
+
     }
 
     @Override
@@ -50,6 +55,14 @@ public abstract class AbstractDataUserListPresenter extends AbstractUserListPres
     }
 
     public void refresh() {
-        dataProvider.refresh();
+        super.refresh();
+        if (dataProvider != null) {
+            dataProvider.refresh();
+        }
+    }
+
+    @Override
+    public boolean includeAdditionalUserInfo() {
+        return findUserCriteria == null || !findUserCriteria.isGroup();
     }
 }

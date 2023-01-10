@@ -24,6 +24,7 @@ import stroom.security.shared.ChangeUserRequest;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.svg.client.SvgPresets;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.button.client.ButtonView;
 
 import com.google.gwt.core.client.GWT;
@@ -54,8 +55,9 @@ public class UserEditAddRemoveUsersPresenter
                                            final UserListView userListView,
                                            final RestFactory restFactory,
                                            final Provider<SelectGroupPresenter> selectGroupPresenterProvider,
-                                           final Provider<SelectUserPresenter> selectUserPresenterProvider) {
-        super(eventBus, userListView, restFactory);
+                                           final Provider<SelectUserPresenter> selectUserPresenterProvider,
+                                           final UiConfigCache uiConfigCache) {
+        super(eventBus, userListView, restFactory, uiConfigCache);
         this.restFactory = restFactory;
         this.selectGroupPresenterProvider = selectGroupPresenterProvider;
         this.selectUserPresenterProvider = selectUserPresenterProvider;

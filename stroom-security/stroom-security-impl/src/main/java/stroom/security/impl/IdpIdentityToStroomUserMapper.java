@@ -1,12 +1,14 @@
 package stroom.security.impl;
 
 import stroom.security.api.ProcessingUserIdentityProvider;
+import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.exception.AuthenticationException;
 import stroom.security.common.impl.IdpIdentityMapper;
 import stroom.security.common.impl.JwtUtil;
 import stroom.security.common.impl.UserIdentityImpl;
 import stroom.security.openid.api.IdpType;
+import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfig;
 import stroom.security.openid.api.TokenResponse;
 import stroom.security.shared.User;
@@ -35,16 +37,22 @@ public class IdpIdentityToStroomUserMapper implements IdpIdentityMapper {
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final UserCache userCache;
     private final Provider<OpenIdConfig> openIdConfigProvider;
+    private final UserService userService;
+    private final SecurityContext securityContext;
 
     @Inject
     public IdpIdentityToStroomUserMapper(final ProcessingUserIdentityProvider processingUserIdentityProvider,
                                          final DefaultOpenIdCredentials defaultOpenIdCredentials,
                                          final UserCache userCache,
-                                         final Provider<OpenIdConfig> openIdConfigProvider) {
+                                         final Provider<OpenIdConfig> openIdConfigProvider,
+                                         final UserService userService,
+                                         final SecurityContext securityContext) {
         this.processingUserIdentityProvider = processingUserIdentityProvider;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.userCache = userCache;
         this.openIdConfigProvider = openIdConfigProvider;
+        this.userService = userService;
+        this.securityContext = securityContext;
     }
 
     @Override
@@ -66,12 +74,48 @@ public class IdpIdentityToStroomUserMapper implements IdpIdentityMapper {
 
         return optUser
                 .flatMap(user -> {
-                    final UserIdentity userIdentity = createUserIdentity(jwtClaims, request, tokenResponse, user);
+                    final UserIdentity userIdentity = createUserIdentity(
+                            jwtClaims, request, tokenResponse, user);
+                    updateUserInfo(user, jwtClaims);
                     return Optional.of(userIdentity);
                 })
                 .or(() -> {
                     throw new AuthenticationException("Unable to find user: " + userId);
                 });
+    }
+
+    /**
+     * External IDP users are identified by their subject which is a not very helpful UUID.
+     * Therefore, we cache the preferred_username and full_name in the stroom user whenever the user
+     * logs in, or hits the api. We have no way to request this information from the IDP prior to
+     * them logging in though.
+     * Each time we map their identity we check the cached info is up-to-date and if so update it.
+     */
+    private void updateUserInfo(final User user, final JwtClaims jwtClaims) {
+        final String preferredUsername = JwtUtil.getClaimValue(
+                        jwtClaims, OpenId.CLAIM__PREFERRED_USERNAME)
+                .orElse(null);
+        final String fullName = JwtUtil.getClaimValue(jwtClaims, OpenId.CLAIM__NAME)
+                .orElse(null);
+
+        if (!Objects.equals(preferredUsername, user.getPreferredUsername())
+                || !Objects.equals(fullName, user.getFullName())) {
+
+            securityContext.asProcessingUser(() -> {
+                final User persistedUser = userService.loadByUuid(user.getUuid())
+                        .orElseThrow(() -> new RuntimeException(
+                                "Expecting to find user with uuid " + user.getUuid()));
+
+                persistedUser.setPreferredUsername(preferredUsername);
+                persistedUser.setFullName(fullName);
+                LOGGER.info("Updating IDP user info for user with name/subject: {}" +
+                                " - preferredUsername '{}' and fullName: '{}'",
+                        persistedUser.getName(),
+                        preferredUsername,
+                        fullName);
+                userService.update(persistedUser);
+            });
+        }
     }
 
     private UserIdentity createUserIdentity(final JwtClaims jwtClaims,
@@ -89,8 +133,8 @@ public class IdpIdentityToStroomUserMapper implements IdpIdentityMapper {
                 tokenResponse,
                 jwtClaims);
 
-        LOGGER.info(() -> "User " + userIdentity
-                + " is authenticated for sessionId " + NullSafe.get(session, HttpSession::getId));
+        LOGGER.info(() -> "Authenticated user " + userIdentity
+                + " for sessionId " + NullSafe.get(session, HttpSession::getId));
         return userIdentity;
     }
 
@@ -125,7 +169,8 @@ public class IdpIdentityToStroomUserMapper implements IdpIdentityMapper {
         }
 
         try {
-            final String userId = getUserId(jwtContext.getJwtClaims());
+            final JwtClaims jwtClaims = jwtContext.getJwtClaims();
+            final String userId = getUserId(jwtClaims);
             final String userUuid;
 
             if (IdpType.TEST_CREDENTIALS.equals(openIdConfigProvider.get().getIdentityProviderType())
@@ -137,6 +182,7 @@ public class IdpIdentityToStroomUserMapper implements IdpIdentityMapper {
             } else {
                 final User user = userCache.get(userId).orElseThrow(() ->
                         new AuthenticationException("Unable to find user: " + userId));
+                updateUserInfo(user, jwtClaims);
                 userUuid = user.getUuid();
             }
 
