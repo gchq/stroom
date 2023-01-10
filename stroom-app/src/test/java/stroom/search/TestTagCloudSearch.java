@@ -115,9 +115,7 @@ class TestTagCloudSearch extends AbstractSearchTest {
 
         final List<ResultRequest> resultRequests = Collections.singletonList(tableResultRequest);
 
-        final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-//        final Query query = new Query(dataSourceRef, expression);
-        final SearchRequest searchRequest = new SearchRequest(queryKey,
+        final SearchRequest searchRequest = new SearchRequest(null,
                 query,
                 resultRequests,
                 DateTimeSettings.builder().build(),

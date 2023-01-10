@@ -64,18 +64,15 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
     @Inject
     private SearchResponseCreatorManager searchResponseCreatorManager;
     @Inject
-    private LuceneSearchStoreFactory storeFactory;
-    @Inject
     private DataSourceResolver dataSourceResolver;
 
     protected static SearchResponse search(final SearchRequest searchRequest,
-                                           final StoreFactory storeFactory,
                                            final SearchResponseCreatorManager searchResponseCreatorManager) {
-        SearchResponse response = searchResponseCreatorManager.search(storeFactory, searchRequest);
+        SearchResponse response = searchResponseCreatorManager.search(searchRequest);
         if (!response.complete()) {
             throw new RuntimeException("NOT COMPLETE");
         }
-        searchResponseCreatorManager.remove(searchRequest.getKey());
+        searchResponseCreatorManager.destroy(response.getKey());
 
         return response;
     }
@@ -97,7 +94,6 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
             final boolean extractValues,
             final Consumer<Map<String, List<Row>>> resultMapConsumer,
             final IndexStore indexStore,
-            final StoreFactory storeFactory,
             final SearchResponseCreatorManager searchResponseCreatorManager) {
 
         final DocRef indexRef = indexStore.list().get(0);
@@ -117,10 +113,10 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
 //                    Fetch.CHANGES);
 //            resultRequests.add(tableResultRequest);
 //        }
-
-        final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
+//
+//        final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
 //        final Query query = Query.builder().dataSource(indexRef).build();
-        SearchRequest searchRequest = new SearchRequest(queryKey,
+        SearchRequest searchRequest = new SearchRequest(null,
                 null,
                 null,
                 DateTimeSettings.builder().build(),
@@ -146,7 +142,7 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
         }
 
         final SearchResponse searchResponse = AbstractSearchTest2
-                .search(searchRequest, storeFactory, searchResponseCreatorManager);
+                .search(searchRequest, searchResponseCreatorManager);
 
         assertThat(searchResponse).as("Search response is null").isNotNull();
         if (searchResponse.getErrors() != null && searchResponse.getErrors().size() > 0) {
@@ -183,7 +179,7 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
     }
 
     protected SearchResponse search(SearchRequest searchRequest) {
-        return search(searchRequest, storeFactory, searchResponseCreatorManager);
+        return search(searchRequest, searchResponseCreatorManager);
     }
 
     public void testInteractive(
@@ -195,6 +191,6 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
             final Consumer<Map<String, List<Row>>> resultMapConsumer,
             final IndexStore indexStore) {
         testInteractive(queryString, expectResultCount, componentIds, tableSettingsCreator,
-                extractValues, resultMapConsumer, indexStore, storeFactory, searchResponseCreatorManager);
+                extractValues, resultMapConsumer, indexStore, searchResponseCreatorManager);
     }
 }

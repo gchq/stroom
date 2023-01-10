@@ -20,6 +20,7 @@ package stroom.processor.impl;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.DateField;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
@@ -96,7 +97,11 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
         return DataSource
                 .builder()
                 .fields(ProcessorTaskFields.getFields())
-                .timeField(ProcessorTaskFields.CREATE_TIME)
                 .build();
+    }
+
+    @Override
+    public DateField getTimeField() {
+        return ProcessorTaskFields.CREATE_TIME;
     }
 }

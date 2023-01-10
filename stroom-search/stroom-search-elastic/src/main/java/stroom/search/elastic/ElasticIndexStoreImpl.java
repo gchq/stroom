@@ -46,8 +46,7 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
     public ElasticIndexStoreImpl(
             final StoreFactory storeFactory,
             final ElasticIndexService elasticIndexService,
-            final ElasticIndexSerialiser serialiser
-    ) {
+            final ElasticIndexSerialiser serialiser) {
         this.store = storeFactory.createStore(serialiser, ElasticIndexDoc.DOCUMENT_TYPE, ElasticIndexDoc.class);
         this.elasticIndexService = elasticIndexService;
     }

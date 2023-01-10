@@ -20,6 +20,7 @@ package stroom.index.impl;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.DateField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -144,6 +145,11 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
                 .builder()
                 .fields(IndexShardFields.getFields())
                 .build();
+    }
+
+    @Override
+    public DateField getTimeField() {
+        return null;
     }
 
     @Override

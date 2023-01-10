@@ -11,6 +11,7 @@ import stroom.annotation.shared.SetStatusRequest;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.DateField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
@@ -53,8 +54,12 @@ public class AnnotationService implements Searchable, AnnotationCreator {
         return DataSource
                 .builder()
                 .fields(AnnotationFields.FIELDS)
-                .timeField(AnnotationFields.UPDATED_ON_FIELD)
                 .build();
+    }
+
+    @Override
+    public DateField getTimeField() {
+        return AnnotationFields.UPDATED_ON_FIELD;
     }
 
     @Override

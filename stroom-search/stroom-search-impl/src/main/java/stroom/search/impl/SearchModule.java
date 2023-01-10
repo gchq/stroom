@@ -23,6 +23,7 @@ import stroom.query.common.v2.EventSearch;
 import stroom.query.common.v2.LmdbDataStoreFactory;
 import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.query.common.v2.SizesProvider;
+import stroom.query.common.v2.StoreFactory;
 import stroom.search.extraction.ExtractionModule;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
@@ -47,7 +48,9 @@ public class SearchModule extends AbstractModule {
         bind(SizesProvider.class).to(SizesProviderImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
-                .addBinding(StroomIndexQueryService.class);
+                .addBinding(LuceneSearchStoreFactory.class);
+        GuiceUtil.buildMultiBinder(binder(), StoreFactory.class)
+                .addBinding(LuceneSearchStoreFactory.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(SearchResponseCreatorManager.class);
 

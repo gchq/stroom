@@ -42,7 +42,6 @@ class DataSourceResourceImpl implements DataSourceResource {
             return DataSource
                     .builder()
                     .fields(MetaFields.getFields())
-                    .timeField(MetaFields.CREATE_TIME)
                     .build();
         }
 

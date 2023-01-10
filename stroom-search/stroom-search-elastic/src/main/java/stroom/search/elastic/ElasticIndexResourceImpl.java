@@ -48,8 +48,7 @@ class ElasticIndexResourceImpl implements ElasticIndexResource, FetchWithUuid<El
     ElasticIndexResourceImpl(
             final Provider<ElasticClusterStore> elasticClusterStoreProvider,
             final Provider<ElasticIndexStore> elasticIndexStoreProvider,
-            final Provider<DocumentResourceHelper> documentResourceHelperProvider
-    ) {
+            final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
         this.elasticClusterStoreProvider = elasticClusterStoreProvider;
         this.elasticIndexStoreProvider = elasticIndexStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;

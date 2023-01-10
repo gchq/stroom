@@ -2,17 +2,20 @@ package stroom.view.impl;
 
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DataSourceProvider;
+import stroom.datasource.api.v2.DateField;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.query.api.v2.Query;
-import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.DataSourceProviderRegistry;
-import stroom.query.common.v2.SearchResponseCreatorManager;
+import stroom.query.common.v2.Store;
+import stroom.query.common.v2.StoreFactory;
+import stroom.query.common.v2.StoreFactoryRegistry;
 import stroom.security.api.SecurityContext;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.view.shared.ViewDoc;
 
 import java.util.ArrayList;
@@ -21,22 +24,25 @@ import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-public class ViewQueryService implements DataSourceProvider {
+@SuppressWarnings("unused")
+public class ViewStoreFactory implements StoreFactory {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ViewStoreFactory.class);
 
     private final ViewStore viewStore;
+    private final Provider<StoreFactoryRegistry> storeFactoryRegistryProvider;
     private final SecurityContext securityContext;
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistry;
-    private final SearchResponseCreatorManager searchResponseCreatorManager;
 
     @Inject
-    public ViewQueryService(final ViewStore viewStore,
+    public ViewStoreFactory(final ViewStore viewStore,
+                            final Provider<StoreFactoryRegistry> storeFactoryRegistryProvider,
                             final SecurityContext securityContext,
-                            final Provider<DataSourceProviderRegistry> dataSourceProviderRegistry,
-                            final SearchResponseCreatorManager searchResponseCreatorManager) {
+                            final Provider<DataSourceProviderRegistry> dataSourceProviderRegistry) {
         this.viewStore = viewStore;
+        this.storeFactoryRegistryProvider = storeFactoryRegistryProvider;
         this.securityContext = securityContext;
         this.dataSourceProviderRegistry = dataSourceProviderRegistry;
-        this.searchResponseCreatorManager = searchResponseCreatorManager;
     }
 
     @Override
@@ -47,16 +53,24 @@ public class ViewQueryService implements DataSourceProvider {
         });
     }
 
-    private ViewDoc getView(final DocRef docRef) {
-        final ViewDoc viewDoc = viewStore.readDocument(docRef);
-        if (viewDoc == null) {
-            throw new RuntimeException("Unable to load view " + docRef);
+    private DataSourceProvider getDelegateDataSourceProvider(final ViewDoc viewDoc) {
+        // Find the referenced data source.
+        final DocRef dataSource = viewDoc.getDataSource();
+        if (dataSource == null) {
+            throw new RuntimeException("Null datasource in view " + DocRefUtil.create(viewDoc));
         }
-        return viewDoc;
+
+        final Optional<DataSourceProvider> delegate =
+                dataSourceProviderRegistry.get().getDataSourceProvider(dataSource);
+        if (delegate.isEmpty()) {
+            throw new RuntimeException("No data source provider found for " + dataSource);
+        }
+
+        return delegate.get();
     }
 
     @Override
-    public SearchResponse search(final SearchRequest request) {
+    public Store create(final SearchRequest request) {
         final ViewDoc viewDoc = getView(request.getQuery().getDataSource());
 
         final List<ResultRequest> resultRequests = request.getResultRequests();
@@ -99,18 +113,26 @@ public class ViewQueryService implements DataSourceProvider {
         // TODO : ADD SOMETHING FOR VIEWDOC FILTER.
 
         // Find the referenced data source.
-        return getDelegateDataSourceProvider(viewDoc).search(modifiedSearchRequest);
+        return getDelegateStoreFactory(viewDoc).create(modifiedSearchRequest);
     }
 
-    private DataSourceProvider getDelegateDataSourceProvider(final ViewDoc viewDoc) {
+    private ViewDoc getView(final DocRef docRef) {
+        final ViewDoc viewDoc = viewStore.readDocument(docRef);
+        if (viewDoc == null) {
+            throw new RuntimeException("Unable to load view " + docRef);
+        }
+        return viewDoc;
+    }
+
+    private StoreFactory getDelegateStoreFactory(final ViewDoc viewDoc) {
         // Find the referenced data source.
         final DocRef dataSource = viewDoc.getDataSource();
         if (dataSource == null) {
             throw new RuntimeException("Null datasource in view " + DocRefUtil.create(viewDoc));
         }
 
-        final Optional<DataSourceProvider> delegate =
-                dataSourceProviderRegistry.get().getDataSourceProvider(dataSource);
+        final Optional<StoreFactory> delegate =
+                storeFactoryRegistryProvider.get().getStoreFactory(dataSource);
         if (delegate.isEmpty()) {
             throw new RuntimeException("No data source provider found for " + dataSource);
         }
@@ -119,13 +141,9 @@ public class ViewQueryService implements DataSourceProvider {
     }
 
     @Override
-    public Boolean keepAlive(final QueryKey queryKey) {
-        return searchResponseCreatorManager.keepAlive(queryKey);
-    }
-
-    @Override
-    public Boolean destroy(final QueryKey queryKey) {
-        return searchResponseCreatorManager.remove(queryKey);
+    public DateField getTimeField(final DocRef docRef) {
+        final ViewDoc viewDoc = getView(docRef);
+        return getDelegateStoreFactory(viewDoc).getTimeField(viewDoc.getDataSource());
     }
 
     @Override

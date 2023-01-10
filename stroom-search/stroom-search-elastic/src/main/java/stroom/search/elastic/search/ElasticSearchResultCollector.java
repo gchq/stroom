@@ -44,7 +44,6 @@ public class ElasticSearchResultCollector implements Store {
     private final Provider<ElasticAsyncSearchTaskHandler> elasticAsyncSearchTaskHandlerProvider;
     private final ElasticAsyncSearchTask task;
     private final Coprocessors coprocessors;
-    private final Sizes maxResultSizes;
 
     private volatile ElasticAsyncSearchTaskHandler asyncSearchTaskHandler;
     private volatile TaskContext taskContext;
@@ -55,14 +54,12 @@ public class ElasticSearchResultCollector implements Store {
             final TaskContextFactory taskContextFactory,
             final Provider<ElasticAsyncSearchTaskHandler> elasticAsyncSearchTaskHandlerProvider,
             final ElasticAsyncSearchTask task,
-            final Coprocessors coprocessors,
-            final Sizes maxResultSizes) {
+            final Coprocessors coprocessors) {
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.elasticAsyncSearchTaskHandlerProvider = elasticAsyncSearchTaskHandlerProvider;
         this.task = task;
         this.coprocessors = coprocessors;
-        this.maxResultSizes = maxResultSizes;
     }
 
     public static ElasticSearchResultCollector create(
@@ -70,15 +67,13 @@ public class ElasticSearchResultCollector implements Store {
             final TaskContextFactory taskContextFactory,
             final Provider<ElasticAsyncSearchTaskHandler> elasticAsyncSearchTaskHandlerProvider,
             final ElasticAsyncSearchTask task,
-            final Coprocessors coprocessors,
-            final Sizes maxResultSizes) {
+            final Coprocessors coprocessors) {
         return new ElasticSearchResultCollector(
                 executor,
                 taskContextFactory,
                 elasticAsyncSearchTaskHandlerProvider,
                 task,
-                coprocessors,
-                maxResultSizes);
+                coprocessors);
     }
 
     public void start() {
@@ -156,10 +151,6 @@ public class ElasticSearchResultCollector implements Store {
     @Override
     public List<String> getHighlights() {
         return null;
-    }
-
-    public Sizes getMaxResultSizes() {
-        return maxResultSizes;
     }
 
     @Override

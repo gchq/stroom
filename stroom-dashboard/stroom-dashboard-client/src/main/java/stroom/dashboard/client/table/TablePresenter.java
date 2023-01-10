@@ -55,7 +55,6 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.instance.client.ClientApplicationInstance;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.processor.shared.ProcessorExpressionUtil;
 import stroom.query.api.v2.ConditionalFormattingRule;
@@ -154,7 +153,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final MyDataGrid<TableRow> dataGrid;
     private final MultiSelectionModelImpl<TableRow> selectionModel;
     private final Column<TableRow, Expander> expanderColumn;
-    private final ClientApplicationInstance clientApplicationInstance;
 
     private int expanderColumnWidth;
     private SearchModel currentSearchModel;
@@ -180,7 +178,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final RestFactory restFactory,
                           final UiConfigCache clientPropertyCache,
                           final TimeZones timeZones,
-                          final ClientApplicationInstance clientApplicationInstance,
                           final UserPreferencesManager userPreferencesManager) {
         super(eventBus, view, settingsPresenterProvider);
         this.locationManager = locationManager;
@@ -188,7 +185,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         this.annotationManager = annotationManager;
         this.restFactory = restFactory;
         this.timeZones = timeZones;
-        this.clientApplicationInstance = clientApplicationInstance;
         this.userPreferencesManager = userPreferencesManager;
 
         dataGrid = new MyDataGrid<>();
@@ -476,7 +472,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
                                 final DashboardSearchRequest searchRequest = DashboardSearchRequest
                                         .builder()
-                                        .applicationInstanceUuid(clientApplicationInstance.getInstanceUuid())
                                         .queryKey(queryKey)
                                         .search(search)
                                         .componentResultRequests(requests)

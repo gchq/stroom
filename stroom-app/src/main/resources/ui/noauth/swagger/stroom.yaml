@@ -710,39 +710,6 @@ paths:
       summary: Enable or disable the state of an API key.
       tags:
       - Api Keys
-  /application-instance/v1/register:
-    get:
-      operationId: applicationInstanceRegister
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApplicationInstanceInfo'
-          description: default response
-      summary: Register a new application instance
-      tags:
-      - Application
-  /application-instance/v1/remove:
-    post:
-      operationId: applicationInstanceRemove
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DestroyRequest'
-        description: destroyRequest
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: boolean
-          description: default response
-      summary: Remove an application instance
-      tags:
-      - Application
   /authentication/v1/needsPasswordChange:
     get:
       operationId: needsPasswordChange
@@ -6495,16 +6462,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ApiKey'
-    ApplicationInstanceInfo:
-      type: object
-      properties:
-        createTime:
-          type: integer
-          format: int64
-        userId:
-          type: string
-        uuid:
-          type: string
     Arg:
       type: object
       properties:
@@ -7101,8 +7058,6 @@ components:
     DashboardSearchRequest:
       type: object
       properties:
-        applicationInstanceUuid:
-          type: string
         componentId:
           type: string
         componentResultRequests:
@@ -7286,34 +7241,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AbstractField'
-        timeField:
-          $ref: '#/components/schemas/DateField'
     DateField:
       type: object
-      properties:
-        conditions:
-          type: array
-          items:
-            type: string
-            enum:
-            - CONTAINS
-            - EQUALS
-            - GREATER_THAN
-            - GREATER_THAN_OR_EQUAL_TO
-            - LESS_THAN
-            - LESS_THAN_OR_EQUAL_TO
-            - BETWEEN
-            - IN
-            - IN_DICTIONARY
-            - IN_FOLDER
-            - IS_DOC_REF
-            - IS_NULL
-            - IS_NOT_NULL
-            - MATCHES_REGEX
-        name:
-          type: string
-        queryable:
-          type: boolean
+      allOf:
+      - $ref: '#/components/schemas/AbstractField'
     DateTimeFormatSettings:
       type: object
       allOf:
@@ -7381,26 +7312,15 @@ components:
     DestroyQueryRequest:
       type: object
       properties:
-        applicationInstanceUuid:
-          type: string
         componentId:
           type: string
         queryDocUuid:
           type: string
         queryKey:
           $ref: '#/components/schemas/QueryKey'
-    DestroyRequest:
-      type: object
-      properties:
-        applicationInstanceInfo:
-          $ref: '#/components/schemas/ApplicationInstanceInfo'
-        reason:
-          type: string
     DestroySearchRequest:
       type: object
       properties:
-        applicationInstanceUuid:
-          type: string
         componentId:
           type: string
         dashboardUuid:
@@ -10139,8 +10059,6 @@ components:
     QuerySearchRequest:
       type: object
       properties:
-        applicationInstanceUuid:
-          type: string
         componentId:
           type: string
         incremental:
@@ -10793,7 +10711,7 @@ components:
             type: string
             description: A list of strings to highlight in the UI that should correlate
               with the search query.
-        queryKey:
+        key:
           $ref: '#/components/schemas/QueryKey'
         results:
           type: array
@@ -10801,7 +10719,7 @@ components:
             $ref: '#/components/schemas/Result'
       required:
       - highlights
-      - queryKey
+      - key
     SelectionIndexShardStatus:
       type: object
       properties:
@@ -11893,9 +11811,6 @@ components:
           type: string
         activity:
           $ref: '#/components/schemas/ActivityConfig'
-        applicationInstanceKeepAliveIntervalMs:
-          type: integer
-          format: int32
         defaultMaxResults:
           type: string
         helpSubPathExpressions:

@@ -32,6 +32,7 @@ import stroom.query.util.LambdaLoggerFactory;
 import stroom.util.string.ExceptionStringUtil;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -50,6 +51,7 @@ public class SearchResponseCreator {
 
     private final SerialisersFactory serialisersFactory;
     private final String userId;
+    private final Instant creationTime;
     private final SizesProvider sizesProvider;
     private final Store store;
 
@@ -67,6 +69,7 @@ public class SearchResponseCreator {
                                  final Store store) {
         this.serialisersFactory = serialisersFactory;
         this.userId = userId;
+        this.creationTime = Instant.now();
         this.sizesProvider = sizesProvider;
         this.store = Objects.requireNonNull(store);
     }

@@ -19,7 +19,6 @@ package stroom.query.client.presenter;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
-import stroom.instance.client.ClientApplicationInstance;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
@@ -43,7 +42,6 @@ public class QueryModel {
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
     private final RestFactory restFactory;
-    private final ClientApplicationInstance applicationInstance;
     private final IndexLoader indexLoader;
     private String queryUuid;
     private String componentId;
@@ -63,12 +61,10 @@ public class QueryModel {
 
 
     public QueryModel(final RestFactory restFactory,
-                      final ClientApplicationInstance applicationInstance,
                       final IndexLoader indexLoader,
                       final DateTimeSettingsFactory dateTimeSettingsFactory,
                       final QueryResultTablePresenter tablePresenter) {
         this.restFactory = restFactory;
-        this.applicationInstance = applicationInstance;
         this.indexLoader = indexLoader;
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
         this.tablePresenter = tablePresenter;
@@ -147,7 +143,6 @@ public class QueryModel {
                 .query(query)
                 .queryContext(currentQueryContext)
                 .incremental(incremental)
-                .applicationInstanceUuid(applicationInstance.getInstanceUuid())
                 .queryDocUuid(queryUuid)
                 .build();
 //            }
@@ -247,7 +242,6 @@ public class QueryModel {
         final DestroyQueryRequest request = DestroyQueryRequest
                 .builder()
                 .queryKey(queryKey)
-                .applicationInstanceUuid(applicationInstance.getInstanceUuid())
                 .queryDocUuid(queryUuid)
                 .componentId(componentId)
                 .build();
@@ -286,7 +280,6 @@ public class QueryModel {
 //                    .search(search)
 //                    .componentResultRequests(requests)
 //                    .dateTimeSettings(dateTimeSettingsFactory.getDateTimeSettings())
-//                    .applicationInstanceUuid(applicationInstance.getInstanceUuid())
 //                    .dashboardUuid(dashboardUuid)
 //                    .componentId(componentId)
 //                    .storeHistory(storeHistory)

@@ -22,7 +22,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.instance.client.ClientApplicationInstance;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.QueryDocPresenter.QueryDocView;
@@ -31,7 +30,6 @@ import stroom.query.client.view.TimeRanges;
 import stroom.query.shared.QueryDoc;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.view.client.presenter.IndexLoader;
-import stroom.widget.button.client.ButtonView;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -61,7 +59,6 @@ public class QueryDocPresenter
                              final Provider<EditorPresenter> editorPresenterProvider,
                              final QueryResultTablePresenter tablePresenter,
                              final RestFactory restFactory,
-                             final ClientApplicationInstance applicationInstance,
                              final IndexLoader indexLoader,
                              final DateTimeSettingsFactory dateTimeSettingsFactory) {
         super(eventBus, view, securityContext);
@@ -69,7 +66,6 @@ public class QueryDocPresenter
 
         queryModel = new QueryModel(
                 restFactory,
-                applicationInstance,
                 indexLoader,
                 dateTimeSettingsFactory,
                 tablePresenter);

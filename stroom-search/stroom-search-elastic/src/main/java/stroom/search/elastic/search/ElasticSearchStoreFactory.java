@@ -17,47 +17,68 @@
 
 package stroom.search.elastic.search;
 
+import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.DateField;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
-import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
-import stroom.query.common.v2.TableCoprocessorSettings;
+import stroom.search.elastic.ElasticClientCache;
+import stroom.search.elastic.ElasticClusterStore;
 import stroom.search.elastic.ElasticIndexCache;
+import stroom.search.elastic.ElasticIndexService;
+import stroom.search.elastic.ElasticIndexStore;
+import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.search.elastic.shared.ElasticIndexField;
+import stroom.search.elastic.shared.ElasticIndexFieldType;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.ui.config.shared.UiConfig;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.elasticsearch.action.support.IndicesOptions;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.indices.GetFieldMappingsRequest;
+import org.elasticsearch.client.indices.GetFieldMappingsResponse;
+import org.elasticsearch.client.indices.GetFieldMappingsResponse.FieldMappingMetadata;
 
-import java.util.Arrays;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.TreeMap;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 @SuppressWarnings("unused")
-public class ElasticSearchStoreFactory implements StoreFactory {
+public class ElasticSearchStoreFactory implements StoreFactory, ElasticIndexService {
 
     public static final String ENTITY_TYPE = ElasticIndexDoc.DOCUMENT_TYPE;
-    private static final Logger LOGGER = LoggerFactory.getLogger(ElasticSearchStoreFactory.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticSearchStoreFactory.class);
 
     private final ElasticIndexCache elasticIndexCache;
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final Provider<ElasticAsyncSearchTaskHandler> elasticAsyncSearchTaskHandlerProvider;
-    private final ElasticSearchConfig searchConfig;
-    private final UiConfig clientConfig;
     private final SecurityContext securityContext;
     private final CoprocessorsFactory coprocessorsFactory;
+    private final ElasticClientCache elasticClientCache;
+    private final ElasticClusterStore elasticClusterStore;
+    private final ElasticIndexStore elasticIndexStore;
 
     @Inject
     public ElasticSearchStoreFactory(
@@ -65,18 +86,20 @@ public class ElasticSearchStoreFactory implements StoreFactory {
             final Executor executor,
             final TaskContextFactory taskContextFactory,
             final Provider<ElasticAsyncSearchTaskHandler> elasticAsyncSearchTaskHandlerProvider,
-            final ElasticSearchConfig searchConfig,
-            final UiConfig clientConfig,
-            final SecurityContext securityContext,
-            final CoprocessorsFactory coprocessorsFactory) {
+            final CoprocessorsFactory coprocessorsFactory,
+            final ElasticClientCache elasticClientCache,
+            final ElasticClusterStore elasticClusterStore,
+            final ElasticIndexStore elasticIndexStore,
+            final SecurityContext securityContext) {
         this.elasticIndexCache = elasticIndexCache;
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.elasticAsyncSearchTaskHandlerProvider = elasticAsyncSearchTaskHandlerProvider;
-        this.searchConfig = searchConfig;
-        this.clientConfig = clientConfig;
         this.securityContext = securityContext;
         this.coprocessorsFactory = coprocessorsFactory;
+        this.elasticClientCache = elasticClientCache;
+        this.elasticClusterStore = elasticClusterStore;
+        this.elasticIndexStore = elasticIndexStore;
     }
 
     @Override
@@ -115,16 +138,13 @@ public class ElasticSearchStoreFactory implements StoreFactory {
                 modifiedSearchRequest.getDateTimeSettings(),
                 nowEpochMilli);
 
-        final Sizes maxResultSizes = calculateMaxResultSizes(coprocessorSettingsList);
-
         // Create the search result collector.
         final ElasticSearchResultCollector searchResultCollector = ElasticSearchResultCollector.create(
                 executor,
                 taskContextFactory,
                 elasticAsyncSearchTaskHandlerProvider,
                 asyncSearchTask,
-                coprocessors,
-                maxResultSizes);
+                coprocessors);
 
         // Tell the task where results will be collected.
         asyncSearchTask.setResultCollector(searchResultCollector);
@@ -135,44 +155,232 @@ public class ElasticSearchStoreFactory implements StoreFactory {
         return searchResultCollector;
     }
 
-    private Sizes calculateMaxResultSizes(final List<CoprocessorSettings> coprocessorSettings) {
-        final Sizes defaultMaxResultsSizes = getDefaultMaxResultsSizes();
-        Sizes currentMaxResultSize = Sizes.create(0);
+    @Override
+    public DataSource getDataSource(final DocRef docRef) {
+        return securityContext.useAsReadResult(() -> {
+            final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
+            return DataSource.builder()
+                    .fields(getDataSourceFields(index))
+                    .defaultExtractionPipeline(index.getDefaultExtractionPipeline())
+                    .build();
+        });
+    }
 
-        // Find the largest maximum result set size of all table consumers
-        for (final CoprocessorSettings settings : coprocessorSettings) {
-            if (settings instanceof TableCoprocessorSettings) {
-                final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) settings;
-                final TableSettings tableSettings = tableCoprocessorSettings.getTableSettings();
+    @Override
+    public DateField getTimeField(final DocRef docRef) {
+        return securityContext.useAsReadResult(() -> {
+            final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
 
-                currentMaxResultSize = Sizes.max(Sizes.create(tableSettings.getMaxResults()), currentMaxResultSize);
+            DateField timeField = null;
+            if (index.getTimeField() != null && !index.getTimeField().isBlank()) {
+                return new DateField(index.getTimeField());
+            }
+
+            return null;
+        });
+    }
+
+    @Override
+    public List<AbstractField> getDataSourceFields(ElasticIndexDoc index) {
+        final Map<String, FieldMappingMetadata> fieldMappings = getFieldMappings(index);
+
+        return fieldMappings
+                .entrySet()
+                .stream()
+                .map(field -> {
+                    final String fieldName = field.getKey();
+                    final FieldMappingMetadata fieldMeta = field.getValue();
+                    String nativeType = getFieldPropertyFromMapping(fieldName, field.getValue(), "type");
+
+                    if (nativeType == null) {
+                        // If field type is null, this is a system field, so ignore
+                        return null;
+                    } else if (nativeType.equals("alias")) {
+                        // Determine the mapping type of the field the alias is referring to
+                        try {
+                            final String aliasPath = getFieldPropertyFromMapping(fieldName, field.getValue(), "path");
+                            final FieldMappingMetadata targetFieldMeta = fieldMappings.get(aliasPath);
+                            nativeType = getFieldPropertyFromMapping(aliasPath, targetFieldMeta, "type");
+                        } catch (Exception e) {
+                            LOGGER.error("Could not determine mapping type for alias field '{}'", fieldName);
+                        }
+                    }
+
+                    try {
+                        final String fullName = fieldMeta.fullName();
+                        final ElasticIndexFieldType elasticFieldType =
+                                ElasticIndexFieldType.fromNativeType(fullName, nativeType);
+
+                        return elasticFieldType.toDataSourceField(fieldName, fieldIsIndexed(field.getValue()));
+                    } catch (IllegalArgumentException e) {
+                        LOGGER.warn(e::getMessage);
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    private String getFieldPropertyFromMapping(final String fieldName, final FieldMappingMetadata fieldMeta,
+                                               final String propertyName) {
+        final Optional<Entry<String, Object>> firstFieldEntry =
+                fieldMeta.sourceAsMap().entrySet().stream().findFirst();
+
+        if (firstFieldEntry.isPresent()) {
+            final Object properties = firstFieldEntry.get().getValue();
+            if (properties instanceof Map) {
+                @SuppressWarnings("unchecked") // Need to get at the nested properties, which is always a map
+                final Map<String, Object> propertiesMap = (Map<String, Object>) properties;
+                return (String) propertiesMap.get(propertyName);
+            } else {
+                LOGGER.debug(() ->
+                        "Mapping properties for field '" + fieldName +
+                                "' were in an unrecognised format. Field ignored.");
             }
         }
 
-        return Sizes.min(currentMaxResultSize, defaultMaxResultsSizes);
+        return null;
     }
 
-    private Sizes getDefaultMaxResultsSizes() {
-        final String value = clientConfig.getDefaultMaxResults();
-        return extractValues(value);
+    @Override
+    public List<ElasticIndexField> getFields(final ElasticIndexDoc index) {
+        return new ArrayList<>(getFieldsMap(index).values());
     }
 
-    private Sizes getStoreSizes() {
-        final String value = searchConfig.getStoreSize();
-        return extractValues(value);
-    }
+    @Override
+    public Map<String, ElasticIndexField> getFieldsMap(final ElasticIndexDoc index) {
+        final Map<String, FieldMappingMetadata> fieldMappings = getFieldMappings(index);
+        final Map<String, ElasticIndexField> fieldsMap = new HashMap<>();
 
-    private Sizes extractValues(String value) {
-        if (value != null) {
+        fieldMappings.forEach((key, fieldMeta) -> {
             try {
-                return Sizes.create(Arrays.stream(value.split(","))
-                        .map(String::trim)
-                        .map(Integer::valueOf)
-                        .collect(Collectors.toList()));
+                String nativeType = getFieldPropertyFromMapping(key, fieldMeta, "type");
+                final String fieldName = fieldMeta.fullName();
+                final boolean indexed = fieldIsIndexed(fieldMeta);
+
+                if (nativeType == null) {
+                    return;
+                } else if (nativeType.equals("alias")) {
+                    // Determine the mapping type of the field the alias is referring to
+                    try {
+                        final String aliasPath = getFieldPropertyFromMapping(fieldName, fieldMeta, "path");
+                        final FieldMappingMetadata targetFieldMeta = fieldMappings.get(aliasPath);
+                        nativeType = getFieldPropertyFromMapping(aliasPath, targetFieldMeta, "type");
+                    } catch (Exception e) {
+                        LOGGER.error("Could not determine mapping type for alias field '{}'", fieldName);
+                    }
+                }
+
+                fieldsMap.put(fieldName, new ElasticIndexField(
+                        ElasticIndexFieldType.fromNativeType(fieldName, nativeType),
+                        fieldName,
+                        nativeType,
+                        indexed));
             } catch (Exception e) {
-                LOGGER.warn(e.getMessage());
+                LOGGER.error(e::getMessage, e);
+            }
+        });
+
+        return fieldsMap;
+    }
+
+    /**
+     * Tests whether a field has the mapping property `index` set to `true`.
+     * This determines whether it is searchable.
+     */
+    private boolean fieldIsIndexed(final FieldMappingMetadata field) {
+        try {
+            final Map<String, Object> fieldMap = field.sourceAsMap();
+            final Optional<String> fieldKey = fieldMap.keySet().stream().findFirst();
+            if (fieldKey.isPresent()) {
+                @SuppressWarnings("unchecked") // Need to get at the field mapping properties
+                final Map<String, Object> mappingProperties = (Map<String, Object>) fieldMap.get(fieldKey.get());
+                return mappingProperties.containsKey("index")
+                        ? (Boolean) fieldMap.get("index")
+                        : true;
+            } else {
+                return false;
+            }
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, FieldMappingMetadata> getFieldMappings(final ElasticIndexDoc elasticIndex) {
+        Map<String, FieldMappingMetadata> result = new TreeMap<>();
+
+        if (elasticIndex.getClusterRef() != null) {
+            try {
+                final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
+                result = elasticClientCache.contextResult(elasticCluster.getConnection(), elasticClient -> {
+
+                    // Flatten the mappings, which are keyed by index, into a deduplicated list
+                    final TreeMap<String, FieldMappingMetadata> mappings = new TreeMap<>((o1, o2) -> {
+                        if (Objects.equals(o1, o2)) {
+                            return 0;
+                        }
+                        if (o2 == null) {
+                            return 1;
+                        }
+
+                        return o1.compareToIgnoreCase(o2);
+                    });
+
+                    final String indexName = elasticIndex.getIndexName();
+                    final GetFieldMappingsRequest request = new GetFieldMappingsRequest();
+                    request.indicesOptions(IndicesOptions.lenientExpand());
+                    request.indices(indexName);
+                    request.fields("*");
+
+                    try {
+                        final GetFieldMappingsResponse response = elasticClient.indices().getFieldMapping(
+                                request, RequestOptions.DEFAULT);
+                        final Map<String, Map<String, FieldMappingMetadata>> allMappings = response.mappings();
+
+                        // Build a list of all multi fields (i.e. those defined only in the field mapping).
+                        // These are excluded from the fields the user can pick via the Stroom UI, as they are not part
+                        // of the returned `_source` field.
+                        final HashSet<String> multiFieldMappings = new HashSet<>();
+                        allMappings.values().forEach(indexMappings -> indexMappings.forEach((fieldName, mapping) -> {
+                            if (mapping.sourceAsMap().get(fieldName) instanceof Map) {
+                                @SuppressWarnings("unchecked") final Map<String, Object> source =
+                                        (Map<String, Object>) mapping.sourceAsMap().get(fieldName);
+                                final Object fields = source.get("fields");
+
+                                if (fields instanceof Map) {
+                                    final Map<String, Object> multiFields = (Map<String, Object>) fields;
+
+                                    multiFields.forEach((multiFieldName, multiFieldMapping) -> {
+                                        final String fullName = mapping.fullName() + "." + multiFieldName;
+                                        multiFieldMappings.add(fullName);
+                                    });
+                                }
+                            }
+                        }));
+
+                        allMappings.values().forEach(indexMappings -> indexMappings.forEach((fieldName, mapping) -> {
+                            if (!mappings.containsKey(fieldName) && !multiFieldMappings.contains(mapping.fullName())) {
+                                mappings.put(fieldName, mapping);
+                            }
+                        }));
+
+                    } catch (final IOException e) {
+                        LOGGER.error(e::getMessage, e);
+                    }
+
+                    return mappings;
+                });
+            } catch (final RuntimeException e) {
+                LOGGER.error(e::getMessage, e);
             }
         }
-        return Sizes.create(Integer.MAX_VALUE);
+        return result;
+    }
+
+
+    @Override
+    public String getType() {
+        return ElasticIndexDoc.DOCUMENT_TYPE;
     }
 }

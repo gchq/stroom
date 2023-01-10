@@ -16,9 +16,12 @@
 
 package stroom.statistics.impl.sql.entity;
 
+import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.query.common.v2.StoreFactory;
+import stroom.statistics.impl.sql.search.SqlStatisticStoreFactory;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
@@ -33,7 +36,6 @@ public class StatisticStoreModule extends AbstractModule {
     protected void configure() {
         bind(StatisticStoreStore.class).to(StatisticStoreStoreImpl.class);
         bind(StatisticStoreCache.class).to(StatisticsDataSourceCacheImpl.class);
-        bind(StatisticsDataSourceProvider.class).to(StatisticsDataSourceProviderImpl.class);
         bind(StatisticStoreValidator.class).to(StatisticsDataSourceValidatorImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)

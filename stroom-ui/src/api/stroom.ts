@@ -238,13 +238,6 @@ export interface ApiKeyResultPage {
   values?: ApiKey[];
 }
 
-export interface ApplicationInstanceInfo {
-  /** @format int64 */
-  createTime?: number;
-  userId?: string;
-  uuid?: string;
-}
-
 export interface Arg {
   allowedValues?: string[];
   argType?: "UNKNOWN" | "BOOLEAN" | "DOUBLE" | "ERROR" | "INTEGER" | "LONG" | "NULL" | "NUMBER" | "STRING";
@@ -604,7 +597,6 @@ export interface DashboardDoc {
 }
 
 export interface DashboardSearchRequest {
-  applicationInstanceUuid?: string;
   componentId?: string;
   componentResultRequests?: ComponentResultRequest[];
   dashboardUuid?: string;
@@ -719,29 +711,9 @@ export interface DataSource {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   defaultExtractionPipeline?: DocRef;
   fields?: AbstractField[];
-  timeField?: DateField;
 }
 
-export interface DateField {
-  conditions?: (
-    | "CONTAINS"
-    | "EQUALS"
-    | "GREATER_THAN"
-    | "GREATER_THAN_OR_EQUAL_TO"
-    | "LESS_THAN"
-    | "LESS_THAN_OR_EQUAL_TO"
-    | "BETWEEN"
-    | "IN"
-    | "IN_DICTIONARY"
-    | "IN_FOLDER"
-    | "IS_DOC_REF"
-    | "IS_NULL"
-    | "IS_NOT_NULL"
-    | "MATCHES_REGEX"
-  )[];
-  name?: string;
-  queryable?: boolean;
-}
+export type DateField = AbstractField;
 
 /**
  * The string formatting to apply to a date value
@@ -785,7 +757,6 @@ export interface DependencyCriteria {
 }
 
 export interface DestroyQueryRequest {
-  applicationInstanceUuid?: string;
   componentId?: string;
   queryDocUuid?: string;
 
@@ -793,13 +764,7 @@ export interface DestroyQueryRequest {
   queryKey?: QueryKey;
 }
 
-export interface DestroyRequest {
-  applicationInstanceInfo?: ApplicationInstanceInfo;
-  reason?: string;
-}
-
 export interface DestroySearchRequest {
-  applicationInstanceUuid?: string;
   componentId?: string;
   dashboardUuid?: string;
 
@@ -2477,7 +2442,6 @@ export interface QueryKey {
 }
 
 export interface QuerySearchRequest {
-  applicationInstanceUuid?: string;
   componentId?: string;
   incremental?: boolean;
   openGroups?: string[];
@@ -2926,7 +2890,7 @@ export interface SearchResponse {
   highlights: string[];
 
   /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
-  queryKey: QueryKey;
+  key: QueryKey;
   results?: Result[];
 }
 
@@ -3561,9 +3525,6 @@ export interface TokenResponse {
 export interface UiConfig {
   aboutHtml?: string;
   activity?: ActivityConfig;
-
-  /** @format int32 */
-  applicationInstanceKeepAliveIntervalMs?: number;
   defaultMaxResults?: string;
   helpSubPathExpressions?: string;
   helpSubPathJobs?: string;
@@ -4621,43 +4582,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         method: "GET",
         query: query,
         secure: true,
-        ...params,
-      }),
-  };
-  applicationInstance = {
-    /**
-     * No description
-     *
-     * @tags Application
-     * @name ApplicationInstanceRegister
-     * @summary Register a new application instance
-     * @request GET:/application-instance/v1/register
-     * @secure
-     */
-    applicationInstanceRegister: (params: RequestParams = {}) =>
-      this.request<any, ApplicationInstanceInfo>({
-        path: `/application-instance/v1/register`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Application
-     * @name ApplicationInstanceRemove
-     * @summary Remove an application instance
-     * @request POST:/application-instance/v1/remove
-     * @secure
-     */
-    applicationInstanceRemove: (data: DestroyRequest, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/application-instance/v1/remove`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
         ...params,
       }),
   };

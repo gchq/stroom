@@ -39,25 +39,17 @@ public final class DataSource implements Serializable {
     @JsonProperty
     private final List<AbstractField> fields;
     @JsonProperty
-    private final DateField timeField;
-    @JsonProperty
     private final DocRef defaultExtractionPipeline;
 
     @JsonCreator
     public DataSource(@JsonProperty("fields") final List<AbstractField> fields,
-                      @JsonProperty("timeField") final DateField timeField,
                       @JsonProperty("defaultExtractionPipeline") final DocRef defaultExtractionPipeline) {
         this.fields = fields;
-        this.timeField = timeField;
         this.defaultExtractionPipeline = defaultExtractionPipeline;
     }
 
     public List<AbstractField> getFields() {
         return fields;
-    }
-
-    public DateField getTimeField() {
-        return timeField;
     }
 
     public DocRef getDefaultExtractionPipeline() {
@@ -74,20 +66,18 @@ public final class DataSource implements Serializable {
         }
         final DataSource that = (DataSource) o;
         return Objects.equals(fields, that.fields) &&
-                Objects.equals(timeField, that.timeField) &&
                 Objects.equals(defaultExtractionPipeline, that.defaultExtractionPipeline);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(fields, timeField, defaultExtractionPipeline);
+        return Objects.hash(fields, defaultExtractionPipeline);
     }
 
     @Override
     public String toString() {
         return "DataSource{" +
                 "fields=" + fields +
-                ", partitionTimeField=" + timeField +
                 ", defaultExtractionPipeline=" + defaultExtractionPipeline +
                 '}';
     }
@@ -103,7 +93,6 @@ public final class DataSource implements Serializable {
     public static final class Builder {
 
         private List<AbstractField> fields = new ArrayList<>();
-        private DateField timeField;
         private DocRef defaultExtractionPipeline;
 
         private Builder() {
@@ -111,17 +100,11 @@ public final class DataSource implements Serializable {
 
         private Builder(final DataSource dataSource) {
             fields = dataSource.fields;
-            timeField = dataSource.timeField;
             defaultExtractionPipeline = dataSource.defaultExtractionPipeline;
         }
 
         public Builder fields(final List<AbstractField> fields) {
             this.fields = fields;
-            return this;
-        }
-
-        public Builder timeField(final DateField timeField) {
-            this.timeField = timeField;
             return this;
         }
 
@@ -131,7 +114,7 @@ public final class DataSource implements Serializable {
         }
 
         public DataSource build() {
-            return new DataSource(fields, timeField, defaultExtractionPipeline);
+            return new DataSource(fields, defaultExtractionPipeline);
         }
     }
 }

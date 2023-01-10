@@ -11,8 +11,6 @@ import stroom.config.common.NodeUriConfig;
 import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
 import stroom.core.receive.ReceiveDataConfig;
-import stroom.dashboard.impl.DashboardConfig;
-import stroom.dashboard.impl.datasource.DataSourceUrlConfig;
 import stroom.docstore.impl.db.DocStoreConfig;
 import stroom.event.logging.impl.LoggingConfig;
 import stroom.explorer.impl.ExplorerConfig;
@@ -70,9 +68,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_COMMON_DB_DETAILS = "commonDbDetails";
     public static final String PROP_NAME_CONTENT_PACK_IMPORT = "contentPackImport";
     public static final String PROP_NAME_CORE = "core";
-    public static final String PROP_NAME_DASHBOARD = "dashboard";
     public static final String PROP_NAME_DATA = "data";
-    public static final String PROP_NAME_DATA_SOURCE_URL = "dataSourceUrl";
     public static final String PROP_NAME_DOCSTORE = "docstore";
     public static final String PROP_NAME_ELASTIC = "elastic";
     public static final String PROP_NAME_EXPLORER = "explorer";
@@ -115,9 +111,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final CommonDbConfig commonDbConfig;
     private final ContentPackImportConfig contentPackImportConfig;
     private final LegacyConfig legacyConfig;
-    private final DashboardConfig dashboardConfig;
     private final DataConfig dataConfig;
-    private final DataSourceUrlConfig dataSourceUrlConfig;
     private final DocStoreConfig docStoreConfig;
     private final ElasticConfig elasticConfig;
     private final ExplorerConfig explorerConfig;
@@ -162,9 +156,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                 new CommonDbConfig(),
                 new ContentPackImportConfig(),
                 new LegacyConfig(),
-                new DashboardConfig(),
                 new DataConfig(),
-                new DataSourceUrlConfig(),
                 new DocStoreConfig(),
                 new ElasticConfig(),
                 new ExplorerConfig(),
@@ -208,9 +200,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_COMMON_DB_DETAILS) final CommonDbConfig commonDbConfig,
                      @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT) final ContentPackImportConfig contentPackImportConfig,
                      @JsonProperty(PROP_NAME_CORE) final LegacyConfig legacyConfig,
-                     @JsonProperty(PROP_NAME_DASHBOARD) final DashboardConfig dashboardConfig,
                      @JsonProperty(PROP_NAME_DATA) final DataConfig dataConfig,
-                     @JsonProperty(PROP_NAME_DATA_SOURCE_URL) final DataSourceUrlConfig dataSourceUrlConfig,
                      @JsonProperty(PROP_NAME_DOCSTORE) final DocStoreConfig docStoreConfig,
                      @JsonProperty(PROP_NAME_ELASTIC) final ElasticConfig elasticConfig,
                      @JsonProperty(PROP_NAME_EXPLORER) final ExplorerConfig explorerConfig,
@@ -250,9 +240,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.commonDbConfig = commonDbConfig;
         this.contentPackImportConfig = contentPackImportConfig;
         this.legacyConfig = legacyConfig;
-        this.dashboardConfig = dashboardConfig;
         this.dataConfig = dataConfig;
-        this.dataSourceUrlConfig = dataSourceUrlConfig;
         this.docStoreConfig = docStoreConfig;
         this.elasticConfig = elasticConfig;
         this.explorerConfig = explorerConfig;
@@ -344,20 +332,10 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         return legacyConfig;
     }
 
-    @JsonProperty(PROP_NAME_DASHBOARD)
-    public DashboardConfig getDashboardConfig() {
-        return dashboardConfig;
-    }
-
     @JsonProperty(PROP_NAME_DATA)
     @JsonPropertyDescription("Configuration for the data layer of stroom")
     public DataConfig getDataConfig() {
         return dataConfig;
-    }
-
-    @JsonProperty(PROP_NAME_DATA_SOURCE_URL)
-    public DataSourceUrlConfig getDataSourceUrlConfig() {
-        return dataSourceUrlConfig;
     }
 
     @JsonProperty(PROP_NAME_DOCSTORE)

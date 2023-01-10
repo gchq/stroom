@@ -11,6 +11,7 @@ import stroom.dashboard.expression.v1.ValString;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.DateField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.expression.matcher.ExpressionMatcher;
@@ -79,8 +80,12 @@ class SearchableTaskProgress implements Searchable {
         return DataSource
                 .builder()
                 .fields(TaskManagerFields.getFields())
-                .timeField(TaskManagerFields.SUBMIT_TIME)
                 .build();
+    }
+
+    @Override
+    public DateField getTimeField() {
+        return TaskManagerFields.SUBMIT_TIME;
     }
 
     @Override

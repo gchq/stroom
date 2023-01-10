@@ -43,7 +43,6 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.client.presenter.EntityChooser;
-import stroom.instance.client.ClientApplicationInstance;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.CreateProcessFilterRequest;
@@ -135,7 +134,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     @Inject
     public QueryPresenter(final EventBus eventBus,
                           final QueryView view,
-                          final ClientApplicationInstance applicationInstance,
                           final Provider<QuerySettingsPresenter> settingsPresenterProvider,
                           final ExpressionTreePresenter expressionPresenter,
                           final QueryHistoryPresenter historyPresenter,
@@ -207,7 +205,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
         searchModel = new SearchModel(
                 restFactory,
-                applicationInstance,
                 indexLoader,
                 dateTimeSettingsFactory);
         searchModel.addErrorListener(this::setErrors);

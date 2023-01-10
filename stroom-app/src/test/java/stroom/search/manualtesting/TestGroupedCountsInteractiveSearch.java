@@ -32,7 +32,6 @@ import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.search.AbstractSearchTest;
 import stroom.search.CommonIndexingTestHelper;
 import stroom.search.extraction.ExtractionConfig;
-import stroom.search.impl.LuceneSearchStoreFactory;
 import stroom.search.impl.shard.IndexShardSearchConfig;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -82,8 +81,6 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
     private TaskManager taskManager;
     @Inject
     private SearchResponseCreatorManager searchResponseCreatorManager;
-    @Inject
-    private LuceneSearchStoreFactory storeFactory;
     @Inject
     private CommonTestControl commonTestControl;
     @Inject
@@ -168,7 +165,6 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
                 extractValues,
                 resultMapConsumer,
                 indexStore,
-                storeFactory,
                 searchResponseCreatorManager);
 
         LOGGER.info("Completed search");

@@ -112,9 +112,8 @@ class TestEventSearch extends AbstractSearchTest {
             resultRequests.add(tableResultRequest);
         }
 
-        final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final Query query = Query.builder().dataSource(indexRef).expression(expressionIn.build()).build();
-        final SearchRequest searchRequest = new SearchRequest(queryKey,
+        final SearchRequest searchRequest = new SearchRequest(null,
                 query,
                 resultRequests,
                 DateTimeSettings.builder().build(),

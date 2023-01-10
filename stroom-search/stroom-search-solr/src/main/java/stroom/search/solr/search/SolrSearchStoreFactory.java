@@ -17,7 +17,10 @@
 
 package stroom.search.solr.search;
 
+import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.DateField;
 import stroom.dictionary.api.WordListProvider;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
@@ -30,7 +33,9 @@ import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
 import stroom.search.solr.CachedSolrIndex;
 import stroom.search.solr.SolrIndexCache;
+import stroom.search.solr.SolrIndexStore;
 import stroom.search.solr.search.SearchExpressionQueryBuilder.SearchExpressionQuery;
+import stroom.search.solr.shared.SolrIndexDataSourceFieldUtil;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.security.api.SecurityContext;
@@ -66,6 +71,7 @@ public class SolrSearchStoreFactory implements StoreFactory {
     private final SolrSearchConfig searchConfig;
     private final SecurityContext securityContext;
     private final CoprocessorsFactory coprocessorsFactory;
+    private final SolrIndexStore solrIndexStore;
 
     @Inject
     public SolrSearchStoreFactory(final SolrIndexCache solrIndexCache,
@@ -74,16 +80,43 @@ public class SolrSearchStoreFactory implements StoreFactory {
                                   final TaskContextFactory taskContextFactory,
                                   final Provider<SolrAsyncSearchTaskHandler> solrAsyncSearchTaskHandlerProvider,
                                   final SolrSearchConfig searchConfig,
-                                  final SecurityContext securityContext,
-                                  final CoprocessorsFactory coprocessorsFactory) {
+                                  final CoprocessorsFactory coprocessorsFactory,
+                                  final SolrIndexStore solrIndexStore,
+                                  final SecurityContext securityContext) {
         this.solrIndexCache = solrIndexCache;
         this.wordListProvider = wordListProvider;
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.solrAsyncSearchTaskHandlerProvider = solrAsyncSearchTaskHandlerProvider;
         this.searchConfig = searchConfig;
-        this.securityContext = securityContext;
         this.coprocessorsFactory = coprocessorsFactory;
+        this.solrIndexStore = solrIndexStore;
+        this.securityContext = securityContext;
+    }
+
+    @Override
+    public DataSource getDataSource(final DocRef docRef) {
+        return securityContext.useAsReadResult(() -> {
+            final SolrIndexDoc index = solrIndexStore.readDocument(docRef);
+            return DataSource
+                    .builder()
+                    .fields(SolrIndexDataSourceFieldUtil.getDataSourceFields(index))
+                    .defaultExtractionPipeline(index.getDefaultExtractionPipeline())
+                    .build();
+        });
+    }
+
+    @Override
+    public DateField getTimeField(final DocRef docRef) {
+        return securityContext.useAsReadResult(() -> {
+            final SolrIndexDoc index = solrIndexStore.readDocument(docRef);
+            DateField timeField = null;
+            if (index.getTimeField() != null && !index.getTimeField().isBlank()) {
+                return new DateField(index.getTimeField());
+            }
+
+            return null;
+        });
     }
 
     @Override
@@ -178,5 +211,10 @@ public class SolrSearchStoreFactory implements StoreFactory {
         }
 
         return highlights;
+    }
+
+    @Override
+    public String getType() {
+        return SolrIndexDoc.DOCUMENT_TYPE;
     }
 }

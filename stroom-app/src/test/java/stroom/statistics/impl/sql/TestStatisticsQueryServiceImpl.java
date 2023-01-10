@@ -29,10 +29,12 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.security.api.SecurityContext;
 import stroom.statistics.impl.sql.entity.StatisticStoreStore;
 import stroom.statistics.impl.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.impl.sql.rollup.RolledUpStatisticEvent;
+import stroom.statistics.impl.sql.search.SqlStatisticStoreFactory;
 import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
@@ -64,7 +66,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.inject.Inject;
@@ -128,7 +129,9 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
     @Inject
     private StatisticStoreStore statisticStoreStore;
     @Inject
-    private StatisticsQueryService statisticsQueryService;
+    private SqlStatisticStoreFactory statisticsQueryService;
+    @Inject
+    private SearchResponseCreatorManager searchResponseCreatorManager;
     @Inject
     private SecurityContext securityContext;
 
@@ -180,7 +183,6 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
 
     @Test
     void testSearchStatisticsData_TwoTags_incrementalNoTimeout() throws SQLException {
-
         if (!ignoreAllTests) {
             final List<StatisticTag> tags = new ArrayList<>();
             tags.add(new StatisticTag(TAG1, TAG1_VAL));
@@ -191,8 +193,6 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
                     TAG1, ImmutableSet.of(TAG1_VAL),
                     TAG2, ImmutableSet.of(TAG2_VAL));
 
-            String queryKey = UUID.randomUUID().toString();
-
             SearchResponse searchResponse;
 
             // Incremental search so first n responses may not be complete
@@ -200,7 +200,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
 
             // keep asking for results till we get a complete one (or timeout)
             do {
-                searchResponse = doSearch(tags, true, queryKey);
+                searchResponse = doSearch(tags, true);
             } while (!searchResponse.complete() || Instant.now().isAfter(timeoutTime));
 
             doAsserts(searchResponse, 1, expectedValuesMap);
@@ -220,14 +220,11 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
                     TAG1, ImmutableSet.of(TAG1_VAL),
                     TAG2, ImmutableSet.of(TAG2_VAL));
 
-            String queryKey = UUID.randomUUID().toString();
-
             //incremental but with a 10s timeout so should get our results on 1st try
             SearchResponse searchResponse = doSearch(
                     tags,
                     Op.AND,
                     true,
-                    queryKey,
                     OptionalLong.of(10_000));
 
             doAsserts(searchResponse, 1, expectedValuesMap);
@@ -350,26 +347,19 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
 
     private SearchResponse doSearch(final List<StatisticTag> searchTags,
                                     final boolean isIncremental) {
-        return doSearch(searchTags, Op.AND, isIncremental, UUID.randomUUID().toString(), OptionalLong.empty());
-    }
-
-    private SearchResponse doSearch(final List<StatisticTag> searchTags,
-                                    final boolean isIncremental,
-                                    final String queryKey) {
-        return doSearch(searchTags, Op.AND, isIncremental, queryKey, OptionalLong.empty());
+        return doSearch(searchTags, Op.AND, isIncremental, OptionalLong.empty());
     }
 
     private SearchResponse doSearch(final List<StatisticTag> searchTags,
                                     final ExpressionOperator.Op op,
                                     final boolean isIncremental) {
 
-        return doSearch(searchTags, op, isIncremental, UUID.randomUUID().toString(), OptionalLong.empty());
+        return doSearch(searchTags, op, isIncremental, OptionalLong.empty());
     }
 
     private SearchResponse doSearch(final List<StatisticTag> searchTags,
                                     final ExpressionOperator.Op op,
                                     final boolean isIncremental,
-                                    final String queryKey,
                                     final OptionalLong optTimeout) {
 
         final ExpressionOperator.Builder operatorBuilder = ExpressionOperator.builder().op(op);
@@ -381,7 +371,6 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
         }
 
         final SearchRequest.Builder searchBuilder = SearchRequest.builder()
-                .key(queryKey)
                 .incremental(isIncremental)
                 .query(Query.builder()
                         .expression(operatorBuilder.build())
@@ -402,7 +391,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
 
         final SearchRequest searchRequest = searchBuilder.build();
 
-        SearchResponse searchResponse = statisticsQueryService.search(searchRequest);
+        SearchResponse searchResponse = searchResponseCreatorManager.search(searchRequest);
 
         LOGGER.debug("Search response returned with completion state {}", searchResponse.getComplete());
 

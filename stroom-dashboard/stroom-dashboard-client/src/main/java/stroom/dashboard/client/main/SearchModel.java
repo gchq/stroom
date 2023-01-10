@@ -26,7 +26,6 @@ import stroom.dashboard.shared.Search;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.instance.client.ClientApplicationInstance;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Param;
@@ -52,7 +51,6 @@ public class SearchModel {
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
 
     private final RestFactory restFactory;
-    private final ClientApplicationInstance applicationInstance;
     private final IndexLoader indexLoader;
     private String dashboardUuid;
     private String componentId;
@@ -68,11 +66,9 @@ public class SearchModel {
     private final List<Consumer<List<String>>> errorListeners = new ArrayList<>();
 
     public SearchModel(final RestFactory restFactory,
-                       final ClientApplicationInstance applicationInstance,
                        final IndexLoader indexLoader,
                        final DateTimeSettingsFactory dateTimeSettingsFactory) {
         this.restFactory = restFactory;
-        this.applicationInstance = applicationInstance;
         this.indexLoader = indexLoader;
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
     }
@@ -206,7 +202,6 @@ public class SearchModel {
                             .search(search)
                             .componentResultRequests(requests)
                             .dateTimeSettings(dateTimeSettingsFactory.getDateTimeSettings())
-                            .applicationInstanceUuid(applicationInstance.getInstanceUuid())
                             .dashboardUuid(dashboardUuid)
                             .componentId(componentId)
                             .build();
@@ -250,7 +245,6 @@ public class SearchModel {
         final DestroySearchRequest request = DestroySearchRequest
                 .builder()
                 .queryKey(queryKey)
-                .applicationInstanceUuid(applicationInstance.getInstanceUuid())
                 .dashboardUuid(dashboardUuid)
                 .componentId(componentId)
                 .build();
@@ -281,7 +275,6 @@ public class SearchModel {
                     .search(search)
                     .componentResultRequests(requests)
                     .dateTimeSettings(dateTimeSettingsFactory.getDateTimeSettings())
-                    .applicationInstanceUuid(applicationInstance.getInstanceUuid())
                     .dashboardUuid(dashboardUuid)
                     .componentId(componentId)
                     .storeHistory(storeHistory)
@@ -433,11 +426,9 @@ public class SearchModel {
 
         return DashboardSearchRequest
                 .builder()
-                .applicationInstanceUuid(applicationInstance.getInstanceUuid())
                 .search(search)
                 .componentResultRequests(requests)
                 .dateTimeSettings(dateTimeSettingsFactory.getDateTimeSettings())
-                .applicationInstanceUuid(applicationInstance.getInstanceUuid())
                 .dashboardUuid(dashboardUuid)
                 .componentId(componentId)
                 .build();

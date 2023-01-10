@@ -75,7 +75,7 @@ public class SearchResponseMapper {
                     .collect(Collectors.toList());
         }
 
-        return new DashboardSearchResponse(searchResponse.getQueryKey(),
+        return new DashboardSearchResponse(searchResponse.getKey(),
                 highlights,
                 errors,
                 searchResponse.complete(),

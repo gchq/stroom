@@ -37,18 +37,12 @@ import stroom.dashboard.shared.StoredQuery;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.dashboard.shared.VisResultRequest;
-import stroom.datasource.api.v2.DataSourceProvider;
-import stroom.datasource.api.v2.DateField;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.query.api.v2.DateTimeSettings;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
-import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
@@ -57,8 +51,7 @@ import stroom.query.api.v2.Row;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
-import stroom.query.api.v2.TimeRange;
-import stroom.query.common.v2.DataSourceProviderRegistry;
+import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -71,7 +64,6 @@ import stroom.util.NullSafe;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceGeneration;
@@ -90,7 +82,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -114,13 +105,12 @@ class DashboardServiceImpl implements DashboardService {
     private final SearchRequestMapper searchRequestMapper;
     private final ResourceStore resourceStore;
     private final SearchEventLog searchEventLog;
-    private final ApplicationInstanceManager applicationInstanceManager;
-    private final DataSourceProviderRegistry searchDataSourceProviderRegistry;
     private final SecurityContext securityContext;
     private final HttpServletRequestHolder httpServletRequestHolder;
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
     private final Provider<FunctionService> functionServiceProvider;
+    private final SearchResponseCreatorManager searchResponseCreatorManager;
 
     @Inject
     DashboardServiceImpl(final DashboardStore dashboardStore,
@@ -129,26 +119,24 @@ class DashboardServiceImpl implements DashboardService {
                          final SearchRequestMapper searchRequestMapper,
                          final ResourceStore resourceStore,
                          final SearchEventLog searchEventLog,
-                         final ApplicationInstanceManager applicationInstanceManager,
-                         final DataSourceProviderRegistry searchDataSourceProviderRegistry,
                          final SecurityContext securityContext,
                          final HttpServletRequestHolder httpServletRequestHolder,
                          final ExecutorProvider executorProvider,
                          final TaskContextFactory taskContextFactory,
-                         final Provider<FunctionService> functionServiceProvider) {
+                         final Provider<FunctionService> functionServiceProvider,
+                         final SearchResponseCreatorManager searchResponseCreatorManager) {
         this.dashboardStore = dashboardStore;
         this.queryService = queryService;
         this.documentResourceHelper = documentResourceHelper;
         this.searchRequestMapper = searchRequestMapper;
         this.resourceStore = resourceStore;
         this.searchEventLog = searchEventLog;
-        this.applicationInstanceManager = applicationInstanceManager;
-        this.searchDataSourceProviderRegistry = searchDataSourceProviderRegistry;
         this.securityContext = securityContext;
         this.httpServletRequestHolder = httpServletRequestHolder;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
         this.functionServiceProvider = functionServiceProvider;
+        this.searchResponseCreatorManager = searchResponseCreatorManager;
     }
 
     @Override
@@ -253,12 +241,9 @@ class DashboardServiceImpl implements DashboardService {
                 if (queryKey == null) {
                     throw new EntityServiceException("No query is active");
                 }
-                final ActiveQueries activeQueries = getActiveQueries(searchRequest);
-                final Optional<ActiveQuery> optionalActiveQuery = activeQueries.getActiveQuery(queryKey);
-                final ActiveQuery activeQuery = optionalActiveQuery
-                        .orElseThrow(() -> new EntityServiceException("The requested search data is not available"));
+
                 SearchRequest mappedRequest = searchRequestMapper.mapRequest(searchRequest);
-                SearchResponse searchResponse = activeQuery.search(mappedRequest);
+                SearchResponse searchResponse = searchResponseCreatorManager.search(mappedRequest);
 
                 if (searchResponse == null || searchResponse.getResults() == null) {
                     throw new EntityServiceException("No results can be found");
@@ -419,39 +404,7 @@ class DashboardServiceImpl implements DashboardService {
 
     @Override
     public Boolean destroy(final DestroySearchRequest request) {
-        return getApplicationInstance(request.getApplicationInstanceUuid())
-                .getActiveQueries()
-                .destroyActiveQuery(request.getQueryKey())
-                .isPresent();
-    }
-
-    private ActiveQueries getActiveQueries(final DashboardSearchRequest request) {
-        return getApplicationInstance(request.getApplicationInstanceUuid())
-                .getActiveQueries();
-    }
-
-    private ApplicationInstance getApplicationInstance(final String applicationInstanceUuid) {
-        if (applicationInstanceUuid == null) {
-            throw new EntityServiceException("""
-                    Session expired, please refresh your browser.
-
-                    Null application instance id.""");
-        }
-        final Optional<ApplicationInstance> optionalApplicationInstance =
-                applicationInstanceManager.getOptApplicationInstance(applicationInstanceUuid);
-        final ApplicationInstance applicationInstance = optionalApplicationInstance.orElseThrow(() ->
-                new EntityServiceException(LogUtil.message("""
-                                Session expired, please refresh your browser.
-
-                                Application instance not found for: {}""",
-                        applicationInstanceUuid)));
-        if (!securityContext.getUserId().equals(applicationInstance.getUserId())) {
-            throw new EntityServiceException("""
-                    Session expired, please refresh your browser.
-
-                    Attempt to use application instance for a different user.""");
-        }
-        return applicationInstance;
+        return searchResponseCreatorManager.destroy(request.getQueryKey());
     }
 
     private DashboardSearchResponse processRequest(final DashboardSearchRequest searchRequest) {
@@ -459,86 +412,24 @@ class DashboardServiceImpl implements DashboardService {
         DashboardSearchResponse result = null;
 
         QueryKey queryKey = searchRequest.getQueryKey();
-        boolean newSearch = false;
-        DashboardSearchRequest updatedSearchRequest = searchRequest;
-        Search search = updatedSearchRequest.getSearch();
-        ActiveQuery activeQuery;
+        Search search = searchRequest.getSearch();
 
         if (search != null) {
             try {
-                // Add a param for `currentUser()`
-                List<Param> params = search.getParams();
-                if (params != null) {
-                    params = new ArrayList<>(params);
-                } else {
-                    params = new ArrayList<>();
-                }
-                params.add(new Param("currentUser()", securityContext.getUserId()));
-                search = search.copy().params(params).build();
-
-                updatedSearchRequest = updatedSearchRequest.copy().search(search).build();
-                SearchRequest mappedRequest = searchRequestMapper.mapRequest(updatedSearchRequest);
-
-                synchronized (DashboardServiceImpl.class) {
-                    final ActiveQueries activeQueries = getActiveQueries(searchRequest);
-
-                    if (queryKey != null) {
-                        final Optional<ActiveQuery> optionalActiveQuery = activeQueries.getActiveQuery(queryKey);
-                        final String message = "No active search found for key = " + queryKey;
-                        activeQuery = optionalActiveQuery.orElseThrow(() ->
-                                new RuntimeException(message));
-                        // Check user identity.
-                        if (!activeQuery.getUserId().equals(securityContext.getUserId())) {
-                            throw new RuntimeException("Query belongs to different user");
-                        }
-
-                    } else {
-                        // If the query doesn't have a key then this is new.
-                        LOGGER.debug(() -> "New query");
-                        newSearch = true;
-
-                        final DocRef dataSourceRef = search.getDataSourceRef();
-                        if (dataSourceRef == null || dataSourceRef.getUuid() == null) {
-                            throw new RuntimeException("No search data source has been specified");
-                        }
-
-                        // Get the data source provider for this query.
-                        final DataSourceProvider dataSourceProvider = searchDataSourceProviderRegistry
-                                .getDataSourceProvider(dataSourceRef)
-                                .orElseThrow(() ->
-                                        new RuntimeException(
-                                                "No search provider found for '" +
-                                                        dataSourceRef.getType() +
-                                                        "' data source"));
-
-                        // Add partition time constraints to the query.
-                        final DateField partitionTimeField =
-                                dataSourceProvider.getDataSource(dataSourceRef).getTimeField();
-                        mappedRequest = addTimeRangeExpression(partitionTimeField, mappedRequest);
-
-                        // Create a brand new query key and give it to the request.
-                        queryKey = new QueryKey(UUID.randomUUID().toString());
-                        mappedRequest = mappedRequest.copy().key(queryKey).build();
-
-                        // Store the new active query for this query.
-                        activeQuery = new ActiveQuery(
-                                mappedRequest.getKey(),
-                                dataSourceRef,
-                                dataSourceProvider,
-                                securityContext.getUserId());
-                        activeQueries.addActiveQuery(queryKey, activeQuery);
-
-                        // Add this search to the history so the user can get back to this
-                        // search again.
-                        storeSearchHistory(searchRequest);
-                    }
-                }
+                final SearchRequest mappedRequest = searchRequestMapper.mapRequest(searchRequest);
 
                 // Perform the search or update results.
-                SearchResponse searchResponse = activeQuery.search(mappedRequest);
+                final SearchResponse searchResponse = searchResponseCreatorManager.search(mappedRequest);
                 result = new SearchResponseMapper().mapResponse(searchResponse);
 
-                if (newSearch) {
+                if (queryKey == null) {
+                    // If the query doesn't have a key then this is new.
+                    LOGGER.debug(() -> "New query");
+
+                    // Add this search to the history so the user can get back to this
+                    // search again.
+                    storeSearchHistory(searchRequest);
+
                     // Log this search request for the current user.
                     searchEventLog.search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo());
                 }
@@ -547,7 +438,7 @@ class DashboardServiceImpl implements DashboardService {
                 final Search finalSearch = search;
                 LOGGER.debug(() -> "Error processing search " + finalSearch, e);
 
-                if (newSearch) {
+                if (queryKey == null) {
                     searchEventLog.search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo(), e);
                 }
 
@@ -557,37 +448,6 @@ class DashboardServiceImpl implements DashboardService {
                         Collections.singletonList(ExceptionStringUtil.getMessage(e)),
                         true,
                         null);
-            }
-        }
-
-        return result;
-    }
-
-    private SearchRequest addTimeRangeExpression(final DateField partitionTimeField,
-                                                 final SearchRequest searchRequest) {
-        SearchRequest result = searchRequest;
-
-        // Add the time range to the expression.
-        if (partitionTimeField != null) {
-            final TimeRange timeRange = result.getQuery().getTimeRange();
-            if (timeRange != null && (timeRange.getFrom() != null || timeRange.getTo() != null)) {
-                ExpressionOperator.Builder and = ExpressionOperator.builder().op(Op.AND);
-                if (timeRange.getFrom() != null) {
-                    and.addTerm(
-                            partitionTimeField,
-                            Condition.GREATER_THAN_OR_EQUAL_TO,
-                            timeRange.getFrom());
-                }
-                if (timeRange.getTo() != null) {
-                    and.addTerm(
-                            partitionTimeField,
-                            Condition.LESS_THAN,
-                            timeRange.getTo());
-                }
-                Query query = result.getQuery();
-                and.addOperator(query.getExpression());
-                query = query.copy().expression(and.build()).build();
-                result = result.copy().query(query).build();
             }
         }
 

@@ -41,8 +41,8 @@ public class ResultStoreConfig extends AbstractConfig implements IsStroomConfig 
         lmdbConfig = new ResultStoreLmdbConfig();
 
         searchResultCache = CacheConfig.builder()
-                .maximumSize(10000L)
-                .expireAfterAccess(StroomDuration.ofMinutes(10))
+//                .maximumSize(10000L)
+//                .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
         storeSize = "1000000,100,10,1";
     }

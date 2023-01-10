@@ -61,8 +61,6 @@ public class QuerySearchRequest {
     private final long timeout;
 
     @JsonProperty
-    private final String applicationInstanceUuid;
-    @JsonProperty
     private final String queryDocUuid;
     @JsonProperty
     private final String componentId;
@@ -80,7 +78,6 @@ public class QuerySearchRequest {
             @JsonProperty("queryContext") final QueryContext queryContext,
             @JsonProperty("incremental") final boolean incremental,
             @JsonProperty("timeout") final long timeout,
-            @JsonProperty("applicationInstanceUuid") final String applicationInstanceUuid,
             @JsonProperty("queryDocUuid") final String queryDocUuid,
             @JsonProperty("componentId") final String componentId,
             @JsonProperty("storeHistory") final boolean storeHistory,
@@ -91,7 +88,6 @@ public class QuerySearchRequest {
         this.queryContext = queryContext;
         this.incremental = incremental;
         this.timeout = timeout;
-        this.applicationInstanceUuid = applicationInstanceUuid;
         this.queryDocUuid = queryDocUuid;
         this.componentId = componentId;
         this.storeHistory = storeHistory;
@@ -117,10 +113,6 @@ public class QuerySearchRequest {
 
     public long getTimeout() {
         return timeout;
-    }
-
-    public String getApplicationInstanceUuid() {
-        return applicationInstanceUuid;
     }
 
     public String getQueryDocUuid() {
@@ -162,7 +154,6 @@ public class QuerySearchRequest {
                 Objects.equals(queryKey, that.queryKey) &&
                 Objects.equals(query, that.query) &&
                 Objects.equals(queryContext, that.queryContext) &&
-                Objects.equals(applicationInstanceUuid, that.applicationInstanceUuid) &&
                 Objects.equals(queryDocUuid, that.queryDocUuid) &&
                 Objects.equals(componentId, that.componentId) &&
                 Objects.equals(requestedRange, that.requestedRange) &&
@@ -176,7 +167,6 @@ public class QuerySearchRequest {
                 queryContext,
                 incremental,
                 timeout,
-                applicationInstanceUuid,
                 queryDocUuid,
                 componentId,
                 storeHistory,
@@ -192,7 +182,6 @@ public class QuerySearchRequest {
                 ", queryContext=" + queryContext +
                 ", incremental=" + incremental +
                 ", timeout=" + timeout +
-                ", applicationInstanceUuid='" + applicationInstanceUuid + '\'' +
                 ", queryDocUuid='" + queryDocUuid + '\'' +
                 ", componentId='" + componentId + '\'' +
                 ", storeHistory=" + storeHistory +
@@ -216,7 +205,6 @@ public class QuerySearchRequest {
         private QueryContext queryContext;
         private boolean incremental = true;
         private long timeout = 1000L;
-        private String applicationInstanceUuid;
         private String queryDocUuid;
         private String componentId;
         private boolean storeHistory;
@@ -232,7 +220,6 @@ public class QuerySearchRequest {
             this.queryContext = request.queryContext;
             this.incremental = request.incremental;
             this.timeout = request.timeout;
-            this.applicationInstanceUuid = request.applicationInstanceUuid;
             this.queryDocUuid = request.queryDocUuid;
             this.storeHistory = request.storeHistory;
             this.componentId = request.componentId;
@@ -260,11 +247,6 @@ public class QuerySearchRequest {
 
         public Builder timeout(final long timeout) {
             this.timeout = timeout;
-            return this;
-        }
-
-        public Builder applicationInstanceUuid(final String applicationInstanceUuid) {
-            this.applicationInstanceUuid = applicationInstanceUuid;
             return this;
         }
 
@@ -314,7 +296,6 @@ public class QuerySearchRequest {
                     queryContext,
                     incremental,
                     timeout,
-                    applicationInstanceUuid,
                     queryDocUuid,
                     componentId,
                     storeHistory,

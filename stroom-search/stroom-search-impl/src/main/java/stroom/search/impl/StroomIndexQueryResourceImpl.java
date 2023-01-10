@@ -16,22 +16,10 @@
 
 package stroom.search.impl;
 
-import stroom.datasource.api.v2.DataSource;
-import stroom.docref.DocRef;
-import stroom.event.logging.api.EventActionDecorator;
 import stroom.event.logging.rs.api.AutoLogged;
-import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.index.impl.StroomIndexQueryResource;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchResponse;
-import stroom.util.json.JsonUtil;
-
-import com.codahale.metrics.annotation.Timed;
-import event.logging.ProcessAction;
-import event.logging.ProcessEventAction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.query.common.v2.AbstractDataSourceResource;
+import stroom.query.common.v2.SearchResponseCreatorManager;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -39,66 +27,13 @@ import javax.inject.Singleton;
 
 @Singleton
 @AutoLogged
-public class StroomIndexQueryResourceImpl implements StroomIndexQueryResource {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(StroomIndexQueryResourceImpl.class);
-
-    private final Provider<StroomIndexQueryService> serviceProvider;
+public class StroomIndexQueryResourceImpl
+        extends AbstractDataSourceResource
+        implements StroomIndexQueryResource {
 
     @Inject
-    StroomIndexQueryResourceImpl(final Provider<StroomIndexQueryService> serviceProvider) {
-        this.serviceProvider = serviceProvider;
-    }
-
-    @Timed
-    @Override
-    public DataSource getDataSource(final DocRef docRef) {
-        if (LOGGER.isDebugEnabled()) {
-            String json = JsonUtil.writeValueAsString(docRef);
-            LOGGER.debug("/dataSource called with docRef:\n{}", json);
-        }
-        return serviceProvider.get().getDataSource(docRef);
-    }
-
-    @Timed
-    @Override
-    public SearchResponse search(final SearchRequest request) {
-        if (LOGGER.isDebugEnabled()) {
-            String json = JsonUtil.writeValueAsString(request);
-            LOGGER.debug("/search called with searchRequest:\n{}", json);
-        }
-        return serviceProvider.get().search(request);
-    }
-
-    @Timed
-    @Override
-    @AutoLogged(OperationType.UNLOGGED)
-    public Boolean keepAlive(final QueryKey queryKey) {
-        if (LOGGER.isDebugEnabled()) {
-            String json = JsonUtil.writeValueAsString(queryKey);
-            LOGGER.debug("/keepAlive called with queryKey:\n{}", json);
-        }
-        return serviceProvider.get().keepAlive(queryKey);
-    }
-
-    @Timed
-    @Override
-    @AutoLogged(value = OperationType.PROCESS, verb = "Closing Query", decorator = TerminateDecorator.class)
-    public Boolean destroy(final QueryKey queryKey) {
-        if (LOGGER.isDebugEnabled()) {
-            String json = JsonUtil.writeValueAsString(queryKey);
-            LOGGER.debug("/destroy called with queryKey:\n{}", json);
-        }
-        return serviceProvider.get().destroy(queryKey);
-    }
-
-    static class TerminateDecorator implements EventActionDecorator<ProcessEventAction> {
-
-        @Override
-        public ProcessEventAction decorate(final ProcessEventAction eventAction) {
-            return eventAction.newCopyBuilder()
-                    .withAction(ProcessAction.TERMINATE)
-                    .build();
-        }
+    StroomIndexQueryResourceImpl(
+            final Provider<SearchResponseCreatorManager> searchResponseCreatorManagerProvider) {
+        super(searchResponseCreatorManagerProvider);
     }
 }

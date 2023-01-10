@@ -1,5 +1,7 @@
 package stroom.searchable.impl;
 
+import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.DateField;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
@@ -12,6 +14,7 @@ import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
 import stroom.searchable.api.Searchable;
 import stroom.searchable.api.SearchableProvider;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
@@ -30,9 +33,7 @@ import javax.inject.Inject;
 
 @SuppressWarnings("unused")
 class SearchableStoreFactory implements StoreFactory {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(SearchableStoreFactory.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SearchableStoreFactory.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SearchableStoreFactory.class);
 
     private final Executor executor;
     private final TaskManager taskManager;
@@ -41,6 +42,7 @@ class SearchableStoreFactory implements StoreFactory {
     private final UiConfig clientConfig;
     private final SearchableProvider searchableProvider;
     private final CoprocessorsFactory coprocessorsFactory;
+    private final SecurityContext securityContext;
 
     @Inject
     SearchableStoreFactory(final Executor executor,
@@ -49,7 +51,8 @@ class SearchableStoreFactory implements StoreFactory {
                            final ResultStoreConfig config,
                            final UiConfig clientConfig,
                            final SearchableProvider searchableProvider,
-                           final CoprocessorsFactory coprocessorsFactory) {
+                           final CoprocessorsFactory coprocessorsFactory,
+                           final SecurityContext securityContext) {
         this.executor = executor;
         this.taskManager = taskManager;
         this.taskContextFactory = taskContextFactory;
@@ -57,6 +60,19 @@ class SearchableStoreFactory implements StoreFactory {
         this.clientConfig = clientConfig;
         this.searchableProvider = searchableProvider;
         this.coprocessorsFactory = coprocessorsFactory;
+        this.securityContext = securityContext;
+    }
+
+    @Override
+    public DataSource getDataSource(final DocRef docRef) {
+        return securityContext.useAsReadResult(() -> {
+            LOGGER.debug(() -> "getDataSource called for docRef " + docRef);
+            final Searchable searchable = searchableProvider.get(docRef);
+            if (searchable == null) {
+                return null;
+            }
+            return searchable.getDataSource();
+        });
     }
 
     @Override
@@ -140,10 +156,20 @@ class SearchableStoreFactory implements StoreFactory {
                         .map(String::trim)
                         .map(Integer::valueOf)
                         .collect(Collectors.toList()));
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.warn(e.getMessage());
             }
         }
         return Sizes.create(Integer.MAX_VALUE);
+    }
+
+    @Override
+    public DateField getTimeField(final DocRef docRef) {
+        return searchableProvider.get(docRef).getTimeField();
+    }
+
+    @Override
+    public String getType() {
+        return "Searchable";
     }
 }

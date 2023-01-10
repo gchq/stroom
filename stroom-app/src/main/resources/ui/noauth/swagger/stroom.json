@@ -1024,55 +1024,6 @@
         "tags" : [ "Api Keys" ]
       }
     },
-    "/application-instance/v1/register" : {
-      "get" : {
-        "operationId" : "applicationInstanceRegister",
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ApplicationInstanceInfo"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Register a new application instance",
-        "tags" : [ "Application" ]
-      }
-    },
-    "/application-instance/v1/remove" : {
-      "post" : {
-        "operationId" : "applicationInstanceRemove",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/DestroyRequest"
-              }
-            }
-          },
-          "description" : "destroyRequest",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Remove an application instance",
-        "tags" : [ "Application" ]
-      }
-    },
     "/authentication/v1/needsPasswordChange" : {
       "get" : {
         "operationId" : "needsPasswordChange",
@@ -9434,21 +9385,6 @@
           }
         }
       },
-      "ApplicationInstanceInfo" : {
-        "type" : "object",
-        "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "userId" : {
-            "type" : "string"
-          },
-          "uuid" : {
-            "type" : "string"
-          }
-        }
-      },
       "Arg" : {
         "type" : "object",
         "properties" : {
@@ -10304,9 +10240,6 @@
       "DashboardSearchRequest" : {
         "type" : "object",
         "properties" : {
-          "applicationInstanceUuid" : {
-            "type" : "string"
-          },
           "componentId" : {
             "type" : "string"
           },
@@ -10553,29 +10486,14 @@
             "items" : {
               "$ref" : "#/components/schemas/AbstractField"
             }
-          },
-          "timeField" : {
-            "$ref" : "#/components/schemas/DateField"
           }
         }
       },
       "DateField" : {
         "type" : "object",
-        "properties" : {
-          "conditions" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string",
-              "enum" : [ "CONTAINS", "EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
-            }
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "queryable" : {
-            "type" : "boolean"
-          }
-        }
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractField"
+        } ]
       },
       "DateTimeFormatSettings" : {
         "type" : "object",
@@ -10662,9 +10580,6 @@
       "DestroyQueryRequest" : {
         "type" : "object",
         "properties" : {
-          "applicationInstanceUuid" : {
-            "type" : "string"
-          },
           "componentId" : {
             "type" : "string"
           },
@@ -10676,23 +10591,9 @@
           }
         }
       },
-      "DestroyRequest" : {
-        "type" : "object",
-        "properties" : {
-          "applicationInstanceInfo" : {
-            "$ref" : "#/components/schemas/ApplicationInstanceInfo"
-          },
-          "reason" : {
-            "type" : "string"
-          }
-        }
-      },
       "DestroySearchRequest" : {
         "type" : "object",
         "properties" : {
-          "applicationInstanceUuid" : {
-            "type" : "string"
-          },
           "componentId" : {
             "type" : "string"
           },
@@ -14368,9 +14269,6 @@
       "QuerySearchRequest" : {
         "type" : "object",
         "properties" : {
-          "applicationInstanceUuid" : {
-            "type" : "string"
-          },
           "componentId" : {
             "type" : "string"
           },
@@ -15238,7 +15136,7 @@
               "description" : "A list of strings to highlight in the UI that should correlate with the search query."
             }
           },
-          "queryKey" : {
+          "key" : {
             "$ref" : "#/components/schemas/QueryKey"
           },
           "results" : {
@@ -15248,7 +15146,7 @@
             }
           }
         },
-        "required" : [ "highlights", "queryKey" ]
+        "required" : [ "highlights", "key" ]
       },
       "SelectionIndexShardStatus" : {
         "type" : "object",
@@ -16674,10 +16572,6 @@
           },
           "activity" : {
             "$ref" : "#/components/schemas/ActivityConfig"
-          },
-          "applicationInstanceKeepAliveIntervalMs" : {
-            "type" : "integer",
-            "format" : "int32"
           },
           "defaultMaxResults" : {
             "type" : "string"

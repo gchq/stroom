@@ -1,5 +1,5 @@
 {
-  "queryKey" : {
+  "key" : {
     "uuid" : "test_uuid"
   },
   "results" : [ {

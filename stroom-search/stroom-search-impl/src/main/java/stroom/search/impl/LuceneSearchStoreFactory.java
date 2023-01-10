@@ -17,7 +17,10 @@
 
 package stroom.search.impl;
 
+import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.DateField;
 import stroom.dictionary.api.WordListProvider;
+import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.LuceneVersionUtil;
 import stroom.index.shared.IndexDoc;
@@ -35,6 +38,9 @@ import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
 import stroom.search.impl.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.security.api.SecurityContext;
+import stroom.task.api.ExecutorProvider;
+import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TerminateHandlerFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +48,10 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.function.Supplier;
 import javax.inject.Inject;
 
 public class LuceneSearchStoreFactory implements StoreFactory {
@@ -55,6 +65,8 @@ public class LuceneSearchStoreFactory implements StoreFactory {
     private final SecurityContext securityContext;
     private final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory;
     private final CoprocessorsFactory coprocessorsFactory;
+    private final TaskContextFactory taskContextFactory;
+    private final ExecutorProvider executorProvider;
 
     @Inject
     public LuceneSearchStoreFactory(final IndexStore indexStore,
@@ -63,7 +75,9 @@ public class LuceneSearchStoreFactory implements StoreFactory {
                                     final NodeInfo nodeInfo,
                                     final SecurityContext securityContext,
                                     final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory,
-                                    final CoprocessorsFactory coprocessorsFactory) {
+                                    final CoprocessorsFactory coprocessorsFactory,
+                                    final TaskContextFactory taskContextFactory,
+                                    final ExecutorProvider executorProvider) {
         this.indexStore = indexStore;
         this.wordListProvider = wordListProvider;
         this.nodeInfo = nodeInfo;
@@ -71,6 +85,44 @@ public class LuceneSearchStoreFactory implements StoreFactory {
         this.securityContext = securityContext;
         this.clusterSearchResultCollectorFactory = clusterSearchResultCollectorFactory;
         this.coprocessorsFactory = coprocessorsFactory;
+        this.taskContextFactory = taskContextFactory;
+        this.executorProvider = executorProvider;
+    }
+
+    @Override
+    public DataSource getDataSource(final DocRef docRef) {
+        return securityContext.useAsReadResult(() -> {
+            final Supplier<DataSource> supplier = taskContextFactory.contextResult(
+                    "Getting Data Source",
+                    TerminateHandlerFactory.NOOP_FACTORY,
+                    taskContext -> {
+                        final IndexDoc index = indexStore.readDocument(docRef);
+                        return DataSource
+                                .builder()
+                                .fields(IndexDataSourceFieldUtil.getDataSourceFields(index, securityContext))
+                                .defaultExtractionPipeline(index.getDefaultExtractionPipeline())
+                                .build();
+                    });
+            final Executor executor = executorProvider.get();
+            final CompletableFuture<DataSource> completableFuture = CompletableFuture.supplyAsync(supplier, executor);
+            try {
+                return completableFuture.get();
+            } catch (final InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        });
+    }
+
+    @Override
+    public DateField getTimeField(final DocRef docRef) {
+        return securityContext.useAsReadResult(() -> {
+            final IndexDoc index = indexStore.readDocument(docRef);
+            DateField timeField = null;
+            if (index.getTimeField() != null && !index.getTimeField().isBlank()) {
+                timeField = new DateField(index.getTimeField());
+            }
+            return timeField;
+        });
     }
 
     public Store create(final SearchRequest searchRequest) {
@@ -156,5 +208,10 @@ public class LuceneSearchStoreFactory implements StoreFactory {
         }
 
         return highlights;
+    }
+
+    @Override
+    public String getType() {
+        return IndexDoc.DOCUMENT_TYPE;
     }
 }

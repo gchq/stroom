@@ -21,6 +21,7 @@ import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.query.common.v2.StoreFactory;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.view.shared.ViewDoc;
@@ -40,7 +41,9 @@ public class ViewModule extends AbstractModule {
                 .addBinding(ViewStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
-                .addBinding(ViewQueryService.class);
+                .addBinding(ViewStoreFactory.class);
+        GuiceUtil.buildMultiBinder(binder(), StoreFactory.class)
+                .addBinding(ViewStoreFactory.class);
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(ViewDoc.DOCUMENT_TYPE, ViewStoreImpl.class);

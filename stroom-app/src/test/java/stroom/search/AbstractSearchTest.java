@@ -23,7 +23,6 @@ import stroom.index.shared.IndexDoc;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
-import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Fetch;
@@ -33,8 +32,6 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.SearchResponseCreatorManager;
-import stroom.query.common.v2.StoreFactory;
-import stroom.search.impl.LuceneSearchStoreFactory;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -49,7 +46,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.inject.Inject;
@@ -62,17 +58,14 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
 
     @Inject
     private SearchResponseCreatorManager searchResponseCreatorManager;
-    @Inject
-    private LuceneSearchStoreFactory storeFactory;
 
     protected static SearchResponse search(final SearchRequest searchRequest,
-                                           final StoreFactory storeFactory,
                                            final SearchResponseCreatorManager searchResponseCreatorManager) {
-        SearchResponse response = searchResponseCreatorManager.search(storeFactory, searchRequest);
+        SearchResponse response = searchResponseCreatorManager.search(searchRequest);
         if (!response.complete()) {
             throw new RuntimeException("NOT COMPLETE");
         }
-        searchResponseCreatorManager.remove(searchRequest.getKey());
+        searchResponseCreatorManager.destroy(response.getKey());
 
         return response;
     }
@@ -94,7 +87,6 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             final boolean extractValues,
             final Consumer<Map<String, List<Row>>> resultMapConsumer,
             final IndexStore indexStore,
-            final StoreFactory storeFactory,
             final SearchResponseCreatorManager searchResponseCreatorManager) {
 
         final DocRef indexRef = indexStore.list().get(0);
@@ -115,9 +107,8 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             resultRequests.add(tableResultRequest);
         }
 
-        final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final Query query = Query.builder().dataSource(indexRef).expression(expressionIn.build()).build();
-        final SearchRequest searchRequest = new SearchRequest(queryKey,
+        final SearchRequest searchRequest = new SearchRequest(null,
                 query,
                 resultRequests,
                 DateTimeSettings.builder().build(),
@@ -132,7 +123,7 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
         }
 
         final SearchResponse searchResponse = AbstractSearchTest
-                .search(searchRequest, storeFactory, searchResponseCreatorManager);
+                .search(searchRequest, searchResponseCreatorManager);
 
         assertThat(searchResponse).as("Search response is null").isNotNull();
         if (searchResponse.getErrors() != null && searchResponse.getErrors().size() > 0) {
@@ -169,7 +160,7 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
     }
 
     protected SearchResponse search(SearchRequest searchRequest) {
-        return search(searchRequest, storeFactory, searchResponseCreatorManager);
+        return search(searchRequest, searchResponseCreatorManager);
     }
 
     public void testInteractive(
@@ -181,6 +172,6 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             final Consumer<Map<String, List<Row>>> resultMapConsumer,
             final IndexStore indexStore) {
         testInteractive(expressionIn, expectResultCount, componentIds, tableSettingsCreator,
-                extractValues, resultMapConsumer, indexStore, storeFactory, searchResponseCreatorManager);
+                extractValues, resultMapConsumer, indexStore, searchResponseCreatorManager);
     }
 }
