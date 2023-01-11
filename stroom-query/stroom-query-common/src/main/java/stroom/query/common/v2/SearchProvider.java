@@ -5,9 +5,9 @@ import stroom.datasource.api.v2.DateField;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.SearchRequest;
 
-public interface StoreFactory extends DataSourceProvider {
+public interface SearchProvider extends DataSourceProvider {
 
-    Store create(SearchRequest searchRequest);
+    ResultStore createResultStore(SearchRequest searchRequest);
 
     DateField getTimeField(DocRef docRef);
 }

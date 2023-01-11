@@ -16,6 +16,7 @@
 
 package stroom.query.common.v2;
 
+import stroom.query.api.v2.Result;
 import stroom.task.api.TerminateHandler;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
@@ -28,10 +29,13 @@ import com.esotericsoftware.kryo.io.Input;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
@@ -39,23 +43,39 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-public class ResultStore implements Store {
+public class ResultStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ResultStore.class);
 
     private final ConcurrentHashMap<String, Set<Throwable>> errors = new ConcurrentHashMap<>();
     private final List<String> highlights;
     private final Coprocessors coprocessors;
+    private final String userId;
+    private final Instant creationTime;
+
+    private final Map<String, ResultCreator> cachedResultCreators = new HashMap<>();
+
+    // Cache the last results for each component.
+    private final Map<String, Result> resultCache = new HashMap<>();
+
+    private final SearchResponseCreator searchResponseCreator;
     private volatile TerminateHandler terminateHandler;
     private volatile boolean destroy;
 
-    public ResultStore(final List<String> highlights,
+    public ResultStore(final SerialisersFactory serialisersFactory,
+                       final SizesProvider sizesProvider,
+                       final String userId,
+                       final List<String> highlights,
                        final Coprocessors coprocessors) {
         this.highlights = Optional
                 .ofNullable(highlights)
                 .map(Collections::unmodifiableList)
                 .orElse(Collections.emptyList());
         this.coprocessors = coprocessors;
+        this.userId = userId;
+        this.creationTime = Instant.now();
+
+        searchResponseCreator = new SearchResponseCreator(serialisersFactory, sizesProvider, this);
     }
 
     public Coprocessors getCoprocessors() {
@@ -69,7 +89,9 @@ public class ResultStore implements Store {
         }
     }
 
-    @Override
+    /**
+     * Stop searching and destroy any stored data.
+     */
     public synchronized void destroy() {
         LOGGER.trace(() -> "destroy()", new RuntimeException("destroy"));
         this.destroy = true;
@@ -86,17 +108,14 @@ public class ResultStore implements Store {
         coprocessors.getCompletionState().signalComplete();
     }
 
-    @Override
     public boolean isComplete() {
         return coprocessors.getCompletionState().isComplete();
     }
 
-    @Override
     public void awaitCompletion() throws InterruptedException {
         coprocessors.getCompletionState().awaitCompletion();
     }
 
-    @Override
     public boolean awaitCompletion(final long timeout,
                                    final TimeUnit unit) throws InterruptedException {
         return coprocessors.getCompletionState().awaitCompletion(timeout, unit);
@@ -163,7 +182,6 @@ public class ResultStore implements Store {
         }
     }
 
-    @Override
     public List<String> getErrors() {
         if (errors.size() == 0 && !coprocessors.getErrorConsumer().hasErrors()) {
             return Collections.emptyList();
@@ -188,14 +206,24 @@ public class ResultStore implements Store {
         return err;
     }
 
-    @Override
     public List<String> getHighlights() {
         return highlights;
     }
 
-    @Override
     public DataStore getData(final String componentId) {
         return coprocessors.getData(componentId);
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public Instant getCreationTime() {
+        return creationTime;
+    }
+
+    public SearchResponseCreator getSearchResponseCreator() {
+        return searchResponseCreator;
     }
 
     @Override

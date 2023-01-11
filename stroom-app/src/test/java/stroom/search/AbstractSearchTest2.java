@@ -28,7 +28,7 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.common.v2.SearchResponseCreatorManager;
+import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.language.DataSourceResolver;
 import stroom.query.language.SearchRequestBuilder;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -58,12 +58,12 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
     @Inject
     private CommonIndexingTestHelper commonIndexingTestHelper;
     @Inject
-    private SearchResponseCreatorManager searchResponseCreatorManager;
+    private ResultStoreManager searchResponseCreatorManager;
     @Inject
     private DataSourceResolver dataSourceResolver;
 
     protected static SearchResponse search(final SearchRequest searchRequest,
-                                           final SearchResponseCreatorManager searchResponseCreatorManager) {
+                                           final ResultStoreManager searchResponseCreatorManager) {
         SearchResponse response = searchResponseCreatorManager.search(searchRequest);
         if (!response.complete()) {
             throw new RuntimeException("NOT COMPLETE");
@@ -90,7 +90,7 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
             final boolean extractValues,
             final Consumer<Map<String, List<Row>>> resultMapConsumer,
             final IndexStore indexStore,
-            final SearchResponseCreatorManager searchResponseCreatorManager) {
+            final ResultStoreManager searchResponseCreatorManager) {
 
         final DocRef indexRef = indexStore.list().get(0);
         final IndexDoc index = indexStore.readDocument(indexRef);

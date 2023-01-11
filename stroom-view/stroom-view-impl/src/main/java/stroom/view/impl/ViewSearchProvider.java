@@ -10,8 +10,8 @@ import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.DataSourceProviderRegistry;
-import stroom.query.common.v2.Store;
-import stroom.query.common.v2.StoreFactory;
+import stroom.query.common.v2.ResultStore;
+import stroom.query.common.v2.SearchProvider;
 import stroom.query.common.v2.StoreFactoryRegistry;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
@@ -25,9 +25,9 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 
 @SuppressWarnings("unused")
-public class ViewStoreFactory implements StoreFactory {
+public class ViewSearchProvider implements SearchProvider {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ViewStoreFactory.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ViewSearchProvider.class);
 
     private final ViewStore viewStore;
     private final Provider<StoreFactoryRegistry> storeFactoryRegistryProvider;
@@ -35,10 +35,10 @@ public class ViewStoreFactory implements StoreFactory {
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistry;
 
     @Inject
-    public ViewStoreFactory(final ViewStore viewStore,
-                            final Provider<StoreFactoryRegistry> storeFactoryRegistryProvider,
-                            final SecurityContext securityContext,
-                            final Provider<DataSourceProviderRegistry> dataSourceProviderRegistry) {
+    public ViewSearchProvider(final ViewStore viewStore,
+                              final Provider<StoreFactoryRegistry> storeFactoryRegistryProvider,
+                              final SecurityContext securityContext,
+                              final Provider<DataSourceProviderRegistry> dataSourceProviderRegistry) {
         this.viewStore = viewStore;
         this.storeFactoryRegistryProvider = storeFactoryRegistryProvider;
         this.securityContext = securityContext;
@@ -70,7 +70,7 @@ public class ViewStoreFactory implements StoreFactory {
     }
 
     @Override
-    public Store create(final SearchRequest request) {
+    public ResultStore createResultStore(final SearchRequest request) {
         final ViewDoc viewDoc = getView(request.getQuery().getDataSource());
 
         final List<ResultRequest> resultRequests = request.getResultRequests();
@@ -113,7 +113,7 @@ public class ViewStoreFactory implements StoreFactory {
         // TODO : ADD SOMETHING FOR VIEWDOC FILTER.
 
         // Find the referenced data source.
-        return getDelegateStoreFactory(viewDoc).create(modifiedSearchRequest);
+        return getDelegateStoreFactory(viewDoc).createResultStore(modifiedSearchRequest);
     }
 
     private ViewDoc getView(final DocRef docRef) {
@@ -124,14 +124,14 @@ public class ViewStoreFactory implements StoreFactory {
         return viewDoc;
     }
 
-    private StoreFactory getDelegateStoreFactory(final ViewDoc viewDoc) {
+    private SearchProvider getDelegateStoreFactory(final ViewDoc viewDoc) {
         // Find the referenced data source.
         final DocRef dataSource = viewDoc.getDataSource();
         if (dataSource == null) {
             throw new RuntimeException("Null datasource in view " + DocRefUtil.create(viewDoc));
         }
 
-        final Optional<StoreFactory> delegate =
+        final Optional<SearchProvider> delegate =
                 storeFactoryRegistryProvider.get().getStoreFactory(dataSource);
         if (delegate.isEmpty()) {
             throw new RuntimeException("No data source provider found for " + dataSource);

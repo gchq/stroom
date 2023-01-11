@@ -16,27 +16,19 @@
 
 package stroom.query.impl;
 
-import stroom.dashboard.impl.FunctionService;
-import stroom.dashboard.impl.SearchRequestMapper;
 import stroom.dashboard.impl.SearchResponseMapper;
 import stroom.dashboard.impl.logging.SearchEventLog;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
-import stroom.datasource.api.v2.DateField;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
-import stroom.query.api.v2.TimeRange;
-import stroom.query.common.v2.DataSourceProviderRegistry;
-import stroom.query.common.v2.SearchResponseCreatorManager;
+import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.language.DataSourceResolver;
 import stroom.query.language.SearchRequestBuilder;
 import stroom.query.shared.DestroyQueryRequest;
@@ -44,9 +36,7 @@ import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryContext;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QuerySearchRequest;
-import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
-import stroom.storedquery.api.StoredQueryService;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
@@ -66,7 +56,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 
 @AutoLogged
@@ -82,7 +71,7 @@ class QueryServiceImpl implements QueryService {
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
     private final DataSourceResolver dataSourceResolver;
-    private final SearchResponseCreatorManager searchResponseCreatorManager;
+    private final ResultStoreManager searchResponseCreatorManager;
 
     @Inject
     QueryServiceImpl(final QueryStore queryStore,
@@ -93,7 +82,7 @@ class QueryServiceImpl implements QueryService {
                      final ExecutorProvider executorProvider,
                      final TaskContextFactory taskContextFactory,
                      final DataSourceResolver dataSourceResolver,
-                     final SearchResponseCreatorManager searchResponseCreatorManager) {
+                     final ResultStoreManager searchResponseCreatorManager) {
         this.queryStore = queryStore;
         this.documentResourceHelper = documentResourceHelper;
         this.searchEventLog = searchEventLog;

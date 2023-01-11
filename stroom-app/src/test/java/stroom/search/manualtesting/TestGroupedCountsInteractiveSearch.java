@@ -28,7 +28,7 @@ import stroom.query.api.v2.Format;
 import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.common.v2.SearchResponseCreatorManager;
+import stroom.query.common.v2.ResultStoreManager;
 import stroom.search.AbstractSearchTest;
 import stroom.search.CommonIndexingTestHelper;
 import stroom.search.extraction.ExtractionConfig;
@@ -80,7 +80,7 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
     @Inject
     private TaskManager taskManager;
     @Inject
-    private SearchResponseCreatorManager searchResponseCreatorManager;
+    private ResultStoreManager searchResponseCreatorManager;
     @Inject
     private CommonTestControl commonTestControl;
     @Inject

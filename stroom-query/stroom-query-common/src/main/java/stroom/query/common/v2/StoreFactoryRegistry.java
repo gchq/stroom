@@ -18,16 +18,16 @@ public class StoreFactoryRegistry {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StoreFactoryRegistry.class);
 
-    private final Map<String, StoreFactory> dataSourceProviders = new ConcurrentHashMap<>();
+    private final Map<String, SearchProvider> dataSourceProviders = new ConcurrentHashMap<>();
 
     @Inject
-    public StoreFactoryRegistry(final Set<StoreFactory> factories) {
-        for (final StoreFactory factory : factories) {
+    public StoreFactoryRegistry(final Set<SearchProvider> factories) {
+        for (final SearchProvider factory : factories) {
             dataSourceProviders.put(factory.getType(), factory);
         }
     }
 
-    public Optional<StoreFactory> getStoreFactory(final DocRef dataSourceRef) {
+    public Optional<SearchProvider> getStoreFactory(final DocRef dataSourceRef) {
         return Optional.ofNullable(dataSourceProviders.get(dataSourceRef.getType()));
     }
 }

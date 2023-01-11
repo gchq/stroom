@@ -35,10 +35,10 @@ import javax.inject.Provider;
 @AutoLogged
 public abstract class AbstractDataSourceResource implements DataSourceResource {
 
-    private final Provider<SearchResponseCreatorManager> searchResponseCreatorManagerProvider;
+    private final Provider<ResultStoreManager> searchResponseCreatorManagerProvider;
 
     public AbstractDataSourceResource(
-            final Provider<SearchResponseCreatorManager> searchResponseCreatorManagerProvider) {
+            final Provider<ResultStoreManager> searchResponseCreatorManagerProvider) {
         this.searchResponseCreatorManagerProvider = searchResponseCreatorManagerProvider;
     }
 

@@ -24,6 +24,7 @@ import stroom.query.common.v2.EventCoprocessor;
 import stroom.query.common.v2.EventCoprocessorSettings;
 import stroom.query.common.v2.EventRefs;
 import stroom.query.common.v2.ResultStore;
+import stroom.query.common.v2.ResultStoreFactory;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
@@ -44,6 +45,7 @@ public class SolrEventSearchTaskHandler {
     private final Provider<SolrAsyncSearchTaskHandler> solrAsyncSearchTaskHandlerProvider;
     private final SecurityContext securityContext;
     private final CoprocessorsFactory coprocessorsFactory;
+    private final ResultStoreFactory resultStoreFactory;
     private final SolrSearchExecutor solrSearchExecutor;
 
     @Inject
@@ -52,12 +54,14 @@ public class SolrEventSearchTaskHandler {
                                final Provider<SolrAsyncSearchTaskHandler> solrAsyncSearchTaskHandlerProvider,
                                final SecurityContext securityContext,
                                final CoprocessorsFactory coprocessorsFactory,
+                               final ResultStoreFactory resultStoreFactory,
                                final SolrSearchExecutor solrSearchExecutor) {
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.solrAsyncSearchTaskHandlerProvider = solrAsyncSearchTaskHandlerProvider;
         this.securityContext = securityContext;
         this.coprocessorsFactory = coprocessorsFactory;
+        this.resultStoreFactory = resultStoreFactory;
         this.solrSearchExecutor = solrSearchExecutor;
     }
 
@@ -101,7 +105,7 @@ public class SolrEventSearchTaskHandler {
             final EventCoprocessor eventCoprocessor = (EventCoprocessor) coprocessors.get(coprocessorId);
 
             // Create the search result store.
-            final ResultStore resultStore = new ResultStore(null, coprocessors);
+            final ResultStore resultStore = resultStoreFactory.create(null, coprocessors);
 
             try {
                 // Start asynchronous search execution.

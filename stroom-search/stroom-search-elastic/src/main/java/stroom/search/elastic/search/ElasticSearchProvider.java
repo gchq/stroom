@@ -28,8 +28,8 @@ import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.ResultStore;
-import stroom.query.common.v2.Store;
-import stroom.query.common.v2.StoreFactory;
+import stroom.query.common.v2.ResultStoreFactory;
+import stroom.query.common.v2.SearchProvider;
 import stroom.search.elastic.ElasticClientCache;
 import stroom.search.elastic.ElasticClusterStore;
 import stroom.search.elastic.ElasticIndexCache;
@@ -66,10 +66,10 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 
 @SuppressWarnings("unused")
-public class ElasticSearchStoreFactory implements StoreFactory, ElasticIndexService {
+public class ElasticSearchProvider implements SearchProvider, ElasticIndexService {
 
     public static final String ENTITY_TYPE = ElasticIndexDoc.DOCUMENT_TYPE;
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticSearchStoreFactory.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticSearchProvider.class);
 
     private final ElasticIndexCache elasticIndexCache;
     private final Executor executor;
@@ -77,18 +77,20 @@ public class ElasticSearchStoreFactory implements StoreFactory, ElasticIndexServ
     private final Provider<ElasticAsyncSearchTaskHandler> elasticAsyncSearchTaskHandlerProvider;
     private final SecurityContext securityContext;
     private final CoprocessorsFactory coprocessorsFactory;
+    private final ResultStoreFactory resultStoreFactory;
     private final ElasticClientCache elasticClientCache;
     private final ElasticClusterStore elasticClusterStore;
     private final ElasticIndexStore elasticIndexStore;
     private final ElasticSearchExecutor elasticSearchExecutor;
 
     @Inject
-    public ElasticSearchStoreFactory(
+    public ElasticSearchProvider(
             final ElasticIndexCache elasticIndexCache,
             final Executor executor,
             final TaskContextFactory taskContextFactory,
             final Provider<ElasticAsyncSearchTaskHandler> elasticAsyncSearchTaskHandlerProvider,
             final CoprocessorsFactory coprocessorsFactory,
+            final ResultStoreFactory resultStoreFactory,
             final ElasticClientCache elasticClientCache,
             final ElasticClusterStore elasticClusterStore,
             final ElasticIndexStore elasticIndexStore,
@@ -100,6 +102,7 @@ public class ElasticSearchStoreFactory implements StoreFactory, ElasticIndexServ
         this.elasticAsyncSearchTaskHandlerProvider = elasticAsyncSearchTaskHandlerProvider;
         this.securityContext = securityContext;
         this.coprocessorsFactory = coprocessorsFactory;
+        this.resultStoreFactory = resultStoreFactory;
         this.elasticClientCache = elasticClientCache;
         this.elasticClusterStore = elasticClusterStore;
         this.elasticIndexStore = elasticIndexStore;
@@ -107,7 +110,7 @@ public class ElasticSearchStoreFactory implements StoreFactory, ElasticIndexServ
     }
 
     @Override
-    public Store create(final SearchRequest searchRequest) {
+    public ResultStore createResultStore(final SearchRequest searchRequest) {
         // Get the current time in millis since epoch.
         final long nowEpochMilli = System.currentTimeMillis();
 
@@ -143,9 +146,7 @@ public class ElasticSearchStoreFactory implements StoreFactory, ElasticIndexServ
                 nowEpochMilli);
 
         // Create the search result collector.
-        final ResultStore resultStore = new ResultStore(
-                null,
-                coprocessors);
+        final ResultStore resultStore = resultStoreFactory.create(null, coprocessors);
         elasticSearchExecutor.start(asyncSearchTask, resultStore);
         return resultStore;
     }

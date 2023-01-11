@@ -12,9 +12,9 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.ResultStore;
+import stroom.query.common.v2.ResultStoreFactory;
+import stroom.query.common.v2.SearchProvider;
 import stroom.query.common.v2.Sizes;
-import stroom.query.common.v2.Store;
-import stroom.query.common.v2.StoreFactory;
 import stroom.statistics.impl.sql.Statistics;
 import stroom.statistics.impl.sql.entity.StatisticStoreCache;
 import stroom.statistics.impl.sql.shared.StatisticField;
@@ -38,9 +38,9 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 @SuppressWarnings("unused")
-public class SqlStatisticStoreFactory implements StoreFactory {
+public class SqlStatisticSearchProvider implements SearchProvider {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SqlStatisticStoreFactory.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SqlStatisticSearchProvider.class);
     public static final String TASK_NAME = "Sql Statistic Search";
 
     private final StatisticStoreCache statisticStoreCache;
@@ -49,24 +49,27 @@ public class SqlStatisticStoreFactory implements StoreFactory {
     private final Executor executor;
     private final TaskManager taskManager;
     private final CoprocessorsFactory coprocessorsFactory;
+    private final ResultStoreFactory resultStoreFactory;
     private final Statistics statistics;
 
     @Inject
-    public SqlStatisticStoreFactory(final StatisticStoreCache statisticStoreCache,
-                                    final StatisticsSearchService statisticsSearchService,
-                                    final TaskContextFactory taskContextFactory,
-                                    final Executor executor,
-                                    final TaskManager taskManager,
-                                    final SearchConfig searchConfig,
-                                    final UiConfig clientConfig,
-                                    final CoprocessorsFactory coprocessorsFactory,
-                                    final Statistics statistics) {
+    public SqlStatisticSearchProvider(final StatisticStoreCache statisticStoreCache,
+                                      final StatisticsSearchService statisticsSearchService,
+                                      final TaskContextFactory taskContextFactory,
+                                      final Executor executor,
+                                      final TaskManager taskManager,
+                                      final SearchConfig searchConfig,
+                                      final UiConfig clientConfig,
+                                      final CoprocessorsFactory coprocessorsFactory,
+                                      final ResultStoreFactory resultStoreFactory,
+                                      final Statistics statistics) {
         this.statisticStoreCache = statisticStoreCache;
         this.statisticsSearchService = statisticsSearchService;
         this.taskContextFactory = taskContextFactory;
         this.executor = executor;
         this.taskManager = taskManager;
         this.coprocessorsFactory = coprocessorsFactory;
+        this.resultStoreFactory = resultStoreFactory;
         this.statistics = statistics;
     }
 
@@ -134,7 +137,7 @@ public class SqlStatisticStoreFactory implements StoreFactory {
 
 
     @Override
-    public Store create(final SearchRequest searchRequest) {
+    public ResultStore createResultStore(final SearchRequest searchRequest) {
         LOGGER.debug("create called for searchRequest {} ", searchRequest);
 
         final DocRef docRef = Preconditions.checkNotNull(
@@ -155,8 +158,8 @@ public class SqlStatisticStoreFactory implements StoreFactory {
         return buildStore(searchRequest, statisticStoreDoc);
     }
 
-    private Store buildStore(final SearchRequest searchRequest,
-                             final StatisticStoreDoc statisticStoreDoc) {
+    private ResultStore buildStore(final SearchRequest searchRequest,
+                                   final StatisticStoreDoc statisticStoreDoc) {
         Preconditions.checkNotNull(searchRequest);
         Preconditions.checkNotNull(statisticStoreDoc);
 
@@ -171,7 +174,7 @@ public class SqlStatisticStoreFactory implements StoreFactory {
 
         // Create coprocessors.
         final Coprocessors coprocessors = coprocessorsFactory.create(modifiedSearchRequest);
-        final ResultStore resultStore = new ResultStore(null, coprocessors);
+        final ResultStore resultStore = resultStoreFactory.create(null, coprocessors);
 
         final Runnable runnable = taskContextFactory.context(TASK_NAME, taskContext -> {
             try {

@@ -31,7 +31,7 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.common.v2.SearchResponseCreatorManager;
+import stroom.query.common.v2.ResultStoreManager;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -57,10 +57,10 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSearchTest.class);
 
     @Inject
-    private SearchResponseCreatorManager searchResponseCreatorManager;
+    private ResultStoreManager searchResponseCreatorManager;
 
     protected static SearchResponse search(final SearchRequest searchRequest,
-                                           final SearchResponseCreatorManager searchResponseCreatorManager) {
+                                           final ResultStoreManager searchResponseCreatorManager) {
         SearchResponse response = searchResponseCreatorManager.search(searchRequest);
         searchResponseCreatorManager.destroy(response.getKey());
         if (!response.complete()) {
@@ -87,7 +87,7 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             final boolean extractValues,
             final Consumer<Map<String, List<Row>>> resultMapConsumer,
             final IndexStore indexStore,
-            final SearchResponseCreatorManager searchResponseCreatorManager) {
+            final ResultStoreManager searchResponseCreatorManager) {
 
         final DocRef indexRef = indexStore.list().get(0);
         final IndexDoc index = indexStore.readDocument(indexRef);

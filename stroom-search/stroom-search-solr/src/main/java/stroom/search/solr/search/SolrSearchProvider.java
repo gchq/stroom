@@ -30,8 +30,8 @@ import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.ResultStore;
-import stroom.query.common.v2.Store;
-import stroom.query.common.v2.StoreFactory;
+import stroom.query.common.v2.ResultStoreFactory;
+import stroom.query.common.v2.SearchProvider;
 import stroom.search.solr.CachedSolrIndex;
 import stroom.search.solr.SolrIndexCache;
 import stroom.search.solr.SolrIndexStore;
@@ -58,10 +58,10 @@ import javax.inject.Provider;
 
 // used by DI
 @SuppressWarnings("unused")
-public class SolrSearchStoreFactory implements StoreFactory {
+public class SolrSearchProvider implements SearchProvider {
 
     public static final String ENTITY_TYPE = SolrIndexDoc.DOCUMENT_TYPE;
-    private static final Logger LOGGER = LoggerFactory.getLogger(SolrSearchStoreFactory.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SolrSearchProvider.class);
     private static final int SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY = 500;
     private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
 
@@ -73,20 +73,22 @@ public class SolrSearchStoreFactory implements StoreFactory {
     private final SolrSearchConfig searchConfig;
     private final SecurityContext securityContext;
     private final CoprocessorsFactory coprocessorsFactory;
+    private final ResultStoreFactory resultStoreFactory;
     private final SolrIndexStore solrIndexStore;
     private final SolrSearchExecutor solrSearchExecutor;
 
     @Inject
-    public SolrSearchStoreFactory(final SolrIndexCache solrIndexCache,
-                                  final WordListProvider wordListProvider,
-                                  final Executor executor,
-                                  final TaskContextFactory taskContextFactory,
-                                  final Provider<SolrAsyncSearchTaskHandler> solrAsyncSearchTaskHandlerProvider,
-                                  final SolrSearchConfig searchConfig,
-                                  final CoprocessorsFactory coprocessorsFactory,
-                                  final SolrIndexStore solrIndexStore,
-                                  final SecurityContext securityContext,
-                                  final SolrSearchExecutor solrSearchExecutor) {
+    public SolrSearchProvider(final SolrIndexCache solrIndexCache,
+                              final WordListProvider wordListProvider,
+                              final Executor executor,
+                              final TaskContextFactory taskContextFactory,
+                              final Provider<SolrAsyncSearchTaskHandler> solrAsyncSearchTaskHandlerProvider,
+                              final SolrSearchConfig searchConfig,
+                              final CoprocessorsFactory coprocessorsFactory,
+                              final ResultStoreFactory resultStoreFactory,
+                              final SolrIndexStore solrIndexStore,
+                              final SecurityContext securityContext,
+                              final SolrSearchExecutor solrSearchExecutor) {
         this.solrIndexCache = solrIndexCache;
         this.wordListProvider = wordListProvider;
         this.executor = executor;
@@ -94,6 +96,7 @@ public class SolrSearchStoreFactory implements StoreFactory {
         this.solrAsyncSearchTaskHandlerProvider = solrAsyncSearchTaskHandlerProvider;
         this.searchConfig = searchConfig;
         this.coprocessorsFactory = coprocessorsFactory;
+        this.resultStoreFactory = resultStoreFactory;
         this.solrIndexStore = solrIndexStore;
         this.securityContext = securityContext;
         this.solrSearchExecutor = solrSearchExecutor;
@@ -125,7 +128,7 @@ public class SolrSearchStoreFactory implements StoreFactory {
     }
 
     @Override
-    public Store create(final SearchRequest searchRequest) {
+    public ResultStore createResultStore(final SearchRequest searchRequest) {
         // Get the current time in millis since epoch.
         final long nowEpochMilli = System.currentTimeMillis();
 
@@ -167,7 +170,7 @@ public class SolrSearchStoreFactory implements StoreFactory {
                 nowEpochMilli);
 
         // Create the search result store.
-        final ResultStore resultStore = new ResultStore(new ArrayList<>(highlights), coprocessors);
+        final ResultStore resultStore = resultStoreFactory.create(new ArrayList<>(highlights), coprocessors);
 
         // Start asynchronous search execution.
         solrSearchExecutor.start(asyncSearchTask, resultStore);

@@ -17,7 +17,7 @@
 package stroom.statistics.impl.sql.search;
 
 import stroom.datasource.api.v2.DataSourceProvider;
-import stroom.query.common.v2.StoreFactory;
+import stroom.query.common.v2.SearchProvider;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
@@ -30,9 +30,9 @@ public class SQLStatisticSearchModule extends AbstractModule {
         bind(StatisticsSearchService.class).to(StatisticsSearchServiceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
-                .addBinding(SqlStatisticStoreFactory.class);
-        GuiceUtil.buildMultiBinder(binder(), StoreFactory.class)
-                .addBinding(SqlStatisticStoreFactory.class);
+                .addBinding(SqlStatisticSearchProvider.class);
+        GuiceUtil.buildMultiBinder(binder(), SearchProvider.class)
+                .addBinding(SqlStatisticSearchProvider.class);
 
         RestResourcesBinder.create(binder())
                 .bind(SqlStatisticsQueryResourceImpl.class);

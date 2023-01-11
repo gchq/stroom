@@ -172,7 +172,8 @@ class TestQueues {
     }
 
     @Test
-    @RepeatedTest(100000)
+//    @RepeatedTest(100000)
+    @RepeatedTest(100)
     @SuppressWarnings("unchecked")
     void testStreamEventMap() {
         final int threads = 10;

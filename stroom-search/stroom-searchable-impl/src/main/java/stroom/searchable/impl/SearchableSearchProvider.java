@@ -13,9 +13,9 @@ import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreConfig;
+import stroom.query.common.v2.ResultStoreFactory;
+import stroom.query.common.v2.SearchProvider;
 import stroom.query.common.v2.Sizes;
-import stroom.query.common.v2.Store;
-import stroom.query.common.v2.StoreFactory;
 import stroom.searchable.api.Searchable;
 import stroom.searchable.api.SearchableProvider;
 import stroom.security.api.SecurityContext;
@@ -42,9 +42,9 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 @SuppressWarnings("unused")
-class SearchableStoreFactory implements StoreFactory {
+class SearchableSearchProvider implements SearchProvider {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SearchableStoreFactory.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SearchableSearchProvider.class);
 
     private final Executor executor;
     private final TaskManager taskManager;
@@ -53,17 +53,19 @@ class SearchableStoreFactory implements StoreFactory {
     private final UiConfig clientConfig;
     private final SearchableProvider searchableProvider;
     private final CoprocessorsFactory coprocessorsFactory;
+    private final ResultStoreFactory resultStoreFactory;
     private final SecurityContext securityContext;
 
     @Inject
-    SearchableStoreFactory(final Executor executor,
-                           final TaskManager taskManager,
-                           final TaskContextFactory taskContextFactory,
-                           final ResultStoreConfig config,
-                           final UiConfig clientConfig,
-                           final SearchableProvider searchableProvider,
-                           final CoprocessorsFactory coprocessorsFactory,
-                           final SecurityContext securityContext) {
+    SearchableSearchProvider(final Executor executor,
+                             final TaskManager taskManager,
+                             final TaskContextFactory taskContextFactory,
+                             final ResultStoreConfig config,
+                             final UiConfig clientConfig,
+                             final SearchableProvider searchableProvider,
+                             final CoprocessorsFactory coprocessorsFactory,
+                             final ResultStoreFactory resultStoreFactory,
+                             final SecurityContext securityContext) {
         this.executor = executor;
         this.taskManager = taskManager;
         this.taskContextFactory = taskContextFactory;
@@ -71,6 +73,7 @@ class SearchableStoreFactory implements StoreFactory {
         this.clientConfig = clientConfig;
         this.searchableProvider = searchableProvider;
         this.coprocessorsFactory = coprocessorsFactory;
+        this.resultStoreFactory = resultStoreFactory;
         this.securityContext = securityContext;
     }
 
@@ -87,7 +90,7 @@ class SearchableStoreFactory implements StoreFactory {
     }
 
     @Override
-    public Store create(final SearchRequest searchRequest) {
+    public ResultStore createResultStore(final SearchRequest searchRequest) {
         final DocRef docRef = Preconditions.checkNotNull(
                 Preconditions.checkNotNull(
                                 Preconditions.checkNotNull(searchRequest)
@@ -122,11 +125,11 @@ class SearchableStoreFactory implements StoreFactory {
         }).get();
     }
 
-    private Store buildStore(final TaskContext parentTaskContext,
-                             final SearchRequest searchRequest,
-                             final Searchable searchable,
-                             final Coprocessors coprocessors,
-                             final ExpressionOperator expression) {
+    private ResultStore buildStore(final TaskContext parentTaskContext,
+                                   final SearchRequest searchRequest,
+                                   final Searchable searchable,
+                                   final Coprocessors coprocessors,
+                                   final ExpressionOperator expression) {
         Preconditions.checkNotNull(searchRequest);
         Preconditions.checkNotNull(searchable);
 
@@ -134,7 +137,7 @@ class SearchableStoreFactory implements StoreFactory {
         final Sizes defaultMaxResultsSizes = getDefaultMaxResultsSizes();
         final int resultHandlerBatchSize = getResultHandlerBatchSize();
 
-        final ResultStore resultStore = new ResultStore(null, coprocessors);
+        final ResultStore resultStore = resultStoreFactory.create(null, coprocessors);
         final String searchKey = searchRequest.getKey().toString();
         final String taskName = getTaskName(searchable.getDocRef());
 

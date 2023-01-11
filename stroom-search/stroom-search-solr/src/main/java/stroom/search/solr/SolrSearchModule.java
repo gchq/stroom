@@ -21,9 +21,9 @@ import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.ScheduledJobsBinder;
-import stroom.query.common.v2.StoreFactory;
+import stroom.query.common.v2.SearchProvider;
 import stroom.search.solr.indexing.SolrIndexingElementModule;
-import stroom.search.solr.search.SolrSearchStoreFactory;
+import stroom.search.solr.search.SolrSearchProvider;
 import stroom.search.solr.search.StroomSolrIndexQueryResourceImpl;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.util.RunnableWrapper;
@@ -49,9 +49,9 @@ public class SolrSearchModule extends AbstractModule {
         bind(SolrIndexStore.class).to(SolrIndexStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
-                .addBinding(SolrSearchStoreFactory.class);
-        GuiceUtil.buildMultiBinder(binder(), StoreFactory.class)
-                .addBinding(SolrSearchStoreFactory.class);
+                .addBinding(SolrSearchProvider.class);
+        GuiceUtil.buildMultiBinder(binder(), SearchProvider.class)
+                .addBinding(SolrSearchProvider.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(SolrIndexCacheImpl.class);

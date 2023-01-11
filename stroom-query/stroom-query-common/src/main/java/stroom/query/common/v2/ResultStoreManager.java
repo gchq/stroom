@@ -46,30 +46,27 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
-public final class SearchResponseCreatorManager implements Clearable {
+public final class ResultStoreManager implements Clearable {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SearchResponseCreatorManager.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ResultStoreManager.class);
 
     private static final String CACHE_NAME = "Search Results";
 
-    private final SearchResponseCreatorFactory searchResponseCreatorFactory;
     private final TaskContext taskContext;
     private final TaskContextFactory taskContextFactory;
     private final SecurityContext securityContext;
     private final ExecutorProvider executorProvider;
-    private final StroomCache<QueryKey, SearchResponseCreator> cache;
+    private final StroomCache<QueryKey, ResultStore> cache;
     private final StoreFactoryRegistry storeFactoryRegistry;
 
     @Inject
-    SearchResponseCreatorManager(final CacheManager cacheManager,
-                                 final Provider<ResultStoreConfig> resultStoreConfigProvider,
-                                 final SearchResponseCreatorFactory searchResponseCreatorFactory,
-                                 final TaskContext taskContext,
-                                 final TaskContextFactory taskContextFactory,
-                                 final SecurityContext securityContext,
-                                 final ExecutorProvider executorProvider,
-                                 final StoreFactoryRegistry storeFactoryRegistry) {
-        this.searchResponseCreatorFactory = searchResponseCreatorFactory;
+    ResultStoreManager(final CacheManager cacheManager,
+                       final Provider<ResultStoreConfig> resultStoreConfigProvider,
+                       final TaskContext taskContext,
+                       final TaskContextFactory taskContextFactory,
+                       final SecurityContext securityContext,
+                       final ExecutorProvider executorProvider,
+                       final StoreFactoryRegistry storeFactoryRegistry) {
         this.taskContext = taskContext;
         this.taskContextFactory = taskContextFactory;
         this.securityContext = securityContext;
@@ -81,11 +78,11 @@ public final class SearchResponseCreatorManager implements Clearable {
         this.storeFactoryRegistry = storeFactoryRegistry;
     }
 
-    public Optional<SearchResponseCreator> getIfPresent(final QueryKey key) {
+    public Optional<ResultStore> getIfPresent(final QueryKey key) {
         return cache.getIfPresent(key);
     }
 
-    private void destroy(final QueryKey key, final SearchResponseCreator value) {
+    private void destroy(final QueryKey key, final ResultStore value) {
         LOGGER.trace(() -> "destroy() " + key);
         if (value != null) {
             LOGGER.debug(() -> "Destroying key: " + key);
@@ -98,7 +95,7 @@ public final class SearchResponseCreatorManager implements Clearable {
             String json = JsonUtil.writeValueAsString(docRef);
             LOGGER.debug("/dataSource called with docRef:\n{}", json);
         }
-        final Optional<StoreFactory> optionalStoreFactory = storeFactoryRegistry.getStoreFactory(docRef);
+        final Optional<SearchProvider> optionalStoreFactory = storeFactoryRegistry.getStoreFactory(docRef);
         return optionalStoreFactory
                 .map(sf -> sf.getDataSource(docRef))
                 .orElseThrow(() -> new RuntimeException("Unknown data source type: " + docRef));
@@ -122,25 +119,25 @@ public final class SearchResponseCreatorManager implements Clearable {
             throw new RuntimeException("No search data source has been specified");
         }
 
-        final Optional<StoreFactory> optionalStoreFactory =
+        final Optional<SearchProvider> optionalStoreFactory =
                 storeFactoryRegistry.getStoreFactory(modifiedRequest.getQuery().getDataSource());
-        final StoreFactory storeFactory = optionalStoreFactory
+        final SearchProvider storeFactory = optionalStoreFactory
                 .orElseThrow(() ->
                         new RuntimeException("No store factory found for " +
                                 searchRequest.getQuery().getDataSource().getType()));
 
-        final SearchResponseCreator searchResponseCreator;
+        final ResultStore resultStore;
         if (modifiedRequest.getKey() != null) {
             final QueryKey queryKey = modifiedRequest.getKey();
-            final Optional<SearchResponseCreator> optionalSearchResponseCreator =
+            final Optional<ResultStore> optionalResultStore =
                     getIfPresent(queryKey);
 
             final String message = "No active search found for key = " + queryKey;
-            searchResponseCreator = optionalSearchResponseCreator.orElseThrow(() ->
+            resultStore = optionalResultStore.orElseThrow(() ->
                     new RuntimeException(message));
 
             // Check user identity.
-            if (!searchResponseCreator.getUserId().equals(userId)) {
+            if (!resultStore.getUserId().equals(userId)) {
                 throw new RuntimeException(
                         "You do not have permission to get the search results associated with this key");
             }
@@ -161,12 +158,11 @@ public final class SearchResponseCreatorManager implements Clearable {
             final SearchRequest finalModifiedRequest = modifiedRequest;
             final QueryKey queryKey = finalModifiedRequest.getKey();
             LOGGER.trace(() -> "get() " + queryKey);
-            searchResponseCreator = cache.get(queryKey, k -> {
+            resultStore = cache.get(queryKey, k -> {
                 try {
                     LOGGER.trace(() -> "create() " + queryKey);
                     LOGGER.debug(() -> "Creating new store for key: " + queryKey);
-                    final Store store = storeFactory.create(finalModifiedRequest);
-                    return searchResponseCreatorFactory.create(userId, store);
+                    return storeFactory.createResultStore(finalModifiedRequest);
                 } catch (final RuntimeException e) {
                     LOGGER.debug(e.getMessage(), e);
                     throw e;
@@ -179,7 +175,7 @@ public final class SearchResponseCreatorManager implements Clearable {
         final Supplier<SearchResponse> supplier =
                 taskContextFactory.contextResult("Getting search results", taskContext -> {
                     taskContext.info(() -> "Creating search result");
-                    return securityContext.useAsReadResult(() -> doSearch(searchResponseCreator, finalSearchRequest));
+                    return securityContext.useAsReadResult(() -> doSearch(resultStore, finalSearchRequest));
                 });
         final Executor executor = executorProvider.get();
         final CompletableFuture<SearchResponse> completableFuture = CompletableFuture.supplyAsync(supplier, executor);
@@ -249,12 +245,12 @@ public final class SearchResponseCreatorManager implements Clearable {
         return result;
     }
 
-    private SearchResponse doSearch(final SearchResponseCreator searchResponseCreator, final SearchRequest request) {
+    private SearchResponse doSearch(final ResultStore resultStore, final SearchRequest request) {
         Preconditions.checkNotNull(request);
 
         try {
             // Create a response from the data found so far, this could be complete/incomplete
-            final SearchResponse response = searchResponseCreator.create(request);
+            final SearchResponse response = resultStore.getSearchResponseCreator().create(request);
 
             LOGGER.trace(() -> getResponseInfoForLogging(request, response));
 
@@ -332,17 +328,18 @@ public final class SearchResponseCreatorManager implements Clearable {
      * @return Get a {@link SearchResponseCreator} from the cache
      */
     public Boolean keepAlive(final QueryKey queryKey) {
-        if (LOGGER.isDebugEnabled()) {
-            String json = JsonUtil.writeValueAsString(queryKey);
-            LOGGER.debug("/keepAlive called with queryKey:\n{}", json);
-        }
-
-        LOGGER.trace(() -> "keepAlive() " + queryKey);
-        final Optional<SearchResponseCreator> optionalSearchResponseCreator = cache
-                .getIfPresent(queryKey);
-        return optionalSearchResponseCreator
-                .map(SearchResponseCreator::keepAlive)
-                .orElse(Boolean.FALSE);
+//        if (LOGGER.isDebugEnabled()) {
+//            String json = JsonUtil.writeValueAsString(queryKey);
+//            LOGGER.debug("/keepAlive called with queryKey:\n{}", json);
+//        }
+//
+//        LOGGER.trace(() -> "keepAlive() " + queryKey);
+//        final Optional<ResultStore> optionalResultStore = cache
+//                .getIfPresent(queryKey);
+//        return optionalResultStore
+//                .map(ResultStore::keepAlive)
+//                .orElse(Boolean.FALSE);
+        return true;
     }
 
     /**

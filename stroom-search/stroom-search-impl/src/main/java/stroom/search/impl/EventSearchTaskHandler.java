@@ -24,6 +24,7 @@ import stroom.query.common.v2.EventCoprocessor;
 import stroom.query.common.v2.EventCoprocessorSettings;
 import stroom.query.common.v2.EventRefs;
 import stroom.query.common.v2.ResultStore;
+import stroom.query.common.v2.ResultStoreFactory;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -40,14 +41,17 @@ public class EventSearchTaskHandler {
 
     private final SecurityContext securityContext;
     private final CoprocessorsFactory coprocessorsFactory;
+    private final ResultStoreFactory resultStoreFactory;
     private final LuceneSearchExecutor luceneSearchExecutor;
 
     @Inject
     EventSearchTaskHandler(final SecurityContext securityContext,
                            final CoprocessorsFactory coprocessorsFactory,
+                           final ResultStoreFactory resultStoreFactory,
                            final LuceneSearchExecutor luceneSearchExecutor) {
         this.securityContext = securityContext;
         this.coprocessorsFactory = coprocessorsFactory;
+        this.resultStoreFactory = resultStoreFactory;
         this.luceneSearchExecutor = luceneSearchExecutor;
     }
 
@@ -94,9 +98,7 @@ public class EventSearchTaskHandler {
                 final EventCoprocessor eventCoprocessor = (EventCoprocessor) coprocessors.get(coprocessorId);
 
                 // Create the search result collector.
-                final ResultStore resultStore = new ResultStore(
-                        null,
-                        coprocessors);
+                final ResultStore resultStore = resultStoreFactory.create(null, coprocessors);
                 try {
                     luceneSearchExecutor.start(asyncSearchTask, resultStore);
 

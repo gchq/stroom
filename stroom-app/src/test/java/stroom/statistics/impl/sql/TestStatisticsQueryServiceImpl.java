@@ -30,12 +30,12 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.common.v2.SearchResponseCreatorManager;
+import stroom.query.common.v2.ResultStoreManager;
 import stroom.security.api.SecurityContext;
 import stroom.statistics.impl.sql.entity.StatisticStoreStore;
 import stroom.statistics.impl.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.impl.sql.rollup.RolledUpStatisticEvent;
-import stroom.statistics.impl.sql.search.SqlStatisticStoreFactory;
+import stroom.statistics.impl.sql.search.SqlStatisticSearchProvider;
 import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
@@ -130,9 +130,9 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
     @Inject
     private StatisticStoreStore statisticStoreStore;
     @Inject
-    private SqlStatisticStoreFactory statisticsQueryService;
+    private SqlStatisticSearchProvider statisticsQueryService;
     @Inject
-    private SearchResponseCreatorManager searchResponseCreatorManager;
+    private ResultStoreManager searchResponseCreatorManager;
     @Inject
     private SecurityContext securityContext;
 

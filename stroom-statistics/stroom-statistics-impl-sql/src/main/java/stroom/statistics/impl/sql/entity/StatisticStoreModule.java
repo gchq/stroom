@@ -16,12 +16,9 @@
 
 package stroom.statistics.impl.sql.entity;
 
-import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
-import stroom.query.common.v2.StoreFactory;
-import stroom.statistics.impl.sql.search.SqlStatisticStoreFactory;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;

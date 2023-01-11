@@ -51,7 +51,7 @@ import stroom.query.api.v2.Row;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
-import stroom.query.common.v2.SearchResponseCreatorManager;
+import stroom.query.common.v2.ResultStoreManager;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -110,7 +110,7 @@ class DashboardServiceImpl implements DashboardService {
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
     private final Provider<FunctionService> functionServiceProvider;
-    private final SearchResponseCreatorManager searchResponseCreatorManager;
+    private final ResultStoreManager searchResponseCreatorManager;
 
     @Inject
     DashboardServiceImpl(final DashboardStore dashboardStore,
@@ -124,7 +124,7 @@ class DashboardServiceImpl implements DashboardService {
                          final ExecutorProvider executorProvider,
                          final TaskContextFactory taskContextFactory,
                          final Provider<FunctionService> functionServiceProvider,
-                         final SearchResponseCreatorManager searchResponseCreatorManager) {
+                         final ResultStoreManager searchResponseCreatorManager) {
         this.dashboardStore = dashboardStore;
         this.queryService = queryService;
         this.documentResourceHelper = documentResourceHelper;

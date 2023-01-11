@@ -35,7 +35,6 @@ import stroom.query.common.v2.LmdbDataStoreFactory;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreConfig;
 import stroom.query.common.v2.SearchDebugUtil;
-import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SerialisersFactory;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.SizesProvider;
@@ -140,18 +139,16 @@ class TestSearchResultCreation {
         // Tell the consumer we are finished receiving data.
         complete(coprocessors);
 
-        final ResultStore collector = new ResultStore(
+        final ResultStore resultStore = new ResultStore(
+                new SerialisersFactory(),
+                sizesProvider,
+                null,
                 null,
                 coprocessors);
         // Mark the collector as artificially complete.
-        collector.signalComplete();
+        resultStore.signalComplete();
 
-        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(
-                new SerialisersFactory(),
-                "test_user_id",
-                sizesProvider,
-                collector);
-        final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
+        final SearchResponse searchResponse = resultStore.getSearchResponseCreator().create(searchRequest);
 
         // Validate the search response.
         validateSearchResponse(searchResponse);
@@ -270,18 +267,16 @@ class TestSearchResultCreation {
         coprocessors.getCompletionState().awaitCompletion();
         coprocessors2.getCompletionState().awaitCompletion();
 
-        final ResultStore collector = new ResultStore(
+        final ResultStore resultStore = new ResultStore(
+                new SerialisersFactory(),
+                sizesProvider,
+                "test_user_id",
                 null,
                 coprocessors2);
         // Mark the collector as artificially complete.
-        collector.signalComplete();
+        resultStore.signalComplete();
 
-        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(
-                new SerialisersFactory(),
-                "test_user_id",
-                sizesProvider,
-                collector);
-        final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
+        final SearchResponse searchResponse = resultStore.getSearchResponseCreator().create(searchRequest);
 
         // Validate the search response.
         validateSearchResponse(searchResponse);
@@ -347,18 +342,16 @@ class TestSearchResultCreation {
         coprocessors.getCompletionState().awaitCompletion();
         coprocessors2.getCompletionState().awaitCompletion();
 
-        final ResultStore collector = new ResultStore(
+        final ResultStore resultStore = new ResultStore(
+                new SerialisersFactory(),
+                sizesProvider,
+                "test_user_id",
                 null,
                 coprocessors2);
         // Mark the collector as artificially complete.
-        collector.signalComplete();
+        resultStore.signalComplete();
 
-        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(
-                new SerialisersFactory(),
-                "test_user_id",
-                sizesProvider,
-                collector);
-        final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
+        final SearchResponse searchResponse = resultStore.getSearchResponseCreator().create(searchRequest);
 
         // Validate the search response.
         validateSearchResponse(searchResponse);
@@ -456,13 +449,16 @@ class TestSearchResultCreation {
         // Ensure the target coprocessors get a chance to add the data from the payloads.
         complete(coprocessors2);
 
-        final ResultStore collector = new ResultStore(
+        final ResultStore resultStore = new ResultStore(
+                null,
+                null,
+                null,
                 null,
                 coprocessors2);
         // Mark the collector as artificially complete.
-        collector.signalComplete();
+        resultStore.signalComplete();
 
-        final DataStore dataStore = collector.getData("table-78LF4");
+        final DataStore dataStore = resultStore.getData("table-78LF4");
         dataStore.getData(data -> {
             final Items dataItems = data.get();
             final Item dataItem = dataItems.iterator().next();

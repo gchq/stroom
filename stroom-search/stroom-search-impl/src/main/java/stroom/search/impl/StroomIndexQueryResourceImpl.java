@@ -19,7 +19,7 @@ package stroom.search.impl;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.index.impl.StroomIndexQueryResource;
 import stroom.query.common.v2.AbstractDataSourceResource;
-import stroom.query.common.v2.SearchResponseCreatorManager;
+import stroom.query.common.v2.ResultStoreManager;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -33,7 +33,7 @@ public class StroomIndexQueryResourceImpl
 
     @Inject
     StroomIndexQueryResourceImpl(
-            final Provider<SearchResponseCreatorManager> searchResponseCreatorManagerProvider) {
+            final Provider<ResultStoreManager> searchResponseCreatorManagerProvider) {
         super(searchResponseCreatorManagerProvider);
     }
 }

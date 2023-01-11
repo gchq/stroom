@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
 import javax.validation.constraints.NotNull;
 
-public class Coprocessors implements Iterable<Coprocessor>, ValuesConsumer {
+public final class Coprocessors implements Iterable<Coprocessor>, ValuesConsumer {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Coprocessors.class);
 

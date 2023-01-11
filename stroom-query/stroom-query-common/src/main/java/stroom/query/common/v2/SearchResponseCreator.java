@@ -32,7 +32,6 @@ import stroom.query.util.LambdaLoggerFactory;
 import stroom.util.string.ExceptionStringUtil;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -50,10 +49,8 @@ public class SearchResponseCreator {
     private static final Duration FALL_BACK_DEFAULT_TIMEOUT = Duration.ofMinutes(5);
 
     private final SerialisersFactory serialisersFactory;
-    private final String userId;
-    private final Instant creationTime;
     private final SizesProvider sizesProvider;
-    private final Store store;
+    private final ResultStore store;
 
     private final Map<String, ResultCreator> cachedResultCreators = new HashMap<>();
 
@@ -64,18 +61,11 @@ public class SearchResponseCreator {
      * @param store The underlying store to use for creating the search responses.
      */
     public SearchResponseCreator(final SerialisersFactory serialisersFactory,
-                                 final String userId,
                                  final SizesProvider sizesProvider,
-                                 final Store store) {
+                                 final ResultStore store) {
         this.serialisersFactory = serialisersFactory;
-        this.userId = userId;
-        this.creationTime = Instant.now();
         this.sizesProvider = sizesProvider;
         this.store = Objects.requireNonNull(store);
-    }
-
-    public String getUserId() {
-        return userId;
     }
 
     /**
@@ -83,7 +73,7 @@ public class SearchResponseCreator {
      * @return An empty {@link SearchResponse} with the passed error messages
      */
     private static SearchResponse createErrorResponse(final QueryKey queryKey,
-                                                      final Store store,
+                                                      final ResultStore store,
                                                       final Throwable throwable) {
         Objects.requireNonNull(store);
         Objects.requireNonNull(throwable);
@@ -102,11 +92,6 @@ public class SearchResponseCreator {
                 null,
                 errors,
                 false);
-    }
-
-    public boolean keepAlive() {
-        LOGGER.trace(() -> "keepAlive()", new RuntimeException("keepAlive"));
-        return true;
     }
 
     /**
@@ -220,7 +205,7 @@ public class SearchResponseCreator {
         }
     }
 
-    private List<String> buildCompoundErrorList(final Store store, final List<Result> results) {
+    private List<String> buildCompoundErrorList(final ResultStore store, final List<Result> results) {
         final List<String> errors = new ArrayList<>();
 
         if (store.getErrors() != null) {
