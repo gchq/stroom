@@ -7,6 +7,8 @@ import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.meta.api.EffectiveMeta;
+import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -16,7 +18,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.Set;
 
 public interface MetaDao {
 
@@ -60,8 +62,6 @@ public interface MetaDao {
      */
     SelectionSummary getReprocessSelectionSummary(FindMetaCriteria criteria);
 
-    Optional<Long> getLatestIdByEffectiveDate(FindMetaCriteria criteria);
-
     int updateStatus(FindMetaCriteria criteria, Status currentStatus, Status newStatus, long statusTime);
 
     int delete(List<Long> metaIdList);
@@ -85,4 +85,6 @@ public interface MetaDao {
      * @return A distinct list of processor UUIds for meta data matching the supplied criteria.
      */
     List<String> getProcessorUuidList(FindMetaCriteria criteria);
+
+    Set<EffectiveMeta> getEffectiveStreams(EffectiveMetaDataCriteria effectiveMetaDataCriteria);
 }
