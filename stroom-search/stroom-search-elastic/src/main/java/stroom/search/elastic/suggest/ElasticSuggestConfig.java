@@ -1,7 +1,5 @@
 package stroom.search.elastic.suggest;
 
-import stroom.util.config.annotations.RequiresRestart;
-import stroom.util.config.annotations.RequiresRestart.RestartScope;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 
@@ -26,7 +24,6 @@ public class ElasticSuggestConfig extends AbstractConfig implements IsStroomConf
     }
 
     @JsonPropertyDescription("Suggest terms in query expressions when using an Elasticsearch index as the data source.")
-    @RequiresRestart(RestartScope.UI)
     public Boolean getEnabled() {
         return enabled;
     }
