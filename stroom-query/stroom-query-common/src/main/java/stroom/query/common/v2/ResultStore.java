@@ -16,7 +16,6 @@
 
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.Result;
 import stroom.task.api.TerminateHandler;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
@@ -32,10 +31,8 @@ import java.io.InputStream;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
@@ -52,11 +49,6 @@ public class ResultStore {
     private final Coprocessors coprocessors;
     private final String userId;
     private final Instant creationTime;
-
-    private final Map<String, ResultCreator> cachedResultCreators = new HashMap<>();
-
-    // Cache the last results for each component.
-    private final Map<String, Result> resultCache = new HashMap<>();
 
     private final SearchResponseCreator searchResponseCreator;
     private volatile TerminateHandler terminateHandler;
