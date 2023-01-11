@@ -1,0 +1,18 @@
+ext.moduleName = 'stroom.query.impl'
+
+dependencies {
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+
+    implementation libs.guice5
+    implementation libs.jackson_annotations
+    implementation libs.jakarta_validation_api
+    implementation libs.javax_inject
+    implementation libs.restygwt
+    implementation libs.slf4j_api
+}

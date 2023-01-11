@@ -5,7 +5,6 @@ dependencies {
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-cluster:stroom-cluster-lock-api')
     implementation project(':stroom-cluster:stroom-cluster-task-api')
-    implementation project(':stroom-core')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
@@ -19,6 +18,7 @@ dependencies {
     implementation project(':stroom-query:stroom-expression')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
+    implementation project(':stroom-query:stroom-query-impl')
     implementation project(path: ":stroom-search:elastic-shaded", configuration: 'shadow') // Use shadow JAR
     implementation project(':stroom-search:stroom-search-extraction')
     implementation project(':stroom-search:stroom-search-api')

@@ -163,6 +163,7 @@ dependencies {
     implementation project(':stroom-query:stroom-expression')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
+    implementation project(':stroom-query:stroom-query-impl')
     implementation project(':stroom-receive:stroom-receive-common')
     implementation project(':stroom-receive:stroom-receive-rules-impl')
     implementation project(':stroom-resource:stroom-resource-api')

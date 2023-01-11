@@ -16,12 +16,12 @@
 
 package stroom.search.elastic;
 
-import stroom.core.query.SuggestionsServiceBinder;
 import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.query.impl.SuggestionsServiceBinder;
 import stroom.search.elastic.indexing.ElasticIndexingElementModule;
 import stroom.search.elastic.search.ElasticIndexQueryResourceImpl;
 import stroom.search.elastic.shared.ElasticClusterDoc;

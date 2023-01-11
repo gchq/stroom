@@ -1,6 +1,5 @@
 package stroom.meta.impl;
 
-import stroom.core.query.SuggestionsService;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.feed.api.FeedStore;
@@ -13,6 +12,7 @@ import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.ReferenceDataFields;
 import stroom.processor.shared.ProcessorTaskFields;
+import stroom.query.impl.SuggestionsService;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;

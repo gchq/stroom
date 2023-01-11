@@ -1,4 +1,4 @@
-package stroom.core.query;
+package stroom.query.impl;
 
 import stroom.query.shared.FetchSuggestionsRequest;
 

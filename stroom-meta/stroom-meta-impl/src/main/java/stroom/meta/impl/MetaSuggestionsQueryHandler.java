@@ -1,6 +1,6 @@
 package stroom.meta.impl;
 
-import stroom.core.query.SuggestionsQueryHandler;
+import stroom.query.impl.SuggestionsQueryHandler;
 
 public interface MetaSuggestionsQueryHandler extends SuggestionsQueryHandler {
 

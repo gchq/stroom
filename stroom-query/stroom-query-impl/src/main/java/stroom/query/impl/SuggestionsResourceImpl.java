@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.core.query;
+package stroom.query.impl;
 
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
