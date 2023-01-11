@@ -205,7 +205,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
             do {
                 searchResponse = doSearch(tags, true, queryKey);
                 queryKey = searchResponse.getKey();
-            } while (!searchResponse.complete() || Instant.now().isAfter(timeoutTime));
+            } while (!searchResponse.complete() && Instant.now().isBefore(timeoutTime));
             searchResponseCreatorManager.destroy(searchResponse.getKey());
 
             doAsserts(searchResponse, 1, expectedValuesMap);
@@ -384,6 +384,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
         }
 
         final SearchRequest.Builder searchBuilder = SearchRequest.builder()
+                .key(queryKey)
                 .incremental(isIncremental)
                 .query(Query.builder()
                         .expression(operatorBuilder.build())

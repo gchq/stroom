@@ -98,16 +98,19 @@ public final class SearchResponseCreatorManager implements Clearable {
             String json = JsonUtil.writeValueAsString(docRef);
             LOGGER.debug("/dataSource called with docRef:\n{}", json);
         }
-        return storeFactoryRegistry.getStoreFactory(docRef).get().getDataSource(docRef);
+        final Optional<StoreFactory> optionalStoreFactory = storeFactoryRegistry.getStoreFactory(docRef);
+        return optionalStoreFactory
+                .map(sf -> sf.getDataSource(docRef))
+                .orElseThrow(() -> new RuntimeException("Unknown data source type: " + docRef));
     }
 
-    public SearchResponse search(final SearchRequest request) {
+    public SearchResponse search(final SearchRequest searchRequest) {
         if (LOGGER.isDebugEnabled()) {
-            String json = JsonUtil.writeValueAsString(request);
+            String json = JsonUtil.writeValueAsString(searchRequest);
             LOGGER.debug("/search called with searchRequest:\n{}", json);
         }
 
-        SearchRequest modifiedRequest = request;
+        SearchRequest modifiedRequest = searchRequest;
 
         final String userId = securityContext.getUserId();
         Objects.requireNonNull(userId, "No user is logged in");
@@ -120,65 +123,58 @@ public final class SearchResponseCreatorManager implements Clearable {
         }
 
         final Optional<StoreFactory> optionalStoreFactory =
-                storeFactoryRegistry.getStoreFactory(request.getQuery().getDataSource());
+                storeFactoryRegistry.getStoreFactory(modifiedRequest.getQuery().getDataSource());
         final StoreFactory storeFactory = optionalStoreFactory
                 .orElseThrow(() ->
                         new RuntimeException("No store factory found for " +
-                                request.getQuery().getDataSource().getType()));
+                                searchRequest.getQuery().getDataSource().getType()));
 
-        QueryKey queryKey = modifiedRequest.getKey();
-        if (queryKey != null) {
+        final SearchResponseCreator searchResponseCreator;
+        if (modifiedRequest.getKey() != null) {
+            final QueryKey queryKey = modifiedRequest.getKey();
             final Optional<SearchResponseCreator> optionalSearchResponseCreator =
                     getIfPresent(queryKey);
 
             final String message = "No active search found for key = " + queryKey;
-            final SearchResponseCreator searchResponseCreator = optionalSearchResponseCreator.orElseThrow(() ->
+            searchResponseCreator = optionalSearchResponseCreator.orElseThrow(() ->
                     new RuntimeException(message));
+
             // Check user identity.
-            if (!searchResponseCreator.getUserId().equals(securityContext.getUserId())) {
-                throw new RuntimeException("Query belongs to different user");
+            if (!searchResponseCreator.getUserId().equals(userId)) {
+                throw new RuntimeException(
+                        "You do not have permission to get the search results associated with this key");
             }
 
         } else {
             // If the query doesn't have a key then this is new.
             LOGGER.debug(() -> "New query");
 
-            // Create a request UUID if we don't already have one.
-            if (modifiedRequest.getKey() == null) {
-                final String uuid = UUID.randomUUID().toString();
-                LOGGER.debug(() -> "Creating new search UUID = " + uuid);
-                modifiedRequest = request.copy().key(uuid).build();
-            } else {
-                modifiedRequest = request;
-            }
+            // Create a new search UUID.
+            modifiedRequest = addQueryKey(modifiedRequest);
 
             // Add a param for `currentUser()`
-            List<Param> params = modifiedRequest.getQuery().getParams();
-            if (params != null) {
-                params = new ArrayList<>(params);
-            } else {
-                params = new ArrayList<>();
-            }
-            params.add(new Param("currentUser()", securityContext.getUserId()));
-            modifiedRequest = modifiedRequest
-                    .copy()
-                    .query(modifiedRequest
-                            .getQuery()
-                            .copy()
-                            .params(params)
-                            .build())
-                    .build();
+            modifiedRequest = addCurrentUserParam(userId, modifiedRequest);
 
             // Add partition time constraints to the query.
             modifiedRequest = addTimeRangeExpression(storeFactory.getTimeField(dataSourceRef), modifiedRequest);
+
+            final SearchRequest finalModifiedRequest = modifiedRequest;
+            final QueryKey queryKey = finalModifiedRequest.getKey();
+            LOGGER.trace(() -> "get() " + queryKey);
+            searchResponseCreator = cache.get(queryKey, k -> {
+                try {
+                    LOGGER.trace(() -> "create() " + queryKey);
+                    LOGGER.debug(() -> "Creating new store for key: " + queryKey);
+                    final Store store = storeFactory.create(finalModifiedRequest);
+                    return searchResponseCreatorFactory.create(userId, store);
+                } catch (final RuntimeException e) {
+                    LOGGER.debug(e.getMessage(), e);
+                    throw e;
+                }
+            });
         }
 
-        // If this is the first call for this query key then it will create a searchResponseCreator (& store) that
-        // have a lifespan beyond the scope of this request and then begin the search for the data.
-        // If it is not the first call for this query key then it will return the existing searchResponseCreator
-        // with access to whatever data has been found so far
-        final SearchResponseCreator searchResponseCreator = get(storeFactory, modifiedRequest);
-
+        // Perform search.
         final SearchRequest finalSearchRequest = modifiedRequest;
         final Supplier<SearchResponse> supplier =
                 taskContextFactory.contextResult("Getting search results", taskContext -> {
@@ -192,6 +188,34 @@ public final class SearchResponseCreatorManager implements Clearable {
         } catch (final InterruptedException | ExecutionException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
+    }
+
+    private SearchRequest addQueryKey(final SearchRequest searchRequest) {
+        // Create a new search UUID.
+        final String uuid = UUID.randomUUID().toString();
+        LOGGER.debug(() -> "Creating new search UUID = " + uuid);
+        final QueryKey queryKey = new QueryKey(uuid);
+        return searchRequest.copy().key(queryKey).build();
+    }
+
+    private SearchRequest addCurrentUserParam(final String userId,
+                                              final SearchRequest searchRequest) {
+        // Add a param for `currentUser()`
+        List<Param> params = searchRequest.getQuery().getParams();
+        if (params != null) {
+            params = new ArrayList<>(params);
+        } else {
+            params = new ArrayList<>();
+        }
+        params.add(new Param("currentUser()", userId));
+        return searchRequest
+                .copy()
+                .query(searchRequest
+                        .getQuery()
+                        .copy()
+                        .params(params)
+                        .build())
+                .build();
     }
 
     private SearchRequest addTimeRangeExpression(final DateField partitionTimeField,
@@ -299,38 +323,6 @@ public final class SearchResponseCreatorManager implements Clearable {
                 searchResponse.complete(),
                 searchResponse.getErrors(),
                 resultInfo);
-    }
-
-    /**
-     * Get a {@link SearchResponseCreator} from the cache or create one if it doesn't exist
-     *
-     * @param searchRequest The search request to get the response creator for.
-     * @return Get a {@link SearchResponseCreator} from the cache or create one if it doesn't exist
-     */
-    private SearchResponseCreator get(final StoreFactory storeFactory, final SearchRequest searchRequest) {
-        final String userId = securityContext.getUserId();
-        Objects.requireNonNull(userId, "No user is logged in");
-
-        final QueryKey key = searchRequest.getKey();
-        Objects.requireNonNull(key, "Key is null");
-
-        LOGGER.trace(() -> "get() " + key);
-        final SearchResponseCreator searchResponseCreator = cache.get(key, k -> {
-            try {
-                LOGGER.trace(() -> "create() " + key);
-                LOGGER.debug(() -> "Creating new store for key: " + key);
-                final Store store = storeFactory.create(searchRequest);
-                return searchResponseCreatorFactory.create(userId, store);
-            } catch (final RuntimeException e) {
-                LOGGER.debug(e.getMessage(), e);
-                throw e;
-            }
-        });
-        if (!searchResponseCreator.getUserId().equals(userId)) {
-            throw new RuntimeException(
-                    "You do not have permission to get the search results associated with this key");
-        }
-        return searchResponseCreator;
     }
 
     /**
