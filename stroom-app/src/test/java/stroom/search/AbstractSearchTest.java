@@ -62,10 +62,10 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
     protected static SearchResponse search(final SearchRequest searchRequest,
                                            final SearchResponseCreatorManager searchResponseCreatorManager) {
         SearchResponse response = searchResponseCreatorManager.search(searchRequest);
+        searchResponseCreatorManager.destroy(response.getKey());
         if (!response.complete()) {
             throw new RuntimeException("NOT COMPLETE");
         }
-        searchResponseCreatorManager.destroy(response.getKey());
 
         return response;
     }
@@ -118,7 +118,7 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             final ObjectMapper mapper = createMapper(true);
             final String json = mapper.writeValueAsString(searchRequest);
             LOGGER.info(json);
-        } catch (final Exception e)  {
+        } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
 

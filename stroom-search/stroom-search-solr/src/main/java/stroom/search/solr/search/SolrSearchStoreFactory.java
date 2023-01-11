@@ -29,6 +29,7 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
+import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
 import stroom.search.solr.CachedSolrIndex;
@@ -44,6 +45,7 @@ import stroom.task.api.TaskContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -72,6 +74,7 @@ public class SolrSearchStoreFactory implements StoreFactory {
     private final SecurityContext securityContext;
     private final CoprocessorsFactory coprocessorsFactory;
     private final SolrIndexStore solrIndexStore;
+    private final SolrSearchExecutor solrSearchExecutor;
 
     @Inject
     public SolrSearchStoreFactory(final SolrIndexCache solrIndexCache,
@@ -82,7 +85,8 @@ public class SolrSearchStoreFactory implements StoreFactory {
                                   final SolrSearchConfig searchConfig,
                                   final CoprocessorsFactory coprocessorsFactory,
                                   final SolrIndexStore solrIndexStore,
-                                  final SecurityContext securityContext) {
+                                  final SecurityContext securityContext,
+                                  final SolrSearchExecutor solrSearchExecutor) {
         this.solrIndexCache = solrIndexCache;
         this.wordListProvider = wordListProvider;
         this.executor = executor;
@@ -92,6 +96,7 @@ public class SolrSearchStoreFactory implements StoreFactory {
         this.coprocessorsFactory = coprocessorsFactory;
         this.solrIndexStore = solrIndexStore;
         this.securityContext = securityContext;
+        this.solrSearchExecutor = solrSearchExecutor;
     }
 
     @Override
@@ -161,22 +166,13 @@ public class SolrSearchStoreFactory implements StoreFactory {
                 modifiedSearchRequest.getDateTimeSettings(),
                 nowEpochMilli);
 
-        // Create the search result collector.
-        final SolrSearchResultCollector searchResultCollector = SolrSearchResultCollector.create(
-                executor,
-                taskContextFactory,
-                solrAsyncSearchTaskHandlerProvider,
-                asyncSearchTask,
-                highlights,
-                coprocessors);
-
-        // Tell the task where results will be collected.
-        asyncSearchTask.setResultCollector(searchResultCollector);
+        // Create the search result store.
+        final ResultStore resultStore = new ResultStore(new ArrayList<>(highlights), coprocessors);
 
         // Start asynchronous search execution.
-        searchResultCollector.start();
+        solrSearchExecutor.start(asyncSearchTask, resultStore);
 
-        return searchResultCollector;
+        return resultStore;
     }
 
     /**

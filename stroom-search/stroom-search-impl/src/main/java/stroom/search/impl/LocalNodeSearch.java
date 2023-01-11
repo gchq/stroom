@@ -2,6 +2,7 @@ package stroom.search.impl;
 
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.Coprocessors;
+import stroom.query.common.v2.ResultStore;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -38,7 +39,7 @@ public class LocalNodeSearch implements NodeSearch {
                            final TaskContext parentContext) {
         LOGGER.debug(() -> task.getSearchName() + " - searching node: " + targetNode + "...");
         parentContext.info(() -> task.getSearchName() + " - searching node: " + targetNode + "...");
-        final ClusterSearchResultCollector resultCollector = task.getResultCollector();
+        final ResultStore resultStore = task.getResultStore();
 
         // Start local cluster search execution.
         final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(
@@ -50,7 +51,7 @@ public class LocalNodeSearch implements NodeSearch {
                 task.getSettings(),
                 task.getDateTimeSettings(),
                 task.getNow());
-        final Coprocessors coprocessors = resultCollector.getCoprocessors();
+        final Coprocessors coprocessors = resultStore.getCoprocessors();
         LOGGER.debug(() -> "Dispatching clusterSearchTask to node: " + targetNode);
         try {
             LOGGER.debug(() -> "startSearch " + clusterSearchTask);
@@ -84,7 +85,7 @@ public class LocalNodeSearch implements NodeSearch {
             LOGGER.debug(() -> "Failed to start local search on node: " + targetNode);
             final SearchException searchException = new SearchException(
                     "Failed to start local search on node: " + targetNode, e);
-            resultCollector.onFailure(targetNode, searchException);
+            resultStore.onFailure(targetNode, searchException);
             throw searchException;
         }
     }

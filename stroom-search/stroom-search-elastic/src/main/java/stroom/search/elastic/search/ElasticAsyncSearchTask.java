@@ -34,8 +34,6 @@ public class ElasticAsyncSearchTask {
     private final DateTimeSettings dateTimeSettings;
     private final long now;
 
-    private transient volatile ElasticSearchResultCollector resultCollector;
-
     public ElasticAsyncSearchTask(final QueryKey key,
                                   final String searchName,
                                   final Query query,
@@ -73,13 +71,5 @@ public class ElasticAsyncSearchTask {
 
     public long getNow() {
         return now;
-    }
-
-    public ElasticSearchResultCollector getResultCollector() {
-        return resultCollector;
-    }
-
-    public void setResultCollector(final ElasticSearchResultCollector resultCollector) {
-        this.resultCollector = resultCollector;
     }
 }

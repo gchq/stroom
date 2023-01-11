@@ -25,7 +25,6 @@ import stroom.index.impl.IndexStore;
 import stroom.index.impl.LuceneVersionUtil;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexFieldsMap;
-import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
@@ -34,6 +33,7 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
+import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
 import stroom.search.impl.SearchExpressionQueryBuilder.SearchExpressionQuery;
@@ -41,10 +41,10 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -56,37 +56,34 @@ import javax.inject.Inject;
 
 public class LuceneSearchStoreFactory implements StoreFactory {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(LuceneSearchStoreFactory.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LuceneSearchStoreFactory.class);
 
     private final IndexStore indexStore;
     private final WordListProvider wordListProvider;
-    private final NodeInfo nodeInfo;
     private final int maxBooleanClauseCount;
     private final SecurityContext securityContext;
-    private final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory;
     private final CoprocessorsFactory coprocessorsFactory;
     private final TaskContextFactory taskContextFactory;
     private final ExecutorProvider executorProvider;
+    private final LuceneSearchExecutor luceneSearchExecutor;
 
     @Inject
     public LuceneSearchStoreFactory(final IndexStore indexStore,
                                     final WordListProvider wordListProvider,
                                     final SearchConfig searchConfig,
-                                    final NodeInfo nodeInfo,
                                     final SecurityContext securityContext,
-                                    final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory,
                                     final CoprocessorsFactory coprocessorsFactory,
                                     final TaskContextFactory taskContextFactory,
-                                    final ExecutorProvider executorProvider) {
+                                    final ExecutorProvider executorProvider,
+                                    final LuceneSearchExecutor luceneSearchExecutor) {
         this.indexStore = indexStore;
         this.wordListProvider = wordListProvider;
-        this.nodeInfo = nodeInfo;
         this.maxBooleanClauseCount = searchConfig.getMaxBooleanClauseCount();
         this.securityContext = securityContext;
-        this.clusterSearchResultCollectorFactory = clusterSearchResultCollectorFactory;
         this.coprocessorsFactory = coprocessorsFactory;
         this.taskContextFactory = taskContextFactory;
         this.executorProvider = executorProvider;
+        this.luceneSearchExecutor = luceneSearchExecutor;
     }
 
     @Override
@@ -168,19 +165,13 @@ public class LuceneSearchStoreFactory implements StoreFactory {
                 nowEpochMilli);
 
         // Create the search result collector.
-        final ClusterSearchResultCollector searchResultCollector = clusterSearchResultCollectorFactory.create(
-                asyncSearchTask,
-                nodeInfo.getThisNodeName(),
-                highlights,
+        final ResultStore resultStore = new ResultStore(
+                new ArrayList<>(highlights),
                 coprocessors);
 
-        // Tell the task where results will be collected.
-        asyncSearchTask.setResultCollector(searchResultCollector);
+        luceneSearchExecutor.start(asyncSearchTask, resultStore);
 
-        // Start asynchronous search execution.
-        searchResultCollector.start();
-
-        return searchResultCollector;
+        return resultStore;
     }
 
     /**

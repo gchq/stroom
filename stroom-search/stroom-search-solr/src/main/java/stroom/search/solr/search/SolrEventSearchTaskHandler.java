@@ -23,6 +23,7 @@ import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.EventCoprocessor;
 import stroom.query.common.v2.EventCoprocessorSettings;
 import stroom.query.common.v2.EventRefs;
+import stroom.query.common.v2.ResultStore;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
@@ -43,18 +44,21 @@ public class SolrEventSearchTaskHandler {
     private final Provider<SolrAsyncSearchTaskHandler> solrAsyncSearchTaskHandlerProvider;
     private final SecurityContext securityContext;
     private final CoprocessorsFactory coprocessorsFactory;
+    private final SolrSearchExecutor solrSearchExecutor;
 
     @Inject
     SolrEventSearchTaskHandler(final Executor executor,
                                final TaskContextFactory taskContextFactory,
                                final Provider<SolrAsyncSearchTaskHandler> solrAsyncSearchTaskHandlerProvider,
                                final SecurityContext securityContext,
-                               final CoprocessorsFactory coprocessorsFactory) {
+                               final CoprocessorsFactory coprocessorsFactory,
+                               final SolrSearchExecutor solrSearchExecutor) {
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.solrAsyncSearchTaskHandlerProvider = solrAsyncSearchTaskHandlerProvider;
         this.securityContext = securityContext;
         this.coprocessorsFactory = coprocessorsFactory;
+        this.solrSearchExecutor = solrSearchExecutor;
     }
 
     public EventRefs exec(final SolrEventSearchTask task) {
@@ -96,26 +100,17 @@ public class SolrEventSearchTaskHandler {
                     false);
             final EventCoprocessor eventCoprocessor = (EventCoprocessor) coprocessors.get(coprocessorId);
 
-            // Create a collector to store search results.
-            final SolrSearchResultCollector searchResultCollector = SolrSearchResultCollector.create(
-                    executor,
-                    taskContextFactory,
-                    solrAsyncSearchTaskHandlerProvider,
-                    asyncSearchTask,
-                    null,
-                    coprocessors);
-
-            // Tell the task where results will be collected.
-            asyncSearchTask.setResultCollector(searchResultCollector);
+            // Create the search result store.
+            final ResultStore resultStore = new ResultStore(null, coprocessors);
 
             try {
                 // Start asynchronous search execution.
-                searchResultCollector.start();
+                solrSearchExecutor.start(asyncSearchTask, resultStore);
 
-                LOGGER.debug(() -> "Started searchResultCollector " + searchResultCollector);
+                LOGGER.debug(() -> "Started searchResultCollector " + resultStore);
 
                 // Wait for completion or termination
-                searchResultCollector.awaitCompletion();
+                resultStore.awaitCompletion();
 
                 eventRefs = eventCoprocessor.getEventRefs();
                 if (eventRefs != null) {
@@ -131,7 +126,7 @@ public class SolrEventSearchTaskHandler {
                         LogUtil.message("Thread {} interrupted executing task {}",
                                 Thread.currentThread().getName(), task));
             } finally {
-                searchResultCollector.destroy();
+                resultStore.destroy();
             }
 
             return eventRefs;

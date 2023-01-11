@@ -24,6 +24,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.Query;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
@@ -172,7 +173,8 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
             tags.add(new StatisticTag(TAG2, TAG2_VAL));
 
             fillStatValSrc(tags);
-            SearchResponse searchResponse = doSearch(tags, false);
+            SearchResponse searchResponse = doSearch(tags, false, null);
+            searchResponseCreatorManager.destroy(searchResponse.getKey());
             Map<String, Set<String>> expectedValuesMap = ImmutableMap.of(
                     TAG1, ImmutableSet.of(TAG1_VAL),
                     TAG2, ImmutableSet.of(TAG2_VAL));
@@ -193,15 +195,18 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
                     TAG1, ImmutableSet.of(TAG1_VAL),
                     TAG2, ImmutableSet.of(TAG2_VAL));
 
-            SearchResponse searchResponse;
+            SearchResponse searchResponse = null;
 
             // Incremental search so first n responses may not be complete
             Instant timeoutTime = Instant.now().plusSeconds(10);
 
             // keep asking for results till we get a complete one (or timeout)
+            QueryKey queryKey = null;
             do {
-                searchResponse = doSearch(tags, true);
+                searchResponse = doSearch(tags, true, queryKey);
+                queryKey = searchResponse.getKey();
             } while (!searchResponse.complete() || Instant.now().isAfter(timeoutTime));
+            searchResponseCreatorManager.destroy(searchResponse.getKey());
 
             doAsserts(searchResponse, 1, expectedValuesMap);
         }
@@ -225,7 +230,9 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
                     tags,
                     Op.AND,
                     true,
+                    null,
                     OptionalLong.of(10_000));
+            searchResponseCreatorManager.destroy(searchResponse.getKey());
 
             doAsserts(searchResponse, 1, expectedValuesMap);
         }
@@ -249,7 +256,8 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
                     TAG1, ImmutableSet.of(TAG1_VAL),
                     TAG2, ImmutableSet.of(TAG2_VAL, TAG2_OTHER_VALUE_1));
 
-            SearchResponse searchResponse = doSearch(searchTags, Op.OR, false);
+            SearchResponse searchResponse = doSearch(searchTags, Op.OR, false, null);
+            searchResponseCreatorManager.destroy(searchResponse.getKey());
             doAsserts(searchResponse, 2, expectedValuesMap);
         }
     }
@@ -271,7 +279,8 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
                     TAG1, Collections.singleton(null),
                     TAG2, Collections.singleton(TAG2_VAL));
 
-            SearchResponse searchResponse = doSearch(searchTags, Op.OR, false);
+            SearchResponse searchResponse = doSearch(searchTags, Op.OR, false, null);
+            searchResponseCreatorManager.destroy(searchResponse.getKey());
             doAsserts(searchResponse, 1, expectedValuesMap);
         }
     }
@@ -296,7 +305,8 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
                     TAG1, Collections.singleton(nastyVal),
                     TAG2, Collections.singleton(TAG2_VAL));
 
-            SearchResponse searchResponse = doSearch(searchTags, Op.OR, false);
+            SearchResponse searchResponse = doSearch(searchTags, Op.OR, false, null);
+            searchResponseCreatorManager.destroy(searchResponse.getKey());
             doAsserts(searchResponse, 1, expectedValuesMap);
         }
     }
@@ -346,20 +356,23 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
     }
 
     private SearchResponse doSearch(final List<StatisticTag> searchTags,
-                                    final boolean isIncremental) {
-        return doSearch(searchTags, Op.AND, isIncremental, OptionalLong.empty());
-    }
-
-    private SearchResponse doSearch(final List<StatisticTag> searchTags,
-                                    final ExpressionOperator.Op op,
-                                    final boolean isIncremental) {
-
-        return doSearch(searchTags, op, isIncremental, OptionalLong.empty());
+                                    final boolean isIncremental,
+                                    final QueryKey queryKey) {
+        return doSearch(searchTags, Op.AND, isIncremental, queryKey, OptionalLong.empty());
     }
 
     private SearchResponse doSearch(final List<StatisticTag> searchTags,
                                     final ExpressionOperator.Op op,
                                     final boolean isIncremental,
+                                    final QueryKey queryKey) {
+
+        return doSearch(searchTags, op, isIncremental, queryKey, OptionalLong.empty());
+    }
+
+    private SearchResponse doSearch(final List<StatisticTag> searchTags,
+                                    final ExpressionOperator.Op op,
+                                    final boolean isIncremental,
+                                    final QueryKey queryKey,
                                     final OptionalLong optTimeout) {
 
         final ExpressionOperator.Builder operatorBuilder = ExpressionOperator.builder().op(op);
@@ -392,6 +405,9 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
         final SearchRequest searchRequest = searchBuilder.build();
 
         SearchResponse searchResponse = searchResponseCreatorManager.search(searchRequest);
+        if (!isIncremental || searchResponse.complete()) {
+            searchResponseCreatorManager.destroy(searchResponse.getKey());
+        }
 
         LOGGER.debug("Search response returned with completion state {}", searchResponse.getComplete());
 

@@ -20,6 +20,7 @@ package stroom.search.elastic.search;
 import stroom.cluster.task.api.ClusterTaskTerminator;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.Coprocessors;
+import stroom.query.common.v2.ResultStore;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
@@ -57,13 +58,13 @@ public class ElasticAsyncSearchTaskHandler {
     public void search(final TaskContext parentContext,
                        final ElasticAsyncSearchTask task,
                        final Coprocessors coprocessors,
-                       final ElasticSearchResultCollector resultCollector) {
+                       final ResultStore resultStore) {
         securityContext.secure(() -> securityContext.useAsRead(() -> {
             if (!parentContext.isTerminated()) {
 
                 // Create an async call that will terminate the whole task if the coprocessors decide they have enough
                 // data.
-                CompletableFuture.runAsync(() -> awaitCompletionAndTerminate(resultCollector, parentContext, task),
+                CompletableFuture.runAsync(() -> awaitCompletionAndTerminate(resultStore, parentContext, task),
                         executorProvider.get());
 
                 try {
@@ -93,10 +94,10 @@ public class ElasticAsyncSearchTaskHandler {
                     LOGGER.debug(() -> task.getSearchName() + " - complete");
 
                     // Ensure search is complete even if we had errors.
-                    resultCollector.signalComplete();
+                    resultStore.signalComplete();
 
                     // Await final completion and terminate all tasks.
-                    awaitCompletionAndTerminate(resultCollector, parentContext, task);
+                    awaitCompletionAndTerminate(resultStore, parentContext, task);
 
                     // We need to wait here for the client to keep getting results if
                     // this is an interactive search.
@@ -106,12 +107,12 @@ public class ElasticAsyncSearchTaskHandler {
         }));
     }
 
-    private void awaitCompletionAndTerminate(final ElasticSearchResultCollector resultCollector,
+    private void awaitCompletionAndTerminate(final ResultStore resultStore,
                                              final TaskContext parentContext,
                                              final ElasticAsyncSearchTask task) {
         // Wait for the result collector to complete.
         try {
-            resultCollector.awaitCompletion();
+            resultStore.awaitCompletion();
         } catch (final InterruptedException e) {
             LOGGER.trace(e.getMessage(), e);
             // Keep interrupting this thread.

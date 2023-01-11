@@ -2,6 +2,7 @@
   "key" : {
     "uuid" : "test_uuid"
   },
+  "highlights" : [ ],
   "results" : [ {
     "type" : "table",
     "componentId" : "table-BKJT6",

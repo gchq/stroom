@@ -27,6 +27,7 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
+import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
 import stroom.search.elastic.ElasticClientCache;
@@ -79,6 +80,7 @@ public class ElasticSearchStoreFactory implements StoreFactory, ElasticIndexServ
     private final ElasticClientCache elasticClientCache;
     private final ElasticClusterStore elasticClusterStore;
     private final ElasticIndexStore elasticIndexStore;
+    private final ElasticSearchExecutor elasticSearchExecutor;
 
     @Inject
     public ElasticSearchStoreFactory(
@@ -90,7 +92,8 @@ public class ElasticSearchStoreFactory implements StoreFactory, ElasticIndexServ
             final ElasticClientCache elasticClientCache,
             final ElasticClusterStore elasticClusterStore,
             final ElasticIndexStore elasticIndexStore,
-            final SecurityContext securityContext) {
+            final SecurityContext securityContext,
+            final ElasticSearchExecutor elasticSearchExecutor) {
         this.elasticIndexCache = elasticIndexCache;
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
@@ -100,6 +103,7 @@ public class ElasticSearchStoreFactory implements StoreFactory, ElasticIndexServ
         this.elasticClientCache = elasticClientCache;
         this.elasticClusterStore = elasticClusterStore;
         this.elasticIndexStore = elasticIndexStore;
+        this.elasticSearchExecutor = elasticSearchExecutor;
     }
 
     @Override
@@ -139,20 +143,11 @@ public class ElasticSearchStoreFactory implements StoreFactory, ElasticIndexServ
                 nowEpochMilli);
 
         // Create the search result collector.
-        final ElasticSearchResultCollector searchResultCollector = ElasticSearchResultCollector.create(
-                executor,
-                taskContextFactory,
-                elasticAsyncSearchTaskHandlerProvider,
-                asyncSearchTask,
+        final ResultStore resultStore = new ResultStore(
+                null,
                 coprocessors);
-
-        // Tell the task where results will be collected.
-        asyncSearchTask.setResultCollector(searchResultCollector);
-
-        // Start asynchronous search execution.
-        searchResultCollector.start();
-
-        return searchResultCollector;
+        elasticSearchExecutor.start(asyncSearchTask, resultStore);
+        return resultStore;
     }
 
     @Override

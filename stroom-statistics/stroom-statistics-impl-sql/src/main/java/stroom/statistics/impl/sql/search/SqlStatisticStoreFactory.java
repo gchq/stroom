@@ -7,8 +7,11 @@ import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
+import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
@@ -18,32 +21,33 @@ import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TaskManager;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import com.google.common.base.Preconditions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 @SuppressWarnings("unused")
 public class SqlStatisticStoreFactory implements StoreFactory {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticStoreFactory.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SqlStatisticStoreFactory.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SqlStatisticStoreFactory.class);
+    public static final String TASK_NAME = "Sql Statistic Search";
 
     private final StatisticStoreCache statisticStoreCache;
     private final StatisticsSearchService statisticsSearchService;
     private final TaskContextFactory taskContextFactory;
     private final Executor executor;
+    private final TaskManager taskManager;
     private final CoprocessorsFactory coprocessorsFactory;
     private final Statistics statistics;
 
@@ -52,6 +56,7 @@ public class SqlStatisticStoreFactory implements StoreFactory {
                                     final StatisticsSearchService statisticsSearchService,
                                     final TaskContextFactory taskContextFactory,
                                     final Executor executor,
+                                    final TaskManager taskManager,
                                     final SearchConfig searchConfig,
                                     final UiConfig clientConfig,
                                     final CoprocessorsFactory coprocessorsFactory,
@@ -60,6 +65,7 @@ public class SqlStatisticStoreFactory implements StoreFactory {
         this.statisticsSearchService = statisticsSearchService;
         this.taskContextFactory = taskContextFactory;
         this.executor = executor;
+        this.taskManager = taskManager;
         this.coprocessorsFactory = coprocessorsFactory;
         this.statistics = statistics;
     }
@@ -154,14 +160,55 @@ public class SqlStatisticStoreFactory implements StoreFactory {
         Preconditions.checkNotNull(searchRequest);
         Preconditions.checkNotNull(statisticStoreDoc);
 
-        //wrap the resultHandler in a new store, initiating the search in the process
-        return new SqlStatisticsStore(
-                searchRequest,
+        final String searchKey = searchRequest.getKey().toString();
+
+        // convert the search into something stats understands
+        final SearchRequest modifiedSearchRequest = ExpressionUtil.replaceExpressionParameters(searchRequest);
+        final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(
                 statisticStoreDoc,
-                statisticsSearchService,
-                executor,
-                taskContextFactory,
-                coprocessorsFactory);
+                modifiedSearchRequest.getQuery().getExpression(),
+                modifiedSearchRequest.getDateTimeSettings());
+
+        // Create coprocessors.
+        final Coprocessors coprocessors = coprocessorsFactory.create(modifiedSearchRequest);
+        final ResultStore resultStore = new ResultStore(null, coprocessors);
+
+        final Runnable runnable = taskContextFactory.context(TASK_NAME, taskContext -> {
+            try {
+                final AtomicBoolean destroyed = new AtomicBoolean();
+
+                // Set the task terminator.
+                resultStore.setTerminateHandler(() -> {
+                    destroyed.set(true);
+                    taskManager.terminate(taskContext.getTaskId());
+                });
+
+                // Don't begin execution if we have been asked to complete already.
+                if (!destroyed.get()) {
+                    // Create the object that will receive results.
+                    LOGGER.debug(() -> "Starting search with key " + searchKey);
+                    taskContext.info(() -> "Sql Statistics search " + searchKey + " - running query");
+
+                    // Execute the search asynchronously.
+                    // We have to create a wrapped runnable so that the task context references a managed task.
+                    statisticsSearchService.search(
+                            taskContext, statisticStoreDoc, criteria, coprocessors.getFieldIndex(), coprocessors,
+                            coprocessors.getErrorConsumer());
+                }
+
+                coprocessors.getCompletionState().signalComplete();
+                coprocessors.getCompletionState().awaitCompletion();
+            } catch (final InterruptedException e) {
+                LOGGER.trace(e::getMessage, e);
+                // Keep interrupting this thread.
+                Thread.currentThread().interrupt();
+            }
+        });
+        executor.execute(runnable);
+
+        LOGGER.debug(() -> "Async search task started for key " + searchKey);
+
+        return resultStore;
     }
 
     private Sizes extractValues(String value) {

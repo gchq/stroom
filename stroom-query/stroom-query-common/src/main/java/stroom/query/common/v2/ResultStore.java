@@ -14,16 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.search.impl;
+package stroom.query.common.v2;
 
-import stroom.query.common.v2.Coprocessors;
-import stroom.query.common.v2.DataStore;
-import stroom.query.common.v2.ErrorConsumerUtil;
-import stroom.query.common.v2.NodeResultSerialiser;
-import stroom.query.common.v2.Store;
-import stroom.task.api.TaskContext;
-import stroom.task.api.TaskContextFactory;
-import stroom.task.api.TaskTerminatedException;
+import stroom.task.api.TerminateHandler;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -40,46 +33,28 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import javax.inject.Provider;
 
-public class ClusterSearchResultCollector implements Store {
+public class ResultStore implements Store {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ClusterSearchResultCollector.class);
-    private static final String TASK_NAME = "AsyncSearchTask";
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ResultStore.class);
 
     private final ConcurrentHashMap<String, Set<Throwable>> errors = new ConcurrentHashMap<>();
-    private final Executor executor;
-    private final TaskContextFactory taskContextFactory;
-    private final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider;
-    private final AsyncSearchTask task;
-    private final String nodeName;
-    private final Set<String> highlights;
+    private final List<String> highlights;
     private final Coprocessors coprocessors;
+    private volatile TerminateHandler terminateHandler;
+    private volatile boolean destroy;
 
-    private volatile AsyncSearchTaskHandler asyncSearchTaskHandler;
-    private volatile TaskContext taskContext;
-    private volatile boolean complete;
-
-    public ClusterSearchResultCollector(final Executor executor,
-                                        final TaskContextFactory taskContextFactory,
-                                        final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider,
-                                        final AsyncSearchTask task,
-                                        final String nodeName,
-                                        final Set<String> highlights,
-                                        final Coprocessors coprocessors) {
-        this.executor = executor;
-        this.taskContextFactory = taskContextFactory;
-        this.asyncSearchTaskHandlerProvider = asyncSearchTaskHandlerProvider;
-        this.task = task;
-        this.nodeName = nodeName;
-        this.highlights = highlights;
+    public ResultStore(final List<String> highlights,
+                       final Coprocessors coprocessors) {
+        this.highlights = Optional
+                .ofNullable(highlights)
+                .map(Collections::unmodifiableList)
+                .orElse(Collections.emptyList());
         this.coprocessors = coprocessors;
     }
 
@@ -87,52 +62,26 @@ public class ClusterSearchResultCollector implements Store {
         return coprocessors;
     }
 
-    public void start() {
-        // Start asynchronous search execution.
-        final Runnable runnable = taskContextFactory.context(TASK_NAME, taskContext -> {
-            this.taskContext = taskContext;
-            this.asyncSearchTaskHandler = asyncSearchTaskHandlerProvider.get();
-
-            // Don't begin execution if we have been asked to complete already.
-            if (!complete) {
-                asyncSearchTaskHandler.exec(taskContext, task);
-            }
-        });
-        CompletableFuture
-                .runAsync(runnable, executor)
-                .whenComplete((result, t) -> {
-                    if (t != null) {
-                        while (t instanceof CompletionException) {
-                            t = t.getCause();
-                        }
-
-                        // We can expect some tasks to throw a task terminated exception
-                        // as they may be terminated before we even try to execute them.
-                        if (!(t instanceof TaskTerminatedException)) {
-                            LOGGER.error(t::getMessage, t);
-                            onFailure(nodeName, t);
-                            coprocessors.getCompletionState().signalComplete();
-                            throw new RuntimeException(t.getMessage(), t);
-                        }
-
-                        coprocessors.getCompletionState().signalComplete();
-                    }
-                });
+    public synchronized void setTerminateHandler(final TerminateHandler terminateHandler) {
+        this.terminateHandler = terminateHandler;
+        if (destroy) {
+            terminateHandler.onTerminate();
+        }
     }
 
     @Override
-    public void destroy() {
+    public synchronized void destroy() {
         LOGGER.trace(() -> "destroy()", new RuntimeException("destroy"));
-        complete = true;
-        if (asyncSearchTaskHandler != null) {
-            asyncSearchTaskHandler.terminateTasks(task, taskContext.getTaskId());
+        this.destroy = true;
+        if (terminateHandler != null) {
+            terminateHandler.onTerminate();
         }
 
         LOGGER.trace(() -> "coprocessors.clear()");
         coprocessors.clear();
     }
 
-    public void complete() {
+    public void signalComplete() {
         LOGGER.trace(() -> "complete()");
         coprocessors.getCompletionState().signalComplete();
     }
@@ -195,6 +144,13 @@ public class ClusterSearchResultCollector implements Store {
         }
     }
 
+    public void addError(final Throwable error) {
+        final Set<Throwable> errorSet = errors.computeIfAbsent("local", k ->
+                Collections.newSetFromMap(new ConcurrentHashMap<>()));
+        LOGGER.debug(error::getMessage, error);
+        errorSet.add(error);
+    }
+
     private void addErrors(final String nodeName,
                            final Set<Throwable> newErrors) {
         if (newErrors != null && newErrors.size() > 0) {
@@ -234,10 +190,7 @@ public class ClusterSearchResultCollector implements Store {
 
     @Override
     public List<String> getHighlights() {
-        if (highlights == null || highlights.size() == 0) {
-            return null;
-        }
-        return new ArrayList<>(highlights);
+        return highlights;
     }
 
     @Override
@@ -247,8 +200,7 @@ public class ClusterSearchResultCollector implements Store {
 
     @Override
     public String toString() {
-        return "ClusterSearchResultCollector{" +
-                "task=" + task +
+        return "StoreImpl{" +
                 ", complete=" + coprocessors.getCompletionState() +
                 '}';
     }

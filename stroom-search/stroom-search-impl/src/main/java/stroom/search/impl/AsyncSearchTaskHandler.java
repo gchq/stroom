@@ -35,6 +35,7 @@ import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.common.v2.DateExpressionParser;
+import stroom.query.common.v2.ResultStore;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
@@ -106,7 +107,7 @@ class AsyncSearchTaskHandler {
 
     public void exec(final TaskContext parentContext, final AsyncSearchTask task) {
         securityContext.secure(() -> securityContext.useAsRead(() -> {
-            final ClusterSearchResultCollector resultCollector = task.getResultCollector();
+            final ResultStore resultCollector = task.getResultStore();
 
             if (!parentContext.isTerminated()) {
                 final String sourceNode = targetNodeSetFactory.getSourceNode();
@@ -200,7 +201,7 @@ class AsyncSearchTaskHandler {
                     LOGGER.debug(() -> task.getSearchName() + " - complete");
 
                     // Ensure search is complete even if we had errors.
-                    resultCollector.complete();
+                    resultCollector.signalComplete();
 
                     // Await final completion and terminate all tasks.
                     awaitCompletionAndTerminate(resultCollector, parentContext, task);
@@ -252,7 +253,7 @@ class AsyncSearchTaskHandler {
                 .map(time -> time.toInstant().toEpochMilli()).orElse(null);
     }
 
-    private void awaitCompletionAndTerminate(final ClusterSearchResultCollector resultCollector,
+    private void awaitCompletionAndTerminate(final ResultStore resultCollector,
                                              final TaskContext parentContext,
                                              final AsyncSearchTask task) {
         // Wait for the result collector to complete.

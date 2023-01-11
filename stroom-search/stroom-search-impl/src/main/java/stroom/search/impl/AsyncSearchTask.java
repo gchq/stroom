@@ -16,11 +16,11 @@
 
 package stroom.search.impl;
 
-import stroom.index.impl.TimePartitionFactory;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.CoprocessorSettings;
+import stroom.query.common.v2.ResultStore;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -36,7 +36,7 @@ public class AsyncSearchTask {
     private final DateTimeSettings dateTimeSettings;
     private final long now;
 
-    private transient volatile ClusterSearchResultCollector resultCollector;
+    private transient volatile ResultStore resultStore;
 
     public AsyncSearchTask(final QueryKey key,
                            final String searchName,
@@ -76,11 +76,11 @@ public class AsyncSearchTask {
         return now;
     }
 
-    public ClusterSearchResultCollector getResultCollector() {
-        return resultCollector;
+    public ResultStore getResultStore() {
+        return resultStore;
     }
 
-    public void setResultCollector(final ClusterSearchResultCollector resultCollector) {
-        this.resultCollector = resultCollector;
+    public void setResultStore(final ResultStore resultStore) {
+        this.resultStore = resultStore;
     }
 }

@@ -20,6 +20,7 @@ package stroom.search.solr.search;
 import stroom.cluster.task.api.ClusterTaskTerminator;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.Coprocessors;
+import stroom.query.common.v2.ResultStore;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
@@ -57,13 +58,13 @@ public class SolrAsyncSearchTaskHandler {
     public void search(final TaskContext parentContext,
                      final SolrAsyncSearchTask task,
                      final Coprocessors coprocessors,
-                     final SolrSearchResultCollector resultCollector) {
+                     final ResultStore resultStore) {
         securityContext.secure(() -> securityContext.useAsRead(() -> {
             if (!Thread.currentThread().isInterrupted()) {
 
                 // Create an async call that will terminate the whole task if the coprocessors decide they have enough
                 // data.
-                CompletableFuture.runAsync(() -> awaitCompletionAndTerminate(resultCollector, parentContext, task),
+                CompletableFuture.runAsync(() -> awaitCompletionAndTerminate(resultStore, parentContext, task),
                         executorProvider.get());
 
                 try {
@@ -93,10 +94,10 @@ public class SolrAsyncSearchTaskHandler {
                     LOGGER.debug(() -> task.getSearchName() + " - complete");
 
                     // Ensure search is complete even if we had errors.
-                    resultCollector.signalComplete();
+                    resultStore.signalComplete();
 
                     // Await final completion and terminate all tasks.
-                    awaitCompletionAndTerminate(resultCollector, parentContext, task);
+                    awaitCompletionAndTerminate(resultStore, parentContext, task);
 
                     // We need to wait here for the client to keep getting results if
                     // this is an interactive search.
@@ -106,12 +107,12 @@ public class SolrAsyncSearchTaskHandler {
         }));
     }
 
-    private void awaitCompletionAndTerminate(final SolrSearchResultCollector resultCollector,
+    private void awaitCompletionAndTerminate(final ResultStore resultStore,
                                              final TaskContext parentContext,
                                              final SolrAsyncSearchTask task) {
         // Wait for the result collector to complete.
         try {
-            resultCollector.awaitCompletion();
+            resultStore.awaitCompletion();
         } catch (final InterruptedException e) {
             LOGGER.trace(e.getMessage(), e);
             // Keep interrupting this thread.
