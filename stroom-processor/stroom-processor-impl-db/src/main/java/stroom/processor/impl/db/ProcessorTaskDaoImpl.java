@@ -1095,9 +1095,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                         .where(Tables.PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(processorFilterId))
                         .execute());
                 LOGGER.debug("Logically deleted {} processor tasks for processorFilterId {}", count, processorFilterId);
-            } catch (DataAccessException e) {
-                if (e.getCause() != null
-                        && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
+            } catch (final DataAccessException e) {
+                if (e.getCause() != null && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
                     final var sqlEx = (SQLIntegrityConstraintViolationException) e.getCause();
                     LOGGER.debug("Expected constraint violation exception: " + sqlEx.getMessage(), e);
                 }
