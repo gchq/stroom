@@ -636,6 +636,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                             "(retries: " + currentRetry + ")");
                     Thread.sleep(sleepDurationMs);
                 } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
                     fatalError("Indexing terminated after " + currentRetry + " retries: " +
                             errorDetailMsg, ex);
                 }

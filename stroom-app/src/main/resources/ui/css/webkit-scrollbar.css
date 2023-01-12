@@ -26,6 +26,7 @@
 
 /* Track */
 ::-webkit-scrollbar-track {
+	background: var(--scrollbar-background-color);
 }
 
 /* Corner */

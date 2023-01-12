@@ -7,10 +7,15 @@ import stroom.util.logging.LogUtil;
 
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
+import org.flywaydb.core.api.MigrationInfo;
+import org.flywaydb.core.api.output.MigrateResult;
 
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.sql.DataSource;
 
 public final class FlywayUtil {
@@ -76,36 +81,39 @@ public final class FlywayUtil {
                 .baselineOnMigrate(true)
                 .load();
 
-        int pendingMigrations = flyway.info().pending().length;
+        final String statesInfo = Arrays.stream(flyway.info().all())
+                .collect(Collectors.groupingBy(MigrationInfo::getState))
+                .entrySet()
+                .stream()
+                .sorted(Entry.comparingByKey())
+                .map(entry -> entry.getKey() + ":" + entry.getValue().size())
+                .collect(Collectors.joining(", "));
 
-        if (pendingMigrations > 0) {
-            try {
-                LOGGER.info(() -> "Applying " +
-                        pendingMigrations +
-                        " Flyway DB migration(s) to " +
-                        moduleName +
-                        " in table " +
-                        flywayTableName +
-                        " from " +
-                        flywayLocations);
-
-                flyway.migrate();
-
-                LOGGER.info(() -> "Completed Flyway DB migration for " +
-                        moduleName +
-                        " in table " +
-                        flywayTableName);
-            } catch (FlywayException e) {
-                LOGGER.error(() -> "Error migrating " +
-                        moduleName +
-                        " database", e);
-                throw e;
-            }
-        } else {
-            LOGGER.info(() -> "No pending Flyway DB migration(s) for " +
-                    moduleName +
-                    " in " +
+        try {
+            LOGGER.info("{} - Validating existing and pending Flyway DB migration(s) ({}) " +
+                            "using history table '{}' from path {}",
+                    moduleName,
+                    statesInfo,
+                    flywayTableName,
                     flywayLocations);
+
+            // This will see if anything needs doing
+            final MigrateResult migrateResult = flyway.migrate();
+
+            if (migrateResult.migrationsExecuted > 0) {
+                LOGGER.info("{} - Successfully applied {} Flyway DB migrations using history table '{}'",
+                        moduleName,
+                        migrateResult.migrationsExecuted,
+                        flywayTableName);
+            } else {
+                LOGGER.info("{} - No Flyway DB migration(s) applied in path {}",
+                        moduleName,
+                        flywayLocations);
+            }
+
+        } catch (FlywayException e) {
+            LOGGER.error("{} - Error migrating database: {}", moduleName, e.getMessage(), e);
+            throw e;
         }
     }
 }

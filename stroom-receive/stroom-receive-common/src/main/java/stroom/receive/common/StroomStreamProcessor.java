@@ -43,6 +43,7 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -112,18 +113,17 @@ public class StroomStreamProcessor {
     public void processZipFile(final Path zipFilePath) {
         try (final StroomZipFile stroomZipFile = new StroomZipFile(zipFilePath)) {
             try {
-                for (final String baseName : stroomZipFile.getStroomZipNameSet().getBaseNameSet()) {
-                    // Add manifest.
-                    addEntry(stroomZipFile, baseName, StroomZipFileType.MANIFEST);
+                final List<StroomZipFileType> zipFileTypes = List.of(
+                        StroomZipFileType.MANIFEST,
+                        StroomZipFileType.META,
+                        StroomZipFileType.CONTEXT,
+                        StroomZipFileType.DATA);
 
-                    // Add meta data.
-                    addEntry(stroomZipFile, baseName, StroomZipFileType.META);
-
-                    // Add context data.
-                    addEntry(stroomZipFile, baseName, StroomZipFileType.CONTEXT);
-
-                    // Add data.
-                    addEntry(stroomZipFile, baseName, StroomZipFileType.DATA);
+                final List<String> baseNameList = stroomZipFile.getStroomZipNameSet().getBaseNameList();
+                for (final String baseName : baseNameList) {
+                    for (final StroomZipFileType zipFileType : zipFileTypes) {
+                        addEntry(stroomZipFile, baseName, zipFileType);
+                    }
                 }
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
@@ -140,7 +140,10 @@ public class StroomStreamProcessor {
         try (final InputStream inputStream =
                 stroomZipFile.getInputStream(baseName, stroomZipFileType)) {
             if (inputStream != null) {
-                handler.addEntry(baseName + stroomZipFileType.getExtension(), inputStream, progressHandler);
+                handler.addEntry(
+                        baseName + stroomZipFileType.getExtension(),
+                        inputStream,
+                        progressHandler);
             }
         }
     }
