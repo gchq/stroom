@@ -12,6 +12,10 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#3136** : Simplify code that finds effective reference data streams. Add more debug logging.
+
+* Issue **#3171** : Fix stroom booting successfully when there have been failed migrations.
+
 * Issue **#3136** : Fix the reference data lookup logic that determines if a ref stream contains a given map or not. Fix NPE in `RefDataLookupRequest#toString()`. Change `ReferenceDataResult` to hold message templates to reduce memory use. Change `RefDataStoreHolder` to only add available maps once per ref stream. Improve in app logging of lookups.
 
 * Issue **#3140** : Ignore processor filter updates on import.
