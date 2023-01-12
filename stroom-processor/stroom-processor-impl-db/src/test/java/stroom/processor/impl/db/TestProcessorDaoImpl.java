@@ -64,6 +64,6 @@ class TestProcessorDaoImpl extends AbstractProcessorTest {
         assertThat(getProcessorFilterCount(PROCESSOR_FILTER.DELETED.eq(true)))
                 .isEqualTo(1);
         assertThat(getProcessorTaskCount(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue())))
-                .isEqualTo(4);
+                .isEqualTo(2);
     }
 }
