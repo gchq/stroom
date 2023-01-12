@@ -18,6 +18,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
 
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
@@ -107,7 +109,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         processorFilterRecord.from(marshalled);
         processorFilterRecord.setFkProcessorId(marshalled.getProcessor().getId());
 
-        final ProcessorFilterRecord stored = JooqUtil.transactionResult(processorDbConnProvider, context -> {
+        final Tuple2<ProcessorFilterRecord, ProcessorFilterTracker> result = JooqUtil.transactionResult(processorDbConnProvider, context -> {
             processorFilterTrackerRecord.attach(context.configuration());
             processorFilterTrackerRecord.store();
 
@@ -119,14 +121,16 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
             processorFilterRecord.attach(context.configuration());
             processorFilterRecord.store();
 
-            return processorFilterRecord;
+            return Tuple.of(processorFilterRecord, persistedTracker);
         });
 
-        final ProcessorFilter result = stored.into(ProcessorFilter.class);
-        result.setProcessorFilterTracker(result.getProcessorFilterTracker());
-        result.setProcessor(result.getProcessor());
+        final ProcessorFilterRecord processorFilterRecord2 = result._1;
+        final ProcessorFilterTracker processorFilterTracker = result._2;
+        final ProcessorFilter processorFilter2 = processorFilterRecord2.into(ProcessorFilter.class);
+        processorFilter2.setProcessorFilterTracker(processorFilterTracker);
+        processorFilter2.setProcessor(processorFilter.getProcessor());
 
-        return marshaller.unmarshal(result);
+        return marshaller.unmarshal(processorFilter2);
     }
 
     @Override

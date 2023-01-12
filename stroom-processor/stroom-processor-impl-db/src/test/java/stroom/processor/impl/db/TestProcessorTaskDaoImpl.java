@@ -3,6 +3,8 @@ package stroom.processor.impl.db;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.TaskStatus;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +14,8 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestProcessorTaskDaoImpl.class);
 
     @Test
     void testReleaseOwnedTasks() {

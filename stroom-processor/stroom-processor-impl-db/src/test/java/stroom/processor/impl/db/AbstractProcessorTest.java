@@ -13,11 +13,13 @@ import stroom.node.api.NodeInfo;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.impl.ProcessorDao;
 import stroom.processor.impl.ProcessorFilterDao;
+import stroom.processor.impl.ProcessorFilterTrackerDao;
 import stroom.processor.impl.ProcessorTaskDao;
 import stroom.processor.impl.ProcessorTaskManager;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorTaskRecord;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.TaskStatus;
@@ -37,6 +39,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mockito;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -44,6 +47,7 @@ import javax.inject.Inject;
 
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
+import static stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker.PROCESSOR_FILTER_TRACKER;
 import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 
 class AbstractProcessorTest {
@@ -58,6 +62,8 @@ class AbstractProcessorTest {
     protected ProcessorDao processorDao;
     @Inject
     protected ProcessorFilterDao processorFilterDao;
+    @Inject
+    protected ProcessorFilterTrackerDao processorFilterTrackerDao;
     @Inject
     protected ProcessorTaskDao processorTaskDao;
     @Inject
@@ -164,6 +170,22 @@ class AbstractProcessorTest {
         return processorFilterDao.create(processorFilter);
     }
 
+    protected ProcessorFilterTracker createProcessorFilterTracker(final ProcessorFilter processorFilter,
+                                                                  final boolean isComplete) {
+        final ProcessorFilterTracker processorFilterTracker = new ProcessorFilterTracker();
+        if (isComplete) {
+            processorFilterTracker.setStatus(ProcessorFilterTracker.COMPLETE);
+        }
+        processorFilterTracker.setMinMetaId(1);
+        processorFilterTracker.setMinEventId(1);
+        processorFilterTracker.setLastPollMs(Instant.now().toEpochMilli());
+
+        final ProcessorFilterTracker processorFilterTracker2 = processorFilterTrackerDao.create(processorFilterTracker);
+        processorFilter.setProcessorFilterTracker(processorFilterTracker2);
+
+        return processorFilterTracker2;
+    }
+
     protected void createProcessorTask(final ProcessorFilter processorFilter,
                                        final TaskStatus taskStatus,
                                        final String nodeName,
@@ -193,6 +215,10 @@ class AbstractProcessorTest {
         return JooqUtil.getTableCountWhen(processorDbConnProvider, PROCESSOR_FILTER, condition);
     }
 
+    protected int getProcessorFilterTrackerCount(final Condition condition) {
+        return JooqUtil.getTableCountWhen(processorDbConnProvider, PROCESSOR_FILTER_TRACKER, condition);
+    }
+
     protected int getProcessorTaskCount(final Condition condition) {
         return JooqUtil.getTableCountWhen(processorDbConnProvider, PROCESSOR_TASK, condition);
     }
@@ -207,28 +233,56 @@ class AbstractProcessorTest {
 
     public void dumpProcessorTable() {
         JooqUtil.context(getProcessorDbConnProvider(), context -> {
-            LOGGER.info("processor:\n{}", JooqUtil.toAsciiTable(context.select(
+            LOGGER.debug("processor:\n{}", JooqUtil.toAsciiTable(context.select(
                             PROCESSOR.ID,
                             PROCESSOR.PIPELINE_UUID,
                             PROCESSOR.UUID,
                             PROCESSOR.DELETED,
                             PROCESSOR.ENABLED,
-                            PROCESSOR.TASK_TYPE)
+                            PROCESSOR.TASK_TYPE,
+                            PROCESSOR.UPDATE_TIME_MS)
                     .from(PROCESSOR)
                     .orderBy(PROCESSOR.ID)
                     .fetch(), false));
         });
     }
 
+    public void dumpProcessorFilterTable() {
+        JooqUtil.context(getProcessorDbConnProvider(), context -> {
+            LOGGER.debug("processor_filter:\n{}", JooqUtil.toAsciiTable(context.select(
+                            PROCESSOR_FILTER.ID,
+                            PROCESSOR_FILTER.FK_PROCESSOR_ID,
+                            PROCESSOR_FILTER.DELETED,
+                            PROCESSOR_FILTER.ENABLED,
+                            PROCESSOR_FILTER.UPDATE_TIME_MS)
+                    .from(PROCESSOR_FILTER)
+                    .orderBy(PROCESSOR_FILTER.ID)
+                    .fetch(), false));
+        });
+    }
+
+    public void dumpProcessorFilterTrackerTable() {
+        JooqUtil.context(getProcessorDbConnProvider(), context -> {
+            LOGGER.debug("processor_filter_tracker:\n{}", JooqUtil.toAsciiTable(context.select(
+                            PROCESSOR_FILTER_TRACKER.ID,
+                            PROCESSOR_FILTER_TRACKER.LAST_POLL_MS,
+                            PROCESSOR_FILTER_TRACKER.STATUS)
+                    .from(PROCESSOR_FILTER_TRACKER)
+                    .orderBy(PROCESSOR_FILTER_TRACKER.ID)
+                    .fetch(), false));
+        });
+    }
+
     public void dumpProcessorTaskTable() {
         JooqUtil.context(getProcessorDbConnProvider(), context -> {
-            LOGGER.info("processor_task:\n{}", JooqUtil.toAsciiTable(context.select(
+            LOGGER.debug("processor_task:\n{}", JooqUtil.toAsciiTable(context.select(
                             PROCESSOR_TASK.ID,
                             PROCESSOR_TASK.META_ID,
                             PROCESSOR_TASK.STATUS,
                             PROCESSOR_TASK.FK_PROCESSOR_NODE_ID,
                             PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID,
-                            PROCESSOR_TASK.FK_PROCESSOR_FEED_ID)
+                            PROCESSOR_TASK.FK_PROCESSOR_FEED_ID,
+                            PROCESSOR_TASK.STATUS_TIME_MS)
                     .from(PROCESSOR_TASK)
                     .orderBy(PROCESSOR_TASK.ID)
                     .fetch(), false));
