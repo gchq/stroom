@@ -48,7 +48,6 @@ import static stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker.PROCES
 class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorFilterDaoImpl.class);
-
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterDaoImpl.class);
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.of(
@@ -109,20 +108,22 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         processorFilterRecord.from(marshalled);
         processorFilterRecord.setFkProcessorId(marshalled.getProcessor().getId());
 
-        final Tuple2<ProcessorFilterRecord, ProcessorFilterTracker> result = JooqUtil.transactionResult(processorDbConnProvider, context -> {
-            processorFilterTrackerRecord.attach(context.configuration());
-            processorFilterTrackerRecord.store();
+        final Tuple2<ProcessorFilterRecord, ProcessorFilterTracker> result = JooqUtil.transactionResult(
+                processorDbConnProvider,
+                context -> {
+                    processorFilterTrackerRecord.attach(context.configuration());
+                    processorFilterTrackerRecord.store();
 
-            final ProcessorFilterTracker persistedTracker =
-                    processorFilterTrackerRecord.into(ProcessorFilterTracker.class);
-            marshalled.setProcessorFilterTracker(persistedTracker);
-            processorFilterRecord.setFkProcessorFilterTrackerId(persistedTracker.getId());
+                    final ProcessorFilterTracker persistedTracker =
+                            processorFilterTrackerRecord.into(ProcessorFilterTracker.class);
+                    marshalled.setProcessorFilterTracker(persistedTracker);
+                    processorFilterRecord.setFkProcessorFilterTrackerId(persistedTracker.getId());
 
-            processorFilterRecord.attach(context.configuration());
-            processorFilterRecord.store();
+                    processorFilterRecord.attach(context.configuration());
+                    processorFilterRecord.store();
 
-            return Tuple.of(processorFilterRecord, persistedTracker);
-        });
+                    return Tuple.of(processorFilterRecord, persistedTracker);
+                });
 
         final ProcessorFilterRecord processorFilterRecord2 = result._1;
         final ProcessorFilterTracker processorFilterTracker = result._2;
@@ -212,8 +213,8 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                                         .or(PROCESSOR_FILTER_TRACKER.STATUS.eq(ProcessorFilterTracker.ERROR)))
                                 .and(PROCESSOR_FILTER_TRACKER.LAST_POLL_MS.lessThan(deleteThreshold.toEpochMilli()))))
                 .execute();
-        LOGGER.debug("Logically deleted {} processor filters that were complete",
-                count);
+        LOGGER.debug("Logically deleted {} processor filters with a state of (COMPLETE|ERROR) and last poll before {}",
+                count, deleteThreshold);
         return count;
     }
 
@@ -226,6 +227,9 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                         .where(PROCESSOR_FILTER.DELETED.eq(true))
                         .and(PROCESSOR_FILTER.UPDATE_TIME_MS.lessThan(deleteThreshold.toEpochMilli()))
                         .fetch());
+        LAMBDA_LOGGER.debug(() ->
+                LogUtil.message("Found {} logically deleted filters with an update time older than {}",
+                        result.size(), deleteThreshold));
 
         // Delete one by one as we expect some constraint errors.
         result.forEach(record -> {

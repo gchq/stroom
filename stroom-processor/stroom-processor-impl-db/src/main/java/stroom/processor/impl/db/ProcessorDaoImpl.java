@@ -9,13 +9,14 @@ import stroom.processor.impl.ProcessorDao;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorRecord;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFields;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
 
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.exception.DataAccessException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.Instant;
@@ -29,7 +30,7 @@ import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FIL
 
 class ProcessorDaoImpl implements ProcessorDao {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorDaoImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorDaoImpl.class);
 
     private final ProcessorDbConnProvider processorDbConnProvider;
     private final GenericDao<ProcessorRecord, Processor, Integer> genericDao;
@@ -150,6 +151,8 @@ class ProcessorDaoImpl implements ProcessorDao {
                         .where(PROCESSOR.DELETED.eq(true))
                         .and(PROCESSOR.UPDATE_TIME_MS.lessThan(deleteThreshold.toEpochMilli()))
                         .fetch(PROCESSOR.ID));
+        LOGGER.debug(() -> LogUtil.message("Found {} logically deleted processors with an update time older than {}",
+                result.size(), deleteThreshold));
 
         // Delete one by one as we expect some constraint errors.
         result.forEach(processorId -> {

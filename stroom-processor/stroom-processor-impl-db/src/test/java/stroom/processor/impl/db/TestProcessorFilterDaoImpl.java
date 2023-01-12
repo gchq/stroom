@@ -18,7 +18,7 @@ import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
 import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 
-class TestProcessorFilterDaoImpl extends AbstractProcessorTest{
+class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestProcessorFilterDaoImpl.class);
 
@@ -204,7 +204,7 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest{
         final ProcessorFilterTracker processorFilterTracker2 = processorFilter2.getProcessorFilterTracker();
 
         Assertions.assertThat(processorFilter1.getProcessor())
-                        .isEqualTo(processorFilter2.getProcessor());
+                .isEqualTo(processorFilter2.getProcessor());
         Assertions.assertThat(processorFilter1.getProcessorFilterTracker())
                 .isEqualTo(processorFilter2.getProcessorFilterTracker());
         Assertions.assertThat(processorFilterTracker1.getId())

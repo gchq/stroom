@@ -112,6 +112,7 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
         });
     }
 
+    // Only public for testing by stroom-app it seems
     @Override
     public void delete(final Instant deleteThreshold) {
         // Logically delete tasks that are associated with filters that have been logically deleted for longer than the
