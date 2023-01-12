@@ -221,10 +221,6 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                         .from(PROCESSOR_FILTER)
                         .where(PROCESSOR_FILTER.DELETED.eq(true))
                         .and(PROCESSOR_FILTER.UPDATE_TIME_MS.lessThan(deleteThreshold.toEpochMilli()))
-//                .and(DSL.notExists(
-//                        DSL.selectZero()
-//                                .from(PROCESSOR_TASK)
-//                                .where(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID))))
                         .fetch());
 
         // Delete one by one as we expect some constraint errors.
@@ -246,9 +242,8 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                             .where(PROCESSOR_FILTER_TRACKER.ID.eq(processorFilterTrackerId))
                             .execute();
                 });
-            } catch (DataAccessException e) {
-                if (e.getCause() != null
-                        && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
+            } catch (final DataAccessException e) {
+                if (e.getCause() != null && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
                     final var sqlEx = (SQLIntegrityConstraintViolationException) e.getCause();
                     LOGGER.debug("Expected constraint violation exception: " + sqlEx.getMessage(), e);
                 }

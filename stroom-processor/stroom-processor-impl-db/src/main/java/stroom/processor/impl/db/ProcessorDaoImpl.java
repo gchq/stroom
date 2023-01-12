@@ -159,9 +159,8 @@ class ProcessorDaoImpl implements ProcessorDao {
                         .deleteFrom(PROCESSOR)
                         .where(PROCESSOR.ID.eq(processorId))
                         .execute());
-            } catch (DataAccessException e) {
-                if (e.getCause() != null
-                        && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
+            } catch (final DataAccessException e) {
+                if (e.getCause() != null && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
                     final var sqlEx = (SQLIntegrityConstraintViolationException) e.getCause();
                     LOGGER.debug("Expected constraint violation exception: " + sqlEx.getMessage(), e);
                 }
