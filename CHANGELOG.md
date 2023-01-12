@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+* Issue **#3171** : Fix stroom booting successfully when there have been failed migrations.
+
 
 ## [v7.1-beta.18] - 2023-01-06
 
