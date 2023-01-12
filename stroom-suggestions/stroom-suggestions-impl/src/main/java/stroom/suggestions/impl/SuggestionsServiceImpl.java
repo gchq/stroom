@@ -33,15 +33,20 @@ public class SuggestionsServiceImpl implements SuggestionsService {
     }
 
     @Override
-    public List<String> fetch(final FetchSuggestionsRequest request) {
+    public List<String> fetch(final FetchSuggestionsRequest request) throws RuntimeException {
         final String dataSourceType = request.getDataSource().getType();
 
         return securityContext.secureResult(() -> {
-            if (dataSourceType != null && providerMap.containsKey(dataSourceType)) {
-                final SuggestionsQueryHandler queryHandler = providerMap.get(dataSourceType).get();
-                return queryHandler.getSuggestions(request);
+            if (dataSourceType != null) {
+                if (providerMap.containsKey(dataSourceType)) {
+                    final SuggestionsQueryHandler queryHandler = providerMap.get(dataSourceType).get();
+                    return queryHandler.getSuggestions(request);
+                } else {
+                    throw new RuntimeException("Suggestions provider not registered for type: " + dataSourceType);
+                }
+            } else {
+                throw new RuntimeException("Data source type not defined");
             }
-            return Collections.emptyList();
         });
     }
 }
