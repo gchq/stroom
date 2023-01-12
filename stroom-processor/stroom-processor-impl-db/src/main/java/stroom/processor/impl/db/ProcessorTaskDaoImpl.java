@@ -24,6 +24,7 @@ import stroom.processor.api.InclusiveRanges.InclusiveRange;
 import stroom.processor.impl.CreatedTasks;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorTaskDao;
+import stroom.processor.impl.db.jooq.Tables;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorTaskRecord;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
@@ -300,7 +301,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     /**
      * Retain task ownership
      *
-     * @param retainForNodes    A set of nodes to retain task ownership for.
+     * @param retainForNodes  A set of nodes to retain task ownership for.
      * @param statusOlderThan Change task ownership for tasks that have a status older than this.
      */
     @Override
@@ -1031,6 +1032,59 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 .stream()
                 .map(DocRef::getUuid)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public int logicalDeleteByProcessorFilterId(final int processorFilterId) {
+        final int count = JooqUtil.contextResult(processorDbConnProvider, context -> context
+                .update(Tables.PROCESSOR_TASK)
+                .set(Tables.PROCESSOR_TASK.STATUS, TaskStatus.DELETED.getPrimitiveValue())
+                .set(Tables.PROCESSOR_TASK.VERSION, Tables.PROCESSOR_TASK.VERSION.plus(1))
+                .set(Tables.PROCESSOR_TASK.STATUS_TIME_MS, Instant.now().toEpochMilli())
+                .where(Tables.PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(processorFilterId))
+                .and(Tables.PROCESSOR_TASK.STATUS.in(
+                        TaskStatus.UNPROCESSED.getPrimitiveValue(),
+                        TaskStatus.ASSIGNED.getPrimitiveValue()))
+                .execute());
+        LOGGER.debug("Logically deleted {} processor tasks", count);
+        return count;
+    }
+
+    @Override
+    public int logicalDeleteByProcessorId(final int processorId) {
+        final int count = JooqUtil.contextResult(processorDbConnProvider, context -> context
+                .update(Tables.PROCESSOR_TASK)
+                .set(Tables.PROCESSOR_TASK.STATUS, TaskStatus.DELETED.getPrimitiveValue())
+                .set(Tables.PROCESSOR_TASK.VERSION, Tables.PROCESSOR_TASK.VERSION.plus(1))
+                .set(Tables.PROCESSOR_TASK.STATUS_TIME_MS, Instant.now().toEpochMilli())
+                .where(DSL.exists(
+                        DSL.selectZero()
+                                .from(PROCESSOR_FILTER)
+                                .innerJoin(PROCESSOR)
+                                .on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
+                                .where(PROCESSOR.ID.eq(processorId))
+                                .and(PROCESSOR_FILTER.ID.eq(Tables.PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID))))
+                .and(Tables.PROCESSOR_TASK.STATUS.in(
+                        TaskStatus.UNPROCESSED.getPrimitiveValue(),
+                        TaskStatus.ASSIGNED.getPrimitiveValue()))
+                .execute());
+        LOGGER.debug("Logically deleted {} processor tasks", count);
+        return count;
+    }
+
+    @Override
+    public int physicallyDeleteOldTasks(final Instant deleteThreshold) {
+        LOGGER.debug("Deleting old COMPLETE or DELETED processor tasks");
+        final int count = JooqUtil.contextResult(processorDbConnProvider, context ->
+                context
+                        .deleteFrom(PROCESSOR_TASK)
+                        .where(PROCESSOR_TASK.STATUS.eq(TaskStatus.COMPLETE.getPrimitiveValue())
+                                .or(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue())))
+                        .and(PROCESSOR_TASK.STATUS_TIME_MS.isNull()
+                                .or(PROCESSOR_TASK.STATUS_TIME_MS.lessThan(deleteThreshold.toEpochMilli())))
+                        .execute());
+        LOGGER.debug("Physically deleted {} processor tasks", count);
+        return count;
     }
 
     private static class CreationState {

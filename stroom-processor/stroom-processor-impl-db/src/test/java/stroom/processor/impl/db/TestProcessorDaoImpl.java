@@ -51,7 +51,7 @@ class TestProcessorDaoImpl extends AbstractProcessorTest {
         dumpProcessorTable();
         dumpProcessorTaskTable();
 
-        processorDao.logicalDelete(processor1.getId());
+        processorDao.logicalDeleteByProcessorId(processor1.getId());
 
         dumpProcessorTable();
         dumpProcessorTaskTable();
