@@ -246,8 +246,9 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 if (e.getCause() != null && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
                     final var sqlEx = (SQLIntegrityConstraintViolationException) e.getCause();
                     LOGGER.debug("Expected constraint violation exception: " + sqlEx.getMessage(), e);
+                } else {
+                    throw e;
                 }
-                throw e;
             }
         });
     }
