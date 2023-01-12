@@ -1073,6 +1073,33 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     }
 
     @Override
+    public void logicalDeleteForDeletedProcessorFilters(final Instant deleteThreshold) {
+        final List<Integer> result =
+                JooqUtil.contextResult(processorDbConnProvider, context -> context
+                        .select(PROCESSOR_FILTER.ID)
+                        .from(PROCESSOR_FILTER)
+                        .where(PROCESSOR_FILTER.DELETED.eq(true))
+                        .and(PROCESSOR_FILTER.UPDATE_TIME_MS.lessThan(deleteThreshold.toEpochMilli()))
+                        .fetch(PROCESSOR_FILTER.ID));
+
+        // Delete one by one.
+        result.forEach(processorFilterId -> {
+            try {
+                final int count = JooqUtil.contextResult(processorDbConnProvider, context -> context
+                        .update(Tables.PROCESSOR_TASK)
+                        .set(Tables.PROCESSOR_TASK.STATUS, TaskStatus.DELETED.getPrimitiveValue())
+                        .set(Tables.PROCESSOR_TASK.VERSION, Tables.PROCESSOR_TASK.VERSION.plus(1))
+                        .set(Tables.PROCESSOR_TASK.STATUS_TIME_MS, Instant.now().toEpochMilli())
+                        .where(Tables.PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(processorFilterId))
+                        .execute());
+                LOGGER.debug("Logically deleted {} processor tasks", count);
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e.getMessage(), e);
+            }
+        });
+    }
+
+    @Override
     public int physicallyDeleteOldTasks(final Instant deleteThreshold) {
         LOGGER.debug("Deleting old COMPLETE or DELETED processor tasks");
         final int count = JooqUtil.contextResult(processorDbConnProvider, context ->

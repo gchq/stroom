@@ -99,7 +99,8 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
                     if (!deleteAge.isZero()) {
                         final Instant deleteThreshold = TimeUtils.durationToThreshold(deleteAge);
                         LOGGER.info(TASK_NAME + " - using deleteAge: {}, deleteThreshold: {}",
-                                deleteAge, deleteThreshold);
+                                deleteAge,
+                                deleteThreshold);
                         // Delete qualifying records prior to this date.
                         delete(deleteThreshold);
                     }
@@ -113,16 +114,20 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
 
     @Override
     public void delete(final Instant deleteThreshold) {
-        // Physically delete tasks that are logically deleted or complete for longer than the threshold.
-        processorTaskDao.physicallyDeleteOldTasks(deleteThreshold);
+        // Logically delete tasks that are associated with filters that have been logically deleted for longer than the
+        // threshold.
+        processorTaskDao.logicalDeleteForDeletedProcessorFilters(deleteThreshold);
 
         // Logically delete completed processor filters.
         processorFilterDao.logicallyDeleteOldProcessorFilters(deleteThreshold);
 
-        // Delete old filters.
+        // Physically delete tasks that are logically deleted or complete for longer than the threshold.
+        processorTaskDao.physicallyDeleteOldTasks(deleteThreshold);
+
+        // Physically delete old filters.
         processorFilterDao.physicalDeleteOldProcessorFilters(deleteThreshold);
 
-        // Delete old processors.
+        // Physically delete old processors.
         processorDao.physicalDeleteOldProcessors(deleteThreshold);
     }
 }
