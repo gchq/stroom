@@ -55,8 +55,10 @@ import org.jooq.Record;
 import org.jooq.Record3;
 import org.jooq.Record5;
 import org.jooq.Result;
+import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -1093,8 +1095,13 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                         .where(Tables.PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(processorFilterId))
                         .execute());
                 LOGGER.debug("Logically deleted {} processor tasks for processorFilterId {}", count, processorFilterId);
-            } catch (final RuntimeException e) {
-                LOGGER.debug(e.getMessage(), e);
+            } catch (DataAccessException e) {
+                if (e.getCause() != null
+                        && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
+                    final var sqlEx = (SQLIntegrityConstraintViolationException) e.getCause();
+                    LOGGER.debug("Expected constraint violation exception: " + sqlEx.getMessage(), e);
+                }
+                throw e;
             }
         });
     }
