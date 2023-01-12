@@ -6,10 +6,10 @@ import stroom.feed.api.FeedStore;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.PipelineStore;
-import stroom.query.impl.SuggestionsService;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
+import stroom.suggestions.api.SuggestionsService;
 import stroom.task.api.SimpleTaskContextFactory;
 import stroom.task.api.TaskContextFactory;
 

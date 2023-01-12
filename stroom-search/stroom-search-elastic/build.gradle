@@ -18,7 +18,7 @@ dependencies {
     implementation project(':stroom-query:stroom-expression')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
-    implementation project(':stroom-query:stroom-query-impl')
+    implementation project(':stroom-suggestions:stroom-suggestions-api')
     implementation project(path: ":stroom-search:elastic-shaded", configuration: 'shadow') // Use shadow JAR
     implementation project(':stroom-search:stroom-search-extraction')
     implementation project(':stroom-search:stroom-search-api')

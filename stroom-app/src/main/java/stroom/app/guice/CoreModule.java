@@ -73,7 +73,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.pipeline.xsltfunctions.DataStoreXsltFunctionModule());
         install(new stroom.processor.impl.ProcessorModule());
         install(new stroom.processor.impl.db.ProcessorDaoModule());
-        install(new stroom.query.impl.SuggestModule());
+        install(new stroom.suggestions.impl.SuggestModule());
         install(new stroom.receive.common.RemoteFeedModule());
         install(new stroom.receive.rules.impl.ReceiveDataRuleSetModule());
         install(new stroom.search.extraction.ExtractionModule());

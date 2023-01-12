@@ -1,6 +1,6 @@
 package stroom.search.elastic.suggest;
 
-import stroom.query.impl.SuggestionsQueryHandler;
+import stroom.suggestions.api.SuggestionsQueryHandler;
 
 public interface ElasticSuggestionsQueryHandler extends SuggestionsQueryHandler {
 

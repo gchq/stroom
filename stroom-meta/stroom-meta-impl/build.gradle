@@ -21,7 +21,7 @@ dependencies {
     implementation project(':stroom-query:stroom-expression')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
-    implementation project(':stroom-query:stroom-query-impl')
+    implementation project(':stroom-suggestions:stroom-suggestions-api')
     implementation project(':stroom-search:stroom-expression-matcher')
     implementation project(':stroom-search:stroom-searchable-api')
     implementation project(':stroom-security:stroom-security-api')

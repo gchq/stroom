@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.query.impl;
+package stroom.suggestions.impl;
 
+import stroom.suggestions.api.SuggestionsService;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;

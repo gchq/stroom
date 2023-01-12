@@ -1,7 +1,9 @@
-package stroom.query.impl;
+package stroom.suggestions.impl;
 
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.security.api.SecurityContext;
+import stroom.suggestions.api.SuggestionsQueryHandler;
+import stroom.suggestions.api.SuggestionsService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

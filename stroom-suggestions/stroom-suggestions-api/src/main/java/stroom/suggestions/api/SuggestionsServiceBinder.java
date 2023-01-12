@@ -1,4 +1,4 @@
-package stroom.query.impl;
+package stroom.suggestions.api;
 
 import com.google.inject.Binder;
 import com.google.inject.multibindings.MapBinder;
