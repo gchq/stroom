@@ -13,9 +13,6 @@ import stroom.util.shared.ResultPage;
 
 import org.jooq.Condition;
 import org.jooq.DSLContext;
-import org.jooq.Record2;
-import org.jooq.Result;
-import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,8 +24,6 @@ import javax.inject.Inject;
 
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
-import static stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker.PROCESSOR_FILTER_TRACKER;
-import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 
 class ProcessorDaoImpl implements ProcessorDao {
 
@@ -147,7 +142,7 @@ class ProcessorDaoImpl implements ProcessorDao {
     @Override
     public void physicalDeleteOldProcessors(final Instant deleteThreshold) {
         final List<Integer> result =
-                JooqUtil.contextResult(processorDbConnProvider, context ->                context
+                JooqUtil.contextResult(processorDbConnProvider, context -> context
                         .select(PROCESSOR.ID)
                         .from(PROCESSOR)
                         .where(PROCESSOR.DELETED.eq(true))
