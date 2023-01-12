@@ -111,7 +111,9 @@ class ProcessorDaoImpl implements ProcessorDao {
 
     @Override
     public boolean delete(final int id) {
-        return genericDao.delete(id);
+        // We don't want to allow direct physical delete, only logical delete.
+        return logicalDeleteByProcessorId(id) > 0;
+        //genericDao.delete(id);
     }
 
     @Override
