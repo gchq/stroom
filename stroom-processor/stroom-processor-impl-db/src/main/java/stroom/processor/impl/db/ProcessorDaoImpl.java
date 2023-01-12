@@ -13,9 +13,11 @@ import stroom.util.shared.ResultPage;
 
 import org.jooq.Condition;
 import org.jooq.DSLContext;
+import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
@@ -157,8 +159,13 @@ class ProcessorDaoImpl implements ProcessorDao {
                         .deleteFrom(PROCESSOR)
                         .where(PROCESSOR.ID.eq(processorId))
                         .execute());
-            } catch (final RuntimeException e) {
-                LOGGER.debug(e.getMessage(), e);
+            } catch (DataAccessException e) {
+                if (e.getCause() != null
+                        && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
+                    final var sqlEx = (SQLIntegrityConstraintViolationException) e.getCause();
+                    LOGGER.debug("Expected constraint violation exception: " + sqlEx.getMessage(), e);
+                }
+                throw e;
             }
         });
     }

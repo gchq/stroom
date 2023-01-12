@@ -25,10 +25,12 @@ import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Record2;
 import org.jooq.Result;
+import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
@@ -244,8 +246,13 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                             .where(PROCESSOR_FILTER_TRACKER.ID.eq(processorFilterTrackerId))
                             .execute();
                 });
-            } catch (final RuntimeException e) {
-                LOGGER.debug(e.getMessage(), e);
+            } catch (DataAccessException e) {
+                if (e.getCause() != null
+                        && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
+                    final var sqlEx = (SQLIntegrityConstraintViolationException) e.getCause();
+                    LOGGER.debug("Expected constraint violation exception: " + sqlEx.getMessage(), e);
+                }
+                throw e;
             }
         });
     }

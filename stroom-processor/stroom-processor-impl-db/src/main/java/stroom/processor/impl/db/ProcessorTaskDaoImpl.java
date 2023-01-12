@@ -1092,7 +1092,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                         .set(Tables.PROCESSOR_TASK.STATUS_TIME_MS, Instant.now().toEpochMilli())
                         .where(Tables.PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(processorFilterId))
                         .execute());
-                LOGGER.debug("Logically deleted {} processor tasks", count);
+                LOGGER.debug("Logically deleted {} processor tasks for processorFilterId {}", count, processorFilterId);
             } catch (final RuntimeException e) {
                 LOGGER.debug(e.getMessage(), e);
             }
