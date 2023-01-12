@@ -25,6 +25,8 @@ import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.mock.MockTaskModule;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.util.db.ForceLegacyMigration;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
@@ -46,6 +48,8 @@ import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 
 class AbstractProcessorTest {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractProcessorTest.class);
+
     protected static final String NODE1 = "node1";
     protected static final String NODE2 = "node2";
     protected static final String FEED = "MY_FEED";
@@ -66,9 +70,11 @@ class AbstractProcessorTest {
     @Inject
     protected Set<Clearable> clearables;
 
+    protected Injector injector;
+
     @BeforeEach
     void beforeEach() {
-        final Injector injector = Guice.createInjector(
+        injector = Guice.createInjector(
                 new ProcessorDaoModule(),
                 new ProcessorDbModule(),
                 new CacheModule(),
@@ -189,5 +195,43 @@ class AbstractProcessorTest {
 
     protected int getProcessorTaskCount(final Condition condition) {
         return JooqUtil.getTableCountWhen(processorDbConnProvider, PROCESSOR_TASK, condition);
+    }
+
+    public Injector getInjector() {
+        return injector;
+    }
+
+    public ProcessorDbConnProvider getProcessorDbConnProvider() {
+        return injector.getInstance(ProcessorDbConnProvider.class);
+    }
+
+    public void dumpProcessorTable() {
+        JooqUtil.context(getProcessorDbConnProvider(), context -> {
+            LOGGER.info("processor:\n{}", JooqUtil.toAsciiTable(context.select(
+                            PROCESSOR.ID,
+                            PROCESSOR.PIPELINE_UUID,
+                            PROCESSOR.UUID,
+                            PROCESSOR.DELETED,
+                            PROCESSOR.ENABLED,
+                            PROCESSOR.TASK_TYPE)
+                    .from(PROCESSOR)
+                    .orderBy(PROCESSOR.ID)
+                    .fetch(), false));
+        });
+    }
+
+    public void dumpProcessorTaskTable() {
+        JooqUtil.context(getProcessorDbConnProvider(), context -> {
+            LOGGER.info("processor_task:\n{}", JooqUtil.toAsciiTable(context.select(
+                            PROCESSOR_TASK.ID,
+                            PROCESSOR_TASK.META_ID,
+                            PROCESSOR_TASK.STATUS,
+                            PROCESSOR_TASK.FK_PROCESSOR_NODE_ID,
+                            PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID,
+                            PROCESSOR_TASK.FK_PROCESSOR_FEED_ID)
+                    .from(PROCESSOR_TASK)
+                    .orderBy(PROCESSOR_TASK.ID)
+                    .fetch(), false));
+        });
     }
 }

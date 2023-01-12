@@ -17,6 +17,7 @@ import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -119,6 +120,7 @@ class ProcessorDaoImpl implements ProcessorDao {
                         .update(PROCESSOR_TASK)
                         .set(PROCESSOR_TASK.STATUS, TaskStatus.DELETED.getPrimitiveValue())
                         .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
+                        .set(PROCESSOR_TASK.STATUS_TIME_MS, Instant.now().toEpochMilli())
                         .where(DSL.exists(
                                 DSL.selectZero()
                                         .from(PROCESSOR_FILTER)
@@ -139,6 +141,7 @@ class ProcessorDaoImpl implements ProcessorDao {
                         .update(PROCESSOR_FILTER)
                         .set(PROCESSOR_FILTER.DELETED, true)
                         .set(PROCESSOR_FILTER.VERSION, PROCESSOR_FILTER.VERSION.plus(1))
+                        .set(PROCESSOR_FILTER.UPDATE_TIME_MS, Instant.now().toEpochMilli())
                         .where(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(id))
                         .execute();
                 LOGGER.debug("Logically deleted {} filters for processor Id {}",
@@ -148,6 +151,7 @@ class ProcessorDaoImpl implements ProcessorDao {
                         .update(PROCESSOR)
                         .set(PROCESSOR.DELETED, true)
                         .set(PROCESSOR.VERSION, PROCESSOR.VERSION.plus(1))
+                        .set(PROCESSOR.UPDATE_TIME_MS, Instant.now().toEpochMilli())
                         .where(PROCESSOR.ID.eq(id))
                         .execute();
 

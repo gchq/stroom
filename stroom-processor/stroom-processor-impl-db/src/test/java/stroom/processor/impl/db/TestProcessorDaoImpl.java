@@ -48,7 +48,13 @@ class TestProcessorDaoImpl extends AbstractProcessorTest {
         assertThat(getProcessorTaskCount(null))
                 .isEqualTo(6);
 
+        dumpProcessorTable();
+        dumpProcessorTaskTable();
+
         processorDao.logicalDelete(processor1.getId());
+
+        dumpProcessorTable();
+        dumpProcessorTaskTable();
 
         // No change to row counts as they have been logically deleted
         assertThat(getProcessorCount(null))

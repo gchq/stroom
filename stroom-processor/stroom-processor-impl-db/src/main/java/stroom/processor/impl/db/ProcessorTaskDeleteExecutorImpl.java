@@ -130,7 +130,7 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
     public void delete(final Instant deleteThreshold) {
         deleteOldTasks(deleteThreshold);
         deleteOldFilters(deleteThreshold);
-        deleteDeletedTasksAndProcessors();
+        deleteDeletedTasksAndProcessors(deleteThreshold);
     }
 
     private void deleteOldTasks(final Instant deleteThreshold) {
@@ -145,7 +145,7 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
         LOGGER.debug("Deleted {} processor tasks", deleteCount);
     }
 
-    private void deleteDeletedTasksAndProcessors() {
+    private void deleteDeletedTasksAndProcessors(final Instant deleteThreshold) {
         // Get deleted processors.
         final List<Integer> deletedProcessorIds =
                 JooqUtil.contextResult(processorDbConnProvider, context ->
@@ -153,6 +153,7 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
                                         .select(PROCESSOR.ID)
                                         .from(PROCESSOR)
                                         .where(PROCESSOR.DELETED.eq(true))
+                                        .and(PROCESSOR.UPDATE_TIME_MS.lessThan(deleteThreshold.toEpochMilli()))
                                         .fetch())
                         .map(Record1::value1);
         LOGGER.debug(() -> LogUtil.message("Found {} 'DELETED' processors", deletedProcessorIds.size()));
@@ -165,6 +166,7 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
                                 .from(PROCESSOR_FILTER)
                                 .where(PROCESSOR_FILTER.DELETED.eq(true))
                                 .or(PROCESSOR_FILTER.FK_PROCESSOR_ID.in(deletedProcessorIds))
+                                .and(PROCESSOR_FILTER.UPDATE_TIME_MS.lessThan(deleteThreshold.toEpochMilli()))
                                 .fetch());
         LOGGER.debug(() ->
                 LogUtil.message("Found {} processor filters that are 'DELETED' or whose processor is 'DELETED'",
@@ -183,9 +185,9 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
                         .deleteFrom(PROCESSOR_TASK)
                         .where(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue()))
                         .or(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.in(deletedProcFilterIds))
+                        .and(PROCESSOR_TASK.STATUS_TIME_MS.lessThan(deleteThreshold.toEpochMilli()))
                         .execute());
         LOGGER.debug("Deleted {} processor tasks", taskDeleteCount);
-
 
         // Delete filters one by one as there may still be some constraint failures.
         for (final Record2<Integer, Integer> record : deletedProcFilterAndTrackerIds) {

@@ -26,6 +26,7 @@ import org.jooq.Record;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -144,6 +145,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
     @Override
     public boolean logicalDelete(final int id) {
+        //TODO make deletion of tasks optional
         final boolean success = JooqUtil.transactionResult(processorDbConnProvider, context -> {
             // Logically delete any associated unprocessed tasks.
             // Once the filter is logically deleted no new tasks will be created for it
@@ -152,6 +154,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                     .update(PROCESSOR_TASK)
                     .set(PROCESSOR_TASK.STATUS, TaskStatus.DELETED.getPrimitiveValue())
                     .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
+                    .set(PROCESSOR_TASK.STATUS_TIME_MS, Instant.now().toEpochMilli())
                     .where(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(id))
                     .and(PROCESSOR_TASK.STATUS.in(
                             TaskStatus.UNPROCESSED.getPrimitiveValue(),
@@ -165,6 +168,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                     .update(PROCESSOR_FILTER)
                     .set(PROCESSOR_FILTER.DELETED, true)
                     .set(PROCESSOR_FILTER.VERSION, PROCESSOR_FILTER.VERSION.plus(1))
+                    .set(PROCESSOR_FILTER.UPDATE_TIME_MS, Instant.now().toEpochMilli())
                     .where(PROCESSOR_FILTER.ID.eq(id))
                     .execute();
         }) > 0;
