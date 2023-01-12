@@ -32,21 +32,21 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.LogUtil;
 import stroom.util.time.StroomDuration;
 import stroom.util.time.TimeUtils;
 
-import org.jooq.Condition;
 import org.jooq.Record1;
 import org.jooq.Record2;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
-import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
@@ -56,7 +56,7 @@ import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 
 class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorTaskDeleteExecutorImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorTaskDeleteExecutorImpl.class);
 
     private static final String TASK_NAME = "Processor Task Delete Executor";
     private static final String LOCK_NAME = "ProcessorTaskDeleteExecutor";
@@ -131,21 +131,20 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
     }
 
     private void deleteOldTasks(final Instant deleteThreshold) {
-        final Collection<Condition> conditions = JooqUtil.conditions(
-                Optional.of(PROCESSOR_TASK.STATUS.eq(TaskStatus.COMPLETE.getPrimitiveValue())),
-                Optional.of(PROCESSOR_TASK.CREATE_TIME_MS.isNull()
-                        .or(PROCESSOR_TASK.CREATE_TIME_MS.lessThan(deleteThreshold.toEpochMilli()))));
-
-        JooqUtil.context(processorDbConnProvider, context ->
+        LOGGER.debug("Deleting old COMPLETE processor tasks");
+        final Integer deleteCount = JooqUtil.contextResult(processorDbConnProvider, context ->
                 context
                         .deleteFrom(PROCESSOR_TASK)
-                        .where(conditions)
+                        .where(PROCESSOR_TASK.STATUS.eq(TaskStatus.COMPLETE.getPrimitiveValue()))
+                        .and(PROCESSOR_TASK.CREATE_TIME_MS.isNull()
+                                .or(PROCESSOR_TASK.CREATE_TIME_MS.lessThan(deleteThreshold.toEpochMilli())))
                         .execute());
+        LOGGER.debug("Deleted {} processor tasks", deleteCount);
     }
 
     private void deleteDeletedTasksAndProcessors() {
         // Get deleted processors.
-        final List<Integer> deletedProcessors =
+        final List<Integer> deletedProcessorIds =
                 JooqUtil.contextResult(processorDbConnProvider, context ->
                                 context
                                         .select(PROCESSOR.ID)
@@ -153,37 +152,54 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
                                         .where(PROCESSOR.DELETED.eq(true))
                                         .fetch())
                         .map(Record1::value1);
+        LOGGER.debug(() -> LogUtil.message("Found {} 'DELETED' processors", deletedProcessorIds.size()));
 
-        final List<Record2<Integer, Integer>> deletedProcessorFilters =
+        final List<Record2<Integer, Integer>> deletedProcFilterAndTrackerIds =
                 JooqUtil.contextResult(processorDbConnProvider, context ->
                         context
                                 .select(PROCESSOR_FILTER.ID,
                                         PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID)
                                 .from(PROCESSOR_FILTER)
                                 .where(PROCESSOR_FILTER.DELETED.eq(true))
-                                .or(PROCESSOR_FILTER.FK_PROCESSOR_ID.in(deletedProcessors))
+                                .or(PROCESSOR_FILTER.FK_PROCESSOR_ID.in(deletedProcessorIds))
                                 .fetch());
+        LOGGER.debug(() ->
+                LogUtil.message("Found {} processor filters that are 'DELETED' or whose processor is 'DELETED'",
+                        deletedProcFilterAndTrackerIds.size()));
+
+        final List<Integer> deletedProcFilterIds = deletedProcFilterAndTrackerIds.stream()
+                .map(Record2::value1)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
 
         // Delete tasks.
-        JooqUtil.context(processorDbConnProvider, context ->
+        LOGGER.debug(() -> LogUtil.message("Deleting processor tasks that are 'DELETED' or are link to one of {} " +
+                        "'DELETED' filter IDs", deletedProcFilterIds.size()));
+        final Integer taskDeleteCount = JooqUtil.contextResult(processorDbConnProvider, context ->
                 context
                         .deleteFrom(PROCESSOR_TASK)
                         .where(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue()))
-                        .or(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.in(deletedProcessorFilters))
+                        .or(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.in(deletedProcFilterIds))
                         .execute());
+        LOGGER.debug("Deleted {} processor tasks", taskDeleteCount);
+
 
         // Delete filters one by one as there may still be some constraint failures.
-        for (final Record2<Integer, Integer> record : deletedProcessorFilters) {
+        for (final Record2<Integer, Integer> record : deletedProcFilterAndTrackerIds) {
+            final Integer processorFilterId = record.value1();
+            final Integer processorFilterTrackerId = record.value2();
             try {
                 JooqUtil.transaction(processorDbConnProvider, context -> {
+                    LOGGER.debug("Deleting processor filter with id {}", processorFilterId);
                     context
                             .deleteFrom(PROCESSOR_FILTER)
-                            .where(PROCESSOR_FILTER.ID.eq(record.value1()))
+                            .where(PROCESSOR_FILTER.ID.eq(processorFilterId))
                             .execute();
 
+                    LOGGER.debug("Deleting processor filter tracker with id {}", processorFilterTrackerId);
                     context
                             .deleteFrom(PROCESSOR_FILTER_TRACKER)
-                            .where(PROCESSOR_FILTER_TRACKER.ID.eq(record.value2()))
+                            .where(PROCESSOR_FILTER_TRACKER.ID.eq(processorFilterTrackerId))
                             .execute();
                 });
             } catch (final RuntimeException e) {
@@ -192,13 +208,15 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
         }
 
         // Delete processors one by one as there may still be some constraint failures.
-        for (final int id : deletedProcessors) {
+        for (final int processorId : deletedProcessorIds) {
             try {
-                JooqUtil.context(processorDbConnProvider, context ->
+                LOGGER.debug("Deleting processor with id {}", processorId);
+                final Integer processorDeleteCount = JooqUtil.contextResult(processorDbConnProvider, context ->
                         context
                                 .deleteFrom(PROCESSOR)
-                                .where(PROCESSOR.ID.eq(id))
+                                .where(PROCESSOR.ID.eq(processorId))
                                 .execute());
+                LOGGER.debug("Deleted {} processors", processorDeleteCount);
             } catch (final RuntimeException e) {
                 LOGGER.debug(e.getMessage(), e);
             }
