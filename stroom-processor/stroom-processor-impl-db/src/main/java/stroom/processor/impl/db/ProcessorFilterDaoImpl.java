@@ -23,7 +23,6 @@ import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
-import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -153,10 +152,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                     .update(PROCESSOR_TASK)
                     .set(PROCESSOR_TASK.STATUS, TaskStatus.DELETED.getPrimitiveValue())
                     .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
-                    .where(DSL.exists(
-                            DSL.selectZero()
-                                    .from(PROCESSOR_FILTER)
-                                    .where(PROCESSOR_FILTER.ID.eq(id))))
+                    .where(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(id))
                     .and(PROCESSOR_TASK.STATUS.in(
                             TaskStatus.UNPROCESSED.getPrimitiveValue(),
                             TaskStatus.ASSIGNED.getPrimitiveValue()))

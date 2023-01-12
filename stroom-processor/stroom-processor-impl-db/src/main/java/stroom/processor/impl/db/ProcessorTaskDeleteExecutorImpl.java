@@ -113,6 +113,9 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
 
                     if (!deleteAge.isZero()) {
                         final Instant deleteThreshold = TimeUtils.durationToThreshold(deleteAge);
+                        LOGGER.info(TASK_NAME + " - using deleteAge: {}, deleteThreshold: {}",
+                                deleteAge, deleteThreshold);
+                        // Delete qualifying records prior to this date.
                         delete(deleteThreshold);
                     }
                     LOGGER.info(TASK_NAME + " - finished in {}", logExecutionTime);

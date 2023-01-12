@@ -124,7 +124,8 @@ class ProcessorDaoImpl implements ProcessorDao {
                                         .from(PROCESSOR_FILTER)
                                         .innerJoin(PROCESSOR)
                                         .on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
-                                        .where(PROCESSOR.ID.eq(id))))
+                                        .where(PROCESSOR.ID.eq(id))
+                                        .and(PROCESSOR_FILTER.ID.eq(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID))))
                         .and(PROCESSOR_TASK.STATUS.in(
                                 TaskStatus.UNPROCESSED.getPrimitiveValue(),
                                 TaskStatus.ASSIGNED.getPrimitiveValue()))
