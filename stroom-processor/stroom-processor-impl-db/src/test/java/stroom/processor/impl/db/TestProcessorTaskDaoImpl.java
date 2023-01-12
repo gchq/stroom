@@ -9,13 +9,25 @@ import stroom.util.logging.LambdaLoggerFactory;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
+import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
+import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 
 class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestProcessorTaskDaoImpl.class);
+
+    Processor processor1;
+    Processor processor2;
+    Processor processor3;
+    ProcessorFilter processorFilter1a;
+    ProcessorFilter processorFilter1b;
+    ProcessorFilter processorFilter2;
+    ProcessorFilter processorFilter3;
 
     @Test
     void testReleaseOwnedTasks() {
@@ -24,16 +36,16 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         assertThat(countOwned(NODE1)).isZero();
         assertThat(countOwned(NODE2)).isZero();
 
-        final Processor processor1 = createProcessor();
+        processor1 = createProcessor();
 
         assertThat(getProcessorCount(null)).isOne();
 
-        final ProcessorFilter processorFilter1 = createProcessorFilter(processor1);
+        processorFilter1a = createProcessorFilter(processor1);
         assertThat(getProcessorFilterCount(null)).isOne();
 
-        createProcessorTask(processorFilter1, TaskStatus.UNPROCESSED, NODE1, FEED);
-        createProcessorTask(processorFilter1, TaskStatus.ASSIGNED, NODE1, FEED);
-        createProcessorTask(processorFilter1, TaskStatus.PROCESSING, NODE1, FEED);
+        createProcessorTask(processorFilter1a, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter1a, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
 
         assertThat(countTasks()).isEqualTo(3);
         assertThat(countOwned(NODE1)).isEqualTo(3);
@@ -44,9 +56,9 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         assertThat(countOwned(NODE1)).isZero();
         assertThat(countOwned(null)).isEqualTo(3);
 
-        createProcessorTask(processorFilter1, TaskStatus.UNPROCESSED, NODE2, FEED);
-        createProcessorTask(processorFilter1, TaskStatus.ASSIGNED, NODE2, FEED);
-        createProcessorTask(processorFilter1, TaskStatus.PROCESSING, NODE2, FEED);
+        createProcessorTask(processorFilter1a, TaskStatus.UNPROCESSED, NODE2, FEED);
+        createProcessorTask(processorFilter1a, TaskStatus.ASSIGNED, NODE2, FEED);
+        createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE2, FEED);
 
         assertThat(countTasks()).isEqualTo(6);
         assertThat(countOwned(NODE1)).isZero();
@@ -68,19 +80,19 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         assertThat(countOwned(NODE1)).isZero();
         assertThat(countOwned(NODE2)).isZero();
 
-        final Processor processor1 = createProcessor();
+        processor1 = createProcessor();
 
         assertThat(getProcessorCount(null)).isOne();
 
-        final ProcessorFilter processorFilter1 = createProcessorFilter(processor1);
+        processorFilter1a = createProcessorFilter(processor1);
         assertThat(getProcessorFilterCount(null)).isOne();
 
-        createProcessorTask(processorFilter1, TaskStatus.UNPROCESSED, NODE1, FEED);
-        createProcessorTask(processorFilter1, TaskStatus.ASSIGNED, NODE1, FEED);
-        createProcessorTask(processorFilter1, TaskStatus.PROCESSING, NODE1, FEED);
-        createProcessorTask(processorFilter1, TaskStatus.UNPROCESSED, NODE2, FEED);
-        createProcessorTask(processorFilter1, TaskStatus.ASSIGNED, NODE2, FEED);
-        createProcessorTask(processorFilter1, TaskStatus.PROCESSING, NODE2, FEED);
+        createProcessorTask(processorFilter1a, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter1a, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
+        createProcessorTask(processorFilter1a, TaskStatus.UNPROCESSED, NODE2, FEED);
+        createProcessorTask(processorFilter1a, TaskStatus.ASSIGNED, NODE2, FEED);
+        createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE2, FEED);
 
         assertThat(countTasks()).isEqualTo(6);
         assertThat(countOwned(NODE1)).isEqualTo(3);
@@ -104,5 +116,240 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         assertThat(countOwned(NODE1)).isEqualTo(3);
         assertThat(countOwned(NODE2)).isZero();
         assertThat(countOwned(null)).isEqualTo(3);
+    }
+
+    @Test
+    void testLogicalDeleteByProcessorId() {
+        assertThat(getProcessorCount(null))
+                .isEqualTo(0);
+
+        processor1 = createProcessor();
+        processor2 = createProcessor();
+
+        processorFilter1a = createProcessorFilter(processor1);
+        createProcessorTask(processorFilter1a, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter1a, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
+
+        processorFilter1b = createProcessorFilter(processor1);
+        createProcessorTask(processorFilter1b, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter1b, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(processorFilter1b, TaskStatus.PROCESSING, NODE1, FEED);
+
+        processorFilter2 = createProcessorFilter(processor2);
+        createProcessorTask(processorFilter2, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter2, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(processorFilter2, TaskStatus.PROCESSING, NODE1, FEED);
+
+        assertThat(getProcessorCount(null))
+                .isEqualTo(2);
+        assertThat(getProcessorFilterCount(null))
+                .isEqualTo(3);
+        assertThat(getProcessorTaskCount(null))
+                .isEqualTo(9);
+
+        dumpProcessorTaskTable();
+
+        processorTaskDao.logicalDeleteByProcessorId(processor1.getId());
+
+        dumpProcessorTaskTable();
+
+        // No change to row counts as they have been logically deleted
+        assertThat(getProcessorCount(null))
+                .isEqualTo(2);
+        assertThat(getProcessorFilterCount(null))
+                .isEqualTo(3);
+        assertThat(getProcessorTaskCount(null))
+                .isEqualTo(9);
+
+        assertThat(getProcessorCount(PROCESSOR.DELETED.eq(true)))
+                .isEqualTo(0);
+        assertThat(getProcessorFilterCount(PROCESSOR_FILTER.DELETED.eq(true)))
+                .isEqualTo(0);
+        // logically deletes the UNPROCESSED + ASSIGNED for each of two filters on one processor
+        assertThat(getProcessorTaskCount(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue())))
+                .isEqualTo(2 * 2);
+    }
+
+    @Test
+    void testLogicalDeleteByProcessorFilterId() {
+        assertThat(getProcessorCount(null))
+                .isEqualTo(0);
+
+        processor1 = createProcessor();
+        processor2 = createProcessor();
+
+        processorFilter1a = createProcessorFilter(processor1);
+        createProcessorTask(processorFilter1a, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter1a, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
+
+        processorFilter1b = createProcessorFilter(processor1);
+        createProcessorTask(processorFilter1b, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter1b, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(processorFilter1b, TaskStatus.PROCESSING, NODE1, FEED);
+
+        processorFilter2 = createProcessorFilter(processor2);
+        createProcessorTask(processorFilter2, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter2, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(processorFilter2, TaskStatus.PROCESSING, NODE1, FEED);
+
+        assertThat(getProcessorCount(null))
+                .isEqualTo(2);
+        assertThat(getProcessorFilterCount(null))
+                .isEqualTo(3);
+        assertThat(getProcessorTaskCount(null))
+                .isEqualTo(9);
+
+        dumpProcessorTaskTable();
+
+        processorTaskDao.logicalDeleteByProcessorFilterId(processorFilter1a.getId());
+
+        dumpProcessorTaskTable();
+
+        // No change to row counts as they have been logically deleted
+        assertThat(getProcessorCount(null))
+                .isEqualTo(2);
+        assertThat(getProcessorFilterCount(null))
+                .isEqualTo(3);
+        assertThat(getProcessorTaskCount(null))
+                .isEqualTo(9);
+
+        assertThat(getProcessorCount(PROCESSOR.DELETED.eq(true)))
+                .isEqualTo(0);
+        assertThat(getProcessorFilterCount(PROCESSOR_FILTER.DELETED.eq(true)))
+                .isEqualTo(0);
+        // logically deletes the UNPROCESSED + ASSIGNED for one processor
+        assertThat(getProcessorTaskCount(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue())))
+                .isEqualTo(2);
+    }
+
+    @Test
+    void testLogicalDeleteForDeletedProcessorFilters() {
+        assertThat(getProcessorCount(null))
+                .isEqualTo(0);
+
+        processor1 = createProcessor();
+        processor2 = createProcessor();
+
+        processorFilter1a = createProcessorFilter(processor1);
+        createProcessorTask(processorFilter1a, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter1a, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
+
+        processorFilter1a.setDeleted(true);
+        processorFilter1a.setUpdateTimeMs(Instant.now().toEpochMilli());
+        processorFilterDao.update(processorFilter1a);
+
+        processorFilter1b = createProcessorFilter(processor1);
+        createProcessorTask(processorFilter1b, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter1b, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(processorFilter1b, TaskStatus.PROCESSING, NODE1, FEED);
+
+        processorFilter2 = createProcessorFilter(processor2);
+        createProcessorTask(processorFilter2, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter2, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(processorFilter2, TaskStatus.PROCESSING, NODE1, FEED);
+
+        assertThat(getProcessorCount(null))
+                .isEqualTo(2);
+        assertThat(getProcessorFilterCount(null))
+                .isEqualTo(3);
+        assertThat(getProcessorTaskCount(null))
+                .isEqualTo(9);
+
+        assertThat(getProcessorFilterCount(PROCESSOR_FILTER.DELETED.eq(true)))
+                .isEqualTo(1);
+
+        dumpProcessorTaskTable();
+
+        final Instant threshold = Instant.now().plus(1, ChronoUnit.DAYS);
+
+        processorTaskDao.logicalDeleteForDeletedProcessorFilters(threshold);
+
+        dumpProcessorTaskTable();
+
+        // No change to row counts as they have been logically deleted
+        assertThat(getProcessorCount(null))
+                .isEqualTo(2);
+        assertThat(getProcessorFilterCount(null))
+                .isEqualTo(3);
+        assertThat(getProcessorTaskCount(null))
+                .isEqualTo(9);
+
+        assertThat(getProcessorCount(PROCESSOR.DELETED.eq(true)))
+                .isEqualTo(0);
+        assertThat(getProcessorFilterCount(PROCESSOR_FILTER.DELETED.eq(true)))
+                .isEqualTo(1);
+        assertThat(getProcessorTaskCount(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue())))
+                .isEqualTo(3);
+    }
+
+    @Test
+    void testPhysicallyDeleteOldTasks() {
+        assertThat(getProcessorCount(null))
+                .isEqualTo(0);
+
+        processor1 = createProcessor();
+        processor2 = createProcessor();
+
+        processorFilter1a = createProcessorFilter(processor1);
+        createProcessorTask(processorFilter1a, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter1a, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
+
+        processorFilter1b = createProcessorFilter(processor1);
+        createProcessorTask(processorFilter1b, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter1b, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(processorFilter1b, TaskStatus.PROCESSING, NODE1, FEED);
+        createProcessorTask(processorFilter1b, TaskStatus.COMPLETE, NODE1, FEED);
+        createProcessorTask(processorFilter1b, TaskStatus.DELETED, NODE1, FEED);
+
+        // These two are older than the threshold time, the rest are not
+        createProcessorTask(processorFilter1b,
+                TaskStatus.COMPLETE,
+                NODE1,
+                FEED,
+                Instant.now().minus(2, ChronoUnit.DAYS));
+        createProcessorTask(
+                processorFilter1b,
+                TaskStatus.DELETED,
+                NODE1,
+                FEED,
+                Instant.now().minus(2, ChronoUnit.DAYS));
+
+        processorFilter2 = createProcessorFilter(processor2);
+        createProcessorTask(processorFilter2, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter2, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(processorFilter2, TaskStatus.PROCESSING, NODE1, FEED);
+
+        assertThat(getProcessorCount(null))
+                .isEqualTo(2);
+        assertThat(getProcessorFilterCount(null))
+                .isEqualTo(3);
+        assertThat(getProcessorTaskCount(null))
+                .isEqualTo(13);
+
+        dumpProcessorTaskTable();
+
+        final Instant threshold = Instant.now().minus(1, ChronoUnit.DAYS);
+
+        processorTaskDao.physicallyDeleteOldTasks(threshold);
+
+        dumpProcessorTaskTable();
+
+        assertThat(getProcessorCount(null))
+                .isEqualTo(2);
+        assertThat(getProcessorFilterCount(null))
+                .isEqualTo(3);
+        assertThat(getProcessorTaskCount(null))
+                .isEqualTo(13 - 2);
+
+        assertThat(getProcessorCount(PROCESSOR.DELETED.eq(true)))
+                .isEqualTo(0);
+        assertThat(getProcessorFilterCount(PROCESSOR_FILTER.DELETED.eq(true)))
+                .isEqualTo(0);
+        assertThat(getProcessorTaskCount(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue())))
+                .isEqualTo(1);
     }
 }

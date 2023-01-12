@@ -227,6 +227,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                         .where(PROCESSOR_FILTER.DELETED.eq(true))
                         .and(PROCESSOR_FILTER.UPDATE_TIME_MS.lessThan(deleteThreshold.toEpochMilli()))
                         .fetch());
+
         LAMBDA_LOGGER.debug(() ->
                 LogUtil.message("Found {} logically deleted filters with an update time older than {}",
                         result.size(), deleteThreshold));

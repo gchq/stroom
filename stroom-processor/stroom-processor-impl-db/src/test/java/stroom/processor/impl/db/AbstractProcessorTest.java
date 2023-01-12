@@ -190,6 +190,14 @@ class AbstractProcessorTest {
                                        final TaskStatus taskStatus,
                                        final String nodeName,
                                        final String feedName) {
+        createProcessorTask(processorFilter, taskStatus, nodeName, feedName, Instant.now());
+    }
+
+    protected void createProcessorTask(final ProcessorFilter processorFilter,
+                                       final TaskStatus taskStatus,
+                                       final String nodeName,
+                                       final String feedName,
+                                       final Instant statusTime) {
         final long now = System.currentTimeMillis();
         final ProcessorTaskRecord processorTaskRecord = PROCESSOR_TASK.newRecord();
         processorTaskRecord.setCreateTimeMs(now);
@@ -197,7 +205,7 @@ class AbstractProcessorTest {
         processorTaskRecord.setFkProcessorNodeId(processorNodeCache.getOrCreate(nodeName));
         processorTaskRecord.setFkProcessorFeedId(processorFeedCache.getOrCreate(feedName));
         processorTaskRecord.setStatus(taskStatus.getPrimitiveValue());
-        processorTaskRecord.setStatusTimeMs(now);
+        processorTaskRecord.setStatusTimeMs(statusTime.toEpochMilli());
         processorTaskRecord.setMetaId(123L);
         processorTaskRecord.setData("my data");
 

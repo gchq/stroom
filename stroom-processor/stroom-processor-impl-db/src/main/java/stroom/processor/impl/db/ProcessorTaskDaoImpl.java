@@ -1084,6 +1084,10 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                         .and(PROCESSOR_FILTER.UPDATE_TIME_MS.lessThan(deleteThreshold.toEpochMilli()))
                         .fetch(PROCESSOR_FILTER.ID));
 
+        LOGGER.debug(() ->
+                LogUtil.message("Found {} logically deleted filters with an update time older than {}",
+                        result.size(), deleteThreshold));
+
         // Delete one by one.
         result.forEach(processorFilterId -> {
             try {
@@ -1117,7 +1121,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                         .and(PROCESSOR_TASK.STATUS_TIME_MS.isNull()
                                 .or(PROCESSOR_TASK.STATUS_TIME_MS.lessThan(deleteThreshold.toEpochMilli())))
                         .execute());
-        LOGGER.debug("Physically deleted {} processor tasks", count);
+        LOGGER.debug("Physically deleted {} processor tasks with status time older than {}", count, deleteThreshold);
         return count;
     }
 
