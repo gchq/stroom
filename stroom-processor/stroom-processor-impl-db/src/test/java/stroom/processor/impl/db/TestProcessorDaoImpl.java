@@ -3,6 +3,8 @@ package stroom.processor.impl.db;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.TaskStatus;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +14,8 @@ import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FIL
 import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 
 class TestProcessorDaoImpl extends AbstractProcessorTest {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestProcessorDaoImpl.class);
 
     @Test
     void logicalDelete() {
@@ -69,7 +73,8 @@ class TestProcessorDaoImpl extends AbstractProcessorTest {
                 .isEqualTo(1);
         assertThat(getProcessorFilterCount(PROCESSOR_FILTER.DELETED.eq(true)))
                 .isEqualTo(1);
+        // Tasks not effected
         assertThat(getProcessorTaskCount(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue())))
-                .isEqualTo(2);
+                .isEqualTo(0);
     }
 }
