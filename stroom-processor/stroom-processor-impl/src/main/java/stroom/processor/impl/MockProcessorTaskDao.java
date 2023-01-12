@@ -191,6 +191,11 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     }
 
     @Override
+    public void logicalDeleteForDeletedProcessorFilters(final Instant deleteThreshold) {
+
+    }
+
+    @Override
     public int physicallyDeleteOldTasks(final Instant deleteThreshold) {
         return 0;
     }
