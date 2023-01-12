@@ -142,7 +142,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
     @Override
     public boolean delete(final int id) {
-        // We don't want to allow simple delete, only logical delete.
+        // We don't want to allow direct physical delete, only logical delete.
         return logicalDeleteByProcessorFilterId(id) > 0;
         //genericDao.delete(id);
     }
