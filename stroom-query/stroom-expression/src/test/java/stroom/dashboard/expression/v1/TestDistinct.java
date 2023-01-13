@@ -15,8 +15,8 @@ class TestDistinct extends AbstractFunctionTest<Distinct> {
         return Stream.of(
                 TestCase.ofAggregate(
                         "no delimiter 1",
-                        ValString.create("abcdezyx"),  // expected result (values in input order)
-                        List.of(                       // input values
+                        ValString.create("abcdezyx"),
+                        List.of(
                                 ValString.create("a"),
                                 ValString.create("a"),
                                 ValString.create("b"),
@@ -26,14 +26,14 @@ class TestDistinct extends AbstractFunctionTest<Distinct> {
                                 ValString.create("d"),
                                 ValString.create("d"),
                                 ValString.create("e"),
-                                ValString.create("z"),  // values out of order
+                                ValString.create("z"),
                                 ValString.create("y"),
                                 ValString.create("x")
                         )),
                 TestCase.ofAggregate(
                         "no delimiter 2",
-                        ValString.create("abcd"),      // expected result
-                        List.of(                       // input values
+                        ValString.create("abcd"),
+                        List.of(
                                 ValString.create("a"),
                                 ValString.create("a"),
                                 ValString.create("b"),
@@ -54,7 +54,7 @@ class TestDistinct extends AbstractFunctionTest<Distinct> {
                                 ValString.create("c"),
                                 ValString.create("d")
                         ),
-                        ValString.create(", ")            // delim param
+                        ValString.create(", ")
                 ),
                 TestCase.ofAggregate(
                         "delim + limit",
@@ -69,8 +69,8 @@ class TestDistinct extends AbstractFunctionTest<Distinct> {
                                 ValString.create("c"),
                                 ValString.create("d")
                         ),
-                        ValString.create("|"),          // delim param
-                        ValInteger.create(3)             // limit param
+                        ValString.create("|"),
+                        ValInteger.create(3)
                 )
         );
     }
