@@ -131,7 +131,7 @@ class Distinct extends AbstractFunction {
         private final String delimiter;
         private final int limit;
         // The distinct input values in input order
-        private final List<String> orderedValues;
+        private final List<String> orderedDistinctValues;
         // The distinct input values
         private final Set<String> distinctValues;
 
@@ -140,7 +140,7 @@ class Distinct extends AbstractFunction {
             this.delimiter = delimiter;
             this.limit = limit;
             this.distinctValues = new HashSet<>(limit);
-            this.orderedValues = new ArrayList<>(limit);
+            this.orderedDistinctValues = new ArrayList<>(limit);
         }
 
         @Override
@@ -158,20 +158,20 @@ class Distinct extends AbstractFunction {
             if (value != null) {
                 final boolean isDistinct = distinctValues.add(value);
                 if (isDistinct) {
-                    orderedValues.add(value);
+                    orderedDistinctValues.add(value);
                 }
             }
         }
 
         @Override
         public Val eval(final Supplier<ChildData> childDataSupplier) {
-            return ValString.create(String.join(delimiter, orderedValues));
+            return ValString.create(String.join(delimiter, orderedDistinctValues));
         }
 
         @Override
         public void merge(final Generator generator) {
             final Gen gen = (Gen) generator;
-            for (final String value : gen.distinctValues) {
+            for (final String value : gen.orderedDistinctValues) {
                 if (distinctValues.size() < limit) {
                     addValueIfDistinct(value);
                 }
@@ -182,16 +182,17 @@ class Distinct extends AbstractFunction {
         @Override
         public void read(final Input input) {
             distinctValues.clear();
+            orderedDistinctValues.clear();
             final int length = input.readInt();
             for (int i = 0; i < length; i++) {
-                distinctValues.add(input.readString());
+                addValueIfDistinct(input.readString());
             }
         }
 
         @Override
         public void write(final Output output) {
-            output.writeInt(distinctValues.size());
-            for (final String string : distinctValues) {
+            output.writeInt(orderedDistinctValues.size());
+            for (final String string : orderedDistinctValues) {
                 output.writeString(string);
             }
         }
