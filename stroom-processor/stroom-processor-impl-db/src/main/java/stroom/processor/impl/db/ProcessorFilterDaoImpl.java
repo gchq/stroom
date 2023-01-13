@@ -252,18 +252,21 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
             try {
                 JooqUtil.transaction(processorDbConnProvider, context -> {
-                    LOGGER.debug("Deleting processor filter with id {}", processorFilterId);
-                    context
+                    final int filterCount = context
                             .deleteFrom(PROCESSOR_FILTER)
                             .where(PROCESSOR_FILTER.ID.eq(processorFilterId))
                             .execute();
+                    LOGGER.debug("Deleted {} processor filters with id {}", filterCount, processorFilterId);
 
-                    LOGGER.debug("Deleting processor filter tracker with id {}", processorFilterTrackerId);
-                    context
+                    final int trackerCount = context
                             .deleteFrom(PROCESSOR_FILTER_TRACKER)
                             .where(PROCESSOR_FILTER_TRACKER.ID.eq(processorFilterTrackerId))
                             .execute();
-                    totalCount.incrementAndGet();
+                    LOGGER.debug("Deleted {} processor filter trackers with id {}",
+                            trackerCount, processorFilterTrackerId);
+
+                    // No point adding the tracker count as they are 1:1 with filter
+                    totalCount.addAndGet(filterCount);
                 });
             } catch (final DataAccessException e) {
                 if (e.getCause() != null && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
