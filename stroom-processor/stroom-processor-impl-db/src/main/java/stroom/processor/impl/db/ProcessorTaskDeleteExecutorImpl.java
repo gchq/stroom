@@ -119,7 +119,8 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
         // threshold.
         processorTaskDao.logicalDeleteForDeletedProcessorFilters(deleteThreshold);
 
-        // Logically delete COMPLETE|ERROR processor filters where the tracker last poll is older than threshold
+        // Logically delete COMPLETE processor filters with no outstanding tasks where the tracker last poll is older
+        // than the threshold
         processorFilterDao.logicallyDeleteOldProcessorFilters(deleteThreshold);
 
         // Physically delete tasks that are logically deleted or complete for longer than the threshold.
