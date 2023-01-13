@@ -117,19 +117,25 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
     public void delete(final Instant deleteThreshold) {
         // Logically delete tasks that are associated with filters that have been logically deleted for longer than the
         // threshold.
-        processorTaskDao.logicalDeleteForDeletedProcessorFilters(deleteThreshold);
+        int count = 0;
+        count = processorTaskDao.logicalDeleteForDeletedProcessorFilters(deleteThreshold);
+        LOGGER.info("{} - Logically deleted {} processor tasks for deleted processor filters", TASK_NAME, count);
 
         // Logically delete COMPLETE processor filters with no outstanding tasks where the tracker last poll is older
         // than the threshold
-        processorFilterDao.logicallyDeleteOldProcessorFilters(deleteThreshold);
+        count = processorFilterDao.logicallyDeleteOldProcessorFilters(deleteThreshold);
+        LOGGER.info("{} - Logically deleted {} old processor filters", TASK_NAME, count);
 
         // Physically delete tasks that are logically deleted or complete for longer than the threshold.
-        processorTaskDao.physicallyDeleteOldTasks(deleteThreshold);
+        count = processorTaskDao.physicallyDeleteOldTasks(deleteThreshold);
+        LOGGER.info("{} - Physically deleted {} old processor tasks", TASK_NAME, count);
 
         // Physically delete old filters.
-        processorFilterDao.physicalDeleteOldProcessorFilters(deleteThreshold);
+        count = processorFilterDao.physicalDeleteOldProcessorFilters(deleteThreshold);
+        LOGGER.info("{} - Physically deleted {} old processor filters", TASK_NAME, count);
 
         // Physically delete old processors.
-        processorDao.physicalDeleteOldProcessors(deleteThreshold);
+        count = processorDao.physicalDeleteOldProcessors(deleteThreshold);
+        LOGGER.info("{} - Physically deleted {} old processors", TASK_NAME, count);
     }
 }

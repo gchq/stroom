@@ -76,7 +76,7 @@ public interface ProcessorTaskDao {
 
     int logicalDeleteByProcessorFilterId(int processorFilterId);
 
-    void logicalDeleteForDeletedProcessorFilters(Instant deleteThreshold);
+    int logicalDeleteForDeletedProcessorFilters(Instant deleteThreshold);
 
     int physicallyDeleteOldTasks(Instant deleteThreshold);
 }
