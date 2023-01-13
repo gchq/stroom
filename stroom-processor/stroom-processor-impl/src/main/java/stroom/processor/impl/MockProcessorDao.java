@@ -10,6 +10,7 @@ import stroom.query.api.v2.ExpressionUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -67,8 +68,13 @@ public class MockProcessorDao implements ProcessorDao, Clearable {
     }
 
     @Override
-    public boolean logicalDelete(final int id) {
-        return false;
+    public int logicalDeleteByProcessorId(final int processorId) {
+        return 0;
+    }
+
+    @Override
+    public void physicalDeleteOldProcessors(final Instant deleteThreshold) {
+
     }
 
     @Override
