@@ -12,6 +12,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0.13] - 2023-01-13
+
+* Fix property name mentioned in _Processor Task Retention_ job description.
+
+* Issue **#3177** : Fix bad SQL in _Processor Task Retention_ that results in tasks not being deleted. Fix logical deletion of processor filters and processors that result in processor tasks being incorrectly deleted.
+
+* Issue **#3111** : Revert previous change that added double quote handling. Now we only trim leading/trailing whitespace from expression terms.
+
+* Issue **#3180** : Enable "in dictionary" condition for "Id" fields.
+
+* Issue **#1876** : Add `distinct` dashboard expression function for returning a list of unique values.
+
+
 ## [v7.0.12] - 2023-01-09
 
 * Issue **#3136** : Simplify code that finds effective reference data streams. Add more debug logging.
@@ -4693,7 +4706,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.12...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.13...HEAD
+[v7.0.13]: https://github.com/gchq/stroom/compare/v7.0.12...v7.0.13
 [v7.0.12]: https://github.com/gchq/stroom/compare/v7.0.11...v7.0.12
 [v7.0.11]: https://github.com/gchq/stroom/compare/v7.0.10...v7.0.11
 [v7.0.10]: https://github.com/gchq/stroom/compare/v7.0.9...v7.0.10
