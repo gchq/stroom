@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+## [v7.1-beta.19] - 2023-01-13
+
+* Issue **#3163** : Add filter to expression field picker.
+
 * Issue **#3171** : Fix stroom booting successfully when there have been failed migrations.
 
 * Issue **#3177** : Stop logical deletes changing the update time if already logically deleted. Add more info logging. Change task name used in logs from `Processor Task Delete Executor` to match job name `Processor Task Retention`.
@@ -4475,7 +4480,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.18...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.19...HEAD
+[v7.1-beta.19]: https://github.com/gchq/stroom/compare/v7.1-beta.18...v7.1-beta.19
 [v7.1-beta.18]: https://github.com/gchq/stroom/compare/v7.1-beta.17...v7.1-beta.18
 [v7.1-beta.17]: https://github.com/gchq/stroom/compare/v7.1-beta.16...v7.1-beta.17
 [v7.1-beta.16]: https://github.com/gchq/stroom/compare/v7.1-beta.15...v7.1-beta.16
