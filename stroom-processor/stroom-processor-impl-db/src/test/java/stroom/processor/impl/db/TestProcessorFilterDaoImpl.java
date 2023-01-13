@@ -93,6 +93,7 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
         processor2 = createProcessor();
         processor3 = createProcessor();
 
+        // This one is complete but has tasks so won't get logically deleted
         processorFilter1 = createProcessorFilter(processor1);
         processorFilterTracker1 = processorFilter1.getProcessorFilterTracker();
         processorFilterTracker1.setLastPollMs(Instant.now().toEpochMilli());
@@ -102,6 +103,7 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
         createProcessorTask(processorFilter1, TaskStatus.ASSIGNED, NODE1, FEED);
         createProcessorTask(processorFilter1, TaskStatus.PROCESSING, NODE1, FEED);
 
+        // This one is not COMPLETE but has tasks so won't get logically deleted
         processorFilter2 = createProcessorFilter(processor2);
         processorFilterTracker2 = processorFilter2.getProcessorFilterTracker();
         processorFilterTracker2.setLastPollMs(Instant.now().toEpochMilli());
@@ -111,10 +113,12 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
         createProcessorTask(processorFilter2, TaskStatus.ASSIGNED, NODE1, FEED);
         createProcessorTask(processorFilter2, TaskStatus.PROCESSING, NODE1, FEED);
 
+        // This one is COMPLETE and has no tasks so will get logically deleted
         processorFilter3 = createProcessorFilter(processor3);
-        createProcessorTask(processorFilter3, TaskStatus.UNPROCESSED, NODE1, FEED);
-        createProcessorTask(processorFilter3, TaskStatus.ASSIGNED, NODE1, FEED);
-        createProcessorTask(processorFilter3, TaskStatus.PROCESSING, NODE1, FEED);
+        processorFilterTracker3 = processorFilter3.getProcessorFilterTracker();
+        processorFilterTracker3.setLastPollMs(Instant.now().toEpochMilli());
+        processorFilterTracker3.setStatus(ProcessorFilterTracker.COMPLETE);
+        processorFilterTrackerDao.update(processorFilterTracker3);
 
         assertThat(getProcessorCount(null))
                 .isEqualTo(3);
@@ -123,7 +127,7 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
         assertThat(getProcessorFilterTrackerCount(null))
                 .isEqualTo(3);
         assertThat(getProcessorTaskCount(null))
-                .isEqualTo(9);
+                .isEqualTo(6);
 
         dumpProcessorFilterTable();
         dumpProcessorFilterTrackerTable();
@@ -142,17 +146,22 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
         assertThat(getProcessorFilterTrackerCount(null))
                 .isEqualTo(3);
         assertThat(getProcessorTaskCount(null))
-                .isEqualTo(9);
+                .isEqualTo(6);
 
         // Now make sure the right number have been set to a deleted state
         // Processors not effected
         assertThat(getProcessorCount(PROCESSOR.DELETED.eq(true)))
                 .isEqualTo(0);
         assertThat(getProcessorFilterCount(PROCESSOR_FILTER.DELETED.eq(true)))
-                .isEqualTo(2);
+                .isEqualTo(1);
         // Tasks not effected
         assertThat(getProcessorTaskCount(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue())))
                 .isEqualTo(0);
+
+        Assertions.assertThat(processorFilterDao.fetch(processorFilter3.getId())
+                .orElseThrow()
+                .isDeleted())
+                .isTrue();
     }
 
     @Test
@@ -174,15 +183,15 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
         // No change to processors
         assertThat(getProcessorCount(null))
                 .isEqualTo(3);
-        // Deleted 2 filters
+        // Deleted 1 filters
         assertThat(getProcessorFilterCount(null))
-                .isEqualTo(3 - 2);
-        // Deleted 2 trackers
+                .isEqualTo(3 - 1);
+        // Deleted 1 trackers
         assertThat(getProcessorFilterTrackerCount(null))
-                .isEqualTo(3 - 2);
-        // Deleted 3 tasks for each of two trackers
+                .isEqualTo(3 - 1);
+        // No tasks deleted
         assertThat(getProcessorTaskCount(null))
-                .isEqualTo(9 - (3 * 2));
+                .isEqualTo(6);
     }
 
     @Test
