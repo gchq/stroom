@@ -209,10 +209,7 @@ public class TermEditor extends Composite {
                 sb.setLength(sb.length() - 1);
             }
 
-            // Remove, then add whitespace quoting so the un-focused term value shows the user
-            // the value with the correct quoting based on what they have entered
-            term.setValue(StringUtil.addWhitespaceQuoting(
-                    StringUtil.removeWhitespaceQuoting(sb.toString())));
+            term.setValue(StringUtil.trimWhitespace(sb.toString()));
             term.setDocRef(docRef);
         }
     }
