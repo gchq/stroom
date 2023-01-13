@@ -15,5 +15,5 @@ public interface ProcessorFilterDao extends HasIntCrud<ProcessorFilter> {
 
     int logicallyDeleteOldProcessorFilters(Instant deleteThreshold);
 
-    void physicalDeleteOldProcessorFilters(Instant deleteThreshold);
+    int physicalDeleteOldProcessorFilters(Instant deleteThreshold);
 }

@@ -38,6 +38,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import javax.inject.Inject;
 
@@ -168,6 +169,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 .set(PROCESSOR_FILTER.VERSION, PROCESSOR_FILTER.VERSION.plus(1))
                 .set(PROCESSOR_FILTER.UPDATE_TIME_MS, Instant.now().toEpochMilli())
                 .where(PROCESSOR_FILTER.ID.eq(processorFilterId))
+                .and(PROCESSOR_FILTER.DELETED.eq(false))
                 .execute();
         LOGGER.debug("Logically deleted {} processor filters for processor filter Id {}",
                 count,
@@ -187,6 +189,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 .set(PROCESSOR_FILTER.VERSION, PROCESSOR_FILTER.VERSION.plus(1))
                 .set(PROCESSOR_FILTER.UPDATE_TIME_MS, Instant.now().toEpochMilli())
                 .where(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(processorId))
+                .and(PROCESSOR_FILTER.DELETED.eq(false))
                 .execute();
         LOGGER.debug("Logically deleted {} processor filters for processor Id {}",
                 count,
@@ -201,12 +204,13 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     }
 
     public int logicallyDeleteOldFilters(final Instant deleteThreshold, final DSLContext context) {
-        final int count = context
+        var query = context
                 .update(PROCESSOR_FILTER)
                 .set(PROCESSOR_FILTER.DELETED, true)
                 .set(PROCESSOR_FILTER.VERSION, PROCESSOR_FILTER.VERSION.plus(1))
                 .set(PROCESSOR_FILTER.UPDATE_TIME_MS, Instant.now().toEpochMilli())
-                .where(DSL.exists(
+                .where(PROCESSOR_FILTER.DELETED.eq(false))
+                .and(DSL.exists(
                         DSL.selectZero()
                                 .from(PROCESSOR_FILTER_TRACKER)
                                 .where(PROCESSOR_FILTER_TRACKER.ID.eq(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID))
@@ -215,8 +219,11 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 .and(DSL.notExists(
                         DSL.selectZero()
                                 .from(PROCESSOR_TASK)
-                                .where(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID))))
-                .execute();
+                                .where(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID))));
+
+        LOGGER.trace("logicallyDeleteOldFilters query:\n{}", query);
+        final int count = query.execute();
+
         LOGGER.debug("Logically deleted {} processor filters with a state of COMPLETE with no outstanding tasks and " +
                         "last poll before {}",
                 count, deleteThreshold);
@@ -224,7 +231,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     }
 
     @Override
-    public void physicalDeleteOldProcessorFilters(final Instant deleteThreshold) {
+    public int physicalDeleteOldProcessorFilters(final Instant deleteThreshold) {
         final Result<Record2<Integer, Integer>> result =
                 JooqUtil.contextResult(processorDbConnProvider, context -> context
                         .select(PROCESSOR_FILTER.ID, PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID)
@@ -237,6 +244,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 LogUtil.message("Found {} logically deleted filters with an update time older than {}",
                         result.size(), deleteThreshold));
 
+        final AtomicInteger totalCount = new AtomicInteger();
         // Delete one by one as we expect some constraint errors.
         result.forEach(record -> {
             final int processorFilterId = record.value1();
@@ -244,17 +252,21 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
             try {
                 JooqUtil.transaction(processorDbConnProvider, context -> {
-                    LOGGER.debug("Deleting processor filter with id {}", processorFilterId);
-                    context
+                    final int filterCount = context
                             .deleteFrom(PROCESSOR_FILTER)
                             .where(PROCESSOR_FILTER.ID.eq(processorFilterId))
                             .execute();
+                    LOGGER.debug("Deleted {} processor filters with id {}", filterCount, processorFilterId);
 
-                    LOGGER.debug("Deleting processor filter tracker with id {}", processorFilterTrackerId);
-                    context
+                    final int trackerCount = context
                             .deleteFrom(PROCESSOR_FILTER_TRACKER)
                             .where(PROCESSOR_FILTER_TRACKER.ID.eq(processorFilterTrackerId))
                             .execute();
+                    LOGGER.debug("Deleted {} processor filter trackers with id {}",
+                            trackerCount, processorFilterTrackerId);
+
+                    // No point adding the tracker count as they are 1:1 with filter
+                    totalCount.addAndGet(filterCount);
                 });
             } catch (final DataAccessException e) {
                 if (e.getCause() != null && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
@@ -265,6 +277,8 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 }
             }
         });
+        LAMBDA_LOGGER.debug(() -> "physicalDeleteOldProcessorFilters returning: " + totalCount.get());
+        return totalCount.get();
     }
 
     @Override
