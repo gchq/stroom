@@ -15,7 +15,7 @@ class TestDistinct extends AbstractFunctionTest<Distinct> {
         return Stream.of(
                 TestCase.ofAggregate(
                         "no delimiter 1",
-                        ValString.create("abcdexyz"),  // expected result (values in input order)
+                        ValString.create("abcdezyx"),  // expected result (values in input order)
                         List.of(                       // input values
                                 ValString.create("a"),
                                 ValString.create("a"),
@@ -58,8 +58,9 @@ class TestDistinct extends AbstractFunctionTest<Distinct> {
                 ),
                 TestCase.ofAggregate(
                         "delim + limit",
-                        ValString.create("a, b"),
+                        ValString.create("d|a|b"),
                         List.of(
+                                ValString.create("d"),
                                 ValString.create("a"),
                                 ValString.create("a"),
                                 ValString.create("b"),
@@ -68,8 +69,8 @@ class TestDistinct extends AbstractFunctionTest<Distinct> {
                                 ValString.create("c"),
                                 ValString.create("d")
                         ),
-                        ValString.create(", "),          // delim param
-                        ValInteger.create(2)             // limit param
+                        ValString.create("|"),          // delim param
+                        ValInteger.create(3)             // limit param
                 )
         );
     }

@@ -20,8 +20,10 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.function.Supplier;
 
 @SuppressWarnings("unused") // Used by FunctionFactory
@@ -128,13 +130,17 @@ class Distinct extends AbstractFunction {
 
         private final String delimiter;
         private final int limit;
+        // The distinct input values in input order
+        private final List<String> orderedValues;
+        // The distinct input values
         private final Set<String> distinctValues;
 
         Gen(final Generator childGenerator, final String delimiter, final int limit) {
             super(childGenerator);
             this.delimiter = delimiter;
             this.limit = limit;
-            this.distinctValues = new TreeSet<>();
+            this.distinctValues = new HashSet<>(limit);
+            this.orderedValues = new ArrayList<>(limit);
         }
 
         @Override
@@ -144,15 +150,22 @@ class Distinct extends AbstractFunction {
             if (distinctValues.size() < limit) {
                 final Val val = childGenerator.eval(null);
                 final String value = val.toString();
-                if (value != null) {
-                    distinctValues.add(value);
+                addValueIfDistinct(value);
+            }
+        }
+
+        private void addValueIfDistinct(final String value) {
+            if (value != null) {
+                final boolean isDistinct = distinctValues.add(value);
+                if (isDistinct) {
+                    orderedValues.add(value);
                 }
             }
         }
 
         @Override
         public Val eval(final Supplier<ChildData> childDataSupplier) {
-            return ValString.create(String.join(delimiter, distinctValues));
+            return ValString.create(String.join(delimiter, orderedValues));
         }
 
         @Override
@@ -160,7 +173,7 @@ class Distinct extends AbstractFunction {
             final Gen gen = (Gen) generator;
             for (final String value : gen.distinctValues) {
                 if (distinctValues.size() < limit) {
-                    distinctValues.add(value);
+                    addValueIfDistinct(value);
                 }
             }
             super.merge(generator);
