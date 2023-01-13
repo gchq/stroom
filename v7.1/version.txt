@@ -1,1 +1,1 @@
-v7.1-beta.18-test-open-id
+v7.1-beta.19
