@@ -29,7 +29,7 @@ public interface ProcessorTaskDao {
     /**
      * Retain task ownership
      *
-     * @param retainForNodes    A set of nodes to retain task ownership for.
+     * @param retainForNodes  A set of nodes to retain task ownership for.
      * @param statusOlderThan Change task ownership for tasks that have a status older than this.
      */
     void retainOwnedTasks(Set<String> retainForNodes,
@@ -77,4 +77,12 @@ public interface ProcessorTaskDao {
     ResultPage<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria);
 
     void search(ExpressionCriteria criteria, AbstractField[] fields, ValuesConsumer consumer);
+
+    int logicalDeleteByProcessorId(int processorId);
+
+    int logicalDeleteByProcessorFilterId(int processorFilterId);
+
+    void logicalDeleteForDeletedProcessorFilters(Instant deleteThreshold);
+
+    int physicallyDeleteOldTasks(Instant deleteThreshold);
 }

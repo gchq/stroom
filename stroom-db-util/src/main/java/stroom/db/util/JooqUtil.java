@@ -1,5 +1,6 @@
 package stroom.db.util;
 
+import stroom.util.NullSafe;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
@@ -34,6 +35,7 @@ import java.sql.Connection;
 import java.sql.Date;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -739,7 +741,24 @@ public final class JooqUtil {
                 final String fieldName = qualifiedFields
                         ? field.getName()
                         : field.getQualifiedName().toString();
-                builder.withColumn(Column.of(fieldName, rec -> rec.get(iCopy)));
+
+                final Function<T, String> getter;
+
+                if (field.getName().endsWith("_ms")) {
+                    getter = rec -> {
+                        final Object val = rec.get(iCopy);
+                        if (val == null) {
+                            return null;
+                        } else if (val instanceof Long) {
+                            return Instant.ofEpochMilli((Long) val).toString();
+                        } else {
+                            return val.toString();
+                        }
+                    };
+                } else {
+                    getter = rec -> NullSafe.get(rec.get(iCopy), Object::toString);
+                }
+                builder.withColumn(Column.of(fieldName, getter));
             }
         }
         return builder.build();

@@ -24,6 +24,7 @@ import stroom.processor.api.InclusiveRanges.InclusiveRange;
 import stroom.processor.impl.CreatedTasks;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorTaskDao;
+import stroom.processor.impl.db.jooq.Tables;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorTaskRecord;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
@@ -54,8 +55,10 @@ import org.jooq.Record;
 import org.jooq.Record3;
 import org.jooq.Record5;
 import org.jooq.Result;
+import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -297,7 +300,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     /**
      * Retain task ownership
      *
-     * @param retainForNodes    A set of nodes to retain task ownership for.
+     * @param retainForNodes  A set of nodes to retain task ownership for.
      * @param statusOlderThan Change task ownership for tasks that have a status older than this.
      */
     @Override
@@ -1080,6 +1083,95 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 .stream()
                 .map(DocRef::getUuid)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public int logicalDeleteByProcessorFilterId(final int processorFilterId) {
+        final int count = JooqUtil.contextResult(processorDbConnProvider, context -> context
+                .update(Tables.PROCESSOR_TASK)
+                .set(Tables.PROCESSOR_TASK.STATUS, TaskStatus.DELETED.getPrimitiveValue())
+                .set(Tables.PROCESSOR_TASK.VERSION, Tables.PROCESSOR_TASK.VERSION.plus(1))
+                .set(Tables.PROCESSOR_TASK.STATUS_TIME_MS, Instant.now().toEpochMilli())
+                .where(Tables.PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(processorFilterId))
+                .and(Tables.PROCESSOR_TASK.STATUS.in(
+                        TaskStatus.UNPROCESSED.getPrimitiveValue(),
+                        TaskStatus.ASSIGNED.getPrimitiveValue()))
+                .execute());
+        LOGGER.debug("Logically deleted {} processor tasks", count);
+        return count;
+    }
+
+    @Override
+    public int logicalDeleteByProcessorId(final int processorId) {
+        final int count = JooqUtil.contextResult(processorDbConnProvider, context -> context
+                .update(Tables.PROCESSOR_TASK)
+                .set(Tables.PROCESSOR_TASK.STATUS, TaskStatus.DELETED.getPrimitiveValue())
+                .set(Tables.PROCESSOR_TASK.VERSION, Tables.PROCESSOR_TASK.VERSION.plus(1))
+                .set(Tables.PROCESSOR_TASK.STATUS_TIME_MS, Instant.now().toEpochMilli())
+                .where(DSL.exists(
+                        DSL.selectZero()
+                                .from(PROCESSOR_FILTER)
+                                .innerJoin(PROCESSOR)
+                                .on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
+                                .where(PROCESSOR.ID.eq(processorId))
+                                .and(PROCESSOR_FILTER.ID.eq(Tables.PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID))))
+                .and(Tables.PROCESSOR_TASK.STATUS.in(
+                        TaskStatus.UNPROCESSED.getPrimitiveValue(),
+                        TaskStatus.ASSIGNED.getPrimitiveValue()))
+                .execute());
+        LOGGER.debug("Logically deleted {} processor tasks", count);
+        return count;
+    }
+
+    @Override
+    public void logicalDeleteForDeletedProcessorFilters(final Instant deleteThreshold) {
+        final List<Integer> result =
+                JooqUtil.contextResult(processorDbConnProvider, context -> context
+                        .select(PROCESSOR_FILTER.ID)
+                        .from(PROCESSOR_FILTER)
+                        .where(PROCESSOR_FILTER.DELETED.eq(true))
+                        .and(PROCESSOR_FILTER.UPDATE_TIME_MS.lessThan(deleteThreshold.toEpochMilli()))
+                        .fetch(PROCESSOR_FILTER.ID));
+
+        LOGGER.debug(() ->
+                LogUtil.message("Found {} logically deleted filters with an update time older than {}",
+                        result.size(), deleteThreshold));
+
+        // Delete one by one.
+        result.forEach(processorFilterId -> {
+            try {
+                final int count = JooqUtil.contextResult(processorDbConnProvider, context -> context
+                        .update(Tables.PROCESSOR_TASK)
+                        .set(Tables.PROCESSOR_TASK.STATUS, TaskStatus.DELETED.getPrimitiveValue())
+                        .set(Tables.PROCESSOR_TASK.VERSION, Tables.PROCESSOR_TASK.VERSION.plus(1))
+                        .set(Tables.PROCESSOR_TASK.STATUS_TIME_MS, Instant.now().toEpochMilli())
+                        .where(Tables.PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(processorFilterId))
+                        .execute());
+                LOGGER.debug("Logically deleted {} processor tasks for processorFilterId {}", count, processorFilterId);
+            } catch (final DataAccessException e) {
+                if (e.getCause() != null && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
+                    final var sqlEx = (SQLIntegrityConstraintViolationException) e.getCause();
+                    LOGGER.debug("Expected constraint violation exception: " + sqlEx.getMessage(), e);
+                } else {
+                    throw e;
+                }
+            }
+        });
+    }
+
+    @Override
+    public int physicallyDeleteOldTasks(final Instant deleteThreshold) {
+        LOGGER.debug("Deleting old COMPLETE or DELETED processor tasks");
+        final int count = JooqUtil.contextResult(processorDbConnProvider, context ->
+                context
+                        .deleteFrom(PROCESSOR_TASK)
+                        .where(PROCESSOR_TASK.STATUS.eq(TaskStatus.COMPLETE.getPrimitiveValue())
+                                .or(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue())))
+                        .and(PROCESSOR_TASK.STATUS_TIME_MS.isNull()
+                                .or(PROCESSOR_TASK.STATUS_TIME_MS.lessThan(deleteThreshold.toEpochMilli())))
+                        .execute());
+        LOGGER.debug("Physically deleted {} processor tasks with status time older than {}", count, deleteThreshold);
+        return count;
     }
 
     private static class CreationState {
