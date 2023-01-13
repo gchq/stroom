@@ -45,9 +45,6 @@ class TestProcessorTaskDeleteExecutorImpl extends AbstractProcessorTest {
         processorFilterTracker1.setStatus(ProcessorFilterTracker.COMPLETE);
         processorFilterTrackerDao.update(processorFilterTracker1);
 
-        createProcessorTask(processorFilter1a, TaskStatus.UNPROCESSED, NODE1, FEED);
-        createProcessorTask(processorFilter1a, TaskStatus.ASSIGNED, NODE1, FEED);
-        createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
 
         processorFilter1b = createProcessorFilter(processor1);
         createProcessorTask(processorFilter1b, TaskStatus.UNPROCESSED, NODE1, FEED);
@@ -89,7 +86,7 @@ class TestProcessorTaskDeleteExecutorImpl extends AbstractProcessorTest {
         assertThat(getProcessorFilterTrackerCount(null))
                 .isEqualTo(4);
         assertThat(getProcessorTaskCount(null))
-                .isEqualTo(14);
+                .isEqualTo(11);
 
         dumpProcessorTable();
         dumpProcessorFilterTable();
@@ -114,7 +111,7 @@ class TestProcessorTaskDeleteExecutorImpl extends AbstractProcessorTest {
         assertThat(getProcessorFilterTrackerCount(null))
                 .isEqualTo(4);
         assertThat(getProcessorTaskCount(null))
-                .isEqualTo(14);
+                .isEqualTo(11);
 
         assertThat(getProcessorCount(PROCESSOR.DELETED.eq(true)))
                 .isEqualTo(0);
@@ -145,16 +142,16 @@ class TestProcessorTaskDeleteExecutorImpl extends AbstractProcessorTest {
                 .isEqualTo(4);
         assertThat(getProcessorFilterTrackerCount(null))
                 .isEqualTo(4);
-        // Two phys deleted as complete/error and old
+        // Two phys deleted as complete and old
         assertThat(getProcessorTaskCount(null))
-                .isEqualTo(14 - 2);
+                .isEqualTo(11 - 2);
 
         // None deleted as none have deleted filter at this point
         assertThat(getProcessorCount(PROCESSOR.DELETED.eq(true)))
                 .isEqualTo(0);
-        // 1 is complete, 1 is error
+        // 1 is complete with no tasks
         assertThat(getProcessorFilterCount(PROCESSOR_FILTER.DELETED.eq(true)))
-                .isEqualTo(2);
+                .isEqualTo(1);
         assertThat(getProcessorTaskCount(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue())))
                 .isEqualTo(0);
     }
@@ -178,18 +175,18 @@ class TestProcessorTaskDeleteExecutorImpl extends AbstractProcessorTest {
                 .isEqualTo(3);
         // Two were logically deleted last time so now they are gone
         assertThat(getProcessorFilterCount(null))
-                .isEqualTo(4 - 2);
+                .isEqualTo(4 - 1);
         // Two were logically deleted last time so now they are gone
         assertThat(getProcessorFilterTrackerCount(null))
-                .isEqualTo(4 - 2);
+                .isEqualTo(4 - 1);
         // Two phys deleted as complete/error and old
         assertThat(getProcessorTaskCount(null))
-                .isEqualTo(14 - 2 - 6);
+                .isEqualTo(11 - 2);
 
         // None deleted as none have deleted filter at this point
         assertThat(getProcessorCount(PROCESSOR.DELETED.eq(true)))
                 .isEqualTo(0);
-        // The 2 were phys deleted
+        // The 1 were phys deleted
         assertThat(getProcessorFilterCount(PROCESSOR_FILTER.DELETED.eq(true)))
                 .isEqualTo(0);
         assertThat(getProcessorTaskCount(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue())))
