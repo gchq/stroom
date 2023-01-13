@@ -110,4 +110,15 @@ public class StringUtil {
                 ? "s"
                 : "";
     }
+
+    /**
+     * Null safe trimming of leading/trailing whitespace.
+     */
+    public static String trimWhitespace(final String userText) {
+        if (userText == null || userText.isEmpty()) {
+            return userText;
+        } else {
+            return userText.trim();
+        }
+    }
 }
