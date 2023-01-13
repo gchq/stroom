@@ -67,9 +67,7 @@ public class ExpressionModel {
                 final Term term = new Term();
                 term.setField(expressionTerm.getField());
                 term.setCondition(expressionTerm.getCondition());
-                // If the value contains any trailing/leading whitespace we need to surround with dbl quotes.
-                // Also, first escape any dbl quotes in the value
-                term.setValue(StringUtil.addWhitespaceQuoting(expressionTerm.getValue()));
+                term.setValue(StringUtil.trimWhitespace(expressionTerm.getValue()));
                 term.setDocRef(expressionTerm.getDocRef());
                 term.setEnabled(expressionTerm.enabled());
 
@@ -112,10 +110,7 @@ public class ExpressionModel {
                     dest.addOperator(childDest.build());
                 } else if (child instanceof Term) {
                     final Term term = (Term) child;
-                    // The user can add dbl quotes to explicitly include leading/trailing white space,
-                    // which would otherwise be removed. They can also do \" to escape actual dbl quotes.
-                    // Remove quoting and un-escape escaped dbl quotes. Trim un-quoted white space.
-                    final String termValue = StringUtil.removeWhitespaceQuoting(term.getValue());
+                    final String termValue = StringUtil.trimWhitespace(term.getValue());
 
                     dest.addTerm(ExpressionTerm.builder()
                             .enabled(term.isEnabled())
