@@ -23,6 +23,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
@@ -135,6 +136,7 @@ class ProcessorDaoImpl implements ProcessorDao {
                 .set(PROCESSOR.VERSION, PROCESSOR.VERSION.plus(1))
                 .set(PROCESSOR.UPDATE_TIME_MS, Instant.now().toEpochMilli())
                 .where(PROCESSOR.ID.eq(processorId))
+                .and(PROCESSOR.DELETED.eq(false))
                 .execute();
         LOGGER.debug("Logically deleted {} processors for processor Id {}",
                 count,
@@ -143,7 +145,7 @@ class ProcessorDaoImpl implements ProcessorDao {
     }
 
     @Override
-    public void physicalDeleteOldProcessors(final Instant deleteThreshold) {
+    public int physicalDeleteOldProcessors(final Instant deleteThreshold) {
         final List<Integer> result =
                 JooqUtil.contextResult(processorDbConnProvider, context -> context
                         .select(PROCESSOR.ID)
@@ -154,14 +156,16 @@ class ProcessorDaoImpl implements ProcessorDao {
         LOGGER.debug(() -> LogUtil.message("Found {} logically deleted processors with an update time older than {}",
                 result.size(), deleteThreshold));
 
+        final AtomicInteger totalCount = new AtomicInteger();
         // Delete one by one as we expect some constraint errors.
         result.forEach(processorId -> {
             try {
                 LOGGER.debug("Deleting processor with id {}", processorId);
-                JooqUtil.context(processorDbConnProvider, context -> context
+                final Integer count = JooqUtil.contextResult(processorDbConnProvider, context -> context
                         .deleteFrom(PROCESSOR)
                         .where(PROCESSOR.ID.eq(processorId))
                         .execute());
+                totalCount.addAndGet(count);
             } catch (final DataAccessException e) {
                 if (e.getCause() != null && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
                     final var sqlEx = (SQLIntegrityConstraintViolationException) e.getCause();
@@ -171,6 +175,8 @@ class ProcessorDaoImpl implements ProcessorDao {
                 }
             }
         });
+        LOGGER.debug(() -> "physicalDeleteOldProcessors returning: " + totalCount.get());
+        return totalCount.get();
     }
 
     @Override

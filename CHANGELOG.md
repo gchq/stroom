@@ -12,6 +12,16 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Fix property name mentioned in _Processor Task Retention_ job description.
+
+* Issue **#3177** : Fix bad SQL in _Processor Task Retention_ that results in tasks not being deleted. Fix logical deletion of processor filters and processors that result in processor tasks being incorrectly deleted.
+
+* Issue **#3111** : Revert previous change that added double quote handling. Now we only trim leading/trailing whitespace from expression terms.
+
+* Issue **#3180** : Enable "in dictionary" condition for "Id" fields.
+
+* Issue **#1876** : Add `distinct` dashboard expression function for returning a list of unique values.
+
 * Issue **#3136** : Simplify code that finds effective reference data streams. Add more debug logging.
 
 * Issue **#3171** : Fix stroom booting successfully when there have been failed migrations.

@@ -22,5 +22,5 @@ public interface ProcessorDao extends HasIntCrud<Processor> {
      */
     int logicalDeleteByProcessorId(int processorId);
 
-    void physicalDeleteOldProcessors(Instant deleteThreshold);
+    int physicalDeleteOldProcessors(Instant deleteThreshold);
 }

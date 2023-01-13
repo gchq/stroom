@@ -39,6 +39,8 @@ import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class ProcessorModule extends AbstractModule {
 
+    public static final String PROCESSOR_TASK_RETENTION_JOB_NAME = "Processor Task Retention";
+
     @Override
     protected void configure() {
         bind(ProcessorTaskManager.class).to(ProcessorTaskManagerImpl.class);
@@ -72,7 +74,7 @@ public class ProcessorModule extends AbstractModule {
                         .description("Write statistics about the size of the task queue")
                         .schedule(PERIODIC, "1m"))
                 .bindJobTo(ProcessorTaskRetention.class, builder -> builder
-                        .name("Processor Task Retention")
+                        .name(PROCESSOR_TASK_RETENTION_JOB_NAME)
                         .description("Physically delete processor tasks that have been logically " +
                                 "deleted or complete based on age (stroom.processor.deleteAge)")
                         .schedule(PERIODIC, "1m"))
