@@ -108,8 +108,10 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
         return createTasks;
     }
 
-    @JsonPropertyDescription("How long to keep tasks on the database for before deleting them " +
-            "(if they are complete). In ISO-8601 duration format, e.g. 'P1DT12H'")
+    @JsonPropertyDescription("How long to keep tasks and filters on the database for before deleting them " +
+            "(if they are complete). After a duration of 'deleteAge', they will be logically deleted and unavailable " +
+            "in the user interface. After a subsequent duration of 'deleteAge' they will be physically deleted. " +
+            "In ISO-8601 duration format, e.g. 'P1DT12H'")
     public StroomDuration getDeleteAge() {
         return deleteAge;
     }
