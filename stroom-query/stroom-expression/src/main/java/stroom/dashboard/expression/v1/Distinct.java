@@ -20,20 +20,20 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Supplier;
 
-@SuppressWarnings("unused") //Used by FunctionFactory
+@SuppressWarnings("unused") // Used by FunctionFactory
 @FunctionDef(
         name = Distinct.NAME,
         commonCategory = FunctionCategory.AGGREGATE,
         commonReturnType = ValString.class,
         signatures = {
                 @FunctionSignature(
-                        description = "Concatenates the supplied values together with no delimiter.",
-                        returnDescription = "The values concatenated together into one string with no delimiter. " +
-                                "Up to a maximum of " + Distinct.DEFAULT_LIMIT + " values.",
+                        description = "Concatenates the distinct supplied values together with no delimiter.",
+                        returnDescription = "The distinct values concatenated together into one string with no " +
+                                "delimiter. Up to a maximum of " + Distinct.DEFAULT_LIMIT + " values.",
                         args = {
                                 @FunctionArg(
                                         name = "values",
@@ -41,9 +41,9 @@ import java.util.function.Supplier;
                                         argType = Val.class)
                         }),
                 @FunctionSignature(
-                        description = "Concatenates the supplied values together with the supplied delimiter.",
-                        returnDescription = "The values concatenated together into one string using the supplied " +
-                                "delimiter. Up to a maximum of " + Distinct.DEFAULT_LIMIT + " values.",
+                        description = "Concatenates the distinct supplied values together with the supplied delimiter.",
+                        returnDescription = "The distinct values concatenated together into one string using the " +
+                                "supplied delimiter. Up to a maximum of " + Distinct.DEFAULT_LIMIT + " values.",
                         args = {
                                 @FunctionArg(
                                         name = "values",
@@ -55,10 +55,10 @@ import java.util.function.Supplier;
                                         argType = Val.class)
                         }),
                 @FunctionSignature(
-                        description = "Concatenates up to limit of the supplied values together with the supplied " +
-                                "delimiter.",
-                        returnDescription = "The values concatenated together into one string using the supplied " +
-                                "delimiter.",
+                        description = "Concatenates up to limit of the distinct supplied values together with " +
+                                "the supplied delimiter.",
+                        returnDescription = "The distinct values concatenated together into one string using the " +
+                                "supplied delimiter.",
                         args = {
                                 @FunctionArg(
                                         name = "values",
@@ -70,13 +70,13 @@ import java.util.function.Supplier;
                                         argType = Val.class),
                                 @FunctionArg(
                                         name = "limit",
-                                        description = "The maximum number of values to concatenate together.",
+                                        description = "The maximum number of distinct values to concatenate together.",
                                         argType = ValInteger.class),
                         })
         })
 class Distinct extends AbstractFunction {
 
-    static final String NAME = "joining";
+    static final String NAME = "distinct";
     static final int DEFAULT_LIMIT = 10;
 
     private String delimiter = "";
@@ -126,41 +126,41 @@ class Distinct extends AbstractFunction {
 
     private static class Gen extends AbstractSingleChildGenerator {
 
-
         private final String delimiter;
         private final int limit;
-        private final List<String> list = new ArrayList<>();
+        private final Set<String> distinctValues;
 
         Gen(final Generator childGenerator, final String delimiter, final int limit) {
             super(childGenerator);
             this.delimiter = delimiter;
             this.limit = limit;
+            this.distinctValues = new TreeSet<>();
         }
 
         @Override
         public void set(final Val[] values) {
             childGenerator.set(values);
 
-            if (list.size() < limit) {
+            if (distinctValues.size() < limit) {
                 final Val val = childGenerator.eval(null);
                 final String value = val.toString();
                 if (value != null) {
-                    list.add(value);
+                    distinctValues.add(value);
                 }
             }
         }
 
         @Override
         public Val eval(final Supplier<ChildData> childDataSupplier) {
-            return ValString.create(String.join(delimiter, list));
+            return ValString.create(String.join(delimiter, distinctValues));
         }
 
         @Override
         public void merge(final Generator generator) {
             final Gen gen = (Gen) generator;
-            for (final String value : gen.list) {
-                if (list.size() < limit) {
-                    list.add(value);
+            for (final String value : gen.distinctValues) {
+                if (distinctValues.size() < limit) {
+                    distinctValues.add(value);
                 }
             }
             super.merge(generator);
@@ -168,17 +168,17 @@ class Distinct extends AbstractFunction {
 
         @Override
         public void read(final Input input) {
-            list.clear();
+            distinctValues.clear();
             final int length = input.readInt();
             for (int i = 0; i < length; i++) {
-                list.add(input.readString());
+                distinctValues.add(input.readString());
             }
         }
 
         @Override
         public void write(final Output output) {
-            output.writeInt(list.size());
-            for (final String string : list) {
+            output.writeInt(distinctValues.size());
+            for (final String string : distinctValues) {
                 output.writeString(string);
             }
         }
