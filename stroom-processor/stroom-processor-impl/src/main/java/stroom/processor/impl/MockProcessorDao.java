@@ -73,8 +73,8 @@ public class MockProcessorDao implements ProcessorDao, Clearable {
     }
 
     @Override
-    public void physicalDeleteOldProcessors(final Instant deleteThreshold) {
-
+    public int physicalDeleteOldProcessors(final Instant deleteThreshold) {
+        return 0;
     }
 
     @Override

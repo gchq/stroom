@@ -56,8 +56,8 @@ public class MockProcessorFilterDao implements ProcessorFilterDao, Clearable {
     }
 
     @Override
-    public void physicalDeleteOldProcessorFilters(final Instant deleteThreshold) {
-
+    public int physicalDeleteOldProcessorFilters(final Instant deleteThreshold) {
+        return 0;
     }
 
     @Override
