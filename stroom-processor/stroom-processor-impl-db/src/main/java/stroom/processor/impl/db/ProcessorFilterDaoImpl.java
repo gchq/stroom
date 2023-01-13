@@ -44,6 +44,7 @@ import javax.inject.Inject;
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker.PROCESSOR_FILTER_TRACKER;
+import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 
 class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
@@ -209,11 +210,15 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                         DSL.selectZero()
                                 .from(PROCESSOR_FILTER_TRACKER)
                                 .where(PROCESSOR_FILTER_TRACKER.ID.eq(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID))
-                                .and(PROCESSOR_FILTER_TRACKER.STATUS.eq(ProcessorFilterTracker.COMPLETE)
-                                        .or(PROCESSOR_FILTER_TRACKER.STATUS.eq(ProcessorFilterTracker.ERROR)))
+                                .and(PROCESSOR_FILTER_TRACKER.STATUS.eq(ProcessorFilterTracker.COMPLETE))
                                 .and(PROCESSOR_FILTER_TRACKER.LAST_POLL_MS.lessThan(deleteThreshold.toEpochMilli()))))
+                .and(DSL.notExists(
+                        DSL.selectZero()
+                                .from(PROCESSOR_TASK)
+                                .where(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID))))
                 .execute();
-        LOGGER.debug("Logically deleted {} processor filters with a state of (COMPLETE|ERROR) and last poll before {}",
+        LOGGER.debug("Logically deleted {} processor filters with a state of COMPLETE with no outstanding tasks and " +
+                        "last poll before {}",
                 count, deleteThreshold);
         return count;
     }
