@@ -12,6 +12,25 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.1-beta.19] - 2023-01-13
+
+* Issue **#3163** : Add filter to expression field picker.
+
+* Issue **#3171** : Fix stroom booting successfully when there have been failed migrations.
+
+* Issue **#3177** : Stop logical deletes changing the update time if already logically deleted. Add more info logging. Change task name used in logs from `Processor Task Delete Executor` to match job name `Processor Task Retention`.
+
+* Fix property name mentioned in _Processor Task Retention_ job description.
+
+* Issue **#3177** : Fix bad SQL in _Processor Task Retention_ that results in tasks not being deleted. Fix logical deletion of processor filters and processors that result in processor tasks being incorrectly deleted.
+
+* Issue **#3111** : Revert previous change that added double quote handling. Now we only trim leading/trailing whitespace from expression terms.
+
+* Issue **#3180** : Enable "in dictionary" condition for "Id" fields.
+
+* Issue **#1876** : Add `distinct` dashboard expression function for returning a list of unique values.
+
+
 ## [v7.1-beta.18] - 2023-01-06
 
 * Issue **#2819** : Scale query expression panel height so all items can be viewed on scroll.
@@ -4461,7 +4480,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.18...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.19...HEAD
+[v7.1-beta.19]: https://github.com/gchq/stroom/compare/v7.1-beta.18...v7.1-beta.19
 [v7.1-beta.18]: https://github.com/gchq/stroom/compare/v7.1-beta.17...v7.1-beta.18
 [v7.1-beta.17]: https://github.com/gchq/stroom/compare/v7.1-beta.16...v7.1-beta.17
 [v7.1-beta.16]: https://github.com/gchq/stroom/compare/v7.1-beta.15...v7.1-beta.16

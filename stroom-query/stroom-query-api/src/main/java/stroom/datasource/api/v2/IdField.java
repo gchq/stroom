@@ -37,6 +37,7 @@ public class IdField extends AbstractNumericField {
     static {
         DEFAULT_CONDITIONS.add(Condition.EQUALS);
         DEFAULT_CONDITIONS.add(Condition.IN);
+        DEFAULT_CONDITIONS.add(Condition.IN_DICTIONARY);
         DEFAULT_CONDITIONS.add(Condition.BETWEEN);
         DEFAULT_CONDITIONS.add(Condition.GREATER_THAN);
         DEFAULT_CONDITIONS.add(Condition.GREATER_THAN_OR_EQUAL_TO);

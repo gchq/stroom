@@ -6,6 +6,7 @@ import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -40,13 +41,23 @@ public class MockProcessorFilterDao implements ProcessorFilterDao, Clearable {
     }
 
     @Override
-    public boolean logicalDelete(final int id) {
-        return fetch(id)
+    public int logicalDeleteByProcessorFilterId(final int processorFilterId) {
+        return fetch(processorFilterId)
                 .map(processorFilter -> {
                     processorFilter.setDeleted(true);
-                    return true;
+                    return 1;
                 })
-                .orElse(false);
+                .orElse(0);
+    }
+
+    @Override
+    public int logicallyDeleteOldProcessorFilters(final Instant deleteThreshold) {
+        return 0;
+    }
+
+    @Override
+    public int physicalDeleteOldProcessorFilters(final Instant deleteThreshold) {
+        return 0;
     }
 
     @Override

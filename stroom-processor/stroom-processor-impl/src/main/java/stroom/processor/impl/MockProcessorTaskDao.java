@@ -190,4 +190,24 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     public void clear() {
         dao.clear();
     }
+
+    @Override
+    public int logicalDeleteByProcessorId(final int processorId) {
+        return 0;
+    }
+
+    @Override
+    public int logicalDeleteByProcessorFilterId(final int processorFilterId) {
+        return 0;
+    }
+
+    @Override
+    public int logicalDeleteForDeletedProcessorFilters(final Instant deleteThreshold) {
+        return 0;
+    }
+
+    @Override
+    public int physicallyDeleteOldTasks(final Instant deleteThreshold) {
+        return 0;
+    }
 }
