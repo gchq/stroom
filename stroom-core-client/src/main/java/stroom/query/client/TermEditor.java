@@ -30,6 +30,7 @@ import stroom.util.shared.StringUtil;
 import stroom.widget.customdatebox.client.MyDateBox;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.InputEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -614,6 +615,11 @@ public class TermEditor extends Composite {
         label.addStyleName("fieldType");
         label.setVisible(false);
         return label;
+    }
+
+    private void fixStyle(final Widget widget, final int width) {
+        widget.addStyleName("termEditor-item");
+        widget.getElement().getStyle().setWidth(width, Unit.PX);
     }
 
     private void fireDirty() {
