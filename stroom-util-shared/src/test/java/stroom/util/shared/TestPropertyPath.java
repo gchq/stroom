@@ -1,12 +1,17 @@
 package stroom.util.shared;
 
+import stroom.test.common.TestUtil;
+
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 
 import java.io.IOException;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -49,7 +54,15 @@ class TestPropertyPath {
     void merge2() {
         PropertyPath propertyPath1 = PropertyPath.fromParts("stroom", "node");
         String part2 = "name";
-        Assertions.assertThat(propertyPath1.merge(part2).toString()).isEqualTo("stroom.node.name");
+        Assertions.assertThat(propertyPath1.merge(part2).toString())
+                .isEqualTo("stroom.node.name");
+    }
+
+    @Test
+    void merge3() {
+        PropertyPath propertyPath1 = PropertyPath.fromParts("stroom", "node");
+        Assertions.assertThat(propertyPath1.merge("name", "other").toString())
+                .isEqualTo("stroom.node.name.other");
     }
 
     @Test
@@ -117,6 +130,23 @@ class TestPropertyPath {
         Assertions.assertThat(result)
                 .isEqualTo(expectedResult);
     }
+
+    @TestFactory
+    Stream<DynamicTest> testGetParentPropertyName() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(PropertyPath.class)
+                .withOutputType(String.class)
+                .withTestFunction(testCase ->
+                        testCase.getInput().getParentPropertyName()
+                                .orElse(null))
+                .withSimpleEqualityAssertion()
+                .addThrowsCase(PropertyPath.blank(), RuntimeException.class)
+                .addCase(PropertyPath.fromParts("root"), null)
+                .addCase(PropertyPath.fromParts("root", "child"), "root")
+                .addCase(PropertyPath.fromParts("root", "child", "grandchild"), "child")
+                .build();
+    }
+
 
     @Test
     void testGetParent1() {

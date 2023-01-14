@@ -16,11 +16,14 @@
 
 package stroom.cache.shared;
 
+import stroom.util.shared.PropertyPath;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -30,22 +33,30 @@ public class CacheInfo {
     @JsonProperty
     private final String name;
     @JsonProperty
+    private final PropertyPath basePropertyPath;
+    @JsonProperty
     private final Map<String, String> map;
     @JsonProperty
     private String nodeName;
 
     @JsonCreator
     public CacheInfo(@JsonProperty("name") final String name,
+                     @JsonProperty("basePropertyPath") final PropertyPath basePropertyPath,
                      @JsonProperty("map") final Map<String, String> map,
                      @JsonProperty("nodeName") final String nodeName) {
         this.name = name;
+        this.basePropertyPath = basePropertyPath;
         this.map = map;
         this.nodeName = nodeName;
     }
 
-    public CacheInfo(final String name, final Map<String, String> map) {
+    public CacheInfo(final String name,
+                     final PropertyPath basePropertyPath,
+                     final Map<String, String> map) {
         this.name = name;
+        this.basePropertyPath = basePropertyPath;
         this.map = map;
+        this.nodeName = null;
     }
 
     public String getName() {
@@ -60,8 +71,12 @@ public class CacheInfo {
         return nodeName;
     }
 
-    public void setNodeName(final String nodeName) {
-        this.nodeName = nodeName;
+    /**
+     * Copies the contents of this object to a new object with the addition of the
+     * supplied nodeName
+     */
+    public CacheInfo withNodeName(final String nodeName) {
+        return new CacheInfo(name, basePropertyPath, new HashMap<>(map), nodeName);
     }
 
     @Override
@@ -73,13 +88,14 @@ public class CacheInfo {
             return false;
         }
         final CacheInfo cacheInfo = (CacheInfo) o;
-        return Objects.equals(name, cacheInfo.name) &&
-                Objects.equals(map, cacheInfo.map) &&
-                Objects.equals(nodeName, cacheInfo.nodeName);
+        return Objects.equals(name, cacheInfo.name) && Objects.equals(basePropertyPath,
+                cacheInfo.basePropertyPath) && Objects.equals(map, cacheInfo.map) && Objects.equals(
+                nodeName,
+                cacheInfo.nodeName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, map, nodeName);
+        return Objects.hash(name, basePropertyPath, map, nodeName);
     }
 }

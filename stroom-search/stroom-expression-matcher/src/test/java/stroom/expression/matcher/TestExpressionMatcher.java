@@ -16,6 +16,7 @@
 
 package stroom.expression.matcher;
 
+import stroom.data.shared.StreamTypeNames;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DocRefField;
 import stroom.datasource.api.v2.TextField;
@@ -32,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestExpressionMatcher {
 
-    public static final DocRefField FEED = new DocRefField("Feed", "Feed");
+    public static final DocRefField FEED = DocRefField.byUniqueName("Feed", "Feed");
     private static final TextField TYPE = new TextField("Type");
     private static final Map<String, AbstractField> FIELD_MAP = Map.of(
             FEED.getName(),
@@ -95,7 +96,7 @@ class TestExpressionMatcher {
     private Map<String, Object> createAttributeMap() {
         final Map<String, Object> attributeMap = new HashMap<>();
         attributeMap.put(FEED.getName(), "TEST_FEED");
-        attributeMap.put(TYPE.getName(), "Raw Events");
+        attributeMap.put(TYPE.getName(), StreamTypeNames.RAW_EVENTS);
         return attributeMap;
     }
 }

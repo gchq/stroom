@@ -1,5 +1,8 @@
 package stroom.test.common.util.test.data;
 
+import stroom.util.concurrent.AtomicLoopedIntegerSequence;
+import stroom.util.concurrent.AtomicLoopedLongSequence;
+
 import com.google.common.base.Preconditions;
 import com.google.common.reflect.ClassPath;
 import org.slf4j.Logger;

@@ -1,6 +1,10 @@
 package stroom.db.util;
 
+import stroom.util.NullSafe;
 import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.logging.AsciiTable;
+import stroom.util.logging.AsciiTable.Column;
+import stroom.util.logging.AsciiTable.TableBuilder;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -10,6 +14,7 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
 import stroom.util.shared.Selection;
 import stroom.util.shared.StringCriteria;
+import stroom.util.string.PatternUtil;
 
 import org.jooq.Condition;
 import org.jooq.DSLContext;
@@ -30,6 +35,7 @@ import java.sql.Connection;
 import java.sql.Date;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -626,6 +632,64 @@ public final class JooqUtil {
     }
 
     /**
+     * If filter is wild carded (i.e. contains a '*') then it returns 'field.like(x)' where x has
+     * '*' characters replaced by '%' and SQL wild cards '%' and '_' are escaped.
+     * If filter is not wild carded it returns 'field.eq(filter)'
+     */
+    public static Condition createWildCardedStringCondition(final Field<String> field, final String filter) {
+        return createWildCardedStringCondition(field, filter, true);
+    }
+
+    /**
+     * If allowWildCards is true and filter is wild carded (i.e. contains a '*') then it
+     * returns 'field.like(x)' where x has
+     * '*' characters replaced by '%' and SQL wild cards '%' and '_' are escaped.
+     * If filter is not wild carded it returns 'field.eq(filter)'
+     */
+    public static Condition createWildCardedStringCondition(final Field<String> field,
+                                                            final String filter,
+                                                            final boolean allowWildCards) {
+        if (filter != null) {
+            if (allowWildCards && filter.contains(PatternUtil.STROOM_WILD_CARD_CHAR)) {
+                final String likeStr = PatternUtil.createSqlLikeStringFromWildCardFilter(filter);
+                LOGGER.debug("field.like({})", likeStr);
+                return field.like(likeStr);
+            }
+            LOGGER.debug("field.eq({})", filter);
+            return field.eq(filter);
+        } else {
+            LOGGER.debug("field.isNull()");
+            return field.isNull();
+        }
+    }
+
+    /**
+     * Creates a single {@link Condition} containing an OR/AND of all the {@link Condition}s for
+     * each of the passed filters, e.g. {@code field like 'xxx%' OR field like '%yyy'}.
+     * If allowWildCards is true and filter is wild carded (i.e. contains a '*') then it
+     * returns 'field.like(x)' where x has
+     * '*' characters replaced by '%' and SQL wild cards '%' and '_' are escaped.
+     * If filter is not wild carded it returns 'field.eq(filter)'.
+     */
+    public static Condition createWildCardedStringsCondition(final Field<String> field,
+                                                             final List<String> filters,
+                                                             final boolean allowWildCards,
+                                                             final BooleanOperator booleanOperator) {
+        Objects.requireNonNull(booleanOperator);
+        if (filters == null || filters.isEmpty()) {
+            return DSL.noCondition();
+        } else {
+            final List<Condition> conditions = filters.stream()
+                    .map(filter -> createWildCardedStringCondition(field, filter, allowWildCards))
+                    .collect(Collectors.toList());
+
+            return BooleanOperator.AND.equals(booleanOperator)
+                    ? DSL.and(conditions)
+                    : DSL.or(conditions);
+        }
+    }
+
+    /**
      * Convert a checked exception into an unchecked one. Produce useful logging and handling of interrupted exceptions.
      *
      * @param e The exception to convert.
@@ -655,6 +719,49 @@ public final class JooqUtil {
                 return new RuntimeException(e.getMessage(), e);
             }
         }
+    }
+
+    /**
+     * Dumps the collection of records to an ASCII table or "NO DATA" if the collection is empty/null
+     */
+    public static <T extends Record> String toAsciiTable(final Collection<T> collection,
+                                                         final boolean qualifiedFields) {
+        final TableBuilder<T> builder = AsciiTable.builder(collection);
+        if (collection.isEmpty()) {
+            return "NO DATA";
+        } else {
+            // Grab any record to figure out what fields we have
+            final T aRecord = collection.stream()
+                    .findAny()
+                    .orElseThrow();
+
+            for (int i = 0; i < aRecord.fields().length; i++) {
+                final Field<?> field = aRecord.field(i);
+                final int iCopy = i;
+                final String fieldName = qualifiedFields
+                        ? field.getName()
+                        : field.getQualifiedName().toString();
+
+                final Function<T, String> getter;
+
+                if (field.getName().endsWith("_ms")) {
+                    getter = rec -> {
+                        final Object val = rec.get(iCopy);
+                        if (val == null) {
+                            return null;
+                        } else if (val instanceof Long) {
+                            return Instant.ofEpochMilli((Long) val).toString();
+                        } else {
+                            return val.toString();
+                        }
+                    };
+                } else {
+                    getter = rec -> NullSafe.get(rec.get(iCopy), Object::toString);
+                }
+                builder.withColumn(Column.of(fieldName, getter));
+            }
+        }
+        return builder.build();
     }
 
     /**
@@ -725,5 +832,14 @@ public final class JooqUtil {
         if (count(context, table) > 0) {
             throw new RuntimeException("Unexpected data");
         }
+    }
+
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+    public static enum BooleanOperator {
+        AND,
+        OR;
     }
 }

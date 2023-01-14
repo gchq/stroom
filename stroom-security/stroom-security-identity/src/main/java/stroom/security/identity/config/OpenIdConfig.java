@@ -21,12 +21,12 @@ public class OpenIdConfig extends AbstractConfig implements IsStroomConfig {
 
     public OpenIdConfig() {
         accessCodeCache = CacheConfig.builder()
-                .maximumSize(1000L)
+                .maximumSize(1_000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
 
         refreshTokenCache = CacheConfig.builder()
-                .maximumSize(10000L)
+                .maximumSize(10_000L)
                 .expireAfterAccess(StroomDuration.ofDays(1))
                 .build();
     }

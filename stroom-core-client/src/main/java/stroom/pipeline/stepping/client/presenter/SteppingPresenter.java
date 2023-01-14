@@ -48,6 +48,7 @@ import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
+import stroom.util.shared.DataRange;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
@@ -432,7 +433,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                     final SourceLocation newSourceLocation = result.getStepData()
                             .getSourceLocation()
                             .copy()
-                            .withHighlight(null)
+                            .withHighlight((DataRange) null)
                             .build();
                     sourcePresenter.setSourceLocation(newSourceLocation);
                 } else {

@@ -44,7 +44,7 @@ class TestHttpCall {
                 () -> tempDir);
 
         try (final CacheManager cacheManager = new CacheManagerImpl()) {
-            HttpCall httpCall = new HttpCall(new HttpClientCache(cacheManager, new PipelineConfig(), pathCreator));
+            HttpCall httpCall = new HttpCall(new HttpClientCache(cacheManager, PipelineConfig::new, pathCreator));
             try (Response response = httpCall.execute("https://localhost:5443/", "", "", "", clientConfig)) {
                 System.out.println(response.body().string());
 

@@ -11,6 +11,169 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+## [v7.1-beta.19] - 2023-01-13
+
+* Issue **#3163** : Add filter to expression field picker.
+
+* Issue **#3171** : Fix stroom booting successfully when there have been failed migrations.
+
+* Issue **#3177** : Stop logical deletes changing the update time if already logically deleted. Add more info logging. Change task name used in logs from `Processor Task Delete Executor` to match job name `Processor Task Retention`.
+
+* Fix property name mentioned in _Processor Task Retention_ job description.
+
+* Issue **#3177** : Fix bad SQL in _Processor Task Retention_ that results in tasks not being deleted. Fix logical deletion of processor filters and processors that result in processor tasks being incorrectly deleted.
+
+* Issue **#3111** : Revert previous change that added double quote handling. Now we only trim leading/trailing whitespace from expression terms.
+
+* Issue **#3180** : Enable "in dictionary" condition for "Id" fields.
+
+* Issue **#1876** : Add `distinct` dashboard expression function for returning a list of unique values.
+
+
+## [v7.1-beta.18] - 2023-01-06
+
+* Issue **#2819** : Scale query expression panel height so all items can be viewed on scroll.
+
+* Issue **#2860** : Retry (with backoff) when indexing to an Elasticsearch cluster and the cluster reports it is overloaded. This improves indexing success rate, reducing the chance of  streams being generated when a cluster is under heavy load.
+
+* Issue **#3127** : Fix ClassCastException when clearing a cache on the Caches screen.
+
+* Issue **#3143** : Fix NPE when modifying a property value.
+
+* Issue **#3145** : Fix initial API Key expiry so it picks up the default value from config.
+
+* Issue **#3136** : Simplify code that finds effective reference data streams. Add more debug logging.
+
+* Issue **#3159** : Improve appearance of user Task Manager.
+
+* Issue **#3141** : Increase default width of global property editor dialog.
+
+* Issue **#3166** : Fix stream import when the zip contains a mix of single-part and multi-part streams.
+
+* Issue **#3136** : Fix the reference data lookup logic that determines if a ref stream contains a given map or not. Fix NPE in `RefDataLookupRequest#toString()`. Change `ReferenceDataResult` to hold message templates to reduce memory use. Change `RefDataStoreHolder` to only add available maps once per ref stream. Improve in app logging of lookups.
+
+* Issue **#3140** : Ignore processor filter updates on import.
+
+* Issue **#3125** : Fix import rename and move so that imported items end up renamed in explorer and store.
+
+* Issue **#3148** : Fix dependencies screen showing status of Missing for the Ref Data and Dual Searchables. Also fix the missing icon on that screen for Searchables.
+
+
+## [v7.1-beta.17] - 2022-12-09
+
+* Relax validation requiring proxy repo and failed retry directories to exist before proxy boots. Now checks they exist (creating if they don't) at time of use.
+
+
+## [v7.1-beta.16] - 2022-12-08
+
+* Issue **#3031** : Add connectors to poll from AWS SQS.
+
+* Issue **#3066** : Make all responses set the HTTP header `Strict-Transport-Security` to force all HTTP traffic on the domain onto HTTPS. Also add property `stroom.security.webContent.strictTransportSecurity` to configure the header value.
+
+* Issue **#3074** : Fix data retention summary and purge job when condition includes a pipeline. Fix data viewer screen to allow filtering by pipeline. Fix filtering using the `in folder` condition. Add `<`, `<=`, `>`, `>=`, `between` conditions to ID fields, e.g. stream ID. **WARNING**: the expression field `Pipeline` has had the following conditions removed; `in`, `in dictionary`, `=`, `contains` and the field `Pipeline Name` has been added with the following conditions; `in`, `in dictionary`, `=`. This may impact processor filters or retention rules that use the `Pipeline` field. See the SQL at https://github.com/gchq/stroom/issues/3074 to find any processor filters using this field with a now un-supported condition. Change the Reference Data searchable data source to support `in`, `in dictionary` and wild carding.
+
+* Fix bug in quick filter when user enters two identical tokens into a quick filter, e.g. `bob bob`.
+
+* Issue **#3111** : Trim leading/trailing white space from term values in the expression tree builder. Users can keep leading/trailing white space if they double quote the value, e.g. `" some text "`. If the value needs to include a double quote then it can be escaped with a `\` like this `I said \"hello\"`.
+
+* Improve description for `useJvmSslConfig` property on `HttpAppender`.
+
+* Issue **#3091** : Add feature to optionally maintain import names and paths.
+
+* Issue **#3101** : Add sensible defaults to processor filter import.
+
+* Issue **#2491** : Add feature to allow a specific folder to be used as an import root folder destination.
+
+* Issue **#3038** : Fix number 2 for intermittent websocket alert.
+
+* Issue **#3097** : Fix Kryo output buffer size = -1 when writing to streams.
+
+* Issue **#3073** : Add string truncation and value length protection for search result fields.
+
+* Issue **#3038** : Fix intermittent websocket alert.
+
+* Issue **#3087** : Stop URI generation adding port 443 unnecessarily.
+
+* Issue **#3090** : Fix import of documents from 5.5 that contain data.
+
+* Issue **#3084** : Add the config property `stroom.data.meta.rawMetaTypes` to allow custom stream types (as defined in `stroom.data.meta.metaTypes`) to be categorised as _raw_ types. Also add `Data Encoding` to the Info tab on the Data screen to show the Data Encoding value set on the feed's settings.
+
+* Issue **#3069** : Fix import of a Feed's Stream Type when the export was made in Stroom v5. Add validation to fail the import if the stream type in the export is not in `stroom.data.meta.metaTypes`. Fix word wrapping on the import error messages tooltip.
+
+* Remove duplicate guice binds.
+
+* Issue **#3078** : Uplift apache commons-text to v1.10.0 to address vulnerability CVE-2922-42889.
+
+* Fix typo in description for property `stroom.ui.applicationInstanceKeepAliveIntervalMs`.
+
+* Issue **#3038** : Improve error handling of web socket code to prevent alerts for expected error conditions.
+
+* Issue **#3056** : Make `View As Hex` editor option available in the Source view (but not when stepping). Change hex dump to use uppercase hex values.
+
+* Issue **#3063** : Fix the conversion of bytes to values like `1.9K` to not always round down.
+
+* Add trace logging to volume selectors.
+
+* Issue **#3014** : Add `Index Shards` searchable datasource so you can search shards on a dashboard.
+
+* Issue **#3016** : Evict items from XSLT pool cache when an XSLT doc is changed. Also evict XSLTs that import/include the one that has changed.
+
+* Improve warning message for ref streams with the same effective date.
+
+* Issue **#3027** : Replace processor_task index on status with one on status and create_time_ms.
+
+* Issue **#3032** : Improve performance of Orphan Meta Finder job. Also add new `fs_orphaned_meta_tracker` table to track progress.
+
+* Remove `Eviction Weight` from the cache stats table as it is meaningless when we do not set custom cache item weights.
+
+* Issue **#3034** : Change FS/Index volumes free/used to be based on limit if set. Implement volume selector for index volumes. Add a local volume map to cache index volumes/groups. Fix validation when creating/editing index volumes. Add creation/validation of index volume path to the index volume edit screen. Add validation of FS volumes. Make volumes with relative paths be relative to stroom.home. Change index volume list sort order to Node|Path and make Node the first column.
+
+* Issue **#3043** : Fix SQL error when creating a batch search.
+
+* Change cluster lock mechanism to keep trying to get the lock rather than timing out after 30s. Now times out after 30mins.
+
+* Issue **#3048** : Prevent copying of feeds in the explorer tree. Feeds already cannot be renamed so there is no value in allowing copy if the new copy cannot be renamed.
+
+* Issue **#3052** : Change `Reference Data - Effective Stream Cache` to use a default `expireAfterWrite` of `10m` rather than `expireAfterAccess`.
+
+* Issue **#3051** : Fix `refData/(purgeByAge|purgeByStream|clearBufferPool)` API calls so they process all nodes concurrently.
+
+* Issue **#2992** : Change the cache clear button to clear the cache and rebuild it from current config values.
+
+* Add `Property Path` column to the Caches screen.
+
+* Issue **#3055** : Change `Document Permission Cache` to be expireAfterWrite 30s. Add change handlers to invalidate entries in `Pipeline Structure Cache` when any pipeline in the inheritance chain is changed. Remove unused cache `Index Shard Searcher Cache` and associated job `Index Searcher Cache Refresh`. Add change handlers on `User` entity to `User App Permissions Cache` & `User Cache`.
+
+* Issue **#3057** : Change InvalidXmlCharFilterReader to filter out restricted control characters.
+
+
+## [v7.1-beta.15] - 2022-08-17
+
+* Issue **#3002** : Fix bootstrap process for deployment of a new version.
+
+* Issue **#3001** : Fix the Source display when stepping context data.
+
+* Issue **#2988** : Remove mention of hex viewer in the error message when viewing raw data that can't be decoded in the stepper. Also ensure stepping up to the un-decodable data works ok.
+
+* Issue **#3018** : Fix incorrect cast of a SQLException to an InterruptedException.
+
+* Issue **#3011** : Fix issue of data being truncated in text pane before the pipeline is run.
+
+* Issue **#3008** : Fix `current-user()` call not returning anything when used in a pipeline on a dash text pane.
+
+* Issue **#2993** : Add sorting to columns on Nodes screen.
+
+* Issue **#2993** : Add column sorting to Jobs screen. Set default sort to node name.
+
+* Issue **#2867** : Stop the XML formatter used in the data preview from formatting non-XML data as XML when it finds angle brackets in the data.
+
+* Change the hex dump display to render single bytes using US_ASCII instead of UTF8.
+
+* Issue **#3028** : Catch entity change events so modified feed entities are removed from the cache. Also update the data display if a feed's encoding is changed.
+
+* Issue **#3031** : Add connectors to poll from AWS SQS.
+
 * Add system info for pool caches, e.g. XSLT pool cache.
 
 * Add button on Caches screen to evict expired entries. Move cache stats from info icon to table columns. Add Hit ratio figure.
@@ -4317,7 +4480,12 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.14...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.19...HEAD
+[v7.1-beta.19]: https://github.com/gchq/stroom/compare/v7.1-beta.18...v7.1-beta.19
+[v7.1-beta.18]: https://github.com/gchq/stroom/compare/v7.1-beta.17...v7.1-beta.18
+[v7.1-beta.17]: https://github.com/gchq/stroom/compare/v7.1-beta.16...v7.1-beta.17
+[v7.1-beta.16]: https://github.com/gchq/stroom/compare/v7.1-beta.15...v7.1-beta.16
+[v7.1-beta.15]: https://github.com/gchq/stroom/compare/v7.1-beta.14...v7.1-beta.15
 [v7.1-beta.14]: https://github.com/gchq/stroom/compare/v7.1-beta.13...v7.1-beta.14
 [v7.1-beta.13]: https://github.com/gchq/stroom/compare/v7.1-beta.12...v7.1-beta.13
 [v7.1-beta.12]: https://github.com/gchq/stroom/compare/v7.1-beta.11...v7.1-beta.12

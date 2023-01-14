@@ -29,6 +29,7 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.concurrent.StripedLock;
+import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
@@ -78,6 +79,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private final TaskContextFactory taskContextFactory;
     private final TaskContext taskContext;
     private final SecurityContext securityContext;
+    private final PathCreator pathCreator;
 
     private volatile Settings settings;
 
@@ -90,7 +92,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                                      final IndexShardWriterExecutorProvider executorProvider,
                                      final TaskContextFactory taskContextFactory,
                                      final TaskContext taskContext,
-                                     final SecurityContext securityContext) {
+                                     final SecurityContext securityContext,
+                                     final PathCreator pathCreator) {
         this.nodeInfo = nodeInfo;
         this.indexShardService = indexShardService;
         this.indexConfigProvider = indexConfigProvider;
@@ -100,6 +103,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         this.taskContextFactory = taskContextFactory;
         this.taskContext = taskContext;
         this.securityContext = securityContext;
+        this.pathCreator = pathCreator;
     }
 
     @Override
@@ -210,7 +214,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                     indexStructure,
                     indexShardKey,
                     indexShard,
-                    ramBufferSizeMB);
+                    ramBufferSizeMB,
+                    pathCreator);
 
             // We have opened the index so update the DB object.
             indexShardManager.setStatus(indexShardId, IndexShardStatus.OPEN);
@@ -548,7 +553,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
         try {
             LOGGER.info(() -> "Clearing any lingering locks (" + indexShard + ")");
-            final Path dir = IndexShardUtil.getIndexPath(indexShard);
+            final Path dir = IndexShardUtil.getIndexPath(indexShard, pathCreator);
             LockFactoryFactory.clean(dir);
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);

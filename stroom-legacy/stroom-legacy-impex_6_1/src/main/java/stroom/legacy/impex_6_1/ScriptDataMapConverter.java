@@ -2,16 +2,17 @@ package stroom.legacy.impex_6_1;
 
 import stroom.dashboard.impl.script.ScriptSerialiser;
 import stroom.docref.DocRef;
+import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.legacy.model_6_1.Script;
 import stroom.script.shared.ScriptDoc;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 @Deprecated
@@ -29,7 +30,7 @@ class ScriptDataMapConverter implements DataMapConverter {
     public Map<String, byte[]> convert(final DocRef docRef,
                                        final Map<String, byte[]> dataMap,
                                        final ImportState importState,
-                                       final ImportState.ImportMode importMode,
+                                       final ImportSettings importSettings,
                                        final String userId) {
         Map<String, byte[]> result = dataMap;
         if (dataMap.size() > 0 && !dataMap.containsKey("meta")) {
@@ -46,6 +47,7 @@ class ScriptDataMapConverter implements DataMapConverter {
                 document.setUpdateTimeMs(oldScript.getUpdateTime());
                 document.setCreateUser(oldScript.getCreateUser());
                 document.setUpdateUser(oldScript.getUpdateUser());
+                document.setData(oldScript.getResource());
 
                 final stroom.legacy.model_6_1.DocRefs docRefs = LegacyXmlSerialiser.getDocRefsFromLegacyXml(oldScript.getDependenciesXML());
                 document.setDependencies(MappingUtil.map(docRefs));

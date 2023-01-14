@@ -1,11 +1,13 @@
 package stroom.util.cache;
 
+import stroom.util.NullSafe;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.config.annotations.RequiresRestart.RestartScope;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.NotInjectableConfig;
+import stroom.util.shared.PropertyPath;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -13,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
 import javax.validation.constraints.Min;
 
 // The descriptions have mostly been taken from the Caffine javadoc
@@ -77,6 +80,33 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig, IsPro
         return expireAfterWrite;
     }
 
+    @Override
+    public String toString() {
+        return "CacheConfig{" +
+                "maximumSize=" + maximumSize +
+                ", expireAfterAccess=" + expireAfterAccess +
+                ", expireAfterWrite=" + expireAfterWrite +
+                '}';
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final CacheConfig that = (CacheConfig) o;
+        return Objects.equals(maximumSize, that.maximumSize) && Objects.equals(expireAfterAccess,
+                that.expireAfterAccess) && Objects.equals(expireAfterWrite, that.expireAfterWrite);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(maximumSize, expireAfterAccess, expireAfterWrite);
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -85,11 +115,16 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig, IsPro
         return new Builder(this);
     }
 
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
     public static final class Builder {
 
         private Long maximumSize;
         private StroomDuration expireAfterAccess;
         private StroomDuration expireAfterWrite;
+        public PropertyPath basePath;
 
         private Builder() {
         }
@@ -98,6 +133,7 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig, IsPro
             maximumSize = cacheConfig.maximumSize;
             expireAfterAccess = cacheConfig.expireAfterAccess;
             expireAfterWrite = cacheConfig.expireAfterWrite;
+            basePath = cacheConfig.getBasePath();
         }
 
         public Builder maximumSize(final Long maximumSize) {
@@ -116,7 +152,9 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig, IsPro
         }
 
         public CacheConfig build() {
-            return new CacheConfig(maximumSize, expireAfterAccess, expireAfterWrite);
+            final CacheConfig cacheConfig = new CacheConfig(maximumSize, expireAfterAccess, expireAfterWrite);
+            NullSafe.consume(basePath, cacheConfig::setBasePath);
+            return cacheConfig;
         }
     }
 }

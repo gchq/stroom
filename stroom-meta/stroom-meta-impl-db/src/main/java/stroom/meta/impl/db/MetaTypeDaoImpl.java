@@ -18,8 +18,9 @@
 package stroom.meta.impl.db;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.db.util.JooqUtil;
+import stroom.db.util.JooqUtil.BooleanOperator;
 import stroom.meta.impl.MetaServiceConfig;
 import stroom.meta.impl.MetaTypeDao;
 import stroom.meta.impl.db.jooq.tables.records.MetaTypeRecord;
@@ -28,13 +29,14 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
 
 import org.jooq.Condition;
-import org.jooq.Field;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import static stroom.meta.impl.db.jooq.tables.MetaType.META_TYPE;
@@ -46,21 +48,24 @@ class MetaTypeDaoImpl implements MetaTypeDao, Clearable {
 
     private static final String CACHE_NAME = "Meta Type Cache";
 
-    private final ICache<String, Integer> cache;
+    private final LoadingStroomCache<String, Integer> cache;
     private final MetaDbConnProvider metaDbConnProvider;
 
     @Inject
     MetaTypeDaoImpl(final MetaDbConnProvider metaDbConnProvider,
                     final CacheManager cacheManager,
-                    final MetaServiceConfig metaServiceConfig) {
+                    final Provider<MetaServiceConfig> metaServiceConfigProvider) {
 
         LOGGER.debug("Initialising MetaTypeDaoImpl");
 
         this.metaDbConnProvider = metaDbConnProvider;
-        cache = cacheManager.create(CACHE_NAME, metaServiceConfig::getMetaTypeCache, this::load);
+        cache = cacheManager.createLoadingCache(
+                CACHE_NAME,
+                () -> metaServiceConfigProvider.get().getMetaTypeCache(),
+                this::load);
 
         // Ensure some types are preloaded.
-        final Set<String> metaTypes = metaServiceConfig.getMetaTypes();
+        final Set<String> metaTypes = metaServiceConfigProvider.get().getMetaTypes();
         LOGGER.debug("metaTypes: {}", metaTypes);
         if (metaTypes != null) {
             metaTypes.stream()
@@ -101,23 +106,15 @@ class MetaTypeDaoImpl implements MetaTypeDao, Clearable {
                 .fetchOptional(META_TYPE.ID));
     }
 
-    List<Integer> find(final String name) {
-        final Condition condition = createCondition(META_TYPE.NAME, name);
+    Map<String, List<Integer>> find(final List<String> names) {
+        final Condition condition = JooqUtil.createWildCardedStringsCondition(
+                META_TYPE.NAME, names, true, BooleanOperator.OR);
+
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                .select(META_TYPE.ID)
+                .select(META_TYPE.NAME, META_TYPE.ID)
                 .from(META_TYPE)
                 .where(condition)
-                .fetch(META_TYPE.ID));
-    }
-
-    private Condition createCondition(final Field<String> field, final String name) {
-        if (name != null) {
-            if (name.contains("*")) {
-                return field.like(name.replaceAll("\\*", "%"));
-            }
-            return field.eq(name);
-        }
-        return null;
+                .fetchGroups(META_TYPE.NAME, META_TYPE.ID));
     }
 
     private Optional<Integer> create(final String name) {

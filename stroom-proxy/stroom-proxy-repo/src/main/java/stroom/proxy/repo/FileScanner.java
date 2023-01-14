@@ -56,6 +56,10 @@ public final class FileScanner {
         this.targetStore = targetStore;
     }
 
+    public Path getSourceDir() {
+        return sourceDir;
+    }
+
     /**
      * Scan a proxy zip repository,
      */

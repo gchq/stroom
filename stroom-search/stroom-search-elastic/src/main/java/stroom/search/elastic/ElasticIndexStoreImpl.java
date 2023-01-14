@@ -25,8 +25,8 @@ import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
+import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
-import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.util.shared.Message;
 
@@ -152,11 +152,11 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
     }
 
     @Override
-    public ImpexDetails importDocument(final DocRef docRef,
-                                       final Map<String, byte[]> dataMap,
-                                       final ImportState importState,
-                                       final ImportMode importMode) {
-        return store.importDocument(docRef, dataMap, importState, importMode);
+    public DocRef importDocument(final DocRef docRef,
+                                 final Map<String, byte[]> dataMap,
+                                 final ImportState importState,
+                                 final ImportSettings importSettings) {
+        return store.importDocument(docRef, dataMap, importState, importSettings);
     }
 
     @Override
@@ -186,5 +186,10 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
     @Override
     public List<DocRef> list() {
         return store.list();
+    }
+
+    @Override
+    public List<DocRef> findByNames(final List<String> names, final boolean allowWildCards) {
+        return store.findByNames(names, allowWildCards);
     }
 }

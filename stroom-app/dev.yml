@@ -30,6 +30,7 @@ logging:
     org.eclipse.jetty: INFO
     org.glassfish: INFO
     org.glassfish.jersey: INFO
+    #    stroom.app.logging.DefaultLoggingFilter: INFO
     #    org.glassfish.jersey.logging.LoggingFeature: INFO
     #    org.glassfish.jersey.server.ServerRuntime.Responder: INFO
     #    org.glassfish.jersey.server.validation.internal.ValidationExceptionMapper: FINER
@@ -107,7 +108,7 @@ appConfig:
   # Comment out the publicUri block if you are not running with nginx
   publicUri:
     hostname: ${API_GATEWAY_HOST:-localhost}
-    port: ${API_GATEWAY_PORT:-443}
+    port: ${API_GATEWAY_PORT:-}
   security:
     identity:
       useDefaultOpenIdCredentials: ${USE_DEFAULT_OPEN_ID_CREDENTIALS:-true}

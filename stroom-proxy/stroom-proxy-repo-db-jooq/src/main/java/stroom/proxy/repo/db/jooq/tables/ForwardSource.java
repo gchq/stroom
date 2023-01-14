@@ -12,7 +12,7 @@ import org.jooq.ForeignKey;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row9;
+import org.jooq.Row10;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -83,6 +83,11 @@ public class ForwardSource extends TableImpl<ForwardSourceRecord> {
      * The column <code>forward_source.tries</code>.
      */
     public final TableField<ForwardSourceRecord, Long> TRIES = createField(DSL.name("tries"), SQLDataType.BIGINT.defaultValue(DSL.field("0", SQLDataType.BIGINT)), this, "");
+
+    /**
+     * The column <code>forward_source.last_try_time_ms</code>.
+     */
+    public final TableField<ForwardSourceRecord, Long> LAST_TRY_TIME_MS = createField(DSL.name("last_try_time_ms"), SQLDataType.BIGINT.defaultValue(DSL.field("0", SQLDataType.BIGINT)), this, "");
 
     /**
      * The column <code>forward_source.new_position</code>.
@@ -169,11 +174,11 @@ public class ForwardSource extends TableImpl<ForwardSourceRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row9 type methods
+    // Row10 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row9<Long, Long, Integer, Long, Boolean, String, Long, Long, Long> fieldsRow() {
-        return (Row9) super.fieldsRow();
+    public Row10<Long, Long, Integer, Long, Boolean, String, Long, Long, Long, Long> fieldsRow() {
+        return (Row10) super.fieldsRow();
     }
 }

@@ -13,36 +13,43 @@ import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.ProcessorFilterTracker;
-import stroom.processor.shared.TaskStatus;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
 
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import org.jooq.Condition;
+import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
+import org.jooq.Record2;
+import org.jooq.Result;
+import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.SQLIntegrityConstraintViolationException;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import javax.inject.Inject;
 
-import static stroom.processor.impl.db.jooq.Tables.PROCESSOR_TASK;
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker.PROCESSOR_FILTER_TRACKER;
+import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 
 class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorFilterDaoImpl.class);
-
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterDaoImpl.class);
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.of(
@@ -83,7 +90,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
         expressionMapper.map(ProcessorFields.ID, PROCESSOR.ID, Integer::valueOf);
         expressionMapper.map(ProcessorFields.CREATE_USER, PROCESSOR_FILTER.CREATE_USER, value -> value);
-        expressionMapper.map(ProcessorFields.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value);
+        expressionMapper.map(ProcessorFields.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value, false);
         expressionMapper.map(ProcessorFields.ENABLED, PROCESSOR.ENABLED, Boolean::valueOf);
         expressionMapper.map(ProcessorFields.DELETED, PROCESSOR.DELETED, Boolean::valueOf);
         expressionMapper.map(ProcessorFields.UUID, PROCESSOR.UUID, value -> value);
@@ -103,26 +110,30 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         processorFilterRecord.from(marshalled);
         processorFilterRecord.setFkProcessorId(marshalled.getProcessor().getId());
 
-        final ProcessorFilterRecord stored = JooqUtil.transactionResult(processorDbConnProvider, context -> {
-            processorFilterTrackerRecord.attach(context.configuration());
-            processorFilterTrackerRecord.store();
+        final Tuple2<ProcessorFilterRecord, ProcessorFilterTracker> result = JooqUtil.transactionResult(
+                processorDbConnProvider,
+                context -> {
+                    processorFilterTrackerRecord.attach(context.configuration());
+                    processorFilterTrackerRecord.store();
 
-            final ProcessorFilterTracker persistedTracker =
-                    processorFilterTrackerRecord.into(ProcessorFilterTracker.class);
-            marshalled.setProcessorFilterTracker(persistedTracker);
-            processorFilterRecord.setFkProcessorFilterTrackerId(persistedTracker.getId());
+                    final ProcessorFilterTracker persistedTracker =
+                            processorFilterTrackerRecord.into(ProcessorFilterTracker.class);
+                    marshalled.setProcessorFilterTracker(persistedTracker);
+                    processorFilterRecord.setFkProcessorFilterTrackerId(persistedTracker.getId());
 
-            processorFilterRecord.attach(context.configuration());
-            processorFilterRecord.store();
+                    processorFilterRecord.attach(context.configuration());
+                    processorFilterRecord.store();
 
-            return processorFilterRecord;
-        });
+                    return Tuple.of(processorFilterRecord, persistedTracker);
+                });
 
-        final ProcessorFilter result = stored.into(ProcessorFilter.class);
-        result.setProcessorFilterTracker(result.getProcessorFilterTracker());
-        result.setProcessor(result.getProcessor());
+        final ProcessorFilterRecord processorFilterRecord2 = result._1;
+        final ProcessorFilterTracker processorFilterTracker = result._2;
+        final ProcessorFilter processorFilter2 = processorFilterRecord2.into(ProcessorFilter.class);
+        processorFilter2.setProcessorFilterTracker(processorFilterTracker);
+        processorFilter2.setProcessor(processorFilter.getProcessor());
 
-        return marshaller.unmarshal(result);
+        return marshaller.unmarshal(processorFilter2);
     }
 
     @Override
@@ -140,41 +151,134 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
     @Override
     public boolean delete(final int id) {
-        return genericDao.delete(id);
+        // We don't want to allow direct physical delete, only logical delete.
+        return logicalDeleteByProcessorFilterId(id) > 0;
+        //genericDao.delete(id);
     }
 
     @Override
-    public boolean logicalDelete(final int id) {
-        final boolean success = JooqUtil.transactionResult(processorDbConnProvider, context -> {
-            // Logically delete any associated unprocessed tasks.
-            // Once the filter is logically deleted no new tasks will be created for it
-            // but we may still have active tasks for 'deleted' filters.
-            final int processor_task_update_count = context
-                    .update(PROCESSOR_TASK)
-                    .set(PROCESSOR_TASK.STATUS, TaskStatus.DELETED.getPrimitiveValue())
-                    .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
-                    .where(DSL.exists(
-                            DSL.selectZero()
-                                    .from(PROCESSOR_FILTER)
-                                    .where(PROCESSOR_FILTER.ID.eq(id))))
-                    .and(PROCESSOR_TASK.STATUS.in(
-                            TaskStatus.UNPROCESSED.getPrimitiveValue(),
-                            TaskStatus.ASSIGNED.getPrimitiveValue()))
-                    .execute();
+    public int logicalDeleteByProcessorFilterId(final int processorFilterId) {
+        return JooqUtil.contextResult(processorDbConnProvider, context ->
+                logicalDeleteByProcessorFilterId(processorFilterId, context));
+    }
 
-            LOGGER.debug("Logically deleted {} tasks for processor filter Id {}",
-                    processor_task_update_count, id);
+    public int logicalDeleteByProcessorFilterId(final int processorFilterId, final DSLContext context) {
+        final int count = context
+                .update(PROCESSOR_FILTER)
+                .set(PROCESSOR_FILTER.DELETED, true)
+                .set(PROCESSOR_FILTER.VERSION, PROCESSOR_FILTER.VERSION.plus(1))
+                .set(PROCESSOR_FILTER.UPDATE_TIME_MS, Instant.now().toEpochMilli())
+                .where(PROCESSOR_FILTER.ID.eq(processorFilterId))
+                .and(PROCESSOR_FILTER.DELETED.eq(false))
+                .execute();
+        LOGGER.debug("Logically deleted {} processor filters for processor filter Id {}",
+                count,
+                processorFilterId);
+        return count;
+    }
 
-            return context
-                    .update(PROCESSOR_FILTER)
-                    .set(PROCESSOR_FILTER.DELETED, true)
-                    .set(PROCESSOR_FILTER.VERSION, PROCESSOR_FILTER.VERSION.plus(1))
-                    .where(PROCESSOR_FILTER.ID.eq(id))
-                    .execute();
-        }) > 0;
+    public int logicalDeleteByProcessorId(final int processorId) {
+        return JooqUtil.contextResult(processorDbConnProvider, context ->
+                logicalDeleteByProcessorId(processorId, context));
+    }
 
-        LOGGER.debug("Logically deleted processor filter {}, success: {}", id, success);
-        return success;
+    public int logicalDeleteByProcessorId(final int processorId, final DSLContext context) {
+        final int count = context
+                .update(PROCESSOR_FILTER)
+                .set(PROCESSOR_FILTER.DELETED, true)
+                .set(PROCESSOR_FILTER.VERSION, PROCESSOR_FILTER.VERSION.plus(1))
+                .set(PROCESSOR_FILTER.UPDATE_TIME_MS, Instant.now().toEpochMilli())
+                .where(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(processorId))
+                .and(PROCESSOR_FILTER.DELETED.eq(false))
+                .execute();
+        LOGGER.debug("Logically deleted {} processor filters for processor Id {}",
+                count,
+                processorId);
+        return count;
+    }
+
+    @Override
+    public int logicallyDeleteOldProcessorFilters(final Instant deleteThreshold) {
+        return JooqUtil.contextResult(processorDbConnProvider, context ->
+                logicallyDeleteOldFilters(deleteThreshold, context));
+    }
+
+    public int logicallyDeleteOldFilters(final Instant deleteThreshold, final DSLContext context) {
+        var query = context
+                .update(PROCESSOR_FILTER)
+                .set(PROCESSOR_FILTER.DELETED, true)
+                .set(PROCESSOR_FILTER.VERSION, PROCESSOR_FILTER.VERSION.plus(1))
+                .set(PROCESSOR_FILTER.UPDATE_TIME_MS, Instant.now().toEpochMilli())
+                .where(PROCESSOR_FILTER.DELETED.eq(false))
+                .and(DSL.exists(
+                        DSL.selectZero()
+                                .from(PROCESSOR_FILTER_TRACKER)
+                                .where(PROCESSOR_FILTER_TRACKER.ID.eq(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID))
+                                .and(PROCESSOR_FILTER_TRACKER.STATUS.eq(ProcessorFilterTracker.COMPLETE))
+                                .and(PROCESSOR_FILTER_TRACKER.LAST_POLL_MS.lessThan(deleteThreshold.toEpochMilli()))))
+                .and(DSL.notExists(
+                        DSL.selectZero()
+                                .from(PROCESSOR_TASK)
+                                .where(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID))));
+
+        LOGGER.trace("logicallyDeleteOldFilters query:\n{}", query);
+        final int count = query.execute();
+
+        LOGGER.debug("Logically deleted {} processor filters with a state of COMPLETE with no outstanding tasks and " +
+                        "last poll before {}",
+                count, deleteThreshold);
+        return count;
+    }
+
+    @Override
+    public int physicalDeleteOldProcessorFilters(final Instant deleteThreshold) {
+        final Result<Record2<Integer, Integer>> result =
+                JooqUtil.contextResult(processorDbConnProvider, context -> context
+                        .select(PROCESSOR_FILTER.ID, PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID)
+                        .from(PROCESSOR_FILTER)
+                        .where(PROCESSOR_FILTER.DELETED.eq(true))
+                        .and(PROCESSOR_FILTER.UPDATE_TIME_MS.lessThan(deleteThreshold.toEpochMilli()))
+                        .fetch());
+
+        LAMBDA_LOGGER.debug(() ->
+                LogUtil.message("Found {} logically deleted filters with an update time older than {}",
+                        result.size(), deleteThreshold));
+
+        final AtomicInteger totalCount = new AtomicInteger();
+        // Delete one by one as we expect some constraint errors.
+        result.forEach(record -> {
+            final int processorFilterId = record.value1();
+            final int processorFilterTrackerId = record.value2();
+
+            try {
+                JooqUtil.transaction(processorDbConnProvider, context -> {
+                    final int filterCount = context
+                            .deleteFrom(PROCESSOR_FILTER)
+                            .where(PROCESSOR_FILTER.ID.eq(processorFilterId))
+                            .execute();
+                    LOGGER.debug("Deleted {} processor filters with id {}", filterCount, processorFilterId);
+
+                    final int trackerCount = context
+                            .deleteFrom(PROCESSOR_FILTER_TRACKER)
+                            .where(PROCESSOR_FILTER_TRACKER.ID.eq(processorFilterTrackerId))
+                            .execute();
+                    LOGGER.debug("Deleted {} processor filter trackers with id {}",
+                            trackerCount, processorFilterTrackerId);
+
+                    // No point adding the tracker count as they are 1:1 with filter
+                    totalCount.addAndGet(filterCount);
+                });
+            } catch (final DataAccessException e) {
+                if (e.getCause() != null && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
+                    final var sqlEx = (SQLIntegrityConstraintViolationException) e.getCause();
+                    LOGGER.debug("Expected constraint violation exception: " + sqlEx.getMessage(), e);
+                } else {
+                    throw e;
+                }
+            }
+        });
+        LAMBDA_LOGGER.debug(() -> "physicalDeleteOldProcessorFilters returning: " + totalCount.get());
+        return totalCount.get();
     }
 
     @Override
@@ -183,9 +287,10 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                         context
                                 .select()
                                 .from(PROCESSOR_FILTER)
-                                .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(
-                                        PROCESSOR_FILTER_TRACKER.ID))
-                                .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
+                                .join(PROCESSOR_FILTER_TRACKER)
+                                .on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(PROCESSOR_FILTER_TRACKER.ID))
+                                .join(PROCESSOR)
+                                .on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
                                 .where(PROCESSOR_FILTER.ID.eq(id))
                                 .fetchOptional())
                 .map(record -> {
@@ -211,9 +316,10 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         final List<ProcessorFilter> list = JooqUtil.contextResult(processorDbConnProvider, context -> context
                         .select()
                         .from(PROCESSOR_FILTER)
-                        .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(
-                                PROCESSOR_FILTER_TRACKER.ID))
-                        .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
+                        .join(PROCESSOR_FILTER_TRACKER)
+                        .on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(PROCESSOR_FILTER_TRACKER.ID))
+                        .join(PROCESSOR)
+                        .on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
                         .where(condition)
                         .orderBy(orderFields)
                         .limit(offset, limit)

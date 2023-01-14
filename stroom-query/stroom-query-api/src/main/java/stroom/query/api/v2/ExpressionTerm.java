@@ -18,6 +18,7 @@ package stroom.query.api.v2;
 
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
+import stroom.util.shared.StringUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -68,6 +69,16 @@ public final class ExpressionTerm extends ExpressionItem {
 
     public ExpressionTerm() {
         // TODO : XML serialisation still requires no-arg constructor and mutable fields
+    }
+
+    @Override
+    public boolean containsField(final String... fields) {
+        for (final String field : fields) {
+            if (Objects.equals(field, this.field)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @JsonCreator
@@ -146,7 +157,7 @@ public final class ExpressionTerm extends ExpressionItem {
                 } else if (Condition.IS_DOC_REF.equals(condition)) {
                     appendDocRef(sb, docRef);
                 } else if (value != null) {
-                    sb.append(value);
+                    sb.append(StringUtil.trimWhitespace(value));
                 }
             }
         }
@@ -163,7 +174,7 @@ public final class ExpressionTerm extends ExpressionItem {
     }
 
     public enum Condition implements HasDisplayValue {
-        CONTAINS("contains"),
+        @Deprecated CONTAINS("contains"), // No longer pick-able in TermEditor
         EQUALS("="),
         GREATER_THAN(">"),
         GREATER_THAN_OR_EQUAL_TO(">="),

@@ -1,21 +1,23 @@
 package stroom.legacy.impex_6_1;
 
 import stroom.docref.DocRef;
+import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.legacy.model_6_1.TextConverter;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.textconverter.TextConverterSerialiser;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 @Deprecated
 class TextConverterDataMapConverter implements DataMapConverter {
+
     private final TextConverterSerialiser serialiser;
 
     @Inject
@@ -27,7 +29,7 @@ class TextConverterDataMapConverter implements DataMapConverter {
     public Map<String, byte[]> convert(final DocRef docRef,
                                        final Map<String, byte[]> dataMap,
                                        final ImportState importState,
-                                       final ImportState.ImportMode importMode,
+                                       final ImportSettings importSettings,
                                        final String userId) {
         Map<String, byte[]> result = dataMap;
         if (dataMap.size() > 1 && !dataMap.containsKey("meta") && dataMap.containsKey("xml")) {
@@ -47,6 +49,7 @@ class TextConverterDataMapConverter implements DataMapConverter {
 
                 document.setDescription(oldTextConverter.getDescription());
                 document.setConverterType(MappingUtil.map(oldTextConverter.getConverterType()));
+                document.setData(oldTextConverter.getData());
 
                 result = serialiser.write(document);
                 if (dataMap.containsKey("data.xml")) {

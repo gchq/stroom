@@ -75,7 +75,7 @@ class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSec
                         .build())
                 .build();
 
-        final ResourceGeneration resourceGeneration = stroomEventLoggingServiceProvider.get()
+        return stroomEventLoggingServiceProvider.get()
                 .loggedWorkBuilder()
                 .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "download"))
                 .withDescription("Downloading stream data")
@@ -88,8 +88,6 @@ class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSec
                     }
                 })
                 .getResultAndLog();
-
-        return resourceGeneration;
     }
 
     @AutoLogged(OperationType.MANUALLY_LOGGED)
@@ -180,6 +178,8 @@ class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSec
     }
 
     private FetchDataResult createErrorResult(final ViewDataException viewDataException) {
+        // TODO: 03/11/2022 Not sure we should be always setting this to raw_events, though depending on where
+        //  the ex happened we may or may not know the actual strm type
         return new FetchDataResult(
                 null,
                 StreamTypeNames.RAW_EVENTS,

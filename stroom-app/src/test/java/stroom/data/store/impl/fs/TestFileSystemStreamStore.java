@@ -29,6 +29,7 @@ import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.feed.api.FeedStore;
+import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
@@ -62,11 +63,13 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -623,7 +626,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         criteria.setEffectivePeriod(new Period(DateUtil.parseNormalDateTimeString("2009-01-01T00:00:00.000Z"),
                 DateUtil.parseNormalDateTimeString("2010-01-01T00:00:00.000Z")));
 
-        Set<Meta> set = metaService.findEffectiveData(criteria);
+        Set<EffectiveMeta> set = metaService.findEffectiveData(criteria);
 
         // Make sure the list contains what it should.
         verifySet(set, refData1, refData2);
@@ -647,12 +650,14 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
      * @param set
      * @param expected
      */
-    private void verifySet(final Set<Meta> set, final Meta... expected) {
+    private void verifySet(final Set<EffectiveMeta> set, final Meta... expected) {
         assertThat(set).isNotNull();
         assertThat(set.size()).isEqualTo(expected.length);
-        for (final Meta meta : expected) {
-            assertThat(set.contains(meta)).isTrue();
-        }
+        final Set<EffectiveMeta> expectedSet = Arrays.stream(expected)
+                .map(EffectiveMeta::new)
+                .collect(Collectors.toSet());
+
+        assertThat(set).containsAll(expectedSet);
     }
 
     private Meta buildRefData(final String feed,

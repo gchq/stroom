@@ -17,8 +17,8 @@
 package stroom.importexport.impl;
 
 import stroom.docref.DocRef;
+import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
-import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.util.io.FileUtil;
 import stroom.util.io.TempDirProvider;
 import stroom.util.shared.Message;
@@ -27,7 +27,6 @@ import stroom.util.zip.ZipUtil;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -50,28 +49,17 @@ public class ImportExportServiceImpl implements ImportExportService {
     }
 
     @Override
-    public List<ImportState> createImportConfirmationList(final Path data) {
-        final List<ImportState> confirmList = new ArrayList<>();
-        doImport(data, confirmList, ImportMode.CREATE_CONFIRMATION);
+    public List<ImportState> importConfig(final Path data,
+                                          final ImportSettings importSettings,
+                                          final List<ImportState> confirmList) {
+        doImport(data, confirmList, importSettings);
         confirmList.sort(Comparator.comparing(ImportState::getSourcePath));
         return confirmList;
     }
 
-    /**
-     * Import API.
-     */
-    @Override
-    public void performImportWithConfirmation(final Path data, final List<ImportState> confirmList) {
-        doImport(data, confirmList, ImportMode.ACTION_CONFIRMATION);
-    }
-
-    @Override
-    public void performImportWithoutConfirmation(final Path data) {
-        doImport(data, null, ImportMode.IGNORE_CONFIRMATION);
-    }
-
-    private void doImport(final Path zipFile, final List<ImportState> confirmList,
-                          final ImportMode importMode) {
+    private void doImport(final Path zipFile,
+                          final List<ImportState> confirmList,
+                          final ImportSettings importSettings) {
         final Path explodeDir = workingZipDir(zipFile);
         try {
             Files.createDirectories(explodeDir);
@@ -79,7 +67,7 @@ public class ImportExportServiceImpl implements ImportExportService {
             // Unzip the zip file.
             ZipUtil.unzip(zipFile, explodeDir);
 
-            importExportSerializer.read(explodeDir, confirmList, importMode);
+            importExportSerializer.read(explodeDir, confirmList, importSettings);
         } catch (final IOException | RuntimeException e) {
             throw new RuntimeException(e.getMessage(), e);
         } finally {

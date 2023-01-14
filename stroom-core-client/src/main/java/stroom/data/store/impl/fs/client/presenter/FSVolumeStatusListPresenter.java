@@ -29,7 +29,6 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -41,6 +40,8 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.OptionalDouble;
+import java.util.OptionalLong;
 import java.util.function.Consumer;
 
 public class FSVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<FsVolume>> {
@@ -108,7 +109,7 @@ public class FSVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<
         final Column<FsVolume, String> totalColumn = new Column<FsVolume, String>(new TextCell()) {
             @Override
             public String getValue(final FsVolume volume) {
-                return getSizeString(volume.getVolumeState().getBytesTotal());
+                return getSizeString(volume.getCapacityInfo().getTotalCapacityBytes());
             }
         };
         getView().addResizableColumn(totalColumn, "Total", ColumnSizeConstants.SMALL_COL);
@@ -120,7 +121,7 @@ public class FSVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<
                 if (volume.getByteLimit() == null) {
                     return "";
                 }
-                return getSizeString(volume.getByteLimit());
+                return getSizeString(volume.getCapacityInfo().getCapacityLimitBytes());
             }
         };
         getView().addResizableColumn(limitColumn, "Limit", ColumnSizeConstants.SMALL_COL);
@@ -129,7 +130,7 @@ public class FSVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<
         final Column<FsVolume, String> usedColumn = new Column<FsVolume, String>(new TextCell()) {
             @Override
             public String getValue(final FsVolume volume) {
-                return getSizeString(volume.getVolumeState().getBytesUsed());
+                return getSizeString(volume.getCapacityInfo().getCapacityUsedBytes());
             }
         };
         getView().addResizableColumn(usedColumn, "Used", ColumnSizeConstants.SMALL_COL);
@@ -138,7 +139,7 @@ public class FSVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<
         final Column<FsVolume, String> freeColumn = new Column<FsVolume, String>(new TextCell()) {
             @Override
             public String getValue(final FsVolume volume) {
-                return getSizeString(volume.getVolumeState().getBytesFree());
+                return getSizeString(volume.getCapacityInfo().getFreeCapacityBytes());
             }
         };
         getView().addResizableColumn(freeColumn, "Free", ColumnSizeConstants.SMALL_COL);
@@ -147,10 +148,24 @@ public class FSVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<
         final Column<FsVolume, String> usePercentColumn = new Column<FsVolume, String>(new TextCell()) {
             @Override
             public String getValue(final FsVolume volume) {
-                return getPercentString(volume.getVolumeState().getPercentUsed());
+                final OptionalDouble optUsedPercent = volume.getCapacityInfo().getUsedCapacityPercent();
+                return optUsedPercent.isPresent()
+                        ? ((long) optUsedPercent.getAsDouble()) + "%"
+                        : "?";
             }
         };
         getView().addResizableColumn(usePercentColumn, "Use%", ColumnSizeConstants.SMALL_COL);
+
+        // Is Full
+        final Column<FsVolume, String> isFullColumn = new Column<FsVolume, String>(new TextCell()) {
+            @Override
+            public String getValue(final FsVolume volume) {
+                return volume.getCapacityInfo().isFull()
+                        ? "Yes"
+                        : "No";
+            }
+        };
+        getView().addResizableColumn(isFullColumn, "Full", ColumnSizeConstants.SMALL_COL);
 
         // Usage Date.
         final Column<FsVolume, String> usageDateColumn = new Column<FsVolume, String>(new TextCell()) {
@@ -164,20 +179,10 @@ public class FSVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<
         getView().addEndColumn(new EndColumn<>());
     }
 
-    private String getSizeString(final Long size) {
-        String string = "?";
-        if (size != null) {
-            string = ModelStringUtil.formatIECByteSizeString(size);
-        }
-        return string;
-    }
-
-    private String getPercentString(final Long percent) {
-        String string = "?";
-        if (percent != null) {
-            string = percent + "%";
-        }
-        return string;
+    private String getSizeString(final OptionalLong optSizeBytes) {
+        return optSizeBytes != null && optSizeBytes.isPresent()
+                ? ModelStringUtil.formatIECByteSizeString(optSizeBytes.getAsLong())
+                : "?";
     }
 
     public MultiSelectionModel<FsVolume> getSelectionModel() {

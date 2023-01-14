@@ -167,12 +167,12 @@ public class StringPredicateFactory {
                 // remove the ^ marker char from the beginning
                 predicate = createCaseInsensitiveStartsWithPredicate(modifiedInput.substring(1));
             } else if (modifiedInput.contains(WILDCARD_STR)) {
-                // Think this is for feed name input fields where the user is allowed to enter the feed
-                // name in wild carded form, such that the processor filter will apply to any feeds matching
-                // that wildcarded form at runtime. This predicate makes the suggestion dropdown show the user
-                // what the term would match at that point.
-                // Not ideal as it is complete match and case sens which is inconsistent with the rest and a bit
-                // magic.
+                // This is intended for expression term values, e.g. specifing a set of feeds in a processor
+                // filter expression. The aim is to show the user what values are represented by a wild-carded
+                // string, e.g. if they enter 'FEED_*' it can show 'FEED_1', 'FEED_2', etc.
+                // This is different behaviour to entering a quick filter term to select a single value.
+                // Also, it is not ideal as it is complete match and case sens which is inconsistent with the rest.
+                // It is not at all obvious to the user what is going on.
                 predicate = createWildCardedPredicate(modifiedInput);
             } else {
                 // Would be nice to use chars anywhere for the default but that needs ranked matches which

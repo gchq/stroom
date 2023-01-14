@@ -12,11 +12,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.Objects;
+import java.util.Objects;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
 /**
- * A {@link PathCreator} that is useful for tests. It create a temporary dir
+ * A {@link PathCreator} that is useful for tests. It creates a temporary dir
  * and a home/temp dir within it. {@link AutoCloseable} to make it easy to destroy afterwards.
  * Delegates most methods to {@link SimplePathCreator}.
  */
@@ -145,7 +147,12 @@ public class TemporaryPathCreator implements PathCreator, AutoCloseable {
 
     private static Path createTempDir() {
         try {
-            return Files.createTempDirectory("stroom");
+            // Ensure each gradle jvm gets a unique path by using the working number
+            final String gradleWorker = Objects.requireNonNullElse(
+                    System.getProperty("org.gradle.test.worker"),
+                    "0");
+            final String prefix = "stroom_" + gradleWorker + "_";
+            return Files.createTempDirectory(prefix);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

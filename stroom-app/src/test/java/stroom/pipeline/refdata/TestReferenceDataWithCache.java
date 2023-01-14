@@ -121,7 +121,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                         null,
                         null,
                         null,
-                        new ReferenceDataConfig()) {
+                        ReferenceDataConfig::new) {
                     @Override
                     public TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
                         return streamSet;
@@ -241,7 +241,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                         null,
                         null,
                         null,
-                        new ReferenceDataConfig()) {
+                        ReferenceDataConfig::new) {
                     @Override
                     public TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
                         return streamSet;
@@ -339,8 +339,9 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                           final long time,
                           final String mapName,
                           final String key) {
-        final ReferenceDataResult result = new ReferenceDataResult();
-        data.ensureReferenceDataAvailability(pipelineReferences, LookupIdentifier.of(mapName, key, time), result);
+        final LookupIdentifier lookupIdentifier = LookupIdentifier.of(mapName, key, time);
+        final ReferenceDataResult result = new ReferenceDataResult(lookupIdentifier);
+        data.ensureReferenceDataAvailability(pipelineReferences, lookupIdentifier, result);
         if (result.getRefDataValueProxy() == null) {
             return null;
         }

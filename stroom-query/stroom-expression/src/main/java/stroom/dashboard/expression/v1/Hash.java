@@ -103,6 +103,9 @@ class Hash extends AbstractFunction {
 
         if (params.length >= 2) {
             algorithm = ParamParseUtil.parseStringParam(params, 1, name);
+            if (algorithm == null) {
+                algorithm = DEFAULT_ALGORITHM;
+            }
         }
         if (params.length >= 3) {
             salt = ParamParseUtil.parseStringParam(params, 2, name);

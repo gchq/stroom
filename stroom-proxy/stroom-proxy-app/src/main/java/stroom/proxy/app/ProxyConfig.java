@@ -6,19 +6,22 @@ import stroom.proxy.app.forwarder.ThreadConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.FileScannerConfig;
+import stroom.proxy.repo.ForwardRetryConfig;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.repo.ProxyDbConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
+import stroom.util.config.annotations.RequiresProxyRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.validation.ValidationSeverity;
-import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.dropwizard.validation.ValidationMethod;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,7 +33,26 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
     public static final PropertyPath ROOT_PROPERTY_PATH = PropertyPath.fromParts("proxyConfig");
 
+    public static final String PROP_NAME_USE_DEFAULT_OPENID_CREDENTIALS = "useDefaultOpenIdCredentials";
     public static final String PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = "haltBootOnConfigValidationFailure";
+    public static final String PROP_NAME_PROXY_ID = "proxyId";
+    public static final String PROP_NAME_CONTENT_DIR = "contentDir";
+    public static final String PROP_NAME_PATH = "path";
+    public static final String PROP_NAME_DB = "db";
+    public static final String PROP_NAME_RECEIVE_DATA_CONFIG = "receiveDataConfig";
+    public static final String PROP_NAME_REPOSITORY = "repository";
+    public static final String PROP_NAME_EVENT_STORE = "eventStore";
+    public static final String PROP_NAME_FILE_SCANNERS = "fileScanners";
+    public static final String PROP_NAME_AGGREGATOR = "aggregator";
+    public static final String PROP_NAME_FORWARD_DESTINATIONS = "forwardDestinations";
+    public static final String PROP_NAME_LOG_STREAM = "logStream";
+    public static final String PROP_NAME_CONTENT_SYNC = "contentSync";
+    public static final String PROP_NAME_FEED_STATUS = "feedStatus";
+    public static final String PROP_NAME_REST_CLIENT = "restClient";
+    public static final String PROP_NAME_THREADS = "threads";
+    public static final String PROP_NAME_FORWARD_RETRY = "forwardRetry";
+    public static final String PROP_NAME_SQS_CONNECTORS = "sqsConnectors";
+
     protected static final boolean DEFAULT_USE_DEFAULT_OPEN_ID_CREDENTIALS = false;
     protected static final boolean DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = true;
     protected static final String DEFAULT_CONTENT_DIR = "content";
@@ -53,7 +75,8 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     private final FeedStatusConfig feedStatusConfig;
     private final RestClientConfig restClientConfig;
     private final ThreadConfig threadConfig;
-    private final StroomDuration retryFrequency;
+    private final ForwardRetryConfig forwardRetry;
+    private final List<SqsConnectorConfig> sqsConnectors;
 
     public ProxyConfig() {
         useDefaultOpenIdCredentials = DEFAULT_USE_DEFAULT_OPEN_ID_CREDENTIALS;
@@ -74,29 +97,33 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         feedStatusConfig = new FeedStatusConfig();
         restClientConfig = new RestClientConfig();
         threadConfig = new ThreadConfig();
-        retryFrequency = StroomDuration.ofMinutes(1);
+        forwardRetry = new ForwardRetryConfig();
+        sqsConnectors = new ArrayList<>();
     }
 
+
+    @SuppressWarnings("checkstyle:LineLength")
     @JsonCreator
     public ProxyConfig(
-            @JsonProperty("useDefaultOpenIdCredentials") final boolean useDefaultOpenIdCredentials,
-            @JsonProperty("haltBootOnConfigValidationFailure") final boolean haltBootOnConfigValidationFailure,
-            @JsonProperty("proxyId") final String proxyId,
-            @JsonProperty("contentDir") final String contentDir,
-            @JsonProperty("path") final ProxyPathConfig pathConfig,
-            @JsonProperty("db") final ProxyDbConfig proxyDbConfig,
-            @JsonProperty("receiveDataConfig") final ReceiveDataConfig receiveDataConfig,
-            @JsonProperty("repository") final ProxyRepoConfig proxyRepoConfig,
-            @JsonProperty("eventStore") final EventStoreConfig eventStoreConfig,
-            @JsonProperty("fileScanners") final List<FileScannerConfig> fileScanners,
-            @JsonProperty("aggregator") final AggregatorConfig aggregatorConfig,
-            @JsonProperty("forwardDestinations") final List<ForwardConfig> forwardDestinations,
-            @JsonProperty("logStream") final LogStreamConfig logStreamConfig,
-            @JsonProperty("contentSync") final ContentSyncConfig contentSyncConfig,
-            @JsonProperty("feedStatus") final FeedStatusConfig feedStatusConfig,
-            @JsonProperty("restClient") final RestClientConfig restClientConfig,
-            @JsonProperty("threads") final ThreadConfig threadConfig,
-            @JsonProperty("retryFrequency") final StroomDuration retryFrequency) {
+            @JsonProperty(PROP_NAME_USE_DEFAULT_OPENID_CREDENTIALS) final boolean useDefaultOpenIdCredentials,
+            @JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE) final boolean haltBootOnConfigValidationFailure,
+            @JsonProperty(PROP_NAME_PROXY_ID) final String proxyId,
+            @JsonProperty(PROP_NAME_CONTENT_DIR) final String contentDir,
+            @JsonProperty(PROP_NAME_PATH) final ProxyPathConfig pathConfig,
+            @JsonProperty(PROP_NAME_DB) final ProxyDbConfig proxyDbConfig,
+            @JsonProperty(PROP_NAME_RECEIVE_DATA_CONFIG) final ReceiveDataConfig receiveDataConfig,
+            @JsonProperty(PROP_NAME_REPOSITORY) final ProxyRepoConfig proxyRepoConfig,
+            @JsonProperty(PROP_NAME_EVENT_STORE) final EventStoreConfig eventStoreConfig,
+            @JsonProperty(PROP_NAME_FILE_SCANNERS) final List<FileScannerConfig> fileScanners,
+            @JsonProperty(PROP_NAME_AGGREGATOR) final AggregatorConfig aggregatorConfig,
+            @JsonProperty(PROP_NAME_FORWARD_DESTINATIONS) final List<ForwardConfig> forwardDestinations,
+            @JsonProperty(PROP_NAME_LOG_STREAM) final LogStreamConfig logStreamConfig,
+            @JsonProperty(PROP_NAME_CONTENT_SYNC) final ContentSyncConfig contentSyncConfig,
+            @JsonProperty(PROP_NAME_FEED_STATUS) final FeedStatusConfig feedStatusConfig,
+            @JsonProperty(PROP_NAME_REST_CLIENT) final RestClientConfig restClientConfig,
+            @JsonProperty(PROP_NAME_THREADS) final ThreadConfig threadConfig,
+            @JsonProperty(PROP_NAME_FORWARD_RETRY) final ForwardRetryConfig forwardRetry,
+            @JsonProperty(PROP_NAME_SQS_CONNECTORS) final List<SqsConnectorConfig> sqsConnectors) {
 
         this.useDefaultOpenIdCredentials = useDefaultOpenIdCredentials;
         this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
@@ -115,7 +142,8 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         this.feedStatusConfig = feedStatusConfig;
         this.restClientConfig = restClientConfig;
         this.threadConfig = threadConfig;
-        this.retryFrequency = retryFrequency;
+        this.forwardRetry = forwardRetry;
+        this.sqsConnectors = sqsConnectors;
     }
 
     @AssertTrue(
@@ -131,7 +159,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return haltBootOnConfigValidationFailure;
     }
 
-    @JsonProperty()
+    @JsonProperty(PROP_NAME_USE_DEFAULT_OPENID_CREDENTIALS)
     @JsonPropertyDescription("If true, stroom will use a set of default authentication credentials to allow" +
             "API calls from stroom-proxy. For test or demonstration purposes only, set to false for production. " +
             "If API keys are set elsewhere in config then they will override this setting.")
@@ -144,85 +172,113 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return proxyId;
     }
 
+    @RequiresProxyRestart
     @JsonProperty
     public String getContentDir() {
         return contentDir;
     }
 
-    @JsonProperty("path")
+    @JsonProperty(PROP_NAME_PATH)
     public ProxyPathConfig getPathConfig() {
         return pathConfig;
     }
 
-    @JsonProperty("db")
+    @JsonProperty(PROP_NAME_DB)
     public ProxyDbConfig getProxyDbConfig() {
         return proxyDbConfig;
     }
 
-    @JsonProperty("receiveDataConfig")
+    @JsonProperty(PROP_NAME_RECEIVE_DATA_CONFIG)
     public ReceiveDataConfig getReceiveDataConfig() {
         return receiveDataConfig;
     }
 
-    @JsonProperty("repository")
+    @JsonProperty(PROP_NAME_REPOSITORY)
     public ProxyRepoConfig getProxyRepositoryConfig() {
         return proxyRepoConfig;
     }
 
-    @JsonProperty("eventStore")
+    @JsonProperty(PROP_NAME_EVENT_STORE)
     public EventStoreConfig getEventStoreConfig() {
         return eventStoreConfig;
     }
 
-    @JsonProperty("fileScanners")
+    @JsonProperty(PROP_NAME_FILE_SCANNERS)
     public List<FileScannerConfig> getFileScanners() {
         return fileScanners;
     }
 
-    @JsonProperty("aggregator")
+    @JsonProperty(PROP_NAME_AGGREGATOR)
     public AggregatorConfig getAggregatorConfig() {
         return aggregatorConfig;
     }
 
-    @JsonProperty("forwardDestinations")
+    @RequiresProxyRestart
+    @JsonProperty(PROP_NAME_FORWARD_DESTINATIONS)
     public List<ForwardConfig> getForwardDestinations() {
         return forwardDestinations;
     }
 
-    @JsonProperty("logStream")
+    @JsonProperty(PROP_NAME_LOG_STREAM)
     public LogStreamConfig getLogStreamConfig() {
         return logStreamConfig;
     }
 
-    @JsonProperty("contentSync")
+    @JsonProperty(PROP_NAME_CONTENT_SYNC)
     public ContentSyncConfig getContentSyncConfig() {
         return contentSyncConfig;
     }
 
-    @JsonProperty("feedStatus")
+    @JsonProperty(PROP_NAME_FEED_STATUS)
     public FeedStatusConfig getFeedStatusConfig() {
         return feedStatusConfig;
     }
 
-    @JsonProperty("restClient")
+    @JsonProperty(PROP_NAME_REST_CLIENT)
     public RestClientConfig getRestClientConfig() {
         return restClientConfig;
     }
 
-    @JsonProperty("threads")
+    @JsonProperty(PROP_NAME_THREADS)
     public ThreadConfig getThreadConfig() {
         return threadConfig;
     }
 
-    @JsonPropertyDescription("How often do we want to retry forwarding data that fails to forward?")
+    @JsonPropertyDescription(PROP_NAME_FORWARD_RETRY)
     @JsonProperty
-    public StroomDuration getRetryFrequency() {
-        return retryFrequency;
+    public ForwardRetryConfig getForwardRetry() {
+        return forwardRetry;
+    }
+
+    @JsonIgnore
+    @SuppressWarnings("unused")
+    @ValidationMethod(message = "If repository.storingEnabled is not true, then forwardDestinations must contain at " +
+            "least one destination")
+    public boolean isRepoConfigValid() {
+        return (proxyRepoConfig != null && proxyRepoConfig.isStoringEnabled())
+                || (forwardDestinations != null && !forwardDestinations.isEmpty());
+    }
+
+    @JsonPropertyDescription("Configurations for AWS SQS connectors")
+    @JsonProperty
+    public List<SqsConnectorConfig> getSqsConnectors() {
+        return sqsConnectors;
     }
 
     public static Builder builder() {
         return new Builder();
     }
+
+    /**
+     * Builds a {@link PropertyPath} by merging parts onto the root {@link PropertyPath}
+     */
+    public static PropertyPath buildPath(final String... parts) {
+        return ROOT_PROPERTY_PATH.merge(parts);
+    }
+
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
     public static class Builder {
 
@@ -244,7 +300,8 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
         private RestClientConfig restClientConfig = new RestClientConfig();
         private ThreadConfig threadConfig = new ThreadConfig();
-        private StroomDuration retryFrequency = StroomDuration.ofMinutes(1);
+        private ForwardRetryConfig forwardRetry = new ForwardRetryConfig();
+        private List<SqsConnectorConfig> sqsConnectors = new ArrayList<>();
 
         private Builder() {
 
@@ -335,8 +392,13 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             return this;
         }
 
-        public Builder retryFrequency(final StroomDuration retryFrequency) {
-            this.retryFrequency = retryFrequency;
+        public Builder forwardRetry(final ForwardRetryConfig forwardRetry) {
+            this.forwardRetry = forwardRetry;
+            return this;
+        }
+
+        public Builder addSqsConnector(final SqsConnectorConfig sqsConnector) {
+            this.sqsConnectors.add(sqsConnector);
             return this;
         }
 
@@ -359,7 +421,8 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                     feedStatusConfig,
                     restClientConfig,
                     threadConfig,
-                    retryFrequency);
+                    forwardRetry,
+                    sqsConnectors);
         }
     }
 }

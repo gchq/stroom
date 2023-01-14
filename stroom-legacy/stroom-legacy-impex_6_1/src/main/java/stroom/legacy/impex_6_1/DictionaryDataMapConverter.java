@@ -5,20 +5,22 @@ import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2Factory;
+import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.legacy.model_6_1.OldDictionaryDoc;
 import stroom.util.shared.Severity;
 import stroom.util.string.EncodingUtil;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 @Deprecated
 class DictionaryDataMapConverter implements DataMapConverter {
+
     private final DocumentSerialiser2<DictionaryDoc> serialiser;
     private final DocumentSerialiser2<OldDictionaryDoc> oldSerialiser;
 
@@ -33,7 +35,7 @@ class DictionaryDataMapConverter implements DataMapConverter {
     public Map<String, byte[]> convert(final DocRef docRef,
                                        final Map<String, byte[]> dataMap,
                                        final ImportState importState,
-                                       final ImportState.ImportMode importMode,
+                                       final ImportSettings importSettings,
                                        final String userId) {
         Map<String, byte[]> result = dataMap;
 
@@ -77,7 +79,10 @@ class DictionaryDataMapConverter implements DataMapConverter {
 
                     if (dataMap.containsKey("data.xml")) {
                         document.setData(EncodingUtil.asString(dataMap.get("data.xml")));
+                    } else if (dataMap.containsKey("data.txt")) {
+                        document.setData(EncodingUtil.asString(dataMap.get("data.txt")));
                     }
+
 
                     result = serialiser.write(document);
                 }

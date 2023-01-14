@@ -18,19 +18,21 @@
 package stroom.meta.impl.db;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.db.util.JooqUtil;
+import stroom.db.util.JooqUtil.BooleanOperator;
 import stroom.meta.impl.MetaFeedDao;
 import stroom.meta.impl.MetaServiceConfig;
 import stroom.meta.impl.db.jooq.tables.records.MetaFeedRecord;
 import stroom.util.shared.Clearable;
 
 import org.jooq.Condition;
-import org.jooq.Field;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import static stroom.meta.impl.db.jooq.tables.MetaFeed.META_FEED;
@@ -40,15 +42,18 @@ class MetaFeedDaoImpl implements MetaFeedDao, Clearable {
 
     private static final String CACHE_NAME = "Meta Feed Cache";
 
-    private final ICache<String, Integer> cache;
+    private final LoadingStroomCache<String, Integer> cache;
     private final MetaDbConnProvider metaDbConnProvider;
 
     @Inject
     MetaFeedDaoImpl(final MetaDbConnProvider metaDbConnProvider,
                     final CacheManager cacheManager,
-                    final MetaServiceConfig metaServiceConfig) {
+                    final Provider<MetaServiceConfig> metaServiceConfigProvider) {
         this.metaDbConnProvider = metaDbConnProvider;
-        cache = cacheManager.create(CACHE_NAME, metaServiceConfig::getMetaFeedCache, this::load);
+        cache = cacheManager.createLoadingCache(
+                CACHE_NAME,
+                () -> metaServiceConfigProvider.get().getMetaFeedCache(),
+                this::load);
     }
 
     private int load(final String name) {
@@ -81,23 +86,15 @@ class MetaFeedDaoImpl implements MetaFeedDao, Clearable {
                 .fetchOptional(META_FEED.ID));
     }
 
-    List<Integer> find(final String name) {
-        final Condition condition = createCondition(META_FEED.NAME, name);
+    Map<String, List<Integer>> find(final List<String> names) {
+        final Condition condition = JooqUtil.createWildCardedStringsCondition(
+                META_FEED.NAME, names, true, BooleanOperator.OR);
+
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                .select(META_FEED.ID)
+                .select(META_FEED.NAME, META_FEED.ID)
                 .from(META_FEED)
                 .where(condition)
-                .fetch(META_FEED.ID));
-    }
-
-    private Condition createCondition(final Field<String> field, final String name) {
-        if (name != null) {
-            if (name.contains("*")) {
-                return field.like(name.replaceAll("\\*", "%"));
-            }
-            return field.eq(name);
-        }
-        return null;
+                .fetchGroups(META_FEED.NAME, META_FEED.ID));
     }
 
     Optional<Integer> create(final String name) {

@@ -18,6 +18,8 @@ package stroom.index.shared;
 
 import stroom.docref.HasDisplayValue;
 import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasCapacity;
+import stroom.util.shared.HasCapacityInfo;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
@@ -28,6 +30,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+import java.util.Objects;
+import java.util.OptionalLong;
 
 /**
  * Some path on the network where we can store stuff.
@@ -50,11 +55,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
         "indexVolumeGroupId"
 })
 @JsonInclude(Include.NON_NULL)
-public class IndexVolume implements HasAuditInfo, HasIntegerId {
-
-    private static final long TEN_GB = 10L * 1024L * 1024L * 1024L;
-    private static final double NINETY_NINE_PERCENT = 0.99D;
-    private static final double ONE_HUNDRED = 100D;
+public class IndexVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
 
     @JsonProperty
     private Integer id;
@@ -86,6 +87,9 @@ public class IndexVolume implements HasAuditInfo, HasIntegerId {
     private Long statusMs;
     @JsonProperty
     private Integer indexVolumeGroupId;
+
+    @JsonIgnore
+    private final HasCapacityInfo capacityInfo = new CapacityInfo();
 
     public IndexVolume() {
     }
@@ -192,6 +196,10 @@ public class IndexVolume implements HasAuditInfo, HasIntegerId {
         this.nodeName = nodeName;
     }
 
+    /**
+     * @return The path the volume resides in. This may be a relative path in which case
+     * it should be resolved relative to stroom.home before use.
+     */
     public String getPath() {
         return path;
     }
@@ -214,33 +222,6 @@ public class IndexVolume implements HasAuditInfo, HasIntegerId {
 
     public void setBytesLimit(final Long bytesLimit) {
         this.bytesLimit = bytesLimit;
-    }
-
-    @JsonIgnore
-    public boolean isFull() {
-        // If we haven't established how many bytes are used on a volume then
-        // assume it is not full (could be dangerous but worst case we will get
-        // an IO error).
-        if (bytesUsed == null || bytesTotal == null) {
-            return false;
-        }
-
-        // If a byte limit has been set then ensure it is less than the total
-        // number of bytes on the volume and if it is return whether the number
-        // of bytes used are greater than this limit.
-        if (bytesLimit != null && bytesLimit < bytesTotal) {
-            return bytesUsed >= bytesLimit;
-        }
-
-        // No byte limit has been set by the user so establish the maximum size
-        // that we will allow.
-        // Choose the higher limit of either the total storage minus 10Gb or 99%
-        // of total storage.
-        final long minusTenGig = bytesTotal - TEN_GB;
-        final long percentage = (long) (bytesTotal * NINETY_NINE_PERCENT);
-        final long max = Math.max(minusTenGig, percentage);
-
-        return bytesUsed >= max;
     }
 
     public Long getBytesUsed() {
@@ -275,21 +256,66 @@ public class IndexVolume implements HasAuditInfo, HasIntegerId {
         this.statusMs = statusMs;
     }
 
-    @JsonIgnore
-    public Long getPercentUsed() {
-        Long percent = null;
-        if (bytesUsed != null && bytesTotal != null) {
-            percent = Double.valueOf(((double) bytesUsed) / ((double) bytesTotal) * ONE_HUNDRED).longValue();
-        }
-        return percent;
-    }
-
     public static Builder builder() {
         return new Builder();
     }
 
     public Builder copy() {
         return new Builder(this);
+    }
+
+    @JsonIgnore
+    @Override
+    public HasCapacityInfo getCapacityInfo() {
+        return capacityInfo;
+    }
+
+    @JsonIgnore
+    @Override
+    public String getIdentifier() {
+        return nodeName + ":" + path;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final IndexVolume that = (IndexVolume) o;
+        return Objects.equals(id, that.id) && Objects.equals(version,
+                that.version) && Objects.equals(createTimeMs, that.createTimeMs) && Objects.equals(
+                createUser,
+                that.createUser) && Objects.equals(updateTimeMs, that.updateTimeMs) && Objects.equals(
+                updateUser,
+                that.updateUser) && Objects.equals(path, that.path) && Objects.equals(nodeName,
+                that.nodeName) && state == that.state && Objects.equals(bytesLimit,
+                that.bytesLimit) && Objects.equals(bytesUsed, that.bytesUsed) && Objects.equals(
+                bytesFree,
+                that.bytesFree) && Objects.equals(bytesTotal, that.bytesTotal) && Objects.equals(
+                statusMs,
+                that.statusMs) && Objects.equals(indexVolumeGroupId, that.indexVolumeGroupId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id,
+                version,
+                createTimeMs,
+                createUser,
+                updateTimeMs,
+                updateUser,
+                path,
+                nodeName,
+                state,
+                bytesLimit,
+                bytesUsed,
+                bytesFree,
+                bytesTotal,
+                statusMs,
+                indexVolumeGroupId);
     }
 
     public enum VolumeUseState implements HasDisplayValue, HasPrimitiveValue {
@@ -396,6 +422,11 @@ public class IndexVolume implements HasAuditInfo, HasIntegerId {
             return this;
         }
 
+        public Builder bytesLimit(final Long bytesLimit) {
+            this.bytesLimit = bytesLimit;
+            return this;
+        }
+
         public Builder statusMs(final Long statusMs) {
             this.statusMs = statusMs;
             return this;
@@ -423,6 +454,58 @@ public class IndexVolume implements HasAuditInfo, HasIntegerId {
                     bytesTotal,
                     statusMs,
                     indexVolumeGroupId);
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "IndexVolume{" +
+                "id=" + id +
+                ", path='" + path + '\'' +
+                ", nodeName='" + nodeName + '\'' +
+                ", state=" + state +
+                ", indexVolumeGroupId=" + indexVolumeGroupId +
+                '}';
+    }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    /**
+     * Essentially a read-only view of some parts of {@link IndexVolume}
+     */
+    private class CapacityInfo implements HasCapacityInfo {
+
+        @Override
+        public OptionalLong getCapacityUsedBytes() {
+            return bytesUsed != null
+                    ? OptionalLong.of(bytesUsed)
+                    : OptionalLong.empty();
+        }
+
+        @Override
+        public OptionalLong getCapacityLimitBytes() {
+            return bytesLimit != null
+                    ? OptionalLong.of(bytesLimit)
+                    : OptionalLong.empty();
+        }
+
+        @Override
+        public OptionalLong getTotalCapacityBytes() {
+            return bytesTotal != null
+                    ? OptionalLong.of(bytesTotal)
+                    : OptionalLong.empty();
+        }
+
+        @Override
+        public OptionalLong getFreeCapacityBytes() {
+            return bytesFree != null
+                    ? OptionalLong.of(bytesFree)
+                    : OptionalLong.empty();
+        }
+
+        @Override
+        public String toString() {
+            return this.asString();
         }
     }
 }

@@ -36,6 +36,7 @@ import stroom.task.api.TaskTerminatedException;
 import stroom.task.api.TerminateHandlerFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
+import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -64,6 +65,7 @@ public class IndexShardSearchTaskHandler {
     private final IndexShardSearchConfig shardConfig;
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
+    private final PathCreator pathCreator;
 
     private QueryKey queryKey;
 
@@ -72,12 +74,14 @@ public class IndexShardSearchTaskHandler {
                                 final IndexShardService indexShardService,
                                 final IndexShardSearchConfig shardConfig,
                                 final ExecutorProvider executorProvider,
-                                final TaskContextFactory taskContextFactory) {
+                                final TaskContextFactory taskContextFactory,
+                                final PathCreator pathCreator) {
         this.indexShardWriterCache = indexShardWriterCache;
         this.indexShardService = indexShardService;
         this.shardConfig = shardConfig;
         this.executor = executorProvider.get(THREAD_POOL);
         this.taskContextFactory = taskContextFactory;
+        this.pathCreator = pathCreator;
     }
 
     public void searchShard(final TaskContext taskContext,
@@ -106,7 +110,7 @@ public class IndexShardSearchTaskHandler {
                     throw new SearchException("Unable to find index shard with id = " + shardId);
                 }
 
-                indexShardSearcher = new IndexShardSearcher(indexShard, indexWriter);
+                indexShardSearcher = new IndexShardSearcher(indexShard, indexWriter, pathCreator);
 
                 // Start searching.
                 searchShard(

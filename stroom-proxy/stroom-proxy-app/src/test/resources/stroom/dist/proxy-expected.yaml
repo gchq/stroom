@@ -10,7 +10,7 @@ proxyConfig:
   contentSync:
     apiKey: null
     contentSyncEnabled: false
-    syncFrequency: 60000
+    syncFrequency: "PT1M"
     upstreamUrl: null
   db:
     batchSize: 10000000
@@ -44,9 +44,22 @@ proxyConfig:
     url: null
   fileScanners: []
   forwardDestinations: []
+  forwardRetry:
+    failedForwardDir: "failures"
+    maxRetryDelay: "PT1H"
+    maxTries: 10
+    retryFrequency: "PT1M"
   haltBootOnConfigValidationFailure: true
   logStream:
-    metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"
+    metaKeys:
+    - "environment"
+    - "feed"
+    - "guid"
+    - "remoteaddress"
+    - "remotecertexpiry"
+    - "remotedn"
+    - "remotehost"
+    - "system"
   path:
     home: null
     temp: null
@@ -70,7 +83,7 @@ proxyConfig:
     requireTokenAuthentication: false
   repository:
     repoDir: "repo"
-    storingEnabled: false
+    storingEnabled: true
   restClient:
     chunkedEncodingEnabled: true
     connectionRequestTimeout: "PT0.5S"
@@ -90,7 +103,7 @@ proxyConfig:
     userAgent: null
     validateAfterInactivityPeriod: "PT0S"
     workQueueSize: 8
-  retryFrequency: "PT1M"
+  sqsConnectors: []
   threads:
     examineSourceThreadCount: 3
     forwardRetryThreadCount: 2

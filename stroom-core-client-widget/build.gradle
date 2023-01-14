@@ -13,6 +13,7 @@ dependencies {
     }
     implementation libs.jackson_annotations
     implementation libs.javax_inject
+    implementation libs.restygwt
 
 
 

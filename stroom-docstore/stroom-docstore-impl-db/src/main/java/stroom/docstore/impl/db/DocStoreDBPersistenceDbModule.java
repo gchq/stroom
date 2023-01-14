@@ -29,11 +29,6 @@ public class DocStoreDBPersistenceDbModule extends AbstractFlyWayDbModule<DocSto
     private static final String FLYWAY_TABLE = "docstore_schema_history";
 
     @Override
-    protected void configure() {
-        super.configure();
-    }
-
-    @Override
     protected String getFlyWayTableName() {
         return FLYWAY_TABLE;
     }

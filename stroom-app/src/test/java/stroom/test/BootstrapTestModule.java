@@ -5,7 +5,10 @@ import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 import stroom.config.app.ConfigHolder;
 import stroom.test.common.util.db.DbTestModule;
+import stroom.test.common.util.db.DbTestUtil;
+import stroom.util.config.AbstractConfigUtil;
 import stroom.util.io.FileUtil;
+import stroom.util.io.StroomPathConfig;
 
 import com.google.inject.AbstractModule;
 
@@ -13,6 +16,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 public class BootstrapTestModule extends AbstractModule {
 
@@ -86,13 +90,23 @@ public class BootstrapTestModule extends AbstractModule {
 
         ConfigHolderImpl() {
             try {
-                final Path dir = Files.createTempDirectory("stroom");
+                final String gradleWorker = DbTestUtil.getGradleWorker();
+                final String prefix = "stroom_" + gradleWorker + "_";
+                final Path dir = Files.createTempDirectory(prefix);
                 this.path = dir.resolve("test.yml");
 
-                this.appConfig = new AppConfig();
-                appConfig.getPathConfig().setTemp(FileUtil.getCanonicalPath(dir));
-                appConfig.getPathConfig().setHome(FileUtil.getCanonicalPath(dir));
+                final AppConfig vanillaAppConfig = new AppConfig();
 
+                final StroomPathConfig modifiedPathConfig = vanillaAppConfig.getPathConfig()
+                        .withHome(FileUtil.getCanonicalPath(dir))
+                        .withTemp(FileUtil.getCanonicalPath(dir));
+
+                final AppConfig modifiedAppConfig = AbstractConfigUtil.mutateTree(
+                        vanillaAppConfig,
+                        AppConfig.ROOT_PROPERTY_PATH,
+                        Map.of(AppConfig.ROOT_PROPERTY_PATH.merge(AppConfig.PROP_NAME_PATH), modifiedPathConfig));
+
+                this.appConfig = modifiedAppConfig;
                 this.config = new Config();
                 this.config.setYamlAppConfig(appConfig);
             } catch (final IOException e) {

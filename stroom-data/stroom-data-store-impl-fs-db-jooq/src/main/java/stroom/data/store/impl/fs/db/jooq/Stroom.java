@@ -4,19 +4,19 @@
 package stroom.data.store.impl.fs.db.jooq;
 
 
-import java.util.Arrays;
-import java.util.List;
-
-import org.jooq.Catalog;
-import org.jooq.Table;
-import org.jooq.impl.SchemaImpl;
-
 import stroom.data.store.impl.fs.db.jooq.tables.FsFeedPath;
 import stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume;
 import stroom.data.store.impl.fs.db.jooq.tables.FsOrphanedMetaTracker;
 import stroom.data.store.impl.fs.db.jooq.tables.FsTypePath;
 import stroom.data.store.impl.fs.db.jooq.tables.FsVolume;
 import stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState;
+
+import org.jooq.Catalog;
+import org.jooq.Table;
+import org.jooq.impl.SchemaImpl;
+
+import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -46,6 +46,11 @@ public class Stroom extends SchemaImpl {
      * The table <code>stroom.fs_orphaned_meta_tracker</code>.
      */
     public final FsOrphanedMetaTracker FS_ORPHANED_META_TRACKER = FsOrphanedMetaTracker.FS_ORPHANED_META_TRACKER;
+
+    /**
+     * The table <code>stroom.fs_orphaned_meta_tracker</code>.
+     */
+//    public final FsOrphanedMetaTracker FS_ORPHANED_META_TRACKER = stroom.data.store.impl.fs.db.jooq.tables.FsOrphanedMetaTracker.FS_ORPHANED_META_TRACKER;
 
     /**
      * The table <code>stroom.fs_type_path</code>.

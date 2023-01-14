@@ -1,5 +1,6 @@
 package stroom.util.io;
 
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -16,7 +17,6 @@ public class HomeDirProviderImpl implements HomeDirProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(HomeDirProviderImpl.class);
 
-//    private static final String PROP_STROOM_HOME = "stroom.home";
 //    private static final String ENV_STROOM_HOME = "STROOM_HOME";
 
     private final PathConfig pathConfig;
@@ -34,38 +34,40 @@ public class HomeDirProviderImpl implements HomeDirProvider {
         if (homeDir == null) {
             Path path = null;
 
-//            String dir = System.getProperty(PROP_STROOM_HOME);
-//            if (dir != null) {
-//                LOGGER.info("Using stroom.home system property: {}", dir);
-//            } else {
-//                dir = System.getenv(ENV_STROOM_HOME);
-//                if (dir != null) {
-//                    LOGGER.info("Using STROOM_HOME environment variable: {}", dir);
-//                } else {
-//                    dir = pathConfig.getHome();
-//                    if (dir != null) {
-//                        LOGGER.info("Using home path configuration property: {}", dir);
-//                    }
-//                }
-//            }
+            // This is to allow system tests to function as they don't have a yaml file to read the home/temp
+            // from, but the validator is set up before the config object is passed in.
+            path = NullSafe.get(
+                    System.getProperty(HomeDirProvider.PROP_STROOM_HOME),
+                    Paths::get);
+            if (path != null) {
+                LOGGER.warn("Using system property {} for stroom home: {}. " +
+                        "This overrides the value in the config file and is only intended for testing.",
+                        HomeDirProvider.PROP_STROOM_HOME, path);
+            }
 
-            String dir = pathConfig.getHome();
-            if (dir != null && !dir.isEmpty()) {
-                LOGGER.info("Using home path configuration property: {}", dir);
-                dir = FileUtil.replaceHome(dir);
-                path = Paths.get(dir);
+            if (path == null) {
+                String dir = pathConfig.getHome();
+                if (!NullSafe.isEmptyString(dir)) {
+                    LOGGER.info("Using home path from configuration file property: {}", dir);
+                    dir = FileUtil.replaceHome(dir);
+                    path = Paths.get(dir);
+                }
             }
 
             if (path == null) {
                 path = getApplicationJarDir()
                         .orElse(null);
-                LOGGER.info("Using application JAR directory for stroom home: {}", path);
+                if (path != null) {
+                    LOGGER.info("Using application JAR directory for stroom home: {}", path);
+                }
             }
 
             if (path == null) {
                 path = getDefaultStroomHomeDir()
                         .orElse(null);
-                LOGGER.info("Using default directory for stroom home: {}", path);
+                if (path != null) {
+                    LOGGER.info("Using default directory for stroom home: {}", path);
+                }
             }
 
             if (path == null) {

@@ -5,6 +5,7 @@ import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.event.logging.rs.impl.AnnotationUtil;
 import stroom.security.api.SecurityContext;
 import stroom.util.ConsoleColour;
+import stroom.util.NullSafe;
 import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.FetchWithLongId;
 import stroom.util.shared.FetchWithTemplate;
@@ -60,14 +61,13 @@ class TestRestResources {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestRestResources.class);
 
-    private static final Map<String, String> OPERATION_ID_MAP = new HashMap<>();
 
     //    @Disabled // Temp while REST resource refactoring / annotation work is ongoing.
     @TestFactory
     @SuppressWarnings("unchecked")
     Stream<DynamicTest> buildQualityAssuranceTests() {
         try (ScanResult result = new ClassGraph()
-                .whitelistPackages("stroom")
+                .acceptPackages("stroom")
                 .enableClassInfo()
                 .ignoreClassVisibility()
                 .enableAnnotationInfo()
@@ -97,7 +97,7 @@ class TestRestResources {
     void listMethods() {
 
         try (ScanResult result = new ClassGraph()
-                .whitelistPackages("stroom")
+                .acceptPackages("stroom")
                 .enableClassInfo()
                 .ignoreClassVisibility()
                 .enableAnnotationInfo()
@@ -121,7 +121,7 @@ class TestRestResources {
                             clazzMethod._2.getName(),
                             getJaxRsHttpMethod(clazzMethod._2),
                             getMethodSig(clazzMethod._1, clazzMethod._2),
-                            getJaxRsPath(clazzMethod._2)))
+                            getJaxRsPath(clazzMethod._1, clazzMethod._2)))
                     .collect(Collectors.groupingBy(
                             tuple ->
                                     Tuple.of(tuple._1, tuple._2),
@@ -143,9 +143,9 @@ class TestRestResources {
                         value.stream()
                                 .sorted()
                                 .forEach(tuple4 -> {
-                                    final String path = Strings.padEnd(tuple4._4, 40, ' ');
+                                    final String path = Strings.padEnd(tuple4._4, 50, ' ');
                                     stringBuilder
-                                            .append("    ")
+                                            .append("  ")
                                             .append(ConsoleColour.blue(path))
                                             .append(" ")
                                             .append(tuple4._3)
@@ -174,12 +174,11 @@ class TestRestResources {
                 "]";
     }
 
-    private String getJaxRsPath(final Method method) {
-        return Arrays.stream(method.getAnnotations())
-                .filter(anno -> Path.class.equals(anno.annotationType()))
-                .findFirst()
-                .map(annotation -> ((Path) annotation).value())
-                .orElse("/");
+    private String getJaxRsPath(final Class<? extends RestResource> clazz,
+                                final Method method) {
+        final String basePath = NullSafe.getOrElse(clazz.getAnnotation(Path.class), Path::value, "");
+        final String subPath = NullSafe.getOrElse(method.getAnnotation(Path.class), Path::value, "/");
+        return basePath + subPath;
     }
 
     private String getJaxRsHttpMethod(final Method method) {
@@ -296,6 +295,8 @@ class TestRestResources {
                                     .getInheritedMethodAnnotation(Operation.class, method);
                             final ApiResponse[] responses = operation.responses();
 
+                            final Map<String, String> operationIdMap = new HashMap<>();
+
                             softAssertions
                                     .assertThat(operation.operationId())
                                     .withFailMessage(() ->
@@ -305,7 +306,7 @@ class TestRestResources {
                                     .isNotBlank();
 
                             if (!operation.operationId().isBlank()) {
-                                final String existing = OPERATION_ID_MAP.put(
+                                final String existing = operationIdMap.put(
                                         operation.operationId(),
                                         resourceClass.getName() + "::" + methodSignature.getName());
 

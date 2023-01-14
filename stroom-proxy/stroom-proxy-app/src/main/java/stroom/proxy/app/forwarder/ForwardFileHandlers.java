@@ -8,18 +8,20 @@ import stroom.proxy.repo.store.SequentialFileStore;
 import stroom.receive.common.StreamHandler;
 import stroom.receive.common.StreamHandlers;
 import stroom.receive.common.StroomStreamException;
+import stroom.util.io.PathCreator;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.file.Paths;
 import java.util.function.Consumer;
 
 public class ForwardFileHandlers implements StreamHandlers {
 
     private final SequentialFileStore sequentialFileStore;
 
-    public ForwardFileHandlers(final ForwardFileConfig config) {
-        this.sequentialFileStore = new SequentialFileStore(() -> Paths.get(config.getPath()));
+    public ForwardFileHandlers(final ForwardFileConfig config,
+                               final PathCreator pathCreator) {
+        this.sequentialFileStore = new SequentialFileStore(() ->
+                pathCreator.toAppPath(config.getPath()));
     }
 
     @Override

@@ -16,6 +16,7 @@
 
 package stroom.data.store.impl.fs.shared;
 
+import stroom.index.shared.ValidationResult;
 import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -37,10 +38,13 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 @Tag(name = "Filesystem Volumes")
-@Path("/fsVolume" + ResourcePaths.V1)
+@Path(FsVolumeResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface FsVolumeResource extends RestResource, DirectRestService, FetchWithIntegerId<FsVolume> {
+
+    String BASE_PATH = "/fsVolume" + ResourcePaths.V1;
+    String VALIDATE_SUB_PATH = "/validate";
 
     @POST
     @Path("/find")
@@ -83,4 +87,11 @@ public interface FsVolumeResource extends RestResource, DirectRestService, Fetch
             summary = "Rescans volumes",
             operationId = "rescanFsVolumes")
     Boolean rescan();
+
+    @POST
+    @Path(VALIDATE_SUB_PATH)
+    @Operation(
+            summary = "Validates a volume",
+            operationId = "validateFsVolume")
+    ValidationResult validate(@Parameter(description = "request", required = true) FsVolume volume);
 }

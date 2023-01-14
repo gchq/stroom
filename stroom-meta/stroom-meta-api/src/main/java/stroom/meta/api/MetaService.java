@@ -119,11 +119,28 @@ public interface MetaService {
     Set<String> getFeeds();
 
     /**
-     * Get a set of all unique type names used by meta data records.
+     * Get a set of all type names used by meta data records.
      *
      * @return A list of all unique type names used by meta data records.
      */
     Set<String> getTypes();
+
+    /**
+     * Get a set of all raw type names used by meta data records. I.e. types used for
+     * the receipt of raw data.
+     *
+     * @return A list of all raw type names used by meta data records.
+     */
+    Set<String> getRawTypes();
+
+    /**
+     * Return true if the passed meta type name is a 'raw' type, i.e. used for receipt of
+     * raw data.
+     */
+    default boolean isRaw(final String typeName) {
+        return typeName != null
+                && getRawTypes().contains(typeName);
+    }
 
     /**
      * Find meta data records that match the specified criteria.
@@ -191,7 +208,7 @@ public interface MetaService {
      * @param criteria the search criteria
      * @return the list of matches
      */
-    Set<Meta> findEffectiveData(final EffectiveMetaDataCriteria criteria);
+    Set<EffectiveMeta> findEffectiveData(final EffectiveMetaDataCriteria criteria);
 
     /**
      * Get a distinct list of processor UUIds for meta data matching the supplied criteria.

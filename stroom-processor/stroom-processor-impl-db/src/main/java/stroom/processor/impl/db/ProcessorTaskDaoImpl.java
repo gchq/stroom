@@ -18,11 +18,13 @@ import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.InclusiveRanges;
 import stroom.processor.api.InclusiveRanges.InclusiveRange;
 import stroom.processor.impl.CreatedTasks;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorTaskDao;
+import stroom.processor.impl.db.jooq.Tables;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorTaskRecord;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
@@ -31,6 +33,7 @@ import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.processor.shared.TaskStatus;
+import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionUtil;
@@ -52,8 +55,10 @@ import org.jooq.Record;
 import org.jooq.Record3;
 import org.jooq.Record5;
 import org.jooq.Result;
+import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -68,9 +73,11 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 import static java.util.Map.entry;
@@ -105,6 +112,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             entry(ProcessorTaskFields.FIELD_FEED, PROCESSOR_FEED.NAME),
             entry(ProcessorTaskFields.FIELD_PRIORITY, PROCESSOR_FILTER.PRIORITY),
             entry(ProcessorTaskFields.FIELD_PIPELINE, PROCESSOR.PIPELINE_UUID),
+            entry(ProcessorTaskFields.FIELD_PIPELINE_NAME, PROCESSOR.PIPELINE_UUID),
             entry(ProcessorTaskFields.FIELD_STATUS, PROCESSOR_TASK.STATUS),
             entry(ProcessorTaskFields.FIELD_COUNT, COUNT),
             entry(ProcessorTaskFields.FIELD_NODE, PROCESSOR_NODE.NAME),
@@ -173,7 +181,11 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         expressionMapper.map(ProcessorTaskFields.META_ID, PROCESSOR_TASK.META_ID, Long::valueOf);
         expressionMapper.map(ProcessorTaskFields.NODE_NAME, PROCESSOR_NODE.NAME, value -> value);
         expressionMapper.map(ProcessorTaskFields.FEED, PROCESSOR_FEED.NAME, value -> value, true);
-        expressionMapper.map(ProcessorTaskFields.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value);
+        // Get a uuid for the selected pipe doc
+        expressionMapper.map(ProcessorTaskFields.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value, false);
+        // Get 0-many uuids for a pipe name (partial/wild-carded)
+        expressionMapper.multiMap(
+                ProcessorTaskFields.PIPELINE_NAME, PROCESSOR.PIPELINE_UUID, this::getPipelineUuidsByName, true);
         expressionMapper.map(ProcessorTaskFields.PROCESSOR_FILTER_ID, PROCESSOR_FILTER.ID, Integer::valueOf);
         expressionMapper.map(ProcessorTaskFields.PROCESSOR_FILTER_PRIORITY,
                 PROCESSOR_FILTER.PRIORITY,
@@ -199,6 +211,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         valueMapper.map(ProcessorTaskFields.NODE_NAME, PROCESSOR_NODE.NAME, ValString::create);
         valueMapper.map(ProcessorTaskFields.FEED, PROCESSOR_FEED.NAME, ValString::create);
         valueMapper.map(ProcessorTaskFields.PIPELINE, PROCESSOR.PIPELINE_UUID, this::getPipelineName);
+        valueMapper.map(ProcessorTaskFields.PIPELINE_NAME, PROCESSOR.PIPELINE_UUID, this::getPipelineName);
         valueMapper.map(ProcessorTaskFields.PROCESSOR_FILTER_ID, PROCESSOR_FILTER.ID, ValInteger::create);
         valueMapper.map(ProcessorTaskFields.PROCESSOR_FILTER_PRIORITY, PROCESSOR_FILTER.PRIORITY, ValInteger::create);
         valueMapper.map(ProcessorTaskFields.PROCESSOR_ID, PROCESSOR.ID, ValInteger::create);
@@ -288,8 +301,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     /**
      * Retain task ownership
      *
-     * @param retainForNodes    A set of nodes to retain task ownership for.
-     * @param statusOlderThanMs Change task ownership for tasks that have a status older than this.
+     * @param retainForNodes  A set of nodes to retain task ownership for.
+     * @param statusOlderThan Change task ownership for tasks that have a status older than this.
      */
     @Override
     public void retainOwnedTasks(final Set<String> retainForNodes, final Instant statusOlderThan) {
@@ -777,6 +790,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 ProcessorTaskFields.PROCESSOR_FILTER_ID,
                 ProcessorTaskFields.PROCESSOR_FILTER_PRIORITY);
 
+        validateExpressionTerms(criteria.getExpression());
+
         final List<AbstractField> fieldList = Arrays.asList(fields);
         final boolean nodeUsed = isUsed(Set.of(ProcessorTaskFields.NODE_NAME), fieldList, criteria);
         final boolean feedUsed = isUsed(Set.of(ProcessorTaskFields.FEED), fieldList, criteria);
@@ -1029,6 +1044,145 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 record.getEndTimeMs(),
                 TaskStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.getStatus()),
                 processorFilter);
+    }
+
+    private boolean validateExpressionTerms(final ExpressionItem expressionItem) {
+        // TODO: 31/10/2022 Ideally this would be done in CommonExpressionMapper but we
+        //  seem to have a load of expressions using unsupported conditions so would get
+        //  exceptions all over the place.
+
+        if (expressionItem == null) {
+            return true;
+        } else {
+            final Map<String, AbstractField> fieldMap = ProcessorTaskFields.getFieldMap();
+
+            return ExpressionUtil.validateExpressionTerms(expressionItem, term -> {
+                final AbstractField field = fieldMap.get(term.getField());
+                if (field == null) {
+                    throw new RuntimeException(LogUtil.message("Unknown field {} in term {}, in expression {}",
+                            term.getField(), term, expressionItem));
+                } else {
+                    final boolean isValid = field.supportsCondition(term.getCondition());
+                    if (!isValid) {
+                        throw new RuntimeException(LogUtil.message("Condition '{}' is not supported by field '{}' " +
+                                        "of type {}. Term: {}",
+                                term.getCondition(),
+                                term.getField(),
+                                field.getType(), term));
+                    } else {
+                        return true;
+                    }
+                }
+            });
+        }
+    }
+
+    private List<String> getPipelineUuidsByName(final List<String> pipelineNames) {
+        // Can't cache this in a simple map due to pipes being renamed, but
+        // docRefInfoService should cache most of this anyway.
+        return docRefInfoService.findByNames(PipelineDoc.DOCUMENT_TYPE, pipelineNames, true)
+                .stream()
+                .map(DocRef::getUuid)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public int logicalDeleteByProcessorFilterId(final int processorFilterId) {
+        final int count = JooqUtil.contextResult(processorDbConnProvider, context -> context
+                .update(Tables.PROCESSOR_TASK)
+                .set(Tables.PROCESSOR_TASK.STATUS, TaskStatus.DELETED.getPrimitiveValue())
+                .set(Tables.PROCESSOR_TASK.VERSION, Tables.PROCESSOR_TASK.VERSION.plus(1))
+                .set(Tables.PROCESSOR_TASK.STATUS_TIME_MS, Instant.now().toEpochMilli())
+                .where(Tables.PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(processorFilterId))
+                .and(Tables.PROCESSOR_TASK.STATUS.in(
+                        TaskStatus.UNPROCESSED.getPrimitiveValue(),
+                        TaskStatus.ASSIGNED.getPrimitiveValue()))
+                .execute());
+        LOGGER.debug("Logically deleted {} processor tasks", count);
+        return count;
+    }
+
+    @Override
+    public int logicalDeleteByProcessorId(final int processorId) {
+        final int count = JooqUtil.contextResult(processorDbConnProvider, context -> {
+            var query = context
+                    .update(Tables.PROCESSOR_TASK)
+                    .set(Tables.PROCESSOR_TASK.STATUS, TaskStatus.DELETED.getPrimitiveValue())
+                    .set(Tables.PROCESSOR_TASK.VERSION, Tables.PROCESSOR_TASK.VERSION.plus(1))
+                    .set(Tables.PROCESSOR_TASK.STATUS_TIME_MS, Instant.now().toEpochMilli())
+                    .where(DSL.exists(
+                            DSL.selectZero()
+                                    .from(PROCESSOR_FILTER)
+                                    .innerJoin(PROCESSOR)
+                                    .on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
+                                    .where(PROCESSOR.ID.eq(processorId))
+                                    .and(PROCESSOR_FILTER.ID.eq(Tables.PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID))))
+                    .and(Tables.PROCESSOR_TASK.STATUS.in(
+                            TaskStatus.UNPROCESSED.getPrimitiveValue(),
+                            TaskStatus.ASSIGNED.getPrimitiveValue()));
+
+            LOGGER.trace("logicalDeleteByProcessorId query:\n{}", query);
+            return query.execute();
+        });
+        LOGGER.debug("Logically deleted {} processor tasks", count);
+        return count;
+    }
+
+    @Override
+    public int logicalDeleteForDeletedProcessorFilters(final Instant deleteThreshold) {
+        final List<Integer> result =
+                JooqUtil.contextResult(processorDbConnProvider, context -> context
+                        .select(PROCESSOR_FILTER.ID)
+                        .from(PROCESSOR_FILTER)
+                        .where(PROCESSOR_FILTER.DELETED.eq(true))
+                        .and(PROCESSOR_FILTER.UPDATE_TIME_MS.lessThan(deleteThreshold.toEpochMilli()))
+                        .fetch(PROCESSOR_FILTER.ID));
+
+        LOGGER.debug(() ->
+                LogUtil.message("Found {} logically deleted filters with an update time older than {}",
+                        result.size(), deleteThreshold));
+
+        final AtomicInteger totalCount = new AtomicInteger();
+        // Delete one by one.
+        result.forEach(processorFilterId -> {
+            try {
+                final int count = JooqUtil.contextResult(processorDbConnProvider, context -> context
+                        .update(Tables.PROCESSOR_TASK)
+                        .set(Tables.PROCESSOR_TASK.STATUS, TaskStatus.DELETED.getPrimitiveValue())
+                        .set(Tables.PROCESSOR_TASK.VERSION, Tables.PROCESSOR_TASK.VERSION.plus(1))
+                        .set(Tables.PROCESSOR_TASK.STATUS_TIME_MS, Instant.now().toEpochMilli())
+                        .where(Tables.PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(processorFilterId))
+                        .and(PROCESSOR_TASK.STATUS.notEqual(TaskStatus.DELETED.getPrimitiveValue()))
+                        .execute());
+                LOGGER.debug("Logically deleted {} processor tasks for processorFilterId {}", count, processorFilterId);
+                totalCount.addAndGet(count);
+            } catch (final DataAccessException e) {
+                if (e.getCause() != null && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
+                    final var sqlEx = (SQLIntegrityConstraintViolationException) e.getCause();
+                    LOGGER.debug("Expected constraint violation exception: " + sqlEx.getMessage(), e);
+                } else {
+                    throw e;
+                }
+            }
+        });
+        LOGGER.debug(() -> "logicalDeleteForDeletedProcessorFilters returning: " + totalCount.get());
+
+        return totalCount.get();
+    }
+
+    @Override
+    public int physicallyDeleteOldTasks(final Instant deleteThreshold) {
+        LOGGER.debug("Deleting old COMPLETE or DELETED processor tasks");
+        final int count = JooqUtil.contextResult(processorDbConnProvider, context ->
+                context
+                        .deleteFrom(PROCESSOR_TASK)
+                        .where(PROCESSOR_TASK.STATUS.eq(TaskStatus.COMPLETE.getPrimitiveValue())
+                                .or(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue())))
+                        .and(PROCESSOR_TASK.STATUS_TIME_MS.isNull()
+                                .or(PROCESSOR_TASK.STATUS_TIME_MS.lessThan(deleteThreshold.toEpochMilli())))
+                        .execute());
+        LOGGER.debug("Physically deleted {} processor tasks with status time older than {}", count, deleteThreshold);
+        return count;
     }
 
     private static class CreationState {

@@ -19,6 +19,7 @@ package stroom.query.client;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.util.shared.StringUtil;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 
 import java.util.List;
@@ -66,7 +67,7 @@ public class ExpressionModel {
                 final Term term = new Term();
                 term.setField(expressionTerm.getField());
                 term.setCondition(expressionTerm.getCondition());
-                term.setValue(expressionTerm.getValue());
+                term.setValue(StringUtil.trimWhitespace(expressionTerm.getValue()));
                 term.setDocRef(expressionTerm.getDocRef());
                 term.setEnabled(expressionTerm.enabled());
 
@@ -109,11 +110,13 @@ public class ExpressionModel {
                     dest.addOperator(childDest.build());
                 } else if (child instanceof Term) {
                     final Term term = (Term) child;
+                    final String termValue = StringUtil.trimWhitespace(term.getValue());
+
                     dest.addTerm(ExpressionTerm.builder()
                             .enabled(term.isEnabled())
                             .field(term.getField())
                             .condition(term.getCondition())
-                            .value(term.getValue())
+                            .value(termValue)
                             .docRef(term.getDocRef())
                             .build());
                 }

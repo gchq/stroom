@@ -666,26 +666,6 @@ paths:
       summary: Enable or disable the state of an API key.
       tags:
       - Api Keys
-  /application-instance/v1/keepAlive:
-    post:
-      operationId: applicationInstanceKeepAlive
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ApplicationInstanceInfo'
-        description: applicationInstanceInfo
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: boolean
-          description: default response
-      summary: Keep an application instance alive
-      tags:
-      - Application
   /application-instance/v1/register:
     get:
       operationId: applicationInstanceRegister
@@ -706,8 +686,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ApplicationInstanceInfo'
-        description: applicationInstanceInfo
+              $ref: '#/components/schemas/DestroyRequest'
+        description: destroyRequest
         required: true
       responses:
         default:
@@ -1171,28 +1151,6 @@ paths:
       summary: Fetch a property by its name, e.g. 'stroom.path.home'
       tags:
       - Global Config
-  /content/v1/confirmImport:
-    post:
-      operationId: confirmContentImport
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ResourceKey'
-        description: resourceKey
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ImportState'
-          description: default response
-      summary: Get import confirmation state
-      tags:
-      - Content
   /content/v1/export:
     post:
       operationId: exportContent
@@ -1248,7 +1206,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResourceKey'
+                $ref: '#/components/schemas/ImportConfigResponse'
           description: default response
       summary: Import content
       tags:
@@ -1538,6 +1496,22 @@ paths:
       summary: List child types for a stream
       tags:
       - Data
+  /dataDownload/v1/downloadZip:
+    post:
+      operationId: downloadZip
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindMetaCriteria'
+        description: criteria
+        required: true
+      responses:
+        default:
+          description: Returns Stroom content data as a zip file
+      summary: Retrieve content matching the provided criteria as a zip file
+      tags:
+      - Data Download
   /dataRetentionRules/v1:
     get:
       operationId: fetchDataRetentionRules
@@ -2222,6 +2196,26 @@ paths:
       summary: Rescans volumes
       tags:
       - Filesystem Volumes
+  /fsVolume/v1/validate:
+    post:
+      operationId: validateFsVolume
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FsVolume'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+          description: default response
+      summary: Validates a volume
+      tags:
+      - Filesystem Volumes
   /fsVolume/v1/{id}:
     delete:
       operationId: deleteFsVolume
@@ -2444,7 +2438,7 @@ paths:
       tags:
       - Index Volumes
   /index/volume/v2/rescan:
-    delete:
+    get:
       operationId: rescanIndexVolumes
       parameters:
       - in: query
@@ -2459,6 +2453,26 @@ paths:
                 type: boolean
           description: default response
       summary: Rescans index volumes
+      tags:
+      - Index Volumes
+  /index/volume/v2/validate:
+    post:
+      operationId: validateIndexVolume
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IndexVolume'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+          description: default response
+      summary: Validates an index volume
       tags:
       - Index Volumes
   /index/volume/v2/{id}:
@@ -2544,6 +2558,25 @@ paths:
                 $ref: '#/components/schemas/IndexVolumeGroup'
           description: default response
       summary: Creates an index volume group
+      tags:
+      - Index Volume Groups
+  /index/volumeGroup/v2/fetchByName/{name}:
+    get:
+      operationId: fetchIndexVolumeGroupByName
+      parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexVolumeGroup'
+          description: default response
+      summary: Gets an index volume group by name
       tags:
       - Index Volume Groups
   /index/volumeGroup/v2/find:
@@ -6283,9 +6316,18 @@ components:
             $ref: '#/components/schemas/DocRef'
         message:
           type: string
+    CacheIdentity:
+      type: object
+      properties:
+        basePropertyPath:
+          $ref: '#/components/schemas/PropertyPath'
+        cacheName:
+          type: string
     CacheInfo:
       type: object
       properties:
+        basePropertyPath:
+          $ref: '#/components/schemas/PropertyPath'
         map:
           type: object
           additionalProperties:
@@ -6311,7 +6353,7 @@ components:
         values:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/CacheIdentity'
     ChangeDocumentPermissionsRequest:
       type: object
       properties:
@@ -7024,6 +7066,13 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
+    DestroyRequest:
+      type: object
+      properties:
+        applicationInstanceInfo:
+          $ref: '#/components/schemas/ApplicationInstanceInfo'
+        reason:
+          type: string
     DestroySearchRequest:
       type: object
       properties:
@@ -8314,8 +8363,39 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ImportState'
+        importSettings:
+          $ref: '#/components/schemas/ImportSettings'
         resourceKey:
           $ref: '#/components/schemas/ResourceKey'
+    ImportConfigResponse:
+      type: object
+      properties:
+        confirmList:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImportState'
+        resourceKey:
+          $ref: '#/components/schemas/ResourceKey'
+    ImportSettings:
+      type: object
+      properties:
+        enableFilters:
+          type: boolean
+        enableFiltersFromTime:
+          type: integer
+          format: int64
+        importMode:
+          type: string
+          enum:
+          - CREATE_CONFIRMATION
+          - ACTION_CONFIRMATION
+          - IGNORE_CONFIRMATION
+        rootDocRef:
+          $ref: '#/components/schemas/DocRef'
+        useImportFolders:
+          type: boolean
+        useImportNames:
+          type: boolean
     ImportState:
       type: object
       properties:
@@ -8325,11 +8405,6 @@ components:
           type: string
         docRef:
           $ref: '#/components/schemas/DocRef'
-        enable:
-          type: boolean
-        enableTime:
-          type: integer
-          format: int64
         messageList:
           type: array
           items:
@@ -8342,6 +8417,7 @@ components:
           - NEW
           - UPDATE
           - EQUAL
+          - IGNORE
         updatedFieldList:
           type: array
           items:
@@ -10643,8 +10719,10 @@ components:
           type: string
         dataRange:
           $ref: '#/components/schemas/DataRange'
-        highlight:
-          $ref: '#/components/schemas/TextRange'
+        highlights:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataRange'
         metaId:
           type: integer
           format: int64
@@ -10654,8 +10732,6 @@ components:
         recordIndex:
           type: integer
           format: int64
-        truncateToWholeLines:
-          type: boolean
     SplashConfig:
       type: object
       properties:
@@ -11249,13 +11325,6 @@ components:
       type: object
       allOf:
       - $ref: '#/components/schemas/AbstractField'
-    TextRange:
-      type: object
-      properties:
-        from:
-          $ref: '#/components/schemas/Location'
-        to:
-          $ref: '#/components/schemas/Location'
     ThemeConfig:
       type: object
       properties:
@@ -11488,6 +11557,18 @@ components:
           type: string
         valid:
           type: boolean
+    ValidationResult:
+      type: object
+      properties:
+        message:
+          type: string
+        severity:
+          type: string
+          enum:
+          - INFO
+          - WARN
+          - ERROR
+          - FATAL
     VisComponentSettings:
       type: object
       allOf:

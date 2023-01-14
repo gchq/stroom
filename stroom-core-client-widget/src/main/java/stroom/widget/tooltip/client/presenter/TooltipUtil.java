@@ -426,6 +426,51 @@ public final class TooltipUtil {
             return this;
         }
 
+        public TableBuilder2 addRow(final Object key,
+                                    final Object value,
+                                    final boolean showBlank,
+                                    final SafeStyles safeStyles1,
+                                    final SafeStyles safeStyles2) {
+            Objects.requireNonNull(key);
+            final SafeHtml safeKey = objectToSafeHtml(key);
+
+            final int defaultPadding = 5;
+            final String cellStyles1 = safeStyles1 != null
+                    ? safeStyles1.asString()
+                    : "padding-right: " + defaultPadding + "px;";
+            final String cellStyles2 = safeStyles2 != null
+                    ? safeStyles2.asString()
+                    : "padding-right: " + defaultPadding + "px;";
+
+            if (value != null) {
+                final SafeHtml safeValue = value instanceof SafeHtml
+                        ? (SafeHtml) value
+                        : objectToSafeHtml(value);
+
+                if (safeValue.asString().length() > 0 || showBlank) {
+                    buffer
+                            .appendHtmlConstant("<tr>")
+                            .appendHtmlConstant("<td style=\"" + cellStyles1 + "\">")
+                            .append(safeKey)
+                            .appendHtmlConstant("</td>")
+                            .appendHtmlConstant("<td style=\"" + cellStyles2 + "\">")
+                            .append(safeValue)
+                            .appendHtmlConstant("</td></tr>");
+                }
+            } else {
+                if (showBlank) {
+                    buffer
+                            .appendHtmlConstant("<tr>")
+                            .appendHtmlConstant("<td style=\"" + cellStyles1 + "\">")
+                            .append(safeKey)
+                            .appendHtmlConstant("</td>")
+                            .appendHtmlConstant("<td/></tr>");
+                }
+            }
+
+            return this;
+        }
+
         public SafeHtml build() {
             buffer.appendHtmlConstant("</table>");
 

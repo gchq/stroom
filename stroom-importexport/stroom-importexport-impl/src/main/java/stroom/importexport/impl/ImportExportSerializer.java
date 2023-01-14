@@ -17,8 +17,8 @@
 package stroom.importexport.impl;
 
 import stroom.docref.DocRef;
+import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
-import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.util.shared.Message;
 
 import java.nio.file.Path;
@@ -37,7 +37,9 @@ public interface ImportExportSerializer {
      * @return The set of all DocRef roots, typically this is the Explorer root DocRef plus any DocRefs
      * not held in the Explorer tree.
      */
-    Set<DocRef> read(Path dir, List<ImportState> importStateList, ImportMode importMode);
+    Set<DocRef> read(Path dir,
+                     List<ImportState> importStateList,
+                     ImportSettings importSettings);
 
     /**
      * Walk the supplied tree of DocRefs and export all to the given path

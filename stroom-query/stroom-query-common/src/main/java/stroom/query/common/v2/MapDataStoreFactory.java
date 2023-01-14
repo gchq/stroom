@@ -9,7 +9,8 @@ import java.util.Map;
 public class MapDataStoreFactory implements DataStoreFactory {
 
     @Override
-    public DataStore create(final QueryKey queryKey,
+    public DataStore create(final Serialisers serialisers,
+                            final QueryKey queryKey,
                             final String componentId,
                             final TableSettings tableSettings,
                             final FieldIndex fieldIndex,
@@ -23,6 +24,7 @@ public class MapDataStoreFactory implements DataStoreFactory {
         }
 
         return new MapDataStore(
+                serialisers,
                 tableSettings,
                 fieldIndex,
                 paramMap,

@@ -19,7 +19,6 @@ package stroom.data.store.impl.fs.db;
 import stroom.data.store.impl.fs.DataStoreServiceConfig.DataStoreServiceDbConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.util.guice.GuiceUtil;
 
 import javax.sql.DataSource;
 
@@ -28,15 +27,6 @@ public class FsDataStoreDbModule extends AbstractFlyWayDbModule<DataStoreService
     private static final String MODULE = "stroom-data-store";
     private static final String FLYWAY_LOCATIONS = "stroom/data/store/impl/fs/db/migration";
     private static final String FLYWAY_TABLE = "fs_schema_history";
-
-    @Override
-    protected void configure() {
-        super.configure();
-
-        // MultiBind the connection provider so we can see status for all databases.
-        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
-                .addBinding(FsDataStoreDbConnProvider.class);
-    }
 
     @Override
     protected String getFlyWayTableName() {

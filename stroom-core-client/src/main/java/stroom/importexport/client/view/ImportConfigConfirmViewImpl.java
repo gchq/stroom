@@ -21,8 +21,10 @@ import stroom.preferences.client.UserPreferencesManager;
 import stroom.widget.customdatebox.client.MyDateBox;
 
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -31,6 +33,8 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
+import java.util.function.Consumer;
+
 public class ImportConfigConfirmViewImpl extends ViewImpl implements ImportConfigConfirmView {
 
     private final Widget widget;
@@ -38,10 +42,19 @@ public class ImportConfigConfirmViewImpl extends ViewImpl implements ImportConfi
     Grid grid;
     @UiField
     SimplePanel dataGridView;
+    @UiField
+    CheckBox enableFilters;
     @UiField(provided = true)
     MyDateBox enableFrom;
     @UiField
-    CheckBox enableFilters;
+    CheckBox useImportNames;
+    @UiField
+    CheckBox useImportFolders;
+    @UiField
+    SimplePanel rootFolder;
+
+    private Consumer<Boolean> useImportNamesConsumer;
+    private Consumer<Boolean> useImportFoldersConsumer;
 
     @Inject
     public ImportConfigConfirmViewImpl(final Binder binder,
@@ -72,6 +85,11 @@ public class ImportConfigConfirmViewImpl extends ViewImpl implements ImportConfi
     }
 
     @Override
+    public void setEnableFromDate(final Long date) {
+        enableFrom.setMilliseconds(date);
+    }
+
+    @Override
     public boolean isEnableFilters() {
         return enableFilters.getValue();
     }
@@ -79,6 +97,45 @@ public class ImportConfigConfirmViewImpl extends ViewImpl implements ImportConfi
     @Override
     public void setEnableFilters(boolean enableFilters) {
         this.enableFilters.setValue(enableFilters);
+    }
+
+    @Override
+    public void onUseImportNames(final Consumer<Boolean> useImportNamesConsumer) {
+        this.useImportNamesConsumer = useImportNamesConsumer;
+    }
+
+    @Override
+    public void setUseImportNames(final boolean useImportedNames) {
+        this.useImportNames.setValue(useImportedNames);
+    }
+
+    @Override
+    public void setUseImportFolders(final boolean useImportFolders) {
+        this.useImportFolders.setValue(useImportFolders);
+    }
+
+    @Override
+    public void onUseImportFolders(final Consumer<Boolean> useImportFoldersConsumer) {
+        this.useImportFoldersConsumer = useImportFoldersConsumer;
+    }
+
+    @Override
+    public void setRootFolderView(final View view) {
+        rootFolder.setWidget(view.asWidget());
+    }
+
+    @UiHandler("useImportNames")
+    void onUseImportNames(final ClickEvent event) {
+        if (useImportNamesConsumer != null) {
+            useImportNamesConsumer.accept(useImportNames.getValue());
+        }
+    }
+
+    @UiHandler("useImportFolders")
+    void onUseImportFolders(final ClickEvent event) {
+        if (useImportFoldersConsumer != null) {
+            useImportFoldersConsumer.accept(useImportFolders.getValue());
+        }
     }
 
     public interface Binder extends UiBinder<Widget, ImportConfigConfirmViewImpl> {

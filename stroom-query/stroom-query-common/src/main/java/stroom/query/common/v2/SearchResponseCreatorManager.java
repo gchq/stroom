@@ -1,7 +1,7 @@
 package stroom.query.common.v2;
 
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.ICache;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.QueryKey;
@@ -30,6 +30,7 @@ import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -44,11 +45,11 @@ public final class SearchResponseCreatorManager implements Clearable {
     private final TaskContextFactory taskContextFactory;
     private final SecurityContext securityContext;
     private final ExecutorProvider executorProvider;
-    private final ICache<Key, SearchResponseCreator> cache;
+    private final LoadingStroomCache<Key, SearchResponseCreator> cache;
 
     @Inject
     SearchResponseCreatorManager(final CacheManager cacheManager,
-                                 final ResultStoreConfig resultStoreConfig,
+                                 final Provider<ResultStoreConfig> resultStoreConfigProvider,
                                  final SearchResponseCreatorFactory searchResponseCreatorFactory,
                                  final TaskContext taskContext,
                                  final TaskContextFactory taskContextFactory,
@@ -59,8 +60,9 @@ public final class SearchResponseCreatorManager implements Clearable {
         this.taskContextFactory = taskContextFactory;
         this.securityContext = securityContext;
         this.executorProvider = executorProvider;
-        this.cache = cacheManager.create(CACHE_NAME,
-                resultStoreConfig::getSearchResultCache,
+        this.cache = cacheManager.createLoadingCache(
+                CACHE_NAME,
+                () -> resultStoreConfigProvider.get().getSearchResultCache(),
                 this::create,
                 this::destroy);
     }

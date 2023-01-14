@@ -4,6 +4,7 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
+import stroom.meta.api.MetaService;
 import stroom.util.io.StreamUtil;
 
 import org.slf4j.Logger;
@@ -20,12 +21,15 @@ public class FeedPropertiesImpl implements FeedProperties {
 
     private final FeedDocCache feedDocCache;
     private final FeedConfig feedConfig;
+    private final MetaService metaService;
 
     @Inject
     FeedPropertiesImpl(final FeedDocCache feedDocCache,
-                       final FeedConfig feedConfig) {
+                       final FeedConfig feedConfig,
+                       final MetaService metaService) {
         this.feedDocCache = feedDocCache;
         this.feedConfig = feedConfig;
+        this.metaService = metaService;
     }
 
     @Override
@@ -54,14 +58,13 @@ public class FeedPropertiesImpl implements FeedProperties {
         final Optional<FeedDoc> optionalFeedDoc = feedDocCache.get(feedName);
         if (optionalFeedDoc.isPresent()) {
             final FeedDoc feedDoc = optionalFeedDoc.get();
+
             if (StreamTypeNames.CONTEXT.equals(childStreamTypeName)) {
                 return resolveEncoding(feedName, childStreamTypeName, feedDoc.getContextEncoding());
 
-            } else if (RawStreamTypes.isRawType(streamTypeName)
-                    && childStreamTypeName == null) {
+            } else if (childStreamTypeName == null
+                    && metaService.isRaw(streamTypeName)) {
                 // Child stream type is null for the data child streams
-                // Only raw streams have a custom encoding, everything internal is the default charset,
-                // i.e. UTF8
                 return resolveEncoding(feedName, streamTypeName, feedDoc.getEncoding());
 
             } else {

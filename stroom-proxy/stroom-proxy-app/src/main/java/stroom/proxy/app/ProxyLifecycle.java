@@ -7,8 +7,8 @@ import stroom.proxy.app.forwarder.ThreadConfig;
 import stroom.proxy.repo.AggregateForwarder;
 import stroom.proxy.repo.Aggregator;
 import stroom.proxy.repo.AggregatorConfig;
+import stroom.proxy.repo.BatchExecutor;
 import stroom.proxy.repo.Cleanup;
-import stroom.proxy.repo.FrequencyBatchExecutor;
 import stroom.proxy.repo.FrequencyExecutor;
 import stroom.proxy.repo.ParallelExecutor;
 import stroom.proxy.repo.ProxyDbConfig;
@@ -97,11 +97,10 @@ public class ProxyLifecycle implements Managed {
                 // Only examine source files if we are aggregating.
 
                 // Add executor to open source files and scan entries
-                addFrequencyBatchExecutor("RepoSourceItems - examine",
+                addBatchExecutor("RepoSourceItems - examine",
                         threadConfig.getExamineSourceThreadCount(),
                         repoSources::getNewSources,
-                        repoSourceItems::examineSource,
-                        dbFlushFrequencyMs);
+                        repoSourceItems::examineSource);
 
                 // Just keep trying to aggregate based on a frequency and not changes to source entries.
                 addFrequencyExecutor("Aggregator - aggregate",
@@ -119,19 +118,16 @@ public class ProxyLifecycle implements Managed {
                         dbFlushFrequencyMs);
 
                 // Forward records.
-                addFrequencyBatchExecutor("AggregateForwarder - forwardNext",
+                addBatchExecutor("AggregateForwarder - forwardNext",
                         threadConfig.getForwardThreadCount(),
                         aggregateForwarder::getNewForwardAggregates,
-                        aggregateForwarder::forward,
-                        dbFlushFrequencyMs);
+                        aggregateForwarder::forward);
 
                 // Retry forward records.
-                final long retryFrequency = proxyConfig.getRetryFrequency().toMillis();
-                addFrequencyBatchExecutor("AggregateForwarder - forwardRetry",
+                addBatchExecutor("AggregateForwarder - forwardRetry",
                         threadConfig.getForwardRetryThreadCount(),
                         aggregateForwarder::getRetryForwardAggregates,
-                        forwardAggregate -> aggregateForwarder.forwardRetry(forwardAggregate, retryFrequency),
-                        dbFlushFrequencyMs);
+                        aggregateForwarder::forwardRetry);
 
             } else {
                 // We are going to do source forwarding so reset aggregate forwarder.
@@ -146,19 +142,16 @@ public class ProxyLifecycle implements Managed {
                         dbFlushFrequencyMs);
 
                 // Forward records.
-                addFrequencyBatchExecutor("SourceForwarder - forwardNext",
+                addBatchExecutor("SourceForwarder - forwardNext",
                         threadConfig.getForwardThreadCount(),
                         sourceForwarder::getNewForwardSources,
-                        sourceForwarder::forward,
-                        dbFlushFrequencyMs);
+                        sourceForwarder::forward);
 
                 // Retry forward records.
-                final long retryFrequency = proxyConfig.getRetryFrequency().toMillis();
-                addFrequencyBatchExecutor("SourceForwarder - forwardRetry",
+                addBatchExecutor("SourceForwarder - forwardRetry",
                         threadConfig.getForwardRetryThreadCount(),
                         sourceForwarder::getRetryForwardSources,
-                        forwardSource -> sourceForwarder.forwardRetry(forwardSource, retryFrequency),
-                        dbFlushFrequencyMs);
+                        sourceForwarder::forwardRetry);
             }
 
             addFrequencyExecutor("Cleanup - cleanupSources",
@@ -175,6 +168,16 @@ public class ProxyLifecycle implements Managed {
         addFrequencyExecutor("Event Store - forward",
                 () -> eventStore::forwardAll,
                 eventStoreConfig.getRollFrequency().toMillis());
+
+        if (proxyConfig.getSqsConnectors() != null) {
+            for (final SqsConnectorConfig sqsConnectorConfig : proxyConfig.getSqsConnectors()) {
+                final SqsConnector sqsConnector = new SqsConnector(eventStore, sqsConnectorConfig);
+                // Add executor to forward event store.
+                addFrequencyExecutor("SQS - poll",
+                        () -> sqsConnector::poll,
+                        sqsConnectorConfig.getPollFrequency().toMillis());
+            }
+        }
     }
 
     private void addParallelExecutor(final String threadName,
@@ -197,17 +200,15 @@ public class ProxyLifecycle implements Managed {
         services.add(executor);
     }
 
-    private <T> void addFrequencyBatchExecutor(final String threadName,
-                                               final int threadCount,
-                                               final Supplier<Batch<T>> supplier,
-                                               final Consumer<T> consumer,
-                                               final long frequencyMs) {
-        final FrequencyBatchExecutor<T> executor = new FrequencyBatchExecutor<>(
+    private <T> void addBatchExecutor(final String threadName,
+                                      final int threadCount,
+                                      final Supplier<Batch<T>> supplier,
+                                      final Consumer<T> consumer) {
+        final BatchExecutor<T> executor = new BatchExecutor<>(
                 threadName,
                 threadCount,
                 supplier,
-                consumer,
-                frequencyMs);
+                consumer);
         services.add(executor);
     }
 
