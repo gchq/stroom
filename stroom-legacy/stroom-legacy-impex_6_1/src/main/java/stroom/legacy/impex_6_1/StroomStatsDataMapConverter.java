@@ -1,6 +1,7 @@
 package stroom.legacy.impex_6_1;
 
 import stroom.docref.DocRef;
+import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.legacy.model_6_1.StroomStatsStoreEntity;
 import stroom.legacy.model_6_1.StroomStatsStoreEntityMarshaller;
@@ -11,11 +12,11 @@ import stroom.statistics.impl.hbase.shared.StatisticType;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 @Deprecated
@@ -33,7 +34,7 @@ class StroomStatsDataMapConverter implements DataMapConverter {
     public Map<String, byte[]> convert(final DocRef docRef,
                                        final Map<String, byte[]> dataMap,
                                        final ImportState importState,
-                                       final ImportState.ImportMode importMode,
+                                       final ImportSettings importSettings,
                                        final String userId) {
         Map<String, byte[]> result = dataMap;
         if (dataMap.size() > 0 && !dataMap.containsKey("meta")) {

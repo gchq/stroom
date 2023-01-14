@@ -44,14 +44,17 @@ public class ProcessorServiceImpl implements ProcessorService {
 
     private final SecurityContext securityContext;
     private final ProcessorDao processorDao;
+    private final ProcessorTaskDao processorTaskDao;
     private final ProcessorFilterService processorFilterService;
 
     @Inject
     ProcessorServiceImpl(final SecurityContext securityContext,
                          final ProcessorDao processorDao,
+                         final ProcessorTaskDao processorTaskDao,
                          final ProcessorFilterService processorFilterService) {
         this.securityContext = securityContext;
         this.processorDao = processorDao;
+        this.processorTaskDao = processorTaskDao;
         this.processorFilterService = processorFilterService;
     }
 
@@ -145,8 +148,14 @@ public class ProcessorServiceImpl implements ProcessorService {
     @Override
     public boolean delete(final int id) {
         return securityContext.secureResult(PERMISSION, () -> {
-            // This will also 'delete' processor filters and UNPROCESSED tasks
-            return processorDao.logicalDelete(id);
+            if (processorDao.logicalDeleteByProcessorId(id) > 0) {
+                // Logically delete any associated unprocessed tasks.
+                // Once the processor and filters are logically deleted no new tasks will be created
+                // but we may still have active tasks for 'deleted' filters.
+                processorTaskDao.logicalDeleteByProcessorId(id);
+                return true;
+            }
+            return false;
         });
     }
 
@@ -157,7 +166,7 @@ public class ProcessorServiceImpl implements ProcessorService {
                         .map(processor -> {
                             try {
                                 // This will also 'delete' processor filters and UNPROCESSED tasks
-                                return processorDao.logicalDelete(processor.getId());
+                                return delete(processor.getId());
                             } catch (Exception e) {
                                 throw new RuntimeException("Error deleting filters and processor for pipelineUuid "
                                         + pipelineUuid, e);

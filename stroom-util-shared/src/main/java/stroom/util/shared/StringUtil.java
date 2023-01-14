@@ -104,4 +104,21 @@ public class StringUtil {
         }
         return userText;
     }
+
+    public static String pluralSuffix(final int count) {
+        return count > 1
+                ? "s"
+                : "";
+    }
+
+    /**
+     * Null safe trimming of leading/trailing whitespace.
+     */
+    public static String trimWhitespace(final String userText) {
+        if (userText == null || userText.isEmpty()) {
+            return userText;
+        } else {
+            return userText.trim();
+        }
+    }
 }

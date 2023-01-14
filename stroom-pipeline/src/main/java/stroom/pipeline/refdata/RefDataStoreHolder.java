@@ -17,11 +17,13 @@
 
 package stroom.pipeline.refdata;
 
+import stroom.docref.DocRef;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.shared.data.PipelineReference;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -42,7 +44,8 @@ class RefDataStoreHolder {
     private final RefDataStore offHeapRefDataStore;
 
     // Hold the maps that are known to be in each stream, built up as we load each stream.
-    private final Map<PipelineReference, Set<String>> pipeRefToMapNamesMap = new HashMap<>();
+    // Note this is pipeline scope so exists for the life of the pipeline process.
+    private final Map<RefStreamDefinition, Set<String>> refStreamDefToMapNamesMap = new HashMap<>();
 
     private RefDataStore onHeapRefDataStore = null;
 
@@ -72,52 +75,109 @@ class RefDataStoreHolder {
         return onHeapRefDataStore;
     }
 
-    boolean isLookupNeeded(final PipelineReference pipelineReference,
-                           final String mapName) {
+    /**
+     * Check if the map exists in this {@link RefStreamDefinition} to determine if we need to bother
+     * doing a lookup. If we haven't loaded refStreamDefinition yet then return true.
+     * This saves having to do multiple pointless gets on the store to find there is no map
+     */
+    MapAvailability getMapAvailabilityInStream(final PipelineReference pipelineReference,
+                                               final RefStreamDefinition refStreamDefinition,
+                                               final String mapName) {
         // This map is populated post load once the maps in the stream are known.
         // A stream may contain 1-* map names.
-        final Set<String> mapNames = pipeRefToMapNamesMap.get(pipelineReference);
-        final boolean isLookupNeeded;
+        final Set<String> mapNames = refStreamDefToMapNamesMap.get(refStreamDefinition);
+        final MapAvailability mapAvailability;
         if (mapNames == null) {
-            // not done a load yet so can't be sure what maps are in the stream
-            isLookupNeeded = true;
+            // Not done a lookup yet so can't be sure what maps are in the stream, therefore
+            // we must assume that a lookup is required.
+            mapAvailability = MapAvailability.UNKNOWN;
         } else {
-            // We have done a load so see if the stream has our map
-            isLookupNeeded = mapNames.contains(mapName);
+            // The DB has been queried to find out what maps exist, so we can be sure whether a lookup
+            // is needed or not.  If the map is known to not exist then no point in doing a lookup.
+            mapAvailability = mapNames.contains(mapName)
+                    ? MapAvailability.PRESENT
+                    : MapAvailability.NOT_PRESENT;
         }
 
-        LOGGER.debug(() -> LogUtil.message(
-                "isLookupNeeded: {}, mapName: {}, mapNames: {} for feed: {}, streamType: {}, pipelineName: {}",
-                isLookupNeeded,
+        LOGGER.trace(() -> LogUtil.message(
+                "mapAvailability: {}, map: {}, available maps: {}, feed: {}, type: {}, stream: {}, partIdx: {}",
+                mapAvailability,
                 mapName,
-                mapNames,
-                pipelineReference.getFeed().getName(),
-                pipelineReference.getStreamType(),
-                pipelineReference.getPipeline().getName()));
+                NullSafe.toStringOrElse(mapNames, "<NOT YET KNOWN>"),
+                NullSafe.get(pipelineReference, PipelineReference::getFeed, DocRef::getName),
+                NullSafe.get(pipelineReference, PipelineReference::getStreamType),
+                NullSafe.get(refStreamDefinition, RefStreamDefinition::getStreamId),
+                NullSafe.get(refStreamDefinition, RefStreamDefinition::getPartIndex)));
 
-        return isLookupNeeded;
+        return mapAvailability;
     }
 
+    /**
+     * Cache the set of map names known to exist in this {@link RefStreamDefinition}.
+     */
     void addKnownMapNames(final RefDataStore refDataStore,
-                          final PipelineReference pipelineReference,
                           final RefStreamDefinition refStreamDefinition) {
 
-        final Optional<ProcessingState> optLoadState = refDataStore.getLoadState(refStreamDefinition);
+        if (!refStreamDefToMapNamesMap.containsKey(refStreamDefinition)) {
+            final Optional<ProcessingState> optLoadState = refDataStore.getLoadState(
+                    refStreamDefinition);
 
-        // Make sure the load was good
-        if (optLoadState.filter(ProcessingState.COMPLETE::equals).isPresent()) {
-            final Set<String> mapNames = refDataStore.getMapNames(refStreamDefinition);
+            // Make sure the load was good
+            if (optLoadState.filter(ProcessingState.COMPLETE::equals).isPresent()) {
+                final Set<String> mapNames = refDataStore.getMapNames(refStreamDefinition);
 
-            LOGGER.debug(() -> LogUtil.message(
-                    "Putting mapNames: {} for feed: {}, streamType: {}, pipelineName: {}",
-                    mapNames,
-                    pipelineReference.getFeed().getName(),
-                    pipelineReference.getStreamType(),
-                    pipelineReference.getPipeline().getName()));
+                // Debug as should only be done once per stream
+                LOGGER.debug(() -> LogUtil.message(
+                        "Putting mapNames: {} for refStreamDefinition: {}",
+                        mapNames,
+                        refStreamDefinition));
 
-            pipeRefToMapNamesMap.put(pipelineReference, mapNames);
+                refStreamDefToMapNamesMap.put(refStreamDefinition, mapNames);
+            } else {
+                LOGGER.trace("Load not complete, optLoadState: {}", optLoadState);
+            }
         } else {
-            LOGGER.debug("Load not complete, optLoadState: {}", optLoadState);
+            LOGGER.trace(() -> LogUtil.message("RefStreamDefinition {} already known, available maps: {}",
+                    refStreamDefinition, refStreamDefToMapNamesMap.get(refStreamDefinition)));
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * The availability of a named map in a reference data stream (i.e. {@link RefStreamDefinition}).
+     */
+    public enum MapAvailability {
+
+        /**
+         * We have established, via querying the DB that the map is present in the stream
+         */
+        PRESENT(true),
+
+        /**
+         * We have established, via querying the DB that the map is NOT present in the stream
+         */
+        NOT_PRESENT(false),
+
+        /**
+         * We don't yet know if the map is in the stream or not.
+         */
+        UNKNOWN(true);
+
+        private final boolean isLookupRequired;
+
+        MapAvailability(final boolean isLookupRequired) {
+            this.isLookupRequired = isLookupRequired;
+        }
+
+        /**
+         * @return True if this {@link MapAvailability} means that a lookup in the database
+         * is required.
+         */
+        public boolean isLookupRequired() {
+            return isLookupRequired;
         }
     }
 }

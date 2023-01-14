@@ -25,6 +25,7 @@ import net.sf.saxon.trans.XPathException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -46,6 +47,21 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
         this.refDataStore = Objects.requireNonNull(refDataStore);
         this.mapDefinition = Objects.requireNonNull(mapDefinition);
         this.key = Objects.requireNonNull(key);
+    }
+
+    @Override
+    public String getKey() {
+        return key;
+    }
+
+    @Override
+    public String getMapName() {
+        return mapDefinition.getMapName();
+    }
+
+    @Override
+    public List<MapDefinition> getMapDefinitions() {
+        return List.of(mapDefinition);
     }
 
     /**
@@ -105,6 +121,11 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
     }
 
     @Override
+    public RefDataValueProxy merge(final RefDataValueProxy additionalProxy) {
+        return MultiRefDataValueProxy.merge(this, additionalProxy);
+    }
+
+    @Override
     public boolean equals(final Object o) {
         if (this == o) {
             return true;
@@ -126,8 +147,8 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
     @Override
     public String toString() {
         return "RefDataValueProxy{" +
-                "mapDefinition=" + mapDefinition +
-                ", key='" + key + '\'' +
+                "key='" + key + '\'' +
+                ", mapDefinition=" + mapDefinition +
                 '}';
     }
 }

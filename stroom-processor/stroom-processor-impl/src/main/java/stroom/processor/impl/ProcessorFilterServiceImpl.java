@@ -72,6 +72,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
     private final ProcessorService processorService;
     private final ProcessorFilterDao processorFilterDao;
+    private final ProcessorTaskDao processorTaskDao;
     private final MetaService metaService;
     private final SecurityContext securityContext;
     private final DocRefInfoService docRefInfoService;
@@ -79,11 +80,13 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     @Inject
     ProcessorFilterServiceImpl(final ProcessorService processorService,
                                final ProcessorFilterDao processorFilterDao,
+                               final ProcessorTaskDao processorTaskDao,
                                final MetaService metaService,
                                final SecurityContext securityContext,
                                final DocRefInfoService docRefInfoService) {
         this.processorService = processorService;
         this.processorFilterDao = processorFilterDao;
+        this.processorTaskDao = processorTaskDao;
         this.metaService = metaService;
         this.securityContext = securityContext;
         this.docRefInfoService = docRefInfoService;
@@ -199,8 +202,16 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
     @Override
     public boolean delete(final int id) {
-        return securityContext.secureResult(PERMISSION, () ->
-                processorFilterDao.logicalDelete(id));
+        return securityContext.secureResult(PERMISSION, () -> {
+            if (processorFilterDao.logicalDeleteByProcessorFilterId(id) > 0) {
+                // Logically delete any associated unprocessed tasks.
+                // Once the filter is logically deleted no new tasks will be created for it
+                // but we may still have active tasks for 'deleted' filters.
+                processorTaskDao.logicalDeleteByProcessorFilterId(id);
+                return true;
+            }
+            return false;
+        });
     }
 
     @Override

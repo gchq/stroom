@@ -29,10 +29,6 @@ public abstract class AbstractFlyWayDbModule<T_CONFIG extends AbstractDbConfig, 
 
     @Override
     protected void performMigration(final DataSource dataSource) {
-        // So that tests don't always try and perform migration only do it if the thread local hasn't recorded it as
-        // being done already.
-        if (FlywayUtil.migrationRequired(getModuleName())) {
-            FlywayUtil.migrate(dataSource, getFlyWayLocation(), getFlyWayTableName(), getModuleName());
-        }
+        FlywayUtil.migrate(dataSource, getFlyWayLocation(), getFlyWayTableName(), getModuleName());
     }
 }

@@ -16,29 +16,24 @@
 
 package stroom.importexport.client.event;
 
-import stroom.importexport.shared.ImportState;
-import stroom.util.shared.ResourceKey;
+import stroom.importexport.shared.ImportConfigResponse;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
-import java.util.List;
-
 public class ImportConfigConfirmEvent extends GwtEvent<ImportConfigConfirmEvent.Handler> {
 
     private static Type<Handler> TYPE;
-    private final ResourceKey resourceKey;
-    private final List<ImportState> confirmList;
+    private final ImportConfigResponse response;
 
-    private ImportConfigConfirmEvent(final ResourceKey resourceKey, final List<ImportState> confirmList) {
-        this.resourceKey = resourceKey;
-        this.confirmList = confirmList;
+    private ImportConfigConfirmEvent(final ImportConfigResponse response) {
+        this.response = response;
     }
 
-    public static void fire(final HasHandlers source, final ResourceKey resourceKey,
-                            final List<ImportState> confirmList) {
-        source.fireEvent(new ImportConfigConfirmEvent(resourceKey, confirmList));
+    public static void fire(final HasHandlers source,
+                            final ImportConfigResponse response) {
+        source.fireEvent(new ImportConfigConfirmEvent(response));
     }
 
     public static Type<Handler> getType() {
@@ -58,12 +53,8 @@ public class ImportConfigConfirmEvent extends GwtEvent<ImportConfigConfirmEvent.
         handler.onConfirmImport(this);
     }
 
-    public ResourceKey getResourceKey() {
-        return resourceKey;
-    }
-
-    public List<ImportState> getConfirmList() {
-        return confirmList;
+    public ImportConfigResponse getResponse() {
+        return response;
     }
 
     public interface Handler extends EventHandler {

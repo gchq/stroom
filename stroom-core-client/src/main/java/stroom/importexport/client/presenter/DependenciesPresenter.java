@@ -59,6 +59,11 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
     private static final int COL_WIDTH_NAME = 300;
     private static final int COL_WIDTH_UUID = 270;
 
+    private static final Preset SEARCHABLE_PRESET = new Preset(
+            DocumentType.DOC_IMAGE_CLASS_NAME + "searchable.svg",
+            "Searchable",
+            true);
+
     private final RestFactory restFactory;
     private final DependencyCriteria criteria;
     private final RestDataProvider<Dependency, ResultPage<Dependency>> dataProvider;
@@ -171,15 +176,23 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
         // Hold map of doc type icons keyed on type to save constructing for each row
         final Rest<DocumentTypes> rest = restFactory.create();
         rest
-                .onSuccess(documentTypes ->
-                        typeToSvgMap = documentTypes.getVisibleTypes().stream()
-                                .collect(Collectors.toMap(
-                                        DocumentType::getType,
-                                        documentType ->
-                                                new Preset(
-                                                        documentType.getIconClassName(),
-                                                        documentType.getDisplayType(),
-                                                        true))))
+                .onSuccess(documentTypes -> {
+                    typeToSvgMap = documentTypes.getVisibleTypes().stream()
+                            .collect(Collectors.toMap(
+                                    DocumentType::getType,
+                                    documentType ->
+                                            new Preset(
+                                                    documentType.getIconClassName(),
+                                                    documentType.getDisplayType(),
+                                                    true)));
+
+                    // Special case for Searchable as it is not a normal doc type
+                    // Not ideal defining it here but adding it fetchDocumentTypes causes problems
+                    // with the explorer context menus.
+                    typeToSvgMap.putIfAbsent(
+                            "Searchable",
+                            SEARCHABLE_PRESET);
+                })
                 .call(EXPLORER_RESOURCE)
                 .fetchDocumentTypes();
     }

@@ -103,6 +103,7 @@ proxyConfig:
     userAgent: null
     validateAfterInactivityPeriod: "PT0S"
     workQueueSize: 8
+  sqsConnectors: []
   threads:
     examineSourceThreadCount: 3
     forwardRetryThreadCount: 2

@@ -5,6 +5,7 @@ import stroom.proxy.repo.FileScannerConfig;
 import stroom.proxy.repo.FrequencyExecutor;
 import stroom.proxy.repo.store.SequentialFileStore;
 import stroom.util.NullSafe;
+import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 
 import io.dropwizard.lifecycle.Managed;
@@ -37,6 +38,7 @@ public class FileScanners implements Managed {
                     .collect(Collectors.toSet());
 
             final Path repoDir = pathCreator.toAppPath(proxyConfig.getProxyRepositoryConfig().getRepoDir());
+            FileUtil.ensureDirExists(repoDir);
             allPaths.add(repoDir);
             if (allPaths.size() != proxyConfig.getFileScanners().size() + 1) {
                 // Can't do this validation with javax validation as it needs pathcreator

@@ -18,9 +18,9 @@ package stroom.util;
 
 import stroom.util.shared.Range;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.Optional;
 
 /**
@@ -181,9 +181,12 @@ public class Period extends Range<Long> {
         if (!isBounded()) {
             return null;
         }
-        long duration = getTo() - getFrom();
-        int totalHours = (int) (duration / MS_IN_HOUR);
-        duration = duration - (totalHours * MS_IN_HOUR);
+        final Duration duration = Duration.between(
+                Instant.ofEpochMilli(getFrom()), Instant.ofEpochMilli(getTo()));
+
+        long durationMs = getTo() - getFrom();
+        int totalHours = (int) (durationMs / MS_IN_HOUR);
+        durationMs = durationMs - (totalHours * MS_IN_HOUR);
 
         int hours;
         int days;
@@ -195,19 +198,21 @@ public class Period extends Range<Long> {
             days = 0;
         }
 
-        int minutes = (int) (duration / MS_IN_MINUTE);
-        duration = duration - (minutes * MS_IN_MINUTE);
-        int seconds = (int) (duration / MS_IN_SECOND);
-        duration = duration - (seconds * MS_IN_SECOND);
+        int minutes = (int) (durationMs / MS_IN_MINUTE);
+        durationMs = durationMs - (minutes * MS_IN_MINUTE);
+        int seconds = (int) (durationMs / MS_IN_SECOND);
+        durationMs = durationMs - (seconds * MS_IN_SECOND);
 
         final StringBuilder sb = new StringBuilder();
-        sb.append(zeroPad(2, Integer.toString(totalHours)));
-        sb.append(":");
-        sb.append(zeroPad(2, Integer.toString(minutes)));
-        sb.append(":");
-        sb.append(zeroPad(2, Integer.toString(seconds)));
-        sb.append(".");
-        sb.append(zeroPad(N3, Long.toString(duration)));
+//        sb.append(zeroPad(2, Integer.toString(totalHours)));
+//        sb.append(":");
+//        sb.append(zeroPad(2, Integer.toString(minutes)));
+//        sb.append(":");
+//        sb.append(zeroPad(2, Integer.toString(seconds)));
+//        sb.append(".");
+//        sb.append(zeroPad(N3, Long.toString(duration)));
+
+        sb.append(duration);
 
         if (days > 0) {
             sb.append(" (");
@@ -235,13 +240,13 @@ public class Period extends Range<Long> {
         if (getFrom() == null) {
             builder.append("null");
         } else {
-            builder.append(new Date(getFrom()));
+            builder.append(Instant.ofEpochMilli(getFrom()));
         }
         builder.append(", To: ");
         if (getTo() == null) {
             builder.append("null");
         } else {
-            builder.append(new Date(getTo()));
+            builder.append(Instant.ofEpochMilli(getTo()));
         }
         builder.append(", Duration: ");
         builder.append(getDurationStr());
