@@ -16,8 +16,8 @@
 # limitations under the License.
 # **********************************************************************
 
-# Version: v0.4.0
-# Date: 2022-09-27T16:06:12+00:00
+# Version: v0.4.1
+# Date: 2023-01-16T14:59:06+00:00
 
 # This script is for tagging a git repository for the purpose of driving a
 # separate release process from that tagged commit. It also updates the 
