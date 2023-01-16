@@ -1548,8 +1548,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
                         metaType.NAME,
                         meta.EFFECTIVE_TIME)
                 .from(meta)
-                .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                .innerJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                .innerJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
                 .where(metaFeed.NAME.eq(criteria.getFeed()))
                 .and(metaType.NAME.eq(criteria.getType()))
                 .and(meta.STATUS.eq(unlockedId));
