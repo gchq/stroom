@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+* Issue **#3189** : Change effective stream query to use inner joins.
+
 
 ## [v7.1-beta.19] - 2023-01-13
 
