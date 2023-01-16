@@ -498,8 +498,13 @@ commit_changelog() {
 
   info "Adding ${BLUE}${CHANGELOG_FILENAME}${GREEN} to the git index."
   git add "${changelog_file}"
-  info "Adding deleted change entry files to the git index."
-  git add "./${UNRELEASED_CHANGES_REL_DIR}/*.md"
+
+  if [[ "${are_unreleased_issues_in_files}" = true ]]; then
+    info "Adding deleted change entry files to the git index."
+    git add "./${UNRELEASED_CHANGES_REL_DIR}/*.md"
+  else
+    info "No deleted change entry files to add to the git index."
+  fi
 
   info "Committing the staged changes"
   git commit -m "Update change log for release ${next_release_version}"
