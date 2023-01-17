@@ -88,7 +88,7 @@ class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegra
         FileUtil.deleteDir(testDataDir);
         FileUtil.mkdirs(testDataDir);
 
-        importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true, null);
+        importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true);
 
         assertThat(FileUtil.count(testDataDir)).isEqualTo(2);
 

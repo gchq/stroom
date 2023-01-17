@@ -59,7 +59,7 @@ class TestImportExportServiceImpl3 extends AbstractCoreIntegrationTest {
         final Path testFile = getCurrentTestDir()
                 .resolve("ExportTest" + FileSystemTestUtil.getUniqueTestString() + ".zip");
 
-        importExportService.exportConfig(null, testFile, msgList);
+        importExportService.exportConfig(null, testFile);
 
         assertThat(msgList.size())
                 .isEqualTo(0);

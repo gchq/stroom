@@ -18,6 +18,7 @@ package stroom.importexport.impl;
 
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.api.ContentService;
+import stroom.importexport.api.ExportSummary;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.importexport.shared.ImportConfigRequest;
@@ -27,6 +28,10 @@ import stroom.importexport.shared.ImportState;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.util.logging.AsciiTable;
+import stroom.util.logging.AsciiTable.Column;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.DocRefs;
 import stroom.util.shared.Message;
 import stroom.util.shared.PermissionException;
@@ -34,17 +39,23 @@ import stroom.util.shared.QuickFilterResultPage;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
+import io.vavr.Tuple;
+import io.vavr.Tuple3;
+
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
 class ContentServiceImpl implements ContentService {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContentServiceImpl.class);
 
     private final ImportExportService importExportService;
     private final ResourceStore resourceStore;
@@ -121,11 +132,11 @@ class ContentServiceImpl implements ContentService {
         Objects.requireNonNull(docRefs);
 
         return securityContext.secureResult(PermissionNames.EXPORT_CONFIGURATION, () -> {
-            final List<Message> messageList = new ArrayList<>();
             ResourceStore resourceStore = this.resourceStore;
             final ResourceKey guiKey = resourceStore.createTempFile("StroomConfig.zip");
             final Path file = resourceStore.getTempFile(guiKey);
-            importExportService.exportConfig(docRefs.getDocRefs(), file, messageList);
+            final ExportSummary exportSummary = importExportService.exportConfig(docRefs.getDocRefs(), file);
+            final List<Message> messageList = exportSummary.getMessages();
 
             return new ResourceGeneration(guiKey, messageList);
         });
@@ -142,17 +153,73 @@ class ContentServiceImpl implements ContentService {
             throw new PermissionException(securityContext.getUserId(),
                     "You do not have permission to export all config");
         }
-        if (!exportConfigProvider.get().isEnabled()) {
+        final ExportConfig exportConfig = exportConfigProvider.get();
+        if (!exportConfig.isEnabled()) {
+            LOGGER.warn("Attempt by user '{}' to export all data when {} is not enabled.",
+                    securityContext.getUserId(),
+                    exportConfig.getFullPathStr(ExportConfig.ENABLED_PROP_NAME));
             throw new PermissionException(securityContext.getUserId(), "Export is not enabled");
         }
 
         final ResourceKey tempResourceKey = resourceStore.createTempFile("StroomConfig.zip");
-
         final Path tempFile = resourceStore.getTempFile(tempResourceKey);
-        importExportService.exportConfig(Set.of(ExplorerConstants.ROOT_DOC_REF), tempFile, new ArrayList<>());
+
+        LOGGER.info("Exporting all config to temp file {}", tempFile);
+        final ExportSummary exportSummary = importExportService.exportConfig(
+                Set.of(ExplorerConstants.ROOT_DOC_REF),
+                tempFile);
+
+        logSummary(tempFile, exportSummary);
 
         return tempResourceKey;
     }
 
+    private void logSummary(final Path tempFile, final ExportSummary exportSummary) {
+        final Set<String> allDocTypes = Stream.concat(
+                        exportSummary.getSuccessCountsByType().keySet().stream(),
+                        exportSummary.getFailedCountsByType().keySet().stream())
+                .collect(Collectors.toSet());
 
+//        final String typeCountsText = allDocTypes.stream()
+//                .sorted()
+//                .map(docType -> "  " + docType + ": "
+//                        + Objects.requireNonNullElse(exportSummary.getSuccessCountsByType().get(docType), 0)
+//                        + " (failed: "
+//                        + Objects.requireNonNullElse(exportSummary.getFailedCountsByType().get(docType), 0)
+//                        + ")")
+//                .collect(Collectors.joining("\n"));
+
+        final List<Tuple3<String, Integer, Integer>> tableData = allDocTypes.stream()
+                .sorted()
+                .map(docType -> Tuple.of(docType,
+                        Objects.requireNonNullElse(exportSummary.getSuccessCountsByType().get(docType), 0),
+                        Objects.requireNonNullElse(exportSummary.getFailedCountsByType().get(docType), 0)))
+                .collect(Collectors.toList());
+
+        final String typeCountsText = AsciiTable.builder(tableData)
+                .withColumn(Column.of("Type", Tuple3::_1))
+                .withColumn(Column.integer("Success", Tuple3::_2))
+                .withColumn(Column.integer("Failed", Tuple3::_3))
+                .build();
+
+//        final String msgText = exportSummary.getMessages().isEmpty()
+//                ? "no messages"
+//                : "messages:\n" + exportSummary.getMessages().stream()
+//                        .map(msg -> "  " + msg.toString())
+//                        .collect(Collectors.joining("\n"));
+
+        final String msgText = exportSummary.getMessages().isEmpty()
+                ? "no messages"
+                : "messages:\n" + AsciiTable.builder(exportSummary.getMessages())
+                        .withColumn(Column.of("Severity", Message::getSeverity))
+                        .withColumn(Column.of("Message", Message::getMessage))
+                        .build();
+
+        LOGGER.info("Exported {} documents ({} failures) using temp file {}, counts by type:\n{}\n{}",
+                exportSummary.getSuccessTotal(),
+                exportSummary.getFailedTotal(),
+                tempFile,
+                typeCountsText,
+                msgText);
+    }
 }

@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder(alphabetic = true)
 public class ExportConfig extends AbstractConfig {
 
+    protected static final String ENABLED_PROP_NAME = "enabled";
     private final boolean enabled;
 
     public ExportConfig() {
@@ -18,7 +19,7 @@ public class ExportConfig extends AbstractConfig {
     }
 
     @JsonCreator
-    public ExportConfig(@JsonProperty("enabled") final boolean enabled) {
+    public ExportConfig(@JsonProperty(ENABLED_PROP_NAME) final boolean enabled) {
         this.enabled = enabled;
     }
 
