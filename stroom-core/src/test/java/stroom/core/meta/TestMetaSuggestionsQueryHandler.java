@@ -1,4 +1,4 @@
-package stroom.meta.impl;
+package stroom.core.meta;
 
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;

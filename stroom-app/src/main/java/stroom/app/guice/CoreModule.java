@@ -21,6 +21,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.core.dataprocess.PipelineStreamTaskModule());
         install(new stroom.core.db.DbStatusModule());
         install(new stroom.core.entity.event.EntityEventModule());
+        install(new stroom.core.meta.MetaModule());
         install(new stroom.core.receive.ReceiveDataModule());
         install(new stroom.core.servlet.ServletModule());
         install(new stroom.core.sysinfo.SystemInfoModule());

@@ -1,4 +1,4 @@
-package stroom.meta.impl;
+package stroom.core.meta;
 
 import stroom.suggestions.api.SuggestionsQueryHandler;
 

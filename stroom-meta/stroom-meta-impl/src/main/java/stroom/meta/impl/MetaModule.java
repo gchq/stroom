@@ -6,9 +6,7 @@ import stroom.meta.api.MetaSecurityFilter;
 import stroom.meta.api.MetaService;
 import stroom.meta.api.PhysicalDelete;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFields;
 import stroom.searchable.api.Searchable;
-import stroom.suggestions.api.SuggestionsServiceBinder;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
@@ -26,7 +24,6 @@ public class MetaModule extends AbstractModule {
     protected void configure() {
         bind(MetaService.class).to(MetaServiceImpl.class);
         bind(PhysicalDelete.class).to(PhysicalDeleteImpl.class);
-        bind(MetaSuggestionsQueryHandler.class).to(MetaSuggestionsQueryHandlerImpl.class);
 
         OptionalBinder.newOptionalBinder(binder(), MetaSecurityFilter.class);
 
@@ -39,9 +36,6 @@ public class MetaModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(MetaResourceImpl.class);
-
-        SuggestionsServiceBinder.create(binder())
-                .bind(MetaFields.STREAM_STORE_TYPE, MetaSuggestionsQueryHandler.class);
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(FlushDataMetaDb.class, builder -> builder
