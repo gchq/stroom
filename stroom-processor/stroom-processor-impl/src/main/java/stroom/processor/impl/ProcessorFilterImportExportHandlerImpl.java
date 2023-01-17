@@ -240,7 +240,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
             throw new RuntimeException("Unable to create meta file for processor filter", ioex);
         }
 
-        importExportDocumentEventLog.exportDocument(docRef, null);
+//        importExportDocumentEventLog.exportDocument(docRef, null);
 
         return data;
     }
