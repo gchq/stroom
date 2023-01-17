@@ -262,7 +262,8 @@ appConfig:
     search:
       scrollDuration: "PT1M"
       storeSize: "1000000,100,10,1"
-      useSuggesters: true
+      suggestions:
+        enabled: true
   explorer:
     db:
       connection:
