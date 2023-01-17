@@ -1,8 +1,6 @@
 package stroom.search.elastic.search;
 
-import stroom.util.cache.CacheConfig;
-import stroom.util.config.annotations.RequiresRestart;
-import stroom.util.config.annotations.RequiresRestart.RestartScope;
+import stroom.search.elastic.suggest.ElasticSuggestConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
@@ -17,22 +15,22 @@ public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfi
 
     private final StroomDuration scrollDuration;
     private final String storeSize;
-    private final Boolean useSuggesters;
+    private final ElasticSuggestConfig suggestConfig;
 
     public ElasticSearchConfig() {
         scrollDuration = StroomDuration.ofMinutes(1);
         storeSize = "1000000,100,10,1";
-        useSuggesters = true;
+        suggestConfig = new ElasticSuggestConfig();
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
     public ElasticSearchConfig(@JsonProperty("scrollDuration") final StroomDuration scrollDuration,
                                @JsonProperty("storeSize") final String storeSize,
-                               @JsonProperty("useSuggesters") final Boolean useSuggesters) {
+                               @JsonProperty("suggestions") final ElasticSuggestConfig suggestConfig) {
         this.scrollDuration = scrollDuration;
         this.storeSize = storeSize;
-        this.useSuggesters = useSuggesters;
+        this.suggestConfig = suggestConfig;
     }
 
     @JsonPropertyDescription("Amount of time to allow an Elasticsearch scroll request to continue before aborting.")
@@ -45,10 +43,9 @@ public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfi
         return storeSize;
     }
 
-    @JsonPropertyDescription("Suggest terms in query expressions when using an Elasticsearch index as the data source.")
-    @RequiresRestart(RestartScope.UI)
-    public Boolean getUseSuggesters() {
-        return useSuggesters;
+    @JsonProperty("suggestions")
+    public ElasticSuggestConfig getSuggestConfig() {
+        return suggestConfig;
     }
 
     @Override
@@ -56,7 +53,7 @@ public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfi
         return "ElasticSearchConfig{" +
                 "scrollDuration='" + scrollDuration + "'" +
                 ", storeSize=" + storeSize +
-                ", useSuggesters=" + useSuggesters +
+                ", suggestConfig=" + suggestConfig +
                 '}';
     }
 }

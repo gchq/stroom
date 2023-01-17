@@ -513,6 +513,15 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.search.elastic.suggest.ElasticSuggestConfig getElasticSuggestConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.search.elastic.suggest.ElasticSuggestConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.search.extraction.ExtractionConfig getExtractionConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
