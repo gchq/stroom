@@ -261,11 +261,8 @@ appConfig:
       retryCount: 10
     search:
       scrollDuration: "PT1M"
-      searchResultCache:
-        expireAfterAccess: "PT10M"
-        expireAfterWrite: null
-        maximumSize: 10000
       storeSize: "1000000,100,10,1"
+      useSuggesters: true
   explorer:
     db:
       connection:
