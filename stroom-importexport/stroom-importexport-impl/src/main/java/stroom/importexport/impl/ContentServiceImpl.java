@@ -132,7 +132,7 @@ class ContentServiceImpl implements ContentService {
         Objects.requireNonNull(docRefs);
 
         return securityContext.secureResult(PermissionNames.EXPORT_CONFIGURATION, () -> {
-            ResourceStore resourceStore = this.resourceStore;
+            final ResourceStore resourceStore = this.resourceStore;
             final ResourceKey guiKey = resourceStore.createTempFile("StroomConfig.zip");
             final Path file = resourceStore.getTempFile(guiKey);
             final ExportSummary exportSummary = importExportService.exportConfig(docRefs.getDocRefs(), file);
@@ -149,7 +149,7 @@ class ContentServiceImpl implements ContentService {
 
     @Override
     public ResourceKey exportAll() {
-        if (!securityContext.hasAppPermission("Export Configuration")) {
+        if (!securityContext.hasAppPermission(PermissionNames.EXPORT_CONFIGURATION)) {
             throw new PermissionException(securityContext.getUserId(),
                     "You do not have permission to export all config");
         }
