@@ -17,6 +17,7 @@
 package stroom.importexport.impl;
 
 import stroom.docref.DocRef;
+import stroom.importexport.api.ExportSummary;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.util.shared.Message;
@@ -39,8 +40,8 @@ public interface ImportExportService {
      * <p>
      * Also in the zip file output content that can be exploded and stored in
      * source control. Used for tracking changes with XSLT and feeds.
+     * @return
      */
-    void exportConfig(Set<DocRef> docRefs,
-                      Path data,
-                      List<Message> messageList);
+    ExportSummary exportConfig(Set<DocRef> docRefs,
+                               Path data);
 }
