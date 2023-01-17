@@ -42,7 +42,8 @@ public class SuggestionsServiceImpl implements SuggestionsService {
                     final SuggestionsQueryHandler queryHandler = providerMap.get(dataSourceType).get();
                     return queryHandler.getSuggestions(request);
                 } else {
-                    throw new RuntimeException("Suggestions provider not registered for type: " + dataSourceType);
+                    LOGGER.debug("Suggestions provider not registered for type: {}", dataSourceType);
+                    return Collections.emptyList();
                 }
             } else {
                 throw new RuntimeException("Data source type not defined");
