@@ -25,36 +25,6 @@ public class DataCreator {
         final Path jsonLocation = dir.resolve("input.json");
 
         final String json = Files.readString(jsonLocation, StandardCharsets.UTF_8);
-//        int start = 0;
-//        start = json.indexOf("\"", start);
-//        final Set<String> names = new HashSet<>();
-//        while (start  != -1) {
-//            int end = json.indexOf("\"", start + 1);
-//            if (end != -1) {
-//                final String text = json.substring(start, end + 1);
-//                names.add(text);
-//            }
-//            start = json.indexOf("\"", end + 1);
-//        }
-//
-//        final Map<String, String> mappings = new HashMap<>();
-//        names.forEach(name -> {
-//            final String uuid = UUID.randomUUID().toString().replace("-", "");
-//            final String rand = uuid.substring(0, name.length() - 2);
-//            mappings.put(name, "\"" + rand + "\"");
-//        });
-//
-//        String out = json;
-//        for (final Entry<String, String> entry : mappings.entrySet()) {
-//            out = out.replace(entry.getKey(), entry.getValue());
-//        }
-//
-//        final Path outp = dir.resolve("output.json");
-//        Files.writeString(outp, out, StandardCharsets.UTF_8);
-//
-//
-//        json = out;
-
 
         // Write a fragment sample.
         final Path outLocationFragment = dir.resolve("sample-fragment-small.xml");
