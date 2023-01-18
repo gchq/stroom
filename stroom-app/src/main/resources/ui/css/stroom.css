@@ -611,8 +611,7 @@ input[type="file"]:disabled {
 	white-space: nowrap;
 }
 
-.gwt-SuggestBoxPopup .suggestPopupContent,
-.com-google-gwt-user-client-ui-CustomScrollPanel-Style-customScrollPanelCorner {
+.gwt-SuggestBoxPopup .suggestPopupContent {
   background: var(--input-background-color) !important;
 }
 
