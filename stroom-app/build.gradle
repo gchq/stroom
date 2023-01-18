@@ -160,7 +160,6 @@ dependencies {
     compile project(':stroom-docref')
     compile libs.validation_api
     compile libs.ws_rs_api
-    compile libs.xerces
 
     runtimeOnly libs.javax_el
     runtimeOnly libs.javax_el_api

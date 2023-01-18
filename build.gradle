@@ -353,7 +353,6 @@ subprojects {
             exclude group: "org.slf4j", module: "slf4j-log4j12"
             exclude group: "log4j", module: "log4j"
             exclude group: "commons-logging", module: "commons-logging"
-            exclude group: "xerces", module: "xercesImpl"
 //            exclude group: "javax.validation", module: "validation-api"
 
             resolutionStrategy {
@@ -376,7 +375,6 @@ subprojects {
                     //println "Slf4j version = $dropwizardBomSlf4jVersion"
                     substitute module('log4j:log4j') with module("org.slf4j:log4j-over-slf4j:1.7.25")
                     // substitute module('javax.validation:validation-api') with module("javax.validation:validation-api:1.1.0.Final")
-                    substitute module('xerces:xercesImpl') with module(libs.xerces)
                 }
 
                 // Stop stroom libs from dragging in a different version of dropwizard
