@@ -58,6 +58,7 @@ dependencies {
     compile libs.swagger_annotations
     compile libs.vavr
     compile libs.ws_rs_api
+    compile libs.xerces
     compile libs.xml_apis
     compile libs.zero_allocation_hashing
 
