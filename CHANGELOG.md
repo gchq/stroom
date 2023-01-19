@@ -12,6 +12,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.1-beta.21] - 2023-01-19
+
 * Add logging of queries that take >2s to execute. Enabled by setting `stroom.db.util.SlowQueryExecuteListener: DEBUG`.
 
 * Add info logging to the export all api resource. Outputs the number of docs export along with counts by type.
@@ -4492,7 +4494,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.20...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.21...HEAD
+[v7.1-beta.21]: https://github.com/gchq/stroom/compare/v7.1-beta.20...v7.1-beta.21
 [v7.1-beta.20]: https://github.com/gchq/stroom/compare/v7.1-beta.19...v7.1-beta.20
 [v7.1-beta.19]: https://github.com/gchq/stroom/compare/v7.1-beta.18...v7.1-beta.19
 [v7.1-beta.18]: https://github.com/gchq/stroom/compare/v7.1-beta.17...v7.1-beta.18
