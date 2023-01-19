@@ -13,11 +13,13 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder(alphabetic = true)
 public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfig {
 
+    private final boolean highlight;
     private final StroomDuration scrollDuration;
     private final String storeSize;
     private final ElasticSuggestConfig suggestConfig;
 
     public ElasticSearchConfig() {
+        highlight = true;
         scrollDuration = StroomDuration.ofMinutes(1);
         storeSize = "1000000,100,10,1";
         suggestConfig = new ElasticSuggestConfig();
@@ -25,12 +27,19 @@ public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfi
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public ElasticSearchConfig(@JsonProperty("scrollDuration") final StroomDuration scrollDuration,
+    public ElasticSearchConfig(@JsonProperty("highlight") final boolean highlight,
+                               @JsonProperty("scrollDuration") final StroomDuration scrollDuration,
                                @JsonProperty("storeSize") final String storeSize,
                                @JsonProperty("suggestions") final ElasticSuggestConfig suggestConfig) {
+        this.highlight = highlight;
         this.scrollDuration = scrollDuration;
         this.storeSize = storeSize;
         this.suggestConfig = suggestConfig;
+    }
+
+    @JsonPropertyDescription("Highlight matched terms in the source document.")
+    public boolean getHighlight() {
+        return highlight;
     }
 
     @JsonPropertyDescription("Amount of time to allow an Elasticsearch scroll request to continue before aborting.")
@@ -51,7 +60,8 @@ public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfi
     @Override
     public String toString() {
         return "ElasticSearchConfig{" +
-                "scrollDuration='" + scrollDuration + "'" +
+                "highlight=" + highlight +
+                ", scrollDuration='" + scrollDuration + "'" +
                 ", storeSize=" + storeSize +
                 ", suggestConfig=" + suggestConfig +
                 '}';
