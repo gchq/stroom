@@ -44,15 +44,13 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.PropertyPath;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.vavr.Tuple;
-import io.vavr.Tuple2;
 
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 public class GlobalConfigService {
@@ -352,12 +350,10 @@ public class GlobalConfigService {
                         .orElse(null),
                 config);
 
-        // Build a map of all the prop de-serialised values
-        final Map<String, Object> nameToValueMap = objectInfo.getPropertyMap()
-                .entrySet()
-                .stream()
-                .map(entry -> Tuple.of(entry.getKey(), entry.getValue().getValueFromConfigObject()))
-                .collect(Collectors.toMap(Tuple2::_1, Tuple2::_2));
+        // Build a map of all the prop de-serialised values. Can't use Collectors.toMap due to null values
+        final Map<String, Object> nameToValueMap = new HashMap<>();
+        objectInfo.getPropertyMap().forEach((propName, prop) ->
+                nameToValueMap.put(propName, prop.getValueFromConfigObject()));
 
         final Object newValue = configMapper.convertValue(propertyPath, effectiveValueStr);
         // Set the prop being validated to its new value
