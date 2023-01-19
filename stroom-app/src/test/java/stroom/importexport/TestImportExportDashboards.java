@@ -228,11 +228,11 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         }
 
         // Export all
-        importExportService.exportConfig(docRefs, resourceStore.getTempFile(file), new ArrayList<>());
+        importExportService.exportConfig(docRefs, resourceStore.getTempFile(file));
 
         final ResourceKey exportConfig = resourceStore.createTempFile("ExportPlain.zip");
 
-        importExportService.exportConfig(docRefs, resourceStore.getTempFile(exportConfig), new ArrayList<>());
+        importExportService.exportConfig(docRefs, resourceStore.getTempFile(exportConfig));
 
         if (!update) {
             // Delete everything.

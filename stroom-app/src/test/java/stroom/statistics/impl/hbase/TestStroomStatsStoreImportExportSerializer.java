@@ -74,7 +74,7 @@ class TestStroomStatsStoreImportExportSerializer extends AbstractCoreIntegration
         FileUtil.deleteDir(testDataDir);
         FileUtil.mkdirs(testDataDir);
 
-        importExportSerializer.write(testDataDir, Set.of(docRef), true, null);
+        importExportSerializer.write(testDataDir, Set.of(docRef), true);
 
         assertThat(FileUtil.count(testDataDir)).isEqualTo(2);
 

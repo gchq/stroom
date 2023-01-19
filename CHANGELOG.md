@@ -12,6 +12,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Add logging of queries that take >2s to execute. Enabled by setting `stroom.db.util.SlowQueryExecuteListener: DEBUG`.
+
+* Add info logging to the export all api resource. Outputs the number of docs export along with counts by type.
+
+* Issue **#3194** : Fix for JDK XML 1.1 parser bug.
+
+
 ## [v7.1-beta.20] - 2023-01-16
 
 * Issue **#3189** : Change effective stream query to use inner joins.
