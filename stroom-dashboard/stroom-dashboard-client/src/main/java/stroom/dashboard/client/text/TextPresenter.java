@@ -260,9 +260,6 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                                         new DefaultLocation(lineNo, colNo),
                                         new DefaultLocation(lineNo, colNo + highlightLength - 1)); // inclusive
                                 highlights.add(hl);
-
-                                i += highlightLength;
-                                // carry on looking for more instances of this highlight string
                             }
                         }
                     } else if (inElementTag && inputChar == '>') {
