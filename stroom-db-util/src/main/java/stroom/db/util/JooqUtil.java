@@ -17,6 +17,7 @@ import stroom.util.shared.StringCriteria;
 import stroom.util.string.PatternUtil;
 
 import org.jooq.Condition;
+import org.jooq.Configuration;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.OrderField;
@@ -29,7 +30,9 @@ import org.jooq.UpdatableRecord;
 import org.jooq.conf.Settings;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
+import org.jooq.impl.DefaultConfiguration;
 import org.jooq.impl.SQLDataType;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.Date;
@@ -66,19 +69,41 @@ public final class JooqUtil {
         System.getProperties().setProperty("org.jooq.no-logo", "true");
     }
 
-    public static DSLContext createContext(final Connection connection) {
+    private static Settings createSettings(final boolean isExecuteWithOptimisticLocking) {
         Settings settings = new Settings();
         // Turn off fully qualified schemata.
-        settings = settings.withRenderSchema(RENDER_SCHEMA);
-        return DSL.using(connection, SQLDialect.MYSQL, settings);
+        settings.withRenderSchema(RENDER_SCHEMA);
+        if (isExecuteWithOptimisticLocking) {
+            settings.withExecuteWithOptimisticLocking(true);
+        }
+        return settings;
+    }
+
+    public static Configuration createConfiguration(final Connection connection,
+                                                    final boolean isExecuteWithOptimisticLocking) {
+        final Settings settings = createSettings(isExecuteWithOptimisticLocking);
+
+        final DefaultConfiguration configuration = new DefaultConfiguration();
+        configuration.setSQLDialect(SQLDialect.MYSQL);
+        configuration.setSettings(settings);
+        configuration.setConnection(connection);
+
+        // Only add listener for slow queries if its logger is enabled to save the overhead
+        if (LoggerFactory.getLogger(SlowQueryExecuteListener.class).isDebugEnabled()) {
+            configuration.setExecuteListener(new SlowQueryExecuteListener());
+        }
+
+        return configuration;
+    }
+
+    public static DSLContext createContext(final Connection connection) {
+        final Configuration configuration = createConfiguration(connection, false);
+        return DSL.using(configuration);
     }
 
     private static DSLContext createContextWithOptimisticLocking(final Connection connection) {
-        Settings settings = new Settings();
-        // Turn off fully qualified schemata.
-        settings = settings.withRenderSchema(RENDER_SCHEMA);
-        settings = settings.withExecuteWithOptimisticLocking(true);
-        return DSL.using(connection, SQLDialect.MYSQL, settings);
+        final Configuration configuration = createConfiguration(connection, true);
+        return DSL.using(configuration);
     }
 
     public static void context(final DataSource dataSource, final Consumer<DSLContext> consumer) {
