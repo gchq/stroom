@@ -38,6 +38,8 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
     // for calling methods on the instance
     private final RefDataStore refDataStore;
     private final MapDefinition mapDefinition;
+
+    private MapDefinition successfulMapDefinition = null;
     private final String key;
 
     public SingleRefDataValueProxy(final RefDataStore refDataStore,
@@ -64,6 +66,11 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
         return List.of(mapDefinition);
     }
 
+    @Override
+    public Optional<MapDefinition> getSuccessfulMapDefinition() {
+        return Optional.ofNullable(successfulMapDefinition);
+    }
+
     /**
      * Materialise the value that this is proxying. The consumeValue() method should be preferred
      * as this method will involve the added cost of copying the contents of the value.
@@ -75,7 +82,11 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
     public Optional<RefDataValue> supplyValue() {
         LOGGER.trace("supplyValue()");
         try {
-            return refDataStore.getValue(mapDefinition, key);
+            final Optional<RefDataValue> value = refDataStore.getValue(mapDefinition, key);
+            if (value.isPresent()) {
+                successfulMapDefinition = mapDefinition;
+            }
+            return value;
         } catch (Exception e) {
             throw new RuntimeException(LogUtil.message(
                     "Error supplying value for key [{}], {}: {}",
@@ -94,7 +105,11 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
     public boolean consumeBytes(final Consumer<TypedByteBuffer> typedByteBufferConsumer) {
         LOGGER.trace("consumeBytes(...)");
         try {
-            return refDataStore.consumeValueBytes(mapDefinition, key, typedByteBufferConsumer);
+            final boolean wasFound = refDataStore.consumeValueBytes(mapDefinition, key, typedByteBufferConsumer);
+            if (wasFound) {
+                successfulMapDefinition = mapDefinition;
+            }
+            return wasFound;
         } catch (Exception e) {
             throw new RuntimeException(LogUtil.message(
                     "Error consuming ref data value bytes for key [{}], {}: {}",
@@ -112,7 +127,11 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
                 .getConsumer(refDataStore.getStorageType());
 
         try {
-            return refDataValueProxyConsumer.consume(this);
+            final boolean wasFound = refDataValueProxyConsumer.consume(this);
+            if (wasFound) {
+                successfulMapDefinition = mapDefinition;
+            }
+            return wasFound;
         } catch (XPathException e) {
             throw new RuntimeException(LogUtil.message(
                     "Error consuming reference data value for key [{}], {}: {}",

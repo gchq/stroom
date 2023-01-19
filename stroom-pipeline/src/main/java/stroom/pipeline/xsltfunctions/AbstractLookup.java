@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.pipeline.refdata.LookupIdentifier;
 import stroom.pipeline.refdata.ReferenceData;
 import stroom.pipeline.refdata.ReferenceDataResult;
+import stroom.pipeline.refdata.ReferenceDataResult.LazyMessage;
 import stroom.pipeline.refdata.store.GenericRefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
@@ -211,7 +212,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         // Create the message.
         final StringBuilder sb = new StringBuilder();
         sb.append("Lookup errored ");
-        lookupIdentifier.append(sb);
+        lookupIdentifier.appendTo(sb);
 
         outputError(context, sb, e);
     }
@@ -222,7 +223,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         // Create the message.
         final StringBuilder sb = new StringBuilder();
         sb.append("Lookup failed ");
-        lookupIdentifier.append(sb);
+        lookupIdentifier.appendTo(sb);
 
         outputWarning(context, sb, e);
     }
@@ -240,7 +241,15 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         if (!msg.endsWith(" ")) {
             sb.append(" ");
         }
-        lookupIdentifier.append(sb);
+        lookupIdentifier.appendTo(sb);
+
+        // Log the stream we found it in, useful if a map is defined in >1 feeds
+        result.getRefDataValueProxy()
+                        .flatMap(RefDataValueProxy::getSuccessfulMapDefinition)
+                                .ifPresent(mapDefinition -> {
+                                    sb.append(" found in stream: ")
+                                            .append(mapDefinition.getRefStreamDefinition().getStreamId());
+                                });
 
         result.getMessages()
                 .stream()
@@ -260,12 +269,14 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         log(context, severity, message, null);
     }
 
-    String getEffectiveStreamIds(final ReferenceDataResult result) {
+    String getQualifiedEffectiveStreamIds(final ReferenceDataResult result) {
         Objects.requireNonNull(result);
         return result.getEffectiveStreams()
                 .stream()
-                .map(RefStreamDefinition::getStreamId)
-                .map(String::valueOf)
+                .map(entry ->
+                        NullSafe.get(entry.getKey(), PipelineReference::getFeed, DocRef::getName)
+                                + ":"
+                                + NullSafe.get(entry.getValue(), RefStreamDefinition::getStreamId))
                 .collect(Collectors.joining(", "));
     }
 
@@ -330,7 +341,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
             // None of the effective streams contains the map
             outputInfo(
                     Severity.WARNING,
-                    "Map not found in effective streams [" + getEffectiveStreamIds(result) + "] ",
+                    "Map not found in effective streams [" + getQualifiedEffectiveStreamIds(result) + "] ",
                     result.getCurrentLookupIdentifier(),
                     trace,
                     ignoreWarnings,
@@ -345,18 +356,50 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                         final boolean ignoreWarnings,
                         final boolean trace) {
 
-        if (wasValueFound && trace) {
+        final List<LazyMessage> messages = result.getMessages();
+        final boolean hasWarnings = messages.stream()
+                .anyMatch(msg -> msg.getSeverity().greaterThanOrEqual(Severity.WARNING));
+        final boolean hasErrors = messages.stream()
+                .anyMatch(msg -> msg.getSeverity().greaterThanOrEqual(Severity.ERROR));
+
+        final Severity maxSeverity = Severity.getMaxSeverity(
+                messages.stream()
+                        .map(LazyMessage::getSeverity)
+                        .collect(Collectors.toList()),
+                        Severity.INFO);
+
+        if (maxSeverity.greaterThanOrEqual(Severity.ERROR) && !trace) {
             outputInfo(
-                    Severity.INFO,
+                    maxSeverity,
+                    "Errors found during lookup ",
+                    result.getCurrentLookupIdentifier(),
+                    trace,
+                    ignoreWarnings,
+                    result,
+                    context);
+        } else if (maxSeverity.equals(Severity.WARNING) && !trace && !ignoreWarnings) {
+            outputInfo(
+                    Severity.WARNING,
+                    "Warnings found during lookup ",
+                    result.getCurrentLookupIdentifier(),
+                    trace,
+                    ignoreWarnings,
+                    result,
+                    context);
+        } else if (wasValueFound && trace) {
+            // Found our value but may still have warnings
+            outputInfo(
+                    maxSeverity,
                     "Success ",
                     result.getCurrentLookupIdentifier(),
                     trace,
                     ignoreWarnings,
                     result,
                     context);
-        } else if (!wasValueFound && !ignoreWarnings) {
+        } else if (!ignoreWarnings) {
+            // Key not found so log at least a warning
             outputInfo(
-                    Severity.WARNING,
+                    maxSeverity.atLeast(Severity.WARNING),
                     "Key not found ",
                     result.getCurrentLookupIdentifier(),
                     trace,

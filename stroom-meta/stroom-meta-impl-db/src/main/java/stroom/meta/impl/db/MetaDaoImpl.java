@@ -28,6 +28,7 @@ import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.impl.MetaDao;
+import stroom.meta.impl.db.jooq.Indexes;
 import stroom.meta.impl.db.jooq.tables.MetaFeed;
 import stroom.meta.impl.db.jooq.tables.MetaProcessor;
 import stroom.meta.impl.db.jooq.tables.MetaType;
@@ -65,6 +66,7 @@ import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Record1;
+import org.jooq.Record2;
 import org.jooq.Record4;
 import org.jooq.Result;
 import org.jooq.Select;
@@ -274,16 +276,44 @@ class MetaDaoImpl implements MetaDao, Clearable {
         return ValString.create(val);
     }
 
+    /**
+     * Supports wild-carded feed names
+     */
     private List<Integer> getFeedIds(final List<String> feedNames) {
         // Feeds cannot be renamed so is ok to cache them
         return getIds(feedNames, feedNameToIdsMap, feedDao::find);
     }
 
+    /**
+     * Does NOT support wild-carded feed names
+     */
+    private Optional<Integer> getFeedId(final String feedName) {
+        // Feeds cannot be renamed so is ok to cache them
+        return getIds(List.of(feedName), feedNameToIdsMap, feedDao::find)
+                .stream()
+                .findFirst();
+    }
+
+    /**
+     * Supports wild-carded type names
+     */
     private List<Integer> getTypeIds(final List<String> typeNames) {
         // In theory types could be renamed, e.g. changing the name of a custom meta type
         // in config. This just means old names may linger in the cache until next reboot. An unlikely and low volume
         // case so not worth worrying about.
         return getIds(typeNames, typeNameToIdsMap, metaTypeDao::find);
+    }
+
+    /**
+     * Does NOT support wild-carded type names
+     */
+    private Optional<Integer> getTypeId(final String typeName) {
+        // In theory types could be renamed, e.g. changing the name of a custom meta type
+        // in config. This just means old names may linger in the cache until next reboot. An unlikely and low volume
+        // case so not worth worrying about.
+        return getIds(List.of(typeName), typeNameToIdsMap, metaTypeDao::find)
+                .stream()
+                .findFirst();
     }
 
     private List<String> getPipelineUuidsByName(final List<String> pipelineNames) {
@@ -1537,21 +1567,20 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 .map(Record1::value1);
     }
 
-    private SelectConditionStep<Record4<Long, String, String, Long>> createBaseEffectiveStreamsQuery(
+    private SelectConditionStep<Record2<Long, Long>> createBaseEffectiveStreamsQuery(
             final DSLContext context,
-            final EffectiveMetaDataCriteria criteria) {
+            final int feedId,
+            final int metaTypeId) {
 
         final byte unlockedId = MetaStatusId.getPrimitiveValue(Status.UNLOCKED);
+
+        // Force the idx to ensure mysql uses the idx with feed_id|effective_time rather than
         return context.select(
                         meta.ID,
-                        metaFeed.NAME,
-                        metaType.NAME,
                         meta.EFFECTIVE_TIME)
-                .from(meta)
-                .innerJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                .innerJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
-                .where(metaFeed.NAME.eq(criteria.getFeed()))
-                .and(metaType.NAME.eq(criteria.getType()))
+                .from(meta.useIndex(Indexes.META_META_FEED_ID_EFFECTIVE_TIME.getName()))
+                .where(meta.FEED_ID.eq(feedId))
+                .and(meta.TYPE_ID.eq(metaTypeId))
                 .and(meta.STATUS.eq(unlockedId));
     }
 
@@ -1562,57 +1591,65 @@ class MetaDaoImpl implements MetaDao, Clearable {
 
         Objects.requireNonNull(effectiveMetaDataCriteria);
         final Period period = Objects.requireNonNull(effectiveMetaDataCriteria.getEffectivePeriod());
+        // Inclusive
         final long fromMs = Objects.requireNonNull(period.getFromMs());
+        // Exclusive
         final long toMs = Objects.requireNonNull(period.getToMs());
 
-        final Function<Record4<Long, String, String, Long>, EffectiveMeta> mapper = rec ->
+        // Debatable whether we should throw an exception if the feed/type don't exist
+        final Optional<Integer> optFeedId = getFeedId(effectiveMetaDataCriteria.getFeed());
+        if (optFeedId.isEmpty()) {
+            LOGGER.warn("Feed {} not found in database", effectiveMetaDataCriteria.getFeed());
+            return Collections.emptySet();
+        }
+
+        final Optional<Integer> optTypeId = getTypeId(effectiveMetaDataCriteria.getType());
+        if (optTypeId.isEmpty()) {
+            LOGGER.warn("Meta Type {} not found in database", effectiveMetaDataCriteria.getType());
+            return Collections.emptySet();
+        }
+
+        final Function<Record2<Long, Long>, EffectiveMeta> mapper = rec ->
                 new EffectiveMeta(
                         rec.get(meta.ID),
-                        rec.get(metaFeed.NAME),
-                        rec.get(metaType.NAME),
+                        effectiveMetaDataCriteria.getFeed(),
+                        effectiveMetaDataCriteria.getType(),
                         rec.get(meta.EFFECTIVE_TIME));
 
-        // Try to get a single stream that is just before our range.  This is so that we always
-        // have a stream (unless there are no streams at all) that was effective at the start
-        // of our range.
-        final Optional<EffectiveMeta> optStreamPriorToRange = JooqUtil.contextResult(metaDbConnProvider,
+        final int feedId = optFeedId.get();
+        final int typeId = optTypeId.get();
+
+        final List<EffectiveMeta> streamsInOrBelowRange = JooqUtil.contextResult(metaDbConnProvider,
                 context -> {
-                    final var select = createBaseEffectiveStreamsQuery(
-                            context,
-                            effectiveMetaDataCriteria)
+                    // Try to get a single stream that is just before our range.  This is so that we always
+                    // have a stream (unless there are no streams at all) that was effective at the start
+                    // of our range.
+                    final var selectUpToRange = createBaseEffectiveStreamsQuery(
+                            context, feedId, typeId)
                             .and(meta.EFFECTIVE_TIME.lessOrEqual(fromMs))
                             .orderBy(meta.EFFECTIVE_TIME.desc())
                             .limit(1);
 
-                    LOGGER.debug("select: {}", select);
-
-                    return select.fetchOptional()
-                            .map(mapper);
-                });
-
-        LOGGER.debug("optStreamPriorToRange {}", optStreamPriorToRange);
-
-        final Set<EffectiveMeta> effectiveMetaSet = new HashSet<>();
-        optStreamPriorToRange.ifPresent(effectiveMetaSet::add);
-
-        final List<EffectiveMeta> streamsInRange = JooqUtil.contextResult(metaDbConnProvider,
-                context -> {
-                    final var select = createBaseEffectiveStreamsQuery(
-                            context, effectiveMetaDataCriteria)
+                    // Get the streams in our range
+                    final var selectInRange = createBaseEffectiveStreamsQuery(
+                            context, feedId, typeId)
                             .and(meta.EFFECTIVE_TIME.greaterThan(fromMs))
                             .and(meta.EFFECTIVE_TIME.lessThan(toMs));
 
-                    LOGGER.debug("select: {}", select);
+                    // Combine the two together, dropping dups if there are any
+                    final var select = selectUpToRange
+                            .union(selectInRange);
+
+                    LOGGER.debug("select:\n{}", select);
 
                     return select.fetch()
                             .map(mapper::apply);
                 });
 
         LOGGER.debug(() -> LogUtil.message("returning {} streams for criteria: {}",
-                streamsInRange.size(), effectiveMetaDataCriteria));
-        effectiveMetaSet.addAll(streamsInRange);
+                streamsInOrBelowRange.size(), effectiveMetaDataCriteria));
 
-        return effectiveMetaSet;
+        return new HashSet<>(streamsInOrBelowRange);
     }
 
     public boolean validateExpressionTerms(final ExpressionItem expressionItem) {
