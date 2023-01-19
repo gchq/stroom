@@ -2323,10 +2323,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/AbstractField"
-                  }
+                  "$ref" : "#/components/schemas/DataSource"
                 }
               }
             },
@@ -10131,6 +10128,9 @@
       "DataSource" : {
         "type" : "object",
         "properties" : {
+          "defaultExtractionPipeline" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
           "fields" : {
             "type" : "array",
             "items" : {
@@ -10553,6 +10553,9 @@
           },
           "createUser" : {
             "type" : "string"
+          },
+          "defaultExtractionPipeline" : {
+            "$ref" : "#/components/schemas/DocRef"
           },
           "description" : {
             "type" : "string"
@@ -12052,6 +12055,9 @@
           },
           "createUser" : {
             "type" : "string"
+          },
+          "defaultExtractionPipeline" : {
+            "$ref" : "#/components/schemas/DocRef"
           },
           "description" : {
             "type" : "string"
@@ -14909,6 +14915,9 @@
           "createUser" : {
             "type" : "string"
           },
+          "defaultExtractionPipeline" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
           "deletedFields" : {
             "type" : "array",
             "items" : {
@@ -15586,6 +15595,9 @@
       "TableComponentSettings" : {
         "type" : "object",
         "properties" : {
+          "dataSourceRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
           "extractValues" : {
             "type" : "boolean",
             "description" : "TODO"

@@ -24,6 +24,7 @@ import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
+import stroom.importexport.api.ExportSummary;
 import stroom.importexport.impl.ImportExportFileNameUtil;
 import stroom.importexport.impl.ImportExportSerializer;
 import stroom.importexport.shared.ImportSettings;
@@ -117,7 +118,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         FileUtil.deleteDir(testDataDir);
         Files.createDirectories(testDataDir);
 
-        importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true, new ArrayList<>());
+        importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true);
 
         List<ImportState> list = new ArrayList<>();
         importExportSerializer.read(testDataDir, list, ImportSettings.createConfirmation());
@@ -212,7 +213,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
 
         System.err.println("Exporting to " + testDataDir);
-        importExportSerializer.write(testDataDir, forExport, true, new ArrayList<>());
+        importExportSerializer.write(testDataDir, forExport, true);
 
 
         importExportSerializer.read(testDataDir, null, ImportSettings.auto());
@@ -239,7 +240,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         FileUtil.deleteDir(testDataDir);
         Files.createDirectories(testDataDir);
 
-        importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true, new ArrayList<>());
+        importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true);
 
         final String fileNamePrefix = ImportExportFileNameUtil.createFilePrefix(childPipelineRef);
         final String fileName = fileNamePrefix + ".meta";
@@ -276,9 +277,9 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                 importExportSerializer.read(inDir, null, ImportSettings.auto());
 
         // Write to output.
-        List<Message> messageList = new ArrayList<>();
-        importExportSerializer.write(outDir, exported, true, messageList);
+        final ExportSummary exportSummary = importExportSerializer.write(outDir, exported, true);
 
+        final List<Message> messageList = exportSummary.getMessages();
         messageList.forEach(message -> {
             if (message.getSeverity().equals(Severity.ERROR)) {
                 LOGGER.error("Export error: {}", message.getMessage());

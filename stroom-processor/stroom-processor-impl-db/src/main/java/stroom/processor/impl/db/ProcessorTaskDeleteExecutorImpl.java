@@ -133,7 +133,7 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
                 "COMPLETED and no tasks");
 
         // Physically delete tasks that are logically deleted or complete for longer than the threshold.
-        taskContext.info(() -> "Physically deleting old and processor tasks with a state of (COMPLETED|DELETED)");
+        taskContext.info(() -> "Physically deleting old processor tasks with a state of (COMPLETED|DELETED)");
         count = processorTaskDao.physicallyDeleteOldTasks(deleteThreshold);
         logCount(count, totalCount, "Physically deleted {} old processor tasks with a state of " +
                 "(COMPLETED|DELETED)");
