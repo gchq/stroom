@@ -264,6 +264,10 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                                         new DefaultLocation(lineNo, colNo),
                                         new DefaultLocation(lineNo, colNo + highlightLength - 1)); // inclusive
                                 highlights.add(hl);
+
+                                // Skip over the found highlight term
+                                i += highlightLength;
+                                colNo += highlightLength;
                             }
                         }
                     } else if (inElementTag && inputChar == '>') {
