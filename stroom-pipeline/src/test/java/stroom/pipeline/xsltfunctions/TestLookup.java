@@ -95,10 +95,11 @@ class TestLookup {
 
         initSequenceMaker(false, false);
 
-        Mockito.doAnswer(invocation -> {
-                    final ReferenceDataResult result = invocation.getArgument(2);
-                    return result;
-                }).when(mockReferenceData)
+        Mockito.doAnswer(
+                        invocation -> {
+                            final ReferenceDataResult result = invocation.getArgument(2);
+                            return result;
+                        }).when(mockReferenceData)
                 .ensureReferenceDataAvailability(Mockito.any(), Mockito.any(), Mockito.any());
 
         doLookup(pipelineReferences);
@@ -129,14 +130,15 @@ class TestLookup {
 
         initSequenceMaker(false, false);
 
-        Mockito.doAnswer(invocation -> {
-                    final ReferenceDataResult result = invocation.getArgument(2);
+        Mockito.doAnswer(
+                        invocation -> {
+                            final ReferenceDataResult result = invocation.getArgument(2);
 
-                    // Add one effective stream
-                    result.addEffectiveStream(pipelineReferences.get(0), refStreamDefinition);
+                            // Add one effective stream
+                            result.addEffectiveStream(pipelineReferences.get(0), refStreamDefinition);
 
-                    return result;
-                }).when(mockReferenceData)
+                            return result;
+                        }).when(mockReferenceData)
                 .ensureReferenceDataAvailability(Mockito.any(), Mockito.any(), Mockito.any());
 
         doLookup(pipelineReferences);
@@ -167,20 +169,21 @@ class TestLookup {
 
         initSequenceMaker(true, false);
 
-        Mockito.doAnswer(invocation -> {
-                    final ReferenceDataResult result = invocation.getArgument(2);
+        Mockito.doAnswer(
+                        invocation -> {
+                            final ReferenceDataResult result = invocation.getArgument(2);
 
-                    // Add one effective stream
-                    result.addEffectiveStream(pipelineReferences.get(0), refStreamDefinition);
+                            // Add one effective stream
+                            result.addEffectiveStream(pipelineReferences.get(0), refStreamDefinition);
 
-                    final ReferenceDataResult resultSpy = Mockito.spy(result);
-                    final RefDataValueProxy mockRefDataValueProxy = Mockito.mock(RefDataValueProxy.class);
+                            final ReferenceDataResult resultSpy = Mockito.spy(result);
+                            final RefDataValueProxy mockRefDataValueProxy = Mockito.mock(RefDataValueProxy.class);
 
-                    Mockito.doReturn(Optional.of(mockRefDataValueProxy))
-                            .when(resultSpy).getRefDataValueProxy();
+                            Mockito.doReturn(Optional.of(mockRefDataValueProxy))
+                                    .when(resultSpy).getRefDataValueProxy();
 
-                    return resultSpy;
-                }).when(mockReferenceData)
+                            return resultSpy;
+                        }).when(mockReferenceData)
                 .ensureReferenceDataAvailability(Mockito.any(), Mockito.any(), Mockito.any());
 
         doLookup(pipelineReferences);
@@ -211,20 +214,21 @@ class TestLookup {
 
         initSequenceMaker(true, true);
 
-        Mockito.doAnswer(invocation -> {
-                    final ReferenceDataResult result = invocation.getArgument(2);
+        Mockito.doAnswer(
+                        invocation -> {
+                            final ReferenceDataResult result = invocation.getArgument(2);
 
-                    // Add one effective stream
-                    result.addEffectiveStream(pipelineReferences.get(0), refStreamDefinition);
+                            // Add one effective stream
+                            result.addEffectiveStream(pipelineReferences.get(0), refStreamDefinition);
 
-                    final ReferenceDataResult resultSpy = Mockito.spy(result);
-                    final RefDataValueProxy mockRefDataValueProxy = Mockito.mock(RefDataValueProxy.class);
+                            final ReferenceDataResult resultSpy = Mockito.spy(result);
+                            final RefDataValueProxy mockRefDataValueProxy = Mockito.mock(RefDataValueProxy.class);
 
-                    Mockito.doReturn(Optional.of(mockRefDataValueProxy))
-                            .when(resultSpy).getRefDataValueProxy();
+                            Mockito.doReturn(Optional.of(mockRefDataValueProxy))
+                                    .when(resultSpy).getRefDataValueProxy();
 
-                    return resultSpy;
-                }).when(mockReferenceData)
+                            return resultSpy;
+                        }).when(mockReferenceData)
                 .ensureReferenceDataAvailability(Mockito.any(), Mockito.any(), Mockito.any());
 
         doLookup(pipelineReferences);
@@ -255,20 +259,21 @@ class TestLookup {
 
         initSequenceMaker(true, true);
 
-        Mockito.doAnswer(invocation -> {
-                    final ReferenceDataResult result = invocation.getArgument(2);
+        Mockito.doAnswer(
+                        invocation -> {
+                            final ReferenceDataResult result = invocation.getArgument(2);
 
-                    // Add one effective stream
-                    result.addEffectiveStream(pipelineReferences.get(0), refStreamDefinition);
+                            // Add one effective stream
+                            result.addEffectiveStream(pipelineReferences.get(0), refStreamDefinition);
 
-                    final ReferenceDataResult resultSpy = Mockito.spy(result);
-                    final RefDataValueProxy mockRefDataValueProxy = Mockito.mock(RefDataValueProxy.class);
+                            final ReferenceDataResult resultSpy = Mockito.spy(result);
+                            final RefDataValueProxy mockRefDataValueProxy = Mockito.mock(RefDataValueProxy.class);
 
-                    Mockito.doReturn(Optional.of(mockRefDataValueProxy))
-                            .when(resultSpy).getRefDataValueProxy();
+                            Mockito.doReturn(Optional.of(mockRefDataValueProxy))
+                                    .when(resultSpy).getRefDataValueProxy();
 
-                    return resultSpy;
-                }).when(mockReferenceData)
+                            return resultSpy;
+                        }).when(mockReferenceData)
                 .ensureReferenceDataAvailability(Mockito.any(), Mockito.any(), Mockito.any());
 
         doLookup(pipelineReferences, false, false);

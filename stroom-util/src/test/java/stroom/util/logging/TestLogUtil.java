@@ -33,7 +33,7 @@ class TestLogUtil {
 
         Assertions.assertThat(box)
                 .isEqualTo("""
-                        
+
                         -----------------
                         |  Hello World  |
                         -----------------""");
