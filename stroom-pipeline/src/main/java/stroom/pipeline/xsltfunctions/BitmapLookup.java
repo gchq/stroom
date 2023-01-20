@@ -20,7 +20,6 @@ import stroom.pipeline.refdata.LookupIdentifier;
 import stroom.pipeline.refdata.ReferenceData;
 import stroom.pipeline.refdata.ReferenceDataResult;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
-import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
 import stroom.pipeline.state.MetaHolder;
 import stroom.util.date.DateUtil;
 import stroom.util.exception.ThrowingFunction;
@@ -48,8 +47,8 @@ class BitmapLookup extends AbstractLookup {
     @Inject
     BitmapLookup(final ReferenceData referenceData,
                  final MetaHolder metaHolder,
-                 final RefDataValueProxyConsumerFactory.Factory consumerFactoryFactory) {
-        super(referenceData, metaHolder, consumerFactoryFactory);
+                 final SequenceMakerFactory sequenceMakerFactory) {
+        super(referenceData, metaHolder, sequenceMakerFactory);
     }
 
     private SequenceMaker getOrCreateSequenceMaker(final AtomicReference<SequenceMaker> sequenceMakerRef,
@@ -57,9 +56,7 @@ class BitmapLookup extends AbstractLookup {
         Objects.requireNonNull(sequenceMakerRef);
         Objects.requireNonNull(xPathContext);
         if (sequenceMakerRef.get() == null) {
-            final SequenceMaker sequenceMaker = new SequenceMaker(
-                    xPathContext,
-                    getRefDataValueProxyConsumerFactoryFactory());
+            final SequenceMaker sequenceMaker = createSequenceMaker(xPathContext);
             sequenceMaker.open();
             sequenceMakerRef.set(sequenceMaker);
         }
@@ -169,7 +166,7 @@ class BitmapLookup extends AbstractLookup {
         } catch (XPathException e) {
             outputInfo(
                     Severity.ERROR,
-                    "Error during lookup: " + e.getMessage(),
+                    () -> "Error during lookup: " + e.getMessage(),
                     lookupIdentifier,
                     trace,
                     ignoreWarnings,

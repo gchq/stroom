@@ -111,10 +111,11 @@ public class ReferenceData {
      * @param pipelineReferences The references to look for reference data in.
      * @param lookupIdentifier   The identifier to lookup in the reference data
      * @param result             The reference result object containing the proxy object for performing the lookup
+     * @return The passed result object
      */
-    public void ensureReferenceDataAvailability(final List<PipelineReference> pipelineReferences,
-                                                final LookupIdentifier lookupIdentifier,
-                                                final ReferenceDataResult result) {
+    public ReferenceDataResult ensureReferenceDataAvailability(final List<PipelineReference> pipelineReferences,
+                                                               final LookupIdentifier lookupIdentifier,
+                                                               final ReferenceDataResult result) {
 
         LOGGER.debug("ensureReferenceDataAvailability({}, {})", lookupIdentifier, pipelineReferences);
 
@@ -180,6 +181,8 @@ public class ReferenceData {
             // non-nested map so just do a lookup
             doGetValue(pipelineReferences, lookupIdentifier, result);
         }
+        // Return the passed result object to aid with mocking in tests
+        return result;
     }
 
     private void logMapLocations(final ReferenceDataResult result) {

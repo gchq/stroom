@@ -168,6 +168,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
     private final MetaExpressionMapper metaExpressionMapper;
     private final ValueMapper valueMapper;
 
+    // TODO: 20/01/2023 This ought to be replaced by calls out to MetaFeedDao and MetaTypeDao
+    //  see https://github.com/gchq/stroom/issues/3201
     private final Map<String, List<Integer>> feedNameToIdsMap = new ConcurrentHashMap<>();
     private final Map<String, List<Integer>> typeNameToIdsMap = new ConcurrentHashMap<>();
 
@@ -333,6 +335,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
      * THIS MIGHT LEAD TO A FEW DUPLICATE ATTEMPTS TO FIND THE SAME ID LIST BUT THAT IS PREFERRED TO SYNCHRONIZING ON
      * THE MAP KEY DURING DB QUERY.
      */
+    // TODO: 20/01/2023 This ought to be replaced by calls out to MetaFeedDao and MetaTypeDao
+    //  see https://github.com/gchq/stroom/issues/3201
     private <T> List<T> getIds(final List<String> names,
                                final Map<String, List<T>> map,
                                final Function<List<String>, Map<String, List<T>>> function) {
@@ -1599,13 +1603,14 @@ class MetaDaoImpl implements MetaDao, Clearable {
         // Debatable whether we should throw an exception if the feed/type don't exist
         final Optional<Integer> optFeedId = getFeedId(effectiveMetaDataCriteria.getFeed());
         if (optFeedId.isEmpty()) {
-            LOGGER.warn("Feed {} not found in database", effectiveMetaDataCriteria.getFeed());
+            LOGGER.debug("Feed {} not found in the {} table. Likely ",
+                    effectiveMetaDataCriteria.getFeed(), META_FEED.NAME);
             return Collections.emptySet();
         }
 
         final Optional<Integer> optTypeId = getTypeId(effectiveMetaDataCriteria.getType());
         if (optTypeId.isEmpty()) {
-            LOGGER.warn("Meta Type {} not found in database", effectiveMetaDataCriteria.getType());
+            LOGGER.warn("Meta Type {} not found in the database", effectiveMetaDataCriteria.getType());
             return Collections.emptySet();
         }
 

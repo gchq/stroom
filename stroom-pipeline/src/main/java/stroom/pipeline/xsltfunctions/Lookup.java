@@ -20,7 +20,6 @@ import stroom.pipeline.refdata.LookupIdentifier;
 import stroom.pipeline.refdata.ReferenceData;
 import stroom.pipeline.refdata.ReferenceDataResult;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
-import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
 import stroom.pipeline.state.MetaHolder;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -41,8 +40,8 @@ class Lookup extends AbstractLookup {
     @Inject
     Lookup(final ReferenceData referenceData,
            final MetaHolder metaHolder,
-           final RefDataValueProxyConsumerFactory.Factory consumerFactoryFactory) {
-        super(referenceData, metaHolder, consumerFactoryFactory);
+           final SequenceMakerFactory sequenceMakerFactory) {
+        super(referenceData, metaHolder, sequenceMakerFactory);
     }
 
     @Override
@@ -59,7 +58,8 @@ class Lookup extends AbstractLookup {
         // into it.
         final ReferenceDataResult result = getReferenceData(lookupIdentifier, trace, ignoreWarnings);
 
-        final SequenceMaker sequenceMaker = new SequenceMaker(context, getRefDataValueProxyConsumerFactoryFactory());
+        // We have to create this even if we don't have any value proxies so we can output an empty sequence
+        final SequenceMaker sequenceMaker = createSequenceMaker(context);
 
         // Note, for a nested lookup the (effective|qualifying)Streams will contain the streams for the last
         // level of the nested lookup, but the messages will cover all levels.
@@ -74,7 +74,7 @@ class Lookup extends AbstractLookup {
         } catch (final Exception e) {
             outputInfo(
                     Severity.ERROR,
-                    "Error during lookup: " + e.getMessage(),
+                    () -> "Error during lookup: " + e.getMessage(),
                     lookupIdentifier,
                     trace,
                     ignoreWarnings,

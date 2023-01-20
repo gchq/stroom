@@ -296,7 +296,7 @@ public class DbTestUtil {
 
             final String dbName = DbTestUtil.createTestDbName();
             THREAD_LOCAL_DB_NAME.set(dbName);
-            LOGGER.info(LogUtil.inBox("Creating test database: {}", dbName));
+            LOGGER.info(LogUtil.inBoxOnNewLine("Creating test database: {}", dbName));
 
             // ********************************************************************************
             // NOTE: the test database created here for this thread will be dropped once

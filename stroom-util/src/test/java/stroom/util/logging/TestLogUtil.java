@@ -1,5 +1,6 @@
 package stroom.util.logging;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,45 @@ class TestLogUtil {
 
     @Test
     void inBox() {
-        LOGGER.info(LogUtil.inBox("Hello World"));
+        final String box = LogUtil.inBox("Hello World");
+        LOGGER.info(box);
+
+        Assertions.assertThat(box)
+                .isEqualTo("""
+                        -----------------
+                        |  Hello World  |
+                        -----------------""");
+    }
+
+    @Test
+    void inBox_newLine() {
+        final String box = LogUtil.inBoxOnNewLine("Hello World");
+        LOGGER.info(box);
+
+        Assertions.assertThat(box)
+                .isEqualTo("""
+                        
+                        -----------------
+                        |  Hello World  |
+                        -----------------""");
+    }
+
+    @Test
+    void inBoxMultiLine() {
+        final String box = LogUtil.inBox("""
+                This is
+                an example showing
+                multiple lines
+                of differing length""");
+
+        LOGGER.info(box);
+        Assertions.assertThat(box)
+                .isEqualTo("""
+                        -------------------------
+                        |  This is              |
+                        |  an example showing   |
+                        |  multiple lines       |
+                        |  of differing length  |
+                        -------------------------""");
     }
 }
