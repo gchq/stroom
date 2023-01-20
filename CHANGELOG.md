@@ -12,6 +12,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0.17] - 2023-01-20
+
+* Issue **#3192** : Fix duplicate user events for exported processor filters.
+
+* Issue **#3197** : Fix NPE when modifying a property value, (back-porting #3143).
+
+
 ## [v7.0.16] - 2023-01-18
 
 * Add logging of queries that take >2s to execute. Enabled by setting `stroom.db.util.SlowQueryExecuteListener: DEBUG`.
@@ -4725,7 +4732,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.16...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.17...HEAD
+[v7.0.17]: https://github.com/gchq/stroom/compare/v7.0.16...v7.0.17
 [v7.0.16]: https://github.com/gchq/stroom/compare/v7.0.15...v7.0.16
 [v7.0.15]: https://github.com/gchq/stroom/compare/v7.0.14...v7.0.15
 [v7.0.14]: https://github.com/gchq/stroom/compare/v7.0.13...v7.0.14
