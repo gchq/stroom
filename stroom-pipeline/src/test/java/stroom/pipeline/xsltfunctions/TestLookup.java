@@ -241,7 +241,7 @@ class TestLookup {
         Mockito.verify(mockErrorReceiver, Mockito.never()).logTemplate(
                 Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
 
-        assertLoggedTopLevelSeverity(Severity.INFO, "success");
+        assertLoggedTopLevelSeverity(Severity.INFO, "key found");
     }
 
     @Test
