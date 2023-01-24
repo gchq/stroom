@@ -23,8 +23,8 @@
 <!--    <logger name="stroom.pipeline.state.LocationHolder" level="INFO" />-->
 
     <logger name="stroom.statistics.internal.DoNothingInternalStatisticsReceiver" level="ERROR" />
-    <logger name="stroom.processor.impl.ProcessorTaskManagerImpl" level="DEBUG" />
-    <logger name="stroom.processor.impl.db.ProcessorTaskDaoImpl" level="DEBUG" />
+    <logger name="stroom.processor.impl.ProcessorTaskManagerImpl" level="INFO" />
+    <logger name="stroom.processor.impl.db.ProcessorTaskDaoImpl" level="INFO" />
 
 <!--    <logger name="stroom.statistics.impl.sql.SQLStatisticValueBatchSaveService" level="DEBUG" />-->
 <!--    <logger name="stroom.statistics.impl.sql.SQLStatisticAggregationManager" level="DEBUG" />-->

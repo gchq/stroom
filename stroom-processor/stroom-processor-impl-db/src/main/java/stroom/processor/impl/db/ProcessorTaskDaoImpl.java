@@ -34,8 +34,6 @@ import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.processor.shared.TaskStatus;
 import stroom.query.api.v2.ExpressionItem;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.util.logging.LambdaLogger;
@@ -124,7 +122,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             PROCESSOR_TASK.VERSION,
             PROCESSOR_TASK.CREATE_TIME_MS,
             PROCESSOR_TASK.STATUS,
-            PROCESSOR_TASK.START_TIME_MS,
+            PROCESSOR_TASK.STATUS_TIME_MS,
             PROCESSOR_TASK.FK_PROCESSOR_NODE_ID,
             PROCESSOR_TASK.FK_PROCESSOR_FEED_ID,
             PROCESSOR_TASK.META_ID,
@@ -426,21 +424,24 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             // Get the current time.
             final long streamTaskCreateMs = System.currentTimeMillis();
 
-            final ExpressionOperator expression = ExpressionOperator.builder()
-                    .addTerm(ProcessorTaskFields.NODE_NAME, ExpressionTerm.Condition.EQUALS, thisNodeName)
-                    .addTerm(ProcessorTaskFields.CREATE_TIME_MS,
-                            ExpressionTerm.Condition.EQUALS,
-                            streamTaskCreateMs)
-                    .addTerm(ProcessorTaskFields.STATUS,
-                            ExpressionTerm.Condition.EQUALS,
-                            TaskStatus.UNPROCESSED.getDisplayValue())
-                    .addTerm(ProcessorTaskFields.PROCESSOR_FILTER_ID,
-                            ExpressionTerm.Condition.EQUALS,
-                            filter.getId())
-                    .build();
-            final ExpressionCriteria findStreamTaskCriteria = new ExpressionCriteria(expression);
-            final Condition condition = expressionMapper.apply(expression);
-            final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, findStreamTaskCriteria);
+//            final ExpressionOperator expression = ExpressionOperator.builder()
+//                    .addTerm(ProcessorTaskFields.NODE_NAME, ExpressionTerm.Condition.EQUALS, thisNodeName)
+//                    .addTerm(ProcessorTaskFields.CREATE_TIME_MS,
+//                            ExpressionTerm.Condition.EQUALS,
+//                            streamTaskCreateMs)
+//                    .addTerm(ProcessorTaskFields.STATUS,
+//                            ExpressionTerm.Condition.EQUALS,
+//                            TaskStatus.UNPROCESSED.getDisplayValue())
+//                    .addTerm(ProcessorTaskFields.PROCESSOR_FILTER_ID,
+//                            ExpressionTerm.Condition.EQUALS,
+//                            filter.getId())
+//                    .build();
+//            final ExpressionCriteria findStreamTaskCriteria = new ExpressionCriteria(expression);
+//            final Condition condition = PROCESSOR_TASK.
+//
+//
+//                    expressionMapper.apply(expression);
+//            final Collection<OrderField<?>> orderFields = Collections.singletonList(PROCESSOR_TASK.ID);
 
             final CreationState creationState = new CreationState();
 
@@ -510,12 +511,21 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     // Select them back.
                     LOGGER.logDurationIfDebugEnabled(() -> {
                         try {
-                            creationState.selectedTaskList = selectTasks(
-                                    context,
-                                    condition,
-                                    orderFields,
-                                    findStreamTaskCriteria,
-                                    creationState.availableTasksCreated);
+                            final Condition condition = PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId)
+                                    .and(PROCESSOR_TASK.CREATE_TIME_MS.eq(streamTaskCreateMs))
+                                    .and(PROCESSOR_TASK.STATUS.eq(TaskStatus.UNPROCESSED.getPrimitiveValue()))
+                                    .and(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(filter.getId()));
+                            creationState.selectedTaskList = select(context, condition);
+
+                            taskStatusTraceLog.createdTasks(ProcessorTaskDaoImpl.class, creationState.selectedTaskList);
+
+                            // Ensure that the select has got back the stream tasks that we
+                            // have just inserted. If it hasn't this would be very bad.
+                            if (creationState.selectedTaskList.size() != creationState.availableTasksCreated) {
+                                throw new RuntimeException(
+                                        "Unexpected number of stream tasks selected back after insertion.");
+                            }
+
                             creationState.selectedTaskCount = creationState.selectedTaskList.size();
                         } catch (final RuntimeException e) {
                             LOGGER.error(e::getMessage, e);
@@ -607,11 +617,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
             final List<ProcessorTask> list;
             if (creationState.selectedTaskList != null) {
-                final ResultPage<ProcessorTask> resultPage = convert(
-                        findStreamTaskCriteria,
-                        creationState.selectedTaskList,
-                        new HashMap<>());
-                list = resultPage.getValues();
+                list = convert(creationState.selectedTaskList);
             } else {
                 list = Collections.emptyList();
             }
@@ -622,6 +628,123 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     creationState.totalTasksCreated,
                     creationState.eventCount));
         }
+    }
+
+    @Override
+    public List<ProcessorTask> queueExistingTasks(final Set<Long> idSet,
+                                                  final String nodeName) {
+        final long now = System.currentTimeMillis();
+        final Integer nodeId;
+        if (nodeName != null) {
+            nodeId = processorNodeCache.getOrCreate(nodeName);
+        } else {
+            nodeId = null;
+        }
+
+        // Do everything within a single transaction.
+        final Result<Record> result = JooqUtil.transactionResult(
+                processorDbConnProvider, context -> {
+                    final int count = changeStatus(
+                            context,
+                            nodeId,
+                            now,
+                            idSet,
+                            TaskStatus.UNPROCESSED,
+                            TaskStatus.UNPROCESSED);
+
+                    // Select back the updated records.
+                    final Condition condition = PROCESSOR_TASK.ID.in(idSet)
+                            .and(PROCESSOR_TASK.STATUS_TIME_MS.eq(now))
+                            .and(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId))
+                            .and(PROCESSOR_TASK.STATUS.eq(TaskStatus.UNPROCESSED.getPrimitiveValue()));
+                    final Result<Record> r = select(context, condition);
+
+                    if (r.size() != count) {
+                        throw new RuntimeException(
+                                "Unexpected number of stream tasks selected back after update.");
+                    }
+
+                    return r;
+                });
+
+        return convert(result);
+    }
+
+    @Override
+    public List<ProcessorTask> assignTasks(final Set<Long> idSet, final String nodeName) {
+        final long now = System.currentTimeMillis();
+        final Integer nodeId;
+        if (nodeName != null) {
+            nodeId = processorNodeCache.getOrCreate(nodeName);
+        } else {
+            nodeId = null;
+        }
+
+        // Do everything within a single transaction.
+        final Result<Record> result = JooqUtil.transactionResult(
+                processorDbConnProvider, context -> {
+                    // Update the records.
+                    changeStatus(context, nodeId, now, idSet, TaskStatus.UNPROCESSED, TaskStatus.ASSIGNED);
+
+                    // Select back the updated records.
+                    final Condition condition = PROCESSOR_TASK.ID.in(idSet)
+                            .and(PROCESSOR_TASK.STATUS_TIME_MS.eq(now))
+                            .and(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId))
+                            .and(PROCESSOR_TASK.STATUS.eq(TaskStatus.ASSIGNED.getPrimitiveValue()));
+                    return select(context, condition);
+                });
+
+        return convert(result);
+    }
+
+    @Override
+    public int releaseTasks(final Set<Long> idSet) {
+        final long now = System.currentTimeMillis();
+        return JooqUtil.contextResult(
+                processorDbConnProvider, context -> {
+                    // Update the records.
+                    return changeStatus(
+                            context,
+                            null,
+                            now,
+                            idSet,
+                            TaskStatus.UNPROCESSED,
+                            TaskStatus.UNPROCESSED);
+                });
+    }
+
+    private Result<Record> select(final DSLContext context,
+                                  final Condition condition) {
+        return context
+                .select()
+                .from(PROCESSOR_TASK)
+                .leftOuterJoin(PROCESSOR_NODE).on(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(PROCESSOR_NODE.ID))
+                .leftOuterJoin(PROCESSOR_FEED).on(PROCESSOR_TASK.FK_PROCESSOR_FEED_ID.eq(PROCESSOR_FEED.ID))
+                .join(PROCESSOR_FILTER).on(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID))
+                .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(
+                        PROCESSOR_FILTER_TRACKER.ID))
+                .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
+                .where(condition)
+                .orderBy(PROCESSOR_TASK.ID)
+                .fetch();
+    }
+
+    private int changeStatus(final DSLContext context,
+                             final Integer nodeId,
+                             final Long statusTime,
+                             final Set<Long> idSet,
+                             final TaskStatus currentStatus,
+                             final TaskStatus newStatus) {
+        return context
+                .update(PROCESSOR_TASK)
+                .set(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID, nodeId)
+                .set(PROCESSOR_TASK.STATUS, newStatus.getPrimitiveValue())
+                .set(PROCESSOR_TASK.STATUS_TIME_MS, statusTime)
+                .setNull(PROCESSOR_TASK.START_TIME_MS)
+                .setNull(PROCESSOR_TASK.END_TIME_MS)
+                .where(PROCESSOR_TASK.ID.in(idSet))
+                .and(PROCESSOR_TASK.STATUS.eq(currentStatus.getPrimitiveValue()))
+                .execute();
     }
 
     private void insertTasks(final DSLContext context,
@@ -668,27 +791,64 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         }
     }
 
-    private Result<Record> selectTasks(final DSLContext context,
-                                       final Condition condition,
-                                       final Collection<OrderField<?>> orderFields,
-                                       final ExpressionCriteria findStreamTaskCriteria,
-                                       final int availableTasksCreated) {
-        final Result<Record> selectedTaskList = find(context,
-                condition,
-                orderFields,
-                findStreamTaskCriteria.getPageRequest());
+//    private Result<Record> selectTasks(final DSLContext context,
+//                                       final Condition condition,
+//                                       final Collection<OrderField<?>> orderFields,
+//                                       final int availableTasksCreated) {
+//        final Result<Record> selectedTaskList = find(context,
+//                condition,
+//                orderFields,
+//                null);
+//
+//        taskStatusTraceLog.createdTasks(ProcessorTaskDaoImpl.class, selectedTaskList);
+//
+//        // Ensure that the select has got back the stream tasks that we
+//        // have just inserted. If it hasn't this would be very bad.
+//        if (selectedTaskList.size() != availableTasksCreated) {
+//            throw new RuntimeException(
+//                    "Unexpected number of stream tasks selected back after insertion.");
+//        }
+//
+//        return selectedTaskList;
+//    }
 
-        taskStatusTraceLog.createdTasks(ProcessorTaskDaoImpl.class, selectedTaskList);
-
-        // Ensure that the select has got back the stream tasks that we
-        // have just inserted. If it hasn't this would be very bad.
-        if (selectedTaskList.size() != availableTasksCreated) {
-            throw new RuntimeException(
-                    "Unexpected number of stream tasks selected back after insertion.");
-        }
-
-        return selectedTaskList;
-    }
+//    private Result<Record> selectTasksToQueue(final DSLContext context,
+//                                              final int nodeId,
+//                                              final long statusTime,
+//                                              final TaskStatus status,
+//                                              final int filterId) {
+//        final Condition condition = PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId)
+//                .and(PROCESSOR_TASK.STATUS_TIME_MS.eq(statusTime))
+//                .and(PROCESSOR_TASK.STATUS.eq(status.getPrimitiveValue()))
+//                .and(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(filterId));
+//
+//        return context
+//                .select()
+//                .from(PROCESSOR_TASK)
+//                .leftOuterJoin(PROCESSOR_NODE).on(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(PROCESSOR_NODE.ID))
+//                .leftOuterJoin(PROCESSOR_FEED).on(PROCESSOR_TASK.FK_PROCESSOR_FEED_ID.eq(PROCESSOR_FEED.ID))
+//                .join(PROCESSOR_FILTER).on(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID))
+//                .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(
+//                        PROCESSOR_FILTER_TRACKER.ID))
+//                .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
+//                .where(condition)
+//                .orderBy(PROCESSOR_TASK.ID)
+//                .fetch();
+//
+//
+////        final ExpressionOperator expression = ExpressionOperator.builder()
+////                .addTerm(ProcessorTaskFields.NODE_NAME, ExpressionTerm.Condition.EQUALS, thisNodeName)
+////                .addTerm(ProcessorTaskFields.CREATE_TIME_MS,
+////                        ExpressionTerm.Condition.EQUALS,
+////                        streamTaskCreateMs)
+////                .addTerm(ProcessorTaskFields.STATUS,
+////                        ExpressionTerm.Condition.EQUALS,
+////                        TaskStatus.UNPROCESSED.getDisplayValue())
+////                .addTerm(ProcessorTaskFields.PROCESSOR_FILTER_ID,
+////                        ExpressionTerm.Condition.EQUALS,
+////                        filter.getId())
+////                .build();
+//    }
 
     private void log(final CreationState creationState,
                      final InclusiveRange streamIdRange) {
@@ -720,34 +880,39 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                         .orderBy(orderFields)
                         .limit(offset, limit)
                         .fetch());
-        return convert(criteria, result, new HashMap<>());
+        return convert(criteria, result);
     }
 
-    private Result<Record> find(final DSLContext context,
-                                final Condition condition,
-                                final Collection<OrderField<?>> orderFields,
-                                final PageRequest pageRequest) {
-        final int offset = JooqUtil.getOffset(pageRequest);
-        final int limit = JooqUtil.getLimit(pageRequest, true);
-        return context
-                .select()
-                .from(PROCESSOR_TASK)
-                .leftOuterJoin(PROCESSOR_NODE).on(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(PROCESSOR_NODE.ID))
-                .leftOuterJoin(PROCESSOR_FEED).on(PROCESSOR_TASK.FK_PROCESSOR_FEED_ID.eq(PROCESSOR_FEED.ID))
-                .join(PROCESSOR_FILTER).on(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID))
-                .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(
-                        PROCESSOR_FILTER_TRACKER.ID))
-                .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
-                .where(condition)
-                .orderBy(orderFields)
-                .limit(offset, limit)
-                .fetch();
-    }
+//    private Result<Record> find(final DSLContext context,
+//                                final Condition condition,
+//                                final Collection<OrderField<?>> orderFields,
+//                                final PageRequest pageRequest) {
+//        final int offset = JooqUtil.getOffset(pageRequest);
+//        final int limit = JooqUtil.getLimit(pageRequest, true);
+//        return context
+//                .select()
+//                .from(PROCESSOR_TASK)
+//                .leftOuterJoin(PROCESSOR_NODE).on(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(PROCESSOR_NODE.ID))
+//                .leftOuterJoin(PROCESSOR_FEED).on(PROCESSOR_TASK.FK_PROCESSOR_FEED_ID.eq(PROCESSOR_FEED.ID))
+//                .join(PROCESSOR_FILTER).on(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID))
+//                .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(
+//                        PROCESSOR_FILTER_TRACKER.ID))
+//                .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
+//                .where(condition)
+//                .orderBy(orderFields)
+//                .limit(offset, limit)
+//                .fetch();
+//    }
 
     private ResultPage<ProcessorTask> convert(final ExpressionCriteria criteria,
-                                              final Result<Record> result,
-                                              final Map<Integer, ProcessorFilter> processorFilterCache) {
-        final List<ProcessorTask> list = result.map(record -> {
+                                              final Result<Record> result) {
+        final List<ProcessorTask> list = convert(result);
+        return ResultPage.createCriterialBasedList(list, criteria);
+    }
+
+    private List<ProcessorTask> convert(final Result<Record> result) {
+        final Map<Integer, ProcessorFilter> processorFilterCache = new HashMap<>();
+        return result.map(record -> {
             final Integer processorFilterId = record.get(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID);
             final ProcessorFilter processorFilter = processorFilterCache.computeIfAbsent(processorFilterId,
                     pfid -> {
@@ -766,7 +931,6 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
             return processorTask;
         });
-        return ResultPage.createCriterialBasedList(list, criteria);
     }
 
     @Override

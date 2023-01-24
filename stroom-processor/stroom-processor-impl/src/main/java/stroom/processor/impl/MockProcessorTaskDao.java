@@ -17,6 +17,7 @@ import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -122,6 +123,22 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
 
             dao.create(task);
         });
+    }
+
+    @Override
+    public List<ProcessorTask> queueExistingTasks(final Set<Long> idSet,
+                                                  final String thisNodeName) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<ProcessorTask> assignTasks(final Set<Long> idSet, final String nodeName) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public int releaseTasks(final Set<Long> idSet) {
+        return 0;
     }
 
     @Override

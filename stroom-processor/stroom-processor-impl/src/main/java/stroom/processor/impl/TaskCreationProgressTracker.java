@@ -28,15 +28,25 @@ class TaskCreationProgressTracker {
     private final ProcessorConfig processorConfig;
     private final List<CompletableFuture<?>> futures = new ArrayList<>();
 
+    private final int queueSize;
+    private final int halfQueueSize;
 
     public TaskCreationProgressTracker(final ConcurrentHashMap<ProcessorFilter, ProcessorTaskQueue> queueMap,
                                        final ProcessorConfig processorConfig) {
         this.queueMap = queueMap;
         this.processorConfig = processorConfig;
+
+        queueSize = processorConfig.getQueueSize();
+        // If a queue is already half full then don't bother adding more
+        halfQueueSize = queueSize / 2;
+    }
+
+    public boolean isQueueOverHalfFull() {
+        return getTotalQueuedCount() > halfQueueSize;
     }
 
     public int getRequiredTaskCount() {
-        final int requiredTasks = processorConfig.getQueueSize() - getTotalQueuedCount();
+        final int requiredTasks = queueSize - getTotalQueuedCount();
         // because of async processing it is possible to go below zero, but hide that from the caller
         return Math.max(requiredTasks, 0);
     }
@@ -146,7 +156,6 @@ class TaskCreationProgressTracker {
 //                getTotalTasksCreated(),
 //                filterCreateCountsStr);
 //    }
-
     public void waitForCompletion() {
         if (!futures.isEmpty()) {
             // Some of task creation is async (tasks for search queries) so we need

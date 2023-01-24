@@ -13,6 +13,7 @@ import stroom.processor.shared.TaskStatus;
 import stroom.util.shared.ResultPage;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -59,6 +60,34 @@ public interface ProcessorTaskDao {
                         boolean reachedLimit,
                         boolean fillTaskQueue,
                         Consumer<CreatedTasks> consumer);
+
+    /**
+     * Change the node ownership of the tasks in the id set and select them back to include in the queue.
+     *
+     * @param idSet        The ids of the tasks to take ownership of.
+     * @param thisNodeName This node name.
+     * @return A list of tasks to queue.
+     */
+    List<ProcessorTask> queueExistingTasks(Set<Long> idSet,
+                                           String thisNodeName);
+
+    /**
+     * Assign a set of tasks to a node for processing.
+     *
+     * @param idSet        The ids of the tasks to assign.
+     * @param thisNodeName The node name to assign the tasks to.
+     * @return A list of tasks to queue.
+     */
+    List<ProcessorTask> assignTasks(Set<Long> idSet,
+                                    String nodeName);
+
+    /**
+     * Release ownership for a set of tasks and abandon processing.
+     *
+     * @param idSet The ids of the tasks to release.
+     * @return The number of tasks changed.
+     */
+    int releaseTasks(Set<Long> idSet);
 
     ProcessorTask changeTaskStatus(ProcessorTask processorTask,
                                    String nodeName,

@@ -213,7 +213,7 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
                 addMeta(feedName1, StreamTypeNames.RAW_EVENTS);
                 addMeta(feedName2, StreamTypeNames.RAW_EVENTS);
             }
-        }, "Creation of test files");
+        }, "Creation of test meta");
 
         final int initialQueueSize = processorConfig.getQueueSize();
         processorConfig.setQueueSize(size);
@@ -274,11 +274,11 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
 
         commonTestScenarioCreator.createProcessor(findStreamQueryData);
 
-        int size = 1000;
+        int size = 10000;
         LOGGER.logDurationIfInfoEnabled(() -> {
             addBulkMeta(feedName1,  StreamTypeNames.RAW_EVENTS, Status.LOCKED, size);
             addBulkMeta(feedName2,  StreamTypeNames.RAW_EVENTS, Status.LOCKED, size);
-        }, "Creation of test files");
+        }, "Creation of test meta");
 
         final int initialQueueSize = processorConfig.getQueueSize();
         processorConfig.setQueueSize(size);
@@ -336,11 +336,11 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
 
         commonTestScenarioCreator.createProcessor(findStreamQueryData);
 
-        int size = 1000;
+        int size = 10000;
         LOGGER.logDurationIfInfoEnabled(() -> {
             addBulkMeta(feedName1,  StreamTypeNames.RAW_EVENTS, Status.UNLOCKED, size);
             addBulkMeta(feedName2,  StreamTypeNames.RAW_EVENTS, Status.UNLOCKED, size);
-        }, "Creation of test files");
+        }, "Creation of test meta");
 
         final int initialQueueSize = processorConfig.getQueueSize();
         processorConfig.setQueueSize(size);
