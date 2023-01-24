@@ -143,12 +143,22 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
             try {
                 lookupIdentifier = new LookupIdentifier(map, key, ms);
 
-                // If we have got the date then continue to do the lookup.
-                try {
-                    LOGGER.debug("doLookup for {}", lookupIdentifier);
-                    result = doLookup(context, ignoreWarnings, traceLookup, lookupIdentifier);
-                } catch (final RuntimeException e) {
-                    createLookupFailError(context, lookupIdentifier, e);
+                if (NullSafe.hasItems(getPipelineReferences())) {
+                    // If we have got the date then continue to do the lookup.
+                    try {
+                        LOGGER.debug("doLookup for {}", lookupIdentifier);
+                        result = doLookup(context, ignoreWarnings, traceLookup, lookupIdentifier);
+                    } catch (final RuntimeException e) {
+                        createLookupFailError(context, lookupIdentifier, e);
+                    }
+                } else {
+                    outputInfo(Severity.ERROR,
+                            () -> "No reference loaders have been added to this XSLT step to perform a lookup",
+                            lookupIdentifier,
+                            traceLookup,
+                            ignoreWarnings,
+                            null,
+                            context);
                 }
             } catch (RuntimeException e) {
                 final StringBuilder sb = new StringBuilder();
@@ -160,7 +170,6 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                 sb.append(ms);
                 log(context, Severity.ERROR, e.getMessage(), e);
             }
-
         } catch (final XPathException | RuntimeException e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
@@ -248,25 +257,28 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
             lookupIdentifier.appendTo(sb);
 
             // Log the stream we found it in, useful if a map is defined in >1 feeds
-            result.getRefDataValueProxy()
-                    .flatMap(RefDataValueProxy::getSuccessfulMapDefinition)
-                    .ifPresent(mapDefinition -> {
-                        sb.append(" found in stream: ")
-                                .append(mapDefinition.getRefStreamDefinition().getStreamId());
-                    });
 
-            result.getMessages()
-                    .stream()
-                    .filter(lazyMessage ->
-                            trace ||
-                                    (!ignoreWarnings && lazyMessage.getSeverity().greaterThanOrEqual(Severity.WARNING)))
-                    .forEach(lazyMessage -> {
-                        sb.append("\n");
-                        sb.append(StoredError.MESSAGE_CAUSE_DELIMITER);
-                        sb.append(lazyMessage.getSeverity().getDisplayValue());
-                        sb.append(": ");
-                        sb.append(lazyMessage.getMessage());
-                    });
+            if (result != null) {
+                result.getRefDataValueProxy()
+                        .flatMap(RefDataValueProxy::getSuccessfulMapDefinition)
+                        .ifPresent(mapDefinition -> {
+                            sb.append(" found in stream: ")
+                                    .append(mapDefinition.getRefStreamDefinition().getStreamId());
+                        });
+
+                result.getMessages()
+                        .stream()
+                        .filter(lazyMessage ->
+                                trace ||
+                                        (!ignoreWarnings && lazyMessage.getSeverity().greaterThanOrEqual(Severity.WARNING)))
+                        .forEach(lazyMessage -> {
+                            sb.append("\n");
+                            sb.append(StoredError.MESSAGE_CAUSE_DELIMITER);
+                            sb.append(lazyMessage.getSeverity().getDisplayValue());
+                            sb.append(": ");
+                            sb.append(lazyMessage.getMessage());
+                        });
+            }
 
             final String message = sb.toString();
             LOGGER.debug(message);

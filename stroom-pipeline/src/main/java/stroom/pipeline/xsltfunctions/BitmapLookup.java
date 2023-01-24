@@ -44,6 +44,8 @@ class BitmapLookup extends AbstractLookup {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BitmapLookup.class);
 
+    public static final String FUNCTION_NAME = "bitmap-lookup";
+
     @Inject
     BitmapLookup(final ReferenceData referenceData,
                  final MetaHolder metaHolder,
