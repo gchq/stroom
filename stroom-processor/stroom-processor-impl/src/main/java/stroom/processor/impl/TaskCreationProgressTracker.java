@@ -11,7 +11,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 /**
  * Holds state relating to the progress of creation of tasks by the master node
@@ -21,32 +20,25 @@ class TaskCreationProgressTracker {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TaskCreationProgressTracker.class);
 
     // The number of tasks we want to create which will be decremented as we create them
-    private final AtomicInteger remainingTasksToCreateCounter;
+    private final AtomicInteger totalCreatedCount = new AtomicInteger();
+    private final AtomicInteger totalQueuedCount = new AtomicInteger();
     private final ConcurrentMap<ProcessorFilter, AtomicInteger> tasksCreatedCountsMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<ProcessorFilter, AtomicInteger> tasksQueuedCountsMap = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<ProcessorFilter, ProcessorTaskQueue> queueMap;
     private final ProcessorConfig processorConfig;
     private final List<CompletableFuture<?>> futures = new ArrayList<>();
 
-    public TaskCreationProgressTracker(final int totalTasksToCreate,
-                                       final ConcurrentHashMap<ProcessorFilter, ProcessorTaskQueue> queueMap,
+
+    public TaskCreationProgressTracker(final ConcurrentHashMap<ProcessorFilter, ProcessorTaskQueue> queueMap,
                                        final ProcessorConfig processorConfig) {
-        this.remainingTasksToCreateCounter = new AtomicInteger(totalTasksToCreate);
         this.queueMap = queueMap;
         this.processorConfig = processorConfig;
     }
 
-    public boolean areAllTasksCreated() {
-        return remainingTasksToCreateCounter.get() <= 0;
-    }
-
-    public boolean areTasksRemainingToBeCreated() {
-        return remainingTasksToCreateCounter.get() > 0;
-    }
-
-    public int getTotalRemainingTasksToCreate() {
-        final int remainingTasks = remainingTasksToCreateCounter.get();
+    public int getRequiredTaskCount() {
+        final int requiredTasks = processorConfig.getQueueSize() - getTotalQueuedCount();
         // because of async processing it is possible to go below zero, but hide that from the caller
-        return Math.max(remainingTasks, 0);
+        return Math.max(requiredTasks, 0);
     }
 
     public int getCreatedCount(final ProcessorFilter filter) {
@@ -56,15 +48,28 @@ class TaskCreationProgressTracker {
                 : 0;
     }
 
-    public void incrementTaskCreationCount(final ProcessorFilter filter) {
-        incrementTaskCreationCount(filter, 1);
+    public int getTotalCreatedCount() {
+        return Math.max(totalCreatedCount.get(), 0);
+    }
+
+    public int getTotalQueuedCount() {
+        return Math.max(totalQueuedCount.get(), 0);
+    }
+
+    public void incrementTaskQueuedCount(final ProcessorFilter filter, final int tasksQueued) {
+        if (tasksQueued < 0) {
+            throw new IllegalArgumentException("tasksQueued (" + tasksQueued + ") must be >= 0");
+        }
+        totalQueuedCount.addAndGet(tasksQueued);
+        tasksQueuedCountsMap.computeIfAbsent(filter, k -> new AtomicInteger(0))
+                .addAndGet(tasksQueued);
     }
 
     public void incrementTaskCreationCount(final ProcessorFilter filter, final int tasksCreated) {
         if (tasksCreated < 0) {
             throw new IllegalArgumentException("tasksCreated (" + tasksCreated + ") must be >= 0");
         }
-        remainingTasksToCreateCounter.addAndGet(tasksCreated * -1);
+        totalCreatedCount.addAndGet(tasksCreated);
         tasksCreatedCountsMap.computeIfAbsent(filter, k -> new AtomicInteger(0))
                 .addAndGet(tasksCreated);
     }
@@ -76,24 +81,24 @@ class TaskCreationProgressTracker {
         futures.add(future);
     }
 
-    public int getTaskCountToCreate(final ProcessorFilter filter) {
-        final ProcessorTaskQueue queue = queueMap.get(filter);
-        if (queue != null) {
-            // This assumes the max number of tasks to create per filter is the same as the max number of
-            // tasks to create over all filters.
-            return Math.min(
-                    processorConfig.getQueueSize() - queue.size(), // head room in queue
-                    getTotalRemainingTasksToCreate()); // total tasks left to create
-        } else {
-            return 0;
-        }
-    }
-
-    public int getTotalTasksCreated() {
-        return tasksCreatedCountsMap.values().stream()
-                .mapToInt(AtomicInteger::get)
-                .sum();
-    }
+//    public int getTaskCountToCreate(final ProcessorFilter filter) {
+//        final ProcessorTaskQueue queue = queueMap.get(filter);
+//        if (queue != null) {
+//            // This assumes the max number of tasks to create per filter is the same as the max number of
+//            // tasks to create over all filters.
+//            return Math.min(
+//                    processorConfig.getQueueSize() - queue.size(), // head room in queue
+//                    getTotalRemainingTasksToCreate()); // total tasks left to create
+//        } else {
+//            return 0;
+//        }
+//    }
+//
+//    public int getTotalTasksCreated() {
+//        return tasksCreatedCountsMap.values().stream()
+//                .mapToInt(AtomicInteger::get)
+//                .sum();
+//    }
 
     public String getProgressSummaryMessage() {
 
@@ -102,44 +107,45 @@ class TaskCreationProgressTracker {
                 .filter(entry -> entry.getValue().get() > 0)
                 .count();
 
-        return LogUtil.message("Created {} tasks in total, for {} filters.",
-                getTotalTasksCreated(),
+        return LogUtil.message("Created {} tasks in total, and queued {} tasks for {} filters.",
+                getTotalCreatedCount(),
+                getTotalQueuedCount(),
                 filtersWithCreatedTasksCount);
     }
 
     /**
      * @return The number of futures that are not yet complete, exceptionally or otherwise.
      */
-    public long getOutstandingFuturesCount() {
-        return futures.stream()
-                .filter(future -> !future.isDone())
-                .count();
-    }
-
-    public String getProgressDetailMessage() {
-
-        final String filterCreateCountsStr = tasksCreatedCountsMap.entrySet()
-                .stream()
-                .filter(entry -> entry.getValue().get() > 0)
-                .map(entry -> {
-                    return "ID: " + entry.getKey().getId()
-                            + " pipe name: " + entry.getKey().getPipelineName()
-                            + " count: " + entry.getValue().get();
-
-                })
-                .collect(Collectors.joining("\n"));
-
-        return LogUtil.message("""
-                        Current task creation state: \
-                        remainingTasksToCreate: {}, \
-                        futures outstanding: {}, \
-                        total tasks created: {}, \
-                        creation counts:\n{}""",
-                remainingTasksToCreateCounter.get(),
-                getOutstandingFuturesCount(),
-                getTotalTasksCreated(),
-                filterCreateCountsStr);
-    }
+//    public long getOutstandingFuturesCount() {
+//        return futures.stream()
+//                .filter(future -> !future.isDone())
+//                .count();
+//    }
+//
+//    public String getProgressDetailMessage() {
+//
+//        final String filterCreateCountsStr = tasksCreatedCountsMap.entrySet()
+//                .stream()
+//                .filter(entry -> entry.getValue().get() > 0)
+//                .map(entry -> {
+//                    return "ID: " + entry.getKey().getId()
+//                            + " pipe name: " + entry.getKey().getPipelineName()
+//                            + " count: " + entry.getValue().get();
+//
+//                })
+//                .collect(Collectors.joining("\n"));
+//
+//        return LogUtil.message("""
+//                        Current task creation state: \
+//                        remainingTasksToCreate: {}, \
+//                        futures outstanding: {}, \
+//                        total tasks created: {}, \
+//                        creation counts:\n{}""",
+//                remainingTasksToCreateCounter.get(),
+//                getOutstandingFuturesCount(),
+//                getTotalTasksCreated(),
+//                filterCreateCountsStr);
+//    }
 
     public void waitForCompletion() {
         if (!futures.isEmpty()) {
@@ -163,7 +169,7 @@ class TaskCreationProgressTracker {
     @Override
     public String toString() {
         return "TaskCreationProgressTracker{" +
-                "remainingTasksToCreateCounter=" + remainingTasksToCreateCounter +
+                "remainingTasksToCreateCounter=" + getRequiredTaskCount() +
                 ", tasksCreatedCountsMap=" + tasksCreatedCountsMap +
                 ", queueMap=" + queueMap +
                 ", processorConfig=" + processorConfig +

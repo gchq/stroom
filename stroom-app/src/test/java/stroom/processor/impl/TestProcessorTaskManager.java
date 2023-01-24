@@ -19,7 +19,13 @@ package stroom.processor.impl;
 
 import stroom.data.shared.StreamTypeNames;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.meta.api.MetaProperties;
+import stroom.meta.api.MetaService;
+import stroom.meta.impl.db.MetaDaoImpl;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
+import stroom.meta.shared.Status;
 import stroom.node.api.NodeInfo;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.ProcessorTaskList;
@@ -36,6 +42,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -56,6 +64,10 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
     private ProcessorTaskService processorTaskService;
     @Inject
     private NodeInfo nodeInfo;
+    @Inject
+    private MetaService metaService;
+    @Inject
+    private MetaDaoImpl metaDao;
 
     @Test
     void testBasic() {
@@ -150,7 +162,7 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
 
         assertThat(getTaskCount()).isEqualTo(1000);
         LOGGER.logDurationIfInfoEnabled(() -> {
-            ProcessorTaskList tasks = processorTaskManager.assignTasks(nodeName, 1000);
+            final ProcessorTaskList tasks = processorTaskManager.assignTasks(nodeName, 1000);
             assertThat(tasks.getList().size()).isEqualTo(1000);
         }, "assignTasks");
 
@@ -162,6 +174,227 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
         }, "assignTasks");
 
         processorConfig.setQueueSize(initialQueueSize);
+    }
+
+    @Test
+    void testPerformance() {
+        final String nodeName = nodeInfo.getThisNodeName();
+
+        processorTaskManager.shutdown();
+        processorTaskManager.startup();
+
+        assertThat(getTaskCount()).isZero();
+        assertThat(getTaskCount()).isZero();
+
+        final String feedName1 = FileSystemTestUtil.getUniqueTestString();
+        final String feedName2 = FileSystemTestUtil.getUniqueTestString();
+
+        LOGGER.logDurationIfInfoEnabled(() ->
+                        processorTaskManager.createTasks(),
+                "createTasks");
+
+        final QueryData findStreamQueryData = QueryData
+                .builder()
+                .dataSource(MetaFields.STREAM_STORE_DOC_REF)
+                .expression(ExpressionOperator.builder()
+                        .addOperator(ExpressionOperator.builder().op(Op.OR)
+                                .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName1)
+                                .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName2)
+                                .build())
+                        .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .build())
+                .build();
+
+        commonTestScenarioCreator.createProcessor(findStreamQueryData);
+
+        int size = 100;
+        LOGGER.logDurationIfInfoEnabled(() -> {
+            for (int i = 0; i < size; i++) {
+                addMeta(feedName1, StreamTypeNames.RAW_EVENTS);
+                addMeta(feedName2, StreamTypeNames.RAW_EVENTS);
+            }
+        }, "Creation of test files");
+
+        final int initialQueueSize = processorConfig.getQueueSize();
+        processorConfig.setQueueSize(size);
+
+        LOGGER.logDurationIfInfoEnabled(() ->
+                        processorTaskManager.createTasks(),
+                "createTasks");
+
+        // Because MySQL continues to create new incremental id's for streams this check will fail as Stroom thinks more
+        // streams have been created so recreates recent stream info before this point which means that it doesn't have
+        // recent stream info. This isn't a problem but this can't be checked in this test with MySql.
+        // assertThat(processorTaskManager.getProcessorTaskManagerRecentStreamDetails().hasRecentDetail()).isTrue();
+
+        assertThat(getTaskCount()).isEqualTo(size);
+        LOGGER.logDurationIfInfoEnabled(() -> {
+            final ProcessorTaskList tasks = processorTaskManager.assignTasks(nodeName, size);
+            assertThat(tasks.getList().size()).isEqualTo(size);
+        }, "assignTasks1");
+
+        processorTaskManager.createTasks();
+        assertThat(getTaskCount()).isEqualTo(size * 2);
+        LOGGER.logDurationIfInfoEnabled(() -> {
+            final ProcessorTaskList tasks = processorTaskManager.assignTasks(nodeName, size);
+            assertThat(tasks.getList().size()).isEqualTo(size);
+        }, "assignTasks2");
+
+        processorConfig.setQueueSize(initialQueueSize);
+    }
+
+    @Test
+    void testPerformance2() {
+        final String nodeName = nodeInfo.getThisNodeName();
+
+        processorTaskManager.shutdown();
+        processorTaskManager.startup();
+
+        assertThat(getTaskCount()).isZero();
+        assertThat(getTaskCount()).isZero();
+
+        final String feedName1 = FileSystemTestUtil.getUniqueTestString();
+        final String feedName2 = FileSystemTestUtil.getUniqueTestString();
+
+        LOGGER.logDurationIfInfoEnabled(() ->
+                        processorTaskManager.createTasks(),
+                "createTasks");
+
+        final QueryData findStreamQueryData = QueryData
+                .builder()
+                .dataSource(MetaFields.STREAM_STORE_DOC_REF)
+                .expression(ExpressionOperator.builder()
+                        .addOperator(ExpressionOperator.builder().op(Op.OR)
+                                .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName1)
+                                .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName2)
+                                .build())
+                        .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .build())
+                .build();
+
+        commonTestScenarioCreator.createProcessor(findStreamQueryData);
+
+        int size = 1000;
+        LOGGER.logDurationIfInfoEnabled(() -> {
+            addBulkMeta(feedName1,  StreamTypeNames.RAW_EVENTS, Status.LOCKED, size);
+            addBulkMeta(feedName2,  StreamTypeNames.RAW_EVENTS, Status.LOCKED, size);
+        }, "Creation of test files");
+
+        final int initialQueueSize = processorConfig.getQueueSize();
+        processorConfig.setQueueSize(size);
+
+        LOGGER.logDurationIfInfoEnabled(() ->
+                        processorTaskManager.createTasks(),
+                "createTasks");
+
+        // Because MySQL continues to create new incremental id's for streams this check will fail as Stroom thinks more
+        // streams have been created so recreates recent stream info before this point which means that it doesn't have
+        // recent stream info. This isn't a problem but this can't be checked in this test with MySql.
+        // assertThat(processorTaskManager.getProcessorTaskManagerRecentStreamDetails().hasRecentDetail()).isTrue();
+
+        createAndAssign(1, nodeName, size);
+        createAndAssign(2, nodeName, size);
+        createAndAssign(3, nodeName, size);
+
+        metaService.updateStatus(new FindMetaCriteria(), Status.LOCKED, Status.UNLOCKED);
+
+        createAndAssign(4, nodeName, size);
+        createAndAssign(5, nodeName, size);
+        createAndAssign(6, nodeName, size);
+
+        processorConfig.setQueueSize(initialQueueSize);
+    }
+
+    @Test
+    void testPerformance3() {
+        final String nodeName = nodeInfo.getThisNodeName();
+
+        processorTaskManager.shutdown();
+        processorTaskManager.startup();
+
+        assertThat(getTaskCount()).isZero();
+        assertThat(getTaskCount()).isZero();
+
+        final String feedName1 = FileSystemTestUtil.getUniqueTestString();
+        final String feedName2 = FileSystemTestUtil.getUniqueTestString();
+
+        LOGGER.logDurationIfInfoEnabled(() ->
+                        processorTaskManager.createTasks(),
+                "createTasks");
+
+        final QueryData findStreamQueryData = QueryData
+                .builder()
+                .dataSource(MetaFields.STREAM_STORE_DOC_REF)
+                .expression(ExpressionOperator.builder()
+                        .addOperator(ExpressionOperator.builder().op(Op.OR)
+                                .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName1)
+                                .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName2)
+                                .build())
+                        .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .build())
+                .build();
+
+        commonTestScenarioCreator.createProcessor(findStreamQueryData);
+
+        int size = 1000;
+        LOGGER.logDurationIfInfoEnabled(() -> {
+            addBulkMeta(feedName1,  StreamTypeNames.RAW_EVENTS, Status.UNLOCKED, size);
+            addBulkMeta(feedName2,  StreamTypeNames.RAW_EVENTS, Status.UNLOCKED, size);
+        }, "Creation of test files");
+
+        final int initialQueueSize = processorConfig.getQueueSize();
+        processorConfig.setQueueSize(size);
+
+        LOGGER.logDurationIfInfoEnabled(() ->
+                        processorTaskManager.createTasks(),
+                "createTasks");
+
+        // Because MySQL continues to create new incremental id's for streams this check will fail as Stroom thinks more
+        // streams have been created so recreates recent stream info before this point which means that it doesn't have
+        // recent stream info. This isn't a problem but this can't be checked in this test with MySql.
+        // assertThat(processorTaskManager.getProcessorTaskManagerRecentStreamDetails().hasRecentDetail()).isTrue();
+
+        createAndAssign(1, nodeName, size);
+        createAndAssign(2, nodeName, size);
+        createAndAssign(3, nodeName, size);
+        createAndAssign(4, nodeName, size);
+        createAndAssign(5, nodeName, size);
+        createAndAssign(6, nodeName, size);
+
+        processorConfig.setQueueSize(initialQueueSize);
+    }
+
+    private void createAndAssign(
+            final int num,
+            final String nodeName,
+            final int size) {
+        LOGGER.logDurationIfInfoEnabled(() -> {
+            processorTaskManager.createTasks();
+        }, "create - " + num);
+        LOGGER.logDurationIfInfoEnabled(() -> {
+            processorTaskManager.assignTasks(nodeName, size);
+        }, "assign - " + num);
+    }
+
+    private void addMeta(final String feed, final String streamType) {
+        final MetaProperties metaProperties = MetaProperties.builder()
+                .feedName(feed)
+                .typeName(streamType)
+                .build();
+        final Meta meta = metaService.create(metaProperties);
+        metaService.updateStatus(meta, Status.LOCKED, Status.UNLOCKED);
+    }
+
+    private void addBulkMeta(final String feed, final String streamType, final Status status, final int count) {
+        final MetaProperties metaProperties = MetaProperties.builder()
+                .feedName(feed)
+                .typeName(streamType)
+                .build();
+        final List<MetaProperties> list = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            list.add(metaProperties);
+        }
+        metaDao.bulkCreate(list, status);
     }
 
     private int getTaskCount() {

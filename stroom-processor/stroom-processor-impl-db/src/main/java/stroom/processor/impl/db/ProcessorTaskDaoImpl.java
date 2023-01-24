@@ -415,7 +415,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                             final String thisNodeName,
                                             final Long maxMetaId,
                                             final boolean reachedLimit,
-                                            final boolean assignNewTasks,
+                                            final boolean fillTaskQueue,
                                             final Consumer<CreatedTasks> consumer) {
 
         // Synchronised to avoid the risk of any table locking when being called concurrently
@@ -477,7 +477,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 bindValues[2] = TaskStatus.UNPROCESSED.getPrimitiveValue(); //stat
                 bindValues[3] = streamTaskCreateMs; //stat_ms
 
-                if (assignNewTasks && Status.UNLOCKED.equals(meta.getStatus())) {
+                if (fillTaskQueue && Status.UNLOCKED.equals(meta.getStatus())) {
                     // If the stream is unlocked then take ownership of the
                     // task, i.e. set the node to this node and add it to the task queue.
                     bindValues[4] = nodeId; //fk_node_id
@@ -495,52 +495,34 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             // Do everything within a single transaction.
             JooqUtil.transaction(processorDbConnProvider, context -> {
                 if (allBindValues.length > 0) {
-                    BatchBindStep batchBindStep = null;
-                    int i = 0;
 
-                    for (final Object[] bindValues : allBindValues) {
-                        i++;
+                    // Insert tasks.
+                    LOGGER.logDurationIfDebugEnabled(() -> {
+                        try {
+                            insertTasks(context, allBindValues);
+                            creationState.totalTasksCreated = streams.size();
+                        } catch (final RuntimeException e) {
+                            LOGGER.error(e::getMessage, e);
+                            throw e;
+                        }
+                    }, () -> "Inserted " + allBindValues.length + " tasks");
 
-                        if (batchBindStep == null) {
-                            batchBindStep = context
-                                    .batch(
-                                            context
-                                                    .insertInto(PROCESSOR_TASK)
-                                                    .columns(PROCESSOR_TASK_COLUMNS)
-                                                    .values(PROCESSOR_TASK_VALUES));
+                    // Select them back.
+                    LOGGER.logDurationIfDebugEnabled(() -> {
+                        try {
+                            creationState.selectedTaskList = selectTasks(
+                                    context,
+                                    condition,
+                                    orderFields,
+                                    findStreamTaskCriteria,
+                                    creationState.availableTasksCreated);
+                            creationState.selectedTaskCount = creationState.selectedTaskList.size();
+                        } catch (final RuntimeException e) {
+                            LOGGER.error(e::getMessage, e);
+                            throw e;
                         }
 
-                        batchBindStep.bind(bindValues);
-
-                        // Execute insert if we have reached batch size.
-                        if (i >= processorConfig.getDatabaseMultiInsertMaxBatchSize()) {
-                            executeInsert(batchBindStep, i);
-                            i = 0;
-                            batchBindStep = null;
-                        }
-                    }
-
-                    // Do final execution.
-                    if (batchBindStep != null) {
-                        executeInsert(batchBindStep, i);
-                    }
-
-                    creationState.totalTasksCreated = streams.size();
-
-                    // Select them back
-                    final Result<Record> availableTaskList = find(context,
-                            condition,
-                            orderFields,
-                            findStreamTaskCriteria.getPageRequest());
-                    creationState.availableTaskList = availableTaskList;
-
-                    taskStatusTraceLog.createdTasks(ProcessorTaskDaoImpl.class, availableTaskList);
-
-                    // Ensure that the select has got back the stream tasks that we
-                    // have just inserted. If it hasn't this would be very bad.
-                    if (availableTaskList.size() != creationState.availableTasksCreated) {
-                        throw new RuntimeException("Unexpected number of stream tasks selected back after insertion.");
-                    }
+                    }, () -> "Selected back " + creationState.selectedTaskCount + " tasks");
                 }
 
                 // Anything created?
@@ -612,8 +594,10 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 // any possibility of getting more tasks in future?
                 if (tracker.getMaxMetaCreateMs() != null && tracker.getMetaCreateMs() != null
                         && tracker.getMetaCreateMs() > tracker.getMaxMetaCreateMs()) {
-                    LOGGER.info(() ->
-                            "processProcessorFilter() - Finished task creation for bounded filter " + filter);
+                    LOGGER.debug(() ->
+                            "processProcessorFilter() - Completed task creation for bounded filter " + filter.getId());
+                    LOGGER.trace(() ->
+                            "processProcessorFilter() - Completed task creation for bounded filter " + filter);
                     tracker.setStatus(ProcessorFilterTracker.COMPLETE);
                 }
 
@@ -622,10 +606,10 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             });
 
             final List<ProcessorTask> list;
-            if (creationState.availableTaskList != null) {
+            if (creationState.selectedTaskList != null) {
                 final ResultPage<ProcessorTask> resultPage = convert(
                         findStreamTaskCriteria,
-                        creationState.availableTaskList,
+                        creationState.selectedTaskList,
                         new HashMap<>());
                 list = resultPage.getValues();
             } else {
@@ -640,14 +624,37 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         }
     }
 
-    private void log(final CreationState creationState,
-                     final InclusiveRange streamIdRange) {
-        LOGGER.debug(() -> "processProcessorFilter() - Created " +
-                creationState.totalTasksCreated +
-                " tasks (" +
-                creationState.availableTasksCreated +
-                " available) in the range " +
-                streamIdRange);
+    private void insertTasks(final DSLContext context,
+                             final Object[][] allBindValues) {
+        BatchBindStep batchBindStep = null;
+        int i = 0;
+
+        for (final Object[] bindValues : allBindValues) {
+            i++;
+
+            if (batchBindStep == null) {
+                batchBindStep = context
+                        .batch(
+                                context
+                                        .insertInto(PROCESSOR_TASK)
+                                        .columns(PROCESSOR_TASK_COLUMNS)
+                                        .values(PROCESSOR_TASK_VALUES));
+            }
+
+            batchBindStep.bind(bindValues);
+
+            // Execute insert if we have reached batch size.
+            if (i >= processorConfig.getDatabaseMultiInsertMaxBatchSize()) {
+                executeInsert(batchBindStep, i);
+                i = 0;
+                batchBindStep = null;
+            }
+        }
+
+        // Do final execution.
+        if (batchBindStep != null) {
+            executeInsert(batchBindStep, i);
+        }
     }
 
     private void executeInsert(final BatchBindStep batchBindStep, final int rowCount) {
@@ -659,6 +666,38 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             LOGGER.error(e::getMessage, e);
             throw new RuntimeException(e.getMessage(), e);
         }
+    }
+
+    private Result<Record> selectTasks(final DSLContext context,
+                                       final Condition condition,
+                                       final Collection<OrderField<?>> orderFields,
+                                       final ExpressionCriteria findStreamTaskCriteria,
+                                       final int availableTasksCreated) {
+        final Result<Record> selectedTaskList = find(context,
+                condition,
+                orderFields,
+                findStreamTaskCriteria.getPageRequest());
+
+        taskStatusTraceLog.createdTasks(ProcessorTaskDaoImpl.class, selectedTaskList);
+
+        // Ensure that the select has got back the stream tasks that we
+        // have just inserted. If it hasn't this would be very bad.
+        if (selectedTaskList.size() != availableTasksCreated) {
+            throw new RuntimeException(
+                    "Unexpected number of stream tasks selected back after insertion.");
+        }
+
+        return selectedTaskList;
+    }
+
+    private void log(final CreationState creationState,
+                     final InclusiveRange streamIdRange) {
+        LOGGER.debug(() -> "processProcessorFilter() - Created " +
+                creationState.totalTasksCreated +
+                " tasks (" +
+                creationState.availableTasksCreated +
+                " available) in the range " +
+                streamIdRange);
     }
 
     @Override
@@ -1141,8 +1180,9 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         InclusiveRange streamIdRange;
         InclusiveRange streamMsRange;
         InclusiveRange eventIdRange;
-        Result<Record> availableTaskList;
+        Result<Record> selectedTaskList;
         int availableTasksCreated;
+        int selectedTaskCount;
         int totalTasksCreated;
         long eventCount;
     }

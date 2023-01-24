@@ -576,12 +576,10 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         // Also need to ensure each filter queue has no more than N in it.
         final ProcessorConfig processorConfig = processorConfigProvider.get();
         final int maxTasksToCreate = processorConfig.getQueueSize();
-        final int maxTasksPerFilterQueue = maxTasksToCreate;
         // If a queue is already half full then don't bother adding more
-        final int halfQueueSize = maxTasksPerFilterQueue / 2;
+        final int halfQueueSize = maxTasksToCreate / 2;
 
         final TaskCreationProgressTracker progressTracker = new TaskCreationProgressTracker(
-                maxTasksToCreate,
                 queueMap,
                 processorConfig);
 
@@ -589,21 +587,23 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             for (final ProcessorFilter filter : filters) {
                 final ProcessorTaskQueue queue = queueMap.computeIfAbsent(filter, k -> new ProcessorTaskQueue());
                 final int currQueueSize = queue.size();
+                progressTracker.incrementTaskQueuedCount(filter, currQueueSize);
 
-                if (progressTracker.areTasksRemainingToBeCreated() && currQueueSize < halfQueueSize) {
-                    if (queue.compareAndSetFilling(false, true)) {
+                // If we have enough tasks queued then stop trying to add more to the queues.
+                if (progressTracker.getTotalQueuedCount() > halfQueueSize) {
+                    break;
 
-                        // Create tasks for this filter
-                        LOGGER.logDurationIfDebugEnabled(
-                                () -> createTasksForFilter(
-                                        taskContext,
-                                        nodeName,
-                                        filter,
-                                        queue,
-                                        progressTracker),
-                                () -> LogUtil.message("Create tasks for filter {} with priority {}",
-                                        filter.getId(), filter.getPriority()));
-                    }
+                } else if (queue.compareAndSetFilling(false, true)) {
+                    // Create tasks for this filter
+                    LOGGER.logDurationIfDebugEnabled(
+                            () -> createTasksForFilter(
+                                    taskContext,
+                                    nodeName,
+                                    filter,
+                                    queue,
+                                    progressTracker),
+                            () -> LogUtil.message("Create tasks for filter {} with priority {}",
+                                    filter.getId(), filter.getPriority()));
                 }
             }
         } catch (final RuntimeException e) {
@@ -615,22 +615,21 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         final Set<ProcessorFilter> enabledFilterSet = new HashSet<>(filters);
         for (final ProcessorFilter filter : queueMap.keySet()) {
             if (!enabledFilterSet.contains(filter)) {
-                final ProcessorTaskQueue queue = queueMap.remove(filter);
-                if (queue != null) {
-                    ProcessorTask streamTask = queue.poll();
-                    while (streamTask != null) {
-                        release(streamTask);
-                        streamTask = queue.poll();
+                LOGGER.logDurationIfDebugEnabled(() -> {
+                    final ProcessorTaskQueue queue = queueMap.remove(filter);
+                    if (queue != null) {
+                        ProcessorTask streamTask = queue.poll();
+                        while (streamTask != null) {
+                            release(streamTask);
+                            streamTask = queue.poll();
+                        }
                     }
-                }
+                }, () -> "Released tasks for disabled filter " + filter.getId());
             }
         }
 
         // We must be the master node so set a time in the future to run delete.
         scheduleDelete();
-
-//        // Set the last stream details for the next call to this method.
-//        processorTaskManagerRecentStreamDetails = recentStreamInfo;
 
         // We may have async search tasks still being created so we need to wait for those
         // in case another node gets master status and tries to do task creation.
@@ -638,18 +637,10 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
         taskContext.info(() -> "Finished");
 
-        if (progressTracker.getTotalTasksCreated() > 0) {
+        if (progressTracker.getTotalCreatedCount() > 0) {
             LOGGER.info(() -> LogUtil.message("Finished creating tasks in {}. {}",
                     logExecutionTime, progressTracker.getProgressSummaryMessage()));
         }
-    }
-
-
-    private int getTaskCountToCreate(final ProcessorTaskQueue queue,
-                                     final TaskCreationProgressTracker progressTracker) {
-        return Math.min(
-                processorConfigProvider.get().getQueueSize() - queue.size(),
-                progressTracker.getTotalRemainingTasksToCreate());
     }
 
     private void createTasksForFilter(final TaskContext taskContext,
@@ -681,16 +672,17 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                         // them here.
                         final ProcessorConfig processorConfig = processorConfigProvider.get();
                         if (processorConfig.isFillTaskQueue()) {
-                            addUnownedTasks(
-                                    taskContext,
-                                    nodeName,
-                                    loadedFilter,
-                                    queue,
-                                    progressTracker);
+                            LOGGER.logDurationIfDebugEnabled(() -> {
+                                addUnownedTasks(
+                                        taskContext,
+                                        nodeName,
+                                        loadedFilter,
+                                        queue,
+                                        progressTracker);
+                            }, "addUnownedTasks");
                         }
 
-                        // If we allowing tasks to be created then go ahead and
-                        // create some.
+                        // If we are allowing tasks to be created then go ahead and create some.
                         if (processorConfig.isCreateTasks()) {
 
                             final Boolean exhausted = exhaustedFilterMap.computeIfAbsent(
@@ -699,8 +691,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
                             // Skip once we have done all that is required
                             // re-compute tasks to create after adding unowned tasks
-                            final int requiredTasks = getTaskCountToCreate(queue, progressTracker);
-
+                            final int requiredTasks = processorConfig.getQueueSize() -
+                                    progressTracker.getTotalQueuedCount();
                             if (requiredTasks > 0 && !Thread.currentThread().isInterrupted()) {
                                 final QueryData queryData = loadedFilter.getQueryData();
                                 final boolean isStreamStoreSearch = queryData.getDataSource() != null
@@ -818,7 +810,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                 final TaskCreationProgressTracker progressTracker) {
         int totalTasks = 0;
         int totalAddedTasks = 0;
-        int tasksToAdd = getTaskCountToCreate(queue, progressTracker);
+        int tasksToAdd = progressTracker.getRequiredTaskCount();
         final int batchSize = Math.max(1000, tasksToAdd);
         long minTaskId = 0;
 
@@ -915,7 +907,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             }
 
             if (totalAddedTasks > 0) {
-                progressTracker.incrementTaskCreationCount(filter, totalAddedTasks);
+                progressTracker.incrementTaskQueuedCount(filter, totalAddedTasks);
                 LOGGER.debug("doCreateTasks() - Added {} tasks that are no longer locked", totalAddedTasks);
             }
 
@@ -938,7 +930,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
         final EventRef minEvent = new EventRef(tracker.getMinMetaId(), tracker.getMinEventId());
         final EventRef maxEvent = new EventRef(Long.MAX_VALUE, 0L);
-        long maxStreams = progressTracker.getTaskCountToCreate(filter);
+        long maxStreams = progressTracker.getRequiredTaskCount();
         LOGGER.debug("Creating search query tasks maxStreams: {}, filer: {}", maxStreams, filter);
         long maxEvents = 1000000;
         final long maxEventsPerStream = 1000;
@@ -1052,13 +1044,15 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                 final List<ProcessorTask> availableTaskList = createdTasks.getAvailableTaskList();
 
                                 if (!availableTaskList.isEmpty()) {
+                                    progressTracker.incrementTaskCreationCount(filter,
+                                            createdTasks.getTotalTasksCreated());
                                     queue.addAll(availableTaskList);
-                                    progressTracker.incrementTaskCreationCount(filter, availableTaskList.size());
+                                    progressTracker.incrementTaskQueuedCount(filter, availableTaskList.size());
                                 }
 
-                                LOGGER.debug("createTasks() - Created {} tasks for filter {}",
+                                LOGGER.debug(() -> LogUtil.message("createTasks() - Created {} tasks for filter {}",
                                         createdTasks.getTotalTasksCreated(),
-                                        filter.toString());
+                                        filter.toString()));
 
                                 exhaustedFilterMap.put(filter.getId(), exhausted);
 
@@ -1109,7 +1103,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             throw new RuntimeException("Attempting to create tasks with an unconstrained filter " + filter);
         }
 
-        final int requiredTasks = progressTracker.getTaskCountToCreate(filter);
+        final int requiredTasks = progressTracker.getRequiredTaskCount();
         LOGGER.debug("Creating tasks from criteria, requiredTasks: {}, filter: {}", requiredTasks, filter);
 
         if (requiredTasks > 0) {
@@ -1145,15 +1139,21 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                     false,
                     processorConfig.isFillTaskQueue(),
                     createdTasks -> {
-                        // Transfer the newly created (and available) tasks to the queue.
+                        // Transfer the newly created (and available) tasks to the
+                        // queue.
                         final List<ProcessorTask> availableTaskList = createdTasks.getAvailableTaskList();
-                        queue.addAll(availableTaskList);
-                        progressTracker.incrementTaskCreationCount(filter, availableTaskList.size());
 
-                        LOGGER.debug("createTasks() - Created {} tasks (requiredTasks={}) for filter {}",
+                        if (!availableTaskList.isEmpty()) {
+                            progressTracker.incrementTaskCreationCount(filter,
+                                    createdTasks.getTotalTasksCreated());
+                            queue.addAll(availableTaskList);
+                            progressTracker.incrementTaskQueuedCount(filter, availableTaskList.size());
+                        }
+
+                        LOGGER.debug(() -> LogUtil.message("createTasks() - Created {} tasks for filter {}",
                                 createdTasks.getTotalTasksCreated(),
-                                requiredTasks,
-                                filter);
+                                filter.toString()));
+
                         exhaustedFilterMap.put(filter.getId(), createdTasks.getTotalTasksCreated() == 0);
                     });
         }
@@ -1226,73 +1226,75 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                   final DocRef pipelineDocRef,
                                   final boolean reprocess,
                                   final int length) {
-        // Validate expression.
-        final ExpressionValidator expressionValidator = new ExpressionValidator(MetaFields.getAllFields());
-        expressionValidator.validate(expression);
+        return LOGGER.logDurationIfDebugEnabled(() -> {
 
-        if (reprocess) {
-            // Don't select deleted streams.
-            final ExpressionOperator statusExpression = ExpressionOperator.builder().op(Op.OR)
-                    .addTerm(MetaFields.PARENT_STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
-                    .addTerm(MetaFields.PARENT_STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
-                    .build();
+            // Validate expression.
+            final ExpressionValidator expressionValidator = new ExpressionValidator(MetaFields.getAllFields());
+            expressionValidator.validate(expression);
 
-            ExpressionOperator.Builder builder = ExpressionOperator.builder()
-                    .addOperator(expression)
-                    .addTerm(MetaFields.PARENT_ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
+            if (reprocess) {
+                // Don't select deleted streams.
+                final ExpressionOperator statusExpression = ExpressionOperator.builder().op(Op.OR)
+                        .addTerm(MetaFields.PARENT_STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                        .addTerm(MetaFields.PARENT_STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
+                        .build();
 
-            if (pipelineDocRef != null) {
-                builder.addTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef);
+                ExpressionOperator.Builder builder = ExpressionOperator.builder()
+                        .addOperator(expression)
+                        .addTerm(MetaFields.PARENT_ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
+
+                if (pipelineDocRef != null) {
+                    builder.addTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef);
+                }
+
+                if (minMetaCreateTimeMs != null) {
+                    builder = builder.addTerm(MetaFields.PARENT_CREATE_TIME,
+                            Condition.GREATER_THAN_OR_EQUAL_TO,
+                            DateUtil.createNormalDateTimeString(minMetaCreateTimeMs));
+                }
+                if (maxMetaCreateTimeMs != null) {
+                    builder = builder.addTerm(MetaFields.PARENT_CREATE_TIME,
+                            Condition.LESS_THAN_OR_EQUAL_TO,
+                            DateUtil.createNormalDateTimeString(maxMetaCreateTimeMs));
+                }
+                builder = builder.addOperator(statusExpression);
+
+                final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(builder.build());
+                findMetaCriteria.setSort(MetaFields.PARENT_ID.getName(), false, false);
+                findMetaCriteria.obtainPageRequest().setLength(length);
+
+                return metaService.findReprocess(findMetaCriteria).getValues();
+
+            } else {
+                // Don't select deleted streams.
+                final ExpressionOperator statusExpression = ExpressionOperator.builder().op(Op.OR)
+                        .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                        .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
+                        .build();
+
+                ExpressionOperator.Builder builder = ExpressionOperator.builder()
+                        .addOperator(expression)
+                        .addTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
+
+                if (minMetaCreateTimeMs != null) {
+                    builder = builder.addTerm(MetaFields.CREATE_TIME,
+                            Condition.GREATER_THAN_OR_EQUAL_TO,
+                            DateUtil.createNormalDateTimeString(minMetaCreateTimeMs));
+                }
+                if (maxMetaCreateTimeMs != null) {
+                    builder = builder.addTerm(MetaFields.CREATE_TIME,
+                            Condition.LESS_THAN_OR_EQUAL_TO,
+                            DateUtil.createNormalDateTimeString(maxMetaCreateTimeMs));
+                }
+                builder = builder.addOperator(statusExpression);
+
+                final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(builder.build());
+                findMetaCriteria.setSort(MetaFields.ID.getName(), false, false);
+                findMetaCriteria.obtainPageRequest().setLength(length);
+
+                return metaService.find(findMetaCriteria).getValues();
             }
-
-            if (minMetaCreateTimeMs != null) {
-                builder = builder.addTerm(MetaFields.PARENT_CREATE_TIME,
-                        Condition.GREATER_THAN_OR_EQUAL_TO,
-                        DateUtil.createNormalDateTimeString(minMetaCreateTimeMs));
-            }
-            if (maxMetaCreateTimeMs != null) {
-                builder = builder.addTerm(MetaFields.PARENT_CREATE_TIME,
-                        Condition.LESS_THAN_OR_EQUAL_TO,
-                        DateUtil.createNormalDateTimeString(maxMetaCreateTimeMs));
-            }
-            builder = builder.addOperator(statusExpression);
-
-            final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(builder.build());
-            findMetaCriteria.setSort(MetaFields.PARENT_ID.getName(), false, false);
-            findMetaCriteria.obtainPageRequest().setLength(length);
-
-            return metaService.findReprocess(findMetaCriteria).getValues();
-
-
-        } else {
-            // Don't select deleted streams.
-            final ExpressionOperator statusExpression = ExpressionOperator.builder().op(Op.OR)
-                    .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
-                    .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
-                    .build();
-
-            ExpressionOperator.Builder builder = ExpressionOperator.builder()
-                    .addOperator(expression)
-                    .addTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
-
-            if (minMetaCreateTimeMs != null) {
-                builder = builder.addTerm(MetaFields.CREATE_TIME,
-                        Condition.GREATER_THAN_OR_EQUAL_TO,
-                        DateUtil.createNormalDateTimeString(minMetaCreateTimeMs));
-            }
-            if (maxMetaCreateTimeMs != null) {
-                builder = builder.addTerm(MetaFields.CREATE_TIME,
-                        Condition.LESS_THAN_OR_EQUAL_TO,
-                        DateUtil.createNormalDateTimeString(maxMetaCreateTimeMs));
-            }
-            builder = builder.addOperator(statusExpression);
-
-            final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(builder.build());
-            findMetaCriteria.setSort(MetaFields.ID.getName(), false, false);
-            findMetaCriteria.obtainPageRequest().setLength(length);
-
-            return metaService.find(findMetaCriteria).getValues();
-        }
+        }, "runSelectMetaQuery");
     }
 
     /**
