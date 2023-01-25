@@ -158,7 +158,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
      * Flag to indicate if we are filling
      */
     private final AtomicBoolean filling = new AtomicBoolean();
-    private final ConcurrentHashMap<Integer, Boolean> exhaustedFilterMap = new ConcurrentHashMap<>();
     private volatile int lastQueueSizeForStats = -1;
 
     /**
@@ -671,11 +670,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
 
                         // If we are allowing tasks to be created then go ahead and create some.
                         if (processorConfig.isCreateTasks()) {
-
-                            final Boolean exhausted = exhaustedFilterMap.computeIfAbsent(
-                                    loadedFilter.getId(),
-                                    k -> Boolean.FALSE);
-
                             // Skip once we have done all that is required
                             // re-compute tasks to create after adding unowned tasks
                             if (!progressTracker.isQueueOverHalfFull() && !Thread.currentThread().isInterrupted()) {
@@ -689,14 +683,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
 
                                 // Get the tracker for this filter.
                                 ProcessorFilterTracker tracker = loadedFilter.getProcessorFilterTracker();
-
-                                // Here we do an optimisation and only bother
-                                // processing anything that we have had recent
-                                // stream data for if we were exhausted last time
-                                LOGGER.debug("createTasks() - Filter {} exhausted = {}",
-                                        loadedFilter.getId(),
-                                        exhausted);
-//                                if (!exhausted || recentStreamInfo.isApplicable(loadedFilter, findStreamCriteria)) {
                                 if (ProcessorFilterTracker.COMPLETE.equals(tracker.getStatus()) ||
                                         ProcessorFilterTracker.ERROR.equals(tracker.getStatus())) {
                                     // If the tracker is complete we need to
@@ -734,15 +720,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                                             processorConfig,
                                             tracker);
                                 }
-//                                }
                             }
-                        } else {
-                            // We terminated early so assume this filter is not
-                            // exhausted
-                            LOGGER.debug(
-                                    "createTasks() - Filter {} no tasks needed at this time - assuming not exhausted",
-                                    loadedFilter.getId());
-                            exhaustedFilterMap.put(loadedFilter.getId(), Boolean.FALSE);
                         }
 
                         taskContext.info(() -> "Created " + progressTracker.getCreatedCount(loadedFilter)
@@ -1000,9 +978,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                     tracker2 = processorFilterTrackerDao.update(tracker2);
 
                 } else {
-                    final int resultSize = eventRefs.size();
                     final boolean reachedLimit = eventRefs.isReachedLimit();
-                    final boolean exhausted = resultSize == 0 || reachedLimit;
 
                     // Update the tracker status message.
                     ProcessorFilterTracker tracker2 = updatedTracker;
@@ -1036,8 +1012,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                                 LOGGER.debug(() -> LogUtil.message("createTasks() - Created {} tasks for filter {}",
                                         createdTasks.getTotalTasksCreated(),
                                         filter.toString()));
-
-                                exhaustedFilterMap.put(filter.getId(), exhausted);
 
                                 queue.setFilling(false);
                             });
@@ -1136,8 +1110,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                         LOGGER.debug(() -> LogUtil.message("createTasks() - Created {} tasks for filter {}",
                                 createdTasks.getTotalTasksCreated(),
                                 filter.toString()));
-
-                        exhaustedFilterMap.put(filter.getId(), createdTasks.getTotalTasksCreated() == 0);
                     });
         }
     }

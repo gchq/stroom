@@ -560,8 +560,9 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 }
                 // Has this filter finished creating tasks for good, i.e. is there
                 // any possibility of getting more tasks in future?
-                if (tracker.getMaxMetaCreateMs() != null && tracker.getMetaCreateMs() != null
-                        && tracker.getMetaCreateMs() > tracker.getMaxMetaCreateMs()) {
+                if (reachedLimit ||
+                        (tracker.getMaxMetaCreateMs() != null && tracker.getMetaCreateMs() != null
+                                && tracker.getMetaCreateMs() > tracker.getMaxMetaCreateMs())) {
                     LOGGER.debug(() ->
                             "processProcessorFilter() - Completed task creation for bounded filter " + filter.getId());
                     LOGGER.trace(() ->
