@@ -1366,7 +1366,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                     }
                 }
             } catch (final RuntimeException e) {
-                // This error is expected in tests and the pipeline name isn't essential.
+                // This error is expected in tests and the pipeline name isn't essential
+                // as it is only used in here for logging purpses.
                 LOGGER.debug(e::getMessage, e);
             }
         }
