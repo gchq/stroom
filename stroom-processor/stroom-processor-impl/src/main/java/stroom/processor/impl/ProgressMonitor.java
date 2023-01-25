@@ -79,8 +79,6 @@ public class ProgressMonitor {
         }
 
         final StringBuilder sb = new StringBuilder();
-        sb.append("\n");
-        sb.append("==========================================\n");
         sb.append("Created tasks for ");
         sb.append(phaseDetailsMap.size());
         sb.append("/");
@@ -99,15 +97,12 @@ public class ProgressMonitor {
             sb.append(")");
             sb.append("\n");
         }
-        sb.append("==========================================");
         return sb.toString();
     }
 
     public String getDetail() {
         final StringBuilder sb = new StringBuilder();
         for (final Entry<ProcessorFilter, Map<String, PhaseDetails>> entry : phaseDetailsMap.entrySet()) {
-            sb.append("\n");
-            sb.append("------------------------------------------\n");
             sb.append("Filter: ");
             sb.append(entry.getKey().getId());
             sb.append("\n");

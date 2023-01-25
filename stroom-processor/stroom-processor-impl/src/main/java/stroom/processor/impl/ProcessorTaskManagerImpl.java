@@ -616,8 +616,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
 
         info(taskContext, () -> "Finished");
 
-        LOGGER.info(progressMonitor::getSummary);
-        LOGGER.debug(progressMonitor::getDetail);
+        LOGGER.info(() -> LogUtil.inBoxOnNewLine("{}", progressMonitor.getSummary()));
+        LOGGER.debug(() -> LogUtil.inBoxOnNewLine("{}", progressMonitor.getDetail()));
 
         LOGGER.trace("doCreateTasks() - Finished");
     }
