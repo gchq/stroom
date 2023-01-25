@@ -1,11 +1,13 @@
 package stroom.processor.impl;
 
 import stroom.processor.shared.ProcessorFilter;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * Holds state relating to the progress of creation of tasks by the master node
@@ -24,8 +27,10 @@ public class ProgressMonitor {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProgressMonitor.class);
     private final AtomicInteger totalQueuedCount = new AtomicInteger();
     private final List<CompletableFuture<?>> futures = new ArrayList<>();
-    // processorFilter => (phaseName => phaseDetails)
-    private final Map<ProcessorFilter, Map<String, PhaseDetails>> phaseDetailsMap = new ConcurrentHashMap<>();
+
+    // Probably don't need this anymore as we are relying on the ordinal sorting of the Phase enum
+    private final Map<ProcessorFilter, List<PhaseDetails>> filterToPhaseDetailsListMap = new ConcurrentHashMap<>();
+    private final Map<ProcessorFilter, Map<Phase, PhaseDetails>> filterToPhaseDetailsMapMap = new ConcurrentHashMap<>();
 
     private final int totalFilterCount;
     private final int queueSize;
@@ -70,57 +75,86 @@ public class ProgressMonitor {
     }
 
     public String getSummary() {
-        final Map<String, PhaseDetails> combinedPhaseDetailsMap = new HashMap<>();
-        for (final Entry<ProcessorFilter, Map<String, PhaseDetails>> entry : phaseDetailsMap.entrySet()) {
-            for (final Entry<String, PhaseDetails> entry2 : entry.getValue().entrySet()) {
+        final Map<Phase, PhaseDetails> combinedPhaseDetailsMap = new HashMap<>();
+
+        // Ensure we have all phases, even if they have not been logged
+        for (final Phase phase : Phase.values()) {
+            combinedPhaseDetailsMap.computeIfAbsent(phase, k -> new PhaseDetails(phase));
+        }
+
+        for (final Entry<ProcessorFilter, Map<Phase, PhaseDetails>> entry : filterToPhaseDetailsMapMap.entrySet()) {
+            for (final Entry<Phase, PhaseDetails> entry2 : entry.getValue().entrySet()) {
+                final Phase phase = entry2.getKey();
+                final PhaseDetails filterPhaseDetails = entry2.getValue();
+
                 combinedPhaseDetailsMap
-                        .computeIfAbsent(entry2.getKey(), k -> new PhaseDetails())
-                        .add(entry2.getValue());
+                        .computeIfAbsent(phase, k -> new PhaseDetails(phase))
+                        .add(filterPhaseDetails);
             }
         }
 
         final StringBuilder sb = new StringBuilder();
         sb.append("Created tasks for ");
-        sb.append(phaseDetailsMap.size());
+        sb.append(filterToPhaseDetailsMapMap.size());
         sb.append("/");
         sb.append(totalFilterCount);
         sb.append(" filters in ");
         sb.append(Duration.ofMillis(System.currentTimeMillis() - startTime));
         sb.append("\n");
-        for (final Entry<String, PhaseDetails> entry : combinedPhaseDetailsMap.entrySet()) {
-            sb.append(entry.getKey());
-            sb.append(": ");
-            sb.append(entry.getValue().count.get());
-            sb.append(" (");
-            sb.append(entry.getValue().calls.get());
-            sb.append(" calls in ");
-            sb.append(Duration.ofMillis(entry.getValue().duration.get()));
-            sb.append(")");
-            sb.append("\n");
-        }
+
+        // Relies on enum order being correct
+        final List<PhaseDetails> phaseDetailsList = combinedPhaseDetailsMap.entrySet()
+                .stream()
+                .sorted(Entry.comparingByKey())
+                .map(Entry::getValue)
+                .collect(Collectors.toList());
+
+        appendPhaseDetails(sb, phaseDetailsList);
+
         return sb.toString();
     }
 
     public String getDetail() {
         final StringBuilder sb = new StringBuilder();
-        for (final Entry<ProcessorFilter, Map<String, PhaseDetails>> entry : phaseDetailsMap.entrySet()) {
-            sb.append("\n");
-            sb.append("Filter (id = ");
-            sb.append(entry.getKey().getId());
+
+        for (final ProcessorFilter filter : filterToPhaseDetailsMapMap.keySet()) {
+            sb.append("Filter (");
+            appendFilter(sb, filter);
             sb.append(")\n");
-            for (final Entry<String, PhaseDetails> entry2 : entry.getValue().entrySet()) {
-                sb.append(entry2.getKey());
-                sb.append(": ");
-                sb.append(entry2.getValue().count.get());
-                sb.append(" (");
-                sb.append(entry2.getValue().calls.get());
-                sb.append(" calls in ");
-                sb.append(Duration.ofMillis(entry2.getValue().duration.get()));
-                sb.append(")");
-                sb.append("\n");
-            }
+            final List<PhaseDetails> phaseDetailsList = filterToPhaseDetailsListMap.get(filter);
+
+            appendPhaseDetails(sb, phaseDetailsList);
+
+            sb.append("\n");
         }
-        return sb.toString();
+
+        return sb.toString()
+                .replaceFirst("\n$", "");
+    }
+
+    private void appendPhaseDetails(final StringBuilder sb,
+                                    final List<PhaseDetails> phaseDetailsList) {
+        phaseDetailsList.stream()
+                .sorted(Comparator.comparing(phaseDetails -> phaseDetails.phase))
+                .forEach(phaseDetails -> {
+                    sb.append(phaseDetails.phase.phaseName);
+                    sb.append(": ");
+                    sb.append(phaseDetails.count.get());
+                    sb.append(" (");
+                    sb.append(phaseDetails.calls.get());
+                    sb.append(" calls in ");
+                    sb.append(Duration.ofMillis(phaseDetails.duration.get()));
+                    sb.append(")\n");
+                });
+    }
+
+    private void appendFilter(final StringBuilder sb, final ProcessorFilter filter) {
+        sb.append("id: ");
+        sb.append(filter.getId());
+        if (!NullSafe.isEmptyString(filter.getPipelineName())) {
+            sb.append(", pipeline: ");
+            sb.append(filter.getPipelineName());
+        }
     }
 
     public void waitForCompletion() {
@@ -147,37 +181,86 @@ public class ProgressMonitor {
         return String.valueOf(totalQueuedCount.get());
     }
 
-    public void logPhase(final String phaseName, final ProcessorFilter filter, final Supplier<Integer> supplier) {
+    public void logPhase(final Phase phase,
+                         final ProcessorFilter filter,
+                         final Supplier<Integer> supplier) {
+
         final long startTime = System.currentTimeMillis();
         final int count = supplier.get();
         final long duration = System.currentTimeMillis() - startTime;
-        LOGGER.debug(() ->
-                "Completed phase " +
-                        phaseName +
-                        " for filter " +
-                        filter.getId() +
-                        " with count " +
-                        count + " in " +
-                        Duration.ofMillis(duration));
+        LOGGER.debug(() -> {
+            final String filterInfo = NullSafe.isEmptyString(filter.getPipelineName())
+                    ? ""
+                    : (" (pipeline: " + filter.getPipelineName() + ")");
+
+            return "Completed phase " +
+                    phase.phaseName +
+                    " for filter " +
+                    filter.getId() +
+                    filterInfo +
+                    " with count " +
+                    count + " in " +
+                    Duration.ofMillis(duration);
+        });
         LOGGER.trace(() ->
                 "Completed phase " +
-                        phaseName +
+                        phase.phaseName +
                         " for filter " +
                         filter +
                         " with count " +
                         count + " in " +
                         Duration.ofMillis(duration));
-        phaseDetailsMap
+
+        final PhaseDetails phaseDetails = filterToPhaseDetailsMapMap
                 .computeIfAbsent(filter, k -> new ConcurrentHashMap<>())
-                .computeIfAbsent(phaseName, k -> new PhaseDetails())
-                .increment(count, duration);
+                .computeIfAbsent(phase, k -> {
+                    // Ensure the same PhaseDetails exists in both map and list
+                    final PhaseDetails newPhaseDetails = new PhaseDetails(phase);
+                    filterToPhaseDetailsListMap.computeIfAbsent(filter, k2 ->
+                                    new ArrayList<>(Phase.values().length))
+                            .add(newPhaseDetails);
+                    return newPhaseDetails;
+                });
+
+        phaseDetails.increment(count, duration);
     }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public enum Phase {
+        // Order is important. It governs the order the phases have in the logging
+        ADD_UNOWNED_TASKS("Add unowned tasks"),
+        INSERT_NEW_TASKS("Inserting new task records"),
+        SELECT_NEW_TASKS("Selecting new task records"),
+        UPDATE_TRACKERS("Update trackers"),
+        ;
+
+        private final String phaseName;
+
+        Phase(final String phaseName) {
+            this.phaseName = phaseName;
+        }
+
+        public String getPhaseName() {
+            return phaseName;
+        }
+    }
+
+    // --------------------------------------------------------------------------------
+
 
     private static class PhaseDetails {
 
+        private final Phase phase;
         private final AtomicInteger calls = new AtomicInteger();
         private final AtomicInteger count = new AtomicInteger();
         private final AtomicLong duration = new AtomicLong();
+
+        private PhaseDetails(final Phase phase) {
+            this.phase = phase;
+        }
 
         public void increment(final int count, final long duration) {
             this.calls.incrementAndGet();

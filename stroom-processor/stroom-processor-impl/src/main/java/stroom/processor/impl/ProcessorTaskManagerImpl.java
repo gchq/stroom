@@ -33,6 +33,7 @@ import stroom.node.api.NodeInfo;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.InclusiveRanges;
 import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.impl.ProgressMonitor.Phase;
 import stroom.processor.shared.Limits;
 import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
@@ -616,15 +617,24 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
 
         info(taskContext, () -> "Finished");
 
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(() ->
-                    LogUtil.inBoxOnNewLine("{}{}", progressMonitor.getSummary(), progressMonitor.getDetail()));
-        } else {
-            LOGGER.info(() ->
-                    LogUtil.inBoxOnNewLine("{}", progressMonitor.getSummary()));
-        }
+        logProgressSummary(progressMonitor);
 
         LOGGER.trace("doCreateTasks() - Finished");
+    }
+
+    private void logProgressSummary(final ProgressMonitor progressMonitor) {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(() -> {
+                final String detail = progressMonitor.getDetail();
+                return LogUtil.inBoxOnNewLine("{}{}{}",
+                        progressMonitor.getSummary(),
+                        (detail.isBlank() ? "" : "\n"),
+                        detail);
+            });
+        } else {
+            LOGGER.info(() ->
+                    LogUtil.inBoxOnNewLine(progressMonitor.getSummary()));
+        }
     }
 
     private void createTasksForFilter(final TaskContext taskContext,
@@ -657,7 +667,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                         // them here.
                         final ProcessorConfig processorConfig = processorConfigProvider.get();
                         if (processorConfig.isFillTaskQueue()) {
-                            progressMonitor.logPhase("Add unowned tasks", filter, () ->
+                            progressMonitor.logPhase(Phase.ADD_UNOWNED_TASKS, filter, () ->
                                     addUnownedTasks(
                                             taskContext,
                                             nodeName,
@@ -1364,11 +1374,12 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                             .type(PipelineDoc.DOCUMENT_TYPE)
                             .uuid(filter.getPipelineUuid())
                             .build();
-                    final DocRef decoratedDocRef = docRefInfoService.decorate(pipelineDocRef);
-                    final String newPipeName = decoratedDocRef.getName();
-                    if (!Objects.equals(filter.getPipelineName(), newPipeName)) {
-                        filter.setPipelineName(newPipeName);
-                    }
+                    docRefInfoService.name(pipelineDocRef)
+                            .ifPresent(newPipeName -> {
+                                if (!Objects.equals(filter.getPipelineName(), newPipeName)) {
+                                    filter.setPipelineName(newPipeName);
+                                }
+                            });
                 }
             } catch (final RuntimeException e) {
                 // This error is expected in tests and the pipeline name isn't essential

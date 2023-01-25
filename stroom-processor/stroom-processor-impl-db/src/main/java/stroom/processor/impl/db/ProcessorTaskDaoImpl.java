@@ -25,6 +25,7 @@ import stroom.processor.impl.CreatedTasks;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorTaskDao;
 import stroom.processor.impl.ProgressMonitor;
+import stroom.processor.impl.ProgressMonitor.Phase;
 import stroom.processor.impl.db.jooq.Tables;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorTaskRecord;
 import stroom.processor.shared.Processor;
@@ -95,7 +96,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
     private static final Object TASK_CREATION_MONITOR = new Object();
 
-    private static final int BATCH_SIZE = 1000;
+    private static final int BATCH_SIZE = 1_000;
 
     private static final Function<Record, Processor> RECORD_TO_PROCESSOR_MAPPER = new RecordToProcessorMapper();
     private static final Function<Record, ProcessorFilter> RECORD_TO_PROCESSOR_FILTER_MAPPER =
@@ -456,7 +457,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 if (allBindValues.length > 0) {
 
                     // Insert tasks.
-                    progressMonitor.logPhase("Inserting new task records", filter, () -> {
+                    progressMonitor.logPhase(Phase.INSERT_NEW_TASKS, filter, () -> {
                         try {
                             insertTasks(context, allBindValues);
                             creationState.totalTasksCreated = allBindValues.length;
@@ -468,7 +469,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     });
 
                     // Select them back.
-                    progressMonitor.logPhase("Selecting new task records", filter, () -> {
+                    progressMonitor.logPhase(Phase.SELECT_NEW_TASKS, filter, () -> {
                         try {
                             final Condition condition = PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId)
                                     .and(PROCESSOR_TASK.STATUS_TIME_MS.eq(statusTimeMs))
@@ -495,7 +496,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 }
 
                 // Update tracker.
-                progressMonitor.logPhase("Update tracker", filter, () -> {
+                progressMonitor.logPhase(Phase.UPDATE_TRACKERS, filter, () -> {
                     // Anything created?
                     if (creationState.totalTasksCreated > 0) {
                         // Done with if because args are not final so can't use lambda
