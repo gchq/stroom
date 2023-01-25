@@ -22,6 +22,7 @@ import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.docref.DocRef;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
@@ -29,6 +30,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
 import stroom.node.api.NodeInfo;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.InclusiveRanges;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.Limits;
@@ -61,14 +63,18 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
+import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.PermissionException;
+import stroom.util.sysinfo.HasSystemInfo;
+import stroom.util.sysinfo.SystemInfoResult;
 
 import java.time.Instant;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -76,6 +82,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -96,7 +103,7 @@ import javax.inject.Singleton;
  * Fill up our pool if we are below our low water mark (FILL_LOW_SIZE).
  */
 @Singleton
-class ProcessorTaskManagerImpl implements ProcessorTaskManager {
+class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorTaskManagerImpl.class);
 
@@ -123,6 +130,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     private final ClusterLockService clusterLockService;
     private final TargetNodeSetFactory targetNodeSetFactory;
     private final ProcessorConfig processorConfig;
+    private final DocRefInfoService docRefInfoService;
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
 
@@ -178,7 +186,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                              final SecurityContext securityContext,
                              final ClusterLockService clusterLockService,
                              final TargetNodeSetFactory targetNodeSetFactory,
-                             final ProcessorConfig processorConfig) {
+                             final ProcessorConfig processorConfig,
+                             final DocRefInfoService docRefInfoService) {
 
         this.processorFilterService = processorFilterService;
         this.processorFilterTrackerDao = processorFilterTrackerDao;
@@ -195,6 +204,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         this.clusterLockService = clusterLockService;
         this.targetNodeSetFactory = targetNodeSetFactory;
         this.processorConfig = processorConfig;
+        this.docRefInfoService = docRefInfoService;
     }
 
     @Override
@@ -551,27 +561,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         LOGGER.debug("doCreateTasks() - Starting");
         taskContext.info(() -> "Starting");
 
-        // Get an up to date list of all enabled stream processor filters.
-        LOGGER.trace("Getting enabled non deleted filters");
-        taskContext.info(() -> "Getting enabled non deleted filters");
-        final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(ProcessorFields.ENABLED, Condition.EQUALS, true)
-                .addTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
-                .addTerm(ProcessorFilterFields.ENABLED, Condition.EQUALS, true)
-                .addTerm(ProcessorFilterFields.DELETED, Condition.EQUALS, false)
-                .build();
-
-        final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria(expression);
-        final List<ProcessorFilter> filters = processorFilterService
-                .find(findProcessorFilterCriteria).getValues();
-        LOGGER.trace("Found {} filters", filters.size());
-        taskContext.info(() -> "Found " + filters.size() + " filters");
-
-        // Sort the stream processor filters by priority.
-        filters.sort(ProcessorFilter.HIGHEST_PRIORITY_FIRST_COMPARATOR);
-
         // Update the stream task store.
-        prioritisedFiltersRef.set(filters);
+        final List<ProcessorFilter> prioritisedFilters = updatePrioritisedFiltersRef();
 
         final String nodeName = nodeInfo.getThisNodeName();
         if (nodeName == null) {
@@ -587,8 +578,10 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                 processorConfig);
 
         try {
-            for (final ProcessorFilter filter : filters) {
-                final ProcessorTaskQueue queue = queueMap.computeIfAbsent(filter, k -> new ProcessorTaskQueue());
+            for (final ProcessorFilter filter : prioritisedFilters) {
+                final ProcessorTaskQueue queue = queueMap.computeIfAbsent(
+                        filter,
+                        k -> new ProcessorTaskQueue());
                 final int currQueueSize = queue.size();
                 progressTracker.incrementTaskQueuedCount(filter, currQueueSize);
 
@@ -615,7 +608,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
         // Release items from the queue that no longer have an enabled filter
         taskContext.info(() -> "Releasing tasks for disabled filters");
-        final Set<ProcessorFilter> enabledFilterSet = new HashSet<>(filters);
+        final Set<ProcessorFilter> enabledFilterSet = new HashSet<>(prioritisedFilters);
         for (final ProcessorFilter filter : queueMap.keySet()) {
             if (!enabledFilterSet.contains(filter)) {
                 releaseFilterTasks(filter);
@@ -1342,4 +1335,78 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         this.allowTaskCreation = allowTaskCreation;
     }
 
+    @Override
+    public SystemInfoResult getSystemInfo() {
+        // Iterate over the latest picture of prioritised filters to get a detailed view of queue sizes
+        // by filter
+        final List<Map<String, Object>> queueInfo = NullSafe.nonNullList(prioritisedFiltersRef.get())
+                .stream()
+                .map(processorFilter ->
+                        new SimpleEntry<>(processorFilter, queueMap.get(processorFilter)))
+                .filter(entry -> NullSafe.test(entry.getValue(), ProcessorTaskQueue::hasItems))
+                .map(entry -> {
+                    final ProcessorFilter processorFilter = entry.getKey();
+                    final ProcessorTaskQueue queue = entry.getValue();
+                    final String pipelineName = Objects.requireNonNullElseGet(
+                            processorFilter.getPipelineName(),
+                            processorFilter::getPipelineUuid);
+
+                    return Map.<String, Object>of(
+                            "filterId", processorFilter.getId(),
+                            "pipelineName", pipelineName,
+                            "priority", processorFilter.getPriority(),
+                            "queueSize", NullSafe.get(queue, ProcessorTaskQueue::size));
+                })
+                .collect(Collectors.toList());
+
+        return SystemInfoResult.builder(this)
+                .description("Processor task queue info")
+                .addDetail("filterQueues", queueInfo)
+                .addDetail("overallQueueSize", getTaskQueueSize())
+                .build();
+    }
+
+    private List<ProcessorFilter> updatePrioritisedFiltersRef() {
+
+        // Get an up to date list of all enabled stream processor filters.
+        LOGGER.trace("Getting enabled non deleted filters");
+        taskContext.info(() -> "Getting enabled non deleted filters");
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .addTerm(ProcessorFields.ENABLED, Condition.EQUALS, true)
+                .addTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
+                .addTerm(ProcessorFilterFields.ENABLED, Condition.EQUALS, true)
+                .addTerm(ProcessorFilterFields.DELETED, Condition.EQUALS, false)
+                .build();
+
+        final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria(expression);
+        final List<ProcessorFilter> filters = processorFilterService
+                .find(findProcessorFilterCriteria)
+                .getValues();
+        LOGGER.trace("Found {} filters", filters.size());
+        taskContext.info(() -> "Found " + filters.size() + " filters");
+
+        // Sort the stream processor filters by priority.
+        filters.sort(ProcessorFilter.HIGHEST_PRIORITY_FIRST_COMPARATOR);
+
+        // Try and ensure we have pipeline names for each filter
+        for (ProcessorFilter filter : NullSafe.nonNullList(filters)) {
+            if (filter != null
+                    && filter.getPipelineUuid() != null
+                    && NullSafe.isEmptyString(filter.getPipelineName())) {
+
+                final DocRef pipelineDocRef = DocRef.builder()
+                        .type(PipelineDoc.DOCUMENT_TYPE)
+                        .uuid(filter.getPipelineUuid())
+                        .build();
+                final DocRef decoratedDocRef = docRefInfoService.decorate(pipelineDocRef);
+                final String newPipeName = decoratedDocRef.getName();
+                if (!Objects.equals(filter.getPipelineName(), newPipeName)) {
+                    filter.setPipelineName(newPipeName);
+                }
+            }
+        }
+        prioritisedFiltersRef.set(filters);
+        return filters;
+    }
 }
+
