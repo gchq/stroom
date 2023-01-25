@@ -400,7 +400,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             final Integer nodeId = processorNodeCache.getOrCreate(thisNodeName);
 
             // Get the current time.
-            final long streamTaskCreateMs = System.currentTimeMillis();
+            final long statusTimeMs = System.currentTimeMillis();
             final CreationState creationState = new CreationState();
 
             // Create all bind values.
@@ -432,9 +432,9 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 final Object[] bindValues = new Object[PROCESSOR_TASK_COLUMNS.length];
 
                 bindValues[0] = 1; //version
-                bindValues[1] = streamTaskCreateMs; //create_ms
+                bindValues[1] = statusTimeMs; //create_ms
                 bindValues[2] = TaskStatus.UNPROCESSED.getPrimitiveValue(); //stat
-                bindValues[3] = streamTaskCreateMs; //stat_ms
+                bindValues[3] = statusTimeMs; //stat_ms
 
                 if (fillTaskQueue && Status.UNLOCKED.equals(meta.getStatus())) {
                     // If the stream is unlocked then take ownership of the
@@ -471,7 +471,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     progressMonitor.logPhase("Selecting new task records", filter, () -> {
                         try {
                             final Condition condition = PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId)
-                                    .and(PROCESSOR_TASK.CREATE_TIME_MS.eq(streamTaskCreateMs))
+                                    .and(PROCESSOR_TASK.STATUS_TIME_MS.eq(statusTimeMs))
                                     .and(PROCESSOR_TASK.STATUS.eq(TaskStatus.UNPROCESSED.getPrimitiveValue()))
                                     .and(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(filter.getId()));
                             creationState.selectedTaskList = select(context, condition);
@@ -553,7 +553,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                         }
                     }
 
-                    tracker.setLastPollMs(streamTaskCreateMs);
+                    tracker.setLastPollMs(statusTimeMs);
                     tracker.setLastPollTaskCount(creationState.totalTasksCreated);
                     tracker.setStatus(null);
 
