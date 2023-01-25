@@ -104,9 +104,10 @@ public class ProgressMonitor {
     public String getDetail() {
         final StringBuilder sb = new StringBuilder();
         for (final Entry<ProcessorFilter, Map<String, PhaseDetails>> entry : phaseDetailsMap.entrySet()) {
-            sb.append("Filter: ");
-            sb.append(entry.getKey().getId());
             sb.append("\n");
+            sb.append("Filter (id = ");
+            sb.append(entry.getKey().getId());
+            sb.append(")\n");
             for (final Entry<String, PhaseDetails> entry2 : entry.getValue().entrySet()) {
                 sb.append(entry2.getKey());
                 sb.append(": ");
@@ -116,8 +117,8 @@ public class ProgressMonitor {
                 sb.append(" calls in ");
                 sb.append(Duration.ofMillis(entry2.getValue().duration.get()));
                 sb.append(")");
+                sb.append("\n");
             }
-            sb.append("------------------------------------------\n");
         }
         return sb.toString();
     }

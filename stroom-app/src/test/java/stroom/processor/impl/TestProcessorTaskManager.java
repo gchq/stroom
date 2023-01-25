@@ -166,7 +166,7 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
     private void test(final int size, final Status metaStatus, final Runnable runnable) {
         final int initialQueueSize = processorConfig.getQueueSize();
         try {
-            processorConfig.setQueueSize(1000);
+            processorConfig.setQueueSize(size);
 
             processorTaskManager.shutdown();
             processorTaskManager.startup();

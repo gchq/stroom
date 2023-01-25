@@ -616,8 +616,13 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
 
         info(taskContext, () -> "Finished");
 
-        LOGGER.info(() -> LogUtil.inBoxOnNewLine("{}", progressMonitor.getSummary()));
-        LOGGER.debug(() -> LogUtil.inBoxOnNewLine("{}", progressMonitor.getDetail()));
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(() ->
+                    LogUtil.inBoxOnNewLine("{}{}", progressMonitor.getSummary(), progressMonitor.getDetail()));
+        } else {
+            LOGGER.info(() ->
+                    LogUtil.inBoxOnNewLine("{}", progressMonitor.getSummary()));
+        }
 
         LOGGER.trace("doCreateTasks() - Finished");
     }
@@ -1367,8 +1372,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                 }
             } catch (final RuntimeException e) {
                 // This error is expected in tests and the pipeline name isn't essential
-                // as it is only used in here for logging purpses.
-                LOGGER.debug(e::getMessage, e);
+                // as it is only used in here for logging purposes.
+                LOGGER.trace(e::getMessage, e);
             }
         }
         prioritisedFiltersRef.set(filters);
