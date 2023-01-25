@@ -550,9 +550,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
     private void doCreateTasks(final TaskContext taskContext) {
         LOGGER.trace("doCreateTasks() - Starting");
 
-        final ProcessorConfig processorConfig = processorConfigProvider.get();
-        final ProgressMonitor progressMonitor = new ProgressMonitor(processorConfig);
-
         // We need to make sure that only 1 thread at a time is allowed to
         // create tasks. This should always be the case in production but some
         // tests will call this directly while scheduled execution could also be
@@ -561,6 +558,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
 
         // Update the stream task store.
         final List<ProcessorFilter> prioritisedFilters = updatePrioritisedFiltersRef(taskContext);
+        final ProcessorConfig processorConfig = processorConfigProvider.get();
+        final ProgressMonitor progressMonitor = new ProgressMonitor(processorConfig, prioritisedFilters.size());
 
         final String nodeName = nodeInfo.getThisNodeName();
         if (nodeName == null) {
@@ -653,7 +652,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                         // them here.
                         final ProcessorConfig processorConfig = processorConfigProvider.get();
                         if (processorConfig.isFillTaskQueue()) {
-                            progressMonitor.logPhase("addUnownedTasks", filter, () ->
+                            progressMonitor.logPhase("Add unowned tasks", filter, () ->
                                     addUnownedTasks(
                                             taskContext,
                                             nodeName,
