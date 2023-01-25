@@ -24,6 +24,7 @@ public class ProgressMonitor {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProgressMonitor.class);
     private final AtomicInteger totalQueuedCount = new AtomicInteger();
     private final List<CompletableFuture<?>> futures = new ArrayList<>();
+    // processorFilter => (phaseName => phaseDetails)
     private final Map<ProcessorFilter, Map<String, PhaseDetails>> phaseDetailsMap = new ConcurrentHashMap<>();
 
     private final int totalFilterCount;
@@ -150,13 +151,13 @@ public class ProgressMonitor {
         return String.valueOf(totalQueuedCount.get());
     }
 
-    public void logPhase(final String phase, final ProcessorFilter filter, final Supplier<Integer> supplier) {
+    public void logPhase(final String phaseName, final ProcessorFilter filter, final Supplier<Integer> supplier) {
         final long startTime = System.currentTimeMillis();
         final int count = supplier.get();
         final long duration = System.currentTimeMillis() - startTime;
         LOGGER.debug(() ->
                 "Completed phase " +
-                        phase +
+                        phaseName +
                         " for filter " +
                         filter.getId() +
                         " with count " +
@@ -164,7 +165,7 @@ public class ProgressMonitor {
                         Duration.ofMillis(duration));
         LOGGER.trace(() ->
                 "Completed phase " +
-                        phase +
+                        phaseName +
                         " for filter " +
                         filter +
                         " with count " +
@@ -172,7 +173,7 @@ public class ProgressMonitor {
                         Duration.ofMillis(duration));
         phaseDetailsMap
                 .computeIfAbsent(filter, k -> new ConcurrentHashMap<>())
-                .computeIfAbsent(phase, k -> new PhaseDetails())
+                .computeIfAbsent(phaseName, k -> new PhaseDetails())
                 .increment(count, duration);
     }
 
