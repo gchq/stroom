@@ -16,7 +16,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
 
 public interface ProcessorTaskDao {
 
@@ -39,27 +38,28 @@ public interface ProcessorTaskDao {
     /**
      * Create new tasks for the specified filter and add them to the queue.
      *
-     * @param filter        The filter to create tasks for
-     * @param tracker       The tracker that tracks the task creation progress for the filter.
-     * @param metaQueryTime The time that we queried for meta data that matches the processor filter.
-     * @param metaMap       The map of meta data and optional event ranges to create tasks for.
-     * @param thisNodeName  This node, the node that will own the created tasks.
-     * @param reachedLimit  For search based task creation this indicates if we have reached the limit of tasks
-     *                      created for a single search. This limit is imposed to stop search based task
-     *                      creation running forever.
-     * @param fillTaskQueue Should the newly created tasks be added to the task queue immediately.
+     * @param filter          The filter to create tasks for
+     * @param tracker         The tracker that tracks the task creation progress for the filter.
+     * @param progressMonitor Monitor and record task creation progress to help identify issues.
+     * @param metaQueryTime   The time that we queried for meta data that matches the processor filter.
+     * @param metaMap         The map of meta data and optional event ranges to create tasks for.
+     * @param thisNodeName    This node, the node that will own the created tasks.
+     * @param reachedLimit    For search based task creation this indicates if we have reached the limit of tasks
+     *                        created for a single search. This limit is imposed to stop search based task
+     *                        creation running forever.
+     * @param fillTaskQueue   Should the newly created tasks be added to the task queue immediately.
      * @return A list of tasks that we have created and that are owned by this
      * node and available to be handed to workers (i.e. their associated meta data is not locked).
      */
-    void createNewTasks(ProcessorFilter filter,
-                        ProcessorFilterTracker tracker,
-                        long metaQueryTime,
-                        Map<Meta, InclusiveRanges> metaMap,
-                        String thisNodeName,
-                        Long maxMetaId,
-                        boolean reachedLimit,
-                        boolean fillTaskQueue,
-                        Consumer<CreatedTasks> consumer);
+    CreatedTasks createNewTasks(ProcessorFilter filter,
+                                ProcessorFilterTracker tracker,
+                                ProgressMonitor progressMonitor,
+                                long metaQueryTime,
+                                Map<Meta, InclusiveRanges> metaMap,
+                                String thisNodeName,
+                                Long maxMetaId,
+                                boolean reachedLimit,
+                                boolean fillTaskQueue);
 
     /**
      * Change the node ownership of the tasks in the id set and select them back to include in the queue.

@@ -24,6 +24,7 @@ import stroom.processor.api.InclusiveRanges.InclusiveRange;
 import stroom.processor.impl.CreatedTasks;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorTaskDao;
+import stroom.processor.impl.ProgressMonitor;
 import stroom.processor.impl.db.jooq.Tables;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorTaskRecord;
 import stroom.processor.shared.Processor;
@@ -74,10 +75,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import static java.util.Map.entry;
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
@@ -87,6 +88,7 @@ import static stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker.PROCES
 import static stroom.processor.impl.db.jooq.tables.ProcessorNode.PROCESSOR_NODE;
 import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 
+@Singleton
 class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorTaskDaoImpl.class);
@@ -160,8 +162,6 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         this.marshaller = marshaller;
         this.docRefInfoService = docRefInfoService;
 
-        // TODO AT: This could be moved out into a singleton class, see IndexShardValueMapper
-        //  to save it being create each time
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(ProcessorTaskFields.CREATE_TIME,
                 PROCESSOR_TASK.CREATE_TIME_MS,
@@ -384,15 +384,15 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
      *                        creation running forever.
      */
     @Override
-    public synchronized void createNewTasks(final ProcessorFilter filter,
-                                            final ProcessorFilterTracker tracker,
-                                            final long streamQueryTime,
-                                            final Map<Meta, InclusiveRanges> streams,
-                                            final String thisNodeName,
-                                            final Long maxMetaId,
-                                            final boolean reachedLimit,
-                                            final boolean fillTaskQueue,
-                                            final Consumer<CreatedTasks> consumer) {
+    public synchronized CreatedTasks createNewTasks(final ProcessorFilter filter,
+                                                    final ProcessorFilterTracker tracker,
+                                                    final ProgressMonitor progressMonitor,
+                                                    final long streamQueryTime,
+                                                    final Map<Meta, InclusiveRanges> streams,
+                                                    final String thisNodeName,
+                                                    final Long maxMetaId,
+                                                    final boolean reachedLimit,
+                                                    final boolean fillTaskQueue) {
 
         // Synchronised to avoid the risk of any table locking when being called concurrently
         // by multiple threads on the master node
@@ -456,18 +456,19 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 if (allBindValues.length > 0) {
 
                     // Insert tasks.
-                    LOGGER.logDurationIfDebugEnabled(() -> {
+                    progressMonitor.logPhase("Inserting new task records", filter, () -> {
                         try {
                             insertTasks(context, allBindValues);
-                            creationState.totalTasksCreated = streams.size();
+                            creationState.totalTasksCreated = allBindValues.length;
                         } catch (final RuntimeException e) {
                             LOGGER.error(e::getMessage, e);
                             throw e;
                         }
-                    }, () -> "Inserted " + allBindValues.length + " tasks");
+                        return allBindValues.length;
+                    });
 
                     // Select them back.
-                    LOGGER.logDurationIfDebugEnabled(() -> {
+                    progressMonitor.logPhase("Selecting new task records", filter, () -> {
                         try {
                             final Condition condition = PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId)
                                     .and(PROCESSOR_TASK.CREATE_TIME_MS.eq(streamTaskCreateMs))
@@ -489,89 +490,96 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                             LOGGER.error(e::getMessage, e);
                             throw e;
                         }
-
-                    }, () -> "Selected back " + creationState.selectedTaskCount + " tasks");
+                        return creationState.selectedTaskCount;
+                    });
                 }
 
-                // Anything created?
-                if (creationState.totalTasksCreated > 0) {
-                    // Done with if because args are not final so can't use lambda
-                    log(creationState, creationState.streamIdRange);
-
-                    // If we have never created tasks before or the last poll gave
-                    // us no tasks then start to report a new creation range.
-                    if (tracker.getMinMetaCreateMs() == null || (tracker.getLastPollTaskCount() != null
-                            && tracker.getLastPollTaskCount().longValue() == 0L)) {
-                        tracker.setMinMetaCreateMs(creationState.streamMsRange.getMin());
-                    }
-                    // Report where we have got to.
-                    tracker.setMetaCreateMs(creationState.streamMsRange.getMax());
-
-                    // Only create tasks for streams with an id 1 or more greater
-                    // than the greatest stream id we have created tasks for this
-                    // time round in future.
-                    if (creationState.eventIdRange != null) {
-                        tracker.setMinMetaId(creationState.streamIdRange.getMax());
-                        tracker.setMinEventId(creationState.eventIdRange.getMax() + 1);
-                    } else {
-                        tracker.setMinMetaId(creationState.streamIdRange.getMax() + 1);
-                        tracker.setMinEventId(0L);
-                    }
-
-                } else {
-                    // We have completed all tasks so update the window to be from
-                    // now
-                    tracker.setMinMetaCreateMs(streamQueryTime);
-
-                    // Report where we have got to.
-                    tracker.setMetaCreateMs(streamQueryTime);
-
-                    // Only create tasks for streams with an id 1 or more greater
-                    // than the current max stream id in future as we didn't manage
-                    // to create any tasks.
-                    if (maxMetaId != null) {
-                        tracker.setMinMetaId(maxMetaId + 1);
-                        tracker.setMinEventId(0L);
-                    }
-                }
-
-                if (tracker.getMetaCount() != null) {
+                // Update tracker.
+                progressMonitor.logPhase("Update tracker", filter, () -> {
+                    // Anything created?
                     if (creationState.totalTasksCreated > 0) {
-                        tracker.setMetaCount(tracker.getMetaCount() + creationState.totalTasksCreated);
-                    }
-                } else {
-                    tracker.setMetaCount((long) creationState.totalTasksCreated);
-                }
-                if (creationState.eventCount > 0) {
-                    if (tracker.getEventCount() != null) {
-                        tracker.setEventCount(tracker.getEventCount() + creationState.eventCount);
+                        // Done with if because args are not final so can't use lambda
+                        log(creationState, creationState.streamIdRange);
+
+                        // If we have never created tasks before or the last poll gave
+                        // us no tasks then start to report a new creation range.
+                        if (tracker.getMinMetaCreateMs() == null || (tracker.getLastPollTaskCount() != null
+                                && tracker.getLastPollTaskCount().longValue() == 0L)) {
+                            tracker.setMinMetaCreateMs(creationState.streamMsRange.getMin());
+                        }
+                        // Report where we have got to.
+                        tracker.setMetaCreateMs(creationState.streamMsRange.getMax());
+
+                        // Only create tasks for streams with an id 1 or more greater
+                        // than the greatest stream id we have created tasks for this
+                        // time round in future.
+                        if (creationState.eventIdRange != null) {
+                            tracker.setMinMetaId(creationState.streamIdRange.getMax());
+                            tracker.setMinEventId(creationState.eventIdRange.getMax() + 1);
+                        } else {
+                            tracker.setMinMetaId(creationState.streamIdRange.getMax() + 1);
+                            tracker.setMinEventId(0L);
+                        }
+
                     } else {
-                        tracker.setEventCount(creationState.eventCount);
+                        // We have completed all tasks so update the window to be from
+                        // now
+                        tracker.setMinMetaCreateMs(streamQueryTime);
+
+                        // Report where we have got to.
+                        tracker.setMetaCreateMs(streamQueryTime);
+
+                        // Only create tasks for streams with an id greater
+                        // than the current max stream id in future as we didn't manage
+                        // to create any tasks.
+                        if (maxMetaId != null) {
+                            tracker.setMinMetaId(maxMetaId + 1);
+                            tracker.setMinEventId(0L);
+                        }
                     }
-                }
 
-                tracker.setLastPollMs(streamTaskCreateMs);
-                tracker.setLastPollTaskCount(creationState.totalTasksCreated);
-                tracker.setStatus(null);
+                    if (tracker.getMetaCount() != null) {
+                        if (creationState.totalTasksCreated > 0) {
+                            tracker.setMetaCount(tracker.getMetaCount() + creationState.totalTasksCreated);
+                        }
+                    } else {
+                        tracker.setMetaCount((long) creationState.totalTasksCreated);
+                    }
+                    if (creationState.eventCount > 0) {
+                        if (tracker.getEventCount() != null) {
+                            tracker.setEventCount(tracker.getEventCount() + creationState.eventCount);
+                        } else {
+                            tracker.setEventCount(creationState.eventCount);
+                        }
+                    }
 
-                // If the filter has a max meta creation time then let the tracker know.
-                if (filter.getMaxMetaCreateTimeMs() != null && tracker.getMaxMetaCreateMs() == null) {
-                    tracker.setMaxMetaCreateMs(filter.getMaxMetaCreateTimeMs());
-                }
-                // Has this filter finished creating tasks for good, i.e. is there
-                // any possibility of getting more tasks in future?
-                if (reachedLimit ||
-                        (tracker.getMaxMetaCreateMs() != null && tracker.getMetaCreateMs() != null
-                                && tracker.getMetaCreateMs() > tracker.getMaxMetaCreateMs())) {
-                    LOGGER.debug(() ->
-                            "processProcessorFilter() - Completed task creation for bounded filter " + filter.getId());
-                    LOGGER.trace(() ->
-                            "processProcessorFilter() - Completed task creation for bounded filter " + filter);
-                    tracker.setStatus(ProcessorFilterTracker.COMPLETE);
-                }
+                    tracker.setLastPollMs(streamTaskCreateMs);
+                    tracker.setLastPollTaskCount(creationState.totalTasksCreated);
+                    tracker.setStatus(null);
 
-                // Save the tracker state within the transaction.
-                processorFilterTrackerDao.update(context, tracker);
+                    // If the filter has a max meta creation time then let the tracker know.
+                    if (filter.getMaxMetaCreateTimeMs() != null && tracker.getMaxMetaCreateMs() == null) {
+                        tracker.setMaxMetaCreateMs(filter.getMaxMetaCreateTimeMs());
+                    }
+                    // Has this filter finished creating tasks for good, i.e. is there
+                    // any possibility of getting more tasks in future?
+                    if (reachedLimit ||
+                            (tracker.getMaxMetaCreateMs() != null && tracker.getMetaCreateMs() != null
+                                    && tracker.getMetaCreateMs() > tracker.getMaxMetaCreateMs())) {
+                        LOGGER.debug(() ->
+                                "processProcessorFilter() - Completed task creation for bounded filter " +
+                                        filter.getId());
+                        LOGGER.trace(() ->
+                                "processProcessorFilter() - Completed task creation for bounded filter " +
+                                        filter);
+                        tracker.setStatus(ProcessorFilterTracker.COMPLETE);
+                    }
+
+                    // Save the tracker state within the transaction.
+                    processorFilterTrackerDao.update(context, tracker);
+
+                    return 1;
+                });
             });
 
             final List<ProcessorTask> list;
@@ -581,11 +589,11 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 list = Collections.emptyList();
             }
 
-            consumer.accept(new CreatedTasks(
+            return new CreatedTasks(
                     list,
                     creationState.availableTasksCreated,
                     creationState.totalTasksCreated,
-                    creationState.eventCount));
+                    creationState.eventCount);
         }
     }
 

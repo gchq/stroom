@@ -21,7 +21,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.inject.Singleton;
 
@@ -84,15 +83,15 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     }
 
     @Override
-    public void createNewTasks(final ProcessorFilter filter,
-                               final ProcessorFilterTracker tracker,
-                               final long metaQueryTime,
-                               final Map<Meta, InclusiveRanges> metaMap,
-                               final String thisNodeName,
-                               final Long maxMetaId,
-                               final boolean reachedLimit,
-                               final boolean fillTaskQueue,
-                               final Consumer<CreatedTasks> consumer) {
+    public CreatedTasks createNewTasks(final ProcessorFilter filter,
+                                       final ProcessorFilterTracker tracker,
+                                       final ProgressMonitor progressMonitor,
+                                       final long metaQueryTime,
+                                       final Map<Meta, InclusiveRanges> metaMap,
+                                       final String thisNodeName,
+                                       final Long maxMetaId,
+                                       final boolean reachedLimit,
+                                       final boolean fillTaskQueue) {
         final long now = System.currentTimeMillis();
 
         metaMap.forEach((meta, eventRanges) -> {
@@ -123,6 +122,8 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
 
             dao.create(task);
         });
+
+        return null;
     }
 
     @Override
