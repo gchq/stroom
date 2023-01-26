@@ -1,7 +1,5 @@
 package stroom.util.logging;
 
-import stroom.util.logging.DurationTimer.DurationResult;
-
 import org.slf4j.Logger;
 import org.slf4j.Marker;
 
@@ -160,11 +158,11 @@ public final class BasicLambdaLogger implements LambdaLogger {
     public <T> T logDurationIfTraceEnabled(final Supplier<T> timedWork,
                                            final Supplier<String> workDescriptionSupplier) {
         if (logger.isTraceEnabled()) {
-            final DurationResult<T> durationResult = DurationTimer.measure(timedWork);
-            final Duration duration = durationResult.getDuration();
-            final T result = durationResult.getResult();
+            final DurationTimer durationTimer = DurationTimer.start();
+            final T result = timedWork.get();
+            final Duration duration = durationTimer.get();
             try {
-                logger.trace(DurationTimer.getDurationMessage(workDescriptionSupplier.get(), duration));
+                logger.trace(LogUtil.getDurationMessage(workDescriptionSupplier.get(), duration));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -178,11 +176,11 @@ public final class BasicLambdaLogger implements LambdaLogger {
     public <T> T logDurationIfTraceEnabled(final Supplier<T> timedWork,
                                            final Function<T, String> workDescriptionFunction) {
         if (logger.isTraceEnabled()) {
-            final DurationResult<T> durationResult = DurationTimer.measure(timedWork);
-            final Duration duration = durationResult.getDuration();
-            final T result = durationResult.getResult();
+            final DurationTimer durationTimer = DurationTimer.start();
+            final T result = timedWork.get();
+            final Duration duration = durationTimer.get();
             try {
-                logger.trace(DurationTimer.getDurationMessage(workDescriptionFunction.apply(result), duration));
+                logger.trace(LogUtil.getDurationMessage(workDescriptionFunction.apply(result), duration));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -196,11 +194,11 @@ public final class BasicLambdaLogger implements LambdaLogger {
     public <T> T logDurationIfDebugEnabled(final Supplier<T> timedWork,
                                            final Supplier<String> workDescriptionSupplier) {
         if (logger.isDebugEnabled()) {
-            final DurationResult<T> durationResult = DurationTimer.measure(timedWork);
-            final Duration duration = durationResult.getDuration();
-            final T result = durationResult.getResult();
+            final DurationTimer durationTimer = DurationTimer.start();
+            final T result = timedWork.get();
+            final Duration duration = durationTimer.get();
             try {
-                logger.debug(DurationTimer.getDurationMessage(workDescriptionSupplier.get(), duration));
+                logger.debug(LogUtil.getDurationMessage(workDescriptionSupplier.get(), duration));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -214,11 +212,11 @@ public final class BasicLambdaLogger implements LambdaLogger {
     public <T> T logDurationIfDebugEnabled(final Supplier<T> timedWork,
                                            final Function<T, String> workDescriptionFunction) {
         if (logger.isDebugEnabled()) {
-            final DurationResult<T> durationResult = DurationTimer.measure(timedWork);
-            final Duration duration = durationResult.getDuration();
-            final T result = durationResult.getResult();
+            final DurationTimer durationTimer = DurationTimer.start();
+            final T result = timedWork.get();
+            final Duration duration = durationTimer.get();
             try {
-                logger.debug(DurationTimer.getDurationMessage(workDescriptionFunction.apply(result), duration));
+                logger.debug(LogUtil.getDurationMessage(workDescriptionFunction.apply(result), duration));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -232,11 +230,11 @@ public final class BasicLambdaLogger implements LambdaLogger {
     public <T> T logDurationIfInfoEnabled(final Supplier<T> timedWork,
                                           final Supplier<String> workDescriptionSupplier) {
         if (logger.isInfoEnabled()) {
-            final DurationResult<T> durationResult = DurationTimer.measure(timedWork);
-            final Duration duration = durationResult.getDuration();
-            final T result = durationResult.getResult();
+            final DurationTimer durationTimer = DurationTimer.start();
+            final T result = timedWork.get();
+            final Duration duration = durationTimer.get();
             try {
-                logger.info(DurationTimer.getDurationMessage(workDescriptionSupplier.get(), duration));
+                logger.info(LogUtil.getDurationMessage(workDescriptionSupplier.get(), duration));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -250,11 +248,11 @@ public final class BasicLambdaLogger implements LambdaLogger {
     public <T> T logDurationIfInfoEnabled(final Supplier<T> timedWork,
                                           final Function<T, String> workDescriptionFunction) {
         if (logger.isInfoEnabled()) {
-            final DurationResult<T> durationResult = DurationTimer.measure(timedWork);
-            final Duration duration = durationResult.getDuration();
-            final T result = durationResult.getResult();
+            final DurationTimer durationTimer = DurationTimer.start();
+            final T result = timedWork.get();
+            final Duration duration = durationTimer.get();
             try {
-                logger.info(DurationTimer.getDurationMessage(workDescriptionFunction.apply(result), duration));
+                logger.info(LogUtil.getDurationMessage(workDescriptionFunction.apply(result), duration));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -270,7 +268,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
         if (logger.isTraceEnabled()) {
             final Duration duration = DurationTimer.measure(timedWork);
             try {
-                logger.trace(DurationTimer.getDurationMessage(workDescriptionSupplier.get(), duration));
+                logger.trace(LogUtil.getDurationMessage(workDescriptionSupplier.get(), duration));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -285,7 +283,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
         if (logger.isDebugEnabled()) {
             final Duration duration = DurationTimer.measure(timedWork);
             try {
-                logger.debug(DurationTimer.getDurationMessage(workDescriptionSupplier.get(), duration));
+                logger.debug(LogUtil.getDurationMessage(workDescriptionSupplier.get(), duration));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -300,7 +298,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
         if (logger.isInfoEnabled()) {
             final Duration duration = DurationTimer.measure(timedWork);
             try {
-                logger.info(DurationTimer.getDurationMessage(workDescriptionSupplier.get(), duration));
+                logger.info(LogUtil.getDurationMessage(workDescriptionSupplier.get(), duration));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }

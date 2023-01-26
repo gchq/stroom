@@ -1,8 +1,8 @@
 package stroom.processor.impl;
 
-import stroom.processor.impl.ProgressMonitor.CountResult;
 import stroom.processor.impl.ProgressMonitor.Phase;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -32,8 +32,10 @@ class TestProgressMonitor {
                 150);
 
         for (final Phase phase : Phase.values()) {
-            progressMonitor.logPhase(phase, PROCESSOR_FILTER_1, () -> new CountResult<>(10));
-            progressMonitor.logPhase(phase, PROCESSOR_FILTER_2, () -> new CountResult<>(20));
+            DurationTimer durationTimer = DurationTimer.start();
+            progressMonitor.log(phase, PROCESSOR_FILTER_1, durationTimer, 10);
+            durationTimer = DurationTimer.start();
+            progressMonitor.log(phase, PROCESSOR_FILTER_2, durationTimer, 20);
         }
 
         final String str = LogUtil.inBoxOnNewLine(progressMonitor.getSummary());
@@ -49,8 +51,10 @@ class TestProgressMonitor {
                 150);
 
         for (final Phase phase : Phase.values()) {
-            progressMonitor.logPhase(phase, PROCESSOR_FILTER_1, () -> new CountResult<>(10));
-            progressMonitor.logPhase(phase, PROCESSOR_FILTER_2, () -> new CountResult<>(20));
+            DurationTimer durationTimer = DurationTimer.start();
+            progressMonitor.log(phase, PROCESSOR_FILTER_1, durationTimer, 10);
+            durationTimer = DurationTimer.start();
+            progressMonitor.log(phase, PROCESSOR_FILTER_2, durationTimer, 20);
         }
         final String str = LogUtil.inBoxOnNewLine(progressMonitor.getDetail());
         LOGGER.info(str);

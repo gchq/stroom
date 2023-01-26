@@ -3,6 +3,7 @@ package stroom.util.logging;
 import com.google.common.base.Strings;
 import org.slf4j.helpers.MessageFormatter;
 
+import java.time.Duration;
 import java.util.stream.Collectors;
 
 public final class LogUtil {
@@ -90,10 +91,22 @@ public final class LogUtil {
                     .collect(Collectors.joining("\n"));
 
             final String boxFormat = """
-                {}{}
-                {}
-                {}""";
-            return message(boxFormat, (addNewLine ? "\n" : ""), topBottomBorder, boxText, topBottomBorder);
+                    {}{}
+                    {}
+                    {}""";
+            return message(boxFormat,
+                    (addNewLine
+                            ? "\n"
+                            : ""),
+                    topBottomBorder,
+                    boxText,
+                    topBottomBorder);
         }
+    }
+
+    public static String getDurationMessage(final String work, final Duration duration) {
+        return LogUtil.message("Completed [{}] in {}",
+                work,
+                duration);
     }
 }

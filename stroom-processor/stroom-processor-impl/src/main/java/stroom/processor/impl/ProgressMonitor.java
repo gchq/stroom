@@ -3,7 +3,6 @@ package stroom.processor.impl;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.util.NullSafe;
 import stroom.util.logging.DurationTimer;
-import stroom.util.logging.DurationTimer.DurationResult;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -21,7 +20,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 
 /**
  * Holds state relating to the progress of creation of tasks by the master node
@@ -186,19 +184,11 @@ public class ProgressMonitor {
         return String.valueOf(totalQueuedCount.get());
     }
 
-    public <R> R logPhase(final Phase phase,
-                          final ProcessorFilter filter,
-                          final Supplier<CountResult<R>> supplier) {
-        return logPhaseDuration(phase, filter, DurationTimer.measure(supplier));
-    }
-
-    public <R> R logPhaseDuration(final Phase phase,
-                                  final ProcessorFilter filter,
-                                  final DurationResult<CountResult<R>> durationResult) {
-        final Duration duration = durationResult.getDuration();
-        final CountResult<R> countResult = durationResult.getResult();
-        final R result = countResult.getResult();
-        final long count = countResult.getCount();
+    public void log(final Phase phase,
+                    final ProcessorFilter filter,
+                    final DurationTimer durationTimer,
+                    final long count) {
+        final Duration duration = durationTimer.get();
         LOGGER.trace(() -> {
             final String filterInfo = NullSafe.isEmptyString(filter.getPipelineName())
                     ? ""
@@ -219,8 +209,6 @@ public class ProgressMonitor {
                 .computeIfAbsent(phase, k -> new PhaseDetails(phase));
 
         phaseDetails.increment(count, duration);
-
-        return result;
     }
 
 
@@ -276,30 +264,6 @@ public class ProgressMonitor {
             this.calls.addAndGet(phaseDetails.calls.get());
             this.count.addAndGet(phaseDetails.count.get());
             durationRef.accumulateAndGet(phaseDetails.durationRef.get(), Duration::plus);
-        }
-    }
-
-    public static class CountResult<R> {
-
-        private final long count;
-        private final R result;
-
-        public CountResult(final long count) {
-            this.count = count;
-            this.result = null;
-        }
-
-        public CountResult(final long count, final R result) {
-            this.count = count;
-            this.result = result;
-        }
-
-        public long getCount() {
-            return count;
-        }
-
-        public R getResult() {
-            return result;
         }
     }
 }
