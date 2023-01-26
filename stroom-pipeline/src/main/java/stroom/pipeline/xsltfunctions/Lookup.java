@@ -37,6 +37,8 @@ class Lookup extends AbstractLookup {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Lookup.class);
 
+    public static final String FUNCTION_NAME = "lookup";
+
     @Inject
     Lookup(final ReferenceData referenceData,
            final MetaHolder metaHolder,

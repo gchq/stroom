@@ -2,9 +2,6 @@ package stroom.pipeline.xsltfunctions;
 
 import stroom.data.shared.StreamTypeNames;
 import stroom.feed.shared.FeedDoc;
-import stroom.pipeline.LocationFactory;
-import stroom.pipeline.errorhandler.ErrorReceiver;
-import stroom.pipeline.refdata.LookupIdentifier;
 import stroom.pipeline.refdata.ReferenceData;
 import stroom.pipeline.refdata.ReferenceDataResult;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
@@ -14,12 +11,13 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.xsltfunctions.AbstractLookup.SequenceMaker;
 import stroom.pipeline.xsltfunctions.AbstractLookup.SequenceMakerFactory;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
-import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -38,7 +36,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @ExtendWith(MockitoExtension.class)
-class TestLookup {
+class TestLookup extends AbstractXsltFunctionTest<Lookup> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestLookup.class);
 
@@ -47,14 +45,11 @@ class TestLookup {
 
     @Mock
     private ReferenceData mockReferenceData;
+
+    @SuppressWarnings("unused") // Used by @InjectMocks
     @Mock
     private MetaHolder mockMetaHolder;
-    @Mock
-    private XPathContext mockXPathContext;
-    @Mock
-    private LocationFactory mockLocationFactory;
-    @Mock
-    private ErrorReceiver mockErrorReceiver;
+
     @Mock
     private SequenceMakerFactory mockSequenceMakerFactory;
 
@@ -66,20 +61,20 @@ class TestLookup {
     @Captor
     private ArgumentCaptor<String> messageCaptor;
 
+    private List<PipelineReference> pipelineReferences;
+
     @Test
     void doLookup_noRefLoaders() throws XPathException {
-        final List<PipelineReference> pipelineReferences = new ArrayList<>();
+        pipelineReferences = new ArrayList<>();
 
-        initSequenceMaker(false, false);
-
-        doLookup(pipelineReferences);
+        doLookup();
 
         // Should call this once with the combined messages for the lookup
-        Mockito.verify(mockErrorReceiver).log(
+        Mockito.verify(getMockErrorReceiver()).log(
                 severityCaptor.capture(), Mockito.any(), Mockito.any(), messageCaptor.capture(), Mockito.any());
 
         // Doesn't use this method
-        Mockito.verify(mockErrorReceiver, Mockito.never()).logTemplate(
+        Mockito.verify(getMockErrorReceiver(), Mockito.never()).logTemplate(
                 Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
 
         assertLoggedTopLevelSeverity(Severity.ERROR, "no reference loaders");
@@ -87,7 +82,7 @@ class TestLookup {
 
     @Test
     void doLookup_onePipeRef_noEffStrms() throws XPathException {
-        final List<PipelineReference> pipelineReferences = List.of(
+        pipelineReferences = List.of(
                 new PipelineReference(
                         PipelineDoc.buildDocRef().randomUuid().name("MyPipe").build(),
                         FeedDoc.buildDocRef().randomUuid().name("MY_FEED").build(),
@@ -102,14 +97,14 @@ class TestLookup {
                         }).when(mockReferenceData)
                 .ensureReferenceDataAvailability(Mockito.any(), Mockito.any(), Mockito.any());
 
-        doLookup(pipelineReferences);
+        doLookup();
 
         // Should call this once with the combined messages for the lookup
-        Mockito.verify(mockErrorReceiver).log(
+        Mockito.verify(getMockErrorReceiver()).log(
                 severityCaptor.capture(), Mockito.any(), Mockito.any(), messageCaptor.capture(), Mockito.any());
 
         // Doesn't use this method
-        Mockito.verify(mockErrorReceiver, Mockito.never()).logTemplate(
+        Mockito.verify(getMockErrorReceiver(), Mockito.never()).logTemplate(
                 Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
 
         assertLoggedTopLevelSeverity(Severity.WARNING, "no effective streams");
@@ -117,7 +112,7 @@ class TestLookup {
 
     @Test
     void doLookup_onePipeRef_mapNotInEffStrms() throws Exception {
-        final List<PipelineReference> pipelineReferences = List.of(
+        pipelineReferences = List.of(
                 new PipelineReference(
                         PipelineDoc.buildDocRef().randomUuid().name("MyPipe").build(),
                         FeedDoc.buildDocRef().randomUuid().name("MY_FEED").build(),
@@ -141,14 +136,14 @@ class TestLookup {
                         }).when(mockReferenceData)
                 .ensureReferenceDataAvailability(Mockito.any(), Mockito.any(), Mockito.any());
 
-        doLookup(pipelineReferences);
+        doLookup();
 
         // Should call this once with the combined messages for the lookup
-        Mockito.verify(mockErrorReceiver).log(
+        Mockito.verify(getMockErrorReceiver()).log(
                 severityCaptor.capture(), Mockito.any(), Mockito.any(), messageCaptor.capture(), Mockito.any());
 
         // Doesn't use this method
-        Mockito.verify(mockErrorReceiver, Mockito.never()).logTemplate(
+        Mockito.verify(getMockErrorReceiver(), Mockito.never()).logTemplate(
                 Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
 
         assertLoggedTopLevelSeverity(Severity.WARNING, "map not found in effective streams");
@@ -156,7 +151,7 @@ class TestLookup {
 
     @Test
     void doLookup_onePipeRef_lookupNoValue() throws Exception {
-        final List<PipelineReference> pipelineReferences = List.of(
+        pipelineReferences = List.of(
                 new PipelineReference(
                         PipelineDoc.buildDocRef().randomUuid().name("MyPipe").build(),
                         FeedDoc.buildDocRef().randomUuid().name("MY_FEED").build(),
@@ -186,14 +181,14 @@ class TestLookup {
                         }).when(mockReferenceData)
                 .ensureReferenceDataAvailability(Mockito.any(), Mockito.any(), Mockito.any());
 
-        doLookup(pipelineReferences);
+        doLookup();
 
         // Should call this once with the combined messages for the lookup
-        Mockito.verify(mockErrorReceiver).log(
+        Mockito.verify(getMockErrorReceiver()).log(
                 severityCaptor.capture(), Mockito.any(), Mockito.any(), messageCaptor.capture(), Mockito.any());
 
         // Doesn't use this method
-        Mockito.verify(mockErrorReceiver, Mockito.never()).logTemplate(
+        Mockito.verify(getMockErrorReceiver(), Mockito.never()).logTemplate(
                 Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
 
         assertLoggedTopLevelSeverity(Severity.WARNING, "key not found");
@@ -201,7 +196,7 @@ class TestLookup {
 
     @Test
     void doLookup_onePipeRef_lookupSuccess() throws Exception {
-        final List<PipelineReference> pipelineReferences = List.of(
+        pipelineReferences = List.of(
                 new PipelineReference(
                         PipelineDoc.buildDocRef().randomUuid().name("MyPipe").build(),
                         FeedDoc.buildDocRef().randomUuid().name("MY_FEED").build(),
@@ -231,14 +226,14 @@ class TestLookup {
                         }).when(mockReferenceData)
                 .ensureReferenceDataAvailability(Mockito.any(), Mockito.any(), Mockito.any());
 
-        doLookup(pipelineReferences);
+        doLookup();
 
         // Should call this once with the combined messages for the lookup
-        Mockito.verify(mockErrorReceiver).log(
+        Mockito.verify(getMockErrorReceiver()).log(
                 severityCaptor.capture(), Mockito.any(), Mockito.any(), messageCaptor.capture(), Mockito.any());
 
         // Doesn't use this method
-        Mockito.verify(mockErrorReceiver, Mockito.never()).logTemplate(
+        Mockito.verify(getMockErrorReceiver(), Mockito.never()).logTemplate(
                 Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
 
         assertLoggedTopLevelSeverity(Severity.INFO, "key found");
@@ -246,7 +241,7 @@ class TestLookup {
 
     @Test
     void doLookup_onePipeRef_lookupSuccess_noTrace() throws Exception {
-        final List<PipelineReference> pipelineReferences = List.of(
+        pipelineReferences = List.of(
                 new PipelineReference(
                         PipelineDoc.buildDocRef().randomUuid().name("MyPipe").build(),
                         FeedDoc.buildDocRef().randomUuid().name("MY_FEED").build(),
@@ -276,14 +271,14 @@ class TestLookup {
                         }).when(mockReferenceData)
                 .ensureReferenceDataAvailability(Mockito.any(), Mockito.any(), Mockito.any());
 
-        doLookup(pipelineReferences, false, false);
+        doLookup(false, false);
 
         // Should call this once with the combined messages for the lookup
-        Mockito.verify(mockErrorReceiver, Mockito.never()).log(
+        Mockito.verify(getMockErrorReceiver(), Mockito.never()).log(
                 severityCaptor.capture(), Mockito.any(), Mockito.any(), messageCaptor.capture(), Mockito.any());
 
         // Doesn't use this method
-        Mockito.verify(mockErrorReceiver, Mockito.never()).logTemplate(
+        Mockito.verify(getMockErrorReceiver(), Mockito.never()).logTemplate(
                 Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
 
 //        assertLoggedTopLevelSeverity(Severity.INFO, "success");
@@ -321,18 +316,36 @@ class TestLookup {
         }
     }
 
-    private void doLookup(final List<PipelineReference> pipelineReferences) {
-        doLookup(pipelineReferences, false, true);
+    private void doLookup() throws XPathException {
+        doLookup(false, true);
     }
 
-    private void doLookup(final List<PipelineReference> pipelineReferences,
-                          final boolean isIgnoreWarnings,
-                          final boolean isTrace) {
+    private void doLookup(final boolean isIgnoreWarnings,
+                          final boolean isTrace) throws XPathException {
 
-        lookup.configure(mockErrorReceiver, mockLocationFactory, pipelineReferences);
+        final Sequence sequence = callFunctionWithSimpleArgs(
+                MAP,
+                KEY,
+                Instant.now(),
+                isIgnoreWarnings,
+                isTrace);
 
-        final LookupIdentifier lookupIdentifier = LookupIdentifier.of(MAP, KEY, Instant.now().toEpochMilli());
+        LOGGER.info("result: {} (class: {})",
+                sequence, NullSafe.get(sequence, Object::getClass, Class::getSimpleName));
+    }
 
-        lookup.doLookup(mockXPathContext, isIgnoreWarnings, isTrace, lookupIdentifier);
+    @Override
+    Lookup getXsltFunction() {
+        return lookup;
+    }
+
+    @Override
+    String getFunctionName() {
+        return Lookup.FUNCTION_NAME;
+    }
+
+    @Override
+    public List<PipelineReference> getPipelineReferences() {
+        return pipelineReferences;
     }
 }

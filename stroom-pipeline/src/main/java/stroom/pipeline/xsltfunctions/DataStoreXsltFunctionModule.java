@@ -40,7 +40,7 @@ public class DataStoreXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         LookupFunction(final Provider<Lookup> functionCallProvider) {
             super(
-                    "lookup",
+                    Lookup.FUNCTION_NAME,
                     2,
                     5,
                     new SequenceType[]{
