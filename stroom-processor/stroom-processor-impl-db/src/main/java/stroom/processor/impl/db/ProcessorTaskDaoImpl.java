@@ -25,6 +25,7 @@ import stroom.processor.impl.CreatedTasks;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorTaskDao;
 import stroom.processor.impl.ProgressMonitor;
+import stroom.processor.impl.ProgressMonitor.CountResult;
 import stroom.processor.impl.ProgressMonitor.Phase;
 import stroom.processor.impl.db.jooq.Tables;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorTaskRecord;
@@ -272,9 +273,10 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
      * Release tasks and make them unowned.
      *
      * @param nodeName The node name to release task ownership for.
+     * @return The number of tasks released.
      */
     @Override
-    public void releaseOwnedTasks(final String nodeName) {
+    public long releaseOwnedTasks(final String nodeName) {
         LOGGER.info(() -> "Releasing owned tasks for " + nodeName);
         final List<Condition> conditions = new ArrayList<>();
 
@@ -291,6 +293,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
         LOGGER.info(() -> "Set " + count + " tasks back to UNPROCESSED that were " +
                 "UNPROCESSED, ASSIGNED, PROCESSING");
+
+        return count;
     }
 
     /**
@@ -298,9 +302,10 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
      *
      * @param retainForNodes  A set of nodes to retain task ownership for.
      * @param statusOlderThan Change task ownership for tasks that have a status older than this.
+     * @return The number of tasks released.
      */
     @Override
-    public void retainOwnedTasks(final Set<String> retainForNodes, final Instant statusOlderThan) {
+    public long retainOwnedTasks(final Set<String> retainForNodes, final Instant statusOlderThan) {
         LOGGER.info(() -> "Retaining owned tasks");
         final List<Condition> conditions = new ArrayList<>();
 
@@ -320,6 +325,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
         LOGGER.info(() -> "Set " + count + " tasks back to UNPROCESSED that were " +
                 "UNPROCESSED, ASSIGNED, PROCESSING");
+
+        return count;
     }
 
     private long releaseTasks(final List<Condition> conditions) {
@@ -465,7 +472,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                             LOGGER.error(e::getMessage, e);
                             throw e;
                         }
-                        return allBindValues.length;
+                        return new CountResult<>(allBindValues.length);
                     });
 
                     // Select them back.
@@ -491,7 +498,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                             LOGGER.error(e::getMessage, e);
                             throw e;
                         }
-                        return creationState.selectedTaskCount;
+                        return new CountResult<>(creationState.selectedTaskCount);
                     });
                 }
 
@@ -579,7 +586,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     // Save the tracker state within the transaction.
                     processorFilterTrackerDao.update(context, tracker);
 
-                    return 1;
+                    return new CountResult<>(1);
                 });
             });
 
@@ -751,7 +758,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
     private void executeInsert(final BatchBindStep batchBindStep, final int rowCount) {
         try {
-            LOGGER.logDurationIfDebugEnabled(
+            LOGGER.logDurationIfTraceEnabled(
                     batchBindStep::execute,
                     () -> LogUtil.message("Execute for {} rows", rowCount));
         } catch (final RuntimeException e) {

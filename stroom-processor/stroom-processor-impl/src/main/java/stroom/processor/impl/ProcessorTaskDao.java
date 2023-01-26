@@ -23,16 +23,18 @@ public interface ProcessorTaskDao {
      * Release tasks and make them unowned.
      *
      * @param nodeName The node name to release task ownership for.
+     * @return The number of tasks released.
      */
-    void releaseOwnedTasks(String nodeName);
+    long releaseOwnedTasks(String nodeName);
 
     /**
      * Retain task ownership
      *
      * @param retainForNodes  A set of nodes to retain task ownership for.
      * @param statusOlderThan Change task ownership for tasks that have a status older than this.
+     * @return The number of tasks released.
      */
-    void retainOwnedTasks(Set<String> retainForNodes,
+    long retainOwnedTasks(Set<String> retainForNodes,
                           Instant statusOlderThan);
 
     /**

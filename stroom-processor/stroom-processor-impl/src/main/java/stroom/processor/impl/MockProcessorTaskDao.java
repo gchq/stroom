@@ -30,17 +30,17 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     private final MockIntCrud<ProcessorTask> dao = new MockIntCrud<>();
 
     @Override
-    public void releaseOwnedTasks(final String nodeName) {
-        releaseTasks(Set.of(nodeName), null, null);
+    public long releaseOwnedTasks(final String nodeName) {
+        return releaseTasks(Set.of(nodeName), null, null);
     }
 
     @Override
-    public void retainOwnedTasks(final Set<String> retainForNodes,
+    public long retainOwnedTasks(final Set<String> retainForNodes,
                                  final Instant statusOlderThan) {
-        releaseTasks(null, retainForNodes, statusOlderThan);
+        return releaseTasks(null, retainForNodes, statusOlderThan);
     }
 
-    private void releaseTasks(final Set<String> releaseForNodes,
+    private long releaseTasks(final Set<String> releaseForNodes,
                               final Set<String> retainForNodes,
                               final Instant statusOlderThan) {
         final long now = System.currentTimeMillis();
@@ -80,6 +80,7 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
                 }
             }
         });
+        return 0L;
     }
 
     @Override

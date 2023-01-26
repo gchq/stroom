@@ -2,11 +2,15 @@ package stroom.processor.impl;
 
 import stroom.processor.shared.ProcessorFilter;
 import stroom.util.NullSafe;
+import stroom.util.logging.DurationTimer;
+import stroom.util.logging.DurationTimer.DurationResult;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -16,8 +20,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 /**
  * Holds state relating to the progress of creation of tasks by the master node
@@ -28,8 +32,6 @@ public class ProgressMonitor {
     private final AtomicInteger totalQueuedCount = new AtomicInteger();
     private final List<CompletableFuture<?>> futures = new ArrayList<>();
 
-    // Probably don't need this anymore as we are relying on the ordinal sorting of the Phase enum
-    private final Map<ProcessorFilter, List<PhaseDetails>> filterToPhaseDetailsListMap = new ConcurrentHashMap<>();
     private final Map<ProcessorFilter, Map<Phase, PhaseDetails>> filterToPhaseDetailsMapMap = new ConcurrentHashMap<>();
 
     private final int totalFilterCount;
@@ -74,14 +76,25 @@ public class ProgressMonitor {
         futures.add(future);
     }
 
+    public void report() {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(() -> {
+                final String detail = getDetail();
+                return LogUtil.inBoxOnNewLine("{}{}{}",
+                        getSummary(),
+                        (detail.isBlank()
+                                ? ""
+                                : "\n"),
+                        detail);
+            });
+        } else {
+            LOGGER.info(() ->
+                    LogUtil.inBoxOnNewLine(getSummary()));
+        }
+    }
+
     public String getSummary() {
         final Map<Phase, PhaseDetails> combinedPhaseDetailsMap = new HashMap<>();
-
-        // Ensure we have all phases, even if they have not been logged
-        for (final Phase phase : Phase.values()) {
-            combinedPhaseDetailsMap.computeIfAbsent(phase, k -> new PhaseDetails(phase));
-        }
-
         for (final Entry<ProcessorFilter, Map<Phase, PhaseDetails>> entry : filterToPhaseDetailsMapMap.entrySet()) {
             for (final Entry<Phase, PhaseDetails> entry2 : entry.getValue().entrySet()) {
                 final Phase phase = entry2.getKey();
@@ -102,14 +115,7 @@ public class ProgressMonitor {
         sb.append(Duration.ofMillis(System.currentTimeMillis() - startTime));
         sb.append("\n");
 
-        // Relies on enum order being correct
-        final List<PhaseDetails> phaseDetailsList = combinedPhaseDetailsMap.entrySet()
-                .stream()
-                .sorted(Entry.comparingByKey())
-                .map(Entry::getValue)
-                .collect(Collectors.toList());
-
-        appendPhaseDetails(sb, phaseDetailsList);
+        appendPhaseDetails(sb, combinedPhaseDetailsMap.values());
 
         return sb.toString();
     }
@@ -117,13 +123,12 @@ public class ProgressMonitor {
     public String getDetail() {
         final StringBuilder sb = new StringBuilder();
 
-        for (final ProcessorFilter filter : filterToPhaseDetailsMapMap.keySet()) {
+        for (final Entry<ProcessorFilter, Map<Phase, PhaseDetails>> entry : filterToPhaseDetailsMapMap.entrySet()) {
             sb.append("Filter (");
-            appendFilter(sb, filter);
+            appendFilter(sb, entry.getKey());
             sb.append(")\n");
-            final List<PhaseDetails> phaseDetailsList = filterToPhaseDetailsListMap.get(filter);
 
-            appendPhaseDetails(sb, phaseDetailsList);
+            appendPhaseDetails(sb, entry.getValue().values());
 
             sb.append("\n");
         }
@@ -133,7 +138,7 @@ public class ProgressMonitor {
     }
 
     private void appendPhaseDetails(final StringBuilder sb,
-                                    final List<PhaseDetails> phaseDetailsList) {
+                                    final Collection<PhaseDetails> phaseDetailsList) {
         phaseDetailsList.stream()
                 .sorted(Comparator.comparing(phaseDetails -> phaseDetails.phase))
                 .forEach(phaseDetails -> {
@@ -143,7 +148,7 @@ public class ProgressMonitor {
                     sb.append(" (");
                     sb.append(phaseDetails.calls.get());
                     sb.append(" calls in ");
-                    sb.append(Duration.ofMillis(phaseDetails.duration.get()));
+                    sb.append(phaseDetails.durationRef.get());
                     sb.append(")\n");
                 });
     }
@@ -159,20 +164,20 @@ public class ProgressMonitor {
 
     public void waitForCompletion() {
         if (!futures.isEmpty()) {
-            // Some of task creation is async (tasks for search queries) so we need
+            // Some task creation is async (tasks for search queries) so we need
             // to wait for them to finish
             final CompletableFuture<Void> allOfFuture = CompletableFuture.allOf(
-                    futures.toArray(new CompletableFuture[futures.size()]));
+                    futures.toArray(new CompletableFuture[0]));
 
-            LOGGER.debug("Waiting for all async task creation to be completed");
+            LOGGER.trace("Waiting for all async task creation to be completed");
 
-            LOGGER.logDurationIfDebugEnabled(
+            LOGGER.logDurationIfTraceEnabled(
                     allOfFuture::join,
                     "Wait for futures to complete");
 
             allOfFuture.join();
         } else {
-            LOGGER.debug("No futures to wait for");
+            LOGGER.trace("No futures to wait for");
         }
     }
 
@@ -181,14 +186,20 @@ public class ProgressMonitor {
         return String.valueOf(totalQueuedCount.get());
     }
 
-    public void logPhase(final Phase phase,
-                         final ProcessorFilter filter,
-                         final Supplier<Integer> supplier) {
+    public <R> R logPhase(final Phase phase,
+                          final ProcessorFilter filter,
+                          final Supplier<CountResult<R>> supplier) {
+        return logPhaseDuration(phase, filter, DurationTimer.measure(supplier));
+    }
 
-        final long startTime = System.currentTimeMillis();
-        final int count = supplier.get();
-        final long duration = System.currentTimeMillis() - startTime;
-        LOGGER.debug(() -> {
+    public <R> R logPhaseDuration(final Phase phase,
+                                  final ProcessorFilter filter,
+                                  final DurationResult<CountResult<R>> durationResult) {
+        final Duration duration = durationResult.getDuration();
+        final CountResult<R> countResult = durationResult.getResult();
+        final R result = countResult.getResult();
+        final long count = countResult.getCount();
+        LOGGER.trace(() -> {
             final String filterInfo = NullSafe.isEmptyString(filter.getPipelineName())
                     ? ""
                     : (" (pipeline: " + filter.getPipelineName() + ")");
@@ -200,29 +211,16 @@ public class ProgressMonitor {
                     filterInfo +
                     " with count " +
                     count + " in " +
-                    Duration.ofMillis(duration);
+                    duration;
         });
-        LOGGER.trace(() ->
-                "Completed phase " +
-                        phase.phaseName +
-                        " for filter " +
-                        filter +
-                        " with count " +
-                        count + " in " +
-                        Duration.ofMillis(duration));
 
         final PhaseDetails phaseDetails = filterToPhaseDetailsMapMap
                 .computeIfAbsent(filter, k -> new ConcurrentHashMap<>())
-                .computeIfAbsent(phase, k -> {
-                    // Ensure the same PhaseDetails exists in both map and list
-                    final PhaseDetails newPhaseDetails = new PhaseDetails(phase);
-                    filterToPhaseDetailsListMap.computeIfAbsent(filter, k2 ->
-                                    new ArrayList<>(Phase.values().length))
-                            .add(newPhaseDetails);
-                    return newPhaseDetails;
-                });
+                .computeIfAbsent(phase, k -> new PhaseDetails(phase));
 
         phaseDetails.increment(count, duration);
+
+        return result;
     }
 
 
@@ -232,10 +230,16 @@ public class ProgressMonitor {
     public enum Phase {
         // Order is important. It governs the order the phases have in the logging
         ADD_UNOWNED_TASKS("Add unowned tasks"),
+        ADD_UNOWNED_TASKS_FETCH_TASKS("Add unowned tasks -> Fetch tasks"),
+        ADD_UNOWNED_TASKS_FETCH_META("Add unowned tasks -> Fetch meta"),
+        ADD_UNOWNED_TASKS_QUEUE_TASKS("Add unowned tasks -> Queue tasks"),
+        CREATE_TASKS_FROM_SEARCH_QUERY("Create tasks from search query"),
+        CREATE_STREAM_MAP("Create stream map"),
+        FIND_META_FOR_FILTER("Find meta records matching filter"),
         INSERT_NEW_TASKS("Inserting new task records"),
         SELECT_NEW_TASKS("Selecting new task records"),
         UPDATE_TRACKERS("Update trackers"),
-        ;
+        RELEASE_TASKS_FOR_DISABLED_FILTERS("Release tasks for disabled filters");
 
         private final String phaseName;
 
@@ -255,23 +259,47 @@ public class ProgressMonitor {
 
         private final Phase phase;
         private final AtomicInteger calls = new AtomicInteger();
-        private final AtomicInteger count = new AtomicInteger();
-        private final AtomicLong duration = new AtomicLong();
+        private final AtomicLong count = new AtomicLong();
+        private final AtomicReference<Duration> durationRef = new AtomicReference<>(Duration.ofMillis(0));
 
         private PhaseDetails(final Phase phase) {
             this.phase = phase;
         }
 
-        public void increment(final int count, final long duration) {
+        public void increment(final long count, final Duration duration) {
             this.calls.incrementAndGet();
             this.count.addAndGet(count);
-            this.duration.addAndGet(duration);
+            durationRef.accumulateAndGet(duration, Duration::plus);
         }
 
         public void add(final PhaseDetails phaseDetails) {
             this.calls.addAndGet(phaseDetails.calls.get());
             this.count.addAndGet(phaseDetails.count.get());
-            this.duration.addAndGet(phaseDetails.duration.get());
+            durationRef.accumulateAndGet(phaseDetails.durationRef.get(), Duration::plus);
+        }
+    }
+
+    public static class CountResult<R> {
+
+        private final long count;
+        private final R result;
+
+        public CountResult(final long count) {
+            this.count = count;
+            this.result = null;
+        }
+
+        public CountResult(final long count, final R result) {
+            this.count = count;
+            this.result = result;
+        }
+
+        public long getCount() {
+            return count;
+        }
+
+        public R getResult() {
+            return result;
         }
     }
 }
