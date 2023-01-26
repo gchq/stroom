@@ -25,6 +25,7 @@ dependencies {
     compile libs.slf4j_api
     compile libs.validation_api
     compile libs.ws_rs_api
+    compile libs.xerces
 
     testCompile project(':stroom-test-common')
     testCompile libs.assertj_core

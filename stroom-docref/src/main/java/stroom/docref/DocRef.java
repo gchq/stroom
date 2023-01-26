@@ -273,7 +273,7 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, Has
         }
 
         /**
-         * Generate a new random UUID and set it as the uuid.
+         * Sets the uuid to a new random UUID.
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder randomUuid() {

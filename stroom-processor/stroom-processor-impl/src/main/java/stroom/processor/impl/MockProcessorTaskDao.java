@@ -17,10 +17,10 @@ import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.inject.Singleton;
 
@@ -30,17 +30,17 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     private final MockIntCrud<ProcessorTask> dao = new MockIntCrud<>();
 
     @Override
-    public void releaseOwnedTasks(final String nodeName) {
-        releaseTasks(Set.of(nodeName), null, null);
+    public long releaseOwnedTasks(final String nodeName) {
+        return releaseTasks(Set.of(nodeName), null, null);
     }
 
     @Override
-    public void retainOwnedTasks(final Set<String> retainForNodes,
+    public long retainOwnedTasks(final Set<String> retainForNodes,
                                  final Instant statusOlderThan) {
-        releaseTasks(null, retainForNodes, statusOlderThan);
+        return releaseTasks(null, retainForNodes, statusOlderThan);
     }
 
-    private void releaseTasks(final Set<String> releaseForNodes,
+    private long releaseTasks(final Set<String> releaseForNodes,
                               final Set<String> retainForNodes,
                               final Instant statusOlderThan) {
         final long now = System.currentTimeMillis();
@@ -80,18 +80,19 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
                 }
             }
         });
+        return 0L;
     }
 
     @Override
-    public void createNewTasks(final ProcessorFilter filter,
-                               final ProcessorFilterTracker tracker,
-                               final long metaQueryTime,
-                               final Map<Meta, InclusiveRanges> metaMap,
-                               final String thisNodeName,
-                               final Long maxMetaId,
-                               final boolean reachedLimit,
-                               final boolean assignNewTasks,
-                               final Consumer<CreatedTasks> consumer) {
+    public CreatedTasks createNewTasks(final ProcessorFilter filter,
+                                       final ProcessorFilterTracker tracker,
+                                       final ProgressMonitor progressMonitor,
+                                       final long metaQueryTime,
+                                       final Map<Meta, InclusiveRanges> metaMap,
+                                       final String thisNodeName,
+                                       final Long maxMetaId,
+                                       final boolean reachedLimit,
+                                       final boolean fillTaskQueue) {
         final long now = System.currentTimeMillis();
 
         metaMap.forEach((meta, eventRanges) -> {
@@ -101,7 +102,7 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
             task.setStatus(TaskStatus.UNPROCESSED);
             task.setStartTimeMs(now);
 
-            if (assignNewTasks && Status.UNLOCKED.equals(meta.getStatus())) {
+            if (fillTaskQueue && Status.UNLOCKED.equals(meta.getStatus())) {
                 task.setNodeName(thisNodeName);
 //                availableTasksCreated++;
             }
@@ -122,6 +123,24 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
 
             dao.create(task);
         });
+
+        return null;
+    }
+
+    @Override
+    public List<ProcessorTask> queueExistingTasks(final Set<Long> idSet,
+                                                  final String thisNodeName) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<ProcessorTask> assignTasks(final Set<Long> idSet, final String nodeName) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public int releaseTasks(final Set<Long> idSet) {
+        return 0;
     }
 
     @Override
