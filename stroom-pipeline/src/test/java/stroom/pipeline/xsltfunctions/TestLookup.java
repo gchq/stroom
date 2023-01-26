@@ -311,7 +311,7 @@ class TestLookup extends AbstractXsltFunctionTest<Lookup> {
                 .thenReturn(mockSequenceMaker);
 
         if (doesLookup) {
-            Mockito.when(mockSequenceMaker.consume(Mockito.any()))
+            Mockito.when(mockSequenceMaker.consume(Mockito.any(RefDataValueProxy.class)))
                     .thenReturn(isValueFound);
         }
     }

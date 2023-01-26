@@ -21,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 public abstract class AbstractXsltFunctionTest<T extends StroomExtensionFunctionCall> {
@@ -37,26 +38,55 @@ public abstract class AbstractXsltFunctionTest<T extends StroomExtensionFunction
     /**
      * Call the function with simple java objects as arguments. These will be converted
      * to a Sequence[]
+     *
      * @param args
      * @return
      * @throws XPathException
      */
-    protected Sequence callFunctionWithSimpleArgs(final Object... args) throws XPathException {
+    protected Sequence callFunctionWithSimpleArgs(final Object... args) {
 
         // Convert our simple java objects (e.g. String, long, etc.) into Sequence[]
         final Sequence[] functionArgs = buildFunctionArguments(args);
         return callFunctionWithSequenceArgs(functionArgs);
     }
 
-    protected Sequence callFunctionWithSequenceArgs(final Sequence[] args) throws XPathException {
+    protected Sequence callFunctionWithSequenceArgs(final Sequence[] args) {
         final T xsltFunction = getXsltFunction();
         final List<PipelineReference> pipelineReferences = getPipelineReferences();
         xsltFunction.configure(mockErrorReceiver, mockLocationFactory, pipelineReferences);
 
         final String functionName = getFunctionName();
         LOGGER.debug("Calling {} with args: {}", functionName, args);
-        final Sequence sequence = xsltFunction.call(functionName, mockXPathContext, args);
+        final Sequence sequence;
+        try {
+            sequence = xsltFunction.call(functionName, mockXPathContext, args);
+        } catch (XPathException e) {
+            throw new RuntimeException(
+                    "Error calling function " + functionName + ": " + e.getMessage(), e);
+        }
+
+        LOGGER.debug("Result type: {}, value: '{}'",
+                NullSafe.toString(
+                        sequence,
+                        sequence2 -> sequence2.getClass().getSimpleName()),
+                getStringValue(sequence).orElse("EMPTY"));
         return sequence;
+    }
+
+    protected static Optional<String> getStringValue(final Sequence sequence) {
+        return Optional.ofNullable(sequence)
+                .map(sequence2 -> {
+                    if (sequence2 instanceof StringValue) {
+                        return ((StringValue) sequence2).getStringValue();
+                    } else {
+                        return sequence.toString();
+                    }
+                });
+    }
+
+    protected static Optional<Long> getLongValue(final Sequence sequence) {
+        return getStringValue(sequence)
+                .map(Long::parseLong);
     }
 
     /**
@@ -105,6 +135,7 @@ public abstract class AbstractXsltFunctionTest<T extends StroomExtensionFunction
 
     /**
      * Converts a list of objects into an array of {@link Sequence}
+     *
      * @param args
      * @return
      */

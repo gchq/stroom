@@ -213,7 +213,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         FormatDateFunction(final Provider<FormatDate> functionCallProvider) {
             super(
-                    "format-date",
+                    FormatDate.FUNCTION_NAME,
                     1,
                     5,
                     new SequenceType[]{
@@ -232,7 +232,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         GetFunction(final Provider<Get> functionCallProvider) {
             super(
-                    "get",
+                    Get.FUNCTION_NAME,
                     1,
                     1,
                     new SequenceType[]{SequenceType.SINGLE_STRING},
@@ -490,7 +490,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         PutFunction(final Provider<Put> functionCallProvider) {
             super(
-                    "put",
+                    Put.FUNCTION_NAME,
                     2,
                     2,
                     new SequenceType[]{
