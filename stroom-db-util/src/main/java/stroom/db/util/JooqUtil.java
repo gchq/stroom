@@ -31,7 +31,6 @@ import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 import org.jooq.impl.DefaultConfiguration;
 import org.jooq.impl.SQLDataType;
-import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.Date;
@@ -88,7 +87,7 @@ public final class JooqUtil {
         configuration.setConnection(connection);
 
         // Only add listener for slow queries if its logger is enabled to save the overhead
-        if (LoggerFactory.getLogger(SlowQueryExecuteListener.class).isDebugEnabled()) {
+        if (SlowQueryExecuteListener.LOGGER.isDebugEnabled()) {
             configuration.setExecuteListener(new SlowQueryExecuteListener());
         }
 

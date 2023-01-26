@@ -20,6 +20,8 @@
 
     <logger name="stroom.proxy" level="info" />
 
+    <logger name="stroom.db.util.SlowQueryExecuteListener" level="debug" />
+
 <!--    <logger name="stroom.pipeline.state.LocationHolder" level="INFO" />-->
 
     <logger name="stroom.statistics.internal.DoNothingInternalStatisticsReceiver" level="ERROR" />
