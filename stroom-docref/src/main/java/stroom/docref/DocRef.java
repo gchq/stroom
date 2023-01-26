@@ -219,6 +219,10 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, Has
         return new Builder();
     }
 
+    /**
+     * Create a {@link DocRef} builder for a given type
+     * @param type The document type
+     */
     public static TypedBuilder builder(final String type) {
         return new TypedBuilder(type);
     }
