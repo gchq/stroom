@@ -17,13 +17,13 @@ class TestLogUtil {
     @Test
     void inBox() {
         final String box = LogUtil.inBox("Hello World");
-        LOGGER.info(box);
+        LOGGER.info("\n{}", box);
 
         Assertions.assertThat(box)
                 .isEqualTo("""
-                        -----------------
-                        |  Hello World  |
-                        -----------------""");
+                        ┌───────────────┐
+                        │  Hello World  │
+                        └───────────────┘""");
     }
 
     @Test
@@ -34,14 +34,14 @@ class TestLogUtil {
         Assertions.assertThat(box)
                 .isEqualTo("""
 
-                        -----------------
-                        |  Hello World  |
-                        -----------------""");
+                        ┌───────────────┐
+                        │  Hello World  │
+                        └───────────────┘""");
     }
 
     @Test
     void inBoxMultiLine() {
-        final String box = LogUtil.inBox("""
+        final String box = LogUtil.inBoxOnNewLine("""
                 This is
                 an example showing
                 multiple lines
@@ -50,11 +50,12 @@ class TestLogUtil {
         LOGGER.info(box);
         Assertions.assertThat(box)
                 .isEqualTo("""
-                        -------------------------
-                        |  This is              |
-                        |  an example showing   |
-                        |  multiple lines       |
-                        |  of differing length  |
-                        -------------------------""");
+
+                        ┌───────────────────────┐
+                        │  This is              │
+                        │  an example showing   │
+                        │  multiple lines       │
+                        │  of differing length  │
+                        └───────────────────────┘""");
     }
 }

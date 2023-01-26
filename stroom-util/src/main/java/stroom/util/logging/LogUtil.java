@@ -4,9 +4,32 @@ import com.google.common.base.Strings;
 import org.slf4j.helpers.MessageFormatter;
 
 import java.time.Duration;
-import java.util.stream.Collectors;
 
 public final class LogUtil {
+
+    // These are 3 byte unicode chars so a bit of a waste of bytes
+//    private static final char BOX_HORIZONTAL_LINE = '━';
+//    private static final char BOX_VERTICAL_LINE = '┃';
+//    private static final char BOX_BTM_LEFT = '┗';
+//    private static final char BOX_TOP_LEFT = '┏';
+//    private static final char BOX_BTM_RIGHT = '┛';
+//    private static final char BOX_TOP_RIGHT = '┓';
+
+    // These are in code page 437 (DOS latin US) + 805 (DOS latin 1)
+//    private static final char BOX_HORIZONTAL_LINE = '═';
+//    private static final char BOX_VERTICAL_LINE = '║';
+//    private static final char BOX_BTM_LEFT = '╚';
+//    private static final char BOX_TOP_LEFT = '╔';
+//    private static final char BOX_BTM_RIGHT = '╝';
+//    private static final char BOX_TOP_RIGHT = '╗';
+
+    // These are in code page 437 (DOS latin US) + 805 (DOS latin 1)
+    private static final char BOX_HORIZONTAL_LINE = '─';
+    private static final char BOX_VERTICAL_LINE = '│';
+    private static final char BOX_BTM_LEFT = '└';
+    private static final char BOX_TOP_LEFT = '┌';
+    private static final char BOX_BTM_RIGHT = '┘';
+    private static final char BOX_TOP_RIGHT = '┐';
 
     private LogUtil() {
         // Utility class.
@@ -38,7 +61,10 @@ public final class LogUtil {
      */
     public static String inSeparatorLine(final String format, final Object... args) {
         final String text = message(format, args);
-        return Strings.padEnd("=== " + text + " ", 100, '=');
+        final String str = Strings.repeat(String.valueOf(BOX_HORIZONTAL_LINE), 3)
+                + " "
+                + text;
+        return Strings.padEnd(str, 100, BOX_HORIZONTAL_LINE);
     }
 
     /**
@@ -75,32 +101,48 @@ public final class LogUtil {
         if (format == null || format.isBlank()) {
             return "";
         } else {
-            final String text = message(format, args);
+            final String contentText = message(format, args);
 
-            final int maxLineLen = text.lines()
+            final int maxLineLen = contentText.lines()
                     .mapToInt(String::length)
                     .max()
                     .orElse(0);
 
-            final String topBottomBorder = Strings.repeat("-", maxLineLen + 6);
-            final String boxText = text.lines()
-                    .map(line -> {
-                        final String padding = Strings.repeat(" ", maxLineLen - line.length());
-                        return "|  " + line + padding + "  |";
-                    })
-                    .collect(Collectors.joining("\n"));
+            final String horizontalLine = Strings.repeat(String.valueOf(BOX_HORIZONTAL_LINE), maxLineLen + 4);
+            final StringBuilder stringBuilder = new StringBuilder();
+            if (addNewLine) {
+                stringBuilder.append("\n");
+            }
+            // Top line
+            stringBuilder
+                    .append(BOX_TOP_LEFT)
+                    .append(horizontalLine)
+                    .append(BOX_TOP_RIGHT)
+                    .append("\n");
 
-            final String boxFormat = """
-                    {}{}
-                    {}
-                    {}""";
-            return message(boxFormat,
-                    (addNewLine
-                            ? "\n"
-                            : ""),
-                    topBottomBorder,
-                    boxText,
-                    topBottomBorder);
+            // Content
+            contentText.lines()
+                    .map(line -> {
+                        // Pad lines out to all the same length
+                        final String variablePadding = Strings.repeat(" ", maxLineLen - line.length());
+                        return line + variablePadding;
+                    })
+                    .forEach(linePlusPadding ->
+                            stringBuilder
+                                    .append(BOX_VERTICAL_LINE)
+                                    .append("  ")
+                                    .append(linePlusPadding)
+                                    .append("  ")
+                                    .append(BOX_VERTICAL_LINE)
+                                    .append("\n"));
+
+            // Bottom line
+            stringBuilder
+                    .append(BOX_BTM_LEFT)
+                    .append(horizontalLine)
+                    .append(BOX_BTM_RIGHT);
+
+            return stringBuilder.toString();
         }
     }
 
