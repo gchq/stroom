@@ -190,6 +190,7 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
             case 100_000_000:
             case 1_000_000_000:
                 yield true;
+                // fall-through (Comment to tell checkstyle we want to fall through cases)
             default:
                 yield false;
         };
