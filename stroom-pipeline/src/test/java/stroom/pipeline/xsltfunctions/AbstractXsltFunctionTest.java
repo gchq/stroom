@@ -9,6 +9,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Item;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
@@ -19,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -76,7 +78,9 @@ public abstract class AbstractXsltFunctionTest<T extends StroomExtensionFunction
     protected static Optional<String> getStringValue(final Sequence sequence) {
         return Optional.ofNullable(sequence)
                 .map(sequence2 -> {
-                    if (sequence2 instanceof StringValue) {
+                    if (sequence2 instanceof EmptyAtomicSequence) {
+                        return null;
+                    } else if (sequence2 instanceof StringValue) {
                         return ((StringValue) sequence2).getStringValue();
                     } else {
                         return sequence.toString();
@@ -130,7 +134,8 @@ public abstract class AbstractXsltFunctionTest<T extends StroomExtensionFunction
     }
 
     static Sequence[] buildFunctionArguments(final Object... args) {
-        return buildFunctionArguments(List.of(args));
+        final List<Object> argsList = Arrays.asList(args);
+        return buildFunctionArguments(argsList);
     }
 
     /**
@@ -146,7 +151,9 @@ public abstract class AbstractXsltFunctionTest<T extends StroomExtensionFunction
                 final Object val = args.get(i);
                 final Item item;
 
-                if (val instanceof Boolean) {
+                if (val == null) {
+                    item = null;
+                } else if (val instanceof Boolean) {
                     item = BooleanValue.get((Boolean) val);
                 } else if (val instanceof Instant) {
                     item = convertInstantArg((Instant) val);
