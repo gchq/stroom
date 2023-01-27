@@ -139,11 +139,11 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         docRefs.add(folder2);
 
         // Export
-        importExportService.exportConfig(docRefs, resourceStore.getTempFile(file), null);
+        importExportService.exportConfig(docRefs, resourceStore.getTempFile(file));
 
         final ResourceKey exportConfig = resourceStore.createTempFile("ExportPlain.zip");
 
-        importExportService.exportConfig(docRefs, resourceStore.getTempFile(exportConfig), null);
+        importExportService.exportConfig(docRefs, resourceStore.getTempFile(exportConfig));
 
         // Delete it and check
         pipelineStore.deleteDocument(tran2.getUuid());
@@ -175,6 +175,6 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         criteriaChild.add(folder2child2);
 
         // Export
-        importExportService.exportConfig(criteriaChild, resourceStore.getTempFile(fileChild), null);
+        importExportService.exportConfig(criteriaChild, resourceStore.getTempFile(fileChild));
     }
 }

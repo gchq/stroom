@@ -6,3 +6,9 @@
 /build/
 /test-output/
 /bin/
+/src/test/resources/TestXml11ParserBug/sample-fragment-small.xml
+/src/test/resources/TestXml11ParserBug/sample-small-10.xml
+/src/test/resources/TestXml11ParserBug/sample-small-10-rewrite.xml
+/src/test/resources/TestXml11ParserBug/sample-small-11.xml
+/src/test/resources/TestXml11ParserBug/sample-small-11-bad-rewrite.xml
+/src/test/resources/TestXml11ParserBug/sample-small-11-rewrite.xml

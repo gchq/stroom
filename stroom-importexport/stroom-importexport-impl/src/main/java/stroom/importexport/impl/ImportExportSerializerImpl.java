@@ -23,6 +23,7 @@ import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
+import stroom.importexport.api.ExportSummary;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.api.ImportExportDocumentEventLog;
 import stroom.importexport.api.NonExplorerDocRefProvider;
@@ -464,25 +465,34 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
     /**
      * EXPORT
+     * @return
      */
     @Override
-    public void write(final Path dir, final Set<DocRef> docRefs, final boolean omitAuditFields,
-                      final List<Message> messageList) {
+    public ExportSummary write(final Path dir,
+                               final Set<DocRef> docRefs,
+                               final boolean omitAuditFields) {
         // Create a set of all entities that we are going to try and export.
-        Set<DocRef> expandedDocRefs = expandDocRefSet(docRefs);
+        final Set<DocRef> expandedDocRefs = expandDocRefSet(docRefs);
 
         if (expandedDocRefs.size() == 0) {
             throw new EntityServiceException("No documents were found that could be exported");
         }
 
+        final ExportSummary exportSummary = new ExportSummary();
+        final List<Message> messageList = new ArrayList<>();
         for (final DocRef docRef : expandedDocRefs) {
             try {
+                LOGGER.debug("Exporting {} to {}, omitAuditFields: {}", docRef, dir, omitAuditFields);
                 performExport(dir, docRef, omitAuditFields, messageList);
+                exportSummary.addSuccess(docRef.getType());
             } catch (final IOException | RuntimeException e) {
                 messageList.add(new Message(Severity.ERROR,
                         "Error created while exporting (" + docRef.toString() + ") : " + e.getMessage()));
+                exportSummary.addFailure(docRef.getType());
             }
         }
+        exportSummary.setMessages(messageList);
+        return exportSummary;
     }
 
     private ExplorerNode getOrCreateParentFolder(ExplorerNode parent,
@@ -731,4 +741,5 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         }
         return "";
     }
+
 }

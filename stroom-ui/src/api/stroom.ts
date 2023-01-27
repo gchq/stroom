@@ -694,6 +694,8 @@ export interface DataRetentionRules {
 }
 
 export interface DataSource {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  defaultExtractionPipeline?: DocRef;
   fields?: AbstractField[];
 }
 
@@ -885,6 +887,9 @@ export interface ElasticIndexDoc {
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  defaultExtractionPipeline?: DocRef;
   description?: string;
   fields?: ElasticIndexField[];
   indexName?: string;
@@ -1541,6 +1546,9 @@ export interface IndexDoc {
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  defaultExtractionPipeline?: DocRef;
   description?: string;
   fields?: IndexField[];
 
@@ -2922,6 +2930,9 @@ export interface SolrIndexDoc {
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  defaultExtractionPipeline?: DocRef;
   deletedFields?: SolrIndexField[];
   description?: string;
   fields?: SolrIndexField[];
@@ -3219,6 +3230,9 @@ export interface TabConfig {
 export type TabLayoutConfig = LayoutConfig & { selected?: number; tabs?: TabConfig[] };
 
 export interface TableComponentSettings {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  dataSourceRef?: DocRef;
+
   /** TODO */
   extractValues?: boolean;
 
@@ -5263,7 +5277,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     fetchDataSourceFields: (data: DocRef, params: RequestParams = {}) =>
-      this.request<any, AbstractField[]>({
+      this.request<any, DataSource>({
         path: `/dataSource/v1/fetchFields`,
         method: "POST",
         body: data,

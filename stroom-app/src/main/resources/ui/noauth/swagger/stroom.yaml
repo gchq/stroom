@@ -1598,9 +1598,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AbstractField'
+                $ref: '#/components/schemas/DataSource'
           description: default response
       summary: Fetch data source fields
       tags:
@@ -6994,6 +6992,8 @@ components:
     DataSource:
       type: object
       properties:
+        defaultExtractionPipeline:
+          $ref: '#/components/schemas/DocRef'
         fields:
           type: array
           items:
@@ -7301,6 +7301,8 @@ components:
           format: int64
         createUser:
           type: string
+        defaultExtractionPipeline:
+          $ref: '#/components/schemas/DocRef'
         description:
           type: string
         fields:
@@ -8430,6 +8432,8 @@ components:
           format: int64
         createUser:
           type: string
+        defaultExtractionPipeline:
+          $ref: '#/components/schemas/DocRef'
         description:
           type: string
         fields:
@@ -10564,6 +10568,8 @@ components:
           format: int64
         createUser:
           type: string
+        defaultExtractionPipeline:
+          $ref: '#/components/schemas/DocRef'
         deletedFields:
           type: array
           items:
@@ -11081,6 +11087,8 @@ components:
     TableComponentSettings:
       type: object
       properties:
+        dataSourceRef:
+          $ref: '#/components/schemas/DocRef'
         extractValues:
           type: boolean
           description: TODO

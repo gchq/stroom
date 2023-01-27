@@ -12,6 +12,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+* Add logging of queries that take >2s to execute. Enabled by setting `stroom.db.util.SlowQueryExecuteListener: DEBUG`.
+
+* Add info logging to the export all api resource. Outputs the number of docs export along with counts by type.
+
+* Issue **#3194** : Fix for JDK XML 1.1 parser bug.
+
+* Issue **#3189** : Change effective stream query to use inner joins.
+
+* Issue **#3163** : Add filter to expression field picker.
+
 * Issue **#3171** : Fix stroom booting successfully when there have been failed migrations.
 
 * Issue **#3177** : Stop logical deletes changing the update time if already logically deleted. Add more info logging. Change task name used in logs from `Processor Task Delete Executor` to match job name `Processor Task Retention`.
@@ -25,9 +36,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3180** : Enable "in dictionary" condition for "Id" fields.
 
 * Issue **#1876** : Add `distinct` dashboard expression function for returning a list of unique values.
-
-
-## [v7.1-beta.18] - 2023-01-06
 
 * Issue **#2819** : Scale query expression panel height so all items can be viewed on scroll.
 
@@ -4971,257 +4979,4 @@ Improve error handling during reference data initialisation.
 [Unreleased]: https://github.com/gchq/stroom/compare/v7.2-alpha.5...HEAD
 [v7.2-alpha.5]: https://github.com/gchq/stroom/compare/v7.2-alpha.4...v7.2-alpha.5
 [v7.2-alpha.4]: https://github.com/gchq/stroom/compare/v7.1-beta.14...v7.2-alpha.4
-
-[v7.1-beta.14]: https://github.com/gchq/stroom/compare/v7.1-beta.13...v7.1-beta.14
-
-[v7.1-beta.13]: https://github.com/gchq/stroom/compare/v7.1-beta.12...v7.1-beta.13
-
-[v7.1-beta.12]: https://github.com/gchq/stroom/compare/v7.1-beta.11...v7.1-beta.12
-
-[v7.1-beta.11]: https://github.com/gchq/stroom/compare/v7.1-beta.10...v7.1-beta.11
-
-[v7.1-beta.10]: https://github.com/gchq/stroom/compare/v7.1-beta.9...v7.1-beta.10
-
-[v7.2-alpha.3]: https://github.com/gchq/stroom/compare/v7.1-beta.13...v7.2-alpha.3
-
-[v7.2-alpha.2]: https://github.com/gchq/stroom/compare/v7.2-alpha.1...v7.2-alpha.2
-
-[v7.2-alpha.1]: https://github.com/gchq/stroom/compare/v7.1-beta.9...v7.2-alpha.1
-
-[v7.1-beta.9]: https://github.com/gchq/stroom/compare/v7.1-beta.8...v7.1-beta.9
-
-[v7.1-beta.8]: https://github.com/gchq/stroom/compare/v7.1-beta.7...v7.1-beta.8
-
-[v7.1-beta.7]: https://github.com/gchq/stroom/compare/v7.1-beta.6...v7.1-beta.7
-
-[v7.1-beta.6]: https://github.com/gchq/stroom/compare/v7.1-beta.5...v7.1-beta.6
-
-[v7.1-beta.5]: https://github.com/gchq/stroom/compare/v7.1-beta.4...v7.1-beta.5
-
-[v7.1-beta.4]: https://github.com/gchq/stroom/compare/v7.1-beta.3...v7.1-beta.4
-
-[v7.1-beta.3]: https://github.com/gchq/stroom/compare/v7.1-beta.2..v7.1-beta.3
-
-[v7.1-beta.2]: https://github.com/gchq/stroom/compare/v7.1-beta.1...v7.1-beta.2
-
-[v7.1-beta.1]: https://github.com/gchq/stroom/compare/v7.0-beta.104...v7.1-beta.1
-
-[v7.0-beta.104]: https://github.com/gchq/stroom/compare/v7.0-beta.103...v7.0-beta.104
-
-[v7.0-beta.103]: https://github.com/gchq/stroom/compare/v7.0-beta.102...v7.0-beta.103
-
-[v7.0-beta.102]: https://github.com/gchq/stroom/compare/v7.0-beta.101...v7.0-beta.102
-
-[v7.0-beta.101]: https://github.com/gchq/stroom/compare/v7.0-beta.100...v7.0-beta.101
-
-[v7.0-beta.100]: https://github.com/gchq/stroom/compare/v7.0-beta.99...v7.0-beta.100
-
-[v7.0-beta.99]: https://github.com/gchq/stroom/compare/v7.0-beta.98...v7.0-beta.99
-
-[v7.0-beta.98]: https://github.com/gchq/stroom/compare/v7.0-beta.97...v7.0-beta.98
-
-[v7.0-beta.97]: https://github.com/gchq/stroom/compare/v7.0-beta.96...v7.0-beta.97
-
-[v7.0-beta.96]: https://github.com/gchq/stroom/compare/v7.0-beta.95...v7.0-beta.96
-
-[v7.0-beta.95]: https://github.com/gchq/stroom/compare/v7.0-beta.94...v7.0-beta.95
-
-[v7.0-beta.94]: https://github.com/gchq/stroom/compare/v7.0-beta.93...v7.0-beta.94
-
-[v7.0-beta.93]: https://github.com/gchq/stroom/compare/v7.0-beta.92...v7.0-beta.93
-
-[v7.0-beta.92]: https://github.com/gchq/stroom/compare/v7.0-beta.91...v7.0-beta.92
-
-[v7.0-beta.91]: https://github.com/gchq/stroom/compare/v7.0-beta.90...v7.0-beta.91
-
-[v7.0-beta.90]: https://github.com/gchq/stroom/compare/v7.0-beta.89...v7.0-beta.90
-
-[v7.0-beta.89]: https://github.com/gchq/stroom/compare/v7.0-beta.88...v7.0-beta.89
-
-[v7.0-beta.88]: https://github.com/gchq/stroom/compare/v7.0-beta.87...v7.0-beta.88
-
-[v7.0-beta.87]: https://github.com/gchq/stroom/compare/v7.0-beta.86...v7.0-beta.87
-
-[v7.0-beta.86]: https://github.com/gchq/stroom/compare/v7.0-beta.85...v7.0-beta.86
-
-[v7.0-beta.85]: https://github.com/gchq/stroom/compare/v7.0-beta.84...v7.0-beta.85
-
-[v7.0-beta.84]: https://github.com/gchq/stroom/compare/v7.0-beta.83...v7.0-beta.84
-
-[v7.0-beta.83]: https://github.com/gchq/stroom/compare/v7.0-beta.82...v7.0-beta.83
-
-[v7.0-beta.82]: https://github.com/gchq/stroom/compare/v7.0-beta.81...v7.0-beta.82
-
-[v7.0-beta.81]: https://github.com/gchq/stroom/compare/v7.0-beta.80...v7.0-beta.81
-
-[v7.0-beta.80]: https://github.com/gchq/stroom/compare/v7.0-beta.79...v7.0-beta.80
-
-[v7.0-beta.79]: https://github.com/gchq/stroom/compare/v7.0-beta.78...v7.0-beta.79
-
-[v7.0-beta.78]: https://github.com/gchq/stroom/compare/v7.0-beta.77...v7.0-beta.78
-
-[v7.0-beta.77]: https://github.com/gchq/stroom/compare/v7.0-beta.76...v7.0-beta.77
-
-[v7.0-beta.76]: https://github.com/gchq/stroom/compare/v7.0-beta.75...v7.0-beta.76
-
-[v7.0-beta.75]: https://github.com/gchq/stroom/compare/v7.0-beta.74...v7.0-beta.75
-
-[v7.0-beta.74]: https://github.com/gchq/stroom/compare/v7.0-beta.73...v7.0-beta.74
-
-[v7.0-beta.73]: https://github.com/gchq/stroom/compare/v7.0-beta.72...v7.0-beta.73
-
-[v7.0-beta.72]: https://github.com/gchq/stroom/compare/v7.0-beta.71...v7.0-beta.72
-
-[v7.0-beta.71]: https://github.com/gchq/stroom/compare/v7.0-beta.70...v7.0-beta.71
-
-[v7.0-beta.70]: https://github.com/gchq/stroom/compare/v7.0-beta.69...v7.0-beta.70
-
-[v7.0-beta.69]: https://github.com/gchq/stroom/compare/v7.0-beta.68...v7.0-beta.69
-
-[v7.0-beta.68]: https://github.com/gchq/stroom/compare/v7.0-beta.67...v7.0-beta.68
-
-[v7.0-beta.67]: https://github.com/gchq/stroom/compare/v7.0-beta.66...v7.0-beta.67
-
-[v7.0-beta.66]: https://github.com/gchq/stroom/compare/v7.0-beta.65...v7.0-beta.66
-
-[v7.0-beta.65]: https://github.com/gchq/stroom/compare/v7.0-beta.64...v7.0-beta.65
-
-[v7.0-beta.64]: https://github.com/gchq/stroom/compare/v7.0-beta.63...v7.0-beta.64
-
-[v7.0-beta.63]: https://github.com/gchq/stroom/compare/v7.0-beta.62...v7.0-beta.63
-
-[v7.0-beta.62]: https://github.com/gchq/stroom/compare/v7.0-beta.61...v7.0-beta.62
-
-[v7.0-beta.61]: https://github.com/gchq/stroom/compare/v7.0-beta.60...v7.0-beta.61
-
-[v7.0-beta.60]: https://github.com/gchq/stroom/compare/v7.0-beta.59...v7.0-beta.60
-
-[v7.0-beta.59]: https://github.com/gchq/stroom/compare/v7.0-beta.58...v7.0-beta.59
-
-[v7.0-beta.58]: https://github.com/gchq/stroom/compare/v7.0-beta.57...v7.0-beta.58
-
-[v7.0-beta.57]: https://github.com/gchq/stroom/compare/v7.0-beta.56...v7.0-beta.57
-
-[v7.0-beta.56]: https://github.com/gchq/stroom/compare/v7.0-beta.55...v7.0-beta.56
-
-[v7.0-beta.55]: https://github.com/gchq/stroom/compare/v7.0-beta.54...v7.0-beta.55
-
-[v7.0-beta.54]: https://github.com/gchq/stroom/compare/v7.0-beta.53...v7.0-beta.54
-
-[v7.0-beta.53]: https://github.com/gchq/stroom/compare/v7.0-beta.52...v7.0-beta.53
-
-[v7.0-beta.52]: https://github.com/gchq/stroom/compare/v7.0-beta.51...v7.0-beta.52
-
-[v7.0-beta.51]: https://github.com/gchq/stroom/compare/v7.0-beta.50...v7.0-beta.51
-
-[v7.0-beta.50]: https://github.com/gchq/stroom/compare/v7.0-beta.49...v7.0-beta.50
-
-[v7.0-beta.49]: https://github.com/gchq/stroom/compare/v7.0-beta.48...v7.0-beta.49
-
-[v7.0-beta.48]: https://github.com/gchq/stroom/compare/v7.0-beta.47...v7.0-beta.48
-
-[v7.0-beta.47]: https://github.com/gchq/stroom/compare/v7.0-beta.46...v7.0-beta.47
-
-[v7.0-beta.46]: https://github.com/gchq/stroom/compare/v7.0-beta.45...v7.0-beta.46
-
-[v7.0-beta.45]: https://github.com/gchq/stroom/compare/v7.0-beta.44...v7.0-beta.45
-
-[v7.0-beta.44]: https://github.com/gchq/stroom/compare/v7.0-beta.43...v7.0-beta.44
-
-[v7.0-beta.43]: https://github.com/gchq/stroom/compare/v7.0-beta.42...v7.0-beta.43
-
-[v7.0-beta.42]: https://github.com/gchq/stroom/compare/v7.0-beta.41...v7.0-beta.42
-
-[v7.0-beta.41]: https://github.com/gchq/stroom/compare/v7.0-beta.40...v7.0-beta.41
-
-[v7.0-beta.40]: https://github.com/gchq/stroom/compare/v7.0-beta.39...v7.0-beta.40
-
-[v7.0-beta.39]: https://github.com/gchq/stroom/compare/v7.0-beta.38...v7.0-beta.39
-
-[v7.0-beta.38]: https://github.com/gchq/stroom/compare/v7.0-beta.37...v7.0-beta.38
-
-[v7.0-beta.37]: https://github.com/gchq/stroom/compare/v7.0-beta.36...v7.0-beta.37
-
-[v7.0-beta.36]: https://github.com/gchq/stroom/compare/v7.0-beta.35...v7.0-beta.36
-
-[v7.0-beta.35]: https://github.com/gchq/stroom/compare/v7.0-beta.34...v7.0-beta.35
-
-[v7.0-beta.34]: https://github.com/gchq/stroom/compare/v7.0-beta.33...v7.0-beta.34
-
-[v7.0-beta.33]: https://github.com/gchq/stroom/compare/v7.0-beta.32...v7.0-beta.33
-
-[v7.0-beta.32]: https://github.com/gchq/stroom/compare/v7.0-beta.31...v7.0-beta.32
-
-[v7.0-beta.31]: https://github.com/gchq/stroom/compare/v7.0-beta.30...v7.0-beta.31
-
-[v7.0-beta.30]: https://github.com/gchq/stroom/compare/v7.0-beta.29...v7.0-beta.30
-
-[v7.0-beta.29]: https://github.com/gchq/stroom/compare/v7.0-beta.28...v7.0-beta.29
-
-[v7.0-beta.28]: https://github.com/gchq/stroom/compare/v7.0-beta.27...v7.0-beta.28
-
-[v7.0-beta.27]: https://github.com/gchq/stroom/compare/v7.0-beta.26...v7.0-beta.27
-
-[v7.0-beta.26]: https://github.com/gchq/stroom/compare/v7.0-beta.25...v7.0-beta.26
-
-[v7.0-beta.25]: https://github.com/gchq/stroom/compare/v7.0-beta.24...v7.0-beta.25
-
-[v7.0-beta.24]: https://github.com/gchq/stroom/compare/v7.0-beta.23...v7.0-beta.24
-
-[v7.0-beta.23]: https://github.com/gchq/stroom/compare/v7.0-beta.22...v7.0-beta.23
-
-[v7.0-beta.22]: https://github.com/gchq/stroom/compare/v7.0-beta.21...v7.0-beta.22
-
-[v7.0-beta.21]: https://github.com/gchq/stroom/compare/v7.0-beta.20...v7.0-beta.21
-
-[v7.0-beta.20]: https://github.com/gchq/stroom/compare/v7.0-beta.19...v7.0-beta.20
-
-[v7.0-beta.19]: https://github.com/gchq/stroom/compare/v7.0-beta.18...v7.0-beta.19
-
-[v7.0-beta.18]: https://github.com/gchq/stroom/compare/v7.0-beta.17...v7.0-beta.18
-
-[v7.0-beta.17]: https://github.com/gchq/stroom/compare/v7.0-beta.16...v7.0-beta.17
-
-[v7.0-beta.16]: https://github.com/gchq/stroom/compare/v7.0-beta.15...v7.0-beta.16
-
-[v7.0-beta.15]: https://github.com/gchq/stroom/compare/v7.0-beta.14...v7.0-beta.15
-
-[v7.0-beta.14]: https://github.com/gchq/stroom/compare/v7.0-beta.13...v7.0-beta.14
-
-[v7.0-beta.13]: https://github.com/gchq/stroom/compare/v7.0-beta.12...v7.0-beta.13
-
-[v7.0-beta.12]: https://github.com/gchq/stroom/compare/v7.0-beta.11...v7.0-beta.12
-
-[v7.0-beta.11]: https://github.com/gchq/stroom/compare/v7.0-beta.10...v7.0-beta.11
-
-[v7.0-beta.10]: https://github.com/gchq/stroom/compare/v7.0-beta.9...v7.0-beta.10
-
-[v7.0-beta.9]: https://github.com/gchq/stroom/compare/v7.0-beta.8...v7.0-beta.9
-
-[v7.0-beta.8]: https://github.com/gchq/stroom/compare/v7.0-beta.7...v7.0-beta.8
-
-[v7.0-beta.7]: https://github.com/gchq/stroom/compare/v7.0-beta.6...v7.0-beta.7
-
-[v7.0-beta.6]: https://github.com/gchq/stroom/compare/v7.0-beta.5...v7.0-beta.6
-
-[v7.0-beta.5]: https://github.com/gchq/stroom/compare/v7.0-beta.4...v7.0-beta.5
-
-[v7.0-beta.4]: https://github.com/gchq/stroom/compare/v7.0-beta.3...v7.0-beta.4
-
-[v7.0-beta.3]: https://github.com/gchq/stroom/compare/v7.0-beta.2...v7.0-beta.3
-
-[v7.0-beta.2]: https://github.com/gchq/stroom/compare/v7.0-beta.1...v7.0-beta.2
-
-[v7.0-beta.1]: https://github.com/gchq/stroom/compare/v7.0-alpha.5...v7.0-beta.1
-
-[v7.0-alpha.5]: https://github.com/gchq/stroom/compare/v7.0-alpha.4...v7.0-alpha.5
-
-[v7.0-alpha.4]: https://github.com/gchq/stroom/compare/v7.0-alpha.3...v7.0-alpha.4
-
-[v7.0-alpha.3]: https://github.com/gchq/stroom/compare/v7.0-alpha.2...v7.0-alpha.3
-
-[v7.0-alpha.2]: https://github.com/gchq/stroom/compare/v7.0-alpha.1...v7.0-alpha.2
-
-[v7.0-alpha.1]: https://github.com/gchq/stroom/compare/v6.0.0...v7.0-alpha.1
-
 [v6.0.0]: https://github.com/gchq/stroom/compare/v5.4.0...v6.0.0

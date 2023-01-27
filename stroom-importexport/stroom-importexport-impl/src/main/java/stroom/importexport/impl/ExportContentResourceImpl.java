@@ -33,7 +33,7 @@ public class ExportContentResourceImpl implements ExportContentResource {
     @AutoLogged(value = OperationType.EXPORT, verb = "Exporting All Config")
     public Response export() {
 
-        ResourceKey tempResourceKey = contentServiceProvider.get().exportAll();
+        final ResourceKey tempResourceKey = contentServiceProvider.get().exportAll();
         final Path tempFile = resourceStoreProvider.get().getTempFile(tempResourceKey);
 
         final StreamingOutput streamingOutput = output -> {
