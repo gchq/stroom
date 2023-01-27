@@ -43,7 +43,6 @@ class TestFormatDate extends AbstractXsltFunctionTest<FormatDate> {
 
     @Test
     void testCall_millis() {
-
         final Instant now = Instant.now();
         final Sequence sequence = callFunctionWithSimpleArgs(now.toEpochMilli());
 
@@ -64,7 +63,7 @@ class TestFormatDate extends AbstractXsltFunctionTest<FormatDate> {
                 .withOutputType(String.class)
                 .withTestFunction(testCase -> {
                     final List<String> argsList = testCase.getInput();
-                    final Object[] args = testCase.getInput().toArray(new Object[argsList.size()]);
+                    final Object[] args = testCase.getInput().toArray(new Object[0]);
                     final Sequence sequence = callFunctionWithSimpleArgs(args);
 
                     final Optional<String> optVal = getStringValue(sequence);

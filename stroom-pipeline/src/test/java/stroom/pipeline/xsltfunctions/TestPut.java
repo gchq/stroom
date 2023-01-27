@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 class TestPut extends AbstractXsltFunctionTest<Put> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestPut.class);
-    
+
     private TaskScopeMap taskScopeMap;
     private Put put;
 
@@ -39,7 +39,7 @@ class TestPut extends AbstractXsltFunctionTest<Put> {
                 .isInstanceOf(EmptyAtomicSequence.class);
 
         Assertions.assertThat(taskScopeMap.get(key1))
-                        .isEqualTo(val1);
+                .isEqualTo(val1);
         Assertions.assertThat(taskScopeMap.get(key2))
                 .isEqualTo(val2);
     }
