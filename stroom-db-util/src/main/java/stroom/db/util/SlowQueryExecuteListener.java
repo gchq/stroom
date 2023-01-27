@@ -8,40 +8,103 @@ import org.jooq.Query;
 import org.jooq.impl.DefaultExecuteListener;
 
 import java.time.Duration;
+import java.time.Instant;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+/**
+ * Logs any sql statements that take longer than 2s to execute.
+ * Enable this by setting {@link SlowQueryExecuteListener} to DEBUG.
+ */
 public class SlowQueryExecuteListener extends DefaultExecuteListener {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SlowQueryExecuteListener.class);
+    public static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SlowQueryExecuteListener.class);
 
-    long startTimeMs;
+    private static final Duration DEFAULT_THRESHOLD = Duration.ofSeconds(2);
+    private static final int MAX_QUERY_COUNT = 5;
+
+    private Instant startTime;
+    private static Duration SLOW_QUERY_DURATION_THRESHOLD = DEFAULT_THRESHOLD;
 
     @Override
     public void executeStart(final ExecuteContext ctx) {
         super.executeStart(ctx);
-        startTimeMs = System.currentTimeMillis();
+        startTime = Instant.now();
     }
 
     @Override
     public void executeEnd(final ExecuteContext ctx) {
         super.executeEnd(ctx);
-        if (LOGGER.isDebugEnabled()) {
-            long durationMs = System.currentTimeMillis() - startTimeMs;
+        if (LOGGER.isDebugEnabled() && ctx != null) {
+            final Duration duration = Duration.between(startTime, Instant.now());
+            logQueryDuration(ctx, duration);
+        }
+    }
 
-            // Could make this configurable but would have to move it out of util
-            if (durationMs > 2_000) {
-                final Duration duration = Duration.ofMillis(durationMs);
-                if (ctx.query() != null) {
-                    LOGGER.debug("SQL query took longer than 2s to execute {}\n{}\nrows: {}",
-                            duration, ctx.query(), ctx.rows());
-                } else if (ctx.batchQueries() != null) {
-                    final Query[] batchQueries = ctx.batchQueries();
-                    LOGGER.debug("Batch of SQL queries (size: {}) took longer than " +
-                            "2s to execute {}, showing 1st query only\n{}\nrows: {}",
-                            batchQueries.length, duration, ctx.query(), ctx.batchRows());
-                } else {
-                    LOGGER.debug("Unknown SQL query took longer than 2s to execute {}", duration);
-                }
+    private void logQueryDuration(final ExecuteContext ctx, final Duration duration) {
+        // Could make this configurable but would have to move it out of util
+        if (duration.compareTo(SLOW_QUERY_DURATION_THRESHOLD) >= 0) {
+            if (ctx.query() != null) {
+                LOGGER.debug("""
+                                SQL of type {} took longer than {} to execute {}
+                                {}
+                                rows: {}""",
+                        ctx.type(),
+                        SLOW_QUERY_DURATION_THRESHOLD,
+                        duration,
+                        ctx.query(),
+                        ctx.rows());
+            } else if (ctx.batchQueries() != null) {
+                // This is where you have multiple distinct queries in the batch,
+                // e.g. an insert and an update
+                final Query[] batchQueries = ctx.batchQueries();
+                final String allSql = batchQueries.length == 0
+                        ? "[NO BATCH QUERIES]"
+                        : IntStream.range(0, batchQueries.length)
+                                .limit(MAX_QUERY_COUNT)
+                                .boxed()
+                                .map(i -> {
+                                    final Query batchQuery = batchQueries[i];
+                                    final String sql = batchQuery.toString();
+                                    final int rows = ctx.batchRows()[i];
+                                    final int queryNo = i + 1;
+                                    return "Query "
+                                            + queryNo
+                                            + ":\n"
+                                            + sql
+                                            + ";\nrows:"
+                                            + rows;
+                                })
+                                .collect(Collectors.joining("\n---\n"));
+                final String limitText = batchQueries.length > MAX_QUERY_COUNT
+                        ? " (only showing first " + MAX_QUERY_COUNT + " queries)"
+                        : "";
+
+                LOGGER.debug("""
+                                Batch of {} SQL statements took longer than {} to execute {}{}
+                                {}""",
+                        batchQueries.length,
+                        SLOW_QUERY_DURATION_THRESHOLD,
+                        duration,
+                        limitText,
+                        allSql);
+            } else {
+                LOGGER.debug("Unknown SQL of type {} took longer than 2s to execute {}",
+                        ctx.type(),
+                        duration);
             }
         }
+    }
+
+    /**
+     * For testing only
+     */
+    public static void setSlowQueryDurationThreshold(final Duration slowQueryDurationThreshold) {
+        SLOW_QUERY_DURATION_THRESHOLD = Objects.requireNonNull(slowQueryDurationThreshold);
+    }
+
+    public static void resetSlowQueryDurationThreshold() {
+        SLOW_QUERY_DURATION_THRESHOLD = DEFAULT_THRESHOLD;
     }
 }

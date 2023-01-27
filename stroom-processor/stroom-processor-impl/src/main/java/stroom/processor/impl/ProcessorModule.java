@@ -28,6 +28,7 @@ import stroom.processor.shared.ProcessorTaskResource;
 import stroom.searchable.api.Searchable;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.HasSystemInfoBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
 
@@ -67,6 +68,9 @@ public class ProcessorModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(ProcessorFilterImportExportHandlerImpl.class);
+
+        HasSystemInfoBinder.create(binder())
+                        .bind(ProcessorTaskManagerImpl.class);
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(ProcessorTaskQueueStatistics.class, builder -> builder
