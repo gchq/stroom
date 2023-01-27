@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+* Issue **#3204** : Improve task creation logging to list considered filters in order and provide queue information.
+
 * Issue **#3195** : Fix editor highlight positions being incorrectly calculated.
 
 * Issue **#3204** : Fix slow physical deletion of completed/deleted tasks.
@@ -25,7 +28,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3192** : Fix duplicate user events for exported processor filters.
 
 * Issue **#3197** : Fix NPE when modifying a property value, (back-porting #3143).
-
 
 * Add logging of queries that take >2s to execute. Enabled by setting `stroom.db.util.SlowQueryExecuteListener: DEBUG`.
 
