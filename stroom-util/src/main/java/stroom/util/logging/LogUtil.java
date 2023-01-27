@@ -1,9 +1,9 @@
 package stroom.util.logging;
 
-        import com.google.common.base.Strings;
-        import org.slf4j.helpers.MessageFormatter;
+import com.google.common.base.Strings;
+import org.slf4j.helpers.MessageFormatter;
 
-        import java.time.Duration;
+import java.time.Duration;
 
 public final class LogUtil {
 
