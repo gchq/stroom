@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+* Issue **#3204** : Improve task creation logging to list considered filters in order and provide queue information.
+
 * Issue **#3195** : Fix editor highlight positions being incorrectly calculated.
 
 * Issue **#3204** : Fix slow physical deletion of completed/deleted tasks.
