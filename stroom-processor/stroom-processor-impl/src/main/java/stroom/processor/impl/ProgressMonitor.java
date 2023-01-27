@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -27,119 +26,110 @@ import java.util.concurrent.atomic.AtomicReference;
 public class ProgressMonitor {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProgressMonitor.class);
-    private final AtomicInteger totalQueuedCount = new AtomicInteger();
-    private final List<CompletableFuture<?>> futures = new ArrayList<>();
 
-    private final Map<ProcessorFilter, Map<Phase, PhaseDetails>> filterToPhaseDetailsMapMap = new ConcurrentHashMap<>();
+
+    private final List<FilterProgressMonitor> filterProgressMonitorList = new ArrayList<>();
 
     private final int totalFilterCount;
-    private final int queueSize;
-    private final int halfQueueSize;
-    private final long startTime;
+    private final DurationTimer totalDuration;
 
-    public ProgressMonitor(final ProcessorConfig processorConfig,
-                           final int totalFilterCount) {
-        queueSize = processorConfig.getQueueSize();
-        // If a queue is already half full then don't bother adding more
-        halfQueueSize = queueSize / 2;
-        startTime = System.currentTimeMillis();
+    public ProgressMonitor(final int totalFilterCount) {
+        totalDuration = DurationTimer.start();
         this.totalFilterCount = totalFilterCount;
     }
 
-    public boolean isQueueOverHalfFull() {
-        return getTotalQueuedCount() > halfQueueSize;
+    public void report(final CreateProcessTasksState createProcessTasksState) {
+        LOGGER.info(() -> getFullReport(createProcessTasksState, LOGGER.isDebugEnabled(), LOGGER.isTraceEnabled()));
     }
 
-    public int getRequiredTaskCount() {
-        final int requiredTasks = queueSize - getTotalQueuedCount();
-        // because of async processing it is possible to go below zero, but hide that from the caller
-        return Math.max(requiredTasks, 0);
-    }
-
-    public int getTotalQueuedCount() {
-        return Math.max(totalQueuedCount.get(), 0);
-    }
-
-    public void incrementTaskQueuedCount(final int tasksQueued) {
-        if (tasksQueued < 0) {
-            throw new IllegalArgumentException("tasksQueued (" + tasksQueued + ") must be >= 0");
-        }
-        totalQueuedCount.addAndGet(tasksQueued);
-    }
-
-    /**
-     * Add any futures obtained during the task creation process so we can wait on them later
-     */
-    public void addFuture(final CompletableFuture<?> future) {
-        futures.add(future);
-    }
-
-    public void report() {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(() -> {
-                final String detail = getDetail();
-                return LogUtil.inBoxOnNewLine("{}{}{}",
-                        getSummary(),
-                        (detail.isBlank()
-                                ? ""
-                                : "\n"),
-                        detail);
-            });
-        } else {
-            LOGGER.info(() ->
-                    LogUtil.inBoxOnNewLine(getSummary()));
-        }
-    }
-
-    public String getSummary() {
-        final Map<Phase, PhaseDetails> combinedPhaseDetailsMap = new HashMap<>();
-        for (final Entry<ProcessorFilter, Map<Phase, PhaseDetails>> entry : filterToPhaseDetailsMapMap.entrySet()) {
-            for (final Entry<Phase, PhaseDetails> entry2 : entry.getValue().entrySet()) {
-                final Phase phase = entry2.getKey();
-                final PhaseDetails filterPhaseDetails = entry2.getValue();
-
-                combinedPhaseDetailsMap
-                        .computeIfAbsent(phase, k -> new PhaseDetails(phase))
-                        .add(filterPhaseDetails);
-            }
-        }
-
+    public String getFullReport(final CreateProcessTasksState createProcessTasksState,
+                                final boolean showFilterDetail,
+                                final boolean showPhaseDetail) {
         final StringBuilder sb = new StringBuilder();
+        addSummary(sb, showPhaseDetail, createProcessTasksState);
+        if (showFilterDetail) {
+            addDetail(sb, showPhaseDetail);
+        }
+        return LogUtil.inBoxOnNewLine(sb.toString());
+    }
+
+    private void addSummary(final StringBuilder sb,
+                            final boolean showPhaseDetail,
+                            final CreateProcessTasksState createProcessTasksState) {
+        sb.append("SUMMARY\n");
+        sb.append("---\n");
         sb.append("Created tasks for ");
-        sb.append(filterToPhaseDetailsMapMap.size());
+        sb.append(filterProgressMonitorList.size());
         sb.append("/");
         sb.append(totalFilterCount);
-        sb.append(" filters in ");
-        sb.append(Duration.ofMillis(System.currentTimeMillis() - startTime));
+        sb.append(" filters");
         sb.append("\n");
+        sb.append("Total create time: ");
+        sb.append(totalDuration.get());
+        sb.append("\n");
+        createProcessTasksState.report(sb);
 
-        appendPhaseDetails(sb, combinedPhaseDetailsMap.values());
+        // Only show phase detail in trace log.
+        if (showPhaseDetail) {
+            final Map<Phase, PhaseDetails> combinedPhaseDetailsMap = new HashMap<>();
+            for (final FilterProgressMonitor filterProgressMonitor : filterProgressMonitorList) {
+                for (final Entry<Phase, PhaseDetails> entry : filterProgressMonitor.phaseDetailsMap.entrySet()) {
+                    final Phase phase = entry.getKey();
+                    final PhaseDetails filterPhaseDetails = entry.getValue();
 
-        return sb.toString();
+                    combinedPhaseDetailsMap
+                            .computeIfAbsent(phase, k -> new PhaseDetails(phase))
+                            .add(filterPhaseDetails);
+                }
+            }
+            appendPhaseDetails(sb, combinedPhaseDetailsMap.values());
+        }
     }
 
-    public String getDetail() {
-        final StringBuilder sb = new StringBuilder();
+    private void addDetail(final StringBuilder sb, final boolean showPhaseDetail) {
+        if (filterProgressMonitorList.size() > 0) {
+            sb.append("\n\nDETAIL");
+            for (final FilterProgressMonitor filterProgressMonitor : filterProgressMonitorList) {
+                final ProcessorFilter filter = filterProgressMonitor.filter;
+                sb.append("\n---\n");
+                sb.append("Filter (");
+                appendFilter(sb, filter);
+                sb.append(")\n");
+                sb.append("Total create time: ");
+                sb.append(filterProgressMonitor.completeDuration);
+                sb.append("\n");
+                sb.append("Initial queue size: ");
+                sb.append(filterProgressMonitor.initialQueueSize);
+                sb.append("\n");
+                sb.append("Unowned tasks added to queue: ");
+                sb.append(filterProgressMonitor.queuedUnownedTasks.get());
+                sb.append("\n");
+                sb.append("Task records created in DB: ");
+                sb.append(filterProgressMonitor.newTasksInDb.get());
+                sb.append("\n");
+                sb.append("Tasks added to queue after DB creation: ");
+                sb.append(filterProgressMonitor.queuedNewTasks.get());
+                sb.append("\n");
+                sb.append("Final queue size: ");
+                sb.append(filterProgressMonitor.initialQueueSize +
+                        filterProgressMonitor.queuedUnownedTasks.get() +
+                        filterProgressMonitor.queuedNewTasks.get());
 
-        for (final Entry<ProcessorFilter, Map<Phase, PhaseDetails>> entry : filterToPhaseDetailsMapMap.entrySet()) {
-            sb.append("Filter (");
-            appendFilter(sb, entry.getKey());
-            sb.append(")\n");
-
-            appendPhaseDetails(sb, entry.getValue().values());
-
-            sb.append("\n");
+                // Only show phase detail in trace log.
+                if (showPhaseDetail) {
+                    appendPhaseDetails(sb, filterProgressMonitor.phaseDetailsMap.values());
+                }
+            }
         }
-
-        return sb.toString()
-                .replaceFirst("\n$", "");
     }
 
     private void appendPhaseDetails(final StringBuilder sb,
                                     final Collection<PhaseDetails> phaseDetailsList) {
+        sb.append("\n");
         phaseDetailsList.stream()
                 .sorted(Comparator.comparing(phaseDetails -> phaseDetails.phase))
                 .forEach(phaseDetails -> {
+                    sb.append("\n");
                     sb.append(phaseDetails.phase.phaseName);
                     sb.append(": ");
                     sb.append(phaseDetails.count.get());
@@ -147,70 +137,29 @@ public class ProgressMonitor {
                     sb.append(phaseDetails.calls.get());
                     sb.append(" calls in ");
                     sb.append(phaseDetails.durationRef.get());
-                    sb.append(")\n");
+                    sb.append(")");
                 });
     }
 
     private void appendFilter(final StringBuilder sb, final ProcessorFilter filter) {
         sb.append("id: ");
         sb.append(filter.getId());
+        sb.append(", priority: ");
+        sb.append(filter.getPriority());
         if (!NullSafe.isEmptyString(filter.getPipelineName())) {
             sb.append(", pipeline: ");
             sb.append(filter.getPipelineName());
         }
     }
 
-    public void waitForCompletion() {
-        if (!futures.isEmpty()) {
-            // Some task creation is async (tasks for search queries) so we need
-            // to wait for them to finish
-            final CompletableFuture<Void> allOfFuture = CompletableFuture.allOf(
-                    futures.toArray(new CompletableFuture[0]));
-
-            LOGGER.trace("Waiting for all async task creation to be completed");
-
-            LOGGER.logDurationIfTraceEnabled(
-                    allOfFuture::join,
-                    "Wait for futures to complete");
-
-            allOfFuture.join();
-        } else {
-            LOGGER.trace("No futures to wait for");
-        }
+    public FilterProgressMonitor logFilter(final ProcessorFilter filter,
+                                           final int initialQueueSize) {
+        final FilterProgressMonitor filterProgressMonitor = new FilterProgressMonitor(
+                filter,
+                initialQueueSize);
+        filterProgressMonitorList.add(filterProgressMonitor);
+        return filterProgressMonitor;
     }
-
-    @Override
-    public String toString() {
-        return String.valueOf(totalQueuedCount.get());
-    }
-
-    public void log(final Phase phase,
-                    final ProcessorFilter filter,
-                    final DurationTimer durationTimer,
-                    final long count) {
-        final Duration duration = durationTimer.get();
-        LOGGER.trace(() -> {
-            final String filterInfo = NullSafe.isEmptyString(filter.getPipelineName())
-                    ? ""
-                    : (" (pipeline: " + filter.getPipelineName() + ")");
-
-            return "Completed phase " +
-                    phase.phaseName +
-                    " for filter " +
-                    filter.getId() +
-                    filterInfo +
-                    " with count " +
-                    count + " in " +
-                    duration;
-        });
-
-        final PhaseDetails phaseDetails = filterToPhaseDetailsMapMap
-                .computeIfAbsent(filter, k -> new ConcurrentHashMap<>())
-                .computeIfAbsent(phase, k -> new PhaseDetails(phase));
-
-        phaseDetails.increment(count, duration);
-    }
-
 
     // --------------------------------------------------------------------------------
 
@@ -242,6 +191,70 @@ public class ProgressMonitor {
 
     // --------------------------------------------------------------------------------
 
+
+    public static class FilterProgressMonitor {
+
+        private final ProcessorFilter filter;
+        private final DurationTimer durationTimer;
+
+        private final Map<Phase, PhaseDetails> phaseDetailsMap = new ConcurrentHashMap<>();
+
+        private final int initialQueueSize;
+        private final AtomicInteger newTasksInDb = new AtomicInteger();
+        private final AtomicInteger queuedNewTasks = new AtomicInteger();
+        private final AtomicInteger queuedUnownedTasks = new AtomicInteger();
+
+        private Duration completeDuration;
+
+        private FilterProgressMonitor(final ProcessorFilter filter,
+                                      final int initialQueueSize) {
+            this.filter = filter;
+            this.initialQueueSize = initialQueueSize;
+            this.durationTimer = DurationTimer.start();
+        }
+
+        /**
+         * Record adding tasks that already existed in the database but were unowned being added to the task queue.
+         *
+         * @param count The number of unowned tasks that were added from the database to the task queue.
+         */
+        public void addUnownedTasksToQueue(final int count) {
+            queuedUnownedTasks.addAndGet(count);
+        }
+
+        /**
+         * Record the total number of tasks that have been created on the database during the task creation process.
+         *
+         * @param count The number of task records added to the database.
+         */
+        public void addNewTasksInDb(final int count) {
+            newTasksInDb.addAndGet(count);
+        }
+
+        /**
+         * Record the number of tasks that were created on the database and then immediately selected back and added to
+         * the task queue.
+         *
+         * @param count The number of newly created tasks that were added to the database and added to the task queue.
+         */
+        public void addNewTasksToQueue(final int count) {
+            queuedNewTasks.addAndGet(count);
+        }
+
+        public void logPhase(final Phase phase,
+                             final DurationTimer durationTimer,
+                             final long count) {
+            final Duration duration = durationTimer.get();
+            final PhaseDetails phaseDetails = phaseDetailsMap
+                    .computeIfAbsent(phase, k -> new PhaseDetails(phase));
+
+            phaseDetails.increment(count, duration);
+        }
+
+        public void complete() {
+            completeDuration = durationTimer.get();
+        }
+    }
 
     private static class PhaseDetails {
 
