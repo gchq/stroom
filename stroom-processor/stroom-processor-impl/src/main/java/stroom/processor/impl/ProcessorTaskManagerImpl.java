@@ -593,7 +593,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
         final List<ProcessorFilter> prioritisedFilters = updatePrioritisedFiltersRef(taskContext);
         final ProcessorConfig processorConfig = processorConfigProvider.get();
         final CreateProcessTasksState createProcessTasksState =
-                new CreateProcessTasksState(processorConfig.getQueueSize(), getTaskQueueSize());
+                new CreateProcessTasksState(getTaskQueueSize(), processorConfig.getQueueSize());
         final ProgressMonitor progressMonitor = new ProgressMonitor(prioritisedFilters.size());
 
         final String nodeName = nodeInfo.getThisNodeName();
