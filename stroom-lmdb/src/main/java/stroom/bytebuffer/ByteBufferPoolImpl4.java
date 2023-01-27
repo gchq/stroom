@@ -172,21 +172,29 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
                                 .map(entry -> entry.getKey() + "=" + entry.getValue())
                                 .collect(Collectors.joining(","))),
                 String.join(",", msgs));
-
     }
 
-    private static boolean isPowerOf10(int n) {
-        return
-                n == 1L
-                        || n == 10L
-                        || n == 100L
-                        || n == 1_000L
-                        || n == 10_000L
-                        || n == 100_000L
-                        || n == 1_000_000L
-                        || n == 10_000_000L
-                        || n == 100_000_000L
-                        || n == 1_000_000_000L;
+    /**
+     * @param n The number to test
+     * @return True if n is a power of ten, e.g. if n==10
+     */
+    static boolean isPowerOf10(int n) {
+        return switch (n) {
+            case 1:
+            case 10:
+            case 100:
+            case 1_000:
+            case 10_000:
+            case 100_000:
+            case 1_000_000:
+            case 10_000_000:
+            case 100_000_000:
+            case 1_000_000_000:
+                yield true;
+                // fall-through (Comment to tell checkstyle we want to fall through cases)
+            default:
+                yield false;
+        };
     }
 
     @Override
@@ -435,7 +443,7 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
                     final int bufferCapacity = bufferSizes[offset];
                     final int buffersOnLoan = buffersHighWaterMark - availableBuffersOnQueue;
                     final int configuredMaximum = Optional.ofNullable(
-                            byteBufferPoolConfigProvider.get().getPooledByteBufferCounts())
+                                    byteBufferPoolConfigProvider.get().getPooledByteBufferCounts())
                             .map(map -> map.get(bufferCapacity))
                             .orElse(DEFAULT_MAX_BUFFERS_PER_QUEUE);
 

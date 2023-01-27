@@ -15,6 +15,6 @@ class TestLogUtil {
 
     @Test
     void inBox() {
-        LOGGER.info(LogUtil.inBox("Hello World"));
+        LOGGER.info(LogUtil.inBoxOnNewLine("Hello World"));
     }
 }
