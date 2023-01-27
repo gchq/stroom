@@ -70,14 +70,15 @@ class TestLookup extends AbstractXsltFunctionTest<Lookup> {
         doLookup();
 
         // Should call this once with the combined messages for the lookup
-        Mockito.verify(getMockErrorReceiver()).log(
-                severityCaptor.capture(), Mockito.any(), Mockito.any(), messageCaptor.capture(), Mockito.any());
+        final LogArgs logArgs = verifySingleLogCall();
+        Assertions.assertThat(logArgs.getSeverity())
+                                .isEqualTo(Severity.ERROR);
+        Assertions.assertThat(logArgs.getMessage())
+                .containsIgnoringCase("no reference loaders");
 
         // Doesn't use this method
         Mockito.verify(getMockErrorReceiver(), Mockito.never()).logTemplate(
                 Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
-
-        assertLoggedTopLevelSeverity(Severity.ERROR, "no reference loaders");
     }
 
     @Test
@@ -100,14 +101,15 @@ class TestLookup extends AbstractXsltFunctionTest<Lookup> {
         doLookup();
 
         // Should call this once with the combined messages for the lookup
-        Mockito.verify(getMockErrorReceiver()).log(
-                severityCaptor.capture(), Mockito.any(), Mockito.any(), messageCaptor.capture(), Mockito.any());
+        final LogArgs logArgs = verifySingleLogCall();
+        Assertions.assertThat(logArgs.getSeverity())
+                .isEqualTo(Severity.WARNING);
+        Assertions.assertThat(logArgs.getMessage())
+                .containsIgnoringCase("no effective streams");
 
         // Doesn't use this method
         Mockito.verify(getMockErrorReceiver(), Mockito.never()).logTemplate(
                 Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
-
-        assertLoggedTopLevelSeverity(Severity.WARNING, "no effective streams");
     }
 
     @Test
@@ -139,14 +141,15 @@ class TestLookup extends AbstractXsltFunctionTest<Lookup> {
         doLookup();
 
         // Should call this once with the combined messages for the lookup
-        Mockito.verify(getMockErrorReceiver()).log(
-                severityCaptor.capture(), Mockito.any(), Mockito.any(), messageCaptor.capture(), Mockito.any());
+        final LogArgs logArgs = verifySingleLogCall();
+        Assertions.assertThat(logArgs.getSeverity())
+                .isEqualTo(Severity.WARNING);
+        Assertions.assertThat(logArgs.getMessage())
+                .containsIgnoringCase("map not found in effective streams");
 
         // Doesn't use this method
         Mockito.verify(getMockErrorReceiver(), Mockito.never()).logTemplate(
                 Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
-
-        assertLoggedTopLevelSeverity(Severity.WARNING, "map not found in effective streams");
     }
 
     @Test
@@ -184,14 +187,15 @@ class TestLookup extends AbstractXsltFunctionTest<Lookup> {
         doLookup();
 
         // Should call this once with the combined messages for the lookup
-        Mockito.verify(getMockErrorReceiver()).log(
-                severityCaptor.capture(), Mockito.any(), Mockito.any(), messageCaptor.capture(), Mockito.any());
+        final LogArgs logArgs = verifySingleLogCall();
+        Assertions.assertThat(logArgs.getSeverity())
+                .isEqualTo(Severity.WARNING);
+        Assertions.assertThat(logArgs.getMessage())
+                .containsIgnoringCase("key not found");
 
         // Doesn't use this method
         Mockito.verify(getMockErrorReceiver(), Mockito.never()).logTemplate(
                 Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
-
-        assertLoggedTopLevelSeverity(Severity.WARNING, "key not found");
     }
 
     @Test
@@ -229,14 +233,15 @@ class TestLookup extends AbstractXsltFunctionTest<Lookup> {
         doLookup();
 
         // Should call this once with the combined messages for the lookup
-        Mockito.verify(getMockErrorReceiver()).log(
-                severityCaptor.capture(), Mockito.any(), Mockito.any(), messageCaptor.capture(), Mockito.any());
+        final LogArgs logArgs = verifySingleLogCall();
+        Assertions.assertThat(logArgs.getSeverity())
+                .isEqualTo(Severity.INFO);
+        Assertions.assertThat(logArgs.getMessage())
+                .containsIgnoringCase("key found");
 
         // Doesn't use this method
         Mockito.verify(getMockErrorReceiver(), Mockito.never()).logTemplate(
                 Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
-
-        assertLoggedTopLevelSeverity(Severity.INFO, "key found");
     }
 
     @Test
@@ -274,14 +279,11 @@ class TestLookup extends AbstractXsltFunctionTest<Lookup> {
         doLookup(false, false);
 
         // Should call this once with the combined messages for the lookup
-        Mockito.verify(getMockErrorReceiver(), Mockito.never()).log(
-                severityCaptor.capture(), Mockito.any(), Mockito.any(), messageCaptor.capture(), Mockito.any());
+        verifyNoLogCalls();
 
         // Doesn't use this method
         Mockito.verify(getMockErrorReceiver(), Mockito.never()).logTemplate(
                 Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
-
-//        assertLoggedTopLevelSeverity(Severity.INFO, "success");
     }
 
     private void assertLoggedTopLevelSeverity(final Severity expectedTopLevelSeverity) {

@@ -46,7 +46,7 @@ class TestFormatDate extends AbstractXsltFunctionTest<FormatDate> {
         final Instant now = Instant.now();
         final Sequence sequence = callFunctionWithSimpleArgs(now.toEpochMilli());
 
-        final Optional<String> optVal = getStringValue(sequence);
+        final Optional<String> optVal = getAsStringValue(sequence);
 
         Assertions.assertThat(optVal)
                 .hasValue(DateUtil.createNormalDateTimeString(now.toEpochMilli()));
@@ -66,7 +66,7 @@ class TestFormatDate extends AbstractXsltFunctionTest<FormatDate> {
                     final Object[] args = testCase.getInput().toArray(new Object[0]);
                     final Sequence sequence = callFunctionWithSimpleArgs(args);
 
-                    final Optional<String> optVal = getStringValue(sequence);
+                    final Optional<String> optVal = getAsStringValue(sequence);
 
                     return optVal.orElseThrow();
                 })
@@ -298,7 +298,7 @@ class TestFormatDate extends AbstractXsltFunctionTest<FormatDate> {
 
     private String call(final String date, final String pattern, final String timeZone) {
         final Sequence sequence = callFunctionWithSimpleArgs(date, pattern, timeZone);
-        return getStringValue(sequence)
+        return getAsStringValue(sequence)
                 .orElseThrow();
     }
 

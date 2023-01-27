@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Objects;
 
 abstract class StroomExtensionFunctionCall {
 
@@ -112,28 +113,33 @@ abstract class StroomExtensionFunctionCall {
         return bool;
     }
 
-    void outputWarning(final XPathContext context, final StringBuilder msg, final Throwable e) {
-        if (e != null) {
-            msg.append(' ');
-            msg.append(e.getMessage());
-        }
-
-        // Tell the logger.
-        LOGGER.debug(msg.toString(), e);
-
-        log(context, Severity.WARNING, msg.toString(), e);
+    void outputWarning(final XPathContext context, final StringBuilder msgBuilder, final Throwable e) {
+        logErrorOrWarning(context, Severity.WARNING, msgBuilder, e);
     }
 
-    void outputError(final XPathContext context, final StringBuilder msg, final Throwable e) {
+    void outputError(final XPathContext context, final StringBuilder msgBuilder, final Throwable e) {
+        logErrorOrWarning(context, Severity.ERROR, msgBuilder, e);
+    }
+
+    private void logErrorOrWarning(final XPathContext context,
+                                   final Severity severity,
+                                   final StringBuilder msgBuilder,
+                                   final Throwable e) {
+        final StringBuilder localMsgBuilder = Objects.requireNonNullElseGet(msgBuilder, StringBuilder::new);
         if (e != null) {
-            msg.append(' ');
-            msg.append(e.getMessage());
+            final String exMsg = e.getMessage();
+            // Prevent duplication of the exception message if the caller has just passed that
+            // or slapped it on the end
+            if (!localMsgBuilder.toString().endsWith(exMsg)) {
+                localMsgBuilder.append(' ');
+                localMsgBuilder.append(exMsg);
+            }
         }
 
+        final String msg = localMsgBuilder.toString();
         // Tell the logger.
-        LOGGER.debug(msg.toString(), e);
-
-        log(context, Severity.ERROR, msg.toString(), e);
+        LOGGER.debug("Logging {}: {}", severity, msg, e);
+        log(context, severity, msg, e);
     }
 
     void log(final XPathContext context, final Severity severity, final String message, final Throwable e) {

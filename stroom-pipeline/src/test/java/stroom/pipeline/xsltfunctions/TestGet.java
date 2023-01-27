@@ -37,16 +37,18 @@ class TestGet extends AbstractXsltFunctionTest<Get> {
 
         Assertions.assertThat(sequence1)
                 .isInstanceOf(StringValue.class);
-        Assertions.assertThat(getStringValue(sequence1))
+        Assertions.assertThat(getAsStringValue(sequence1))
                 .hasValue(val1);
 
         final Sequence sequence2 = callFunctionWithSimpleArgs(key2);
 
         Assertions.assertThat(sequence2)
                 .isInstanceOf(StringValue.class);
-        Assertions.assertThat(getStringValue(sequence2))
+        Assertions.assertThat(getAsStringValue(sequence2))
                 .isPresent()
                 .hasValue(val2);
+
+        verifyNoLogCalls();
     }
 
     @Test
@@ -60,6 +62,8 @@ class TestGet extends AbstractXsltFunctionTest<Get> {
 
         Assertions.assertThat(sequence1)
                 .isInstanceOf(EmptyAtomicSequence.class);
+
+        verifyNoLogCalls();
     }
 
     @Override

@@ -263,7 +263,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         HexToDecFunction(final Provider<HexToDec> functionCallProvider) {
             super(
-                    "hex-to-dec",
+                    HexToDec.FUNCTION_NAME,
                     1,
                     1,
                     new SequenceType[]{SequenceType.SINGLE_STRING},
@@ -338,7 +338,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         JsonToXmlFunction(final Provider<JsonToXml> functionCallProvider) {
             super(
-                    "json-to-xml",
+                    JsonToXml.FUNCTION_NAME,
                     1,
                     1,
                     new SequenceType[]{SequenceType.SINGLE_STRING},
@@ -397,7 +397,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         LogFunction(final Provider<Log> functionCallProvider) {
             super(
-                    "log",
+                    Log.FUNCTION_NAME,
                     2,
                     2,
                     new SequenceType[]{
