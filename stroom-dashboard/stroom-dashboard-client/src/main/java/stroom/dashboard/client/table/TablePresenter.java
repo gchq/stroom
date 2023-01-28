@@ -130,7 +130,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private final LocationManager locationManager;
     private TableResultRequest tableResultRequest = TableResultRequest.builder()
-            .requestedRange(new OffsetRange(0, 100))
+            .requestedRange(new OffsetRange(0, 1000))
             .build();
     private final List<Column<TableRow, ?>> existingColumns = new ArrayList<>();
     private final List<HandlerRegistration> searchModelHandlerRegistrations = new ArrayList<>();
