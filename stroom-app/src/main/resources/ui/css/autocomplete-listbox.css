@@ -42,6 +42,7 @@
     overflow-y: auto;
     border-radius: 0;
     width: auto;
+    min-width: 200px;
 }
 
 .gwt-PopupPanel.autocompletePanel select > option {
