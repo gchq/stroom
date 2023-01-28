@@ -56,6 +56,7 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.instance.client.ClientApplicationInstance;
+import stroom.item.client.presenter.AutocompletePopupView;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.processor.shared.ProcessorExpressionUtil;
 import stroom.query.api.v2.ConditionalFormattingRule;
@@ -94,14 +95,16 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -302,9 +305,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private void onAddField(final ClickEvent event) {
         if (currentSearchModel != null && fieldAddPresenter == null) {
             fieldAddPresenter = fieldAddPresenterProvider.get();
-            final AddSelectionHandler selectionHandler = new AddSelectionHandler(fieldAddPresenter);
-            final HandlerRegistration handlerRegistration = fieldAddPresenter
-                    .addSelectionChangeHandler(selectionHandler);
 
             final List<Field> addFields = new ArrayList<>();
             final IndexLoader indexLoader = currentSearchModel.getIndexLoader();
@@ -370,33 +370,24 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     .build();
             addFields.add(custom);
 
-            fieldAddPresenter.setFields(addFields);
-            fieldAddPresenter.clearSelection();
-
-            final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-                @Override
-                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                    HidePopupEvent.fire(TablePresenter.this, fieldAddPresenter);
-                }
-
-                @Override
-                public void onHide(final boolean autoClose, final boolean ok) {
-                    handlerRegistration.removeHandler();
-                    fieldAddPresenter = null;
-                }
-            };
-
-            final com.google.gwt.dom.client.Element target = event.getNativeEvent().getEventTarget().cast();
-
-            final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft() - 3,
+            final Element target = event.getNativeEvent().getEventTarget().cast();
+            final PopupPosition popupPosition = new PopupPosition(
+                    target.getAbsoluteLeft() - 3,
                     target.getAbsoluteTop() + target.getClientHeight() + 1);
-            ShowPopupEvent.fire(
-                    this,
-                    fieldAddPresenter,
-                    PopupType.POPUP,
-                    popupPosition,
-                    popupUiHandlers,
-                    target);
+
+            final AutocompletePopupView<Field> popupView = fieldAddPresenter.getView();
+            popupView.clearItems();
+            popupView.addItems(addFields);
+            popupView.showPopup(popupPosition);
+
+            final AddSelectionHandler selectionHandler = new AddSelectionHandler(fieldAddPresenter);
+            final HandlerRegistration selectionHandlerRegistration = fieldAddPresenter
+                    .addSelectionHandler(selectionHandler);
+
+            popupView.addCloseHandler(closeEvent -> {
+                selectionHandlerRegistration.removeHandler();
+                fieldAddPresenter = null;
+            });
         }
     }
 
@@ -1075,7 +1066,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         void setRefreshing(boolean refreshing);
     }
 
-    private class AddSelectionHandler implements SelectionChangeEvent.Handler {
+    private class AddSelectionHandler implements SelectionHandler<Field> {
 
         private final FieldAddPresenter presenter;
 
@@ -1084,8 +1075,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
 
         @Override
-        public void onSelectionChange(final SelectionChangeEvent event) {
-            Field field = presenter.getSelectedObject();
+        public void onSelection(final SelectionEvent<Field> event) {
+            Field field = event.getSelectedItem();
             if (field != null) {
                 HidePopupEvent.fire(TablePresenter.this, presenter);
 
