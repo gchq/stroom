@@ -104,7 +104,7 @@ import static stroom.meta.impl.db.jooq.tables.MetaType.META_TYPE;
 import static stroom.meta.impl.db.jooq.tables.MetaVal.META_VAL;
 
 @Singleton
-class MetaDaoImpl implements MetaDao, Clearable {
+public class MetaDaoImpl implements MetaDao, Clearable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MetaDaoImpl.class);
 
@@ -404,21 +404,26 @@ class MetaDaoImpl implements MetaDao, Clearable {
     /**
      * Method currently only here for test purposes as a means of bulk loading data.
      */
-    public void create(final List<MetaProperties> metaPropertiesList, final Status status) {
+    public void bulkCreate(final List<MetaProperties> metaPropertiesList, final Status status) {
         // ensure we have all the parent records and capture all their ids
         final Map<String, Integer> feedIds = metaPropertiesList.stream()
                 .map(MetaProperties::getFeedName)
+                .filter(Objects::nonNull)
                 .distinct()
                 .map(feedName -> Tuple.of(feedName, feedDao.getOrCreate(feedName)))
                 .collect(Collectors.toMap(Tuple2::_1, Tuple2::_2));
 
         final Map<String, Integer> typeIds = metaPropertiesList.stream()
                 .map(MetaProperties::getTypeName)
+                .filter(Objects::nonNull)
                 .distinct()
                 .map(typeName -> Tuple.of(typeName, metaTypeDao.getOrCreate(typeName)))
                 .collect(Collectors.toMap(Tuple2::_1, Tuple2::_2));
 
         final Map<String, Integer> processorIds = metaPropertiesList.stream()
+                .filter(metaProperties ->
+                        metaProperties.getProcessorUuid() != null &&
+                                metaProperties.getPipelineUuid() != null)
                 .map(metaProperties -> Tuple.of(metaProperties.getProcessorUuid(), metaProperties.getPipelineUuid()))
                 .distinct()
                 .map(tuple -> Tuple.of(
@@ -453,9 +458,15 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                                     metaProperties.getParentId(),
                                                     statusId,
                                                     metaProperties.getStatusMs(),
-                                                    feedIds.get(metaProperties.getFeedName()),
-                                                    typeIds.get(metaProperties.getTypeName()),
-                                                    processorIds.get(metaProperties.getProcessorUuid()),
+                                                    metaProperties.getFeedName() == null
+                                                            ? null
+                                                            : feedIds.get(metaProperties.getFeedName()),
+                                                    metaProperties.getTypeName() == null
+                                                            ? null
+                                                            : typeIds.get(metaProperties.getTypeName()),
+                                                    metaProperties.getProcessorUuid() == null
+                                                            ? null
+                                                            : processorIds.get(metaProperties.getProcessorUuid()),
                                                     metaProperties.getProcessorFilterId(),
                                                     metaProperties.getProcessorTaskId()));
                                     return insertStep;

@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
+import java.util.UUID;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -222,6 +223,10 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, Has
         return new Builder(this);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     /**
      * Builder for constructing a {@link DocRef docRef}
      */
@@ -256,6 +261,15 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, Has
          */
         public Builder uuid(final String value) {
             this.uuid = value;
+            return this;
+        }
+
+        /**
+         * Sets the uuid to a new random UUID.
+         * @return The {@link Builder}, enabling method chaining
+         */
+        public Builder randomUuid() {
+            this.uuid = UUID.randomUUID().toString();
             return this;
         }
 
