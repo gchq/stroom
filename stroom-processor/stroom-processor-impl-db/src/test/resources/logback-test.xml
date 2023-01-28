@@ -6,6 +6,7 @@
     </appender>
 
     <logger name="stroom" level="debug" />
+    <logger name="stroom.db.util.SlowQueryExecuteListener" level="debug" />
 <!--    <logger name="stroom.cache.impl.AbstractStroomCache" level="trace" />-->
 <!--    <logger name="stroom" level="debug" additivity="false">-->
 <!--        <appender-ref ref="STDOUT" />-->

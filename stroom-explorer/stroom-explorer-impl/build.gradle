@@ -29,8 +29,12 @@ dependencies {
     implementation libs.swagger_annotations
     implementation libs.ws_rs_api
 
+    testImplementation project(':stroom-security:stroom-security-mock')
+
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter_api
+    testImplementation libs.mockito_core
+    testImplementation libs.mockito_junit_jupiter
 
     runtimeOnly libs.mysql_connector_java
 

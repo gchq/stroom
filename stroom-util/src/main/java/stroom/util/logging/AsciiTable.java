@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.NumberFormat;
+import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -122,26 +123,33 @@ public class AsciiTable {
      * @return A {@link String} containing the markdown style table.
      */
     public static <T> String from(final Collection<T> data, boolean sortColumns) {
-        if (data.size() <= 1) {
-            throw new RuntimeException("Need at least one row to auto create a table");
+        if (data == null || data.isEmpty()) {
+            return "NO DATA";
         }
 
         final T item = data.iterator().next();
         final TableBuilder<T> tableBuilder = builder(data);
 
-        Stream<Method> methodNameStream = Arrays.stream(item.getClass().getDeclaredMethods())
-                .filter(method -> {
-                    final String methodName = method.getName();
-                    return methodName.startsWith("get") || methodName.startsWith("is");
-                });
+        if (item instanceof String
+                || Number.class.isAssignableFrom(item.getClass())
+                || Temporal.class.isAssignableFrom(item.getClass())) {
+            // Simple single column table so don't try and get getters.
+            tableBuilder.withColumn(Column.of(item.getClass().getSimpleName(), Object::toString));
+        } else {
+            Stream<Method> methodNameStream = Arrays.stream(item.getClass().getDeclaredMethods())
+                    .filter(method -> {
+                        final String methodName = method.getName();
+                        return methodName.startsWith("get") || methodName.startsWith("is");
+                    });
 
-        if (sortColumns) {
-            methodNameStream = methodNameStream.sorted(Comparator.comparing(Method::getName));
+            if (sortColumns) {
+                methodNameStream = methodNameStream.sorted(Comparator.comparing(Method::getName));
+            }
+            methodNameStream.forEach(method -> {
+                final Column<T, ?> column = convertToColumn(method);
+                tableBuilder.withColumn(column);
+            });
         }
-        methodNameStream.forEach(method -> {
-            final Column<T, ?> column = convertToColumn(method);
-            tableBuilder.withColumn(column);
-        });
 
         return tableBuilder.build();
     }

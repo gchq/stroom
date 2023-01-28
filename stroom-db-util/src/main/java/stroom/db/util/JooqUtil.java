@@ -32,7 +32,6 @@ import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 import org.jooq.impl.DefaultConfiguration;
 import org.jooq.impl.SQLDataType;
-import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.Date;
@@ -89,7 +88,7 @@ public final class JooqUtil {
         configuration.setConnection(connection);
 
         // Only add listener for slow queries if its logger is enabled to save the overhead
-        if (LoggerFactory.getLogger(SlowQueryExecuteListener.class).isDebugEnabled()) {
+        if (SlowQueryExecuteListener.LOGGER.isDebugEnabled()) {
             configuration.setExecuteListener(new SlowQueryExecuteListener());
         }
 
@@ -229,7 +228,7 @@ public final class JooqUtil {
     }
 
     public static <R extends UpdatableRecord<R>> R create(final DataSource dataSource, final R record) {
-        LOGGER.debug(() -> "Creating a " + record.getTable() + " record " + record);
+        LOGGER.debug(() -> "Creating a " + record.getTable() + " record:\n" + record);
         try (final Connection connection = dataSource.getConnection()) {
             try {
                 checkDataSource(dataSource);
@@ -271,7 +270,7 @@ public final class JooqUtil {
                                                                      final TableField<R, T2> keyField2,
                                                                      final Consumer<R> onCreateAction) {
         R persistedRecord;
-        LOGGER.debug(() -> "Creating a " + record.getTable() + " record if it doesn't already exist" + record);
+        LOGGER.debug(() -> "Creating a " + record.getTable() + " record if it doesn't already exist:\n" + record);
         try (final Connection connection = dataSource.getConnection()) {
             try {
                 checkDataSource(dataSource);
@@ -329,7 +328,7 @@ public final class JooqUtil {
     }
 
     public static <R extends UpdatableRecord<R>> R update(final DataSource dataSource, final R record) {
-        LOGGER.debug(() -> "Updating a " + record.getTable() + " record " + record);
+        LOGGER.debug(() -> "Updating a " + record.getTable() + " record:\n" + record);
         try (final Connection connection = dataSource.getConnection()) {
             try {
                 checkDataSource(dataSource);
@@ -347,7 +346,7 @@ public final class JooqUtil {
 
     public static <R extends UpdatableRecord<R>> R updateWithOptimisticLocking(final DataSource dataSource,
                                                                                final R record) {
-        LOGGER.debug(() -> "Updating a " + record.getTable() + " record " + record);
+        LOGGER.debug(() -> "Updating a " + record.getTable() + " record:\n" + record);
         try (final Connection connection = dataSource.getConnection()) {
             try {
                 checkDataSource(dataSource);
