@@ -182,6 +182,9 @@ public class AutocompletePopup<T extends HasDisplayValue> extends Composite impl
             autoListBox.addItem(item);
         }
 
+        // Ensure the search box width matches the select element
+        autoTextBox.setWidth(autoListBox.getOffsetWidth() + "px");
+
         updateSelectedItem();
     }
 
