@@ -15,6 +15,7 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -177,6 +178,10 @@ public class AutocompleteListBox<T extends HasDisplayValue> extends Composite im
         for (final String item : items) {
             autoListBox.addItem(item);
         }
+
+        // Update the text box size to accommodate the longest item
+        final Optional<String> longestItem = items.stream().max(Comparator.comparingInt(String::length));
+        longestItem.ifPresent(s -> textBox.setVisibleLength(s.length()));
 
         updateSelectedItem();
     }

@@ -8,6 +8,7 @@
     background-position-y: 50%;
     background-color: transparent;
     border: none;
+    max-width: 400px;
 }
 
 .stroom-theme-dark .gwt-TextBox.autocompleteTextBox,

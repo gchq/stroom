@@ -570,7 +570,7 @@ public class TermEditor extends Composite {
         fieldListBox.addStyleName(ITEM_CLASS_NAME);
         fieldListBox.addStyleName(DROPDOWN_CLASS_NAME);
         fieldListBox.addStyleName("field");
-        fixStyle(fieldListBox, 160);
+        fieldListBox.addStyleName("termEditor-item");
         return fieldListBox;
     }
 
@@ -615,11 +615,6 @@ public class TermEditor extends Composite {
         label.addStyleName("fieldType");
         label.setVisible(false);
         return label;
-    }
-
-    private void fixStyle(final Widget widget, final int width) {
-        widget.addStyleName("termEditor-item");
-        widget.getElement().getStyle().setWidth(width, Unit.PX);
     }
 
     private void fireDirty() {
