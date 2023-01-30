@@ -246,7 +246,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         HashFunction(final Provider<Hash> functionCallProvider) {
             super(
-                    "hash",
+                    Hash.FUNCTION_NAME,
                     1,
                     3,
                     new SequenceType[]{
