@@ -1,8 +1,6 @@
 package stroom.importexport.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.importexport.client.DependenciesPlugin;
-import stroom.importexport.client.event.ShowDocRefDependenciesEvent;
 import stroom.importexport.client.presenter.DependenciesTabPresenter.DependenciesTabView;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.svg.client.Icon;
@@ -28,7 +26,6 @@ public class DependenciesTabPresenter
     public DependenciesTabPresenter(final EventBus eventBus,
                                     final DependenciesTabView view,
                                     final DependenciesPresenter dependenciesPresenter,
-                                    final DependenciesPlugin dependenciesPlugin,
                                     final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         this.dependenciesPresenter = dependenciesPresenter;
@@ -41,11 +38,6 @@ public class DependenciesTabPresenter
                                 "Dependencies Quick Filter Syntax",
                                 DependencyCriteria.FIELD_DEFINITIONS,
                                 uiConfig.getHelpUrlQuickFilter())));
-
-        registerHandler(getEventBus().addHandler(ShowDocRefDependenciesEvent.getType(), event -> {
-            dependenciesPlugin.open();
-            setQuickFilterText("touuid:" + event.getDocRef().getUuid());
-        }));
     }
 
     @Override
