@@ -67,6 +67,7 @@ import stroom.explorer.shared.PermissionInheritance;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.client.event.ExportConfigEvent;
 import stroom.importexport.client.event.ImportConfigEvent;
+import stroom.importexport.client.event.ShowDocRefDependenciesEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -759,8 +760,13 @@ public class DocumentPluginEventManager extends Plugin {
                     DocumentPermissionNames.OWNER,
                     true);
             if (ownedItems.size() == 1) {
-                menuItems.add(new Separator(10));
-                menuItems.add(createPermissionsMenuItem(ownedItems.get(0), 11, true));
+                if (securityContext.hasAppPermission(PermissionNames.VIEW_SYSTEM_INFO_PERMISSION)) {
+                    menuItems.add(new Separator(10));
+                    menuItems.add(createShowDependenciesMenuItem(ownedItems.get(0), 11));
+                }
+
+                menuItems.add(new Separator(12));
+                menuItems.add(createPermissionsMenuItem(ownedItems.get(0), 13, true));
             }
         }
     }
@@ -920,6 +926,16 @@ public class DocumentPluginEventManager extends Plugin {
                 null,
                 true,
                 () -> ExportConfigEvent.fire(DocumentPluginEventManager.this, readableItems));
+    }
+
+    private MenuItem createShowDependenciesMenuItem(final ExplorerNode explorerNode, final int priority) {
+        return new IconMenuItem(priority,
+                SvgPresets.DEPENDENCIES,
+                SvgPresets.DEPENDENCIES,
+                "Dependencies",
+                null,
+                true,
+                () -> ShowDocRefDependenciesEvent.fire(DocumentPluginEventManager.this, explorerNode.getDocRef()));
     }
 
     void registerPlugin(final String entityType, final DocumentPlugin<?> plugin) {

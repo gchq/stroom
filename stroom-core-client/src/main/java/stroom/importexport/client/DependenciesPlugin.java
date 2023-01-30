@@ -19,6 +19,7 @@ package stroom.importexport.client;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.importexport.client.event.ShowDocRefDependenciesEvent;
 import stroom.importexport.client.presenter.DependenciesTabPresenter;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
@@ -37,6 +38,17 @@ public class DependenciesPlugin extends MonitoringPlugin<DependenciesTabPresente
                               final Provider<DependenciesTabPresenter> presenterProvider,
                               final ClientSecurityContext securityContext) {
         super(eventBus, eventManager, presenterProvider, securityContext);
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+
+        // Open the Dependencies view, filtered by a particular DocRef
+        registerHandler(getEventBus().addHandler(ShowDocRefDependenciesEvent.getType(), event -> {
+            open();
+            getPresenter().setQuickFilterText("touuid:" + event.getDocRef().getUuid());
+        }));
     }
 
     @Override
