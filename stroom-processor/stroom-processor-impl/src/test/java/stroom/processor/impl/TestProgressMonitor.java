@@ -1,11 +1,11 @@
 package stroom.processor.impl;
 
+import stroom.processor.impl.ProgressMonitor.FilterProgressMonitor;
 import stroom.processor.impl.ProgressMonitor.Phase;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -27,38 +27,51 @@ class TestProgressMonitor {
 
     @Test
     void getSummary() {
-        final ProgressMonitor progressMonitor = new ProgressMonitor(
-                new ProcessorConfig(),
-                150);
+        final String str = test(false, false);
+        Assertions.assertThat(str)
+                .contains("Created tasks for 2/2 filters"); // 10 + 20
+    }
 
-        for (final Phase phase : Phase.values()) {
-            DurationTimer durationTimer = DurationTimer.start();
-            progressMonitor.log(phase, PROCESSOR_FILTER_1, durationTimer, 10);
-            durationTimer = DurationTimer.start();
-            progressMonitor.log(phase, PROCESSOR_FILTER_2, durationTimer, 20);
-        }
-
-        final String str = LogUtil.inBoxOnNewLine(progressMonitor.getSummary());
-        LOGGER.info(str);
+    @Test
+    void getSummaryPlusPhaseDetail() {
+        final String str = test(false, true);
         Assertions.assertThat(str)
                 .contains(Phase.SELECT_NEW_TASKS.getPhaseName() + ": " + 30); // 10 + 20
     }
 
     @Test
     void getDetail() {
-        final ProgressMonitor progressMonitor = new ProgressMonitor(
-                new ProcessorConfig(),
-                150);
+        final String str = test(true, false);
+        Assertions.assertThat(str)
+                .contains("Filter (id: 1, priority: 10, pipeline: Pipe 1)");
+    }
 
+    @Test
+    void getDetailPlusPhaseDetail() {
+        final String str = test(true, true);
+        Assertions.assertThat(str)
+                .contains("Filter (id: 1, priority: 10, pipeline: Pipe 1)");
+    }
+
+    private String test(final boolean showFilterDetail, final boolean showPhaseDetail) {
+        final ProgressMonitor progressMonitor = new ProgressMonitor(2);
+
+        final FilterProgressMonitor progressMonitor1 = progressMonitor.logFilter(PROCESSOR_FILTER_1, 0);
+        final FilterProgressMonitor progressMonitor2 = progressMonitor.logFilter(PROCESSOR_FILTER_2, 0);
         for (final Phase phase : Phase.values()) {
             DurationTimer durationTimer = DurationTimer.start();
-            progressMonitor.log(phase, PROCESSOR_FILTER_1, durationTimer, 10);
+            progressMonitor1.logPhase(phase, durationTimer, 10);
             durationTimer = DurationTimer.start();
-            progressMonitor.log(phase, PROCESSOR_FILTER_2, durationTimer, 20);
+            progressMonitor2.logPhase(phase, durationTimer, 20);
         }
-        final String str = LogUtil.inBoxOnNewLine(progressMonitor.getDetail());
+        progressMonitor1.complete();
+        progressMonitor2.complete();
+
+        final String str = progressMonitor
+                .getFullReport(new CreateProcessTasksState(0, 0),
+                        showFilterDetail,
+                        showPhaseDetail);
         LOGGER.info(str);
-        Assertions.assertThat(str)
-                .contains("Filter (id: 1, pipeline: Pipe 1)");
+        return str;
     }
 }

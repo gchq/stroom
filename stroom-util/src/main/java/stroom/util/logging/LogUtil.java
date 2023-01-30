@@ -109,6 +109,7 @@ public final class LogUtil {
                     .orElse(0);
 
             final String horizontalLine = Strings.repeat(String.valueOf(BOX_HORIZONTAL_LINE), maxLineLen + 4);
+            final String horizontalSeparator = Strings.repeat(String.valueOf(BOX_HORIZONTAL_LINE), maxLineLen);
             final StringBuilder stringBuilder = new StringBuilder();
             if (addNewLine) {
                 stringBuilder.append("\n");
@@ -123,9 +124,14 @@ public final class LogUtil {
             // Content
             contentText.lines()
                     .map(line -> {
-                        // Pad lines out to all the same length
-                        final String variablePadding = Strings.repeat(" ", maxLineLen - line.length());
-                        return line + variablePadding;
+                        // Add a pattern replacement to insert a horizontal rule like markdown.
+                        if (line.equals("---")) {
+                            return horizontalSeparator;
+                        } else {
+                            // Pad lines out to all the same length
+                            final String variablePadding = Strings.repeat(" ", maxLineLen - line.length());
+                            return line + variablePadding;
+                        }
                     })
                     .forEach(linePlusPadding ->
                             stringBuilder

@@ -6,6 +6,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 import stroom.processor.api.InclusiveRanges;
+import stroom.processor.impl.ProgressMonitor.FilterProgressMonitor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorTask;
@@ -86,7 +87,7 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     @Override
     public CreatedTasks createNewTasks(final ProcessorFilter filter,
                                        final ProcessorFilterTracker tracker,
-                                       final ProgressMonitor progressMonitor,
+                                       final FilterProgressMonitor filterProgressMonitor,
                                        final long metaQueryTime,
                                        final Map<Meta, InclusiveRanges> metaMap,
                                        final String thisNodeName,

@@ -24,7 +24,7 @@ import stroom.processor.api.InclusiveRanges.InclusiveRange;
 import stroom.processor.impl.CreatedTasks;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorTaskDao;
-import stroom.processor.impl.ProgressMonitor;
+import stroom.processor.impl.ProgressMonitor.FilterProgressMonitor;
 import stroom.processor.impl.ProgressMonitor.Phase;
 import stroom.processor.impl.db.jooq.Tables;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorTaskRecord;
@@ -394,7 +394,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     @Override
     public synchronized CreatedTasks createNewTasks(final ProcessorFilter filter,
                                                     final ProcessorFilterTracker tracker,
-                                                    final ProgressMonitor progressMonitor,
+                                                    final FilterProgressMonitor filterProgressMonitor,
                                                     final long streamQueryTime,
                                                     final Map<Meta, InclusiveRanges> streams,
                                                     final String thisNodeName,
@@ -472,7 +472,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                         LOGGER.error(e::getMessage, e);
                         throw e;
                     }
-                    progressMonitor.log(Phase.INSERT_NEW_TASKS, filter, durationTimer, allBindValues.length);
+                    filterProgressMonitor.logPhase(Phase.INSERT_NEW_TASKS, durationTimer, allBindValues.length);
 
                     // Select them back.
                     durationTimer = DurationTimer.start();
@@ -497,8 +497,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                         LOGGER.error(e::getMessage, e);
                         throw e;
                     }
-                    progressMonitor.log(Phase.SELECT_NEW_TASKS,
-                            filter,
+                    filterProgressMonitor.logPhase(Phase.SELECT_NEW_TASKS,
                             durationTimer,
                             creationState.selectedTaskCount);
                 }
@@ -586,7 +585,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
                 // Save the tracker state within the transaction.
                 processorFilterTrackerDao.update(context, tracker);
-                progressMonitor.log(Phase.UPDATE_TRACKERS, filter, durationTimer, 1);
+                filterProgressMonitor.logPhase(Phase.UPDATE_TRACKERS, durationTimer, 1);
             });
 
             final List<ProcessorTask> list;
