@@ -19,7 +19,10 @@ import net.sf.saxon.om.Sequence;
 import net.sf.saxon.query.QueryResult;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.BooleanValue;
+import net.sf.saxon.value.DoubleValue;
+import net.sf.saxon.value.Int64Value;
 import net.sf.saxon.value.StringValue;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -174,6 +177,20 @@ public abstract class AbstractXsltFunctionTest<T extends StroomExtensionFunction
         }
     }
 
+    protected void assertLogCall(final LogArgs logArgs,
+                                 final Severity expectedSeverity,
+                                 final String... expectedMessageParts) {
+        if (logArgs != null) {
+            Assertions.assertThat(logArgs.getSeverity())
+                    .isEqualTo(expectedSeverity);
+
+            for (final String expectedMessagePart : expectedMessageParts) {
+                Assertions.assertThat(logArgs.getMessage())
+                        .containsIgnoringCase(expectedMessagePart);
+            }
+        }
+    }
+
     protected static Optional<String> getAsStringValue(final Sequence sequence) {
         return Optional.ofNullable(sequence)
                 .map(sequence2 -> {
@@ -190,10 +207,33 @@ public abstract class AbstractXsltFunctionTest<T extends StroomExtensionFunction
     }
 
     protected static Optional<Long> getAsLongValue(final Sequence sequence) {
-        final Optional<Long> val = getAsStringValue(sequence)
-                .map(Long::parseLong);
-        LOGGER.debug("Got long value:\n{}", val);
-        return val;
+        return Optional.ofNullable(sequence)
+                .map(sequence2 -> {
+                    if (sequence2 instanceof EmptyAtomicSequence) {
+                        return null;
+                    } else if (sequence2 instanceof Int64Value) {
+                        final long val = ((Int64Value) sequence2).longValue();
+                        LOGGER.debug("Got long value:\n{}", val);
+                        return val;
+                    } else {
+                        return Long.parseLong(sequence.toString());
+                    }
+                });
+    }
+
+    protected static Optional<Double> getAsDoubleValue(final Sequence sequence) {
+        return Optional.ofNullable(sequence)
+                .map(sequence2 -> {
+                    if (sequence2 instanceof EmptyAtomicSequence) {
+                        return null;
+                    } else if (sequence2 instanceof DoubleValue) {
+                        final double val = ((DoubleValue) sequence2).getDoubleValue();
+                        LOGGER.debug("Got double value:\n{}", val);
+                        return val;
+                    } else {
+                        return Double.parseDouble(sequence.toString());
+                    }
+                });
     }
 
     protected static Optional<String> getAsSerialisedXmlString(final Sequence sequence) {
