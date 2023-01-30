@@ -8,7 +8,7 @@
         </encoder>
     </appender>
 
-        <logger name="stroom" level="info" />
+    <logger name="stroom" level="info" />
 
     <logger name="org.jooq.tools.LoggerListene" level="debug" />
     <logger name="stroom.meta.impl.db" level="debug" />

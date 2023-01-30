@@ -16,6 +16,7 @@
 
 package stroom.util.xml;
 
+import org.apache.xerces.jaxp.SAXParserFactoryImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXNotRecognizedException;
@@ -36,7 +37,7 @@ public final class SAXParserFactoryFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(SAXParserFactoryFactory.class);
 
     private static final String DEFAULT_SAX_PARSER_FACTORY =
-            "com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl";
+            "org.apache.xerces.jaxp.SAXParserFactoryImpl";
     private static final String IMP_USED = "The SAX Parser factory implementation being used is: ";
     private static final String END = "\".";
     private static final String SYSPROP_SAX_PARSER_FACTORY = "javax.xml.parsers.SAXParserFactory";
@@ -54,8 +55,22 @@ public final class SAXParserFactoryFactory {
                 LOGGER.info(SYSPROP_SET_TO + factoryName + END);
             }
 
-            final SAXParserFactory factory = newInstance();
+            // Ensure we set the system default.
+            SAXParserFactory factory = SAXParserFactory.newInstance();
             LOGGER.info(IMP_USED + factory.getClass().getName());
+
+            if (!factory.getClass().getName().equals(DEFAULT_SAX_PARSER_FACTORY)) {
+                throw new RuntimeException("Unexpected SAX version");
+            }
+
+            // Check what version we will create.
+            factory = newInstance();
+            LOGGER.info(IMP_USED + factory.getClass().getName());
+
+            if (!factory.getClass().getName().equals(DEFAULT_SAX_PARSER_FACTORY)) {
+                throw new RuntimeException("Unexpected SAX version");
+            }
+
         } catch (final RuntimeException e) {
             LOGGER.error("Unable to configure SAXParserFactory!", e);
         }
@@ -66,7 +81,7 @@ public final class SAXParserFactoryFactory {
     }
 
     public static SAXParserFactory newInstance() {
-        final SAXParserFactory factory = SAXParserFactory.newInstance();
+        final SAXParserFactory factory = new SAXParserFactoryImpl();
         secureProcessing(factory);
         factory.setNamespaceAware(true);
         factory.setValidating(false);

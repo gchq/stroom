@@ -468,17 +468,37 @@
 .userTaskView-layout {
     position: relative;
     width: 100%;
-    padding: 2px;
-    border: 1px solid grey;
 }
 
-.userTaskView-terminate {
-    vertical-align: middle;
-    padding: 3px;
-    padding-bottom: 0;
-    background-image: url("../images/terminate.png");
-    width: 11px;
-    height: 11px;
+.userTaskView-layout tr > td {
+	padding: 5px 8px;
+	border-bottom: 1px solid grey;
+}
+
+.userTaskView-layout .gwt-Label {
+	white-space: normal;
+}
+
+.gwt-Button.userTaskView-terminate {
+    background-image: url("../images/terminate.png") !important;
+	width: 12px;
+	height: 12px;
+	background-size: contain;
+	background-position-x: 0;
+	background-position-y: 0;
+	background-color: transparent !important;
+	background-repeat: no-repeat;
+	border-radius: 0;
+	border: none !important;
+	opacity: 0.8;
+}
+
+.gwt-Button.userTaskView-terminate:hover {
+	opacity: 1;
+}
+
+.userTaskView-taskName {
+	font-weight: bold;
 }
 /*
 .entityTreeView-nameFilter {
@@ -994,8 +1014,8 @@
 }
 
 .globalPropertyEditViewImpl-textArea {
-    width:100%;
-    height:80px;
+    width: 100%;
+    height: 100px;
 }
 .globalPropertyEditViewImpl-textAreaReducedHeight {
     width:100%;

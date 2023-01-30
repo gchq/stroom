@@ -14,14 +14,16 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder(alphabetic = true)
 public class ElasticConfig extends AbstractConfig implements IsStroomConfig {
 
-    private final ElasticIndexingConfig elasticIndexingConfig;
-    private final ElasticSearchConfig elasticSearchConfig;
+    public final ElasticClientConfig clientConfig;
+    private final ElasticIndexingConfig indexingConfig;
+    private final ElasticSearchConfig searchConfig;
     private final CacheConfig indexClientCache;
     private final CacheConfig indexCache;
 
     public ElasticConfig() {
-        elasticIndexingConfig = new ElasticIndexingConfig();
-        elasticSearchConfig = new ElasticSearchConfig();
+        clientConfig = new ElasticClientConfig();
+        indexingConfig = new ElasticIndexingConfig();
+        searchConfig = new ElasticSearchConfig();
         indexClientCache = CacheConfig.builder()
                 .maximumSize(100L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
@@ -34,24 +36,31 @@ public class ElasticConfig extends AbstractConfig implements IsStroomConfig {
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public ElasticConfig(@JsonProperty("indexing") final ElasticIndexingConfig elasticIndexingConfig,
-                         @JsonProperty("search") final ElasticSearchConfig elasticSearchConfig,
+    public ElasticConfig(@JsonProperty("client") final ElasticClientConfig clientConfig,
+                         @JsonProperty("indexing") final ElasticIndexingConfig indexingConfig,
+                         @JsonProperty("search") final ElasticSearchConfig searchConfig,
                          @JsonProperty("indexClientCache") final CacheConfig indexClientCache,
                          @JsonProperty("indexCache") final CacheConfig indexCache) {
-        this.elasticIndexingConfig = elasticIndexingConfig;
-        this.elasticSearchConfig = elasticSearchConfig;
+        this.clientConfig = clientConfig;
+        this.indexingConfig = indexingConfig;
+        this.searchConfig = searchConfig;
         this.indexClientCache = indexClientCache;
         this.indexCache = indexCache;
     }
 
+    @JsonProperty("client")
+    public ElasticClientConfig getClientConfig() {
+        return clientConfig;
+    }
+
     @JsonProperty("indexing")
-    public ElasticIndexingConfig getElasticIndexingConfig() {
-        return elasticIndexingConfig;
+    public ElasticIndexingConfig getIndexingConfig() {
+        return indexingConfig;
     }
 
     @JsonProperty("search")
-    public ElasticSearchConfig getElasticSearchConfig() {
-        return elasticSearchConfig;
+    public ElasticSearchConfig getSearchConfig() {
+        return searchConfig;
     }
 
     public CacheConfig getIndexClientCache() {
@@ -65,8 +74,9 @@ public class ElasticConfig extends AbstractConfig implements IsStroomConfig {
     @Override
     public String toString() {
         return "ElasticConfig{" +
-                "elasticIndexingConfig=" + elasticIndexingConfig +
-                ", elasticSearchConfig=" + elasticSearchConfig +
+                "clientConfig=" + clientConfig +
+                ", indexingConfig=" + indexingConfig +
+                ", searchConfig=" + searchConfig +
                 ", indexClientCache=" + indexClientCache +
                 ", indexCache=" + indexCache +
                 '}';

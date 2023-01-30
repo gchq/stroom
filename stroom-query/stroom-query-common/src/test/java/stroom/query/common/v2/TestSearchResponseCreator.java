@@ -14,7 +14,11 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.MapDataStore.ItemsImpl;
 import stroom.query.test.util.MockitoExtension;
-import stroom.query.test.util.TimingUtils;
+import stroom.util.concurrent.ThreadUtil;
+import stroom.util.logging.DurationTimer;
+import stroom.util.logging.DurationTimer.TimedResult;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -24,8 +28,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.Collections;
@@ -38,7 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(MockitoExtension.class)
 class TestSearchResponseCreator {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestSearchResponseCreator.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestSearchResponseCreator.class);
     private static final Duration TOLERANCE = Duration.ofMillis(500);
 
     @Mock
@@ -67,7 +69,7 @@ class TestSearchResponseCreator {
 
         SearchRequest searchRequest = getSearchRequest(false, null);
 
-        TimingUtils.TimedResult<SearchResponse> timedResult = TimingUtils.timeIt(() ->
+        final TimedResult<SearchResponse> timedResult = DurationTimer.measure(() ->
                 searchResponseCreator.create(searchRequest));
 
         SearchResponse searchResponse = timedResult.getResult();
@@ -76,7 +78,7 @@ class TestSearchResponseCreator {
         assertThat(searchResponse).isNotNull();
         assertThat(searchResponse.getResults()).isNullOrEmpty();
 
-        TimingUtils.isWithinTollerance(
+        isWithinTolerance(
                 serverTimeout,
                 actualDuration,
                 TOLERANCE);
@@ -102,7 +104,7 @@ class TestSearchResponseCreator {
 
         SearchRequest searchRequest = getSearchRequest(false, null);
 
-        TimingUtils.TimedResult<SearchResponse> timedResult = TimingUtils.timeIt(() ->
+        final TimedResult<SearchResponse> timedResult = DurationTimer.measure(() ->
                 searchResponseCreator.create(searchRequest));
 
         SearchResponse searchResponse = timedResult.getResult();
@@ -111,7 +113,7 @@ class TestSearchResponseCreator {
         assertResponseWithData(searchResponse);
 
         // Allow a period of time for java to run the code, it will never be 0
-        TimingUtils.isWithinTollerance(
+        isWithinTolerance(
                 Duration.ZERO,
                 actualDuration,
                 TOLERANCE);
@@ -129,7 +131,7 @@ class TestSearchResponseCreator {
 
         SearchRequest searchRequest = getSearchRequest(false, clientTimeout.toMillis());
 
-        TimingUtils.TimedResult<SearchResponse> timedResult = TimingUtils.timeIt(() ->
+        final TimedResult<SearchResponse> timedResult = DurationTimer.measure(() ->
                 searchResponseCreator.create(searchRequest));
 
         SearchResponse searchResponse = timedResult.getResult();
@@ -137,7 +139,7 @@ class TestSearchResponseCreator {
 
         assertResponseWithData(searchResponse);
 
-        TimingUtils.isWithinTollerance(
+        isWithinTolerance(
                 Duration.ofMillis(sleepTime),
                 actualDuration,
                 TOLERANCE);
@@ -158,7 +160,7 @@ class TestSearchResponseCreator {
         //zero timeout
         SearchRequest searchRequest = getSearchRequest(true, clientTimeout.toMillis());
 
-        TimingUtils.TimedResult<SearchResponse> timedResult = TimingUtils.timeIt(() ->
+        final TimedResult<SearchResponse> timedResult = DurationTimer.measure(() ->
                 searchResponseCreator.create(searchRequest));
 
         SearchResponse searchResponse = timedResult.getResult();
@@ -167,7 +169,7 @@ class TestSearchResponseCreator {
         assertThat(searchResponse).isNotNull();
         assertThat(searchResponse.getResults()).isNullOrEmpty();
 
-        TimingUtils.isWithinTollerance(
+        isWithinTolerance(
                 clientTimeout,
                 actualDuration,
                 TOLERANCE);
@@ -186,7 +188,7 @@ class TestSearchResponseCreator {
 
         SearchRequest searchRequest = getSearchRequest(true, clientTimeout.toMillis());
 
-        TimingUtils.TimedResult<SearchResponse> timedResult = TimingUtils.timeIt(() ->
+        TimedResult<SearchResponse> timedResult = DurationTimer.measure(() ->
                 searchResponseCreator.create(searchRequest));
 
         SearchResponse searchResponse = timedResult.getResult();
@@ -195,7 +197,7 @@ class TestSearchResponseCreator {
         assertResponseWithData(searchResponse);
 
         // Allow a period of time for java to run the code, it will never be 0
-        TimingUtils.isWithinTollerance(
+        isWithinTolerance(
                 clientTimeout,
                 actualDuration,
                 TOLERANCE);
@@ -207,7 +209,7 @@ class TestSearchResponseCreator {
 
         SearchRequest searchRequest2 = getSearchRequest(true, clientTimeout.toMillis());
 
-        timedResult = TimingUtils.timeIt(() ->
+        timedResult = DurationTimer.measure(() ->
                 searchResponseCreator.create(searchRequest2));
 
         SearchResponse searchResponse2 = timedResult.getResult();
@@ -216,7 +218,7 @@ class TestSearchResponseCreator {
         assertResponseWithData(searchResponse2);
 
         // Allow a period of time for java to run the code, it will never be 0
-        TimingUtils.isWithinTollerance(
+        isWithinTolerance(
                 Duration.ofMillis(sleepTime),
                 actualDuration,
                 TOLERANCE);
@@ -225,7 +227,7 @@ class TestSearchResponseCreator {
     private void makeSearchStateAfter(final long sleepTime, final boolean state) {
         try {
             final Answer<Boolean> answer = invocation -> {
-                TimingUtils.sleep(sleepTime);
+                ThreadUtil.sleep(sleepTime);
                 //change the store to be complete
                 Mockito.when(mockStore.isComplete()).thenReturn(state);
                 return state;
@@ -345,5 +347,21 @@ class TestSearchResponseCreator {
         assertThat(searchResponse.getResults().get(0)).isInstanceOf(TableResult.class);
         TableResult tableResult = (TableResult) searchResponse.getResults().get(0);
         assertThat(tableResult.getTotalResults()).isEqualTo(1);
+    }
+
+    public static void isWithinTolerance(final Duration expectedDuration,
+                                         final Duration actualDuration,
+                                         final Duration tolerance) {
+        LOGGER.info(() -> "Expected: " +
+                expectedDuration +
+                ", actual: " +
+                actualDuration +
+                ", tolerance: " +
+                tolerance +
+                ", diff " +
+                expectedDuration.minus(actualDuration).abs());
+
+        assertThat(actualDuration).isGreaterThanOrEqualTo(expectedDuration);
+        assertThat(actualDuration).isLessThanOrEqualTo(expectedDuration.plus(tolerance));
     }
 }

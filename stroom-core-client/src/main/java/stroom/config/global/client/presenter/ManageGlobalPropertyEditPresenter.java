@@ -511,8 +511,8 @@ public final class ManageGlobalPropertyEditPresenter
         setUiSourceText();
     }
 
-    protected PopupSize getPopupSize() {
-        return PopupSize.resizableX();
+    private PopupSize getPopupSize() {
+        return PopupSize.resizableX(500);
     }
 
     @Override

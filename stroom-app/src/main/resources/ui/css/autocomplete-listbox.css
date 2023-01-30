@@ -1,0 +1,48 @@
+.gwt-TextBox.autocompleteTextBox {
+    background-image: url('../images/drop-down.svg');
+    cursor: default;
+    background-size: 12px;
+    background-origin: content-box;
+    background-repeat: no-repeat;
+    background-position-x: right;
+    background-position-y: 50%;
+    background-color: transparent;
+    border: none;
+}
+
+.stroom-theme-dark .gwt-TextBox.autocompleteTextBox,
+.stroom-theme-dark-2 .gwt-TextBox.autocompleteTextBox {
+    background-image: url('../images/drop-down-dark.svg');
+}
+
+.gwt-PopupPanel.autocompletePanel {
+    padding: 0;
+    border: none;
+    border-radius: 0 5px 5px 5px;
+}
+
+.gwt-PopupPanel.autocompletePanel input {
+    background-image: url('../images/search.svg');
+    background-size: 12px;
+    background-origin: content-box;
+    background-repeat: no-repeat;
+    background-position-x: right;
+    background-position-y: 1px;
+}
+
+.stroom-theme-dark .gwt-PopupPanel.autocompletePanel input,
+.stroom-theme-dark-2 .gwt-PopupPanel.autocompletePanel input {
+    background-image: url('../images/search-dark.svg');
+}
+
+.gwt-PopupPanel.autocompletePanel .gwt-ListBox {
+    background-image: none;
+    padding: 0;
+    overflow-y: auto;
+    border-radius: 0;
+}
+
+.gwt-PopupPanel.autocompletePanel select > option {
+    padding: 2px 5px;
+    border: none;
+}
