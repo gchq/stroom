@@ -18,6 +18,7 @@ import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.ResultRequest.ResultStyle;
+import stroom.query.api.v2.ResultStoreSettingsFactory;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.Sort;
@@ -144,11 +145,13 @@ class TestSearchResultCreation {
                 sizesProvider,
                 null,
                 null,
-                coprocessors);
+                coprocessors,
+                "node",
+                new ResultStoreSettingsFactory().get());
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
-        final SearchResponse searchResponse = resultStore.getSearchResponseCreator().create(searchRequest);
+        final SearchResponse searchResponse = resultStore.search(searchRequest);
 
         // Validate the search response.
         validateSearchResponse(searchResponse);
@@ -272,11 +275,13 @@ class TestSearchResultCreation {
                 sizesProvider,
                 "test_user_id",
                 null,
-                coprocessors2);
+                coprocessors2,
+                "node",
+                new ResultStoreSettingsFactory().get());
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
-        final SearchResponse searchResponse = resultStore.getSearchResponseCreator().create(searchRequest);
+        final SearchResponse searchResponse = resultStore.search(searchRequest);
 
         // Validate the search response.
         validateSearchResponse(searchResponse);
@@ -347,11 +352,13 @@ class TestSearchResultCreation {
                 sizesProvider,
                 "test_user_id",
                 null,
-                coprocessors2);
+                coprocessors2,
+                "node",
+                new ResultStoreSettingsFactory().get());
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
-        final SearchResponse searchResponse = resultStore.getSearchResponseCreator().create(searchRequest);
+        final SearchResponse searchResponse = resultStore.search(searchRequest);
 
         // Validate the search response.
         validateSearchResponse(searchResponse);
@@ -454,7 +461,9 @@ class TestSearchResultCreation {
                 null,
                 null,
                 null,
-                coprocessors2);
+                coprocessors2,
+                "node",
+                new ResultStoreSettingsFactory().get());
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
@@ -493,42 +502,6 @@ class TestSearchResultCreation {
             target.readPayloads(input);
         }
     }
-
-//    private Coprocessors transfer(final String[] lines,
-//                                  final int[] mappings,
-//                                  final ExtractionReceiver consumer,
-//                                  final CoprocessorsFactory coprocessorsFactory,
-//                                  final Coprocessors coprocessors) {
-//        for (int i = 0; i < lines.length; i++) {
-//            final String line = lines[i];
-//            final String[] values = line.split(",");
-//            final Val[] vals = new Val[values.length];
-//            for (int j = 0; j < values.length; j++) {
-//                final String value = values[j];
-//                final int target = mappings[j];
-//                vals[target] = ValString.create(value);
-//            }
-//            consumer.getValuesConsumer().accept(vals);
-//        }
-//        consumer.getCompletionConsumer().accept((long) lines.length);
-//
-//
-//
-//
-//
-//
-//        final Coprocessors coprocessors2 = coprocessorsFactory.create(
-//        coprocessorSettings, searchRequest.getQuery().getParams());
-//
-//        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-//        try (final Output output = new Output(outputStream)) {
-//            coprocessors.writePayloads(output);
-//        }
-//
-//        try (final Input input = new Input(new ByteArrayInputStream(outputStream.toByteArray()))) {
-//            coprocessors2.readPayloads(input);
-//        }
-//    }
 
     private int[] createMappings(ExtractionReceiver receiver) {
         final FieldIndex fieldIndex = receiver.getFieldIndex();

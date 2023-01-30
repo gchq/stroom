@@ -16,7 +16,10 @@
 
 package stroom.query.common.v2;
 
-import stroom.task.api.TerminateHandler;
+import stroom.query.api.v2.ResultStoreSettings;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchResponse;
+import stroom.query.api.v2.SearchTaskProgress;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -49,16 +52,21 @@ public class ResultStore {
     private final Coprocessors coprocessors;
     private final String userId;
     private final Instant creationTime;
+    private volatile Instant lastAccessTime;
+    private final String nodeName;
 
     private final SearchResponseCreator searchResponseCreator;
-    private volatile TerminateHandler terminateHandler;
-    private volatile boolean destroy;
+    private final ResultStoreSettings resultStoreSettings;
+    private volatile SearchProcess searchProcess;
+    private volatile boolean terminate;
 
     public ResultStore(final SerialisersFactory serialisersFactory,
                        final SizesProvider sizesProvider,
                        final String userId,
                        final List<String> highlights,
-                       final Coprocessors coprocessors) {
+                       final Coprocessors coprocessors,
+                       final String nodeName,
+                       final ResultStoreSettings resultStoreSettings) {
         this.highlights = Optional
                 .ofNullable(highlights)
                 .map(Collections::unmodifiableList)
@@ -66,6 +74,9 @@ public class ResultStore {
         this.coprocessors = coprocessors;
         this.userId = userId;
         this.creationTime = Instant.now();
+        lastAccessTime = creationTime;
+        this.nodeName = nodeName;
+        this.resultStoreSettings = resultStoreSettings;
 
         searchResponseCreator = new SearchResponseCreator(serialisersFactory, sizesProvider, this);
     }
@@ -74,10 +85,18 @@ public class ResultStore {
         return coprocessors;
     }
 
-    public synchronized void setTerminateHandler(final TerminateHandler terminateHandler) {
-        this.terminateHandler = terminateHandler;
-        if (destroy) {
-            terminateHandler.onTerminate();
+    public synchronized void setSearchProcess(final SearchProcess searchProcess) {
+        this.searchProcess = searchProcess;
+        if (terminate) {
+            searchProcess.onTerminate();
+        }
+    }
+
+    public synchronized void terminate() {
+        LOGGER.trace(() -> "terminate()", new RuntimeException("terminate"));
+        this.terminate = true;
+        if (searchProcess != null) {
+            searchProcess.onTerminate();
         }
     }
 
@@ -85,12 +104,9 @@ public class ResultStore {
      * Stop searching and destroy any stored data.
      */
     public synchronized void destroy() {
-        LOGGER.trace(() -> "destroy()", new RuntimeException("destroy"));
-        this.destroy = true;
-        if (terminateHandler != null) {
-            terminateHandler.onTerminate();
-        }
+        terminate();
 
+        LOGGER.trace(() -> "destroy()", new RuntimeException("destroy"));
         LOGGER.trace(() -> "coprocessors.clear()");
         coprocessors.clear();
     }
@@ -214,8 +230,30 @@ public class ResultStore {
         return creationTime;
     }
 
-    public SearchResponseCreator getSearchResponseCreator() {
-        return searchResponseCreator;
+    public Instant getLastAccessTime() {
+        return lastAccessTime;
+    }
+
+    public String getNodeName() {
+        return nodeName;
+    }
+
+    public ResultStoreSettings getResultStoreSettings() {
+        return resultStoreSettings;
+    }
+
+    public SearchTaskProgress getSearchTaskProgress() {
+        final SearchProcess searchProcess = this.searchProcess;
+        if (searchProcess != null) {
+            return searchProcess.getSearchTaskProgress();
+        }
+        return null;
+    }
+
+    public SearchResponse search(final SearchRequest request) {
+        final SearchResponse response = searchResponseCreator.create(request);
+        lastAccessTime = Instant.now();
+        return response;
     }
 
     @Override

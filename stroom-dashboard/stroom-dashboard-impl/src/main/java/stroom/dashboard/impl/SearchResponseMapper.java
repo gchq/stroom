@@ -48,7 +48,8 @@ public class SearchResponseMapper {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SearchResponseMapper.class);
 
-    public DashboardSearchResponse mapResponse(final stroom.query.api.v2.SearchResponse searchResponse) {
+    public DashboardSearchResponse mapResponse(final String node,
+                                               final stroom.query.api.v2.SearchResponse searchResponse) {
         if (searchResponse == null) {
             return null;
         }
@@ -75,7 +76,9 @@ public class SearchResponseMapper {
                     .collect(Collectors.toList());
         }
 
-        return new DashboardSearchResponse(searchResponse.getKey(),
+        return new DashboardSearchResponse(
+                node,
+                searchResponse.getKey(),
                 highlights,
                 errors,
                 searchResponse.complete(),

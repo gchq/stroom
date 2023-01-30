@@ -16,19 +16,30 @@
 
 package stroom.core.client;
 
+import stroom.core.client.event.WindowCloseEvent;
+
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.Location;
+import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
-public class LocationManager {
+@Singleton
+public class LocationManager implements HasHandlers {
 
+    private final EventBus eventBus;
     private boolean ignoreClose;
 
     @Inject
-    public LocationManager(final HasSaveRegistry hasSaveRegistry) {
+    public LocationManager(final EventBus eventBus,
+                           final HasSaveRegistry hasSaveRegistry) {
+        this.eventBus = eventBus;
         Window.addWindowClosingHandler(event -> {
             if (!ignoreClose) {
+                WindowCloseEvent.fire(this);
                 if (hasSaveRegistry.isDirty()) {
                     event.setMessage("Are you sure you want to leave Stroom?");
                 }
@@ -41,5 +52,10 @@ public class LocationManager {
     public void replace(final String newURL) {
         ignoreClose = true;
         Location.replace(newURL);
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> event) {
+        eventBus.fireEvent(event);
     }
 }

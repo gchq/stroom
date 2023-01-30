@@ -1,5 +1,7 @@
 package stroom.query.common.v2;
 
+import stroom.node.api.NodeInfo;
+import stroom.query.api.v2.ResultStoreSettingsFactory;
 import stroom.security.api.SecurityContext;
 
 import java.util.List;
@@ -11,14 +13,20 @@ public final class ResultStoreFactory {
     private final SerialisersFactory serialisersFactory;
     private final SizesProvider sizesProvider;
     private final SecurityContext securityContext;
+    private final NodeInfo nodeInfo;
+    private final ResultStoreSettingsFactory resultStoreSettingsFactory;
 
     @Inject
     ResultStoreFactory(final SerialisersFactory serialisersFactory,
                        final SizesProvider sizesProvider,
-                       final SecurityContext securityContext) {
+                       final SecurityContext securityContext,
+                       final NodeInfo nodeInfo,
+                       final ResultStoreSettingsFactory resultStoreSettingsFactory) {
         this.serialisersFactory = serialisersFactory;
         this.sizesProvider = sizesProvider;
         this.securityContext = securityContext;
+        this.nodeInfo = nodeInfo;
+        this.resultStoreSettingsFactory = resultStoreSettingsFactory;
     }
 
     /**
@@ -34,6 +42,8 @@ public final class ResultStoreFactory {
                 sizesProvider,
                 userId,
                 highlights,
-                coprocessors);
+                coprocessors,
+                nodeInfo.getThisNodeName(),
+                resultStoreSettingsFactory.get());
     }
 }

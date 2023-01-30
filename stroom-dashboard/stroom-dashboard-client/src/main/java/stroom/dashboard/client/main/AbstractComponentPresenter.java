@@ -160,6 +160,11 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
     }
 
     @Override
+    public void onClose() {
+        unbind();
+    }
+
+    @Override
     public void onRemove() {
         unbind();
     }

@@ -31,12 +31,14 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
-public class QueryDocSuperPresenter extends DocumentEditTabPresenter<LinkTabPanelView, QueryDoc> {
+public class QueryDocSuperPresenter
+        extends DocumentEditTabPresenter<LinkTabPanelView, QueryDoc> {
 
     private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
     private static final TabData QUERY_TAB = new TabDataImpl("Query");
 
     private final TabContentProvider<QueryDoc> tabContentProvider = new TabContentProvider<>();
+    private final QueryDocPresenter queryDocPresenter;
 
     @Inject
     public QueryDocSuperPresenter(final EventBus eventBus,
@@ -45,6 +47,7 @@ public class QueryDocSuperPresenter extends DocumentEditTabPresenter<LinkTabPane
                                   final Provider<QueryDocPresenter> queryDocPresenterProvider,
                                   final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
+        queryDocPresenter = queryDocPresenterProvider.get();
 
         tabContentProvider.setDirtyHandler(event -> {
             if (event.isDirty()) {
@@ -53,7 +56,7 @@ public class QueryDocSuperPresenter extends DocumentEditTabPresenter<LinkTabPane
         });
 
         addTab(QUERY_TAB);
-        tabContentProvider.add(QUERY_TAB, queryDocPresenterProvider);
+        tabContentProvider.add(QUERY_TAB, () -> queryDocPresenter);
         addTab(SETTINGS_TAB);
         tabContentProvider.add(SETTINGS_TAB, settingsPresenterProvider);
         selectTab(QUERY_TAB);
@@ -79,6 +82,11 @@ public class QueryDocSuperPresenter extends DocumentEditTabPresenter<LinkTabPane
     public void onReadOnly(final boolean readOnly) {
         super.onReadOnly(readOnly);
         tabContentProvider.onReadOnly(readOnly);
+    }
+
+    @Override
+    public void onClose() {
+        queryDocPresenter.onClose();
     }
 
     @Override

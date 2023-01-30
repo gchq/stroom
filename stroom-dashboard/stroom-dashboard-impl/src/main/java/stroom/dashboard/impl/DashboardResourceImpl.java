@@ -86,11 +86,11 @@ class DashboardResourceImpl implements DashboardResource {
         return dashboardServiceProvider.get().search(request);
     }
 
-    @Override
-    @AutoLogged(OperationType.UNLOGGED)
-    public Boolean destroy(final DestroySearchRequest request) {
-        return dashboardServiceProvider.get().destroy(request);
-    }
+//    @Override
+//    @AutoLogged(OperationType.UNLOGGED)
+//    public Boolean destroy(final DestroySearchRequest request) {
+//        return dashboardServiceProvider.get().destroy(request);
+//    }
 
     @Override
     @AutoLogged(OperationType.UNLOGGED)

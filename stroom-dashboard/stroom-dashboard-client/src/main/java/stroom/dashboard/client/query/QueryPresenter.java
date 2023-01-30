@@ -18,6 +18,7 @@ package stroom.dashboard.client.query;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.LocationManager;
+import stroom.core.client.event.WindowCloseEvent;
 import stroom.dashboard.client.HasSelection;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
@@ -50,6 +51,7 @@ import stroom.processor.shared.Limits;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.QueryData;
+import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionUtil;
@@ -57,6 +59,7 @@ import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.QueryUiHandlers;
+import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.client.view.QueryButtons;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -146,7 +149,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                           final ClientSecurityContext securityContext,
                           final UiConfigCache clientPropertyCache,
                           final LocationManager locationManager,
-                          final DateTimeSettingsFactory dateTimeSettingsFactory) {
+                          final DateTimeSettingsFactory dateTimeSettingsFactory,
+                          final ResultStoreModel resultStoreModel) {
         super(eventBus, view, settingsPresenterProvider);
         this.expressionPresenter = expressionPresenter;
         this.historyPresenter = historyPresenter;
@@ -206,7 +210,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         searchModel = new SearchModel(
                 restFactory,
                 indexLoader,
-                dateTimeSettingsFactory);
+                dateTimeSettingsFactory,
+                resultStoreModel);
         searchModel.addErrorListener(this::setErrors);
         searchModel.addModeListener(this::setMode);
 
@@ -281,6 +286,11 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                 loadedDataSource(indexLoader.getLoadedDataSourceRef(), indexLoader.getDataSourceFieldsMap())));
 
         registerHandler(downloadQueryButton.addClickHandler(event -> downloadQuery()));
+
+        registerHandler(getEventBus().addHandler(WindowCloseEvent.getType(), event -> {
+            // If a user is even attempting to close the browser or browser tab then destroy the query.
+            searchModel.reset(DestroyReason.WINDOW_CLOSE);
+        }));
     }
 
     @Override
@@ -334,7 +344,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 //                          this.params = params;
 //                          lastUsedQueryInfo = null;
 
-                            stop();
+                            searchModel.reset(DestroyReason.NO_LONGER_NEEDED);
                             run(true, true, decorator);
                         }
                     }
@@ -586,6 +596,15 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         searchModel.stop();
     }
 
+    //    @Override
+//    public void reset() {
+//        if (autoRefreshTimer != null) {
+//            autoRefreshTimer.cancel();
+//            autoRefreshTimer = null;
+//        }
+//        searchModel.reset();
+//    }
+
     @Override
     public boolean getMode() {
         return searchModel.getMode();
@@ -614,7 +633,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             final ExpressionOperator decorated = expressionDecorator.apply(root);
 
             // Start search.
-            searchModel.reset();
             searchModel.startNewSearch(
                     decorated,
                     getDashboardContext().getCombinedParams(),
@@ -673,9 +691,16 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     @Override
+    public void onClose() {
+        super.onClose();
+        searchModel.reset(DestroyReason.TAB_CLOSE);
+        initialised = false;
+    }
+
+    @Override
     public void onRemove() {
         super.onRemove();
-        stop();
+        searchModel.reset(DestroyReason.NO_LONGER_NEEDED);
         initialised = false;
     }
 

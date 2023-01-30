@@ -21,6 +21,7 @@ import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
 import stroom.query.api.v2.DateTimeSettings;
+import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.Row;
@@ -68,7 +69,7 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
         if (!response.complete()) {
             throw new RuntimeException("NOT COMPLETE");
         }
-        searchResponseCreatorManager.destroy(response.getKey());
+        searchResponseCreatorManager.destroy(response.getKey(), DestroyReason.NO_LONGER_NEEDED);
 
         return response;
     }

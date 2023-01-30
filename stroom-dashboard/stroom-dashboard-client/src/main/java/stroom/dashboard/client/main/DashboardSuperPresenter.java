@@ -31,12 +31,14 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
-public class DashboardSuperPresenter extends DocumentEditTabPresenter<LinkTabPanelView, DashboardDoc> {
+public class DashboardSuperPresenter
+        extends DocumentEditTabPresenter<LinkTabPanelView, DashboardDoc> {
 
     private static final TabData DASHBOARD = new TabDataImpl("Dashboard");
     private static final TabData SETTINGS = new TabDataImpl("Settings");
 
     private final TabContentProvider<DashboardDoc> tabContentProvider = new TabContentProvider<>();
+    private final DashboardPresenter dashboardPresenter;
 
     @Inject
     public DashboardSuperPresenter(final EventBus eventBus,
@@ -45,6 +47,7 @@ public class DashboardSuperPresenter extends DocumentEditTabPresenter<LinkTabPan
                                    final Provider<DashboardSettingsPresenter> settingsPresenterProvider,
                                    final Provider<DashboardPresenter> dashboardPresenterProvider) {
         super(eventBus, view, securityContext);
+        dashboardPresenter = dashboardPresenterProvider.get();
 
         tabContentProvider.setDirtyHandler(event -> {
             if (event.isDirty()) {
@@ -53,7 +56,7 @@ public class DashboardSuperPresenter extends DocumentEditTabPresenter<LinkTabPan
         });
 
         addTab(DASHBOARD);
-        tabContentProvider.add(DASHBOARD, dashboardPresenterProvider);
+        tabContentProvider.add(DASHBOARD, () -> dashboardPresenter);
 
         addTab(SETTINGS);
         tabContentProvider.add(SETTINGS, settingsPresenterProvider);
@@ -81,6 +84,12 @@ public class DashboardSuperPresenter extends DocumentEditTabPresenter<LinkTabPan
     public void onReadOnly(final boolean readOnly) {
         super.onReadOnly(readOnly);
         tabContentProvider.onReadOnly(readOnly);
+    }
+
+    @Override
+    public void onClose() {
+        dashboardPresenter.onClose();
+        super.onClose();
     }
 
     @Override

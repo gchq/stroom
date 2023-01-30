@@ -81,8 +81,8 @@ public class SearchModule extends AbstractModule {
     private static class EvictExpiredElements extends RunnableWrapper {
 
         @Inject
-        EvictExpiredElements(final ResultStoreManager searchResponseCreatorManager) {
-            super(searchResponseCreatorManager::evictExpiredElements);
+        EvictExpiredElements(final ResultStoreManager resultStoreManager) {
+            super(resultStoreManager::evictExpiredElements);
         }
     }
 }

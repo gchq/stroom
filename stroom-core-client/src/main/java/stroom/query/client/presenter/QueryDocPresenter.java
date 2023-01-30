@@ -18,10 +18,12 @@
 package stroom.query.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.core.client.event.WindowCloseEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.QueryDocPresenter.QueryDocView;
@@ -60,7 +62,8 @@ public class QueryDocPresenter
                              final QueryResultTablePresenter tablePresenter,
                              final RestFactory restFactory,
                              final IndexLoader indexLoader,
-                             final DateTimeSettingsFactory dateTimeSettingsFactory) {
+                             final DateTimeSettingsFactory dateTimeSettingsFactory,
+                             final ResultStoreModel resultStoreModel) {
         super(eventBus, view, securityContext);
         this.tablePresenter = tablePresenter;
 
@@ -68,6 +71,7 @@ public class QueryDocPresenter
                 restFactory,
                 indexLoader,
                 dateTimeSettingsFactory,
+                resultStoreModel,
                 tablePresenter);
         queryModel.addErrorListener(this::setErrors);
         getView().setWarningsVisible(false);
@@ -89,6 +93,17 @@ public class QueryDocPresenter
         registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
         registerHandler(tablePresenter.addExpanderHandler(event -> queryModel.refresh()));
         registerHandler(tablePresenter.addRangeChangeHandler(event -> queryModel.refresh()));
+
+        registerHandler(getEventBus().addHandler(WindowCloseEvent.getType(), event -> {
+            // If a user is even attempting to close the browser or browser tab then destroy the query.
+            queryModel.reset(DestroyReason.WINDOW_CLOSE);
+        }));
+    }
+
+    @Override
+    public void onClose() {
+        queryModel.reset(DestroyReason.TAB_CLOSE);
+        super.onClose();
     }
 
     public void setErrors(final List<String> errors) {
@@ -155,7 +170,7 @@ public class QueryDocPresenter
 //            final ExpressionOperator decorated = expressionDecorator.apply(root);
 
         // Start search.
-        queryModel.reset();
+        queryModel.reset(DestroyReason.NO_LONGER_NEEDED);
         queryModel.startNewSearch(
                 codePresenter.getText(),
                 null, //getDashboardContext().getCombinedParams(),

@@ -6,6 +6,7 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskId;
+import stroom.task.shared.TaskProgress;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -39,6 +40,11 @@ public class MockTaskModule extends AbstractModule {
             @Override
             public void terminate(final TaskId taskId) {
 
+            }
+
+            @Override
+            public TaskProgress getTaskProgress(final TaskContext taskContext) {
+                return null;
             }
         };
     }

@@ -21,6 +21,7 @@ import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
 import stroom.query.api.v2.DateTimeSettings;
+import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.Result;
@@ -57,12 +58,12 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSearchTest.class);
 
     @Inject
-    private ResultStoreManager searchResponseCreatorManager;
+    private ResultStoreManager resultStoreManager;
 
     protected static SearchResponse search(final SearchRequest searchRequest,
-                                           final ResultStoreManager searchResponseCreatorManager) {
-        SearchResponse response = searchResponseCreatorManager.search(searchRequest);
-        searchResponseCreatorManager.destroy(response.getKey());
+                                           final ResultStoreManager resultStoreManager) {
+        SearchResponse response = resultStoreManager.search(searchRequest);
+        resultStoreManager.destroy(response.getKey(), DestroyReason.NO_LONGER_NEEDED);
         if (!response.complete()) {
             throw new RuntimeException("NOT COMPLETE");
         }
@@ -160,7 +161,7 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
     }
 
     protected SearchResponse search(SearchRequest searchRequest) {
-        return search(searchRequest, searchResponseCreatorManager);
+        return search(searchRequest, resultStoreManager);
     }
 
     public void testInteractive(
@@ -172,6 +173,6 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             final Consumer<Map<String, List<Row>>> resultMapConsumer,
             final IndexStore indexStore) {
         testInteractive(expressionIn, expectResultCount, componentIds, tableSettingsCreator,
-                extractValues, resultMapConsumer, indexStore, searchResponseCreatorManager);
+                extractValues, resultMapConsumer, indexStore, resultStoreManager);
     }
 }

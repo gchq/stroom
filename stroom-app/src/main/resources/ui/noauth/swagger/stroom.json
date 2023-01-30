@@ -6343,6 +6343,36 @@
         "tags" : [ "Remote Search" ]
       }
     },
+    "/result-store/v1/find" : {
+      "post" : {
+        "operationId" : "findResultStoreCriteria",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FindResultStoreCriteria"
+              }
+            }
+          },
+          "description" : "criteria",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageResultStoreInfo"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find the result stores matching the supplied criteria",
+        "tags" : [ "Queries" ]
+      }
+    },
     "/ruleset/v2/export" : {
       "post" : {
         "operationId" : "exportReceiveDataRules",
@@ -11926,6 +11956,27 @@
           }
         }
       },
+      "FindResultStoreCriteria" : {
+        "type" : "object",
+        "properties" : {
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "quickFilterInput" : {
+            "type" : "string"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          }
+        }
+      },
       "FindStoredQueryCriteria" : {
         "type" : "object",
         "properties" : {
@@ -14825,6 +14876,21 @@
           }
         }
       },
+      "ResultPageResultStoreInfo" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ResultStoreInfo"
+            }
+          }
+        }
+      },
       "ResultPageStoredQuery" : {
         "type" : "object",
         "description" : "A page of results.",
@@ -14907,6 +14973,21 @@
           }
         },
         "required" : [ "componentId", "mappings", "openGroups", "requestedRange", "resultStyle" ]
+      },
+      "ResultStoreInfo" : {
+        "type" : "object",
+        "properties" : {
+          "creationTime" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "queryKey" : {
+            "$ref" : "#/components/schemas/QueryKey"
+          },
+          "userId" : {
+            "type" : "string"
+          }
+        }
       },
       "Row" : {
         "type" : "object",

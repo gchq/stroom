@@ -1,19 +1,21 @@
 package stroom.query.common.v2;
 
-import stroom.cache.api.CacheManager;
-import stroom.cache.api.StroomCache;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
 import stroom.docref.DocRef;
+import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.v2.FindResultStoreCriteria;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
+import stroom.query.api.v2.ResultStoreInfo;
+import stroom.query.api.v2.ResultStoreSettings;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
@@ -27,22 +29,24 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.ResultPage;
 
 import com.google.common.base.Preconditions;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -50,19 +54,15 @@ public final class ResultStoreManager implements Clearable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ResultStoreManager.class);
 
-    private static final String CACHE_NAME = "Search Results";
-
     private final TaskContext taskContext;
     private final TaskContextFactory taskContextFactory;
     private final SecurityContext securityContext;
     private final ExecutorProvider executorProvider;
-    private final StroomCache<QueryKey, ResultStore> cache;
+    private final Map<QueryKey, ResultStore> resultStoreMap;
     private final StoreFactoryRegistry storeFactoryRegistry;
 
     @Inject
-    ResultStoreManager(final CacheManager cacheManager,
-                       final Provider<ResultStoreConfig> resultStoreConfigProvider,
-                       final TaskContext taskContext,
+    ResultStoreManager(final TaskContext taskContext,
                        final TaskContextFactory taskContextFactory,
                        final SecurityContext securityContext,
                        final ExecutorProvider executorProvider,
@@ -71,23 +71,22 @@ public final class ResultStoreManager implements Clearable {
         this.taskContextFactory = taskContextFactory;
         this.securityContext = securityContext;
         this.executorProvider = executorProvider;
-        this.cache = cacheManager.create(
-                CACHE_NAME,
-                () -> resultStoreConfigProvider.get().getSearchResultCache(),
-                this::destroy);
+        this.resultStoreMap = new ConcurrentHashMap<>();
         this.storeFactoryRegistry = storeFactoryRegistry;
     }
 
-    public Optional<ResultStore> getIfPresent(final QueryKey key) {
-        return cache.getIfPresent(key);
+    private void destroyAndRemove(final QueryKey queryKey, final ResultStore resultStore) {
+        try {
+            securityContext.asProcessingUser(resultStore::destroy);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
+        } finally {
+            resultStoreMap.remove(queryKey);
+        }
     }
 
-    private void destroy(final QueryKey key, final ResultStore value) {
-        LOGGER.trace(() -> "destroy() " + key);
-        if (value != null) {
-            LOGGER.debug(() -> "Destroying key: " + key);
-            securityContext.asProcessingUser(value::destroy);
-        }
+    public Optional<ResultStore> getIfPresent(final QueryKey key) {
+        return Optional.ofNullable(resultStoreMap.get(key));
     }
 
     public DataSource getDataSource(final DocRef docRef) {
@@ -158,16 +157,15 @@ public final class ResultStoreManager implements Clearable {
             final SearchRequest finalModifiedRequest = modifiedRequest;
             final QueryKey queryKey = finalModifiedRequest.getKey();
             LOGGER.trace(() -> "get() " + queryKey);
-            resultStore = cache.get(queryKey, k -> {
-                try {
-                    LOGGER.trace(() -> "create() " + queryKey);
-                    LOGGER.debug(() -> "Creating new store for key: " + queryKey);
-                    return storeFactory.createResultStore(finalModifiedRequest);
-                } catch (final RuntimeException e) {
-                    LOGGER.debug(e.getMessage(), e);
-                    throw e;
-                }
-            });
+            try {
+                LOGGER.trace(() -> "create() " + queryKey);
+                LOGGER.debug(() -> "Creating new store for key: " + queryKey);
+                resultStore = storeFactory.createResultStore(finalModifiedRequest);
+                resultStoreMap.put(queryKey, resultStore);
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e.getMessage(), e);
+                throw e;
+            }
         }
 
         // Perform search.
@@ -250,7 +248,7 @@ public final class ResultStoreManager implements Clearable {
 
         try {
             // Create a response from the data found so far, this could be complete/incomplete
-            final SearchResponse response = resultStore.getSearchResponseCreator().create(request);
+            final SearchResponse response = resultStore.search(request);
 
             LOGGER.trace(() -> getResponseInfoForLogging(request, response));
 
@@ -322,32 +320,44 @@ public final class ResultStoreManager implements Clearable {
     }
 
     /**
-     * Get an existing {@link SearchResponseCreator} from the cache if possible
+     * Terminate all running search processes associated with a result store.
      *
-     * @param queryKey The key of the entry to retrieve.
-     * @return Get a {@link SearchResponseCreator} from the cache
+     * @param queryKey The key of the result store to terminate searches on.
      */
-    public Boolean keepAlive(final QueryKey queryKey) {
-//        if (LOGGER.isDebugEnabled()) {
-//            String json = JsonUtil.writeValueAsString(queryKey);
-//            LOGGER.debug("/keepAlive called with queryKey:\n{}", json);
-//        }
-//
-//        LOGGER.trace(() -> "keepAlive() " + queryKey);
-//        final Optional<ResultStore> optionalResultStore = cache
-//                .getIfPresent(queryKey);
-//        return optionalResultStore
-//                .map(ResultStore::keepAlive)
-//                .orElse(Boolean.FALSE);
-        return true;
+    public Boolean terminate(final QueryKey queryKey) {
+        if (LOGGER.isDebugEnabled()) {
+            String json = JsonUtil.writeValueAsString(queryKey);
+            LOGGER.debug("/terminate called with queryKey:\n{}", json);
+        }
+
+        final Supplier<Boolean> supplier = taskContextFactory.contextResult("Terminate search",
+                taskContext -> {
+                    taskContext.info(queryKey::getUuid);
+                    LOGGER.debug(() -> "terminate called for queryKey " + queryKey);
+                    final Optional<ResultStore> optionalResultStore = getIfPresent(queryKey);
+                    if (optionalResultStore.isPresent()) {
+                        final ResultStore resultStore = optionalResultStore.get();
+                        resultStore.terminate();
+                        return true;
+                    }
+                    return false;
+                });
+        final Executor executor = executorProvider.get();
+        final CompletableFuture<Boolean> completableFuture = CompletableFuture.supplyAsync(supplier, executor);
+        try {
+            return completableFuture.get();
+        } catch (final InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
     /**
-     * Remove an entry from the cache, this will also terminate any running search for that entry
+     * Destroy a result store for the specified query key.
      *
-     * @param queryKey The key of the entry to remove.
+     * @param queryKey The key of the result store to destroy.
      */
-    public Boolean destroy(final QueryKey queryKey) {
+    public Boolean destroy(final QueryKey queryKey,
+                           final DestroyReason destroyReason) {
         if (LOGGER.isDebugEnabled()) {
             String json = JsonUtil.writeValueAsString(queryKey);
             LOGGER.debug("/destroy called with queryKey:\n{}", json);
@@ -357,7 +367,36 @@ public final class ResultStoreManager implements Clearable {
                 taskContext -> {
                     taskContext.info(queryKey::getUuid);
                     LOGGER.debug(() -> "remove called for queryKey " + queryKey);
-                    cache.remove(queryKey);
+                    final Optional<ResultStore> resultStore = getIfPresent(queryKey);
+                    resultStore.ifPresent(store -> {
+                        if (destroyReason == null) {
+                            destroyAndRemove(queryKey, store);
+                        } else {
+                            switch (destroyReason) {
+                                case NO_LONGER_NEEDED, MANUAL -> destroyAndRemove(queryKey, store);
+                                case TAB_CLOSE -> {
+                                    final ResultStoreSettings resultStoreSettings = store.getResultStoreSettings();
+                                    if (resultStoreSettings.getStoreLifespan()
+                                            .isDestroyOnTabClose()) {
+                                        destroyAndRemove(queryKey, store);
+                                    } else if (resultStoreSettings.getSearchProcessLifespan()
+                                            .isDestroyOnTabClose()) {
+                                        store.terminate();
+                                    }
+                                }
+                                case WINDOW_CLOSE -> {
+                                    final ResultStoreSettings resultStoreSettings = store.getResultStoreSettings();
+                                    if (resultStoreSettings.getStoreLifespan()
+                                            .isDestroyOnWindowClose()) {
+                                        destroyAndRemove(queryKey, store);
+                                    } else if (resultStoreSettings.getSearchProcessLifespan()
+                                            .isDestroyOnWindowClose()) {
+                                        store.terminate();
+                                    }
+                                }
+                            }
+                        }
+                    });
                     return true;
                 });
         final Executor executor = executorProvider.get();
@@ -370,15 +409,50 @@ public final class ResultStoreManager implements Clearable {
     }
 
     /**
-     * Evicts any expired entries from the underlying cache
+     * Evicts any expired result stores.
      */
     public void evictExpiredElements() {
         taskContext.info(() -> "Evicting expired search responses");
-        cache.evictExpiredElements();
+        final long now = System.currentTimeMillis();
+        resultStoreMap.forEach((queryKey, resultStore) -> {
+            try {
+                final ResultStoreSettings settings = resultStore.getResultStoreSettings();
+                final long createTime = resultStore.getCreationTime().toEpochMilli();
+                final long accessTime = resultStore.getLastAccessTime().toEpochMilli();
+                final long createAge = now - createTime;
+                final long accessAge = now - accessTime;
+                if (createAge > settings.getStoreLifespan().getTimeToLiveMs()) {
+                    destroyAndRemove(queryKey, resultStore);
+                } else if (accessAge > settings.getStoreLifespan().getTimeToIdleMs()) {
+                    destroyAndRemove(queryKey, resultStore);
+                } else if (createAge > settings.getSearchProcessLifespan().getTimeToLiveMs()) {
+                    resultStore.terminate();
+                } else if (accessAge > settings.getSearchProcessLifespan().getTimeToIdleMs()) {
+                    resultStore.terminate();
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.error(e::getMessage, e);
+            }
+        });
     }
 
     @Override
     public void clear() {
-        cache.clear();
+        resultStoreMap.forEach(this::destroyAndRemove);
+    }
+
+    public ResultPage<ResultStoreInfo> find(final FindResultStoreCriteria criteria) {
+        final List<ResultStoreInfo> list = new ArrayList<>();
+        resultStoreMap.forEach((queryKey, resultStore) -> {
+            list.add(new ResultStoreInfo(queryKey,
+                    resultStore.getUserId(),
+                    resultStore.getCreationTime().toEpochMilli(),
+                    resultStore.getNodeName(),
+                    resultStore.getCoprocessors().getByteSize(),
+                    resultStore.isComplete(),
+                    resultStore.getSearchTaskProgress(),
+                    resultStore.getResultStoreSettings()));
+        });
+        return new ResultPage<>(list);
     }
 }

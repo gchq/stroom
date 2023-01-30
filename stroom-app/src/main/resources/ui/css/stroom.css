@@ -630,10 +630,6 @@ input[type="file"]:disabled {
   color: var(--control__text-color);
 }
 
-.com-google-gwt-user-client-ui-CustomScrollPanel-Style-customScrollPanelCorner {
-  background: transparent !important;
-}
-
 .gwt-ListBox {
 	/* Hide drop down arrow on Firefox */
     -moz-appearance: none;

@@ -3,7 +3,6 @@ package stroom.query.impl;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
-import stroom.query.shared.DestroyQueryRequest;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QuerySearchRequest;
@@ -23,7 +22,7 @@ public interface QueryService {
 
     DashboardSearchResponse search(QuerySearchRequest request);
 
-    Boolean destroy(DestroyQueryRequest request);
+//    Boolean destroy(DestroyQueryRequest request);
 
     List<String> fetchTimeZones();
 }

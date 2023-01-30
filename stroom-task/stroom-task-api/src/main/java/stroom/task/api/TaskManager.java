@@ -18,6 +18,7 @@
 package stroom.task.api;
 
 import stroom.task.shared.TaskId;
+import stroom.task.shared.TaskProgress;
 
 public interface TaskManager {
 
@@ -36,4 +37,6 @@ public interface TaskManager {
      * @param taskId The id of the task to terminate.
      */
     void terminate(TaskId taskId);
+
+    TaskProgress getTaskProgress(TaskContext taskContext);
 }

@@ -34,6 +34,12 @@ import java.util.Set;
 public class DashboardSearchResponse {
 
     /**
+     * The node that this search response is for.
+     */
+    @JsonProperty
+    private final String node;
+
+    /**
      * The dashboard component that this search response is for.
      */
     @JsonProperty
@@ -63,16 +69,22 @@ public class DashboardSearchResponse {
     private final List<Result> results;
 
     @JsonCreator
-    public DashboardSearchResponse(@JsonProperty("queryKey") final QueryKey queryKey,
+    public DashboardSearchResponse(@JsonProperty("node") final String node,
+                                   @JsonProperty("queryKey") final QueryKey queryKey,
                                    @JsonProperty("highlights") final Set<String> highlights,
                                    @JsonProperty("errors") final List<String> errors,
                                    @JsonProperty("complete") final boolean complete,
                                    @JsonProperty("results") final List<Result> results) {
+        this.node = node;
         this.queryKey = queryKey;
         this.highlights = highlights;
         this.errors = errors;
         this.complete = complete;
         this.results = results;
+    }
+
+    public String getNode() {
+        return node;
     }
 
     public QueryKey getQueryKey() {

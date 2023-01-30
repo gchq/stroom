@@ -22,6 +22,7 @@ import stroom.docref.DocRef;
 import stroom.event.logging.api.EventActionDecorator;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
@@ -56,16 +57,9 @@ public abstract class AbstractDataSourceResource implements DataSourceResource {
 
     @Timed
     @Override
-    @AutoLogged(OperationType.UNLOGGED)
-    public Boolean keepAlive(final QueryKey queryKey) {
-        return searchResponseCreatorManagerProvider.get().keepAlive(queryKey);
-    }
-
-    @Timed
-    @Override
     @AutoLogged(value = OperationType.PROCESS, verb = "Closing Query", decorator = TerminateDecorator.class)
     public Boolean destroy(final QueryKey queryKey) {
-        return searchResponseCreatorManagerProvider.get().destroy(queryKey);
+        return searchResponseCreatorManagerProvider.get().destroy(queryKey, DestroyReason.NO_LONGER_NEEDED);
     }
 
     static class TerminateDecorator implements EventActionDecorator<ProcessEventAction> {

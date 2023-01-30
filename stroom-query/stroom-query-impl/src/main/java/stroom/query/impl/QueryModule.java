@@ -48,5 +48,7 @@ public class QueryModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(QueryResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bind(ResultStoreResourceImpl.class);
     }
 }

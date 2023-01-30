@@ -40,7 +40,7 @@ class TestSearchResponseMapper {
     @Test
     void testResponse() {
         final SearchResponseMapper mapper = new SearchResponseMapper();
-        final DashboardSearchResponse result = mapper.mapResponse(getSearchResponse());
+        final DashboardSearchResponse result = mapper.mapResponse(null, getSearchResponse());
         System.out.println(result);
     }
 

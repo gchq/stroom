@@ -27,7 +27,5 @@ public interface DataSourceResource {
 
     SearchResponse search(SearchRequest request);
 
-    Boolean keepAlive(QueryKey queryKey);
-
     Boolean destroy(QueryKey queryKey);
 }

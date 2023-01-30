@@ -21,11 +21,11 @@ import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DashboardSearchResponse;
-import stroom.dashboard.shared.DestroySearchRequest;
 import stroom.dashboard.shared.Search;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Param;
@@ -33,7 +33,7 @@ import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
-import stroom.util.client.Console;
+import stroom.query.client.presenter.ResultStoreModel;
 import stroom.view.client.presenter.IndexLoader;
 
 import com.google.gwt.core.client.GWT;
@@ -55,8 +55,10 @@ public class SearchModel {
     private String dashboardUuid;
     private String componentId;
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
+    private final ResultStoreModel resultStoreModel;
     private Map<String, ResultComponent> componentMap = new HashMap<>();
     private DashboardSearchResponse currentResponse;
+    private String currentNode;
     private QueryKey currentQueryKey;
     private Search currentSearch;
     private Boolean mode = false;
@@ -67,10 +69,12 @@ public class SearchModel {
 
     public SearchModel(final RestFactory restFactory,
                        final IndexLoader indexLoader,
-                       final DateTimeSettingsFactory dateTimeSettingsFactory) {
+                       final DateTimeSettingsFactory dateTimeSettingsFactory,
+                       final ResultStoreModel resultStoreModel) {
         this.restFactory = restFactory;
         this.indexLoader = indexLoader;
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
+        this.resultStoreModel = resultStoreModel;
     }
 
     public void init(final String dashboardUuid,
@@ -81,14 +85,36 @@ public class SearchModel {
 
     /**
      * Stop searching, set the search mode to inactive and tell all components
-     * that they no longer want data and search has ended.
+     * that they no longer want data and search has ended. Do not destroy search results.
      */
     public void stop() {
         GWT.log("SearchModel - stop()");
-        if (currentQueryKey != null) {
-            destroy(currentQueryKey);
-            currentQueryKey = null;
+
+        terminate(currentNode, currentQueryKey);
+        setMode(false);
+
+        // Stop the spinner from spinning and tell components that they no
+        // longer want data.
+        for (final ResultComponent resultComponent : componentMap.values()) {
+            resultComponent.endSearch();
         }
+
+        // Stop polling.
+        searching = false;
+    }
+
+    /**
+     * Destroy the previous search and ready all components for a new search to
+     * begin.
+     */
+    public void reset(final DestroyReason destroyReason) {
+        GWT.log("SearchModel - reset()");
+
+        // Stop previous search if there is one.
+        deleteStore(currentNode, currentQueryKey, destroyReason);
+        currentQueryKey = null;
+        currentNode = null;
+
         setMode(false);
 
         // Stop the spinner from spinning and tell components that they no
@@ -103,15 +129,6 @@ public class SearchModel {
     }
 
     /**
-     * Destroy the previous search and ready all components for a new search to
-     * begin.
-     */
-    public void reset() {
-        // Stop previous search.
-        stop();
-    }
-
-    /**
      * Begin executing a new search using the supplied query expression.
      *
      * @param expression The expression to search with.
@@ -122,10 +139,10 @@ public class SearchModel {
                                final boolean incremental,
                                final boolean storeHistory,
                                final String queryInfo) {
-        // Destroy the previous search and ready all components for a new search to begin.
-        stop();
-
         GWT.log("SearchModel - startNewSearch()");
+
+        // Destroy the previous search and ready all components for a new search to begin.
+        reset(DestroyReason.NO_LONGER_NEEDED);
 
         final Map<String, ComponentSettings> resultComponentMap = createComponentSettingsMap();
         if (resultComponentMap != null) {
@@ -241,22 +258,64 @@ public class SearchModel {
         }
     }
 
-    private void destroy(final QueryKey queryKey) {
-        final DestroySearchRequest request = DestroySearchRequest
-                .builder()
-                .queryKey(queryKey)
-                .dashboardUuid(dashboardUuid)
-                .componentId(componentId)
-                .build();
-        final Rest<Boolean> rest = restFactory.create();
-        rest
-                .onSuccess(response -> {
-                    if (!response) {
-                        Console.log("Unable to destroy search: " + request);
-                    }
-                })
-                .call(DASHBOARD_RESOURCE)
-                .destroy(request);
+//    private void terminate(final QueryKey queryKey) {
+//        if (queryKey != null) {
+//            resultStoreModel.terminate();
+//        }
+//
+////        final DestroySearchRequest request = DestroySearchRequest
+////                .builder()
+////                .queryKey(queryKey)
+////                .dashboardUuid(dashboardUuid)
+////                .componentId(componentId)
+////                .build();
+////        final Rest<Boolean> rest = restFactory.create();
+////        rest
+////                .onSuccess(response -> {
+////                    if (!response) {
+////                        Console.log("Unable to destroy search: " + request);
+////                    }
+////                })
+////                .call(DASHBOARD_RESOURCE)
+////                .destroy(request);
+//    }
+
+
+//    private void destroy(final QueryKey queryKey) {
+//        if (queryKey != null) {
+//            resultStoreModel.destroy();
+//        }
+//
+////        final DestroySearchRequest request = DestroySearchRequest
+////                .builder()
+////                .queryKey(queryKey)
+////                .dashboardUuid(dashboardUuid)
+////                .componentId(componentId)
+////                .build();
+////        final Rest<Boolean> rest = restFactory.create();
+////        rest
+////                .onSuccess(response -> {
+////                    if (!response) {
+////                        Console.log("Unable to destroy search: " + request);
+////                    }
+////                })
+////                .call(DASHBOARD_RESOURCE)
+////                .destroy(request);
+//    }
+
+
+    private void deleteStore(final String node, final QueryKey queryKey, final DestroyReason destroyReason) {
+        if (queryKey != null) {
+            resultStoreModel.destroy(node, queryKey, destroyReason, (ok) ->
+                    GWT.log("Destroyed store " + queryKey));
+        }
+    }
+
+    private void terminate(final String node, final QueryKey queryKey) {
+        if (queryKey != null) {
+            resultStoreModel.terminate(node, queryKey, (ok) ->
+                    GWT.log("Terminate search " + queryKey));
+        }
     }
 
     private void poll(final boolean storeHistory) {
@@ -285,6 +344,7 @@ public class SearchModel {
                     .onSuccess(response -> {
                         if (search == currentSearch) {
                             currentQueryKey = response.getQueryKey();
+                            currentNode = response.getNode();
 
                             try {
                                 update(response);
@@ -296,7 +356,7 @@ public class SearchModel {
                                 poll(false);
                             }
                         } else {
-                            destroy(response.getQueryKey());
+                            deleteStore(response.getNode(), response.getQueryKey(), DestroyReason.NO_LONGER_NEEDED);
                         }
                     })
                     .onFailure(throwable -> {

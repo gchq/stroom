@@ -1357,6 +1357,13 @@ export interface FindNodeStatusCriteria {
   sortList?: CriteriaFieldSort[];
 }
 
+export interface FindResultStoreCriteria {
+  pageRequest?: PageRequest;
+  quickFilterInput?: string;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+}
+
 export interface FindStoredQueryCriteria {
   componentId?: string;
   dashboardUuid?: string;
@@ -2735,6 +2742,15 @@ export interface ResultPageProcessorTaskSummary {
 /**
  * A page of results.
  */
+export interface ResultPageResultStoreInfo {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: ResultStoreInfo[];
+}
+
+/**
+ * A page of results.
+ */
 export interface ResultPageStoredQuery {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
@@ -2776,6 +2792,15 @@ export interface ResultRequest {
 
   /** The style of results required. FLAT will provide a FlatResult object, while TABLE will provide a TableResult object */
   resultStyle: "FLAT" | "TABLE";
+}
+
+export interface ResultStoreInfo {
+  /** @format int64 */
+  creationTime?: number;
+
+  /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
+  queryKey?: QueryKey;
+  userId?: string;
 }
 
 /**
@@ -7891,6 +7916,26 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     startRemoteSearch: (data: ClusterSearchTask, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/remoteSearch/v1/start`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
+  resultStore = {
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name FindResultStoreCriteria
+     * @summary Find the result stores matching the supplied criteria
+     * @request POST:/result-store/v1/find
+     * @secure
+     */
+    findResultStoreCriteria: (data: FindResultStoreCriteria, params: RequestParams = {}) =>
+      this.request<any, ResultPageResultStoreInfo>({
+        path: `/result-store/v1/find`,
         method: "POST",
         body: data,
         secure: true,

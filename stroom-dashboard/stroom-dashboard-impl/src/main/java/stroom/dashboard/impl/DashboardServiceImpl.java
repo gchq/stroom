@@ -28,7 +28,6 @@ import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DashboardSearchResponse;
-import stroom.dashboard.shared.DestroySearchRequest;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.FunctionSignature;
@@ -41,6 +40,7 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Query;
@@ -111,6 +111,7 @@ class DashboardServiceImpl implements DashboardService {
     private final TaskContextFactory taskContextFactory;
     private final Provider<FunctionService> functionServiceProvider;
     private final ResultStoreManager searchResponseCreatorManager;
+    private final NodeInfo nodeInfo;
 
     @Inject
     DashboardServiceImpl(final DashboardStore dashboardStore,
@@ -124,7 +125,8 @@ class DashboardServiceImpl implements DashboardService {
                          final ExecutorProvider executorProvider,
                          final TaskContextFactory taskContextFactory,
                          final Provider<FunctionService> functionServiceProvider,
-                         final ResultStoreManager searchResponseCreatorManager) {
+                         final ResultStoreManager searchResponseCreatorManager,
+                         final NodeInfo nodeInfo) {
         this.dashboardStore = dashboardStore;
         this.queryService = queryService;
         this.documentResourceHelper = documentResourceHelper;
@@ -137,6 +139,7 @@ class DashboardServiceImpl implements DashboardService {
         this.taskContextFactory = taskContextFactory;
         this.functionServiceProvider = functionServiceProvider;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
+        this.nodeInfo = nodeInfo;
     }
 
     @Override
@@ -402,10 +405,10 @@ class DashboardServiceImpl implements DashboardService {
         });
     }
 
-    @Override
-    public Boolean destroy(final DestroySearchRequest request) {
-        return searchResponseCreatorManager.destroy(request.getQueryKey());
-    }
+//    @Override
+//    public Boolean destroy(final DestroySearchRequest request) {
+//        return searchResponseCreatorManager.destroy(request.getQueryKey());
+//    }
 
     private DashboardSearchResponse processRequest(final DashboardSearchRequest searchRequest) {
         LOGGER.trace(() -> "processRequest() " + searchRequest);
@@ -420,7 +423,7 @@ class DashboardServiceImpl implements DashboardService {
 
                 // Perform the search or update results.
                 final SearchResponse searchResponse = searchResponseCreatorManager.search(mappedRequest);
-                result = new SearchResponseMapper().mapResponse(searchResponse);
+                result = new SearchResponseMapper().mapResponse(nodeInfo.getThisNodeName(), searchResponse);
 
                 if (queryKey == null) {
                     // If the query doesn't have a key then this is new.
@@ -443,6 +446,7 @@ class DashboardServiceImpl implements DashboardService {
                 }
 
                 result = new DashboardSearchResponse(
+                        nodeInfo.getThisNodeName(),
                         queryKey,
                         null,
                         Collections.singletonList(ExceptionStringUtil.getMessage(e)),

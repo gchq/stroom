@@ -1,10 +1,8 @@
 package stroom.query.common.v2;
 
-import stroom.util.cache.CacheConfig;
 import stroom.util.io.ByteSize;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
-import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -25,8 +23,6 @@ public class ResultStoreConfig extends AbstractConfig implements IsStroomConfig 
     private final int maxStringFieldLength;
 
     private final ResultStoreLmdbConfig lmdbConfig;
-
-    private final CacheConfig searchResultCache;
     private final String storeSize;
 
     public ResultStoreConfig() {
@@ -39,11 +35,6 @@ public class ResultStoreConfig extends AbstractConfig implements IsStroomConfig 
         maxStringFieldLength = 1000;
 
         lmdbConfig = new ResultStoreLmdbConfig();
-
-        searchResultCache = CacheConfig.builder()
-//                .maximumSize(10000L)
-//                .expireAfterAccess(StroomDuration.ofMinutes(10))
-                .build();
         storeSize = "1000000,100,10,1";
     }
 
@@ -56,7 +47,6 @@ public class ResultStoreConfig extends AbstractConfig implements IsStroomConfig 
                              @JsonProperty("maxStringFieldLength") final int maxStringFieldLength,
                              @JsonProperty("valueQueueSize") final int valueQueueSize,
                              @JsonProperty("lmdb") final ResultStoreLmdbConfig lmdbConfig,
-                             @JsonProperty("searchResultCache") final CacheConfig searchResultCache,
                              @JsonProperty("storeSize") final String storeSize) {
         this.maxPutsBeforeCommit = maxPutsBeforeCommit;
         this.offHeapResults = offHeapResults;
@@ -65,7 +55,6 @@ public class ResultStoreConfig extends AbstractConfig implements IsStroomConfig 
         this.maxStringFieldLength = maxStringFieldLength;
         this.valueQueueSize = valueQueueSize;
         this.lmdbConfig = lmdbConfig;
-        this.searchResultCache = searchResultCache;
         this.storeSize = storeSize;
     }
 
@@ -111,11 +100,6 @@ public class ResultStoreConfig extends AbstractConfig implements IsStroomConfig 
         return lmdbConfig;
     }
 
-    @JsonProperty("searchResultCache")
-    public CacheConfig getSearchResultCache() {
-        return searchResultCache;
-    }
-
     @JsonPropertyDescription("The maximum number of search results to keep in memory at each level.")
     public String getStoreSize() {
         return storeSize;
@@ -131,7 +115,6 @@ public class ResultStoreConfig extends AbstractConfig implements IsStroomConfig 
                 ", maxPayloadSize=" + maxPayloadSize +
                 ", maxStringFieldLength=" + maxStringFieldLength +
                 ", lmdbConfig=" + lmdbConfig +
-                ", searchResultCache=" + searchResultCache +
                 ", storeSize='" + storeSize + '\'' +
                 '}';
     }

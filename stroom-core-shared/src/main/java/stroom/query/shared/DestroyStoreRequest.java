@@ -16,6 +16,7 @@
 
 package stroom.query.shared;
 
+import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.QueryKey;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -26,43 +27,34 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class DestroyQueryRequest {
+public class DestroyStoreRequest {
 
     @JsonProperty
     private final QueryKey queryKey;
     @JsonProperty
-    private final String queryDocUuid;
-    @JsonProperty
-    private final String componentId;
+    private final DestroyReason destroyReason;
 
     @JsonCreator
-    public DestroyQueryRequest(
+    public DestroyStoreRequest(
             @JsonProperty("queryKey") final QueryKey queryKey,
-            @JsonProperty("queryDocUuid") final String queryDocUuid,
-            @JsonProperty("componentId") final String componentId) {
+            @JsonProperty("destroyReason") final DestroyReason destroyReason) {
         this.queryKey = queryKey;
-        this.queryDocUuid = queryDocUuid;
-        this.componentId = componentId;
+        this.destroyReason = destroyReason;
     }
 
     public QueryKey getQueryKey() {
         return queryKey;
     }
 
-    public String getQueryDocUuid() {
-        return queryDocUuid;
-    }
-
-    public String getComponentId() {
-        return componentId;
+    public DestroyReason getDestroyReason() {
+        return destroyReason;
     }
 
     @Override
     public String toString() {
-        return "DestroySearchRequest{" +
+        return "DestroyStoreRequest{" +
                 "queryKey=" + queryKey +
-                ", queryDocUuid='" + queryDocUuid + '\'' +
-                ", componentId='" + componentId + '\'' +
+                ", destroyReason=" + destroyReason +
                 '}';
     }
 
@@ -77,16 +69,14 @@ public class DestroyQueryRequest {
     public static final class Builder {
 
         private QueryKey queryKey;
-        private String queryDocUuid;
-        private String componentId;
+        private DestroyReason destroyReason;
 
         private Builder() {
         }
 
-        private Builder(final DestroyQueryRequest searchRequest) {
+        private Builder(final DestroyStoreRequest searchRequest) {
             this.queryKey = searchRequest.queryKey;
-            this.queryDocUuid = searchRequest.queryDocUuid;
-            this.componentId = searchRequest.componentId;
+            this.destroyReason = searchRequest.destroyReason;
         }
 
         public Builder queryKey(final QueryKey queryKey) {
@@ -94,21 +84,15 @@ public class DestroyQueryRequest {
             return this;
         }
 
-        public Builder queryDocUuid(final String queryDocUuid) {
-            this.queryDocUuid = queryDocUuid;
+        public Builder destroyReason(final DestroyReason destroyReason) {
+            this.destroyReason = destroyReason;
             return this;
         }
 
-        public Builder componentId(final String componentId) {
-            this.componentId = componentId;
-            return this;
-        }
-
-        public DestroyQueryRequest build() {
-            return new DestroyQueryRequest(
+        public DestroyStoreRequest build() {
+            return new DestroyStoreRequest(
                     queryKey,
-                    queryDocUuid,
-                    componentId);
+                    destroyReason);
         }
     }
 }

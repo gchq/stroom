@@ -18,6 +18,7 @@ package stroom.statistics.impl.sql;
 
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
+import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
@@ -174,7 +175,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
 
             fillStatValSrc(tags);
             SearchResponse searchResponse = doSearch(tags, false, null);
-            searchResponseCreatorManager.destroy(searchResponse.getKey());
+            searchResponseCreatorManager.destroy(searchResponse.getKey(), DestroyReason.NO_LONGER_NEEDED);
             Map<String, Set<String>> expectedValuesMap = ImmutableMap.of(
                     TAG1, ImmutableSet.of(TAG1_VAL),
                     TAG2, ImmutableSet.of(TAG2_VAL));
@@ -206,7 +207,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
                 searchResponse = doSearch(tags, true, queryKey);
                 queryKey = searchResponse.getKey();
             } while (!searchResponse.complete() && Instant.now().isBefore(timeoutTime));
-            searchResponseCreatorManager.destroy(searchResponse.getKey());
+            searchResponseCreatorManager.destroy(searchResponse.getKey(), DestroyReason.NO_LONGER_NEEDED);
 
             doAsserts(searchResponse, 1, expectedValuesMap);
         }
@@ -232,7 +233,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
                     true,
                     null,
                     OptionalLong.of(10_000));
-            searchResponseCreatorManager.destroy(searchResponse.getKey());
+            searchResponseCreatorManager.destroy(searchResponse.getKey(), DestroyReason.NO_LONGER_NEEDED);
 
             doAsserts(searchResponse, 1, expectedValuesMap);
         }
@@ -257,7 +258,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
                     TAG2, ImmutableSet.of(TAG2_VAL, TAG2_OTHER_VALUE_1));
 
             SearchResponse searchResponse = doSearch(searchTags, Op.OR, false, null);
-            searchResponseCreatorManager.destroy(searchResponse.getKey());
+            searchResponseCreatorManager.destroy(searchResponse.getKey(), DestroyReason.NO_LONGER_NEEDED);
             doAsserts(searchResponse, 2, expectedValuesMap);
         }
     }
@@ -280,7 +281,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
                     TAG2, Collections.singleton(TAG2_VAL));
 
             SearchResponse searchResponse = doSearch(searchTags, Op.OR, false, null);
-            searchResponseCreatorManager.destroy(searchResponse.getKey());
+            searchResponseCreatorManager.destroy(searchResponse.getKey(), DestroyReason.NO_LONGER_NEEDED);
             doAsserts(searchResponse, 1, expectedValuesMap);
         }
     }
@@ -306,7 +307,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
                     TAG2, Collections.singleton(TAG2_VAL));
 
             SearchResponse searchResponse = doSearch(searchTags, Op.OR, false, null);
-            searchResponseCreatorManager.destroy(searchResponse.getKey());
+            searchResponseCreatorManager.destroy(searchResponse.getKey(), DestroyReason.NO_LONGER_NEEDED);
             doAsserts(searchResponse, 1, expectedValuesMap);
         }
     }
@@ -407,7 +408,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
 
         SearchResponse searchResponse = searchResponseCreatorManager.search(searchRequest);
         if (!isIncremental || searchResponse.complete()) {
-            searchResponseCreatorManager.destroy(searchResponse.getKey());
+            searchResponseCreatorManager.destroy(searchResponse.getKey(), DestroyReason.NO_LONGER_NEEDED);
         }
 
         LOGGER.debug("Search response returned with completion state {}", searchResponse.getComplete());

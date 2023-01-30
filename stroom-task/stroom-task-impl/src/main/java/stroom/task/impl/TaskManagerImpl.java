@@ -19,6 +19,7 @@ package stroom.task.impl;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
@@ -177,13 +178,12 @@ class TaskManagerImpl implements TaskManager {
         LOGGER.trace(() -> LogUtil.message("doTerminated() - itemsToKill.size() {}", itemsToKill.size()));
 
         for (final TaskContextImpl taskContext : itemsToKill) {
-            final TaskId taskId = taskContext.getTaskId();
             // Try and terminate the task.
             if (!taskContext.isTerminated()) {
-                LOGGER.trace(() -> LogUtil.message("terminating task {}", taskId));
+                LOGGER.trace(() -> LogUtil.message("terminating task {}", taskContext.getTaskId()));
                 taskContext.terminate();
             }
-            final TaskProgress taskProgress = buildTaskProgress(timeNowMs, taskContext, taskId);
+            final TaskProgress taskProgress = buildTaskProgress(timeNowMs, taskContext);
             taskProgressList.add(taskProgress);
         }
     }
@@ -228,8 +228,7 @@ class TaskManagerImpl implements TaskManager {
                             findTaskProgressCriteria.getSessionId().equals(taskContext.getSessionId()));
                 })
                 .map(taskContext -> {
-                    final TaskId taskId = taskContext.getTaskId();
-                    return buildFilteredTaskProgress(timeNowMs, taskContext, taskId, fuzzyMatchPredicate);
+                    return buildFilteredTaskProgress(timeNowMs, taskContext, fuzzyMatchPredicate);
                 })
                 .collect(Collectors.toList());
 
@@ -243,14 +242,20 @@ class TaskManagerImpl implements TaskManager {
         return ResultPage.createUnboundedList(taskProgressList);
     }
 
+    @Override
+    public TaskProgress getTaskProgress(final TaskContext taskContext) {
+        if (taskContext instanceof TaskContextImpl) {
+            return buildTaskProgress(System.currentTimeMillis(), ((TaskContextImpl) taskContext));
+        }
+        return null;
+    }
 
     private TaskProgress buildTaskProgress(
             final long timeNowMs,
-            final TaskContextImpl taskContext,
-            final TaskId taskId) {
+            final TaskContextImpl taskContext) {
 
         final TaskProgress taskProgress = new TaskProgress();
-        taskProgress.setId(taskId);
+        taskProgress.setId(taskContext.getTaskId());
         taskProgress.setTaskName(taskContext.getName());
         taskProgress.setUserName(taskContext.getUserId());
         taskProgress.setThreadName(taskContext.getThreadName());
@@ -264,9 +269,8 @@ class TaskManagerImpl implements TaskManager {
     private TaskProgress buildFilteredTaskProgress(
             final long timeNowMs,
             final TaskContextImpl taskContext,
-            final TaskId taskId,
             final Predicate<TaskProgress> fuzzyMatchPredicate) {
-        final TaskProgress taskProgress = buildTaskProgress(timeNowMs, taskContext, taskId);
+        final TaskProgress taskProgress = buildTaskProgress(timeNowMs, taskContext);
 
         // Because the UI needs to display the ancestors of filtered in tasks and the ancestor tasks
         // may exist on another node, we can't just remove filtered out tasks. We need to let the UI

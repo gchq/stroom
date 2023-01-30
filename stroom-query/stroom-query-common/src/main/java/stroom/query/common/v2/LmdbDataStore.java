@@ -51,6 +51,8 @@ import org.lmdbjava.Txn;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
@@ -62,6 +64,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 import javax.inject.Provider;
 import javax.validation.constraints.NotNull;
 
@@ -676,6 +679,28 @@ public class LmdbDataStore implements DataStore {
             throw new RuntimeException("Not producing payloads");
         }
         payloadCreator.writePayload(output);
+    }
+
+    @Override
+    public long getByteSize() {
+        final AtomicLong total = new AtomicLong();
+        try {
+            final Path dir = lmdbEnv.getLocalDir();
+            try (final Stream<Path> stream = Files.walk(dir)) {
+                stream.forEach(path -> {
+                    try {
+                        if (Files.isRegularFile(path)) {
+                            total.addAndGet(Files.size(path));
+                        }
+                    } catch (final IOException e) {
+                        LOGGER.debug(e::getMessage, e);
+                    }
+                });
+            }
+        } catch (final IOException e) {
+            LOGGER.debug(e::getMessage, e);
+        }
+        return total.get();
     }
 
     private static class LmdbData implements Data {

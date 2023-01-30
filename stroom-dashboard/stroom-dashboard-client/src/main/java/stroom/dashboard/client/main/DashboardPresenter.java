@@ -413,7 +413,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     @Override
     public void onClose() {
         // Remove all components.
-        components.removeAll();
+        components.onClose();
         super.onClose();
     }
 

@@ -82,14 +82,14 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
             operationId = "querySearch")
     DashboardSearchResponse search(
             @Parameter(description = "request", required = true) QuerySearchRequest request);
-
-    @POST
-    @Path("/destroy")
-    @Operation(
-            summary = "Destroy a running query",
-            operationId = "queryDestroySearch")
-    Boolean destroy(
-            @Parameter(description = "request", required = true) DestroyQueryRequest request);
+//
+//    @POST
+//    @Path("/destroy")
+//    @Operation(
+//            summary = "Destroy a running query",
+//            operationId = "queryDestroySearch")
+//    Boolean destroy(
+//            @Parameter(description = "request", required = true) DestroyQueryRequest request);
 
     @GET
     @Path("/fetchTimeZones")

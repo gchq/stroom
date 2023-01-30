@@ -331,6 +331,11 @@ class TestSearchResponseCreator {
             @Override
             public void writePayload(final Output output) {
             }
+
+            @Override
+            public long getByteSize() {
+                return 0;
+            }
         };
     }
 

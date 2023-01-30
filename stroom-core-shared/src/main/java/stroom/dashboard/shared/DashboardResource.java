@@ -90,13 +90,13 @@ public interface DashboardResource extends RestResource, DirectRestService, Fetc
     DashboardSearchResponse search(
             @Parameter(description = "request", required = true) DashboardSearchRequest request);
 
-    @POST
-    @Path("/destroy")
-    @Operation(
-            summary = "Destroy a running search",
-            operationId = "dashboardDestroySearch")
-    Boolean destroy(
-            @Parameter(description = "request", required = true) DestroySearchRequest request);
+//    @POST
+//    @Path("/destroy")
+//    @Operation(
+//            summary = "Destroy a running search",
+//            operationId = "dashboardDestroySearch")
+//    Boolean destroy(
+//            @Parameter(description = "request", required = true) DestroySearchRequest request);
 
     @GET
     @Path("/fetchTimeZones")

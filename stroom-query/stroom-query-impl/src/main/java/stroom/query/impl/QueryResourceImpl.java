@@ -17,12 +17,10 @@
 package stroom.query.impl;
 
 import stroom.dashboard.shared.DashboardSearchResponse;
-import stroom.dashboard.shared.FunctionSignature;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
-import stroom.query.shared.DestroyQueryRequest;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryResource;
@@ -86,11 +84,11 @@ class QueryResourceImpl implements QueryResource {
         return queryServiceProvider.get().search(request);
     }
 
-    @Override
-    @AutoLogged(OperationType.UNLOGGED)
-    public Boolean destroy(final DestroyQueryRequest request) {
-        return queryServiceProvider.get().destroy(request);
-    }
+//    @Override
+//    @AutoLogged(OperationType.UNLOGGED)
+//    public Boolean destroy(final DestroyQueryRequest request) {
+//        return queryServiceProvider.get().destroy(request);
+//    }
 
     @Override
     @AutoLogged(OperationType.UNLOGGED)

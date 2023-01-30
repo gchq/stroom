@@ -81,6 +81,13 @@ public class Components implements HasHandlers, HasChangeDataHandlers<Components
         return component;
     }
 
+    public void onClose(final String id) {
+        final Component component = idMap.remove(id);
+        if (component != null) {
+            component.onClose();
+        }
+    }
+
     public void remove(final String id, final boolean fireEvents) {
         final Component component = idMap.remove(id);
         if (component != null) {
@@ -98,6 +105,13 @@ public class Components implements HasHandlers, HasChangeDataHandlers<Components
             if (fireEvents) {
                 ChangeDataEvent.fire(this, this);
             }
+        }
+    }
+
+    public void onClose() {
+        final List<String> componentIdList = new ArrayList<>(idMap.keySet());
+        for (final String id : componentIdList) {
+            onClose(id);
         }
     }
 

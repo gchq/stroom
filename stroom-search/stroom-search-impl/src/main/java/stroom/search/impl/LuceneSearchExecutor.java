@@ -1,9 +1,13 @@
 package stroom.search.impl;
 
 import stroom.node.api.NodeInfo;
+import stroom.query.api.v2.SearchTaskProgress;
 import stroom.query.common.v2.ResultStore;
+import stroom.query.common.v2.SearchProcess;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TaskManager;
 import stroom.task.api.TaskTerminatedException;
+import stroom.task.shared.TaskProgress;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -23,16 +27,19 @@ public class LuceneSearchExecutor {
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider;
+    private final TaskManager taskManager;
 
     @Inject
     LuceneSearchExecutor(final NodeInfo nodeInfo,
                          final Executor executor,
                          final TaskContextFactory taskContextFactory,
-                         final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider) {
+                         final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider,
+                         final TaskManager taskManager) {
         this.nodeInfo = nodeInfo;
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.asyncSearchTaskHandlerProvider = asyncSearchTaskHandlerProvider;
+        this.taskManager = taskManager;
     }
 
     public void start(final AsyncSearchTask asyncSearchTask,
@@ -45,11 +52,33 @@ public class LuceneSearchExecutor {
             final AtomicBoolean destroyed = new AtomicBoolean();
             final AsyncSearchTaskHandler asyncSearchTaskHandler = asyncSearchTaskHandlerProvider.get();
 
-            // Set the task terminator.
-            resultStore.setTerminateHandler(() -> {
-                destroyed.set(true);
-                asyncSearchTaskHandler.terminateTasks(asyncSearchTask, taskContext.getTaskId());
-            });
+            final SearchProcess searchProcess = new SearchProcess() {
+                @Override
+                public SearchTaskProgress getSearchTaskProgress() {
+                    final TaskProgress taskProgress =
+                            taskManager.getTaskProgress(taskContext);
+                    if (taskProgress != null) {
+                        return new SearchTaskProgress(
+                                taskProgress.getTaskName(),
+                                taskProgress.getTaskInfo(),
+                                taskProgress.getUserName(),
+                                taskProgress.getThreadName(),
+                                taskProgress.getNodeName(),
+                                taskProgress.getSubmitTimeMs(),
+                                taskProgress.getTimeNowMs());
+                    }
+                    return null;
+                }
+
+                @Override
+                public void onTerminate() {
+                    destroyed.set(true);
+                    asyncSearchTaskHandler.terminateTasks(asyncSearchTask, taskContext.getTaskId());
+                }
+            };
+
+            // Set the search process.
+            resultStore.setSearchProcess(searchProcess);
 
             // Don't begin execution if we have been asked to complete already.
             if (!destroyed.get()) {

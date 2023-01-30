@@ -153,4 +153,9 @@ public class EventCoprocessor implements Coprocessor {
     public void clear() {
         eventRefs = null;
     }
+
+    @Override
+    public long getByteSize() {
+        return 0;
+    }
 }

@@ -23,6 +23,7 @@ import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
@@ -31,7 +32,6 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.language.DataSourceResolver;
 import stroom.query.language.SearchRequestBuilder;
-import stroom.query.shared.DestroyQueryRequest;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryContext;
 import stroom.query.shared.QueryDoc;
@@ -72,6 +72,7 @@ class QueryServiceImpl implements QueryService {
     private final TaskContextFactory taskContextFactory;
     private final DataSourceResolver dataSourceResolver;
     private final ResultStoreManager searchResponseCreatorManager;
+    private final NodeInfo nodeInfo;
 
     @Inject
     QueryServiceImpl(final QueryStore queryStore,
@@ -82,7 +83,8 @@ class QueryServiceImpl implements QueryService {
                      final ExecutorProvider executorProvider,
                      final TaskContextFactory taskContextFactory,
                      final DataSourceResolver dataSourceResolver,
-                     final ResultStoreManager searchResponseCreatorManager) {
+                     final ResultStoreManager searchResponseCreatorManager,
+                     final NodeInfo nodeInfo) {
         this.queryStore = queryStore;
         this.documentResourceHelper = documentResourceHelper;
         this.searchEventLog = searchEventLog;
@@ -92,6 +94,7 @@ class QueryServiceImpl implements QueryService {
         this.taskContextFactory = taskContextFactory;
         this.dataSourceResolver = dataSourceResolver;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
+        this.nodeInfo = nodeInfo;
     }
 
     @Override
@@ -299,10 +302,10 @@ class QueryServiceImpl implements QueryService {
         });
     }
 
-    @Override
-    public Boolean destroy(final DestroyQueryRequest request) {
-        return searchResponseCreatorManager.destroy(request.getQueryKey());
-    }
+//    @Override
+//    public Boolean destroy(final DestroyQueryRequest request) {
+//        return searchResponseCreatorManager.destroy(request.getQueryKey());
+//    }
 
     private SearchRequest mapRequest(final QuerySearchRequest searchRequest) {
         QueryKey queryKey = searchRequest.getQueryKey();
@@ -354,7 +357,7 @@ class QueryServiceImpl implements QueryService {
 
                 // Perform the search or update results.
                 final SearchResponse searchResponse = searchResponseCreatorManager.search(mappedRequest);
-                result = new SearchResponseMapper().mapResponse(searchResponse);
+                result = new SearchResponseMapper().mapResponse(nodeInfo.getThisNodeName(), searchResponse);
 
                 if (queryKey == null) {
                     // If the query doesn't have a key then this is new.
@@ -381,6 +384,7 @@ class QueryServiceImpl implements QueryService {
                 }
 
                 result = new DashboardSearchResponse(
+                        nodeInfo.getThisNodeName(),
                         queryKey,
                         null,
                         Collections.singletonList(ExceptionStringUtil.getMessage(e)),
