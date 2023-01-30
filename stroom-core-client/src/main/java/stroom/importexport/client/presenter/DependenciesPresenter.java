@@ -24,8 +24,10 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.explorer.client.event.HighlightExplorerNodeEvent;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.Dependency;
@@ -38,6 +40,7 @@ import stroom.util.shared.ResultPage;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -115,10 +118,12 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
                 COL_WIDTH_TYPE);
 
         // From (Name)
-        getView().addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
-                                getValue(row, Dependency::getFrom, DocRef::getName))
-                        .withSorting(DependencyCriteria.FIELD_FROM_NAME, true)
-                        .build(),
+        final Column<Dependency, String> fromNameColumn = DataGridUtil.hyperlinkColumnBuilder((Dependency row) ->
+                        getValue(row, Dependency::getFrom, DocRef::getName))
+                .withSorting(DependencyCriteria.FIELD_FROM_NAME, true)
+                .build();
+        fromNameColumn.setFieldUpdater((index, object, value) -> highlightExplorerNode(object.getFrom()));
+        getView().addResizableColumn(fromNameColumn,
                 DependencyCriteria.FIELD_FROM_NAME,
                 COL_WIDTH_NAME);
 
@@ -145,10 +150,12 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
                 COL_WIDTH_TYPE);
 
         // To (Name)
-        getView().addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
-                                getValue(row, Dependency::getTo, DocRef::getName))
-                        .withSorting(DependencyCriteria.FIELD_TO_NAME, true)
-                        .build(),
+        final Column<Dependency, String> toNameColumn = DataGridUtil.hyperlinkColumnBuilder((Dependency row) ->
+                        getValue(row, Dependency::getTo, DocRef::getName))
+                .withSorting(DependencyCriteria.FIELD_TO_NAME, true)
+                .build();
+        toNameColumn.setFieldUpdater((index, object, value) -> highlightExplorerNode(object.getTo()));
+        getView().addResizableColumn(toNameColumn,
                 DependencyCriteria.FIELD_TO_NAME,
                 COL_WIDTH_NAME);
 
@@ -169,6 +176,14 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
 
         DataGridUtil.addEndColumn(getView());
         DataGridUtil.addColumnSortHandler(getView(), criteria, dataProvider::refresh);
+    }
+
+    /**
+     * Reveal in the Explorer, the node matching the provided DocRef
+     */
+    private void highlightExplorerNode(final DocRef docRef) {
+        final ExplorerNode explorerNode = ExplorerNode.create(docRef);
+        HighlightExplorerNodeEvent.fire(this, explorerNode);
     }
 
     private void refreshDocTypeIcons() {
