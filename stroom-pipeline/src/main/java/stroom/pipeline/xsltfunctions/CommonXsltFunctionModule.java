@@ -100,7 +100,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         CurrentTimeFunction(final Provider<CurrentTime> functionCallProvider) {
             super(
-                    "current-time",
+                    CurrentTime.FUNCTION_NAME,
                     0,
                     0,
                     new SequenceType[]{},
@@ -114,7 +114,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         CurrentUserFunction(final Provider<CurrentUser> functionCallProvider) {
             super(
-                    "current-user",
+                    CurrentUser.FUNCTION_NAME,
                     0,
                     0,
                     new SequenceType[]{},

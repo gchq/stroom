@@ -28,6 +28,7 @@ class TestHexToDec extends AbstractXsltFunctionTest<HexToDec> {
 
         final Sequence sequence = callFunctionWithSimpleArgs("2A");
 
+        // Not sure why it is outputting a StringValue instead of an IntegerValue
         final Long decimalVal = getAsLongValue(sequence)
                 .orElseThrow();
 

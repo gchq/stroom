@@ -215,6 +215,11 @@ public abstract class AbstractXsltFunctionTest<T extends StroomExtensionFunction
                         final long val = ((Int64Value) sequence2).longValue();
                         LOGGER.debug("Got long value:\n{}", val);
                         return val;
+                    } else if (sequence2 instanceof StringValue) {
+                        final String str = ((StringValue) sequence2).getStringValue();
+                        final long val = Long.parseLong(str);
+                        LOGGER.debug("Got long value:\n{}", val);
+                        return val;
                     } else {
                         return Long.parseLong(sequence.toString());
                     }
