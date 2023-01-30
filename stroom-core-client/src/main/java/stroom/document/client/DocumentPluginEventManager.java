@@ -760,11 +760,8 @@ public class DocumentPluginEventManager extends Plugin {
                     DocumentPermissionNames.OWNER,
                     true);
             if (ownedItems.size() == 1) {
-                if (securityContext.hasAppPermission(PermissionNames.VIEW_SYSTEM_INFO_PERMISSION)) {
-                    menuItems.add(new Separator(10));
-                    menuItems.add(createShowDependenciesMenuItem(ownedItems.get(0), 11));
-                }
-
+                menuItems.add(new Separator(10));
+                menuItems.add(createShowDependenciesMenuItem(ownedItems.get(0), 11));
                 menuItems.add(new Separator(12));
                 menuItems.add(createPermissionsMenuItem(ownedItems.get(0), 13, true));
             }
