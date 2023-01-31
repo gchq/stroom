@@ -1,4 +1,4 @@
-package stroom.query.api.v2;
+package stroom.query.common.v2;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

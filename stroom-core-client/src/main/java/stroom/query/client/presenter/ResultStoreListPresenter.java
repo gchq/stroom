@@ -24,9 +24,8 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.v2.DestroyReason;
-import stroom.query.api.v2.Lifespan;
+import stroom.query.api.v2.LifespanInfo;
 import stroom.query.api.v2.ResultStoreInfo;
-import stroom.query.api.v2.ResultStoreSettings;
 import stroom.query.api.v2.SearchTaskProgress;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ModelStringUtil;
@@ -52,17 +51,21 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
     private final MultiSelectionModelImpl<ResultStoreInfo> selectionModel;
     private final RestDataProvider<ResultStoreInfo, ResultPage<ResultStoreInfo>> dataProvider;
     private final ResultStoreModel resultStoreModel;
+    private final ResultStoreSettingsPresenter resultStoreSettingsPresenter;
 
     private ButtonView terminateButton;
     private ButtonView deleteButton;
+    private ButtonView settingsButton;
 
     @Inject
     public ResultStoreListPresenter(final EventBus eventBus,
                                     final PagerView view,
                                     final ResultStoreModel resultStoreModel,
-                                    final DateTimeFormatter dateTimeFormatter) {
+                                    final DateTimeFormatter dateTimeFormatter,
+                                    final ResultStoreSettingsPresenter resultStoreSettingsPresenter) {
         super(eventBus, view);
         this.resultStoreModel = resultStoreModel;
+        this.resultStoreSettingsPresenter = resultStoreSettingsPresenter;
 
         final MyDataGrid<ResultStoreInfo> dataGrid = new MyDataGrid<>();
         selectionModel = dataGrid.addDefaultSelectionModel(false);
@@ -75,6 +78,10 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
         deleteButton = view.addButton(SvgPresets.DELETE);
         deleteButton.setTitle("Delete Store");
         deleteButton.setEnabled(false);
+
+        settingsButton = view.addButton(SvgPresets.SETTINGS_BLUE);
+        settingsButton.setTitle("Store Settings");
+        settingsButton.setEnabled(false);
 
         // Query key
         dataGrid.addResizableColumn(new Column<ResultStoreInfo, SafeHtml>(new SafeHtmlCell()) {
@@ -104,9 +111,8 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
                 sb.appendEscaped(Boolean.toString(resultStoreInfo.isComplete()));
                 sb.appendHtmlConstant("<br/>");
 
-                final ResultStoreSettings resultStoreSettings = resultStoreInfo.getResultStoreSettings();
-                addLifespan(sb, resultStoreSettings.getStoreLifespan(), "Store");
-                addLifespan(sb, resultStoreSettings.getSearchProcessLifespan(), "Search process");
+                addLifespan(sb, resultStoreInfo.getSearchProcessLifespan(), "Search process");
+                addLifespan(sb, resultStoreInfo.getStoreLifespan(), "Store");
 
                 final SearchTaskProgress taskProgress = resultStoreInfo.getTaskProgress();
                 if (taskProgress != null) {
@@ -204,14 +210,12 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
         dataProvider.addDataDisplay(dataGrid);
     }
 
-    private void addLifespan(final SafeHtmlBuilder sb, final Lifespan lifespan, final String type) {
+    private void addLifespan(final SafeHtmlBuilder sb, final LifespanInfo lifespan, final String type) {
         sb.appendHtmlConstant("<b>" + type + " TTL: </b>");
-        sb.appendEscaped(ModelStringUtil
-                .formatDurationString(lifespan.getTimeToLiveMs()));
+        sb.appendEscaped(lifespan.getTimeToLive());
         sb.appendHtmlConstant("<br/>");
         sb.appendHtmlConstant("<b>" + type + " TTI: </b>");
-        sb.appendEscaped(ModelStringUtil
-                .formatDurationString(lifespan.getTimeToIdleMs()));
+        sb.appendEscaped(lifespan.getTimeToIdle());
         sb.appendHtmlConstant("<br/>");
         sb.appendHtmlConstant("<b>" + type + " destroy on tab close: </b>");
         sb.appendEscaped(Boolean.toString(lifespan.isDestroyOnTabClose()));
@@ -265,14 +269,26 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
             }
         }));
 
+        registerHandler(settingsButton.addClickHandler(event -> {
+            final ResultStoreInfo selected = getSelectionModel().getSelected();
+            if (selected != null) {
+                resultStoreSettingsPresenter.show(selected, "Change Result Store Settings", ok -> {
+                    resultStoreSettingsPresenter.hide();
+                    refresh();
+                });
+            }
+        }));
+
         registerHandler(getSelectionModel().addSelectionHandler(event -> {
             final ResultStoreInfo selected = getSelectionModel().getSelected();
             if (selected == null) {
                 terminateButton.setEnabled(false);
                 deleteButton.setEnabled(false);
+                settingsButton.setEnabled(false);
             } else {
                 terminateButton.setEnabled(!selected.isComplete());
                 deleteButton.setEnabled(true);
+                settingsButton.setEnabled(true);
             }
         }));
     }
@@ -280,26 +296,6 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
     public void refresh() {
         dataProvider.refresh();
     }
-
-//    public void show() {
-//        dataProvider.refresh();
-//
-//        final PopupSize popupSize = PopupSize.resizable(1000, 600);
-//        ShowPopupEvent.builder(this)
-//                .popupType(PopupType.OK_CANCEL_DIALOG)
-//                .popupSize(popupSize)
-//                .caption("Search Result Stores")
-////                .onShow(e -> getView().focus())
-////                .onHide(e -> {
-////                    if (e.isOk() && groupConsumer != null) {
-////                        final User selected = getSelectionModel().getSelected();
-////                        if (selected != null) {
-////                            groupConsumer.accept(selected);
-////                        }
-////                    }
-////                })
-//                .fire();
-//    }
 
     public MultiSelectionModel<ResultStoreInfo> getSelectionModel() {
         return selectionModel;

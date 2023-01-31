@@ -8,34 +8,34 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class Lifespan {
+public class LifespanInfo {
 
     @JsonProperty
-    private final long timeToIdleMs;
+    private final String timeToIdle;
     @JsonProperty
-    private final long timeToLiveMs;
+    private final String timeToLive;
     @JsonProperty
     private final boolean destroyOnTabClose;
     @JsonProperty
     private final boolean destroyOnWindowClose;
 
     @JsonCreator
-    public Lifespan(@JsonProperty("timeToIdleMs") final long timeToIdleMs,
-                    @JsonProperty("timeToLiveMs") final long timeToLiveMs,
-                    @JsonProperty("destroyOnTabClose") final boolean destroyOnTabClose,
-                    @JsonProperty("destroyOnWindowClose") final boolean destroyOnWindowClose) {
-        this.timeToIdleMs = timeToIdleMs;
-        this.timeToLiveMs = timeToLiveMs;
+    public LifespanInfo(@JsonProperty("timeToIdle") final String timeToIdle,
+                        @JsonProperty("timeToLive") final String timeToLive,
+                        @JsonProperty("destroyOnTabClose") final boolean destroyOnTabClose,
+                        @JsonProperty("destroyOnWindowClose") final boolean destroyOnWindowClose) {
+        this.timeToIdle = timeToIdle;
+        this.timeToLive = timeToLive;
         this.destroyOnTabClose = destroyOnTabClose;
         this.destroyOnWindowClose = destroyOnWindowClose;
     }
 
-    public long getTimeToIdleMs() {
-        return timeToIdleMs;
+    public String getTimeToIdle() {
+        return timeToIdle;
     }
 
-    public long getTimeToLiveMs() {
-        return timeToLiveMs;
+    public String getTimeToLive() {
+        return timeToLive;
     }
 
     public boolean isDestroyOnTabClose() {

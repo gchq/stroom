@@ -9,13 +9,13 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.FindResultStoreCriteria;
 import stroom.query.api.v2.FlatResult;
+import stroom.query.api.v2.LifespanInfo;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultStoreInfo;
-import stroom.query.api.v2.ResultStoreSettings;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
@@ -29,10 +29,13 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
+import stroom.util.time.StroomDuration;
 
 import com.google.common.base.Preconditions;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -75,6 +78,36 @@ public final class ResultStoreManager implements Clearable {
         this.storeFactoryRegistry = storeFactoryRegistry;
     }
 
+    public void update(final QueryKey queryKey,
+                       final LifespanInfo searchProcessLifespan,
+                       final LifespanInfo storeLifespan) {
+        final Optional<ResultStore> optionalResultStore = getIfPresent(queryKey);
+        if (optionalResultStore.isPresent()) {
+            final ResultStore resultStore = optionalResultStore.get();
+            checkPermissions(resultStore);
+
+            final ResultStoreSettings newSettings = new ResultStoreSettings(
+                    parseLifespanInfo(searchProcessLifespan),
+                    parseLifespanInfo(storeLifespan));
+
+            resultStore.setResultStoreSettings(newSettings);
+        }
+    }
+
+    private Lifespan parseLifespanInfo(final LifespanInfo lifespanInfo) {
+        return new Lifespan(StroomDuration.parse(lifespanInfo.getTimeToIdle()),
+                StroomDuration.parse(lifespanInfo.getTimeToLive()),
+                lifespanInfo.isDestroyOnTabClose(),
+                lifespanInfo.isDestroyOnWindowClose());
+    }
+
+    private void checkPermissions(final ResultStore resultStore) {
+        if (!securityContext.isAdmin() && !resultStore.getUserId().equals(securityContext.getUserId())) {
+            throw new PermissionException(securityContext.getUserId(),
+                    "You do not have permission to modify this store");
+        }
+    }
+
     private void destroyAndRemove(final QueryKey queryKey, final ResultStore resultStore) {
         try {
             securityContext.asProcessingUser(resultStore::destroy);
@@ -85,7 +118,7 @@ public final class ResultStoreManager implements Clearable {
         }
     }
 
-    public Optional<ResultStore> getIfPresent(final QueryKey key) {
+    private Optional<ResultStore> getIfPresent(final QueryKey key) {
         return Optional.ofNullable(resultStoreMap.get(key));
     }
 
@@ -337,6 +370,7 @@ public final class ResultStoreManager implements Clearable {
                     final Optional<ResultStore> optionalResultStore = getIfPresent(queryKey);
                     if (optionalResultStore.isPresent()) {
                         final ResultStore resultStore = optionalResultStore.get();
+                        checkPermissions(resultStore);
                         resultStore.terminate();
                         return true;
                     }
@@ -369,6 +403,7 @@ public final class ResultStoreManager implements Clearable {
                     LOGGER.debug(() -> "remove called for queryKey " + queryKey);
                     final Optional<ResultStore> resultStore = getIfPresent(queryKey);
                     resultStore.ifPresent(store -> {
+                        checkPermissions(store);
                         if (destroyReason == null) {
                             destroyAndRemove(queryKey, store);
                         } else {
@@ -413,21 +448,24 @@ public final class ResultStoreManager implements Clearable {
      */
     public void evictExpiredElements() {
         taskContext.info(() -> "Evicting expired search responses");
-        final long now = System.currentTimeMillis();
+        final Instant now = Instant.now();
         resultStoreMap.forEach((queryKey, resultStore) -> {
             try {
                 final ResultStoreSettings settings = resultStore.getResultStoreSettings();
-                final long createTime = resultStore.getCreationTime().toEpochMilli();
-                final long accessTime = resultStore.getLastAccessTime().toEpochMilli();
-                final long createAge = now - createTime;
-                final long accessAge = now - accessTime;
-                if (createAge > settings.getStoreLifespan().getTimeToLiveMs()) {
+                final Instant createTime = resultStore.getCreationTime();
+                final Instant accessTime = resultStore.getLastAccessTime();
+
+                if (settings.getStoreLifespan().getTimeToLive() != null &&
+                        now.isAfter(createTime.plus(settings.getStoreLifespan().getTimeToLive()))) {
                     destroyAndRemove(queryKey, resultStore);
-                } else if (accessAge > settings.getStoreLifespan().getTimeToIdleMs()) {
+                } else if (settings.getStoreLifespan().getTimeToIdle() != null &&
+                        now.isAfter(accessTime.plus(settings.getStoreLifespan().getTimeToIdle()))) {
                     destroyAndRemove(queryKey, resultStore);
-                } else if (createAge > settings.getSearchProcessLifespan().getTimeToLiveMs()) {
+                } else if (settings.getSearchProcessLifespan().getTimeToLive() != null &&
+                        now.isAfter(createTime.plus(settings.getSearchProcessLifespan().getTimeToLive()))) {
                     resultStore.terminate();
-                } else if (accessAge > settings.getSearchProcessLifespan().getTimeToIdleMs()) {
+                } else if (settings.getSearchProcessLifespan().getTimeToIdle() != null &&
+                        now.isAfter(accessTime.plus(settings.getSearchProcessLifespan().getTimeToIdle()))) {
                     resultStore.terminate();
                 }
             } catch (final RuntimeException e) {
@@ -444,15 +482,33 @@ public final class ResultStoreManager implements Clearable {
     public ResultPage<ResultStoreInfo> find(final FindResultStoreCriteria criteria) {
         final List<ResultStoreInfo> list = new ArrayList<>();
         resultStoreMap.forEach((queryKey, resultStore) -> {
-            list.add(new ResultStoreInfo(queryKey,
-                    resultStore.getUserId(),
-                    resultStore.getCreationTime().toEpochMilli(),
-                    resultStore.getNodeName(),
-                    resultStore.getCoprocessors().getByteSize(),
-                    resultStore.isComplete(),
-                    resultStore.getSearchTaskProgress(),
-                    resultStore.getResultStoreSettings()));
+            if (securityContext.isAdmin() || resultStore.getUserId().equals(securityContext.getUserId())) {
+                list.add(new ResultStoreInfo(queryKey,
+                        resultStore.getUserId(),
+                        resultStore.getCreationTime().toEpochMilli(),
+                        resultStore.getNodeName(),
+                        resultStore.getCoprocessors().getByteSize(),
+                        resultStore.isComplete(),
+                        resultStore.getSearchTaskProgress(),
+                        getLifespanInfo(resultStore.getResultStoreSettings().getSearchProcessLifespan()),
+                        getLifespanInfo(resultStore.getResultStoreSettings().getStoreLifespan())));
+            }
         });
         return new ResultPage<>(list);
+    }
+
+    private LifespanInfo getLifespanInfo(final Lifespan lifespan) {
+        return new LifespanInfo(
+                getDurationString(lifespan.getTimeToIdle()),
+                getDurationString(lifespan.getTimeToLive()),
+                lifespan.isDestroyOnTabClose(),
+                lifespan.isDestroyOnWindowClose());
+    }
+
+    private String getDurationString(final StroomDuration duration) {
+        if (duration == null) {
+            return null;
+        }
+        return duration.getValueAsStr();
     }
 }

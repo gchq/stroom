@@ -25,7 +25,9 @@ public class ResultStoreInfo {
     @JsonProperty
     private final SearchTaskProgress taskProgress;
     @JsonProperty
-    private final ResultStoreSettings resultStoreSettings;
+    private final LifespanInfo searchProcessLifespan;
+    @JsonProperty
+    private final LifespanInfo storeLifespan;
 
     @JsonCreator
     public ResultStoreInfo(@JsonProperty("queryKey") final QueryKey queryKey,
@@ -35,7 +37,8 @@ public class ResultStoreInfo {
                            @JsonProperty("storeSize") final long storeSize,
                            @JsonProperty("complete") final boolean complete,
                            @JsonProperty("taskProgress") final SearchTaskProgress taskProgress,
-                           @JsonProperty("resultStoreSettings") final ResultStoreSettings resultStoreSettings) {
+                           @JsonProperty("searchProcessLifespan") final LifespanInfo searchProcessLifespan,
+                           @JsonProperty("storeLifespan") final LifespanInfo storeLifespan) {
         this.queryKey = queryKey;
         this.userId = userId;
         this.creationTime = creationTime;
@@ -43,7 +46,8 @@ public class ResultStoreInfo {
         this.storeSize = storeSize;
         this.complete = complete;
         this.taskProgress = taskProgress;
-        this.resultStoreSettings = resultStoreSettings;
+        this.searchProcessLifespan = searchProcessLifespan;
+        this.storeLifespan = storeLifespan;
     }
 
     public QueryKey getQueryKey() {
@@ -74,7 +78,11 @@ public class ResultStoreInfo {
         return taskProgress;
     }
 
-    public ResultStoreSettings getResultStoreSettings() {
-        return resultStoreSettings;
+    public LifespanInfo getSearchProcessLifespan() {
+        return searchProcessLifespan;
+    }
+
+    public LifespanInfo getStoreLifespan() {
+        return storeLifespan;
     }
 }

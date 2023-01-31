@@ -1,12 +1,12 @@
-package stroom.query.api.v2;
+package stroom.query.common.v2;
+
+import stroom.util.time.StroomDuration;
 
 public class ResultStoreSettingsFactory {
 
-    private static final long ONE_DAY = 24 * 60 * 60 * 1000;
-
     private static final Lifespan DEFAULT_LIFESPAN = new Lifespan(
-            ONE_DAY,
-            ONE_DAY,
+            StroomDuration.parse("24h"),
+            StroomDuration.parse("24h"),
             true,
             true);
 

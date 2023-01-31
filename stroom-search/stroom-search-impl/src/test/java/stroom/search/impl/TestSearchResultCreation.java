@@ -18,7 +18,7 @@ import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.ResultRequest.ResultStyle;
-import stroom.query.api.v2.ResultStoreSettingsFactory;
+import stroom.query.common.v2.ResultStoreSettingsFactory;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.Sort;

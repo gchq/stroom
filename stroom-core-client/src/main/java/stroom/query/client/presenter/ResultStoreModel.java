@@ -10,6 +10,7 @@ import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultStoreInfo;
 import stroom.query.shared.DestroyStoreRequest;
 import stroom.query.shared.ResultStoreResource;
+import stroom.query.shared.UpdateStoreRequest;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.ResultPage;
 
@@ -109,5 +110,16 @@ public class ResultStoreModel {
                 .onFailure(t -> consumer.accept(false))
                 .call(RESULT_STORE_RESOURCE)
                 .destroy(nodeName, new DestroyStoreRequest(queryKey, destroyReason));
+    }
+
+    public void updateSettings(final String nodeName,
+                               final UpdateStoreRequest updateStoreRequest,
+                               final Consumer<Boolean> consumer) {
+        final Rest<Boolean> rest = restFactory.create();
+        rest
+                .onSuccess(consumer)
+                .onFailure(t -> consumer.accept(false))
+                .call(RESULT_STORE_RESOURCE)
+                .update(nodeName, updateStoreRequest);
     }
 }

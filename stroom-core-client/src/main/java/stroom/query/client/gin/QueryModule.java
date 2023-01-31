@@ -31,9 +31,12 @@ import stroom.query.client.presenter.QueryResultTablePresenter;
 import stroom.query.client.presenter.QueryResultTablePresenter.QueryResultTableView;
 import stroom.query.client.presenter.ResultStorePresenter;
 import stroom.query.client.presenter.ResultStorePresenter.ResultStoreView;
+import stroom.query.client.presenter.ResultStoreSettingsPresenter;
+import stroom.query.client.presenter.ResultStoreSettingsPresenter.ResultStoreSettingsView;
 import stroom.query.client.view.QueryDocSettingsViewImpl;
 import stroom.query.client.view.QueryDocViewImpl;
 import stroom.query.client.view.QueryResultTableViewImpl;
+import stroom.query.client.view.ResultStoreSettingsViewImpl;
 import stroom.query.client.view.ResultStoreViewImpl;
 
 public class QueryModule extends PluginModule {
@@ -67,5 +70,10 @@ public class QueryModule extends PluginModule {
                 ResultStorePresenter.class,
                 ResultStoreView.class,
                 ResultStoreViewImpl.class);
+
+        bindPresenterWidget(
+                ResultStoreSettingsPresenter.class,
+                ResultStoreSettingsView.class,
+                ResultStoreSettingsViewImpl.class);
     }
 }

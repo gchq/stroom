@@ -1,7 +1,6 @@
 package stroom.query.common.v2;
 
 import stroom.node.api.NodeInfo;
-import stroom.query.api.v2.ResultStoreSettingsFactory;
 import stroom.security.api.SecurityContext;
 
 import java.util.List;

@@ -16,7 +16,6 @@
 
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.ResultStoreSettings;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.SearchTaskProgress;
@@ -56,7 +55,7 @@ public class ResultStore {
     private final String nodeName;
 
     private final SearchResponseCreator searchResponseCreator;
-    private final ResultStoreSettings resultStoreSettings;
+    private volatile ResultStoreSettings resultStoreSettings;
     private volatile SearchProcess searchProcess;
     private volatile boolean terminate;
 
@@ -77,7 +76,6 @@ public class ResultStore {
         lastAccessTime = creationTime;
         this.nodeName = nodeName;
         this.resultStoreSettings = resultStoreSettings;
-
         searchResponseCreator = new SearchResponseCreator(serialisersFactory, sizesProvider, this);
     }
 
@@ -254,6 +252,10 @@ public class ResultStore {
         final SearchResponse response = searchResponseCreator.create(request);
         lastAccessTime = Instant.now();
         return response;
+    }
+
+    public void setResultStoreSettings(final ResultStoreSettings resultStoreSettings) {
+        this.resultStoreSettings = resultStoreSettings;
     }
 
     @Override

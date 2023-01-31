@@ -10,6 +10,7 @@ import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.shared.DestroyStoreRequest;
 import stroom.query.shared.ResultStoreResource;
 import stroom.query.shared.ResultStoreResponse;
+import stroom.query.shared.UpdateStoreRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResourcePaths;
@@ -69,6 +70,31 @@ public class ResultStoreResourceImpl implements ResultStoreResource {
         }
     }
 
+    @Override
+    public Boolean update(final String nodeName, final UpdateStoreRequest updateStoreRequest) {
+        try {
+            return nodeServiceProvider.get()
+                    .remoteRestResult(
+                            nodeName,
+                            Boolean.class,
+                            () -> ResourcePaths.buildAuthenticatedApiPath(
+                                    ResultStoreResource.BASE_PATH,
+                                    ResultStoreResource.UPDATE_PATH_PART,
+                                    nodeName),
+                            () -> {
+                                resultStoreManagerProvider.get().update(updateStoreRequest.getQueryKey(),
+                                        updateStoreRequest.getSearchProcessLifespan(),
+                                        updateStoreRequest.getStoreLifespan());
+                                return true;
+                            },
+                            builder ->
+                                    builder.post(Entity.json(updateStoreRequest)));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw e;
+        }
+    }
+
     //    @AutoLogged(value = OperationType.PROCESS, verb = "Terminating",
 //            decorator = TerminateDecorator.class)
     @Override
@@ -80,7 +106,7 @@ public class ResultStoreResourceImpl implements ResultStoreResource {
                             Boolean.class,
                             () -> ResourcePaths.buildAuthenticatedApiPath(
                                     ResultStoreResource.BASE_PATH,
-                                    ResultStoreResource.FIND_PATH_PART,
+                                    ResultStoreResource.TERMINATE_PATH_PART,
                                     nodeName),
                             () -> resultStoreManagerProvider.get()
                                     .terminate(queryKey),
@@ -101,7 +127,7 @@ public class ResultStoreResourceImpl implements ResultStoreResource {
                             Boolean.class,
                             () -> ResourcePaths.buildAuthenticatedApiPath(
                                     ResultStoreResource.BASE_PATH,
-                                    ResultStoreResource.FIND_PATH_PART,
+                                    ResultStoreResource.DESTROY_PATH_PART,
                                     nodeName),
                             () -> resultStoreManagerProvider.get()
                                     .destroy(request.getQueryKey(), request.getDestroyReason()),

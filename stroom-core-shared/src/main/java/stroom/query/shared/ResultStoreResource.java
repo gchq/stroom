@@ -16,7 +16,6 @@
 
 package stroom.query.shared;
 
-import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.FindResultStoreCriteria;
 import stroom.query.api.v2.QueryKey;
 import stroom.util.shared.ResourcePaths;
@@ -44,6 +43,7 @@ public interface ResultStoreResource extends RestResource, DirectRestService {
     String BASE_PATH = "/result-store" + ResourcePaths.V1;
     String LIST_PATH_PART = "/list";
     String FIND_PATH_PART = "/find";
+    String UPDATE_PATH_PART = "/update";
     String TERMINATE_PATH_PART = "/terminate";
     String DESTROY_PATH_PART = "/destroy";
     String NODE_NAME_PATH_PARAM = "/{nodeName}";
@@ -51,18 +51,27 @@ public interface ResultStoreResource extends RestResource, DirectRestService {
     @GET
     @Path(LIST_PATH_PART + NODE_NAME_PATH_PARAM)
     @Operation(
-            summary = "Lists tasks for a node",
-            operationId = "listTasks")
+            summary = "Lists result stores for a node",
+            operationId = "listResultStores")
     ResultStoreResponse list(@PathParam("nodeName") String nodeName);
 
     @POST
     @Path(FIND_PATH_PART + NODE_NAME_PATH_PARAM)
     @Operation(
             summary = "Find the result stores matching the supplied criteria for a node",
-            operationId = "findResultStoreCriteria")
+            operationId = "findResultStores")
     ResultStoreResponse find(
             @PathParam("nodeName") String nodeName,
             @Parameter(description = "criteria", required = true) FindResultStoreCriteria criteria);
+
+    @POST
+    @Path(UPDATE_PATH_PART + NODE_NAME_PATH_PARAM)
+    @Operation(
+            summary = "Find the result stores matching the supplied criteria for a node",
+            operationId = "updateResultStore")
+    Boolean update(
+            @PathParam("nodeName") String nodeName,
+            @Parameter(description = "request", required = true) UpdateStoreRequest updateStoreRequest);
 
     @POST
     @Path(TERMINATE_PATH_PART + NODE_NAME_PATH_PARAM)
