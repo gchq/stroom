@@ -172,7 +172,7 @@ public class DataProcessorTaskHandler {
                     metaService.getMeta(task.getMetaId(), true));
 
             // If meta has been deleted then allow normal completion.
-            if (meta == null || meta.getStatus().equals(Status.DELETED)) {
+            if (meta == null || Status.DELETED.equals(meta.getStatus())) {
                 LOGGER.debug(e::getMessage, e);
                 complete = true;
 
