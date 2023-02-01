@@ -12,6 +12,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0.20] - 2023-02-01
+
+* Issue **#3136** : Improve ref data lookup trace logging. Refactor effective streams query.
+
+* De-dup error message text produced by XSLT functions.
+
+* Issue **#3218** : Fix XSLT and dashboard `hash()` functions stripping leading zeros from the hash result.
+
+* Issue **#3221** : Queue all unowned tasks unless associated meta is locked. Tasks for deleted meta will be processed and complete as expected where meta is deleted.
+
+* Issue **#3220** : Fix Info tooltip on Active Tasks sub-tab not showing when stream is not unlocked or is physically deleted.
+
+
 ## [v7.0.19] - 2023-01-27
 
 * Issue **#3204** : Improve task creation logging to list considered filters in order and provide queue information.
@@ -4750,7 +4763,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.19...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.20...HEAD
+[v7.0.20]: https://github.com/gchq/stroom/compare/v7.0.19...v7.0.20
 [v7.0.19]: https://github.com/gchq/stroom/compare/v7.0.18...v7.0.19
 [v7.0.18]: https://github.com/gchq/stroom/compare/v7.0.17...v7.0.18
 [v7.0.17]: https://github.com/gchq/stroom/compare/v7.0.16...v7.0.17
