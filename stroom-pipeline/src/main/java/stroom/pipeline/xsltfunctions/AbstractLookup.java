@@ -20,14 +20,18 @@ import stroom.docref.DocRef;
 import stroom.pipeline.refdata.LookupIdentifier;
 import stroom.pipeline.refdata.ReferenceData;
 import stroom.pipeline.refdata.ReferenceDataResult;
+import stroom.pipeline.refdata.ReferenceDataResult.LazyMessage;
 import stroom.pipeline.refdata.store.GenericRefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
+import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory.Factory;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.MetaHolder;
 import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
@@ -41,41 +45,37 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.tree.tiny.TinyBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 
 abstract class AbstractLookup extends StroomExtensionFunctionCall {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLookup.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractLookup.class);
 
     private final ReferenceData referenceData;
     private final MetaHolder metaHolder;
-    private final RefDataValueProxyConsumerFactory.Factory consumerFactoryFactory;
+    private final SequenceMakerFactory sequenceMakerFactory;
 
     private long defaultMs = -1;
 
     AbstractLookup(final ReferenceData referenceData,
                    final MetaHolder metaHolder,
-                   final RefDataValueProxyConsumerFactory.Factory consumerFactoryFactory) {
+                   final SequenceMakerFactory sequenceMakerFactory) {
         this.referenceData = referenceData;
         this.metaHolder = metaHolder;
-        this.consumerFactoryFactory = consumerFactoryFactory;
+        this.sequenceMakerFactory = sequenceMakerFactory;
     }
 
-    RefDataValueProxyConsumerFactory.Factory getRefDataValueProxyConsumerFactoryFactory() {
-        return consumerFactoryFactory;
+    protected SequenceMaker createSequenceMaker(final XPathContext context) {
+        return sequenceMakerFactory.create(context);
     }
-
-//    OffHeapRefDataValueProxyConsumer.Factory getConsumerFactory() {
-//        return consumerFactory;
-//    }
 
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
@@ -143,12 +143,22 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
             try {
                 lookupIdentifier = new LookupIdentifier(map, key, ms);
 
-                // If we have got the date then continue to do the lookup.
-                try {
-                    LOGGER.debug("doLookup for {}", lookupIdentifier);
-                    result = doLookup(context, ignoreWarnings, traceLookup, lookupIdentifier);
-                } catch (final RuntimeException e) {
-                    createLookupFailError(context, lookupIdentifier, e);
+                if (NullSafe.hasItems(getPipelineReferences())) {
+                    // If we have got the date then continue to do the lookup.
+                    try {
+                        LOGGER.debug("doLookup for {}", lookupIdentifier);
+                        result = doLookup(context, ignoreWarnings, traceLookup, lookupIdentifier);
+                    } catch (final RuntimeException e) {
+                        createLookupFailError(context, lookupIdentifier, e);
+                    }
+                } else {
+                    outputInfo(Severity.ERROR,
+                            () -> "No reference loaders have been added to this XSLT step to perform a lookup",
+                            lookupIdentifier,
+                            traceLookup,
+                            ignoreWarnings,
+                            null,
+                            context);
                 }
             } catch (RuntimeException e) {
                 final StringBuilder sb = new StringBuilder();
@@ -160,7 +170,6 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                 sb.append(ms);
                 log(context, Severity.ERROR, e.getMessage(), e);
             }
-
         } catch (final XPathException | RuntimeException e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
@@ -179,7 +188,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                                          final boolean isTraceEnabled,
                                          final boolean isIgnoreWarnings) {
         LOGGER.trace("getReferenceData({})", lookupIdentifier);
-        final ReferenceDataResult result = new ReferenceDataResult(
+        ReferenceDataResult result = new ReferenceDataResult(
                 lookupIdentifier, isTraceEnabled, isIgnoreWarnings);
 
         result.logLazyTemplate(
@@ -200,7 +209,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                     Severity.ERROR,
                     "No pipeline references have been added to this XSLT step to perform a lookup");
         } else {
-            referenceData.ensureReferenceDataAvailability(pipelineReferences, lookupIdentifier, result);
+            result = referenceData.ensureReferenceDataAvailability(pipelineReferences, lookupIdentifier, result);
         }
         return result;
     }
@@ -210,8 +219,8 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                                        final Throwable e) {
         // Create the message.
         final StringBuilder sb = new StringBuilder();
-        sb.append("Lookup errored ");
-        lookupIdentifier.append(sb);
+        sb.append("Error performing lookup ");
+        lookupIdentifier.appendTo(sb);
 
         outputError(context, sb, e);
     }
@@ -222,50 +231,72 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         // Create the message.
         final StringBuilder sb = new StringBuilder();
         sb.append("Lookup failed ");
-        lookupIdentifier.append(sb);
+        lookupIdentifier.appendTo(sb);
 
         outputWarning(context, sb, e);
     }
 
     void outputInfo(final Severity severity,
-                    final String msg,
+                    final Supplier<String> msgSupplier,
                     final LookupIdentifier lookupIdentifier,
                     final boolean trace,
                     final boolean ignoreWarnings,
                     final ReferenceDataResult result,
                     final XPathContext context) {
 
-        final StringBuilder sb = new StringBuilder();
-        sb.append(msg);
-        if (!msg.endsWith(" ")) {
-            sb.append(" ");
+        if (shouldLog(severity, trace, ignoreWarnings)) {
+
+            final String msg = msgSupplier.get();
+            final StringBuilder sb = new StringBuilder();
+            if (msg != null && !msg.isBlank()) {
+                sb.append(msg);
+                if (!msg.endsWith(" ")) {
+                    sb.append(" ");
+                }
+            }
+            lookupIdentifier.appendTo(sb);
+
+            // Log the stream we found it in, useful if a map is defined in >1 feeds
+
+            if (result != null) {
+                result.getRefDataValueProxy()
+                        .flatMap(RefDataValueProxy::getSuccessfulMapDefinition)
+                        .ifPresent(mapDefinition -> {
+                            sb.append(" found in stream: ")
+                                    .append(mapDefinition.getRefStreamDefinition().getStreamId());
+                        });
+
+                result.getMessages()
+                        .stream()
+                        .filter(lazyMessage ->
+                                shouldLog(lazyMessage.getSeverity(), trace, ignoreWarnings))
+                        .forEach(lazyMessage -> {
+                            sb.append("\n");
+                            sb.append(StoredError.MESSAGE_CAUSE_DELIMITER);
+                            sb.append(lazyMessage.getSeverity().getDisplayValue());
+                            sb.append(": ");
+                            sb.append(lazyMessage.getMessage());
+                        });
+            }
+
+            final String message = sb.toString();
+            LOGGER.debug(message);
+            log(context, severity, message, null);
+        } else {
+            LOGGER.debug(() -> LogUtil.message(
+                    "Ignoring log message, severity: {}, trace: {}, ignoreWarnings: {}, msg: {}",
+                    severity, trace, ignoreWarnings, msgSupplier.get()));
         }
-        lookupIdentifier.append(sb);
-
-        result.getMessages()
-                .stream()
-                .filter(lazyMessage ->
-                        trace ||
-                                (!ignoreWarnings && lazyMessage.getSeverity().greaterThanOrEqual(Severity.WARNING)))
-                .forEach(lazyMessage -> {
-                    sb.append("\n");
-                    sb.append(StoredError.MESSAGE_CAUSE_DELIMITER);
-                    sb.append(lazyMessage.getSeverity().getDisplayValue());
-                    sb.append(": ");
-                    sb.append(lazyMessage.getMessage());
-                });
-
-        final String message = sb.toString();
-        LOGGER.debug(message);
-        log(context, severity, message, null);
     }
 
-    String getEffectiveStreamIds(final ReferenceDataResult result) {
+    String getQualifiedEffectiveStreamIds(final ReferenceDataResult result) {
         Objects.requireNonNull(result);
         return result.getEffectiveStreams()
                 .stream()
-                .map(RefStreamDefinition::getStreamId)
-                .map(String::valueOf)
+                .map(entry ->
+                        NullSafe.get(entry.getKey(), PipelineReference::getFeed, DocRef::getName)
+                                + ":"
+                                + NullSafe.get(entry.getValue(), RefStreamDefinition::getStreamId))
                 .collect(Collectors.joining(", "));
     }
 
@@ -298,16 +329,32 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                 });
     }
 
+    /**
+     * Log a lookup failing to return a value.  Whether it actually logs depends on things like
+     * whether there were any errors, state of ignoreWarnings, state of trace, etc.
+     */
     void logFailureReason(final ReferenceDataResult result,
                           final XPathContext context,
                           final boolean ignoreWarnings,
                           final boolean trace) {
 
-        if (!ignoreWarnings && result.getEffectiveStreams().isEmpty()) {
-            // No effective streams were found to lookup from
-            final List<PipelineReference> pipelineReferences = NullSafe.nonNullList(getPipelineReferences());
+        final List<PipelineReference> pipelineReferences = NullSafe.nonNullList(getPipelineReferences());
+        final Severity maxSeverity = getMaxSeverity(result);
 
-            if (pipelineReferences.size() > 1) {
+        if (pipelineReferences.isEmpty()) {
+            outputInfo(
+                    maxSeverity.atLeast(Severity.ERROR),
+                    () -> "No reference loaders are configured so the lookup cannot be performed. ",
+                    result.getCurrentLookupIdentifier(),
+                    trace,
+                    ignoreWarnings,
+                    result,
+                    context);
+
+        } else if (!ignoreWarnings && result.getEffectiveStreams().isEmpty()) {
+            // No effective streams were found to lookup from
+
+            if (pipelineReferences.size() > 0) {
                 final String feeds = pipelineReferences.stream()
                         .map(pipeRef -> NullSafe.get(pipeRef, PipelineReference::getFeed, DocRef::getName))
                         .filter(Objects::nonNull)
@@ -315,10 +362,10 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                         .collect(Collectors.joining(", "));
 
                 outputInfo(
-                        Severity.WARNING,
-                        LogUtil.message(
+                        maxSeverity.atLeast(Severity.WARNING),
+                        () -> LogUtil.message(
                                 "No effective streams found in any of the reference loaders (feeds: [{}]). " +
-                                        "Do reference data streams exist for the lookup time?",
+                                        "Do reference data streams exist for the lookup time? ",
                                 feeds),
                         result.getCurrentLookupIdentifier(),
                         trace,
@@ -329,8 +376,17 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         } else if (!ignoreWarnings && result.getQualifyingStreams().isEmpty()) {
             // None of the effective streams contains the map
             outputInfo(
-                    Severity.WARNING,
-                    "Map not found in effective streams [" + getEffectiveStreamIds(result) + "] ",
+                    maxSeverity.atLeast(Severity.WARNING),
+                    () -> "Map not found in effective streams [" + getQualifiedEffectiveStreamIds(result) + "] ",
+                    result.getCurrentLookupIdentifier(),
+                    trace,
+                    ignoreWarnings,
+                    result,
+                    context);
+        } else if (maxSeverity.greaterThanOrEqual(Severity.ERROR)) {
+            outputInfo(
+                    maxSeverity.atLeast(Severity.ERROR),
+                    () -> "Errors found during lookup ",
                     result.getCurrentLookupIdentifier(),
                     trace,
                     ignoreWarnings,
@@ -339,25 +395,67 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         }
     }
 
+    private Severity getMaxSeverity(final ReferenceDataResult result) {
+        return Severity.getMaxSeverity(
+                NullSafe.nonNullList(result.getMessages()).stream()
+                        .map(LazyMessage::getSeverity)
+                        .collect(Collectors.toList()),
+                Severity.INFO);
+    }
+
+    // Pkg private for testing
+    static boolean shouldLog(final Severity maxSeverity,
+                             final boolean isTraceEnabled,
+                             final boolean isIgnoreWarnings) {
+        return isTraceEnabled
+                || maxSeverity.greaterThanOrEqual(Severity.ERROR)
+                || (!isIgnoreWarnings && maxSeverity.greaterThanOrEqual(Severity.WARNING));
+    }
+
+    /**
+     * Log a lookup that ran without
+     */
     void logLookupValue(final boolean wasValueFound,
                         final ReferenceDataResult result,
                         final XPathContext context,
                         final boolean ignoreWarnings,
                         final boolean trace) {
 
-        if (wasValueFound && trace) {
+        // Establish the highest severity of all messages we have as we may have found a value for a key
+        // but encountered warnings along the way
+        final Severity maxSeverity = getMaxSeverity(result);
+
+        if (maxSeverity.greaterThanOrEqual(Severity.WARNING)) {
+            final String prefix = wasValueFound
+                    ? "Key found "
+                    : "Key not found";
+            final String suffix = maxSeverity.greaterThanOrEqual(Severity.ERROR)
+                    ? "with errors "
+                    : "with warnings ";
+
             outputInfo(
-                    Severity.INFO,
-                    "Success ",
+                    maxSeverity,
+                    () -> prefix + suffix,
                     result.getCurrentLookupIdentifier(),
                     trace,
                     ignoreWarnings,
                     result,
                     context);
-        } else if (!wasValueFound && !ignoreWarnings) {
+        } else if (wasValueFound) {
+            // Found our value but may still have warnings
             outputInfo(
-                    Severity.WARNING,
-                    "Key not found ",
+                    Severity.INFO, // Anything higher should have been covered above
+                    () -> "Key found ",
+                    result.getCurrentLookupIdentifier(),
+                    trace,
+                    ignoreWarnings,
+                    result,
+                    context);
+        } else {
+            // Key not found so log at least a warning
+            outputInfo(
+                    maxSeverity.atLeast(Severity.WARNING),
+                    () -> "Key not found ",
                     result.getCurrentLookupIdentifier(),
                     trace,
                     ignoreWarnings,
@@ -369,12 +467,32 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
 // --------------------------------------------------------------------------------
 
 
+    /**
+     * To aid mocking in testing
+     */
+    static class SequenceMakerFactory {
+
+        private final RefDataValueProxyConsumerFactory.Factory consumerFactoryFactory;
+
+        @Inject
+        SequenceMakerFactory(final Factory consumerFactoryFactory) {
+            this.consumerFactoryFactory = consumerFactoryFactory;
+        }
+
+        SequenceMaker create(final XPathContext context) {
+            return new SequenceMaker(context, consumerFactoryFactory);
+        }
+    }
+
+
+// --------------------------------------------------------------------------------
+
+
     static class SequenceMaker {
 
         private final XPathContext context;
         private final RefDataValueProxyConsumerFactory.Factory consumerFactoryFactory;
         private Builder builder;
-        private RefDataValueProxyConsumerFactory consumerFactory;
         private GenericRefDataValueProxyConsumer consumer;
 
         SequenceMaker(final XPathContext context,
@@ -415,8 +533,6 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                         builder,
                         pipelineConfiguration,
                         consumerFactoryFactory.create(builder, pipelineConfiguration));
-
-//                consumer = consumerFactory.create(builder, pipelineConfiguration);
             }
         }
 

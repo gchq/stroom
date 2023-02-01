@@ -20,6 +20,7 @@ import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.shared.data.PipelineReference;
 import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Location;
@@ -28,10 +29,12 @@ import stroom.util.shared.Severity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -49,7 +52,7 @@ public class ReferenceDataResult implements ErrorReceiver {
     private LookupIdentifier currentLookupIdentifier;
     private List<LazyMessage> messages = new ArrayList<>();
     // 0-1 stream(s) per ref loader based on the effective datetime of the stream and the lookup datetime
-    private final List<RefStreamDefinition> effectiveStreams = new ArrayList<>();
+    private final List<Entry<PipelineReference, RefStreamDefinition>> effectiveStreams = new ArrayList<>();
 
     public ReferenceDataResult(final LookupIdentifier lookupIdentifier) {
         this.isTraceEnabled = false;
@@ -85,16 +88,17 @@ public class ReferenceDataResult implements ErrorReceiver {
      * The stream that has been chosen from a feed whose effective time matches the time
      * on the lookup.
      */
-    public void addEffectiveStream(final RefStreamDefinition refStreamDefinition) {
+    public void addEffectiveStream(final PipelineReference pipelineReference,
+                                   final RefStreamDefinition refStreamDefinition) {
         Objects.requireNonNull(refStreamDefinition);
         LOGGER.trace("Adding effectiveStream {}", refStreamDefinition);
-        effectiveStreams.add(refStreamDefinition);
+        effectiveStreams.add(new SimpleEntry<>(pipelineReference, refStreamDefinition));
     }
 
     /**
      * 0-1 stream(s) per ref loader based on the effective datetime of the stream and the lookup datetime
      */
-    public List<RefStreamDefinition> getEffectiveStreams() {
+    public List<Entry<PipelineReference, RefStreamDefinition>> getEffectiveStreams() {
         return effectiveStreams;
     }
 

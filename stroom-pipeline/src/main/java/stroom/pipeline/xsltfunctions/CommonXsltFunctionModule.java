@@ -100,7 +100,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         CurrentTimeFunction(final Provider<CurrentTime> functionCallProvider) {
             super(
-                    "current-time",
+                    CurrentTime.FUNCTION_NAME,
                     0,
                     0,
                     new SequenceType[]{},
@@ -114,7 +114,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         CurrentUserFunction(final Provider<CurrentUser> functionCallProvider) {
             super(
-                    "current-user",
+                    CurrentUser.FUNCTION_NAME,
                     0,
                     0,
                     new SequenceType[]{},
@@ -213,7 +213,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         FormatDateFunction(final Provider<FormatDate> functionCallProvider) {
             super(
-                    "format-date",
+                    FormatDate.FUNCTION_NAME,
                     1,
                     5,
                     new SequenceType[]{
@@ -232,7 +232,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         GetFunction(final Provider<Get> functionCallProvider) {
             super(
-                    "get",
+                    Get.FUNCTION_NAME,
                     1,
                     1,
                     new SequenceType[]{SequenceType.SINGLE_STRING},
@@ -246,7 +246,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         HashFunction(final Provider<Hash> functionCallProvider) {
             super(
-                    "hash",
+                    Hash.FUNCTION_NAME,
                     1,
                     3,
                     new SequenceType[]{
@@ -263,7 +263,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         HexToDecFunction(final Provider<HexToDec> functionCallProvider) {
             super(
-                    "hex-to-dec",
+                    HexToDec.FUNCTION_NAME,
                     1,
                     1,
                     new SequenceType[]{SequenceType.SINGLE_STRING},
@@ -338,7 +338,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         JsonToXmlFunction(final Provider<JsonToXml> functionCallProvider) {
             super(
-                    "json-to-xml",
+                    JsonToXml.FUNCTION_NAME,
                     1,
                     1,
                     new SequenceType[]{SequenceType.SINGLE_STRING},
@@ -397,7 +397,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         LogFunction(final Provider<Log> functionCallProvider) {
             super(
-                    "log",
+                    Log.FUNCTION_NAME,
                     2,
                     2,
                     new SequenceType[]{
@@ -490,7 +490,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         PutFunction(final Provider<Put> functionCallProvider) {
             super(
-                    "put",
+                    Put.FUNCTION_NAME,
                     2,
                     2,
                     new SequenceType[]{

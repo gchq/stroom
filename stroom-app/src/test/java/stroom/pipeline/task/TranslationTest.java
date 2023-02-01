@@ -62,9 +62,9 @@ import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTranslationTestHelper;
 import stroom.test.ContentImportService;
-import stroom.test.common.ComparisonHelper;
 import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.util.date.DateUtil;
+import stroom.util.io.DiffUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogUtil;
@@ -147,8 +147,21 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         // Process event data.
         processData(inputDir, outputDir, false, compareOutput, exceptions);
 
+        assertNoExceptions(exceptions);
+    }
+
+    private void assertNoExceptions(final List<Exception> exceptions) {
         if (exceptions.size() > 0) {
-            fail(exceptions.get(0).getMessage());
+            final StringBuilder sb = new StringBuilder("Test failed with ")
+                    .append(exceptions.size())
+                    .append(" exceptions:");
+            exceptions.forEach(e -> {
+                sb.append("\n")
+                        .append(e.getMessage());
+            });
+            sb.append("\nLook further up in the logs for any file diffs.");
+
+            fail(sb.toString());
         }
     }
 
@@ -166,9 +179,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         LOGGER.info("Processing data for {} in {}", name, inputDir.toAbsolutePath().normalize());
         processData(name, inputDir, outputDir, isReference, compareOutput, exceptions);
 
-        if (exceptions.size() > 0) {
-            fail(exceptions.get(0).getMessage());
-        }
+        assertNoExceptions(exceptions);
     }
 
     protected void loadAllRefData() {
@@ -181,9 +192,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         // Process reference data.
         final List<Exception> exceptions = new ArrayList<>();
         processData(inputDir, outputDir, true, false, exceptions);
-        if (exceptions.size() > 0) {
-            fail(exceptions.get(0).getMessage());
-        }
+        assertNoExceptions(exceptions);
     }
 
     protected void importConfig() {
@@ -626,9 +635,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             }
         }
 
-        if (exceptions.size() > 0) {
-            fail(exceptions.get(0).getMessage());
-        }
+        assertNoExceptions(exceptions);
     }
 
     private SteppingResult step(final StepType direction,
@@ -746,10 +753,15 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
     private void compareFiles(final Path expectedFile, final Path actualFile, final List<Exception> exceptions) {
         try {
-            boolean areFilesTheSame = ComparisonHelper.unifiedDiff(expectedFile, actualFile, 0);
+            boolean areFilesTheSame = !DiffUtil.unifiedDiff(
+                    expectedFile, actualFile, true, 3);
             if (areFilesTheSame) {
                 Files.deleteIfExists(actualFile);
             } else {
+                LOGGER.error("Differences exist between the expected and actual output");
+                LOGGER.info("\nvimdiff {} {}", expectedFile, actualFile);
+                LOGGER.info("If you are satisfied the actual output is correct then copy " +
+                        "the actual over the expected and re-run.");
                 throw new RuntimeException(LogUtil.message("Files are not the same:\n{}\n{}",
                         FileUtil.getCanonicalPath(actualFile),
                         FileUtil.getCanonicalPath(expectedFile)));
