@@ -154,7 +154,7 @@ public class TestFastInfosetVocab {
 
     private void dumpVocabs(final Tuple3<Vocabulary, SerializerVocabulary, ParserVocabulary> vocabs) {
         LOGGER.info("""
-                                        
+
                         vocabulary:           {}
                         serializerVocabulary: {}
                         parserVocabulary:     {}""",
