@@ -39,6 +39,7 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
     private final RefDataStore refDataStore;
     private final MapDefinition mapDefinition;
 
+    // This will be set with mapDefinition if we have a successful lookup with it, else stays null
     private MapDefinition successfulMapDefinition = null;
     private final String key;
 

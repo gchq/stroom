@@ -28,7 +28,6 @@ import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.impl.MetaDao;
-import stroom.meta.impl.db.jooq.Indexes;
 import stroom.meta.impl.db.jooq.tables.MetaFeed;
 import stroom.meta.impl.db.jooq.tables.MetaProcessor;
 import stroom.meta.impl.db.jooq.tables.MetaType;
@@ -1593,7 +1592,7 @@ public class MetaDaoImpl implements MetaDao, Clearable {
         return context.select(
                         meta.ID,
                         meta.EFFECTIVE_TIME)
-                .from(meta.useIndex(Indexes.META_META_FEED_ID_EFFECTIVE_TIME.getName()))
+                .from(meta)
                 .where(meta.FEED_ID.eq(feedId))
                 .and(meta.TYPE_ID.eq(metaTypeId))
                 .and(meta.STATUS.eq(unlockedId));
@@ -1653,8 +1652,7 @@ public class MetaDaoImpl implements MetaDao, Clearable {
                             .and(meta.EFFECTIVE_TIME.lessThan(toMs));
 
                     // Combine the two together, dropping dups if there are any
-                    final var select = selectUpToRange
-                            .union(selectInRange);
+                    final var select = selectUpToRange.union(selectInRange);
 
                     LOGGER.debug("select:\n{}", select);
 
