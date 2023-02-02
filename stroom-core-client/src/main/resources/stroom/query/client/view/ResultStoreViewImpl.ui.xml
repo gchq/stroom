@@ -1,7 +1,17 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui"
->
-    <g:SimplePanel ui:field="tableContainer"
-                   styleName="max dashboard-panel overflow-hidden"/>
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <g:SimplePanel styleName="max">
+        <g:MySplitLayoutPanel styleName="max">
+            <g:south size="200">
+                <g:MaxScrollPanel addStyleNames="max dashboard-panel">
+                    <g:SimplePanel ui:field="infoPanel"/>
+                </g:MaxScrollPanel>
+            </g:south>
+            <g:center>
+                <g:SimplePanel ui:field="tableContainer"
+                               styleName="max dashboard-panel overflow-hidden"/>
+            </g:center>
+        </g:MySplitLayoutPanel>
+    </g:SimplePanel>
 </ui:UiBinder>

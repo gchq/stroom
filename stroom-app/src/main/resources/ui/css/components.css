@@ -1714,3 +1714,34 @@
 .timeRange-quickSetting:hover {
     text-decoration: underline;
 }
+
+
+.metaInfo, .resultStoreInfo {
+    padding: var(--control__padding--horizontal) var(--control__padding--vertical);
+    white-space: nowrap;
+}
+
+.metaInfo th, .resultStoreInfo th {
+    color: #1e88e5;
+    font-weight: bold;
+    font-size: 125%;
+    height: 2em;
+}
+
+.metaInfo td:first-child, .resultStoreInfo td:first-child {
+    line-height: 1.4em;
+    font-weight: 500;
+    padding-right: var(--control__padding--horizontal);
+}
+
+/*
+.resultStoreInfo {
+    padding: var(--control__padding--horizontal) var(--control__padding--vertical);
+    white-space: nowrap;
+}
+
+.resultStoreInfo th {
+    padding: var(--control__padding--horizontal) var(--control__padding--vertical);
+    white-space: nowrap;
+}
+*/

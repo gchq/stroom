@@ -18,6 +18,7 @@ package stroom.query.client.view;
 
 import stroom.query.client.presenter.ResultStorePresenter.ResultStoreView;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -32,6 +33,8 @@ public class ResultStoreViewImpl extends ViewImpl implements ResultStoreView {
 
     @UiField
     SimplePanel tableContainer;
+    @UiField
+    SimplePanel infoPanel;
 
     @Inject
     public ResultStoreViewImpl(final Binder binder) {
@@ -46,6 +49,11 @@ public class ResultStoreViewImpl extends ViewImpl implements ResultStoreView {
     @Override
     public void setListView(final View view) {
         tableContainer.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setData(final SafeHtml safeHtml) {
+        infoPanel.getElement().setInnerHTML(safeHtml.asString());
     }
 
     public interface Binder extends UiBinder<Widget, ResultStoreViewImpl> {

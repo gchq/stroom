@@ -118,7 +118,6 @@ public class ResultStoreModel {
         final Rest<Boolean> rest = restFactory.create();
         rest
                 .onSuccess(consumer)
-                .onFailure(t -> consumer.accept(false))
                 .call(RESULT_STORE_RESOURCE)
                 .update(nodeName, updateStoreRequest);
     }

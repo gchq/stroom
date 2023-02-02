@@ -53,17 +53,11 @@ import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
-import stroom.widget.tooltip.client.presenter.TooltipUtil;
+import stroom.widget.tooltip.client.presenter.TableBuilder;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.dom.client.Style.VerticalAlign;
-import com.google.gwt.dom.client.Style.WhiteSpace;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.safecss.shared.SafeStyles;
-import com.google.gwt.safecss.shared.SafeStylesBuilder;
-import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -93,28 +87,6 @@ public class DataPresenter
 
     private static final DataResource DATA_RESOURCE = com.google.gwt.core.shared.GWT.create(DataResource.class);
     private static final MetaResource META_RESOURCE = com.google.gwt.core.shared.GWT.create(MetaResource.class);
-
-    private static final SafeStyles META_SECTION_HEAD_STYLES = new SafeStylesBuilder()
-            .paddingLeft(0.2, Unit.EM)
-            .whiteSpace(WhiteSpace.NOWRAP)
-            .trustedColor("#1e88e5")
-            .fontWeight(FontWeight.BOLD)
-            .fontSize(125, Unit.PCT)
-            .toSafeStyles();
-
-    private static final SafeStyles META_SECTION_CELL_STYLES = new SafeStylesBuilder()
-            .height(2, Unit.EM)
-            .whiteSpace(WhiteSpace.NOWRAP)
-            .verticalAlign(VerticalAlign.BOTTOM)
-            .toSafeStyles();
-
-    private static final SafeStyles META_KEY_STYLES = new SafeStylesBuilder()
-            .paddingLeft(1, Unit.EM)
-            .paddingRight(1, Unit.EM)
-            .whiteSpace(WhiteSpace.NOWRAP)
-            .append(SafeStylesUtils.fromTrustedNameAndValue("line-height", "1.4em"))
-            .append(SafeStylesUtils.fromTrustedNameAndValue("font-weight", "500"))
-            .toSafeStyles();
 
     private static final String CONTEXT_TAB_NAME = "Context";
     private static final String DATA_PREVIEW_TAB_NAME = "Data Preview";
@@ -1131,33 +1103,25 @@ public class DataPresenter
     }
 
     private void handleMetaInfoResult(final List<DataInfoSection> dataInfoSections) {
-        final TooltipUtil.Builder builder = TooltipUtil.builder();
+        final TableBuilder tableBuilder = new TableBuilder();
+        for (final DataInfoSection section : dataInfoSections) {
+            // Add the section header.
+            tableBuilder.row().header(section.getTitle(), 2);
 
-        builder.addTwoColTable(tableBuilder -> {
-            for (final DataInfoSection section : dataInfoSections) {
-                // Add the section header
+            // Add rows.
+            section.getEntries()
+                    .forEach(entry ->
+                            tableBuilder
+                                    .row()
+                                    .data(entry.getKey())
+                                    .data(replaceJavaLineBreaks(entry.getValue())));
+        }
 
-                tableBuilder.addRow(
-                        new SafeHtmlBuilder()
-                                .appendHtmlConstant("<span style=\"" + META_SECTION_HEAD_STYLES.asString() + "\">")
-                                .appendEscaped(section.getTitle())
-                                .appendHtmlConstant("</span>")
-                                .toSafeHtml(),
-                        null,
-                        true,
-                        META_SECTION_CELL_STYLES);
-
-                section.getEntries()
-                        .forEach(entry ->
-                                tableBuilder.addRow(
-                                        TooltipUtil.styledSpan(entry.getKey(), META_KEY_STYLES),
-                                        replaceJavaLineBreaks(entry.getValue()),
-                                        true));
-            }
-            return tableBuilder.build();
-        });
-
-        htmlPresenter.setHtml(builder.build().asString());
+        final SafeHtmlBuilder sb = new SafeHtmlBuilder();
+        sb.appendHtmlConstant("<div class=\"metaInfo\">");
+        tableBuilder.write(sb);
+        sb.appendHtmlConstant("</div>");
+        htmlPresenter.setHtml(sb.toSafeHtml().asString());
     }
 
     private SafeHtml replaceJavaLineBreaks(final String str) {

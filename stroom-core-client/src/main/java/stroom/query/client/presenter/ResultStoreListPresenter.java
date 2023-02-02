@@ -18,15 +18,14 @@ package stroom.query.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.v2.DestroyReason;
-import stroom.query.api.v2.LifespanInfo;
 import stroom.query.api.v2.ResultStoreInfo;
-import stroom.query.api.v2.SearchTaskProgress;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
@@ -34,10 +33,7 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
@@ -83,72 +79,21 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
         settingsButton.setTitle("Store Settings");
         settingsButton.setEnabled(false);
 
-        // Query key
-        dataGrid.addResizableColumn(new Column<ResultStoreInfo, SafeHtml>(new SafeHtmlCell()) {
-            @Override
-            public SafeHtml getValue(final ResultStoreInfo resultStoreInfo) {
-                final SafeHtmlBuilder sb = new SafeHtmlBuilder();
-                sb.appendHtmlConstant("<b>UUID: </b>");
-                sb.appendEscaped(resultStoreInfo.getQueryKey().getUuid());
-                sb.appendHtmlConstant("<br/>");
-                sb.appendHtmlConstant("<b>User Id: </b>");
-                sb.appendEscaped(resultStoreInfo.getUserId());
-                sb.appendHtmlConstant("<br/>");
-                sb.appendHtmlConstant("<b>Creation Time: </b>");
-                sb.appendEscaped(dateTimeFormatter.format(resultStoreInfo.getCreationTime()));
-                sb.appendHtmlConstant("<br/>");
-                sb.appendHtmlConstant("<b>Age: </b>");
-                sb.appendEscaped(ModelStringUtil
-                        .formatDurationString(System.currentTimeMillis() - resultStoreInfo.getCreationTime()));
-                sb.appendHtmlConstant("<br/>");
-                sb.appendHtmlConstant("<b>Node Name: </b>");
-                sb.appendEscaped(resultStoreInfo.getNodeName());
-                sb.appendHtmlConstant("<br/>");
-                sb.appendHtmlConstant("<b>Store Size: </b>");
-                sb.appendEscaped(ModelStringUtil.formatIECByteSizeString(resultStoreInfo.getStoreSize()));
-                sb.appendHtmlConstant("<br/>");
-                sb.appendHtmlConstant("<b>Complete: </b>");
-                sb.appendEscaped(Boolean.toString(resultStoreInfo.isComplete()));
-                sb.appendHtmlConstant("<br/>");
-
-                addLifespan(sb, resultStoreInfo.getSearchProcessLifespan(), "Search process");
-                addLifespan(sb, resultStoreInfo.getStoreLifespan(), "Store");
-
-                final SearchTaskProgress taskProgress = resultStoreInfo.getTaskProgress();
-                if (taskProgress != null) {
-                    sb.appendHtmlConstant("<b>Task Info: </b>");
-                    sb.appendEscaped(taskProgress.getTaskInfo());
-                    sb.appendHtmlConstant("<br/>");
-                }
-
-                return sb.toSafeHtml();
-            }
-        }, "Store", 1000);
-
-//
-//        // Query key
-//        dataGrid.addResizableColumn(new Column<ResultStoreInfo, String>(new TextCell()) {
-//            @Override
-//            public String getValue(final ResultStoreInfo resultStoreInfo) {
-//                return resultStoreInfo.getQueryKey().getUuid();
-//            }
-//        }, "UUID", 250);
-//
         // User Id
         dataGrid.addResizableColumn(new Column<ResultStoreInfo, String>(new TextCell()) {
             @Override
             public String getValue(final ResultStoreInfo resultStoreInfo) {
                 return resultStoreInfo.getUserId();
             }
-        }, "User Id", 250);
+        }, "User Id", ColumnSizeConstants.MEDIUM_COL);
 
-        // Creation time
+        // Store size
         dataGrid.addResizableColumn(new Column<ResultStoreInfo, String>(new TextCell()) {
             @Override
             public String getValue(final ResultStoreInfo resultStoreInfo) {
-                return dateTimeFormatter.format(resultStoreInfo.getCreationTime());
+                return ModelStringUtil.formatIECByteSizeString(resultStoreInfo.getStoreSize());
             }
-        }, "Creation Time", 250);
+        }, "Size", ColumnSizeConstants.SMALL_COL);
 
         // Age
         dataGrid.addResizableColumn(new Column<ResultStoreInfo, String>(new TextCell()) {
@@ -157,44 +102,31 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
                 return ModelStringUtil
                         .formatDurationString(System.currentTimeMillis() - resultStoreInfo.getCreationTime());
             }
-        }, "Age", 250);
+        }, "Age", ColumnSizeConstants.SMALL_COL);
 
-//
-//        // Node name
-//        dataGrid.addResizableColumn(new Column<ResultStoreInfo, String>(new TextCell()) {
-//            @Override
-//            public String getValue(final ResultStoreInfo resultStoreInfo) {
-//                return resultStoreInfo.getNodeName();
-//            }
-//        }, "Node Name", 250);
-//
-//        // Store size
-//        dataGrid.addResizableColumn(new Column<ResultStoreInfo, String>(new TextCell()) {
-//            @Override
-//            public String getValue(final ResultStoreInfo resultStoreInfo) {
-//                return ModelStringUtil.formatIECByteSizeString(resultStoreInfo.getStoreSize());
-//            }
-//        }, "Store Size", 250);
-//
-//        // Complete
-//        dataGrid.addResizableColumn(new Column<ResultStoreInfo, String>(new TextCell()) {
-//            @Override
-//            public String getValue(final ResultStoreInfo resultStoreInfo) {
-//                return Boolean.toString(resultStoreInfo.isComplete());
-//            }
-//        }, "Complete", 250);
-//
-//        // Task Info
-//        dataGrid.addResizableColumn(new Column<ResultStoreInfo, String>(new TextCell()) {
-//            @Override
-//            public String getValue(final ResultStoreInfo resultStoreInfo) {
-//                final SearchTaskProgress taskProgress = resultStoreInfo.getTaskProgress();
-//                if (taskProgress != null) {
-//                    return taskProgress.getTaskInfo();
-//                }
-//                return null;
-//            }
-//        }, "Task Info", 250);
+        // Creation time
+        dataGrid.addResizableColumn(new Column<ResultStoreInfo, String>(new TextCell()) {
+            @Override
+            public String getValue(final ResultStoreInfo resultStoreInfo) {
+                return dateTimeFormatter.format(resultStoreInfo.getCreationTime());
+            }
+        }, "Creation Time", ColumnSizeConstants.DATE_COL);
+
+        // Node name
+        dataGrid.addResizableColumn(new Column<ResultStoreInfo, String>(new TextCell()) {
+            @Override
+            public String getValue(final ResultStoreInfo resultStoreInfo) {
+                return resultStoreInfo.getNodeName();
+            }
+        }, "Node", ColumnSizeConstants.MEDIUM_COL);
+
+        // Complete
+        dataGrid.addResizableColumn(new Column<ResultStoreInfo, String>(new TextCell()) {
+            @Override
+            public String getValue(final ResultStoreInfo resultStoreInfo) {
+                return Boolean.toString(resultStoreInfo.isComplete());
+            }
+        }, "Complete", ColumnSizeConstants.SMALL_COL);
 
         dataGrid.addEndColumn(new EndColumn<>());
 
@@ -208,21 +140,6 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
                     }
                 };
         dataProvider.addDataDisplay(dataGrid);
-    }
-
-    private void addLifespan(final SafeHtmlBuilder sb, final LifespanInfo lifespan, final String type) {
-        sb.appendHtmlConstant("<b>" + type + " TTL: </b>");
-        sb.appendEscaped(lifespan.getTimeToLive());
-        sb.appendHtmlConstant("<br/>");
-        sb.appendHtmlConstant("<b>" + type + " TTI: </b>");
-        sb.appendEscaped(lifespan.getTimeToIdle());
-        sb.appendHtmlConstant("<br/>");
-        sb.appendHtmlConstant("<b>" + type + " destroy on tab close: </b>");
-        sb.appendEscaped(Boolean.toString(lifespan.isDestroyOnTabClose()));
-        sb.appendHtmlConstant("<br/>");
-        sb.appendHtmlConstant("<b>" + type + " destroy on window close: </b>");
-        sb.appendEscaped(Boolean.toString(lifespan.isDestroyOnWindowClose()));
-        sb.appendHtmlConstant("<br/>");
     }
 
     @Override
@@ -270,13 +187,7 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
         }));
 
         registerHandler(settingsButton.addClickHandler(event -> {
-            final ResultStoreInfo selected = getSelectionModel().getSelected();
-            if (selected != null) {
-                resultStoreSettingsPresenter.show(selected, "Change Result Store Settings", ok -> {
-                    resultStoreSettingsPresenter.hide();
-                    refresh();
-                });
-            }
+            edit();
         }));
 
         registerHandler(getSelectionModel().addSelectionHandler(event -> {
@@ -290,7 +201,20 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
                 deleteButton.setEnabled(true);
                 settingsButton.setEnabled(true);
             }
+            if (event.getSelectionType().isDoubleSelect()) {
+                edit();
+            }
         }));
+    }
+
+    private void edit() {
+        final ResultStoreInfo selected = getSelectionModel().getSelected();
+        if (selected != null) {
+            resultStoreSettingsPresenter.show(selected, "Change Result Store Settings", ok -> {
+                resultStoreSettingsPresenter.hide();
+                refresh();
+            });
+        }
     }
 
     public void refresh() {
