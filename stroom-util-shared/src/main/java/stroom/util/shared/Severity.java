@@ -18,14 +18,24 @@ package stroom.util.shared;
 
 import stroom.docref.HasDisplayValue;
 
+import java.util.Collection;
+import java.util.Comparator;
+
 
 public enum Severity implements HasDisplayValue {
+    // In case anyone is using the default enum ordinal compare, these must be defined
+    // in ascending order of severity and so must the IDs
     INFO(1, "INFO", "Information"),
     WARNING(2, "WARN", "Warnings"),
     ERROR(3, "ERROR", "Errors"),
     FATAL_ERROR(4, "FATAL", "Fatal Errors");
 
     public static final Severity[] SEVERITIES = {FATAL_ERROR, ERROR, WARNING, INFO};
+
+    /**
+     * Comparator for comparing severities with nulls first
+     */
+    public static final Comparator<Severity> COMPARATOR = Comparator.nullsFirst(Comparator.comparing(Severity::getId));
 
     private final int id;
     private final String displayValue;
@@ -79,8 +89,43 @@ public enum Severity implements HasDisplayValue {
         return summaryValue;
     }
 
+    private int getId() {
+        return id;
+    }
+
     @Override
     public String toString() {
         return displayValue;
+    }
+
+    /**
+     * Get the highest (most severe) severity in the list of severities. If there are no severities,
+     * return {@code defaultValue}.
+     */
+    public static <T extends Collection<Severity>> Severity getMaxSeverity(final T severities,
+                                                                           final Severity defaultValue) {
+        if (severities == null || severities.isEmpty()) {
+            return defaultValue;
+        } else {
+            // GWT so can't use requireNonNullElse
+            return severities.stream()
+                    .map(severity -> severity != null
+                            ? severity
+                            : defaultValue)
+                    .max(COMPARATOR)
+                    .orElse(defaultValue);
+        }
+    }
+
+    /**
+     * Return this severity if it is greater than or equal to minimumSeverity
+     * else return minimumSeverity.
+     */
+    public Severity atLeast(final Severity minimumSeverity) {
+        if (minimumSeverity == null || this.greaterThanOrEqual(minimumSeverity)) {
+            return this;
+        } else {
+            return minimumSeverity;
+        }
     }
 }

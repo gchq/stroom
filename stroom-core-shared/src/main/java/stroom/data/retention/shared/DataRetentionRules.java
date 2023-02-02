@@ -16,6 +16,7 @@
 
 package stroom.data.retention.shared;
 
+import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -74,6 +75,13 @@ public class DataRetentionRules extends Doc {
                               @JsonProperty("rules") final List<DataRetentionRule> rules) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.rules = rules;
+    }
+
+    /**
+     * @return A new builder for creating a {@link DocRef} for this document's type.
+     */
+    public static DocRef.TypedBuilder buildDocRef() {
+        return DocRef.builder(DOCUMENT_TYPE);
     }
 
     public List<DataRetentionRule> getRules() {

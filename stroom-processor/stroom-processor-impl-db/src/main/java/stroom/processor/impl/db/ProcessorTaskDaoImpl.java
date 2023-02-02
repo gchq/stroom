@@ -1225,6 +1225,13 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         return count;
     }
 
+    /**
+     * Logically delete tasks that are associated with filters that have been logically deleted for longer than the
+     * threshold.
+     *
+     * @param deleteThreshold Only logically delete tasks with an update time older than the threshold.
+     * @return The number of logically deleted tasks.
+     */
     @Override
     public int logicalDeleteForDeletedProcessorFilters(final Instant deleteThreshold) {
         final List<Integer> result =
@@ -1267,6 +1274,12 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         return totalCount.get();
     }
 
+    /**
+     * Physically delete tasks that are logically deleted or complete for longer than the threshold.
+     *
+     * @param deleteThreshold Only physically delete tasks with an update time older than the threshold.
+     * @return The number of physically deleted tasks.
+     */
     @Override
     public int physicallyDeleteOldTasks(final Instant deleteThreshold) {
         LOGGER.debug("Deleting old COMPLETE or DELETED processor tasks");
