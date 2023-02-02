@@ -609,23 +609,21 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                 final ProcessorTaskQueue queue = queueMap.computeIfAbsent(
                         filter,
                         k -> new ProcessorTaskQueue());
-                final int currQueueSize = queue.size();
 
                 // If we have enough tasks queued then stop trying to add more to the queues.
                 if (!createProcessTasksState.keepAddingTasks()) {
                     break;
 
                 } else if (queue.compareAndSetFilling(false, true)) {
-                    // Create tasks for this filter
-                    final FilterProgressMonitor filterProgressMonitor =
-                            progressMonitor.logFilter(filter, currQueueSize);
-                    createProcessTasksState.addCurrentlyQueuedTasks(currQueueSize);
+                    final int initialQueueSize = queue.size();
+                    createProcessTasksState.addCurrentlyQueuedTasks(initialQueueSize);
                     createTasksForFilter(
                             taskContext,
                             nodeName,
                             filter,
+                            progressMonitor,
                             queue,
-                            filterProgressMonitor,
+                            initialQueueSize,
                             createProcessTasksState);
                 }
             }
@@ -665,9 +663,13 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
     private void createTasksForFilter(final TaskContext taskContext,
                                       final String nodeName,
                                       final ProcessorFilter filter,
+                                      final ProgressMonitor progressMonitor,
                                       final ProcessorTaskQueue queue,
-                                      final FilterProgressMonitor filterProgressMonitor,
+                                      final int initialQueueSize,
                                       final CreateProcessTasksState createProcessTasksState) {
+        // Create tasks for this filter
+        final FilterProgressMonitor filterProgressMonitor =
+                progressMonitor.logFilter(filter, initialQueueSize);
         Optional<ProcessorFilter> optionalProcessorFilter = Optional.empty();
 
         final AtomicBoolean isSearching = new AtomicBoolean();
@@ -795,6 +797,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
         } finally {
             if (!isSearching.get()) {
                 queue.setFilling(false);
+                filterProgressMonitor.complete();
             }
         }
     }
@@ -839,12 +842,12 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                     tasksToAdd = 0;
                 }
 
-                // If we have some processor tasks then see if we can find unlocked meta for them so we can process.
+                // If we have some processor tasks then queue them unless they belong to locked meta.
                 if (processorTasks.size() > 0) {
                     // Increment the total number of unowned tasks.
                     totalTasks += processorTasks.size();
 
-                    // Find unlocked meta corresponding to this list of unowned tasks.
+                    // Find meta corresponding to this list of unowned tasks.
                     final ExpressionOperator.Builder metaIdExpressionBuilder = ExpressionOperator.builder().op(Op.OR);
                     for (final ProcessorTask task : processorTasks) {
                         metaIdExpressionBuilder.addTerm(MetaFields.ID, Condition.EQUALS, task.getMetaId());
@@ -852,7 +855,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                         minTaskId = Math.max(minTaskId, task.getId());
                     }
 
-                    // Find all unlocked meta entries for the selected processor tasks.
+                    // Find all locked meta entries for the selected processor tasks.
                     final ExpressionOperator findMetaExpression = ExpressionOperator.builder()
                             .addOperator(metaIdExpressionBuilder.build())
                             .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
@@ -1182,8 +1185,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                             createdTasks.getTotalTasksCreated(),
                             filter.toString()));
         }
-
-        filterProgressMonitor.complete();
     }
 
     private void info(final TaskContext taskContext,

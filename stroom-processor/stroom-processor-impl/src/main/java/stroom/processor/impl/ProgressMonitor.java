@@ -39,16 +39,21 @@ public class ProgressMonitor {
     }
 
     public void report(final CreateProcessTasksState createProcessTasksState) {
-        LOGGER.info(() -> getFullReport(createProcessTasksState, LOGGER.isDebugEnabled(), LOGGER.isTraceEnabled()));
+        LOGGER.info(() -> getFullReport(
+                createProcessTasksState,
+                LOGGER.isDebugEnabled(),
+                LOGGER.isDebugEnabled(),
+                LOGGER.isTraceEnabled()));
     }
 
     public String getFullReport(final CreateProcessTasksState createProcessTasksState,
                                 final boolean showFilterDetail,
-                                final boolean showPhaseDetail) {
+                                final boolean showSummaryPhaseDetail,
+                                final boolean showFilterPhaseDetail) {
         final StringBuilder sb = new StringBuilder();
-        addSummary(sb, showPhaseDetail, createProcessTasksState);
+        addSummary(sb, showSummaryPhaseDetail, createProcessTasksState);
         if (showFilterDetail) {
-            addDetail(sb, showPhaseDetail);
+            addDetail(sb, showFilterPhaseDetail);
         }
         return LogUtil.inBoxOnNewLine(sb.toString());
     }
