@@ -140,7 +140,7 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     }
 
     @Override
-    public int releaseTasks(final Set<Long> idSet) {
+    public int releaseTasks(final Set<Long> idSet, final Set<TaskStatus> currentStatus) {
         return 0;
     }
 
@@ -221,9 +221,9 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     }
 
     @Override
-    public List<UnprocessedTask> findUnownedUnprocessedTasks(final long minTaskId,
-                                                             final int filterId,
-                                                             final int limit) {
+    public List<UnprocessedTask> findUnprocessedTasks(final long minTaskId,
+                                                      final int filterId,
+                                                      final int limit) {
         return null;
     }
 }

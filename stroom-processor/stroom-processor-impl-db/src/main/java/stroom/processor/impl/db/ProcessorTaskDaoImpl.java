@@ -37,8 +37,6 @@ import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.processor.shared.TaskStatus;
 import stroom.query.api.v2.ExpressionItem;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.util.logging.DurationTimer;
@@ -47,7 +45,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Selection;
 
 import org.jooq.BatchBindStep;
 import org.jooq.Condition;
@@ -259,15 +256,16 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         return set;
     }
 
+    private Condition getTaskCondition(final Set<TaskStatus> taskStatuses) {
+        return PROCESSOR_TASK.STATUS.in(taskStatuses
+                .stream()
+                .map(TaskStatus::getPrimitiveValue)
+                .collect(Collectors.toList()));
+    }
+
+
     private Condition getActiveTaskCondition() {
-        final Set<Byte> statusSet = Set.of(
-                TaskStatus.UNPROCESSED.getPrimitiveValue(),
-                TaskStatus.ASSIGNED.getPrimitiveValue(),
-                TaskStatus.PROCESSING.getPrimitiveValue());
-        final Selection<Byte> selection = Selection.selectNone();
-        selection.setSet(statusSet);
-        final Optional<Condition> statusCondition = JooqUtil.getSetCondition(PROCESSOR_TASK.STATUS, selection);
-        return statusCondition.orElse(null);
+        return getTaskCondition(Set.of(TaskStatus.QUEUED, TaskStatus.ASSIGNED, TaskStatus.PROCESSING));
     }
 
     /**
@@ -293,7 +291,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         final long count = releaseTasks(conditions);
 
         LOGGER.info(() -> "Set " + count + " tasks back to UNPROCESSED that were " +
-                "UNPROCESSED, ASSIGNED, PROCESSING");
+                "QUEUED, ASSIGNED, PROCESSING");
 
         return count;
     }
@@ -325,7 +323,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         final long count = releaseTasks(conditions);
 
         LOGGER.info(() -> "Set " + count + " tasks back to UNPROCESSED that were " +
-                "UNPROCESSED, ASSIGNED, PROCESSING");
+                "QUEUED, ASSIGNED, PROCESSING");
 
         return count;
     }
@@ -360,13 +358,14 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 }
 
                 for (final Entry<TaskStatus, Set<Long>> entry : idSetMap.entrySet()) {
+                    final Condition updateCondition = PROCESSOR_TASK.ID.in(entry.getValue())
+                            .and(PROCESSOR_TASK.STATUS.eq(entry.getKey().getPrimitiveValue()));
                     count += JooqUtil.contextResult(processorDbConnProvider, context ->
                             changeStatus(context,
                                     null,
+                                    TaskStatus.UNPROCESSED,
                                     System.currentTimeMillis(),
-                                    entry.getValue(),
-                                    entry.getKey(),
-                                    TaskStatus.UNPROCESSED));
+                                    updateCondition));
                 }
             }
         }
@@ -441,15 +440,18 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
             bindValues[0] = 1; //version
             bindValues[1] = statusTimeMs; //create_ms
-            bindValues[2] = TaskStatus.UNPROCESSED.getPrimitiveValue(); //stat
-            bindValues[3] = statusTimeMs; //stat_ms
 
             if (fillTaskQueue && Status.UNLOCKED.equals(meta.getStatus())) {
                 // If the stream is unlocked then take ownership of the
                 // task, i.e. set the node to this node and add it to the task queue.
+                bindValues[2] = TaskStatus.QUEUED.getPrimitiveValue(); //stat
                 bindValues[4] = nodeId; //fk_node_id
                 creationState.availableTasksCreated++;
+            } else {
+                bindValues[2] = TaskStatus.UNPROCESSED.getPrimitiveValue(); //stat
             }
+
+            bindValues[3] = statusTimeMs; //stat_ms
             bindValues[5] = processorFeedCache.getOrCreate(meta.getFeedName());
             bindValues[6] = meta.getId(); //fk_strm_id
             if (eventRangeData != null && !eventRangeData.isEmpty()) {
@@ -479,7 +481,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 try {
                     final Condition condition = PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId)
                             .and(PROCESSOR_TASK.STATUS_TIME_MS.eq(statusTimeMs))
-                            .and(PROCESSOR_TASK.STATUS.eq(TaskStatus.UNPROCESSED.getPrimitiveValue()))
+                            .and(PROCESSOR_TASK.STATUS.eq(TaskStatus.QUEUED.getPrimitiveValue()))
                             .and(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(filter.getId()));
                     creationState.selectedTaskList = select(context, condition);
 
@@ -616,20 +618,22 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         // Do everything within a single transaction.
         final Result<Record> result = JooqUtil.transactionResult(
                 processorDbConnProvider, context -> {
+                    // Change unprocessed tasks to queued.
+                    final Condition updateCondition = PROCESSOR_TASK.ID.in(idSet)
+                            .and(PROCESSOR_TASK.STATUS.eq(TaskStatus.UNPROCESSED.getPrimitiveValue()));
                     final int count = changeStatus(
                             context,
                             nodeId,
+                            TaskStatus.QUEUED,
                             now,
-                            idSet,
-                            TaskStatus.UNPROCESSED,
-                            TaskStatus.UNPROCESSED);
+                            updateCondition);
 
                     // Select back the updated records.
-                    final Condition condition = PROCESSOR_TASK.ID.in(idSet)
+                    final Condition selectCondition = PROCESSOR_TASK.ID.in(idSet)
                             .and(PROCESSOR_TASK.STATUS_TIME_MS.eq(now))
                             .and(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId))
-                            .and(PROCESSOR_TASK.STATUS.eq(TaskStatus.UNPROCESSED.getPrimitiveValue()));
-                    final Result<Record> r = select(context, condition);
+                            .and(PROCESSOR_TASK.STATUS.eq(TaskStatus.QUEUED.getPrimitiveValue()));
+                    final Result<Record> r = select(context, selectCondition);
 
                     if (r.size() != count) {
                         throw new RuntimeException(
@@ -656,21 +660,23 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         final Result<Record> result = JooqUtil.transactionResult(
                 processorDbConnProvider, context -> {
                     // Update the records.
-                    changeStatus(context, nodeId, now, idSet, TaskStatus.UNPROCESSED, TaskStatus.ASSIGNED);
+                    final Condition updateCondition = PROCESSOR_TASK.ID.in(idSet)
+                            .and(PROCESSOR_TASK.STATUS.eq(TaskStatus.QUEUED.getPrimitiveValue()));
+                    changeStatus(context, nodeId, TaskStatus.ASSIGNED, now, updateCondition);
 
                     // Select back the updated records.
-                    final Condition condition = PROCESSOR_TASK.ID.in(idSet)
+                    final Condition selectCondition = PROCESSOR_TASK.ID.in(idSet)
                             .and(PROCESSOR_TASK.STATUS_TIME_MS.eq(now))
                             .and(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId))
                             .and(PROCESSOR_TASK.STATUS.eq(TaskStatus.ASSIGNED.getPrimitiveValue()));
-                    return select(context, condition);
+                    return select(context, selectCondition);
                 });
 
         return convert(result);
     }
 
     @Override
-    public int releaseTasks(final Set<Long> idSet) {
+    public int releaseTasks(final Set<Long> idSet, final Set<TaskStatus> currentStatus) {
         final long now = System.currentTimeMillis();
         return JooqUtil.contextResult(
                 processorDbConnProvider, context -> {
@@ -678,10 +684,9 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     return changeStatus(
                             context,
                             null,
-                            now,
-                            idSet,
                             TaskStatus.UNPROCESSED,
-                            TaskStatus.UNPROCESSED);
+                            now,
+                            PROCESSOR_TASK.ID.in(idSet).and(getTaskCondition(currentStatus)));
                 });
     }
 
@@ -703,10 +708,9 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
     private int changeStatus(final DSLContext context,
                              final Integer nodeId,
+                             final TaskStatus newStatus,
                              final Long statusTime,
-                             final Set<Long> idSet,
-                             final TaskStatus currentStatus,
-                             final TaskStatus newStatus) {
+                             final Condition condition) {
         return context
                 .update(PROCESSOR_TASK)
                 .set(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID, nodeId)
@@ -715,8 +719,9 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 .setNull(PROCESSOR_TASK.START_TIME_MS)
                 .setNull(PROCESSOR_TASK.END_TIME_MS)
                 .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
-                .where(PROCESSOR_TASK.ID.in(idSet))
-                .and(PROCESSOR_TASK.STATUS.eq(currentStatus.getPrimitiveValue()))
+                .where(condition)
+//                .where(PROCESSOR_TASK.ID.in(idSet))
+//                .and(PROCESSOR_TASK.STATUS.eq(currentStatus.getPrimitiveValue()))
                 .execute();
     }
 
@@ -1246,15 +1251,14 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     }
 
     @Override
-    public List<UnprocessedTask> findUnownedUnprocessedTasks(final long minTaskId,
-                                                             final int filterId,
-                                                             final int limit) {
+    public List<UnprocessedTask> findUnprocessedTasks(final long minTaskId,
+                                                      final int filterId,
+                                                      final int limit) {
         final Result<Record2<Long, Long>> records = JooqUtil.contextResult(processorDbConnProvider, context ->
                 context
                         .select(PROCESSOR_TASK.ID, PROCESSOR_TASK.META_ID)
                         .where(PROCESSOR_TASK.ID.gt(minTaskId))
                         .and(PROCESSOR_TASK.STATUS.eq(TaskStatus.UNPROCESSED.getPrimitiveValue()))
-                        .and(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.isNull())
                         .and(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(filterId))
                         .orderBy(PROCESSOR_TASK.ID)
                         .limit(limit)

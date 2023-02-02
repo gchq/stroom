@@ -12872,7 +12872,7 @@
           },
           "status" : {
             "type" : "string",
-            "enum" : [ "UNPROCESSED", "ASSIGNED", "PROCESSING", "COMPLETE", "FAILED", "DELETED" ]
+            "enum" : [ "QUEUED", "UNPROCESSED", "ASSIGNED", "PROCESSING", "COMPLETE", "FAILED", "DELETED" ]
           },
           "statusTimeMs" : {
             "type" : "integer",
@@ -12917,7 +12917,7 @@
           },
           "status" : {
             "type" : "string",
-            "enum" : [ "UNPROCESSED", "ASSIGNED", "PROCESSING", "COMPLETE", "FAILED", "DELETED" ]
+            "enum" : [ "QUEUED", "UNPROCESSED", "ASSIGNED", "PROCESSING", "COMPLETE", "FAILED", "DELETED" ]
           }
         }
       },

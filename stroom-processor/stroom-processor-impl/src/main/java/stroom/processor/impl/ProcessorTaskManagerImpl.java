@@ -43,6 +43,7 @@ import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.QueryData;
+import stroom.processor.shared.TaskStatus;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionParamUtil;
@@ -342,7 +343,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                         .stream()
                         .map(ProcessorTask::getId)
                         .collect(Collectors.toSet());
-                processorTaskDao.releaseTasks(idSet);
+                processorTaskDao.releaseTasks(idSet, Set.of(TaskStatus.ASSIGNED, TaskStatus.PROCESSING));
 
             } catch (final RuntimeException e) {
                 LOGGER.error("abandon() - {}", processorTaskList, e);
@@ -356,12 +357,12 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
         long total = 0;
         for (final Entry<ProcessorFilter, ProcessorTaskQueue> entry : queueMap.entrySet()) {
             final ProcessorFilter filter = entry.getKey();
-            total += releaseFilterTasks(filter);
+            total += releaseQueuedFilterTasks(filter);
         }
         return total;
     }
 
-    private long releaseFilterTasks(final ProcessorFilter filter) {
+    private long releaseQueuedFilterTasks(final ProcessorFilter filter) {
         if (filter != null) {
             return LOGGER.logDurationIfDebugEnabled(() -> {
                 final Set<Long> taskIdSet = new HashSet<>();
@@ -371,23 +372,23 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                     while (processorTask != null) {
                         taskIdSet.add(processorTask.getId());
                         if (taskIdSet.size() >= BATCH_SIZE) {
-                            release(taskIdSet);
+                            releaseQueuedTask(taskIdSet);
                             taskIdSet.clear();
                         }
                         processorTask = queue.poll();
                     }
                 }
-                release(taskIdSet);
+                releaseQueuedTask(taskIdSet);
                 return taskIdSet.size();
             }, () -> "Released tasks for filter " + filter.getId());
         }
         return 0;
     }
 
-    private void release(final Set<Long> taskIdSet) {
+    private void releaseQueuedTask(final Set<Long> taskIdSet) {
         if (taskIdSet.size() > 0) {
             try {
-                processorTaskDao.releaseTasks(taskIdSet);
+                processorTaskDao.releaseTasks(taskIdSet, Set.of(TaskStatus.QUEUED));
             } catch (final RuntimeException e) {
                 LOGGER.error("release() - {}", taskIdSet, e);
             }
@@ -637,7 +638,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
             final ProcessorTaskQueue queue = entry.getValue();
             if (!enabledFilterSet.contains(filter)) {
                 final DurationTimer durationTimer = DurationTimer.start();
-                final long count = releaseFilterTasks(filter);
+                final long count = releaseQueuedFilterTasks(filter);
                 final FilterProgressMonitor filterProgressMonitor = progressMonitor.logFilter(filter, queue.size());
                 filterProgressMonitor.logPhase(Phase.RELEASE_TASKS_FOR_DISABLED_FILTERS, durationTimer, count);
                 filterProgressMonitor.complete();
@@ -819,7 +820,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                 // First look for any items that are no-longer locked etc
                 DurationTimer durationTimer = DurationTimer.start();
                 final List<UnprocessedTask> processorTasks = processorTaskDao
-                        .findUnownedUnprocessedTasks(minTaskId, filter.getId(), batchSize);
+                        .findUnprocessedTasks(minTaskId, filter.getId(), batchSize);
                 filterProgressMonitor.logPhase(Phase.ADD_UNOWNED_TASKS_FETCH_TASKS,
                         durationTimer,
                         processorTasks.size());

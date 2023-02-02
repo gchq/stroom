@@ -2123,7 +2123,7 @@ export interface ProcessorTask {
 
   /** @format int64 */
   startTimeMs?: number;
-  status?: "UNPROCESSED" | "ASSIGNED" | "PROCESSING" | "COMPLETE" | "FAILED" | "DELETED";
+  status?: "QUEUED" | "UNPROCESSED" | "ASSIGNED" | "PROCESSING" | "COMPLETE" | "FAILED" | "DELETED";
 
   /** @format int64 */
   statusTimeMs?: number;
@@ -2147,7 +2147,7 @@ export interface ProcessorTaskSummary {
 
   /** @format int32 */
   priority?: number;
-  status?: "UNPROCESSED" | "ASSIGNED" | "PROCESSING" | "COMPLETE" | "FAILED" | "DELETED";
+  status?: "QUEUED" | "UNPROCESSED" | "ASSIGNED" | "PROCESSING" | "COMPLETE" | "FAILED" | "DELETED";
 }
 
 export interface Prop {

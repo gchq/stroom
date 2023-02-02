@@ -25,7 +25,11 @@ import stroom.util.shared.PrimitiveValueConverter;
  */
 public enum TaskStatus implements HasDisplayValue, HasPrimitiveValue {
     /**
-     * The task has not yet been processed or assigned to a node for processing.
+     * The task is queued for processing.
+     */
+    QUEUED("Queued", 0),
+    /**
+     * The task has been created but not yet queued for processing.
      */
     UNPROCESSED("Unprocessed", 1),
     /**
