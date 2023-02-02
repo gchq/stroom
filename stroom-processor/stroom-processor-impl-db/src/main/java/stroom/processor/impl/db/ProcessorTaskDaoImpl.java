@@ -26,6 +26,7 @@ import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorTaskDao;
 import stroom.processor.impl.ProgressMonitor.FilterProgressMonitor;
 import stroom.processor.impl.ProgressMonitor.Phase;
+import stroom.processor.impl.UnprocessedTask;
 import stroom.processor.impl.db.jooq.Tables;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorTaskRecord;
 import stroom.processor.shared.Processor;
@@ -36,6 +37,8 @@ import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.processor.shared.TaskStatus;
 import stroom.query.api.v2.ExpressionItem;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.util.logging.DurationTimer;
@@ -1240,6 +1243,23 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                         .execute());
         LOGGER.debug("Physically deleted {} processor tasks with status time older than {}", count, deleteThreshold);
         return count;
+    }
+
+    @Override
+    public List<UnprocessedTask> findUnownedUnprocessedTasks(final long minTaskId,
+                                                             final int filterId,
+                                                             final int limit) {
+        final Result<Record2<Long, Long>> records = JooqUtil.contextResult(processorDbConnProvider, context ->
+                context
+                        .select(PROCESSOR_TASK.ID, PROCESSOR_TASK.META_ID)
+                        .where(PROCESSOR_TASK.ID.gt(minTaskId))
+                        .and(PROCESSOR_TASK.STATUS.eq(TaskStatus.UNPROCESSED.getPrimitiveValue()))
+                        .and(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.isNull())
+                        .and(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(filterId))
+                        .orderBy(PROCESSOR_TASK.ID)
+                        .limit(limit)
+                        .fetch());
+        return records.map(r -> new UnprocessedTask(r.value1(), r.value2()));
     }
 
     private static class CreationState {

@@ -124,4 +124,7 @@ public interface ProcessorTaskDao {
      * @return The number of physically deleted tasks.
      */
     int physicallyDeleteOldTasks(Instant deleteThreshold);
+
+
+    List<UnprocessedTask> findUnownedUnprocessedTasks(long minTaskId, int filterId, int limit);
 }

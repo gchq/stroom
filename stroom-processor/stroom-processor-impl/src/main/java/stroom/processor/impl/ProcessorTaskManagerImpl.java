@@ -41,10 +41,8 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorTask;
-import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.QueryData;
-import stroom.processor.shared.TaskStatus;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionParamUtil;
@@ -819,20 +817,9 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
             while (tasksToAdd > 0) {
 
                 // First look for any items that are no-longer locked etc
-                final ExpressionOperator findProcessorTaskExpression = ExpressionOperator.builder()
-                        .addTerm(ProcessorTaskFields.TASK_ID, Condition.GREATER_THAN, minTaskId)
-                        .addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, TaskStatus.UNPROCESSED.getDisplayValue())
-                        .addTerm(ProcessorTaskFields.NODE_NAME, Condition.IS_NULL, null)
-                        .addTerm(ProcessorTaskFields.PROCESSOR_FILTER_ID, Condition.EQUALS, filter.getId())
-                        .build();
-                final ExpressionCriteria findProcessorTaskCriteria =
-                        new ExpressionCriteria(findProcessorTaskExpression);
-                findProcessorTaskCriteria.obtainPageRequest().setLength(batchSize);
-                findProcessorTaskCriteria.addSort(ProcessorTaskFields.FIELD_ID);
-
                 DurationTimer durationTimer = DurationTimer.start();
-                final List<ProcessorTask> processorTasks = processorTaskDao
-                        .find(findProcessorTaskCriteria).getValues();
+                final List<UnprocessedTask> processorTasks = processorTaskDao
+                        .findUnownedUnprocessedTasks(minTaskId, filter.getId(), batchSize);
                 filterProgressMonitor.logPhase(Phase.ADD_UNOWNED_TASKS_FETCH_TASKS,
                         durationTimer,
                         processorTasks.size());
@@ -844,43 +831,29 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
 
                 // If we have some processor tasks then queue them unless they belong to locked meta.
                 if (processorTasks.size() > 0) {
-                    // Increment the total number of unowned tasks.
-                    totalTasks += processorTasks.size();
-
-                    // Find meta corresponding to this list of unowned tasks.
-                    final ExpressionOperator.Builder metaIdExpressionBuilder = ExpressionOperator.builder().op(Op.OR);
-                    for (final ProcessorTask task : processorTasks) {
-                        metaIdExpressionBuilder.addTerm(MetaFields.ID, Condition.EQUALS, task.getMetaId());
-                        // Ensure we don't see this task again in the next attempt.
-                        minTaskId = Math.max(minTaskId, task.getId());
-                    }
-
-                    // Find all locked meta entries for the selected processor tasks.
-                    final ExpressionOperator findMetaExpression = ExpressionOperator.builder()
-                            .addOperator(metaIdExpressionBuilder.build())
-                            .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
-                            .build();
-                    final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(findMetaExpression);
-                    findMetaCriteria.setSort(MetaFields.ID.getName(), false, false);
-
-                    durationTimer = DurationTimer.start();
-                    final List<Meta> metaList = metaService.find(findMetaCriteria).getValues();
-                    filterProgressMonitor.logPhase(Phase.ADD_UNOWNED_TASKS_FETCH_META,
-                            durationTimer,
-                            metaList.size());
-
                     try {
-                        // Create a map of locked meta items keyed by id.
-                        final Set<Long> lockedMetaIdSet = metaList
-                                .stream()
-                                .map(Meta::getId)
-                                .collect(Collectors.toSet());
-                        // Get a set of processor task ids but filter out tasks associated with meta that is still
-                        // locked.
+                        // Increment the total number of unowned tasks.
+                        totalTasks += processorTasks.size();
+
+                        final List<Long> metaIdList = new ArrayList<>(processorTasks.size());
+                        for (final UnprocessedTask task : processorTasks) {
+                            metaIdList.add(task.getMetaId());
+                            // Ensure we don't see this task again in the next attempt.
+                            minTaskId = Math.max(minTaskId, task.getTaskId());
+                        }
+
+                        // Find all locked meta entries for the selected processor tasks.
+                        durationTimer = DurationTimer.start();
+                        final Set<Long> lockedMetaIdSet = metaService.findLockedMeta(metaIdList);
+                        filterProgressMonitor.logPhase(Phase.ADD_UNOWNED_TASKS_FETCH_META,
+                                durationTimer,
+                                lockedMetaIdSet.size());
+
+                        // Filter out tasks associated with meta that is still locked.
                         final Set<Long> processorTaskIdSet = processorTasks
                                 .stream()
                                 .filter(processorTask -> !lockedMetaIdSet.contains(processorTask.getMetaId()))
-                                .map(ProcessorTask::getId)
+                                .map(UnprocessedTask::getTaskId)
                                 .collect(Collectors.toSet());
 
                         durationTimer = DurationTimer.start();

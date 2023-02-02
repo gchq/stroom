@@ -219,4 +219,11 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     public int physicallyDeleteOldTasks(final Instant deleteThreshold) {
         return 0;
     }
+
+    @Override
+    public List<UnprocessedTask> findUnownedUnprocessedTasks(final long minTaskId,
+                                                             final int filterId,
+                                                             final int limit) {
+        return null;
+    }
 }

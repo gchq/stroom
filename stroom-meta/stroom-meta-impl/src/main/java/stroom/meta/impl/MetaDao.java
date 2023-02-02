@@ -17,6 +17,7 @@ import stroom.meta.shared.Status;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -66,15 +67,15 @@ public interface MetaDao {
 
     int delete(List<Long> metaIdList);
 
-    List<DataRetentionDeleteSummary> getRetentionDeletionSummary(final DataRetentionRules rules,
-                                                                 final FindDataRetentionImpactCriteria criteria);
+    List<DataRetentionDeleteSummary> getRetentionDeletionSummary(DataRetentionRules rules,
+                                                                 FindDataRetentionImpactCriteria criteria);
 
     /**
      * @param ruleActions Must be sorted with highest priority rule first
      * @param period
      */
-    int logicalDelete(final List<DataRetentionRuleAction> ruleActions,
-                      final TimePeriod period);
+    int logicalDelete(List<DataRetentionRuleAction> ruleActions,
+                      TimePeriod period);
 
     int getLockCount();
 
@@ -87,4 +88,6 @@ public interface MetaDao {
     List<String> getProcessorUuidList(FindMetaCriteria criteria);
 
     Set<EffectiveMeta> getEffectiveStreams(EffectiveMetaDataCriteria effectiveMetaDataCriteria);
+
+    Set<Long> findLockedMeta(Collection<Long> metaIdCollection);
 }

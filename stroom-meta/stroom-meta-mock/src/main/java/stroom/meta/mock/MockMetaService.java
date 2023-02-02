@@ -24,6 +24,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -357,5 +358,10 @@ public class MockMetaService implements MetaService, Clearable {
     @Override
     public boolean cancelRetentionDeleteSummary(final String queryId) {
         return true;
+    }
+
+    @Override
+    public Set<Long> findLockedMeta(final Collection<Long> metaIdCollection) {
+        return null;
     }
 }
