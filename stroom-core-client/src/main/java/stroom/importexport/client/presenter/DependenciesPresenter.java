@@ -69,7 +69,6 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
 
     private static final int COL_WIDTH_TYPE = 120;
     private static final int COL_WIDTH_NAME = 300;
-    private static final int COL_WIDTH_UUID = 270;
 
     private static final Preset SEARCHABLE_PRESET = new Preset(
             DocumentType.DOC_IMAGE_CLASS_NAME + "searchable.svg",
