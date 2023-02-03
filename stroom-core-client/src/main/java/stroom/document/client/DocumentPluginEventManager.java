@@ -33,10 +33,12 @@ import stroom.docref.DocRefInfo;
 import stroom.docref.HasDisplayValue;
 import stroom.document.client.event.CopyDocumentEvent;
 import stroom.document.client.event.CreateDocumentEvent;
+import stroom.document.client.event.DeleteDocumentEvent;
 import stroom.document.client.event.MoveDocumentEvent;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.document.client.event.RenameDocumentEvent;
+import stroom.document.client.event.ResultCallback;
 import stroom.document.client.event.SaveAsDocumentEvent;
 import stroom.document.client.event.ShowCopyDocumentDialogEvent;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
@@ -48,7 +50,6 @@ import stroom.document.client.event.WriteDocumentEvent;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
-import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
 import stroom.explorer.client.event.ShowNewMenuEvent;
 import stroom.explorer.client.presenter.DocumentTypeCache;
@@ -309,6 +310,22 @@ public class DocumentPluginEventManager extends Plugin {
                     }
                 })));
 
+        // 8.4. Handle entity delete events.
+        registerHandler(getEventBus().addHandler(DeleteDocumentEvent.getType(), event -> {
+            if (event.getConfirm()) {
+                ConfirmEvent.fire(
+                        DocumentPluginEventManager.this,
+                        "Are you sure you want to delete this item?",
+                        ok -> {
+                            if (ok) {
+                                delete(event.getDocRefs(), result -> handleDeleteResult(result, event.getCallback()));
+                            }
+                        });
+            } else {
+                delete(event.getDocRefs(), result -> handleDeleteResult(result, event.getCallback()));
+            }
+        }));
+
         // 9. Handle entity rename events.
         registerHandler(getEventBus().addHandler(RenameDocumentEvent.getType(), event -> {
             // Hide the rename document presenter.
@@ -320,7 +337,7 @@ public class DocumentPluginEventManager extends Plugin {
             });
         }));
 
-        // 10. Handle entity delete events.
+        // 10. Handle explorer tree entity delete events.
         registerHandler(getEventBus().addHandler(ExplorerTreeDeleteEvent.getType(), event -> {
             if (getSelectedItems().size() > 0) {
                 fetchPermissions(getSelectedItems(), documentPermissionMap ->
@@ -418,24 +435,27 @@ public class DocumentPluginEventManager extends Plugin {
                     .map(ExplorerNode::getDocRef)
                     .collect(Collectors.toList());
             if (docRefs.size() > 0) {
-                ConfirmEvent.fire(DocumentPluginEventManager.this,
-                        "Are you sure you want to delete these items?",
-                        ok -> {
-                            if (ok) {
-                                delete(docRefs, result -> {
-                                    if (result.getMessage().length() > 0) {
-                                        AlertEvent.fireInfo(DocumentPluginEventManager.this,
-                                                "Unable to delete some items",
-                                                result.getMessage(),
-                                                null);
-                                    }
-
-                                    // Refresh the explorer tree so the documents are marked as deleted.
-                                    RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this);
-                                });
-                            }
-                        });
+                DeleteDocumentEvent.fire(
+                        DocumentPluginEventManager.this,
+                        docRefs,
+                        true);
             }
+        }
+    }
+
+    private void handleDeleteResult(final BulkActionResult result, ResultCallback callback) {
+        boolean success = true;
+        if (result.getMessage().length() > 0) {
+            AlertEvent.fireInfo(DocumentPluginEventManager.this,
+                    "Unable to delete some items",
+                    result.getMessage(),
+                    null);
+
+            success = false;
+        }
+
+        if (callback != null) {
+            callback.onResult(success);
         }
     }
 

@@ -23,22 +23,34 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
-public class OpenDocumentEvent extends GwtEvent<OpenDocumentEvent.Handler> {
+import java.util.List;
+
+public class DeleteDocumentEvent extends GwtEvent<DeleteDocumentEvent.Handler> {
 
     private static Type<Handler> TYPE;
-    private final DocRef docRef;
-    private final boolean forceOpen;
+    private final List<DocRef> docRefs;
+    private final boolean confirm;
+    private final ResultCallback callback;
 
-    private OpenDocumentEvent(final DocRef docRef,
-                              final boolean forceOpen) {
-        this.docRef = docRef;
-        this.forceOpen = forceOpen;
+    private DeleteDocumentEvent(final List<DocRef> docRefs,
+                                final boolean confirm,
+                                final ResultCallback callback) {
+        this.docRefs = docRefs;
+        this.confirm = confirm;
+        this.callback = callback;
     }
 
     public static void fire(final HasHandlers handlers,
-                            final DocRef docRef,
-                            final boolean forceOpen) {
-        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen));
+                            final List<DocRef> docRefs,
+                            final boolean confirm) {
+        handlers.fireEvent(new DeleteDocumentEvent(docRefs, confirm, null));
+    }
+
+    public static void fire(final HasHandlers handlers,
+                            final List<DocRef> docRefs,
+                            final boolean confirm,
+                            final ResultCallback callback) {
+        handlers.fireEvent(new DeleteDocumentEvent(docRefs, confirm, callback));
     }
 
     public static Type<Handler> getType() {
@@ -55,19 +67,23 @@ public class OpenDocumentEvent extends GwtEvent<OpenDocumentEvent.Handler> {
 
     @Override
     protected void dispatch(final Handler handler) {
-        handler.onOpen(this);
+        handler.onDelete(this);
     }
 
-    public DocRef getDocRef() {
-        return docRef;
+    public List<DocRef> getDocRefs() {
+        return docRefs;
     }
 
-    public boolean getForceOpen() {
-        return forceOpen;
+    public boolean getConfirm() {
+        return confirm;
+    }
+
+    public ResultCallback getCallback() {
+        return callback;
     }
 
     public interface Handler extends EventHandler {
 
-        void onOpen(final OpenDocumentEvent event);
+        void onDelete(final DeleteDocumentEvent event);
     }
 }

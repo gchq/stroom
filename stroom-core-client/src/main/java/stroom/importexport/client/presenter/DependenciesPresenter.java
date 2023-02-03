@@ -26,6 +26,7 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPluginEventManager;
+import stroom.document.client.event.DeleteDocumentEvent;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
@@ -53,6 +54,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,6 +77,7 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
             "Searchable",
             true);
     private static final Preset DOC_INFO_PRESET = SvgPresets.INFO.title("Properties");
+    private static final Preset DELETE_DOC_PRESET = SvgPresets.DELETE.title("Delete");
     private static final Preset REVEAL_DOC_PRESET = SvgPresets.SHOW.title("Reveal in Explorer");
     private static final Preset SHOW_DEPENDENCIES_PRESET = SvgPresets.DEPENDENCIES.title("Show dependencies");
 
@@ -220,6 +223,10 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
                         .withText(DOC_INFO_PRESET.getTitle())
                         .withCommand(() -> onDocInfo(docRef)))
                 .withIconMenuItem(itemBuilder -> itemBuilder
+                        .withIcon(DELETE_DOC_PRESET)
+                        .withText(DELETE_DOC_PRESET.getTitle())
+                        .withCommand(() -> onDeleteDoc(docRef)))
+                .withIconMenuItem(itemBuilder -> itemBuilder
                         .withIcon(REVEAL_DOC_PRESET)
                         .withText(REVEAL_DOC_PRESET.getTitle())
                         .withCommand(() -> onRevealDoc(docRef)))
@@ -234,7 +241,7 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
      * Open a document
      */
     private void onOpenDoc(final DocRef docRef) {
-        OpenDocumentEvent.fire(this, this, docRef, true);
+        OpenDocumentEvent.fire(DependenciesPresenter.this, docRef, true);
     }
 
     /**
@@ -246,6 +253,14 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
 
     private void onDocInfo(final DocRef docRef) {
         ShowDependenciesInfoDialogEvent.fire(DependenciesPresenter.this, docRef);
+    }
+
+    private void onDeleteDoc(final DocRef docRef) {
+        DeleteDocumentEvent.fire(
+                DependenciesPresenter.this,
+                Collections.singletonList(docRef),
+                true,
+                result -> refresh());
     }
 
     private void onShowDependencies(final DocRef docRef) {
