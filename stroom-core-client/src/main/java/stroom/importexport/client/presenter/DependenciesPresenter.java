@@ -26,6 +26,7 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPluginEventManager;
+import stroom.document.client.event.OpenDocumentEvent;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerResource;
@@ -37,7 +38,6 @@ import stroom.importexport.shared.DependencyCriteria;
 import stroom.receive.rules.client.presenter.ActionMenuPresenter;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
-import stroom.util.client.Console;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.menu.client.presenter.Item;
@@ -234,8 +234,7 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
      * Open a document
      */
     private void onOpenDoc(final DocRef docRef) {
-        Console.log("Opening doc: " + docRef);
-        entityPluginEventManager.open(docRef, true);
+        OpenDocumentEvent.fire(this, this, docRef, true);
     }
 
     /**

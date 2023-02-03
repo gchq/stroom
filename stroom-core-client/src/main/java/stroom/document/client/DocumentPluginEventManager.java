@@ -34,6 +34,7 @@ import stroom.docref.HasDisplayValue;
 import stroom.document.client.event.CopyDocumentEvent;
 import stroom.document.client.event.CreateDocumentEvent;
 import stroom.document.client.event.MoveDocumentEvent;
+import stroom.document.client.event.OpenDocumentEvent;
 import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.document.client.event.RenameDocumentEvent;
 import stroom.document.client.event.SaveAsDocumentEvent;
@@ -268,7 +269,11 @@ public class DocumentPluginEventManager extends Plugin {
                             event.getNewDocConsumer().accept(docRef);
                         })));
 
-        // 8.1. Handle entity copy events.
+        // 8.1. Handle entity open events.
+        registerHandler(getEventBus().addHandler(OpenDocumentEvent.getType(), event ->
+                open(event.getDocRef(), event.getForceOpen())));
+
+        // 8.2. Handle entity copy events.
         registerHandler(getEventBus().addHandler(CopyDocumentEvent.getType(), event ->
                 copy(event.getDocRefs(), event.getDestinationFolderRef(), event.getPermissionInheritance(), result -> {
                     // Hide the copy document presenter.
@@ -286,7 +291,7 @@ public class DocumentPluginEventManager extends Plugin {
                     }
                 })));
 
-        // 8.2. Handle entity move events.
+        // 8.3. Handle entity move events.
         registerHandler(getEventBus().addHandler(MoveDocumentEvent.getType(), event ->
                 move(event.getDocRefs(), event.getDestinationFolderRef(), event.getPermissionInheritance(), result -> {
                     // Hide the move document presenter.
@@ -507,7 +512,7 @@ public class DocumentPluginEventManager extends Plugin {
                 .rename(new ExplorerServiceRenameRequest(docRef, docName));
     }
 
-    private void delete(final List<DocRef> docRefs, final Consumer<BulkActionResult> consumer) {
+    public void delete(final List<DocRef> docRefs, final Consumer<BulkActionResult> consumer) {
         final Rest<BulkActionResult> rest = restFactory.create();
         rest
                 .onSuccess(consumer)
@@ -515,7 +520,7 @@ public class DocumentPluginEventManager extends Plugin {
                 .delete(new ExplorerServiceDeleteRequest(docRefs));
     }
 
-    public void open(final DocRef docRef, final boolean forceOpen) {
+    private void open(final DocRef docRef, final boolean forceOpen) {
         final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(docRef.getType());
         if (documentPlugin != null) {
             documentPlugin.open(docRef, forceOpen);
