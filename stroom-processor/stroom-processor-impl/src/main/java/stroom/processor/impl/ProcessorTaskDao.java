@@ -127,5 +127,5 @@ public interface ProcessorTaskDao {
     int physicallyDeleteOldTasks(Instant deleteThreshold);
 
 
-    List<UnprocessedTask> findUnprocessedTasks(long minTaskId, int filterId, int limit);
+    List<ExistingCreatedTask> findExistingCreatedTasks(long minTaskId, int filterId, int limit);
 }

@@ -41,12 +41,12 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
         processor2 = createProcessor();
 
         processorFilter1 = createProcessorFilter(processor1);
-        createProcessorTask(processorFilter1, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter1, TaskStatus.CREATED, NODE1, FEED);
         createProcessorTask(processorFilter1, TaskStatus.ASSIGNED, NODE1, FEED);
         createProcessorTask(processorFilter1, TaskStatus.PROCESSING, NODE1, FEED);
 
         processorFilter2 = createProcessorFilter(processor2);
-        createProcessorTask(processorFilter2, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter2, TaskStatus.CREATED, NODE1, FEED);
         createProcessorTask(processorFilter2, TaskStatus.ASSIGNED, NODE1, FEED);
         createProcessorTask(processorFilter2, TaskStatus.PROCESSING, NODE1, FEED);
 
@@ -99,7 +99,7 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
         processorFilterTracker1.setLastPollMs(Instant.now().toEpochMilli());
         processorFilterTracker1.setStatus(ProcessorFilterTracker.COMPLETE);
         processorFilterTrackerDao.update(processorFilterTracker1);
-        createProcessorTask(processorFilter1, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter1, TaskStatus.CREATED, NODE1, FEED);
         createProcessorTask(processorFilter1, TaskStatus.ASSIGNED, NODE1, FEED);
         createProcessorTask(processorFilter1, TaskStatus.PROCESSING, NODE1, FEED);
 
@@ -109,7 +109,7 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
         processorFilterTracker2.setLastPollMs(Instant.now().toEpochMilli());
         processorFilterTracker2.setStatus(ProcessorFilterTracker.ERROR);
         processorFilterTrackerDao.update(processorFilterTracker2);
-        createProcessorTask(processorFilter2, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter2, TaskStatus.CREATED, NODE1, FEED);
         createProcessorTask(processorFilter2, TaskStatus.ASSIGNED, NODE1, FEED);
         createProcessorTask(processorFilter2, TaskStatus.PROCESSING, NODE1, FEED);
 

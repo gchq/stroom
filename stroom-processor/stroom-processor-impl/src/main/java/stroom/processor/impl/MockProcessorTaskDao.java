@@ -46,7 +46,7 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
                               final Instant statusOlderThan) {
         final long now = System.currentTimeMillis();
         dao.getMap().values().forEach(task -> {
-            if (TaskStatus.UNPROCESSED.equals(task.getStatus()) ||
+            if (TaskStatus.CREATED.equals(task.getStatus()) ||
                     TaskStatus.ASSIGNED.equals(task.getStatus()) ||
                     TaskStatus.PROCESSING.equals(task.getStatus())) {
 
@@ -74,7 +74,7 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
                 }
 
                 if (release) {
-                    task.setStatus(TaskStatus.UNPROCESSED);
+                    task.setStatus(TaskStatus.CREATED);
                     task.setStatusTimeMs(now);
                     task.setNodeName(null);
                     dao.update(task);
@@ -100,7 +100,7 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
             final ProcessorTask task = new ProcessorTask();
             task.setVersion(1);
             task.setCreateTimeMs(now);
-            task.setStatus(TaskStatus.UNPROCESSED);
+            task.setStatus(TaskStatus.CREATED);
             task.setStartTimeMs(now);
 
             if (fillTaskQueue && Status.UNLOCKED.equals(meta.getStatus())) {
@@ -221,9 +221,9 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     }
 
     @Override
-    public List<UnprocessedTask> findUnprocessedTasks(final long minTaskId,
-                                                      final int filterId,
-                                                      final int limit) {
+    public List<ExistingCreatedTask> findExistingCreatedTasks(final long minTaskId,
+                                                              final int filterId,
+                                                              final int limit) {
         return null;
     }
 }

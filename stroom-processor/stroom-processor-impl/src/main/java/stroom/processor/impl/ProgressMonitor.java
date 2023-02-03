@@ -171,10 +171,10 @@ public class ProgressMonitor {
 
     public enum Phase {
         // Order is important. It governs the order the phases have in the logging
-        ADD_UNOWNED_TASKS("Add unowned tasks"),
-        ADD_UNOWNED_TASKS_FETCH_TASKS("Add unowned tasks -> Fetch tasks"),
-        ADD_UNOWNED_TASKS_FETCH_META("Add unowned tasks -> Fetch meta"),
-        ADD_UNOWNED_TASKS_QUEUE_TASKS("Add unowned tasks -> Queue tasks"),
+        QUEUE_CREATED_TASKS("Queue created tasks"),
+        QUEUE_CREATED_TASKS_FETCH_TASKS("Queue created tasks -> Fetch tasks"),
+        QUEUE_CREATED_TASKS_FETCH_META("Queue created tasks -> Fetch meta"),
+        QUEUE_CREATED_TASKS_QUEUE_TASKS("Queue created tasks -> Queue tasks"),
         CREATE_TASKS_FROM_SEARCH_QUERY("Create tasks from search query"),
         CREATE_STREAM_MAP("Create stream map"),
         FIND_META_FOR_FILTER("Find meta records matching filter"),

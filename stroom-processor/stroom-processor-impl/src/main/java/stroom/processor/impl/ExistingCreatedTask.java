@@ -1,10 +1,10 @@
 package stroom.processor.impl;
 
-public class UnprocessedTask {
+public class ExistingCreatedTask {
     private final long taskId;
     private final long metaId;
 
-    public UnprocessedTask(final long taskId, final long metaId) {
+    public ExistingCreatedTask(final long taskId, final long metaId) {
         this.taskId = taskId;
         this.metaId = metaId;
     }

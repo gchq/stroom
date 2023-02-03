@@ -47,7 +47,7 @@ class TestProcessorTaskDeleteExecutorImpl extends AbstractProcessorTest {
 
 
         processorFilter1b = createProcessorFilter(processor1);
-        createProcessorTask(processorFilter1b, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter1b, TaskStatus.CREATED, NODE1, FEED);
         createProcessorTask(processorFilter1b, TaskStatus.ASSIGNED, NODE1, FEED);
         createProcessorTask(processorFilter1b, TaskStatus.PROCESSING, NODE1, FEED);
 
@@ -70,12 +70,12 @@ class TestProcessorTaskDeleteExecutorImpl extends AbstractProcessorTest {
         processorFilterTracker2.setStatus(ProcessorFilterTracker.ERROR);
         processorFilterTrackerDao.update(processorFilterTracker2);
 
-        createProcessorTask(processorFilter2, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter2, TaskStatus.CREATED, NODE1, FEED);
         createProcessorTask(processorFilter2, TaskStatus.ASSIGNED, NODE1, FEED);
         createProcessorTask(processorFilter2, TaskStatus.PROCESSING, NODE1, FEED);
 
         processorFilter3 = createProcessorFilter(processor3);
-        createProcessorTask(processorFilter3, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter3, TaskStatus.CREATED, NODE1, FEED);
         createProcessorTask(processorFilter3, TaskStatus.ASSIGNED, NODE1, FEED);
         createProcessorTask(processorFilter3, TaskStatus.PROCESSING, NODE1, FEED);
 

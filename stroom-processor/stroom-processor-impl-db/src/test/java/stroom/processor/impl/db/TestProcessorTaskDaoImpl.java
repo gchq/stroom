@@ -127,30 +127,25 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         processor2 = createProcessor();
 
         processorFilter1a = createProcessorFilter(processor1);
-        createProcessorTask(processorFilter1a, TaskStatus.UNPROCESSED, NODE1, FEED);
-        createProcessorTask(processorFilter1a, TaskStatus.ASSIGNED, NODE1, FEED);
-        createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
+        createTasksForFilter(processorFilter1a);
 
         processorFilter1b = createProcessorFilter(processor1);
-        createProcessorTask(processorFilter1b, TaskStatus.UNPROCESSED, NODE1, FEED);
-        createProcessorTask(processorFilter1b, TaskStatus.ASSIGNED, NODE1, FEED);
-        createProcessorTask(processorFilter1b, TaskStatus.PROCESSING, NODE1, FEED);
+        createTasksForFilter(processorFilter1b);
 
         processorFilter2 = createProcessorFilter(processor2);
-        createProcessorTask(processorFilter2, TaskStatus.UNPROCESSED, NODE1, FEED);
-        createProcessorTask(processorFilter2, TaskStatus.ASSIGNED, NODE1, FEED);
-        createProcessorTask(processorFilter2, TaskStatus.PROCESSING, NODE1, FEED);
+        createTasksForFilter(processorFilter2);
 
         assertThat(getProcessorCount(null))
                 .isEqualTo(2);
         assertThat(getProcessorFilterCount(null))
                 .isEqualTo(3);
         assertThat(getProcessorTaskCount(null))
-                .isEqualTo(9);
+                .isEqualTo(15);
 
         dumpProcessorTaskTable();
 
-        processorTaskDao.logicalDeleteByProcessorId(processor1.getId());
+        final int count = processorTaskDao.logicalDeleteByProcessorId(processor1.getId());
+        assertThat(count).isEqualTo(8);
 
         dumpProcessorTaskTable();
 
@@ -160,15 +155,23 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         assertThat(getProcessorFilterCount(null))
                 .isEqualTo(3);
         assertThat(getProcessorTaskCount(null))
-                .isEqualTo(9);
+                .isEqualTo(15);
 
         assertThat(getProcessorCount(PROCESSOR.DELETED.eq(true)))
                 .isEqualTo(0);
         assertThat(getProcessorFilterCount(PROCESSOR_FILTER.DELETED.eq(true)))
                 .isEqualTo(0);
-        // logically deletes the UNPROCESSED + ASSIGNED for each of two filters on one processor
+        // logically deletes the CREATED, QUEUED and ASSIGNED for each of two filters on one processor
         assertThat(getProcessorTaskCount(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue())))
-                .isEqualTo(2 * 2);
+                .isEqualTo(8);
+    }
+
+    private void createTasksForFilter(final ProcessorFilter filter) {
+        createProcessorTask(filter, TaskStatus.CREATED, null, FEED);
+        createProcessorTask(filter, TaskStatus.QUEUED, NODE1, FEED);
+        createProcessorTask(filter, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(filter, TaskStatus.PROCESSING, NODE1, FEED);
+        createProcessorTask(filter, TaskStatus.COMPLETE, NODE1, FEED);
     }
 
     @Test
@@ -180,30 +183,25 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         processor2 = createProcessor();
 
         processorFilter1a = createProcessorFilter(processor1);
-        createProcessorTask(processorFilter1a, TaskStatus.UNPROCESSED, NODE1, FEED);
-        createProcessorTask(processorFilter1a, TaskStatus.ASSIGNED, NODE1, FEED);
-        createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
+        createTasksForFilter(processorFilter1a);
 
         processorFilter1b = createProcessorFilter(processor1);
-        createProcessorTask(processorFilter1b, TaskStatus.UNPROCESSED, NODE1, FEED);
-        createProcessorTask(processorFilter1b, TaskStatus.ASSIGNED, NODE1, FEED);
-        createProcessorTask(processorFilter1b, TaskStatus.PROCESSING, NODE1, FEED);
+        createTasksForFilter(processorFilter1b);
 
         processorFilter2 = createProcessorFilter(processor2);
-        createProcessorTask(processorFilter2, TaskStatus.UNPROCESSED, NODE1, FEED);
-        createProcessorTask(processorFilter2, TaskStatus.ASSIGNED, NODE1, FEED);
-        createProcessorTask(processorFilter2, TaskStatus.PROCESSING, NODE1, FEED);
+        createTasksForFilter(processorFilter2);
 
         assertThat(getProcessorCount(null))
                 .isEqualTo(2);
         assertThat(getProcessorFilterCount(null))
                 .isEqualTo(3);
         assertThat(getProcessorTaskCount(null))
-                .isEqualTo(9);
+                .isEqualTo(15);
 
         dumpProcessorTaskTable();
 
-        processorTaskDao.logicalDeleteByProcessorFilterId(processorFilter1a.getId());
+        final int count = processorTaskDao.logicalDeleteByProcessorFilterId(processorFilter1a.getId());
+        assertThat(count).isEqualTo(4);
 
         dumpProcessorTaskTable();
 
@@ -213,15 +211,15 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         assertThat(getProcessorFilterCount(null))
                 .isEqualTo(3);
         assertThat(getProcessorTaskCount(null))
-                .isEqualTo(9);
+                .isEqualTo(15);
 
         assertThat(getProcessorCount(PROCESSOR.DELETED.eq(true)))
                 .isEqualTo(0);
         assertThat(getProcessorFilterCount(PROCESSOR_FILTER.DELETED.eq(true)))
                 .isEqualTo(0);
-        // logically deletes the UNPROCESSED + ASSIGNED for one processor
+        // logically deletes the CREATED, QUEUED and ASSIGNED for one processor
         assertThat(getProcessorTaskCount(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue())))
-                .isEqualTo(2);
+                .isEqualTo(4);
     }
 
     @Test
@@ -233,7 +231,7 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         processor2 = createProcessor();
 
         processorFilter1a = createProcessorFilter(processor1);
-        createProcessorTask(processorFilter1a, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter1a, TaskStatus.CREATED, NODE1, FEED);
         createProcessorTask(processorFilter1a, TaskStatus.ASSIGNED, NODE1, FEED);
         createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
 
@@ -242,12 +240,12 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         processorFilterDao.update(processorFilter1a);
 
         processorFilter1b = createProcessorFilter(processor1);
-        createProcessorTask(processorFilter1b, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter1b, TaskStatus.CREATED, NODE1, FEED);
         createProcessorTask(processorFilter1b, TaskStatus.ASSIGNED, NODE1, FEED);
         createProcessorTask(processorFilter1b, TaskStatus.PROCESSING, NODE1, FEED);
 
         processorFilter2 = createProcessorFilter(processor2);
-        createProcessorTask(processorFilter2, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter2, TaskStatus.CREATED, NODE1, FEED);
         createProcessorTask(processorFilter2, TaskStatus.ASSIGNED, NODE1, FEED);
         createProcessorTask(processorFilter2, TaskStatus.PROCESSING, NODE1, FEED);
 
@@ -294,12 +292,12 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         processor2 = createProcessor();
 
         processorFilter1a = createProcessorFilter(processor1);
-        createProcessorTask(processorFilter1a, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter1a, TaskStatus.CREATED, NODE1, FEED);
         createProcessorTask(processorFilter1a, TaskStatus.ASSIGNED, NODE1, FEED);
         createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
 
         processorFilter1b = createProcessorFilter(processor1);
-        createProcessorTask(processorFilter1b, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter1b, TaskStatus.CREATED, NODE1, FEED);
         createProcessorTask(processorFilter1b, TaskStatus.ASSIGNED, NODE1, FEED);
         createProcessorTask(processorFilter1b, TaskStatus.PROCESSING, NODE1, FEED);
         createProcessorTask(processorFilter1b, TaskStatus.COMPLETE, NODE1, FEED);
@@ -319,7 +317,7 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
                 Instant.now().minus(2, ChronoUnit.DAYS));
 
         processorFilter2 = createProcessorFilter(processor2);
-        createProcessorTask(processorFilter2, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter2, TaskStatus.CREATED, NODE1, FEED);
         createProcessorTask(processorFilter2, TaskStatus.ASSIGNED, NODE1, FEED);
         createProcessorTask(processorFilter2, TaskStatus.PROCESSING, NODE1, FEED);
 

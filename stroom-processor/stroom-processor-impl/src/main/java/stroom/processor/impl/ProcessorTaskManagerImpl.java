@@ -688,21 +688,19 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                         info(taskContext, () ->
                                 "Creating tasks: " + loadedFilter);
 
-                        // If there are any tasks for this filter that were
-                        // previously created but are unprocessed, not owned by any
-                        // node and their associated stream is unlocked then add
-                        // them here.
+                        // If there are any tasks for this filter that were previously created but aren't queued and
+                        // their associated stream is unlocked then add them to the queue here.
                         final ProcessorConfig processorConfig = processorConfigProvider.get();
                         if (processorConfig.isFillTaskQueue()) {
                             final DurationTimer durationTimer = DurationTimer.start();
-                            final int count = addUnownedTasks(
+                            final int count = queueCreatedTasks(
                                     taskContext,
                                     nodeName,
                                     loadedFilter,
                                     queue,
                                     createProcessTasksState,
                                     filterProgressMonitor);
-                            filterProgressMonitor.logPhase(Phase.ADD_UNOWNED_TASKS, durationTimer, count);
+                            filterProgressMonitor.logPhase(Phase.QUEUE_CREATED_TASKS, durationTimer, count);
                         }
 
                         // If we are allowing tasks to be created then go ahead and create some.
@@ -801,12 +799,12 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
         }
     }
 
-    private int addUnownedTasks(final TaskContext taskContext,
-                                final String nodeName,
-                                final ProcessorFilter filter,
-                                final ProcessorTaskQueue queue,
-                                final CreateProcessTasksState createProcessTasksState,
-                                final FilterProgressMonitor filterProgressMonitor) {
+    private int queueCreatedTasks(final TaskContext taskContext,
+                                  final String nodeName,
+                                  final ProcessorFilter filter,
+                                  final ProcessorTaskQueue queue,
+                                  final CreateProcessTasksState createProcessTasksState,
+                                  final FilterProgressMonitor filterProgressMonitor) {
         int totalTasks = 0;
         int totalAddedTasks = 0;
         int tasksToAdd = createProcessTasksState.getRequiredTaskCount();
@@ -817,27 +815,27 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
             // Keep adding tasks until we have reached the requested number.
             while (tasksToAdd > 0) {
 
-                // First look for any items that are no-longer locked etc
+                // Look for any existing tasks we have created.
                 DurationTimer durationTimer = DurationTimer.start();
-                final List<UnprocessedTask> processorTasks = processorTaskDao
-                        .findUnprocessedTasks(minTaskId, filter.getId(), batchSize);
-                filterProgressMonitor.logPhase(Phase.ADD_UNOWNED_TASKS_FETCH_TASKS,
+                final List<ExistingCreatedTask> existingCreatedTasks = processorTaskDao
+                        .findExistingCreatedTasks(minTaskId, filter.getId(), batchSize);
+                filterProgressMonitor.logPhase(Phase.QUEUE_CREATED_TASKS_FETCH_TASKS,
                         durationTimer,
-                        processorTasks.size());
+                        existingCreatedTasks.size());
 
                 // If we got fewer tasks returned than we asked for then we won't need to ask for more.
-                if (processorTasks.size() < batchSize) {
+                if (existingCreatedTasks.size() < batchSize) {
                     tasksToAdd = 0;
                 }
 
-                // If we have some processor tasks then queue them unless they belong to locked meta.
-                if (processorTasks.size() > 0) {
+                // If we have some existing tasks then queue them unless they belong to locked meta.
+                if (existingCreatedTasks.size() > 0) {
                     try {
                         // Increment the total number of unowned tasks.
-                        totalTasks += processorTasks.size();
+                        totalTasks += existingCreatedTasks.size();
 
-                        final List<Long> metaIdList = new ArrayList<>(processorTasks.size());
-                        for (final UnprocessedTask task : processorTasks) {
+                        final List<Long> metaIdList = new ArrayList<>(existingCreatedTasks.size());
+                        for (final ExistingCreatedTask task : existingCreatedTasks) {
                             metaIdList.add(task.getMetaId());
                             // Ensure we don't see this task again in the next attempt.
                             minTaskId = Math.max(minTaskId, task.getTaskId());
@@ -846,22 +844,22 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                         // Find all locked meta entries for the selected processor tasks.
                         durationTimer = DurationTimer.start();
                         final Set<Long> lockedMetaIdSet = metaService.findLockedMeta(metaIdList);
-                        filterProgressMonitor.logPhase(Phase.ADD_UNOWNED_TASKS_FETCH_META,
+                        filterProgressMonitor.logPhase(Phase.QUEUE_CREATED_TASKS_FETCH_META,
                                 durationTimer,
                                 lockedMetaIdSet.size());
 
                         // Filter out tasks associated with meta that is still locked.
-                        final Set<Long> processorTaskIdSet = processorTasks
+                        final Set<Long> processorTaskIdSet = existingCreatedTasks
                                 .stream()
                                 .filter(processorTask -> !lockedMetaIdSet.contains(processorTask.getMetaId()))
-                                .map(UnprocessedTask::getTaskId)
+                                .map(ExistingCreatedTask::getTaskId)
                                 .collect(Collectors.toSet());
 
                         durationTimer = DurationTimer.start();
                         final List<ProcessorTask> existingTasks = processorTaskDao.queueExistingTasks(
                                 processorTaskIdSet,
                                 nodeName);
-                        filterProgressMonitor.logPhase(Phase.ADD_UNOWNED_TASKS_QUEUE_TASKS,
+                        filterProgressMonitor.logPhase(Phase.QUEUE_CREATED_TASKS_QUEUE_TASKS,
                                 durationTimer,
                                 existingTasks.size());
 

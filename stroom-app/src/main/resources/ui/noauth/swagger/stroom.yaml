@@ -9067,8 +9067,8 @@ components:
         status:
           type: string
           enum:
+          - CREATED
           - QUEUED
-          - UNPROCESSED
           - ASSIGNED
           - PROCESSING
           - COMPLETE
@@ -9105,8 +9105,8 @@ components:
         status:
           type: string
           enum:
+          - CREATED
           - QUEUED
-          - UNPROCESSED
           - ASSIGNED
           - PROCESSING
           - COMPLETE
