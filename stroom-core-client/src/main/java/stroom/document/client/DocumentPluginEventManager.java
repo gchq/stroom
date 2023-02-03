@@ -515,6 +515,15 @@ public class DocumentPluginEventManager extends Plugin {
                 .delete(new ExplorerServiceDeleteRequest(docRefs));
     }
 
+    public void open(final DocRef docRef, final boolean forceOpen) {
+        final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(docRef.getType());
+        if (documentPlugin != null) {
+            documentPlugin.open(docRef, forceOpen);
+        } else {
+            throw new IllegalArgumentException("Document type '" + docRef.getType() + "' not registered");
+        }
+    }
+
     /**
      * This method will highlight the supplied document item in the explorer tree.
      */
