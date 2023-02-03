@@ -32,8 +32,6 @@ import java.util.Objects;
 public class ProcessorFilterTracker implements HasIntegerId {
 
     public static final String ENTITY_TYPE = "ProcessorFilterTracker";
-    public static final String COMPLETE = "Complete";
-    public static final String ERROR = "Error";
 
     // standard id and OCC fields
     @JsonProperty
@@ -70,7 +68,9 @@ public class ProcessorFilterTracker implements HasIntegerId {
     @JsonProperty
     private Integer lastPollTaskCount;
     @JsonProperty
-    private String status;
+    private ProcessorFilterTrackerStatus status;
+    @JsonProperty
+    private String message;
 
     @JsonProperty
     private Long metaCount;
@@ -90,7 +90,8 @@ public class ProcessorFilterTracker implements HasIntegerId {
                                   @JsonProperty("metaCreateMs") final Long metaCreateMs,
                                   @JsonProperty("lastPollMs") final Long lastPollMs,
                                   @JsonProperty("lastPollTaskCount") final Integer lastPollTaskCount,
-                                  @JsonProperty("status") final String status,
+                                  @JsonProperty("status") final ProcessorFilterTrackerStatus status,
+                                  @JsonProperty("message") final String message,
                                   @JsonProperty("metaCount") final Long metaCount,
                                   @JsonProperty("eventCount") final Long eventCount) {
         this.id = id;
@@ -103,6 +104,7 @@ public class ProcessorFilterTracker implements HasIntegerId {
         this.lastPollMs = lastPollMs;
         this.lastPollTaskCount = lastPollTaskCount;
         this.status = status;
+        this.message = message;
         this.metaCount = metaCount;
         this.eventCount = eventCount;
     }
@@ -188,12 +190,20 @@ public class ProcessorFilterTracker implements HasIntegerId {
         this.lastPollTaskCount = lastPollTaskCount;
     }
 
-    public String getStatus() {
+    public ProcessorFilterTrackerStatus getStatus() {
         return status;
     }
 
-    public void setStatus(final String status) {
+    public void setStatus(final ProcessorFilterTrackerStatus status) {
         this.status = status;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(final String message) {
+        this.message = message;
     }
 
     public Long getMetaCount() {
@@ -222,7 +232,7 @@ public class ProcessorFilterTracker implements HasIntegerId {
     }
 
     public Integer getTrackerStreamCreatePercentage(final long now) {
-        if (ProcessorFilterTracker.COMPLETE.equals(status)) {
+        if (ProcessorFilterTrackerStatus.COMPLETE.equals(status)) {
             return 100;
         }
 
@@ -280,7 +290,8 @@ public class ProcessorFilterTracker implements HasIntegerId {
                 ", metaCreateMs=" + metaCreateMs +
                 ", lastPollMs=" + lastPollMs +
                 ", lastPollTaskCount=" + lastPollTaskCount +
-                ", status='" + status + '\'' +
+                ", status=" + status +
+                ", message='" + message + '\'' +
                 ", metaCount=" + metaCount +
                 ", eventCount=" + eventCount +
                 '}';

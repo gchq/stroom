@@ -12764,6 +12764,9 @@
             "type" : "integer",
             "format" : "int64"
           },
+          "message" : {
+            "type" : "string"
+          },
           "metaCount" : {
             "type" : "integer",
             "format" : "int64"
@@ -12785,7 +12788,8 @@
             "format" : "int64"
           },
           "status" : {
-            "type" : "string"
+            "type" : "string",
+            "enum" : [ "CREATED", "COMPLETE", "ERROR" ]
           },
           "version" : {
             "type" : "integer",

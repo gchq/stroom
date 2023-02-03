@@ -2070,6 +2070,7 @@ export interface ProcessorFilterTracker {
 
   /** @format int64 */
   maxMetaCreateMs?: number;
+  message?: string;
 
   /** @format int64 */
   metaCount?: number;
@@ -2085,7 +2086,7 @@ export interface ProcessorFilterTracker {
 
   /** @format int64 */
   minMetaId?: number;
-  status?: string;
+  status?: "CREATED" | "COMPLETE" | "ERROR";
 
   /** @format int32 */
   version?: number;

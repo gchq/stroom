@@ -4,6 +4,7 @@ import stroom.processor.impl.ProcessorTaskDeleteExecutor;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
+import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.TaskStatus;
 
 import org.junit.jupiter.api.Test;
@@ -27,7 +28,6 @@ class TestProcessorTaskDeleteExecutorImpl extends AbstractProcessorTest {
     ProcessorFilter processorFilter3;
     ProcessorFilterTracker processorFilterTracker1;
     ProcessorFilterTracker processorFilterTracker2;
-    ProcessorFilterTracker processorFilterTracker3;
 
     @Test
     void delete1() {
@@ -42,7 +42,7 @@ class TestProcessorTaskDeleteExecutorImpl extends AbstractProcessorTest {
         processorFilter1a = createProcessorFilter(processor1);
         processorFilterTracker1 = processorFilter1a.getProcessorFilterTracker();
         processorFilterTracker1.setLastPollMs(Instant.now().minus(3, ChronoUnit.DAYS).toEpochMilli());
-        processorFilterTracker1.setStatus(ProcessorFilterTracker.COMPLETE);
+        processorFilterTracker1.setStatus(ProcessorFilterTrackerStatus.COMPLETE);
         processorFilterTrackerDao.update(processorFilterTracker1);
 
 
@@ -67,7 +67,7 @@ class TestProcessorTaskDeleteExecutorImpl extends AbstractProcessorTest {
         processorFilter2 = createProcessorFilter(processor2);
         processorFilterTracker2 = processorFilter2.getProcessorFilterTracker();
         processorFilterTracker2.setLastPollMs(Instant.now().minus(3, ChronoUnit.DAYS).toEpochMilli());
-        processorFilterTracker2.setStatus(ProcessorFilterTracker.ERROR);
+        processorFilterTracker2.setStatus(ProcessorFilterTrackerStatus.ERROR);
         processorFilterTrackerDao.update(processorFilterTracker2);
 
         createProcessorTask(processorFilter2, TaskStatus.CREATED, NODE1, FEED);

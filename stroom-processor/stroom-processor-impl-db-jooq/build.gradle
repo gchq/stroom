@@ -52,7 +52,7 @@ jooq {
                         forcedTypes {
                             forcedType {
                                 name = 'BOOLEAN'
-                                types = '(?i:TINYINT\\(1\\))'
+                                includeExpression = 'deleted|enabled|reprocess'
                             }
                         }
                     }

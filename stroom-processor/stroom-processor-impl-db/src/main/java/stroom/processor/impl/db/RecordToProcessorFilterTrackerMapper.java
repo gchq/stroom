@@ -1,6 +1,7 @@
 package stroom.processor.impl.db;
 
 import stroom.processor.shared.ProcessorFilterTracker;
+import stroom.processor.shared.ProcessorFilterTrackerStatus;
 
 import org.jooq.Record;
 
@@ -22,7 +23,9 @@ class RecordToProcessorFilterTrackerMapper implements Function<Record, Processor
         processorFilterTracker.setMetaCreateMs(record.get(PROCESSOR_FILTER_TRACKER.META_CREATE_MS));
         processorFilterTracker.setLastPollMs(record.get(PROCESSOR_FILTER_TRACKER.LAST_POLL_MS));
         processorFilterTracker.setLastPollTaskCount(record.get(PROCESSOR_FILTER_TRACKER.LAST_POLL_TASK_COUNT));
-        processorFilterTracker.setStatus(record.get(PROCESSOR_FILTER_TRACKER.STATUS));
+        processorFilterTracker.setStatus(ProcessorFilterTrackerStatus.PRIMITIVE_VALUE_CONVERTER
+                .fromPrimitiveValue(record.get(PROCESSOR_FILTER_TRACKER.STATUS)));
+        processorFilterTracker.setMessage(record.get(PROCESSOR_FILTER_TRACKER.MESSAGE));
         processorFilterTracker.setMetaCount(record.get(PROCESSOR_FILTER_TRACKER.META_COUNT));
         processorFilterTracker.setEventCount(record.get(PROCESSOR_FILTER_TRACKER.EVENT_COUNT));
         return processorFilterTracker;

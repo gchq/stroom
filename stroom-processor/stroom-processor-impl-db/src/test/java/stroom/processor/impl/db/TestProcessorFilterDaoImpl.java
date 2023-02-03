@@ -3,9 +3,8 @@ package stroom.processor.impl.db;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
+import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.TaskStatus;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -19,8 +18,6 @@ import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FIL
 import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 
 class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestProcessorFilterDaoImpl.class);
 
     Processor processor1;
     Processor processor2;
@@ -97,7 +94,7 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
         processorFilter1 = createProcessorFilter(processor1);
         processorFilterTracker1 = processorFilter1.getProcessorFilterTracker();
         processorFilterTracker1.setLastPollMs(Instant.now().toEpochMilli());
-        processorFilterTracker1.setStatus(ProcessorFilterTracker.COMPLETE);
+        processorFilterTracker1.setStatus(ProcessorFilterTrackerStatus.COMPLETE);
         processorFilterTrackerDao.update(processorFilterTracker1);
         createProcessorTask(processorFilter1, TaskStatus.CREATED, NODE1, FEED);
         createProcessorTask(processorFilter1, TaskStatus.ASSIGNED, NODE1, FEED);
@@ -107,7 +104,7 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
         processorFilter2 = createProcessorFilter(processor2);
         processorFilterTracker2 = processorFilter2.getProcessorFilterTracker();
         processorFilterTracker2.setLastPollMs(Instant.now().toEpochMilli());
-        processorFilterTracker2.setStatus(ProcessorFilterTracker.ERROR);
+        processorFilterTracker2.setStatus(ProcessorFilterTrackerStatus.ERROR);
         processorFilterTrackerDao.update(processorFilterTracker2);
         createProcessorTask(processorFilter2, TaskStatus.CREATED, NODE1, FEED);
         createProcessorTask(processorFilter2, TaskStatus.ASSIGNED, NODE1, FEED);
@@ -117,7 +114,7 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
         processorFilter3 = createProcessorFilter(processor3);
         processorFilterTracker3 = processorFilter3.getProcessorFilterTracker();
         processorFilterTracker3.setLastPollMs(Instant.now().toEpochMilli());
-        processorFilterTracker3.setStatus(ProcessorFilterTracker.COMPLETE);
+        processorFilterTracker3.setStatus(ProcessorFilterTrackerStatus.COMPLETE);
         processorFilterTrackerDao.update(processorFilterTracker3);
 
         assertThat(getProcessorCount(null))
@@ -159,8 +156,8 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
                 .isEqualTo(0);
 
         Assertions.assertThat(processorFilterDao.fetch(processorFilter3.getId())
-                .orElseThrow()
-                .isDeleted())
+                        .orElseThrow()
+                        .isDeleted())
                 .isTrue();
     }
 

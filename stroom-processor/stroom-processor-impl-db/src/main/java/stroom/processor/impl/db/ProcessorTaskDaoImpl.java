@@ -31,6 +31,7 @@ import stroom.processor.impl.db.jooq.tables.records.ProcessorTaskRecord;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
+import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskSummary;
@@ -556,7 +557,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
             tracker.setLastPollMs(statusTimeMs);
             tracker.setLastPollTaskCount(creationState.totalTasksCreated);
-            tracker.setStatus(null);
+            tracker.setStatus(ProcessorFilterTrackerStatus.CREATED);
 
             // If the filter has a max meta creation time then let the tracker know.
             if (filter.getMaxMetaCreateTimeMs() != null && tracker.getMaxMetaCreateMs() == null) {
@@ -573,12 +574,12 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 LOGGER.trace(() ->
                         "processProcessorFilter() - Completed task creation for bounded filter " +
                                 filter);
-                tracker.setStatus(ProcessorFilterTracker.COMPLETE);
+                tracker.setStatus(ProcessorFilterTrackerStatus.COMPLETE);
             }
 
             // Save the tracker state within the transaction.
-            processorFilterTrackerDao.update(context, tracker);
-            filterProgressMonitor.logPhase(Phase.UPDATE_TRACKERS, durationTimer, 1);
+            final int updatedTrackerCount = processorFilterTrackerDao.update(context, tracker);
+            filterProgressMonitor.logPhase(Phase.UPDATE_TRACKERS, durationTimer, updatedTrackerCount);
         });
 
         final List<ProcessorTask> list;
@@ -709,6 +710,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                              final TaskStatus newStatus,
                              final Long statusTime,
                              final Condition condition) {
+        Objects.requireNonNull(condition, "Null condition");
         return context
                 .update(PROCESSOR_TASK)
                 .set(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID, nodeId)
@@ -718,8 +720,6 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 .setNull(PROCESSOR_TASK.END_TIME_MS)
                 .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
                 .where(condition)
-//                .where(PROCESSOR_TASK.ID.in(idSet))
-//                .and(PROCESSOR_TASK.STATUS.eq(currentStatus.getPrimitiveValue()))
                 .execute();
     }
 
@@ -1251,14 +1251,14 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     }
 
     @Override
-    public List<ExistingCreatedTask> findExistingCreatedTasks(final long minTaskId,
+    public List<ExistingCreatedTask> findExistingCreatedTasks(final long lastTaskId,
                                                               final int filterId,
                                                               final int limit) {
         final Result<Record2<Long, Long>> records = JooqUtil.contextResult(processorDbConnProvider, context ->
                 context
                         .select(PROCESSOR_TASK.ID, PROCESSOR_TASK.META_ID)
                         .from(PROCESSOR_TASK)
-                        .where(PROCESSOR_TASK.ID.gt(minTaskId))
+                        .where(PROCESSOR_TASK.ID.gt(lastTaskId))
                         .and(PROCESSOR_TASK.STATUS.eq(TaskStatus.CREATED.getPrimitiveValue()))
                         .and(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(filterId))
                         .orderBy(PROCESSOR_TASK.ID)

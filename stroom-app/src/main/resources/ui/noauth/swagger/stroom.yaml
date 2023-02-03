@@ -8990,6 +8990,8 @@ components:
         maxMetaCreateMs:
           type: integer
           format: int64
+        message:
+          type: string
         metaCount:
           type: integer
           format: int64
@@ -9007,6 +9009,10 @@ components:
           format: int64
         status:
           type: string
+          enum:
+          - CREATED
+          - COMPLETE
+          - ERROR
         version:
           type: integer
           format: int32
