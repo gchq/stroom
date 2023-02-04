@@ -58,13 +58,13 @@ public class ProgressMonitor {
                             final CreateProcessTasksState createProcessTasksState) {
         sb.append("SUMMARY\n");
         sb.append("---\n");
-        sb.append("Created tasks for ");
+        sb.append("Inspected ");
         sb.append(filterProgressMonitorList.size());
         sb.append("/");
         sb.append(totalFilterCount);
-        sb.append(" filters");
+        sb.append(" filters for task creation");
         sb.append("\n");
-        sb.append("Total create time: ");
+        sb.append("Total time: ");
         sb.append(totalDuration.get());
         sb.append("\n");
         createProcessTasksState.report(sb);

@@ -16,7 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
-import java.math.BigInteger;
+import com.google.common.io.BaseEncoding;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
@@ -93,8 +94,11 @@ class Hash extends AbstractFunction {
         }
 
         final byte[] arr = digest.digest(value.getBytes());
-        // Converts message digest value in base 16 (hex)
-        return new BigInteger(1, arr).toString(16);
+
+        // TODO: 30/01/2023 In Java17+ use HexFormat class
+        return BaseEncoding.base16()
+                .lowerCase()
+                .encode(arr);
     }
 
     @Override

@@ -855,7 +855,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                     // Find all unlocked meta entries for the selected processor tasks.
                     final ExpressionOperator findMetaExpression = ExpressionOperator.builder()
                             .addOperator(metaIdExpressionBuilder.build())
-                            .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                            .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
                             .build();
                     final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(findMetaExpression);
                     findMetaCriteria.setSort(MetaFields.ID.getName(), false, false);
@@ -866,45 +866,45 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                             durationTimer,
                             metaList.size());
 
-                    if (metaList.size() > 0) {
-                        try {
-                            // Create a map of meta items keyed by id.
-                            final Set<Long> metaIdSet = metaList
-                                    .stream()
-                                    .map(Meta::getId)
-                                    .collect(Collectors.toSet());
-                            final Set<Long> processorTaskIdSet = processorTasks
-                                    .stream()
-                                    .filter(processorTask -> metaIdSet.contains(processorTask.getMetaId()))
-                                    .map(ProcessorTask::getId)
-                                    .collect(Collectors.toSet());
+                    try {
+                        // Create a map of locked meta items keyed by id.
+                        final Set<Long> lockedMetaIdSet = metaList
+                                .stream()
+                                .map(Meta::getId)
+                                .collect(Collectors.toSet());
+                        // Get a set of processor task ids but filter out tasks associated with meta that is still
+                        // locked.
+                        final Set<Long> processorTaskIdSet = processorTasks
+                                .stream()
+                                .filter(processorTask -> !lockedMetaIdSet.contains(processorTask.getMetaId()))
+                                .map(ProcessorTask::getId)
+                                .collect(Collectors.toSet());
 
-                            durationTimer = DurationTimer.start();
-                            final List<ProcessorTask> existingTasks = processorTaskDao.queueExistingTasks(
-                                    processorTaskIdSet,
-                                    nodeName);
-                            filterProgressMonitor.logPhase(Phase.ADD_UNOWNED_TASKS_QUEUE_TASKS,
-                                    durationTimer,
-                                    existingTasks.size());
+                        durationTimer = DurationTimer.start();
+                        final List<ProcessorTask> existingTasks = processorTaskDao.queueExistingTasks(
+                                processorTaskIdSet,
+                                nodeName);
+                        filterProgressMonitor.logPhase(Phase.ADD_UNOWNED_TASKS_QUEUE_TASKS,
+                                durationTimer,
+                                existingTasks.size());
 
-                            queue.addAll(existingTasks);
-                            tasksToAdd -= existingTasks.size();
-                            totalAddedTasks += existingTasks.size();
+                        queue.addAll(existingTasks);
+                        tasksToAdd -= existingTasks.size();
+                        totalAddedTasks += existingTasks.size();
 
-                            final int finalTotalAddedTasks = totalAddedTasks;
-                            final int finalTotalTasks = totalTasks;
-                            info(taskContext, () ->
-                                    LogUtil.message("Adding {}/{} non owned Tasks",
-                                            finalTotalAddedTasks,
-                                            finalTotalTasks));
+                        final int finalTotalAddedTasks = totalAddedTasks;
+                        final int finalTotalTasks = totalTasks;
+                        info(taskContext, () ->
+                                LogUtil.message("Adding {}/{} non owned Tasks",
+                                        finalTotalAddedTasks,
+                                        finalTotalTasks));
 
-                            if (Thread.currentThread().isInterrupted()) {
-                                // Stop trying to add tasks.
-                                tasksToAdd = 0;
-                            }
-                        } catch (final RuntimeException e) {
-                            LOGGER.error("doCreateTasks() - Failed to grab non owned tasks", e);
+                        if (Thread.currentThread().isInterrupted()) {
+                            // Stop trying to add tasks.
+                            tasksToAdd = 0;
                         }
+                    } catch (final RuntimeException e) {
+                        LOGGER.error("doCreateTasks() - Failed to grab non owned tasks", e);
                     }
                 }
             }
