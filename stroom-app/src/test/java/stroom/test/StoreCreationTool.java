@@ -254,7 +254,7 @@ public final class StoreCreationTool {
         DocRef docRef;
         docRef = explorerService.create(FeedDoc.DOCUMENT_TYPE,
                 feedName,
-                ExplorerConstants.ROOT_DOC_REF,
+                ExplorerConstants.SYSTEM_DOC_REF,
                 PermissionInheritance.DESTINATION);
         if (docRef == null) {
             // allow for a mocked explorer service
@@ -267,7 +267,7 @@ public final class StoreCreationTool {
         DocRef docRef;
         docRef = explorerService.create(TextConverterDoc.DOCUMENT_TYPE,
                 name,
-                ExplorerConstants.ROOT_DOC_REF,
+                ExplorerConstants.SYSTEM_DOC_REF,
                 PermissionInheritance.DESTINATION);
         if (docRef == null) {
             // allow for a mocked explorer service
@@ -280,7 +280,7 @@ public final class StoreCreationTool {
         DocRef docRef;
         docRef = explorerService.create(XsltDoc.DOCUMENT_TYPE,
                 name,
-                ExplorerConstants.ROOT_DOC_REF,
+                ExplorerConstants.SYSTEM_DOC_REF,
                 PermissionInheritance.DESTINATION);
         if (docRef == null) {
             // allow for a mocked explorer service
@@ -293,7 +293,7 @@ public final class StoreCreationTool {
         DocRef docRef;
         docRef = explorerService.create(PipelineDoc.DOCUMENT_TYPE,
                 name,
-                ExplorerConstants.ROOT_DOC_REF,
+                ExplorerConstants.SYSTEM_DOC_REF,
                 PermissionInheritance.DESTINATION);
         if (docRef == null) {
             // allow for a mocked explorer service
@@ -802,7 +802,7 @@ public final class StoreCreationTool {
         DocRef newDocRef = explorerService.create(
                 PipelineDoc.DOCUMENT_TYPE,
                 newName,
-                ExplorerConstants.ROOT_DOC_REF,
+                ExplorerConstants.SYSTEM_DOC_REF,
                 PermissionInheritance.DESTINATION);
         if (newDocRef == null) {
             newDocRef = pipelineStore.createDocument(newName);
@@ -920,7 +920,7 @@ public final class StoreCreationTool {
     }
 
     public DocRef ensurePath(final String path) {
-        return ensurePath(ExplorerConstants.ROOT_DOC_REF, path);
+        return ensurePath(ExplorerConstants.SYSTEM_DOC_REF, path);
     }
 
     public DocRef ensurePath(final DocRef parentFolder, final String path) {
@@ -969,7 +969,7 @@ public final class StoreCreationTool {
         DocRef docRef;
         docRef = explorerService.create(
                 FeedDoc.DOCUMENT_TYPE, feedName,
-                ExplorerConstants.ROOT_DOC_REF,
+                ExplorerConstants.SYSTEM_DOC_REF,
                 PermissionInheritance.DESTINATION);
         if (docRef == null) {
             // allow for a mocked explorer service

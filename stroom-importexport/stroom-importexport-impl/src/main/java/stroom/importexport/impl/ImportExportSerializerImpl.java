@@ -124,7 +124,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         }
 
         //Add the root of the explorer tree
-        result.add(ExplorerConstants.ROOT_DOC_REF);
+        result.add(ExplorerConstants.SYSTEM_DOC_REF);
 
         return result;
     }

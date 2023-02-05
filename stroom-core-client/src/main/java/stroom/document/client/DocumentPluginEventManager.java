@@ -31,12 +31,14 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docref.HasDisplayValue;
+import stroom.docstore.shared.DocFavResource;
 import stroom.document.client.event.CopyDocumentEvent;
 import stroom.document.client.event.CreateDocumentEvent;
 import stroom.document.client.event.MoveDocumentEvent;
 import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.document.client.event.RenameDocumentEvent;
 import stroom.document.client.event.SaveAsDocumentEvent;
+import stroom.document.client.event.SetDocumentAsFavouriteEvent;
 import stroom.document.client.event.ShowCopyDocumentDialogEvent;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.document.client.event.ShowInfoDocumentDialogEvent;
@@ -55,6 +57,7 @@ import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.explorer.shared.DocumentTypes;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNodePermissions;
 import stroom.explorer.shared.ExplorerResource;
@@ -110,6 +113,7 @@ import java.util.stream.Collectors;
 public class DocumentPluginEventManager extends Plugin {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
+    private static final DocFavResource DOC_FAV_RESOURCE = GWT.create(DocFavResource.class);
     private static final KeyTest CTRL_S = event ->
             event.getCtrlKey() && !event.getShiftKey() && event.getKeyCode() == 'S';
     private static final KeyTest CTRL_SHIFT_S = event ->
@@ -330,13 +334,17 @@ public class DocumentPluginEventManager extends Plugin {
             }
         }));
 
+        // Handle setting document as Favourite events
+        registerHandler(getEventBus().addHandler(SetDocumentAsFavouriteEvent.getType(), event -> {
+            setAsFavourite(event.getDocRef(), event.getSetFavourite());
+        }));
+
         //////////////////////////////
         // END EXPLORER EVENTS
         ///////////////////////////////
 
 
-        // Not handled as it is done directly.
-
+        // Handle the display of the `New` item menu
         registerHandler(getEventBus().addHandler(ShowNewMenuEvent.getType(), event -> {
             if (getSelectedItems().size() == 1) {
                 final ExplorerNode primarySelection = getPrimarySelection();
@@ -349,36 +357,51 @@ public class DocumentPluginEventManager extends Plugin {
                 });
             }
         }));
+
+        // Handle the display of the explorer item context menu
         registerHandler(getEventBus().addHandler(ShowExplorerMenuEvent.getType(), event -> {
             final List<ExplorerNode> selectedItems = getSelectedItems();
             final boolean singleSelection = selectedItems.size() == 1;
             final ExplorerNode primarySelection = getPrimarySelection();
 
             if (selectedItems.size() > 0) {
-                fetchPermissions(selectedItems, documentPermissionMap ->
-                        documentTypeCache.fetch(documentTypes -> {
-                            final List<Item> menuItems = new ArrayList<>();
-
-                            // Only allow the new menu to appear if we have a single selection.
-                            addNewMenuItem(menuItems,
-                                    singleSelection,
-                                    documentPermissionMap,
-                                    primarySelection,
-                                    documentTypes);
-                            addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
-
-                            menuListPresenter.setData(menuItems);
-                            final PopupPosition popupPosition = new PopupPosition(event.getX(), event.getY());
-                            ShowPopupEvent.fire(
-                                    DocumentPluginEventManager.this,
-                                    menuListPresenter,
-                                    PopupType.POPUP,
-                                    popupPosition,
-                                    null);
-                        })
-                );
+                if (!isFavouritesNode(primarySelection)) {
+                    showItemContextMenu(event, selectedItems, singleSelection, primarySelection);
+                }
             }
         }));
+    }
+
+    private boolean isFavouritesNode(final ExplorerNode node) {
+        return node != null && ExplorerConstants.FAVOURITES_DOC_REF.equals(node.getDocRef());
+    }
+
+    private void showItemContextMenu(final ShowExplorerMenuEvent event,
+                                     final List<ExplorerNode> selectedItems,
+                                     final boolean singleSelection,
+                                     final ExplorerNode primarySelection) {
+        fetchPermissions(selectedItems, documentPermissionMap ->
+                documentTypeCache.fetch(documentTypes -> {
+                    final List<Item> menuItems = new ArrayList<>();
+
+                    // Only allow the new menu to appear if we have a single selection.
+                    addNewMenuItem(menuItems,
+                            singleSelection,
+                            documentPermissionMap,
+                            primarySelection,
+                            documentTypes);
+                    addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
+
+                    menuListPresenter.setData(menuItems);
+                    final PopupPosition popupPosition = new PopupPosition(event.getX(), event.getY());
+                    ShowPopupEvent.fire(
+                            DocumentPluginEventManager.this,
+                            menuListPresenter,
+                            PopupType.POPUP,
+                            popupPosition,
+                            null);
+                })
+        );
     }
 
 
@@ -514,6 +537,16 @@ public class DocumentPluginEventManager extends Plugin {
                 .delete(new ExplorerServiceDeleteRequest(docRefs));
     }
 
+    private void setAsFavourite(final DocRef docRef, final boolean setFavourite) {
+        final Rest<Void> rest = restFactory.create();
+        rest.onSuccess(result -> RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this));
+        if (setFavourite) {
+            rest.call(DOC_FAV_RESOURCE).create(docRef);
+        } else {
+            rest.call(DOC_FAV_RESOURCE).delete(docRef);
+        }
+    }
+
     /**
      * This method will highlight the supplied document item in the explorer tree.
      */
@@ -558,19 +591,24 @@ public class DocumentPluginEventManager extends Plugin {
                                 documentPermissionMap -> documentTypeCache.fetch(documentTypes -> {
                                     final List<Item> menuItems = new ArrayList<>();
 
-                                    // Only allow the new menu to appear if we have a single selection.
-                                    addNewMenuItem(menuItems,
-                                            singleSelection,
-                                            documentPermissionMap,
-                                            primarySelection,
-                                            documentTypes);
+                                    if (!isFavouritesNode(primarySelection)) {
+                                        // Only allow the new menu to appear if we have a single selection.
+                                        addNewMenuItem(menuItems,
+                                                singleSelection,
+                                                documentPermissionMap,
+                                                primarySelection,
+                                                documentTypes);
+                                    }
                                     menuItems.add(createCloseMenuItem(isTabItemSelected(selectedTab)));
                                     menuItems.add(createCloseAllMenuItem(isTabItemSelected(selectedTab)));
                                     menuItems.add(new Separator(5));
                                     menuItems.add(createSaveMenuItem(6, isDirty(selectedTab)));
                                     menuItems.add(createSaveAllMenuItem(8, hasSaveRegistry.isDirty()));
-                                    menuItems.add(new Separator(9));
-                                    addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
+
+                                    if (!isFavouritesNode(primarySelection)) {
+                                        menuItems.add(new Separator(9));
+                                        addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
+                                    }
 
                                     future.setResult(menuItems);
                                 }));
@@ -617,6 +655,30 @@ public class DocumentPluginEventManager extends Plugin {
 //        }
 //        return docRef;
 //    }
+
+    private void addFavouritesMenuItem(final List<Item> menuItems, final boolean singleSelection) {
+        final ExplorerNode primarySelection = getPrimarySelection();
+
+        // Add the favourites menu item if an item is selected, and it's not a folder
+        if (singleSelection && primarySelection != null && !DocumentTypes.isFolder(primarySelection.getType())) {
+            final boolean isFavourite = primarySelection.getIsFavourite();
+            menuItems.add(new IconMenuItem(
+                    1,
+                    isFavourite ? SvgPresets.FAVOURITES_OUTLINE : SvgPresets.FAVOURITES,
+                    isFavourite ? SvgPresets.FAVOURITES_OUTLINE : SvgPresets.FAVOURITES,
+                    isFavourite ? "Remove from Favourites" : "Add to Favourites",
+                    null,
+                    true,
+                    () -> {
+                        toggleFavourite(primarySelection.getDocRef(), isFavourite);
+                        selectionModel.clear();
+                    }));
+        }
+    }
+
+    private void toggleFavourite(final DocRef docRef, final boolean isFavourite) {
+        SetDocumentAsFavouriteEvent.fire(DocumentPluginEventManager.this, docRef, !isFavourite);
+    }
 
     private void addNewMenuItem(final List<Item> menuItems,
                                 final boolean singleSelection,
@@ -739,6 +801,8 @@ public class DocumentPluginEventManager extends Plugin {
         final boolean isCopyEnabled = singleSelection
                 && allowRead
                 && !FeedDoc.DOCUMENT_TYPE.equals(readableItems.get(0).getType());
+
+        addFavouritesMenuItem(menuItems, singleSelection);
 
         menuItems.add(createInfoMenuItem(readableItems, 3, isInfoEnabled));
         menuItems.add(createCopyMenuItem(readableItems, 4, isCopyEnabled));

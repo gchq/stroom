@@ -61,7 +61,7 @@ class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegra
 
     private Set<DocRef> buildFindFolderCriteria() {
         final Set<DocRef> docRefs = new HashSet<>();
-        docRefs.add(ExplorerConstants.ROOT_DOC_REF);
+        docRefs.add(ExplorerConstants.SYSTEM_DOC_REF);
         return docRefs;
     }
 

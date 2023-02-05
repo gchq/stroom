@@ -1,0 +1,29 @@
+ext.moduleName = 'stroom.docstore.fav.impl.db'
+
+dependencies {
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-db-util')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-docstore:stroom-docstore-impl')
+    implementation project(':stroom-docstore:stroom-docstore-impl-db')
+    implementation project(':stroom-docstore:stroom-docstore-fav-impl')
+    implementation project(':stroom-docstore:stroom-docstore-fav-impl-db-jooq')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+
+    implementation libs.flyway_core
+    implementation libs.guice5
+    implementation libs.hikari
+    implementation libs.jackson_annotations
+    implementation libs.javax_inject
+    implementation libs.jooq
+    implementation libs.slf4j_api
+
+    runtimeOnly libs.mysql_connector_java
+
+    testImplementation libs.assertj_core
+
+    testImplementation libs.junit_jupiter_api
+}

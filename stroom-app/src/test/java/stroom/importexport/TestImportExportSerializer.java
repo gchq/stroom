@@ -96,7 +96,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
     private Set<DocRef> buildFindFolderCriteria() {
         final Set<DocRef> criteria = new HashSet<>();
-        criteria.add(ExplorerConstants.ROOT_DOC_REF);
+        criteria.add(ExplorerConstants.SYSTEM_DOC_REF);
         return criteria;
     }
 

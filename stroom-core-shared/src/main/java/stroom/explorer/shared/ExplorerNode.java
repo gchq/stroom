@@ -50,6 +50,10 @@ public class ExplorerNode implements HasDisplayValue {
 
     @JsonProperty
     private final List<ExplorerNode> children;
+    @JsonProperty
+    private final ExplorerNode parent;
+    @JsonProperty
+    private final boolean isFavourite;
 
     @JsonCreator
     public ExplorerNode(@JsonProperty("type") final String type,
@@ -59,7 +63,9 @@ public class ExplorerNode implements HasDisplayValue {
                         @JsonProperty("depth") final int depth,
                         @JsonProperty("iconClassName") final String iconClassName,
                         @JsonProperty("nodeState") final NodeState nodeState,
-                        @JsonProperty("children") final List<ExplorerNode> children) {
+                        @JsonProperty("children") final List<ExplorerNode> children,
+                        @JsonProperty("parent") final ExplorerNode parent,
+                        @JsonProperty("isFavourite") final boolean isFavourite) {
         this.type = type;
         this.uuid = uuid;
         this.name = name;
@@ -68,6 +74,8 @@ public class ExplorerNode implements HasDisplayValue {
         this.iconClassName = iconClassName;
         this.nodeState = nodeState;
         this.children = children;
+        this.parent = parent;
+        this.isFavourite = isFavourite;
     }
 
     public static ExplorerNode create(final DocRef docRef) {
@@ -114,6 +122,14 @@ public class ExplorerNode implements HasDisplayValue {
         return children;
     }
 
+    public ExplorerNode getParent() {
+        return parent;
+    }
+
+    public boolean getIsFavourite() {
+        return isFavourite;
+    }
+
     @JsonIgnore
     public DocRef getDocRef() {
         return new DocRef(type, uuid, name);
@@ -134,12 +150,12 @@ public class ExplorerNode implements HasDisplayValue {
             return false;
         }
         final ExplorerNode that = (ExplorerNode) o;
-        return uuid.equals(that.uuid);
+        return uuid.equals(that.uuid) && Objects.equals(parent, that.parent);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uuid);
+        return Objects.hash(uuid, parent);
     }
 
     @Override
@@ -171,6 +187,8 @@ public class ExplorerNode implements HasDisplayValue {
         private String iconClassName;
         private NodeState nodeState;
         private List<ExplorerNode> children;
+        private ExplorerNode parent;
+        private boolean isFavourite;
 
         private Builder() {
         }
@@ -184,6 +202,8 @@ public class ExplorerNode implements HasDisplayValue {
             this.iconClassName = explorerNode.iconClassName;
             this.nodeState = explorerNode.nodeState;
             this.children = explorerNode.children;
+            this.parent = explorerNode.parent;
+            this.isFavourite = explorerNode.isFavourite;
         }
 
         public Builder type(final String type) {
@@ -230,7 +250,17 @@ public class ExplorerNode implements HasDisplayValue {
             if (children == null) {
                 children = new ArrayList<>();
             }
-            children.add(child);
+            children.add(child);;
+            return this;
+        }
+
+        public Builder parent(final ExplorerNode parent) {
+            this.parent = parent;
+            return this;
+        }
+
+        public Builder isFavourite(final boolean isFavourite) {
+            this.isFavourite = isFavourite;
             return this;
         }
 
@@ -243,7 +273,9 @@ public class ExplorerNode implements HasDisplayValue {
                     depth,
                     iconClassName,
                     nodeState,
-                    children);
+                    children,
+                    parent,
+                    isFavourite);
         }
     }
 }

@@ -1,5 +1,7 @@
 package stroom.explorer.client.view;
 
+import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 
 import com.google.gwt.cell.client.AbstractCell;
@@ -40,11 +42,13 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                         break;
                     case OPEN:
                         expanderIcon = template.icon(
-                                "svgIcon explorerCell-expanderIcon explorerCell-treeOpen");
+                                "svgIcon explorerCell-expanderIcon explorerCell-treeOpen",
+                                item.getType());
                         break;
                     case CLOSED:
                         expanderIcon = template.icon(
-                                "svgIcon explorerCell-expanderIcon explorerCell-treeClosed");
+                                "svgIcon explorerCell-expanderIcon explorerCell-treeClosed",
+                                item.getType());
                         break;
                     default:
                         throw new RuntimeException("Unexpected state " + item.getNodeState());
@@ -65,6 +69,7 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
             SafeHtml expanderHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
             SafeHtml iconHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
             SafeHtml textHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
+            SafeHtml favIconHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
 
             if (expanderIcon != null) {
                 final SafeStyles paddingLeft = SafeStylesUtils.fromTrustedString("padding-left:" + indent + "px;");
@@ -72,34 +77,44 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
             }
 
             if (item.getIconClassName() != null) {
-                iconHtml = template.icon("explorerCell-icon " + item.getIconClassName());
+                iconHtml = template.icon("explorerCell-icon " + item.getIconClassName(), item.getType());
             }
 
             if (item.getDisplayValue() != null) {
-                textHtml = template.text("explorerCell-text", SafeHtmlUtils.fromString(item.getDisplayValue()));
+                textHtml = template.text("explorerCell-text",
+                        SafeHtmlUtils.fromString(item.getDisplayValue()));
+            }
+
+            // If the item is a favourite and not part of the Favourites node, display a star next to it
+            if (item.getIsFavourite() && !ExplorerConstants.FAVOURITES_DOC_REF.equals(item.getParent().getDocRef())) {
+                favIconHtml = template.favIcon(
+                        DocumentType.DOC_IMAGE_CLASS_NAME + ExplorerConstants.FAVOURITES,
+                        "Item is a favourite");
             }
 
             final SafeHtmlBuilder content = new SafeHtmlBuilder();
             content.append(expanderHtml);
             content.append(iconHtml);
             content.append(textHtml);
+            content.append(favIconHtml);
 
             sb.append(template.outer("explorerCell-outer", content.toSafeHtml()));
         }
     }
 
     interface Template extends SafeHtmlTemplates {
-//        @Template("<div class=\"{0}\" style=\"width:{1}px\"></div>")
-//        SafeHtml indent(String indentClass, int indent);
 
         @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
         SafeHtml expander(String iconClass, SafeStyles styles, SafeHtml icon);
 
-        @Template("<div class=\"{0}\"></div>")
-        SafeHtml icon(String iconClass);
+        @Template("<div class=\"{0}\" title=\"{1}\"></div>")
+        SafeHtml icon(String iconClass, String title);
 
         @Template("<div class=\"{0}\">{1}</div>")
         SafeHtml text(String textClass, SafeHtml text);
+
+        @Template("<div class=\"{0}\" title=\"{1}\"></div>")
+        SafeHtml favIcon(String iconClass, String title);
 
         @Template("<div class=\"{0}\">{1}</div>")
         SafeHtml outer(String outerClass, SafeHtml content);

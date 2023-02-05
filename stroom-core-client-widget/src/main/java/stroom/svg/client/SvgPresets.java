@@ -42,6 +42,7 @@ public final class SvgPresets {
     public static final Preset EXPLORER = enabled("svgIcon-explorer", "Explorer");
     public static final Preset FATAL = enabled("svgIcon-fatal", "Fatal");
     public static final Preset FAVOURITES = disabled("svgIcon-favourites", "Favourites");
+    public static final Preset FAVOURITES_OUTLINE = disabled("svgIcon-favourites-outline", "Favourites");
     public static final Preset FEED = enabled("svgIcon-feed", "Feed");
     public static final Preset FIELD = enabled("svgIcon-field", "Field");
     public static final Preset FILE = enabled("svgIcon-file", "File");

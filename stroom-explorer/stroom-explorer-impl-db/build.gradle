@@ -5,6 +5,7 @@ dependencies {
     implementation project(':stroom-core-shared')
     implementation project(':stroom-db-util')
     implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-fav-impl-db-jooq')
     implementation project(':stroom-explorer:stroom-explorer-impl')
     implementation project(':stroom-explorer:stroom-explorer-impl-db-jooq')
     implementation project(':stroom-util')

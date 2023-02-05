@@ -25,9 +25,10 @@ public class TreeModel {
         parentMap.put(child != null
                 ? child.getUuid()
                 : null, parent);
+        final ExplorerNode childWithParent = child != null ? child.copy().parent(parent).build() : null;
         childMap.computeIfAbsent(parent != null
                 ? parent.getUuid()
-                : null, k -> new ArrayList<>()).add(child);
+                : null, k -> new ArrayList<>()).add(childWithParent);
     }
 
     long getId() {

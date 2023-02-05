@@ -19,6 +19,7 @@ package stroom.explorer.impl;
 
 import stroom.collection.api.CollectionService;
 import stroom.docref.DocRef;
+import stroom.docstore.fav.api.DocFavService;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.api.ExplorerDecorator;
 import stroom.explorer.api.ExplorerNodeService;
@@ -76,6 +77,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     private final SecurityContext securityContext;
     private final ExplorerEventLog explorerEventLog;
     private final Provider<ExplorerDecorator> explorerDecoratorProvider;
+    private final Provider<DocFavService> docFavService;
 
     @Inject
     ExplorerServiceImpl(final ExplorerNodeService explorerNodeService,
@@ -83,13 +85,15 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                         final ExplorerActionHandlers explorerActionHandlers,
                         final SecurityContext securityContext,
                         final ExplorerEventLog explorerEventLog,
-                        final Provider<ExplorerDecorator> explorerDecoratorProvider) {
+                        final Provider<ExplorerDecorator> explorerDecoratorProvider,
+                        final Provider<DocFavService> docFavService) {
         this.explorerNodeService = explorerNodeService;
         this.explorerTreeModel = explorerTreeModel;
         this.explorerActionHandlers = explorerActionHandlers;
         this.securityContext = securityContext;
         this.explorerEventLog = explorerEventLog;
         this.explorerDecoratorProvider = explorerDecoratorProvider;
+        this.docFavService = docFavService;
 
         explorerNodeService.ensureRootNodeExists();
     }
@@ -161,9 +165,11 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     rootNodes,
                     fuzzyMatchPredicate);
 
-            // Ensure root node is open if it has items
-            if (rootNodes.size() > 0) {
-                final ExplorerNode rootNode = rootNodes.get(0);
+            rootNodes.add(0, buildFavouritesNode(fuzzyMatchPredicate));
+            openedItems.add(ExplorerConstants.FAVOURITES_DOC_REF.getUuid());
+
+            // Ensure root nodes are open if they have items
+            for (final ExplorerNode rootNode : rootNodes) {
                 if (rootNode.getChildren() != null
                         && !rootNode.getChildren().isEmpty()
                         && NodeState.CLOSED.equals(rootNode.getNodeState())) {
@@ -185,6 +191,36 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             LOGGER.error("Error fetching nodes with criteria {}", criteria, e);
             throw e;
         }
+    }
+
+    private ExplorerNode buildFavouritesNode(final Predicate<DocRef> fuzzyMatchPredicate) {
+        final ExplorerNode.Builder favNodeBuilder = ExplorerNode.builder()
+                .type(ExplorerConstants.FAVOURITES_DOC_REF.getType())
+                .uuid(ExplorerConstants.FAVOURITES_DOC_REF.getUuid())
+                .name(ExplorerConstants.FAVOURITES_DOC_REF.getName())
+                .tags(StandardTagNames.DATA_SOURCE)
+                .nodeState(NodeState.OPEN)
+                .depth(0)
+                .iconClassName(DocumentType.DOC_IMAGE_CLASS_NAME + ExplorerConstants.FAVOURITES);
+        final ExplorerNode favNode = favNodeBuilder.build();
+        final List<ExplorerNode> favNodes = docFavService.get().fetchDocFavs()
+                .stream()
+                .filter(fuzzyMatchPredicate)
+                .map(docFav -> favNode.copy()
+                        .type(docFav.getType())
+                        .uuid(docFav.getUuid())
+                        .name(docFav.getName())
+                        .nodeState(NodeState.LEAF)
+                        .depth(1)
+                        .iconClassName(DocumentType.DOC_IMAGE_CLASS_NAME + docFav.getType())
+                        .isFavourite(true)
+                        .parent(favNode)
+                        .build())
+                .toList();
+
+        return favNodeBuilder
+                .children(favNodes)
+                .build();
     }
 
     private List<ExplorerNode> decorateTree(final FindExplorerNodeCriteria criteria,
@@ -491,6 +527,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
             builder.nodeState(NodeState.OPEN);
             builder.children(newChildren);
+            builder.parent(parent);
 
         } else {
             builder.nodeState(NodeState.CLOSED);
