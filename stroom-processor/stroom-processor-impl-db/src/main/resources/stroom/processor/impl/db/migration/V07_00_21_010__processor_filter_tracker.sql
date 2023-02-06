@@ -61,7 +61,7 @@ BEGIN
     AND column_name = p_column_name;
 
     IF object_count = 0 THEN
-        CALL meta_run_sql_v1(CONCAT(
+        CALL processor_run_sql_v1(CONCAT(
             'alter table ', database(), '.', p_table_name,
             ' add column ', p_column_name, ' ', p_column_type_info));
     ELSE
@@ -97,7 +97,7 @@ BEGIN
     AND column_name = p_new_column_name;
 
     IF object_count = 0 THEN
-        CALL meta_run_sql_v1(CONCAT(
+        CALL processor_run_sql_v1(CONCAT(
             'alter table ', database(), '.', p_table_name,
             ' change ', p_old_column_name, ' ',
             p_new_column_name, ' ', p_column_type_info));
