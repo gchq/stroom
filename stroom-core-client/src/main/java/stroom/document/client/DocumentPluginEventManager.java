@@ -364,16 +364,33 @@ public class DocumentPluginEventManager extends Plugin {
             final boolean singleSelection = selectedItems.size() == 1;
             final ExplorerNode primarySelection = getPrimarySelection();
 
-            if (selectedItems.size() > 0) {
-                if (!isFavouritesNode(primarySelection)) {
-                    showItemContextMenu(event, selectedItems, singleSelection, primarySelection);
-                }
+            if (selectedItems.size() > 0 && !isFavouritesRootNode(primarySelection)) {
+                showItemContextMenu(event, selectedItems, singleSelection, primarySelection);
             }
         }));
     }
 
+    /**
+     * Tests whether a node is the root Favourites node
+     */
+    private boolean isFavouritesRootNode(final ExplorerNode node) {
+        if (node == null) {
+            return false;
+        }
+
+        return ExplorerConstants.FAVOURITES_DOC_REF.equals(node.getDocRef());
+    }
+
+    /**
+     * Tests whether a node is either the root Favourites node or one of its children
+     */
     private boolean isFavouritesNode(final ExplorerNode node) {
-        return node != null && ExplorerConstants.FAVOURITES_DOC_REF.equals(node.getDocRef());
+        if (node == null) {
+            return false;
+        }
+
+        return isFavouritesRootNode(node) ||
+                node.getParent() != null && ExplorerConstants.FAVOURITES.equals(node.getParent().getType());
     }
 
     private void showItemContextMenu(final ShowExplorerMenuEvent event,
@@ -390,6 +407,7 @@ public class DocumentPluginEventManager extends Plugin {
                             documentPermissionMap,
                             primarySelection,
                             documentTypes);
+
                     addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
 
                     menuListPresenter.setData(menuItems);
@@ -591,24 +609,21 @@ public class DocumentPluginEventManager extends Plugin {
                                 documentPermissionMap -> documentTypeCache.fetch(documentTypes -> {
                                     final List<Item> menuItems = new ArrayList<>();
 
-                                    if (!isFavouritesNode(primarySelection)) {
-                                        // Only allow the new menu to appear if we have a single selection.
-                                        addNewMenuItem(menuItems,
-                                                singleSelection,
-                                                documentPermissionMap,
-                                                primarySelection,
-                                                documentTypes);
-                                    }
+                                    // Only allow the new menu to appear if we have a single selection.
+                                    addNewMenuItem(menuItems,
+                                            singleSelection,
+                                            documentPermissionMap,
+                                            primarySelection,
+                                            documentTypes);
+
                                     menuItems.add(createCloseMenuItem(isTabItemSelected(selectedTab)));
                                     menuItems.add(createCloseAllMenuItem(isTabItemSelected(selectedTab)));
                                     menuItems.add(new Separator(5));
                                     menuItems.add(createSaveMenuItem(6, isDirty(selectedTab)));
                                     menuItems.add(createSaveAllMenuItem(8, hasSaveRegistry.isDirty()));
 
-                                    if (!isFavouritesNode(primarySelection)) {
-                                        menuItems.add(new Separator(9));
-                                        addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
-                                    }
+                                    menuItems.add(new Separator(9));
+                                    addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
 
                                     future.setResult(menuItems);
                                 }));
@@ -686,7 +701,7 @@ public class DocumentPluginEventManager extends Plugin {
                                 final ExplorerNode primarySelection,
                                 final DocumentTypes documentTypes) {
         // Only allow the new menu to appear if we have a single selection.
-        if (singleSelection) {
+        if (singleSelection && !isFavouritesNode(primarySelection)) {
             // Add 'New' menu item.
             final ExplorerNodePermissions documentPermissions = documentPermissionMap.get(primarySelection);
             final List<Item> children = createNewMenuItems(primarySelection, documentPermissions,
@@ -810,11 +825,13 @@ public class DocumentPluginEventManager extends Plugin {
         menuItems.add(createRenameMenuItem(updatableItems, 6, isRenameEnabled));
         menuItems.add(createDeleteMenuItem(deletableItems, 7, allowDelete));
 
-        if (securityContext.hasAppPermission(PermissionNames.IMPORT_CONFIGURATION)) {
-            menuItems.add(createImportMenuItem(8));
-        }
-        if (securityContext.hasAppPermission(PermissionNames.EXPORT_CONFIGURATION)) {
-            menuItems.add(createExportMenuItem(9, readableItems));
+        if (!isFavouritesNode(getPrimarySelection())) {
+            if (securityContext.hasAppPermission(PermissionNames.IMPORT_CONFIGURATION)) {
+                menuItems.add(createImportMenuItem(8));
+            }
+            if (securityContext.hasAppPermission(PermissionNames.EXPORT_CONFIGURATION)) {
+                menuItems.add(createExportMenuItem(9, readableItems));
+            }
         }
 
         // Only allow users to change permissions if they have a single item selected.
