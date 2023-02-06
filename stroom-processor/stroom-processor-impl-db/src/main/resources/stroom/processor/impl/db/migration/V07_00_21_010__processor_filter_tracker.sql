@@ -148,7 +148,7 @@ DELIMITER ;
 CALL processor_rename_column_v1(
     'processor_filter_tracker',
     'status',
-    'message'
+    'message',
     'varchar(255) DEFAULT NULL');
 
 -- idempotent
