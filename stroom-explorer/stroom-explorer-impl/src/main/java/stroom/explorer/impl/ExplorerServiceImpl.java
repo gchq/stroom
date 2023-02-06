@@ -165,8 +165,11 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     rootNodes,
                     fuzzyMatchPredicate);
 
-            rootNodes.add(0, buildFavouritesNode(fuzzyMatchPredicate));
-            openedItems.add(ExplorerConstants.FAVOURITES_DOC_REF.getUuid());
+            final ExplorerNode favNode = buildFavouritesNode(fuzzyMatchPredicate, filter);
+            if (!favNode.getChildren().isEmpty()) {
+                rootNodes.add(0, favNode);
+                openedItems.add(ExplorerConstants.FAVOURITES_DOC_REF.getUuid());
+            }
 
             // Ensure root nodes are open if they have items
             for (final ExplorerNode rootNode : rootNodes) {
@@ -193,7 +196,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         }
     }
 
-    private ExplorerNode buildFavouritesNode(final Predicate<DocRef> fuzzyMatchPredicate) {
+    private ExplorerNode buildFavouritesNode(final Predicate<DocRef> fuzzyMatchPredicate,
+                                             final ExplorerTreeFilter filter) {
         final ExplorerNode.Builder favNodeBuilder = ExplorerNode.builder()
                 .type(ExplorerConstants.FAVOURITES_DOC_REF.getType())
                 .uuid(ExplorerConstants.FAVOURITES_DOC_REF.getUuid())
@@ -206,6 +210,9 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         final List<ExplorerNode> favNodes = docFavService.get().fetchDocFavs()
                 .stream()
                 .filter(fuzzyMatchPredicate)
+                .filter(docRef -> checkType(ExplorerNode.create(docRef), filter.getIncludedTypes()))
+                .filter(docRef -> checkTags(ExplorerNode.create(docRef), filter.getTags()))
+                .filter(docRef -> checkSecurity(ExplorerNode.create(docRef), filter.getRequiredPermissions()))
                 .map(docFav -> favNode.copy()
                         .type(docFav.getType())
                         .uuid(docFav.getUuid())
