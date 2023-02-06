@@ -203,7 +203,6 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 .type(ExplorerConstants.FAVOURITES_DOC_REF.getType())
                 .uuid(ExplorerConstants.FAVOURITES_DOC_REF.getUuid())
                 .name(ExplorerConstants.FAVOURITES_DOC_REF.getName())
-                .tags(StandardTagNames.DATA_SOURCE)
                 .nodeState(NodeState.OPEN)
                 .depth(0)
                 .iconClassName(DocumentType.DOC_IMAGE_CLASS_NAME + ExplorerConstants.FAVOURITES);
