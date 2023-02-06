@@ -29,7 +29,6 @@ public class DocumentTypes {
 
     public static final String[] FOLDER_TYPES = new String[]{
             ExplorerConstants.SYSTEM,
-            ExplorerConstants.FAVOURITES,
             ExplorerConstants.FOLDER
     };
 

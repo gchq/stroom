@@ -24,6 +24,7 @@ import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.DocumentTypes;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.ui.config.client.UiConfigCache;
@@ -114,8 +115,12 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
         explorerTree.setFocus(true);
     }
 
-    public void setIncludedTypes(final String... includedTypes) {
-        explorerTree.getTreeModel().setIncludedTypes(includedTypes);
+    public void setIncludedTypes(final String... types) {
+        explorerTree.getTreeModel().setIncludedTypes(types);
+    }
+
+    public void setIncludedRootTypes(final String... types) {
+        explorerTree.getTreeModel().setIncludedRootTypes(types);
     }
 
     public void setTags(final String... tags) {
@@ -189,6 +194,7 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
                                     final RestFactory restFactory) {
             super(restFactory, false);
             this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;
+            this.getTreeModel().setIncludedRootTypes(ExplorerConstants.SYSTEM);
         }
 
         @Override

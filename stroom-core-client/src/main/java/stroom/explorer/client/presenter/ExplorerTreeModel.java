@@ -81,8 +81,12 @@ public class ExplorerTreeModel {
         explorerTreeFilterBuilder.setIncludedTypeSet(types);
     }
 
-    public void setIncludedTypes(final String... includedTypes) {
-        explorerTreeFilterBuilder.setIncludedTypes(includedTypes);
+    public void setIncludedTypes(final String... types) {
+        explorerTreeFilterBuilder.setIncludedTypes(types);
+    }
+
+    public void setIncludedRootTypes(final String... types) {
+        explorerTreeFilterBuilder.setIncludedRootTypes(types);
     }
 
     public void setTags(final String... tags) {

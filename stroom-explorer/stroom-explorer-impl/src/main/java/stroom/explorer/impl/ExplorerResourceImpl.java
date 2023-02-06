@@ -162,6 +162,7 @@ class ExplorerResourceImpl implements ExplorerResource {
                     final ExplorerTreeFilter requestFilter = request.getFilter();
                     final ExplorerTreeFilter qualifiedFilter = new ExplorerTreeFilter(
                             requestFilter.getIncludedTypes(),
+                            requestFilter.getIncludedRootTypes(),
                             requestFilter.getTags(),
                             requestFilter.getRequiredPermissions(),
                             result.getQualifiedFilterInput(),

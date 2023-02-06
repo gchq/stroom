@@ -167,7 +167,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     fuzzyMatchPredicate);
 
             final ExplorerNode favNode = buildFavouritesNode(fuzzyMatchPredicate, filter);
-            if (!favNode.getChildren().isEmpty()) {
+            if (checkType(favNode, filter.getIncludedRootTypes()) && !favNode.getChildren().isEmpty()) {
                 rootNodes.add(0, favNode);
                 openedItems.add(ExplorerConstants.FAVOURITES_DOC_REF.getUuid());
             }
