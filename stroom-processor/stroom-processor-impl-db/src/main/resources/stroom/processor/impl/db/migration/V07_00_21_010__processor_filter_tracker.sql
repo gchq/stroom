@@ -117,8 +117,8 @@ END $$
 --
 -- Rename the old QUERY table, idempotent
 --
-DROP PROCEDURE IF EXISTS processor_rename_col;
-DELIMITER //
+DROP PROCEDURE IF EXISTS processor_rename_col$$
+
 CREATE PROCEDURE processor_rename_col ()
 BEGIN
     IF NOT EXISTS (
@@ -136,10 +136,7 @@ BEGIN
             RENAME TABLE QUERY TO OLD_QUERY;
         END IF;
     END IF;
-END//
-DELIMITER ;
-CALL processor_rename_col();
-DROP PROCEDURE processor_rename_col;
+END $$
 
 -- --------------------------------------------------
 
