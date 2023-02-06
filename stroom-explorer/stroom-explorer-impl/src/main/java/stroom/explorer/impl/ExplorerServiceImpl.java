@@ -48,6 +48,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -213,6 +214,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 .filter(docRef -> checkType(ExplorerNode.create(docRef), filter.getIncludedTypes()))
                 .filter(docRef -> checkTags(ExplorerNode.create(docRef), filter.getTags()))
                 .filter(docRef -> checkSecurity(ExplorerNode.create(docRef), filter.getRequiredPermissions()))
+                .sorted(Comparator.comparing(a -> a.getName()))
                 .map(docFav -> favNode.copy()
                         .type(docFav.getType())
                         .uuid(docFav.getUuid())
