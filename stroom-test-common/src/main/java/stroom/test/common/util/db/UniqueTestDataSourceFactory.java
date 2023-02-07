@@ -16,14 +16,14 @@ import javax.inject.Singleton;
 import javax.sql.DataSource;
 
 @Singleton
-class TestDataSourceFactory implements DataSourceFactory, Clearable {
+class UniqueTestDataSourceFactory implements DataSourceFactory, Clearable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataSourceFactoryImpl.class);
 
     private final Provider<CommonDbConfig> commonDbConfigProvider;
 
     @Inject
-    TestDataSourceFactory(final Provider<CommonDbConfig> commonDbConfigProvider) {
+    UniqueTestDataSourceFactory(final Provider<CommonDbConfig> commonDbConfigProvider) {
         this.commonDbConfigProvider = commonDbConfigProvider;
         LOGGER.debug("Initialising {}", this.getClass().getSimpleName());
 
@@ -33,7 +33,14 @@ class TestDataSourceFactory implements DataSourceFactory, Clearable {
     @Override
     public DataSource create(final AbstractDbConfig dbConfig, final String name, final boolean unique) {
         final AbstractDbConfig mergedConfig = commonDbConfigProvider.get().mergeConfig(dbConfig);
-        return DbTestUtil.createTestDataSource(mergedConfig, name, unique);
+        return DbTestUtil.createTestDataSource(mergedConfig, name, unique, false);
+    }
+
+    /**
+     * Drop the test database and rebuild it
+     */
+    public void drop() {
+        DbTestUtil.dropThreadTestDatabase(false);
     }
 
     /**

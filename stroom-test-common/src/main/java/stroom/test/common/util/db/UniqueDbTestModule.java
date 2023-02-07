@@ -7,16 +7,16 @@ import stroom.util.shared.Clearable;
 import com.google.inject.AbstractModule;
 
 /**
- * Will share databases between runs for the same config
+ * Will create a new database for each run, needed for migration testing
  */
-public class DbTestModule extends AbstractModule {
+public class UniqueDbTestModule extends AbstractModule {
 
     @Override
     protected void configure() {
         super.configure();
-        bind(DataSourceFactory.class).to(TestDataSourceFactory.class);
+        bind(DataSourceFactory.class).to(UniqueTestDataSourceFactory.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-                .addBinding(TestDataSourceFactory.class);
+                .addBinding(UniqueTestDataSourceFactory.class);
     }
 }

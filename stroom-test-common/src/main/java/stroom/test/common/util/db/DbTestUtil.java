@@ -3,7 +3,6 @@ package stroom.test.common.util.db;
 import stroom.config.common.AbstractDbConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceKey;
 import stroom.db.util.DbUrl;
@@ -68,9 +67,14 @@ public class DbTestUtil {
             WHERE TABLE_SCHEMA = database()
             AND TABLE_TYPE LIKE '%BASE TABLE%'
             AND TABLE_NAME NOT LIKE '%schema%'""";
-    private static final ThreadLocal<AbstractDbConfig> THREAD_LOCAL_DB_CONFIG = new ThreadLocal<>();
-    private static final ThreadLocal<String> THREAD_LOCAL_DB_NAME = new ThreadLocal<>();
+
+    private static final ThreadLocal<AbstractDbConfig> THREAD_LOCAL_SHARED_DB_CONFIG = new ThreadLocal<>();
+    private static final ThreadLocal<String> THREAD_LOCAL_SHARED_DB_NAME = new ThreadLocal<>();
+    private static final ThreadLocal<AbstractDbConfig> THREAD_LOCAL_INDEPENDENT_DB_CONFIG = new ThreadLocal<>();
+    private static final ThreadLocal<String> THREAD_LOCAL_INDEPENDENT_DB_NAME = new ThreadLocal<>();
+
     private static final ThreadLocal<Set<DataSource>> LOCAL_DATA_SOURCES = new ThreadLocal<>();
+
     private static final ConcurrentMap<DataSourceKey, DataSource> DATA_SOURCE_MAP = new ConcurrentHashMap<>();
     private static final Set<String> DB_NAMES_IN_USE = new ConcurrentSkipListSet<>();
     private static volatile EmbeddedMysql EMBEDDED_MYSQL;
@@ -104,35 +108,44 @@ public class DbTestUtil {
     }
 
     private static String createTestDbName() {
-        final String uuid = UUID.randomUUID()
-                .toString()
-                .toLowerCase()
-                .replace("-", "");
+        String dbName;
+        do {
+            final String uuid = UUID.randomUUID()
+                    .toString()
+                    .toLowerCase()
+                    .replace("-", "");
 
-        // Include the gradle worker id (unique to the JVM) and the thread ID to ensure there
-        // is no clash between JVMs or threads
-        String dbName = String.join("_",
-                "test",
-                getGradleWorker(),
-                Long.toString(Thread.currentThread().getId()),
-                uuid);
+            // Include the gradle worker id (unique to the JVM) and the thread ID to ensure there
+            // is no clash between JVMs or threads
+            dbName = String.join("_",
+                    "test",
+                    getGradleWorker(),
+                    Long.toString(Thread.currentThread().getId()),
+                    uuid);
 
-        // Truncate to max 64 chars to ensure we don't blow db name limit
-        if (dbName.length() > 64) {
-            dbName = dbName.substring(0, 64);
-        }
+            // Truncate to max 64 chars to ensure we don't blow db name limit
+            if (dbName.length() > 64) {
+                dbName = dbName.substring(0, 64);
+            }
 
-        // We use the pattern to drop dbs after all tests have run, so ensure the name matches the pattern now.
-        if (!DB_NAME_PATTERN.asMatchPredicate().test(dbName)) {
-            throw new RuntimeException(LogUtil.message("dbName '{}' does not match pattern {}",
-                    dbName, DB_NAME_PATTERN));
-        }
+            // We use the pattern to drop dbs after all tests have run, so ensure the name matches the pattern now.
+            if (!DB_NAME_PATTERN.asMatchPredicate().test(dbName)) {
+                throw new RuntimeException(LogUtil.message("dbName '{}' does not match pattern {}",
+                        dbName, DB_NAME_PATTERN));
+            }
+
+            // Loop in case of name clash
+        } while (DB_NAMES_IN_USE.contains(dbName));
 
         DB_NAMES_IN_USE.add(dbName);
         return dbName;
     }
 
     public static DataSource createTestDataSource() {
+        return createTestDataSource(new CommonDbConfig(), "test", false);
+    }
+
+    public static DataSource resetTestDataSource() {
         return createTestDataSource(new CommonDbConfig(), "test", false);
     }
 
@@ -153,6 +166,7 @@ public class DbTestUtil {
 
     /**
      * Verify there is a connection to the database on the root account.
+     *
      * @return
      */
     public static boolean isDbAvailable() {
@@ -243,11 +257,50 @@ public class DbTestUtil {
         }
     }
 
+//    private static String getThreadLocalDbName(final boolean isSharedDatabase) {
+//        final String dbName = isSharedDatabase
+//                ? THREAD_LOCAL_SHARED_DB_NAME.get()
+//                : THREAD_LOCAL_INDEPENDENT_DB_NAME.get();
+//        LOGGER.debug("Got dbName: {}, isSharedDatabase: {}", dbName, isSharedDatabase);
+//        return dbName;
+//    }
+//
+//    private static void setThreadLocalDbName(final String dbName, final boolean isSharedDatabase) {
+//        if (isSharedDatabase) {
+//            THREAD_LOCAL_SHARED_DB_NAME.set(dbName);
+//        } else {
+//            THREAD_LOCAL_INDEPENDENT_DB_NAME.set(dbName);
+//        }
+//    }
+//
+//    private static void removeThreadLocalDbName(final boolean isSharedDatabase) {
+//        if (isSharedDatabase) {
+//            THREAD_LOCAL_SHARED_DB_NAME.remove();
+//        } else {
+//            THREAD_LOCAL_INDEPENDENT_DB_NAME.remove();
+//        }
+//    }
+
+    private static ThreadLocal<String> getDbNameThreadLocal(final boolean isSharedDatabase) {
+        return isSharedDatabase
+                ? THREAD_LOCAL_SHARED_DB_NAME
+                : THREAD_LOCAL_INDEPENDENT_DB_NAME;
+    }
+
+    private static ThreadLocal<AbstractDbConfig> getDbConfigThreadLocal(final boolean isSharedDatabase) {
+        return isSharedDatabase
+                ? THREAD_LOCAL_SHARED_DB_CONFIG
+                : THREAD_LOCAL_INDEPENDENT_DB_CONFIG;
+    }
+
     /**
      * Drop the database used by the current thread
+     * @param isSharedDatabase True if you want to drop the current shared database or
+     *                         false if you want to drop the current independent database.
      */
-    public static void dropThreadTestDatabase() {
-        final String dbName = THREAD_LOCAL_DB_NAME.get();
+    public static void dropThreadTestDatabase(final boolean isSharedDatabase) {
+        final String dbName = getDbNameThreadLocal(isSharedDatabase).get();
+
         if (dbName != null) {
             final ConnectionConfig connectionConfig = createConnectionConfig(new CommonDbConfig());
             final ConnectionConfig rootConnectionConfig = createRootConnectionConfig(connectionConfig);
@@ -260,9 +313,17 @@ public class DbTestUtil {
             try (final Connection connection = DriverManager.getConnection(rootConnectionConfig.getUrl(),
                     connectionProps)) {
                 try (final Statement statement = connection.createStatement()) {
-                    LOGGER.info("Dropping test database {}", dbName);
-                    statement.executeUpdate("DROP DATABASE " + dbName + ";");
+                    LOGGER.info(LogUtil.inBoxOnNewLine(
+                            "Dropping {} test database: {} on thread: {}",
+                            (isSharedDatabase
+                                    ? "shared"
+                                    : "independent"),
+                            dbName,
+                            Thread.currentThread().getName()));
+
+                    statement.executeUpdate("DROP DATABASE IF EXISTS `" + dbName + "`;");
                     DB_NAMES_IN_USE.remove(dbName);
+                    getDbNameThreadLocal(isSharedDatabase).remove();
                 }
             } catch (final SQLException e) {
                 throw new RuntimeException(e.getMessage(), e);
@@ -275,11 +336,24 @@ public class DbTestUtil {
     public static DataSource createTestDataSource(final AbstractDbConfig dbConfig,
                                                   final String name,
                                                   final boolean unique) {
+        return createTestDataSource(dbConfig, name, unique, true);
+    }
+
+    /**
+     * @param dbConfig The config to use
+     * @param name The name of the datasource, i.e. the module name
+     * @param unique True if we want our own dedicated connection pool
+     * @param isSharedDatabase True if we want to re-use the DB between tests. We normally do
+     *                         to save on the cost of running migrations, but not for
+     *                         migration tests as for those we want a blank db.
+     */
+    public static DataSource createTestDataSource(final AbstractDbConfig dbConfig,
+                                                  final String name,
+                                                  final boolean unique,
+                                                  final boolean isSharedDatabase) {
         // See if we have a local data source.
-        AbstractDbConfig testDbConfig = THREAD_LOCAL_DB_CONFIG.get();
-        boolean createJunitLogTable = false;
-        if (testDbConfig == null) {
-            createJunitLogTable = true;
+        AbstractDbConfig testDbConfig = getDbConfigThreadLocal(isSharedDatabase).get();
+        if (testDbConfig == null || !isSharedDatabase) {
             // Create a merged config using the common db config as a base.
             ConnectionConfig connectionConfig;
             ConnectionConfig rootConnectionConfig;
@@ -292,11 +366,25 @@ public class DbTestUtil {
             connectionProps.put("user", rootConnectionConfig.getUser());
             connectionProps.put("password", rootConnectionConfig.getPassword());
 
-            LOGGER.info("Connecting to DB as root connection with URL: {}", rootConnectionConfig.getUrl());
+            LOGGER.debug("Connecting to DB as root connection with URL: {}",
+                    rootConnectionConfig.getUrl());
 
-            final String dbName = DbTestUtil.createTestDbName();
-            THREAD_LOCAL_DB_NAME.set(dbName);
-            LOGGER.info(LogUtil.inBoxOnNewLine("Creating test database: {}", dbName));
+            final String dbName;
+            if (isSharedDatabase) {
+                dbName = Objects.requireNonNullElseGet(
+                        getDbNameThreadLocal(isSharedDatabase).get(),
+                        DbTestUtil::createTestDbName);
+            } else {
+                dbName = createTestDbName();
+            }
+            getDbNameThreadLocal(isSharedDatabase).set(dbName);
+
+            LOGGER.info(LogUtil.inBoxOnNewLine("Creating {} test database: {} for thread: {}",
+                    (isSharedDatabase
+                            ? "shared"
+                            : "independent"),
+                    dbName,
+                    Thread.currentThread().getName()));
 
             // ********************************************************************************
             // NOTE: the test database created here for this thread will be dropped once
@@ -337,22 +425,22 @@ public class DbTestUtil {
                     .url(url)
                     .build();
             LOGGER.info("Using DB connection url: {}", url);
-            testDbConfig = new AbstractDbConfig() {
-                @Override
-                public ConnectionConfig getConnectionConfig() {
-                    return newConnectionConfig;
-                }
-
-                @Override
-                public ConnectionPoolConfig getConnectionPoolConfig() {
-                    return dbConfig.getConnectionPoolConfig();
-                }
+            testDbConfig = new AbstractDbConfig(
+                    newConnectionConfig,
+                    dbConfig.getConnectionPoolConfig()) {
             };
 
-            THREAD_LOCAL_DB_CONFIG.set(testDbConfig);
+            getDbConfigThreadLocal(isSharedDatabase).set(testDbConfig);
+        } else {
+            LOGGER.info(LogUtil.inBoxOnNewLine("Reusing shared database: {}, on thread: {}",
+                    getDbNameThreadLocal(true),
+                    Thread.currentThread().getName()));
         }
 
-        final DataSource dataSource = createDataSource(name, unique, testDbConfig);
+        final DataSource dataSource = createDataSource(
+                name,
+                (unique || !isSharedDatabase),
+                testDbConfig);
 
         Set<DataSource> dataSources = LOCAL_DATA_SOURCES.get();
         if (dataSources == null) {
@@ -368,8 +456,10 @@ public class DbTestUtil {
                                                final boolean unique,
                                                final AbstractDbConfig testDbConfig) {
         // Get a data source from a map to limit connections where connection details are common.
+        LOGGER.debug("Creating datasource for name: {}, unique: {}, testDbConfig: {}", name, unique, testDbConfig);
         final DataSourceKey dataSourceKey = new DataSourceKey(testDbConfig, name, unique);
         final DataSource dataSource = DATA_SOURCE_MAP.computeIfAbsent(dataSourceKey, k -> {
+            LOGGER.debug("Creating new HikariConfig for name: {}", name);
             final HikariConfig hikariConfig = HikariUtil.createConfig(
                     k.getConfig(), null, null, null);
             return new HikariDataSource(hikariConfig);
@@ -441,22 +531,14 @@ public class DbTestUtil {
         if (!HAVE_ALREADY_SHOWN_DB_MSG) {
             if (useEmbeddedDb) {
                 String msg = """
-
-                        ---------------------------------------------------------------
                                             Using embedded MySQL
                          To use an external DB for better performance add the following
                            -D{}=false
                          to Run Configurations -> Templates -> Junit -> VM Options
-                         You many need to restart IntelliJ for this to work
-                        ---------------------------------------------------------------""";
-                LOGGER.info(ConsoleColour.green(msg), USE_EMBEDDED_MYSQL_PROP_NAME);
+                         You many need to restart IntelliJ for this to work""";
+                LOGGER.info(ConsoleColour.cyan(LogUtil.inBoxOnNewLine(msg, USE_EMBEDDED_MYSQL_PROP_NAME)));
             } else {
-                String msg = """
-
-                        ---------------------------------------------------------------
-                                            Using external MySQL
-                        ---------------------------------------------------------------""";
-                LOGGER.info(ConsoleColour.cyan(msg));
+                LOGGER.info(ConsoleColour.cyan(LogUtil.inBoxOnNewLine("Using external MySQL")));
             }
             HAVE_ALREADY_SHOWN_DB_MSG = true;
         }
@@ -613,7 +695,7 @@ public class DbTestUtil {
         if (dataSources != null) {
             for (final DataSource dataSource : dataSources) {
                 // Clear the database.
-                LOGGER.info("Clearing all tables in DB {}", THREAD_LOCAL_DB_NAME.get());
+                LOGGER.info("Clearing all tables in DB {}", THREAD_LOCAL_SHARED_DB_NAME.get());
                 try (final Connection connection = dataSource.getConnection()) {
                     DbTestUtil.clearAllTables(connection);
                 } catch (final SQLException e) {
