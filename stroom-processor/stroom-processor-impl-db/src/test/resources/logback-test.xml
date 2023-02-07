@@ -8,6 +8,7 @@
 
     <logger name="org.flywaydb" level="info" />
     <logger name="stroom" level="debug" />
+    <logger name="stroom.db.util.AbstractFlyWayDbModule" level="debug" />
     <logger name="stroom.db.util.SlowQueryExecuteListener" level="debug" />
     <logger name="stroom.test.common.util.db.DbTestUtil" level="debug" />
 

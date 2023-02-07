@@ -14,27 +14,22 @@ import java.util.Optional;
 public abstract class AbstractProcessorMigrationTest
         extends AbstractSingleFlywayMigrationTest<ProcessorDbConfig, ProcessorDbConnProvider> {
 
-    private volatile AbstractFlyWayDbModule<ProcessorDbConfig, ProcessorDbConnProvider> module = null;
-
     @Override
     protected AbstractFlyWayDbModule<ProcessorDbConfig, ProcessorDbConnProvider> getDatasourceModule() {
 
-        if (module == null) {
-            module = new ProcessorDbModule() {
+        return new ProcessorDbModule() {
 
-                @Override
-                protected List<String> getFlyWayLocations() {
-                    return getLocations();
-                }
+            @Override
+            protected List<String> getFlyWayLocations() {
+                return mergeLocations(super.getFlyWayLocations(), getTestDataMigrationLocation());
+            }
 
-                // Override this, so we target a specific version and don't run all migrations
-                @Override
-                protected Optional<MigrationVersion> getMigrationTarget() {
-                    return Optional.ofNullable(getTargetVersion());
-                }
-            };
-        }
-        return module;
+            // Override this, so we target a specific version and don't run all migrations
+            @Override
+            protected Optional<MigrationVersion> getMigrationTarget() {
+                return Optional.ofNullable(getTargetVersion());
+            }
+        };
     }
 
     @Override

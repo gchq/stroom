@@ -4,6 +4,7 @@ import stroom.activity.impl.db.ActivityConfig.ActivityDbConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 
+import java.util.List;
 import javax.sql.DataSource;
 
 public class ActivityDbModule extends AbstractFlyWayDbModule<ActivityDbConfig, ActivityDbConnProvider> {
@@ -23,8 +24,8 @@ public class ActivityDbModule extends AbstractFlyWayDbModule<ActivityDbConfig, A
     }
 
     @Override
-    protected String getFlyWayLocation() {
-        return FLYWAY_LOCATIONS;
+    protected List<String> getFlyWayLocations() {
+        return List.of(FLYWAY_LOCATIONS);
     }
 
     @Override

@@ -30,8 +30,6 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.sql.DataSource;
@@ -73,6 +71,11 @@ public abstract class AbstractSingleFlywayMigrationTest<
         T_CONFIG extends AbstractDbConfig, T_CONN_PROV extends DataSource> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractSingleFlywayMigrationTest.class);
+
+    /**
+     * See {@link org.flywaydb.core.api.configuration.FluentConfiguration#locations(String...)}
+     */
+    protected static final String FILE_SYSTEM_LOCATION_PREFIX = "filesystem:";
 
     protected Injector injector;
 
@@ -141,18 +144,18 @@ public abstract class AbstractSingleFlywayMigrationTest<
         NullSafe.consume(testDataDir, FileUtil::deleteDir);
     }
 
-    protected List<String> getLocations() {
-        return Stream.of(testDataDir)
-                .filter(Objects::nonNull)
-                .peek(path -> {
-                    if (!Files.isDirectory(path)) {
-                        throw new RuntimeException(LogUtil.message("Can't find directory {}",
-                                path.normalize().toAbsolutePath().toString()));
-                    }
-                })
-                .map(path -> path.normalize().toAbsolutePath().toString())
-                .map(str -> "filesystem:" + str)
-                .collect(Collectors.toList());
+    /**
+     * @return The location of the migration containing the test data.
+     * See {@link org.flywaydb.core.api.configuration.FluentConfiguration#locations(String...)}
+     */
+    protected String getTestDataMigrationLocation() {
+        Objects.requireNonNull(testDataDir);
+
+        if (!Files.isDirectory(testDataDir)) {
+            throw new RuntimeException(LogUtil.message("Can't find directory {}",
+                    testDataDir.normalize().toAbsolutePath().toString()));
+        }
+        return FILE_SYSTEM_LOCATION_PREFIX + testDataDir.normalize().toAbsolutePath();
     }
 
     public T_CONN_PROV getDataSource() {
@@ -193,9 +196,12 @@ public abstract class AbstractSingleFlywayMigrationTest<
                 .replaceAll("__.*$", "");
 
         targetVersion = MigrationVersion.fromVersion(versionUnderTest);
-        LOGGER.info("Using target version number {}", targetVersion);
+        LOGGER.debug("Using target version number {}", targetVersion);
     }
 
+    /**
+     * @return The version being tested
+     */
     protected MigrationVersion getTargetVersion() {
         if (targetVersion == null) {
             setupTargetVersion();
@@ -221,7 +227,7 @@ public abstract class AbstractSingleFlywayMigrationTest<
                 .append(".1");
 
         testDataVersion = MigrationVersion.fromVersion(sb.toString());
-        LOGGER.info("Using test data version number {}", testDataVersion);
+        LOGGER.debug("Using test data version number {}", testDataVersion);
     }
 
     private MigrationVersion getTestDataVersion() {

@@ -34,13 +34,18 @@ public abstract class AbstractFlyWayDbModule<T_CONFIG extends AbstractDbConfig, 
 
     protected abstract String getFlyWayTableName();
 
-    protected abstract String getFlyWayLocation();
-
-    // TODO: 06/02/2023 Refactor so we only have this method
+    /**
+     * Provide a list of locations that flyway can look for migration scripts/classes in.
+     * See {@link FluentConfiguration#locations(String...)}.
+     */
     protected List<String> getFlyWayLocations() {
         return Collections.emptyList();
     }
 
+    /**
+     * @return An optional target version for flyway to migrate up to (inclusive).
+     * Intended to be overridden only by classes testing specific migrations.
+     */
     protected Optional<MigrationVersion> getMigrationTarget() {
         return Optional.empty();
     }
@@ -55,22 +60,24 @@ public abstract class AbstractFlyWayDbModule<T_CONFIG extends AbstractDbConfig, 
     protected void performMigration(final DataSource dataSource) {
         LOGGER.info(LogUtil.inBoxOnNewLine("Migrating database module: {}", getModuleName()));
 
-        final String[] locations = Stream.concat(
-                        Stream.of(getFlyWayLocation()),
-                        NullSafe.nonNullList(getFlyWayLocations()).stream())
+        final String[] migrationLocations = NullSafe.nonNullList(getFlyWayLocations())
+                .stream()
                 .filter(Objects::nonNull)
                 .distinct()
                 .toArray(String[]::new);
 
         final FluentConfiguration fluentConfiguration = Flyway.configure()
                 .dataSource(dataSource)
-                .locations(locations)
+                .locations(migrationLocations)
                 .table(getFlyWayTableName())
                 .baselineOnMigrate(true);
 
         // Set the target for the migration, i.e. only migrate up to this point.
         // Used for testing migrations.
-        getMigrationTarget().ifPresent(fluentConfiguration::target);
+        getMigrationTarget().ifPresent(target -> {
+            LOGGER.info("Migrating with target version (inc.): {}", target);
+            fluentConfiguration.target(target);
+        });
 
         final Flyway flyway = fluentConfiguration.load();
 
@@ -84,11 +91,11 @@ public abstract class AbstractFlyWayDbModule<T_CONFIG extends AbstractDbConfig, 
 
         try {
             LOGGER.info("{} - Validating existing and pending Flyway DB migration(s) ({}) " +
-                            "using history table '{}' from path {}",
+                            "using history table '{}' from paths '{}'",
                     getModuleName(),
                     statesInfo,
                     getFlyWayTableName(),
-                    getFlyWayLocation());
+                    String.join(", ", migrationLocations));
 
             // This will see if anything needs doing
             final int migrationsApplied = flyway.migrate();
@@ -99,14 +106,40 @@ public abstract class AbstractFlyWayDbModule<T_CONFIG extends AbstractDbConfig, 
                         migrationsApplied,
                         getFlyWayTableName());
             } else {
-                LOGGER.info("{} - No Flyway DB migration(s) applied in path {}",
+                LOGGER.info("{} - No Flyway DB migration(s) applied in paths '{}'",
                         getModuleName(),
-                        getFlyWayLocation());
+                        String.join(", ", migrationLocations));
             }
 
         } catch (FlywayException e) {
             LOGGER.error("{} - Error migrating database: {}", getModuleName(), e.getMessage(), e);
             throw e;
         }
+    }
+
+    /**
+     * Combine two lists of flyway migration locations
+     */
+    protected static List<String> mergeLocations(
+            final List<String> locations1,
+            final List<String> locations2) {
+        return Stream.concat(
+                        NullSafe.nonNullList(locations1).stream(),
+                        NullSafe.nonNullList(locations2).stream())
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Combine two lists of flyway migration locations
+     */
+    protected static List<String> mergeLocations(
+            final List<String> locations1,
+            final String location2) {
+        return Stream.concat(
+                        NullSafe.nonNullList(locations1).stream(),
+                        Stream.of(location2))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 }
