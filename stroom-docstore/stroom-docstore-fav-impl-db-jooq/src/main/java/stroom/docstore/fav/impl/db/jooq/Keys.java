@@ -24,6 +24,6 @@ public class Keys {
     // UNIQUE and PRIMARY KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final UniqueKey<DocFavouriteRecord> KEY_DOC_FAVOURITE_DOC_FAVOURITE_FK_DOC_TYPE_DOC_UUID_USER_UUID = Internal.createUniqueKey(DocFavourite.DOC_FAVOURITE, DSL.name("KEY_doc_favourite_doc_favourite_fk_doc_type_doc_uuid_user_uuid"), new TableField[] { DocFavourite.DOC_FAVOURITE.DOC_TYPE, DocFavourite.DOC_FAVOURITE.DOC_UUID, DocFavourite.DOC_FAVOURITE.USER_UUID }, true);
+    public static final UniqueKey<DocFavouriteRecord> KEY_DOC_FAVOURITE_DOC_FAVOURITE_FK_EXPLORER_NODE_TYPE_EXPLORER_NODE_UUID_USER_UUID = Internal.createUniqueKey(DocFavourite.DOC_FAVOURITE, DSL.name("KEY_doc_favourite_doc_favourite_fk_explorer_node_type_explorer_node_uuid_user_uuid"), new TableField[] { DocFavourite.DOC_FAVOURITE.DOC_TYPE, DocFavourite.DOC_FAVOURITE.DOC_UUID, DocFavourite.DOC_FAVOURITE.USER_UUID }, true);
     public static final UniqueKey<DocFavouriteRecord> KEY_DOC_FAVOURITE_PRIMARY = Internal.createUniqueKey(DocFavourite.DOC_FAVOURITE, DSL.name("KEY_doc_favourite_PRIMARY"), new TableField[] { DocFavourite.DOC_FAVOURITE.ID }, true);
 }

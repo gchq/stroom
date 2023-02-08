@@ -22,6 +22,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.NodeState;
+import stroom.explorer.shared.ExplorerNodeKey;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
@@ -46,7 +47,7 @@ public class ExplorerTreeModel {
             .type("")
             .build());
 
-    private final OpenItems<String> openItems = new OpenItems<>();
+    private final OpenItems<ExplorerNodeKey> openItems = new OpenItems<>();
     private final NameFilterTimer timer = new NameFilterTimer();
     private final ExplorerTreeFilterBuilder explorerTreeFilterBuilder = new ExplorerTreeFilterBuilder();
     private final AbstractExplorerTree explorerTree;
@@ -54,7 +55,7 @@ public class ExplorerTreeModel {
     private final RestFactory restFactory;
 
     private Integer minDepth = 1;
-    private Set<String> ensureVisible;
+    private Set<ExplorerNodeKey> ensureVisible;
 
     private FindExplorerNodeCriteria currentCriteria;
     private boolean fetching;
@@ -102,8 +103,8 @@ public class ExplorerTreeModel {
         if (ensureVisible != null) {
             this.ensureVisible = new HashSet<>();
             for (ExplorerNode node : ensureVisible) {
-                if (node != null && node.getUuid() != null) {
-                    this.ensureVisible.add(node.getUuid());
+                if (node != null && node.getUniqueKey() != null) {
+                    this.ensureVisible.add(node.getUniqueKey());
                 }
             }
         }
@@ -114,8 +115,8 @@ public class ExplorerTreeModel {
         if (ensureVisible != null) {
             this.ensureVisible = new HashSet<>();
             for (ExplorerNode node : ensureVisible) {
-                if (node != null && node.getUuid() != null) {
-                    this.ensureVisible.add(node.getUuid());
+                if (node != null && node.getUniqueKey() != null) {
+                    this.ensureVisible.add(node.getUniqueKey());
                 }
             }
         }
@@ -173,7 +174,7 @@ public class ExplorerTreeModel {
                             // folders these were so we can add them to the set of open folders to ensure they
                             // aren't immediately closed on the next refresh.
                             if (result.getOpenedItems() != null) {
-                                for (final String openedItem : result.getOpenedItems()) {
+                                for (final ExplorerNodeKey openedItem : result.getOpenedItems()) {
                                     openItems.open(openedItem);
                                 }
                             }
@@ -193,10 +194,10 @@ public class ExplorerTreeModel {
                             // that try and select one of the folders that has been forced open in an attempt to
                             // make the requested item visible.
                             if (criteria.getEnsureVisible() != null && criteria.getEnsureVisible().size() > 0) {
-                                String uuid = criteria.getEnsureVisible().iterator().next();
+                                ExplorerNodeKey uniqueKey = criteria.getEnsureVisible().iterator().next();
                                 ExplorerNode nextSelection = null;
-                                if (uuid != null) {
-                                    nextSelection = ExplorerNode.create(new DocRef(null, uuid));
+                                if (uniqueKey != null) {
+                                    nextSelection = ExplorerNode.create(new DocRef(null, uniqueKey.getUuid()));
                                 }
 
                                 // If we are allowing null selection then select the NULL node if we have been
@@ -211,9 +212,9 @@ public class ExplorerTreeModel {
                                     if (result.getOpenedItems() != null) {
                                         final int openedItemsCnt = result.getOpenedItems().size();
                                         for (int i = openedItemsCnt - 1; i >= 0 && nextSelection == null; i--) {
-                                            final String item = result.getOpenedItems().get(i);
+                                            final ExplorerNodeKey item = result.getOpenedItems().get(i);
                                             final ExplorerNode explorerNode = ExplorerNode.create(
-                                                    new DocRef(null, item));
+                                                    new DocRef(null, item.getUuid()));
                                             if (rows.contains(explorerNode)) {
                                                 nextSelection = explorerNode;
                                             }
@@ -272,9 +273,9 @@ public class ExplorerTreeModel {
 
     private void addToRows(final List<ExplorerNode> in,
                            final List<ExplorerNode> rows,
-                           final Set<String> openItems) {
+                           final Set<ExplorerNodeKey> openItems) {
         for (ExplorerNode parent : in) {
-            if (openItems.contains(parent.getUuid())) {
+            if (openItems.contains(parent.getUniqueKey())) {
                 final ExplorerNode.Builder builder = parent.copy();
                 if (!NodeState.LEAF.equals(parent.getNodeState())) {
                     builder.nodeState(NodeState.OPEN);
@@ -317,15 +318,15 @@ public class ExplorerTreeModel {
 
     public void setItemOpen(final ExplorerNode item, final boolean open) {
         if (item != null) {
-            if (open != openItems.isOpen(item.getUuid())) {
-                refresh(openItems.toggleOpenState(item.getUuid()));
+            if (open != openItems.isOpen(item.getUniqueKey())) {
+                refresh(openItems.toggleOpenState(item.getUniqueKey()));
             }
         }
     }
 
     public void toggleOpenState(final ExplorerNode item) {
         if (item != null) {
-            refresh(openItems.toggleOpenState(item.getUuid()));
+            refresh(openItems.toggleOpenState(item.getUniqueKey()));
         }
     }
 

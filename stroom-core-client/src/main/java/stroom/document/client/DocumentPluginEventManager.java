@@ -105,6 +105,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -376,9 +377,9 @@ public class DocumentPluginEventManager extends Plugin {
     private boolean isFavouritesRootNode(final ExplorerNode node) {
         if (node == null) {
             return false;
+        } else {
+            return Objects.equals(ExplorerConstants.FAVOURITES_DOC_REF, node.getDocRef());
         }
-
-        return ExplorerConstants.FAVOURITES_DOC_REF.equals(node.getDocRef());
     }
 
     /**
@@ -387,10 +388,11 @@ public class DocumentPluginEventManager extends Plugin {
     private boolean isFavouritesNode(final ExplorerNode node) {
         if (node == null) {
             return false;
+        } else {
+            final String rootNodeUuid = node.getRootNodeUuid();
+            return isFavouritesRootNode(node) ||
+                    Objects.equals(ExplorerConstants.FAVOURITES_DOC_REF.getUuid(), rootNodeUuid);
         }
-
-        return isFavouritesRootNode(node) ||
-                node.getParent() != null && ExplorerConstants.FAVOURITES.equals(node.getParent().getType());
     }
 
     private void showItemContextMenu(final ShowExplorerMenuEvent event,
@@ -641,10 +643,15 @@ public class DocumentPluginEventManager extends Plugin {
         }
 
         fetchPermissions(explorerNodes, documentPermissions ->
-                documentTypeCache.fetch(documentTypes ->
+                documentTypeCache.fetch(documentTypes -> {
+                    if (documentPermissions.containsKey(explorerNode)) {
                         future.setResult(createNewMenuItems(explorerNode,
                                 documentPermissions.get(explorerNode),
-                                documentTypes))));
+                                documentTypes));
+                    } else {
+                        future.setResult(Collections.emptyList());
+                    }
+                }));
         return future;
     }
 
@@ -674,8 +681,10 @@ public class DocumentPluginEventManager extends Plugin {
     private void addFavouritesMenuItem(final List<Item> menuItems, final boolean singleSelection) {
         final ExplorerNode primarySelection = getPrimarySelection();
 
-        // Add the favourites menu item if an item is selected, and it's not a folder
-        if (singleSelection && primarySelection != null && !DocumentTypes.isFolder(primarySelection.getType())) {
+        // Add the favourites menu item if an item is selected, and it's not a root-level node or a favourite folder
+        // item
+        if (singleSelection && primarySelection != null && primarySelection.getDepth() > 0 &&
+                (primarySelection.getDepth() == 1 || !isFavouritesNode(primarySelection))) {
             final boolean isFavourite = primarySelection.getIsFavourite();
             menuItems.add(new IconMenuItem(
                     1,
@@ -701,7 +710,7 @@ public class DocumentPluginEventManager extends Plugin {
                                 final ExplorerNode primarySelection,
                                 final DocumentTypes documentTypes) {
         // Only allow the new menu to appear if we have a single selection.
-        if (singleSelection && !isFavouritesNode(primarySelection)) {
+        if (singleSelection && primarySelection != null && DocumentTypes.isFolder(primarySelection.getType())) {
             // Add 'New' menu item.
             final ExplorerNodePermissions documentPermissions = documentPermissionMap.get(primarySelection);
             final List<Item> children = createNewMenuItems(primarySelection, documentPermissions,
@@ -825,13 +834,11 @@ public class DocumentPluginEventManager extends Plugin {
         menuItems.add(createRenameMenuItem(updatableItems, 6, isRenameEnabled));
         menuItems.add(createDeleteMenuItem(deletableItems, 7, allowDelete));
 
-        if (!isFavouritesNode(getPrimarySelection())) {
-            if (securityContext.hasAppPermission(PermissionNames.IMPORT_CONFIGURATION)) {
-                menuItems.add(createImportMenuItem(8));
-            }
-            if (securityContext.hasAppPermission(PermissionNames.EXPORT_CONFIGURATION)) {
-                menuItems.add(createExportMenuItem(9, readableItems));
-            }
+        if (securityContext.hasAppPermission(PermissionNames.IMPORT_CONFIGURATION)) {
+            menuItems.add(createImportMenuItem(8));
+        }
+        if (securityContext.hasAppPermission(PermissionNames.EXPORT_CONFIGURATION)) {
+            menuItems.add(createExportMenuItem(9, readableItems));
         }
 
         // Only allow users to change permissions if they have a single item selected.

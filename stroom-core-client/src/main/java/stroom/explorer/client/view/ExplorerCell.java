@@ -1,8 +1,8 @@
 package stroom.explorer.client.view;
 
-import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.svg.client.SvgPresets;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
@@ -86,9 +86,10 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
             }
 
             // If the item is a favourite and not part of the Favourites node, display a star next to it
-            if (item.getIsFavourite() && !ExplorerConstants.FAVOURITES_DOC_REF.equals(item.getParent().getDocRef())) {
+            if (item.getIsFavourite() && item.getRootNodeUuid() != null &&
+                    !ExplorerConstants.FAVOURITES_DOC_REF.getUuid().equals(item.getRootNodeUuid())) {
                 favIconHtml = template.favIcon(
-                        DocumentType.DOC_IMAGE_CLASS_NAME + ExplorerConstants.FAVOURITES,
+                        SvgPresets.FAVOURITES.getClassName() + " small",
                         "Item is a favourite");
             }
 

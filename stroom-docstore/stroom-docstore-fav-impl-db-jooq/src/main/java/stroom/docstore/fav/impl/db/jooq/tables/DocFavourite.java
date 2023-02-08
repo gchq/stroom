@@ -10,6 +10,7 @@ import java.util.List;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
+import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Row5;
@@ -22,6 +23,7 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
+import stroom.docstore.fav.impl.db.jooq.Indexes;
 import stroom.docstore.fav.impl.db.jooq.Keys;
 import stroom.docstore.fav.impl.db.jooq.Stroom;
 import stroom.docstore.fav.impl.db.jooq.tables.records.DocFavouriteRecord;
@@ -112,6 +114,11 @@ public class DocFavourite extends TableImpl<DocFavouriteRecord> {
     }
 
     @Override
+    public List<Index> getIndexes() {
+        return Arrays.asList(Indexes.DOC_FAVOURITE_DOC_FAVOURITE_FK_DOC_TYPE_DOC_UUID);
+    }
+
+    @Override
     public Identity<DocFavouriteRecord, Long> getIdentity() {
         return (Identity<DocFavouriteRecord, Long>) super.getIdentity();
     }
@@ -123,7 +130,7 @@ public class DocFavourite extends TableImpl<DocFavouriteRecord> {
 
     @Override
     public List<UniqueKey<DocFavouriteRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.KEY_DOC_FAVOURITE_DOC_FAVOURITE_FK_DOC_TYPE_DOC_UUID_USER_UUID);
+        return Arrays.asList(Keys.KEY_DOC_FAVOURITE_DOC_FAVOURITE_FK_EXPLORER_NODE_TYPE_EXPLORER_NODE_UUID_USER_UUID);
     }
 
     @Override

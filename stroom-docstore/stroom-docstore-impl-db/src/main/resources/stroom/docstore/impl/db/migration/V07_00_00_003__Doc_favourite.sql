@@ -27,12 +27,12 @@ CREATE TABLE IF NOT EXISTS `doc_favourite`
     PRIMARY KEY (`id`),
     KEY `doc_favourite_fk_doc_type_doc_uuid` (`doc_type`, `doc_uuid`),
     KEY `doc_favourite_fk_user_uuid` (`user_uuid`),
-    UNIQUE KEY `doc_favourite_fk_doc_type_doc_uuid_user_uuid` (`doc_type`, `doc_uuid`, `user_uuid`),
+    UNIQUE KEY `doc_favourite_fk_explorer_node_type_explorer_node_uuid_user_uuid` (`doc_type`, `doc_uuid`, `user_uuid`),
     CONSTRAINT `doc_favourite_fk_user_uuid` FOREIGN KEY (`user_uuid`)
         REFERENCES `stroom`.`stroom_user` (`uuid`)
         ON DELETE CASCADE,
-    CONSTRAINT `doc_favourite_fk_doc_type_doc_uuid` FOREIGN KEY (`doc_type`, `doc_uuid`)
-        REFERENCES `stroom`.`doc` (`type`, `uuid`)
+    CONSTRAINT `doc_favourite_fk_explorer_node_type_explorer_node_uuid` FOREIGN KEY (`doc_type`, `doc_uuid`)
+        REFERENCES `stroom`.`explorer_node` (`type`, `uuid`)
         ON DELETE CASCADE
 ) ENGINE = InnoDB
   AUTO_INCREMENT = 446

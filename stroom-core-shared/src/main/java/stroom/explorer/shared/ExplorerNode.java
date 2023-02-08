@@ -51,9 +51,11 @@ public class ExplorerNode implements HasDisplayValue {
     @JsonProperty
     private final List<ExplorerNode> children;
     @JsonProperty
-    private final ExplorerNode parent;
+    private final String rootNodeUuid;
     @JsonProperty
     private final boolean isFavourite;
+    @JsonProperty
+    private final ExplorerNodeKey uniqueKey;
 
     @JsonCreator
     public ExplorerNode(@JsonProperty("type") final String type,
@@ -64,8 +66,9 @@ public class ExplorerNode implements HasDisplayValue {
                         @JsonProperty("iconClassName") final String iconClassName,
                         @JsonProperty("nodeState") final NodeState nodeState,
                         @JsonProperty("children") final List<ExplorerNode> children,
-                        @JsonProperty("parent") final ExplorerNode parent,
-                        @JsonProperty("isFavourite") final boolean isFavourite) {
+                        @JsonProperty("rootNodeUuid") final String rootNodeUuid,
+                        @JsonProperty("isFavourite") final boolean isFavourite,
+                        @JsonProperty("uniqueKey") final ExplorerNodeKey uniqueKey) {
         this.type = type;
         this.uuid = uuid;
         this.name = name;
@@ -74,8 +77,9 @@ public class ExplorerNode implements HasDisplayValue {
         this.iconClassName = iconClassName;
         this.nodeState = nodeState;
         this.children = children;
-        this.parent = parent;
+        this.rootNodeUuid = rootNodeUuid;
         this.isFavourite = isFavourite;
+        this.uniqueKey = uniqueKey;
     }
 
     public static ExplorerNode create(final DocRef docRef) {
@@ -122,8 +126,8 @@ public class ExplorerNode implements HasDisplayValue {
         return children;
     }
 
-    public ExplorerNode getParent() {
-        return parent;
+    public String getRootNodeUuid() {
+        return rootNodeUuid;
     }
 
     public boolean getIsFavourite() {
@@ -141,6 +145,10 @@ public class ExplorerNode implements HasDisplayValue {
         return name;
     }
 
+    public ExplorerNodeKey getUniqueKey() {
+        return uniqueKey;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -150,12 +158,12 @@ public class ExplorerNode implements HasDisplayValue {
             return false;
         }
         final ExplorerNode that = (ExplorerNode) o;
-        return uuid.equals(that.uuid) && Objects.equals(parent, that.parent);
+        return Objects.equals(uniqueKey, that.uniqueKey);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uuid, parent);
+        return Objects.hashCode(uniqueKey);
     }
 
     @Override
@@ -187,7 +195,7 @@ public class ExplorerNode implements HasDisplayValue {
         private String iconClassName;
         private NodeState nodeState;
         private List<ExplorerNode> children;
-        private ExplorerNode parent;
+        private String rootNodeUuid;
         private boolean isFavourite;
 
         private Builder() {
@@ -202,7 +210,7 @@ public class ExplorerNode implements HasDisplayValue {
             this.iconClassName = explorerNode.iconClassName;
             this.nodeState = explorerNode.nodeState;
             this.children = explorerNode.children;
-            this.parent = explorerNode.parent;
+            this.rootNodeUuid = explorerNode.rootNodeUuid;
             this.isFavourite = explorerNode.isFavourite;
         }
 
@@ -254,8 +262,13 @@ public class ExplorerNode implements HasDisplayValue {
             return this;
         }
 
-        public Builder parent(final ExplorerNode parent) {
-            this.parent = parent;
+        public Builder rootNodeUuid(final String rootNodeUuid) {
+            this.rootNodeUuid = rootNodeUuid;
+            return this;
+        }
+
+        public Builder rootNodeUuid(final ExplorerNode rootNodeUuid) {
+            this.rootNodeUuid = rootNodeUuid != null ? rootNodeUuid.getUuid() : null;
             return this;
         }
 
@@ -274,8 +287,9 @@ public class ExplorerNode implements HasDisplayValue {
                     iconClassName,
                     nodeState,
                     children,
-                    parent,
-                    isFavourite);
+                    rootNodeUuid,
+                    isFavourite,
+                    new ExplorerNodeKey(uuid, rootNodeUuid));
         }
     }
 }

@@ -7,6 +7,7 @@ import stroom.explorer.impl.ExplorerTreeDao;
 import stroom.explorer.impl.ExplorerTreeNode;
 import stroom.explorer.impl.ExplorerTreePath;
 import stroom.explorer.impl.TreeModel;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 
 import org.jooq.Condition;

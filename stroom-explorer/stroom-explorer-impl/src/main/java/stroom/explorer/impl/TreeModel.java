@@ -3,68 +3,49 @@ package stroom.explorer.impl;
 import stroom.explorer.shared.ExplorerNode;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
-public class TreeModel {
-
-    private final long id;
-    private final long creationTime;
-    private final Map<String, ExplorerNode> parentMap = new HashMap<>();
-    private final Map<String, List<ExplorerNode>> childMap = new HashMap<>();
+public class TreeModel extends AbstractTreeModel<String> implements Cloneable {
 
     public TreeModel(final long id, final long creationTime) {
-        this.id = id;
-        this.creationTime = creationTime;
+        super(id, creationTime);
     }
 
+    @Override
     public void add(final ExplorerNode parent, final ExplorerNode child) {
         parentMap.put(child != null
                 ? child.getUuid()
                 : null, parent);
-        final ExplorerNode childWithParent = child != null ? child.copy().parent(parent).build() : null;
         childMap.computeIfAbsent(parent != null
                 ? parent.getUuid()
-                : null, k -> new ArrayList<>()).add(childWithParent);
+                : null, k -> new ArrayList<>()).add(child);
     }
 
-    long getId() {
-        return id;
-    }
-
-    long getCreationTime() {
-        return creationTime;
-    }
-
-    Set<String> getAllParents() {
-        return childMap.keySet();
-    }
-
-    ExplorerNode getParent(final String childUuid) {
-        if (childUuid == null) {
-            return null;
-        }
-        return parentMap.get(childUuid);
-    }
-
-    ExplorerNode getParent(final ExplorerNode child) {
+    public ExplorerNode getParent(final ExplorerNode child) {
         if (child == null) {
             return null;
         }
         return parentMap.get(child.getUuid());
     }
 
-    List<ExplorerNode> getChildren(final ExplorerNode parent) {
+    public List<ExplorerNode> getChildren(final ExplorerNode parent) {
         if (parent == null) {
             return childMap.get(null);
         }
         return childMap.get(parent.getUuid());
     }
 
-    Collection<List<ExplorerNode>> values() {
-        return childMap.values();
+    @Override
+    public TreeModel clone() {
+        try {
+            final TreeModel treeModel = (TreeModel) super.clone();
+            treeModel.parentMap = new HashMap<>(parentMap);
+            treeModel.childMap = new HashMap<>();
+            childMap.forEach((key, value) -> treeModel.childMap.put(key, new ArrayList<>(value)));
+            return treeModel;
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
     }
 }

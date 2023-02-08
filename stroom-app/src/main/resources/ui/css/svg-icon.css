@@ -79,6 +79,11 @@
 .svgIcon-favourites {
   background-image: url("../images/favourites.svg");
 }
+.svgIcon-favourites.small {
+  background-size: 80%;
+  background-repeat: no-repeat;
+  background-position: center;
+}
 .svgIcon-favourites-outline {
   background-image: url("../images/favourites-outline.svg");
 }

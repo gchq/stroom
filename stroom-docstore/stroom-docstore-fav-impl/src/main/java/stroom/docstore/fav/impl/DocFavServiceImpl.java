@@ -5,6 +5,8 @@ import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.docstore.fav.api.DocFavService;
 import stroom.explorer.api.ExplorerService;
 import stroom.security.api.SecurityContext;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.util.List;
 import java.util.Objects;
@@ -12,6 +14,8 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 
 public class DocFavServiceImpl implements DocFavService {
+
+    private final static LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocFavServiceImpl.class);
 
     private final DocFavDao docFavDao;
     private final SecurityContext securityContext;
@@ -51,7 +55,17 @@ public class DocFavServiceImpl implements DocFavService {
         Objects.requireNonNull(userId);
         return docFavDao.getUserDocFavs(userId)
                 .stream()
-                .map(docRef -> docRefInfoService.get().decorate(docRef))
+                .map(docRef -> {
+                    try {
+                        return docRefInfoService.get().decorate(docRef);
+                    } catch (RuntimeException e) {
+                        // Doc info couldn't be found, probably due to a document that exists in the `explorer_node`
+                        // table, but not `doc`.
+                        LOGGER.error("Missing doc referenced by favourite: {}, user: {}", docRef, userId);
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
                 .toList();
     }
 
