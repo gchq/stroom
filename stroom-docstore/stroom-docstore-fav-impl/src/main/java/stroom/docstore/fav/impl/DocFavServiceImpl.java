@@ -15,7 +15,7 @@ import javax.inject.Provider;
 
 public class DocFavServiceImpl implements DocFavService {
 
-    private final static LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocFavServiceImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocFavServiceImpl.class);
 
     private final DocFavDao docFavDao;
     private final SecurityContext securityContext;
