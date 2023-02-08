@@ -17,6 +17,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder(alphabetic = true)
 public class DataStoreServiceConfig extends AbstractConfig implements HasDbConfig {
 
+    public static final String PROP_NAME_DELETE_PURGE_AGE = "deletePurgeAge";
+
     private final DataStoreServiceDbConfig dbConfig;
     private StroomDuration deletePurgeAge;
     private final int deleteBatchSize;
@@ -37,7 +39,7 @@ public class DataStoreServiceConfig extends AbstractConfig implements HasDbConfi
     @SuppressWarnings("unused")
     @JsonCreator
     public DataStoreServiceConfig(@JsonProperty("db") final DataStoreServiceDbConfig dbConfig,
-                                  @JsonProperty("deletePurgeAge") final StroomDuration deletePurgeAge,
+                                  @JsonProperty(PROP_NAME_DELETE_PURGE_AGE) final StroomDuration deletePurgeAge,
                                   @JsonProperty("deleteBatchSize") final int deleteBatchSize,
                                   @JsonProperty("fileSystemCleanBatchSize") final int fileSystemCleanBatchSize,
                                   @JsonProperty("fileSystemCleanDeleteOut") final boolean fileSystemCleanDeleteOut,

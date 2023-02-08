@@ -13,10 +13,13 @@ import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.SelectionSummary;
+import stroom.meta.shared.SimpleMeta;
 import stroom.meta.shared.Status;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
 
+import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -64,7 +67,7 @@ public interface MetaDao {
 
     int updateStatus(FindMetaCriteria criteria, Status currentStatus, Status newStatus, long statusTime);
 
-    int delete(List<Long> metaIdList);
+    int delete(Collection<Long> metaIds);
 
     List<DataRetentionDeleteSummary> getRetentionDeletionSummary(final DataRetentionRules rules,
                                                                  final FindDataRetentionImpactCriteria criteria);
@@ -87,4 +90,12 @@ public interface MetaDao {
     List<String> getProcessorUuidList(FindMetaCriteria criteria);
 
     Set<EffectiveMeta> getEffectiveStreams(EffectiveMetaDataCriteria effectiveMetaDataCriteria);
+
+    /**
+     * Get a batch of logically deleted {@link SimpleMeta} records that are older than {@code deleteThreshold}.
+     * Gets a batch of the youngest ones matching that condition.
+     */
+    List<SimpleMeta> getLogicallyDeleted(Instant deleteThreshold,
+                                         int batchSize,
+                                         final Set<Long> metaIdExcludeSet);
 }

@@ -35,6 +35,8 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.SelectionSummary;
+import stroom.meta.shared.SimpleMeta;
+import stroom.meta.shared.SimpleMetaImpl;
 import stroom.meta.shared.Status;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionItem;
@@ -67,6 +69,7 @@ import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.Record2;
 import org.jooq.Record4;
+import org.jooq.Record5;
 import org.jooq.Result;
 import org.jooq.Select;
 import org.jooq.SelectConditionStep;
@@ -1487,11 +1490,15 @@ public class MetaDaoImpl implements MetaDao, Clearable {
 
 
     @Override
-    public int delete(final List<Long> metaIdList) {
-        return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                .deleteFrom(meta)
-                .where(meta.ID.in(metaIdList))
-                .execute());
+    public int delete(final Collection<Long> metaIds) {
+        if (NullSafe.hasItems(metaIds)) {
+            return JooqUtil.contextResult(metaDbConnProvider, context -> context
+                    .deleteFrom(meta)
+                    .where(meta.ID.in(metaIds))
+                    .execute());
+        } else {
+            return 0;
+        }
     }
 
     @Override
@@ -1664,6 +1671,56 @@ public class MetaDaoImpl implements MetaDao, Clearable {
                 streamsInOrBelowRange.size(), effectiveMetaDataCriteria));
 
         return new HashSet<>(streamsInOrBelowRange);
+    }
+
+    @Override
+    public List<SimpleMeta> getLogicallyDeleted(final Instant deleteThreshold,
+                                                final int batchSize,
+                                                final Set<Long> metaIdExcludeSet) {
+        LOGGER.debug(() -> LogUtil.message("getLogicallyDeleted({}, {}, {} (size))",
+                deleteThreshold, batchSize, metaIdExcludeSet.size()));
+        Objects.requireNonNull(deleteThreshold);
+        final List<SimpleMeta> simpleMetas;
+        if (batchSize > 0) {
+            final byte statusIdDeleted = MetaStatusId.getPrimitiveValue(Status.DELETED);
+            // Get a batch starting from the cut off threshold and working backwards in time.
+            // This is so next time we can work from the previous min status time.
+            simpleMetas = JooqUtil.contextResult(metaDbConnProvider, context -> {
+                var select = context
+                        .select(
+                                meta.ID,
+                                metaType.NAME,
+                                metaFeed.NAME,
+                                meta.CREATE_TIME,
+                                meta.STATUS_TIME)
+                        .from(meta)
+                        .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                        .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                        .where(meta.STATUS.eq(statusIdDeleted))
+                        .and(meta.STATUS_TIME.lessOrEqual(deleteThreshold.toEpochMilli()));
+
+                // Here to stop us trying to pick up any failed ones from the previous batch
+                if (NullSafe.hasItems(metaIdExcludeSet)) {
+                    select.and(meta.ID.notIn(metaIdExcludeSet));
+                }
+                return select.orderBy(meta.STATUS_TIME.desc())
+                        .limit(batchSize)
+                        .fetch(this::mapToSimpleMeta);
+            });
+        } else {
+            simpleMetas = Collections.emptyList();
+        }
+        LOGGER.debug(() -> LogUtil.message("Found {} meta records", simpleMetas.size()));
+        return simpleMetas;
+    }
+
+    private SimpleMeta mapToSimpleMeta(final Record5<Long, String, String, Long, Long> record) {
+        return new SimpleMetaImpl(
+                record.get(meta.ID, long.class),
+                record.get(metaType.NAME, String.class),
+                record.get(metaFeed.NAME, String.class),
+                record.get(meta.CREATE_TIME, long.class),
+                record.get(meta.STATUS_TIME, Long.class));
     }
 
     public boolean validateExpressionTerms(final ExpressionItem expressionItem) {

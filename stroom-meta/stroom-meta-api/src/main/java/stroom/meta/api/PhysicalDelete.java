@@ -1,8 +1,8 @@
 package stroom.meta.api;
 
-import java.util.List;
+import java.util.Collection;
 
 public interface PhysicalDelete {
 
-    void cleanup(List<Long> idList);
+    void cleanup(Collection<Long> ids);
 }
