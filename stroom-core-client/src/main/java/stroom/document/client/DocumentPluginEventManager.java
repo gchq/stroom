@@ -710,7 +710,7 @@ public class DocumentPluginEventManager extends Plugin {
                                 final ExplorerNode primarySelection,
                                 final DocumentTypes documentTypes) {
         // Only allow the new menu to appear if we have a single selection.
-        if (singleSelection && primarySelection != null && DocumentTypes.isFolder(primarySelection.getType())) {
+        if (singleSelection && primarySelection != null) {
             // Add 'New' menu item.
             final ExplorerNodePermissions documentPermissions = documentPermissionMap.get(primarySelection);
             final List<Item> children = createNewMenuItems(primarySelection, documentPermissions,

@@ -197,7 +197,10 @@ public class ExplorerTreeModel {
                                 ExplorerNodeKey uniqueKey = criteria.getEnsureVisible().iterator().next();
                                 ExplorerNode nextSelection = null;
                                 if (uniqueKey != null) {
-                                    nextSelection = ExplorerNode.create(new DocRef(null, uniqueKey.getUuid()));
+                                    nextSelection = ExplorerNode.create(new DocRef(null, uniqueKey.getUuid()))
+                                            .copy()
+                                            .rootNodeUuid(uniqueKey.getRootNodeUuid())
+                                            .build();
                                 }
 
                                 // If we are allowing null selection then select the NULL node if we have been
@@ -214,7 +217,10 @@ public class ExplorerTreeModel {
                                         for (int i = openedItemsCnt - 1; i >= 0 && nextSelection == null; i--) {
                                             final ExplorerNodeKey item = result.getOpenedItems().get(i);
                                             final ExplorerNode explorerNode = ExplorerNode.create(
-                                                    new DocRef(null, item.getUuid()));
+                                                    new DocRef(null, item.getUuid()))
+                                                    .copy()
+                                                    .rootNodeUuid(item.getRootNodeUuid())
+                                                    .build();
                                             if (rows.contains(explorerNode)) {
                                                 nextSelection = explorerNode;
                                             }
