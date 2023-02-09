@@ -55,7 +55,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -567,7 +566,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                                final String name,
                                final ExplorerNode destinationFolder,
                                final PermissionInheritance permissionInheritance) {
-        final DocRef folderRef = destinationFolder != null ? destinationFolder.getDocRef() : null;
+        final DocRef folderRef = getDestinationFolderRef(destinationFolder);
         final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);
 
         DocRef result;
@@ -594,6 +593,19 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 .docRef(result)
                 .rootNodeUuid(destinationFolder != null ? destinationFolder.getRootNodeUuid() : null)
                 .build();
+    }
+
+    /**
+     * Returns the DocRef of a destination folder
+     * @param destinationFolder If null, looks up the default root node
+     */
+    private DocRef getDestinationFolderRef(final ExplorerNode destinationFolder) {
+        if (destinationFolder != null) {
+            return destinationFolder.getDocRef();
+        }
+
+        final ExplorerNode rootNode = explorerNodeService.getRoot().orElse(null);
+        return rootNode != null ? rootNode.getDocRef() : null;
     }
 
     @Override
@@ -658,6 +670,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                       final StringBuilder resultMessage,
                       final Map<ExplorerNode, ExplorerNode> remappings) {
 
+        final DocRef destinationFolderRef = getDestinationFolderRef(destinationFolder);
+
         try {
             // Ensure we haven't already copied this item as part of a folder copy.
             if (!remappings.containsKey(sourceNode)) {
@@ -665,11 +679,10 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 final ExplorerActionHandler handler = explorerActionHandlers.getHandler(sourceNode.getType());
 
                 // Check that the user is allowed to create an item of this type in the destination folder.
-                checkCreatePermission(getUUID(destinationFolder.getDocRef()), sourceNode.getType());
+                checkCreatePermission(getUUID(destinationFolderRef), sourceNode.getType());
 
                 // Find out names of other items in the destination folder.
-                final Set<String> otherDestinationChildrenNames = explorerNodeService.getChildren(
-                        destinationFolder.getDocRef())
+                final Set<String> otherDestinationChildrenNames = explorerNodeService.getChildren(destinationFolderRef)
                         .stream()
                         .map(ExplorerNode::getDocRef)
                         .filter(docRef -> docRef.getType().equals(sourceNode.getType()))
@@ -679,7 +692,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 // Copy the item to the destination folder.
                 final DocRef destinationDocRef = handler.copyDocument(sourceNode.getDocRef(),
                         otherDestinationChildrenNames);
-                explorerEventLog.copy(sourceNode.getDocRef(), destinationFolder.getDocRef(), permissionInheritance,
+                explorerEventLog.copy(sourceNode.getDocRef(), destinationFolderRef, permissionInheritance,
                         null);
 
                 // Create the explorer node
@@ -687,19 +700,19 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     // Copy the explorer node.
                     explorerNodeService.copyNode(sourceNode.getDocRef(),
                             destinationDocRef,
-                            destinationFolder.getDocRef(),
+                            destinationFolderRef,
                             permissionInheritance);
 
                     // Record where the document got copied from -> to.
                     remappings.put(sourceNode, ExplorerNode.builder()
                             .docRef(destinationDocRef)
-                            .rootNodeUuid(destinationFolder.getRootNodeUuid())
+                            .rootNodeUuid(destinationFolder != null ? destinationFolder.getRootNodeUuid() : null)
                             .build());
                 }
             }
 
         } catch (final RuntimeException e) {
-            explorerEventLog.copy(sourceNode.getDocRef(), destinationFolder.getDocRef(), permissionInheritance, e);
+            explorerEventLog.copy(sourceNode.getDocRef(), destinationFolderRef, permissionInheritance, e);
             resultMessage.append("Unable to copy '");
             resultMessage.append(sourceNode.getName());
             resultMessage.append("' ");
@@ -752,7 +765,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     public BulkActionResult move(final List<ExplorerNode> explorerNodes,
                                  final ExplorerNode destinationFolder,
                                  final PermissionInheritance permissionInheritance) {
-        final DocRef folderRef = destinationFolder.getDocRef();
+        final DocRef folderRef = getDestinationFolderRef(destinationFolder);
         final List<ExplorerNode> resultNodes = new ArrayList<>();
         final StringBuilder resultMessage = new StringBuilder();
 

@@ -131,7 +131,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
             map.put(confirmation.getDocRef(), confirmation);
         }
 
-        assertThat(map.get(testNode).getState()).isEqualTo(State.EQUAL);
+        assertThat(map.get(testNode.getDocRef()).getState()).isEqualTo(State.EQUAL);
 
         eventFeed = feedStore.readDocument(testNode.getDocRef());
         eventFeed.setDescription("New Description");
@@ -153,8 +153,8 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         }
 
         assertThat(list.size() > 0).isTrue();
-        assertThat(map.get(testNode).getState()).isEqualTo(State.UPDATE);
-        assertThat(map.get(testNode).getUpdatedFieldList().contains("description")).isTrue();
+        assertThat(map.get(testNode.getDocRef()).getState()).isEqualTo(State.UPDATE);
+        assertThat(map.get(testNode.getDocRef()).getUpdatedFieldList().contains("description")).isTrue();
 
         // Remove all entities from the database.
         commonTestControl.clear();

@@ -116,7 +116,6 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
     private void test(final boolean skipVisCreation, final boolean skipVisExport, final boolean update) {
         deleteAllAndCheck();
 
-        final ExplorerNode systemNode = explorerNodeService.getRoot().orElse(null);
         final ExplorerNode folder1 = explorerService.create(
                 ExplorerConstants.FOLDER,
                 "Group1",
