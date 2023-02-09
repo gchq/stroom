@@ -88,9 +88,7 @@ public class ExplorerNode implements HasDisplayValue {
         }
         return ExplorerNode
                 .builder()
-                .type(docRef.getType())
-                .uuid(docRef.getUuid())
-                .name(docRef.getName())
+                .docRef(docRef)
                 .build();
     }
 

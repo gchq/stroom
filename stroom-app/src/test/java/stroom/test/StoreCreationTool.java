@@ -254,9 +254,7 @@ public final class StoreCreationTool {
         ExplorerNode feedNode;
         feedNode = explorerService.create(FeedDoc.DOCUMENT_TYPE,
                 feedName,
-                ExplorerNode.builder()
-                        .docRef(ExplorerConstants.SYSTEM_DOC_REF)
-                        .build(),
+                ExplorerConstants.SYSTEM_NODE,
                 PermissionInheritance.DESTINATION);
         if (feedNode == null) {
             // allow for a mocked explorer service
@@ -270,9 +268,7 @@ public final class StoreCreationTool {
         ExplorerNode textConverterNode;
         textConverterNode = explorerService.create(TextConverterDoc.DOCUMENT_TYPE,
                 name,
-                ExplorerNode.builder()
-                        .docRef(ExplorerConstants.SYSTEM_DOC_REF)
-                        .build(),
+                ExplorerConstants.SYSTEM_NODE,
                 PermissionInheritance.DESTINATION);
         if (textConverterNode == null) {
             // allow for a mocked explorer service
@@ -286,9 +282,7 @@ public final class StoreCreationTool {
         ExplorerNode xsltNode;
         xsltNode = explorerService.create(XsltDoc.DOCUMENT_TYPE,
                 name,
-                ExplorerNode.builder()
-                        .docRef(ExplorerConstants.SYSTEM_DOC_REF)
-                        .build(),
+                ExplorerConstants.SYSTEM_NODE,
                 PermissionInheritance.DESTINATION);
         if (xsltNode == null) {
             // allow for a mocked explorer service
@@ -302,9 +296,7 @@ public final class StoreCreationTool {
         ExplorerNode pipelineNode;
         pipelineNode = explorerService.create(PipelineDoc.DOCUMENT_TYPE,
                 name,
-                ExplorerNode.builder()
-                        .docRef(ExplorerConstants.SYSTEM_DOC_REF)
-                        .build(),
+                ExplorerConstants.SYSTEM_NODE,
                 PermissionInheritance.DESTINATION);
         if (pipelineNode == null) {
             // allow for a mocked explorer service
@@ -810,13 +802,10 @@ public final class StoreCreationTool {
 
         final PipelineDoc sourcePipeline = pipelineStore.readDocument(sourcePipelineDocRef);
 
-//        final DocRef newDocRef = pipelineStore.createDocument(newName);
-        ExplorerNode newNode = explorerService.create(
+        final ExplorerNode newNode = explorerService.create(
                 PipelineDoc.DOCUMENT_TYPE,
                 newName,
-                ExplorerNode.builder()
-                        .docRef(ExplorerConstants.SYSTEM_DOC_REF)
-                        .build(),
+                ExplorerConstants.SYSTEM_NODE,
                 PermissionInheritance.DESTINATION);
         final DocRef newDocRef = newNode != null
                 ? newNode.getDocRef()
@@ -982,9 +971,7 @@ public final class StoreCreationTool {
         LOGGER.info("Creating feed {} in {} with type {} encoding {}");
         ExplorerNode feedNode;
         feedNode = explorerService.create(FeedDoc.DOCUMENT_TYPE, feedName,
-                ExplorerNode.builder()
-                        .docRef(ExplorerConstants.SYSTEM_DOC_REF)
-                        .build(),
+                ExplorerConstants.SYSTEM_NODE,
                 PermissionInheritance.DESTINATION);
         final DocRef feedDocRef = feedNode != null ? feedNode.getDocRef() : feedStore.createDocument(feedName);
         FeedDoc feedDoc = feedStore.readDocument(feedDocRef);

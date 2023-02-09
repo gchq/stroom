@@ -200,18 +200,14 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
     private void buildFavouritesNode(final TreeModel masterTreeModel) {
         final ExplorerNode.Builder favNodeBuilder = ExplorerNode.builder()
-                .type(ExplorerConstants.FAVOURITES_DOC_REF.getType())
-                .uuid(ExplorerConstants.FAVOURITES_DOC_REF.getUuid())
-                .name(ExplorerConstants.FAVOURITES_DOC_REF.getName())
+                .docRef(ExplorerConstants.FAVOURITES_DOC_REF)
                 .depth(0)
                 .iconClassName(DocumentType.DOC_IMAGE_CLASS_NAME + ExplorerConstants.FAVOURITES);
         final ExplorerNode favNode = favNodeBuilder.build();
 
         for (final DocRef favDocRef : docFavService.get().fetchDocFavs()) {
             final ExplorerNode childNode = favNode.copy()
-                    .type(favDocRef.getType())
-                    .uuid(favDocRef.getUuid())
-                    .name(favDocRef.getName())
+                    .docRef(favDocRef)
                     .depth(1)
                     .iconClassName(DocumentType.DOC_IMAGE_CLASS_NAME + favDocRef.getType())
                     .isFavourite(true)
