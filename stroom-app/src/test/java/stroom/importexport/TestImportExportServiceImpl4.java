@@ -55,6 +55,9 @@ class TestImportExportServiceImpl4 extends AbstractCoreIntegrationTest {
             PipelineDoc.DOCUMENT_TYPE,
             "d6fb12ff-fb94-437e-90c3-b95372572efd",
             "DATA_SPLITTER-EVENTS");
+    private static final ExplorerNode PIPELINE_EXPLORER_NODE = ExplorerNode.builder()
+            .docRef(PIPELINE_DOC_REF)
+            .build();
 
     @Inject
     private ImportExportService importExportService;
@@ -173,7 +176,7 @@ class TestImportExportServiceImpl4 extends AbstractCoreIntegrationTest {
                 "Destination Folder",
                 "RENAMED_DATA_SPLITTER-EVENTS",
                 builder);
-        explorerService.delete(Collections.singletonList(PIPELINE_DOC_REF));
+        explorerService.delete(Collections.singletonList(PIPELINE_EXPLORER_NODE));
         confirmList = performImport(
                 confirmList,
                 zipFile,
@@ -197,7 +200,7 @@ class TestImportExportServiceImpl4 extends AbstractCoreIntegrationTest {
                 "DATA_SPLITTER-EVENTS",
                 builder);
 
-        explorerService.delete(Collections.singletonList(PIPELINE_DOC_REF));
+        explorerService.delete(Collections.singletonList(PIPELINE_EXPLORER_NODE));
         builder.rootDocRef(rootDocRef);
         builder.useImportNames(false);
         builder.useImportFolders(false);
@@ -208,7 +211,7 @@ class TestImportExportServiceImpl4 extends AbstractCoreIntegrationTest {
                 "DATA_SPLITTER-EVENTS",
                 builder);
 
-        explorerService.delete(Collections.singletonList(PIPELINE_DOC_REF));
+        explorerService.delete(Collections.singletonList(PIPELINE_EXPLORER_NODE));
         builder.rootDocRef(rootDocRef);
         builder.useImportNames(false);
         builder.useImportFolders(true);
@@ -220,7 +223,7 @@ class TestImportExportServiceImpl4 extends AbstractCoreIntegrationTest {
                 "New Root/",
                 builder);
 
-        explorerService.delete(Collections.singletonList(PIPELINE_DOC_REF));
+        explorerService.delete(Collections.singletonList(PIPELINE_EXPLORER_NODE));
         builder.rootDocRef(rootDocRef);
         builder.useImportNames(true);
         builder.useImportFolders(true);

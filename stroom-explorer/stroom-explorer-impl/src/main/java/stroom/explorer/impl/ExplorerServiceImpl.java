@@ -55,6 +55,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -346,7 +348,11 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             for (final ExplorerNodeKey ensureVisible : criteria.getEnsureVisible()) {
                 ExplorerNode parent = masterTreeModel.getParent(ensureVisible.getUuid());
                 while (parent != null) {
-                    forcedOpen.add(parent.getUniqueKey());
+                    forcedOpen.add(ExplorerNode.builder()
+                            .docRef(parent.getDocRef())
+                            .rootNodeUuid(ensureVisible.getRootNodeUuid())
+                            .build()
+                            .getUniqueKey());
                     parent = masterTreeModel.getParent(parent);
                 }
             }
@@ -354,7 +360,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
         // Add nodes that should be forced open because they are deeper than the minimum expansion depth.
         if (criteria.getMinDepth() != null && criteria.getMinDepth() > 0) {
-            forceMinDepthOpen(masterTreeModel, forcedOpen, null, null, criteria.getMinDepth(), 1);
+            forceMinDepthOpen(masterTreeModel, forcedOpen, null, null,
+                    criteria.getMinDepth(), 1);
         }
 
         return forcedOpen;
@@ -370,7 +377,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         if (children != null) {
             for (final ExplorerNode child : children) {
                 final ExplorerNode childWithRootNode = child.copy()
-                        .rootNodeUuid(rootNode != null ? rootNode : child)
+                        .rootNodeUuid(Objects.requireNonNullElse(rootNode, child))
                         .build();
                 forcedOpen.add(childWithRootNode.getUniqueKey());
                 if (minDepth > depth) {
@@ -406,7 +413,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 // Decorate the child with the root parent node, so the same child can be referenced in multiple
                 // parent roots (e.g. System or Favourites)
                 final ExplorerNode childWithParent = child.copy()
-                        .rootNodeUuid(rootNode != null ? rootNode : child)
+                        .rootNodeUuid(Objects.requireNonNullElse(rootNode, child))
                         .build();
 
                 // We don't want to filter child items if the parent folder matches the name filter.
@@ -415,7 +422,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 // Recurse right down to find out if a descendant is being added and therefore if we need to
                 // include this as an ancestor.
                 final boolean hasChildren = addDescendants(
-                        rootNode != null ? rootNode : childWithParent,
+                        Objects.requireNonNullElse(rootNode, childWithParent),
                         childWithParent,
                         treeModelIn,
                         treeModelOut,
@@ -556,16 +563,11 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     }
 
     @Override
-    public DocRef create(final String type,
-                         final String name,
-                         final DocRef destinationFolderRef,
-                         final PermissionInheritance permissionInheritance) {
-        final DocRef folderRef = Optional.ofNullable(destinationFolderRef)
-                .orElse(explorerNodeService.getRoot()
-                        .map(ExplorerNode::getDocRef)
-                        .orElse(null)
-                );
-
+    public ExplorerNode create(final String type,
+                               final String name,
+                               final ExplorerNode destinationFolder,
+                               final PermissionInheritance permissionInheritance) {
+        final DocRef folderRef = destinationFolder != null ? destinationFolder.getDocRef() : null;
         final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);
 
         DocRef result;
@@ -588,46 +590,50 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         // Make sure the tree model is rebuilt.
         rebuildTree();
 
-        return result;
+        return ExplorerNode.builder()
+                .docRef(result)
+                .rootNodeUuid(destinationFolder != null ? destinationFolder.getRootNodeUuid() : null)
+                .build();
     }
 
     @Override
-    public BulkActionResult copy(final List<DocRef> docRefs,
-                                 final DocRef potentialDestinationFolderRef,
+    public BulkActionResult copy(final List<ExplorerNode> explorerNodes,
+                                 final ExplorerNode destinationFolder,
                                  final PermissionInheritance permissionInheritance) {
-        final DocRef destinationFolderRef = Optional.ofNullable(potentialDestinationFolderRef)
-                .orElse(explorerNodeService.getRoot()
-                        .map(ExplorerNode::getDocRef)
-                        .orElseThrow(() -> new RuntimeException("Cannot copy into null destination")));
-
         final StringBuilder resultMessage = new StringBuilder();
 
         // Create a map to store source to destination document references.
-        final Map<DocRef, DocRef> remappings = new HashMap<>();
+        final Map<ExplorerNode, ExplorerNode> remappings = new HashMap<>();
 
         // Discover all affected folder children.
-        final Map<DocRef, List<DocRef>> childMap = new HashMap<>();
-        createChildMap(docRefs, childMap);
+        final Map<ExplorerNode, List<ExplorerNode>> childMap = new HashMap<>();
+        createChildMap(explorerNodes, childMap);
 
         // Perform a copy on the selected items.
-        docRefs.forEach(sourceDocRef -> copy(sourceDocRef,
-                destinationFolderRef,
+        explorerNodes.forEach(sourceNode -> copy(
+                sourceNode,
+                destinationFolder,
                 permissionInheritance,
                 resultMessage,
                 remappings));
 
         // Recursively copy any selected folders.
-        docRefs.forEach(sourceDocRef -> recurseCopy(sourceDocRef,
+        explorerNodes.forEach(sourceNode -> recurseCopy(
+                sourceNode,
                 permissionInheritance,
                 resultMessage,
                 remappings,
                 childMap));
 
         // Remap all dependencies for the copied items.
-        remappings.values().forEach(newDocRef -> {
-            final ExplorerActionHandler handler = explorerActionHandlers.getHandler(newDocRef.getType());
+        remappings.values().forEach(newExplorerNode -> {
+            final ExplorerActionHandler handler = explorerActionHandlers.getHandler(newExplorerNode.getType());
             if (handler != null) {
-                handler.remapDependencies(newDocRef, remappings);
+                final HashMap<DocRef, DocRef> docRefRemappings = new HashMap<>();
+                for (final var remapping : remappings.entrySet()) {
+                    docRefRemappings.put(remapping.getKey().getDocRef(), remapping.getValue().getDocRef());
+                }
+                handler.remapDependencies(newExplorerNode.getDocRef(), docRefRemappings);
             }
         });
 
@@ -640,56 +646,62 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     /**
      * Copy an item into a destination folder.
      *
-     * @param sourceDocRef          The doc ref for the item being copied
-     * @param destinationFolderRef  The doc ref for the destination folder
+     * @param sourceNode            The explorer node being copied
+     * @param destinationFolder     The destination folder explorer node
      * @param permissionInheritance The mode of permission inheritance being used for the whole operation
      * @param resultMessage         Allow contribution to result message
      * @param remappings            A map to store source to destination document references
      */
-    private void copy(final DocRef sourceDocRef,
-                      final DocRef destinationFolderRef,
+    private void copy(final ExplorerNode sourceNode,
+                      final ExplorerNode destinationFolder,
                       final PermissionInheritance permissionInheritance,
                       final StringBuilder resultMessage,
-                      final Map<DocRef, DocRef> remappings) {
+                      final Map<ExplorerNode, ExplorerNode> remappings) {
 
         try {
             // Ensure we haven't already copied this item as part of a folder copy.
-            if (!remappings.containsKey(sourceDocRef)) {
-                // Get a handler to performt he copy.
-                final ExplorerActionHandler handler = explorerActionHandlers.getHandler(sourceDocRef.getType());
+            if (!remappings.containsKey(sourceNode)) {
+                // Get a handler to perform the copy.
+                final ExplorerActionHandler handler = explorerActionHandlers.getHandler(sourceNode.getType());
 
                 // Check that the user is allowed to create an item of this type in the destination folder.
-                checkCreatePermission(getUUID(destinationFolderRef), sourceDocRef.getType());
+                checkCreatePermission(getUUID(destinationFolder.getDocRef()), sourceNode.getType());
 
                 // Find out names of other items in the destination folder.
-                final Set<String> otherDestinationChildrenNames = explorerNodeService.getChildren(destinationFolderRef)
+                final Set<String> otherDestinationChildrenNames = explorerNodeService.getChildren(
+                        destinationFolder.getDocRef())
                         .stream()
                         .map(ExplorerNode::getDocRef)
-                        .filter(docRef -> docRef.getType().equals(sourceDocRef.getType()))
+                        .filter(docRef -> docRef.getType().equals(sourceNode.getType()))
                         .map(DocRef::getName)
                         .collect(Collectors.toSet());
 
                 // Copy the item to the destination folder.
-                final DocRef destinationDocRef = handler.copyDocument(sourceDocRef, otherDestinationChildrenNames);
-                explorerEventLog.copy(sourceDocRef, destinationFolderRef, permissionInheritance, null);
+                final DocRef destinationDocRef = handler.copyDocument(sourceNode.getDocRef(),
+                        otherDestinationChildrenNames);
+                explorerEventLog.copy(sourceNode.getDocRef(), destinationFolder.getDocRef(), permissionInheritance,
+                        null);
 
                 // Create the explorer node
                 if (destinationDocRef != null) {
                     // Copy the explorer node.
-                    explorerNodeService.copyNode(sourceDocRef,
+                    explorerNodeService.copyNode(sourceNode.getDocRef(),
                             destinationDocRef,
-                            destinationFolderRef,
+                            destinationFolder.getDocRef(),
                             permissionInheritance);
 
                     // Record where the document got copied from -> to.
-                    remappings.put(sourceDocRef, destinationDocRef);
+                    remappings.put(sourceNode, ExplorerNode.builder()
+                            .docRef(destinationDocRef)
+                            .rootNodeUuid(destinationFolder.getRootNodeUuid())
+                            .build());
                 }
             }
 
         } catch (final RuntimeException e) {
-            explorerEventLog.copy(sourceDocRef, destinationFolderRef, permissionInheritance, e);
+            explorerEventLog.copy(sourceNode.getDocRef(), destinationFolder.getDocRef(), permissionInheritance, e);
             resultMessage.append("Unable to copy '");
-            resultMessage.append(sourceDocRef.getName());
+            resultMessage.append(sourceNode.getName());
             resultMessage.append("' ");
             resultMessage.append(e.getMessage());
             resultMessage.append("\n");
@@ -699,23 +711,23 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     /**
      * Copy the contents of a folder recursively
      *
-     * @param sourceFolderRef       The doc ref for the folder being copied
+     * @param sourceFolder          The explorer node being copied
      * @param permissionInheritance The mode of permission inheritance being used for the whole operation
      * @param resultMessage         Allow contribution to result message
-     * @param remappings            A map to store source to destination document references
+     * @param remappings            A map to store source to destination explorer nodes
      * @param childMap              A map of folders and their child items.
      */
-    private void recurseCopy(final DocRef sourceFolderRef,
+    private void recurseCopy(final ExplorerNode sourceFolder,
                              final PermissionInheritance permissionInheritance,
                              final StringBuilder resultMessage,
-                             final Map<DocRef, DocRef> remappings,
-                             final Map<DocRef, List<DocRef>> childMap) {
-        final DocRef destinationFolderRef = remappings.get(sourceFolderRef);
-        if (destinationFolderRef != null) {
-            final List<DocRef> children = childMap.get(sourceFolderRef);
+                             final Map<ExplorerNode, ExplorerNode> remappings,
+                             final Map<ExplorerNode, List<ExplorerNode>> childMap) {
+        final ExplorerNode destinationFolder = remappings.get(sourceFolder);
+        if (destinationFolder != null) {
+            final List<ExplorerNode> children = childMap.get(sourceFolder);
             if (children != null && children.size() > 0) {
                 children.forEach(child -> {
-                    copy(child, destinationFolderRef, permissionInheritance, resultMessage, remappings);
+                    copy(child, destinationFolder, permissionInheritance, resultMessage, remappings);
                     recurseCopy(child, permissionInheritance, resultMessage, remappings, childMap);
                 });
             }
@@ -725,50 +737,45 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     /**
      * Create a map of folders and their child items.
      */
-    private void createChildMap(final List<DocRef> docRefs,
-                                final Map<DocRef, List<DocRef>> childMap) {
-        docRefs.forEach(docRef -> {
-            final List<ExplorerNode> children = explorerNodeService.getChildren(docRef);
+    private void createChildMap(final List<ExplorerNode> explorerNodes,
+                                final Map<ExplorerNode, List<ExplorerNode>> childMap) {
+        explorerNodes.forEach(explorerNode -> {
+            final List<ExplorerNode> children = explorerNodeService.getChildren(explorerNode.getDocRef());
             if (children != null && children.size() > 0) {
-                final List<DocRef> childDocRefs = children
-                        .stream()
-                        .map(ExplorerNode::getDocRef)
-                        .collect(Collectors.toList());
-                childMap.put(docRef, childDocRefs);
-                createChildMap(childDocRefs, childMap);
+                childMap.put(explorerNode, children);
+                createChildMap(children, childMap);
             }
         });
     }
 
     @Override
-    public BulkActionResult move(final List<DocRef> docRefs,
-                                 final DocRef destinationFolderRef,
+    public BulkActionResult move(final List<ExplorerNode> explorerNodes,
+                                 final ExplorerNode destinationFolder,
                                  final PermissionInheritance permissionInheritance) {
-        final DocRef folderRef = Optional.ofNullable(destinationFolderRef)
-                .orElse(explorerNodeService.getRoot()
-                        .map(ExplorerNode::getDocRef)
-                        .orElse(null));
-
-        final List<DocRef> resultDocRefs = new ArrayList<>();
+        final DocRef folderRef = destinationFolder.getDocRef();
+        final List<ExplorerNode> resultNodes = new ArrayList<>();
         final StringBuilder resultMessage = new StringBuilder();
 
-        for (final DocRef docRef : docRefs) {
-            final ExplorerActionHandler handler = explorerActionHandlers.getHandler(docRef.getType());
+        for (final ExplorerNode explorerNode : explorerNodes) {
+            final ExplorerActionHandler handler = explorerActionHandlers.getHandler(explorerNode.getType());
 
             DocRef result = null;
 
             try {
                 // Check that the user is allowed to create an item of this type in the destination folder.
-                checkCreatePermission(getUUID(folderRef), docRef.getType());
+                checkCreatePermission(getUUID(folderRef), explorerNode.getType());
                 // Move the item.
-                result = handler.moveDocument(docRef.getUuid());
-                explorerEventLog.move(docRef, folderRef, permissionInheritance, null);
-                resultDocRefs.add(result);
+                result = handler.moveDocument(explorerNode.getUuid());
+                explorerEventLog.move(explorerNode.getDocRef(), folderRef, permissionInheritance, null);
+                resultNodes.add(ExplorerNode.builder()
+                        .docRef(result)
+                        .rootNodeUuid(explorerNode.getRootNodeUuid())
+                        .build());
 
             } catch (final RuntimeException e) {
-                explorerEventLog.move(docRef, folderRef, permissionInheritance, e);
+                explorerEventLog.move(explorerNode.getDocRef(), folderRef, permissionInheritance, e);
                 resultMessage.append("Unable to move '");
-                resultMessage.append(docRef.getName());
+                resultMessage.append(explorerNode.getName());
                 resultMessage.append("' ");
                 resultMessage.append(e.getMessage());
                 resultMessage.append("\n");
@@ -783,14 +790,13 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         // Make sure the tree model is rebuilt.
         rebuildTree();
 
-        return new BulkActionResult(resultDocRefs, resultMessage.toString());
+        return new BulkActionResult(resultNodes, resultMessage.toString());
     }
 
     @Override
-    public DocRef rename(final DocRef docRef, final String docName) {
-        final ExplorerActionHandler handler = explorerActionHandlers.getHandler(docRef.getType());
-
-        final DocRef result = rename(handler, docRef, docName);
+    public ExplorerNode rename(final ExplorerNode explorerNode, final String docName) {
+        final ExplorerActionHandler handler = explorerActionHandlers.getHandler(explorerNode.getType());
+        final ExplorerNode result = rename(handler, explorerNode, docName);
 
         // Make sure the tree model is rebuilt.
         rebuildTree();
@@ -798,35 +804,38 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         return result;
     }
 
-    private DocRef rename(final ExplorerActionHandler handler,
-                          final DocRef docRef,
-                          final String docName) {
+    private ExplorerNode rename(final ExplorerActionHandler handler,
+                                final ExplorerNode explorerNode,
+                                final String docName) {
         DocRef result;
 
         try {
-            result = handler.renameDocument(docRef.getUuid(), docName);
-            explorerEventLog.rename(docRef, docName, null);
+            result = handler.renameDocument(explorerNode.getUuid(), docName);
+            explorerEventLog.rename(explorerNode.getDocRef(), docName, null);
         } catch (final RuntimeException e) {
-            explorerEventLog.rename(docRef, docName, e);
+            explorerEventLog.rename(explorerNode.getDocRef(), docName, e);
             throw e;
         }
 
         // Rename the explorer node.
         explorerNodeService.renameNode(result);
 
-        return result;
+        return ExplorerNode.builder()
+                .docRef(result)
+                .rootNodeUuid(explorerNode.getRootNodeUuid())
+                .build();
     }
 
     @Override
-    public BulkActionResult delete(final List<DocRef> docRefs) {
-        final List<DocRef> resultDocRefs = new ArrayList<>();
+    public BulkActionResult delete(final List<ExplorerNode> explorerNodes) {
+        final List<ExplorerNode> resultDocRefs = new ArrayList<>();
         final StringBuilder resultMessage = new StringBuilder();
 
-        final HashSet<DocRef> deleted = new HashSet<>();
-        docRefs.forEach(docRef -> {
+        final HashSet<ExplorerNode> deleted = new HashSet<>();
+        explorerNodes.forEach(explorerNode -> {
             // Check this document hasn't already been deleted.
-            if (!deleted.contains(docRef)) {
-                recursiveDelete(docRefs, deleted, resultDocRefs, resultMessage);
+            if (!deleted.contains(explorerNode)) {
+                recursiveDelete(explorerNodes, deleted, resultDocRefs, resultMessage);
             }
         });
 
@@ -836,47 +845,44 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         return new BulkActionResult(resultDocRefs, resultMessage.toString());
     }
 
-    private void recursiveDelete(final List<DocRef> docRefs,
-                                 final HashSet<DocRef> deleted,
-                                 final List<DocRef> resultDocRefs,
+    private void recursiveDelete(final List<ExplorerNode> explorerNodes,
+                                 final HashSet<ExplorerNode> deleted,
+                                 final List<ExplorerNode> resultDocRefs,
                                  final StringBuilder resultMessage) {
-        docRefs.forEach(docRef -> {
+        explorerNodes.forEach(explorerNode -> {
             // Check this document hasn't already been deleted.
-            if (!deleted.contains(docRef)) {
+            if (!deleted.contains(explorerNode)) {
                 // Get any children that might need to be deleted.
-                List<ExplorerNode> children = explorerNodeService.getChildren(docRef);
+                List<ExplorerNode> children = explorerNodeService.getChildren(explorerNode.getDocRef());
                 if (children != null && children.size() > 0) {
                     // Recursive delete.
-                    final List<DocRef> childDocRefs = children.stream()
-                            .map(ExplorerNode::getDocRef)
-                            .collect(Collectors.toList());
-                    recursiveDelete(childDocRefs, deleted, resultDocRefs, resultMessage);
+                    recursiveDelete(children, deleted, resultDocRefs, resultMessage);
                 }
 
                 // Check to see if we still have children.
-                children = explorerNodeService.getChildren(docRef);
+                children = explorerNodeService.getChildren(explorerNode.getDocRef());
                 if (children != null && children.size() > 0) {
-                    final String message = "Unable to delete '" + docRef.getName() +
+                    final String message = "Unable to delete '" + explorerNode.getName() +
                             "' because the folder is not empty";
                     resultMessage.append(message);
                     resultMessage.append("\n");
-                    explorerEventLog.delete(docRef, new RuntimeException(message));
+                    explorerEventLog.delete(explorerNode.getDocRef(), new RuntimeException(message));
 
                 } else {
-                    final ExplorerActionHandler handler = explorerActionHandlers.getHandler(docRef.getType());
+                    final ExplorerActionHandler handler = explorerActionHandlers.getHandler(explorerNode.getType());
                     try {
-                        handler.deleteDocument(docRef.getUuid());
-                        explorerEventLog.delete(docRef, null);
-                        deleted.add(docRef);
-                        resultDocRefs.add(docRef);
+                        handler.deleteDocument(explorerNode.getUuid());
+                        explorerEventLog.delete(explorerNode.getDocRef(), null);
+                        deleted.add(explorerNode);
+                        resultDocRefs.add(explorerNode);
 
                         // Delete the explorer node.
-                        explorerNodeService.deleteNode(docRef);
+                        explorerNodeService.deleteNode(explorerNode.getDocRef());
 
                     } catch (final Exception e) {
-                        explorerEventLog.delete(docRef, e);
+                        explorerEventLog.delete(explorerNode.getDocRef(), e);
                         resultMessage.append("Unable to delete '");
-                        resultMessage.append(docRef.getName());
+                        resultMessage.append(explorerNode.getName());
                         resultMessage.append("' ");
                         resultMessage.append(e.getMessage());
                         resultMessage.append("\n");

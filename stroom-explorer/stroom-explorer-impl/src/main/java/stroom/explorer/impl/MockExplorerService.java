@@ -21,6 +21,7 @@ import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.explorer.shared.PermissionInheritance;
@@ -35,34 +36,34 @@ class MockExplorerService implements ExplorerService {
     }
 
     @Override
-    public DocRef create(final String docType,
+    public ExplorerNode create(final String docType,
                          final String docName,
-                         final DocRef destinationFolderRef,
+                         final ExplorerNode destinationFolder,
                          final PermissionInheritance permissionInheritance) {
         return null;
     }
 
     @Override
-    public BulkActionResult copy(final List<DocRef> docRefs,
-                                 final DocRef destinationFolderRef,
+    public BulkActionResult copy(final List<ExplorerNode> explorerNodes,
+                                 final ExplorerNode destinationFolder,
                                  final PermissionInheritance permissionInheritance) {
         return null;
     }
 
     @Override
-    public BulkActionResult move(final List<DocRef> docRefs,
-                                 final DocRef destinationFolderRef,
+    public BulkActionResult move(final List<ExplorerNode> explorerNodes,
+                                 final ExplorerNode destinationFolder,
                                  final PermissionInheritance permissionInheritance) {
         return null;
     }
 
     @Override
-    public DocRef rename(final DocRef docRef, final String docName) {
+    public ExplorerNode rename(final ExplorerNode explorerNode, final String docName) {
         return null;
     }
 
     @Override
-    public BulkActionResult delete(final List<DocRef> docRefs) {
+    public BulkActionResult delete(final List<ExplorerNode> explorerNodes) {
         return null;
     }
 

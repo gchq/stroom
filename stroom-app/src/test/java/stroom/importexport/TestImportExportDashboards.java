@@ -116,48 +116,71 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
     private void test(final boolean skipVisCreation, final boolean skipVisExport, final boolean update) {
         deleteAllAndCheck();
 
-        final DocRef folder1 = explorerService.create(ExplorerConstants.FOLDER, "Group1", null, null);
-        final DocRef folder2 = explorerService.create(ExplorerConstants.FOLDER, "Group2", null, null);
+        final ExplorerNode systemNode = explorerNodeService.getRoot().orElse(null);
+        final ExplorerNode folder1 = explorerService.create(
+                ExplorerConstants.FOLDER,
+                "Group1",
+                null,
+                null);
+        final ExplorerNode folder2 = explorerService.create(
+                ExplorerConstants.FOLDER,
+                "Group2",
+                null,
+                null);
 
         final List<ExplorerNode> nodes = explorerNodeService.getDescendants(null);
         assertThat(nodes.size()).isEqualTo(3);
 
-        DocRef visRef = null;
+        ExplorerNode visNode = null;
         if (!skipVisCreation) {
-            final DocRef scriptRef = explorerService.create(ScriptDoc.DOCUMENT_TYPE, "Test Script", folder2, null);
-            ScriptDoc script = scriptStore.readDocument(scriptRef);
+            final ExplorerNode scriptNode = explorerService.create(ScriptDoc.DOCUMENT_TYPE,
+                    "Test Script",
+                    folder2,
+                    null);
+            ScriptDoc script = scriptStore.readDocument(scriptNode.getDocRef());
             script.setData("Test Data");
             scriptStore.writeDocument(script);
             assertThat(scriptStore.list().size()).isEqualTo(1);
 
-            visRef = explorerService.create(VisualisationDoc.DOCUMENT_TYPE, "Test Vis", folder2, null);
-            final VisualisationDoc vis = visualisationStore.readDocument(visRef);
-            vis.setScriptRef(scriptRef);
+            visNode = explorerService.create(
+                    VisualisationDoc.DOCUMENT_TYPE,
+                    "Test Vis",
+                    folder2,
+                    null);
+            final VisualisationDoc vis = visualisationStore.readDocument(visNode.getDocRef());
+            vis.setScriptRef(scriptNode.getDocRef());
             visualisationStore.writeDocument(vis);
             assertThat(visualisationStore.list().size()).isEqualTo(1);
         }
 
-        final DocRef pipelineRef = explorerService.create(PipelineDoc.DOCUMENT_TYPE, "Test Pipeline", folder1, null);
-        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+        final ExplorerNode pipelineNode = explorerService.create(PipelineDoc.DOCUMENT_TYPE,
+                "Test Pipeline",
+                folder1,
+                null);
+        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineNode.getDocRef());
         pipelineStore.writeDocument(pipelineDoc);
         assertThat(pipelineStore.list().size()).isEqualTo(1);
 
-        final DocRef indexRef = explorerService.create(IndexDoc.DOCUMENT_TYPE, "Test Index", folder1, null);
-        final IndexDoc index = indexStore.readDocument(indexRef);
+        final ExplorerNode indexNode = explorerService.create(
+                IndexDoc.DOCUMENT_TYPE,
+                "Test Index",
+                folder1,
+                null);
+        final IndexDoc index = indexStore.readDocument(indexNode.getDocRef());
         indexStore.writeDocument(index);
         assertThat(indexStore.list().size()).isEqualTo(1);
 
-        final DocRef dictionaryRef = explorerService.create(DictionaryDoc.DOCUMENT_TYPE,
+        final ExplorerNode dictionaryNode = explorerService.create(DictionaryDoc.DOCUMENT_TYPE,
                 "Test Dictionary",
                 folder1,
                 null);
-        final DictionaryDoc dictionary = dictionaryStore.readDocument(dictionaryRef);
+        final DictionaryDoc dictionary = dictionaryStore.readDocument(dictionaryNode.getDocRef());
         dictionaryStore.writeDocument(dictionary);
         assertThat(dictionaryStore.list().size()).isEqualTo(1);
 
         // Create query.
         final QueryComponentSettings queryComponentSettings = QueryComponentSettings.builder()
-                .dataSource(indexRef)
+                .dataSource(indexNode.getDocRef())
                 .expression(createExpression(dictionary).build())
                 .build();
 
@@ -171,7 +194,7 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         // Create table.
         final TableComponentSettings tableSettings = TableComponentSettings.builder()
                 .extractValues(true)
-                .extractionPipeline(pipelineRef)
+                .extractionPipeline(pipelineNode.getDocRef())
                 .build();
 
         final ComponentConfig table = ComponentConfig.builder()
@@ -185,7 +208,7 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         final VisComponentSettings visSettings = VisComponentSettings.builder()
                 .tableId("table-1234")
                 .tableSettings(tableSettings)
-                .visualisation(visRef)
+                .visualisation(visNode != null ? visNode.getDocRef() : null)
                 .build();
 
         final ComponentConfig visualisation = ComponentConfig.builder()
@@ -205,8 +228,12 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         final DashboardConfig dashboardData = new DashboardConfig();
         dashboardData.setComponents(components);
 
-        final DocRef dashboardRef = explorerService.create(DashboardDoc.DOCUMENT_TYPE, "Test Dashboard", folder1, null);
-        DashboardDoc dashboard = dashboardStore.readDocument(dashboardRef);
+        final ExplorerNode dashboardNode = explorerService.create(
+                DashboardDoc.DOCUMENT_TYPE,
+                "Test Dashboard",
+                folder1,
+                null);
+        DashboardDoc dashboard = dashboardStore.readDocument(dashboardNode.getDocRef());
         dashboard.setDashboardConfig(dashboardData);
         dashboard = dashboardStore.writeDocument(dashboard);
         assertThat(dashboardStore.list().size()).isEqualTo(1);
@@ -219,9 +246,9 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
 
         final ResourceKey file = resourceStore.createTempFile("Export.zip");
         final Set<DocRef> docRefs = new HashSet<>();
-        docRefs.add(folder1);
+        docRefs.add(folder1.getDocRef());
         if (!skipVisExport) {
-            docRefs.add(folder2);
+            docRefs.add(folder2.getDocRef());
         } else {
 //            startFolderSize = 1;
             startVisualisationSize = 0;

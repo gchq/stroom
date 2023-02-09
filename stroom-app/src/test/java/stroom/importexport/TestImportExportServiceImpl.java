@@ -62,71 +62,72 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
 
     @Test
     void testExport() {
-        final DocRef system = explorerNodeService.getRoot().map(ExplorerNode::getDocRef).orElse(null);
-        assertThat(explorerNodeService.getDescendants(system).size()).isEqualTo(1);
+        final ExplorerNode systemNode = explorerNodeService.getRoot().orElse(null);
+        final DocRef systemDocRef = systemNode != null ? systemNode.getDocRef() : null;
+        assertThat(explorerNodeService.getDescendants(systemDocRef).size()).isEqualTo(1);
 
-        final DocRef folder1 = explorerService.create(ExplorerConstants.FOLDER, "Root1_", system, null);
-        final DocRef folder2 = explorerService.create(ExplorerConstants.FOLDER,
+        final ExplorerNode folder1 = explorerService.create(ExplorerConstants.FOLDER, "Root1_", systemNode, null);
+        final ExplorerNode folder2 = explorerService.create(ExplorerConstants.FOLDER,
                 "Root2_" + FileSystemTestUtil.getUniqueTestString(),
-                system,
+                systemNode,
                 null);
-        final DocRef folder2child1 = explorerService.create(ExplorerConstants.FOLDER,
+        final ExplorerNode folder2child1 = explorerService.create(ExplorerConstants.FOLDER,
                 "Root2_Child1_" + FileSystemTestUtil.getUniqueTestString(),
                 folder2,
                 null);
-        final DocRef folder2child2 = explorerService.create(ExplorerConstants.FOLDER,
+        final ExplorerNode folder2child2 = explorerService.create(ExplorerConstants.FOLDER,
                 "Root2_Child2_" + FileSystemTestUtil.getUniqueTestString(),
                 folder2,
                 null);
 
-        assertThat(explorerNodeService.getDescendants(system).size()).isEqualTo(5);
+        assertThat(explorerNodeService.getDescendants(systemDocRef).size()).isEqualTo(5);
 
-        final DocRef tran1Ref = explorerService.create(PipelineDoc.DOCUMENT_TYPE,
+        final ExplorerNode tran1Ref = explorerService.create(PipelineDoc.DOCUMENT_TYPE,
                 FileSystemTestUtil.getUniqueTestString(),
                 folder1,
                 null);
-        final PipelineDoc tran1 = pipelineStore.readDocument(tran1Ref);
+        final PipelineDoc tran1 = pipelineStore.readDocument(tran1Ref.getDocRef());
         tran1.setDescription("Description");
         pipelineStore.writeDocument(tran1);
 
-        final DocRef tran2Ref = explorerService.create(PipelineDoc.DOCUMENT_TYPE,
+        final ExplorerNode tran2Ref = explorerService.create(PipelineDoc.DOCUMENT_TYPE,
                 FileSystemTestUtil.getUniqueTestString(),
                 folder2,
                 null);
-        PipelineDoc tran2 = pipelineStore.readDocument(tran2Ref);
+        PipelineDoc tran2 = pipelineStore.readDocument(tran2Ref.getDocRef());
         tran2.setDescription("Description");
-        tran2.setParentPipeline(tran1Ref);
+        tran2.setParentPipeline(tran1Ref.getDocRef());
         tran2 = pipelineStore.writeDocument(tran2);
 
-        final DocRef referenceFeedRef = explorerService.create(FeedDoc.DOCUMENT_TYPE,
+        final ExplorerNode referenceFeedRef = explorerService.create(FeedDoc.DOCUMENT_TYPE,
                 FileSystemTestUtil.getUniqueTestString(),
                 folder1,
                 null);
-        final FeedDoc referenceFeed = feedStore.readDocument(referenceFeedRef);
+        final FeedDoc referenceFeed = feedStore.readDocument(referenceFeedRef.getDocRef());
         referenceFeed.setDescription("Description");
         feedStore.writeDocument(referenceFeed);
 
-        final DocRef eventFeedRef = explorerService.create(FeedDoc.DOCUMENT_TYPE,
+        final ExplorerNode eventFeedNode = explorerService.create(FeedDoc.DOCUMENT_TYPE,
                 FileSystemTestUtil.getUniqueTestString(),
                 folder2,
                 null);
-        FeedDoc eventFeed = feedStore.readDocument(eventFeedRef);
+        FeedDoc eventFeed = feedStore.readDocument(eventFeedNode.getDocRef());
         eventFeed.setDescription("Description");
         feedStore.writeDocument(eventFeed);
 
-        final DocRef eventFeedChildRef = explorerService.create(FeedDoc.DOCUMENT_TYPE,
+        final ExplorerNode eventFeedChildNode = explorerService.create(FeedDoc.DOCUMENT_TYPE,
                 FileSystemTestUtil.getUniqueTestString(),
                 folder2child1,
                 null);
-        final FeedDoc eventFeedChild = feedStore.readDocument(eventFeedChildRef);
+        final FeedDoc eventFeedChild = feedStore.readDocument(eventFeedChildNode.getDocRef());
         eventFeedChild.setDescription("Description");
         feedStore.writeDocument(eventFeedChild);
 
-        final DocRef eventFeedChild2Ref = explorerService.create(FeedDoc.DOCUMENT_TYPE,
+        final ExplorerNode eventFeedChild2Node = explorerService.create(FeedDoc.DOCUMENT_TYPE,
                 FileSystemTestUtil.getUniqueTestString(),
                 folder2child2,
                 null);
-        final FeedDoc eventFeedChild2 = feedStore.readDocument(eventFeedChild2Ref);
+        final FeedDoc eventFeedChild2 = feedStore.readDocument(eventFeedChild2Node.getDocRef());
         eventFeedChild2.setDescription("Description2");
         feedStore.writeDocument(eventFeedChild2);
 
@@ -135,8 +136,8 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
 
         final ResourceKey file = resourceStore.createTempFile("Export.zip");
         final Set<DocRef> docRefs = new HashSet<>();
-        docRefs.add(folder1);
-        docRefs.add(folder2);
+        docRefs.add(folder1.getDocRef());
+        docRefs.add(folder2.getDocRef());
 
         // Export
         importExportService.exportConfig(docRefs, resourceStore.getTempFile(file));
@@ -149,7 +150,7 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         pipelineStore.deleteDocument(tran2.getUuid());
         assertThat(pipelineStore.list().size()).isEqualTo(startTranslationSize - 1);
 
-        feedStore.deleteDocument(eventFeedRef.getUuid());
+        feedStore.deleteDocument(eventFeedNode.getUuid());
         assertThat(feedStore.list().size()).isEqualTo(startFeedSize - 1);
 
         // Import
@@ -172,7 +173,7 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
 
         final ResourceKey fileChild = resourceStore.createTempFile("ExportChild.zip");
         final Set<DocRef> criteriaChild = new HashSet<>();
-        criteriaChild.add(folder2child2);
+        criteriaChild.add(folder2child2.getDocRef());
 
         // Export
         importExportService.exportConfig(criteriaChild, resourceStore.getTempFile(fileChild));

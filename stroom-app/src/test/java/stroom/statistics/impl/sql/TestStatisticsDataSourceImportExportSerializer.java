@@ -23,6 +23,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.impl.ImportExportSerializer;
 import stroom.importexport.shared.ImportSettings;
 import stroom.statistics.impl.sql.entity.StatisticStoreStore;
@@ -72,8 +73,8 @@ class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegra
      */
     @Test
     void testStatisticsDataSource() {
-        final DocRef docRef = explorerService.create(StatisticStoreDoc.DOCUMENT_TYPE, "StatName1", null, null);
-        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
+        final ExplorerNode statNode = explorerService.create(StatisticStoreDoc.DOCUMENT_TYPE, "StatName1", null, null);
+        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(statNode.getDocRef());
         statisticsDataSource.setDescription("My Description");
         statisticsDataSource.setStatisticType(StatisticType.COUNT);
         statisticsDataSource.setConfig(new StatisticsDataSourceData());

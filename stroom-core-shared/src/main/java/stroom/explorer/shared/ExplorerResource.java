@@ -48,7 +48,7 @@ public interface ExplorerResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Create explorer item",
             operationId = "createExplorerItem")
-    DocRef create(@Parameter(description = "request", required = true) ExplorerServiceCreateRequest request);
+    ExplorerNode create(@Parameter(description = "request", required = true) ExplorerServiceCreateRequest request);
 
     @DELETE
     @Path("/delete")
@@ -76,7 +76,7 @@ public interface ExplorerResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Rename explorer items",
             operationId = "renameExplorerItems")
-    DocRef rename(@Parameter(description = "request", required = true) ExplorerServiceRenameRequest request);
+    ExplorerNode rename(@Parameter(description = "request", required = true) ExplorerServiceRenameRequest request);
 
     @POST
     @Path("/info")

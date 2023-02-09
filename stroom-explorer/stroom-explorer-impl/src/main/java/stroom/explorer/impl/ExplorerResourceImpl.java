@@ -81,35 +81,35 @@ class ExplorerResourceImpl implements ExplorerResource {
     }
 
     @Override
-    public DocRef create(final ExplorerServiceCreateRequest request) {
+    public ExplorerNode create(final ExplorerServiceCreateRequest request) {
         return explorerServiceProvider.get().create(request.getDocType(),
                 request.getDocName(),
-                request.getDestinationFolderRef(),
+                request.getDestinationFolder(),
                 request.getPermissionInheritance());
     }
 
     @Override
     public BulkActionResult delete(final ExplorerServiceDeleteRequest request) {
-        return explorerServiceProvider.get().delete(request.getDocRefs());
+        return explorerServiceProvider.get().delete(request.getExplorerNodes());
     }
 
     @Override
     public BulkActionResult copy(final ExplorerServiceCopyRequest request) {
-        return explorerServiceProvider.get().copy(request.getDocRefs(),
-                request.getDestinationFolderRef(),
+        return explorerServiceProvider.get().copy(request.getExplorerNodes(),
+                request.getDestinationFolder(),
                 request.getPermissionInheritance());
     }
 
     @Override
     public BulkActionResult move(final ExplorerServiceMoveRequest request) {
-        return explorerServiceProvider.get().move(request.getDocRefs(),
-                request.getDestinationFolderRef(),
+        return explorerServiceProvider.get().move(request.getExplorerNodes(),
+                request.getDestinationFolder(),
                 request.getPermissionInheritance());
     }
 
     @Override
-    public DocRef rename(final ExplorerServiceRenameRequest request) {
-        return explorerServiceProvider.get().rename(request.getDocRef(), request.getDocName());
+    public ExplorerNode rename(final ExplorerServiceRenameRequest request) {
+        return explorerServiceProvider.get().rename(request.getExplorerNode(), request.getDocName());
     }
 
     @Override

@@ -362,10 +362,11 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         // If we are creating a new node or moving an existing one then create the destination folders and check
         // permissions.
         DocRef folderRef = null;
+        ExplorerNode parentNode = null;
         if (importState.getState() == State.NEW || moving) {
             // Create a parent folder for the new node.
             final ExplorerNode parent = explorerNodeService.getRoot().orElse(null);
-            final ExplorerNode parentNode = getOrCreateParentFolder(parent,
+            parentNode = getOrCreateParentFolder(parent,
                     importPath,
                     ImportSettings.ok(importSettings, importState));
 
@@ -398,6 +399,11 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 // Add explorer node afterwards on successful import as they won't be controlled by
                 // doc service.
                 if (ImportSettings.ok(importSettings, importState)) {
+                    final ExplorerNode explorerNode = ExplorerNode
+                            .builder()
+                            .docRef(docRef)
+                            .build();
+
                     // Create, rename and/or move explorer node.
                     if (existingNode.isEmpty()) {
                         explorerNodeService.createNode(imported,
@@ -406,12 +412,12 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                         explorerService.rebuildTree();
                     } else {
                         if (importSettings.isUseImportNames()) {
-                            explorerService.rename(docRef, docRef.getName());
+                            explorerService.rename(explorerNode, docRef.getName());
                         }
                         if (moving) {
                             explorerService.move(
-                                    Collections.singletonList(docRef),
-                                    folderRef,
+                                    Collections.singletonList(explorerNode),
+                                    parentNode,
                                     PermissionInheritance.DESTINATION);
                         }
                     }
@@ -518,11 +524,11 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                     // Go and create the folder if we are actually importing now.
                     if (create) {
                         // Go and create the folder.
-                        final DocRef newFolder = explorerService.create(FOLDER,
+                        parent = explorerService.create(
+                                FOLDER,
                                 element,
-                                folderRef,
+                                parent,
                                 PermissionInheritance.DESTINATION);
-                        parent = ExplorerNode.create(newFolder);
                     }
 
                 } else {

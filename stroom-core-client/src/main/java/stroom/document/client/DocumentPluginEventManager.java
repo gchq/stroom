@@ -260,25 +260,21 @@ public class DocumentPluginEventManager extends Plugin {
         registerHandler(getEventBus().addHandler(CreateDocumentEvent.getType(), event ->
                 create(event.getDocType(),
                         event.getDocName(),
-                        event.getDestinationFolderRef(),
+                        event.getDestinationFolder(),
                         event.getPermissionInheritance(),
-                        docRef -> {
+                        explorerNode -> {
                             // Hide the create document presenter.
                             HidePopupEvent.fire(DocumentPluginEventManager.this, event.getPresenter());
 
-                            final ExplorerNode newNode = ExplorerNode.builder()
-                                    .docRef(docRef)
-                                    .rootNodeUuid(selectionModel.getSelected().getRootNodeUuid())
-                                    .build();
-                            highlight(newNode);
+                            highlight(explorerNode);
 
                             // The initiator of this event can now do what they want with the docref.
-                            event.getNewDocConsumer().accept(docRef);
+                            event.getNewDocConsumer().accept(explorerNode);
                         })));
 
         // 8.1. Handle entity copy events.
-        registerHandler(getEventBus().addHandler(CopyDocumentEvent.getType(), event ->
-                copy(event.getDocRefs(), event.getDestinationFolderRef(), event.getPermissionInheritance(), result -> {
+        registerHandler(getEventBus().addHandler(CopyDocumentEvent.getType(), event -> copy(
+                event.getExplorerNodes(), event.getDestinationFolder(), event.getPermissionInheritance(), result -> {
                     // Hide the copy document presenter.
                     HidePopupEvent.fire(DocumentPluginEventManager.this, event.getPresenter());
 
@@ -289,14 +285,14 @@ public class DocumentPluginEventManager extends Plugin {
                                 null);
                     }
 
-                    if (result.getDocRefs().size() > 0) {
-                        highlight(result.getDocRefs().get(0));
+                    if (result.getExplorerNodes().size() > 0) {
+                        highlight(result.getExplorerNodes().get(0));
                     }
                 })));
 
         // 8.2. Handle entity move events.
-        registerHandler(getEventBus().addHandler(MoveDocumentEvent.getType(), event ->
-                move(event.getDocRefs(), event.getDestinationFolderRef(), event.getPermissionInheritance(), result -> {
+        registerHandler(getEventBus().addHandler(MoveDocumentEvent.getType(), event -> move(
+                event.getExplorerNodes(), event.getDestinationFolder(), event.getPermissionInheritance(), result -> {
                     // Hide the move document presenter.
                     HidePopupEvent.fire(DocumentPluginEventManager.this, event.getPresenter());
 
@@ -307,8 +303,8 @@ public class DocumentPluginEventManager extends Plugin {
                                 null);
                     }
 
-                    if (result.getDocRefs().size() > 0) {
-                        highlight(result.getDocRefs().get(0));
+                    if (result.getExplorerNodes().size() > 0) {
+                        highlight(result.getExplorerNodes().get(0));
                     }
                 })));
 
@@ -317,9 +313,9 @@ public class DocumentPluginEventManager extends Plugin {
             // Hide the rename document presenter.
             HidePopupEvent.fire(DocumentPluginEventManager.this, event.getPresenter());
 
-            rename(event.getDocRef(), event.getDocName(), docRef -> {
-                highlight(docRef);
-                RefreshDocumentEvent.fire(this, docRef);
+            rename(event.getExplorerNode(), event.getDocName(), explorerNode -> {
+                highlight(explorerNode);
+                RefreshDocumentEvent.fire(this, explorerNode.getDocRef());
             });
         }));
 
@@ -454,29 +450,24 @@ public class DocumentPluginEventManager extends Plugin {
     }
 
     private void deleteItems(final List<ExplorerNode> explorerNodeList) {
-        if (explorerNodeList != null) {
-            final List<DocRef> docRefs = explorerNodeList.stream()
-                    .map(ExplorerNode::getDocRef)
-                    .collect(Collectors.toList());
-            if (docRefs.size() > 0) {
-                ConfirmEvent.fire(DocumentPluginEventManager.this,
-                        "Are you sure you want to delete these items?",
-                        ok -> {
-                            if (ok) {
-                                delete(docRefs, result -> {
-                                    if (result.getMessage().length() > 0) {
-                                        AlertEvent.fireInfo(DocumentPluginEventManager.this,
-                                                "Unable to delete some items",
-                                                result.getMessage(),
-                                                null);
-                                    }
+        if (explorerNodeList != null && explorerNodeList.size() > 0) {
+            ConfirmEvent.fire(DocumentPluginEventManager.this,
+                    "Are you sure you want to delete these items?",
+                    ok -> {
+                        if (ok) {
+                            delete(explorerNodeList, result -> {
+                                if (result.getMessage().length() > 0) {
+                                    AlertEvent.fireInfo(DocumentPluginEventManager.this,
+                                            "Unable to delete some items",
+                                            result.getMessage(),
+                                            null);
+                                }
 
-                                    // Refresh the explorer tree so the documents are marked as deleted.
-                                    RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this);
-                                });
-                            }
-                        });
-            }
+                                // Refresh the explorer tree so the documents are marked as deleted.
+                                RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this);
+                            });
+                        }
+                    });
         }
     }
 
@@ -510,55 +501,55 @@ public class DocumentPluginEventManager extends Plugin {
 
     public void create(final String docType,
                        final String docName,
-                       final DocRef destinationFolderRef,
+                       final ExplorerNode destinationFolder,
                        final PermissionInheritance permissionInheritance,
-                       final Consumer<DocRef> consumer) {
-        final Rest<DocRef> rest = restFactory.create();
+                       final Consumer<ExplorerNode> consumer) {
+        final Rest<ExplorerNode> rest = restFactory.create();
         rest
                 .onSuccess(consumer)
                 .call(EXPLORER_RESOURCE)
                 .create(new ExplorerServiceCreateRequest(docType,
                         docName,
-                        destinationFolderRef,
+                        destinationFolder,
                         permissionInheritance));
     }
 
-    private void copy(final List<DocRef> docRefs,
-                      final DocRef destinationFolderRef,
+    private void copy(final List<ExplorerNode> explorerNodes,
+                      final ExplorerNode destinationFolder,
                       final PermissionInheritance permissionInheritance,
                       final Consumer<BulkActionResult> consumer) {
         final Rest<BulkActionResult> rest = restFactory.create();
         rest
                 .onSuccess(consumer)
                 .call(EXPLORER_RESOURCE)
-                .copy(new ExplorerServiceCopyRequest(docRefs, destinationFolderRef, permissionInheritance));
+                .copy(new ExplorerServiceCopyRequest(explorerNodes, destinationFolder, permissionInheritance));
     }
 
-    private void move(final List<DocRef> docRefs,
-                      final DocRef destinationFolderRef,
+    private void move(final List<ExplorerNode> explorerNodes,
+                      final ExplorerNode destinationFolder,
                       final PermissionInheritance permissionInheritance,
                       final Consumer<BulkActionResult> consumer) {
         final Rest<BulkActionResult> rest = restFactory.create();
         rest
                 .onSuccess(consumer)
                 .call(EXPLORER_RESOURCE)
-                .move(new ExplorerServiceMoveRequest(docRefs, destinationFolderRef, permissionInheritance));
+                .move(new ExplorerServiceMoveRequest(explorerNodes, destinationFolder, permissionInheritance));
     }
 
-    private void rename(final DocRef docRef, final String docName, final Consumer<DocRef> consumer) {
-        final Rest<DocRef> rest = restFactory.create();
+    private void rename(final ExplorerNode explorerNode, final String docName, final Consumer<ExplorerNode> consumer) {
+        final Rest<ExplorerNode> rest = restFactory.create();
         rest
                 .onSuccess(consumer)
                 .call(EXPLORER_RESOURCE)
-                .rename(new ExplorerServiceRenameRequest(docRef, docName));
+                .rename(new ExplorerServiceRenameRequest(explorerNode, docName));
     }
 
-    private void delete(final List<DocRef> docRefs, final Consumer<BulkActionResult> consumer) {
+    private void delete(final List<ExplorerNode> explorerNodes, final Consumer<BulkActionResult> consumer) {
         final Rest<BulkActionResult> rest = restFactory.create();
         rest
                 .onSuccess(consumer)
                 .call(EXPLORER_RESOURCE)
-                .delete(new ExplorerServiceDeleteRequest(docRefs));
+                .delete(new ExplorerServiceDeleteRequest(explorerNodes));
     }
 
     private void setAsFavourite(final DocRef docRef, final boolean setFavourite) {
@@ -574,17 +565,9 @@ public class DocumentPluginEventManager extends Plugin {
     /**
      * This method will highlight the supplied document item in the explorer tree.
      */
-    public void highlight(final DocRef docRef) {
+    public void highlight(final ExplorerNode documentData) {
         // Open up parent items.
-        final ExplorerNode documentData = ExplorerNode.create(docRef);
         HighlightExplorerNodeEvent.fire(DocumentPluginEventManager.this, documentData);
-    }
-
-    /**
-     * Highlight an existing node in the tree
-     */
-    public void highlight(final ExplorerNode explorerNode) {
-        HighlightExplorerNodeEvent.fire(DocumentPluginEventManager.this, explorerNode);
     }
 
 
@@ -784,7 +767,8 @@ public class DocumentPluginEventManager extends Plugin {
             final DocumentType documentType,
             final ExplorerNode explorerNode
     ) {
-        final Consumer<DocRef> newDocumentConsumer = docRef -> {
+        final Consumer<ExplorerNode> newDocumentConsumer = newDocNode -> {
+            final DocRef docRef = newDocNode.getDocRef();
             // Open the document in the content pane.
             final DocumentPlugin<?> plugin = documentPluginRegistry.get(docRef.getType());
             if (plugin != null) {

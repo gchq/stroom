@@ -197,7 +197,8 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
         if (tabData instanceof DocumentEditPresenter<?, ?>) {
             final DocumentEditPresenter<?, D> presenter = (DocumentEditPresenter<?, D>) tabData;
 
-            final Consumer<DocRef> newDocumentConsumer = newDocRef -> {
+            final Consumer<ExplorerNode> newDocumentConsumer = explorerNode -> {
+                final DocRef newDocRef = explorerNode.getDocRef();
                 final Consumer<D> saveConsumer = saved -> {
                     // Read the new document into this presenter.
                     presenter.read(newDocRef, saved);
