@@ -677,8 +677,7 @@ public class DocumentPluginEventManager extends Plugin {
 
         // Add the favourites menu item if an item is selected, and it's not a root-level node or a favourite folder
         // item
-        if (singleSelection && primarySelection != null && primarySelection.getDepth() > 0 &&
-                (primarySelection.getDepth() == 1 || !isFavouritesNode(primarySelection))) {
+        if (singleSelection && primarySelection != null && primarySelection.getDepth() > 0) {
             final boolean isFavourite = primarySelection.getIsFavourite();
             menuItems.add(new IconMenuItem(
                     1,
