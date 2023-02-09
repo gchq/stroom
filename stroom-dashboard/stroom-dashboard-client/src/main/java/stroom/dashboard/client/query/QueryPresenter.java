@@ -55,6 +55,7 @@ import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.api.v2.ResultStoreInfo;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
@@ -221,6 +222,11 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                     defaultProcessorRecordLimit = result.getProcess().getDefaultRecordLimit();
                 })
                 .onFailure(caught -> AlertEvent.fireError(QueryPresenter.this, caught.getMessage(), null));
+    }
+
+    @Override
+    public void setResultStoreInfo(final ResultStoreInfo resultStoreInfo) {
+        searchModel.setResultStoreInfo(resultStoreInfo);
     }
 
     @Override

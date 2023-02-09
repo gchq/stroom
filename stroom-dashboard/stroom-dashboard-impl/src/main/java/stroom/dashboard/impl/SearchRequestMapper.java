@@ -74,6 +74,7 @@ public class SearchRequestMapper {
         }
 
         return SearchRequest.builder()
+                .searchRequestSource(searchRequest.getSearchRequestSource())
                 .key(searchRequest.getQueryKey())
                 .query(mapQuery(searchRequest))
                 .resultRequests(mapResultRequests(searchRequest))

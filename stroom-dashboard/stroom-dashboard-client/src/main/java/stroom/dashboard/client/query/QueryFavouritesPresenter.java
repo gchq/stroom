@@ -83,7 +83,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
 
         createButton = view.addButton(SvgPresets.NEW_ITEM);
         createButton.setTitle("Create Favourite From Current Query");
-        editButton = view.addButton(SvgPresets.OPEN);
+        editButton = view.addButton(SvgPresets.EDIT);
         editButton.setTitle("Change Favourite Name");
         deleteButton = view.addButton(SvgPresets.DELETE);
         deleteButton.setTitle("Delete Favourite");

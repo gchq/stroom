@@ -317,6 +317,7 @@ class QueryServiceImpl implements QueryService {
                 .timeRange(queryContext.getTimeRange())
                 .build();
         SearchRequest sampleRequest = new SearchRequest(
+                searchRequest.getSearchRequestSource(),
                 queryKey,
                 sampleQuery,
                 null,

@@ -44,6 +44,8 @@ import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.shared.DocumentType;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.ParamUtil;
+import stroom.query.api.v2.ResultStoreInfo;
+import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.QueryUiHandlers;
 import stroom.query.client.view.QueryButtons;
@@ -95,6 +97,8 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     private LayoutConstraints layoutConstraints = new LayoutConstraints(true, true);
     private Size preferredSize = new Size();
     private boolean designMode;
+
+    private ResultStoreInfo resultStoreInfo;
 
     @Inject
     public DashboardPresenter(final EventBus eventBus,
@@ -217,6 +221,10 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         getView().setEmbedded(embedded);
     }
 
+    public void setResultStoreInfo(final ResultStoreInfo resultStoreInfo) {
+        this.resultStoreInfo = resultStoreInfo;
+    }
+
     public void setQueryOnOpen(final boolean queryOnOpen) {
         this.queryOnOpen = queryOnOpen;
     }
@@ -329,9 +337,18 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             // Tell all queryable components whether we want them to query on open.
             for (final Component component : components) {
                 if (component instanceof Queryable) {
+                    if (resultStoreInfo != null) {
+                        final SearchRequestSource searchRequestSource = resultStoreInfo.getSearchRequestSource();
+                        if (searchRequestSource != null &&
+                                component.getId().equals(searchRequestSource.getComponentId())) {
+                            ((Queryable) component).setResultStoreInfo(resultStoreInfo);
+                        }
+                    }
+
                     ((Queryable) component).setQueryOnOpen(queryOnOpen);
                 }
             }
+            resultStoreInfo = null;
         }
     }
 

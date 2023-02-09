@@ -115,7 +115,9 @@ class TestTagCloudSearch extends AbstractSearchTest {
 
         final List<ResultRequest> resultRequests = Collections.singletonList(tableResultRequest);
 
-        final SearchRequest searchRequest = new SearchRequest(null,
+        final SearchRequest searchRequest = new SearchRequest(
+                null,
+                null,
                 query,
                 resultRequests,
                 DateTimeSettings.builder().build(),

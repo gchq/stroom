@@ -146,7 +146,10 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 nowEpochMilli);
 
         // Create the search result collector.
-        final ResultStore resultStore = resultStoreFactory.create(null, coprocessors);
+        final ResultStore resultStore = resultStoreFactory.create(
+                searchRequest.getSearchRequestSource(),
+                null,
+                coprocessors);
         elasticSearchExecutor.start(asyncSearchTask, resultStore);
         return resultStore;
     }

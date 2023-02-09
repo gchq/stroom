@@ -472,6 +472,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
                                 final DashboardSearchRequest searchRequest = DashboardSearchRequest
                                         .builder()
+                                        .searchRequestSource(currentSearchModel.getSearchRequestSource())
                                         .queryKey(queryKey)
                                         .search(search)
                                         .componentResultRequests(requests)

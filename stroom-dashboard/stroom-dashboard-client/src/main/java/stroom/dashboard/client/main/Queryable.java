@@ -16,6 +16,8 @@
 
 package stroom.dashboard.client.main;
 
+import stroom.query.api.v2.ResultStoreInfo;
+
 import java.util.function.Consumer;
 
 public interface Queryable {
@@ -35,4 +37,6 @@ public interface Queryable {
     void setQueryOnOpen(boolean queryOnOpen);
 
     void setDashboardContext(DashboardContext dashboardContext);
+
+    void setResultStoreInfo(ResultStoreInfo resultStoreInfo);
 }

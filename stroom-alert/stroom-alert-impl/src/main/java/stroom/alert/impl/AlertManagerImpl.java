@@ -39,6 +39,8 @@ import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchRequestSource;
+import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.language.DataSourceResolver;
 import stroom.query.language.SearchRequestBuilder;
@@ -328,6 +330,7 @@ public class AlertManagerImpl implements AlertManager {
             // Map the rule query
             Query sampleQuery = Query.builder().build();
             SearchRequest sampleRequest = new SearchRequest(
+                    SearchRequestSource.builder().sourceType(SourceType.ALERT_RULE).build(),
                     null,
                     sampleQuery,
                     null,

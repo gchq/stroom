@@ -11,6 +11,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class ResultStoreInfo {
 
     @JsonProperty
+    private final SearchRequestSource searchRequestSource;
+    @JsonProperty
     private final QueryKey queryKey;
     @JsonProperty
     private final String userId;
@@ -30,15 +32,18 @@ public class ResultStoreInfo {
     private final LifespanInfo storeLifespan;
 
     @JsonCreator
-    public ResultStoreInfo(@JsonProperty("queryKey") final QueryKey queryKey,
-                           @JsonProperty("userId") final String userId,
-                           @JsonProperty("creationTime") final long creationTime,
-                           @JsonProperty("nodeName") final String nodeName,
-                           @JsonProperty("storeSize") final long storeSize,
-                           @JsonProperty("complete") final boolean complete,
-                           @JsonProperty("taskProgress") final SearchTaskProgress taskProgress,
-                           @JsonProperty("searchProcessLifespan") final LifespanInfo searchProcessLifespan,
-                           @JsonProperty("storeLifespan") final LifespanInfo storeLifespan) {
+    public ResultStoreInfo(
+            @JsonProperty("searchRequestSource") final SearchRequestSource searchRequestSource,
+            @JsonProperty("queryKey") final QueryKey queryKey,
+            @JsonProperty("userId") final String userId,
+            @JsonProperty("creationTime") final long creationTime,
+            @JsonProperty("nodeName") final String nodeName,
+            @JsonProperty("storeSize") final long storeSize,
+            @JsonProperty("complete") final boolean complete,
+            @JsonProperty("taskProgress") final SearchTaskProgress taskProgress,
+            @JsonProperty("searchProcessLifespan") final LifespanInfo searchProcessLifespan,
+            @JsonProperty("storeLifespan") final LifespanInfo storeLifespan) {
+        this.searchRequestSource = searchRequestSource;
         this.queryKey = queryKey;
         this.userId = userId;
         this.creationTime = creationTime;
@@ -48,6 +53,10 @@ public class ResultStoreInfo {
         this.taskProgress = taskProgress;
         this.searchProcessLifespan = searchProcessLifespan;
         this.storeLifespan = storeLifespan;
+    }
+
+    public SearchRequestSource getSearchRequestSource() {
+        return searchRequestSource;
     }
 
     public QueryKey getQueryKey() {

@@ -18,18 +18,24 @@ package stroom.dashboard.shared;
 
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchRequestSource;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
+@JsonPropertyOrder(alphabetic = true)
 public class DashboardSearchRequest {
 
+    @JsonProperty
+    private SearchRequestSource searchRequestSource;
     @JsonProperty
     private final QueryKey queryKey;
     @JsonProperty
@@ -50,32 +56,29 @@ public class DashboardSearchRequest {
             "return no results, complete=false and details of the timeout in the error field")
     @JsonProperty
     private final long timeout;
-
-    @JsonProperty
-    private final String dashboardUuid;
-    @JsonProperty
-    private final String componentId;
     @JsonProperty
     private final boolean storeHistory;
 
     @JsonCreator
     public DashboardSearchRequest(
+            @JsonProperty("searchRequestSource") final SearchRequestSource searchRequestSource,
             @JsonProperty("queryKey") final QueryKey queryKey,
             @JsonProperty("search") final Search search,
             @JsonProperty("componentResultRequests") final List<ComponentResultRequest> componentResultRequests,
             @JsonProperty("dateTimeSettings") final DateTimeSettings dateTimeSettings,
             @JsonProperty("timeout") final long timeout,
-            @JsonProperty("dashboardUuid") final String dashboardUuid,
-            @JsonProperty("componentId") final String componentId,
             @JsonProperty("storeHistory") final boolean storeHistory) {
+        this.searchRequestSource = searchRequestSource;
         this.queryKey = queryKey;
         this.search = search;
         this.componentResultRequests = componentResultRequests;
         this.dateTimeSettings = dateTimeSettings;
         this.timeout = timeout;
-        this.dashboardUuid = dashboardUuid;
-        this.componentId = componentId;
         this.storeHistory = storeHistory;
+    }
+
+    public SearchRequestSource getSearchRequestSource() {
+        return searchRequestSource;
     }
 
     public QueryKey getQueryKey() {
@@ -98,14 +101,6 @@ public class DashboardSearchRequest {
         return timeout;
     }
 
-    public String getDashboardUuid() {
-        return dashboardUuid;
-    }
-
-    public String getComponentId() {
-        return componentId;
-    }
-
     public boolean isStoreHistory() {
         return storeHistory;
     }
@@ -118,8 +113,7 @@ public class DashboardSearchRequest {
                 ", componentResultRequests=" + componentResultRequests +
                 ", dateTimeSettings='" + dateTimeSettings + '\'' +
                 ", timeout=" + timeout +
-                ", dashboardUuid='" + dashboardUuid + '\'' +
-                ", componentId='" + componentId + '\'' +
+                ", searchRequestSource='" + searchRequestSource + '\'' +
                 ", storeHistory=" + storeHistory +
                 '}';
     }
@@ -134,27 +128,35 @@ public class DashboardSearchRequest {
 
     public static final class Builder {
 
+        private SearchRequestSource searchRequestSource;
         private QueryKey queryKey;
         private Search search;
         private List<ComponentResultRequest> componentResultRequests;
         private DateTimeSettings dateTimeSettings;
         private long timeout = 1000L;
-        private String dashboardUuid;
-        private String componentId;
         private boolean storeHistory;
 
         private Builder() {
         }
 
         private Builder(final DashboardSearchRequest searchRequest) {
+            this.searchRequestSource = searchRequest.searchRequestSource;
             this.queryKey = searchRequest.queryKey;
             this.search = searchRequest.search;
             this.componentResultRequests = searchRequest.componentResultRequests;
             this.dateTimeSettings = searchRequest.dateTimeSettings;
             this.timeout = searchRequest.timeout;
-            this.dashboardUuid = searchRequest.dashboardUuid;
             this.storeHistory = searchRequest.storeHistory;
-            this.componentId = searchRequest.componentId;
+        }
+
+        /**
+         * Where did this search request originate, e.g. query, dashboard or API?
+         *
+         * @return The {@link SearchRequest.Builder}, enabling method chaining
+         */
+        public Builder searchRequestSource(final SearchRequestSource searchRequestSource) {
+            this.searchRequestSource = searchRequestSource;
+            return this;
         }
 
         public Builder queryKey(final QueryKey queryKey) {
@@ -182,16 +184,6 @@ public class DashboardSearchRequest {
             return this;
         }
 
-        public Builder dashboardUuid(final String dashboardUuid) {
-            this.dashboardUuid = dashboardUuid;
-            return this;
-        }
-
-        public Builder componentId(final String componentId) {
-            this.componentId = componentId;
-            return this;
-        }
-
         public Builder storeHistory(final boolean storeHistory) {
             this.storeHistory = storeHistory;
             return this;
@@ -199,13 +191,12 @@ public class DashboardSearchRequest {
 
         public DashboardSearchRequest build() {
             return new DashboardSearchRequest(
+                    searchRequestSource,
                     queryKey,
                     search,
                     componentResultRequests,
                     dateTimeSettings,
                     timeout,
-                    dashboardUuid,
-                    componentId,
                     storeHistory);
         }
     }

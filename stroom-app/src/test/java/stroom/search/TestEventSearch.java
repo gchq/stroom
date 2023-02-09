@@ -113,7 +113,9 @@ class TestEventSearch extends AbstractSearchTest {
         }
 
         final Query query = Query.builder().dataSource(indexRef).expression(expressionIn.build()).build();
-        final SearchRequest searchRequest = new SearchRequest(null,
+        final SearchRequest searchRequest = new SearchRequest(
+                null,
+                null,
                 query,
                 resultRequests,
                 DateTimeSettings.builder().build(),

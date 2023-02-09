@@ -49,6 +49,7 @@ import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.common.v2.ResultStoreManager;
@@ -317,13 +318,14 @@ class DashboardServiceImpl implements DashboardService {
     }
 
     private String getQueryFileName(final DashboardSearchRequest request) {
-        final DocRefInfo dashDocRefInfo = dashboardStore.info(request.getDashboardUuid());
+        final SearchRequestSource searchRequestSource = request.getSearchRequestSource();
+        final DocRefInfo dashDocRefInfo = dashboardStore.info(searchRequestSource.getOwnerDocUuid());
         final String dashboardName = NullSafe.getOrElse(
                 dashDocRefInfo,
                 DocRefInfo::getDocRef,
                 DocRef::getName,
-                request.getDashboardUuid());
-        final String basename = dashboardName + "__" + request.getComponentId();
+                searchRequestSource.getOwnerDocUuid());
+        final String basename = dashboardName + "__" + searchRequestSource.getComponentId();
         return getFileName(basename, "json");
     }
 
@@ -470,11 +472,11 @@ class DashboardServiceImpl implements DashboardService {
                         search.getExpression(),
                         search.getParams(),
                         search.getTimeRange());
-
+                final SearchRequestSource searchRequestSource = request.getSearchRequestSource();
                 final StoredQuery storedQuery = new StoredQuery();
                 storedQuery.setName("History");
-                storedQuery.setDashboardUuid(request.getDashboardUuid());
-                storedQuery.setComponentId(request.getComponentId());
+                storedQuery.setDashboardUuid(searchRequestSource.getOwnerDocUuid());
+                storedQuery.setComponentId(searchRequestSource.getComponentId());
                 storedQuery.setQuery(query);
                 queryService.create(storedQuery);
 

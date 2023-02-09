@@ -18,6 +18,8 @@ package stroom.query.shared;
 
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchRequestSource;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -34,6 +36,8 @@ import java.util.Set;
 @JsonInclude(Include.NON_NULL)
 public class QuerySearchRequest {
 
+    @JsonProperty
+    private SearchRequestSource searchRequestSource;
     @JsonProperty
     private final QueryKey queryKey;
     @JsonProperty
@@ -59,11 +63,6 @@ public class QuerySearchRequest {
             "return no results, complete=false and details of the timeout in the error field")
     @JsonProperty
     private final long timeout;
-
-    @JsonProperty
-    private final String queryDocUuid;
-    @JsonProperty
-    private final String componentId;
     @JsonProperty
     private final boolean storeHistory;
     @JsonProperty
@@ -73,26 +72,28 @@ public class QuerySearchRequest {
 
     @JsonCreator
     public QuerySearchRequest(
+            @JsonProperty("searchRequestSource") final SearchRequestSource searchRequestSource,
             @JsonProperty("queryKey") final QueryKey queryKey,
             @JsonProperty("query") final String query,
             @JsonProperty("queryContext") final QueryContext queryContext,
             @JsonProperty("incremental") final boolean incremental,
             @JsonProperty("timeout") final long timeout,
-            @JsonProperty("queryDocUuid") final String queryDocUuid,
-            @JsonProperty("componentId") final String componentId,
             @JsonProperty("storeHistory") final boolean storeHistory,
             @JsonProperty("requestedRange") final OffsetRange requestedRange,
             @JsonProperty("openGroups") final Set<String> openGroups) {
+        this.searchRequestSource = searchRequestSource;
         this.queryKey = queryKey;
         this.query = query;
         this.queryContext = queryContext;
         this.incremental = incremental;
         this.timeout = timeout;
-        this.queryDocUuid = queryDocUuid;
-        this.componentId = componentId;
         this.storeHistory = storeHistory;
         this.requestedRange = requestedRange;
         this.openGroups = openGroups;
+    }
+
+    public SearchRequestSource getSearchRequestSource() {
+        return searchRequestSource;
     }
 
     public QueryKey getQueryKey() {
@@ -113,14 +114,6 @@ public class QuerySearchRequest {
 
     public long getTimeout() {
         return timeout;
-    }
-
-    public String getQueryDocUuid() {
-        return queryDocUuid;
-    }
-
-    public String getComponentId() {
-        return componentId;
     }
 
     public boolean isStoreHistory() {
@@ -151,24 +144,23 @@ public class QuerySearchRequest {
         return incremental == that.incremental &&
                 timeout == that.timeout &&
                 storeHistory == that.storeHistory &&
+                Objects.equals(searchRequestSource, that.searchRequestSource) &&
                 Objects.equals(queryKey, that.queryKey) &&
                 Objects.equals(query, that.query) &&
                 Objects.equals(queryContext, that.queryContext) &&
-                Objects.equals(queryDocUuid, that.queryDocUuid) &&
-                Objects.equals(componentId, that.componentId) &&
                 Objects.equals(requestedRange, that.requestedRange) &&
                 Objects.equals(openGroups, that.openGroups);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(queryKey,
+        return Objects.hash(
+                searchRequestSource,
+                queryKey,
                 query,
                 queryContext,
                 incremental,
                 timeout,
-                queryDocUuid,
-                componentId,
                 storeHistory,
                 requestedRange,
                 openGroups);
@@ -177,13 +169,12 @@ public class QuerySearchRequest {
     @Override
     public String toString() {
         return "QuerySearchRequest{" +
-                "queryKey=" + queryKey +
+                "searchRequestSource=" + searchRequestSource +
+                ", queryKey=" + queryKey +
                 ", query='" + query + '\'' +
                 ", queryContext=" + queryContext +
                 ", incremental=" + incremental +
                 ", timeout=" + timeout +
-                ", queryDocUuid='" + queryDocUuid + '\'' +
-                ", componentId='" + componentId + '\'' +
                 ", storeHistory=" + storeHistory +
                 ", requestedRange=" + requestedRange +
                 ", openGroups=" + openGroups +
@@ -200,13 +191,12 @@ public class QuerySearchRequest {
 
     public static final class Builder {
 
+        private SearchRequestSource searchRequestSource;
         private QueryKey queryKey;
         private String query;
         private QueryContext queryContext;
         private boolean incremental = true;
         private long timeout = 1000L;
-        private String queryDocUuid;
-        private String componentId;
         private boolean storeHistory;
         private OffsetRange requestedRange = new OffsetRange(0, 100);
         private Set<String> openGroups;
@@ -215,14 +205,23 @@ public class QuerySearchRequest {
         }
 
         private Builder(final QuerySearchRequest request) {
+            this.searchRequestSource = request.searchRequestSource;
             this.queryKey = request.queryKey;
             this.query = request.query;
             this.queryContext = request.queryContext;
             this.incremental = request.incremental;
             this.timeout = request.timeout;
-            this.queryDocUuid = request.queryDocUuid;
             this.storeHistory = request.storeHistory;
-            this.componentId = request.componentId;
+        }
+
+        /**
+         * Where did this search request originate, e.g. query, dashboard or API?
+         *
+         * @return The {@link SearchRequest.Builder}, enabling method chaining
+         */
+        public Builder searchRequestSource(final SearchRequestSource searchRequestSource) {
+            this.searchRequestSource = searchRequestSource;
+            return this;
         }
 
         public Builder queryKey(final QueryKey queryKey) {
@@ -247,16 +246,6 @@ public class QuerySearchRequest {
 
         public Builder timeout(final long timeout) {
             this.timeout = timeout;
-            return this;
-        }
-
-        public Builder queryDocUuid(final String queryDocUuid) {
-            this.queryDocUuid = queryDocUuid;
-            return this;
-        }
-
-        public Builder componentId(final String componentId) {
-            this.componentId = componentId;
             return this;
         }
 
@@ -291,13 +280,12 @@ public class QuerySearchRequest {
 
         public QuerySearchRequest build() {
             return new QuerySearchRequest(
+                    searchRequestSource,
                     queryKey,
                     query,
                     queryContext,
                     incremental,
                     timeout,
-                    queryDocUuid,
-                    componentId,
                     storeHistory,
                     requestedRange,
                     openGroups);

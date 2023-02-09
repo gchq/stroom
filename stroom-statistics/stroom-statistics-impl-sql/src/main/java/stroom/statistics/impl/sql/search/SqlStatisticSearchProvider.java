@@ -177,7 +177,10 @@ public class SqlStatisticSearchProvider implements SearchProvider {
 
         // Create coprocessors.
         final Coprocessors coprocessors = coprocessorsFactory.create(modifiedSearchRequest);
-        final ResultStore resultStore = resultStoreFactory.create(null, coprocessors);
+        final ResultStore resultStore = resultStoreFactory.create(
+                searchRequest.getSearchRequestSource(),
+                null,
+                coprocessors);
 
         final Runnable runnable = taskContextFactory.context(TASK_NAME, taskContext -> {
             try {

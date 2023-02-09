@@ -29,7 +29,9 @@ public class TestSearchRequestBuilder extends AbstractQueryTest {
         final List<ResultRequest> resultRequests = new ArrayList<>(0);
         final QueryKey queryKey = new QueryKey("test");
         final Query query = Query.builder().build();
-        SearchRequest searchRequest = new SearchRequest(queryKey,
+        SearchRequest searchRequest = new SearchRequest(
+                null,
+                queryKey,
                 query,
                 resultRequests,
                 DateTimeSettings.builder().build(),

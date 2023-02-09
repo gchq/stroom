@@ -17,6 +17,7 @@
 package stroom.query.common.v2;
 
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.SearchTaskProgress;
 import stroom.util.io.StreamUtil;
@@ -47,6 +48,7 @@ public class ResultStore {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ResultStore.class);
 
     private final ConcurrentHashMap<String, Set<Throwable>> errors = new ConcurrentHashMap<>();
+    private final SearchRequestSource searchRequestSource;
     private final List<String> highlights;
     private final Coprocessors coprocessors;
     private final String userId;
@@ -59,13 +61,15 @@ public class ResultStore {
     private volatile SearchProcess searchProcess;
     private volatile boolean terminate;
 
-    public ResultStore(final SerialisersFactory serialisersFactory,
+    public ResultStore(final SearchRequestSource searchRequestSource,
+                       final SerialisersFactory serialisersFactory,
                        final SizesProvider sizesProvider,
                        final String userId,
                        final List<String> highlights,
                        final Coprocessors coprocessors,
                        final String nodeName,
                        final ResultStoreSettings resultStoreSettings) {
+        this.searchRequestSource = searchRequestSource;
         this.highlights = Optional
                 .ofNullable(highlights)
                 .map(Collections::unmodifiableList)
@@ -77,6 +81,10 @@ public class ResultStore {
         this.nodeName = nodeName;
         this.resultStoreSettings = resultStoreSettings;
         searchResponseCreator = new SearchResponseCreator(serialisersFactory, sizesProvider, this);
+    }
+
+    public SearchRequestSource getSearchRequestSource() {
+        return searchRequestSource;
     }
 
     public Coprocessors getCoprocessors() {

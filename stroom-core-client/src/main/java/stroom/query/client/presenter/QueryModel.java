@@ -23,6 +23,8 @@ import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
+import stroom.query.api.v2.SearchRequestSource;
+import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.shared.QueryContext;
 import stroom.query.shared.QueryResource;
@@ -182,10 +184,15 @@ public class QueryModel {
 
         currentSearch = QuerySearchRequest
                 .builder()
+                .searchRequestSource(
+                        SearchRequestSource
+                                .builder()
+                                .sourceType(SourceType.QUERY_UI)
+                                .ownerDocUuid(queryUuid)
+                                .build())
                 .query(query)
                 .queryContext(currentQueryContext)
                 .incremental(incremental)
-                .queryDocUuid(queryUuid)
                 .build();
 //            }
 //        }

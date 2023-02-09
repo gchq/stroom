@@ -105,7 +105,10 @@ public class SolrEventSearchTaskHandler {
             final EventCoprocessor eventCoprocessor = (EventCoprocessor) coprocessors.get(coprocessorId);
 
             // Create the search result store.
-            final ResultStore resultStore = resultStoreFactory.create(null, coprocessors);
+            final ResultStore resultStore = resultStoreFactory.create(
+                    null,
+                    null,
+                    coprocessors);
 
             try {
                 // Start asynchronous search execution.

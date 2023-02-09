@@ -168,7 +168,10 @@ public class LuceneSearchProvider implements SearchProvider {
                 nowEpochMilli);
 
         // Create the search result collector.
-        final ResultStore resultStore = resultStoreFactory.create(new ArrayList<>(highlights), coprocessors);
+        final ResultStore resultStore = resultStoreFactory.create(
+                searchRequest.getSearchRequestSource(),
+                new ArrayList<>(highlights),
+                coprocessors);
 
         luceneSearchExecutor.start(asyncSearchTask, resultStore);
 

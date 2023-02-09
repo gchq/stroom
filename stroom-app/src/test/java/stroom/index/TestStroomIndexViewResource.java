@@ -68,7 +68,9 @@ class TestStroomIndexViewResource {
         List<ResultRequest> resultRequestList = new ArrayList<>();
         final DateTimeSettings dateTimeSettings = DateTimeSettings.builder().build();
         boolean incremental = false;
-        SearchRequest searchRequest = new SearchRequest(queryKey,
+        SearchRequest searchRequest = new SearchRequest(
+                null,
+                queryKey,
                 query,
                 resultRequestList,
                 dateTimeSettings,

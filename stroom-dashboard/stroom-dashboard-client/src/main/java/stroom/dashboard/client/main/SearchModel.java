@@ -31,6 +31,9 @@ import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
+import stroom.query.api.v2.ResultStoreInfo;
+import stroom.query.api.v2.SearchRequestSource;
+import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.ResultStoreModel;
@@ -215,12 +218,11 @@ public class SearchModel {
 
                     final DashboardSearchRequest request = DashboardSearchRequest
                             .builder()
+                            .searchRequestSource(getSearchRequestSource())
                             .queryKey(queryKey)
                             .search(search)
                             .componentResultRequests(requests)
                             .dateTimeSettings(dateTimeSettingsFactory.getDateTimeSettings())
-                            .dashboardUuid(dashboardUuid)
-                            .componentId(componentId)
                             .build();
 
                     final Rest<DashboardSearchResponse> rest = restFactory.create();
@@ -330,12 +332,11 @@ public class SearchModel {
             }
             final DashboardSearchRequest request = DashboardSearchRequest
                     .builder()
+                    .searchRequestSource(getSearchRequestSource())
                     .queryKey(queryKey)
                     .search(search)
                     .componentResultRequests(requests)
                     .dateTimeSettings(dateTimeSettingsFactory.getDateTimeSettings())
-                    .dashboardUuid(dashboardUuid)
-                    .componentId(componentId)
                     .storeHistory(storeHistory)
                     .build();
 
@@ -486,10 +487,18 @@ public class SearchModel {
 
         return DashboardSearchRequest
                 .builder()
+                .searchRequestSource(getSearchRequestSource())
                 .search(search)
                 .componentResultRequests(requests)
                 .dateTimeSettings(dateTimeSettingsFactory.getDateTimeSettings())
-                .dashboardUuid(dashboardUuid)
+                .build();
+    }
+
+    public SearchRequestSource getSearchRequestSource() {
+        return SearchRequestSource
+                .builder()
+                .sourceType(SourceType.DASHBOARD_UI)
+                .ownerDocUuid(dashboardUuid)
                 .componentId(componentId)
                 .build();
     }
@@ -542,5 +551,9 @@ public class SearchModel {
 
     public void removeErrorListener(final Consumer<List<String>> consumer) {
         errorListeners.remove(consumer);
+    }
+
+    public void setResultStoreInfo(final ResultStoreInfo resultStoreInfo) {
+
     }
 }

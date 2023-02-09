@@ -141,6 +141,7 @@ class TestSearchResultCreation {
         complete(coprocessors);
 
         final ResultStore resultStore = new ResultStore(
+                searchRequest.getSearchRequestSource(),
                 new SerialisersFactory(),
                 sizesProvider,
                 null,
@@ -271,6 +272,7 @@ class TestSearchResultCreation {
         coprocessors2.getCompletionState().awaitCompletion();
 
         final ResultStore resultStore = new ResultStore(
+                searchRequest.getSearchRequestSource(),
                 new SerialisersFactory(),
                 sizesProvider,
                 "test_user_id",
@@ -348,6 +350,7 @@ class TestSearchResultCreation {
         coprocessors2.getCompletionState().awaitCompletion();
 
         final ResultStore resultStore = new ResultStore(
+                searchRequest.getSearchRequestSource(),
                 new SerialisersFactory(),
                 sizesProvider,
                 "test_user_id",
@@ -457,6 +460,7 @@ class TestSearchResultCreation {
         complete(coprocessors2);
 
         final ResultStore resultStore = new ResultStore(
+                searchRequest.getSearchRequestSource(),
                 null,
                 null,
                 null,

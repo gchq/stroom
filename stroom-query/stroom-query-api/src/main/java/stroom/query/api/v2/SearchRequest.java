@@ -38,10 +38,18 @@ import javax.xml.bind.annotation.XmlType;
  * A class for describing a search request including the query to run and definition(s) of how the results
  * should be returned
  */
-@JsonPropertyOrder({"key", "query", "resultRequests", "dateTimeLocale", "incremental", "timeout"})
+@JsonPropertyOrder({
+        "searchRequestSource",
+        "key",
+        "query",
+        "resultRequests",
+        "dateTimeLocale",
+        "incremental",
+        "timeout"})
 @JsonInclude(Include.NON_NULL)
 @XmlRootElement(name = "searchRequest")
 @XmlType(name = "SearchRequest", propOrder = {
+        "searchRequestSource",
         "key",
         "query",
         "resultRequests",
@@ -53,8 +61,10 @@ import javax.xml.bind.annotation.XmlType;
         "iterative search")
 public final class SearchRequest {
 
+    @JsonProperty
+    private SearchRequestSource searchRequestSource;
+
     @XmlElement
-    @Schema(required = true)
     @JsonProperty
     private QueryKey key;
 
@@ -68,7 +78,6 @@ public final class SearchRequest {
     @Schema(required = true)
     @JsonProperty
     private List<ResultRequest> resultRequests;
-
 
     @XmlElement
     @Schema(description = "The client date/time settings")
@@ -101,37 +110,40 @@ public final class SearchRequest {
     }
 
     /**
-     * @param key                    A unique key to identify the instance of the search by. This key is used to
-     *                               identify multiple requests for the same search when running in incremental mode.
-     * @param query                  The query terms for the search
-     * @param resultRequests         A list of {@link ResultRequest resultRequest} definitions. If null or the list is
-     *                               empty no results will be returned. Allows the caller to request that the results of
-     *                               the query are returned in multiple forms, e.g. using a number of different
-     *                               filtering/aggregation/sorting approaches.
+     * @param key              A unique key to identify the instance of the search by. This key is used to
+     *                         identify multiple requests for the same search when running in incremental mode.
+     * @param query            The query terms for the search
+     * @param resultRequests   A list of {@link ResultRequest resultRequest} definitions. If null or the list is
+     *                         empty no results will be returned. Allows the caller to request that the results of
+     *                         the query are returned in multiple forms, e.g. using a number of different
+     *                         filtering/aggregation/sorting approaches.
      * @param dateTimeSettings The client date time settings to use when formatting date values in the search
-     *                               results.
-     * @param incremental            If true the response will contain all results found so far. Future requests for the
-     *                               same query key may return more results. Intended for use on longer running searches
-     *                               to allow partial result sets to be returned as soon as they are available rather
-     *                               than waiting for the full result set.
-     * @param timeout                Set the maximum time (in ms) for the server to wait for a complete result set.The
-     *                               timeout applies to both incremental and non incremental queries, though the
-     *                               behaviour is slightly different. The timeout will make the server wait for which
-     *                               ever comes first out of the query completing or the timeout period being reached.
-     *                               If no value is supplied then for an incremental query a default value of 0 will be
-     *                               used (i.e. returning immediately) and for a non-incremental query the server's
-     *                               default timeout period will be used. For an incremental query, if the query has not
-     *                               completed by the end of the timeout period, it will return the currently know
-     *                               results with complete=false, however for a non-incremental query it will return no
-     *                               results, complete=false and details of the timeout in the error field
+     *                         results.
+     * @param incremental      If true the response will contain all results found so far. Future requests for the
+     *                         same query key may return more results. Intended for use on longer running searches
+     *                         to allow partial result sets to be returned as soon as they are available rather
+     *                         than waiting for the full result set.
+     * @param timeout          Set the maximum time (in ms) for the server to wait for a complete result set.The
+     *                         timeout applies to both incremental and non incremental queries, though the
+     *                         behaviour is slightly different. The timeout will make the server wait for which
+     *                         ever comes first out of the query completing or the timeout period being reached.
+     *                         If no value is supplied then for an incremental query a default value of 0 will be
+     *                         used (i.e. returning immediately) and for a non-incremental query the server's
+     *                         default timeout period will be used. For an incremental query, if the query has not
+     *                         completed by the end of the timeout period, it will return the currently know
+     *                         results with complete=false, however for a non-incremental query it will return no
+     *                         results, complete=false and details of the timeout in the error field
      */
     @JsonCreator
-    public SearchRequest(@JsonProperty("key") final QueryKey key,
-                         @JsonProperty("query") final Query query,
-                         @JsonProperty("resultRequests") final List<ResultRequest> resultRequests,
-                         @JsonProperty("dateTimeSettings") final DateTimeSettings dateTimeSettings,
-                         @JsonProperty("incremental") final Boolean incremental,
-                         @JsonProperty("timeout") final Long timeout) {
+    public SearchRequest(
+            @JsonProperty("searchRequestSource") final SearchRequestSource searchRequestSource,
+            @JsonProperty("key") final QueryKey key,
+            @JsonProperty("query") final Query query,
+            @JsonProperty("resultRequests") final List<ResultRequest> resultRequests,
+            @JsonProperty("dateTimeSettings") final DateTimeSettings dateTimeSettings,
+            @JsonProperty("incremental") final Boolean incremental,
+            @JsonProperty("timeout") final Long timeout) {
+        this.searchRequestSource = searchRequestSource;
         this.key = key;
         this.query = query;
         this.resultRequests = resultRequests;
@@ -140,26 +152,28 @@ public final class SearchRequest {
         this.timeout = timeout;
     }
 
-    /**
-     * See {@link SearchRequest#SearchRequest(QueryKey, Query, List, DateTimeSettings, Boolean, Long)}
-     *
-     * @param key                    As linked
-     * @param query                  As linked
-     * @param resultRequests         As linked
-     * @param dateTimeSettings As linked
-     * @param incremental            As linked
-     */
-    public SearchRequest(final QueryKey key,
+    public SearchRequest(final SearchRequestSource searchRequestSource,
+                         final QueryKey key,
                          final Query query,
                          final List<ResultRequest> resultRequests,
                          final DateTimeSettings dateTimeSettings,
                          final Boolean incremental) {
+        this.searchRequestSource = searchRequestSource;
         this.key = key;
         this.query = query;
         this.resultRequests = resultRequests;
         this.dateTimeSettings = dateTimeSettings;
         this.incremental = incremental;
         this.timeout = null;
+    }
+
+    /**
+     * Where did this search request originate, e.g. query, dashboard or API?
+     *
+     * @return The source of the search request.
+     */
+    public SearchRequestSource getSearchRequestSource() {
+        return searchRequestSource;
     }
 
     /**
@@ -284,6 +298,7 @@ public final class SearchRequest {
      */
     public static final class Builder {
 
+        private SearchRequestSource searchRequestSource;
         private List<ResultRequest> resultRequests;
         private QueryKey key;
         private Query query;
@@ -295,12 +310,23 @@ public final class SearchRequest {
         }
 
         private Builder(final SearchRequest searchRequest) {
+            this.searchRequestSource = searchRequest.searchRequestSource;
             this.resultRequests = searchRequest.resultRequests;
             this.key = searchRequest.key;
             this.query = searchRequest.query;
             this.dateTimeSettings = searchRequest.dateTimeSettings;
             this.incremental = searchRequest.incremental;
             this.timeout = searchRequest.timeout;
+        }
+
+        /**
+         * Where did this search request originate, e.g. query, dashboard or API?
+         *
+         * @return The {@link Builder}, enabling method chaining
+         */
+        public Builder searchRequestSource(final SearchRequestSource searchRequestSource) {
+            this.searchRequestSource = searchRequestSource;
+            return this;
         }
 
         /**
@@ -371,8 +397,7 @@ public final class SearchRequest {
         }
 
         /**
-         * @param value See {@link SearchRequest#SearchRequest(QueryKey, Query, List, DateTimeSettings, Boolean,
-         *              Long)}
+         * @param value The timeout period in ms. Can be null.
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder timeout(final Long value) {
@@ -381,7 +406,14 @@ public final class SearchRequest {
         }
 
         public SearchRequest build() {
-            return new SearchRequest(key, query, resultRequests, dateTimeSettings, incremental, timeout);
+            return new SearchRequest(
+                    searchRequestSource,
+                    key,
+                    query,
+                    resultRequests,
+                    dateTimeSettings,
+                    incremental,
+                    timeout);
         }
     }
 

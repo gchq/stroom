@@ -483,7 +483,9 @@ public final class ResultStoreManager implements Clearable {
         final List<ResultStoreInfo> list = new ArrayList<>();
         resultStoreMap.forEach((queryKey, resultStore) -> {
             if (securityContext.isAdmin() || resultStore.getUserId().equals(securityContext.getUserId())) {
-                list.add(new ResultStoreInfo(queryKey,
+                list.add(new ResultStoreInfo(
+                        resultStore.getSearchRequestSource(),
+                        queryKey,
                         resultStore.getUserId(),
                         resultStore.getCreationTime().toEpochMilli(),
                         resultStore.getNodeName(),

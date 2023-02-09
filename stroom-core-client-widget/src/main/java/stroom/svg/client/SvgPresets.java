@@ -68,7 +68,7 @@ public final class SvgPresets {
     public static final Preset MOVE = disabled("svgIcon-move", "Move");
     public static final Preset NEW_ITEM = enabled("svgIcon-add", "New");
     public static final Preset NODES = enabled("svgIcon-nodes", "Nodes");
-    public static final Preset OPEN = disabled("svgIcon-edit", "Open");
+    public static final Preset OPEN = disabled("svgIcon-open", "Open");
     public static final Preset OPERATOR = enabled("svgIcon-operator", "Add Operator");
     public static final Preset PASSWORD = enabled("svgIcon-password", "Change Password");
     public static final Preset PROCESS = disabled("svgIcon-process", "Process");

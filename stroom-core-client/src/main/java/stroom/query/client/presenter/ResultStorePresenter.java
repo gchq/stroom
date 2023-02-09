@@ -19,6 +19,7 @@ package stroom.query.client.presenter;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.v2.LifespanInfo;
 import stroom.query.api.v2.ResultStoreInfo;
+import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchTaskProgress;
 import stroom.query.client.presenter.ResultStorePresenter.ResultStoreView;
 import stroom.util.shared.ModelStringUtil;
@@ -62,17 +63,32 @@ public class ResultStorePresenter extends MyPresenterWidget<ResultStoreView> {
             if (resultStoreInfo != null) {
                 tb
                         .row(TableCell.header("Store Details", 2))
-                        .row("UUID:", resultStoreInfo.getQueryKey().getUuid())
-                        .row("User Id:", resultStoreInfo.getUserId())
-                        .row("Creation Time:", dateTimeFormatter.format(resultStoreInfo.getCreationTime()))
-                        .row("Age:", ModelStringUtil.formatDurationString(
+                        .row("UUID", resultStoreInfo.getQueryKey().getUuid())
+                        .row("User Id", resultStoreInfo.getUserId())
+                        .row("Creation Time", dateTimeFormatter.format(resultStoreInfo.getCreationTime()))
+                        .row("Age", ModelStringUtil.formatDurationString(
                                 System.currentTimeMillis() - resultStoreInfo.getCreationTime()))
-                        .row("Node Name:", resultStoreInfo.getNodeName())
-                        .row("Store Size:", ModelStringUtil.formatIECByteSizeString(resultStoreInfo.getStoreSize()))
-                        .row("Complete:", Boolean.toString(resultStoreInfo.isComplete()));
+                        .row("Node Name", resultStoreInfo.getNodeName())
+                        .row("Store Size", ModelStringUtil.formatIECByteSizeString(resultStoreInfo.getStoreSize()))
+                        .row("Complete", Boolean.toString(resultStoreInfo.isComplete()));
                 final SearchTaskProgress taskProgress = resultStoreInfo.getTaskProgress();
                 if (taskProgress != null) {
-                    tb.row("Task Info:", taskProgress.getTaskInfo());
+                    tb.row("Task Info", taskProgress.getTaskInfo());
+                }
+
+                if (resultStoreInfo.getSearchRequestSource() != null) {
+                    final SearchRequestSource source = resultStoreInfo.getSearchRequestSource();
+                    tb
+                            .row(TableCell.header("Source", 2));
+                    if (source.getSourceType() != null) {
+                        tb.row("Type", source.getSourceType().getDisplayValue());
+                    }
+                    if (source.getOwnerDocUuid() != null) {
+                        tb.row("Owner Doc", source.getOwnerDocUuid());
+                    }
+                    if (source.getComponentId() != null) {
+                        tb.row("Component Id", source.getComponentId());
+                    }
                 }
 
                 tb.row(TableCell.header("Search Process Lifespan", 2));
@@ -89,10 +105,10 @@ public class ResultStorePresenter extends MyPresenterWidget<ResultStoreView> {
 
     private void addLifespan(final TableBuilder tb, final LifespanInfo lifespan) {
         tb
-                .row("Time To Live:", lifespan.getTimeToLive())
-                .row("Time To Idle:", lifespan.getTimeToIdle())
-                .row("Destroy On Tab Close:", Boolean.toString(lifespan.isDestroyOnTabClose()))
-                .row("Destroy On Window Close:", Boolean.toString(lifespan.isDestroyOnWindowClose()));
+                .row("Time To Live", lifespan.getTimeToLive())
+                .row("Time To Idle", lifespan.getTimeToIdle())
+                .row("Destroy On Tab Close", Boolean.toString(lifespan.isDestroyOnTabClose()))
+                .row("Destroy On Window Close", Boolean.toString(lifespan.isDestroyOnWindowClose()));
     }
 
     public void show() {

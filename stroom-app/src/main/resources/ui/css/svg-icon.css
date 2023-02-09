@@ -169,6 +169,9 @@
 .svgIcon-edit {
   background-image: url("../images/edit.svg");
 }
+.svgIcon-open {
+  background-image: url("../images/open.svg");
+}
 .svgIcon-operator {
   background-image: url("../images/operator.svg");
 }

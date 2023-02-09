@@ -1,6 +1,7 @@
 package stroom.query.common.v2;
 
 import stroom.node.api.NodeInfo;
+import stroom.query.api.v2.SearchRequestSource;
 import stroom.security.api.SecurityContext;
 
 import java.util.List;
@@ -31,12 +32,14 @@ public final class ResultStoreFactory {
     /**
      * @param store The underlying store to use for creating the search responses.
      */
-    public ResultStore create(final List<String> highlights,
+    public ResultStore create(final SearchRequestSource searchRequestSource,
+                              final List<String> highlights,
                               final Coprocessors coprocessors) {
         final String userId = securityContext.getUserId();
         Objects.requireNonNull(userId, "No user is logged in");
 
         return new ResultStore(
+                searchRequestSource,
                 serialisersFactory,
                 sizesProvider,
                 userId,

@@ -3742,6 +3742,14 @@ public class SvgImages {
             "</svg>\n" +
             "";
 
+    public static String MONO_OPEN = "" +
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?><svg xmlns=\"http://www.w3.org/2000/svg\" wi" +
+            "dth=\"20\" height=\"20\" viewBox=\"0 0 20 20\"><path style=\"fill:currentColor\" d=\"M17 " +
+            "17H3V3h5V1H3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5h-2z\"/><path styl" +
+            "e=\"fill:currentColor\" d=\"M19 1h-8l3.29 3.29-5.73 5.73 1.42 1.42 5.73-5.73L19 9V1" +
+            "z\"/></svg>\n" +
+            "";
+
     public static String MONO_PAUSE = "" +
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 448 512\">\n" +
@@ -4638,6 +4646,19 @@ public class SvgImages {
             "</svg>\n" +
             "";
 
+    public static String SEARCH_DARK = "" +
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
+            "1792 1792\">\n" +
+            "    <path style=\"fill:#e6e1dc\"\n" +
+            "          d=\"M1216 832q0-185-131.5-316.5t-316.5-131.5-316.5 131.5-131.5 316.5 13" +
+            "1.5 316.5 316.5 131.5 316.5-131.5 131.5-316.5zm512 832q0 52-38 90t-90 38q-54 0-9" +
+            "0-38l-343-342q-179 124-399 124-143 0-273.5-55.5t-225-150-150-225-55.5-273.5 55.5" +
+            "-273.5 150-225 225-150 273.5-55.5 273.5 55.5 225 150 150 225 55.5 273.5q0 220-12" +
+            "4 399l343 343q37 37 37 90z\"/>\n" +
+            "</svg>\n" +
+            "";
+
     public static String SELECT_ALL_OR_NONE = "" +
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
@@ -4761,7 +4782,7 @@ public class SvgImages {
             " 368q20 35 20 69z\"/></svg>\n" +
             "";
 
-    public static String ALERT_RULE = "" +
+    public static String SIGMA_RULE = "" +
             "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
             "<!-- Created with Inkscape (http://www.inkscape.org/) -->\n" +
             "\n" +

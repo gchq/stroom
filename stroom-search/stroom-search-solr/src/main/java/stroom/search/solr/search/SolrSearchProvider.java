@@ -170,7 +170,10 @@ public class SolrSearchProvider implements SearchProvider {
                 nowEpochMilli);
 
         // Create the search result store.
-        final ResultStore resultStore = resultStoreFactory.create(new ArrayList<>(highlights), coprocessors);
+        final ResultStore resultStore = resultStoreFactory.create(
+                searchRequest.getSearchRequestSource(),
+                new ArrayList<>(highlights),
+                coprocessors);
 
         // Start asynchronous search execution.
         solrSearchExecutor.start(asyncSearchTask, resultStore);

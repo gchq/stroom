@@ -73,7 +73,7 @@ public class UsersAndGroupsTabPresenter extends
         setInSlot(LIST, listPresenter);
 
         newButton = listPresenter.addButton(SvgPresets.NEW_ITEM);
-        openButton = listPresenter.addButton(SvgPresets.OPEN);
+        openButton = listPresenter.addButton(SvgPresets.EDIT);
         deleteButton = listPresenter.addButton(SvgPresets.DELETE);
 
         final boolean updatePerm = securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION);

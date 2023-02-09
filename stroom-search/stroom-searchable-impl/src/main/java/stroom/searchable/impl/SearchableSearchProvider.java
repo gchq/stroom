@@ -140,7 +140,10 @@ class SearchableSearchProvider implements SearchProvider {
         final Sizes defaultMaxResultsSizes = getDefaultMaxResultsSizes();
         final int resultHandlerBatchSize = getResultHandlerBatchSize();
 
-        final ResultStore resultStore = resultStoreFactory.create(null, coprocessors);
+        final ResultStore resultStore = resultStoreFactory.create(
+                searchRequest.getSearchRequestSource(),
+                null,
+                coprocessors);
         final String searchKey = searchRequest.getKey().toString();
         final String taskName = getTaskName(searchable.getDocRef());
 

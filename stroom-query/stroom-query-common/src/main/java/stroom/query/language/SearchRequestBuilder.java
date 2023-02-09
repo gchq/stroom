@@ -66,7 +66,9 @@ public class SearchRequestBuilder {
         final List<ResultRequest> resultRequests = new ArrayList<>();
         remaining = addTableSettings(remaining, true, resultRequests);
 
-        return new SearchRequest(in.getKey(),
+        return new SearchRequest(
+                in.getSearchRequestSource(),
+                in.getKey(),
                 query,
                 resultRequests,
                 in.getDateTimeSettings(),

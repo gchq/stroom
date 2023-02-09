@@ -98,7 +98,10 @@ public class EventSearchTaskHandler {
                 final EventCoprocessor eventCoprocessor = (EventCoprocessor) coprocessors.get(coprocessorId);
 
                 // Create the search result collector.
-                final ResultStore resultStore = resultStoreFactory.create(null, coprocessors);
+                final ResultStore resultStore = resultStoreFactory.create(
+                        null,
+                        null,
+                        coprocessors);
                 try {
                     luceneSearchExecutor.start(asyncSearchTask, resultStore);
 
