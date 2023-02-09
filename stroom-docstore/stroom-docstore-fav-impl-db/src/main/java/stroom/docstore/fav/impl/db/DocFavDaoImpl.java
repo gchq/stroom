@@ -4,10 +4,6 @@ import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
 import stroom.docstore.fav.impl.DocFavDao;
 import stroom.docstore.impl.db.DocStoreDbConnProvider;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-
-import org.jooq.exception.DataAccessException;
 
 import java.time.Instant;
 import java.util.List;
@@ -16,8 +12,6 @@ import javax.inject.Inject;
 import static stroom.docstore.fav.impl.db.jooq.Tables.DOC_FAVOURITE;
 
 public class DocFavDaoImpl implements DocFavDao {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocFavDaoImpl.class);
 
     private final DocStoreDbConnProvider docStoreDbConnProvider;
 

@@ -1,7 +1,6 @@
 package stroom.docstore.fav.impl;
 
 import stroom.docref.DocRef;
-import stroom.security.api.UserIdentity;
 
 import java.util.List;
 

@@ -1,21 +1,15 @@
 ext.moduleName = 'stroom.docstore.fav.impl'
 
 dependencies {
-    implementation project(':stroom-cache:stroom-cache-api')
-    implementation project(':stroom-cluster:stroom-cluster-lock-api')
-    implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-docref')
-    implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-docstore:stroom-docstore-fav-api')
     implementation project(':stroom-docstore:stroom-docstore-fav-impl-db-jooq')
-    implementation project(':stroom-explorer:stroom-collection-api')
     implementation project(':stroom-explorer:stroom-docrefinfo-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
