@@ -214,6 +214,16 @@ public class ExplorerNode implements HasDisplayValue {
             this.isFavourite = explorerNode.isFavourite;
         }
 
+        public Builder docRef(final DocRef docRef) {
+            if (docRef != null) {
+                this.type = docRef.getType();
+                this.uuid = docRef.getUuid();
+                this.name = docRef.getName();
+            }
+
+            return this;
+        }
+
         public Builder type(final String type) {
             this.type = type;
             return this;

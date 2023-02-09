@@ -266,7 +266,11 @@ public class DocumentPluginEventManager extends Plugin {
                             // Hide the create document presenter.
                             HidePopupEvent.fire(DocumentPluginEventManager.this, event.getPresenter());
 
-                            highlight(docRef);
+                            final ExplorerNode newNode = ExplorerNode.builder()
+                                    .docRef(docRef)
+                                    .rootNodeUuid(selectionModel.getSelected().getRootNodeUuid())
+                                    .build();
+                            highlight(newNode);
 
                             // The initiator of this event can now do what they want with the docref.
                             event.getNewDocConsumer().accept(docRef);
@@ -574,6 +578,13 @@ public class DocumentPluginEventManager extends Plugin {
         // Open up parent items.
         final ExplorerNode documentData = ExplorerNode.create(docRef);
         HighlightExplorerNodeEvent.fire(DocumentPluginEventManager.this, documentData);
+    }
+
+    /**
+     * Highlight an existing node in the tree
+     */
+    public void highlight(final ExplorerNode explorerNode) {
+        HighlightExplorerNodeEvent.fire(DocumentPluginEventManager.this, explorerNode);
     }
 
 

@@ -194,11 +194,11 @@ public class ExplorerTreeModel {
                             // that try and select one of the folders that has been forced open in an attempt to
                             // make the requested item visible.
                             if (criteria.getEnsureVisible() != null && criteria.getEnsureVisible().size() > 0) {
-                                ExplorerNodeKey uniqueKey = criteria.getEnsureVisible().iterator().next();
+                                final ExplorerNodeKey uniqueKey = criteria.getEnsureVisible().iterator().next();
                                 ExplorerNode nextSelection = null;
                                 if (uniqueKey != null) {
-                                    nextSelection = ExplorerNode.create(new DocRef(null, uniqueKey.getUuid()))
-                                            .copy()
+                                    nextSelection = ExplorerNode.builder()
+                                            .uuid(uniqueKey.getUuid())
                                             .rootNodeUuid(uniqueKey.getRootNodeUuid())
                                             .build();
                                 }
@@ -216,9 +216,8 @@ public class ExplorerTreeModel {
                                         final int openedItemsCnt = result.getOpenedItems().size();
                                         for (int i = openedItemsCnt - 1; i >= 0 && nextSelection == null; i--) {
                                             final ExplorerNodeKey item = result.getOpenedItems().get(i);
-                                            final ExplorerNode explorerNode = ExplorerNode.create(
-                                                    new DocRef(null, item.getUuid()))
-                                                    .copy()
+                                            final ExplorerNode explorerNode = ExplorerNode.builder()
+                                                    .uuid(item.getUuid())
                                                     .rootNodeUuid(item.getRootNodeUuid())
                                                     .build();
                                             if (rows.contains(explorerNode)) {
