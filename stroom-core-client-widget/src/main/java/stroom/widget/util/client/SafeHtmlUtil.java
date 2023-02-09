@@ -1,4 +1,4 @@
-package stroom.util.client;
+package stroom.widget.util.client;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -145,5 +145,89 @@ public class SafeHtmlUtil {
         } else {
             return getSafeHtml(string);
         }
+    }
+
+    public static SafeHtml from(boolean b) {
+        return SafeHtmlUtils.fromTrustedString(String.valueOf(b));
+    }
+
+    public static SafeHtml from(byte num) {
+        return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
+    }
+
+    public static SafeHtml from(char c) {
+        return SafeHtmlUtils.fromTrustedString(SafeHtmlUtils.htmlEscape(c));
+    }
+
+    public static SafeHtml from(double num) {
+        return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
+    }
+
+    public static SafeHtml from(float num) {
+        return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
+    }
+
+    public static SafeHtml from(int num) {
+        return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
+    }
+
+    public static SafeHtml from(long num) {
+        return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
+    }
+
+    public static SafeHtml from(Boolean b) {
+        if (b == null) {
+            return SafeHtmlUtils.EMPTY_SAFE_HTML;
+        }
+        return SafeHtmlUtils.fromTrustedString(String.valueOf(b));
+    }
+
+    public static SafeHtml from(Byte num) {
+        if (num == null) {
+            return SafeHtmlUtils.EMPTY_SAFE_HTML;
+        }
+        return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
+    }
+
+    public static SafeHtml from(Character c) {
+        if (c == null) {
+            return SafeHtmlUtils.EMPTY_SAFE_HTML;
+        }
+        return SafeHtmlUtils.fromTrustedString(SafeHtmlUtils.htmlEscape(c));
+    }
+
+    public static SafeHtml from(Double num) {
+        if (num == null) {
+            return SafeHtmlUtils.EMPTY_SAFE_HTML;
+        }
+        return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
+    }
+
+    public static SafeHtml from(Float num) {
+        if (num == null) {
+            return SafeHtmlUtils.EMPTY_SAFE_HTML;
+        }
+        return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
+    }
+
+    public static SafeHtml from(Integer num) {
+        if (num == null) {
+            return SafeHtmlUtils.EMPTY_SAFE_HTML;
+        }
+        return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
+    }
+
+    public static SafeHtml from(Long num) {
+        if (num == null) {
+            return SafeHtmlUtils.EMPTY_SAFE_HTML;
+        }
+        return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
+    }
+
+    public static SafeHtml from(String string) {
+        if (string == null) {
+            return SafeHtmlUtils.EMPTY_SAFE_HTML;
+        }
+        return SafeHtmlUtils.fromString(string);
     }
 }

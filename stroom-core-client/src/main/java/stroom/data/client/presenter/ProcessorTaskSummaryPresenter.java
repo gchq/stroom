@@ -36,9 +36,12 @@ import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
-import stroom.widget.tooltip.client.presenter.TooltipUtil;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.TableBuilder;
+import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
@@ -105,20 +108,22 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
         final InfoColumn<ProcessorTaskSummary> infoColumn = new InfoColumn<ProcessorTaskSummary>() {
             @Override
             protected void showInfo(final ProcessorTaskSummary row, final int x, final int y) {
-                final TooltipUtil.Builder builder = TooltipUtil.builder()
-                        .addTwoColTable(tableBuilder -> {
-                            tableBuilder.addHeaderRow("Key Data");
-                            final DocRef pipeline = row.getPipeline();
-                            if (pipeline != null) {
-                                tableBuilder.addRow("Pipeline", DocRefUtil.createSimpleDocRefString(pipeline));
-                            }
-                            return tableBuilder
-                                    .addRow("Feed", row.getFeed())
-                                    .addRow("Priority", row.getPriority())
-                                    .addRow("Status", row.getStatus())
-                                    .build();
-                        });
-                tooltipPresenter.show(builder.build(), x, y);
+                final TableBuilder tb = new TableBuilder();
+                tb.row(TableCell.header("Key Data", 2));
+                final DocRef pipeline = row.getPipeline();
+                if (pipeline != null) {
+                    tb.row("Pipeline", DocRefUtil.createSimpleDocRefString(pipeline));
+                }
+
+                tb
+                        .row("Feed", row.getFeed())
+                        .row("Priority", String.valueOf(row.getPriority()))
+                        .row("Status", String.valueOf(row.getStatus()));
+
+                final HtmlBuilder htmlBuilder = new HtmlBuilder();
+                htmlBuilder.div(tb::write, Attribute.className("infoTable"));
+
+                tooltipPresenter.show(htmlBuilder.toSafeHtml(), x, y);
             }
         };
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);

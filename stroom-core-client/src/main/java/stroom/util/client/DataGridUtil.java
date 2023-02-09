@@ -11,6 +11,7 @@ import stroom.svg.client.Preset;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.Expander;
 import stroom.util.shared.TreeAction;
+import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.Cell.Context;

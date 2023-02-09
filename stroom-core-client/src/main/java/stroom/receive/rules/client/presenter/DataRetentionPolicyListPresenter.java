@@ -28,7 +28,8 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.tooltip.client.presenter.TooltipUtil;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -172,11 +173,17 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerVie
 
     private SafeHtml getSafeHtml(final String string, final DataRetentionRule rule) {
         if (isDefaultRule(rule)) {
-            return TooltipUtil.styledSpan(string, builder ->
-                    builder.trustedColor("#484848"));
+            return HtmlBuilder
+                    .builder()
+                    .span(hb ->
+                            hb.append(string), Attribute.className("dataRetention--defaultRule"))
+                    .toSafeHtml();
         } else if (!rule.isEnabled()) {
-            return TooltipUtil.styledSpan(string, builder ->
-                    builder.trustedColor("#A9A9A9"));
+            return HtmlBuilder
+                    .builder()
+                    .span(hb ->
+                            hb.append(string), Attribute.className("dataRetention--disabledRule"))
+                    .toSafeHtml();
         } else {
             return SafeHtmlUtils.fromString(string);
         }

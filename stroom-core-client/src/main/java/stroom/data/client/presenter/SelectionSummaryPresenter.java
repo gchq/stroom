@@ -7,7 +7,7 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.SelectionSummary;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.util.client.SafeHtmlUtil;
+import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 

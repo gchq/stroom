@@ -49,8 +49,10 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
-import stroom.widget.tooltip.client.presenter.TooltipUtil;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.TableBuilder;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.shared.GWT;
@@ -244,39 +246,39 @@ public class IndexShardPresenter extends MyPresenterWidget<PagerView>
         final InfoColumn<IndexShard> infoColumn = new InfoColumn<IndexShard>() {
             @Override
             protected void showInfo(final IndexShard indexShard, final int x, final int y) {
-                final TooltipUtil.Builder builder = TooltipUtil.builder()
-                        .addTwoColTable(tableBuilder -> {
-                            if (index != null) {
-                                tableBuilder.addRow("Index UUID", String.valueOf(index.getUuid()));
-                            }
-                            tableBuilder
-                                    .addRow("Shard Id", String.valueOf(indexShard.getId()))
-                                    .addRow("Node", indexShard.getNodeName())
-                                    .addRow("Partition", indexShard.getPartition());
+                final TableBuilder tb = new TableBuilder();
 
-                            if (indexShard.getPartitionFromTime() != null) {
-                                tableBuilder.addRow("Partition From",
-                                        dateTimeFormatter.format(indexShard.getPartitionFromTime()));
-                            }
-                            if (indexShard.getPartitionToTime() != null) {
-                                tableBuilder.addRow("Partition To",
-                                        dateTimeFormatter.format(indexShard.getPartitionToTime()));
-                            }
+                if (index != null) {
+                    tb.row("Index UUID", String.valueOf(index.getUuid()));
+                }
+                tb
+                        .row("Shard Id", String.valueOf(indexShard.getId()))
+                        .row("Node", indexShard.getNodeName())
+                        .row("Partition", indexShard.getPartition());
 
-                            return tableBuilder
-                                    .addRow("Path", indexShard.getVolume().getPath())
-                                    .addRow("Status", indexShard.getStatus().getDisplayValue())
-                                    .addRow("Document Count", intToString(indexShard.getDocumentCount()))
-                                    .addRow("File Size", indexShard.getFileSizeString())
-                                    .addRow("Bytes Per Document", intToString(indexShard.getBytesPerDocument()))
-                                    .addRow("Commit", dateTimeFormatter.format(indexShard.getCommitMs()))
-                                    .addRow("Commit Duration",
-                                            ModelStringUtil.formatDurationString(indexShard.getCommitDurationMs()))
-                                    .addRow("Commit Document Count", intToString(indexShard.getCommitDocumentCount()))
-                                    .addRow("Index Version", indexShard.getIndexVersion())
-                                    .build();
-                        });
-                tooltipPresenter.show(builder.build(), x, y);
+                if (indexShard.getPartitionFromTime() != null) {
+                    tb.row("Partition From", dateTimeFormatter.format(indexShard.getPartitionFromTime()));
+                }
+                if (indexShard.getPartitionToTime() != null) {
+                    tb.row("Partition To", dateTimeFormatter.format(indexShard.getPartitionToTime()));
+                }
+
+                tb
+                        .row("Path", indexShard.getVolume().getPath())
+                        .row("Status", indexShard.getStatus().getDisplayValue())
+                        .row("Document Count", intToString(indexShard.getDocumentCount()))
+                        .row("File Size", indexShard.getFileSizeString())
+                        .row("Bytes Per Document", intToString(indexShard.getBytesPerDocument()))
+                        .row("Commit", dateTimeFormatter.format(indexShard.getCommitMs()))
+                        .row("Commit Duration",
+                                ModelStringUtil.formatDurationString(indexShard.getCommitDurationMs()))
+                        .row("Commit Document Count", intToString(indexShard.getCommitDocumentCount()))
+                        .row("Index Version", indexShard.getIndexVersion());
+
+                final HtmlBuilder htmlBuilder = new HtmlBuilder();
+                htmlBuilder.div(tb::write, Attribute.className("infoTable"));
+
+                tooltipPresenter.show(htmlBuilder.toSafeHtml(), x, y);
             }
         };
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);

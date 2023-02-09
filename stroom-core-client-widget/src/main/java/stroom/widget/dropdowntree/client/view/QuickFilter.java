@@ -18,7 +18,7 @@ package stroom.widget.dropdowntree.client.view;
 
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.SvgButton;
-import stroom.widget.tooltip.client.presenter.TooltipUtil;
+import stroom.widget.util.client.HtmlBuilder;
 
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -43,10 +43,12 @@ public class QuickFilter extends FlowPanel
         implements HasText, HasValueChangeHandlers<String> {
 
     private static final int REFRESH_ALL_NODES_TIMER_DELAY_MS = 500;
-    private static final SafeHtml DEFAULT_POPUP_TEXT = TooltipUtil.builder()
-            .addHeading("Quick Filter")
-            .addLine("Field values containing the characters input will be included.")
-            .build();
+    private static final SafeHtml DEFAULT_POPUP_TEXT = new HtmlBuilder()
+            .bold(hb -> hb.append("Quick Filter"))
+            .br()
+            .append("Field values containing the characters input will be included.")
+            .br()
+            .toSafeHtml();
 
     private final TextBox textBox = new TextBox();
     private final SvgButton clearButton;

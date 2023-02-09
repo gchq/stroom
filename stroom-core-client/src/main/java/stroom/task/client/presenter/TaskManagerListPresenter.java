@@ -52,7 +52,10 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
-import stroom.widget.tooltip.client.presenter.TooltipUtil;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.TableBuilder;
+import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
@@ -321,27 +324,26 @@ public class TaskManagerListPresenter
     }
 
     private SafeHtml buildTooltipHtml(final TaskProgress row) {
-        return TooltipUtil.builder()
-                .addTwoColTable(tableBuilder -> {
-                    tableBuilder.addHeaderRow("Task")
-                            .addRow("Name", row.getTaskName())
-                            .addRow("User", row.getUserName())
-                            .addRow("Submit Time", dateTimeFormatter.format(row.getSubmitTimeMs()))
-                            .addRow("Age", ModelStringUtil.formatDurationString(row.getAgeMs()))
-                            .addBlankRow()
-                            .addRow("Id", row.getId())
-                            .addRow("Thread Name", row.getThreadName());
+        final TableBuilder tb = new TableBuilder();
+        tb
+                .row(TableCell.header("Task", 2))
+                .row("Name", row.getTaskName())
+                .row("User", row.getUserName())
+                .row("Submit Time", dateTimeFormatter.format(row.getSubmitTimeMs()))
+                .row("Age", ModelStringUtil.formatDurationString(row.getAgeMs()))
+                .row()
+                .row("Id", row.getId().toString())
+                .row("Thread Name", row.getThreadName());
 
-                    if (row.getId() != null) {
-                        final TaskId parentId = row.getId().getParentId();
-                        if (parentId != null) {
-                            tableBuilder.addRow("Parent Id", parentId);
-                        }
-                    }
-                    return tableBuilder.build();
-                })
-                .addLine(row.getTaskInfo())
-                .build();
+        if (row.getId() != null) {
+            final TaskId parentId = row.getId().getParentId();
+            if (parentId != null) {
+                tb.row("Parent Id", parentId.toString());
+            }
+        }
+        final HtmlBuilder htmlBuilder = new HtmlBuilder();
+        htmlBuilder.div(tb::write, Attribute.className("infoTable"));
+        return htmlBuilder.toSafeHtml();
     }
 
     private Function<TaskProgress, SafeHtml> getColouredCellFunc(final Function<TaskProgress, String> extractor) {

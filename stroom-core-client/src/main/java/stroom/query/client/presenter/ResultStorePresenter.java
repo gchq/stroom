@@ -25,10 +25,12 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.tooltip.client.presenter.TableBuilder;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.TableBuilder;
+import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -58,64 +60,39 @@ public class ResultStorePresenter extends MyPresenterWidget<ResultStoreView> {
             final TableBuilder tb = new TableBuilder();
             final ResultStoreInfo resultStoreInfo = resultStoreListPresenter.getSelectionModel().getSelected();
             if (resultStoreInfo != null) {
-                tb.row().header("Store Details", 2);
-                tb.row()
-                        .data("UUID:")
-                        .data(resultStoreInfo.getQueryKey().getUuid());
-                tb.row()
-                        .data("User Id:")
-                        .data(resultStoreInfo.getUserId());
-                tb.row()
-                        .data("Creation Time:")
-                        .data(dateTimeFormatter.format(resultStoreInfo.getCreationTime()));
-                tb.row()
-                        .data("Age:")
-                        .data(ModelStringUtil.formatDurationString(
-                                System.currentTimeMillis() - resultStoreInfo.getCreationTime()));
-                tb.row()
-                        .data("Node Name:")
-                        .data(resultStoreInfo.getNodeName());
-                tb.row()
-                        .data("Store Size:")
-                        .data(ModelStringUtil.formatIECByteSizeString(resultStoreInfo.getStoreSize()));
-                tb.row()
-                        .data("Complete:")
-                        .data(Boolean.toString(resultStoreInfo.isComplete()));
+                tb
+                        .row(TableCell.header("Store Details", 2))
+                        .row("UUID:", resultStoreInfo.getQueryKey().getUuid())
+                        .row("User Id:", resultStoreInfo.getUserId())
+                        .row("Creation Time:", dateTimeFormatter.format(resultStoreInfo.getCreationTime()))
+                        .row("Age:", ModelStringUtil.formatDurationString(
+                                System.currentTimeMillis() - resultStoreInfo.getCreationTime()))
+                        .row("Node Name:", resultStoreInfo.getNodeName())
+                        .row("Store Size:", ModelStringUtil.formatIECByteSizeString(resultStoreInfo.getStoreSize()))
+                        .row("Complete:", Boolean.toString(resultStoreInfo.isComplete()));
                 final SearchTaskProgress taskProgress = resultStoreInfo.getTaskProgress();
                 if (taskProgress != null) {
-                    tb.row()
-                            .data("Task Info:")
-                            .data(taskProgress.getTaskInfo());
+                    tb.row("Task Info:", taskProgress.getTaskInfo());
                 }
 
-                tb.row().header("Search Process Lifespan", 2);
+                tb.row(TableCell.header("Search Process Lifespan", 2));
                 addLifespan(tb, resultStoreInfo.getSearchProcessLifespan());
-                tb.row().header("Store Lifespan", 2);
+                tb.row(TableCell.header("Store Lifespan", 2));
                 addLifespan(tb, resultStoreInfo.getStoreLifespan());
             }
 
-            final SafeHtmlBuilder sb = new SafeHtmlBuilder();
-            sb.appendHtmlConstant("<div class=\"resultStoreInfo\">");
-            tb.write(sb);
-            sb.appendHtmlConstant("</div>");
-
-            getView().setData(sb.toSafeHtml());
+            final HtmlBuilder htmlBuilder = new HtmlBuilder();
+            htmlBuilder.div(tb::write, Attribute.className("infoTable"));
+            getView().setData(htmlBuilder.toSafeHtml());
         }));
     }
 
     private void addLifespan(final TableBuilder tb, final LifespanInfo lifespan) {
-        tb.row()
-                .data("Time To Live:")
-                .data(lifespan.getTimeToLive());
-        tb.row()
-                .data("Time To Idle:")
-                .data(lifespan.getTimeToIdle());
-        tb.row()
-                .data("Destroy On Tab Close:")
-                .data(Boolean.toString(lifespan.isDestroyOnTabClose()));
-        tb.row()
-                .data("Destroy On Window Close:")
-                .data(Boolean.toString(lifespan.isDestroyOnWindowClose()));
+        tb
+                .row("Time To Live:", lifespan.getTimeToLive())
+                .row("Time To Idle:", lifespan.getTimeToIdle())
+                .row("Destroy On Tab Close:", Boolean.toString(lifespan.isDestroyOnTabClose()))
+                .row("Destroy On Window Close:", Boolean.toString(lifespan.isDestroyOnWindowClose()));
     }
 
     public void show() {

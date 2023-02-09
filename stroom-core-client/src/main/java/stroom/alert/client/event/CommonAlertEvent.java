@@ -16,7 +16,7 @@
 
 package stroom.alert.client.event;
 
-import stroom.util.client.SafeHtmlUtil;
+import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;

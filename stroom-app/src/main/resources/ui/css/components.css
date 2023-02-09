@@ -1220,6 +1220,14 @@
     position: relative;
 }
 
+.dataRetention--defaultRule {
+    color: #484848;
+}
+
+.dataRetention--disabledRule {
+    color: #A9A9A9;
+}
+
 .importConfigViewImpl-label {
     float: left;
     width: 100px;
@@ -1322,13 +1330,13 @@
 .infoMenuItem {
     cursor:default;
     color:#212121;
-    background:linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.1));
-    border: 1px solid gray;
+    /*background:linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.1));*/
+    /*border: 1px solid gray;*/
 }
 
 .stroom-theme-dark .infoMenuItem {
 	color: var(--text-color);
-    border: 1px solid var(--dialog__border-color);
+    /*border: 1px solid var(--dialog__border-color);*/
 }
 
 .button-group {
@@ -1716,32 +1724,82 @@
 }
 
 
-.metaInfo, .resultStoreInfo {
-    padding: var(--control__padding--horizontal) var(--control__padding--vertical);
+.infoTable {
     white-space: nowrap;
+    user-select: text;
 }
 
-.metaInfo th, .resultStoreInfo th {
+.infoTable tr {
+    height: 10px;
+}
+
+.infoTable th {
     color: #1e88e5;
     font-weight: bold;
     font-size: 125%;
     height: 2em;
 }
 
-.metaInfo td:first-child, .resultStoreInfo td:first-child {
+.infoTable th, .infoTable td {
+    padding-right: var(--row__padding--horizontal);
+}
+
+.infoTable th:first-child, .infoTable td:first-child {
+    padding-left: var(--row__padding--horizontal);
+}
+
+.infoTable td:first-child {
     line-height: 1.4em;
     font-weight: 500;
-    padding-right: var(--control__padding--horizontal);
 }
 
-/*
-.resultStoreInfo {
-    padding: var(--control__padding--horizontal) var(--control__padding--vertical);
-    white-space: nowrap;
+.functionSignatureInfo {
+    max-width: 600px;
 }
 
-.resultStoreInfo th {
-    padding: var(--control__padding--horizontal) var(--control__padding--vertical);
-    white-space: nowrap;
+.functionSignatureInfo-description {
+    white-space: pre-wrap !important;
 }
-*/
+
+.functionSignatureTable {
+    white-space: nowrap;
+    user-select: text;
+}
+
+.functionSignatureTable tr {
+    height: 10px;
+}
+
+.functionSignatureTable th {
+    padding-right: var(--row__gap--horizontal);
+    font-weight: bold;
+}
+
+.functionSignatureTable td {
+    padding-right: var(--row__gap--horizontal);
+}
+
+
+.nodePingBar-outer {
+    padding-left: .25em;
+    padding-right: .25em;
+}
+
+.nodePingBar-bar {
+     color: white;
+     height: 100%;
+}
+
+.nodePingBar-bar__healthy {
+     background-color: rgba(33, 150, 243, 0.6);
+}
+
+.nodePingBar-bar__unhealthy {
+     background-color: rgba(255, 111, 0, 0.6);
+}
+
+.nodePingBar-text {
+    padding-left: .25em;
+}
+
+

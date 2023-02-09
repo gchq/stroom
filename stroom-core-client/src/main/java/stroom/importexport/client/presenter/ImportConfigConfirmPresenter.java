@@ -52,14 +52,12 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
-import stroom.widget.tooltip.client.presenter.TooltipUtil;
-import stroom.widget.tooltip.client.presenter.TooltipUtil.Builder;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.TableBuilder;
+import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.dom.client.Style.Overflow;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.dom.client.Style.WhiteSpace;
-import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.client.ui.Focus;
@@ -373,39 +371,28 @@ public class ImportConfigConfirmPresenter extends
 
             @Override
             protected void showInfo(final ImportState action, final int x, final int y) {
-
-                final Builder builder = TooltipUtil.builder();
+                final HtmlBuilder htmlBuilder = new HtmlBuilder();
                 if (action.getMessageList().size() > 0) {
-                    builder
-                            .addHeading("Messages:")
-                            .addTwoColTable(tableBuilder -> {
-                                for (final Message msg : action.getMessageList()) {
-                                    tableBuilder.addRow(
-                                            msg.getSeverity().getDisplayValue(),
-                                            msg.getMessage(),
-                                            true,
-                                            new SafeStylesBuilder()
-                                                    .whiteSpace(WhiteSpace.PRE)
-                                                    .paddingRight(8, Unit.PX)
-                                                    .toSafeStyles(),
-                                            new SafeStylesBuilder()
-                                                    .whiteSpace(WhiteSpace.NORMAL)
-                                                    .overflow(Overflow.AUTO)
-                                                    .toSafeStyles());
-                                }
-                                return tableBuilder.build();
-                            });
+
+                    final TableBuilder tb = new TableBuilder();
+                    tb.row(TableCell.header("Messages", 2));
+                    for (final Message msg : action.getMessageList()) {
+                        tb.row(msg.getSeverity().getDisplayValue(), msg.getMessage());
+                    }
+                    htmlBuilder.div(tb::write, Attribute.className("infoTable"));
                 }
 
                 if (action.getUpdatedFieldList().size() > 0) {
                     if (action.getMessageList().size() > 0) {
-                        builder.addBreak();
+                        htmlBuilder.br();
                     }
 
-                    builder.addHeading("Fields Updated:");
-                    action.getUpdatedFieldList().forEach(builder::addLine);
+                    final TableBuilder tb = new TableBuilder();
+                    tb.row(TableCell.header("Fields Updated"));
+                    action.getUpdatedFieldList().forEach(tb::row);
+                    htmlBuilder.div(tb::write, Attribute.className("infoTable"));
                 }
-                tooltipPresenter.show(builder.build(), x, y);
+                tooltipPresenter.show(htmlBuilder.toSafeHtml(), x, y);
             }
         };
         dataGrid.addColumn(infoColumn, "<br/>", 20);

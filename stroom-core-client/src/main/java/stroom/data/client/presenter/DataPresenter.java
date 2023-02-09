@@ -53,13 +53,15 @@ import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
-import stroom.widget.tooltip.client.presenter.TableBuilder;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.TableBuilder;
+import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Focus;
@@ -1106,35 +1108,26 @@ public class DataPresenter
         final TableBuilder tableBuilder = new TableBuilder();
         for (final DataInfoSection section : dataInfoSections) {
             // Add the section header.
-            tableBuilder.row().header(section.getTitle(), 2);
+            tableBuilder.row(TableCell.header(section.getTitle(), 2));
 
             // Add rows.
             section.getEntries()
                     .forEach(entry ->
                             tableBuilder
-                                    .row()
-                                    .data(entry.getKey())
-                                    .data(replaceJavaLineBreaks(entry.getValue())));
+                                    .row(SafeHtmlUtils.fromString(entry.getKey()),
+                                            replaceJavaLineBreaks(entry.getValue())));
         }
 
-        final SafeHtmlBuilder sb = new SafeHtmlBuilder();
-        sb.appendHtmlConstant("<div class=\"metaInfo\">");
-        tableBuilder.write(sb);
-        sb.appendHtmlConstant("</div>");
-        htmlPresenter.setHtml(sb.toSafeHtml().asString());
+        final HtmlBuilder htmlBuilder = new HtmlBuilder();
+        htmlBuilder.div(tableBuilder::write, Attribute.className("infoTable"));
+        htmlPresenter.setHtml(htmlBuilder.toSafeHtml().asString());
     }
 
     private SafeHtml replaceJavaLineBreaks(final String str) {
         if (str != null) {
-            String[] parts = str.split("\\n");
-            SafeHtmlBuilder safeHtmlBuilder = new SafeHtmlBuilder();
-            for (int i = 0; i < parts.length; i++) {
-                safeHtmlBuilder.append(SafeHtmlUtils.fromString(parts[i]));
-                if (i != parts.length - 1) {
-                    safeHtmlBuilder.appendHtmlConstant("</br>");
-                }
-            }
-            return safeHtmlBuilder.toSafeHtml();
+            HtmlBuilder sb = new HtmlBuilder();
+            sb.appendEscapedLines(str);
+            return sb.toSafeHtml();
         } else {
             return null;
         }

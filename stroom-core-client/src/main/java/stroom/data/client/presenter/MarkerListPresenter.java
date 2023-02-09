@@ -30,8 +30,7 @@ import stroom.util.shared.StoredError;
 import stroom.util.shared.StreamLocation;
 import stroom.util.shared.Summary;
 import stroom.util.shared.TreeRow;
-import stroom.widget.tooltip.client.presenter.TooltipUtil;
-import stroom.widget.tooltip.client.presenter.TooltipUtil.Builder;
+import stroom.widget.util.client.HtmlBuilder;
 
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.regexp.shared.RegExp;
@@ -262,17 +261,19 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
                             final SplitResult splitResult = messageCauseDelimiterPattern.split(
                                     storedError.getMessage());
 
-                            final Builder builder = TooltipUtil.builder();
-
+                            final HtmlBuilder htmlBuilder = new HtmlBuilder();
                             for (int i = 0; i < splitResult.length(); i++) {
                                 if (i != 0) {
-                                    builder.addEnSpace()
-                                            .appendWithoutBreak("> ");
+                                    htmlBuilder.append(HtmlBuilder.EN_SPACE);
+                                    htmlBuilder.appendTrustedString("> ");
                                 }
 
-                                builder.addLine(splitResult.get(i));
+                                if (splitResult.get(i) != null) {
+                                    htmlBuilder.append(splitResult.get(i));
+                                    htmlBuilder.br();
+                                }
                             }
-                            return builder.build();
+                            return htmlBuilder.toSafeHtml();
                         })
                         .topAligned()
                         .withStyleName("dataGridCellVerticalTop")

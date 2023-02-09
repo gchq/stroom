@@ -39,14 +39,16 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
-import stroom.util.client.SafeHtmlUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
-import stroom.widget.tooltip.client.presenter.TooltipUtil;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.SafeHtmlUtil;
+import stroom.widget.util.client.TableBuilder;
+import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -192,30 +194,24 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
                         ? maxBarWidthPct
                         : ((double) pingResult.getPing() / highestPing * maxBarWidthPct);
 
-                final SafeHtml textHtml = TooltipUtil.styledSpan(
-                        THOUSANDS_FORMATTER.format(pingResult.getPing()),
-                        safeStylesBuilder ->
-                                safeStylesBuilder.paddingLeft(0.25, Unit.EM));
+                final String barColourClass = pingResult.getPing() < unHealthyThresholdPing
+                        ? "nodePingBar-bar__healthy"
+                        : "nodePingBar-bar__unhealthy";
 
-                final String healthyBarColour = "rgba(33, 150, 243, 0.6)"; // stroom blue with alpha
-                final String unHealthyBarColour = "rgba(255, 111, 0, 0.6)"; // stroom dirty amber with aplha
-                final String barColour = pingResult.getPing() < unHealthyThresholdPing
-                        ? healthyBarColour
-                        : unHealthyBarColour;
-
-                final SafeHtml barDiv = TooltipUtil.styledDiv(textHtml, safeStylesBuilder ->
-                        safeStylesBuilder
-                                .trustedColor("#white")
-                                .trustedBackgroundColor(barColour)
-                                .width(barWidthPct, Unit.PCT)
-                                .height(100, Unit.PCT));
-
-                final SafeHtml outerDiv = TooltipUtil.styledDiv(barDiv, safeStylesBuilder ->
-                        safeStylesBuilder
-                                .paddingLeft(0.25, Unit.EM)
-                                .paddingRight(0.25, Unit.EM));
-
-                return outerDiv;
+                HtmlBuilder htmlBuilder = new HtmlBuilder();
+                htmlBuilder.div(hb1 ->
+                                hb1.div(hb2 ->
+                                                hb2.span(hb3 ->
+                                                                hb3.append(THOUSANDS_FORMATTER
+                                                                        .format(pingResult.getPing())),
+                                                        Attribute.className("nodePingBar-text")),
+                                        Attribute.className("nodePingBar-bar " +
+                                                barColourClass),
+                                        Attribute.style("width:" +
+                                                barWidthPct +
+                                                "%"))
+                        , Attribute.className("nodePingBar-outer"));
+                return htmlBuilder.toSafeHtml();
             }
             return SafeHtmlUtil.getSafeHtml("-");
         });
@@ -281,30 +277,27 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
     }
 
     private void showNodeInfoResult(final Node node, final ClusterNodeInfo result, final int x, final int y) {
-        final TooltipUtil.Builder builder = TooltipUtil.builder();
+        final TableBuilder tb1 = new TableBuilder();
+        final TableBuilder tb2 = new TableBuilder();
 
         if (result != null) {
             final BuildInfo buildInfo = result.getBuildInfo();
-            builder
-                    .addTwoColTable(tableBuilder -> {
-                        tableBuilder.addHeaderRow("Node Details");
-                        tableBuilder.addRow("Node Name", result.getNodeName(), true);
-                        if (buildInfo != null) {
-                            tableBuilder
-                                    .addRow("Build Version", buildInfo.getBuildVersion(), true)
-                                    .addRow("Build Date", dateTimeFormatter.format(buildInfo.getBuildTime()), true)
-                                    .addRow("Up Date", dateTimeFormatter.format(buildInfo.getUpTime()), true);
-                        }
-                        return tableBuilder
-                                .addRow("Discover Time", dateTimeFormatter.format(result.getDiscoverTime()), true)
-                                .addRow("Node Endpoint URL", result.getEndpointUrl(), true)
-                                .addRow("Ping", ModelStringUtil.formatDurationString(result.getPing()))
-                                .addRow("Error", result.getError())
-                                .build();
-                    })
-                    .addBreak()
-                    .addHeading("Node List");
+            tb1
+                    .row(TableCell.header("Node Details", 2))
+                    .row("Node Name", result.getNodeName());
+            if (buildInfo != null) {
+                tb1
+                        .row("Build Version", buildInfo.getBuildVersion())
+                        .row("Build Date", dateTimeFormatter.format(buildInfo.getBuildTime()))
+                        .row("Up Date", dateTimeFormatter.format(buildInfo.getUpTime()));
+            }
+            tb1
+                    .row("Discover Time", dateTimeFormatter.format(result.getDiscoverTime()))
+                    .row("Node Endpoint URL", result.getEndpointUrl())
+                    .row("Ping", ModelStringUtil.formatDurationString(result.getPing()))
+                    .row("Error", result.getError());
 
+            tb2.row(TableCell.header("Node List"));
             if (result.getItemList() != null) {
                 for (final ClusterNodeInfo.ClusterNodeInfoItem info : result.getItemList()) {
                     String nodeValue = info.getNodeName();
@@ -315,16 +308,21 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
                     if (info.isMaster()) {
                         nodeValue += " (Master)";
                     }
-                    builder.addLine(nodeValue);
+                    tb2.row(nodeValue);
                 }
             }
+
         } else {
-            builder.addTwoColTable(tableBuilder -> tableBuilder
-                    .addRow("Node Name", node.getName(), true)
-                    .addRow("Cluster URL", node.getUrl(), true)
-                    .build());
+            tb1
+                    .row("Node Name", node.getName())
+                    .row("Cluster URL", node.getUrl());
         }
-        tooltipPresenter.show(builder.build(), x, y);
+
+        final HtmlBuilder htmlBuilder = new HtmlBuilder();
+        htmlBuilder.div(tb1::write, Attribute.className("infoTable"));
+        htmlBuilder.div(tb2::write, Attribute.className("infoTable"));
+
+        tooltipPresenter.show(htmlBuilder.toSafeHtml(), x, y);
     }
 
     private void showNodeInfoError(final Throwable caught, final int x, final int y) {
