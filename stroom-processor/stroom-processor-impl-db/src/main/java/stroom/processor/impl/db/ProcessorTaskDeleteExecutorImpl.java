@@ -33,9 +33,11 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.time.StroomDuration;
 import stroom.util.time.TimeUtils;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 import javax.inject.Inject;
 
 class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
@@ -120,37 +122,73 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
         // Logically delete tasks that are associated with filters that have been logically deleted for longer than the
         // threshold.
         final AtomicInteger totalCount = new AtomicInteger();
-        int count = 0;
         taskContext.info(() -> "Logically deleting processor tasks for deleted processor filters");
-        count = processorTaskDao.logicalDeleteForDeletedProcessorFilters(deleteThreshold);
-        logCount(count, totalCount, "Logically deleted {} processor tasks for deleted processor filters");
+        runWithCountAndTimeLogging(
+                () -> processorTaskDao.logicalDeleteForDeletedProcessorFilters(deleteThreshold),
+                totalCount,
+                "Logically deleted {} processor tasks for deleted processor filters");
 
         // Logically delete COMPLETE processor filters with no outstanding tasks where the tracker last poll is older
-        // than the threshold
+        // than the threshold. Note that COMPLETE just means that we have finished producing tasks on the DB, but we
+        // can't delete the filter until all associated tasks have been processed otherwise they will never be picked
+        // up.
         taskContext.info(() -> "Logically deleting old processor filters with a state of COMPLETED and no tasks");
-        count = processorFilterDao.logicallyDeleteOldProcessorFilters(deleteThreshold);
-        logCount(count, totalCount, "Logically deleted {} old processor filters with a state of " +
-                "COMPLETED and no tasks");
+        runWithCountAndTimeLogging(
+                () -> processorFilterDao.logicallyDeleteOldProcessorFilters(deleteThreshold),
+                totalCount,
+                "Logically deleted {} old processor filters with a state of " +
+                        "COMPLETED and no tasks");
 
         // Physically delete tasks that are logically deleted or complete for longer than the threshold.
-        taskContext.info(() -> "Physically deleting old and processor tasks with a state of (COMPLETED|DELETED)");
-        count = processorTaskDao.physicallyDeleteOldTasks(deleteThreshold);
-        logCount(count, totalCount, "Physically deleted {} old processor tasks with a state of " +
-                "(COMPLETED|DELETED)");
+        taskContext.info(() -> "Physically deleting old processor tasks with a state of (COMPLETED|DELETED)");
+        runWithCountAndTimeLogging(
+                () -> processorTaskDao.physicallyDeleteOldTasks(deleteThreshold),
+                totalCount,
+                "Physically deleted {} old processor tasks with a state of " +
+                        "(COMPLETED|DELETED)");
 
         // Physically delete old filters.
         taskContext.info(() -> "Physically deleting old processor filters with state of DELETED");
-        count = processorFilterDao.physicalDeleteOldProcessorFilters(deleteThreshold);
-        logCount(count, totalCount, "Physically deleted {} old and processor filters with state of DELETED");
+        runWithCountAndTimeLogging(
+                () -> processorFilterDao.physicalDeleteOldProcessorFilters(deleteThreshold),
+                totalCount,
+                "Physically deleted {} old processor filters with state of DELETED");
 
         // Physically delete old processors.
         taskContext.info(() -> "Physically deleting old processors with state of DELETED");
-        count = processorDao.physicalDeleteOldProcessors(deleteThreshold);
-        logCount(count, totalCount, "Physically deleted {} old processors with state of DELETED");
+        runWithCountAndTimeLogging(
+                () -> processorDao.physicalDeleteOldProcessors(deleteThreshold),
+                totalCount,
+                "Physically deleted {} old processors with state of DELETED");
 
         if (totalCount.get() == 0) {
             LOGGER.info("{} - No records logically or physically deleted", TASK_NAME);
         }
+    }
+
+    private void runWithCountAndTimeLogging(final Supplier<Integer> action,
+                                            final AtomicInteger totalCount,
+                                            final String messageTemplate) {
+
+        final Integer count;
+        if (LOGGER.isInfoEnabled()) {
+            final Instant startTime = Instant.now();
+            count = action.get();
+            if (count > 0) {
+                try {
+                    LOGGER.info("{} - " + messageTemplate + " in {}",
+                            TASK_NAME,
+                            count,
+                            Duration.between(startTime, Instant.now()));
+                } catch (final RuntimeException e) {
+                    LOGGER.error("Error logging message - messageTemplate: '{}', error: {}",
+                            messageTemplate, e.getMessage(), e);
+                }
+            }
+        } else {
+            count = action.get();
+        }
+        totalCount.addAndGet(count);
     }
 
     private void logCount(final int count, final AtomicInteger totalCount, final String message) {

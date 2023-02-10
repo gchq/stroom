@@ -79,6 +79,14 @@
 .svgIcon-favourites {
   background-image: url("../images/favourites.svg");
 }
+.svgIcon-favourites.small {
+  background-size: 80%;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.svgIcon-favourites-outline {
+  background-image: url("../images/favourites-outline.svg");
+}
 .svgIcon-feed {
   background-image: url("../images/feed.svg");
 }
@@ -341,6 +349,9 @@
 }
 .svgIcon-document-ElasticIndex {
   background-image: url("../images/document/ElasticIndex.svg");
+}
+.svgIcon-document-Favourites {
+  background-image: url("../images/document/Favourites.svg");
 }
 .stroom-theme-dark .svgIcon-document-ElasticIndex {
   background-image: url("../images/document/ElasticIndex-dark.svg");

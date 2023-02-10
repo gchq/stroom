@@ -101,34 +101,26 @@ class TestEffectiveStreamCache extends StroomUnitTest {
             assertThat(findEffectiveStreamSourceCount).as("No calls to the database yet").isEqualTo(0);
 
             long time = DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z");
-            long fromMs = getFromMs(time);
-            long toMs = getToMs(fromMs);
             effectiveStreamCache
-                    .get(new EffectiveStreamKey(refFeedName, StreamTypeNames.REFERENCE, fromMs, toMs));
+                    .get(EffectiveStreamKey.forLookupTime(refFeedName, StreamTypeNames.REFERENCE, time));
             assertThat(findEffectiveStreamSourceCount).as("Database call").isEqualTo(1);
 
             // Still in window
             time = DateUtil.parseNormalDateTimeString("2010-01-01T13:00:00.000Z");
-            fromMs = getFromMs(time);
-            toMs = getToMs(fromMs);
             effectiveStreamCache
-                    .get(new EffectiveStreamKey(refFeedName, StreamTypeNames.REFERENCE, fromMs, toMs));
+                    .get(EffectiveStreamKey.forLookupTime(refFeedName, StreamTypeNames.REFERENCE, time));
             assertThat(findEffectiveStreamSourceCount).as("Database call").isEqualTo(1);
 
             // After window ...
             time = DateUtil.parseNormalDateTimeString("2010-01-15T13:00:00.000Z");
-            fromMs = getFromMs(time);
-            toMs = getToMs(fromMs);
             effectiveStreamCache
-                    .get(new EffectiveStreamKey(refFeedName, StreamTypeNames.REFERENCE, fromMs, toMs));
+                    .get(EffectiveStreamKey.forLookupTime(refFeedName, StreamTypeNames.REFERENCE, time));
             assertThat(findEffectiveStreamSourceCount).as("Database call").isEqualTo(2);
 
             // Before window ...
             time = DateUtil.parseNormalDateTimeString("2009-12-15T13:00:00.000Z");
-            fromMs = getFromMs(time);
-            toMs = getToMs(fromMs);
             effectiveStreamCache
-                    .get(new EffectiveStreamKey(refFeedName, StreamTypeNames.REFERENCE, fromMs, toMs));
+                    .get(EffectiveStreamKey.forLookupTime(refFeedName, StreamTypeNames.REFERENCE, time));
             assertThat(findEffectiveStreamSourceCount).as("Database call").isEqualTo(3);
         } catch (final RuntimeException e) {
             throw new RuntimeException(e.getMessage(), e);

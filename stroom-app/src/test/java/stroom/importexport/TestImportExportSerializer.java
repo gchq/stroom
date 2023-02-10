@@ -22,8 +22,10 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
+import stroom.importexport.api.ExportSummary;
 import stroom.importexport.impl.ImportExportFileNameUtil;
 import stroom.importexport.impl.ImportExportSerializer;
 import stroom.importexport.shared.ImportSettings;
@@ -95,17 +97,17 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
     private Set<DocRef> buildFindFolderCriteria() {
         final Set<DocRef> criteria = new HashSet<>();
-        criteria.add(ExplorerConstants.ROOT_DOC_REF);
+        criteria.add(ExplorerConstants.SYSTEM_DOC_REF);
         return criteria;
     }
 
     @Test
     void testExport() throws IOException {
-        final DocRef docRef = explorerService.create(FeedDoc.DOCUMENT_TYPE,
+        final ExplorerNode testNode = explorerService.create(FeedDoc.DOCUMENT_TYPE,
                 FileSystemTestUtil.getUniqueTestString(),
                 null,
                 null);
-        FeedDoc eventFeed = feedStore.readDocument(docRef);
+        FeedDoc eventFeed = feedStore.readDocument(testNode.getDocRef());
         eventFeed.setDescription("Original Description");
         feedStore.writeDocument(eventFeed);
 
@@ -117,7 +119,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         FileUtil.deleteDir(testDataDir);
         Files.createDirectories(testDataDir);
 
-        importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true, new ArrayList<>());
+        importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true);
 
         List<ImportState> list = new ArrayList<>();
         importExportSerializer.read(testDataDir, list, ImportSettings.createConfirmation());
@@ -129,9 +131,9 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
             map.put(confirmation.getDocRef(), confirmation);
         }
 
-        assertThat(map.get(docRef).getState()).isEqualTo(State.EQUAL);
+        assertThat(map.get(testNode.getDocRef()).getState()).isEqualTo(State.EQUAL);
 
-        eventFeed = feedStore.readDocument(docRef);
+        eventFeed = feedStore.readDocument(testNode.getDocRef());
         eventFeed.setDescription("New Description");
         feedStore.writeDocument(eventFeed);
 
@@ -151,8 +153,8 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         }
 
         assertThat(list.size() > 0).isTrue();
-        assertThat(map.get(docRef).getState()).isEqualTo(State.UPDATE);
-        assertThat(map.get(docRef).getUpdatedFieldList().contains("description")).isTrue();
+        assertThat(map.get(testNode.getDocRef()).getState()).isEqualTo(State.UPDATE);
+        assertThat(map.get(testNode.getDocRef()).getUpdatedFieldList().contains("description")).isTrue();
 
         // Remove all entities from the database.
         commonTestControl.clear();
@@ -178,13 +180,16 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
     @Test
     void testPipelineWithProcessorFilter() {
-        final DocRef folder = explorerService.create(ExplorerConstants.FOLDER,
+        final ExplorerNode folder = explorerService.create(ExplorerConstants.FOLDER,
                 FileSystemTestUtil.getUniqueTestString(),
                 null,
                 null);
-        final DocRef pipelineRef = explorerService.create(PipelineDoc.DOCUMENT_TYPE, "TestPipeline", folder, null);
+        final ExplorerNode pipelineNode = explorerService.create(PipelineDoc.DOCUMENT_TYPE,
+                "TestPipeline",
+                folder,
+                null);
 
-        final PipelineDoc pipeline = pipelineStore.readDocument(pipelineRef);
+        final PipelineDoc pipeline = pipelineStore.readDocument(pipelineNode.getDocRef());
 
 
         final ExpressionOperator expression = ExpressionOperator.builder()
@@ -194,12 +199,12 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         QueryData filterConstraints = new QueryData();
         filterConstraints.setExpression(expression);
 
-        Processor processor = processorService.create(pipelineRef, true);
+        Processor processor = processorService.create(pipelineNode.getDocRef(), true);
 
         ProcessorFilter filter = processorFilterService.create(processor,
                 CreateProcessFilterRequest
                         .builder()
-                        .pipeline(pipelineRef)
+                        .pipeline(pipelineNode.getDocRef())
                         .queryData(filterConstraints)
                         .build());
 
@@ -212,7 +217,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
 
         System.err.println("Exporting to " + testDataDir);
-        importExportSerializer.write(testDataDir, forExport, true, new ArrayList<>());
+        importExportSerializer.write(testDataDir, forExport, true);
 
 
         importExportSerializer.read(testDataDir, null, ImportSettings.auto());
@@ -222,14 +227,21 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
     @Test
     void testPipeline() throws IOException {
-        final DocRef folder = explorerService.create(ExplorerConstants.FOLDER,
+        final ExplorerNode folder = explorerService.create(ExplorerConstants.FOLDER,
                 FileSystemTestUtil.getUniqueTestString(),
                 null,
                 null);
-        final DocRef parentPipelineRef = explorerService.create(PipelineDoc.DOCUMENT_TYPE, "Parent", folder, null);
-        final DocRef childPipelineRef = explorerService.create(PipelineDoc.DOCUMENT_TYPE, "Child", folder, null);
-        final PipelineDoc childPipeline = pipelineStore.readDocument(childPipelineRef);
-        childPipeline.setParentPipeline(parentPipelineRef);
+        final ExplorerNode parentPipelineNode = explorerService.create(PipelineDoc.DOCUMENT_TYPE,
+                "Parent",
+                folder,
+                null);
+        final ExplorerNode childPipelineNode = explorerService.create(
+                PipelineDoc.DOCUMENT_TYPE,
+                "Child",
+                folder,
+                null);
+        final PipelineDoc childPipeline = pipelineStore.readDocument(childPipelineNode.getDocRef());
+        childPipeline.setParentPipeline(parentPipelineNode.getDocRef());
         pipelineStore.writeDocument(childPipeline);
 
         assertThat(pipelineStore.list().size()).isEqualTo(2);
@@ -239,9 +251,9 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         FileUtil.deleteDir(testDataDir);
         Files.createDirectories(testDataDir);
 
-        importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true, new ArrayList<>());
+        importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true);
 
-        final String fileNamePrefix = ImportExportFileNameUtil.createFilePrefix(childPipelineRef);
+        final String fileNamePrefix = ImportExportFileNameUtil.createFilePrefix(childPipelineNode.getDocRef());
         final String fileName = fileNamePrefix + ".meta";
         final Path path = testDataDir.resolve(folder.getName()).resolve(fileName);
         final String childJson = new String(Files.readAllBytes(path), StreamUtil.DEFAULT_CHARSET);
@@ -276,9 +288,9 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                 importExportSerializer.read(inDir, null, ImportSettings.auto());
 
         // Write to output.
-        List<Message> messageList = new ArrayList<>();
-        importExportSerializer.write(outDir, exported, true, messageList);
+        final ExportSummary exportSummary = importExportSerializer.write(outDir, exported, true);
 
+        final List<Message> messageList = exportSummary.getMessages();
         messageList.forEach(message -> {
             if (message.getSeverity().equals(Severity.ERROR)) {
                 LOGGER.error("Export error: {}", message.getMessage());

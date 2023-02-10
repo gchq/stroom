@@ -63,6 +63,15 @@ class SecurityContextImpl implements SecurityContext {
     }
 
     @Override
+    public String getUserUuid() {
+        final UserIdentity userIdentity = getUserIdentity();
+        if (userIdentity == null) {
+            return null;
+        }
+        return getUserUuid(userIdentity);
+    }
+
+    @Override
     public UserIdentity getUserIdentity() {
         return CurrentUserState.current();
     }

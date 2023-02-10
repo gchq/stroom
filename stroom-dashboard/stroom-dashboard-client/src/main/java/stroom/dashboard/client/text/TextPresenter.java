@@ -209,12 +209,16 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         final List<TextRange> highlights = new ArrayList<>();
 
         // See if we are going to add highlights.
-        if (highlightStrings != null && highlightStrings.size() > 0) {
+        if (input != null && highlightStrings != null && highlightStrings.size() > 0) {
             final char[] inputChars = input.toLowerCase().toCharArray();
             final int inputLength = inputChars.length;
 
             // Find out where the highlight elements need to be placed.
             for (final String highlight : highlightStrings) {
+                if (highlight == null) {
+                    continue;
+                }
+
                 final char[] highlightChars = highlight.toLowerCase().toCharArray();
                 final int highlightLength = highlightChars.length;
 
@@ -261,8 +265,9 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                                         new DefaultLocation(lineNo, colNo + highlightLength - 1)); // inclusive
                                 highlights.add(hl);
 
+                                // Skip over the found highlight term
                                 i += highlightLength;
-                                // carry on looking for more instances of this highlight string
+                                colNo += highlightLength;
                             }
                         }
                     } else if (inElementTag && inputChar == '>') {

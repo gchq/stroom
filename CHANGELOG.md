@@ -12,6 +12,52 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.1-beta.23] - 2023-02-02
+
+* Issue **#3136** : Improve ref data lookup trace logging. Refactor effective streams query.
+
+* De-dup error message text produced by XSLT functions.
+
+* Issue **#3218** : Fix XSLT and dashboard `hash()` functions stripping leading zeros from the hash result.
+
+* Issue **#3221** : Queue all unowned tasks unless associated meta is locked. Tasks for deleted meta will be processed and complete as expected where meta is deleted.
+
+* Issue **#3220** : Fix Info tooltip on Active Tasks sub-tab not showing when stream is not unlocked or is physically deleted.
+
+
+## [v7.1-beta.22] - 2023-01-27
+
+* Issue **#3204** : Improve task creation logging to list considered filters in order and provide queue information.
+
+* Issue **#3195** : Fix editor highlight positions being incorrectly calculated.
+
+* Issue **#3204** : Fix slow physical deletion of completed/deleted tasks.
+
+* Issue **#3204** : Improve task creation performance. Add system info for inspecting task queues.
+
+* Improve performance of power of ten method in ref data byte buffer pool.
+
+* Issue **#3209** : Fix logging of slow batch SQL.
+
+* Issue **#3192** : Fix duplicate user events for exported processor filters.
+
+* Issue **#3197** : Fix NPE when modifying a property value, (back-porting #3143).
+
+
+## [v7.1-beta.21] - 2023-01-19
+
+* Add logging of queries that take >2s to execute. Enabled by setting `stroom.db.util.SlowQueryExecuteListener: DEBUG`.
+
+* Add info logging to the export all api resource. Outputs the number of docs export along with counts by type.
+
+* Issue **#3194** : Fix for JDK XML 1.1 parser bug.
+
+
+## [v7.1-beta.20] - 2023-01-16
+
+* Issue **#3189** : Change effective stream query to use inner joins.
+
+
 ## [v7.1-beta.19] - 2023-01-13
 
 * Issue **#3163** : Add filter to expression field picker.
@@ -4480,7 +4526,11 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.19...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.23...HEAD
+[v7.1-beta.23]: https://github.com/gchq/stroom/compare/v7.1-beta.22...v7.1-beta.23
+[v7.1-beta.22]: https://github.com/gchq/stroom/compare/v7.1-beta.21...v7.1-beta.22
+[v7.1-beta.21]: https://github.com/gchq/stroom/compare/v7.1-beta.20...v7.1-beta.21
+[v7.1-beta.20]: https://github.com/gchq/stroom/compare/v7.1-beta.19...v7.1-beta.20
 [v7.1-beta.19]: https://github.com/gchq/stroom/compare/v7.1-beta.18...v7.1-beta.19
 [v7.1-beta.18]: https://github.com/gchq/stroom/compare/v7.1-beta.17...v7.1-beta.18
 [v7.1-beta.17]: https://github.com/gchq/stroom/compare/v7.1-beta.16...v7.1-beta.17
