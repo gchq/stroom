@@ -15,7 +15,7 @@ public class TreeModel extends AbstractTreeModel<String> implements Cloneable {
 
     @Override
     public void add(final ExplorerNode parent, final ExplorerNode child) {
-        parentMap.put(child != null
+        parentMap.putIfAbsent(child != null
                 ? child.getUuid()
                 : null, parent);
         childMap.computeIfAbsent(parent != null

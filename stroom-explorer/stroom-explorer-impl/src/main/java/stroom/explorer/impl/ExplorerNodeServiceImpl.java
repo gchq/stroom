@@ -247,7 +247,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                 .map(node -> {
                     final String rootNodeUuid = explorerTreeDao.getRoot(node).getUuid();
 
-                    // Set the root node UUID, provided it isn't equal to the requested document's ID
+                    // Set the root node UUID
                     return ExplorerNode.builder()
                             .docRef(docRef)
                             .rootNodeUuid(rootNodeUuid)
