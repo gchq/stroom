@@ -4,6 +4,7 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNodeKey;
 
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 public class FilteredTreeModel extends AbstractTreeModel<ExplorerNodeKey> {
@@ -28,10 +29,8 @@ public class FilteredTreeModel extends AbstractTreeModel<ExplorerNodeKey> {
         return parentMap.get(child.getUniqueKey());
     }
 
-    public Set<ExplorerNode> getChildren(final ExplorerNode parent) {
-        if (parent == null) {
-            return childMap.get(null);
-        }
-        return childMap.get(parent.getUniqueKey());
+    public List<ExplorerNode> getChildren(final ExplorerNode parent) {
+        final Set<ExplorerNode> children = childMap.get(parent != null ? parent.getUniqueKey() : null);
+        return children != null ? children.stream().toList() : null;
     }
 }

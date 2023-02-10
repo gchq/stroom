@@ -364,7 +364,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                                    final ExplorerNode parent,
                                    final int minDepth,
                                    final int depth) {
-        final Set<ExplorerNode> children = masterTreeModel.getChildren(parent);
+        final List<ExplorerNode> children = masterTreeModel.getChildren(parent);
         if (children != null) {
             for (final ExplorerNode child : children) {
                 final ExplorerNode childWithRootNode = child.copy()
@@ -390,7 +390,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                                    final int currentDepth) {
         int added = 0;
 
-        final Set<ExplorerNode> children = treeModelIn.getChildren(parent);
+        final List<ExplorerNode> children = treeModelIn.getChildren(parent);
         if (children != null) {
             // Add all children if the name filter has changed or the parent item is open.
             final boolean addAllChildren = (filter.isNameFilterChange() && filter.getNameFilter() != null)
@@ -477,7 +477,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                                         final Set<ExplorerNodeKey> temporaryOpenItems,
                                         final List<ExplorerNodeKey> openedItems) {
         final List<ExplorerNode> rootNodes = new ArrayList<>();
-        final Set<ExplorerNode> children = filteredModel.getChildren(null);
+        final List<ExplorerNode> children = filteredModel.getChildren(null);
 
         if (children != null) {
             final List<ExplorerNode> sortedChildren = children
@@ -523,7 +523,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             force = true;
         }
 
-        final Set<ExplorerNode> children = filteredModel.getChildren(parent);
+        final List<ExplorerNode> children = filteredModel.getChildren(parent);
         if (children == null) {
             builder.nodeState(NodeState.LEAF);
         } else if (force || openItems.contains(parentNodeKey)) {
@@ -938,7 +938,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                              final Set<String> requiredPermissions) {
         boolean added = false;
 
-        final Set<ExplorerNode> children = treeModel.getChildren(parent);
+        final List<ExplorerNode> children = treeModel.getChildren(parent);
         if (children != null) {
             for (final ExplorerNode child : children) {
                 // Recurse right down to find out if a descendant is being added and therefore if we need to

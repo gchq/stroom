@@ -4,7 +4,6 @@ import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerNode;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -31,11 +30,9 @@ public class TreeModel extends AbstractTreeModel<String> implements Cloneable {
         return parentMap.get(child.getUuid());
     }
 
-    public Set<ExplorerNode> getChildren(final ExplorerNode parent) {
-        if (parent == null) {
-            return childMap.get(null);
-        }
-        return childMap.get(parent.getUuid());
+    public List<ExplorerNode> getChildren(final ExplorerNode parent) {
+        final Set<ExplorerNode> children = childMap.get(parent != null ? parent.getUuid() : null);
+        return children != null ? children.stream().toList() : null;
     }
 
     public List<DocRef> getChildren(final DocRef parent) {
@@ -56,7 +53,7 @@ public class TreeModel extends AbstractTreeModel<String> implements Cloneable {
             final TreeModel treeModel = (TreeModel) super.clone();
             treeModel.parentMap = new HashMap<>(parentMap);
             treeModel.childMap = new HashMap<>();
-            childMap.forEach((key, value) -> treeModel.childMap.put(key, new HashSet<>(value)));
+            childMap.forEach((key, value) -> treeModel.childMap.put(key, new LinkedHashSet<>(value)));
             return treeModel;
         } catch (CloneNotSupportedException e) {
             throw new AssertionError();

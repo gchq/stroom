@@ -2,11 +2,10 @@ package stroom.explorer.impl;
 
 import stroom.explorer.shared.ExplorerNode;
 
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.ToIntFunction;
@@ -43,10 +42,6 @@ public abstract class AbstractTreeModel<K> {
         return parentMap.get(childKey);
     }
 
-    public Collection<Set<ExplorerNode>> values() {
-        return childMap.values();
-    }
-
     public void sort(final ToIntFunction<ExplorerNode> priorityExtractor) {
         final Map<K, Set<ExplorerNode>> newChildMap = new HashMap<>();
         childMap.forEach((key, children) -> newChildMap.put(key, children
@@ -64,5 +59,5 @@ public abstract class AbstractTreeModel<K> {
 
     public abstract ExplorerNode getParent(final ExplorerNode child);
 
-    public abstract Set<ExplorerNode> getChildren(final ExplorerNode parent);
+    public abstract List<ExplorerNode> getChildren(final ExplorerNode parent);
 }
