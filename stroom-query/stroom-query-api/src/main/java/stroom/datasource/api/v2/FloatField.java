@@ -29,8 +29,6 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public class FloatField extends AbstractNumericField {
 
-    private static final long serialVersionUID = 1272545271946712570L;
-
     public FloatField(final String name) {
         super(name);
     }
@@ -48,19 +46,7 @@ public class FloatField extends AbstractNumericField {
 
     @JsonIgnore
     @Override
-    public String getType() {
-        return FieldTypes.FLOAT;
-    }
-
-    @Override
-    public String getShortTypeName() {
-        return "float";
-    }
-
-    @Override
-    public String getTypeDescription() {
-        return "Floating-point field type\n" +
-               "\n" +
-               "Decimal value supporting equality and range queries.";
+    public FieldType getFieldType() {
+        return FieldType.FLOAT;
     }
 }

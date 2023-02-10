@@ -30,8 +30,6 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public class DateField extends AbstractField {
 
-    private static final long serialVersionUID = 1272545271946712570L;
-
     private static final List<Condition> DEFAULT_CONDITIONS = new ArrayList<>();
 
     static {
@@ -61,25 +59,7 @@ public class DateField extends AbstractField {
 
     @JsonIgnore
     @Override
-    public String getType() {
-        return FieldTypes.DATE;
-    }
-
-    @Override
-    public String getShortTypeName() {
-        return "date";
-    }
-
-    @Override
-    public String getTypeDescription() {
-        return "Date field type\n" +
-               "\n" +
-               "Accepts a text-based date, in ISO8601 date/time format: yyyy-MM-ddTHH:mm:ss[.SSS][Z].\n" +
-               "Relative values are supported, including: now(), year(), month(), day().\n" +
-               "\n" +
-               "Examples (omit quotes):\n" +
-               " * Current time plus 2 days: 'now() + 2d'\n" +
-               " * Current time minus 1 hour: 'now() - 1h'\n" +
-               " * Current time plus 2 weeks, minus 1 day 10 hours: 'now() + 2w - 1d10h'";
+    public FieldType getFieldType() {
+        return FieldType.DATE;
     }
 }

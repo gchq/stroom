@@ -181,8 +181,8 @@ class ReceiveDataPolicyChecker {
             fieldMap.forEach((fieldName, field) -> {
                 try {
                     final String string = attributeMap.get(fieldName);
-                    switch (field.getType()) {
-                        case FieldTypes.TEXT:
+                    switch (field.getFieldType()) {
+                        case TEXT:
                             map.put(fieldName, string);
                             break;
                         default:

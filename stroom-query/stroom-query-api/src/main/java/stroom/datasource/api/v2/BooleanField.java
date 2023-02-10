@@ -30,9 +30,7 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public class BooleanField extends AbstractField {
 
-    private static final long serialVersionUID = 1272545271946712570L;
-
-    private static List<Condition> DEFAULT_CONDITIONS = new ArrayList<>();
+    private static final List<Condition> DEFAULT_CONDITIONS = new ArrayList<>();
 
     static {
         DEFAULT_CONDITIONS.add(Condition.EQUALS);
@@ -56,19 +54,7 @@ public class BooleanField extends AbstractField {
 
     @JsonIgnore
     @Override
-    public String getType() {
-        return FieldTypes.BOOLEAN;
-    }
-
-    @Override
-    public String getShortTypeName() {
-        return "bool";
-    }
-
-    @Override
-    public String getTypeDescription() {
-        return "Boolean field type\n" +
-               "\n" +
-               "Accepts either 'true' or 'false' values.";
+    public FieldType getFieldType() {
+        return FieldType.BOOLEAN;
     }
 }

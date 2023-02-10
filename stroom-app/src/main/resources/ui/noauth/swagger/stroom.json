@@ -2475,6 +2475,80 @@
         "tags" : [ "Dictionaries (v1)" ]
       }
     },
+    "/docFav/v1/create" : {
+      "post" : {
+        "operationId" : "createDocFav",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DocRef"
+              }
+            }
+          },
+          "description" : "docRef",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : { }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Set a document as a favourite for the current user",
+        "tags" : [ "Document Favourites" ]
+      }
+    },
+    "/docFav/v1/delete" : {
+      "delete" : {
+        "operationId" : "deleteDocFav",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DocRef"
+              }
+            }
+          },
+          "description" : "docRef",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : { }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Unset a document as favourite for the current user",
+        "tags" : [ "Document Favourites" ]
+      }
+    },
+    "/docFav/v1/fetchDocFavs" : {
+      "get" : {
+        "operationId" : "fetchDocFavs",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/DocRef"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Retrieve all DocRefs the current user has marked as favourite",
+        "tags" : [ "Document Favourites" ]
+      }
+    },
     "/elasticCluster/v1/testCluster" : {
       "post" : {
         "operationId" : "testElasticCluster",
@@ -2748,7 +2822,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/DocRef"
+                  "$ref" : "#/components/schemas/ExplorerNode"
                 }
               }
             },
@@ -2913,6 +2987,36 @@
         "tags" : [ "Explorer (v2)" ]
       }
     },
+    "/explorer/v2/getFromDocRef" : {
+      "post" : {
+        "operationId" : "getRootNodeRef",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DocRef"
+              }
+            }
+          },
+          "description" : "docRef",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ExplorerNode"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Get a node from a document reference, decorated with its root node UUID",
+        "tags" : [ "Explorer (v2)" ]
+      }
+    },
     "/explorer/v2/info" : {
       "post" : {
         "operationId" : "fetchExplorerItemInfo",
@@ -2992,7 +3096,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/DocRef"
+                  "$ref" : "#/components/schemas/ExplorerNode"
                 }
               }
             },
@@ -8671,7 +8775,8 @@
           "type" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "type" ]
       },
       "Account" : {
         "type" : "object",
@@ -9157,10 +9262,10 @@
       "BulkActionResult" : {
         "type" : "object",
         "properties" : {
-          "docRefs" : {
+          "explorerNodes" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/DocRef"
+              "$ref" : "#/components/schemas/ExplorerNode"
             }
           },
           "message" : {
@@ -10609,7 +10714,7 @@
           },
           "fieldUse" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "IPV4_ADDRESS" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS" ]
           },
           "indexed" : {
             "type" : "boolean"
@@ -10763,6 +10868,9 @@
           "iconClassName" : {
             "type" : "string"
           },
+          "isFavourite" : {
+            "type" : "boolean"
+          },
           "name" : {
             "type" : "string"
           },
@@ -10770,7 +10878,27 @@
             "type" : "string",
             "enum" : [ "OPEN", "CLOSED", "LEAF" ]
           },
+          "rootNodeUuid" : {
+            "type" : "string"
+          },
           "tags" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "uniqueKey" : {
+            "$ref" : "#/components/schemas/ExplorerNodeKey"
+          },
+          "uuid" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ExplorerNodeKey" : {
+        "type" : "object",
+        "properties" : {
+          "rootNodeUuid" : {
             "type" : "string"
           },
           "type" : {
@@ -10809,13 +10937,13 @@
       "ExplorerServiceCopyRequest" : {
         "type" : "object",
         "properties" : {
-          "destinationFolderRef" : {
-            "$ref" : "#/components/schemas/DocRef"
+          "destinationFolder" : {
+            "$ref" : "#/components/schemas/ExplorerNode"
           },
-          "docRefs" : {
+          "explorerNodes" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/DocRef"
+              "$ref" : "#/components/schemas/ExplorerNode"
             }
           },
           "permissionInheritance" : {
@@ -10827,8 +10955,8 @@
       "ExplorerServiceCreateRequest" : {
         "type" : "object",
         "properties" : {
-          "destinationFolderRef" : {
-            "$ref" : "#/components/schemas/DocRef"
+          "destinationFolder" : {
+            "$ref" : "#/components/schemas/ExplorerNode"
           },
           "docName" : {
             "type" : "string"
@@ -10856,13 +10984,13 @@
       "ExplorerServiceMoveRequest" : {
         "type" : "object",
         "properties" : {
-          "destinationFolderRef" : {
-            "$ref" : "#/components/schemas/DocRef"
+          "destinationFolder" : {
+            "$ref" : "#/components/schemas/ExplorerNode"
           },
-          "docRefs" : {
+          "explorerNodes" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/DocRef"
+              "$ref" : "#/components/schemas/ExplorerNode"
             }
           },
           "permissionInheritance" : {
@@ -10877,14 +11005,21 @@
           "docName" : {
             "type" : "string"
           },
-          "docRef" : {
-            "$ref" : "#/components/schemas/DocRef"
+          "explorerNode" : {
+            "$ref" : "#/components/schemas/ExplorerNode"
           }
         }
       },
       "ExplorerTreeFilter" : {
         "type" : "object",
         "properties" : {
+          "includedRootTypes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          },
           "includedTypes" : {
             "type" : "array",
             "items" : {
@@ -11131,7 +11266,7 @@
           "openedItems" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/ExplorerNodeKey"
             }
           },
           "qualifiedFilterInput" : {
@@ -11146,7 +11281,7 @@
           "temporaryOpenedItems" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/ExplorerNodeKey"
             },
             "uniqueItems" : true
           }
@@ -11392,7 +11527,7 @@
           "ensureVisible" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/ExplorerNodeKey"
             },
             "uniqueItems" : true
           },
@@ -11406,14 +11541,14 @@
           "openItems" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/ExplorerNodeKey"
             },
             "uniqueItems" : true
           },
           "temporaryOpenedItems" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/ExplorerNodeKey"
             },
             "uniqueItems" : true
           }
@@ -12471,6 +12606,12 @@
             "type" : "string"
           }
         }
+      },
+      "KeywordField" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractField"
+        } ]
       },
       "LayoutConfig" : {
         "type" : "object",

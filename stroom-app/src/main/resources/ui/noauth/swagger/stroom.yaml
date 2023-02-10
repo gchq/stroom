@@ -1699,6 +1699,57 @@ paths:
       summary: Update a dictionary doc
       tags:
       - Dictionaries (v1)
+  /docFav/v1/create:
+    post:
+      operationId: createDocFav
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocRef'
+        description: docRef
+        required: true
+      responses:
+        default:
+          content:
+            application/json: {}
+          description: default response
+      summary: Set a document as a favourite for the current user
+      tags:
+      - Document Favourites
+  /docFav/v1/delete:
+    delete:
+      operationId: deleteDocFav
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocRef'
+        description: docRef
+        required: true
+      responses:
+        default:
+          content:
+            application/json: {}
+          description: default response
+      summary: Unset a document as favourite for the current user
+      tags:
+      - Document Favourites
+  /docFav/v1/fetchDocFavs:
+    get:
+      operationId: fetchDocFavs
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DocRef'
+          description: default response
+      summary: Retrieve all DocRefs the current user has marked as favourite
+      tags:
+      - Document Favourites
   /elasticCluster/v1/testCluster:
     post:
       operationId: testElasticCluster
@@ -1888,7 +1939,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DocRef'
+                $ref: '#/components/schemas/ExplorerNode'
           description: default response
       summary: Create explorer item
       tags:
@@ -1997,6 +2048,27 @@ paths:
       summary: Fetch permissions for explorer items
       tags:
       - Explorer (v2)
+  /explorer/v2/getFromDocRef:
+    post:
+      operationId: getRootNodeRef
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocRef'
+        description: docRef
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExplorerNode'
+          description: default response
+      summary: Get a node from a document reference, decorated with its root node
+        UUID
+      tags:
+      - Explorer (v2)
   /explorer/v2/info:
     post:
       operationId: fetchExplorerItemInfo
@@ -2052,7 +2124,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DocRef'
+                $ref: '#/components/schemas/ExplorerNode'
           description: default response
       summary: Rename explorer items
       tags:
@@ -5974,6 +6046,8 @@ components:
           type: boolean
         type:
           type: string
+      required:
+      - type
     Account:
       type: object
       properties:
@@ -6310,10 +6384,10 @@ components:
     BulkActionResult:
       type: object
       properties:
-        docRefs:
+        explorerNodes:
           type: array
           items:
-            $ref: '#/components/schemas/DocRef'
+            $ref: '#/components/schemas/ExplorerNode'
         message:
           type: string
     CacheIdentity:
@@ -7348,6 +7422,7 @@ components:
           - DOUBLE
           - DATE
           - TEXT
+          - KEYWORD
           - IPV4_ADDRESS
         indexed:
           type: boolean
@@ -7455,6 +7530,8 @@ components:
           format: int32
         iconClassName:
           type: string
+        isFavourite:
+          type: boolean
         name:
           type: string
         nodeState:
@@ -7463,7 +7540,20 @@ components:
           - OPEN
           - CLOSED
           - LEAF
+        rootNodeUuid:
+          type: string
         tags:
+          type: string
+        type:
+          type: string
+        uniqueKey:
+          $ref: '#/components/schemas/ExplorerNodeKey'
+        uuid:
+          type: string
+    ExplorerNodeKey:
+      type: object
+      properties:
+        rootNodeUuid:
           type: string
         type:
           type: string
@@ -7489,12 +7579,12 @@ components:
     ExplorerServiceCopyRequest:
       type: object
       properties:
-        destinationFolderRef:
-          $ref: '#/components/schemas/DocRef'
-        docRefs:
+        destinationFolder:
+          $ref: '#/components/schemas/ExplorerNode'
+        explorerNodes:
           type: array
           items:
-            $ref: '#/components/schemas/DocRef'
+            $ref: '#/components/schemas/ExplorerNode'
         permissionInheritance:
           type: string
           enum:
@@ -7505,8 +7595,8 @@ components:
     ExplorerServiceCreateRequest:
       type: object
       properties:
-        destinationFolderRef:
-          $ref: '#/components/schemas/DocRef'
+        destinationFolder:
+          $ref: '#/components/schemas/ExplorerNode'
         docName:
           type: string
         docType:
@@ -7528,12 +7618,12 @@ components:
     ExplorerServiceMoveRequest:
       type: object
       properties:
-        destinationFolderRef:
-          $ref: '#/components/schemas/DocRef'
-        docRefs:
+        destinationFolder:
+          $ref: '#/components/schemas/ExplorerNode'
+        explorerNodes:
           type: array
           items:
-            $ref: '#/components/schemas/DocRef'
+            $ref: '#/components/schemas/ExplorerNode'
         permissionInheritance:
           type: string
           enum:
@@ -7546,11 +7636,16 @@ components:
       properties:
         docName:
           type: string
-        docRef:
-          $ref: '#/components/schemas/DocRef'
+        explorerNode:
+          $ref: '#/components/schemas/ExplorerNode'
     ExplorerTreeFilter:
       type: object
       properties:
+        includedRootTypes:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
         includedTypes:
           type: array
           items:
@@ -7758,7 +7853,7 @@ components:
         openedItems:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/ExplorerNodeKey'
         qualifiedFilterInput:
           type: string
         rootNodes:
@@ -7768,7 +7863,7 @@ components:
         temporaryOpenedItems:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/ExplorerNodeKey'
           uniqueItems: true
     FetchLinkedScriptRequest:
       type: object
@@ -7937,7 +8032,7 @@ components:
         ensureVisible:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/ExplorerNodeKey'
           uniqueItems: true
         filter:
           $ref: '#/components/schemas/ExplorerTreeFilter'
@@ -7947,12 +8042,12 @@ components:
         openItems:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/ExplorerNodeKey'
           uniqueItems: true
         temporaryOpenedItems:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/ExplorerNodeKey'
           uniqueItems: true
     FindFsVolumeCriteria:
       type: object
@@ -8755,6 +8850,10 @@ components:
           type: string
         version:
           type: string
+    KeywordField:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AbstractField'
     LayoutConfig:
       type: object
       discriminator:

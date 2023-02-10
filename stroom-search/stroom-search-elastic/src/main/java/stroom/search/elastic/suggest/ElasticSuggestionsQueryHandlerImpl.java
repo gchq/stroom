@@ -1,6 +1,7 @@
 package stroom.search.elastic.suggest;
 
 import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.FieldTypes;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.util.LambdaLogger;
@@ -95,7 +96,7 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
             if (!elasticSuggestConfigProvider.get().getEnabled() || query == null || query.length() == 0) {
                 return Collections.emptyList();
             }
-            if (!(FieldTypes.TEXT.equals(field.getType()) || FieldTypes.KEYWORD.equals(field.getType()))) {
+            if (!(FieldType.TEXT.equals(field.getFieldType()) || FieldType.KEYWORD.equals(field.getFieldType()))) {
                 // Only generate suggestions for text and keyword fields
                 return Collections.emptyList();
             }

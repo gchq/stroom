@@ -46,6 +46,7 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DateField;
+import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.FieldTypes;
 import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
@@ -328,15 +329,15 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     if (indexFieldsMap != null) {
                         final AbstractField indexField = indexFieldsMap.get(indexFieldName);
                         if (indexField != null) {
-                            switch (indexField.getType()) {
-                                case FieldTypes.DATE:
+                            switch (indexField.getFieldType()) {
+                                case DATE:
                                     fieldBuilder.format(Format.DATE_TIME);
                                     break;
-                                case FieldTypes.INTEGER:
-                                case FieldTypes.LONG:
-                                case FieldTypes.FLOAT:
-                                case FieldTypes.DOUBLE:
-                                case FieldTypes.ID:
+                                case INTEGER:
+                                case LONG:
+                                case FLOAT:
+                                case DOUBLE:
+                                case ID:
                                     fieldBuilder.format(Format.NUMBER);
                                     break;
                                 default:
@@ -395,7 +396,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                                   final String indexFieldName) {
         final AbstractField dataSourceField = indexFieldsMap.get(indexFieldName);
         String fieldParam = ParamUtil.makeParam(indexFieldName);
-        if (dataSourceField != null && FieldTypes.DATE.equals(dataSourceField.getType())) {
+        if (dataSourceField != null && FieldType.DATE.equals(dataSourceField.getFieldType())) {
             fieldParam = "formatDate(" + fieldParam + ")";
         }
         final Set<String> allFieldNames = indexFieldsMap.keySet();

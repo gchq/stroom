@@ -1165,7 +1165,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                         "of type {}. Term: {}",
                                 term.getCondition(),
                                 term.getField(),
-                                field.getType(), term));
+                                field.getFieldType(), term));
                     } else {
                         return true;
                     }

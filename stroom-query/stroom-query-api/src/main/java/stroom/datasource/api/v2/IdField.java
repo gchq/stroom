@@ -30,8 +30,6 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public class IdField extends AbstractNumericField {
 
-    private static final long serialVersionUID = 1272545271946712570L;
-
     private static final List<Condition> DEFAULT_CONDITIONS = new ArrayList<>();
 
     static {
@@ -62,19 +60,7 @@ public class IdField extends AbstractNumericField {
 
     @JsonIgnore
     @Override
-    public String getType() {
-        return FieldTypes.ID;
-    }
-
-    @Override
-    public String getShortTypeName() {
-        return "id";
-    }
-
-    @Override
-    public String getTypeDescription() {
-        return "ID field type\n" +
-               "\n" +
-               "Represents the numeric identifier of a record or other Stroom entity.";
+    public FieldType getFieldType() {
+        return FieldType.ID;
     }
 }

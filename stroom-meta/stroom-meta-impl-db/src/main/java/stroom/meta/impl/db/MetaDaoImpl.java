@@ -1685,7 +1685,7 @@ public class MetaDaoImpl implements MetaDao, Clearable {
                                         "of type {}. Term: {}",
                                 term.getCondition(),
                                 term.getField(),
-                                field.getType(), term));
+                                field.getFieldType().getTypeName(), term));
                     } else {
                         return true;
                     }

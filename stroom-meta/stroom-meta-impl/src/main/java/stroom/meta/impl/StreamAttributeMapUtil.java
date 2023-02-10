@@ -1,6 +1,5 @@
 package stroom.meta.impl;
 
-import stroom.datasource.api.v2.FieldTypes;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
@@ -58,18 +57,18 @@ class StreamAttributeMapUtil {
             final String value = attributeMap.get(field.getName());
             if (value != null) {
                 try {
-                    switch (field.getType()) {
-                        case FieldTypes.TEXT:
+                    switch (field.getFieldType()) {
+                        case TEXT:
                             map.put(field.getName(), value);
                             break;
-                        case FieldTypes.DATE:
+                        case DATE:
                             map.put(field.getName(), DateUtil.parseNormalDateTimeString(value));
                             break;
-                        case FieldTypes.DOC_REF:
+                        case DOC_REF:
                             attributeMap.put(field.getName(), value);
                             break;
-                        case FieldTypes.ID:
-                        case FieldTypes.LONG:
+                        case ID:
+                        case LONG:
                             map.put(field.getName(), Long.valueOf(value));
                             break;
                     }

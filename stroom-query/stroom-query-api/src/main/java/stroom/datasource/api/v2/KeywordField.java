@@ -30,8 +30,6 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public class KeywordField extends AbstractField {
 
-    private static final long serialVersionUID = 1272545271946712570L;
-
     private static final List<Condition> DEFAULT_CONDITIONS = new ArrayList<>();
 
     static {
@@ -59,27 +57,7 @@ public class KeywordField extends AbstractField {
 
     @JsonIgnore
     @Override
-    public String getType() {
-        return FieldTypes.KEYWORD;
-    }
-
-    @Override
-    public String getShortTypeName() {
-        return "keyword";
-    }
-
-    @Override
-    public String getTypeDescription() {
-        return "Keyword field type\n" +
-               "\n" +
-               " * Supports exact matches, wildcards (*, ?) and dictionary lookups\n" +
-               " * Case and whitespace sensitive\n" +
-               "\n" +
-               "Examples (omit quotes):\n" +
-               " * Exact match: 'Joe.Bloggs1' or '12345'\n" +
-               " * Starts with: 'the quick brown *'\n" +
-               " * Ends with: '* lazy dog'\n" +
-               " * Contains: '*cat sat*'\n" +
-               " * Substitute a single character: 'Joe.?loggs1'";
+    public FieldType getFieldType() {
+        return FieldType.KEYWORD;
     }
 }

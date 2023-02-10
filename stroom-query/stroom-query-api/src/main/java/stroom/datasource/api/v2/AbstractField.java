@@ -28,7 +28,6 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
 
@@ -50,9 +49,7 @@ import java.util.Objects;
         @Type(value = DocRefField.class, name = FieldTypes.DOC_REF)
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public abstract class AbstractField implements Serializable, HasDisplayValue {
-
-    private static final long serialVersionUID = 1272545271946712570L;
+public abstract class AbstractField implements HasDisplayValue {
 
     @JsonProperty
     private final String name;
@@ -70,13 +67,8 @@ public abstract class AbstractField implements Serializable, HasDisplayValue {
         this.conditions = conditions;
     }
 
-    public abstract String getType();
-
-    public abstract String getShortTypeName();
-
-    public String getTypeDescription() {
-        return null;
-    }
+    @JsonIgnore
+    public abstract FieldType getFieldType();
 
     public String getName() {
         return name;

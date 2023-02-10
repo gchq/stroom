@@ -29,8 +29,6 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public class IpV4AddressField extends AbstractNumericField {
 
-    private static final long serialVersionUID = 1272545271946712570L;
-
     public IpV4AddressField(final String name) {
         super(name);
     }
@@ -48,23 +46,7 @@ public class IpV4AddressField extends AbstractNumericField {
 
     @JsonIgnore
     @Override
-    public String getType() {
-        return FieldTypes.IPV4_ADDRESS;
-    }
-
-    @Override
-    public String getShortTypeName() {
-        return "ip";
-    }
-
-    @Override
-    public String getTypeDescription() {
-        return "IPv4 address field type\n" +
-               "\n" +
-               "Supports equality or range queries.\n" +
-               "\n" +
-               "Examples (omit quotes):\n" +
-               " * Exact match: '192.168.1.2'\n" +
-               " * CIDR comparison: '192.168.1.0/24'";
+    public FieldType getFieldType() {
+        return FieldType.IPV4_ADDRESS;
     }
 }

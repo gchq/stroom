@@ -54,7 +54,7 @@ public class FieldEditPresenter extends MyPresenterWidget<FieldEditPresenter.Fie
 
     public void read(final AbstractField field, final Set<String> otherFieldNames) {
         this.otherFieldNames = otherFieldNames;
-        getView().setType(field.getType());
+        getView().setType(field.getFieldType().getTypeName());
         getView().setName(field.getName());
     }
 

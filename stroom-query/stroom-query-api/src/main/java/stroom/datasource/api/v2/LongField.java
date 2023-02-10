@@ -28,8 +28,6 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class LongField extends AbstractNumericField {
 
-    private static final long serialVersionUID = 1272545271946712570L;
-
     public LongField(final String name) {
         super(name);
     }
@@ -47,19 +45,7 @@ public class LongField extends AbstractNumericField {
 
     @JsonIgnore
     @Override
-    public String getType() {
-        return FieldTypes.LONG;
-    }
-
-    @Override
-    public String getShortTypeName() {
-        return "long";
-    }
-
-    @Override
-    public String getTypeDescription() {
-        return "Long field type\n" +
-               "\n" +
-               "Non-fractional numeric value supporting equality and range queries.";
+    public FieldType getFieldType() {
+        return FieldType.LONG;
     }
 }

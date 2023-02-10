@@ -18,6 +18,7 @@ package stroom.query.client;
 
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DocRefField;
+import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.FieldTypes;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -244,8 +245,8 @@ public class TermEditor extends Composite {
         conditionListBox.setSelectedItem(selected);
         changeCondition(field, selected);
 
-        fieldTypeLabel.setText(field.getShortTypeName());
-        fieldTypeLabel.setTitle(field.getTypeDescription());
+        fieldTypeLabel.setText(field.getFieldType().getShortTypeName());
+        fieldTypeLabel.setTitle(field.getFieldType().getDescription());
         fieldTypeLabel.setVisible(true);
     }
 
@@ -262,7 +263,7 @@ public class TermEditor extends Composite {
         } else if (field.getConditions() != null && field.getConditions().size() > 0) {
             conditions = field.getConditions();
         } else {
-            if (FieldTypes.DOC_REF.equals(field.getType())) {
+            if (FieldType.DOC_REF.equals(field.getFieldType())) {
                 conditions = Arrays.asList(
                         Condition.EQUALS,
                         Condition.IN,
@@ -280,7 +281,7 @@ public class TermEditor extends Composite {
                         Condition.IN_DICTIONARY
                 );
 
-            } else if (FieldTypes.DATE.equals(field.getType())) {
+            } else if (FieldType.DATE.equals(field.getFieldType())) {
                 conditions = Arrays.asList(
                         Condition.EQUALS,
                         Condition.GREATER_THAN,
@@ -309,9 +310,9 @@ public class TermEditor extends Composite {
 
     private void changeCondition(final AbstractField field,
                                  final Condition condition) {
-        String indexFieldType = null;
+        FieldType indexFieldType = null;
         if (fieldListBox.getSelectedItem() != null) {
-            indexFieldType = fieldListBox.getSelectedItem().getType();
+            indexFieldType = fieldListBox.getSelectedItem().getFieldType();
         }
 
         if (indexFieldType == null) {
@@ -320,7 +321,7 @@ public class TermEditor extends Composite {
         } else {
             switch (condition) {
                 case EQUALS:
-                    if (FieldTypes.DATE.equals(indexFieldType)) {
+                    if (FieldType.DATE.equals(indexFieldType)) {
                         enterDateMode();
                     } else {
                         enterTextMode();
@@ -333,35 +334,35 @@ public class TermEditor extends Composite {
                     enterTextMode();
                     break;
                 case BETWEEN:
-                    if (FieldTypes.DATE.equals(indexFieldType)) {
+                    if (FieldType.DATE.equals(indexFieldType)) {
                         enterDateRangeMode();
                     } else {
                         enterTextRangeMode();
                     }
                     break;
                 case LESS_THAN:
-                    if (FieldTypes.DATE.equals(indexFieldType)) {
+                    if (FieldType.DATE.equals(indexFieldType)) {
                         enterDateMode();
                     } else {
                         enterTextMode();
                     }
                     break;
                 case LESS_THAN_OR_EQUAL_TO:
-                    if (FieldTypes.DATE.equals(indexFieldType)) {
+                    if (FieldType.DATE.equals(indexFieldType)) {
                         enterDateMode();
                     } else {
                         enterTextMode();
                     }
                     break;
                 case GREATER_THAN:
-                    if (FieldTypes.DATE.equals(indexFieldType)) {
+                    if (FieldType.DATE.equals(indexFieldType)) {
                         enterDateMode();
                     } else {
                         enterTextMode();
                     }
                     break;
                 case GREATER_THAN_OR_EQUAL_TO:
-                    if (FieldTypes.DATE.equals(indexFieldType)) {
+                    if (FieldType.DATE.equals(indexFieldType)) {
                         enterDateMode();
                     } else {
                         enterTextMode();

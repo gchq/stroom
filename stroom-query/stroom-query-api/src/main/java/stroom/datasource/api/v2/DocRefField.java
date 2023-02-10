@@ -32,8 +32,6 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public class DocRefField extends AbstractField {
 
-    private static final long serialVersionUID = 1272545271946712570L;
-
     // Conditions suitable for use when referencing the DocRef by UUID
     private static final List<Condition> DEFAULT_CONDITIONS_UUID = new ArrayList<>();
     // Conditions suitable for use when referencing the DocRef by name
@@ -108,20 +106,7 @@ public class DocRefField extends AbstractField {
 
     @JsonIgnore
     @Override
-    public String getType() {
-        return FieldTypes.DOC_REF;
-    }
-
-    @Override
-    public String getShortTypeName() {
-        return "docRef";
-    }
-
-    @Override
-    public String getTypeDescription() {
-        return "Document reference field type\n" +
-               "\n" +
-               "This is a reference to a Stroom object such as a Dictionary.\n" +
-               "Click in the selection box to select the desired object.";
+    public FieldType getFieldType() {
+        return FieldType.DOC_REF;
     }
 }

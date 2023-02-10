@@ -177,7 +177,7 @@ public class FieldListPresenter extends MyPresenterWidget<DataGridView<AbstractF
         getView().addResizableColumn(new Column<AbstractField, String>(new TextCell()) {
             @Override
             public String getValue(final AbstractField row) {
-                return row.getType();
+                return row.getFieldType().getTypeName();
             }
         }, "Type", 100);
     }
