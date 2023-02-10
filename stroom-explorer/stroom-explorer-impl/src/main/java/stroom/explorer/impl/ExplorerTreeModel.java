@@ -24,8 +24,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import java.time.Instant;
-import java.util.Comparator;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -129,7 +127,7 @@ class ExplorerTreeModel {
             newModel = explorerTreeDao.createModel(this::getIconClassName, id, creationTime);
 
             // Sort children.
-            newModel.values().forEach(this::sort);
+            newModel.sort(this::getPriority);
 
             setCurrentModel(newModel);
         } finally {
@@ -145,13 +143,6 @@ class ExplorerTreeModel {
         }
 
         return documentType.getIconClassName();
-    }
-
-    private void sort(final List<ExplorerNode> list) {
-        list.sort(Comparator
-                .comparingInt(this::getPriority)
-                .thenComparing(ExplorerNode::getType)
-                .thenComparing(ExplorerNode::getName));
     }
 
     private int getPriority(final ExplorerNode node) {

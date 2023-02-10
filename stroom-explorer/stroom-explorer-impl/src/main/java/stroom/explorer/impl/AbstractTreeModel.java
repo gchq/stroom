@@ -3,18 +3,21 @@ package stroom.explorer.impl;
 import stroom.explorer.shared.ExplorerNode;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.ToIntFunction;
+import java.util.stream.Collectors;
 
 public abstract class AbstractTreeModel<K> {
 
     protected final long id;
     protected final long creationTime;
     protected Map<K, ExplorerNode> parentMap = new HashMap<>();
-    protected Map<K, List<ExplorerNode>> childMap = new HashMap<>();
+    protected Map<K, Set<ExplorerNode>> childMap = new HashMap<>();
 
     public AbstractTreeModel(final long id, final long creationTime) {
         this.id = id;
@@ -30,7 +33,7 @@ public abstract class AbstractTreeModel<K> {
     }
 
     public Set<K> getAllParents() {
-        return new HashSet<>(childMap.keySet());
+        return new LinkedHashSet<>(childMap.keySet());
     }
 
     public ExplorerNode getParent(final K childKey) {
@@ -40,13 +43,26 @@ public abstract class AbstractTreeModel<K> {
         return parentMap.get(childKey);
     }
 
-    public Collection<List<ExplorerNode>> values() {
+    public Collection<Set<ExplorerNode>> values() {
         return childMap.values();
+    }
+
+    public void sort(final ToIntFunction<ExplorerNode> priorityExtractor) {
+        final Map<K, Set<ExplorerNode>> newChildMap = new HashMap<>();
+        childMap.forEach((key, children) -> newChildMap.put(key, children
+                .stream()
+                .sorted(Comparator
+                        .comparingInt(priorityExtractor)
+                        .thenComparing(ExplorerNode::getType)
+                        .thenComparing(ExplorerNode::getName))
+                .collect(Collectors.toCollection(LinkedHashSet::new))));
+
+        childMap = newChildMap;
     }
 
     public abstract void add(final ExplorerNode parent, final ExplorerNode child);
 
     public abstract ExplorerNode getParent(final ExplorerNode child);
 
-    public abstract List<ExplorerNode> getChildren(final ExplorerNode parent);
+    public abstract Set<ExplorerNode> getChildren(final ExplorerNode parent);
 }

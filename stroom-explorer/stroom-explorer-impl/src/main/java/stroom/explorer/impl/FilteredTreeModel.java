@@ -3,8 +3,8 @@ package stroom.explorer.impl;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNodeKey;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class FilteredTreeModel extends AbstractTreeModel<ExplorerNodeKey> {
 
@@ -14,12 +14,11 @@ public class FilteredTreeModel extends AbstractTreeModel<ExplorerNodeKey> {
 
     @Override
     public void add(final ExplorerNode parent, final ExplorerNode child) {
-        parentMap.put(child != null
-                ? child.getUniqueKey()
-                : null, parent);
-        childMap.computeIfAbsent(parent != null
-                ? parent.getUniqueKey()
-                : null, k -> new ArrayList<>()).add(child);
+        final ExplorerNodeKey childKey = child != null ? child.getUniqueKey() : null;
+        final ExplorerNodeKey parentKey = parent != null ? parent.getUniqueKey() : null;
+
+        parentMap.put(childKey, parent);
+        childMap.computeIfAbsent(parentKey, k -> new LinkedHashSet<>()).add(child);
     }
 
     public ExplorerNode getParent(final ExplorerNode child) {
@@ -29,7 +28,7 @@ public class FilteredTreeModel extends AbstractTreeModel<ExplorerNodeKey> {
         return parentMap.get(child.getUniqueKey());
     }
 
-    public List<ExplorerNode> getChildren(final ExplorerNode parent) {
+    public Set<ExplorerNode> getChildren(final ExplorerNode parent) {
         if (parent == null) {
             return childMap.get(null);
         }

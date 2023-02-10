@@ -3,9 +3,11 @@ package stroom.explorer.impl;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerNode;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 public class TreeModel extends AbstractTreeModel<String> implements Cloneable {
 
@@ -15,12 +17,11 @@ public class TreeModel extends AbstractTreeModel<String> implements Cloneable {
 
     @Override
     public void add(final ExplorerNode parent, final ExplorerNode child) {
-        parentMap.putIfAbsent(child != null
-                ? child.getUuid()
-                : null, parent);
-        childMap.computeIfAbsent(parent != null
-                ? parent.getUuid()
-                : null, k -> new ArrayList<>()).add(child);
+        final String childUuid = child != null ? child.getUuid() : null;
+        final String parentUuid = parent != null ? parent.getUuid() : null;
+
+        parentMap.putIfAbsent(childUuid, parent);
+        childMap.computeIfAbsent(parentUuid, k -> new LinkedHashSet<>()).add(child);
     }
 
     public ExplorerNode getParent(final ExplorerNode child) {
@@ -30,7 +31,7 @@ public class TreeModel extends AbstractTreeModel<String> implements Cloneable {
         return parentMap.get(child.getUuid());
     }
 
-    public List<ExplorerNode> getChildren(final ExplorerNode parent) {
+    public Set<ExplorerNode> getChildren(final ExplorerNode parent) {
         if (parent == null) {
             return childMap.get(null);
         }
@@ -55,7 +56,7 @@ public class TreeModel extends AbstractTreeModel<String> implements Cloneable {
             final TreeModel treeModel = (TreeModel) super.clone();
             treeModel.parentMap = new HashMap<>(parentMap);
             treeModel.childMap = new HashMap<>();
-            childMap.forEach((key, value) -> treeModel.childMap.put(key, new ArrayList<>(value)));
+            childMap.forEach((key, value) -> treeModel.childMap.put(key, new HashSet<>(value)));
             return treeModel;
         } catch (CloneNotSupportedException e) {
             throw new AssertionError();
