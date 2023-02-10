@@ -90,7 +90,7 @@ class TestFileSystemUtil {
         when(meta.getId()).thenReturn(1001001L);
         when(meta.getTypeName()).thenReturn(StreamTypeNames.EVENTS);
         when(meta.getFeedName()).thenReturn("TEST_FEED");
-        when(meta.getCreateMs()).thenReturn(DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z"));
+        when(meta.getCreateTime()).thenReturn(DateUtil.parseNormalDateTimeStringToInstant("2010-01-01T12:00:00.000Z"));
 
         final FsFeedPathDao fileSystemFeedPaths = mock(FsFeedPathDao.class);
         when(fileSystemFeedPaths.getOrCreatePath(any())).thenReturn("1");
@@ -113,7 +113,8 @@ class TestFileSystemUtil {
         when(meta.getId()).thenReturn(1001001L);
         when(meta.getTypeName()).thenReturn(StreamTypeNames.RAW_EVENTS);
         when(meta.getFeedName()).thenReturn("TEST_FEED");
-        when(meta.getCreateMs()).thenReturn(DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z"));
+        when(meta.getCreateTime())
+                .thenReturn(DateUtil.parseNormalDateTimeStringToInstant("2010-01-01T12:00:00.000Z"));
 
         final FsFeedPathDao fileSystemFeedPaths = mock(FsFeedPathDao.class);
         when(fileSystemFeedPaths.getOrCreatePath(any())).thenReturn("1");
@@ -271,7 +272,7 @@ class TestFileSystemUtil {
         when(meta.getId()).thenReturn(100100L);
         when(meta.getTypeName()).thenReturn(StreamTypeNames.EVENTS);
         when(meta.getFeedName()).thenReturn("TEST_FEED");
-        when(meta.getCreateMs()).thenReturn(DateUtil.parseNormalDateTimeString("2008-11-18T10:00:00.000Z"));
+        when(meta.getCreateTime()).thenReturn(DateUtil.parseNormalDateTimeStringToInstant("2008-11-18T10:00:00.000Z"));
 
         final FsFeedPathDao fileSystemFeedPaths = mock(FsFeedPathDao.class);
         when(fileSystemFeedPaths.getOrCreatePath(any())).thenReturn("2");
@@ -293,7 +294,7 @@ class TestFileSystemUtil {
         when(meta.getId()).thenReturn(1100100L);
         when(meta.getTypeName()).thenReturn(StreamTypeNames.EVENTS);
         when(meta.getFeedName()).thenReturn("TEST_FEED");
-        when(meta.getCreateMs()).thenReturn(DateUtil.parseNormalDateTimeString("2008-11-18T10:00:00.000Z"));
+        when(meta.getCreateTime()).thenReturn(DateUtil.parseNormalDateTimeStringToInstant("2008-11-18T10:00:00.000Z"));
 
         final FsFeedPathDao fileSystemFeedPaths = mock(FsFeedPathDao.class);
         when(fileSystemFeedPaths.getOrCreatePath(any())).thenReturn("2");
