@@ -17,15 +17,12 @@
 package stroom.explorer.impl;
 
 import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.ExplorerNode;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import java.time.Instant;
-import java.util.Comparator;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -127,10 +124,6 @@ class ExplorerTreeModel {
         performingRebuild.incrementAndGet();
         try {
             newModel = explorerTreeDao.createModel(this::getIconClassName, id, creationTime);
-
-            // Sort children.
-            newModel.values().forEach(this::sort);
-
             setCurrentModel(newModel);
         } finally {
             performingRebuild.decrementAndGet();
@@ -145,22 +138,6 @@ class ExplorerTreeModel {
         }
 
         return documentType.getIconClassName();
-    }
-
-    private void sort(final List<ExplorerNode> list) {
-        list.sort(Comparator
-                .comparingInt(this::getPriority)
-                .thenComparing(ExplorerNode::getType)
-                .thenComparing(ExplorerNode::getName));
-    }
-
-    private int getPriority(final ExplorerNode node) {
-        final DocumentType documentType = explorerActionHandlers.getType(node.getType());
-        if (documentType == null) {
-            return Integer.MAX_VALUE;
-        }
-
-        return documentType.getGroup().getPriority();
     }
 
     private synchronized void setCurrentModel(final TreeModel treeModel) {

@@ -85,6 +85,7 @@ class TestExplorerTreePerformance {
                     new HashSet<>(),
                     new ExplorerTreeFilter(
                             Collections.singleton("test"),
+                            Collections.singleton("test"),
                             null,
                             Collections.singleton(DocumentPermissionNames.READ),
                             null,
@@ -175,7 +176,7 @@ class TestExplorerTreePerformance {
         final List<ExplorerNode> children = parent.getChildren();
         if (children != null && children.size() > 0) {
             for (final ExplorerNode child : children) {
-                findExplorerNodeCriteria.getOpenItems().add(child.getUuid());
+                findExplorerNodeCriteria.getOpenItems().add(child.getUniqueKey());
                 lastChild = openAll(child, result, findExplorerNodeCriteria);
                 if (lastChild == null) {
                     lastChild = child;

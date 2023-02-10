@@ -31,17 +31,18 @@ public class FetchExplorerNodeResult {
     @JsonProperty
     private final List<ExplorerNode> rootNodes;
     @JsonProperty
-    private final List<String> openedItems;
+    private final List<ExplorerNodeKey> openedItems;
     @JsonProperty
-    private Set<String> temporaryOpenedItems;
+    private Set<ExplorerNodeKey> temporaryOpenedItems;
     @JsonProperty
     private final String qualifiedFilterInput;
 
     @JsonCreator
-    public FetchExplorerNodeResult(@JsonProperty("rootNodes") final List<ExplorerNode> rootNodes,
-                                   @JsonProperty("openedItems") final List<String> openedItems,
-                                   @JsonProperty("temporaryOpenedItems") final Set<String> temporaryOpenedItems,
-                                   @JsonProperty("qualifiedFilterInput") final String qualifiedFilterInput) {
+    public FetchExplorerNodeResult(
+            @JsonProperty("rootNodes") final List<ExplorerNode> rootNodes,
+            @JsonProperty("openedItems") final List<ExplorerNodeKey> openedItems,
+            @JsonProperty("temporaryOpenedItems")final Set<ExplorerNodeKey> temporaryOpenedItems,
+            @JsonProperty("qualifiedFilterInput") final String qualifiedFilterInput) {
         this.rootNodes = rootNodes;
         this.openedItems = openedItems;
         this.temporaryOpenedItems = temporaryOpenedItems;
@@ -52,11 +53,11 @@ public class FetchExplorerNodeResult {
         return rootNodes;
     }
 
-    public List<String> getOpenedItems() {
+    public List<ExplorerNodeKey> getOpenedItems() {
         return openedItems;
     }
 
-    public Set<String> getTemporaryOpenedItems() {
+    public Set<ExplorerNodeKey> getTemporaryOpenedItems() {
         return temporaryOpenedItems;
     }
 
@@ -64,7 +65,7 @@ public class FetchExplorerNodeResult {
         return qualifiedFilterInput;
     }
 
-    public void setTemporaryOpenedItems(final Set<String> temporaryOpenedItems) {
+    public void setTemporaryOpenedItems(final Set<ExplorerNodeKey> temporaryOpenedItems) {
         this.temporaryOpenedItems = temporaryOpenedItems;
     }
 

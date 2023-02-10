@@ -33,6 +33,8 @@ public interface ExplorerTreeDao {
 
     List<ExplorerTreeNode> getRoots();
 
+    ExplorerTreeNode getRoot(final ExplorerTreeNode node);
+
     void removeAll();
 
     List<ExplorerTreeNode> getTree(ExplorerTreeNode node);
