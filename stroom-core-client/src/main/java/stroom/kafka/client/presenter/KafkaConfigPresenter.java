@@ -68,7 +68,7 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
                                 final Provider<EditorPresenter> editorPresenterProvider,
                                 final RestFactory restFactory,
                                 final LocationManager locationManager) {
-        super(eventBus, view, securityContext);
+        super(eventBus, view, securityContext, restFactory);
         this.settingsPresenter = settingsPresenter;
         this.editorPresenterProvider = editorPresenterProvider;
         this.restFactory = restFactory;

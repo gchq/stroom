@@ -112,7 +112,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         // Make sure stream attributes get flushed straight away.
         setConfigValueMapper(MetaValueConfig.class, metaValueConfig -> metaValueConfig.withAddAsync(false));
 
-        final Optional<ExplorerNode> system = explorerNodeService.getRoot();
+        final Optional<ExplorerNode> system = explorerNodeService.getNodeWithRoot();
         final DocRef root = system.get().getDocRef();
         final DocRef folder1 = new DocRef("Folder", UUID.randomUUID().toString(), "Folder 1");
         folder2 = new DocRef("Folder", UUID.randomUUID().toString(), "Folder 2");

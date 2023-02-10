@@ -39,6 +39,7 @@ public class ExplorerTreeFilter {
 
     @JsonProperty
     private final Set<String> includedTypes;
+    private final Set<String> includedRootTypes;
     @JsonProperty
     private final Set<String> tags;
     @JsonProperty
@@ -50,11 +51,13 @@ public class ExplorerTreeFilter {
 
     @JsonCreator
     public ExplorerTreeFilter(@JsonProperty("includedTypes") final Set<String> includedTypes,
+                              @JsonProperty("includedRootTypes") final Set<String> includedRootTypes,
                               @JsonProperty("tags") final Set<String> tags,
                               @JsonProperty("requiredPermissions") final Set<String> requiredPermissions,
                               @JsonProperty("nameFilter") final String nameFilter,
                               @JsonProperty("nameFilterChange") final boolean nameFilterChange) {
         this.includedTypes = includedTypes;
+        this.includedRootTypes = includedRootTypes;
         this.tags = tags;
         this.requiredPermissions = requiredPermissions;
         this.nameFilter = nameFilter;
@@ -63,6 +66,10 @@ public class ExplorerTreeFilter {
 
     public Set<String> getIncludedTypes() {
         return includedTypes;
+    }
+
+    public Set<String> getIncludedRootTypes() {
+        return includedRootTypes;
     }
 
     public Set<String> getTags() {
@@ -92,6 +99,7 @@ public class ExplorerTreeFilter {
         final ExplorerTreeFilter that = (ExplorerTreeFilter) o;
         return nameFilterChange == that.nameFilterChange &&
                 Objects.equals(includedTypes, that.includedTypes) &&
+                Objects.equals(includedRootTypes, that.includedRootTypes) &&
                 Objects.equals(tags, that.tags) &&
                 Objects.equals(requiredPermissions, that.requiredPermissions) &&
                 Objects.equals(nameFilter, that.nameFilter);
@@ -99,6 +107,6 @@ public class ExplorerTreeFilter {
 
     @Override
     public int hashCode() {
-        return Objects.hash(includedTypes, tags, requiredPermissions, nameFilter, nameFilterChange);
+        return Objects.hash(includedTypes, includedRootTypes, tags, requiredPermissions, nameFilter, nameFilterChange);
     }
 }
