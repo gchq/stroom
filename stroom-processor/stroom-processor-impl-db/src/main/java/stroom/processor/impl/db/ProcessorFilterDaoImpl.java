@@ -197,6 +197,15 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         return count;
     }
 
+    /**
+     * Logically delete COMPLETE processor filters with no outstanding tasks where the tracker last poll is older
+     * than the threshold. Note that COMPLETE just means that we have finished producing tasks on the DB, but we
+     * can't delete the filter until all associated tasks have been processed otherwise they will never be picked
+     * up.
+     *
+     * @param deleteThreshold Only logically delete filters with a last poll time older than the threshold.
+     * @return The number of logically deleted filters.
+     */
     @Override
     public int logicallyDeleteOldProcessorFilters(final Instant deleteThreshold) {
         return JooqUtil.contextResult(processorDbConnProvider, context ->
@@ -230,6 +239,12 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         return count;
     }
 
+    /**
+     * Physically delete old processor filters that are logically deleted with an update time older than the threshold.
+     *
+     * @param deleteThreshold Only physically delete filters with an update time older than the threshold.
+     * @return The number of physically deleted filters.
+     */
     @Override
     public int physicalDeleteOldProcessorFilters(final Instant deleteThreshold) {
         final Result<Record2<Integer, Integer>> result =

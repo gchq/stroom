@@ -19,6 +19,7 @@ package stroom.explorer.impl;
 
 import stroom.collection.api.CollectionService;
 import stroom.docref.DocRef;
+import stroom.docstore.fav.api.DocFavService;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.api.ExplorerDecorator;
 import stroom.explorer.api.ExplorerNodeService;
@@ -28,6 +29,7 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.NodeState;
+import stroom.explorer.shared.ExplorerNodeKey;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
@@ -47,11 +49,13 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -76,6 +80,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     private final SecurityContext securityContext;
     private final ExplorerEventLog explorerEventLog;
     private final Provider<ExplorerDecorator> explorerDecoratorProvider;
+    private final Provider<DocFavService> docFavService;
 
     @Inject
     ExplorerServiceImpl(final ExplorerNodeService explorerNodeService,
@@ -83,13 +88,15 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                         final ExplorerActionHandlers explorerActionHandlers,
                         final SecurityContext securityContext,
                         final ExplorerEventLog explorerEventLog,
-                        final Provider<ExplorerDecorator> explorerDecoratorProvider) {
+                        final Provider<ExplorerDecorator> explorerDecoratorProvider,
+                        final Provider<DocFavService> docFavService) {
         this.explorerNodeService = explorerNodeService;
         this.explorerTreeModel = explorerTreeModel;
         this.explorerActionHandlers = explorerActionHandlers;
         this.securityContext = securityContext;
         this.explorerEventLog = explorerEventLog;
         this.explorerDecoratorProvider = explorerDecoratorProvider;
+        this.docFavService = docFavService;
 
         explorerNodeService.ensureRootNodeExists();
     }
@@ -98,30 +105,35 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     public FetchExplorerNodeResult getData(final FindExplorerNodeCriteria criteria) {
         try {
             List<ExplorerNode> rootNodes;
-            List<String> openedItems = new ArrayList<>();
-            Set<String> temporaryOpenItems;
+            List<ExplorerNodeKey> openedItems = new ArrayList<>();
+            Set<ExplorerNodeKey> temporaryOpenItems;
 
             final ExplorerTreeFilter filter = criteria.getFilter();
             final String qualifiedFilterInput = QuickFilterPredicateFactory.fullyQualifyInput(
                     filter.getNameFilter(), FIELD_MAPPERS);
 
             // Get the master tree model.
-            final TreeModel masterTreeModel = explorerTreeModel.getModel();
+            final TreeModel masterTreeModel = explorerTreeModel.getModel().clone();
+
+            buildFavouritesNode(masterTreeModel);
 
             // See if we need to open any more folders to see nodes we want to ensure are visible.
-            final Set<String> forcedOpenItems = getForcedOpenItems(masterTreeModel, criteria);
+            final Set<ExplorerNodeKey> forcedOpenItems = getForcedOpenItems(masterTreeModel, criteria);
 
-            final Set<String> allOpenItems = new HashSet<>();
+            final Set<ExplorerNodeKey> allOpenItems = new HashSet<>();
             allOpenItems.addAll(criteria.getOpenItems());
             allOpenItems.addAll(criteria.getTemporaryOpenedItems());
             allOpenItems.addAll(forcedOpenItems);
 
-            final TreeModel filteredModel = new TreeModel(masterTreeModel.getId(), masterTreeModel.getCreationTime());
+            final FilteredTreeModel filteredModel = new FilteredTreeModel(
+                    masterTreeModel.getId(),
+                    masterTreeModel.getCreationTime());
             // Create the predicate for the current filter value
             final Predicate<DocRef> fuzzyMatchPredicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
                     filter.getNameFilter(), FIELD_MAPPERS);
 
             addDescendants(
+                    null,
                     null,
                     masterTreeModel,
                     filteredModel,
@@ -130,6 +142,9 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     false,
                     allOpenItems,
                     0);
+
+            // Sort the tree model
+            filteredModel.sort(this::getPriority);
 
             // If the name filter has changed then we want to temporarily expand all nodes.
             if (filter.isNameFilterChange()) {
@@ -161,9 +176,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     rootNodes,
                     fuzzyMatchPredicate);
 
-            // Ensure root node is open if it has items
-            if (rootNodes.size() > 0) {
-                final ExplorerNode rootNode = rootNodes.get(0);
+            // Ensure root nodes are open if they have items
+            for (final ExplorerNode rootNode : rootNodes) {
                 if (rootNode.getChildren() != null
                         && !rootNode.getChildren().isEmpty()
                         && NodeState.CLOSED.equals(rootNode.getNodeState())) {
@@ -185,6 +199,34 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             LOGGER.error("Error fetching nodes with criteria {}", criteria, e);
             throw e;
         }
+    }
+
+    private int getPriority(final ExplorerNode node) {
+        final DocumentType documentType = explorerActionHandlers.getType(node.getType());
+        if (documentType == null) {
+            return Integer.MAX_VALUE;
+        }
+
+        return documentType.getGroup().getPriority();
+    }
+
+    private void buildFavouritesNode(final TreeModel masterTreeModel) {
+        final ExplorerNode.Builder favNodeBuilder = ExplorerConstants.FAVOURITES_NODE.copy()
+                .iconClassName(DocumentType.DOC_IMAGE_CLASS_NAME + ExplorerConstants.FAVOURITES);
+        final ExplorerNode favNode = favNodeBuilder.build();
+
+        for (final DocRef favDocRef : docFavService.get().fetchDocFavs()) {
+            final ExplorerNode childNode = favNode.copy()
+                    .docRef(favDocRef)
+                    .depth(1)
+                    .iconClassName(DocumentType.DOC_IMAGE_CLASS_NAME + favDocRef.getType())
+                    .isFavourite(true)
+                    .rootNodeUuid(favNode)
+                    .build();
+            masterTreeModel.add(favNode, childNode);
+        }
+
+        masterTreeModel.add(null, favNode);
     }
 
     private List<ExplorerNode> decorateTree(final FindExplorerNodeCriteria criteria,
@@ -213,7 +255,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         if (rootNode != null) {
             builder = rootNode.copy();
         } else {
-            builder = explorerNodeService.getRoot()
+            builder = explorerNodeService.getNodeWithRoot()
                     .map(node -> {
                         final ExplorerNode.Builder root = node.copy();
                         Optional.ofNullable(explorerActionHandlers.getType(ExplorerConstants.SYSTEM))
@@ -243,9 +285,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     additionalDocRefs.forEach(docRef -> {
                         final ExplorerNode node = ExplorerNode
                                 .builder()
-                                .type(docRef.getType())
-                                .uuid(docRef.getUuid())
-                                .name(docRef.getName())
+                                .docRef(docRef)
                                 .tags(StandardTagNames.DATA_SOURCE)
                                 .nodeState(NodeState.LEAF)
                                 .depth(1)
@@ -273,45 +313,49 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         final TreeModel masterTreeModel = explorerTreeModel.getModel();
         if (masterTreeModel != null) {
             final Set<DocRef> refs = new HashSet<>();
-            addChildren(ExplorerNode.create(folder), type, 0, maxDepth, masterTreeModel, refs);
+            addChildren(folder, type, 0, maxDepth, masterTreeModel, refs);
             return refs;
         }
 
         return Collections.emptySet();
     }
 
-    private void addChildren(final ExplorerNode parent,
+    private void addChildren(final DocRef parent,
                              final String type,
                              final int depth,
                              final int maxDepth,
                              final TreeModel treeModel,
                              final Set<DocRef> refs) {
-        final List<ExplorerNode> childNodes = treeModel.getChildren(parent);
-        if (childNodes != null) {
-            childNodes.forEach(node -> {
-                if (node.getType().equals(type)) {
-                    if (securityContext.hasDocumentPermission(node.getUuid(), DocumentPermissionNames.USE)) {
-                        refs.add(node.getDocRef());
+        final List<DocRef> children = treeModel.getChildren(parent);
+        if (children != null) {
+            children.forEach(childDocRef -> {
+                if (childDocRef.getType().equals(type)) {
+                    if (securityContext.hasDocumentPermission(childDocRef.getUuid(), DocumentPermissionNames.USE)) {
+                        refs.add(childDocRef);
                     }
                 }
 
                 if (depth < maxDepth) {
-                    addChildren(node, type, depth + 1, maxDepth, treeModel, refs);
+                    addChildren(childDocRef, type, depth + 1, maxDepth, treeModel, refs);
                 }
             });
         }
     }
 
-    private Set<String> getForcedOpenItems(final TreeModel masterTreeModel,
-                                           final FindExplorerNodeCriteria criteria) {
-        final Set<String> forcedOpen = new HashSet<>();
+    private Set<ExplorerNodeKey> getForcedOpenItems(final TreeModel masterTreeModel,
+                                                    final FindExplorerNodeCriteria criteria) {
+        final Set<ExplorerNodeKey> forcedOpen = new HashSet<>();
 
         // Add parents of  nodes that we have been requested to ensure are visible.
         if (criteria.getEnsureVisible() != null && criteria.getEnsureVisible().size() > 0) {
-            for (final String ensureVisible : criteria.getEnsureVisible()) {
-                ExplorerNode parent = masterTreeModel.getParent(ensureVisible);
+            for (final ExplorerNodeKey ensureVisible : criteria.getEnsureVisible()) {
+                ExplorerNode parent = masterTreeModel.getParent(ensureVisible.getUuid());
                 while (parent != null) {
-                    forcedOpen.add(parent.getUuid());
+                    forcedOpen.add(ExplorerNode.builder()
+                            .docRef(parent.getDocRef())
+                            .rootNodeUuid(ensureVisible.getRootNodeUuid())
+                            .build()
+                            .getUniqueKey());
                     parent = masterTreeModel.getParent(parent);
                 }
             }
@@ -319,35 +363,42 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
         // Add nodes that should be forced open because they are deeper than the minimum expansion depth.
         if (criteria.getMinDepth() != null && criteria.getMinDepth() > 0) {
-            forceMinDepthOpen(masterTreeModel, forcedOpen, null, criteria.getMinDepth(), 1);
+            forceMinDepthOpen(masterTreeModel, forcedOpen, null, null,
+                    criteria.getMinDepth(), 1);
         }
 
         return forcedOpen;
     }
 
     private void forceMinDepthOpen(final TreeModel masterTreeModel,
-                                   final Set<String> forcedOpen,
+                                   final Set<ExplorerNodeKey> forcedOpen,
+                                   final ExplorerNode rootNode,
                                    final ExplorerNode parent,
                                    final int minDepth,
                                    final int depth) {
         final List<ExplorerNode> children = masterTreeModel.getChildren(parent);
         if (children != null) {
             for (final ExplorerNode child : children) {
-                forcedOpen.add(child.getUuid());
+                final ExplorerNode childWithRootNode = child.copy()
+                        .rootNodeUuid(Objects.requireNonNullElse(rootNode, child))
+                        .build();
+                forcedOpen.add(childWithRootNode.getUniqueKey());
                 if (minDepth > depth) {
-                    forceMinDepthOpen(masterTreeModel, forcedOpen, child, minDepth, depth + 1);
+                    forceMinDepthOpen(masterTreeModel, forcedOpen, rootNode == null ? child : rootNode,
+                            child, minDepth, depth + 1);
                 }
             }
         }
     }
 
-    private boolean addDescendants(final ExplorerNode parent,
+    private boolean addDescendants(final ExplorerNode rootNode,
+                                   final ExplorerNode parent,
                                    final TreeModel treeModelIn,
-                                   final TreeModel treeModelOut,
+                                   final FilteredTreeModel treeModelOut,
                                    final ExplorerTreeFilter filter,
                                    final Predicate<DocRef> filterPredicate,
                                    final boolean ignoreNameFilter,
-                                   final Set<String> allOpenItems,
+                                   final Set<ExplorerNodeKey> allOpenItems,
                                    final int currentDepth) {
         int added = 0;
 
@@ -355,20 +406,27 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         if (children != null) {
             // Add all children if the name filter has changed or the parent item is open.
             final boolean addAllChildren = (filter.isNameFilterChange() && filter.getNameFilter() != null)
-                    || parent == null || allOpenItems.contains(parent.getUuid());
+                    || parent == null || allOpenItems.contains(parent.getUniqueKey());
 
-            // We need to add add least one item to the tree to be able to determine if the parent is a leaf node.
+            // We need to add at least one item to the tree to be able to determine if the parent is a leaf node.
             final Iterator<ExplorerNode> iterator = children.iterator();
             while (iterator.hasNext() && (addAllChildren || added == 0)) {
                 final ExplorerNode child = iterator.next();
 
+                // Decorate the child with the root parent node, so the same child can be referenced in multiple
+                // parent roots (e.g. System or Favourites)
+                final ExplorerNode childWithParent = child.copy()
+                        .rootNodeUuid(Objects.requireNonNullElse(rootNode, child))
+                        .build();
+
                 // We don't want to filter child items if the parent folder matches the name filter.
-                final boolean ignoreChildNameFilter = filterPredicate.test(child.getDocRef());
+                final boolean ignoreChildNameFilter = filterPredicate.test(childWithParent.getDocRef());
 
                 // Recurse right down to find out if a descendant is being added and therefore if we need to
                 // include this as an ancestor.
                 final boolean hasChildren = addDescendants(
-                        child,
+                        Objects.requireNonNullElse(rootNode, childWithParent),
+                        childWithParent,
                         treeModelIn,
                         treeModelOut,
                         filter,
@@ -377,14 +435,13 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                         allOpenItems,
                         currentDepth + 1);
                 if (hasChildren) {
-                    treeModelOut.add(parent, child);
+                    treeModelOut.add(parent, childWithParent);
                     added++;
-
-                } else if (checkType(child, filter.getIncludedTypes())
-                        && checkTags(child, filter.getTags())
-                        && (ignoreNameFilter || filterPredicate.test(child.getDocRef()))
-                        && checkSecurity(child, filter.getRequiredPermissions())) {
-                    treeModelOut.add(parent, child);
+                } else if (checkType(childWithParent, filter.getIncludedTypes())
+                        && checkTags(childWithParent, filter.getTags())
+                        && (ignoreNameFilter || filterPredicate.test(childWithParent.getDocRef()))
+                        && checkSecurity(childWithParent, filter.getRequiredPermissions())) {
+                    treeModelOut.add(parent, childWithParent);
                     added++;
                 }
             }
@@ -426,17 +483,23 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         return false;
     }
 
-    private List<ExplorerNode> addRoots(final TreeModel filteredModel,
-                                        final Set<String> openItems,
-                                        final Set<String> forcedOpenItems,
-                                        final Set<String> temporaryOpenItems,
-                                        final List<String> openedItems) {
+    private List<ExplorerNode> addRoots(final FilteredTreeModel filteredModel,
+                                        final Set<ExplorerNodeKey> openItems,
+                                        final Set<ExplorerNodeKey> forcedOpenItems,
+                                        final Set<ExplorerNodeKey> temporaryOpenItems,
+                                        final List<ExplorerNodeKey> openedItems) {
         final List<ExplorerNode> rootNodes = new ArrayList<>();
         final List<ExplorerNode> children = filteredModel.getChildren(null);
+
         if (children != null) {
-            for (final ExplorerNode child : children) {
+            final List<ExplorerNode> sortedChildren = children
+                    .stream()
+                    .sorted(Comparator.comparing(ExplorerNode::getName))
+                    .toList();
+            for (final ExplorerNode child : sortedChildren) {
                 final ExplorerNode copy =
                         addChildren(
+                                child,
                                 child,
                                 filteredModel,
                                 openItems,
@@ -450,35 +513,36 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         return rootNodes;
     }
 
-    private ExplorerNode addChildren(final ExplorerNode parent,
-                                     final TreeModel filteredModel,
-                                     final Set<String> openItems,
-                                     final Set<String> forcedOpenItems,
-                                     final Set<String> temporaryOpenItems,
+    private ExplorerNode addChildren(final ExplorerNode rootNode,
+                                     final ExplorerNode parent,
+                                     final FilteredTreeModel filteredModel,
+                                     final Set<ExplorerNodeKey> openItems,
+                                     final Set<ExplorerNodeKey> forcedOpenItems,
+                                     final Set<ExplorerNodeKey> temporaryOpenItems,
                                      final int currentDepth,
-                                     final List<String> openedItems) {
+                                     final List<ExplorerNodeKey> openedItems) {
         ExplorerNode.Builder builder = parent.copy();
         builder.depth(currentDepth);
 
-        final String parentUuid = parent.getUuid();
+        final ExplorerNodeKey parentNodeKey = parent.getUniqueKey();
 
         // See if we need to force this item open.
         boolean force = false;
-        if (forcedOpenItems.contains(parentUuid)) {
+        if (forcedOpenItems.contains(parentNodeKey)) {
             force = true;
-            openedItems.add(parentUuid);
-        } else if (temporaryOpenItems != null && temporaryOpenItems.contains(parentUuid)) {
+            openedItems.add(parentNodeKey);
+        } else if (temporaryOpenItems != null && temporaryOpenItems.contains(parentNodeKey)) {
             force = true;
         }
 
         final List<ExplorerNode> children = filteredModel.getChildren(parent);
         if (children == null) {
             builder.nodeState(NodeState.LEAF);
-
-        } else if (force || openItems.contains(parentUuid)) {
+        } else if (force || openItems.contains(parentNodeKey)) {
             final List<ExplorerNode> newChildren = new ArrayList<>();
             for (final ExplorerNode child : children) {
                 final ExplorerNode copy = addChildren(
+                        rootNode,
                         child,
                         filteredModel,
                         openItems,
@@ -491,6 +555,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
             builder.nodeState(NodeState.OPEN);
             builder.children(newChildren);
+            builder.rootNodeUuid(rootNode);
 
         } else {
             builder.nodeState(NodeState.CLOSED);
@@ -500,16 +565,11 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     }
 
     @Override
-    public DocRef create(final String type,
-                         final String name,
-                         final DocRef destinationFolderRef,
-                         final PermissionInheritance permissionInheritance) {
-        final DocRef folderRef = Optional.ofNullable(destinationFolderRef)
-                .orElse(explorerNodeService.getRoot()
-                        .map(ExplorerNode::getDocRef)
-                        .orElse(null)
-                );
-
+    public ExplorerNode create(final String type,
+                               final String name,
+                               final ExplorerNode destinationFolder,
+                               final PermissionInheritance permissionInheritance) {
+        final DocRef folderRef = getDestinationFolderRef(destinationFolder);
         final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);
 
         DocRef result;
@@ -532,46 +592,63 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         // Make sure the tree model is rebuilt.
         rebuildTree();
 
-        return result;
+        return ExplorerNode.builder()
+                .docRef(result)
+                .rootNodeUuid(destinationFolder != null ? destinationFolder.getRootNodeUuid() : null)
+                .build();
+    }
+
+    /**
+     * Returns the DocRef of a destination folder
+     * @param destinationFolder If null, looks up the default root node
+     */
+    private DocRef getDestinationFolderRef(final ExplorerNode destinationFolder) {
+        if (destinationFolder != null) {
+            return destinationFolder.getDocRef();
+        }
+
+        final ExplorerNode rootNode = explorerNodeService.getNodeWithRoot().orElse(null);
+        return rootNode != null ? rootNode.getDocRef() : null;
     }
 
     @Override
-    public BulkActionResult copy(final List<DocRef> docRefs,
-                                 final DocRef potentialDestinationFolderRef,
+    public BulkActionResult copy(final List<ExplorerNode> explorerNodes,
+                                 final ExplorerNode destinationFolder,
                                  final PermissionInheritance permissionInheritance) {
-        final DocRef destinationFolderRef = Optional.ofNullable(potentialDestinationFolderRef)
-                .orElse(explorerNodeService.getRoot()
-                        .map(ExplorerNode::getDocRef)
-                        .orElseThrow(() -> new RuntimeException("Cannot copy into null destination")));
-
         final StringBuilder resultMessage = new StringBuilder();
 
         // Create a map to store source to destination document references.
-        final Map<DocRef, DocRef> remappings = new HashMap<>();
+        final Map<ExplorerNode, ExplorerNode> remappings = new HashMap<>();
 
         // Discover all affected folder children.
-        final Map<DocRef, List<DocRef>> childMap = new HashMap<>();
-        createChildMap(docRefs, childMap);
+        final Map<ExplorerNode, List<ExplorerNode>> childMap = new HashMap<>();
+        createChildMap(explorerNodes, childMap);
 
         // Perform a copy on the selected items.
-        docRefs.forEach(sourceDocRef -> copy(sourceDocRef,
-                destinationFolderRef,
+        explorerNodes.forEach(sourceNode -> copy(
+                sourceNode,
+                destinationFolder,
                 permissionInheritance,
                 resultMessage,
                 remappings));
 
         // Recursively copy any selected folders.
-        docRefs.forEach(sourceDocRef -> recurseCopy(sourceDocRef,
+        explorerNodes.forEach(sourceNode -> recurseCopy(
+                sourceNode,
                 permissionInheritance,
                 resultMessage,
                 remappings,
                 childMap));
 
         // Remap all dependencies for the copied items.
-        remappings.values().forEach(newDocRef -> {
-            final ExplorerActionHandler handler = explorerActionHandlers.getHandler(newDocRef.getType());
+        remappings.values().forEach(newExplorerNode -> {
+            final ExplorerActionHandler handler = explorerActionHandlers.getHandler(newExplorerNode.getType());
             if (handler != null) {
-                handler.remapDependencies(newDocRef, remappings);
+                final HashMap<DocRef, DocRef> docRefRemappings = new HashMap<>();
+                for (final var remapping : remappings.entrySet()) {
+                    docRefRemappings.put(remapping.getKey().getDocRef(), remapping.getValue().getDocRef());
+                }
+                handler.remapDependencies(newExplorerNode.getDocRef(), docRefRemappings);
             }
         });
 
@@ -584,56 +661,63 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     /**
      * Copy an item into a destination folder.
      *
-     * @param sourceDocRef          The doc ref for the item being copied
-     * @param destinationFolderRef  The doc ref for the destination folder
+     * @param sourceNode            The explorer node being copied
+     * @param destinationFolder     The destination folder explorer node
      * @param permissionInheritance The mode of permission inheritance being used for the whole operation
      * @param resultMessage         Allow contribution to result message
      * @param remappings            A map to store source to destination document references
      */
-    private void copy(final DocRef sourceDocRef,
-                      final DocRef destinationFolderRef,
+    private void copy(final ExplorerNode sourceNode,
+                      final ExplorerNode destinationFolder,
                       final PermissionInheritance permissionInheritance,
                       final StringBuilder resultMessage,
-                      final Map<DocRef, DocRef> remappings) {
+                      final Map<ExplorerNode, ExplorerNode> remappings) {
+
+        final DocRef destinationFolderRef = getDestinationFolderRef(destinationFolder);
 
         try {
             // Ensure we haven't already copied this item as part of a folder copy.
-            if (!remappings.containsKey(sourceDocRef)) {
-                // Get a handler to performt he copy.
-                final ExplorerActionHandler handler = explorerActionHandlers.getHandler(sourceDocRef.getType());
+            if (!remappings.containsKey(sourceNode)) {
+                // Get a handler to perform the copy.
+                final ExplorerActionHandler handler = explorerActionHandlers.getHandler(sourceNode.getType());
 
                 // Check that the user is allowed to create an item of this type in the destination folder.
-                checkCreatePermission(getUUID(destinationFolderRef), sourceDocRef.getType());
+                checkCreatePermission(getUUID(destinationFolderRef), sourceNode.getType());
 
                 // Find out names of other items in the destination folder.
                 final Set<String> otherDestinationChildrenNames = explorerNodeService.getChildren(destinationFolderRef)
                         .stream()
                         .map(ExplorerNode::getDocRef)
-                        .filter(docRef -> docRef.getType().equals(sourceDocRef.getType()))
+                        .filter(docRef -> docRef.getType().equals(sourceNode.getType()))
                         .map(DocRef::getName)
                         .collect(Collectors.toSet());
 
                 // Copy the item to the destination folder.
-                final DocRef destinationDocRef = handler.copyDocument(sourceDocRef, otherDestinationChildrenNames);
-                explorerEventLog.copy(sourceDocRef, destinationFolderRef, permissionInheritance, null);
+                final DocRef destinationDocRef = handler.copyDocument(sourceNode.getDocRef(),
+                        otherDestinationChildrenNames);
+                explorerEventLog.copy(sourceNode.getDocRef(), destinationFolderRef, permissionInheritance,
+                        null);
 
                 // Create the explorer node
                 if (destinationDocRef != null) {
                     // Copy the explorer node.
-                    explorerNodeService.copyNode(sourceDocRef,
+                    explorerNodeService.copyNode(sourceNode.getDocRef(),
                             destinationDocRef,
                             destinationFolderRef,
                             permissionInheritance);
 
                     // Record where the document got copied from -> to.
-                    remappings.put(sourceDocRef, destinationDocRef);
+                    remappings.put(sourceNode, ExplorerNode.builder()
+                            .docRef(destinationDocRef)
+                            .rootNodeUuid(destinationFolder != null ? destinationFolder.getRootNodeUuid() : null)
+                            .build());
                 }
             }
 
         } catch (final RuntimeException e) {
-            explorerEventLog.copy(sourceDocRef, destinationFolderRef, permissionInheritance, e);
+            explorerEventLog.copy(sourceNode.getDocRef(), destinationFolderRef, permissionInheritance, e);
             resultMessage.append("Unable to copy '");
-            resultMessage.append(sourceDocRef.getName());
+            resultMessage.append(sourceNode.getName());
             resultMessage.append("' ");
             resultMessage.append(e.getMessage());
             resultMessage.append("\n");
@@ -643,23 +727,23 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     /**
      * Copy the contents of a folder recursively
      *
-     * @param sourceFolderRef       The doc ref for the folder being copied
+     * @param sourceFolder          The explorer node being copied
      * @param permissionInheritance The mode of permission inheritance being used for the whole operation
      * @param resultMessage         Allow contribution to result message
-     * @param remappings            A map to store source to destination document references
+     * @param remappings            A map to store source to destination explorer nodes
      * @param childMap              A map of folders and their child items.
      */
-    private void recurseCopy(final DocRef sourceFolderRef,
+    private void recurseCopy(final ExplorerNode sourceFolder,
                              final PermissionInheritance permissionInheritance,
                              final StringBuilder resultMessage,
-                             final Map<DocRef, DocRef> remappings,
-                             final Map<DocRef, List<DocRef>> childMap) {
-        final DocRef destinationFolderRef = remappings.get(sourceFolderRef);
-        if (destinationFolderRef != null) {
-            final List<DocRef> children = childMap.get(sourceFolderRef);
+                             final Map<ExplorerNode, ExplorerNode> remappings,
+                             final Map<ExplorerNode, List<ExplorerNode>> childMap) {
+        final ExplorerNode destinationFolder = remappings.get(sourceFolder);
+        if (destinationFolder != null) {
+            final List<ExplorerNode> children = childMap.get(sourceFolder);
             if (children != null && children.size() > 0) {
                 children.forEach(child -> {
-                    copy(child, destinationFolderRef, permissionInheritance, resultMessage, remappings);
+                    copy(child, destinationFolder, permissionInheritance, resultMessage, remappings);
                     recurseCopy(child, permissionInheritance, resultMessage, remappings, childMap);
                 });
             }
@@ -669,50 +753,51 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     /**
      * Create a map of folders and their child items.
      */
-    private void createChildMap(final List<DocRef> docRefs,
-                                final Map<DocRef, List<DocRef>> childMap) {
-        docRefs.forEach(docRef -> {
-            final List<ExplorerNode> children = explorerNodeService.getChildren(docRef);
+    private void createChildMap(final List<ExplorerNode> explorerNodes,
+                                final Map<ExplorerNode, List<ExplorerNode>> childMap) {
+        explorerNodes.forEach(explorerNode -> {
+            final List<ExplorerNode> children = explorerNodeService.getChildren(explorerNode.getDocRef());
             if (children != null && children.size() > 0) {
-                final List<DocRef> childDocRefs = children
-                        .stream()
-                        .map(ExplorerNode::getDocRef)
-                        .collect(Collectors.toList());
-                childMap.put(docRef, childDocRefs);
-                createChildMap(childDocRefs, childMap);
+                childMap.put(explorerNode, children);
+                createChildMap(children, childMap);
             }
         });
     }
 
     @Override
-    public BulkActionResult move(final List<DocRef> docRefs,
-                                 final DocRef destinationFolderRef,
+    public BulkActionResult move(final List<ExplorerNode> explorerNodes,
+                                 final ExplorerNode destinationFolder,
                                  final PermissionInheritance permissionInheritance) {
-        final DocRef folderRef = Optional.ofNullable(destinationFolderRef)
-                .orElse(explorerNodeService.getRoot()
-                        .map(ExplorerNode::getDocRef)
-                        .orElse(null));
-
-        final List<DocRef> resultDocRefs = new ArrayList<>();
+        final DocRef folderRef = getDestinationFolderRef(destinationFolder);
+        final List<ExplorerNode> resultNodes = new ArrayList<>();
         final StringBuilder resultMessage = new StringBuilder();
 
-        for (final DocRef docRef : docRefs) {
-            final ExplorerActionHandler handler = explorerActionHandlers.getHandler(docRef.getType());
+        // Test whether any of the source items match the destination. If so, abort the move as it's not possible
+        // to move one object into itself
+        if (explorerNodes.stream().anyMatch(node -> node.getDocRef().equals(destinationFolder.getDocRef()))) {
+            throw new IllegalArgumentException("Source and destination locations cannot be the same.");
+        }
+
+        for (final ExplorerNode explorerNode : explorerNodes) {
+            final ExplorerActionHandler handler = explorerActionHandlers.getHandler(explorerNode.getType());
 
             DocRef result = null;
 
             try {
                 // Check that the user is allowed to create an item of this type in the destination folder.
-                checkCreatePermission(getUUID(folderRef), docRef.getType());
+                checkCreatePermission(getUUID(folderRef), explorerNode.getType());
                 // Move the item.
-                result = handler.moveDocument(docRef.getUuid());
-                explorerEventLog.move(docRef, folderRef, permissionInheritance, null);
-                resultDocRefs.add(result);
+                result = handler.moveDocument(explorerNode.getUuid());
+                explorerEventLog.move(explorerNode.getDocRef(), folderRef, permissionInheritance, null);
+                resultNodes.add(ExplorerNode.builder()
+                        .docRef(result)
+                        .rootNodeUuid(explorerNode.getRootNodeUuid())
+                        .build());
 
             } catch (final RuntimeException e) {
-                explorerEventLog.move(docRef, folderRef, permissionInheritance, e);
+                explorerEventLog.move(explorerNode.getDocRef(), folderRef, permissionInheritance, e);
                 resultMessage.append("Unable to move '");
-                resultMessage.append(docRef.getName());
+                resultMessage.append(explorerNode.getName());
                 resultMessage.append("' ");
                 resultMessage.append(e.getMessage());
                 resultMessage.append("\n");
@@ -727,14 +812,13 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         // Make sure the tree model is rebuilt.
         rebuildTree();
 
-        return new BulkActionResult(resultDocRefs, resultMessage.toString());
+        return new BulkActionResult(resultNodes, resultMessage.toString());
     }
 
     @Override
-    public DocRef rename(final DocRef docRef, final String docName) {
-        final ExplorerActionHandler handler = explorerActionHandlers.getHandler(docRef.getType());
-
-        final DocRef result = rename(handler, docRef, docName);
+    public ExplorerNode rename(final ExplorerNode explorerNode, final String docName) {
+        final ExplorerActionHandler handler = explorerActionHandlers.getHandler(explorerNode.getType());
+        final ExplorerNode result = rename(handler, explorerNode, docName);
 
         // Make sure the tree model is rebuilt.
         rebuildTree();
@@ -742,35 +826,38 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         return result;
     }
 
-    private DocRef rename(final ExplorerActionHandler handler,
-                          final DocRef docRef,
-                          final String docName) {
+    private ExplorerNode rename(final ExplorerActionHandler handler,
+                                final ExplorerNode explorerNode,
+                                final String docName) {
         DocRef result;
 
         try {
-            result = handler.renameDocument(docRef.getUuid(), docName);
-            explorerEventLog.rename(docRef, docName, null);
+            result = handler.renameDocument(explorerNode.getUuid(), docName);
+            explorerEventLog.rename(explorerNode.getDocRef(), docName, null);
         } catch (final RuntimeException e) {
-            explorerEventLog.rename(docRef, docName, e);
+            explorerEventLog.rename(explorerNode.getDocRef(), docName, e);
             throw e;
         }
 
         // Rename the explorer node.
         explorerNodeService.renameNode(result);
 
-        return result;
+        return ExplorerNode.builder()
+                .docRef(result)
+                .rootNodeUuid(explorerNode.getRootNodeUuid())
+                .build();
     }
 
     @Override
-    public BulkActionResult delete(final List<DocRef> docRefs) {
-        final List<DocRef> resultDocRefs = new ArrayList<>();
+    public BulkActionResult delete(final List<ExplorerNode> explorerNodes) {
+        final List<ExplorerNode> resultDocRefs = new ArrayList<>();
         final StringBuilder resultMessage = new StringBuilder();
 
-        final HashSet<DocRef> deleted = new HashSet<>();
-        docRefs.forEach(docRef -> {
+        final HashSet<ExplorerNode> deleted = new HashSet<>();
+        explorerNodes.forEach(explorerNode -> {
             // Check this document hasn't already been deleted.
-            if (!deleted.contains(docRef)) {
-                recursiveDelete(docRefs, deleted, resultDocRefs, resultMessage);
+            if (!deleted.contains(explorerNode)) {
+                recursiveDelete(explorerNodes, deleted, resultDocRefs, resultMessage);
             }
         });
 
@@ -780,47 +867,44 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         return new BulkActionResult(resultDocRefs, resultMessage.toString());
     }
 
-    private void recursiveDelete(final List<DocRef> docRefs,
-                                 final HashSet<DocRef> deleted,
-                                 final List<DocRef> resultDocRefs,
+    private void recursiveDelete(final List<ExplorerNode> explorerNodes,
+                                 final HashSet<ExplorerNode> deleted,
+                                 final List<ExplorerNode> resultDocRefs,
                                  final StringBuilder resultMessage) {
-        docRefs.forEach(docRef -> {
+        explorerNodes.forEach(explorerNode -> {
             // Check this document hasn't already been deleted.
-            if (!deleted.contains(docRef)) {
+            if (!deleted.contains(explorerNode)) {
                 // Get any children that might need to be deleted.
-                List<ExplorerNode> children = explorerNodeService.getChildren(docRef);
+                List<ExplorerNode> children = explorerNodeService.getChildren(explorerNode.getDocRef());
                 if (children != null && children.size() > 0) {
                     // Recursive delete.
-                    final List<DocRef> childDocRefs = children.stream()
-                            .map(ExplorerNode::getDocRef)
-                            .collect(Collectors.toList());
-                    recursiveDelete(childDocRefs, deleted, resultDocRefs, resultMessage);
+                    recursiveDelete(children, deleted, resultDocRefs, resultMessage);
                 }
 
                 // Check to see if we still have children.
-                children = explorerNodeService.getChildren(docRef);
+                children = explorerNodeService.getChildren(explorerNode.getDocRef());
                 if (children != null && children.size() > 0) {
-                    final String message = "Unable to delete '" + docRef.getName() +
+                    final String message = "Unable to delete '" + explorerNode.getName() +
                             "' because the folder is not empty";
                     resultMessage.append(message);
                     resultMessage.append("\n");
-                    explorerEventLog.delete(docRef, new RuntimeException(message));
+                    explorerEventLog.delete(explorerNode.getDocRef(), new RuntimeException(message));
 
                 } else {
-                    final ExplorerActionHandler handler = explorerActionHandlers.getHandler(docRef.getType());
+                    final ExplorerActionHandler handler = explorerActionHandlers.getHandler(explorerNode.getType());
                     try {
-                        handler.deleteDocument(docRef.getUuid());
-                        explorerEventLog.delete(docRef, null);
-                        deleted.add(docRef);
-                        resultDocRefs.add(docRef);
+                        handler.deleteDocument(explorerNode.getUuid());
+                        explorerEventLog.delete(explorerNode.getDocRef(), null);
+                        deleted.add(explorerNode);
+                        resultDocRefs.add(explorerNode);
 
                         // Delete the explorer node.
-                        explorerNodeService.deleteNode(docRef);
+                        explorerNodeService.deleteNode(explorerNode.getDocRef());
 
                     } catch (final Exception e) {
-                        explorerEventLog.delete(docRef, e);
+                        explorerEventLog.delete(explorerNode.getDocRef(), e);
                         resultMessage.append("Unable to delete '");
-                        resultMessage.append(docRef.getName());
+                        resultMessage.append(explorerNode.getName());
                         resultMessage.append("' ");
                         resultMessage.append(e.getMessage());
                         resultMessage.append("\n");

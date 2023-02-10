@@ -27,6 +27,8 @@ import stroom.explorer.client.event.HighlightExplorerNodeEvent;
 import stroom.explorer.client.event.OpenExplorerTabEvent;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.explorer.client.event.ShowNewMenuEvent;
+import stroom.explorer.shared.DocumentTypes;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.client.api.event.CurrentUserChangedEvent;
 import stroom.security.client.api.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
@@ -89,7 +91,9 @@ public class ExplorerTreePresenter
             @Override
             protected void doSelect(final ExplorerNode row, final SelectionType selectionType) {
                 super.doSelect(row, selectionType);
-                getView().setDeleteEnabled(explorerTree.getSelectionModel().getSelectedItems().size() > 0);
+                getView().setDeleteEnabled(explorerTree.getSelectionModel().getSelectedItems().size() > 0 &&
+                        !ExplorerConstants.isSystemNode(row) &&
+                        !ExplorerConstants.isFavouritesNode(row));
             }
         };
 

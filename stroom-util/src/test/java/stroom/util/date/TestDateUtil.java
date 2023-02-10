@@ -19,6 +19,8 @@ package stroom.util.date;
 
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestDateUtil {
@@ -37,7 +39,8 @@ class TestDateUtil {
 
         // Convert Back to string
         assertThat(DateUtil.createNormalDateTimeString(date))
-                .isEqualTo(dateString);
+                .isEqualTo(dateString)
+                .isEqualTo(DateUtil.createNormalDateTimeString(Instant.ofEpochMilli(date)));
     }
 
     @Test
@@ -49,7 +52,9 @@ class TestDateUtil {
 
     @Test
     void testSimpleFileFormat() {
-        assertThat(DateUtil.createFileDateTimeString(DateUtil.parseNormalDateTimeString("2010-01-01T23:59:59.000Z")))
-                .isEqualTo("2010-01-01T23#59#59,000Z");
+        final long timeMs = DateUtil.parseNormalDateTimeString("2010-01-01T23:59:59.000Z");
+        assertThat(DateUtil.createFileDateTimeString(timeMs))
+                .isEqualTo("2010-01-01T23#59#59,000Z")
+                .isEqualTo(DateUtil.createFileDateTimeString(Instant.ofEpochMilli(timeMs)));
     }
 }
