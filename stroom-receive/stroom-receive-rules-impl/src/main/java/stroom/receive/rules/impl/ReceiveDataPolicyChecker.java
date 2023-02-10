@@ -18,7 +18,6 @@
 package stroom.receive.rules.impl;
 
 import stroom.datasource.api.v2.AbstractField;
-import stroom.datasource.api.v2.FieldTypes;
 import stroom.docref.DocRef;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.ExpressionMatcherFactory;

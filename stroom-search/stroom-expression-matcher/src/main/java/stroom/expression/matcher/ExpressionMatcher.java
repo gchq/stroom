@@ -21,7 +21,6 @@ import stroom.collection.api.CollectionService;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DocRefField;
 import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.FieldTypes;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.DateTimeSettings;

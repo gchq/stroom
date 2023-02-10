@@ -44,7 +44,7 @@ export interface AbstractField {
   )[];
   name?: string;
   queryable?: boolean;
-  type?: string;
+  type: string;
 }
 
 export interface Account {
@@ -276,7 +276,7 @@ export interface BuildInfo {
 }
 
 export interface BulkActionResult {
-  docRefs?: DocRef[];
+  explorerNodes?: ExplorerNode[];
   message?: string;
 }
 
@@ -910,7 +910,7 @@ export interface ElasticIndexDoc {
 export interface ElasticIndexField {
   fieldName?: string;
   fieldType?: string;
-  fieldUse?: "ID" | "BOOLEAN" | "INTEGER" | "LONG" | "FLOAT" | "DOUBLE" | "DATE" | "TEXT" | "IPV4_ADDRESS";
+  fieldUse?: "ID" | "BOOLEAN" | "INTEGER" | "LONG" | "FLOAT" | "DOUBLE" | "DATE" | "TEXT" | "KEYWORD" | "IPV4_ADDRESS";
   indexed?: boolean;
 }
 
@@ -985,9 +985,18 @@ export interface ExplorerNode {
   /** @format int32 */
   depth?: number;
   iconClassName?: string;
+  isFavourite?: boolean;
   name?: string;
   nodeState?: "OPEN" | "CLOSED" | "LEAF";
+  rootNodeUuid?: string;
   tags?: string;
+  type?: string;
+  uniqueKey?: ExplorerNodeKey;
+  uuid?: string;
+}
+
+export interface ExplorerNodeKey {
+  rootNodeUuid?: string;
   type?: string;
   uuid?: string;
 }
@@ -1000,15 +1009,13 @@ export interface ExplorerNodePermissions {
 }
 
 export interface ExplorerServiceCopyRequest {
-  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  destinationFolderRef?: DocRef;
-  docRefs?: DocRef[];
+  destinationFolder?: ExplorerNode;
+  explorerNodes?: ExplorerNode[];
   permissionInheritance?: "NONE" | "SOURCE" | "DESTINATION" | "COMBINED";
 }
 
 export interface ExplorerServiceCreateRequest {
-  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  destinationFolderRef?: DocRef;
+  destinationFolder?: ExplorerNode;
   docName?: string;
   docType?: string;
   permissionInheritance?: "NONE" | "SOURCE" | "DESTINATION" | "COMBINED";
@@ -1019,20 +1026,18 @@ export interface ExplorerServiceDeleteRequest {
 }
 
 export interface ExplorerServiceMoveRequest {
-  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  destinationFolderRef?: DocRef;
-  docRefs?: DocRef[];
+  destinationFolder?: ExplorerNode;
+  explorerNodes?: ExplorerNode[];
   permissionInheritance?: "NONE" | "SOURCE" | "DESTINATION" | "COMBINED";
 }
 
 export interface ExplorerServiceRenameRequest {
   docName?: string;
-
-  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  docRef?: DocRef;
+  explorerNode?: ExplorerNode;
 }
 
 export interface ExplorerTreeFilter {
+  includedRootTypes?: string[];
   includedTypes?: string[];
   nameFilter?: string;
   nameFilterChange?: boolean;
@@ -1151,10 +1156,10 @@ export type FetchDataResult = AbstractFetchDataResult & {
 };
 
 export interface FetchExplorerNodeResult {
-  openedItems?: string[];
+  openedItems?: ExplorerNodeKey[];
   qualifiedFilterInput?: string;
   rootNodes?: ExplorerNode[];
-  temporaryOpenedItems?: string[];
+  temporaryOpenedItems?: ExplorerNodeKey[];
 }
 
 export interface FetchLinkedScriptRequest {
@@ -1272,13 +1277,13 @@ export interface FindElementDocRequest {
 }
 
 export interface FindExplorerNodeCriteria {
-  ensureVisible?: string[];
+  ensureVisible?: ExplorerNodeKey[];
   filter?: ExplorerTreeFilter;
 
   /** @format int32 */
   minDepth?: number;
-  openItems?: string[];
-  temporaryOpenedItems?: string[];
+  openItems?: ExplorerNodeKey[];
+  temporaryOpenedItems?: ExplorerNodeKey[];
 }
 
 export interface FindFsVolumeCriteria {
@@ -1759,6 +1764,8 @@ export interface KafkaConfigDoc {
   uuid?: string;
   version?: string;
 }
+
+export type KeywordField = AbstractField;
 
 export interface LayoutConfig {
   preferredSize?: Size;
@@ -5365,6 +5372,62 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         ...params,
       }),
   };
+  docFav = {
+    /**
+     * No description
+     *
+     * @tags Document Favourites
+     * @name CreateDocFav
+     * @summary Set a document as a favourite for the current user
+     * @request POST:/docFav/v1/create
+     * @secure
+     */
+    createDocFav: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/docFav/v1/create`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Document Favourites
+     * @name DeleteDocFav
+     * @summary Unset a document as favourite for the current user
+     * @request DELETE:/docFav/v1/delete
+     * @secure
+     */
+    deleteDocFav: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/docFav/v1/delete`,
+        method: "DELETE",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Document Favourites
+     * @name FetchDocFavs
+     * @summary Retrieve all DocRefs the current user has marked as favourite
+     * @request GET:/docFav/v1/fetchDocFavs
+     * @secure
+     */
+    fetchDocFavs: (params: RequestParams = {}) =>
+      this.request<any, DocRef[]>({
+        path: `/docFav/v1/fetchDocFavs`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+  };
   elasticCluster = {
     /**
      * No description
@@ -5527,7 +5590,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     createExplorerItem: (data: ExplorerServiceCreateRequest, params: RequestParams = {}) =>
-      this.request<any, DocRef>({
+      this.request<any, ExplorerNode>({
         path: `/explorer/v2/create`,
         method: "POST",
         body: data,
@@ -5633,6 +5696,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Explorer (v2)
+     * @name GetRootNodeRef
+     * @summary Get a node from a document reference, decorated with its root node UUID
+     * @request POST:/explorer/v2/getFromDocRef
+     * @secure
+     */
+    getRootNodeRef: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, ExplorerNode>({
+        path: `/explorer/v2/getFromDocRef`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Explorer (v2)
      * @name FetchExplorerItemInfo
      * @summary Get document info
      * @request POST:/explorer/v2/info
@@ -5677,7 +5759,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     renameExplorerItems: (data: ExplorerServiceRenameRequest, params: RequestParams = {}) =>
-      this.request<any, DocRef>({
+      this.request<any, ExplorerNode>({
         path: `/explorer/v2/rename`,
         method: "PUT",
         body: data,

@@ -2,7 +2,6 @@ package stroom.search.elastic.suggest;
 
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.FieldTypes;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.util.LambdaLogger;
 import stroom.query.util.LambdaLoggerFactory;

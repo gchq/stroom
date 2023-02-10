@@ -1,6 +1,12 @@
 package stroom.datasource.api.v2;
 
-public enum FieldType {
+import stroom.docref.HasDisplayValue;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+public enum FieldType implements HasDisplayValue {
     ID("Id",
             "id", "ID field type\n" +
             "\n" +
@@ -82,6 +88,18 @@ public enum FieldType {
                     "This is a reference to a Stroom object such as a Dictionary.\n" +
                     "Click in the selection box to select the desired object.");
 
+    public static final List<FieldType> TYPES = new ArrayList<>(Arrays.asList(
+            ID,
+            BOOLEAN,
+            INTEGER,
+            LONG,
+            FLOAT,
+            DOUBLE,
+            DATE,
+            TEXT,
+            IPV4_ADDRESS,
+            DOC_REF));
+
     private final String typeName;
     private final String shortTypeName;
     private final String description;
@@ -102,5 +120,10 @@ public enum FieldType {
 
     public String getDescription() {
         return description;
+    }
+
+    @Override
+    public String getDisplayValue() {
+        return typeName;
     }
 }

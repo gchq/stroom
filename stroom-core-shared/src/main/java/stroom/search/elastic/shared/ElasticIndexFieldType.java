@@ -20,7 +20,7 @@ import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.BooleanField;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.DoubleField;
-import stroom.datasource.api.v2.FieldTypes;
+import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.FloatField;
 import stroom.datasource.api.v2.IdField;
 import stroom.datasource.api.v2.IntegerField;
@@ -43,18 +43,18 @@ import java.util.Set;
  * @see "https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-types.html"
  */
 public enum ElasticIndexFieldType implements HasDisplayValue {
-    ID(FieldTypes.ID, "Id", true, null),
-    BOOLEAN(FieldTypes.BOOLEAN, "Boolean", false, new String[]{ "boolean" }),
-    INTEGER(FieldTypes.INTEGER, "Integer", true,
-            new String[]{ "integer", "short", "byte", "version" }),
-    LONG(FieldTypes.LONG, "Long", true, new String[]{ "long", "unsigned_long" }),
-    FLOAT(FieldTypes.FLOAT, "Float", false, new String[]{ "float", "half_float", "scaled_float" }),
-    DOUBLE(FieldTypes.DOUBLE, "Double", false, new String[]{ "double" }),
-    DATE(FieldTypes.DATE, "Date", false, new String[]{ "date" }),
-    TEXT(FieldTypes.TEXT, "Text", false, new String[]{ "text" }),
-    KEYWORD(FieldTypes.KEYWORD, "Keyword", false,
-            new String[]{ "keyword", "constant_keyword", "wildcard" }),
-    IPV4_ADDRESS(FieldTypes.IPV4_ADDRESS, "IpV4Address", false, new String[]{ "ip" });
+    ID(FieldType.ID, "Id", true, null),
+    BOOLEAN(FieldType.BOOLEAN, "Boolean", false, new String[]{"boolean"}),
+    INTEGER(FieldType.INTEGER, "Integer", true,
+            new String[]{"integer", "short", "byte", "version"}),
+    LONG(FieldType.LONG, "Long", true, new String[]{"long", "unsigned_long"}),
+    FLOAT(FieldType.FLOAT, "Float", false, new String[]{"float", "half_float", "scaled_float"}),
+    DOUBLE(FieldType.DOUBLE, "Double", false, new String[]{"double"}),
+    DATE(FieldType.DATE, "Date", false, new String[]{"date"}),
+    TEXT(FieldType.TEXT, "Text", false, new String[]{"text"}),
+    KEYWORD(FieldType.KEYWORD, "Keyword", false,
+            new String[]{"keyword", "constant_keyword", "wildcard"}),
+    IPV4_ADDRESS(FieldType.IPV4_ADDRESS, "IpV4Address", false, new String[]{"ip"});
 
     private static Map<String, ElasticIndexFieldType> nativeTypeRegistry = new HashMap<>();
 
@@ -70,35 +70,27 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
         ElasticIndexFieldType.nativeTypeRegistry = nativeTypeRegistry;
     }
 
-    private final String dataSourceFieldType;
+    private final FieldType dataSourceFieldType;
     private final String displayValue;
     private final boolean numeric;
     private final Set<String> nativeTypes;
     private final List<Condition> supportedConditions;
 
-    ElasticIndexFieldType(
-            final String dataSourceFieldType,
-            final String displayValue,
-            final boolean numeric,
-            final String[] nativeTypes
-    ) {
+    ElasticIndexFieldType(final FieldType dataSourceFieldType,
+                          final String displayValue,
+                          final boolean numeric,
+                          final String[] nativeTypes) {
         this.dataSourceFieldType = dataSourceFieldType;
         this.displayValue = displayValue;
         this.numeric = numeric;
-        this.nativeTypes = nativeTypes != null ? new HashSet<>(Arrays.asList(nativeTypes)) : null;
+        this.nativeTypes = nativeTypes != null
+                ? new HashSet<>(Arrays.asList(nativeTypes))
+                : null;
         this.supportedConditions = getConditions();
-    }
-
-    public String getDataSourceFieldType() {
-        return dataSourceFieldType;
     }
 
     public boolean isNumeric() {
         return numeric;
-    }
-
-    public Set<String> getNativeTypes() {
-        return nativeTypes;
     }
 
     public List<Condition> getSupportedConditions() {
@@ -116,8 +108,8 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
     private List<Condition> getConditions() {
         final List<Condition> conditions = new ArrayList<>();
 
-        if (dataSourceFieldType.equals(FieldTypes.DATE) ||
-                dataSourceFieldType.equals(FieldTypes.IPV4_ADDRESS) ||
+        if (FieldType.DATE.equals(dataSourceFieldType) ||
+                FieldType.IPV4_ADDRESS.equals(dataSourceFieldType) ||
                 numeric) {
             conditions.add(Condition.EQUALS);
             conditions.add(Condition.GREATER_THAN);
@@ -155,25 +147,25 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
     public AbstractField toDataSourceField(final String fieldName, final Boolean isIndexed)
             throws IllegalArgumentException {
         switch (dataSourceFieldType) {
-            case FieldTypes.ID:
+            case ID:
                 return new IdField(fieldName, isIndexed, supportedConditions);
-            case FieldTypes.BOOLEAN:
+            case BOOLEAN:
                 return new BooleanField(fieldName, isIndexed, supportedConditions);
-            case FieldTypes.INTEGER:
+            case INTEGER:
                 return new IntegerField(fieldName, isIndexed, supportedConditions);
-            case FieldTypes.LONG:
+            case LONG:
                 return new LongField(fieldName, isIndexed, supportedConditions);
-            case FieldTypes.FLOAT:
+            case FLOAT:
                 return new FloatField(fieldName, isIndexed, supportedConditions);
-            case FieldTypes.DOUBLE:
+            case DOUBLE:
                 return new DoubleField(fieldName, isIndexed, supportedConditions);
-            case FieldTypes.DATE:
+            case DATE:
                 return new DateField(fieldName, isIndexed, supportedConditions);
-            case FieldTypes.TEXT:
+            case TEXT:
                 return new TextField(fieldName, isIndexed, supportedConditions);
-            case FieldTypes.KEYWORD:
+            case KEYWORD:
                 return new KeywordField(fieldName, isIndexed, supportedConditions);
-            case FieldTypes.IPV4_ADDRESS:
+            case IPV4_ADDRESS:
                 return new IpV4AddressField(fieldName, isIndexed, supportedConditions);
             default:
                 return null;

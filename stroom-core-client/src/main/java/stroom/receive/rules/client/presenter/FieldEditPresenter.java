@@ -23,7 +23,7 @@ import stroom.datasource.api.v2.BooleanField;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.DocRefField;
 import stroom.datasource.api.v2.DoubleField;
-import stroom.datasource.api.v2.FieldTypes;
+import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.FloatField;
 import stroom.datasource.api.v2.IdField;
 import stroom.datasource.api.v2.IntegerField;
@@ -54,7 +54,7 @@ public class FieldEditPresenter extends MyPresenterWidget<FieldEditPresenter.Fie
 
     public void read(final AbstractField field, final Set<String> otherFieldNames) {
         this.otherFieldNames = otherFieldNames;
-        getView().setType(field.getFieldType().getTypeName());
+        getView().setFieldType(field.getFieldType());
         getView().setName(field.getName());
     }
 
@@ -71,7 +71,7 @@ public class FieldEditPresenter extends MyPresenterWidget<FieldEditPresenter.Fie
             return null;
         }
 
-        return create(getView().getType(), name);
+        return create(getView().getFieldType(), name);
     }
 
     public void show(final String caption, final PopupUiHandlers uiHandlers) {
@@ -85,36 +85,36 @@ public class FieldEditPresenter extends MyPresenterWidget<FieldEditPresenter.Fie
 
     public interface FieldEditView extends View {
 
-        String getType();
+        FieldType getFieldType();
 
-        void setType(String type);
+        void setFieldType(FieldType type);
 
         String getName();
 
         void setName(final String name);
     }
 
-    private AbstractField create(final String type, final String name) {
+    private AbstractField create(final FieldType type, final String name) {
         switch (type) {
-            case FieldTypes.ID:
+            case ID:
                 return new IdField(name);
-            case FieldTypes.BOOLEAN:
+            case BOOLEAN:
                 return new BooleanField(name);
-            case FieldTypes.INTEGER:
+            case INTEGER:
                 return new IntegerField(name);
-            case FieldTypes.LONG:
+            case LONG:
                 return new LongField(name);
-            case FieldTypes.FLOAT:
+            case FLOAT:
                 return new FloatField(name);
-            case FieldTypes.DOUBLE:
+            case DOUBLE:
                 return new DoubleField(name);
-            case FieldTypes.DATE:
+            case DATE:
                 return new DateField(name);
-            case FieldTypes.TEXT:
+            case TEXT:
                 return new TextField(name);
-            case FieldTypes.IPV4_ADDRESS:
+            case IPV4_ADDRESS:
                 return new IpV4AddressField(name);
-            case FieldTypes.DOC_REF:
+            case DOC_REF:
                 return new DocRefField(null, name);
             default:
                 AlertEvent.fireWarn(this, "Unexpected type " + type, null);
