@@ -148,6 +148,25 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                 .fetchInto(ExplorerTreeNode.class));
     }
 
+    /**
+     * Get the root node containing a particular node, or the node itself if it is a root node.
+     */
+    @Override
+    public ExplorerTreeNode getRoot(final ExplorerTreeNode node) {
+        return JooqUtil.contextResult(explorerDbConnProvider, context -> Optional.ofNullable(context
+                .select(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS, p.DEPTH)
+                .from(n.innerJoin(p).on(n.ID.eq(p.ANCESTOR)))
+                .where(p.DESCENDANT.eq(node.getId()).and(p.ANCESTOR.ne(node.getId())))
+                .orderBy(p.DEPTH.desc())
+                .fetchAny()).map(r ->
+                new ExplorerTreeNode(r.get(n.ID),
+                        r.get(n.TYPE),
+                        r.get(n.UUID),
+                        r.get(n.NAME),
+                        r.get(n.TAGS),
+                        false)).orElse(node));
+    }
+
     @Override
     public TreeModel createModel(final Function<String, String> iconUrlProvider,
                                  final long id,

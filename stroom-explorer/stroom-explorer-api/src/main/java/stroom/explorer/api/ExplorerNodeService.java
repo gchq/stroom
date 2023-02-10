@@ -43,6 +43,11 @@ public interface ExplorerNodeService {
 
     Optional<ExplorerNode> getRoot();
 
+    /**
+     * Get the root node containing another node
+     */
+    Optional<ExplorerNode> getRoot(DocRef docRef);
+
     Optional<ExplorerNode> getNode(DocRef docRef);
 
     List<ExplorerNode> getPath(DocRef docRef);

@@ -26,6 +26,7 @@ import stroom.docref.DocRef;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.dropdowntree.client.presenter.DropDownTreePresenter;
@@ -33,6 +34,7 @@ import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.util.client.SelectionType;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -40,7 +42,10 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 class ExplorerDropDownTreePresenter extends DropDownTreePresenter
         implements HasDataSelectionHandlers<ExplorerNode> {
 
+    private final static ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
+
     private final ExtendedExplorerTree explorerTree;
+    private final RestFactory restFactory;
     private boolean allowFolderSelection;
     private ExplorerNode selectedExplorerNode;
 
@@ -50,6 +55,8 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
                                   final RestFactory restFactory,
                                   final UiConfigCache uiConfigCache) {
         super(eventBus, view);
+
+        this.restFactory = restFactory;
 
         explorerTree = new ExtendedExplorerTree(this, restFactory);
         setIncludeNullSelection(true);
@@ -140,7 +147,11 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
     }
 
     public void setSelectedEntityReference(final DocRef docRef) {
-        setSelectedEntityData(ExplorerNode.create(docRef));
+        restFactory
+                .create()
+                .onSuccess(explorerNode -> setSelectedEntityData((ExplorerNode) explorerNode))
+                .call(EXPLORER_RESOURCE)
+                .getFromDocRef(docRef);
     }
 
     private ExplorerNode getSelectedEntityData() {

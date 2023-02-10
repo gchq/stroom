@@ -198,6 +198,7 @@ public class ExplorerTreeModel {
                                 ExplorerNode nextSelection = null;
                                 if (uniqueKey != null) {
                                     nextSelection = ExplorerNode.builder()
+                                            .type(uniqueKey.getType())
                                             .uuid(uniqueKey.getUuid())
                                             .rootNodeUuid(uniqueKey.getRootNodeUuid())
                                             .build();
@@ -217,6 +218,7 @@ public class ExplorerTreeModel {
                                         for (int i = openedItemsCnt - 1; i >= 0 && nextSelection == null; i--) {
                                             final ExplorerNodeKey item = result.getOpenedItems().get(i);
                                             final ExplorerNode explorerNode = ExplorerNode.builder()
+                                                    .type(item.getType())
                                                     .uuid(item.getUuid())
                                                     .rootNodeUuid(item.getRootNodeUuid())
                                                     .build();

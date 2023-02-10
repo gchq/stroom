@@ -241,6 +241,20 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                 .map(this::createExplorerNode);
     }
 
+    @Override
+    public Optional<ExplorerNode> getRoot(final DocRef docRef) {
+        return getNodeForDocRef(docRef)
+                .map(node -> {
+                    final String rootNodeUuid = explorerTreeDao.getRoot(node).getUuid();
+
+                    // Set the root node UUID, provided it isn't equal to the requested document's ID
+                    return ExplorerNode.builder()
+                            .docRef(docRef)
+                            .rootNodeUuid(rootNodeUuid)
+                            .build();
+                });
+    }
+
     private synchronized void createRoot() {
         final List<ExplorerTreeNode> roots = explorerTreeDao.getRoots();
         if (roots == null || roots.size() == 0) {
@@ -402,8 +416,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     }
 
     private ExplorerNode createExplorerNode(final ExplorerTreeNode explorerTreeNode) {
-        return ExplorerNode
-                .builder()
+        return ExplorerNode.builder()
                 .type(explorerTreeNode.getType())
                 .uuid(explorerTreeNode.getUuid())
                 .name(explorerTreeNode.getName())

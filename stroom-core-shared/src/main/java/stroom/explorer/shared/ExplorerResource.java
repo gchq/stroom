@@ -86,6 +86,13 @@ public interface ExplorerResource extends RestResource, DirectRestService {
     DocRefInfo info(@Parameter(description = "docRef", required = true) DocRef docRef);
 
     @POST
+    @Path("/getFromDocRef")
+    @Operation(
+            summary = "Get a node from a document reference, decorated with its root node UUID",
+            operationId = "getRootNodeRef")
+    ExplorerNode getFromDocRef(@Parameter(description = "docRef", required = true) DocRef docRef);
+
+    @POST
     @Path("/fetchDocRefs")
     @Operation(
             summary = "Fetch document references",

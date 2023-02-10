@@ -11,15 +11,23 @@ import java.util.Objects;
 public class ExplorerNodeKey {
 
     @JsonProperty
+    private final String type;
+    @JsonProperty
     private final String uuid;
     @JsonProperty
     private final String rootNodeUuid;
 
     @JsonCreator
-    public ExplorerNodeKey(@JsonProperty("uuid") final String uuid,
+    public ExplorerNodeKey(@JsonProperty("type") final String type,
+                           @JsonProperty("uuid") final String uuid,
                            @JsonProperty("rootNodeUuid") final String rootNodeUuid) {
+        this.type = type;
         this.uuid = uuid;
         this.rootNodeUuid = rootNodeUuid;
+    }
+
+    public String getType() {
+        return type;
     }
 
     public String getUuid() {
@@ -32,7 +40,7 @@ public class ExplorerNodeKey {
 
     @Override
     public int hashCode() {
-        return Objects.hash(uuid, rootNodeUuid);
+        return Objects.hash(type, uuid, rootNodeUuid);
     }
 
     @Override
@@ -44,7 +52,8 @@ public class ExplorerNodeKey {
             return false;
         }
         final ExplorerNodeKey that = (ExplorerNodeKey) o;
-        return Objects.equals(uuid, that.uuid) &&
+        return Objects.equals(type, that.type) &&
+                Objects.equals(uuid, that.uuid) &&
                 Objects.equals(rootNodeUuid, that.rootNodeUuid);
     }
 }

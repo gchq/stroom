@@ -275,9 +275,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     additionalDocRefs.forEach(docRef -> {
                         final ExplorerNode node = ExplorerNode
                                 .builder()
-                                .type(docRef.getType())
-                                .uuid(docRef.getUuid())
-                                .name(docRef.getName())
+                                .docRef(docRef)
                                 .tags(StandardTagNames.DATA_SOURCE)
                                 .nodeState(NodeState.LEAF)
                                 .depth(1)
