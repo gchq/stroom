@@ -189,8 +189,7 @@ public class ElasticSearchTaskHandler {
 
             // Number of slices needs to be > 1 else an exception is raised
             if (elasticIndex.getSearchSlices() > 1) {
-                searchSourceBuilder.slice(new SliceBuilder(slice,
-                        elasticIndex.getSearchSlices()));
+                searchSourceBuilder.slice(new SliceBuilder(slice, elasticIndex.getSearchSlices()));
             }
 
             final Scroll scroll = new Scroll(

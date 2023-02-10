@@ -31,16 +31,17 @@ public class TestSerialisation {
         final ExplorerTreeFilter explorerTreeFilter = new ExplorerTreeFilter(
                 Set.of("t1", "t2"),
                 Set.of("t1", "t2"),
+                Set.of("t1", "t2"),
                 Set.of("p1", "p2"),
                 "blah",
                 true);
 
         final FindExplorerNodeCriteria criteria1 = new FindExplorerNodeCriteria(
-                Set.of(explorerNode.getUuid()),
-                Set.of(explorerNode.getUuid()),
+                Set.of(explorerNode.getUniqueKey()),
+                Set.of(explorerNode.getUniqueKey()),
                 explorerTreeFilter,
                 2,
-                Set.of(explorerNode.getUuid()));
+                Set.of(explorerNode.getUniqueKey()));
 
         final ObjectMapper objectMapper = JsonUtil.getMapper();
         final String result1 = objectMapper.writeValueAsString(criteria1);
@@ -76,8 +77,8 @@ public class TestSerialisation {
 
         final FetchExplorerNodeResult result1 = new FetchExplorerNodeResult(
                 List.of(parent),
-                List.of(parent.getUuid()),
-                Set.of(parent.getUuid()),
+                List.of(parent.getUniqueKey()),
+                Set.of(parent.getUniqueKey()),
                 null);
 
         final ObjectMapper objectMapper = JsonUtil.getMapper();

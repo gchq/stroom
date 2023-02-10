@@ -62,4 +62,23 @@ public class TextField extends AbstractField {
     public String getType() {
         return FieldTypes.TEXT;
     }
+
+    @Override
+    public String getShortTypeName() {
+        return "text";
+    }
+
+    @Override
+    public String getTypeDescription() {
+        return "Text field type\n" +
+               "\n" +
+               " * Full-text search: matches against any of the provided search terms\n" +
+               " * Case insensitive\n" +
+               " * Typically ignores whitespace and punctuation (incl. hyphens, commas, periods and special " +
+               "characters)\n" +
+               "\n" +
+               "Examples (omit single quotes):\n" +
+               " * Match one or more terms in any order: 'the cat sat on the mat'\n" +
+               " * Match an exact phrase (use double quotes): \"the cat sat\"";
+    }
 }

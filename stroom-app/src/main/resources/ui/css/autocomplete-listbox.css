@@ -8,6 +8,7 @@
     background-position-y: 50%;
     background-color: transparent;
     border: none;
+    max-width: 400px;
 }
 
 .stroom-theme-dark .gwt-TextBox.autocompleteTextBox,
@@ -40,6 +41,8 @@
     padding: 0;
     overflow-y: auto;
     border-radius: 0;
+    width: auto;
+    min-width: 200px;
 }
 
 .gwt-PopupPanel.autocompletePanel select > option {

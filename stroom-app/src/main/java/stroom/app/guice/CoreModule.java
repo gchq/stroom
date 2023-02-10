@@ -1,5 +1,7 @@
 package stroom.app.guice;
 
+import stroom.docstore.fav.impl.db.DocFavDbModule;
+
 import com.google.inject.AbstractModule;
 
 public class CoreModule extends AbstractModule {
@@ -21,7 +23,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.core.dataprocess.PipelineStreamTaskModule());
         install(new stroom.core.db.DbStatusModule());
         install(new stroom.core.entity.event.EntityEventModule());
-        install(new stroom.core.query.QueryModule());
+        install(new stroom.core.meta.MetaModule());
         install(new stroom.core.receive.ReceiveDataModule());
         install(new stroom.core.servlet.ServletModule());
         install(new stroom.core.sysinfo.SystemInfoModule());
@@ -41,6 +43,8 @@ public class CoreModule extends AbstractModule {
         install(new stroom.dictionary.impl.DictionaryModule());
         install(new stroom.docstore.impl.DocStoreModule());
         install(new stroom.docstore.impl.db.DocStoreDbPersistenceModule());
+        install(new stroom.docstore.fav.impl.DocFavModule());
+        install(new stroom.docstore.fav.impl.db.DocFavDbModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
         install(new stroom.event.logging.rs.impl.RestResourceAutoLoggerModule());
         install(new stroom.explorer.impl.ExplorerModule());
@@ -74,6 +78,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.pipeline.xsltfunctions.DataStoreXsltFunctionModule());
         install(new stroom.processor.impl.ProcessorModule());
         install(new stroom.processor.impl.db.ProcessorDaoModule());
+        install(new stroom.suggestions.impl.SuggestModule());
         install(new stroom.receive.common.RemoteFeedModule());
         install(new stroom.receive.rules.impl.ReceiveDataRuleSetModule());
         install(new stroom.search.extraction.ExtractionModule());

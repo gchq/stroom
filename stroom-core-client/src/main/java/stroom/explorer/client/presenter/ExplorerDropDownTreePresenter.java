@@ -24,7 +24,9 @@ import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.DocumentTypes;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.dropdowntree.client.presenter.DropDownTreePresenter;
@@ -32,6 +34,7 @@ import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.util.client.SelectionType;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -39,7 +42,10 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 class ExplorerDropDownTreePresenter extends DropDownTreePresenter
         implements HasDataSelectionHandlers<ExplorerNode> {
 
+    private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
+
     private final ExtendedExplorerTree explorerTree;
+    private final RestFactory restFactory;
     private boolean allowFolderSelection;
     private ExplorerNode selectedExplorerNode;
 
@@ -49,6 +55,8 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
                                   final RestFactory restFactory,
                                   final UiConfigCache uiConfigCache) {
         super(eventBus, view);
+
+        this.restFactory = restFactory;
 
         explorerTree = new ExtendedExplorerTree(this, restFactory);
         setIncludeNullSelection(true);
@@ -114,8 +122,12 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
         explorerTree.setFocus(true);
     }
 
-    public void setIncludedTypes(final String... includedTypes) {
-        explorerTree.getTreeModel().setIncludedTypes(includedTypes);
+    public void setIncludedTypes(final String... types) {
+        explorerTree.getTreeModel().setIncludedTypes(types);
+    }
+
+    public void setIncludedRootTypes(final String... types) {
+        explorerTree.getTreeModel().setIncludedRootTypes(types);
     }
 
     public void setTags(final String... tags) {
@@ -135,7 +147,11 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
     }
 
     public void setSelectedEntityReference(final DocRef docRef) {
-        setSelectedEntityData(ExplorerNode.create(docRef));
+        restFactory
+                .create()
+                .onSuccess(explorerNode -> setSelectedEntityData((ExplorerNode) explorerNode))
+                .call(EXPLORER_RESOURCE)
+                .getFromDocRef(docRef);
     }
 
     private ExplorerNode getSelectedEntityData() {
@@ -189,6 +205,7 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
                                     final RestFactory restFactory) {
             super(restFactory, false);
             this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;
+            this.getTreeModel().setIncludedRootTypes(ExplorerConstants.SYSTEM);
         }
 
         @Override

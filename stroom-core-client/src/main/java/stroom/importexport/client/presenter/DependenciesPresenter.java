@@ -16,6 +16,7 @@
 
 package stroom.importexport.client.presenter;
 
+import stroom.cell.info.client.ActionCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
@@ -24,30 +25,43 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.document.client.DocumentPluginEventManager;
+import stroom.document.client.event.DeleteDocumentEvent;
+import stroom.document.client.event.OpenDocumentEvent;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerResource;
+import stroom.importexport.client.event.ShowDependenciesInfoDialogEvent;
+import stroom.importexport.client.event.ShowDocRefDependenciesEvent;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
+import stroom.receive.rules.client.presenter.ActionMenuPresenter;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ResultPage;
+import stroom.widget.menu.client.presenter.Item;
+import stroom.widget.menu.client.presenter.MenuBuilder;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Provider;
 
 public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Dependency>> {
 
@@ -57,23 +71,32 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
 
     private static final int COL_WIDTH_TYPE = 120;
     private static final int COL_WIDTH_NAME = 300;
-    private static final int COL_WIDTH_UUID = 270;
 
     private static final Preset SEARCHABLE_PRESET = new Preset(
             DocumentType.DOC_IMAGE_CLASS_NAME + "searchable.svg",
             "Searchable",
             true);
+    private static final Preset DOC_INFO_PRESET = SvgPresets.INFO.title("Properties");
+    private static final Preset DELETE_DOC_PRESET = SvgPresets.DELETE.title("Delete");
+    private static final Preset REVEAL_DOC_PRESET = SvgPresets.SHOW.title("Reveal in Explorer");
+    private static final Preset SHOW_DEPENDENCIES_PRESET = SvgPresets.DEPENDENCIES.title("Show dependencies");
 
     private final RestFactory restFactory;
     private final DependencyCriteria criteria;
     private final RestDataProvider<Dependency, ResultPage<Dependency>> dataProvider;
+    private final DocumentPluginEventManager entityPluginEventManager;
+    private final Provider<ActionMenuPresenter> actionMenuPresenterProvider;
 
     // Holds all the doc type icons
     private Map<String, Preset> typeToSvgMap = new HashMap<>();
 
     @Inject
-    public DependenciesPresenter(final EventBus eventBus, final RestFactory restFactory) {
+    public DependenciesPresenter(final EventBus eventBus,
+                                 final RestFactory restFactory,
+                                 final DocumentPluginEventManager entityPluginEventManager,
+                                 final Provider<ActionMenuPresenter> actionMenuPresenterProvider) {
         super(eventBus, new DataGridViewImpl<>(false, DEFAULT_PAGE_SIZE));
+
         this.restFactory = restFactory;
         criteria = new DependencyCriteria();
 
@@ -94,6 +117,9 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
             }
         };
         dataProvider.addDataDisplay(getView().getDataDisplay());
+        this.entityPluginEventManager = entityPluginEventManager;
+        this.actionMenuPresenterProvider = actionMenuPresenterProvider;
+
         initColumns();
     }
 
@@ -115,19 +141,17 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
                 COL_WIDTH_TYPE);
 
         // From (Name)
-        getView().addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
-                                getValue(row, Dependency::getFrom, DocRef::getName))
-                        .withSorting(DependencyCriteria.FIELD_FROM_NAME, true)
-                        .build(),
+        final Column<Dependency, String> fromNameColumn = DataGridUtil.hyperlinkColumnBuilder((Dependency row) ->
+                        getValue(row, Dependency::getFrom, DocRef::getName))
+                .withSorting(DependencyCriteria.FIELD_FROM_NAME, true)
+                .build();
+        fromNameColumn.setFieldUpdater((index, object, value) -> onOpenDoc(object.getFrom()));
+        getView().addResizableColumn(fromNameColumn,
                 DependencyCriteria.FIELD_FROM_NAME,
                 COL_WIDTH_NAME);
 
-        // From (UUID)
-        getView().addResizableColumn(DataGridUtil.htmlColumnBuilder((Dependency row) ->
-                                getUUID(row, Dependency::getFrom))
-                        .build(),
-                DependencyCriteria.FIELD_FROM_UUID,
-                COL_WIDTH_UUID);
+        // From (action menu))
+        addActionButtonColumn(Dependency::getFrom, "", 40);
 
         // To (Icon)
         getView().addColumn(DataGridUtil.svgPresetColumnBuilder(false, (Dependency row) ->
@@ -145,19 +169,17 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
                 COL_WIDTH_TYPE);
 
         // To (Name)
-        getView().addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
-                                getValue(row, Dependency::getTo, DocRef::getName))
-                        .withSorting(DependencyCriteria.FIELD_TO_NAME, true)
-                        .build(),
+        final Column<Dependency, String> toNameColumn = DataGridUtil.hyperlinkColumnBuilder((Dependency row) ->
+                        getValue(row, Dependency::getTo, DocRef::getName))
+                .withSorting(DependencyCriteria.FIELD_TO_NAME, true)
+                .build();
+        toNameColumn.setFieldUpdater((index, object, value) -> onOpenDoc(object.getTo()));
+        getView().addResizableColumn(toNameColumn,
                 DependencyCriteria.FIELD_TO_NAME,
                 COL_WIDTH_NAME);
 
-        // To (UUID)
-        getView().addResizableColumn(DataGridUtil.htmlColumnBuilder((Dependency row) ->
-                                getUUID(row, Dependency::getTo))
-                        .build(),
-                DependencyCriteria.FIELD_TO_UUID,
-                COL_WIDTH_UUID);
+        // To (action menu)
+        addActionButtonColumn(Dependency::getTo, "", 40);
 
         // Status
         getView().addResizableColumn(DataGridUtil.htmlColumnBuilder(this::getStatusValue)
@@ -169,6 +191,80 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
 
         DataGridUtil.addEndColumn(getView());
         DataGridUtil.addColumnSortHandler(getView(), criteria, dataProvider::refresh);
+    }
+
+    private void addActionButtonColumn(final Function<Dependency, DocRef> docRefSelector,
+                                       final String name,
+                                       final int width) {
+        final ActionCell<DocRef> actionCell = new ActionCell<>(this::showActionMenu);
+        final Column<Dependency, DocRef> actionColumn = DataGridUtil.columnBuilder(
+                docRefSelector,
+                Function.identity(),
+                () -> actionCell
+        ).build();
+        getView().addColumn(actionColumn, name, width);
+    }
+
+    private void showActionMenu(final DocRef docRef, final NativeEvent event) {
+
+        List<Item> items = buildActionMenu(docRef);
+        actionMenuPresenterProvider.get().show(
+                DependenciesPresenter.this,
+                items,
+                event.getClientX(),
+                event.getClientY());
+    }
+
+    private List<Item> buildActionMenu(final DocRef docRef) {
+
+        return MenuBuilder.builder()
+                .withIconMenuItem(itemBuilder -> itemBuilder
+                        .withIcon(DOC_INFO_PRESET)
+                        .withText(DOC_INFO_PRESET.getTitle())
+                        .withCommand(() -> onDocInfo(docRef)))
+                .withIconMenuItem(itemBuilder -> itemBuilder
+                        .withIcon(DELETE_DOC_PRESET)
+                        .withText(DELETE_DOC_PRESET.getTitle())
+                        .withCommand(() -> onDeleteDoc(docRef)))
+                .withIconMenuItem(itemBuilder -> itemBuilder
+                        .withIcon(REVEAL_DOC_PRESET)
+                        .withText(REVEAL_DOC_PRESET.getTitle())
+                        .withCommand(() -> onRevealDoc(docRef)))
+                .withIconMenuItem(itemBuilder -> itemBuilder
+                        .withIcon(SHOW_DEPENDENCIES_PRESET)
+                        .withText(SHOW_DEPENDENCIES_PRESET.getTitle())
+                        .withCommand(() -> onShowDependencies(docRef)))
+                .build();
+    }
+
+    /**
+     * Open a document
+     */
+    private void onOpenDoc(final DocRef docRef) {
+        OpenDocumentEvent.fire(DependenciesPresenter.this, docRef, true);
+    }
+
+    /**
+     * Reveal the doc in the Explorer tree
+     */
+    private void onRevealDoc(final DocRef docRef) {
+        entityPluginEventManager.highlight(docRef);
+    }
+
+    private void onDocInfo(final DocRef docRef) {
+        ShowDependenciesInfoDialogEvent.fire(DependenciesPresenter.this, docRef);
+    }
+
+    private void onDeleteDoc(final DocRef docRef) {
+        DeleteDocumentEvent.fire(
+                DependenciesPresenter.this,
+                Collections.singletonList(docRef),
+                true,
+                result -> refresh());
+    }
+
+    private void onShowDependencies(final DocRef docRef) {
+        ShowDocRefDependenciesEvent.fire(DependenciesPresenter.this, docRef);
     }
 
     private void refreshDocTypeIcons() {

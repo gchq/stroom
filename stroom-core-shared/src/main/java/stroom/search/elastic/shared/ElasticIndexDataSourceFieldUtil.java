@@ -24,6 +24,7 @@ import stroom.datasource.api.v2.FloatField;
 import stroom.datasource.api.v2.IdField;
 import stroom.datasource.api.v2.IntegerField;
 import stroom.datasource.api.v2.IpV4AddressField;
+import stroom.datasource.api.v2.KeywordField;
 import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -64,6 +65,8 @@ public final class ElasticIndexDataSourceFieldUtil {
                 return new DateField(fieldName, field.isIndexed(), supportedConditions);
             case TEXT:
                 return new TextField(fieldName, field.isIndexed(), supportedConditions);
+            case KEYWORD:
+                return new KeywordField(fieldName, field.isIndexed(), supportedConditions);
             case IPV4_ADDRESS:
                 return new IpV4AddressField(fieldName, field.isIndexed(), supportedConditions);
         }

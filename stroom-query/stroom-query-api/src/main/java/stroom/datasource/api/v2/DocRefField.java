@@ -111,4 +111,17 @@ public class DocRefField extends AbstractField {
     public String getType() {
         return FieldTypes.DOC_REF;
     }
+
+    @Override
+    public String getShortTypeName() {
+        return "docRef";
+    }
+
+    @Override
+    public String getTypeDescription() {
+        return "Document reference field type\n" +
+               "\n" +
+               "This is a reference to a Stroom object such as a Dictionary.\n" +
+               "Click in the selection box to select the desired object.";
+    }
 }

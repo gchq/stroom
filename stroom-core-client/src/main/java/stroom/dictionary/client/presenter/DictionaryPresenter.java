@@ -67,7 +67,7 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
                                final ClientSecurityContext securityContext,
                                final RestFactory restFactory,
                                final LocationManager locationManager) {
-        super(eventBus, view, securityContext);
+        super(eventBus, view, securityContext, restFactory);
         this.settingsPresenter = settingsPresenter;
         this.editorPresenterProvider = editorPresenterProvider;
         this.restFactory = restFactory;

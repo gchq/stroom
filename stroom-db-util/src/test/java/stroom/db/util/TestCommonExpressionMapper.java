@@ -299,5 +299,10 @@ class TestCommonExpressionMapper {
         public String getName() {
             return name;
         }
+
+        @Override
+        public String getShortTypeName() {
+            return null;
+        }
     }
 }

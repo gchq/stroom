@@ -30,6 +30,7 @@ public class FieldTypes {
     public static final String DOUBLE = "Double";
     public static final String DATE = "Date";
     public static final String TEXT = "Text";
+    public static final String KEYWORD = "Keyword";
     public static final String IPV4_ADDRESS = "IpV4Address";
     public static final String DOC_REF = "DocRef";
 

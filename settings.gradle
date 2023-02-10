@@ -105,6 +105,10 @@ include 'stroom-docstore:stroom-docstore-impl'
 include 'stroom-docstore:stroom-docstore-impl-db'
 include 'stroom-docstore:stroom-docstore-impl-fs'
 include 'stroom-docstore:stroom-docstore-impl-memory'
+include 'stroom-docstore:stroom-docstore-fav-api'
+include 'stroom-docstore:stroom-docstore-fav-impl'
+include 'stroom-docstore:stroom-docstore-fav-impl-db'
+include 'stroom-docstore:stroom-docstore-fav-impl-db-jooq'
 
 // Common dropwizard supporting code
 include 'stroom-dropwizard-common'
@@ -208,6 +212,10 @@ include 'stroom-query:stroom-expression'
 include 'stroom-query:stroom-query-api'
 include 'stroom-query:stroom-query-common'
 
+// Suggestions
+include 'stroom-suggestions:stroom-suggestions-api'
+include 'stroom-suggestions:stroom-suggestions-impl'
+
 // Resource store
 include 'stroom-resource:stroom-resource-api'
 include 'stroom-resource:stroom-resource-impl'
@@ -269,6 +277,4 @@ include 'stroom-ui'
 // Util
 include 'stroom-util'
 include 'stroom-util-shared'
-
-
 include 'stroom-ssl-test'

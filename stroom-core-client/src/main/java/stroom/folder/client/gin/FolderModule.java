@@ -17,6 +17,7 @@
 package stroom.folder.client.gin;
 
 import stroom.core.client.gin.PluginModule;
+import stroom.folder.client.FolderFavouritesPlugin;
 import stroom.folder.client.FolderPlugin;
 import stroom.folder.client.FolderPresenter;
 import stroom.folder.client.FolderRootPlugin;
@@ -26,6 +27,7 @@ public class FolderModule extends PluginModule {
     @Override
     protected void configure() {
         bindPlugin(FolderRootPlugin.class);
+        bindPlugin(FolderFavouritesPlugin.class);
         bindPlugin(FolderPlugin.class);
 
         bind(FolderPresenter.class);

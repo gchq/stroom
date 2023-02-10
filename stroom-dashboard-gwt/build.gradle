@@ -67,8 +67,6 @@ dependencies {
 
 // Create a list of source directories where source for GWT can be found.
 def gwtSourceDirs = []
-// Add all of the library sources from the gwtSource source set defined above.
-gwtSourceDirs.addAll(sourceSets.gwtSource.compileClasspath)
 
 // Define a list of projects that contain the source code we want to compile with GWT.
 def projList = [
@@ -91,6 +89,9 @@ projList.each { p ->
     gwtSourceDirs.addAll(p.sourceSets.main.java.srcDirs)
     gwtSourceDirs.addAll(p.sourceSets.main.resources.srcDirs)
 }
+
+// Add all of the library sources from the gwtSource source set defined above.
+gwtSourceDirs.addAll(sourceSets.gwtSource.compileClasspath)
 
 task gwtCompile(dependsOn: classes, type: JavaExec) {
     group "gwt"
