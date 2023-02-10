@@ -59,4 +59,16 @@ public class BooleanField extends AbstractField {
     public String getType() {
         return FieldTypes.BOOLEAN;
     }
+
+    @Override
+    public String getShortTypeName() {
+        return "bool";
+    }
+
+    @Override
+    public String getTypeDescription() {
+        return "Boolean field type\n" +
+               "\n" +
+               "Accepts either 'true' or 'false' values.";
+    }
 }

@@ -212,6 +212,10 @@ include 'stroom-query:stroom-expression'
 include 'stroom-query:stroom-query-api'
 include 'stroom-query:stroom-query-common'
 
+// Suggestions
+include 'stroom-suggestions:stroom-suggestions-api'
+include 'stroom-suggestions:stroom-suggestions-impl'
+
 // Resource store
 include 'stroom-resource:stroom-resource-api'
 include 'stroom-resource:stroom-resource-impl'
@@ -273,6 +277,4 @@ include 'stroom-ui'
 // Util
 include 'stroom-util'
 include 'stroom-util-shared'
-
-
 include 'stroom-ssl-test'

@@ -50,4 +50,16 @@ public class LongField extends AbstractNumericField {
     public String getType() {
         return FieldTypes.LONG;
     }
+
+    @Override
+    public String getShortTypeName() {
+        return "long";
+    }
+
+    @Override
+    public String getTypeDescription() {
+        return "Long field type\n" +
+               "\n" +
+               "Non-fractional numeric value supporting equality and range queries.";
+    }
 }

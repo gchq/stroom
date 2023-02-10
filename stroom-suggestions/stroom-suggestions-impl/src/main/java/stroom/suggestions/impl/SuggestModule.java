@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.core.query;
+package stroom.suggestions.impl;
 
+import stroom.suggestions.api.SuggestionsService;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
 
-public class QueryModule extends AbstractModule {
+public class SuggestModule extends AbstractModule {
 
     @Override
     protected void configure() {
