@@ -28,8 +28,7 @@
 .explorerCell-text {
     padding: var(--layout-padding-explorer);
     padding-left: 5px;
-    padding-right: 2px;
-    flex-grow: 1;
+    padding-right: 5px;
 }
 
 .explorerCell-treeOpen {
