@@ -18,6 +18,7 @@ package stroom.importexport.client.gin;
 
 import stroom.importexport.client.ExportConfigPlugin;
 import stroom.importexport.client.ImportConfigPlugin;
+import stroom.importexport.client.presenter.DependenciesInfoPresenter;
 import stroom.importexport.client.presenter.ExportConfigPresenter;
 import stroom.importexport.client.presenter.ImportConfigConfirmPresenter;
 import stroom.importexport.client.presenter.ImportConfigPresenter;
@@ -35,4 +36,6 @@ public interface ImportExportConfigGinjector {
     AsyncProvider<ImportConfigPresenter> getImportPresenter();
 
     AsyncProvider<ImportConfigConfirmPresenter> getImportConfirmPresenter();
+
+    AsyncProvider<DependenciesInfoPresenter> getDependenciesInfoPresenter();
 }

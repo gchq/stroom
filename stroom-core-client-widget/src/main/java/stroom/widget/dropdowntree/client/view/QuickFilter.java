@@ -152,6 +152,7 @@ public class QuickFilter extends FlowPanel
     @Override
     public void setText(final String text) {
         textBox.setText(text);
+        onChange();
     }
 
     @Override
