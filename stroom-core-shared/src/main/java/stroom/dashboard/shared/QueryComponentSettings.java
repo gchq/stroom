@@ -18,6 +18,7 @@ package stroom.dashboard.shared;
 
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.QueryKey;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -46,17 +47,22 @@ public class QueryComponentSettings implements ComponentSettings {
     private final Automate automate;
     @JsonProperty("selectionHandlers")
     private final List<ComponentSelectionHandler> selectionHandlers;
+    @JsonProperty("lastQueryKey")
+    private final QueryKey lastQueryKey;
+
 
     @SuppressWarnings("checkstyle:LineLength")
     @JsonCreator
     public QueryComponentSettings(@JsonProperty("dataSource") final DocRef dataSource,
                                   @JsonProperty("expression") final ExpressionOperator expression,
                                   @JsonProperty("automate") final Automate automate,
-                                  @JsonProperty("selectionHandlers") final List<ComponentSelectionHandler> selectionHandlers) {
+                                  @JsonProperty("selectionHandlers") final List<ComponentSelectionHandler> selectionHandlers,
+                                  @JsonProperty("lastQueryKey") final QueryKey lastQueryKey) {
         this.dataSource = dataSource;
         this.expression = expression;
         this.automate = automate;
         this.selectionHandlers = selectionHandlers;
+        this.lastQueryKey = lastQueryKey;
     }
 
     public DocRef getDataSource() {
@@ -73,6 +79,10 @@ public class QueryComponentSettings implements ComponentSettings {
 
     public List<ComponentSelectionHandler> getSelectionHandlers() {
         return selectionHandlers;
+    }
+
+    public QueryKey getLastQueryKey() {
+        return lastQueryKey;
     }
 
     @Override
@@ -119,6 +129,7 @@ public class QueryComponentSettings implements ComponentSettings {
         private ExpressionOperator expression;
         private Automate automate;
         private List<ComponentSelectionHandler> selectionHandlers;
+        private QueryKey lastQueryKey;
 
         private Builder() {
         }
@@ -130,6 +141,7 @@ public class QueryComponentSettings implements ComponentSettings {
             if (queryComponentSettings.selectionHandlers != null) {
                 this.selectionHandlers = new ArrayList<>(queryComponentSettings.selectionHandlers);
             }
+            this.lastQueryKey = queryComponentSettings.lastQueryKey;
         }
 
         public Builder dataSource(final DocRef dataSource) {
@@ -160,8 +172,13 @@ public class QueryComponentSettings implements ComponentSettings {
             return this;
         }
 
+        public Builder lastQueryKey(final QueryKey lastQueryKey) {
+            this.lastQueryKey = lastQueryKey;
+            return this;
+        }
+
         public QueryComponentSettings build() {
-            return new QueryComponentSettings(dataSource, expression, automate, selectionHandlers);
+            return new QueryComponentSettings(dataSource, expression, automate, selectionHandlers, lastQueryKey);
         }
     }
 }

@@ -644,14 +644,14 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     }
 
     @Override
-    public ComponentResultRequest getResultRequest(final boolean ignorePause) {
+    public boolean isPaused() {
+        return pause;
+    }
+
+    @Override
+    public ComponentResultRequest getResultRequest(final Fetch fetch) {
         // Update table settings.
         updateLinkedTableSettings();
-
-        Fetch fetch = Fetch.CHANGES;
-        if (pause && !ignorePause) {
-            fetch = Fetch.NONE;
-        }
         return VisResultRequest
                 .builder()
                 .componentId(getId())

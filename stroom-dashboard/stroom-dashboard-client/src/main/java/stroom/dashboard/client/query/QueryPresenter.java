@@ -55,6 +55,7 @@ import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultStoreInfo;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
@@ -645,7 +646,34 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                     getDashboardContext().getTimeRange(),
                     incremental,
                     storeHistory,
-                    lastUsedQueryInfo);
+                    lastUsedQueryInfo,
+                    null);
+        }
+    }
+
+    private void resume(final QueryKey queryKey) {
+        final DocRef dataSourceRef = getQuerySettings().getDataSource();
+
+        if (dataSourceRef == null) {
+            warnNoDataSource();
+        } else {
+            currentWarnings = null;
+            expressionPresenter.clearSelection();
+
+            warningsButton.setVisible(false);
+
+            // Write expression.
+            final ExpressionOperator root = expressionPresenter.write();
+
+            // Start search.
+            searchModel.startNewSearch(
+                    root,
+                    getDashboardContext().getCombinedParams(),
+                    getDashboardContext().getTimeRange(),
+                    true,
+                    false,
+                    lastUsedQueryInfo,
+                    queryKey);
         }
     }
 
@@ -688,6 +716,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         setSettings(getQuerySettings()
                 .copy()
                 .expression(expressionPresenter.write())
+                .lastQueryKey(searchModel.getCurrentQueryKey())
                 .build());
         return super.write();
     }
@@ -717,11 +746,16 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private void init() {
         if (!initialised) {
             initialised = true;
+
             // An auto search can only commence if the UI has fully loaded and the data source has also
             // loaded from the server.
             final Automate automate = getQuerySettings().getAutomate();
             if (queryOnOpen || automate.isOpen()) {
                 run(true, false);
+
+            } else if (getQuerySettings().getLastQueryKey() != null) {
+                // Resume search if we have a stored query key.
+                resume(getQuerySettings().getLastQueryKey());
             }
         }
     }

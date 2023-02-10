@@ -31,6 +31,7 @@ import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
+import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.ResultStoreInfo;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
@@ -141,11 +142,13 @@ public class SearchModel {
                                final TimeRange timeRange,
                                final boolean incremental,
                                final boolean storeHistory,
-                               final String queryInfo) {
+                               final String queryInfo,
+                               final QueryKey resumeQueryKey) {
         GWT.log("SearchModel - startNewSearch()");
 
         // Destroy the previous search and ready all components for a new search to begin.
         reset(DestroyReason.NO_LONGER_NEEDED);
+        currentQueryKey = resumeQueryKey;
 
         final Map<String, ComponentSettings> resultComponentMap = createComponentSettingsMap();
         if (resultComponentMap != null) {
@@ -183,7 +186,7 @@ public class SearchModel {
 
                 // Start polling.
                 searching = true;
-                poll(storeHistory);
+                poll(Fetch.ALL, storeHistory);
             }
         }
     }
@@ -213,7 +216,8 @@ public class SearchModel {
                             .build();
 
                     final List<ComponentResultRequest> requests = new ArrayList<>();
-                    final ComponentResultRequest componentResultRequest = resultComponent.getResultRequest(true);
+                    final ComponentResultRequest componentResultRequest = resultComponent
+                            .getResultRequest(Fetch.CHANGES);
                     requests.add(componentResultRequest);
 
                     final DashboardSearchRequest request = DashboardSearchRequest
@@ -320,14 +324,19 @@ public class SearchModel {
         }
     }
 
-    private void poll(final boolean storeHistory) {
+    private void poll(Fetch fetch, final boolean storeHistory) {
         final QueryKey queryKey = currentQueryKey;
         final Search search = currentSearch;
         if (search != null && searching) {
             final List<ComponentResultRequest> requests = new ArrayList<>();
             for (final Entry<String, ResultComponent> entry : componentMap.entrySet()) {
                 final ResultComponent resultComponent = entry.getValue();
-                final ComponentResultRequest componentResultRequest = resultComponent.getResultRequest(false);
+
+                if (resultComponent.isPaused()) {
+                    fetch = Fetch.NONE;
+                }
+
+                final ComponentResultRequest componentResultRequest = resultComponent.getResultRequest(fetch);
                 requests.add(componentResultRequest);
             }
             final DashboardSearchRequest request = DashboardSearchRequest
@@ -354,7 +363,7 @@ public class SearchModel {
                             }
 
                             if (searching) {
-                                poll(false);
+                                poll(Fetch.CHANGES, false);
                             }
                         } else {
                             deleteStore(response.getNode(), response.getQueryKey(), DestroyReason.NO_LONGER_NEEDED);
@@ -371,7 +380,7 @@ public class SearchModel {
                         }
 
                         if (searching) {
-                            poll(false);
+                            poll(Fetch.CHANGES, false);
                         }
                     })
                     .call(DASHBOARD_RESOURCE)

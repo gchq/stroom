@@ -982,11 +982,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     @Override
-    public ComponentResultRequest getResultRequest(final boolean ignorePause) {
-        Fetch fetch = Fetch.CHANGES;
-        if (pause && !ignorePause) {
-            fetch = Fetch.NONE;
-        }
+    public boolean isPaused() {
+        return pause;
+    }
+
+    @Override
+    public ComponentResultRequest getResultRequest(final Fetch fetch) {
         return tableResultRequest.copy().fetch(fetch).build();
     }
 

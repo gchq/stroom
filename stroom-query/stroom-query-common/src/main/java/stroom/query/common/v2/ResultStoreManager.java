@@ -144,20 +144,6 @@ public final class ResultStoreManager implements Clearable {
         final String userId = securityContext.getUserId();
         Objects.requireNonNull(userId, "No user is logged in");
 
-        Objects.requireNonNull(modifiedRequest.getQuery(),
-                "Query is null");
-        final DocRef dataSourceRef = modifiedRequest.getQuery().getDataSource();
-        if (dataSourceRef == null || dataSourceRef.getUuid() == null) {
-            throw new RuntimeException("No search data source has been specified");
-        }
-
-        final Optional<SearchProvider> optionalStoreFactory =
-                storeFactoryRegistry.getStoreFactory(modifiedRequest.getQuery().getDataSource());
-        final SearchProvider storeFactory = optionalStoreFactory
-                .orElseThrow(() ->
-                        new RuntimeException("No store factory found for " +
-                                searchRequest.getQuery().getDataSource().getType()));
-
         final ResultStore resultStore;
         if (modifiedRequest.getKey() != null) {
             final QueryKey queryKey = modifiedRequest.getKey();
@@ -177,6 +163,23 @@ public final class ResultStoreManager implements Clearable {
         } else {
             // If the query doesn't have a key then this is new.
             LOGGER.debug(() -> "New query");
+
+            // Get the data source.
+            Objects.requireNonNull(modifiedRequest.getQuery(),
+                    "Query is null");
+            final DocRef dataSourceRef = modifiedRequest.getQuery().getDataSource();
+            if (dataSourceRef == null || dataSourceRef.getUuid() == null) {
+                throw new RuntimeException("No search data source has been specified");
+            }
+
+            // Get a store factory to perform this new search.
+            final Optional<SearchProvider> optionalStoreFactory =
+                    storeFactoryRegistry.getStoreFactory(modifiedRequest.getQuery().getDataSource());
+            final SearchProvider storeFactory = optionalStoreFactory
+                    .orElseThrow(() ->
+                            new RuntimeException("No store factory found for " +
+                                    searchRequest.getQuery().getDataSource().getType()));
+
 
             // Create a new search UUID.
             modifiedRequest = addQueryKey(modifiedRequest);

@@ -172,6 +172,7 @@ public final class MappingUtil {
         return new stroom.dashboard.shared.QueryComponentSettings(map(value.getDataSource()),
                 map(value.getExpression()),
                 map(value.getAutomate()),
+                null,
                 null);
     }
 
