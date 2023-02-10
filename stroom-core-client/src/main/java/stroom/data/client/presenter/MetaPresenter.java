@@ -130,7 +130,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
         }
 
         // Selection information
-        streamListInfo = metaListPresenter.add(SvgPresets.INFO);
+        streamListInfo = metaListPresenter.add(SvgPresets.INFO.title("Selection summary"));
 
         // Download
         if (securityContext.hasAppPermission(PermissionNames.EXPORT_DATA_PERMISSION)) {
