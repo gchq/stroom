@@ -46,8 +46,6 @@ import java.util.Objects;
         "should be included and what sorting, grouping, filtering, limiting, etc. should be applied")
 public final class TableSettings {
 
-    public static final int[] DEFAULT_MAX_RESULTS = {1000000};
-
     @Schema(description = "TODO",
             required = true)
     @JsonProperty
@@ -81,10 +79,6 @@ public final class TableSettings {
             hidden = true)
     @JsonProperty("conditionalFormattingRules")
     private final List<ConditionalFormattingRule> conditionalFormattingRules;
-    @Schema(description = "IGNORE: UI use only",
-            hidden = true)
-    @JsonProperty("modelVersion")
-    private final String modelVersion;
 
     @SuppressWarnings("checkstyle:LineLength")
     @JsonCreator
@@ -95,8 +89,7 @@ public final class TableSettings {
             @JsonProperty("extractionPipeline") final DocRef extractionPipeline,
             @JsonProperty("maxResults") final List<Integer> maxResults,
             @JsonProperty("showDetail") final Boolean showDetail,
-            @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule> conditionalFormattingRules,
-            @JsonProperty("modelVersion") final String modelVersion) {
+            @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule> conditionalFormattingRules) {
 
         this.queryId = queryId;
         this.fields = fields;
@@ -105,7 +98,6 @@ public final class TableSettings {
         this.maxResults = maxResults;
         this.showDetail = showDetail;
         this.conditionalFormattingRules = conditionalFormattingRules;
-        this.modelVersion = modelVersion;
     }
 
     public String getQueryId() {
@@ -150,10 +142,6 @@ public final class TableSettings {
         return conditionalFormattingRules;
     }
 
-    public String getModelVersion() {
-        return modelVersion;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -169,8 +157,7 @@ public final class TableSettings {
                 Objects.equals(extractionPipeline, that.extractionPipeline) &&
                 Objects.equals(maxResults, that.maxResults) &&
                 Objects.equals(showDetail, that.showDetail) &&
-                Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&
-                Objects.equals(modelVersion, that.modelVersion);
+                Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules);
     }
 
     @Override
@@ -181,8 +168,7 @@ public final class TableSettings {
                 extractionPipeline,
                 maxResults,
                 showDetail,
-                conditionalFormattingRules,
-                modelVersion);
+                conditionalFormattingRules);
     }
 
     @Override
@@ -195,7 +181,6 @@ public final class TableSettings {
                 ", maxResults=" + maxResults +
                 ", showDetail=" + showDetail +
                 ", conditionalFormattingRules=" + conditionalFormattingRules +
-                ", modelVersion='" + modelVersion + '\'' +
                 '}';
     }
 
@@ -219,7 +204,6 @@ public final class TableSettings {
         protected List<Integer> maxResults;
         protected Boolean showDetail;
         protected List<ConditionalFormattingRule> conditionalFormattingRules;
-        protected String modelVersion;
 
         private Builder() {
         }
@@ -238,7 +222,6 @@ public final class TableSettings {
             this.conditionalFormattingRules = tableSettings.getConditionalFormattingRules() == null
                     ? null
                     : new ArrayList<>(tableSettings.getConditionalFormattingRules());
-            this.modelVersion = tableSettings.getModelVersion();
         }
 
         /**
@@ -358,11 +341,6 @@ public final class TableSettings {
             return this;
         }
 
-        public Builder modelVersion(final String modelVersion) {
-            this.modelVersion = modelVersion;
-            return this;
-        }
-
         public TableSettings build() {
             return new TableSettings(
                     queryId,
@@ -371,8 +349,7 @@ public final class TableSettings {
                     extractionPipeline,
                     maxResults,
                     showDetail,
-                    conditionalFormattingRules,
-                    modelVersion);
+                    conditionalFormattingRules);
         }
     }
 }
