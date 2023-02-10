@@ -67,6 +67,9 @@ public interface MetaDao {
 
     int updateStatus(FindMetaCriteria criteria, Status currentStatus, Status newStatus, long statusTime);
 
+    /**
+     * Physically delete the records from the database.
+     */
     int delete(Collection<Long> metaIds);
 
     List<DataRetentionDeleteSummary> getRetentionDeletionSummary(final DataRetentionRules rules,

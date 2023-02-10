@@ -99,4 +99,70 @@ public class SimpleMetaImpl implements SimpleMeta {
     public String toString() {
         return id + " - " + feedName + " - " + typeName;
     }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static final class Builder {
+
+        private long id;
+        private String feedName;
+        private String typeName;
+        private Long statusMs;
+        private long createMs;
+
+        private Builder() {
+        }
+
+        private Builder(final SimpleMeta meta) {
+            this.id = meta.getId();
+            this.feedName = meta.getFeedName();
+            this.typeName = meta.getTypeName();
+            this.statusMs = meta.getStatusMs();
+            this.createMs = meta.getCreateMs();
+        }
+
+        public Builder id(final long id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder feedName(final String feedName) {
+            this.feedName = feedName;
+            return this;
+        }
+
+        public Builder typeName(final String typeName) {
+            this.typeName = typeName;
+            return this;
+        }
+
+        public Builder statusMs(final Long statusMs) {
+            this.statusMs = statusMs;
+            return this;
+        }
+
+        public Builder createMs(final long createMs) {
+            this.createMs = createMs;
+            return this;
+        }
+
+        public SimpleMetaImpl build() {
+            return new SimpleMetaImpl(
+                    id,
+                    feedName,
+                    typeName,
+                    statusMs,
+                    createMs);
+        }
+    }
 }

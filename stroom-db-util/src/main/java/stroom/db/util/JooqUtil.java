@@ -5,6 +5,8 @@ import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.AsciiTable.TableBuilder;
+import stroom.util.logging.DurationTimer;
+import stroom.util.logging.DurationTimer.TimedResult;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -36,6 +38,7 @@ import java.sql.Connection;
 import java.sql.Date;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -118,6 +121,35 @@ public final class JooqUtil {
         }
     }
 
+    /**
+     * If {@code isTimed} is {@code true} it will measure the duration of consumer,
+     * else it will return a zero duration. {@code isTimed} can be set using
+     * {@code LOGGER.isDebugEnabled()} for example.
+     */
+    public static Duration timedContext(final DataSource dataSource,
+                                        final boolean isTimed,
+                                        final Consumer<DSLContext> consumer) {
+        final Duration duration;
+        try (final Connection connection = dataSource.getConnection()) {
+            try {
+                checkDataSource(dataSource);
+                final DSLContext context = createContext(connection);
+                if (isTimed) {
+                    duration = DurationTimer.measure(() ->
+                            consumer.accept(context));
+                } else {
+                    consumer.accept(context);
+                    duration = Duration.ZERO;
+                }
+            } finally {
+                releaseDataSource();
+            }
+        } catch (final Exception e) {
+            throw convertException(e);
+        }
+        return duration;
+    }
+
     public static <R extends Record> void truncateTable(final DataSource dataSource,
                                                         final Table<R> table) {
         try (final Connection connection = dataSource.getConnection()) {
@@ -181,6 +213,34 @@ public final class JooqUtil {
             throw convertException(e);
         }
         return result;
+    }
+
+    /**
+     * If {@code isTimed} is {@code true} it will measure the duration of function,
+     * else it will return a {@link TimedResult} containing a zero duration.
+     * {@code isTimed} can be set using {@code LOGGER.isDebugEnabled()} for example.
+     */
+    public static <R> TimedResult<R> timedContextResult(final DataSource dataSource,
+                                                        final boolean isTimed,
+                                                        final Function<DSLContext, R> function) {
+        TimedResult<R> timedResult;
+        try (final Connection connection = dataSource.getConnection()) {
+            try {
+                checkDataSource(dataSource);
+                final DSLContext context = createContext(connection);
+                if (isTimed) {
+                    timedResult = DurationTimer.measure(() ->
+                            function.apply(context));
+                } else {
+                    timedResult = TimedResult.zero(function.apply(context));
+                }
+            } finally {
+                releaseDataSource();
+            }
+        } catch (final Exception e) {
+            throw convertException(e);
+        }
+        return timedResult;
     }
 
 //    public static void contextResultWithOptimisticLocking(

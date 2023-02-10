@@ -32,19 +32,18 @@ import stroom.util.io.FileUtil;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogExecutionTime;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.StringUtil;
 import stroom.util.time.StroomDuration;
 import stroom.util.time.TimeUtils;
 
-import java.io.IOException;
-import java.nio.file.DirectoryStream;
+import org.jetbrains.annotations.NotNull;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -56,9 +55,12 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class PhysicalDeleteExecutor {
 
@@ -68,7 +70,7 @@ public class PhysicalDeleteExecutor {
     private static final String LOCK_NAME = "FsDeleteExecutor";
 
     private final ClusterLockService clusterLockService;
-    private final DataStoreServiceConfig dataStoreServiceConfig;
+    private final Provider<DataStoreServiceConfig> dataStoreServiceConfigProvider;
     private final FsPathHelper fileSystemStreamPathHelper;
     private final MetaService metaService;
     private final PhysicalDelete physicalDelete;
@@ -76,12 +78,12 @@ public class PhysicalDeleteExecutor {
     private final TaskContextFactory taskContextFactory;
     private final TaskContext taskContext;
     private final ExecutorProvider executorProvider;
-    private final DataStoreServiceConfig config;
+    private final FsFileDeleter fsFileDeleter;
 
     @Inject
     PhysicalDeleteExecutor(
             final ClusterLockService clusterLockService,
-            final DataStoreServiceConfig dataStoreServiceConfig,
+            final Provider<DataStoreServiceConfig> dataStoreServiceConfigProvider,
             final FsPathHelper fileSystemStreamPathHelper,
             final MetaService metaService,
             final PhysicalDelete physicalDelete,
@@ -89,9 +91,9 @@ public class PhysicalDeleteExecutor {
             final TaskContextFactory taskContextFactory,
             final TaskContext taskContext,
             final ExecutorProvider executorProvider,
-            final DataStoreServiceConfig config) {
+            final FsFileDeleter fsFileDeleter) {
         this.clusterLockService = clusterLockService;
-        this.dataStoreServiceConfig = dataStoreServiceConfig;
+        this.dataStoreServiceConfigProvider = dataStoreServiceConfigProvider;
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.metaService = metaService;
         this.physicalDelete = physicalDelete;
@@ -99,7 +101,7 @@ public class PhysicalDeleteExecutor {
         this.taskContextFactory = taskContextFactory;
         this.taskContext = taskContext;
         this.executorProvider = executorProvider;
-        this.config = config;
+        this.fsFileDeleter = fsFileDeleter;
     }
 
     public void exec() {
@@ -107,22 +109,23 @@ public class PhysicalDeleteExecutor {
         clusterLockService.tryLock(LOCK_NAME, () -> {
             try {
                 if (!Thread.currentThread().isInterrupted()) {
-                    final LogExecutionTime logExecutionTime = new LogExecutionTime();
-                    getDeleteThreshold(dataStoreServiceConfig)
-                            .ifPresent(this::delete);
-                    LOGGER.info("{} - finished in {}", TASK_NAME, logExecutionTime);
+                    final DataStoreServiceConfig dataStoreServiceConfig = dataStoreServiceConfigProvider.get();
+                    // Monitors all the totals for the whole run
+                    final Progress progress = Progress.start(dataStoreServiceConfig);
+                    getDeleteAgeThreshold(dataStoreServiceConfig)
+                            .ifPresent(ageThreshold ->
+                                    delete(ageThreshold, progress));
+                    progress.logSummaryToInfo("Finished. Summary:");
                 }
             } catch (final RuntimeException e) {
-                LOGGER.error(e::getMessage, e);
+                LOGGER.error(TASK_NAME + " - " + e.getClass().getSimpleName() + " - " + e.getMessage(), e);
             }
         });
     }
 
-    public void delete(final Instant deleteThreshold) {
+    public void delete(final Instant deleteThreshold, final Progress progress) {
         if (!Thread.currentThread().isInterrupted()) {
-
-            final LogExecutionTime logExecutionTime = LogExecutionTime.start();
-
+            final DataStoreServiceConfig dataStoreServiceConfig = dataStoreServiceConfigProvider.get();
             final int deleteBatchSize = dataStoreServiceConfig.getDeleteBatchSize();
 
             Instant currentDeleteThreshold = deleteThreshold;
@@ -130,13 +133,26 @@ public class PhysicalDeleteExecutor {
 
             long count;
             long total = 0;
-            if (!Thread.currentThread().isInterrupted() && currentDeleteThreshold != null) {
-                final ThreadPool threadPool = new ThreadPoolImpl("Data Delete#", Thread.MIN_PRIORITY);
-                final Executor executor = executorProvider.get(threadPool);
+            if (currentDeleteThreshold != null) {
+                final Executor executor = getExecutor();
                 final Set<Long> metaIdExcludeSet = new HashSet<>();
 
                 do {
-                    // Get a batch of meta ids that are ready for actual deletion.
+                    if (Thread.currentThread().isInterrupted()) {
+                        LOGGER.debug("{} - Thread interrupted", TASK_NAME);
+                        break;
+                    }
+                    if (progress.hasBreachedThreshold()) {
+                        LOGGER.error("{} - Aborting as failure threshold {} exceeded. " +
+                                        "See property {}",
+                                TASK_NAME,
+                                dataStoreServiceConfig.getDeleteFailureThreshold(),
+                                dataStoreServiceConfig.getFullPath(
+                                        DataStoreServiceConfig.PROP_NAME_DELETE_FAILURE_THRESHOLD));
+                        break;
+                    }
+                    // Get a batch of meta ids that are ready for actual deletion (logically deleted).
+                    // metaIdExcludeSet ensures we don't pick up any from previous runs
                     final List<SimpleMeta> simpleMetas = metaService.getLogicallyDeleted(
                             currentDeleteThreshold,
                             deleteBatchSize,
@@ -146,8 +162,8 @@ public class PhysicalDeleteExecutor {
 
                     // If we found some ids then try and physically delete this batch.
                     if (count > 0) {
-                        LOGGER.debug("currentDeleteThreshold: {}, count:{}, total: {}",
-                                currentDeleteThreshold, count, total);
+                        LOGGER.debug("{} - currentDeleteThreshold: {}", TASK_NAME, currentDeleteThreshold);
+                        progress.incrementBatchCount();
                         final long finalCount = count;
                         final long finalTotal = total;
                         info(() -> LogUtil.message("Deleting files for {} stream{}. Stream{} processed so far: {}",
@@ -159,17 +175,20 @@ public class PhysicalDeleteExecutor {
 
                         final WorkQueue workQueue = new WorkQueue(
                                 executor,
-                                config.getFileSystemCleanBatchSize(),
+                                dataStoreServiceConfig.getFileSystemCleanBatchSize(),
                                 simpleMetas.size());
 
+                        // Attempt to delete the files for the streams then the DB records
                         final Set<SimpleMeta> failedMetaIds = deleteCurrentBatch(
                                 taskContext,
                                 simpleMetas,
                                 currentDeleteThreshold,
-                                workQueue);
+                                workQueue,
+                                progress);
 
-                        // Advance the currentDeleteThreshold backwards in time so it is equal to the
-                        // earliest one in our batch
+                        // Advance the currentDeleteThreshold backwards in time, so it is equal to the
+                        // earliest one in our batch. If there are lots of metas with the same status time
+                        // then currentDeleteThreshold may not change.
                         lastDeleteThreshold = currentDeleteThreshold;
                         currentDeleteThreshold = simpleMetas
                                 .stream()
@@ -179,12 +198,13 @@ public class PhysicalDeleteExecutor {
                                 .min(Comparator.naturalOrder())
                                 .orElse(null);
 
-                        LOGGER.debug("currentDeleteThreshold: {}, lastDeleteThreshold: {}",
-                                currentDeleteThreshold, lastDeleteThreshold);
+                        LOGGER.debug("{} - currentDeleteThreshold: {}, lastDeleteThreshold: {}",
+                                TASK_NAME, currentDeleteThreshold, lastDeleteThreshold);
 
                         if (NullSafe.hasItems(failedMetaIds)) {
-                            LOGGER.error("Failed to delete files for {} meta records. Check logs for error messages.",
-                                    failedMetaIds.size());
+                            LOGGER.error("{} - Failed to delete files for {} meta records. " +
+                                            "Check logs for error messages.",
+                                    TASK_NAME, failedMetaIds.size());
                             if (currentDeleteThreshold != null) {
 
                                 // As our next batch will be anything <= the new currentDeleteThreshold, we need
@@ -201,89 +221,97 @@ public class PhysicalDeleteExecutor {
                                 // It is possible that we have >deleteBatchSize meta records with the same
                                 // status time (e.g. from some bulk ingest) so need to allow for our exclude list
                                 // growing on each iteration
-                                if (Objects.equals(currentDeleteThreshold, lastDeleteThreshold)) {
-                                    metaIdExcludeSet.addAll(newMetaIdExcludeSet);
-                                } else {
+                                if (!Objects.equals(currentDeleteThreshold, lastDeleteThreshold)) {
+                                    // Different threshold time, so we can bin our old exclude set values
                                     metaIdExcludeSet.clear();
                                 }
+                                metaIdExcludeSet.addAll(newMetaIdExcludeSet);
                             }
                         } else {
                             metaIdExcludeSet.clear();
                         }
-                    } else {
-                        currentDeleteThreshold = null;
                     }
-                } while (!Thread.currentThread().isInterrupted()
-                        && count >= deleteBatchSize
-                        && currentDeleteThreshold != null);
+                    progress.logSummaryToDebug("End of batch progress:");
+                } while (count >= deleteBatchSize);
             }
-
-            LOGGER.info("{} - Deleted {} streams in {}.", TASK_NAME, total, logExecutionTime);
         }
     }
 
+    private Executor getExecutor() {
+        final ThreadPool threadPool = new ThreadPoolImpl("Data Delete#", Thread.MIN_PRIORITY);
+        return executorProvider.get(threadPool);
+    }
+
+    /**
+     * Deletes a batch of simpleMetas from the file system and the database.
+     *
+     * @param deleteThresholdEpoch The threshold for statusTime, i.e. records <= deleteThresholdEpoch
+     * @param progress             Count of failures that spans multiple batches
+     * @return Those simpleMeta items that could not be deleted for some reason.
+     */
     private Set<SimpleMeta> deleteCurrentBatch(final TaskContext taskContext,
                                                final List<SimpleMeta> simpleMetas,
                                                final Instant deleteThresholdEpoch,
-                                               final WorkQueue workQueue) {
+                                               final WorkQueue workQueue,
+                                               final Progress progress) {
         Objects.requireNonNull(simpleMetas);
         Objects.requireNonNull(deleteThresholdEpoch);
         Objects.requireNonNull(workQueue);
 
         Set<SimpleMeta> failedMetasSet = null;
         try {
-            final LinkedBlockingQueue<Long> successfulMetaIdDeleteQueue = new LinkedBlockingQueue<>();
-            final Map<Path, Path> directoryMap = new ConcurrentHashMap<>();
+            final Map<Path, Path> dirToVolPathMap = new ConcurrentHashMap<>(); // dir => volumePath
 
+            // Delete all the files associated with simpleMetas
+            final LinkedBlockingQueue<Long> successfulMetaIdDeleteQueue = deleteMetaFiles(
+                    taskContext,
+                    simpleMetas,
+                    workQueue,
+                    progress,
+                    dirToVolPathMap);
 
-            final DurationTimer durationTimer = DurationTimer.start();
-            // Delete all matching files.
-            for (final SimpleMeta simpleMeta : simpleMetas) {
-                final Runnable runnable = deleteFiles(simpleMeta,
-                        taskContext,
-                        successfulMetaIdDeleteQueue,
-                        directoryMap);
-                workQueue.exec(runnable);
+            if (!progress.hasBreachedThreshold()) {
+                // Remove any empty directories (including their ancestors, but not the root volumePath)
+                LOGGER.logDurationIfDebugEnabled(
+                        () -> {
+                            dirToVolPathMap.forEach((dir, volumePath) ->
+                                    fsFileDeleter.tryDeleteDir(
+                                            volumePath,
+                                            dir,
+                                            deleteThresholdEpoch.toEpochMilli(),
+                                            progress::addDirDeletes));
+                        },
+                        LogUtil.message("{} - Deleting empty directories for {} directories, {} meta IDs",
+                                TASK_NAME, dirToVolPathMap.size(), simpleMetas.size()));
+
+                if (Thread.interrupted()) {
+                    throw new InterruptedException();
+                }
+
+                final Set<Long> successfulMetaIdSet = new HashSet<>(successfulMetaIdDeleteQueue.size());
+                successfulMetaIdDeleteQueue.drainTo(successfulMetaIdSet);
+                final int successCount = successfulMetaIdSet.size();
+
+                failedMetasSet = simpleMetas.stream()
+                        .filter(simpleMeta -> !successfulMetaIdSet.contains(simpleMeta.getId()))
+                        .collect(Collectors.toSet());
+
+                // Delete data volumes.
+                info(() -> LogUtil.message("Deleting data volumes for {} meta IDs", successCount));
+                LOGGER.logDurationIfDebugEnabled(
+                        () -> dataVolumeDao.delete(successfulMetaIdSet),
+                        LogUtil.message("{} - Delete data volume records for {} meta IDs",
+                                TASK_NAME, successfulMetaIdSet.size()));
+
+                // Physically delete meta data.
+                info(() -> LogUtil.message("Deleting meta data for {} meta IDs", successCount));
+                LOGGER.logDurationIfDebugEnabled(
+                        () -> physicalDelete.cleanup(successfulMetaIdSet),
+                        LogUtil.message("{} - Delete meta and meta value records for {} meta IDs",
+                                TASK_NAME, successCount));
+            } else {
+                LOGGER.debug("{} - Aborting as failure threshold breached", TASK_NAME);
             }
-
-            // Wait for all completable futures to complete.
-            workQueue.join();
-            if (Thread.interrupted()) {
-                throw new InterruptedException();
-            }
-            // Can't use logDurationIfDebugEnabled due to InterruptedException
-            LOGGER.debug(() -> LogUtil.message("Deleting files for {} meta records took {}",
-                    simpleMetas.size(), durationTimer.get()));
-
-            // Cleanup empty directories.
-            LOGGER.logDurationIfDebugEnabled(
-                    () -> directoryMap.forEach((dir, root) ->
-                            tryDeleteDir(root, dir, deleteThresholdEpoch.toEpochMilli())),
-                    LogUtil.message("Deleting empty directories for {} meta records", simpleMetas.size()));
-
-            if (Thread.interrupted()) {
-                throw new InterruptedException();
-            }
-
-            final Set<Long> successfulMetaIdSet = new HashSet<>(successfulMetaIdDeleteQueue.size());
-            successfulMetaIdDeleteQueue.drainTo(successfulMetaIdSet);
-
-            failedMetasSet = simpleMetas.stream()
-                    .filter(simpleMeta -> !successfulMetaIdSet.contains(simpleMeta.getId()))
-                    .collect(Collectors.toSet());
-
-            // Delete data volumes.
-            info(() -> "Deleting data volumes");
-            LOGGER.logDurationIfDebugEnabled(
-                    () -> dataVolumeDao.delete(successfulMetaIdSet),
-                    LogUtil.message("Delete data volume records for {} meta IDs", successfulMetaIdSet.size()));
-
-            // Physically delete meta data.
-            info(() -> "Deleting meta data");
-            LOGGER.logDurationIfDebugEnabled(
-                    () -> physicalDelete.cleanup(successfulMetaIdSet),
-                    LogUtil.message("Delete meta and meta value records for {} meta IDs", successfulMetaIdSet.size()));
-
         } catch (final InterruptedException e) {
             LOGGER.debug("{} - {}", TASK_NAME, e.getMessage(), e);
 
@@ -291,45 +319,63 @@ public class PhysicalDeleteExecutor {
             // Keep interrupting this thread.
             Thread.currentThread().interrupt();
         }
-        return Objects.requireNonNullElseGet(failedMetasSet, Collections::emptySet);
+        return NullSafe.nonNullSet(failedMetasSet);
     }
 
-    private void tryDeleteDir(final Path root,
-                              final Path dir,
-                              final long oldFileTime) {
-        try {
-            final String canonicalRoot = FileUtil.getCanonicalPath(root);
-            final String canonicalDir = FileUtil.getCanonicalPath(dir);
+    @NotNull
+    private LinkedBlockingQueue<Long> deleteMetaFiles(
+            final TaskContext taskContext,
+            final List<SimpleMeta> simpleMetas,
+            final WorkQueue workQueue,
+            final Progress progress,
+            final Map<Path, Path> dirToVolPathMap) throws InterruptedException {
 
-            if (canonicalRoot.length() > 2
-                    && canonicalDir.startsWith(canonicalRoot)
-                    && !Files.isSameFile(root, dir)) {
-                final long lastModified = Files.getLastModifiedTime(dir).toMillis();
+        final LinkedBlockingQueue<Long> successfulMetaIdDeleteQueue = new LinkedBlockingQueue<>();
+        final DurationTimer durationTimer = DurationTimer.start();
 
-                if (lastModified < oldFileTime) {
-                    try {
-                        Files.delete(dir);
-                        LOGGER.debug("tryDelete() - Deleted dir {}", canonicalDir);
-
-                        // Recurse.
-                        tryDeleteDir(root, dir.getParent(), oldFileTime);
-                    } catch (final IOException e) {
-                        LOGGER.debug("tryDelete() - Failed to delete dir {}", canonicalDir);
-                    }
-
-                } else {
-                    LOGGER.debug("tryDelete() - Dir too new to delete {}", canonicalDir);
-                }
+        // Delete all matching files with concurrent threads working on a simpleMeta at a time
+        for (final SimpleMeta simpleMeta : simpleMetas) {
+            // No point starting jobs if we have gone over failure limit
+            if (progress.hasBreachedThreshold()) {
+                break;
             }
-        } catch (final IOException e) {
-            LOGGER.error("tryDelete() - Failed to delete dir {}", FileUtil.getCanonicalPath(dir), e);
+            final Runnable runnable = deleteFiles(
+                    simpleMeta,
+                    taskContext,
+                    successfulMetaIdDeleteQueue,
+                    progress,
+                    dirToVolPathMap);
+
+            workQueue.exec(runnable);
         }
+
+        // Wait for all completable futures to complete.
+        workQueue.join();
+        if (Thread.interrupted()) {
+            throw new InterruptedException();
+        }
+        // Can't use logDurationIfDebugEnabled due to InterruptedException
+        LOGGER.debug(() -> LogUtil.message("{} - Deleting files for {} meta records took {}. " +
+                        "Success count:{}, failure count: {}",
+                TASK_NAME,
+                simpleMetas.size(),
+                durationTimer.get(),
+                progress.getSuccessCount(),
+                progress.getFailureCount()));
+        return successfulMetaIdDeleteQueue;
     }
+
+//    private boolean shouldAbort(final Progress progress) {
+//        return progress.get() > dataStoreServiceConfig.getDeleteFailureThreshold();
+//    }
 
     private Runnable deleteFiles(final SimpleMeta simpleMeta,
                                  final TaskContext parentTaskContext,
                                  final Queue<Long> successfulMetaIdDeleteQueue,
-                                 final Map<Path, Path> directoryMap) {
+                                 final Progress progress,
+                                 final Map<Path, Path> dirToVolPathMap) {
+
+        final DataStoreServiceConfig dataStoreServiceConfig = dataStoreServiceConfigProvider.get();
         return taskContextFactory.childContext(
                 parentTaskContext,
                 "Deleting files",
@@ -338,63 +384,52 @@ public class PhysicalDeleteExecutor {
                         if (Thread.interrupted()) {
                             throw new InterruptedException();
                         }
-
-                        info(() -> "Deleting everything associated with " + simpleMeta);
-
-                        final DataVolume dataVolume = dataVolumeDao.findDataVolume(simpleMeta.getId());
-                        if (dataVolume == null) {
-                            LOGGER.warn(() -> "Unable to find any volume for " + simpleMeta);
-
+                        // This all needs to be re-runnable so if we come back again with partially deleted
+                        // state it will cope
+                        if (progress.hasBreachedThreshold()) {
+                            LOGGER.warn("{} - Skipping file deletion for stream {} as failure threshold exceeded {}. " +
+                                            "See property {}",
+                                    TASK_NAME,
+                                    simpleMeta.getId(),
+                                    dataStoreServiceConfig.getDeleteFailureThreshold(),
+                                    dataStoreServiceConfig.getFullPath(
+                                            DataStoreServiceConfig.PROP_NAME_DELETE_FAILURE_THRESHOLD));
                         } else {
-                            final Path volumePath = Paths.get(dataVolume.getVolumePath());
-                            final Path file = fileSystemStreamPathHelper.getRootPath(
-                                    volumePath,
-                                    simpleMeta,
-                                    simpleMeta.getTypeName());
-                            final Path dir = file.getParent();
-                            String baseName = file.getFileName().toString();
-                            baseName = baseName.substring(0, baseName.indexOf("."));
+                            info(() -> "Deleting everything associated with " + simpleMeta);
 
-                            if (Files.isDirectory(dir)) {
-                                final String glob = baseName + ".*";
-                                try (final DirectoryStream<Path> stream = Files.newDirectoryStream(dir, glob)) {
-                                    stream.forEach(f -> {
-                                        try {
-                                            info(() -> "Deleting file: '"
-                                                    + FileUtil.getCanonicalPath(f)
-                                                    + "' for stream "
-                                                    + simpleMeta.getId());
-                                            Files.deleteIfExists(f);
-                                        } catch (final IOException e) {
-                                            LOGGER.debug(e.getMessage(), e);
-                                            LOGGER.error("Error deleting file '" +
-                                                    FileUtil.getCanonicalPath(f) +
-                                                    "' for meta ID " +
-                                                    simpleMeta.getId() +
-                                                    " " +
-                                                    e.getMessage());
-                                        }
-                                    });
-                                } catch (final IOException e) {
-                                    LOGGER.debug(e.getMessage(), e);
-                                    LOGGER.error("Error creating directory stream '" +
-                                            FileUtil.getCanonicalPath(dir) +
-                                            "' glob=" +
-                                            glob +
-                                            " " +
-                                            e.getMessage());
-                                }
-
-                                directoryMap.put(dir, volumePath);
+                            final DataVolume dataVolume = dataVolumeDao.findDataVolume(simpleMeta.getId());
+                            final boolean isSuccessful;
+                            if (dataVolume == null) {
+                                LOGGER.warn(() -> TASK_NAME + " - Unable to find any volume for " + simpleMeta);
+                                isSuccessful = true;
                             } else {
-                                LOGGER.warn("Directory does not exist '" +
-                                        FileUtil.getCanonicalPath(dir) +
-                                        "'");
+                                final Path volumePath = Paths.get(dataVolume.getVolumePath());
+                                final Path file = fileSystemStreamPathHelper.getRootPath(
+                                        volumePath,
+                                        simpleMeta,
+                                        simpleMeta.getTypeName());
+                                final Path dir = file.getParent();
+                                String baseName = file.getFileName().toString();
+                                baseName = baseName.substring(0, baseName.indexOf("."));
+
+                                if (Files.isDirectory(dir)) {
+                                    isSuccessful = fsFileDeleter.deleteFilesByBaseName(
+                                            simpleMeta.getId(), dir, baseName, progress::addFileDeletes);
+
+                                    dirToVolPathMap.put(dir, volumePath);
+                                } else {
+                                    isSuccessful = true;
+                                    LOGGER.warn(TASK_NAME + " - Directory does not exist '" +
+                                            FileUtil.getCanonicalPath(dir) +
+                                            "'");
+                                }
                             }
+
+                            if (isSuccessful) {
+                                successfulMetaIdDeleteQueue.add(simpleMeta.getId());
+                            }
+                            progress.recordMetaFileDeleteSuccess(isSuccessful);
                         }
-
-                        successfulMetaIdDeleteQueue.add(simpleMeta.getId());
-
                     } catch (final InterruptedException e) {
                         LOGGER.trace(e::getMessage, e);
                         // Keep interrupting this thread.
@@ -406,19 +441,20 @@ public class PhysicalDeleteExecutor {
     private void info(final Supplier<String> message) {
         try {
             taskContext.info(message);
-            LOGGER.debug(message);
+            LOGGER.debug(() -> TASK_NAME + " - " + message);
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         }
     }
 
-    private Optional<Instant> getDeleteThreshold(final DataStoreServiceConfig config) {
+    private Optional<Instant> getDeleteAgeThreshold(final DataStoreServiceConfig config) {
         final StroomDuration deletePurgeAge = config.getDeletePurgeAge();
         return Optional.ofNullable(deletePurgeAge)
                 .map(purgeAge -> {
                     try {
                         final Instant deleteThreshold = TimeUtils.durationToThreshold(purgeAge);
-                        LOGGER.debug("Using deleteThreshold: {} for deletePurgeAge: {}", deleteThreshold, purgeAge);
+                        LOGGER.debug("{} - Using deleteThreshold: {} for deletePurgeAge: {}",
+                                TASK_NAME, deleteThreshold, purgeAge);
                         return deleteThreshold;
                     } catch (Exception e) {
                         throw new RuntimeException(LogUtil.message("Invalid value {} for property '{}'",
@@ -426,5 +462,124 @@ public class PhysicalDeleteExecutor {
                                 config.getFullPathStr(DataStoreServiceConfig.PROP_NAME_DELETE_PURGE_AGE)), e);
                     }
                 });
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    static final class Progress {
+
+        private final DataStoreServiceConfig dataStoreServiceConfig;
+        private final int failureThreshold;
+
+        private DurationTimer durationTimer = DurationTimer.start();
+
+        // Total count of the number of metas that have been successfully deleted
+        private final AtomicInteger successCounter = new AtomicInteger(0);
+
+        // Total count of the number of metas that had failures during file deletion
+        private final AtomicInteger failureCounter = new AtomicInteger(0);
+
+        // Total number of files deleted
+        private final LongAdder fileDeleteCounter = new LongAdder();
+
+        // Total number of empty directories deleted
+        private final LongAdder dirDeleteCounter = new LongAdder();
+
+        // Number of batches processed, successful or not
+        private final AtomicInteger batchCounter = new AtomicInteger(0);
+
+        private Progress(final DataStoreServiceConfig dataStoreServiceConfig) {
+            this.dataStoreServiceConfig = dataStoreServiceConfig;
+            this.failureThreshold = dataStoreServiceConfig.getDeleteFailureThreshold();
+        }
+
+        static Progress start(final DataStoreServiceConfig dataStoreServiceConfig) {
+            return new Progress(dataStoreServiceConfig);
+        }
+
+        void addFileDeletes(final long count) {
+            fileDeleteCounter.add(count);
+        }
+
+        void addDirDeletes(final long count) {
+            dirDeleteCounter.add(count);
+        }
+
+        void recordMetaFileDeleteSuccess(final boolean success) {
+            if (success) {
+                successCounter.incrementAndGet();
+            } else {
+                failureCounter.incrementAndGet();
+            }
+        }
+
+        void incrementBatchCount() {
+            batchCounter.addAndGet(1);
+        }
+
+        int getFailureCount() {
+            return failureCounter.get();
+        }
+
+        int getSuccessCount() {
+            return successCounter.get();
+        }
+
+        long getFileDeleteCount() {
+            return fileDeleteCounter.sum();
+        }
+
+        long getDirDeleteCount() {
+            return dirDeleteCounter.sum();
+        }
+
+        int getBatchCount() {
+            return batchCounter.get();
+        }
+
+        boolean hasBreachedThreshold() {
+            return failureCounter.get() > failureThreshold;
+        }
+
+        Duration getDuration() {
+            return durationTimer.get();
+        }
+
+        String buildSummaryBox() {
+            return LogUtil.inBox("""
+                            Duration: {}
+                            Total streams count: {}
+                            Successful streams count: {}
+                            Failed streams count: {}
+                            File delete count: {}
+                            Directory delete count: {}
+                            Failed streams threshold: {}
+                            Batch count: {}
+                            Batch size: {}""",
+                    durationTimer.get(),
+                    successCounter.get() + failureCounter.get(),
+                    successCounter.get(),
+                    failureCounter.get(),
+                    fileDeleteCounter.sum(),
+                    dirDeleteCounter.sum(),
+                    failureThreshold,
+                    batchCounter.get(),
+                    dataStoreServiceConfig.getDeleteBatchSize());
+        }
+
+        void logSummaryToInfo(final String msg) {
+            LOGGER.info(() -> LogUtil.message("{} - {}\n{}", TASK_NAME, msg, buildSummaryBox()));
+        }
+
+        void logSummaryToDebug(final String msg) {
+            LOGGER.debug(() -> LogUtil.message("{} - {}\n{}", TASK_NAME, msg, buildSummaryBox()));
+        }
+
+        @Override
+        public String toString() {
+            return buildSummaryBox();
+        }
     }
 }

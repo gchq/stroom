@@ -28,12 +28,14 @@ import static stroom.job.api.Schedule.ScheduleType.CRON;
 
 public class FsDataStoreJobsModule extends AbstractModule {
 
+    protected static final String DATA_DELETE_JOB_NAME = "Data Delete";
+
     @Override
     protected void configure() {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(DataDelete.class, builder -> builder
-                        .name("Data Delete")
+                        .name(DATA_DELETE_JOB_NAME)
                         .description("Physically delete meta data and associated files that have been logically " +
                                 "deleted based on age of delete (stroom.data.store.deletePurgeAge)")
                         .schedule(CRON, "0 0 *")

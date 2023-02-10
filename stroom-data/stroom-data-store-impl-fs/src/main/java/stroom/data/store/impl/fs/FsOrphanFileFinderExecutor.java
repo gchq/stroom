@@ -62,7 +62,7 @@ class FsOrphanFileFinderExecutor {
                                final Provider<FsOrphanFileFinder> orphanFileFinderProvider,
 //                               final ExecutorProvider executorProvider,
                                final TaskContext taskContext,
-                               final DataStoreServiceConfig config,
+                               final Provider<DataStoreServiceConfig> config,
                                final PathCreator pathCreator) {
         this.volumeService = volumeService;
         this.orphanFileFinderProvider = orphanFileFinderProvider;
@@ -72,7 +72,7 @@ class FsOrphanFileFinderExecutor {
 //        this.config = config;
 
         Duration age;
-        age = config.getFileSystemCleanOldAge().getDuration();
+        age = config.get().getFileSystemCleanOldAge().getDuration();
         if (age == null) {
             age = Duration.ofDays(1);
         }

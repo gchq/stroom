@@ -47,6 +47,7 @@ import stroom.query.common.v2.DateExpressionParser;
 import stroom.util.NullSafe;
 import stroom.util.Period;
 import stroom.util.collections.BatchingIterator;
+import stroom.util.logging.DurationTimer.TimedResult;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -1677,36 +1678,51 @@ public class MetaDaoImpl implements MetaDao, Clearable {
     public List<SimpleMeta> getLogicallyDeleted(final Instant deleteThreshold,
                                                 final int batchSize,
                                                 final Set<Long> metaIdExcludeSet) {
-        LOGGER.debug(() -> LogUtil.message("getLogicallyDeleted({}, {}, {} (size))",
+        LOGGER.debug(() -> LogUtil.message("getLogicallyDeleted() - deleteThreshold: {}, batchSize: {}, " +
+                        "metaIdExcludeSet size: {}",
                 deleteThreshold, batchSize, metaIdExcludeSet.size()));
+
         Objects.requireNonNull(deleteThreshold);
         final List<SimpleMeta> simpleMetas;
         if (batchSize > 0) {
             final byte statusIdDeleted = MetaStatusId.getPrimitiveValue(Status.DELETED);
             // Get a batch starting from the cut off threshold and working backwards in time.
             // This is so next time we can work from the previous min status time.
-            simpleMetas = JooqUtil.contextResult(metaDbConnProvider, context -> {
-                var select = context
-                        .select(
-                                meta.ID,
-                                metaType.NAME,
-                                metaFeed.NAME,
-                                meta.CREATE_TIME,
-                                meta.STATUS_TIME)
-                        .from(meta)
-                        .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
-                        .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                        .where(meta.STATUS.eq(statusIdDeleted))
-                        .and(meta.STATUS_TIME.lessOrEqual(deleteThreshold.toEpochMilli()));
+            final TimedResult<List<SimpleMeta>> timedResult = JooqUtil.timedContextResult(
+                    metaDbConnProvider,
+                    LOGGER.isDebugEnabled(),
+                    context -> {
+                        var select = context
+                                .select(
+                                        meta.ID,
+                                        metaType.NAME,
+                                        metaFeed.NAME,
+                                        meta.CREATE_TIME,
+                                        meta.STATUS_TIME)
+                                .from(meta)
+                                .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                .where(meta.STATUS.eq(statusIdDeleted))
+                                .and(meta.STATUS_TIME.lessOrEqual(deleteThreshold.toEpochMilli()));
 
-                // Here to stop us trying to pick up any failed ones from the previous batch
-                if (NullSafe.hasItems(metaIdExcludeSet)) {
-                    select.and(meta.ID.notIn(metaIdExcludeSet));
-                }
-                return select.orderBy(meta.STATUS_TIME.desc())
-                        .limit(batchSize)
-                        .fetch(this::mapToSimpleMeta);
-            });
+                        // Here to stop us trying to pick up any failed ones from the previous batch.
+                        // This is because this may be called repeatedly with the same deleteThreshold
+                        // if there are many metas with the same statusTime. In healthy operation this will be
+                        // empty so won't impact the query performance.
+                        if (NullSafe.hasItems(metaIdExcludeSet)) {
+                            select.and(meta.ID.notIn(metaIdExcludeSet));
+                        }
+
+                        // Should be able to scan down the status_status_time_idx
+                        return select.orderBy(meta.STATUS_TIME.desc())
+                                .limit(batchSize)
+                                .fetch(this::mapToSimpleMeta);
+                    });
+
+            simpleMetas = timedResult.getResult();
+
+            LOGGER.debug(() -> LogUtil.message("getLogicallyDeleted() - Selected {} meta records in {}",
+                    simpleMetas.size(), timedResult.getDuration()));
         } else {
             simpleMetas = Collections.emptyList();
         }
