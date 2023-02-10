@@ -3,14 +3,14 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <g:SimplePanel styleName="max">
         <g:MySplitLayoutPanel styleName="max">
-            <g:south size="200">
+            <g:north size="200">
+                <g:SimplePanel ui:field="tableContainer"
+                               styleName="max dashboard-panel overflow-hidden"/>
+            </g:north>
+            <g:center>
                 <g:MaxScrollPanel addStyleNames="max dashboard-panel">
                     <g:SimplePanel ui:field="infoPanel"/>
                 </g:MaxScrollPanel>
-            </g:south>
-            <g:center>
-                <g:SimplePanel ui:field="tableContainer"
-                               styleName="max dashboard-panel overflow-hidden"/>
             </g:center>
         </g:MySplitLayoutPanel>
     </g:SimplePanel>

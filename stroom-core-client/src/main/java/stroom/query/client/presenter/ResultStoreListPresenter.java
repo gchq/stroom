@@ -26,7 +26,6 @@ import stroom.data.grid.client.PagerView;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ResultStoreInfo;
-import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
@@ -53,7 +52,6 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
     private ButtonView terminateButton;
     private ButtonView deleteButton;
     private ButtonView settingsButton;
-    private ButtonView openButton;
 
     @Inject
     public ResultStoreListPresenter(final EventBus eventBus,
@@ -80,10 +78,6 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
         settingsButton = view.addButton(SvgPresets.SETTINGS_BLUE);
         settingsButton.setTitle("Store Settings");
         settingsButton.setEnabled(false);
-
-        openButton = view.addButton(SvgPresets.OPEN);
-        openButton.setTitle("Open");
-        openButton.setEnabled(false);
 
         // User Id
         dataGrid.addResizableColumn(new Column<ResultStoreInfo, String>(new TextCell()) {
@@ -196,24 +190,16 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
             edit();
         }));
 
-        registerHandler(openButton.addClickHandler(event -> {
-            open();
-        }));
-
         registerHandler(getSelectionModel().addSelectionHandler(event -> {
             final ResultStoreInfo selected = getSelectionModel().getSelected();
             if (selected == null) {
                 terminateButton.setEnabled(false);
                 deleteButton.setEnabled(false);
                 settingsButton.setEnabled(false);
-                openButton.setEnabled(false);
             } else {
                 terminateButton.setEnabled(!selected.isComplete());
                 deleteButton.setEnabled(true);
                 settingsButton.setEnabled(true);
-                openButton.setEnabled(selected.getSearchRequestSource() != null &&
-                        (SourceType.DASHBOARD_UI.equals(selected.getSearchRequestSource().getSourceType()) ||
-                                SourceType.QUERY_UI.equals(selected.getSearchRequestSource().getSourceType())));
             }
             if (event.getSelectionType().isDoubleSelect()) {
                 edit();
@@ -222,16 +208,6 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
     }
 
     private void edit() {
-        final ResultStoreInfo selected = getSelectionModel().getSelected();
-        if (selected != null) {
-            resultStoreSettingsPresenter.show(selected, "Change Result Store Settings", ok -> {
-                resultStoreSettingsPresenter.hide();
-                refresh();
-            });
-        }
-    }
-
-    private void open() {
         final ResultStoreInfo selected = getSelectionModel().getSelected();
         if (selected != null) {
             resultStoreSettingsPresenter.show(selected, "Change Result Store Settings", ok -> {
