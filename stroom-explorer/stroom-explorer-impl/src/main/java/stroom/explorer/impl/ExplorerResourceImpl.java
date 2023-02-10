@@ -90,7 +90,11 @@ class ExplorerResourceImpl implements ExplorerResource {
 
     @Override
     public BulkActionResult delete(final ExplorerServiceDeleteRequest request) {
-        return explorerServiceProvider.get().delete(request.getExplorerNodes());
+        final List<ExplorerNode> explorerNodes = request.getDocRefs()
+                .stream()
+                .map(this::getFromDocRef)
+                .toList();
+        return explorerServiceProvider.get().delete(explorerNodes);
     }
 
     @Override

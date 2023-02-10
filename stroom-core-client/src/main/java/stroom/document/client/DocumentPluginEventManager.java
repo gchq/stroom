@@ -52,6 +52,7 @@ import stroom.document.client.event.WriteDocumentEvent;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
+import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
 import stroom.explorer.client.event.ShowNewMenuEvent;
 import stroom.explorer.client.presenter.DocumentTypeCache;
@@ -276,7 +277,7 @@ public class DocumentPluginEventManager extends Plugin {
 
         // 8.1. Handle entity open events.
         registerHandler(getEventBus().addHandler(OpenDocumentEvent.getType(), event ->
-                open(event.getExplorerNodes(), event.getForceOpen())));
+                open(event.getDocRef(), event.getForceOpen())));
 
         // 8.2. Handle entity copy events.
         registerHandler(getEventBus().addHandler(CopyDocumentEvent.getType(), event -> copy(
@@ -449,9 +450,13 @@ public class DocumentPluginEventManager extends Plugin {
 
     private void deleteItems(final List<ExplorerNode> explorerNodeList) {
         if (explorerNodeList != null && explorerNodeList.size() > 0) {
+            final List<DocRef> docRefs = explorerNodeList
+                    .stream()
+                    .map(ExplorerNode::getDocRef)
+                    .collect(Collectors.toList());
             DeleteDocumentEvent.fire(
                     DocumentPluginEventManager.this,
-                    explorerNodeList,
+                    docRefs,
                     true);
         }
     }
@@ -466,6 +471,9 @@ public class DocumentPluginEventManager extends Plugin {
 
             success = false;
         }
+
+        // Refresh the tree
+        RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this);
 
         if (callback != null) {
             callback.onResult(success);
@@ -545,12 +553,12 @@ public class DocumentPluginEventManager extends Plugin {
                 .rename(new ExplorerServiceRenameRequest(explorerNode, docName));
     }
 
-    public void delete(final List<ExplorerNode> explorerNodes, final Consumer<BulkActionResult> consumer) {
+    public void delete(final List<DocRef> docRefs, final Consumer<BulkActionResult> consumer) {
         final Rest<BulkActionResult> rest = restFactory.create();
         rest
                 .onSuccess(consumer)
                 .call(EXPLORER_RESOURCE)
-                .delete(new ExplorerServiceDeleteRequest(explorerNodes));
+                .delete(new ExplorerServiceDeleteRequest(docRefs));
     }
 
     private void setAsFavourite(final DocRef docRef, final boolean setFavourite) {
@@ -573,12 +581,19 @@ public class DocumentPluginEventManager extends Plugin {
     }
 
     /**
-     * This method will highlight the supplied document item in the explorer tree.
+     * Highlights the supplied document item in the explorer tree.
      */
-    public void highlight(final ExplorerNode documentData) {
-        HighlightExplorerNodeEvent.fire(DocumentPluginEventManager.this, documentData);
+    public void highlight(final ExplorerNode explorerNode) {
+        HighlightExplorerNodeEvent.fire(DocumentPluginEventManager.this, explorerNode);
     }
 
+    public void highlight(final DocRef docRef) {
+        // Obtain the Explorer node for the provided DocRef
+        restFactory.create()
+                .onSuccess(explorerNode -> highlight((ExplorerNode) explorerNode))
+                .call(EXPLORER_RESOURCE)
+                .getFromDocRef(docRef);
+    }
 
     private List<ExplorerNode> getExplorerNodeListWithPermission(
             final Map<ExplorerNode, ExplorerNodePermissions> documentPermissionMap,
