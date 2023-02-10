@@ -7,8 +7,8 @@ import stroom.explorer.impl.ExplorerTreeDao;
 import stroom.explorer.impl.ExplorerTreeNode;
 import stroom.explorer.impl.ExplorerTreePath;
 import stroom.explorer.impl.TreeModel;
-import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.security.api.SecurityContext;
 
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
@@ -18,9 +18,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 import static stroom.explorer.impl.db.jooq.tables.ExplorerNode.EXPLORER_NODE;
 import static stroom.explorer.impl.db.jooq.tables.ExplorerPath.EXPLORER_PATH;
@@ -30,6 +32,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     private final boolean orderIndexMatters;
     private final boolean removeReferencedNodes;
     private final ExplorerDbConnProvider explorerDbConnProvider;
+    private final Provider<SecurityContext> securityContextProvider;
 
     private final stroom.explorer.impl.db.jooq.tables.ExplorerPath p = EXPLORER_PATH.as("p");
     private final stroom.explorer.impl.db.jooq.tables.ExplorerPath p1 = EXPLORER_PATH.as("p1");
@@ -38,10 +41,12 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     private final stroom.docstore.fav.impl.db.jooq.tables.DocFavourite f = DocFavourite.DOC_FAVOURITE.as("f");
 
     @Inject
-    ExplorerTreeDaoImpl(final ExplorerDbConnProvider explorerDbConnProvider) {
+    ExplorerTreeDaoImpl(final ExplorerDbConnProvider explorerDbConnProvider,
+                        final Provider<SecurityContext> securityContextProvider) {
         this.removeReferencedNodes = true;
         this.orderIndexMatters = false;
         this.explorerDbConnProvider = explorerDbConnProvider;
+        this.securityContextProvider = securityContextProvider;
     }
 
     private boolean isPersistent(final ExplorerTreeNode entity) {
@@ -126,11 +131,14 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 
     @Override
     public List<ExplorerTreeNode> getRoots() {
+        final String userUuid = securityContextProvider.get().getUserUuid();
         return JooqUtil.contextResult(explorerDbConnProvider, context -> context
                 .select(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS,
                         DSL.iif(DSL.count(f).gt(0), true, false))
-                .from(n)
-                .leftJoin(f).on(f.DOC_TYPE.eq(n.TYPE).and(f.DOC_UUID.eq(n.UUID)))
+                .from(n.leftJoin(f).on(f.DOC_TYPE.eq(n.TYPE)
+                        .and(f.DOC_UUID.eq(n.UUID))
+                        .and(f.USER_UUID.eq(userUuid).or(DSL.condition(userUuid == null))))
+                )
                 .whereNotExists(context
                         .selectOne()
                         .from(p)
@@ -143,6 +151,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     public TreeModel createModel(final Function<String, String> iconUrlProvider,
                                  final long id,
                                  final long creationTime) {
+        final String userUuid = securityContextProvider.get().getUserUuid();
         final TreeModel treeModel = new TreeModel(id, creationTime);
 
         final List<Integer> roots = JooqUtil.contextResult(explorerDbConnProvider, context -> context
@@ -162,12 +171,12 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                     context -> context
                             .select(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS,
                                     DSL.iif(DSL.count(f).gt(0), true, false))
-                            .from(n
-                                    .leftJoin(f).on(f.DOC_TYPE.eq(n.TYPE).and(f.DOC_UUID.eq(n.UUID)))
+                            .from(n.leftJoin(f).on(f.DOC_TYPE.eq(n.TYPE)
+                                    .and(f.DOC_UUID.eq(n.UUID))
+                                    .and(f.USER_UUID.eq(userUuid).or(DSL.condition(userUuid == null))))
                             )
                             .groupBy(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS)
-                            .fetchMap(n.ID, r -> ExplorerNode
-                                    .builder()
+                            .fetchMap(n.ID, r -> ExplorerNode.builder()
                                     .type(r.get(n.TYPE))
                                     .uuid(r.get(n.UUID))
                                     .name(r.get(n.NAME))
@@ -217,11 +226,14 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 
     @Override
     public List<ExplorerTreeNode> getTree(final ExplorerTreeNode parent) {
+        final String userUuid = securityContextProvider.get().getUserUuid();
         return JooqUtil.contextResult(explorerDbConnProvider, context -> context
                 .select(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS,
                         DSL.iif(DSL.count(f).gt(0), true, false))
-                .from(n)
-                .leftJoin(f).on(f.DOC_TYPE.eq(n.TYPE).and(f.DOC_UUID.eq(n.UUID)))
+                .from(n.leftJoin(f).on(f.DOC_TYPE.eq(n.TYPE)
+                        .and(f.DOC_UUID.eq(n.UUID))
+                        .and(f.USER_UUID.eq(userUuid).or(DSL.condition(userUuid == null))))
+                )
                 .where(n.ID.in(context
                         .select(p.DESCENDANT)
                         .from(p)
@@ -232,11 +244,14 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 
     @Override
     public List<ExplorerTreeNode> getChildren(final ExplorerTreeNode parent) {
+        final String userUuid = securityContextProvider.get().getUserUuid();
         return JooqUtil.contextResult(explorerDbConnProvider, context -> context
                 .select(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS,
                         DSL.iif(DSL.count(f).gt(0), true, false))
-                .from(n)
-                .leftJoin(f).on(f.DOC_TYPE.eq(n.TYPE).and(f.DOC_UUID.eq(n.UUID)))
+                .from(n.leftJoin(f).on(f.DOC_TYPE.eq(n.TYPE)
+                        .and(f.DOC_UUID.eq(n.UUID))
+                        .and(f.USER_UUID.eq(userUuid).or(DSL.condition(userUuid == null))))
+                )
                 .where(n.ID.in(context
                         .select(p.DESCENDANT)
                         .from(p)
@@ -249,12 +264,15 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 
     @Override
     public ExplorerTreeNode getParent(final ExplorerTreeNode child) {
+        final String userUuid = securityContextProvider.get().getUserUuid();
         final List<ExplorerTreeNode> parents = JooqUtil.contextResult(explorerDbConnProvider, context ->
                 context
                         .select(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS,
                                 DSL.iif(DSL.count(f).gt(0), true, false))
-                        .from(n)
-                        .leftJoin(f).on(f.DOC_TYPE.eq(n.TYPE).and(f.DOC_UUID.eq(n.UUID)))
+                        .from(n.leftJoin(f).on(f.DOC_TYPE.eq(n.TYPE)
+                                .and(f.DOC_UUID.eq(n.UUID))
+                                .and(f.USER_UUID.eq(userUuid).or(DSL.condition(userUuid == null))))
+                        )
                         .where(n.ID.in(context
                                 .select(p.ANCESTOR)
                                 .from(p)
@@ -274,20 +292,22 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
 
     @Override
     public List<ExplorerTreeNode> getPath(final ExplorerTreeNode node) {
-        return JooqUtil.contextResult(explorerDbConnProvider, context ->
-                        context
-                                .select(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS, p.DEPTH,
-                                        DSL.iif(DSL.count(f).gt(0), true, false))
-                                .from(n
-                                        .innerJoin(p).on(n.ID.eq(p.ANCESTOR)))
-                                        .leftJoin(f).on(f.DOC_TYPE.eq(n.TYPE).and(f.DOC_UUID.eq(n.UUID)))
-                                .where(p.DESCENDANT.eq(node.getId()).and(p.ANCESTOR.ne(node.getId())))
-                                .groupBy(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS, p.DEPTH)
-                                .orderBy(p.DEPTH.desc())
-                                .fetch())
-                .map(r ->
-                        new ExplorerTreeNode(r.get(n.ID), r.get(n.TYPE), r.get(n.UUID), r.get(n.NAME), r.get(n.TAGS),
-                                r.value7()));
+        final String userUuid = securityContextProvider.get().getUserUuid();
+        return JooqUtil.contextResult(explorerDbConnProvider, context -> context
+                        .select(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS, p.DEPTH,
+                                DSL.iif(DSL.count(f).gt(0), true, false))
+                        .from(n
+                                .innerJoin(p).on(n.ID.eq(p.ANCESTOR))
+                                .leftJoin(f).on(f.DOC_TYPE.eq(n.TYPE)
+                                        .and(f.DOC_UUID.eq(n.UUID))
+                                        .and(f.USER_UUID.eq(userUuid).or(DSL.condition(userUuid == null))))
+                        )
+                        .where(p.DESCENDANT.eq(node.getId()).and(p.ANCESTOR.ne(node.getId())))
+                        .groupBy(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS, p.DEPTH)
+                        .orderBy(p.DEPTH.desc())
+                        .fetch())
+                .map(r -> new ExplorerTreeNode(r.get(n.ID), r.get(n.TYPE), r.get(n.UUID), r.get(n.NAME), r.get(n.TAGS),
+                        r.value7()));
     }
 
     @Override
@@ -614,15 +634,18 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
             return null;
         }
 
+        final String userUuid = securityContextProvider.get().getUserUuid();
         final List<ExplorerTreeNode> list = JooqUtil.contextResult(explorerDbConnProvider, context ->
-                        context
-                                .select(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS,
-                                        DSL.iif(DSL.count(f).gt(0), true, false))
-                                .from(n)
-                                .leftJoin(f).on(f.DOC_TYPE.eq(n.TYPE).and(f.DOC_UUID.eq(n.UUID)))
-                                .where(n.UUID.eq(uuid))
-                                .groupBy(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS)
-                                .fetchInto(ExplorerTreeNode.class));
+                context
+                        .select(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS,
+                                DSL.iif(DSL.count(f).gt(0), true, false))
+                        .from(n.leftJoin(f).on(f.DOC_TYPE.eq(n.TYPE)
+                                .and(f.DOC_UUID.eq(n.UUID))
+                                .and(f.USER_UUID.eq(userUuid).or(DSL.condition(userUuid == null))))
+                        )
+                        .where(n.UUID.eq(uuid))
+                        .groupBy(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS)
+                        .fetchInto(ExplorerTreeNode.class));
 
         if (list.size() == 0) {
             return null;
@@ -638,32 +661,37 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     @Override
     public List<ExplorerTreeNode> findByNames(final List<String> names,
                                               final boolean allowWildCards) {
+        final String userUuid = securityContextProvider.get().getUserUuid();
         final Condition nameConditions = JooqUtil.createWildCardedStringsCondition(
                 n.UUID, names, allowWildCards, BooleanOperator.OR);
 
         return JooqUtil.contextResult(explorerDbConnProvider, context ->
-                        context
-                                .select(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS,
-                                        DSL.iif(DSL.count(f).gt(0), true, false))
-                                .from(n)
-                                .leftJoin(f).on(f.DOC_TYPE.eq(n.TYPE).and(f.DOC_UUID.eq(n.UUID)))
-                                .where(nameConditions)
-                                .groupBy(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS)
-                                .fetchInto(ExplorerTreeNode.class));
+                context
+                        .select(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS,
+                                DSL.iif(DSL.count(f).gt(0), true, false))
+                        .from(n.leftJoin(f).on(f.DOC_TYPE.eq(n.TYPE)
+                                .and(f.DOC_UUID.eq(n.UUID))
+                                .and(f.USER_UUID.eq(userUuid).or(DSL.condition(userUuid == null))))
+                        )
+                        .where(nameConditions)
+                        .groupBy(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS)
+                        .fetchInto(ExplorerTreeNode.class));
     }
 
     @Override
     public List<ExplorerTreeNode> findByType(final String type) {
-
+        final String userUuid = securityContextProvider.get().getUserUuid();
         return JooqUtil.contextResult(explorerDbConnProvider, context ->
-                        context
-                                .select(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS,
-                                        DSL.iif(DSL.count(f).gt(0), true, false))
-                                .from(n)
-                                .leftJoin(f).on(f.DOC_TYPE.eq(n.TYPE).and(f.DOC_UUID.eq(n.UUID)))
-                                .where(n.TYPE.eq(type))
-                                .groupBy(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS)
-                                .fetchInto(ExplorerTreeNode.class));
+                context
+                        .select(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS,
+                                DSL.iif(DSL.count(f).gt(0), true, false))
+                        .from(n.leftJoin(f).on(f.DOC_TYPE.eq(n.TYPE)
+                                .and(f.DOC_UUID.eq(n.UUID))
+                                .and(f.USER_UUID.eq(userUuid).or(DSL.condition(userUuid == null))))
+                        )
+                        .where(n.TYPE.eq(type))
+                        .groupBy(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS)
+                        .fetchInto(ExplorerTreeNode.class));
     }
 
     private void assertInsertParameters(final ExplorerTreeNode parent,
