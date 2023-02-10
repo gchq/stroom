@@ -42,7 +42,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 class ExplorerDropDownTreePresenter extends DropDownTreePresenter
         implements HasDataSelectionHandlers<ExplorerNode> {
 
-    private final static ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
+    private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
     private final ExtendedExplorerTree explorerTree;
     private final RestFactory restFactory;
