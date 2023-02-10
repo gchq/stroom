@@ -38,16 +38,15 @@ public class TreeModel extends AbstractTreeModel<String> implements Cloneable {
     }
 
     public List<DocRef> getChildren(final DocRef parent) {
-        if (parent == null) {
-            return childMap.get(null)
+        final String parentUuid = parent != null ? parent.getUuid() : null;
+        if (childMap.containsKey(parentUuid)) {
+            return childMap.get(parentUuid)
                     .stream()
                     .map(ExplorerNode::getDocRef)
                     .toList();
+        } else {
+            return null;
         }
-        return childMap.get(parent.getUuid())
-                .stream()
-                .map(ExplorerNode::getDocRef)
-                .toList();
     }
 
     @Override
