@@ -143,6 +143,9 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     allOpenItems,
                     0);
 
+            // Sort the tree model
+            filteredModel.sort(this::getPriority);
+
             // If the name filter has changed then we want to temporarily expand all nodes.
             if (filter.isNameFilterChange()) {
                 if (filter.getNameFilter() == null) {
@@ -196,6 +199,15 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             LOGGER.error("Error fetching nodes with criteria {}", criteria, e);
             throw e;
         }
+    }
+
+    private int getPriority(final ExplorerNode node) {
+        final DocumentType documentType = explorerActionHandlers.getType(node.getType());
+        if (documentType == null) {
+            return Integer.MAX_VALUE;
+        }
+
+        return documentType.getGroup().getPriority();
     }
 
     private void buildFavouritesNode(final TreeModel masterTreeModel) {

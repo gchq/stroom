@@ -17,7 +17,6 @@
 package stroom.explorer.impl;
 
 import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.ExplorerNode;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -125,10 +124,6 @@ class ExplorerTreeModel {
         performingRebuild.incrementAndGet();
         try {
             newModel = explorerTreeDao.createModel(this::getIconClassName, id, creationTime);
-
-            // Sort children.
-            newModel.sort(this::getPriority);
-
             setCurrentModel(newModel);
         } finally {
             performingRebuild.decrementAndGet();
@@ -143,15 +138,6 @@ class ExplorerTreeModel {
         }
 
         return documentType.getIconClassName();
-    }
-
-    private int getPriority(final ExplorerNode node) {
-        final DocumentType documentType = explorerActionHandlers.getType(node.getType());
-        if (documentType == null) {
-            return Integer.MAX_VALUE;
-        }
-
-        return documentType.getGroup().getPriority();
     }
 
     private synchronized void setCurrentModel(final TreeModel treeModel) {

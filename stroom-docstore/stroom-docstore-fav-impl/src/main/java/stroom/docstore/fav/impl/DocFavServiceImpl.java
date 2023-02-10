@@ -4,15 +4,12 @@ import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.docstore.fav.api.DocFavService;
 import stroom.explorer.api.ExplorerService;
-import stroom.explorer.shared.DocumentTypes;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -56,7 +53,7 @@ public class DocFavServiceImpl implements DocFavService {
     public List<DocRef> fetchDocFavs() {
         final String userId = securityContext.getUserUuid();
         Objects.requireNonNull(userId);
-        final List<DocRef> allNodes = docFavDao.getUserDocFavs(userId)
+        return docFavDao.getUserDocFavs(userId)
                 .stream()
                 .map(docRef -> {
                     try {
@@ -70,16 +67,6 @@ public class DocFavServiceImpl implements DocFavService {
                 })
                 .filter(Objects::nonNull)
                 .toList();
-
-        // Folder nodes appear first (sorted alphabetically), followed by any leaf nodes
-        final Stream<DocRef> folderNodes = allNodes.stream()
-                .filter(docRef -> DocumentTypes.isFolder(docRef.getType()))
-                .sorted(Comparator.comparing(DocRef::getName));
-        final Stream<DocRef> leafNodes = allNodes.stream()
-                .filter(docRef -> !DocumentTypes.isFolder(docRef.getType()))
-                .sorted(Comparator.comparing(DocRef::getName));
-
-        return Stream.concat(folderNodes, leafNodes).toList();
     }
 
     @Override
