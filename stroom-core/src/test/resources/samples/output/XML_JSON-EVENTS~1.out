@@ -30,7 +30,7 @@
          <User>
             <Id>user1</Id>
             <Data Name="SHA256Hash"
-                  Value="a041b9462caa4a31bac3567e0b6e6fd9100787db2ab433d96f6d178cabfce90"/>
+                  Value="0a041b9462caa4a31bac3567e0b6e6fd9100787db2ab433d96f6d178cabfce90"/>
             <Data Name="SHA256HashWithSalt"
                   Value="fecee872821bc6fe82018eac462b2255911cc45a612e30f88af40bcb689aab94"/>
             <Data Name="MD5HashWithSalt" Value="321865df6f0ce6bdf3ea16f74623534a"/>
@@ -406,7 +406,7 @@
          <User>
             <Id>user9</Id>
             <Data Name="SHA256Hash"
-                  Value="fb8d3c5dfaf81a387bf0ba439ab40e6343d2155fb4ddf6978a52d9b9ea8d0f8"/>
+                  Value="0fb8d3c5dfaf81a387bf0ba439ab40e6343d2155fb4ddf6978a52d9b9ea8d0f8"/>
             <Data Name="SHA256HashWithSalt"
                   Value="251593d4d56c8780408e02e86c14b73dee936b826384224b2479ca39f95656b3"/>
             <Data Name="MD5HashWithSalt" Value="9bc8f44e5a04d2df0957b92967c85263"/>

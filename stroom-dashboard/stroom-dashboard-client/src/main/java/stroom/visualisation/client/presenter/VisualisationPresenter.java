@@ -18,6 +18,7 @@
 package stroom.visualisation.client.presenter;
 
 import stroom.dashboard.client.vis.ClearFunctionCacheEvent;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
@@ -42,8 +43,9 @@ public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPane
     public VisualisationPresenter(final EventBus eventBus,
                                   final LinkTabPanelView view,
                                   final VisualisationSettingsPresenter settingsPresenter,
-                                  final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+                                  final ClientSecurityContext securityContext,
+                                  final RestFactory restFactory) {
+        super(eventBus, view, securityContext, restFactory);
         this.settingsPresenter = settingsPresenter;
 
         settingsPresenter.addDirtyHandler(event -> {

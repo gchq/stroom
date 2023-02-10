@@ -1,5 +1,7 @@
 package stroom.app.guice;
 
+import stroom.docstore.fav.impl.db.DocFavDbModule;
+
 import com.google.inject.AbstractModule;
 
 public class CoreModule extends AbstractModule {
@@ -41,6 +43,8 @@ public class CoreModule extends AbstractModule {
         install(new stroom.dictionary.impl.DictionaryModule());
         install(new stroom.docstore.impl.DocStoreModule());
         install(new stroom.docstore.impl.db.DocStoreDbPersistenceModule());
+        install(new stroom.docstore.fav.impl.DocFavModule());
+        install(new stroom.docstore.fav.impl.db.DocFavDbModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
         install(new stroom.event.logging.rs.impl.RestResourceAutoLoggerModule());
         install(new stroom.explorer.impl.ExplorerModule());

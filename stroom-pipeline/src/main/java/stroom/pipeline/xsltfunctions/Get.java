@@ -28,6 +28,8 @@ import javax.inject.Inject;
 
 class Get extends StroomExtensionFunctionCall {
 
+    public static final String FUNCTION_NAME = "get";
+
     private final TaskScopeMap map;
 
     @Inject
