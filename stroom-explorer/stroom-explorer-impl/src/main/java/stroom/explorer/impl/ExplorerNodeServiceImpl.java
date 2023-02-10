@@ -226,7 +226,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     }
 
     @Override
-    public Optional<ExplorerNode> getRoot() {
+    public Optional<ExplorerNode> getNodeWithRoot() {
         final List<ExplorerTreeNode> roots = Optional
                 .ofNullable(explorerTreeDao.getRoots())
                 .filter(r -> r.size() > 0)
@@ -242,7 +242,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     }
 
     @Override
-    public Optional<ExplorerNode> getRoot(final DocRef docRef) {
+    public Optional<ExplorerNode> getNodeWithRoot(final DocRef docRef) {
         return getNodeForDocRef(docRef)
                 .map(node -> {
                     final String rootNodeUuid = explorerTreeDao.getRoot(node).getUuid();

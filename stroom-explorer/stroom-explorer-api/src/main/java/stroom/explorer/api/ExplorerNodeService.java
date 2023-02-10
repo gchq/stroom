@@ -41,12 +41,12 @@ public interface ExplorerNodeService {
 
     void deleteNode(DocRef docRef);
 
-    Optional<ExplorerNode> getRoot();
+    Optional<ExplorerNode> getNodeWithRoot();
 
     /**
      * Get the root node containing another node
      */
-    Optional<ExplorerNode> getRoot(DocRef docRef);
+    Optional<ExplorerNode> getNodeWithRoot(DocRef docRef);
 
     Optional<ExplorerNode> getNode(DocRef docRef);
 

@@ -121,7 +121,7 @@ class ExplorerResourceImpl implements ExplorerResource {
     @Override
     @AutoLogged(OperationType.VIEW)
     public ExplorerNode getFromDocRef(final DocRef docRef) {
-        return explorerNodeServiceProvider.get().getRoot(docRef).orElse(null);
+        return explorerNodeServiceProvider.get().getNodeWithRoot(docRef).orElse(null);
     }
 
     @Override

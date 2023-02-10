@@ -365,7 +365,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         ExplorerNode parentNode = null;
         if (importState.getState() == State.NEW || moving) {
             // Create a parent folder for the new node.
-            final ExplorerNode parent = explorerNodeService.getRoot().orElse(null);
+            final ExplorerNode parent = explorerNodeService.getNodeWithRoot().orElse(null);
             parentNode = getOrCreateParentFolder(parent,
                     importPath,
                     ImportSettings.ok(importSettings, importState));
@@ -455,7 +455,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 final List<ExplorerNode> nodes = explorerNodeService.getPath(importSettings.getRootDocRef());
                 nodes.add(rootNode);
                 // Remove root node.
-                explorerNodeService.getRoot().ifPresent(root -> {
+                explorerNodeService.getNodeWithRoot().ifPresent(root -> {
                     if (nodes.get(0).equals(root)) {
                         nodes.remove(0);
                     }

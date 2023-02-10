@@ -1,5 +1,6 @@
 package stroom.explorer.impl;
 
+import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerNode;
 
 import java.util.ArrayList;
@@ -34,6 +35,19 @@ public class TreeModel extends AbstractTreeModel<String> implements Cloneable {
             return childMap.get(null);
         }
         return childMap.get(parent.getUuid());
+    }
+
+    public List<DocRef> getChildren(final DocRef parent) {
+        if (parent == null) {
+            return childMap.get(null)
+                    .stream()
+                    .map(ExplorerNode::getDocRef)
+                    .toList();
+        }
+        return childMap.get(parent.getUuid())
+                .stream()
+                .map(ExplorerNode::getDocRef)
+                .toList();
     }
 
     @Override

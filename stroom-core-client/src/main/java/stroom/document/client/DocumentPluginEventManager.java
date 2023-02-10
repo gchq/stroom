@@ -105,7 +105,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -246,9 +245,9 @@ public class DocumentPluginEventManager extends Plugin {
 
         // 6. Handle save as events.
         registerHandler(getEventBus().addHandler(SaveAsDocumentEvent.getType(), event -> {
-            final DocumentPlugin<?> plugin = documentPluginRegistry.get(event.getDocRef().getType());
+            final DocumentPlugin<?> plugin = documentPluginRegistry.get(event.getExplorerNode().getType());
             if (plugin != null) {
-                plugin.saveAs(event.getDocRef());
+                plugin.saveAs(event.getExplorerNode());
             }
         }));
 
@@ -365,34 +364,10 @@ public class DocumentPluginEventManager extends Plugin {
             final boolean singleSelection = selectedItems.size() == 1;
             final ExplorerNode primarySelection = getPrimarySelection();
 
-            if (selectedItems.size() > 0 && !isFavouritesRootNode(primarySelection)) {
+            if (selectedItems.size() > 0 && !ExplorerConstants.isFavouritesNode(primarySelection)) {
                 showItemContextMenu(event, selectedItems, singleSelection, primarySelection);
             }
         }));
-    }
-
-    /**
-     * Tests whether a node is the root Favourites node
-     */
-    private boolean isFavouritesRootNode(final ExplorerNode node) {
-        if (node == null) {
-            return false;
-        } else {
-            return Objects.equals(ExplorerConstants.FAVOURITES_DOC_REF, node.getDocRef());
-        }
-    }
-
-    /**
-     * Tests whether a node is either the root Favourites node or one of its children
-     */
-    private boolean isFavouritesNode(final ExplorerNode node) {
-        if (node == null) {
-            return false;
-        } else {
-            final String rootNodeUuid = node.getRootNodeUuid();
-            return isFavouritesRootNode(node) ||
-                    Objects.equals(ExplorerConstants.FAVOURITES_DOC_REF.getUuid(), rootNodeUuid);
-        }
     }
 
     private void showItemContextMenu(final ShowExplorerMenuEvent event,
@@ -566,7 +541,6 @@ public class DocumentPluginEventManager extends Plugin {
      * This method will highlight the supplied document item in the explorer tree.
      */
     public void highlight(final ExplorerNode documentData) {
-        // Open up parent items.
         HighlightExplorerNodeEvent.fire(DocumentPluginEventManager.this, documentData);
     }
 

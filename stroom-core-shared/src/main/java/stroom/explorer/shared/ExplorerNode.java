@@ -82,22 +82,6 @@ public class ExplorerNode implements HasDisplayValue {
         this.uniqueKey = uniqueKey;
     }
 
-    public static ExplorerNode create(final DocRef docRef) {
-        if (docRef == null) {
-            return null;
-        }
-        // If not the `System` node, use the `System` node as a parent when constructing from a DocRef.
-        // If multiple root nodes are supported in the future, the relevant parent node will need to be obtained by
-        // querying the database.
-        final String systemNodeUuid = ExplorerConstants.SYSTEM_NODE.getUuid();
-        final String rootNodeUuid = systemNodeUuid.equals(docRef.getUuid()) ? null : systemNodeUuid;
-        return ExplorerNode
-                .builder()
-                .docRef(docRef)
-                .rootNodeUuid(rootNodeUuid)
-                .build();
-    }
-
     public String getType() {
         return type;
     }

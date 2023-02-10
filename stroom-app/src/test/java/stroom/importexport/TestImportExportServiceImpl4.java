@@ -126,7 +126,7 @@ class TestImportExportServiceImpl4 extends AbstractCoreIntegrationTest {
 
         // Now move the item.
         // Create a new dest dir.
-        final Optional<ExplorerNode> rootNode = explorerNodeService.getRoot();
+        final Optional<ExplorerNode> rootNode = explorerNodeService.getNodeWithRoot();
         assertThat(rootNode).isNotNull();
         assertThat(rootNode.isPresent()).isTrue();
 

@@ -49,12 +49,12 @@ public class MockExplorerNodeService implements ExplorerNodeService {
     }
 
     @Override
-    public Optional<ExplorerNode> getRoot() {
+    public Optional<ExplorerNode> getNodeWithRoot() {
         return Optional.of(createTestNode());
     }
 
     @Override
-    public Optional<ExplorerNode> getRoot(final DocRef docRef) {
+    public Optional<ExplorerNode> getNodeWithRoot(final DocRef docRef) {
         return Optional.empty();
     }
 

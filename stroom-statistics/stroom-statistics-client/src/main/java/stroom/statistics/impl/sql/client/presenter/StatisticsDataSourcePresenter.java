@@ -17,6 +17,7 @@
 
 package stroom.statistics.impl.sql.client.presenter;
 
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
@@ -47,9 +48,10 @@ public class StatisticsDataSourcePresenter extends DocumentEditTabPresenter<Link
             final Provider<StatisticsDataSourceSettingsPresenter> statisticsDataSourceSettingsPresenter,
             final Provider<StatisticsFieldListPresenter> statisticsFieldListPresenter,
             final Provider<StatisticsCustomMaskListPresenter> statisticsCustomMaskListPresenter,
-            final ClientSecurityContext securityContext) {
+            final ClientSecurityContext securityContext,
+            final RestFactory restFactory) {
 
-        super(eventBus, view, securityContext);
+        super(eventBus, view, securityContext, restFactory);
 
         tabContentProvider.setDirtyHandler(event -> {
             if (event.isDirty()) {

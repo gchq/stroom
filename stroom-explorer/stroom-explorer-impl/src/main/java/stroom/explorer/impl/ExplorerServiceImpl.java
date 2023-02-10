@@ -199,9 +199,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     }
 
     private void buildFavouritesNode(final TreeModel masterTreeModel) {
-        final ExplorerNode.Builder favNodeBuilder = ExplorerNode.builder()
-                .docRef(ExplorerConstants.FAVOURITES_DOC_REF)
-                .depth(0)
+        final ExplorerNode.Builder favNodeBuilder = ExplorerConstants.FAVOURITES_NODE.copy()
                 .iconClassName(DocumentType.DOC_IMAGE_CLASS_NAME + ExplorerConstants.FAVOURITES);
         final ExplorerNode favNode = favNodeBuilder.build();
 
@@ -245,7 +243,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         if (rootNode != null) {
             builder = rootNode.copy();
         } else {
-            builder = explorerNodeService.getRoot()
+            builder = explorerNodeService.getNodeWithRoot()
                     .map(node -> {
                         final ExplorerNode.Builder root = node.copy();
                         Optional.ofNullable(explorerActionHandlers.getType(ExplorerConstants.SYSTEM))
@@ -303,30 +301,30 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         final TreeModel masterTreeModel = explorerTreeModel.getModel();
         if (masterTreeModel != null) {
             final Set<DocRef> refs = new HashSet<>();
-            addChildren(ExplorerNode.create(folder), type, 0, maxDepth, masterTreeModel, refs);
+            addChildren(folder, type, 0, maxDepth, masterTreeModel, refs);
             return refs;
         }
 
         return Collections.emptySet();
     }
 
-    private void addChildren(final ExplorerNode parent,
+    private void addChildren(final DocRef parent,
                              final String type,
                              final int depth,
                              final int maxDepth,
                              final TreeModel treeModel,
                              final Set<DocRef> refs) {
-        final List<ExplorerNode> childNodes = treeModel.getChildren(parent);
-        if (childNodes != null) {
-            childNodes.forEach(node -> {
-                if (node.getType().equals(type)) {
-                    if (securityContext.hasDocumentPermission(node.getUuid(), DocumentPermissionNames.USE)) {
-                        refs.add(node.getDocRef());
+        final List<DocRef> children = treeModel.getChildren(parent);
+        if (children != null) {
+            children.forEach(childDocRef -> {
+                if (childDocRef.getType().equals(type)) {
+                    if (securityContext.hasDocumentPermission(childDocRef.getUuid(), DocumentPermissionNames.USE)) {
+                        refs.add(childDocRef);
                     }
                 }
 
                 if (depth < maxDepth) {
-                    addChildren(node, type, depth + 1, maxDepth, treeModel, refs);
+                    addChildren(childDocRef, type, depth + 1, maxDepth, treeModel, refs);
                 }
             });
         }
@@ -598,7 +596,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             return destinationFolder.getDocRef();
         }
 
-        final ExplorerNode rootNode = explorerNodeService.getRoot().orElse(null);
+        final ExplorerNode rootNode = explorerNodeService.getNodeWithRoot().orElse(null);
         return rootNode != null ? rootNode.getDocRef() : null;
     }
 

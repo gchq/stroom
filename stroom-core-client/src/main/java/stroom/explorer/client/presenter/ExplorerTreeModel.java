@@ -41,11 +41,11 @@ import java.util.Set;
 public class ExplorerTreeModel {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
-    public static final ExplorerNode NULL_SELECTION = ExplorerNode.create(DocRef.builder()
+    public static final ExplorerNode NULL_SELECTION = ExplorerNode.builder().docRef(DocRef.builder()
             .uuid("")
             .name("None")
             .type("")
-            .build());
+            .build()).build();
 
     private final OpenItems<ExplorerNodeKey> openItems = new OpenItems<>();
     private final NameFilterTimer timer = new NameFilterTimer();

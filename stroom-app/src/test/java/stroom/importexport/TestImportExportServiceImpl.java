@@ -62,7 +62,7 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
 
     @Test
     void testExport() {
-        final ExplorerNode systemNode = explorerNodeService.getRoot().orElse(null);
+        final ExplorerNode systemNode = explorerNodeService.getNodeWithRoot().orElse(null);
         final DocRef systemDocRef = systemNode != null ? systemNode.getDocRef() : null;
         assertThat(explorerNodeService.getDescendants(systemDocRef).size()).isEqualTo(1);
 
