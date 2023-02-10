@@ -761,6 +761,12 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         final List<ExplorerNode> resultNodes = new ArrayList<>();
         final StringBuilder resultMessage = new StringBuilder();
 
+        // Test whether any of the source items match the destination. If so, abort the move as it's not possible
+        // to move one object into itself
+        if (explorerNodes.stream().anyMatch(node -> node.getDocRef().equals(destinationFolder.getDocRef()))) {
+            throw new IllegalArgumentException("Source and destination locations cannot be the same.");
+        }
+
         for (final ExplorerNode explorerNode : explorerNodes) {
             final ExplorerActionHandler handler = explorerActionHandlers.getHandler(explorerNode.getType());
 
