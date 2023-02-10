@@ -1,6 +1,5 @@
-package stroom.core.query;
+package stroom.core.meta;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.feed.api.FeedStore;
@@ -15,6 +14,7 @@ import stroom.pipeline.shared.ReferenceDataFields;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.security.api.SecurityContext;
+import stroom.suggestions.api.SuggestionsService;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.filter.QuickFilterPredicateFactory;
@@ -27,7 +27,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -39,10 +38,9 @@ import javax.inject.Singleton;
 import javax.validation.constraints.NotNull;
 
 @Singleton
-@SuppressWarnings("unused")
-public class SuggestionsServiceImpl implements SuggestionsService {
+public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SuggestionsServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MetaSuggestionsQueryHandlerImpl.class);
     private static final int LIMIT = 20;
 
     private final MetaService metaService;
@@ -52,10 +50,7 @@ public class SuggestionsServiceImpl implements SuggestionsService {
     private final DocRefInfoService docRefInfoService;
     private final TaskContextFactory taskContextFactory;
 
-    // TODO: 03/11/2022 Instead of having all these maps, we need a SuggestionsProvider iface
-    //  then each module can multi-bind an impl, keyed on the docref of the datasource.
-    //  Searchable can then extend SuggestionsProvider. This will remove the need for field names
-    //  to be in core-shared
+    // This may need changing if we have suggestions that are not for the stream store data source
     private final Map<String, Function<String, List<String>>> metaFieldNameToFunctionMap = Map.of(
             MetaFields.FEED.getName(), this::createFeedList,
             MetaFields.PIPELINE.getName(), this::createPipelineList,
@@ -77,12 +72,13 @@ public class SuggestionsServiceImpl implements SuggestionsService {
 
     @SuppressWarnings("unused")
     @Inject
-    SuggestionsServiceImpl(final MetaService metaService,
-                           final PipelineStore pipelineStore,
-                           final SecurityContext securityContext,
-                           final FeedStore feedStore,
-                           final DocRefInfoService docRefInfoService,
-                           final TaskContextFactory taskContextFactory) {
+    MetaSuggestionsQueryHandlerImpl(final MetaService metaService,
+                                    final PipelineStore pipelineStore,
+                                    final SecurityContext securityContext,
+                                    final FeedStore feedStore,
+                                    final TaskContextFactory taskContextFactory,
+                                    final DocRefInfoService docRefInfoService,
+                                    final SuggestionsService suggestionsService) {
         this.metaService = metaService;
         this.pipelineStore = pipelineStore;
         this.securityContext = securityContext;
@@ -92,17 +88,14 @@ public class SuggestionsServiceImpl implements SuggestionsService {
     }
 
     @Override
-    public List<String> fetch(final FetchSuggestionsRequest request) {
+    public List<String> getSuggestions(final FetchSuggestionsRequest request) {
         return securityContext.secureResult(() -> {
             List<String> result = Collections.emptyList();
+
             final String fieldName = request.getField().getName();
-
-            if (request.getDataSource() != null) {
-                final Function<String, List<String>> suggestionFunc = getSuggestionFunc(request, fieldName);
-
-                if (suggestionFunc != null) {
-                    result = suggestionFunc.apply(request.getText());
-                }
+            final Function<String, List<String>> suggestionFunc = getSuggestionFunc(request, fieldName);
+            if (suggestionFunc != null) {
+                result = suggestionFunc.apply(request.getText());
             }
             return result;
         });
@@ -124,12 +117,6 @@ public class SuggestionsServiceImpl implements SuggestionsService {
             suggestionFunc = null;
         }
         return suggestionFunc;
-    }
-
-    private boolean matchesMetaField(final FetchSuggestionsRequest request,
-                                     final AbstractField fieldToMatch) {
-        Objects.requireNonNull(fieldToMatch);
-        return fieldToMatch.getName().equals(request.getField().getName());
     }
 
     @NotNull

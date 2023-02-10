@@ -51,4 +51,20 @@ public class IpV4AddressField extends AbstractNumericField {
     public String getType() {
         return FieldTypes.IPV4_ADDRESS;
     }
+
+    @Override
+    public String getShortTypeName() {
+        return "ip";
+    }
+
+    @Override
+    public String getTypeDescription() {
+        return "IPv4 address field type\n" +
+               "\n" +
+               "Supports equality or range queries.\n" +
+               "\n" +
+               "Examples (omit quotes):\n" +
+               " * Exact match: '192.168.1.2'\n" +
+               " * CIDR comparison: '192.168.1.0/24'";
+    }
 }

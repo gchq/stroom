@@ -65,4 +65,16 @@ public class IdField extends AbstractNumericField {
     public String getType() {
         return FieldTypes.ID;
     }
+
+    @Override
+    public String getShortTypeName() {
+        return "id";
+    }
+
+    @Override
+    public String getTypeDescription() {
+        return "ID field type\n" +
+               "\n" +
+               "Represents the numeric identifier of a record or other Stroom entity.";
+    }
 }

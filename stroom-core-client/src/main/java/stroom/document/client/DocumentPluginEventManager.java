@@ -34,9 +34,12 @@ import stroom.docref.HasDisplayValue;
 import stroom.docstore.shared.DocFavResource;
 import stroom.document.client.event.CopyDocumentEvent;
 import stroom.document.client.event.CreateDocumentEvent;
+import stroom.document.client.event.DeleteDocumentEvent;
 import stroom.document.client.event.MoveDocumentEvent;
+import stroom.document.client.event.OpenDocumentEvent;
 import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.document.client.event.RenameDocumentEvent;
+import stroom.document.client.event.ResultCallback;
 import stroom.document.client.event.SaveAsDocumentEvent;
 import stroom.document.client.event.SetDocumentAsFavouriteEvent;
 import stroom.document.client.event.ShowCopyDocumentDialogEvent;
@@ -70,6 +73,7 @@ import stroom.explorer.shared.PermissionInheritance;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.client.event.ExportConfigEvent;
 import stroom.importexport.client.event.ImportConfigEvent;
+import stroom.importexport.client.event.ShowDocRefDependenciesEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -271,7 +275,11 @@ public class DocumentPluginEventManager extends Plugin {
                             event.getNewDocConsumer().accept(explorerNode);
                         })));
 
-        // 8.1. Handle entity copy events.
+        // 8.1. Handle entity open events.
+        registerHandler(getEventBus().addHandler(OpenDocumentEvent.getType(), event ->
+                open(event.getDocRef(), event.getForceOpen())));
+
+        // 8.2. Handle entity copy events.
         registerHandler(getEventBus().addHandler(CopyDocumentEvent.getType(), event -> copy(
                 event.getExplorerNodes(), event.getDestinationFolder(), event.getPermissionInheritance(), result -> {
                     // Hide the copy document presenter.
@@ -289,7 +297,7 @@ public class DocumentPluginEventManager extends Plugin {
                     }
                 })));
 
-        // 8.2. Handle entity move events.
+        // 8.3. Handle entity move events.
         registerHandler(getEventBus().addHandler(MoveDocumentEvent.getType(), event -> move(
                 event.getExplorerNodes(), event.getDestinationFolder(), event.getPermissionInheritance(), result -> {
                     // Hide the move document presenter.
@@ -306,6 +314,22 @@ public class DocumentPluginEventManager extends Plugin {
                         highlight(result.getExplorerNodes().get(0));
                     }
                 })));
+
+        // 8.4. Handle entity delete events.
+        registerHandler(getEventBus().addHandler(DeleteDocumentEvent.getType(), event -> {
+            if (event.getConfirm()) {
+                ConfirmEvent.fire(
+                        DocumentPluginEventManager.this,
+                        "Are you sure you want to delete this item?",
+                        ok -> {
+                            if (ok) {
+                                delete(event.getDocRefs(), result -> handleDeleteResult(result, event.getCallback()));
+                            }
+                        });
+            } else {
+                delete(event.getDocRefs(), result -> handleDeleteResult(result, event.getCallback()));
+            }
+        }));
 
         // 9. Handle entity rename events.
         registerHandler(getEventBus().addHandler(RenameDocumentEvent.getType(), event -> {
@@ -426,23 +450,33 @@ public class DocumentPluginEventManager extends Plugin {
 
     private void deleteItems(final List<ExplorerNode> explorerNodeList) {
         if (explorerNodeList != null && explorerNodeList.size() > 0) {
-            ConfirmEvent.fire(DocumentPluginEventManager.this,
-                    "Are you sure you want to delete these items?",
-                    ok -> {
-                        if (ok) {
-                            delete(explorerNodeList, result -> {
-                                if (result.getMessage().length() > 0) {
-                                    AlertEvent.fireInfo(DocumentPluginEventManager.this,
-                                            "Unable to delete some items",
-                                            result.getMessage(),
-                                            null);
-                                }
+            final List<DocRef> docRefs = explorerNodeList
+                    .stream()
+                    .map(ExplorerNode::getDocRef)
+                    .collect(Collectors.toList());
+            DeleteDocumentEvent.fire(
+                    DocumentPluginEventManager.this,
+                    docRefs,
+                    true);
+        }
+    }
 
-                                // Refresh the explorer tree so the documents are marked as deleted.
-                                RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this);
-                            });
-                        }
-                    });
+    private void handleDeleteResult(final BulkActionResult result, ResultCallback callback) {
+        boolean success = true;
+        if (result.getMessage().length() > 0) {
+            AlertEvent.fireInfo(DocumentPluginEventManager.this,
+                    "Unable to delete some items",
+                    result.getMessage(),
+                    null);
+
+            success = false;
+        }
+
+        // Refresh the tree
+        RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this);
+
+        if (callback != null) {
+            callback.onResult(success);
         }
     }
 
@@ -519,12 +553,12 @@ public class DocumentPluginEventManager extends Plugin {
                 .rename(new ExplorerServiceRenameRequest(explorerNode, docName));
     }
 
-    private void delete(final List<ExplorerNode> explorerNodes, final Consumer<BulkActionResult> consumer) {
+    public void delete(final List<DocRef> docRefs, final Consumer<BulkActionResult> consumer) {
         final Rest<BulkActionResult> rest = restFactory.create();
         rest
                 .onSuccess(consumer)
                 .call(EXPLORER_RESOURCE)
-                .delete(new ExplorerServiceDeleteRequest(explorerNodes));
+                .delete(new ExplorerServiceDeleteRequest(docRefs));
     }
 
     private void setAsFavourite(final DocRef docRef, final boolean setFavourite) {
@@ -537,13 +571,29 @@ public class DocumentPluginEventManager extends Plugin {
         }
     }
 
-    /**
-     * This method will highlight the supplied document item in the explorer tree.
-     */
-    public void highlight(final ExplorerNode documentData) {
-        HighlightExplorerNodeEvent.fire(DocumentPluginEventManager.this, documentData);
+    private void open(final DocRef docRef, final boolean forceOpen) {
+        final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(docRef.getType());
+        if (documentPlugin != null) {
+            documentPlugin.open(docRef, forceOpen);
+        } else {
+            throw new IllegalArgumentException("Document type '" + docRef.getType() + "' not registered");
+        }
     }
 
+    /**
+     * Highlights the supplied document item in the explorer tree.
+     */
+    public void highlight(final ExplorerNode explorerNode) {
+        HighlightExplorerNodeEvent.fire(DocumentPluginEventManager.this, explorerNode);
+    }
+
+    public void highlight(final DocRef docRef) {
+        // Obtain the Explorer node for the provided DocRef
+        restFactory.create()
+                .onSuccess(explorerNode -> highlight((ExplorerNode) explorerNode))
+                .call(EXPLORER_RESOURCE)
+                .getFromDocRef(docRef);
+    }
 
     private List<ExplorerNode> getExplorerNodeListWithPermission(
             final Map<ExplorerNode, ExplorerNodePermissions> documentPermissionMap,
@@ -816,7 +866,9 @@ public class DocumentPluginEventManager extends Plugin {
                     true);
             if (ownedItems.size() == 1) {
                 menuItems.add(new Separator(10));
-                menuItems.add(createPermissionsMenuItem(ownedItems.get(0), 11, true));
+                menuItems.add(createShowDependenciesMenuItem(ownedItems.get(0), 11));
+                menuItems.add(new Separator(12));
+                menuItems.add(createPermissionsMenuItem(ownedItems.get(0), 13, true));
             }
         }
     }
@@ -976,6 +1028,16 @@ public class DocumentPluginEventManager extends Plugin {
                 null,
                 true,
                 () -> ExportConfigEvent.fire(DocumentPluginEventManager.this, readableItems));
+    }
+
+    private MenuItem createShowDependenciesMenuItem(final ExplorerNode explorerNode, final int priority) {
+        return new IconMenuItem(priority,
+                SvgPresets.DEPENDENCIES,
+                SvgPresets.DEPENDENCIES,
+                "Dependencies",
+                null,
+                true,
+                () -> ShowDocRefDependenciesEvent.fire(DocumentPluginEventManager.this, explorerNode.getDocRef()));
     }
 
     void registerPlugin(final String entityType, final DocumentPlugin<?> plugin) {

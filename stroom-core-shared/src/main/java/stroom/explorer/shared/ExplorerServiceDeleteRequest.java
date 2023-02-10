@@ -30,14 +30,14 @@ import java.util.List;
 public class ExplorerServiceDeleteRequest {
 
     @JsonProperty
-    private final List<ExplorerNode> explorerNodes;
+    private final List<DocRef> docRefs;
 
     @JsonCreator
-    public ExplorerServiceDeleteRequest(@JsonProperty("explorerNodes") final List<ExplorerNode> explorerNodes) {
-        this.explorerNodes = explorerNodes;
+    public ExplorerServiceDeleteRequest(@JsonProperty("docRefs") final List<DocRef> docRefs) {
+        this.docRefs = docRefs;
     }
 
-    public List<ExplorerNode> getExplorerNodes() {
-        return explorerNodes;
+    public List<DocRef> getDocRefs() {
+        return docRefs;
     }
 }

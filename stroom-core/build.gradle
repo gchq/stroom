@@ -29,6 +29,7 @@ dependencies {
     implementation project(':stroom-resource:stroom-resource-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-statistics:stroom-statistics-api')
+    implementation project(':stroom-suggestions:stroom-suggestions-api')
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-cluster:stroom-cluster-lock-api')
     implementation project(':stroom-util')

@@ -51,4 +51,16 @@ public class IntegerField extends AbstractNumericField {
     public String getType() {
         return FieldTypes.INTEGER;
     }
+
+    @Override
+    public String getShortTypeName() {
+        return "int";
+    }
+
+    @Override
+    public String getTypeDescription() {
+        return "Integer field type\n" +
+               "\n" +
+               "Non-fractional numeric value supporting equality and range queries.";
+    }
 }
