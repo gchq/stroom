@@ -17,7 +17,6 @@
 package stroom.widget.menu.client.presenter;
 
 import stroom.svg.client.Icon;
-import stroom.widget.menu.client.presenter.MenuItemCell.SeparatorAppearance.Template;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.ValueUpdater;
