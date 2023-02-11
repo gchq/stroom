@@ -60,7 +60,7 @@ class OpenIdManager {
         Objects.requireNonNull(clientId,
                 "To make an authentication request the OpenId config 'clientId' must not be null");
         // Create a state for this authentication request.
-        final AuthenticationState state = AuthenticationStateSessionUtil.create(request, getRedirectUrl());
+        final AuthenticationState state = AuthenticationStateSessionUtil.create(request, getRedirectUrl(request));
         LOGGER.debug(() -> "frontChannelOIDC state=" + state);
         return createAuthUri(request, endpoint, clientId, state, false);
     }
@@ -100,8 +100,8 @@ class OpenIdManager {
         return null;
     }
 
-    public String getRedirectUrl() {
-        return uriFactory.publicUri("/").toString();
+    public String getRedirectUrl(final HttpServletRequest request) {
+        return uriFactory.publicUri(UrlUtils.getFullUri(request)).toString();
     }
 
     /**
@@ -138,7 +138,7 @@ class OpenIdManager {
                 "To make a logout request the OpenId config 'logoutEndpoint' must not be null");
         Objects.requireNonNull(clientId,
                 "To make an authentication request the OpenId config 'clientId' must not be null");
-        final AuthenticationState state = AuthenticationStateSessionUtil.create(request, getRedirectUrl());
+        final AuthenticationState state = AuthenticationStateSessionUtil.create(request, getRedirectUrl(request));
         LOGGER.debug(() -> "logout state=" + state);
         return createAuthUri(request, endpoint, clientId, state, true);
     }
@@ -153,7 +153,7 @@ class OpenIdManager {
         UriBuilder uriBuilder = UriBuilder.fromUri(endpoint);
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.RESPONSE_TYPE, OpenId.CODE);
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.CLIENT_ID, clientId);
-        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.REDIRECT_URI, getRedirectUrl());
+        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.REDIRECT_URI, uriFactory.publicUri("/"));
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.SCOPE, OpenId.SCOPE__OPENID +
                 " " +
                 OpenId.SCOPE__EMAIL);
