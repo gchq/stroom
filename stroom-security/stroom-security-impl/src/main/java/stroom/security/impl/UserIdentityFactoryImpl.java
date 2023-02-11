@@ -57,7 +57,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
     private final InternalJwtContextFactory internalJwtContextFactory;
     private final StandardJwtContextFactory standardJwtContextFactory;
     private final OpenIdConfig openIdConfig;
-    private final UriFactory uriFactory;
+    private final OpenIdManager openIdManager;
     private final ResolvedOpenIdConfig resolvedOpenIdConfig;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final UserCache userCache;
@@ -68,7 +68,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
                             final InternalJwtContextFactory internalJwtContextFactory,
                             final StandardJwtContextFactory standardJwtContextFactory,
                             final OpenIdConfig openIdConfig,
-                            final UriFactory uriFactory,
+                            final OpenIdManager openIdManager,
                             final ResolvedOpenIdConfig resolvedOpenIdConfig,
                             final DefaultOpenIdCredentials defaultOpenIdCredentials,
                             final UserCache userCache,
@@ -77,7 +77,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
         this.internalJwtContextFactory = internalJwtContextFactory;
         this.standardJwtContextFactory = standardJwtContextFactory;
         this.openIdConfig = openIdConfig;
-        this.uriFactory = uriFactory;
+        this.openIdManager = openIdManager;
         this.resolvedOpenIdConfig = resolvedOpenIdConfig;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.userCache = userCache;
@@ -129,7 +129,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
 
         final ObjectMapper mapper = getMapper();
         final String tokenEndpoint = resolvedOpenIdConfig.getTokenEndpoint();
-        final String redirectUri = uriFactory.publicUri("/").toString();
+        final String redirectUri = openIdManager.getRedirectUri(state.getUri());
         final HttpPost httpPost = new HttpPost(tokenEndpoint);
 
         // AWS requires form content and not a JSON object.

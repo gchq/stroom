@@ -205,4 +205,15 @@ public class ResolvedOpenIdConfig {
         }
         return openIdConfig.getRequestScope();
     }
+
+    public String getRedirectUri() {
+        final OpenIdConfig openIdConfig = openIdConfigProvider.get();
+        if (openIdConfig.isUseInternal() ||
+                openIdConfig.getRedirectUri() == null ||
+                openIdConfig.getRedirectUri().isBlank()) {
+            return null;
+        } else {
+            return openIdConfig.getRedirectUri();
+        }
+    }
 }
