@@ -260,6 +260,7 @@ appConfig:
       maxNestedElementDepth: 10
       retryCount: 10
     search:
+      highlight: true
       scrollDuration: "PT1M"
       storeSize: "1000000,100,10,1"
       suggestions:
