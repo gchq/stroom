@@ -192,9 +192,9 @@ public class PhysicalDeleteExecutor {
                         lastDeleteThreshold = currentDeleteThreshold;
                         currentDeleteThreshold = simpleMetas
                                 .stream()
-                                .map(SimpleMeta::getStatusTime)
-                                .filter(Optional::isPresent)
-                                .map(Optional::get)
+                                .map(SimpleMeta::getStatusMs)
+                                .filter(Objects::nonNull)
+                                .map(Instant::ofEpochMilli)
                                 .min(Comparator.naturalOrder())
                                 .orElse(null);
 
@@ -214,7 +214,7 @@ public class PhysicalDeleteExecutor {
                                 final Set<Long> newMetaIdExcludeSet = failedMetaIds.stream()
                                         .filter(failedMeta -> Objects.equals(
                                                 currentDeleteThresholdCopy,
-                                                failedMeta.getStatusTime().orElse(null)))
+                                                failedMeta.getStatusMs()))
                                         .map(SimpleMeta::getId)
                                         .collect(Collectors.toSet());
 

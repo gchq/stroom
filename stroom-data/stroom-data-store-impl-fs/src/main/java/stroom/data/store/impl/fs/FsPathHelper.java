@@ -188,7 +188,7 @@ class FsPathHelper {
     Path getRootPath(final Path volumePath,
                      final SimpleMeta meta,
                      final String streamTypeName) {
-        final String utcDate = DateUtil.createNormalDateTimeString(meta.getCreateTime());
+        final String utcDate = DateUtil.createNormalDateTimeString(meta.getCreateMs());
         final String typePath = fileSystemTypePaths.getOrCreatePath(streamTypeName);
         final String feedPath = fileSystemFeedPaths.getOrCreatePath(meta.getFeedName());
         final String paddedId = FsPrefixUtil.padId(meta.getId());

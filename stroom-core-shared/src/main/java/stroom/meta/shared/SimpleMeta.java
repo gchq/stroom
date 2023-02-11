@@ -1,8 +1,5 @@
 package stroom.meta.shared;
 
-import java.time.Instant;
-import java.util.Optional;
-
 public interface SimpleMeta {
 
     long getId();
@@ -13,9 +10,5 @@ public interface SimpleMeta {
 
     long getCreateMs();
 
-    Instant getCreateTime();
-
     Long getStatusMs();
-
-    Optional<Instant> getStatusTime();
 }

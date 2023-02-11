@@ -813,7 +813,7 @@ class TestMetaDaoImpl {
                 .containsOnly(RAW_STREAM_TYPE_NAME);
 
         for (final SimpleMeta simpleMeta : simpleMetas) {
-            assertThat(simpleMeta.getStatusTime().get())
+            assertThat(Instant.ofEpochMilli(simpleMeta.getStatusMs()))
                     .isBeforeOrEqualTo(threshold);
         }
     }

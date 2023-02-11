@@ -16,9 +16,7 @@ class TestSimpleMetaImpl {
             SimpleMeta::getId,
             SimpleMeta::getFeedName,
             SimpleMeta::getTypeName,
-            SimpleMeta::getCreateTime,
             SimpleMeta::getCreateMs,
-            SimpleMeta::getStatusTime,
             SimpleMeta::getStatusMs);
 
     @Test

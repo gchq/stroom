@@ -17,14 +17,11 @@
 package stroom.meta.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.time.Instant;
 import java.util.Objects;
-import java.util.Optional;
 
 @JsonInclude(Include.NON_NULL)
 public class Meta implements SimpleMeta {
@@ -156,12 +153,6 @@ public class Meta implements SimpleMeta {
         this.status = status;
     }
 
-    @JsonIgnore
-    public Optional<Instant> getStatusTime() {
-        return Optional.ofNullable(statusMs)
-                .map(Instant::ofEpochMilli);
-    }
-
     public Long getStatusMs() {
         return statusMs;
     }
@@ -170,23 +161,12 @@ public class Meta implements SimpleMeta {
         this.statusMs = statusMs;
     }
 
-    @JsonIgnore
-    public Instant getCreateTime() {
-        return Instant.ofEpochMilli(createMs);
-    }
-
     public long getCreateMs() {
         return createMs;
     }
 
     public void setCreateMs(final long createMs) {
         this.createMs = createMs;
-    }
-
-    @JsonIgnore
-    public Optional<Instant> getEffectiveTime() {
-        return Optional.ofNullable(effectiveMs)
-                .map(Instant::ofEpochMilli);
     }
 
     public Long getEffectiveMs() {
