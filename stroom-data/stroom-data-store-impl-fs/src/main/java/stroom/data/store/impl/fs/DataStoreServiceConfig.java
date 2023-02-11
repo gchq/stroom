@@ -80,7 +80,7 @@ public class DataStoreServiceConfig extends AbstractConfig implements HasDbConfi
 
     @Min(0)
     @JsonPropertyDescription("The number of streams to accept file delete failures for before aborting the '"
-            + FsDataStoreJobsModule.DATA_DELETE_JOB_NAME + "' job. This job deletes a stream's files before " +
+            + PhysicalDeleteExecutor.TASK_NAME + "' job. This job deletes a stream's files before " +
             "removing its records from the database. Deletion of files may fail due to network connectivity. " +
             "A value of zero means it will abort on the first stream with errors. A value of 100 means it will " +
             "abort on the 101st stream that errors. Due to concurrent processing, the number of streams processed " +

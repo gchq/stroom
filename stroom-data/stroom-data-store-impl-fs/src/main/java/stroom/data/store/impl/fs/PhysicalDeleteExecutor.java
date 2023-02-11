@@ -33,7 +33,6 @@ import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.StringUtil;
 import stroom.util.time.StroomDuration;
 import stroom.util.time.TimeUtils;
 
@@ -66,7 +65,7 @@ public class PhysicalDeleteExecutor {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PhysicalDeleteExecutor.class);
 
-    private static final String TASK_NAME = "Fs Delete Executor";
+    public static final String TASK_NAME = "Data Delete";
     private static final String LOCK_NAME = "FsDeleteExecutor";
 
     private final ClusterLockService clusterLockService;
@@ -105,9 +104,10 @@ public class PhysicalDeleteExecutor {
     }
 
     public void exec() {
-        LOGGER.info(() -> TASK_NAME + " - start");
+        LOGGER.debug(() -> TASK_NAME + " - Trying lock " + LOCK_NAME);
         clusterLockService.tryLock(LOCK_NAME, () -> {
             try {
+                LOGGER.debug(() -> TASK_NAME + " - Acquired lock " + LOCK_NAME);
                 if (!Thread.currentThread().isInterrupted()) {
                     final DataStoreServiceConfig dataStoreServiceConfig = dataStoreServiceConfigProvider.get();
                     // Monitors all the totals for the whole run
@@ -127,13 +127,16 @@ public class PhysicalDeleteExecutor {
         if (!Thread.currentThread().isInterrupted()) {
             final DataStoreServiceConfig dataStoreServiceConfig = dataStoreServiceConfigProvider.get();
             final int deleteBatchSize = dataStoreServiceConfig.getDeleteBatchSize();
+            LOGGER.info(() -> LogUtil.message(
+                    "{} - Starting physical data deletion, deleteThreshold: {}, batchSize: {}",
+                    TASK_NAME, deleteThreshold, deleteBatchSize));
 
-            Instant currentDeleteThreshold = deleteThreshold;
-            Instant lastDeleteThreshold = null;
+            Instant slidingDeleteThreshold = deleteThreshold;
+            Instant lastSlidingDeleteThreshold = null;
 
             long count;
             long total = 0;
-            if (currentDeleteThreshold != null) {
+            if (slidingDeleteThreshold != null) {
                 final Executor executor = getExecutor();
                 final Set<Long> metaIdExcludeSet = new HashSet<>();
 
@@ -154,7 +157,7 @@ public class PhysicalDeleteExecutor {
                     // Get a batch of meta ids that are ready for actual deletion (logically deleted).
                     // metaIdExcludeSet ensures we don't pick up any from previous runs
                     final List<SimpleMeta> simpleMetas = metaService.getLogicallyDeleted(
-                            currentDeleteThreshold,
+                            slidingDeleteThreshold,
                             deleteBatchSize,
                             metaIdExcludeSet);
 
@@ -162,15 +165,12 @@ public class PhysicalDeleteExecutor {
 
                     // If we found some ids then try and physically delete this batch.
                     if (count > 0) {
-                        LOGGER.debug("{} - currentDeleteThreshold: {}", TASK_NAME, currentDeleteThreshold);
+                        LOGGER.debug("{} - currentDeleteThreshold: {}", TASK_NAME, slidingDeleteThreshold);
                         progress.incrementBatchCount();
                         final long finalCount = count;
                         final long finalTotal = total;
-                        info(() -> LogUtil.message("Deleting files for {} stream{}. Stream{} processed so far: {}",
-                                finalCount,
-                                StringUtil.pluralSuffix(finalCount),
-                                StringUtil.pluralSuffix(finalTotal),
-                                finalTotal));
+                        info(() -> LogUtil.message("Deleting files for {} streams. Streams processed so far: {}",
+                                finalCount, finalTotal));
                         total += count;
 
                         final WorkQueue workQueue = new WorkQueue(
@@ -182,15 +182,15 @@ public class PhysicalDeleteExecutor {
                         final Set<SimpleMeta> failedMetaIds = deleteCurrentBatch(
                                 taskContext,
                                 simpleMetas,
-                                currentDeleteThreshold,
+                                deleteThreshold, // currentDeleteThreshold only used for the DB qry
                                 workQueue,
                                 progress);
 
                         // Advance the currentDeleteThreshold backwards in time, so it is equal to the
                         // earliest one in our batch. If there are lots of metas with the same status time
                         // then currentDeleteThreshold may not change.
-                        lastDeleteThreshold = currentDeleteThreshold;
-                        currentDeleteThreshold = simpleMetas
+                        lastSlidingDeleteThreshold = slidingDeleteThreshold;
+                        slidingDeleteThreshold = simpleMetas
                                 .stream()
                                 .map(SimpleMeta::getStatusMs)
                                 .filter(Objects::nonNull)
@@ -199,18 +199,18 @@ public class PhysicalDeleteExecutor {
                                 .orElse(null);
 
                         LOGGER.debug("{} - currentDeleteThreshold: {}, lastDeleteThreshold: {}",
-                                TASK_NAME, currentDeleteThreshold, lastDeleteThreshold);
+                                TASK_NAME, slidingDeleteThreshold, lastSlidingDeleteThreshold);
 
                         if (NullSafe.hasItems(failedMetaIds)) {
                             LOGGER.error("{} - Failed to delete files for {} meta records. " +
                                             "Check logs for error messages.",
                                     TASK_NAME, failedMetaIds.size());
-                            if (currentDeleteThreshold != null) {
+                            if (slidingDeleteThreshold != null) {
 
                                 // As our next batch will be anything <= the new currentDeleteThreshold, we need
                                 // to exclude any metas that have the same status time as the new threshold
                                 // else they will get picked up again.
-                                final Instant currentDeleteThresholdCopy = currentDeleteThreshold;
+                                final Instant currentDeleteThresholdCopy = slidingDeleteThreshold;
                                 final Set<Long> newMetaIdExcludeSet = failedMetaIds.stream()
                                         .filter(failedMeta -> Objects.equals(
                                                 currentDeleteThresholdCopy,
@@ -221,7 +221,7 @@ public class PhysicalDeleteExecutor {
                                 // It is possible that we have >deleteBatchSize meta records with the same
                                 // status time (e.g. from some bulk ingest) so need to allow for our exclude list
                                 // growing on each iteration
-                                if (!Objects.equals(currentDeleteThreshold, lastDeleteThreshold)) {
+                                if (!Objects.equals(slidingDeleteThreshold, lastSlidingDeleteThreshold)) {
                                     // Different threshold time, so we can bin our old exclude set values
                                     metaIdExcludeSet.clear();
                                 }
@@ -230,8 +230,9 @@ public class PhysicalDeleteExecutor {
                         } else {
                             metaIdExcludeSet.clear();
                         }
+                        progress.logSummaryToDebug(() ->
+                                "Progress after batch " + progress.getBatchCount() + ":");
                     }
-                    progress.logSummaryToDebug("End of batch progress:");
                 } while (count >= deleteBatchSize);
             }
         }
@@ -395,7 +396,12 @@ public class PhysicalDeleteExecutor {
                                     dataStoreServiceConfig.getFullPath(
                                             DataStoreServiceConfig.PROP_NAME_DELETE_FAILURE_THRESHOLD));
                         } else {
-                            info(() -> "Deleting everything associated with " + simpleMeta);
+                            info(() -> LogUtil.message(
+                                    "Physically deleting everything associated with stream: {}, " +
+                                            "feed: {}, type: {}, statusTime: {}",
+                                    simpleMeta.getId(), simpleMeta.getFeedName(),
+                                    simpleMeta.getTypeName(),
+                                    LogUtil.instant(simpleMeta.getStatusMs())));
 
                             final DataVolume dataVolume = dataVolumeDao.findDataVolume(simpleMeta.getId());
                             final boolean isSuccessful;
@@ -441,7 +447,7 @@ public class PhysicalDeleteExecutor {
     private void info(final Supplier<String> message) {
         try {
             taskContext.info(message);
-            LOGGER.debug(() -> TASK_NAME + " - " + message);
+            LOGGER.debug(() -> TASK_NAME + " - " + message.get());
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         }
@@ -573,8 +579,9 @@ public class PhysicalDeleteExecutor {
             LOGGER.info(() -> LogUtil.message("{} - {}\n{}", TASK_NAME, msg, buildSummaryBox()));
         }
 
-        void logSummaryToDebug(final String msg) {
-            LOGGER.debug(() -> LogUtil.message("{} - {}\n{}", TASK_NAME, msg, buildSummaryBox()));
+        void logSummaryToDebug(final Supplier<String> msgSupplier) {
+            LOGGER.debug(() -> LogUtil.message("{} - {}\n{}",
+                    TASK_NAME, msgSupplier.get(), buildSummaryBox()));
         }
 
         @Override

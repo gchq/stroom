@@ -4,6 +4,7 @@ import com.google.common.base.Strings;
 import org.slf4j.helpers.MessageFormatter;
 
 import java.time.Duration;
+import java.time.Instant;
 
 public final class LogUtil {
 
@@ -156,5 +157,16 @@ public final class LogUtil {
         return LogUtil.message("Completed [{}] in {}",
                 work,
                 duration);
+    }
+
+    /**
+     * @return epochMs as an instant or null if epochMs is null.
+     */
+    public static Instant instant(final Long epochMs) {
+        if (epochMs == null) {
+            return null;
+        } else {
+            return Instant.ofEpochMilli(epochMs);
+        }
     }
 }
