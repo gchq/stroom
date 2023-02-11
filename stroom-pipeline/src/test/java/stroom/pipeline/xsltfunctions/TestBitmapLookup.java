@@ -79,7 +79,7 @@ class TestBitmapLookup extends AbstractXsltFunctionTest<BitmapLookup> {
         Mockito.verify(getMockErrorReceiver(), Mockito.never()).logTemplate(
                 Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
 
-        assertLoggedTopLevelSeverity(Severity.ERROR, "no reference loaders");
+        assertLoggedTopLevelSeverity(Severity.WARNING, "no reference loaders");
     }
 
     @Test
