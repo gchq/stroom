@@ -137,7 +137,7 @@ public class ProgressMonitor {
                     sb.append("\n");
                     sb.append(phaseDetails.phase.phaseName);
                     sb.append(": ");
-                    sb.append(phaseDetails.count.get());
+                    sb.append(phaseDetails.affectedItemCount.get());
                     sb.append(" (");
                     sb.append(phaseDetails.calls.get());
                     sb.append(" calls in ");
@@ -246,14 +246,30 @@ public class ProgressMonitor {
             queuedNewTasks.addAndGet(count);
         }
 
+        /**
+         * Log the duration of a phase with no affected items.
+         * @param phase The phase to log against.
+         * @param durationTimer The duration of the phase.
+         */
+        public void logPhase(final Phase phase,
+                             final DurationTimer durationTimer) {
+            logPhase(phase, durationTimer, 0);
+        }
+
+        /**
+         * Log the duration of a phase with {@code phase} affected items.
+         * @param phase The phase to log against.
+         * @param durationTimer The duration of the phase.
+         * @param affectedItemCount The number of items affected in the phase.
+         */
         public void logPhase(final Phase phase,
                              final DurationTimer durationTimer,
-                             final long count) {
+                             final long affectedItemCount) {
             final Duration duration = durationTimer.get();
             final PhaseDetails phaseDetails = phaseDetailsMap
                     .computeIfAbsent(phase, k -> new PhaseDetails(phase));
 
-            phaseDetails.increment(count, duration);
+            phaseDetails.increment(affectedItemCount, duration);
         }
 
         public void complete() {
@@ -265,22 +281,35 @@ public class ProgressMonitor {
 
         private final Phase phase;
         private final AtomicInteger calls = new AtomicInteger();
-        private final AtomicLong count = new AtomicLong();
+        private final AtomicLong affectedItemCount = new AtomicLong();
         private final AtomicReference<Duration> durationRef = new AtomicReference<>(Duration.ofMillis(0));
 
         private PhaseDetails(final Phase phase) {
             this.phase = phase;
         }
 
+        /**
+         * Increment the call count by one and add the duration.
+         */
+        public void increment(final Duration duration) {
+            increment(0, duration);
+        }
+
+        /**
+         * Increment the call count by one, increment the count of items affected by the
+         * phase by {@code count} and add the duration.
+         * @param count Number of items affected
+         * @param duration The duration to add.
+         */
         public void increment(final long count, final Duration duration) {
             this.calls.incrementAndGet();
-            this.count.addAndGet(count);
+            this.affectedItemCount.addAndGet(count);
             durationRef.accumulateAndGet(duration, Duration::plus);
         }
 
         public void add(final PhaseDetails phaseDetails) {
             this.calls.addAndGet(phaseDetails.calls.get());
-            this.count.addAndGet(phaseDetails.count.get());
+            this.affectedItemCount.addAndGet(phaseDetails.affectedItemCount.get());
             durationRef.accumulateAndGet(phaseDetails.durationRef.get(), Duration::plus);
         }
     }
