@@ -218,7 +218,7 @@ class TestPhysicalDeleteExecutor extends AbstractCoreIntegrationTest {
                 assertThat(progress.getFailureCount())
                         .isEqualTo(0);
                 assertThat(progress.getBatchCount())
-                        .isEqualTo(1);
+                        .isEqualTo(0);
             }
 
             for (final Meta unlockedMeta : unlockedMetas) {
