@@ -112,31 +112,6 @@ BEGIN
     END IF;
 END $$
 
--- --------------------------------------------------
-
---
--- Rename the old QUERY table, idempotent
---
-DROP PROCEDURE IF EXISTS processor_rename_col$$
-
-CREATE PROCEDURE processor_rename_col ()
-BEGIN
-    IF NOT EXISTS (
-        SELECT TABLE_NAME
-        FROM INFORMATION_SCHEMA.TABLES
-        WHERE TABLE_SCHEMA = database()
-        AND TABLE_NAME = 'OLD_QUERY') THEN
-
-        IF EXISTS (
-            SELECT TABLE_NAME
-            FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_SCHEMA = database()
-            AND TABLE_NAME = 'QUERY') THEN
-
-            RENAME TABLE QUERY TO OLD_QUERY;
-        END IF;
-    END IF;
-END $$
 
 -- --------------------------------------------------
 
