@@ -62,13 +62,11 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 import stroom.util.shared.Severity;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.cell.client.TextCell;
@@ -477,6 +475,20 @@ public abstract class AbstractMetaListPresenter
 //            this.criteria.obtainPageRequest().setOffset(0);
 //            this.criteria.obtainPageRequest().setLength(PageRequest.DEFAULT_PAGE_SIZE);
             refresh();
+        });
+    }
+
+    public void info() {
+        final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
+        validateExpression(expression, exp -> {
+            final FindMetaCriteria criteria = expressionToNonPagedCriteria(exp);
+            showSummary(
+                    criteria,
+                    null,
+                    null,
+                    "Selection Summary",
+                    false,
+                    null);
         });
     }
 
