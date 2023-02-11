@@ -36,13 +36,18 @@ import stroom.importexport.client.event.ShowDocRefDependenciesEvent;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
-import stroom.receive.rules.client.presenter.ActionMenuPresenter;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuBuilder;
+import stroom.widget.menu.client.presenter.MenuListPresenter;
+import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
@@ -61,7 +66,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.inject.Provider;
 
 public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Dependency>> {
 
@@ -85,7 +89,7 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
     private final DependencyCriteria criteria;
     private final RestDataProvider<Dependency, ResultPage<Dependency>> dataProvider;
     private final DocumentPluginEventManager entityPluginEventManager;
-    private final Provider<ActionMenuPresenter> actionMenuPresenterProvider;
+    private final MenuListPresenter menuListPresenter;
 
     // Holds all the doc type icons
     private Map<String, Preset> typeToSvgMap = new HashMap<>();
@@ -94,7 +98,7 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
     public DependenciesPresenter(final EventBus eventBus,
                                  final RestFactory restFactory,
                                  final DocumentPluginEventManager entityPluginEventManager,
-                                 final Provider<ActionMenuPresenter> actionMenuPresenterProvider) {
+                                 final MenuListPresenter menuListPresenter) {
         super(eventBus, new DataGridViewImpl<>(false, DEFAULT_PAGE_SIZE));
 
         this.restFactory = restFactory;
@@ -118,7 +122,7 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
         };
         dataProvider.addDataDisplay(getView().getDataDisplay());
         this.entityPluginEventManager = entityPluginEventManager;
-        this.actionMenuPresenterProvider = actionMenuPresenterProvider;
+        this.menuListPresenter = menuListPresenter;
 
         initColumns();
     }
@@ -206,13 +210,22 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
     }
 
     private void showActionMenu(final DocRef docRef, final NativeEvent event) {
+        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+            @Override
+            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                HidePopupEvent.fire(DependenciesPresenter.this, menuListPresenter);
+            }
 
-        List<Item> items = buildActionMenu(docRef);
-        actionMenuPresenterProvider.get().show(
-                DependenciesPresenter.this,
-                items,
-                event.getClientX(),
-                event.getClientY());
+            @Override
+            public void onHide(final boolean autoClose, final boolean ok) {
+            }
+        };
+
+        final com.google.gwt.dom.client.Element target = event.getEventTarget().cast();
+        final PopupPosition popupPosition = new PopupPosition(event.getClientX() + 10, event.getClientY());
+
+        menuListPresenter.setData(buildActionMenu(docRef));
+        ShowPopupEvent.fire(this, menuListPresenter, PopupType.POPUP, popupPosition, popupUiHandlers);
     }
 
     private List<Item> buildActionMenu(final DocRef docRef) {
