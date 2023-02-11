@@ -19,7 +19,7 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
 CALL meta_create_non_unique_index_v1(
     'meta',
-    'status_status_time_idx',
+    'meta_status_status_time_idx',
     'status, status_time');
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
