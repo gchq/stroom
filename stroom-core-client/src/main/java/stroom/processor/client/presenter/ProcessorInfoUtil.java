@@ -5,6 +5,7 @@ import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorFilterTracker;
+import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorRow;
 import stroom.widget.customdatebox.client.ClientDateUtil;
@@ -77,7 +78,7 @@ public class ProcessorInfoUtil {
                             tableBuilder.addRow("Min Event Id", tracker.getMinEventId());
                             tableBuilder.addRow("Streams", tracker.getMetaCount());
                             tableBuilder.addRow("Events", tracker.getEventCount());
-                            tableBuilder.addRow("Status", tracker.getStatus());
+                            tableBuilder.addRow("Status", getStatusMessage(tracker));
                         }
                     }
                     return tableBuilder.build();
@@ -89,5 +90,15 @@ public class ProcessorInfoUtil {
         if (ms != null) {
             builder.addRow(label, ClientDateUtil.toISOString(ms) + " (" + ms + ")");
         }
+    }
+
+    public static String getStatusMessage(final ProcessorFilterTracker tracker) {
+        String status = null;
+        if (tracker.getMessage() != null && tracker.getMessage().length() > 0) {
+            status = tracker.getStatus().getDisplayValue() + ": " + tracker.getMessage();
+        } else if (!ProcessorFilterTrackerStatus.CREATED.equals(tracker.getStatus())) {
+            status = tracker.getStatus().getDisplayValue();
+        }
+        return status;
     }
 }

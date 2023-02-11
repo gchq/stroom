@@ -1769,4 +1769,14 @@ public class MetaDaoImpl implements MetaDao, Clearable {
             });
         }
     }
+
+    @Override
+    public Set<Long> findLockedMeta(final Collection<Long> metaIdCollection) {
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+                .select(META.ID)
+                .from(META)
+                .where(META.ID.in(metaIdCollection))
+                .and(META.STATUS.eq(MetaStatusId.LOCKED))
+                .fetchSet(META.ID));
+    }
 }

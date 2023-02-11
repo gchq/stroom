@@ -4,6 +4,7 @@ import stroom.annotation.impl.AnnotationConfig.AnnotationDBConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 
+import java.util.List;
 import javax.sql.DataSource;
 
 public class AnnotationDbModule extends AbstractFlyWayDbModule<AnnotationDBConfig, AnnotationDbConnProvider> {
@@ -23,8 +24,8 @@ public class AnnotationDbModule extends AbstractFlyWayDbModule<AnnotationDBConfi
     }
 
     @Override
-    protected String getFlyWayLocation() {
-        return FLYWAY_LOCATIONS;
+    protected List<String> getFlyWayLocations() {
+        return List.of(FLYWAY_LOCATIONS);
     }
 
     @Override

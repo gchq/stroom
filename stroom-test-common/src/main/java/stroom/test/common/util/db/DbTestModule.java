@@ -6,6 +6,9 @@ import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
 
+/**
+ * Will share databases between runs for the same config
+ */
 public class DbTestModule extends AbstractModule {
 
     @Override

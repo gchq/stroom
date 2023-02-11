@@ -2,6 +2,6 @@ package stroom.processor.impl.db;
 
 import javax.sql.DataSource;
 
-interface ProcessorDbConnProvider extends DataSource {
+public interface ProcessorDbConnProvider extends DataSource {
 
 }

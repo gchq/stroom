@@ -39,16 +39,21 @@ public class ProgressMonitor {
     }
 
     public void report(final CreateProcessTasksState createProcessTasksState) {
-        LOGGER.info(() -> getFullReport(createProcessTasksState, LOGGER.isDebugEnabled(), LOGGER.isTraceEnabled()));
+        LOGGER.info(() -> getFullReport(
+                createProcessTasksState,
+                LOGGER.isDebugEnabled(),
+                LOGGER.isDebugEnabled(),
+                LOGGER.isTraceEnabled()));
     }
 
     public String getFullReport(final CreateProcessTasksState createProcessTasksState,
                                 final boolean showFilterDetail,
-                                final boolean showPhaseDetail) {
+                                final boolean showSummaryPhaseDetail,
+                                final boolean showFilterPhaseDetail) {
         final StringBuilder sb = new StringBuilder();
-        addSummary(sb, showPhaseDetail, createProcessTasksState);
+        addSummary(sb, showSummaryPhaseDetail, createProcessTasksState);
         if (showFilterDetail) {
-            addDetail(sb, showPhaseDetail);
+            addDetail(sb, showFilterPhaseDetail);
         }
         return LogUtil.inBoxOnNewLine(sb.toString());
     }
@@ -166,10 +171,10 @@ public class ProgressMonitor {
 
     public enum Phase {
         // Order is important. It governs the order the phases have in the logging
-        ADD_UNOWNED_TASKS("Add unowned tasks"),
-        ADD_UNOWNED_TASKS_FETCH_TASKS("Add unowned tasks -> Fetch tasks"),
-        ADD_UNOWNED_TASKS_FETCH_META("Add unowned tasks -> Fetch meta"),
-        ADD_UNOWNED_TASKS_QUEUE_TASKS("Add unowned tasks -> Queue tasks"),
+        QUEUE_CREATED_TASKS("Queue created tasks"),
+        QUEUE_CREATED_TASKS_FETCH_TASKS("Queue created tasks -> Fetch tasks"),
+        QUEUE_CREATED_TASKS_FETCH_META("Queue created tasks -> Fetch meta"),
+        QUEUE_CREATED_TASKS_QUEUE_TASKS("Queue created tasks -> Queue tasks"),
         CREATE_TASKS_FROM_SEARCH_QUERY("Create tasks from search query"),
         CREATE_STREAM_MAP("Create stream map"),
         FIND_META_FOR_FILTER("Find meta records matching filter"),

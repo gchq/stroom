@@ -68,9 +68,9 @@ public abstract class AbstractDataSourceProviderModule<
 
         // Prevent migrations from being re-run for each test
         final boolean hasModuleBeenMigrated = !COMPLETED_MIGRATIONS.computeIfAbsent(
-                dataSource,
-                k -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
-                .add(getModuleName());
+                            dataSource,
+                            k -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
+                    .add(getModuleName());
 
         final boolean haveBootstrapMigrationsBeenDone = DbMigrationState.haveBootstrapMigrationsBeenDone();
 

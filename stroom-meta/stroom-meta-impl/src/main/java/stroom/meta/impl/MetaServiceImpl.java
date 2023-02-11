@@ -41,6 +41,7 @@ import stroom.util.time.TimePeriod;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -705,5 +706,10 @@ public class MetaServiceImpl implements MetaService, Searchable {
     @Override
     public List<String> getProcessorUuidList(final FindMetaCriteria criteria) {
         return metaDao.getProcessorUuidList(criteria);
+    }
+
+    @Override
+    public Set<Long> findLockedMeta(final Collection<Long> metaIdCollection) {
+        return metaDao.findLockedMeta(metaIdCollection);
     }
 }

@@ -36,6 +36,9 @@ class TestDataSourceFactory implements DataSourceFactory, Clearable {
         return DbTestUtil.createTestDataSource(mergedConfig, name, unique);
     }
 
+    /**
+     * Clears the data from all tables
+     */
     @Override
     public void clear() {
         DbTestUtil.clear();

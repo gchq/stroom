@@ -4,6 +4,7 @@ import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 import stroom.storedquery.impl.StoredQueryConfig.StoredQueryDbConfig;
 
+import java.util.List;
 import javax.sql.DataSource;
 
 public class StoredQueryDbModule extends AbstractFlyWayDbModule<StoredQueryDbConfig, StoredQueryDbConnProvider> {
@@ -23,8 +24,8 @@ public class StoredQueryDbModule extends AbstractFlyWayDbModule<StoredQueryDbCon
     }
 
     @Override
-    protected String getFlyWayLocation() {
-        return FLYWAY_LOCATIONS;
+    protected List<String> getFlyWayLocations() {
+        return List.of(FLYWAY_LOCATIONS);
     }
 
     @Override

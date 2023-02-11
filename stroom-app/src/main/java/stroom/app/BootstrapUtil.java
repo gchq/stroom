@@ -155,11 +155,11 @@ public class BootstrapUtil {
 
     private static void showBuildInfo(final BuildInfo buildInfo) {
         Objects.requireNonNull(buildInfo);
-        LOGGER.info(""
-                + "\n********************************************************************************"
-                + "\n  Build version: " + buildInfo.getBuildVersion()
-                + "\n  Build date:    " + buildInfo.getBuildDate()
-                + "\n********************************************************************************");
+        LOGGER.info(LogUtil.inBoxOnNewLine(
+                """
+                Build version: {}
+                Build date:    {}
+                """, buildInfo.getBuildVersion(), buildInfo.getBuildDate()));
     }
 
     /**
@@ -246,11 +246,7 @@ public class BootstrapUtil {
                         }
                         doneWork.set(true);
 
-                        LOGGER.info("""
-
-                                -----------------------------------------------------------
-                                  Completed database migrations
-                                -----------------------------------------------------------""");
+                        LOGGER.info(LogUtil.inBoxOnNewLine("Completed all database migrations"));
 
                         // If anything fails and we don't update/insert these it is fine, it will just
                         // get done on next successful boot
