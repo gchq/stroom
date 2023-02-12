@@ -16,6 +16,8 @@
 
 package stroom.main.client.event;
 
+import stroom.main.client.event.UrlQueryParameterChangeEvent.UrlQueryParameterChangeHandler;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
@@ -23,7 +25,7 @@ import com.google.gwt.event.shared.HasHandlers;
 import java.util.Map;
 
 public class UrlQueryParameterChangeEvent extends
-        GwtEvent<UrlQueryParameterChangeEvent.UrlQueryParameterChangeHandler> {
+        GwtEvent<UrlQueryParameterChangeHandler> {
 
     private static Type<UrlQueryParameterChangeHandler> TYPE;
     private final String action;
