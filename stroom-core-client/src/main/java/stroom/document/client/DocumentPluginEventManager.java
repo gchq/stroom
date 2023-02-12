@@ -858,7 +858,7 @@ public class DocumentPluginEventManager extends Plugin {
                 && !FeedDoc.DOCUMENT_TYPE.equals(readableItems.get(0).getType());
 
         addFavouritesMenuItem(menuItems, singleSelection, 10);
-        if (singleSelection && getPrimarySelection() != null) {
+        if (singleSelection && getPrimarySelection() != null && !DocumentTypes.isSystem(getPrimarySelection().getType())) {
             menuItems.add(createCopyLinkMenuItem(getPrimarySelection(), 11));
             menuItems.add(new Separator(12));
         }
