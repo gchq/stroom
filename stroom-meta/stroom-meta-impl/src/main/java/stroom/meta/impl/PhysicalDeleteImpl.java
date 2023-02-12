@@ -2,7 +2,7 @@ package stroom.meta.impl;
 
 import stroom.meta.api.PhysicalDelete;
 
-import java.util.List;
+import java.util.Collection;
 import javax.inject.Inject;
 
 class PhysicalDeleteImpl implements PhysicalDelete {
@@ -17,11 +17,11 @@ class PhysicalDeleteImpl implements PhysicalDelete {
     }
 
     @Override
-    public void cleanup(final List<Long> idList) {
+    public void cleanup(final Collection<Long> metaIds) {
         // Delete meta attributes.
-        metaValueDao.delete(idList);
+        metaValueDao.delete(metaIds);
 
         // Delete meta data.
-        metaDao.delete(idList);
+        metaDao.delete(metaIds);
     }
 }

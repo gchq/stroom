@@ -18,6 +18,7 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.shared.StreamTypeNames;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.SimpleMeta;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 
@@ -184,7 +185,9 @@ class FsPathHelper {
     /**
      * Return a File IO object.
      */
-    Path getRootPath(final Path volumePath, final Meta meta, final String streamTypeName) {
+    Path getRootPath(final Path volumePath,
+                     final SimpleMeta meta,
+                     final String streamTypeName) {
         final String utcDate = DateUtil.createNormalDateTimeString(meta.getCreateMs());
         final String typePath = fileSystemTypePaths.getOrCreatePath(streamTypeName);
         final String feedPath = fileSystemFeedPaths.getOrCreatePath(meta.getFeedName());

@@ -9,10 +9,12 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.SelectionSummary;
+import stroom.meta.shared.SimpleMeta;
 import stroom.meta.shared.Status;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -230,7 +232,12 @@ public interface MetaService {
                                                                DataRetentionRules rules,
                                                                FindDataRetentionImpactCriteria criteria);
 
-    boolean cancelRetentionDeleteSummary(String queryId);
+    boolean cancelRetentionDeleteSummary(final String queryId);
 
     Set<Long> findLockedMeta(Collection<Long> metaIdCollection);
+
+    List<SimpleMeta> getLogicallyDeleted(final Instant deleteThreshold,
+                                         final int batchSize,
+                                         final Set<Long> metaIdExcludeSet);
+
 }

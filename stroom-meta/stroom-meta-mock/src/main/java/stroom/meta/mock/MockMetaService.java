@@ -17,12 +17,14 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.SelectionSummary;
+import stroom.meta.shared.SimpleMeta;
 import stroom.meta.shared.Status;
 import stroom.util.NullSafe;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -363,5 +365,12 @@ public class MockMetaService implements MetaService, Clearable {
     @Override
     public Set<Long> findLockedMeta(final Collection<Long> metaIdCollection) {
         return null;
+    }
+
+    @Override
+    public List<SimpleMeta> getLogicallyDeleted(final Instant deleteThreshold,
+                                                final int batchSize,
+                                                final Set<Long> metaIdExcludeSet) {
+        return Collections.emptyList();
     }
 }

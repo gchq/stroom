@@ -34,6 +34,7 @@ import org.jooq.BatchBindStep;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -288,10 +289,10 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
     }
 
     @Override
-    public int delete(final List<Long> metaIdList) {
+    public int delete(final Collection<Long> metaIds) {
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .deleteFrom(META_VAL)
-                .where(META_VAL.META_ID.in(metaIdList))
+                .where(META_VAL.META_ID.in(metaIds))
                 .execute());
     }
 

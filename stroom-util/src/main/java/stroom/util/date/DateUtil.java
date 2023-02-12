@@ -100,6 +100,17 @@ public final class DateUtil {
      * @throws IllegalArgumentException if date does not parse
      */
     public static long parseNormalDateTimeString(final String date) {
+        return parseNormalDateTimeStringToInstant(date).toEpochMilli();
+    }
+
+    /**
+     * Parse a 'normal' type date.
+     *
+     * @param date string date
+     * @return A UTC {@link Instant}
+     * @throws IllegalArgumentException if date does not parse
+     */
+    public static Instant parseNormalDateTimeStringToInstant(final String date) {
         if (date == null) {
             throw new IllegalArgumentException("Unable to parse null date");
         }
@@ -109,7 +120,7 @@ public final class DateUtil {
         }
 
         final LocalDateTime dateTime = LocalDateTime.parse(date, NORMAL_STROOM_TIME_FORMATTER);
-        return dateTime.toInstant(ZoneOffset.UTC).toEpochMilli();
+        return dateTime.toInstant(ZoneOffset.UTC);
     }
 
     /**
