@@ -577,6 +577,16 @@ public class DocumentPluginEventManager extends Plugin {
     public void open(final DocRef docRef, final boolean forceOpen) {
         final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(docRef.getType());
         if (documentPlugin != null) {
+            // Decorate the DocRef with its name from the info service (required by the doc presenter)
+            restFactory.create()
+                    .onSuccess(result -> {
+                        final DocRefInfo docRefInfo = (DocRefInfo) result;
+                        if (docRefInfo.getDocRef() != null) {
+                            docRef.setName(docRefInfo.getDocRef().getName());
+                        }
+                    })
+                    .call(EXPLORER_RESOURCE)
+                    .info(docRef);
             documentPlugin.open(docRef, forceOpen);
         } else {
             throw new IllegalArgumentException("Document type '" + docRef.getType() + "' not registered");
@@ -971,7 +981,7 @@ public class DocumentPluginEventManager extends Plugin {
                 priority,
                 SvgPresets.CLIPBOARD,
                 SvgPresets.CLIPBOARD,
-                "Copy link to clipboard",
+                "Copy Link to Clipboard",
                 null,
                 true,
                 () -> ClipboardUtil.copy(docUrl)
