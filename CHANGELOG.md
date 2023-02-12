@@ -12,6 +12,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0.21] - 2023-02-12
+
+* Issue **#3204** : More changes to improve task creation performance.
+
+* Issue **#3204** : Split UNPROCESSED(1) task state into CREATED(0) and QUEUED(1) to improve task creation performance and management.
+
+* Issue **#3204** : Change processor_filter_tracker to have a status enum and an optional message.
+
+* Issue **#3225** : Improve performance of the database query used to find logically deleted streams for the `Data Delete` job. Add the index `meta_status_status_time_idx` on table `meta`. Add a summary log for the job.
+
+* Issue **#3231** : Change severity from ERROR to WARN when a reference lookup is performed with no reference loaders configured.
+
+
 ## [v7.0.20] - 2023-02-01
 
 * Issue **#3136** : Improve ref data lookup trace logging. Refactor effective streams query.
@@ -4763,7 +4776,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.20...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.21...HEAD
+[v7.0.21]: https://github.com/gchq/stroom/compare/v7.0.20...v7.0.21
 [v7.0.20]: https://github.com/gchq/stroom/compare/v7.0.19...v7.0.20
 [v7.0.19]: https://github.com/gchq/stroom/compare/v7.0.18...v7.0.19
 [v7.0.18]: https://github.com/gchq/stroom/compare/v7.0.17...v7.0.18
