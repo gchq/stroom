@@ -12764,6 +12764,9 @@
             "type" : "integer",
             "format" : "int64"
           },
+          "message" : {
+            "type" : "string"
+          },
           "metaCount" : {
             "type" : "integer",
             "format" : "int64"
@@ -12785,7 +12788,8 @@
             "format" : "int64"
           },
           "status" : {
-            "type" : "string"
+            "type" : "string",
+            "enum" : [ "CREATED", "COMPLETE", "ERROR" ]
           },
           "version" : {
             "type" : "integer",
@@ -12872,7 +12876,7 @@
           },
           "status" : {
             "type" : "string",
-            "enum" : [ "UNPROCESSED", "ASSIGNED", "PROCESSING", "COMPLETE", "FAILED", "DELETED" ]
+            "enum" : [ "CREATED", "QUEUED", "ASSIGNED", "PROCESSING", "COMPLETE", "FAILED", "DELETED" ]
           },
           "statusTimeMs" : {
             "type" : "integer",
@@ -12917,7 +12921,7 @@
           },
           "status" : {
             "type" : "string",
-            "enum" : [ "UNPROCESSED", "ASSIGNED", "PROCESSING", "COMPLETE", "FAILED", "DELETED" ]
+            "enum" : [ "CREATED", "QUEUED", "ASSIGNED", "PROCESSING", "COMPLETE", "FAILED", "DELETED" ]
           }
         }
       },
