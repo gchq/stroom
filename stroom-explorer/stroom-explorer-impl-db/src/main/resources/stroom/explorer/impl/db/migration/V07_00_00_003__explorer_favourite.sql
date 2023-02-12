@@ -26,7 +26,8 @@ CREATE TABLE IF NOT EXISTS `explorer_favourite`
     `create_time_ms` bigint       NOT NULL,
     PRIMARY KEY (`id`),
     KEY `explorer_favourite_fk_doc_type_doc_uuid` (`doc_type`, `doc_uuid`),
-    KEY `explorer_favourite_fk_user_uuid` (`user_uuid`),
+    KEY `explorer_favourite_user_uuid_idx` (`user_uuid`),
+    KEY `explorer_favourite_user_uuid_doc_type_doc_uuid_idx` (`user_uuid`, `doc_type`, `doc_uuid`),
     UNIQUE KEY `explorer_favourite_fk_en_type_en_uuid_user_uuid` (`doc_type`, `doc_uuid`, `user_uuid`),
     CONSTRAINT `explorer_favourite_fk_en_type_en_uuid` FOREIGN KEY (`doc_type`, `doc_uuid`)
         REFERENCES `stroom`.`explorer_node` (`type`, `uuid`)

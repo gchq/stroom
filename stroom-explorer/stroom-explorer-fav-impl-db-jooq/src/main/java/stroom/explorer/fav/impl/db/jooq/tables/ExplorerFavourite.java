@@ -115,7 +115,7 @@ public class ExplorerFavourite extends TableImpl<ExplorerFavouriteRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.asList(Indexes.EXPLORER_FAVOURITE_EXPLORER_FAVOURITE_FK_DOC_TYPE_DOC_UUID, Indexes.EXPLORER_FAVOURITE_EXPLORER_FAVOURITE_FK_USER_UUID);
+        return Arrays.asList(Indexes.EXPLORER_FAVOURITE_EXPLORER_FAVOURITE_FK_DOC_TYPE_DOC_UUID, Indexes.EXPLORER_FAVOURITE_EXPLORER_FAVOURITE_USER_UUID_DOC_TYPE_DOC_UUID_IDX, Indexes.EXPLORER_FAVOURITE_EXPLORER_FAVOURITE_USER_UUID_IDX);
     }
 
     @Override

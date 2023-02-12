@@ -45,9 +45,9 @@ public class ExplorerFavDaoImpl implements ExplorerFavDao {
     public void deleteFavouriteForUser(final DocRef docRef, final String userId) {
         final int count = JooqUtil.contextResult(docStoreDbConnProvider, context -> context
                 .deleteFrom(EXPLORER_FAVOURITE)
-                .where(EXPLORER_FAVOURITE.DOC_TYPE.eq(docRef.getType()))
+                .where(EXPLORER_FAVOURITE.USER_UUID.eq(userId))
+                .and(EXPLORER_FAVOURITE.DOC_TYPE.eq(docRef.getType()))
                 .and(EXPLORER_FAVOURITE.DOC_UUID.eq(docRef.getUuid()))
-                .and(EXPLORER_FAVOURITE.USER_UUID.eq(userId))
                 .execute());
 
         if (count != 1) {
@@ -72,8 +72,8 @@ public class ExplorerFavDaoImpl implements ExplorerFavDao {
     public boolean isFavourite(final DocRef docRef, final String userId) {
         return JooqUtil.contextResult(docStoreDbConnProvider, context -> context
                 .fetchCount(EXPLORER_FAVOURITE,
-                        EXPLORER_FAVOURITE.DOC_TYPE.eq(docRef.getType())
-                        .and(EXPLORER_FAVOURITE.DOC_UUID.eq(docRef.getUuid()))
-                        .and(EXPLORER_FAVOURITE.USER_UUID.eq(userId)))) > 0;
+                        EXPLORER_FAVOURITE.USER_UUID.eq(userId)
+                                .and(EXPLORER_FAVOURITE.DOC_TYPE.eq(docRef.getType()))
+                                .and(EXPLORER_FAVOURITE.DOC_UUID.eq(docRef.getUuid()))) > 0);
     }
 }

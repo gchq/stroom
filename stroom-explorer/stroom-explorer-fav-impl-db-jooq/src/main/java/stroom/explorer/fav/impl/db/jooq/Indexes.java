@@ -23,5 +23,6 @@ public class Indexes {
     // -------------------------------------------------------------------------
 
     public static final Index EXPLORER_FAVOURITE_EXPLORER_FAVOURITE_FK_DOC_TYPE_DOC_UUID = Internal.createIndex(DSL.name("explorer_favourite_fk_doc_type_doc_uuid"), ExplorerFavourite.EXPLORER_FAVOURITE, new OrderField[] { ExplorerFavourite.EXPLORER_FAVOURITE.DOC_TYPE, ExplorerFavourite.EXPLORER_FAVOURITE.DOC_UUID }, false);
-    public static final Index EXPLORER_FAVOURITE_EXPLORER_FAVOURITE_FK_USER_UUID = Internal.createIndex(DSL.name("explorer_favourite_fk_user_uuid"), ExplorerFavourite.EXPLORER_FAVOURITE, new OrderField[] { ExplorerFavourite.EXPLORER_FAVOURITE.USER_UUID }, false);
+    public static final Index EXPLORER_FAVOURITE_EXPLORER_FAVOURITE_USER_UUID_DOC_TYPE_DOC_UUID_IDX = Internal.createIndex(DSL.name("explorer_favourite_user_uuid_doc_type_doc_uuid_idx"), ExplorerFavourite.EXPLORER_FAVOURITE, new OrderField[] { ExplorerFavourite.EXPLORER_FAVOURITE.USER_UUID, ExplorerFavourite.EXPLORER_FAVOURITE.DOC_TYPE, ExplorerFavourite.EXPLORER_FAVOURITE.DOC_UUID }, false);
+    public static final Index EXPLORER_FAVOURITE_EXPLORER_FAVOURITE_USER_UUID_IDX = Internal.createIndex(DSL.name("explorer_favourite_user_uuid_idx"), ExplorerFavourite.EXPLORER_FAVOURITE, new OrderField[] { ExplorerFavourite.EXPLORER_FAVOURITE.USER_UUID }, false);
 }
