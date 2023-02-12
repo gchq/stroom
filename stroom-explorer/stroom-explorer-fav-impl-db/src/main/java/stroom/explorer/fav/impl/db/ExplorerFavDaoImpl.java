@@ -2,8 +2,8 @@ package stroom.explorer.fav.impl.db;
 
 import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
-import stroom.docstore.impl.db.DocStoreDbConnProvider;
 import stroom.explorer.fav.impl.ExplorerFavDao;
+import stroom.explorer.impl.db.ExplorerDbConnProvider;
 
 import java.time.Instant;
 import java.util.List;
@@ -13,10 +13,10 @@ import static stroom.explorer.fav.impl.db.jooq.Tables.EXPLORER_FAVOURITE;
 
 public class ExplorerFavDaoImpl implements ExplorerFavDao {
 
-    private final DocStoreDbConnProvider docStoreDbConnProvider;
+    private final ExplorerDbConnProvider docStoreDbConnProvider;
 
     @Inject
-    ExplorerFavDaoImpl(final DocStoreDbConnProvider docStoreDbConnProvider) {
+    ExplorerFavDaoImpl(final ExplorerDbConnProvider docStoreDbConnProvider) {
         this.docStoreDbConnProvider = docStoreDbConnProvider;
     }
 
