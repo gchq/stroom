@@ -26,6 +26,7 @@ public final class SvgPresets {
     public static final Preset ALERT = enabled("svgIcon-alert", "Alert");
     public static final Preset ANNOTATE = disabled("svgIcon-edit", "Annotate");
     public static final Preset CLEAR = disabled("svgIcon-clear", "Clear");
+    public static final Preset CLIPBOARD = disabled("svgIcon-clipboard", "Clipboard");
     public static final Preset CLOSE = disabled("svgIcon-close", "Close");
     public static final Preset COPY = disabled("svgIcon-copy", "Copy");
     public static final Preset DATABASE = enabled("svgIcon-database", "Database");

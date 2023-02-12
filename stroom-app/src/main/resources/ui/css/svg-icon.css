@@ -28,6 +28,9 @@
 .svgIcon-clear {
   background-image: url("../images/clear.svg");
 }
+.svgIcon-clipboard {
+  background-image: url("../images/clipboard.svg");
+}
 .svgIcon-close {
   background-image: url("../images/close.svg");
 }

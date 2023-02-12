@@ -13,6 +13,7 @@ public class UrlParameters {
     private final String params;
     private final boolean embedded;
     private final boolean queryOnOpen;
+    private final String docRef;
 
     public UrlParameters() {
         type = Window.Location.getParameter("type");
@@ -21,6 +22,7 @@ public class UrlParameters {
         params = Window.Location.getParameter("params");
         embedded = Boolean.TRUE.toString().equalsIgnoreCase(Window.Location.getParameter("embedded"));
         queryOnOpen = !Boolean.FALSE.toString().equalsIgnoreCase(Window.Location.getParameter("queryOnOpen"));
+        docRef = Window.Location.getParameter("docRef");
     }
 
     public String getType() {
@@ -45,5 +47,9 @@ public class UrlParameters {
 
     public boolean isQueryOnOpen() {
         return queryOnOpen;
+    }
+
+    public String getDocRef() {
+        return docRef;
     }
 }
