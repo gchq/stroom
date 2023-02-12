@@ -31,7 +31,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docref.HasDisplayValue;
-import stroom.docstore.shared.DocFavResource;
 import stroom.document.client.event.CopyDocumentEvent;
 import stroom.document.client.event.CreateDocumentEvent;
 import stroom.document.client.event.DeleteDocumentEvent;
@@ -61,6 +60,7 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerConstants;
+import stroom.explorer.shared.ExplorerFavouriteResource;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNodePermissions;
 import stroom.explorer.shared.ExplorerResource;
@@ -117,7 +117,7 @@ import java.util.stream.Collectors;
 public class DocumentPluginEventManager extends Plugin {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
-    private static final DocFavResource DOC_FAV_RESOURCE = GWT.create(DocFavResource.class);
+    private static final ExplorerFavouriteResource EXPLORER_FAV_RESOURCE = GWT.create(ExplorerFavouriteResource.class);
     private static final KeyTest CTRL_S = event ->
             event.getCtrlKey() && !event.getShiftKey() && event.getKeyCode() == 'S';
     private static final KeyTest CTRL_SHIFT_S = event ->
@@ -565,9 +565,9 @@ public class DocumentPluginEventManager extends Plugin {
         final Rest<Void> rest = restFactory.create();
         rest.onSuccess(result -> RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this));
         if (setFavourite) {
-            rest.call(DOC_FAV_RESOURCE).create(docRef);
+            rest.call(EXPLORER_FAV_RESOURCE).createUserFavourite(docRef);
         } else {
-            rest.call(DOC_FAV_RESOURCE).delete(docRef);
+            rest.call(EXPLORER_FAV_RESOURCE).deleteUserFavourite(docRef);
         }
     }
 
