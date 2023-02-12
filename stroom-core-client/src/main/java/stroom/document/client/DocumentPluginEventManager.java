@@ -709,7 +709,7 @@ public class DocumentPluginEventManager extends Plugin {
 //        return docRef;
 //    }
 
-    private void addFavouritesMenuItem(final List<Item> menuItems, final boolean singleSelection) {
+    private void addFavouritesMenuItem(final List<Item> menuItems, final boolean singleSelection, final int priority) {
         final ExplorerNode primarySelection = getPrimarySelection();
 
         // Add the favourites menu item if an item is selected, and it's not a root-level node or a favourite folder
@@ -857,24 +857,23 @@ public class DocumentPluginEventManager extends Plugin {
                 && allowRead
                 && !FeedDoc.DOCUMENT_TYPE.equals(readableItems.get(0).getType());
 
-        addFavouritesMenuItem(menuItems, singleSelection);
-
-        menuItems.add(createInfoMenuItem(readableItems, 3, isInfoEnabled));
-
-        if (singleSelection) {
-            menuItems.add(createCopyLinkMenuItem(getPrimarySelection(), 4));
+        addFavouritesMenuItem(menuItems, singleSelection, 10);
+        if (singleSelection && getPrimarySelection() != null) {
+            menuItems.add(createCopyLinkMenuItem(getPrimarySelection(), 11));
+            menuItems.add(new Separator(12));
         }
 
-        menuItems.add(createCopyMenuItem(readableItems, 5, isCopyEnabled));
-        menuItems.add(createMoveMenuItem(updatableItems, 6, allowUpdate));
-        menuItems.add(createRenameMenuItem(updatableItems, 7, isRenameEnabled));
-        menuItems.add(createDeleteMenuItem(deletableItems, 8, allowDelete));
+        menuItems.add(createInfoMenuItem(readableItems, 20, isInfoEnabled));
+        menuItems.add(createCopyMenuItem(readableItems, 21, isCopyEnabled));
+        menuItems.add(createMoveMenuItem(updatableItems, 22, allowUpdate));
+        menuItems.add(createRenameMenuItem(updatableItems, 23, isRenameEnabled));
+        menuItems.add(createDeleteMenuItem(deletableItems, 24, allowDelete));
 
         if (securityContext.hasAppPermission(PermissionNames.IMPORT_CONFIGURATION)) {
-            menuItems.add(createImportMenuItem(9));
+            menuItems.add(createImportMenuItem(25));
         }
         if (securityContext.hasAppPermission(PermissionNames.EXPORT_CONFIGURATION)) {
-            menuItems.add(createExportMenuItem(10, readableItems));
+            menuItems.add(createExportMenuItem(26, readableItems));
         }
 
         // Only allow users to change permissions if they have a single item selected.
@@ -883,10 +882,10 @@ public class DocumentPluginEventManager extends Plugin {
                     DocumentPermissionNames.OWNER,
                     true);
             if (ownedItems.size() == 1) {
-                menuItems.add(new Separator(20));
-                menuItems.add(createShowDependenciesMenuItem(ownedItems.get(0), 21));
                 menuItems.add(new Separator(30));
-                menuItems.add(createPermissionsMenuItem(ownedItems.get(0), 31, true));
+                menuItems.add(createShowDependenciesMenuItem(ownedItems.get(0), 31));
+                menuItems.add(new Separator(32));
+                menuItems.add(createPermissionsMenuItem(ownedItems.get(0), 33, true));
             }
         }
     }
@@ -979,8 +978,8 @@ public class DocumentPluginEventManager extends Plugin {
 
         return new IconMenuItem(
                 priority,
-                SvgPresets.CLIPBOARD,
-                SvgPresets.CLIPBOARD,
+                SvgPresets.SHARE,
+                SvgPresets.SHARE,
                 "Copy Link to Clipboard",
                 null,
                 true,

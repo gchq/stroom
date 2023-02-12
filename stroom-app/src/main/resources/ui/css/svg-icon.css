@@ -320,6 +320,9 @@
 .svgIcon-refresh-green {
   background-image: url("../images/refresh-green.svg");
 }
+.svgIcon-share {
+  background-image: url("../images/share.svg");
+}
 .svgIcon-show {
   background-image: url("../images/show.svg");
 }
