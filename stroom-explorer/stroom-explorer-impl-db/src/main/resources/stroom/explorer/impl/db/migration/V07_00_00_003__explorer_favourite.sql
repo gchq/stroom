@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS `explorer_favourite`
     KEY `explorer_favourite_user_uuid_doc_type_doc_uuid_idx` (`user_uuid`, `doc_type`, `doc_uuid`),
     UNIQUE KEY `explorer_favourite_fk_en_type_en_uuid_user_uuid` (`doc_type`, `doc_uuid`, `user_uuid`),
     CONSTRAINT `explorer_favourite_fk_en_type_en_uuid` FOREIGN KEY (`doc_type`, `doc_uuid`)
-        REFERENCES `stroom`.`explorer_node` (`type`, `uuid`)
+        REFERENCES `explorer_node` (`type`, `uuid`)
         ON DELETE CASCADE
 ) ENGINE = InnoDB
   AUTO_INCREMENT = 446
