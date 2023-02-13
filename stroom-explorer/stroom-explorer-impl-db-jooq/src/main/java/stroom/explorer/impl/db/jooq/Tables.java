@@ -4,6 +4,7 @@
 package stroom.explorer.impl.db.jooq;
 
 
+import stroom.explorer.impl.db.jooq.tables.ExplorerFavourite;
 import stroom.explorer.impl.db.jooq.tables.ExplorerNode;
 import stroom.explorer.impl.db.jooq.tables.ExplorerPath;
 
@@ -13,6 +14,11 @@ import stroom.explorer.impl.db.jooq.tables.ExplorerPath;
  */
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Tables {
+
+    /**
+     * The table <code>stroom.explorer_favourite</code>.
+     */
+    public static final ExplorerFavourite EXPLORER_FAVOURITE = ExplorerFavourite.EXPLORER_FAVOURITE;
 
     /**
      * The table <code>stroom.explorer_node</code>.

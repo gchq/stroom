@@ -1,6 +1,6 @@
-package stroom.explorer.fav.impl;
+package stroom.explorer.impl;
 
-import stroom.explorer.fav.api.ExplorerFavService;
+import stroom.explorer.api.ExplorerFavService;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
