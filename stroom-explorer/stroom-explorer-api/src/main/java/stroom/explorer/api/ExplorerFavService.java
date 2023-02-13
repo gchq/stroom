@@ -1,4 +1,4 @@
-package stroom.explorer.fav.api;
+package stroom.explorer.api;
 
 import stroom.docref.DocRef;
 
