@@ -1,10 +1,10 @@
-package stroom.explorer.fav.impl;
+package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
-import stroom.explorer.fav.api.ExplorerFavService;
+import stroom.explorer.api.ExplorerFavService;
 import stroom.explorer.shared.ExplorerFavouriteResource;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
