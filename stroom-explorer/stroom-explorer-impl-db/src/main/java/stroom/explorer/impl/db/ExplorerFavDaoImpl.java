@@ -1,15 +1,14 @@
-package stroom.explorer.fav.impl.db;
+package stroom.explorer.impl.db;
 
 import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
-import stroom.explorer.fav.impl.ExplorerFavDao;
-import stroom.explorer.impl.db.ExplorerDbConnProvider;
+import stroom.explorer.impl.ExplorerFavDao;
 
 import java.time.Instant;
 import java.util.List;
 import javax.inject.Inject;
 
-import static stroom.explorer.fav.impl.db.jooq.Tables.EXPLORER_FAVOURITE;
+import static stroom.explorer.impl.db.jooq.Tables.EXPLORER_FAVOURITE;
 
 public class ExplorerFavDaoImpl implements ExplorerFavDao {
 

@@ -1,7 +1,7 @@
 package stroom.app.guice;
 
-import stroom.explorer.fav.impl.ExplorerFavModule;
-import stroom.explorer.fav.impl.db.ExplorerFavDbModule;
+import stroom.explorer.impl.ExplorerFavModule;
+import stroom.explorer.impl.db.ExplorerFavDbModule;
 
 import com.google.inject.AbstractModule;
 

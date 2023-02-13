@@ -105,10 +105,6 @@ include 'stroom-docstore:stroom-docstore-impl'
 include 'stroom-docstore:stroom-docstore-impl-db'
 include 'stroom-docstore:stroom-docstore-impl-fs'
 include 'stroom-docstore:stroom-docstore-impl-memory'
-include 'stroom-explorer:stroom-explorer-fav-api'
-include 'stroom-explorer:stroom-explorer-fav-impl'
-include 'stroom-explorer:stroom-explorer-fav-impl-db'
-include 'stroom-explorer:stroom-explorer-fav-impl-db-jooq'
 
 // Common dropwizard supporting code
 include 'stroom-dropwizard-common'

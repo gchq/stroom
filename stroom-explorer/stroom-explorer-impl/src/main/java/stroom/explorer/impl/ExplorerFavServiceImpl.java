@@ -1,9 +1,9 @@
-package stroom.explorer.fav.impl;
+package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.explorer.api.ExplorerFavService;
 import stroom.explorer.api.ExplorerService;
-import stroom.explorer.fav.api.ExplorerFavService;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

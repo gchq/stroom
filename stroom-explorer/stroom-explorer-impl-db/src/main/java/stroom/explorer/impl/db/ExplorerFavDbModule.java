@@ -1,6 +1,6 @@
-package stroom.explorer.fav.impl.db;
+package stroom.explorer.impl.db;
 
-import stroom.explorer.fav.impl.ExplorerFavDao;
+import stroom.explorer.impl.ExplorerFavDao;
 
 import com.google.inject.AbstractModule;
 
