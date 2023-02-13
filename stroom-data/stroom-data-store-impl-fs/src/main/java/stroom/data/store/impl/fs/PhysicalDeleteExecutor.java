@@ -165,7 +165,7 @@ public class PhysicalDeleteExecutor {
 
                     // If we found some ids then try and physically delete this batch.
                     if (count > 0) {
-                        LOGGER.debug("{} - currentDeleteThreshold: {}", TASK_NAME, slidingDeleteThreshold);
+                        LOGGER.debug("{} - slidingDeleteThreshold: {}", TASK_NAME, slidingDeleteThreshold);
                         progress.incrementBatchCount();
                         final long finalCount = count;
                         final long finalTotal = total;
@@ -182,13 +182,13 @@ public class PhysicalDeleteExecutor {
                         final Set<SimpleMeta> failedMetaIds = deleteCurrentBatch(
                                 taskContext,
                                 simpleMetas,
-                                deleteThreshold, // currentDeleteThreshold only used for the DB qry
+                                deleteThreshold, // slidingDeleteThreshold only used for the DB qry
                                 workQueue,
                                 progress);
 
-                        // Advance the currentDeleteThreshold backwards in time, so it is equal to the
+                        // Advance the slidingDeleteThreshold backwards in time, so it is equal to the
                         // earliest one in our batch. If there are lots of metas with the same status time
-                        // then currentDeleteThreshold may not change.
+                        // then slidingDeleteThreshold may not change.
                         lastSlidingDeleteThreshold = slidingDeleteThreshold;
                         slidingDeleteThreshold = simpleMetas
                                 .stream()
@@ -198,7 +198,7 @@ public class PhysicalDeleteExecutor {
                                 .min(Comparator.naturalOrder())
                                 .orElse(null);
 
-                        LOGGER.debug("{} - currentDeleteThreshold: {}, lastDeleteThreshold: {}",
+                        LOGGER.debug("{} - slidingDeleteThreshold: {}, lastDeleteThreshold: {}",
                                 TASK_NAME, slidingDeleteThreshold, lastSlidingDeleteThreshold);
 
                         if (NullSafe.hasItems(failedMetaIds)) {
@@ -207,7 +207,7 @@ public class PhysicalDeleteExecutor {
                                     TASK_NAME, failedMetaIds.size());
                             if (slidingDeleteThreshold != null) {
 
-                                // As our next batch will be anything <= the new currentDeleteThreshold, we need
+                                // As our next batch will be anything <= the new slidingDeleteThreshold, we need
                                 // to exclude any metas that have the same status time as the new threshold
                                 // else they will get picked up again.
                                 final Instant currentDeleteThresholdCopy = slidingDeleteThreshold;
