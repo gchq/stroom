@@ -74,7 +74,6 @@ public class ExcelTarget implements SearchResultWriter.Target {
         // Create a workbook with 100 rows in memory. Exceeding rows will be
         // flushed to disk.
         workbook = new SXSSFWorkbook(100);
-        sheet = workbook.createSheet();
 
         // Create a style for headings.
         final Font headingFont = workbook.createFont();
@@ -88,11 +87,6 @@ public class ExcelTarget implements SearchResultWriter.Target {
 
     @Override
     public void end() throws IOException {
-        // Auto-size tracked columns
-        for (var columnIndex : sheet.getTrackedColumnsForAutoSizing()) {
-            sheet.autoSizeColumn(columnIndex);
-        }
-
         // Write the workbook to the output stream.
         workbook.write(outputStream);
         outputStream.close();
@@ -102,6 +96,21 @@ public class ExcelTarget implements SearchResultWriter.Target {
 
         // Dispose of temporary files backing workbook on disk.
         workbook.dispose();
+    }
+
+    @Override
+    public void startTable(final String tableName) {
+        sheet = workbook.createSheet(tableName);
+        rowNum = 0;
+        colNum = 0;
+    }
+
+    @Override
+    public void endTable() {
+        // Auto-size tracked columns
+        for (var columnIndex : sheet.getTrackedColumnsForAutoSizing()) {
+            sheet.autoSizeColumn(columnIndex);
+        }
     }
 
     @Override

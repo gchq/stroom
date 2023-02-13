@@ -11,6 +11,12 @@
       </g:customCell>
     </g:row>
     <g:row>
+      <g:cell>Download All Tables:</g:cell>
+      <g:customCell>
+        <view:TickBox ui:field="downloadAllTables" />
+      </g:customCell>
+    </g:row>
+    <g:row>
       <g:cell>Sample Only:</g:cell>
       <g:customCell>
         <view:TickBox ui:field="sample" />
