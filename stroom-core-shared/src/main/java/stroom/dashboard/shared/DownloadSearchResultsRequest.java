@@ -63,7 +63,7 @@ public class DownloadSearchResultsRequest {
     public DownloadSearchResultFileType getFileType() {
         return fileType;
     }
-    
+
     public boolean isDownloadAllTables() {
         return downloadAllTables;
     }
