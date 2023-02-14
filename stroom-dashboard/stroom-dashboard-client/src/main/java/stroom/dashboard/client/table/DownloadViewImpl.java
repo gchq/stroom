@@ -59,7 +59,12 @@ public class DownloadViewImpl extends ViewImpl implements DownloadView {
         fileType.setSelectedItem(DownloadSearchResultFileType.EXCEL);
 
         downloadAllTables.setEnabled(isExcelFileTypeSelected());
-        fileType.addSelectionHandler(event -> downloadAllTables.setEnabled(isExcelFileTypeSelected()));
+        fileType.addSelectionHandler(event ->{
+            downloadAllTables.setEnabled(isExcelFileTypeSelected());
+            if(!isExcelFileTypeSelected()) {
+                downloadAllTables.setBooleanValue(false);
+            }
+        });
     }
 
     private boolean isExcelFileTypeSelected() {
