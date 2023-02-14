@@ -49,6 +49,8 @@ public class QueryComponentSettings implements ComponentSettings {
     private final List<ComponentSelectionHandler> selectionHandlers;
     @JsonProperty("lastQueryKey")
     private final QueryKey lastQueryKey;
+    @JsonProperty("lastQueryNode")
+    private final String lastQueryNode;
 
 
     @SuppressWarnings("checkstyle:LineLength")
@@ -57,12 +59,14 @@ public class QueryComponentSettings implements ComponentSettings {
                                   @JsonProperty("expression") final ExpressionOperator expression,
                                   @JsonProperty("automate") final Automate automate,
                                   @JsonProperty("selectionHandlers") final List<ComponentSelectionHandler> selectionHandlers,
-                                  @JsonProperty("lastQueryKey") final QueryKey lastQueryKey) {
+                                  @JsonProperty("lastQueryKey") final QueryKey lastQueryKey,
+                                  @JsonProperty("lastQueryNode") final String lastQueryNode) {
         this.dataSource = dataSource;
         this.expression = expression;
         this.automate = automate;
         this.selectionHandlers = selectionHandlers;
         this.lastQueryKey = lastQueryKey;
+        this.lastQueryNode = lastQueryNode;
     }
 
     public DocRef getDataSource() {
@@ -85,24 +89,29 @@ public class QueryComponentSettings implements ComponentSettings {
         return lastQueryKey;
     }
 
+    public String getLastQueryNode() {
+        return lastQueryNode;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof QueryComponentSettings)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
         final QueryComponentSettings that = (QueryComponentSettings) o;
         return Objects.equals(dataSource, that.dataSource) && Objects.equals(expression,
                 that.expression) && Objects.equals(automate, that.automate) && Objects.equals(
                 selectionHandlers,
-                that.selectionHandlers);
+                that.selectionHandlers) && Objects.equals(lastQueryKey,
+                that.lastQueryKey) && Objects.equals(lastQueryNode, that.lastQueryNode);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(dataSource, expression, automate, selectionHandlers);
+        return Objects.hash(dataSource, expression, automate, selectionHandlers, lastQueryKey, lastQueryNode);
     }
 
     @Override
@@ -111,9 +120,12 @@ public class QueryComponentSettings implements ComponentSettings {
                 "dataSource=" + dataSource +
                 ", expression=" + expression +
                 ", automate=" + automate +
-                ", componentSelectionListeners=" + selectionHandlers +
+                ", selectionHandlers=" + selectionHandlers +
+                ", lastQueryKey=" + lastQueryKey +
+                ", lastQueryNode='" + lastQueryNode + '\'' +
                 '}';
     }
+
 
     public static Builder builder() {
         return new Builder();
@@ -130,6 +142,7 @@ public class QueryComponentSettings implements ComponentSettings {
         private Automate automate;
         private List<ComponentSelectionHandler> selectionHandlers;
         private QueryKey lastQueryKey;
+        private String lastQueryNode;
 
         private Builder() {
         }
@@ -142,6 +155,7 @@ public class QueryComponentSettings implements ComponentSettings {
                 this.selectionHandlers = new ArrayList<>(queryComponentSettings.selectionHandlers);
             }
             this.lastQueryKey = queryComponentSettings.lastQueryKey;
+            this.lastQueryNode = queryComponentSettings.lastQueryNode;
         }
 
         public Builder dataSource(final DocRef dataSource) {
@@ -177,8 +191,19 @@ public class QueryComponentSettings implements ComponentSettings {
             return this;
         }
 
+        public Builder lastQueryNode(final String lastQueryNode) {
+            this.lastQueryNode = lastQueryNode;
+            return this;
+        }
+
         public QueryComponentSettings build() {
-            return new QueryComponentSettings(dataSource, expression, automate, selectionHandlers, lastQueryKey);
+            return new QueryComponentSettings(
+                    dataSource,
+                    expression,
+                    automate,
+                    selectionHandlers,
+                    lastQueryKey,
+                    lastQueryNode);
         }
     }
 }

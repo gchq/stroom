@@ -15,10 +15,19 @@
     background-image: url('../images/drop-down-dark.svg');
 }
 
-.gwt-PopupPanel.autocompletePanel {
+.autocompletePanel {
     padding: 0;
     border: none;
     border-radius: 0 5px 5px 5px;
+}
+
+.autocompleteLayout {
+    display : flex;
+    flex-direction: column;
+}
+
+.gwt-PopupPanel.autocompletePanel {
+    background: none;
 }
 
 .gwt-PopupPanel.autocompletePanel input {
@@ -28,6 +37,8 @@
     background-repeat: no-repeat;
     background-position-x: right;
     background-position-y: 1px;
+    border-radius: 0;
+    height: 22px;
 }
 
 .stroom-theme-dark .gwt-PopupPanel.autocompletePanel input,
@@ -40,9 +51,5 @@
     padding: 0;
     overflow-y: auto;
     border-radius: 0;
-}
-
-.gwt-PopupPanel.autocompletePanel select > option {
-    padding: 2px 5px;
-    border: none;
+    height: 300px;
 }

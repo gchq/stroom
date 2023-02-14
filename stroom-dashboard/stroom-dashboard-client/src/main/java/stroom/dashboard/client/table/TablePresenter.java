@@ -492,7 +492,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                                 null,
                                                 result))
                                         .call(DASHBOARD_RESOURCE)
-                                        .downloadSearchResults(downloadSearchResultsRequest);
+                                        .downloadSearchResults(
+                                                currentSearchModel.getCurrentNode(),
+                                                downloadSearchResultsRequest);
                             }
 
                             e.hide();

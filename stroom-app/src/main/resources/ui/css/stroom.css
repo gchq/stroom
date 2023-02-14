@@ -585,7 +585,7 @@ td {
 .gwt-DateBox,
 .stroom-DropDownTree,
 .stroom-control,
-select option,
+select,
 textarea,
 input,
 input[type="text"],
@@ -606,13 +606,33 @@ input[type="file"] {
 .gwt-DateBox:disabled,
 .stroom-DropDownTree:disabled,
 .stroom-control:disabled,
-select option:disabled,
+select:disabled,
 textarea:disabled,
 input:disabled,
 input[type="text"]:disabled,
 input[type="checkbox"]:disabled,
 input[type="file"]:disabled {
 	border: solid 1px var(--control__border-color--disabled);
+	background-color: var(--control__background-color--disabled);
+	color: var(--control__text-color--disabled);
+}
+
+select option {
+	background-color: var(--control__background-color);
+	color: var(--control__text-color);
+	padding: 5px;
+}
+
+select option:hover {
+    background-color: var(--row__background-color--hovered);
+}
+
+select option:checked {
+	background-color: var(--row__background-color--selected);
+	color: var(--row__text-color--selected);
+}
+
+select option:disabled {
 	background-color: var(--control__background-color--disabled);
 	color: var(--control__text-color--disabled);
 }

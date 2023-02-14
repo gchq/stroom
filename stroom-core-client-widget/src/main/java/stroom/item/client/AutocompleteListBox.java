@@ -9,6 +9,7 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextBox;
@@ -46,13 +47,14 @@ public class AutocompleteListBox<T extends HasDisplayValue> extends Composite im
         textBox.addStyleName("autocompleteTextBox");
         textBox.addClickHandler(event -> showPopup(!isPopupVisible));
 
-        final VerticalPanel verticalPanel = new VerticalPanel();
+        final FlowPanel verticalPanel = new FlowPanel();
+        verticalPanel.addStyleName("autocompleteLayout");
         verticalPanel.add(autoTextBox);
         verticalPanel.add(autoListBox);
         popupPanel.add(verticalPanel);
         popupPanel.setAutoHideEnabled(true);
         popupPanel.addStyleName("autocompletePanel");
-        popupPanel.setPixelSize(textBox.getOffsetWidth(), 0);
+//        popupPanel.setPixelSize(textBox.getOffsetWidth(), 0);
         popupPanel.addCloseHandler(event -> showPopup(false));
 
         autoTextBox.addKeyUpHandler(this::filterItems);

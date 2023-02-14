@@ -63,6 +63,7 @@ import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.QueryUiHandlers;
 import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.client.view.QueryButtons;
+import stroom.query.shared.ResultStoreResource;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
@@ -103,6 +104,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         implements HasDirtyHandlers, Queryable {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
+    private static final ResultStoreResource RESULT_STORE_RESOURCE = GWT.create(ResultStoreResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
 
     public static final ComponentType TYPE = new ComponentType(0, "query", "Query", ComponentUse.PANEL);
@@ -603,15 +605,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         searchModel.stop();
     }
 
-    //    @Override
-//    public void reset() {
-//        if (autoRefreshTimer != null) {
-//            autoRefreshTimer.cancel();
-//            autoRefreshTimer = null;
-//        }
-//        searchModel.reset();
-//    }
-
     @Override
     public boolean getMode() {
         return searchModel.getMode();
@@ -647,11 +640,13 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                     incremental,
                     storeHistory,
                     lastUsedQueryInfo,
+                    null,
                     null);
         }
     }
 
-    private void resume(final QueryKey queryKey) {
+    private void resume(final String node,
+                        final QueryKey queryKey) {
         final DocRef dataSourceRef = getQuerySettings().getDataSource();
 
         if (dataSourceRef == null) {
@@ -673,6 +668,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                     true,
                     false,
                     lastUsedQueryInfo,
+                    node,
                     queryKey);
         }
     }
@@ -717,6 +713,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                 .copy()
                 .expression(expressionPresenter.write())
                 .lastQueryKey(searchModel.getCurrentQueryKey())
+                .lastQueryNode(searchModel.getCurrentNode())
                 .build());
         return super.write();
     }
@@ -746,7 +743,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private void init() {
         if (!initialised) {
             initialised = true;
-
             // An auto search can only commence if the UI has fully loaded and the data source has also
             // loaded from the server.
             final Automate automate = getQuerySettings().getAutomate();
@@ -754,8 +750,17 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                 run(true, false);
 
             } else if (getQuerySettings().getLastQueryKey() != null) {
-                // Resume search if we have a stored query key.
-                resume(getQuerySettings().getLastQueryKey());
+                // See if the result store exists before we try and resume a query.
+                final Rest<Boolean> rest = restFactory.create();
+                rest
+                        .onSuccess(result -> {
+                            if (result != null && result) {
+                                // Resume search if we have a stored query key.
+                                resume(getQuerySettings().getLastQueryNode(), getQuerySettings().getLastQueryKey());
+                            }
+                        })
+                        .call(RESULT_STORE_RESOURCE)
+                        .exists(getQuerySettings().getLastQueryNode(), getQuerySettings().getLastQueryKey());
             }
         }
     }

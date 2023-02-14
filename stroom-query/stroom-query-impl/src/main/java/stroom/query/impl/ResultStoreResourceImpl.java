@@ -95,6 +95,27 @@ public class ResultStoreResourceImpl implements ResultStoreResource {
         }
     }
 
+    @Override
+    public Boolean exists(final String nodeName, final QueryKey queryKey) {
+        try {
+            return nodeServiceProvider.get()
+                    .remoteRestResult(
+                            nodeName,
+                            Boolean.class,
+                            () -> ResourcePaths.buildAuthenticatedApiPath(
+                                    ResultStoreResource.BASE_PATH,
+                                    ResultStoreResource.TERMINATE_PATH_PART,
+                                    nodeName),
+                            () -> resultStoreManagerProvider.get()
+                                    .terminate(queryKey),
+                            builder ->
+                                    builder.post(Entity.json(queryKey)));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
+            return false;
+        }
+    }
+
     //    @AutoLogged(value = OperationType.PROCESS, verb = "Terminating",
 //            decorator = TerminateDecorator.class)
     @Override

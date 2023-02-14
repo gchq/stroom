@@ -20,27 +20,36 @@ import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DashboardSearchResponse;
-import stroom.dashboard.shared.DestroySearchRequest;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.FunctionSignature;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.node.api.NodeService;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceGeneration;
+import stroom.util.shared.ResourcePaths;
 
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.ws.rs.client.Entity;
 
 @AutoLogged
 class DashboardResourceImpl implements DashboardResource {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DashboardResourceImpl.class);
+
+    private final Provider<NodeService> nodeServiceProvider;
     private final Provider<DashboardService> dashboardServiceProvider;
 
     @Inject
-    DashboardResourceImpl(final Provider<DashboardService> dashboardServiceProvider) {
+    DashboardResourceImpl(final Provider<NodeService> nodeServiceProvider,
+                          final Provider<DashboardService> dashboardServiceProvider) {
+        this.nodeServiceProvider = nodeServiceProvider;
         this.dashboardServiceProvider = dashboardServiceProvider;
     }
 
@@ -75,22 +84,56 @@ class DashboardResourceImpl implements DashboardResource {
         return dashboardServiceProvider.get().downloadQuery(request);
     }
 
-    @Override
-    public ResourceGeneration downloadSearchResults(final DownloadSearchResultsRequest request) {
-        return dashboardServiceProvider.get().downloadSearchResults(request);
-    }
-
-    @Override
     @AutoLogged(OperationType.UNLOGGED)
-    public DashboardSearchResponse search(final DashboardSearchRequest request) {
-        return dashboardServiceProvider.get().search(request);
+    @Override
+    public ResourceGeneration downloadSearchResults(final String nodeName,
+                                                    final DownloadSearchResultsRequest request) {
+        try {
+            // If the client doesn't specify a node then execute locally.
+            if (nodeName == null || nodeName.equals("null")) {
+                return dashboardServiceProvider.get().downloadSearchResults(request);
+            }
+
+            return nodeServiceProvider.get()
+                    .remoteRestResult(
+                            nodeName,
+                            ResourceGeneration.class,
+                            () -> ResourcePaths.buildAuthenticatedApiPath(
+                                    DashboardResource.BASE_PATH,
+                                    DashboardResource.DOWNLOAD_SEARCH_RESULTS_PATH_PATH,
+                                    nodeName),
+                            () -> dashboardServiceProvider.get().downloadSearchResults(request),
+                            builder -> builder.post(Entity.json(request)));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw e;
+        }
     }
 
-//    @Override
-//    @AutoLogged(OperationType.UNLOGGED)
-//    public Boolean destroy(final DestroySearchRequest request) {
-//        return dashboardServiceProvider.get().destroy(request);
-//    }
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public DashboardSearchResponse search(final String nodeName, final DashboardSearchRequest request) {
+        try {
+            // If the client doesn't specify a node then execute locally.
+            if (nodeName == null || nodeName.equals("null")) {
+                return dashboardServiceProvider.get().search(request);
+            }
+
+            return nodeServiceProvider.get()
+                    .remoteRestResult(
+                            nodeName,
+                            DashboardSearchResponse.class,
+                            () -> ResourcePaths.buildAuthenticatedApiPath(
+                                    DashboardResource.BASE_PATH,
+                                    DashboardResource.SEARCH_PATH_PART,
+                                    nodeName),
+                            () -> dashboardServiceProvider.get().search(request),
+                            builder -> builder.post(Entity.json(request)));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw e;
+        }
+    }
 
     @Override
     @AutoLogged(OperationType.UNLOGGED)

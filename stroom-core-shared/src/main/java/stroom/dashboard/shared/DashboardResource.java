@@ -37,10 +37,15 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 @Tag(name = "Dashboards")
-@Path("/dashboard" + ResourcePaths.V1)
+@Path(DashboardResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface DashboardResource extends RestResource, DirectRestService, FetchWithUuid<DashboardDoc> {
+    String BASE_PATH = "/dashboard" + ResourcePaths.V1;
+
+    String DOWNLOAD_SEARCH_RESULTS_PATH_PATH = "/downloadSearchResults";
+    String SEARCH_PATH_PART = "/search";
+    String NODE_NAME_PATH_PARAM = "/{nodeName}";
 
     @GET
     @Path("/{uuid}")
@@ -75,19 +80,21 @@ public interface DashboardResource extends RestResource, DirectRestService, Fetc
                     DashboardSearchRequest request);
 
     @POST
-    @Path("/downloadSearchResults")
+    @Path(DOWNLOAD_SEARCH_RESULTS_PATH_PATH + NODE_NAME_PATH_PARAM)
     @Operation(
             summary = "Download search results",
             operationId = "downloadDashboardSearchResults")
     ResourceGeneration downloadSearchResults(
+            @PathParam("nodeName") String nodeName,
             @Parameter(description = "request", required = true) DownloadSearchResultsRequest request);
 
     @POST
-    @Path("/search")
+    @Path(SEARCH_PATH_PART + NODE_NAME_PATH_PARAM)
     @Operation(
             summary = "Perform a new search or get new results",
             operationId = "dashboardSearch")
     DashboardSearchResponse search(
+            @PathParam("nodeName") String nodeName,
             @Parameter(description = "request", required = true) DashboardSearchRequest request);
 
 //    @POST

@@ -143,11 +143,15 @@ public class SearchModel {
                                final boolean incremental,
                                final boolean storeHistory,
                                final String queryInfo,
+                               final String resumeNode,
                                final QueryKey resumeQueryKey) {
         GWT.log("SearchModel - startNewSearch()");
 
         // Destroy the previous search and ready all components for a new search to begin.
         reset(DestroyReason.NO_LONGER_NEEDED);
+
+        // If we are resuming then set the node and query key.
+        currentNode = resumeNode;
         currentQueryKey = resumeQueryKey;
 
         final Map<String, ComponentSettings> resultComponentMap = createComponentSettingsMap();
@@ -258,7 +262,7 @@ public class SearchModel {
                                 resultConsumer.accept(null);
                             })
                             .call(DASHBOARD_RESOURCE)
-                            .search(request);
+                            .search(currentNode, request);
                 }
             }
         }
@@ -384,7 +388,7 @@ public class SearchModel {
                         }
                     })
                     .call(DASHBOARD_RESOURCE)
-                    .search(request);
+                    .search(currentNode, request);
         }
     }
 
@@ -518,6 +522,10 @@ public class SearchModel {
 
     public QueryKey getCurrentQueryKey() {
         return currentQueryKey;
+    }
+
+    public String getCurrentNode() {
+        return currentNode;
     }
 
     public Search getCurrentSearch() {

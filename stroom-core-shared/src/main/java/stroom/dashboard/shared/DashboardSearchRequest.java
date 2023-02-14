@@ -35,7 +35,7 @@ import java.util.List;
 public class DashboardSearchRequest {
 
     @JsonProperty
-    private SearchRequestSource searchRequestSource;
+    private final SearchRequestSource searchRequestSource;
     @JsonProperty
     private final QueryKey queryKey;
     @JsonProperty

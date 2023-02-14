@@ -1773,36 +1773,6 @@
         "tags" : [ "Content" ]
       }
     },
-    "/dashboard/v1/destroy" : {
-      "post" : {
-        "operationId" : "dashboardDestroySearch",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/DestroySearchRequest"
-              }
-            }
-          },
-          "description" : "request",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Destroy a running search",
-        "tags" : [ "Dashboards" ]
-      }
-    },
     "/dashboard/v1/downloadQuery" : {
       "post" : {
         "operationId" : "downloadDashboardQuery",
@@ -5855,36 +5825,6 @@
         "tags" : [ "Processor Tasks" ]
       }
     },
-    "/query/v1/destroy" : {
-      "post" : {
-        "operationId" : "queryDestroySearch",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/DestroyQueryRequest"
-              }
-            }
-          },
-          "description" : "request",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Destroy a running query",
-        "tags" : [ "Queries" ]
-      }
-    },
     "/query/v1/downloadSearchResults" : {
       "post" : {
         "operationId" : "downloadQuerySearchResults",
@@ -6343,9 +6283,55 @@
         "tags" : [ "Remote Search" ]
       }
     },
-    "/result-store/v1/find" : {
+    "/result-store/v1/destroy/{nodeName}" : {
       "post" : {
-        "operationId" : "findResultStoreCriteria",
+        "operationId" : "destroyResultStore",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "nodeName",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DestroyStoreRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Destroy a search result store for a node",
+        "tags" : [ "ResultStore" ]
+      }
+    },
+    "/result-store/v1/find/{nodeName}" : {
+      "post" : {
+        "operationId" : "findResultStores",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "nodeName",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -6362,15 +6348,118 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ResultPageResultStoreInfo"
+                  "$ref" : "#/components/schemas/ResultStoreResponse"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "Find the result stores matching the supplied criteria",
-        "tags" : [ "Queries" ]
+        "summary" : "Find the result stores matching the supplied criteria for a node",
+        "tags" : [ "ResultStore" ]
+      }
+    },
+    "/result-store/v1/list/{nodeName}" : {
+      "get" : {
+        "operationId" : "listResultStores",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "nodeName",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultStoreResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Lists result stores for a node",
+        "tags" : [ "ResultStore" ]
+      }
+    },
+    "/result-store/v1/terminate/{nodeName}" : {
+      "post" : {
+        "operationId" : "terminateSearchTask",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "nodeName",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/QueryKey"
+              }
+            }
+          },
+          "description" : "queryKey",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Terminates search tasks for a node",
+        "tags" : [ "ResultStore" ]
+      }
+    },
+    "/result-store/v1/update/{nodeName}" : {
+      "post" : {
+        "operationId" : "updateResultStore",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "nodeName",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateStoreRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find the result stores matching the supplied criteria for a node",
+        "tags" : [ "ResultStore" ]
       }
     },
     "/ruleset/v2/export" : {
@@ -6705,36 +6794,6 @@
         "tags" : [ "Searchable" ]
       }
     },
-    "/searchable/v2/keepAlive" : {
-      "post" : {
-        "operationId" : "keepAliveSearchableQuery",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/QueryKey"
-              }
-            }
-          },
-          "description" : "QueryKey",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Keep a running query alive",
-        "tags" : [ "Searchable" ]
-      }
-    },
     "/searchable/v2/search" : {
       "post" : {
         "operationId" : "startSearchableQuery",
@@ -7047,36 +7106,6 @@
           }
         },
         "summary" : "Destroy a running query",
-        "tags" : [ "Sql Statistics Query" ]
-      }
-    },
-    "/sqlstatistics/v2/keepAlive" : {
-      "post" : {
-        "operationId" : "keepAliveSqlStatisticsQuery",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/QueryKey"
-              }
-            }
-          },
-          "description" : "QueryKey",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Keep a running query alive",
         "tags" : [ "Sql Statistics Query" ]
       }
     },
@@ -7726,36 +7755,6 @@
         "tags" : [ "Elasticsearch Queries" ]
       }
     },
-    "/stroom-elastic-index/v2/keepAlive" : {
-      "post" : {
-        "operationId" : "keepAliveElasticIndexQuery",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/QueryKey"
-              }
-            }
-          },
-          "description" : "QueryKey",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Keep a running query alive",
-        "tags" : [ "Elasticsearch Queries" ]
-      }
-    },
     "/stroom-elastic-index/v2/search" : {
       "post" : {
         "operationId" : "searchElasticIndex",
@@ -7846,36 +7845,6 @@
         "tags" : [ "Stroom-Index Queries" ]
       }
     },
-    "/stroom-index/v2/keepAlive" : {
-      "post" : {
-        "operationId" : "keepAliveStroomIndexQuery",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/QueryKey"
-              }
-            }
-          },
-          "description" : "QueryKey",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Keep a running query alive",
-        "tags" : [ "Stroom-Index Queries" ]
-      }
-    },
     "/stroom-index/v2/search" : {
       "post" : {
         "operationId" : "startStroomIndexQuery",
@@ -7963,36 +7932,6 @@
           }
         },
         "summary" : "Destroy a running query",
-        "tags" : [ "Solr Queries" ]
-      }
-    },
-    "/stroom-solr-index/v2/keepAlive" : {
-      "post" : {
-        "operationId" : "keepAliveSolrIndexQuery",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/QueryKey"
-              }
-            }
-          },
-          "description" : "QueryKey",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Keep a running query alive",
         "tags" : [ "Solr Queries" ]
       }
     },
@@ -10270,17 +10209,11 @@
       "DashboardSearchRequest" : {
         "type" : "object",
         "properties" : {
-          "componentId" : {
-            "type" : "string"
-          },
           "componentResultRequests" : {
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/ComponentResultRequest"
             }
-          },
-          "dashboardUuid" : {
-            "type" : "string"
           },
           "dateTimeSettings" : {
             "$ref" : "#/components/schemas/DateTimeSettings"
@@ -10290,6 +10223,9 @@
           },
           "search" : {
             "$ref" : "#/components/schemas/Search"
+          },
+          "searchRequestSource" : {
+            "$ref" : "#/components/schemas/SearchRequestSource"
           },
           "storeHistory" : {
             "type" : "boolean"
@@ -10319,6 +10255,9 @@
               "type" : "string"
             },
             "uniqueItems" : true
+          },
+          "node" : {
+            "type" : "string"
           },
           "queryKey" : {
             "$ref" : "#/components/schemas/QueryKey"
@@ -10607,28 +10546,12 @@
           }
         }
       },
-      "DestroyQueryRequest" : {
+      "DestroyStoreRequest" : {
         "type" : "object",
         "properties" : {
-          "componentId" : {
-            "type" : "string"
-          },
-          "queryDocUuid" : {
-            "type" : "string"
-          },
-          "queryKey" : {
-            "$ref" : "#/components/schemas/QueryKey"
-          }
-        }
-      },
-      "DestroySearchRequest" : {
-        "type" : "object",
-        "properties" : {
-          "componentId" : {
-            "type" : "string"
-          },
-          "dashboardUuid" : {
-            "type" : "string"
+          "destroyReason" : {
+            "type" : "string",
+            "enum" : [ "MANUAL", "NO_LONGER_NEEDED", "TAB_CLOSE", "WINDOW_CLOSE" ]
           },
           "queryKey" : {
             "$ref" : "#/components/schemas/QueryKey"
@@ -12949,6 +12872,23 @@
           }
         }
       },
+      "LifespanInfo" : {
+        "type" : "object",
+        "properties" : {
+          "destroyOnTabClose" : {
+            "type" : "boolean"
+          },
+          "destroyOnWindowClose" : {
+            "type" : "boolean"
+          },
+          "timeToIdle" : {
+            "type" : "string"
+          },
+          "timeToLive" : {
+            "type" : "string"
+          }
+        }
+      },
       "Limits" : {
         "type" : "object",
         "properties" : {
@@ -14205,6 +14145,9 @@
             "expression" : {
               "$ref" : "#/components/schemas/ExpressionOperator"
             },
+            "lastQueryKey" : {
+              "$ref" : "#/components/schemas/QueryKey"
+            },
             "selectionHandlers" : {
               "type" : "array",
               "items" : {
@@ -14320,9 +14263,6 @@
       "QuerySearchRequest" : {
         "type" : "object",
         "properties" : {
-          "componentId" : {
-            "type" : "string"
-          },
           "incremental" : {
             "type" : "boolean"
           },
@@ -14339,14 +14279,14 @@
           "queryContext" : {
             "$ref" : "#/components/schemas/QueryContext"
           },
-          "queryDocUuid" : {
-            "type" : "string"
-          },
           "queryKey" : {
             "$ref" : "#/components/schemas/QueryKey"
           },
           "requestedRange" : {
             "$ref" : "#/components/schemas/OffsetRange"
+          },
+          "searchRequestSource" : {
+            "$ref" : "#/components/schemas/SearchRequestSource"
           },
           "storeHistory" : {
             "type" : "boolean"
@@ -14876,21 +14816,6 @@
           }
         }
       },
-      "ResultPageResultStoreInfo" : {
-        "type" : "object",
-        "description" : "A page of results.",
-        "properties" : {
-          "pageResponse" : {
-            "$ref" : "#/components/schemas/PageResponse"
-          },
-          "values" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/ResultStoreInfo"
-            }
-          }
-        }
-      },
       "ResultPageStoredQuery" : {
         "type" : "object",
         "description" : "A page of results.",
@@ -14977,15 +14902,57 @@
       "ResultStoreInfo" : {
         "type" : "object",
         "properties" : {
+          "complete" : {
+            "type" : "boolean"
+          },
           "creationTime" : {
             "type" : "integer",
             "format" : "int64"
           },
+          "nodeName" : {
+            "type" : "string"
+          },
           "queryKey" : {
             "$ref" : "#/components/schemas/QueryKey"
           },
+          "searchProcessLifespan" : {
+            "$ref" : "#/components/schemas/LifespanInfo"
+          },
+          "searchRequestSource" : {
+            "$ref" : "#/components/schemas/SearchRequestSource"
+          },
+          "storeLifespan" : {
+            "$ref" : "#/components/schemas/LifespanInfo"
+          },
+          "storeSize" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "taskProgress" : {
+            "$ref" : "#/components/schemas/SearchTaskProgress"
+          },
           "userId" : {
             "type" : "string"
+          }
+        }
+      },
+      "ResultStoreResponse" : {
+        "type" : "object",
+        "properties" : {
+          "errors" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ResultStoreInfo"
+            }
           }
         }
       },
@@ -15185,15 +15152,33 @@
               "wrapped" : true
             }
           },
+          "searchRequestSource" : {
+            "$ref" : "#/components/schemas/SearchRequestSource"
+          },
           "timeout" : {
             "type" : "integer",
             "format" : "int64",
             "description" : "Set the maximum time (in ms) for the server to wait for a complete result set. The timeout applies to both incremental and non incremental queries, though the behaviour is slightly different. The timeout will make the server wait for which ever comes first out of the query completing or the timeout period being reached. If no value is supplied then for an incremental query a default value of 0 will be used (i.e. returning immediately) and for a non-incremental query the server's default timeout period will be used. For an incremental query, if the query has not completed by the end of the timeout period, it will return the currently know results with complete=false, however for a non-incremental query it will return no results, complete=false and details of the timeout in the error field"
           }
         },
-        "required" : [ "incremental", "key", "query", "resultRequests" ],
+        "required" : [ "incremental", "query", "resultRequests" ],
         "xml" : {
           "name" : "searchRequest"
+        }
+      },
+      "SearchRequestSource" : {
+        "type" : "object",
+        "properties" : {
+          "componentId" : {
+            "type" : "string"
+          },
+          "ownerDocUuid" : {
+            "type" : "string"
+          },
+          "sourceType" : {
+            "type" : "string",
+            "enum" : [ "ALERT_RULE", "DASHBOARD_UI", "QUERY_UI", "API", "BATCH_SEARCH" ]
+          }
         }
       },
       "SearchResponse" : {
@@ -15228,6 +15213,34 @@
           }
         },
         "required" : [ "highlights", "key" ]
+      },
+      "SearchTaskProgress" : {
+        "type" : "object",
+        "properties" : {
+          "nodeName" : {
+            "type" : "string"
+          },
+          "submitTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "taskInfo" : {
+            "type" : "string"
+          },
+          "taskName" : {
+            "type" : "string"
+          },
+          "threadName" : {
+            "type" : "string"
+          },
+          "timeNowMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "userName" : {
+            "type" : "string"
+          }
+        }
       },
       "SelectionIndexShardStatus" : {
         "type" : "object",
@@ -16735,6 +16748,20 @@
           "newStatus" : {
             "type" : "string",
             "enum" : [ "UNLOCKED", "LOCKED", "DELETED" ]
+          }
+        }
+      },
+      "UpdateStoreRequest" : {
+        "type" : "object",
+        "properties" : {
+          "queryKey" : {
+            "$ref" : "#/components/schemas/QueryKey"
+          },
+          "searchProcessLifespan" : {
+            "$ref" : "#/components/schemas/LifespanInfo"
+          },
+          "storeLifespan" : {
+            "$ref" : "#/components/schemas/LifespanInfo"
           }
         }
       },

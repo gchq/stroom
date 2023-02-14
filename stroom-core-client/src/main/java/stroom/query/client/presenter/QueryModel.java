@@ -281,7 +281,7 @@ public class QueryModel {
                         tablePresenter.setData(null);
                     })
                     .call(QUERY_RESOURCE)
-                    .search(request);
+                    .search(currentNode, request);
         }
 //            }
 //        }
@@ -373,7 +373,7 @@ public class QueryModel {
                         }
                     })
                     .call(QUERY_RESOURCE)
-                    .search(request);
+                    .search(currentNode, request);
         }
     }
 

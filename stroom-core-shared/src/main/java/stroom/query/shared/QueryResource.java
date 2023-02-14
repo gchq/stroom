@@ -39,10 +39,16 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 @Tag(name = "Queries")
-@Path("/query" + ResourcePaths.V1)
+@Path(QueryResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface QueryResource extends RestResource, DirectRestService, FetchWithUuid<QueryDoc> {
+
+    String BASE_PATH = "/query" + ResourcePaths.V1;
+
+    String DOWNLOAD_SEARCH_RESULTS_PATH_PATH = "/downloadSearchResults";
+    String SEARCH_PATH_PART = "/search";
+    String NODE_NAME_PATH_PARAM = "/{nodeName}";
 
     @GET
     @Path("/{uuid}")
@@ -68,19 +74,21 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
             @Parameter(description = "query", required = true) String query);
 
     @POST
-    @Path("/downloadSearchResults")
+    @Path(DOWNLOAD_SEARCH_RESULTS_PATH_PATH + NODE_NAME_PATH_PARAM)
     @Operation(
             summary = "Download search results",
             operationId = "downloadQuerySearchResults")
     ResourceGeneration downloadSearchResults(
+            @PathParam("nodeName") String nodeName,
             @Parameter(description = "request", required = true) DownloadQueryResultsRequest request);
 
     @POST
-    @Path("/search")
+    @Path(SEARCH_PATH_PART + NODE_NAME_PATH_PARAM)
     @Operation(
             summary = "Perform a new search or get new results",
             operationId = "querySearch")
     DashboardSearchResponse search(
+            @PathParam("nodeName") String nodeName,
             @Parameter(description = "request", required = true) QuerySearchRequest request);
 //
 //    @POST

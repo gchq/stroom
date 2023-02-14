@@ -355,6 +355,26 @@ public final class ResultStoreManager implements Clearable {
                 resultInfo);
     }
 
+    public Boolean exists(final QueryKey queryKey) {
+        if (LOGGER.isDebugEnabled()) {
+            String json = JsonUtil.writeValueAsString(queryKey);
+            LOGGER.debug("/exists called with queryKey:\n{}", json);
+        }
+
+        final String userId = securityContext.getUserId();
+        Objects.requireNonNull(userId, "No user is logged in");
+
+        final Optional<ResultStore> optionalResultStore =
+                getIfPresent(queryKey);
+
+        if (optionalResultStore.isPresent()) {
+            final ResultStore resultStore = optionalResultStore.get();
+            return resultStore.getUserId().equals(userId);
+        }
+
+        return false;
+    }
+
     /**
      * Terminate all running search processes associated with a result store.
      *

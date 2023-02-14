@@ -21,24 +21,34 @@ import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.node.api.NodeService;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceGeneration;
+import stroom.util.shared.ResourcePaths;
 
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.ws.rs.client.Entity;
 
 @AutoLogged
 class QueryResourceImpl implements QueryResource {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(QueryResourceImpl.class);
+
+    private final Provider<NodeService> nodeServiceProvider;
     private final Provider<QueryService> queryServiceProvider;
 
     @Inject
-    QueryResourceImpl(final Provider<QueryService> dashboardServiceProvider) {
+    QueryResourceImpl(final Provider<NodeService> nodeServiceProvider,
+                      final Provider<QueryService> dashboardServiceProvider) {
+        this.nodeServiceProvider = nodeServiceProvider;
         this.queryServiceProvider = dashboardServiceProvider;
     }
 
@@ -68,37 +78,59 @@ class QueryResourceImpl implements QueryResource {
         return queryServiceProvider.get().validateQuery(query);
     }
 
-//    @Override
-//    public ResourceGeneration downloadQuery(final DashboardSearchRequest request) {
-//        return queryServiceProvider.get().downloadQuery(request);
-//    }
-
-    @Override
-    public ResourceGeneration downloadSearchResults(final DownloadQueryResultsRequest request) {
-        return queryServiceProvider.get().downloadSearchResults(request);
-    }
-
-    @Override
     @AutoLogged(OperationType.UNLOGGED)
-    public DashboardSearchResponse search(final QuerySearchRequest request) {
-        return queryServiceProvider.get().search(request);
+    @Override
+    public ResourceGeneration downloadSearchResults(final String nodeName, final DownloadQueryResultsRequest request) {
+        try {
+            // If the client doesn't specify a node then execute locally.
+            if (nodeName == null || nodeName.equals("null")) {
+                return queryServiceProvider.get().downloadSearchResults(request);
+            }
+
+            return nodeServiceProvider.get()
+                    .remoteRestResult(
+                            nodeName,
+                            ResourceGeneration.class,
+                            () -> ResourcePaths.buildAuthenticatedApiPath(
+                                    QueryResource.BASE_PATH,
+                                    QueryResource.DOWNLOAD_SEARCH_RESULTS_PATH_PATH,
+                                    nodeName),
+                            () -> queryServiceProvider.get().downloadSearchResults(request),
+                            builder -> builder.post(Entity.json(request)));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw e;
+        }
     }
 
-//    @Override
-//    @AutoLogged(OperationType.UNLOGGED)
-//    public Boolean destroy(final DestroyQueryRequest request) {
-//        return queryServiceProvider.get().destroy(request);
-//    }
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public DashboardSearchResponse search(final String nodeName, final QuerySearchRequest request) {
+        try {
+            // If the client doesn't specify a node then execute locally.
+            if (nodeName == null || nodeName.equals("null")) {
+                return queryServiceProvider.get().search(request);
+            }
+
+            return nodeServiceProvider.get()
+                    .remoteRestResult(
+                            nodeName,
+                            DashboardSearchResponse.class,
+                            () -> ResourcePaths.buildAuthenticatedApiPath(
+                                    QueryResource.BASE_PATH,
+                                    QueryResource.SEARCH_PATH_PART,
+                                    nodeName),
+                            () -> queryServiceProvider.get().search(request),
+                            builder -> builder.post(Entity.json(request)));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw e;
+        }
+    }
 
     @Override
     @AutoLogged(OperationType.UNLOGGED)
     public List<String> fetchTimeZones() {
         return queryServiceProvider.get().fetchTimeZones();
     }
-
-//    @Override
-//    @AutoLogged(OperationType.UNLOGGED)
-//    public List<FunctionSignature> fetchFunctions() {
-//        return queryServiceProvider.get().fetchFunctions();
-//    }
 }
