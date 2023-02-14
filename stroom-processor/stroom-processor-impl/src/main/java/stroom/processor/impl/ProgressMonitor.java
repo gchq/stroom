@@ -2,6 +2,7 @@ package stroom.processor.impl;
 
 import stroom.processor.shared.ProcessorFilter;
 import stroom.util.NullSafe;
+import stroom.util.concurrent.DurationAdder;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -18,7 +19,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Holds state relating to the progress of creation of tasks by the master node
@@ -141,7 +141,7 @@ public class ProgressMonitor {
                     sb.append(" (");
                     sb.append(phaseDetails.calls.get());
                     sb.append(" calls in ");
-                    sb.append(phaseDetails.durationRef.get());
+                    sb.append(phaseDetails.durationAdder.get());
                     sb.append(")");
                 });
     }
@@ -282,7 +282,7 @@ public class ProgressMonitor {
         private final Phase phase;
         private final AtomicInteger calls = new AtomicInteger();
         private final AtomicLong affectedItemCount = new AtomicLong();
-        private final AtomicReference<Duration> durationRef = new AtomicReference<>(Duration.ofMillis(0));
+        private final DurationAdder durationAdder = new DurationAdder();
 
         private PhaseDetails(final Phase phase) {
             this.phase = phase;
@@ -304,13 +304,13 @@ public class ProgressMonitor {
         public void increment(final long count, final Duration duration) {
             this.calls.incrementAndGet();
             this.affectedItemCount.addAndGet(count);
-            durationRef.accumulateAndGet(duration, Duration::plus);
+            durationAdder.add(duration);
         }
 
         public void add(final PhaseDetails phaseDetails) {
             this.calls.addAndGet(phaseDetails.calls.get());
             this.affectedItemCount.addAndGet(phaseDetails.affectedItemCount.get());
-            durationRef.accumulateAndGet(phaseDetails.durationRef.get(), Duration::plus);
+            durationAdder.add(phaseDetails.durationAdder);
         }
     }
 }
