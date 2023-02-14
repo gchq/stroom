@@ -27,16 +27,14 @@ class TestDurationAdder {
         assertThat(durationAdder.get())
                 .isEqualTo(Duration.ZERO);
 
-        Duration duration = durationAdder.add(Duration.ofMinutes(10));
+        durationAdder.add(Duration.ofMinutes(10));
 
-        assertThat(duration)
-                .isEqualTo(durationAdder.get())
+        assertThat(durationAdder.get())
                 .isEqualTo(Duration.ofMinutes(10));
 
-        duration = durationAdder.add(Duration.ofMinutes(10));
+        durationAdder.add(Duration.ofMinutes(10));
 
-        assertThat(duration)
-                .isEqualTo(durationAdder.get())
+        assertThat(durationAdder.get())
                 .isEqualTo(Duration.ofMinutes(20));
     }
 
@@ -44,16 +42,14 @@ class TestDurationAdder {
     void add2() {
         final DurationAdder durationAdder = new DurationAdder(Duration.ofMinutes(10));
 
-        Duration duration = durationAdder.add(Duration.ofMinutes(10));
+        durationAdder.add(Duration.ofMinutes(10));
 
-        assertThat(duration)
-                .isEqualTo(durationAdder.get())
+        assertThat(durationAdder.get())
                 .isEqualTo(Duration.ofMinutes(20));
 
-        duration = durationAdder.add(Duration.ofMinutes(10));
+        durationAdder.add(Duration.ofMinutes(10));
 
-        assertThat(duration)
-                .isEqualTo(durationAdder.get())
+        assertThat(durationAdder.get())
                 .isEqualTo(Duration.ofMinutes(30));
     }
 
@@ -74,10 +70,9 @@ class TestDurationAdder {
         final DurationAdder durationAdder1 = new DurationAdder(Duration.ofMinutes(10));
         final DurationAdder durationAdder2 = new DurationAdder(Duration.ofMinutes(5));
 
-        final Duration duration = durationAdder1.add(durationAdder2);
+        durationAdder1.add(durationAdder2);
 
-        assertThat(duration)
-                .isEqualTo(durationAdder1.get())
+        assertThat(durationAdder1.get())
                 .isEqualTo(Duration.ofMinutes(15));
 
         // Unchanged

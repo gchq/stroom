@@ -6,22 +6,27 @@ import java.time.Duration;
 import java.time.temporal.TemporalUnit;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  * A {@link Duration} that can be added to in a thread safe, non-blocking, way.
+ * Relies on {@link LongAdder} to accumulate the durations so is not designed for
+ * any form of synchronisation control.
+ * Does not implement equals.
  */
-public class DurationAdder implements Comparable<DurationAdder> {
+public class DurationAdder {
 
-    private final AtomicReference<Duration> durationRef;
+    // Duration consists of a seconds part and a nanos part so accumulate both
+    // so that we can build a duration from it when we need it. LongAdder is stripped
+    // so less contention than something like AtomicReference
+    private final LongAdder secondsAdder = new LongAdder();
+    private final LongAdder nanosAdder = new LongAdder();
 
     public DurationAdder() {
-        this.durationRef = new AtomicReference<>(Duration.ZERO);
     }
 
     public DurationAdder(final Duration duration) {
-        Objects.requireNonNull(duration);
-        this.durationRef = new AtomicReference<>(duration);
+        add(duration);
     }
 
     /**
@@ -29,11 +34,10 @@ public class DurationAdder implements Comparable<DurationAdder> {
      *
      * @return The duration after adding duration
      */
-    public Duration add(final Duration duration) {
+    public void add(final Duration duration) {
         Objects.requireNonNull(duration);
-        return durationRef.accumulateAndGet(
-                duration,
-                Duration::plus);
+        secondsAdder.add(duration.getSeconds());
+        nanosAdder.add(duration.getNano());
     }
 
     /**
@@ -41,11 +45,10 @@ public class DurationAdder implements Comparable<DurationAdder> {
      *
      * @return The duration after adding durationAdder
      */
-    public Duration add(final DurationAdder durationAdder) {
+    public void add(final DurationAdder durationAdder) {
         Objects.requireNonNull(durationAdder);
-        return durationRef.accumulateAndGet(
-                durationAdder.get(),
-                Duration::plus);
+        this.secondsAdder.add(durationAdder.secondsAdder.sum());
+        this.nanosAdder.add(durationAdder.nanosAdder.sum());
     }
 
     /**
@@ -53,110 +56,97 @@ public class DurationAdder implements Comparable<DurationAdder> {
      *
      * @return The duration after adding durationTimer
      */
-    public Duration add(final DurationTimer durationTimer) {
+    public void add(final DurationTimer durationTimer) {
         Objects.requireNonNull(durationTimer);
-        return durationRef.accumulateAndGet(
-                durationTimer.get(),
-                Duration::plus);
+        final Duration duration = durationTimer.get();
+        add(duration);
     }
 
     /**
      * @return The current duration
      */
     public Duration get() {
-        return durationRef.get();
+        return Duration.ofSeconds(secondsAdder.sum(), nanosAdder.sum());
     }
 
     public long get(final TemporalUnit unit) {
-        return durationRef.get().get(unit);
+        return get().get(unit);
     }
 
     public List<TemporalUnit> getUnits() {
-        return durationRef.get().getUnits();
+        return get().getUnits();
     }
 
     public boolean isZero() {
-        return durationRef.get().isZero();
+        return get().isZero();
     }
 
     public boolean isNegative() {
-        return durationRef.get().isNegative();
+        return get().isNegative();
     }
 
     public long getSeconds() {
-        return durationRef.get().getSeconds();
+        return get().getSeconds();
     }
 
     public int getNano() {
-        return durationRef.get().getNano();
-    }
-
-    public Duration withSeconds(final long seconds) {
-        return durationRef.get().withSeconds(seconds);
-    }
-
-    public Duration withNanos(final int nanoOfSecond) {
-        return durationRef.get().withNanos(nanoOfSecond);
+        return get().getNano();
     }
 
     public long toDays() {
-        return durationRef.get().toDays();
+        return get().toDays();
     }
 
     public long toHours() {
-        return durationRef.get().toHours();
+        return get().toHours();
     }
 
     public long toMinutes() {
-        return durationRef.get().toMinutes();
+        return get().toMinutes();
     }
 
     public long toSeconds() {
-        return durationRef.get().toSeconds();
+        return get().toSeconds();
     }
 
     public long toMillis() {
-        return durationRef.get().toMillis();
+        return get().toMillis();
     }
 
     public long toNanos() {
-        return durationRef.get().toNanos();
+        return get().toNanos();
     }
 
     public long toDaysPart() {
-        return durationRef.get().toDaysPart();
+        return get().toDaysPart();
     }
 
     public int toHoursPart() {
-        return durationRef.get().toHoursPart();
+        return get().toHoursPart();
     }
 
     public int toMinutesPart() {
-        return durationRef.get().toMinutesPart();
+        return get().toMinutesPart();
     }
 
     public int toSecondsPart() {
-        return durationRef.get().toSecondsPart();
+        return get().toSecondsPart();
     }
 
     public int toMillisPart() {
-        return durationRef.get().toMillisPart();
+        return get().toMillisPart();
     }
 
     public int toNanosPart() {
-        return durationRef.get().toNanosPart();
+        return get().toNanosPart();
     }
 
     public Duration truncatedTo(final TemporalUnit unit) {
-        return durationRef.get().truncatedTo(unit);
-    }
-
-    public int compareTo(final DurationAdder otherDuration) {
-        return durationRef.get().compareTo(otherDuration.get());
+        return get().truncatedTo(unit);
     }
 
     @Override
     public String toString() {
-        return durationRef.get().toString();
+        return get().toString();
     }
 }
