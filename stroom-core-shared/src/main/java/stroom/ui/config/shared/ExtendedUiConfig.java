@@ -95,7 +95,6 @@ public class ExtendedUiConfig extends UiConfig {
         this.externalIdentityProvider = externalIdentityProvider;
     }
 
-    @JsonProperty
     public boolean isExternalIdentityProvider() {
         return externalIdentityProvider;
     }

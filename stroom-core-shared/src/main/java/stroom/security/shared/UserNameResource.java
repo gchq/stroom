@@ -3,6 +3,7 @@ package stroom.security.shared;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserName;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -26,5 +27,5 @@ public interface UserNameResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Find the user names matching the supplied criteria",
             operationId = "findUserNames")
-    ResultPage<String> find(@Parameter(description = "criteria", required = true) FindUserNameCriteria criteria);
+    ResultPage<UserName> find(@Parameter(description = "criteria", required = true) FindUserNameCriteria criteria);
 }

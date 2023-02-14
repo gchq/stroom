@@ -85,10 +85,7 @@ public class UserEditPresenter extends MyPresenterWidget<UserEditView>
                         .resizable(true)
                         .build())
                 .build();
-        final String captionSuffix = userRef.getPreferredUsername() != null
-                ? " (" + userRef.getPreferredUsername() + ")"
-                : "";
-        final String caption = "User - " + userRef.getName() + captionSuffix;
+        final String caption = "User - " + userRef.getUsername().asDisplayValue();
         ShowPopupEvent.fire(
                 UserEditPresenter.this,
                 UserEditPresenter.this,

@@ -21,6 +21,7 @@ package stroom.security.impl;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.shared.FindUserNameCriteria;
+import stroom.util.shared.UserName;
 import stroom.security.shared.UserNameResource;
 import stroom.util.shared.ResultPage;
 
@@ -38,7 +39,7 @@ class UserNameResourceImpl implements UserNameResource {
     }
 
     @Override
-    public ResultPage<String> find(final FindUserNameCriteria criteria) {
+    public ResultPage<UserName> find(final FindUserNameCriteria criteria) {
         return userNameServiceProvider.get().find(criteria);
     }
 }

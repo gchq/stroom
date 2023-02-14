@@ -11,14 +11,14 @@ import java.util.Objects;
 public class SessionInfo {
 
     @JsonProperty
-    private final String userName;
+    private final UserName userName;
     @JsonProperty
     private final String nodeName;
     @JsonProperty
     private final BuildInfo buildInfo;
 
     @JsonCreator
-    public SessionInfo(@JsonProperty("userName") final String userName,
+    public SessionInfo(@JsonProperty("userName") final UserName userName,
                        @JsonProperty("nodeName") final String nodeName,
                        @JsonProperty("buildInfo") final BuildInfo buildInfo) {
         this.userName = userName;
@@ -26,7 +26,7 @@ public class SessionInfo {
         this.buildInfo = buildInfo;
     }
 
-    public String getUserName() {
+    public UserName getUserName() {
         return userName;
     }
 

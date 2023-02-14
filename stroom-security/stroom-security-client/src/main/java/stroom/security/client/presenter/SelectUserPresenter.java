@@ -24,9 +24,11 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.FindUserNameCriteria;
 import stroom.security.shared.User;
+import stroom.util.shared.UserName;
 import stroom.security.shared.UserResource;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -57,10 +59,11 @@ public class SelectUserPresenter
 
     private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
-    private final DataGridView<String> dataGridView;
+    private final DataGridView<UserName> dataGridView;
     private final RestFactory restFactory;
-    private final ButtonView newButton;
-    private final ManageNewEntityPresenter newPresenter;
+    private ButtonView newButton = null;
+    private final CreateNewUserPresenter newPresenter;
+    private final UiConfigCache uiConfigCache;
     private UserNameDataProvider dataProvider;
     private FindUserNameCriteria findUserCriteria;
     private Consumer<User> userConsumer;
@@ -69,33 +72,60 @@ public class SelectUserPresenter
     public SelectUserPresenter(final EventBus eventBus,
                                final UserListView userListView,
                                final RestFactory restFactory,
-                               final ManageNewEntityPresenter newPresenter) {
+                               final CreateNewUserPresenter newPresenter,
+                               final UiConfigCache uiConfigCache) {
         super(eventBus, userListView);
         this.restFactory = restFactory;
         this.newPresenter = newPresenter;
+        this.uiConfigCache = uiConfigCache;
 
         dataGridView = new DataGridViewImpl<>(true);
         userListView.setDatGridView(dataGridView);
         userListView.setUiHandlers(this);
 
         // Icon
-        dataGridView.addColumn(new Column<String, Preset>(new SvgCell()) {
+        dataGridView.addColumn(new Column<UserName, Preset>(new SvgCell()) {
             @Override
-            public Preset getValue(final String userRef) {
+            public Preset getValue(final UserName userRef) {
                 return SvgPresets.USER;
             }
         }, "</br>", 20);
 
         // Name.
-        dataGridView.addResizableColumn(new Column<String, String>(new TextCell()) {
+        dataGridView.addResizableColumn(new Column<UserName, String>(new TextCell()) {
             @Override
-            public String getValue(final String userRef) {
-                return userRef;
+            public String getValue(final UserName userRef) {
+                return userRef.getName();
             }
-        }, "Name", 350);
+        }, "User ID", 350);
+
+        // Preferred User Name
+        final Column<UserName, String> preferredUsernameCol = new Column<UserName, String>(new TextCell()) {
+            @Override
+            public String getValue(final UserName userRef) {
+                return userRef.getPreferredUsername();
+            }
+        };
+        dataGridView.addResizableColumn(preferredUsernameCol, "Display Name", 250);
+
+        // Full name
+        final Column<UserName, String> fullNameCol = new Column<UserName, String>(new TextCell()) {
+            @Override
+            public String getValue(final UserName userRef) {
+                return userRef.getFullName();
+            }
+        };
+        dataGridView.addResizableColumn(fullNameCol, "Full Name", 350);
 
         dataGridView.addEndColumn(new EndColumn<>());
-        newButton = dataGridView.addButton(SvgPresets.NEW_ITEM);
+        // Only want to let user create a stroom user if they are using an external IDP.
+        // If internal then all users are available to be picked from the account tbl.
+        uiConfigCache.get()
+                .onSuccess(config -> {
+                    if (config.isExternalIdentityProvider()) {
+                        newButton = dataGridView.addButton(SvgPresets.NEW_ITEM);
+                    }
+                });
     }
 
     @Override
@@ -108,7 +138,7 @@ public class SelectUserPresenter
         }));
         registerHandler(dataGridView.getSelectionModel().addSelectionHandler(event -> {
             if (event.getSelectionType().isDoubleSelect()) {
-                final String selected = dataGridView.getSelectionModel().getSelected();
+                final UserName selected = dataGridView.getSelectionModel().getSelected();
                 hide(false, true, selected);
             }
         }));
@@ -119,7 +149,7 @@ public class SelectUserPresenter
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
-                    final String selected = newPresenter.getName();
+                    final UserName selected = newPresenter.getUserName();
                     hide(false, true, selected);
                 }
                 newPresenter.hide();
@@ -156,11 +186,11 @@ public class SelectUserPresenter
         final FindUserNameCriteria findUserCriteria = new FindUserNameCriteria();
         setup(findUserCriteria);
 
-        final PopupSize popupSize = PopupSize.resizable(400, 400);
+        final PopupSize popupSize = PopupSize.resizable(1000, 600);
         final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
             @Override
             public void onHideRequest(boolean autoClose, boolean ok) {
-                final String selected = dataGridView.getSelectionModel().getSelected();
+                final UserName selected = dataGridView.getSelectionModel().getSelected();
                 hide(autoClose, ok, selected);
             }
         };
@@ -173,8 +203,8 @@ public class SelectUserPresenter
                 popupUiHandlers);
     }
 
-    private void hide(final boolean autoClose, final boolean ok, final String selected) {
-        if (ok && userConsumer != null && selected != null && selected.length() > 0) {
+    private void hide(final boolean autoClose, final boolean ok, final UserName selected) {
+        if (ok && userConsumer != null && selected != null) {
             final Rest<User> rest = restFactory.create();
             rest
                     .onSuccess(user -> {
@@ -186,7 +216,7 @@ public class SelectUserPresenter
                                 ok);
                     })
                     .call(USER_RESOURCE)
-                    .create(selected, false);
+                    .createUser(selected);
         } else {
             HidePopupEvent.fire(
                     this,
@@ -207,7 +237,7 @@ public class SelectUserPresenter
         dataProvider.refresh();
     }
 
-    public DataGridView<String> getDataGridView() {
+    public DataGridView<UserName> getDataGridView() {
         return dataGridView;
     }
 }

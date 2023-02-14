@@ -4,6 +4,7 @@ import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserName;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -51,12 +52,18 @@ public interface UserResource extends RestResource, DirectRestService, FetchWith
     User fetch(@PathParam("userUuid") String userUuid);
 
     @POST
-    @Path("/create/{name}/{isGroup}")
+    @Path("/createGroup/{name}")
     @Operation(
-            summary = "Creates a user or group with the supplied name",
+            summary = "Creates a group with the supplied name",
+            operationId = "createGroup")
+    User createGroup(@Parameter(description = "name", required = true) String name);
+
+    @POST
+    @Path("/createUser/{name}")
+    @Operation(
+            summary = "Creates a user with the supplied name",
             operationId = "createUser")
-    User create(@PathParam("name") String name,
-                @PathParam("isGroup") Boolean isGroup);
+    User createUser(@Parameter(description = "name", required = true) UserName name);
 
     @DELETE
     @Path("/{uuid}")

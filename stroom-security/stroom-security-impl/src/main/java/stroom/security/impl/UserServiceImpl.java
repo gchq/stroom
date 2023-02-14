@@ -22,6 +22,7 @@ import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.FindUserNameCriteria;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
+import stroom.util.shared.UserName;
 import stroom.security.shared.UserNameProvider;
 import stroom.util.AuditUtil;
 import stroom.util.entityevent.EntityAction;
@@ -55,22 +56,26 @@ class UserServiceImpl implements UserService, UserNameProvider {
     }
 
     @Override
-    public User getOrCreateUser(final String name, final Consumer<User> onCreateAction) {
+    public User getOrCreateUser(final UserName name, final Consumer<User> onCreateAction) {
         return getOrCreate(name, false, onCreateAction);
     }
 
     @Override
     public User getOrCreateUserGroup(final String name, final Consumer<User> onCreateAction) {
-        return getOrCreate(name, true, onCreateAction);
+        return getOrCreate(new UserName(name), true, onCreateAction);
     }
 
-    private User getOrCreate(final String name, final boolean isGroup, final Consumer<User> onCreateAction) {
-        final Optional<User> optional = userDao.getByName(name, isGroup);
+    private User getOrCreate(final UserName name,
+                             final boolean isGroup,
+                             final Consumer<User> onCreateAction) {
+        final Optional<User> optional = userDao.getByName(name.getName(), isGroup);
         return optional.orElseGet(() -> {
             User user = new User();
             AuditUtil.stamp(securityContext.getUserId(), user);
             user.setUuid(UUID.randomUUID().toString());
-            user.setName(name);
+            user.setName(name.getName());
+            user.setPreferredUsername(name.getPreferredUsername());
+            user.setFullName(name.getFullName());
             user.setGroup(isGroup);
 
             return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
@@ -127,7 +132,7 @@ class UserServiceImpl implements UserService, UserNameProvider {
     }
 
     @Override
-    public ResultPage<String> findUserNames(final FindUserNameCriteria criteria) {
+    public ResultPage<UserName> findUserNames(final FindUserNameCriteria criteria) {
         final FindUserCriteria findUserCriteria = new FindUserCriteria(
                 criteria.getPageRequest(),
                 criteria.getSortList(),
@@ -135,7 +140,10 @@ class UserServiceImpl implements UserService, UserNameProvider {
                 false,
                 null);
         final List<User> users = find(findUserCriteria);
-        final List<String> list = users.stream().map(User::getName).collect(Collectors.toList());
+        final List<UserName> list = users.stream()
+                .map(User::getUsername)
+                .collect(Collectors.toList());
+
         return new ResultPage<>(list);
     }
 

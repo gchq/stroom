@@ -5,6 +5,7 @@ import stroom.security.identity.authenticate.PasswordValidator;
 import stroom.security.identity.config.IdentityConfig;
 import stroom.security.shared.FindUserNameCriteria;
 import stroom.security.shared.PermissionNames;
+import stroom.util.shared.UserName;
 import stroom.security.shared.UserNameProvider;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
@@ -32,13 +33,23 @@ public class AccountServiceImpl implements AccountService, UserNameProvider {
     }
 
     @Override
-    public ResultPage<String> findUserNames(final FindUserNameCriteria criteria) {
+    public ResultPage<UserName> findUserNames(final FindUserNameCriteria criteria) {
+
         final SearchAccountRequest request = new SearchAccountRequest(
                 criteria.getPageRequest(),
                 criteria.getSortList(),
                 criteria.getQuickFilterInput());
+
         final AccountResultPage result = search(request);
-        final List<String> list = result.getValues().stream().map(Account::getUserId).collect(Collectors.toList());
+
+        final List<UserName> list = result.getValues()
+                .stream()
+                .map(account -> new UserName(
+                        account.getUserId(),
+                        account.getUserId(), // use user id for both name and preferredUsername
+                        account.getFullName()))
+                .collect(Collectors.toList());
+
         return new ResultPage<>(list, result.getPageResponse());
     }
 

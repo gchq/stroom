@@ -63,9 +63,9 @@ public class UserEditAddRemoveUsersPresenter
         this.selectUserPresenterProvider = selectUserPresenterProvider;
 
         addButton = addButton(SvgPresets.ADD);
-        addButton.setTitle("Add Group");
+        addButton.setTitle("Add Group Membership");
         removeButton = addButton(SvgPresets.REMOVE);
-        removeButton.setTitle("Remove Group");
+        removeButton.setTitle("Remove Group Membership");
     }
 
     @Override
@@ -123,9 +123,16 @@ public class UserEditAddRemoveUsersPresenter
         final FindUserCriteria findUserCriteria = new FindUserCriteria();
         findUserCriteria.setRelatedUser(relatedUser);
 
-        final String type = getRelatedType();
-        addButton.setTitle("Add " + type);
-        removeButton.setTitle("Remove " + type);
+//        final String type = getRelatedType();
+        if (relatedUser.isGroup()) {
+// TODO Add Group Membership vs Add User To Group
+            addButton.setTitle("Add Group Membership");
+            removeButton.setTitle("Remove Group Membership");
+        } else {
+// TODO
+            addButton.setTitle("Add User to Group");
+            removeButton.setTitle("Remove User from Group");
+        }
 
         setup(findUserCriteria);
     }
@@ -136,5 +143,11 @@ public class UserEditAddRemoveUsersPresenter
             type = "User";
         }
         return type;
+    }
+
+    @Override
+    public boolean includeAdditionalUserInfo() {
+        // If relatedUser is a group then we are listing users and vice versa
+        return relatedUser == null || relatedUser.isGroup();
     }
 }

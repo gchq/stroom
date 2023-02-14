@@ -33,7 +33,11 @@ public class WelcomeViewImpl extends ViewImpl implements WelcomeView {
     @UiField
     SimplePanel html;
     @UiField
-    Label userName;
+    Label userIdentity;
+    @UiField
+    Label preferredUsername;
+    @UiField
+    Label fullName;
     @UiField
     Label roleName;
     @UiField
@@ -81,8 +85,18 @@ public class WelcomeViewImpl extends ViewImpl implements WelcomeView {
     }
 
     @Override
-    public HasText getUserName() {
-        return userName;
+    public HasText getUserIdentity() {
+        return userIdentity;
+    }
+
+    @Override
+    public Label getPreferredUsername() {
+        return preferredUsername;
+    }
+
+    @Override
+    public Label getFullName() {
+        return fullName;
     }
 
     @Override

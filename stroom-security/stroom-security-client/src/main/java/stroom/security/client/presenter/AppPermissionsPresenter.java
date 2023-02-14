@@ -115,13 +115,6 @@ public class AppPermissionsPresenter extends
                 ? new TickBoxCell.DefaultAppearance()
                 : new TickBoxCell.NoBorderAppearance();
 
-        getView().addColumn(new Column<String, String>(new TextCell()) {
-            @Override
-            public String getValue(final String row) {
-                return row;
-            }
-        }, "Permission", 200);
-
         // Selection.
         final Column<String, TickBoxState> selectionColumn = new Column<String, TickBoxState>(
                 TickBoxCell.create(appearance, true, true, updateable)) {
@@ -135,6 +128,7 @@ public class AppPermissionsPresenter extends
                 return TickBoxState.fromBoolean(false);
             }
         };
+
         if (updateable) {
             selectionColumn.setFieldUpdater((index, permission, value) -> {
                 final ChangeUserRequest request = new ChangeUserRequest(
@@ -152,7 +146,24 @@ public class AppPermissionsPresenter extends
                         .changeUser(request);
             });
         }
-        getView().addColumn(selectionColumn, "<br/>", 50);
+
+        getView().addColumn(selectionColumn, "<br/>", 20);
+
+        // Perm name
+        getView().addColumn(new Column<String, String>(new TextCell()) {
+            @Override
+            public String getValue(final String permissionName) {
+                return permissionName;
+            }
+        }, "Permission", 200);
+
+        // Description
+        getView().addColumn(new Column<String, String>(new TextCell()) {
+            @Override
+            public String getValue(final String permissionName) {
+                return PermissionNames.getDescription(permissionName);
+            }
+        }, "Description", 700);
     }
 
     protected boolean isCurrentUserUpdate() {

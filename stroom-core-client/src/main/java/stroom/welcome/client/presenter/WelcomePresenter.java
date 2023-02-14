@@ -26,6 +26,7 @@ import stroom.svg.client.Icon;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.SessionInfo;
+import stroom.util.shared.UserName;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.HasText;
@@ -50,20 +51,27 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
         final Rest<SessionInfo> rest = restFactory.create();
         rest
                 .onSuccess(sessionInfo -> {
+                    final UserName userName = sessionInfo.getUserName();
+                    view.getUserIdentity().setText(userName.getName());
+                    view.getPreferredUsername().setText(userName.getPreferredUsername());
+                    view.getFullName().setText(userName.getFullName());
+
                     final BuildInfo buildInfo = sessionInfo.getBuildInfo();
-                    view.getBuildVersion().setText("Build Version: " + buildInfo.getBuildVersion());
-                    view.getBuildDate().setText("Build Date: " + dateTimeFormatter.format(buildInfo.getBuildTime()));
-                    view.getUpDate().setText("Up Date: " + dateTimeFormatter.format(buildInfo.getUpTime()));
-                    view.getNodeName().setText("Node Name: " + sessionInfo.getNodeName());
-                    view.getUserName().setText("User Name: " + sessionInfo.getUserName());
+                    view.getBuildVersion().setText(buildInfo.getBuildVersion());
+                    view.getBuildDate().setText(dateTimeFormatter.format(buildInfo.getBuildTime()));
+                    view.getUpDate().setText(dateTimeFormatter.format(buildInfo.getUpTime()));
+                    view.getNodeName().setText(sessionInfo.getNodeName());
                 })
-                .onFailure(caught -> AlertEvent.fireError(WelcomePresenter.this, caught.getMessage(), null))
+                .onFailure(caught ->
+                        AlertEvent.fireError(WelcomePresenter.this, caught.getMessage(), null))
                 .call(SESSION_INFO_RESOURCE)
                 .get();
 
         uiConfigCache.get()
-                .onSuccess(result -> view.setHTML(result.getWelcomeHtml()))
-                .onFailure(caught -> AlertEvent.fireError(WelcomePresenter.this, caught.getMessage(), null));
+                .onSuccess(result ->
+                        view.setHTML(result.getWelcomeHtml()))
+                .onFailure(caught ->
+                        AlertEvent.fireError(WelcomePresenter.this, caught.getMessage(), null));
     }
 
     @Override
@@ -88,7 +96,11 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
 
         HasText getNodeName();
 
-        HasText getUserName();
+        HasText getUserIdentity();
+
+        HasText getPreferredUsername();
+
+        HasText getFullName();
 
         HasText getRoleName();
     }

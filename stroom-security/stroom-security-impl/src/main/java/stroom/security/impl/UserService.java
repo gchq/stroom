@@ -19,6 +19,7 @@ package stroom.security.impl;
 
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
+import stroom.util.shared.UserName;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,7 +32,11 @@ public interface UserService {
         return getOrCreateUser(name, null);
     }
 
-    User getOrCreateUser(String name, final Consumer<User> onCreateAction);
+    default User getOrCreateUser(String name, final Consumer<User> onCreateAction) {
+        return getOrCreateUser(new UserName(name), onCreateAction);
+    }
+
+    User getOrCreateUser(UserName name, final Consumer<User> onCreateAction);
 
     default User getOrCreateUserGroup(String name) {
         return getOrCreateUserGroup(name, null);

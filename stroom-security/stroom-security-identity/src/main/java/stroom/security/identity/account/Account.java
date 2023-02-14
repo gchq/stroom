@@ -25,6 +25,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Account implements HasIntegerId {
 
@@ -286,6 +288,21 @@ public class Account implements HasIntegerId {
 
     public void setProcessingAccount(final boolean processingAccount) {
         this.processingAccount = processingAccount;
+    }
+
+    /**
+     * @return The users full name, e.g. "Joe Bloggs".
+     */
+    @JsonIgnore
+    public String getFullName() {
+        if (firstName == null && lastName == null) {
+            return null;
+        } else {
+            return String.join(
+                    " ",
+                    Objects.requireNonNullElse(firstName, ""),
+                    Objects.requireNonNullElse(lastName, ""));
+        }
     }
 
     @JsonIgnore

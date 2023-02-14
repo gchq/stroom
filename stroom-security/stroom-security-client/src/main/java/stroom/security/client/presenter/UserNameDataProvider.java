@@ -24,8 +24,8 @@ import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.FindUserNameCriteria;
+import stroom.util.shared.UserName;
 import stroom.security.shared.UserNameResource;
-import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
 import com.google.gwt.core.client.GWT;
@@ -40,13 +40,13 @@ public class UserNameDataProvider implements Refreshable {
 
     private final EventBus eventBus;
     private final RestFactory restFactory;
-    private final DataGridView<String> view;
-    private RestDataProvider<String, ResultPage<String>> dataProvider;
+    private final DataGridView<UserName> view;
+    private RestDataProvider<UserName, ResultPage<UserName>> dataProvider;
     private FindUserNameCriteria criteria = new FindUserNameCriteria();
 
     public UserNameDataProvider(final EventBus eventBus,
                                 final RestFactory restFactory,
-                                final DataGridView<String> view) {
+                                final DataGridView<UserName> view) {
         this.eventBus = eventBus;
         this.restFactory = restFactory;
         this.view = view;
@@ -63,13 +63,13 @@ public class UserNameDataProvider implements Refreshable {
     public void setCriteria(final FindUserNameCriteria criteria) {
         this.criteria = criteria;
         if (dataProvider == null) {
-            this.dataProvider = new RestDataProvider<String, ResultPage<String>>(eventBus) {
+            this.dataProvider = new RestDataProvider<UserName, ResultPage<UserName>>(eventBus) {
                 @Override
                 protected void exec(final Range range,
-                                    final Consumer<ResultPage<String>> dataConsumer,
+                                    final Consumer<ResultPage<UserName>> dataConsumer,
                                     final Consumer<Throwable> throwableConsumer) {
                     CriteriaUtil.setRange(criteria, range);
-                    final Rest<ResultPage<String>> rest = restFactory.create();
+                    final Rest<ResultPage<UserName>> rest = restFactory.create();
                     rest
                             .onSuccess(dataConsumer)
                             .onFailure(throwableConsumer)
@@ -81,8 +81,8 @@ public class UserNameDataProvider implements Refreshable {
                 // examination and modification of data prior to setting it in
                 // the display.
                 @Override
-                protected void changeData(final ResultPage<String> data) {
-                    final ResultPage<String> processedData = processData(data);
+                protected void changeData(final ResultPage<UserName> data) {
+                    final ResultPage<UserName> processedData = processData(data);
                     super.changeData(processedData);
                 }
             };
@@ -97,7 +97,7 @@ public class UserNameDataProvider implements Refreshable {
      * We override the default set data functionality to allow the examination
      * and modification of data prior to setting it in the display.
      */
-    protected ResultPage<String> processData(final ResultPage<String> data) {
+    protected ResultPage<UserName> processData(final ResultPage<UserName> data) {
         return data;
     }
 

@@ -2,13 +2,56 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <g:FlowPanel styleName="max welcomeViewImpl-body stroom-content">
         <g:SimplePanel ui:field="html"/>
-        <g:FlowPanel styleName="welcomeViewImpl-buildInfo">
-            <g:Label ui:field="userName"/>
-            <g:Label ui:field="roleName"/>
-            <g:Label ui:field="buildVersion"/>
-            <g:Label ui:field="buildDate"/>
-            <g:Label ui:field="upDate"/>
-            <g:Label ui:field="nodeName"/>
-        </g:FlowPanel>
+            <g:Grid styleName="welcomeViewImpl-buildInfo stroom-control-grid w-100">
+                <g:row>
+                    <g:cell>User ID:</g:cell>
+                    <g:customCell>
+                        <g:Label ui:field="userIdentity"/>
+                    </g:customCell>
+                </g:row>
+                <g:row>
+                    <g:cell>User Display Name:</g:cell>
+                    <g:customCell>
+                        <g:Label ui:field="preferredUsername"/>
+                    </g:customCell>
+                </g:row>
+                <g:row>
+                    <g:cell>User Full Name:</g:cell>
+                    <g:customCell>
+                        <g:Label ui:field="fullName"/>
+                    </g:customCell>
+                </g:row>
+                <g:row>
+                    <g:cell>Role Name:</g:cell>
+                    <g:customCell>
+                        <g:Label ui:field="roleName"/>
+                    </g:customCell>
+                </g:row>
+                <g:row>
+                    <g:cell>Build Version:</g:cell>
+                    <g:customCell>
+                        <g:Label ui:field="buildVersion"/>
+                    </g:customCell>
+                </g:row>
+                <g:row>
+                    <g:cell>Build Date:</g:cell>
+                    <g:customCell>
+                        <g:Label ui:field="buildDate"/>
+                    </g:customCell>
+                </g:row>
+                <g:row>
+                    <g:cell>Up Date:</g:cell>
+                    <g:customCell>
+                        <g:Label ui:field="upDate"/>
+                    </g:customCell>
+                </g:row>
+                <g:row>
+                    <g:cell>Node Name:</g:cell>
+                    <g:customCell>
+                        <g:Label ui:field="nodeName"/>
+                    </g:customCell>
+                </g:row>
+
+            </g:Grid>
     </g:FlowPanel>
 </ui:UiBinder>

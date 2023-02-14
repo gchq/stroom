@@ -25,6 +25,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
 import stroom.svg.client.SvgPresets;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
@@ -53,12 +54,14 @@ public class UsersAndGroupsTabPresenter
     private final Provider<UserEditPresenter> userEditPresenterProvider;
     private final Provider<GroupEditPresenter> groupEditPresenterProvider;
     private final Provider<SelectUserPresenter> selectUserPresenterProvider;
-    private final ManageNewEntityPresenter newPresenter;
+    private final ManageNewEntityPresenter newGroupPresenter;
+    private final CreateNewUserPresenter newUserPresenter;
     private final RestFactory restFactory;
     private final ButtonView newButton;
     private final ButtonView openButton;
     private final ButtonView deleteButton;
     private final FindUserCriteria criteria = new FindUserCriteria();
+    private final UiConfigCache uiConfigCache;
 
     @Inject
     public UsersAndGroupsTabPresenter(final EventBus eventBus,
@@ -66,16 +69,20 @@ public class UsersAndGroupsTabPresenter
                                       final Provider<UserEditPresenter> userEditPresenterProvider,
                                       final Provider<GroupEditPresenter> groupEditPresenterProvider,
                                       final Provider<SelectUserPresenter> selectUserPresenterProvider,
-                                      final ManageNewEntityPresenter newPresenter,
+                                      final ManageNewEntityPresenter newGroupPresenter,
+                                      final CreateNewUserPresenter newUserPresenter,
                                       final RestFactory restFactory,
-                                      final ClientSecurityContext securityContext) {
+                                      final ClientSecurityContext securityContext,
+                                      final UiConfigCache uiConfigCache) {
         super(eventBus, listPresenter.getView());
         this.listPresenter = listPresenter;
         this.userEditPresenterProvider = userEditPresenterProvider;
         this.groupEditPresenterProvider = groupEditPresenterProvider;
         this.selectUserPresenterProvider = selectUserPresenterProvider;
         this.restFactory = restFactory;
-        this.newPresenter = newPresenter;
+        this.newGroupPresenter = newGroupPresenter;
+        this.newUserPresenter = newUserPresenter;
+        this.uiConfigCache = uiConfigCache;
 
         setInSlot(LIST, listPresenter);
 
@@ -169,35 +176,69 @@ public class UsersAndGroupsTabPresenter
 
     private void onNew() {
         if (criteria.isGroup()) {
-            final PopupUiHandlers hidePopupUiHandlers = new PopupUiHandlers() {
-                @Override
-                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                    if (ok) {
-                        final Rest<User> rest = restFactory.create();
-                        rest
-                                .onSuccess(result -> {
-                                    newPresenter.hide();
-                                    edit(result);
-                                })
-                                .call(USER_RESOURCE)
-                                .create(newPresenter.getName(), criteria.isGroup());
-                    } else {
-                        newPresenter.hide();
-                    }
-                }
-
-                @Override
-                public void onHide(final boolean autoClose, final boolean ok) {
-                    // Ignore hide.
-                }
-            };
-
-            newPresenter.show(hidePopupUiHandlers);
-
+            showNewGroupDialog();
         } else {
-
-            selectUserPresenterProvider.get().show(this::edit);
+            uiConfigCache.get()
+                    .onSuccess(extendedUiConfig -> {
+                        if (extendedUiConfig.isExternalIdentityProvider()) {
+                            showNewUserDialog();
+                        } else {
+                            selectUserPresenterProvider.get().show(this::edit);
+                        }
+                    });
         }
+    }
+
+    private void showNewGroupDialog() {
+        final PopupUiHandlers hidePopupUiHandlers = new PopupUiHandlers() {
+            @Override
+            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                if (ok) {
+                    final Rest<User> rest = restFactory.create();
+                    rest
+                            .onSuccess(result -> {
+                                newGroupPresenter.hide();
+                                edit(result);
+                            })
+                            .call(USER_RESOURCE)
+                            .createGroup(newGroupPresenter.getName());
+                } else {
+                    newGroupPresenter.hide();
+                }
+            }
+
+            @Override
+            public void onHide(final boolean autoClose, final boolean ok) {
+                // Ignore hide.
+            }
+        };
+        newGroupPresenter.show(hidePopupUiHandlers);
+    }
+
+    private void showNewUserDialog() {
+        final PopupUiHandlers hidePopupUiHandlers = new PopupUiHandlers() {
+            @Override
+            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                if (ok) {
+                    final Rest<User> rest = restFactory.create();
+                    rest
+                            .onSuccess(result -> {
+                                newUserPresenter.hide();
+                                edit(result);
+                            })
+                            .call(USER_RESOURCE)
+                            .createUser(newUserPresenter.getUserName());
+                } else {
+                    newUserPresenter.hide();
+                }
+            }
+
+            @Override
+            public void onHide(final boolean autoClose, final boolean ok) {
+                // Ignore hide.
+            }
+        };
+        newUserPresenter.show(hidePopupUiHandlers);
     }
 
     private void edit(final User userRef) {

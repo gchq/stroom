@@ -1,6 +1,7 @@
 package stroom.security.impl;
 
 import stroom.security.shared.FindUserNameCriteria;
+import stroom.util.shared.UserName;
 import stroom.security.shared.UserNameProvider;
 import stroom.util.shared.ResultPage;
 
@@ -19,13 +20,16 @@ public class UserNameService {
         this.userNameProviders = userNameProviders;
     }
 
-    public ResultPage<String> find(final FindUserNameCriteria criteria) {
-        final Set<String> names = new HashSet<>();
+    public ResultPage<UserName> find(final FindUserNameCriteria criteria) {
+        final Set<UserName> names = new HashSet<>();
         for (final UserNameProvider userNameProvider : userNameProviders) {
-            final ResultPage<String> resultPage = userNameProvider.findUserNames(criteria);
+            final ResultPage<UserName> resultPage = userNameProvider.findUserNames(criteria);
             names.addAll(resultPage.getValues());
         }
-        final List<String> list = names.stream().sorted().collect(Collectors.toList());
+        final List<UserName> list = names.stream()
+                .sorted()
+                .collect(Collectors.toList());
+
         return new ResultPage<>(list);
     }
 }

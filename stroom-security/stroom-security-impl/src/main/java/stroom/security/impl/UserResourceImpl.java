@@ -6,6 +6,7 @@ import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
+import stroom.util.shared.UserName;
 import stroom.security.shared.UserResource;
 import stroom.util.shared.ResultPage;
 
@@ -84,20 +85,7 @@ public class UserResourceImpl implements UserResource {
 
     @Override
     @AutoLogged(OperationType.MANUALLY_LOGGED)
-    public User create(final String name,
-                       final Boolean isGroup) {
-        User user;
-
-        if (isGroup) {
-            user = createGroup(name);
-        } else {
-            user = createUser(name);
-        }
-
-        return user;
-    }
-
-    private User createUser(final String name) {
+    public User createUser(final UserName name) {
         final CreateEventAction.Builder<Void> builder = CreateEventAction.builder();
 
         try {
@@ -110,7 +98,8 @@ public class UserResourceImpl implements UserResource {
                                         .withId(user.getName())
                                         .build());
 
-                        stroomEventLoggingServiceProvider.get().log("UserResourceImpl.createUser",
+                        stroomEventLoggingServiceProvider.get()
+                                .log("UserResourceImpl.createUser",
                                 "Creating new Stroom user " + name, builder.build());
                     });
 
@@ -118,7 +107,7 @@ public class UserResourceImpl implements UserResource {
         } catch (Exception ex) {
             builder.withObjects(
                     event.logging.User.builder()
-                            .withId(name)
+                            .withId(name.getName())
                             .build());
             builder.withOutcome(Outcome.builder()
                     .withSuccess(false)
@@ -132,7 +121,9 @@ public class UserResourceImpl implements UserResource {
         }
     }
 
-    private User createGroup(final String name) {
+    @Override
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    public User createGroup(final String name) {
         final CreateEventAction.Builder<Void> builder = CreateEventAction.builder();
 
         try {

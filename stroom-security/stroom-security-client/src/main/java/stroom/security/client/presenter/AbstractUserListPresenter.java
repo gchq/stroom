@@ -63,8 +63,7 @@ public abstract class AbstractUserListPresenter
     }
     
     public void refresh() {
-        final boolean includeUserInfoCols = isExternalIdentityProvider
-                && includeAdditionalUserInfo();
+        final boolean includeUserInfoCols = includeAdditionalUserInfo();
 
         if (this.lastIncludeUserInfoColsVal == null || this.lastIncludeUserInfoColsVal != includeUserInfoCols) {
             setupColumns();
@@ -100,7 +99,10 @@ public abstract class AbstractUserListPresenter
                 return userRef.getName();
             }
         };
-        dataGridView.addResizableColumn(uniqueIdentityCol, "Unique Identity", 280);
+        final String nameColName = includeAdditionalUserInfo()
+                ? "User ID"
+                : "Group Name";
+        dataGridView.addResizableColumn(uniqueIdentityCol, nameColName, 280);
         columns.add(uniqueIdentityCol);
 
         if (includeAdditionalUserInfo()) {
@@ -111,7 +113,7 @@ public abstract class AbstractUserListPresenter
                     return userRef.getPreferredUsername();
                 }
             };
-            dataGridView.addResizableColumn(preferredUsernameCol, "Preferred Username", 250);
+            dataGridView.addResizableColumn(preferredUsernameCol, "Display Name", 250);
             columns.add(preferredUsernameCol);
 
             // Full name
@@ -148,6 +150,6 @@ public abstract class AbstractUserListPresenter
     }
 
     public boolean includeAdditionalUserInfo() {
-        return true;
+        return false;
     }
 }

@@ -1,0 +1,28 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui">
+  <g:Grid styleName="stroom-control-grid w-100">
+
+    <g:row>
+      <g:cell>User Identity:</g:cell>
+      <g:customCell>
+        <g:TextBox ui:field="userIdentity" addStyleNames="w-100" />
+      </g:customCell>
+    </g:row>
+
+    <g:row>
+      <g:cell>Preferred Username (optional):</g:cell>
+      <g:customCell>
+        <g:TextBox ui:field="preferredUsername" addStyleNames="w-100" />
+      </g:customCell>
+    </g:row>
+
+    <g:row>
+      <g:cell>Full Name (optional):</g:cell>
+      <g:customCell>
+        <g:TextBox ui:field="fullName" addStyleNames="w-100" />
+      </g:customCell>
+    </g:row>
+
+  </g:Grid>
+</ui:UiBinder>

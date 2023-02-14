@@ -16,6 +16,9 @@
 
 package stroom.security.shared;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Provide string constants for the permissions.
  */
@@ -74,7 +77,90 @@ public final class PermissionNames {
             VIEW_SYSTEM_INFO_PERMISSION
     };
 
+    // TODO: 11/01/2023 This whole class ought to be refactored to an enum
+    private static final Map<String, String> PERMISSION_TO_DESCRIPTION_MAP = new HashMap<>();
+    static {
+        PERMISSION_TO_DESCRIPTION_MAP.put(
+                ADMINISTRATOR,
+                "Full administrator rights to access and manage everything.");
+        PERMISSION_TO_DESCRIPTION_MAP.put(
+                ANNOTATIONS,
+                "Create and view annotations in query results.");
+        PERMISSION_TO_DESCRIPTION_MAP.put(
+                MANAGE_CACHE_PERMISSION,
+                "Access the Caches screen to view and clear system caches.");
+        PERMISSION_TO_DESCRIPTION_MAP.put(
+                VIEW_DATA_PERMISSION,
+                "View stream data (e.g. in the Data Viewer or a Dashboard text pane).");
+        PERMISSION_TO_DESCRIPTION_MAP.put(
+                VIEW_DATA_WITH_PIPELINE_PERMISSION,
+                "View data in a Dashboard text pane that uses a pipeline.");
+        PERMISSION_TO_DESCRIPTION_MAP.put(
+                DELETE_DATA_PERMISSION,
+                "Delete streams.");
+        PERMISSION_TO_DESCRIPTION_MAP.put(
+                IMPORT_DATA_PERMISSION,
+                "Upload stream data into a feed.");
+        PERMISSION_TO_DESCRIPTION_MAP.put(
+                EXPORT_DATA_PERMISSION,
+                "Download/export streams from a feed.");
+        PERMISSION_TO_DESCRIPTION_MAP.put(
+                MANAGE_USERS_PERMISSION,
+                "Access the screens to manage users, groups, permissions and API keys.");
+        PERMISSION_TO_DESCRIPTION_MAP.put(
+                STEPPING_PERMISSION,
+                "Step data through a pipeline using the Stepper.");
+        PERMISSION_TO_DESCRIPTION_MAP.put(
+                MANAGE_PROCESSORS_PERMISSION,
+                "Access the Processors tab and manage the processors/filters used to process stream data through " +
+                        "pipelines.");
+        PERMISSION_TO_DESCRIPTION_MAP.put(
+                MANAGE_TASKS_PERMISSION,
+                "Access the Server Tasks screen to view/stop tasks running on the nodes.");
+        PERMISSION_TO_DESCRIPTION_MAP.put(
+                DOWNLOAD_SEARCH_RESULTS_PERMISSION,
+                "Download search result data on a Dashboard.");
+        PERMISSION_TO_DESCRIPTION_MAP.put(
+                MANAGE_JOBS_PERMISSION,
+                "Access the Jobs screen to manage Stroom's background jobs.");
+        PERMISSION_TO_DESCRIPTION_MAP.put(
+                MANAGE_PROPERTIES_PERMISSION,
+                "Access to the Properties to manage the system configuration.");
+        PERMISSION_TO_DESCRIPTION_MAP.put(
+                MANAGE_POLICIES_PERMISSION,
+                "Access the Data Retention screen to manage data retention rules.");
+        PERMISSION_TO_DESCRIPTION_MAP.put(
+                MANAGE_NODES_PERMISSION,
+                "Access the Nodes screen to view the nodes the cluster and manage their priority and enabled states.");
+        PERMISSION_TO_DESCRIPTION_MAP.put(
+                MANAGE_INDEX_SHARDS_PERMISSION,
+                "");
+        PERMISSION_TO_DESCRIPTION_MAP.put(
+                MANAGE_VOLUMES_PERMISSION,
+                "");
+        PERMISSION_TO_DESCRIPTION_MAP.put(
+                MANAGE_DB_PERMISSION,
+                "");
+        PERMISSION_TO_DESCRIPTION_MAP.put(
+                IMPORT_CONFIGURATION,
+                "");
+        PERMISSION_TO_DESCRIPTION_MAP.put(
+                EXPORT_CONFIGURATION,
+                "");
+        PERMISSION_TO_DESCRIPTION_MAP.put(
+                VIEW_SYSTEM_INFO_PERMISSION,
+                "");
+    }
+
     private PermissionNames() {
         // Constants
+    }
+
+    public static String getDescription(final String permissionName) {
+        if (permissionName == null || permissionName.isEmpty()) {
+            return null;
+        } else {
+            return PERMISSION_TO_DESCRIPTION_MAP.get(permissionName);
+        }
     }
 }

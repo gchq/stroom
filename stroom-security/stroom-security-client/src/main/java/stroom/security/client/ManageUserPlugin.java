@@ -71,20 +71,21 @@ public class ManageUserPlugin extends NodeToolsPlugin {
                             1,
                             SvgPresets.USER,
                             SvgPresets.USER,
-                            "User Permissions",
+                            "User and Group Permissions",
                             null,
                             true,
                             () -> usersAndGroupsPresenterProvider.get(new AsyncCallback<UsersAndGroupsPresenter>() {
                                 @Override
                                 public void onSuccess(final UsersAndGroupsPresenter presenter) {
-                                    final PopupSize popupSize = PopupSize.resizable(800, 600);
+                                    final PopupSize popupSize = PopupSize.resizable(
+                                            1_100, 800);
                                     ShowPopupEvent.fire(
                                             ManageUserPlugin.this,
                                             presenter,
                                             PopupType.CLOSE_DIALOG,
                                             null,
                                             popupSize,
-                                            "User Permissions",
+                                            "User and Group Permissions",
                                             null,
                                             null);
                                 }

@@ -1464,9 +1464,15 @@
 }
 
 .welcomeViewImpl-buildInfo {
+    display: flex;
+    justify-content: flex-end;
     position: absolute;
     right: 5px;
     bottom: 5px;
+}
+
+.welcomeViewImpl-buildInfo > tbody > tr > td:first-child {
+    font-weight: bold;
 }
 
 .manageActivityViewImpl-nameFilter {
