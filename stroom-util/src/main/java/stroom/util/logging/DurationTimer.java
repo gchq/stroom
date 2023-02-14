@@ -58,6 +58,10 @@ public class DurationTimer {
         }
     }
 
+    @Override
+    public String toString() {
+        return Duration.between(startTime, Instant.now()).toString();
+    }
 
     // --------------------------------------------------------------------------------
 
