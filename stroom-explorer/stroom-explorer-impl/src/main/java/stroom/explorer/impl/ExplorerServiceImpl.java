@@ -19,9 +19,9 @@ package stroom.explorer.impl;
 
 import stroom.collection.api.CollectionService;
 import stroom.docref.DocRef;
-import stroom.docstore.fav.api.DocFavService;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.api.ExplorerDecorator;
+import stroom.explorer.api.ExplorerFavService;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
@@ -80,7 +80,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     private final SecurityContext securityContext;
     private final ExplorerEventLog explorerEventLog;
     private final Provider<ExplorerDecorator> explorerDecoratorProvider;
-    private final Provider<DocFavService> docFavService;
+    private final Provider<ExplorerFavService> explorerFavService;
 
     @Inject
     ExplorerServiceImpl(final ExplorerNodeService explorerNodeService,
@@ -89,14 +89,14 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                         final SecurityContext securityContext,
                         final ExplorerEventLog explorerEventLog,
                         final Provider<ExplorerDecorator> explorerDecoratorProvider,
-                        final Provider<DocFavService> docFavService) {
+                        final Provider<ExplorerFavService> explorerFavService) {
         this.explorerNodeService = explorerNodeService;
         this.explorerTreeModel = explorerTreeModel;
         this.explorerActionHandlers = explorerActionHandlers;
         this.securityContext = securityContext;
         this.explorerEventLog = explorerEventLog;
         this.explorerDecoratorProvider = explorerDecoratorProvider;
-        this.docFavService = docFavService;
+        this.explorerFavService = explorerFavService;
 
         explorerNodeService.ensureRootNodeExists();
     }
@@ -215,7 +215,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 .iconClassName(DocumentType.DOC_IMAGE_CLASS_NAME + ExplorerConstants.FAVOURITES);
         final ExplorerNode favNode = favNodeBuilder.build();
 
-        for (final DocRef favDocRef : docFavService.get().fetchDocFavs()) {
+        for (final DocRef favDocRef : explorerFavService.get().getUserFavourites()) {
             final ExplorerNode childNode = favNode.copy()
                     .docRef(favDocRef)
                     .depth(1)
