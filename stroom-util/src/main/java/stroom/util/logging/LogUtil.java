@@ -1,9 +1,12 @@
 package stroom.util.logging;
 
+import stroom.util.concurrent.DurationAdder;
+
 import com.google.common.base.Strings;
 import org.slf4j.helpers.MessageFormatter;
 
 import java.time.Duration;
+import java.time.Instant;
 
 public final class LogUtil {
 
@@ -156,5 +159,55 @@ public final class LogUtil {
         return LogUtil.message("Completed [{}] in {}",
                 work,
                 duration);
+    }
+
+    /**
+     * @return epochMs as an instant or null if epochMs is null.
+     */
+    public static Instant instant(final Long epochMs) {
+        if (epochMs == null) {
+            return null;
+        } else {
+            return Instant.ofEpochMilli(epochMs);
+        }
+    }
+
+    /**
+     * Output the value with its percentage of {@code total}, e.g. {@code 1000 (10%)}.
+     * Supports numbers and {@link Duration} and {@link DurationAdder}.
+     */
+    public static <T> String withPercentage(final T value, final T total) {
+        return withPercentage(value, value, total);
+    }
+
+    private static <T> String withPercentage(final Object originalValue,
+                                             final T value,
+                                             final T total) {
+        if (value == null || total == null) {
+            return null;
+        } else {
+            if (value instanceof Duration) {
+                return withPercentage(value,
+                        ((Duration) value).toMillis(),
+                        ((Duration) total).toMillis());
+            } else if (value instanceof DurationAdder) {
+                return withPercentage(value,
+                        ((DurationAdder) value).toMillis(),
+                        ((DurationAdder) total).toMillis());
+            } else if (value instanceof Number) {
+                final double valNum = ((Number) value).doubleValue();
+                final double totalNum = ((Number) total).doubleValue();
+                if (totalNum == 0) {
+                    return originalValue + " (undefined%)";
+                } else {
+                    final int pct = (int) (valNum / totalNum * 100);
+                    return originalValue + " (" + pct + "%)";
+                }
+            } else {
+                throw new IllegalArgumentException("Type "
+                        + value.getClass().getSimpleName()
+                        + " not supported");
+            }
+        }
     }
 }

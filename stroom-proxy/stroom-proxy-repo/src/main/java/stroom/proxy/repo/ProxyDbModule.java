@@ -24,13 +24,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 
 public class ProxyDbModule extends AbstractModule {
 
     private static final String MODULE = "stroom-proxy-repo";
-    private static final String FLYWAY_LOCATIONS = "stroom/proxy/repo/db/sqlite";
+    private static final List<String> FLYWAY_LOCATIONS = List.of("stroom/proxy/repo/db/sqlite");
     private static final String FLYWAY_TABLE = "proxy_repo_schema_history";
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractDataSourceProviderModule.class);

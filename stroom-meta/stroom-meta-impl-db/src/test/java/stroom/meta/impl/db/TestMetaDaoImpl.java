@@ -40,6 +40,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.SelectionSummary;
+import stroom.meta.shared.SimpleMeta;
 import stroom.meta.shared.Status;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
@@ -62,12 +63,12 @@ import com.google.common.base.Strings;
 import com.google.inject.Guice;
 import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -746,7 +747,7 @@ class TestMetaDaoImpl {
                             .collect(Collectors.toSet());
                 })
                 .withAssertions(testOutcome -> {
-                    Assertions.assertThat(testOutcome.getActualOutput())
+                    assertThat(testOutcome.getActualOutput())
                             .containsExactlyInAnyOrderElementsOf(testOutcome.getExpectedOutput());
                 })
                 .addNamedCase(
@@ -781,9 +782,103 @@ class TestMetaDaoImpl {
                 .build();
     }
 
+    @Test
+    void testGetLogicallyDeleted() {
+        final List<Meta> metaList = new ArrayList<>();
+        final Instant baseTime = addDeletedData(metaList);
+
+        final Instant threshold = baseTime
+                .minus(2, ChronoUnit.DAYS)
+                .plus(1, ChronoUnit.HOURS);
+
+        final List<SimpleMeta> simpleMetas = metaDao.getLogicallyDeleted(threshold, 4, Collections.emptySet());
+
+        assertThat(simpleMetas)
+                .hasSize(4);
+
+        assertThat(simpleMetas)
+                .extracting(SimpleMeta::getId)
+                .containsExactly(
+                        metaList.get(2).getId(),
+                        metaList.get(3).getId(),
+                        metaList.get(4).getId(),
+                        metaList.get(5).getId());
+
+        assertThat(simpleMetas)
+                .extracting(SimpleMeta::getFeedName)
+                .containsOnly(TEST1_FEED_NAME);
+
+        assertThat(simpleMetas)
+                .extracting(SimpleMeta::getTypeName)
+                .containsOnly(RAW_STREAM_TYPE_NAME);
+
+        for (final SimpleMeta simpleMeta : simpleMetas) {
+            assertThat(Instant.ofEpochMilli(simpleMeta.getStatusMs()))
+                    .isBeforeOrEqualTo(threshold);
+        }
+    }
+
+    private Instant addDeletedData(final List<Meta> metaList) {
+        assertThat(JooqUtil.getTableCount(metaDbConnProvider, meta))
+                .isEqualTo(40);
+
+//        dumpMetaTable();
+
+        final Instant baseTime = LocalDateTime.of(
+                        2016, 6, 20, 14, 0, 0)
+                .toInstant(ZoneOffset.UTC);
+
+        LOGGER.debug("baseTime: {}", baseTime);
+        for (int i = 0; i < 10; i++) {
+            final Instant time = baseTime.minus(Duration.ofDays(i));
+            LOGGER.debug("time: {}", time);
+            final Meta meta = metaDao.create(createRawProperties(TEST1_FEED_NAME, time));
+            meta.setStatus(Status.DELETED);
+            metaList.add(meta);
+        }
+        // Logically delete all the added ones
+        JooqUtil.context(metaDbConnProvider, context ->
+                context.update(meta)
+                        .set(meta.STATUS, MetaStatusId.DELETED)
+                        .where(meta.ID.in(metaList.stream()
+                                .map(Meta::getId)
+                                .collect(Collectors.toSet())))
+                        .execute());
+
+        assertThat(JooqUtil.getTableCount(metaDbConnProvider, meta))
+                .isEqualTo(40 + 10);
+
+        return baseTime;
+    }
+
+    private void dumpMetaTable() {
+        JooqUtil.context(metaDbConnProvider, context ->
+                LOGGER.debug("processor:\n{}", JooqUtil.toAsciiTable(context.select(
+                                meta.ID,
+                                meta.STATUS,
+                                metaType.NAME,
+                                metaFeed.NAME,
+                                meta.CREATE_TIME,
+                                meta.STATUS_TIME)
+                        .from(meta)
+                        .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                        .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                        .orderBy(meta.ID)
+                        .fetch(), false)));
+    }
+
     private MetaProperties createRawProperties(final String feedName) {
         return MetaProperties.builder()
                 .createMs(System.currentTimeMillis())
+                .feedName(feedName)
+                .typeName(RAW_STREAM_TYPE_NAME)
+                .build();
+    }
+
+    private MetaProperties createRawProperties(final String feedName, final Instant time) {
+        return MetaProperties.builder()
+                .createMs(time.toEpochMilli())
+                .statusMs(time.toEpochMilli())
                 .feedName(feedName)
                 .typeName(RAW_STREAM_TYPE_NAME)
                 .build();

@@ -40,8 +40,8 @@ import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.ProcessorFilterTracker;
+import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.ProcessorTask;
-import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.TaskStatus;
@@ -348,7 +348,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                         .stream()
                         .map(ProcessorTask::getId)
                         .collect(Collectors.toSet());
-                processorTaskDao.releaseTasks(idSet);
+                processorTaskDao.releaseTasks(idSet, Set.of(TaskStatus.ASSIGNED, TaskStatus.PROCESSING));
 
             } catch (final RuntimeException e) {
                 LOGGER.error("abandon() - {}", processorTaskList, e);
@@ -362,12 +362,12 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
         long total = 0;
         for (final Entry<ProcessorFilter, ProcessorTaskQueue> entry : queueMap.entrySet()) {
             final ProcessorFilter filter = entry.getKey();
-            total += releaseFilterTasks(filter);
+            total += releaseQueuedFilterTasks(filter);
         }
         return total;
     }
 
-    private long releaseFilterTasks(final ProcessorFilter filter) {
+    private long releaseQueuedFilterTasks(final ProcessorFilter filter) {
         if (filter != null) {
             return LOGGER.logDurationIfDebugEnabled(() -> {
                 final Set<Long> taskIdSet = new HashSet<>();
@@ -377,23 +377,23 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                     while (processorTask != null) {
                         taskIdSet.add(processorTask.getId());
                         if (taskIdSet.size() >= BATCH_SIZE) {
-                            release(taskIdSet);
+                            releaseQueuedTask(taskIdSet);
                             taskIdSet.clear();
                         }
                         processorTask = queue.poll();
                     }
                 }
-                release(taskIdSet);
+                releaseQueuedTask(taskIdSet);
                 return taskIdSet.size();
             }, () -> "Released tasks for filter " + filter.getId());
         }
         return 0;
     }
 
-    private void release(final Set<Long> taskIdSet) {
+    private void releaseQueuedTask(final Set<Long> taskIdSet) {
         if (taskIdSet.size() > 0) {
             try {
-                processorTaskDao.releaseTasks(taskIdSet);
+                processorTaskDao.releaseTasks(taskIdSet, Set.of(TaskStatus.QUEUED));
             } catch (final RuntimeException e) {
                 LOGGER.error("release() - {}", taskIdSet, e);
             }
@@ -609,23 +609,21 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                 final ProcessorTaskQueue queue = queueMap.computeIfAbsent(
                         filter,
                         k -> new ProcessorTaskQueue());
-                final int currQueueSize = queue.size();
 
                 // If we have enough tasks queued then stop trying to add more to the queues.
                 if (!createProcessTasksState.keepAddingTasks()) {
                     break;
 
                 } else if (queue.compareAndSetFilling(false, true)) {
-                    // Create tasks for this filter
-                    final FilterProgressMonitor filterProgressMonitor =
-                            progressMonitor.logFilter(filter, currQueueSize);
-                    createProcessTasksState.addCurrentlyQueuedTasks(currQueueSize);
+                    final int initialQueueSize = queue.size();
+                    createProcessTasksState.addCurrentlyQueuedTasks(initialQueueSize);
                     createTasksForFilter(
                             taskContext,
                             nodeName,
                             filter,
+                            progressMonitor,
                             queue,
-                            filterProgressMonitor,
+                            initialQueueSize,
                             createProcessTasksState);
                 }
             }
@@ -641,7 +639,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
             final ProcessorTaskQueue queue = entry.getValue();
             if (!enabledFilterSet.contains(filter)) {
                 final DurationTimer durationTimer = DurationTimer.start();
-                final long count = releaseFilterTasks(filter);
+                final long count = releaseQueuedFilterTasks(filter);
                 final FilterProgressMonitor filterProgressMonitor = progressMonitor.logFilter(filter, queue.size());
                 filterProgressMonitor.logPhase(Phase.RELEASE_TASKS_FOR_DISABLED_FILTERS, durationTimer, count);
                 filterProgressMonitor.complete();
@@ -665,9 +663,13 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
     private void createTasksForFilter(final TaskContext taskContext,
                                       final String nodeName,
                                       final ProcessorFilter filter,
+                                      final ProgressMonitor progressMonitor,
                                       final ProcessorTaskQueue queue,
-                                      final FilterProgressMonitor filterProgressMonitor,
+                                      final int initialQueueSize,
                                       final CreateProcessTasksState createProcessTasksState) {
+        // Create tasks for this filter
+        final FilterProgressMonitor filterProgressMonitor =
+                progressMonitor.logFilter(filter, initialQueueSize);
         Optional<ProcessorFilter> optionalProcessorFilter = Optional.empty();
 
         final AtomicBoolean isSearching = new AtomicBoolean();
@@ -687,21 +689,19 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                         info(taskContext, () ->
                                 "Creating tasks: " + loadedFilter);
 
-                        // If there are any tasks for this filter that were
-                        // previously created but are unprocessed, not owned by any
-                        // node and their associated stream is unlocked then add
-                        // them here.
+                        // If there are any tasks for this filter that were previously created but aren't queued and
+                        // their associated stream is unlocked then add them to the queue here.
                         final ProcessorConfig processorConfig = processorConfigProvider.get();
                         if (processorConfig.isFillTaskQueue()) {
                             final DurationTimer durationTimer = DurationTimer.start();
-                            final int count = addUnownedTasks(
+                            final int count = queueCreatedTasks(
                                     taskContext,
                                     nodeName,
                                     loadedFilter,
                                     queue,
                                     createProcessTasksState,
                                     filterProgressMonitor);
-                            filterProgressMonitor.logPhase(Phase.ADD_UNOWNED_TASKS, durationTimer, count);
+                            filterProgressMonitor.logPhase(Phase.QUEUE_CREATED_TASKS, durationTimer, count);
                         }
 
                         // If we are allowing tasks to be created then go ahead and create some.
@@ -718,8 +718,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
 
                                 // Get the tracker for this filter.
                                 ProcessorFilterTracker tracker = loadedFilter.getProcessorFilterTracker();
-                                if (ProcessorFilterTracker.COMPLETE.equals(tracker.getStatus()) ||
-                                        ProcessorFilterTracker.ERROR.equals(tracker.getStatus())) {
+                                if (ProcessorFilterTrackerStatus.COMPLETE.equals(tracker.getStatus()) ||
+                                        ProcessorFilterTrackerStatus.ERROR.equals(tracker.getStatus())) {
                                     // If the tracker is complete we need to make sure the status is updated, so we can
                                     // see that it is not delivering any more tasks.
                                     if (tracker.getLastPollTaskCount() != null && tracker.getLastPollTaskCount() > 0) {
@@ -784,7 +784,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                     if (error.length() > MAX_ERROR_LENGTH) {
                         error = error.substring(0, MAX_ERROR_LENGTH) + "...";
                     }
-                    tracker.setStatus("Error: " + error);
+                    tracker.setStatus(ProcessorFilterTrackerStatus.ERROR);
+                    tracker.setMessage(error);
                     updateTracker(tracker, filterProgressMonitor);
                 });
             } catch (final RuntimeException e2) {
@@ -795,96 +796,72 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
         } finally {
             if (!isSearching.get()) {
                 queue.setFilling(false);
+                filterProgressMonitor.complete();
             }
         }
     }
 
-    private int addUnownedTasks(final TaskContext taskContext,
-                                final String nodeName,
-                                final ProcessorFilter filter,
-                                final ProcessorTaskQueue queue,
-                                final CreateProcessTasksState createProcessTasksState,
-                                final FilterProgressMonitor filterProgressMonitor) {
+    private int queueCreatedTasks(final TaskContext taskContext,
+                                  final String nodeName,
+                                  final ProcessorFilter filter,
+                                  final ProcessorTaskQueue queue,
+                                  final CreateProcessTasksState createProcessTasksState,
+                                  final FilterProgressMonitor filterProgressMonitor) {
         int totalTasks = 0;
         int totalAddedTasks = 0;
         int tasksToAdd = createProcessTasksState.getRequiredTaskCount();
         final int batchSize = Math.max(BATCH_SIZE, tasksToAdd);
-        long minTaskId = 0;
+        long lastTaskId = 0;
 
         try {
             // Keep adding tasks until we have reached the requested number.
             while (tasksToAdd > 0) {
 
-                // First look for any items that are no-longer locked etc
-                final ExpressionOperator findProcessorTaskExpression = ExpressionOperator.builder()
-                        .addTerm(ProcessorTaskFields.TASK_ID, Condition.GREATER_THAN, minTaskId)
-                        .addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, TaskStatus.UNPROCESSED.getDisplayValue())
-                        .addTerm(ProcessorTaskFields.NODE_NAME, Condition.IS_NULL, null)
-                        .addTerm(ProcessorTaskFields.PROCESSOR_FILTER_ID, Condition.EQUALS, filter.getId())
-                        .build();
-                final ExpressionCriteria findProcessorTaskCriteria =
-                        new ExpressionCriteria(findProcessorTaskExpression);
-                findProcessorTaskCriteria.obtainPageRequest().setLength(batchSize);
-                findProcessorTaskCriteria.addSort(ProcessorTaskFields.FIELD_ID);
-
+                // Look for any existing tasks we have created.
                 DurationTimer durationTimer = DurationTimer.start();
-                final List<ProcessorTask> processorTasks = processorTaskDao
-                        .find(findProcessorTaskCriteria).getValues();
-                filterProgressMonitor.logPhase(Phase.ADD_UNOWNED_TASKS_FETCH_TASKS,
+                final List<ExistingCreatedTask> existingCreatedTasks = processorTaskDao
+                        .findExistingCreatedTasks(lastTaskId, filter.getId(), batchSize);
+                filterProgressMonitor.logPhase(Phase.QUEUE_CREATED_TASKS_FETCH_TASKS,
                         durationTimer,
-                        processorTasks.size());
+                        existingCreatedTasks.size());
 
                 // If we got fewer tasks returned than we asked for then we won't need to ask for more.
-                if (processorTasks.size() < batchSize) {
+                if (existingCreatedTasks.size() < batchSize) {
                     tasksToAdd = 0;
                 }
 
-                // If we have some processor tasks then see if we can find unlocked meta for them so we can process.
-                if (processorTasks.size() > 0) {
-                    // Increment the total number of unowned tasks.
-                    totalTasks += processorTasks.size();
-
-                    // Find unlocked meta corresponding to this list of unowned tasks.
-                    final ExpressionOperator.Builder metaIdExpressionBuilder = ExpressionOperator.builder().op(Op.OR);
-                    for (final ProcessorTask task : processorTasks) {
-                        metaIdExpressionBuilder.addTerm(MetaFields.ID, Condition.EQUALS, task.getMetaId());
-                        // Ensure we don't see this task again in the next attempt.
-                        minTaskId = Math.max(minTaskId, task.getId());
-                    }
-
-                    // Find all unlocked meta entries for the selected processor tasks.
-                    final ExpressionOperator findMetaExpression = ExpressionOperator.builder()
-                            .addOperator(metaIdExpressionBuilder.build())
-                            .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
-                            .build();
-                    final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(findMetaExpression);
-                    findMetaCriteria.setSort(MetaFields.ID.getName(), false, false);
-
-                    durationTimer = DurationTimer.start();
-                    final List<Meta> metaList = metaService.find(findMetaCriteria).getValues();
-                    filterProgressMonitor.logPhase(Phase.ADD_UNOWNED_TASKS_FETCH_META,
-                            durationTimer,
-                            metaList.size());
-
+                // If we have some existing tasks then queue them unless they belong to locked meta.
+                if (existingCreatedTasks.size() > 0) {
                     try {
-                        // Create a map of locked meta items keyed by id.
-                        final Set<Long> lockedMetaIdSet = metaList
-                                .stream()
-                                .map(Meta::getId)
-                                .collect(Collectors.toSet());
-                        // Get a set of processor task ids but filter out tasks associated with meta that is still
-                        // locked.
-                        final Set<Long> processorTaskIdSet = processorTasks
+                        // Increment the total number of unowned tasks.
+                        totalTasks += existingCreatedTasks.size();
+
+                        final List<Long> metaIdList = new ArrayList<>(existingCreatedTasks.size());
+                        for (final ExistingCreatedTask task : existingCreatedTasks) {
+                            metaIdList.add(task.getMetaId());
+                            // Ensure we don't see this task again in the next attempt.
+                            lastTaskId = Math.max(lastTaskId, task.getTaskId());
+                        }
+
+                        // Find all locked meta entries for the selected processor tasks.
+                        durationTimer = DurationTimer.start();
+                        final Set<Long> lockedMetaIdSet = metaService.findLockedMeta(metaIdList);
+                        filterProgressMonitor.logPhase(Phase.QUEUE_CREATED_TASKS_FETCH_META,
+                                durationTimer,
+                                lockedMetaIdSet.size());
+
+                        // Filter out tasks associated with meta that is still locked.
+                        final Set<Long> processorTaskIdSet = existingCreatedTasks
                                 .stream()
                                 .filter(processorTask -> !lockedMetaIdSet.contains(processorTask.getMetaId()))
-                                .map(ProcessorTask::getId)
+                                .map(ExistingCreatedTask::getTaskId)
                                 .collect(Collectors.toSet());
 
                         durationTimer = DurationTimer.start();
                         final List<ProcessorTask> existingTasks = processorTaskDao.queueExistingTasks(
                                 processorTaskIdSet,
                                 nodeName);
-                        filterProgressMonitor.logPhase(Phase.ADD_UNOWNED_TASKS_QUEUE_TASKS,
+                        filterProgressMonitor.logPhase(Phase.QUEUE_CREATED_TASKS_QUEUE_TASKS,
                                 durationTimer,
                                 existingTasks.size());
 
@@ -951,7 +928,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                 final long start = filter.getCreateTimeMs();
                 final long end = start + limits.getDurationMs();
                 if (end < System.currentTimeMillis()) {
-                    tracker.setStatus(ProcessorFilterTracker.COMPLETE);
+                    tracker.setStatus(ProcessorFilterTrackerStatus.COMPLETE);
                     updateTracker(tracker, filterProgressMonitor);
                     return;
                 }
@@ -966,7 +943,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                 maxStreams = Math.min(streamLimit, maxStreams);
 
                 if (maxStreams <= 0) {
-                    tracker.setStatus(ProcessorFilterTracker.COMPLETE);
+                    tracker.setStatus(ProcessorFilterTrackerStatus.COMPLETE);
                     updateTracker(tracker, filterProgressMonitor);
                     return;
                 }
@@ -981,7 +958,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                 maxEvents = Math.min(eventLimit, maxEvents);
 
                 if (maxEvents <= 0) {
-                    tracker.setStatus(ProcessorFilterTracker.COMPLETE);
+                    tracker.setStatus(ProcessorFilterTrackerStatus.COMPLETE);
                     updateTracker(tracker, filterProgressMonitor);
                     return;
                 }
@@ -993,10 +970,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                 .expression(queryData.getExpression())
                 .params(getParams(queryData))
                 .build();
-
-        // Update the tracker status message.
-        tracker.setStatus("Searching...");
-        final ProcessorFilterTracker updatedTracker = updateTracker(tracker, filterProgressMonitor);
 
         final Long maxMetaId = metaService.getMaxId();
 
@@ -1012,20 +985,16 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                             throwable.getMessage();
                     LOGGER.error(message);
                     LOGGER.debug(message, throwable);
-                    updatedTracker.setStatus(ProcessorFilterTracker.ERROR);
-                    updateTracker(updatedTracker, filterProgressMonitor);
+                    tracker.setStatus(ProcessorFilterTrackerStatus.ERROR);
+                    updateTracker(tracker, filterProgressMonitor);
 
                 } else if (eventRefs == null) {
                     LOGGER.debug(() -> "eventRefs is null");
-                    updatedTracker.setStatus(ProcessorFilterTracker.COMPLETE);
-                    updateTracker(updatedTracker, filterProgressMonitor);
+                    tracker.setStatus(ProcessorFilterTrackerStatus.COMPLETE);
+                    updateTracker(tracker, filterProgressMonitor);
 
                 } else {
                     final boolean reachedLimit = eventRefs.isReachedLimit();
-
-                    // Update the tracker status message.
-                    updatedTracker.setStatus("Creating...");
-                    final ProcessorFilterTracker tracker2 = updateTracker(updatedTracker, filterProgressMonitor);
 
                     // Create a task for each stream reference.
                     final DurationTimer durationTimer = DurationTimer.start();
@@ -1036,7 +1005,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
 
                     final CreatedTasks createdTasks = processorTaskDao.createNewTasks(
                             filter,
-                            tracker2,
+                            tracker,
                             filterProgressMonitor,
                             streamQueryTime,
                             map,
@@ -1092,14 +1061,13 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
         createProcessTasksState.addFuture(future2);
     }
 
-    private ProcessorFilterTracker updateTracker(final ProcessorFilterTracker tracker,
-                                                 final FilterProgressMonitor filterProgressMonitor) {
+    private void updateTracker(final ProcessorFilterTracker tracker,
+                               final FilterProgressMonitor filterProgressMonitor) {
         final DurationTimer durationTimer = DurationTimer.start();
-        final ProcessorFilterTracker updated = processorFilterTrackerDao.update(tracker);
+        processorFilterTrackerDao.update(tracker);
         filterProgressMonitor.logPhase(Phase.UPDATE_TRACKERS,
                 durationTimer,
                 0);
-        return updated;
     }
 
     private List<Param> getParams(final QueryData queryData) {
@@ -1131,18 +1099,13 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
         LOGGER.debug("Creating tasks from criteria, requiredTasks: {}, filter: {}", requiredTasks, filter);
 
         if (requiredTasks > 0) {
-            // Update the tracker status message.
-            tracker.setStatus("Creating...");
-
-            final ProcessorFilterTracker updatedTracker = updateTracker(tracker, filterProgressMonitor);
-
             // This will contain locked and unlocked streams
             final Long maxMetaId = metaService.getMaxId();
 
             final DurationTimer durationTimer = DurationTimer.start();
             final List<Meta> metaList = runSelectMetaQuery(
                     queryData.getExpression(),
-                    updatedTracker.getMinMetaId(),
+                    tracker.getMinMetaId(),
                     filter.getMinMetaCreateTimeMs(),
                     filter.getMaxMetaCreateTimeMs(),
                     filter.getPipeline(),
@@ -1158,7 +1121,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
 
             final CreatedTasks createdTasks = processorTaskDao.createNewTasks(
                     filter,
-                    updatedTracker,
+                    tracker,
                     filterProgressMonitor,
                     streamQueryTime,
                     map,
@@ -1182,8 +1145,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                             createdTasks.getTotalTasksCreated(),
                             filter.toString()));
         }
-
-        filterProgressMonitor.complete();
     }
 
     private void info(final TaskContext taskContext,

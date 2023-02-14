@@ -10,9 +10,11 @@ dependencies {
     implementation libs.assertj_core
     implementation libs.commons_lang
     implementation libs.dropwizard_testing
+    implementation libs.flyway_core
     implementation libs.guava
     implementation libs.guice5
     implementation libs.hikari
+    implementation libs.jooq
     implementation libs.junit_jupiter_api
     implementation libs.junit_platform_launcher
     implementation libs.mockito_core

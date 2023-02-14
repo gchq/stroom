@@ -16,6 +16,7 @@ dependencies {
     testImplementation libs.assertj_core
     testImplementation libs.jackson_core
     testImplementation libs.junit_jupiter_api
+    testImplementation libs.slf4j_api
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jakarta_activation

@@ -4,6 +4,7 @@ import stroom.cluster.lock.impl.db.ClusterLockConfig.ClusterLockDbConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 
+import java.util.List;
 import javax.sql.DataSource;
 
 public class ClusterLockDbModule extends AbstractFlyWayDbModule<ClusterLockDbConfig, ClusterLockDbConnProvider> {
@@ -23,8 +24,8 @@ public class ClusterLockDbModule extends AbstractFlyWayDbModule<ClusterLockDbCon
     }
 
     @Override
-    protected String getFlyWayLocation() {
-        return FLYWAY_LOCATIONS;
+    protected List<String> getFlyWayLocations() {
+        return List.of(FLYWAY_LOCATIONS);
     }
 
     @Override

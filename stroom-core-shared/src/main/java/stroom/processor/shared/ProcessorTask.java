@@ -59,7 +59,7 @@ public class ProcessorTask {
     private ProcessorFilter processorFilter;
 
     public ProcessorTask() {
-        status = TaskStatus.UNPROCESSED;
+        status = TaskStatus.CREATED;
     }
 
     @JsonCreator
