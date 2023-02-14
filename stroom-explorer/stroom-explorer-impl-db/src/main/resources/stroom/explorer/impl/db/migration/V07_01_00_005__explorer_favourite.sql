@@ -17,7 +17,7 @@
 -- stop note level warnings about objects (not)? existing
 set @old_sql_notes = @@sql_notes, sql_notes = 0;
 
-CREATE TABLE IF NOT EXISTS `doc_favourite`
+CREATE TABLE IF NOT EXISTS `explorer_favourite`
 (
     `id`             bigint       NOT NULL AUTO_INCREMENT,
     `doc_type`       varchar(255) NOT NULL,
@@ -25,14 +25,12 @@ CREATE TABLE IF NOT EXISTS `doc_favourite`
     `user_uuid`      varchar(255) NOT NULL,
     `create_time_ms` bigint       NOT NULL,
     PRIMARY KEY (`id`),
-    KEY `doc_favourite_fk_doc_type_doc_uuid` (`doc_type`, `doc_uuid`),
-    KEY `doc_favourite_fk_user_uuid` (`user_uuid`),
-    UNIQUE KEY `doc_favourite_fk_explorer_node_type_explorer_node_uuid_user_uuid` (`doc_type`, `doc_uuid`, `user_uuid`),
-    CONSTRAINT `doc_favourite_fk_user_uuid` FOREIGN KEY (`user_uuid`)
-        REFERENCES `stroom`.`stroom_user` (`uuid`)
-        ON DELETE CASCADE,
-    CONSTRAINT `doc_favourite_fk_explorer_node_type_explorer_node_uuid` FOREIGN KEY (`doc_type`, `doc_uuid`)
-        REFERENCES `stroom`.`explorer_node` (`type`, `uuid`)
+    KEY `explorer_favourite_fk_doc_type_doc_uuid` (`doc_type`, `doc_uuid`),
+    KEY `explorer_favourite_user_uuid_idx` (`user_uuid`),
+    KEY `explorer_favourite_user_uuid_doc_type_doc_uuid_idx` (`user_uuid`, `doc_type`, `doc_uuid`),
+    UNIQUE KEY `explorer_favourite_fk_en_type_en_uuid_user_uuid` (`doc_type`, `doc_uuid`, `user_uuid`),
+    CONSTRAINT `explorer_favourite_fk_en_type_en_uuid` FOREIGN KEY (`doc_type`, `doc_uuid`)
+        REFERENCES `explorer_node` (`type`, `uuid`)
         ON DELETE CASCADE
 ) ENGINE = InnoDB
   AUTO_INCREMENT = 446

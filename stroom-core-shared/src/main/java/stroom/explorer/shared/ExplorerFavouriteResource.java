@@ -1,4 +1,4 @@
-package stroom.docstore.shared;
+package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
 import stroom.util.shared.ResourcePaths;
@@ -18,30 +18,30 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Tag(name = "Document Favourites")
-@Path("/docFav" + ResourcePaths.V1)
+@Tag(name = "Explorer Favourites")
+@Path("/explorerFavourite" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface DocFavResource extends RestResource, DirectRestService {
+public interface ExplorerFavouriteResource extends RestResource, DirectRestService {
 
     @POST
-    @Path("/create")
+    @Path("/createUserFavourite")
     @Operation(
             summary = "Set a document as a favourite for the current user",
-            operationId = "createDocFav")
-    void create(@Parameter(description = "docRef", required = true) DocRef docRef);
+            operationId = "createUserFavourite")
+    void createUserFavourite(@Parameter(description = "docRef", required = true) DocRef docRef);
 
     @DELETE
-    @Path("/delete")
+    @Path("/deleteUserFavourite")
     @Operation(
             summary = "Unset a document as favourite for the current user",
-            operationId = "deleteDocFav")
-    void delete(@Parameter(description = "docRef", required = true) DocRef docRef);
+            operationId = "deleteUserFavourite")
+    void deleteUserFavourite(@Parameter(description = "docRef", required = true) DocRef docRef);
 
     @GET
-    @Path("/fetchDocFavs")
+    @Path("/getUserFavourites")
     @Operation(
             summary = "Retrieve all DocRefs the current user has marked as favourite",
-            operationId = "fetchDocFavs")
-    List<DocRef> fetchDocFavs();
+            operationId = "getUserFavourites")
+    List<DocRef> getUserFavourites();
 }

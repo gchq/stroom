@@ -2,11 +2,11 @@ package stroom.explorer.impl.db;
 
 import stroom.db.util.JooqUtil;
 import stroom.db.util.JooqUtil.BooleanOperator;
-import stroom.docstore.fav.impl.db.jooq.tables.DocFavourite;
 import stroom.explorer.impl.ExplorerTreeDao;
 import stroom.explorer.impl.ExplorerTreeNode;
 import stroom.explorer.impl.ExplorerTreePath;
 import stroom.explorer.impl.TreeModel;
+import stroom.explorer.impl.db.jooq.tables.ExplorerFavourite;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.exception.AuthenticationException;
@@ -39,7 +39,8 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     private final stroom.explorer.impl.db.jooq.tables.ExplorerPath p1 = EXPLORER_PATH.as("p1");
     private final stroom.explorer.impl.db.jooq.tables.ExplorerPath p2 = EXPLORER_PATH.as("p2");
     private final stroom.explorer.impl.db.jooq.tables.ExplorerNode n = EXPLORER_NODE.as("n");
-    private final stroom.docstore.fav.impl.db.jooq.tables.DocFavourite f = DocFavourite.DOC_FAVOURITE.as("f");
+    private final stroom.explorer.impl.db.jooq.tables.ExplorerFavourite f =
+            ExplorerFavourite.EXPLORER_FAVOURITE.as("f");
 
     @Inject
     ExplorerTreeDaoImpl(final ExplorerDbConnProvider explorerDbConnProvider,

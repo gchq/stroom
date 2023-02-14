@@ -1,11 +1,11 @@
-package stroom.docstore.fav.impl;
+package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
-import stroom.docstore.fav.api.DocFavService;
-import stroom.docstore.shared.DocFavResource;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.explorer.api.ExplorerFavService;
+import stroom.explorer.shared.ExplorerFavouriteResource;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -19,22 +19,22 @@ import javax.inject.Provider;
 import static stroom.event.logging.rs.api.AutoLogged.OperationType.UNLOGGED;
 
 @AutoLogged(UNLOGGED)
-public class DocFavResourceImpl implements DocFavResource {
+public class ExplorerFavouriteResourceImpl implements ExplorerFavouriteResource {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocFavResourceImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExplorerFavouriteResourceImpl.class);
 
-    private final Provider<DocFavService> docFavService;
+    private final Provider<ExplorerFavService> explorerFavService;
     private final Provider<StroomEventLoggingService> eventLoggingService;
 
     @Inject
-    DocFavResourceImpl(final Provider<DocFavService> docFavService,
-                       final Provider<StroomEventLoggingService> eventLoggingService) {
-        this.docFavService = docFavService;
+    ExplorerFavouriteResourceImpl(final Provider<ExplorerFavService> explorerFavService,
+                                  final Provider<StroomEventLoggingService> eventLoggingService) {
+        this.explorerFavService = explorerFavService;
         this.eventLoggingService = eventLoggingService;
     }
 
     @Override
-    public void create(final DocRef docRef) {
+    public void createUserFavourite(final DocRef docRef) {
         LOGGER.debug("Setting document {} as favourite", docRef);
         eventLoggingService.get().loggedWorkBuilder()
                 .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "update"))
@@ -45,13 +45,13 @@ public class DocFavResourceImpl implements DocFavResource {
                                 .build())
                         .build())
                 .withSimpleLoggedAction(() -> {
-                    docFavService.get().create(docRef);
+                    explorerFavService.get().create(docRef);
                 })
                 .runActionAndLog();
     }
 
     @Override
-    public void delete(final DocRef docRef) {
+    public void deleteUserFavourite(final DocRef docRef) {
         LOGGER.debug("Unsetting document {} as favourite", docRef);
         eventLoggingService.get().loggedWorkBuilder()
                 .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "update"))
@@ -62,13 +62,13 @@ public class DocFavResourceImpl implements DocFavResource {
                                 .build())
                         .build())
                 .withSimpleLoggedAction(() -> {
-                    docFavService.get().delete(docRef);
+                    explorerFavService.get().delete(docRef);
                 })
                 .runActionAndLog();
     }
 
     @Override
-    public List<DocRef> fetchDocFavs() {
-        return docFavService.get().fetchDocFavs();
+    public List<DocRef> getUserFavourites() {
+        return explorerFavService.get().getUserFavourites();
     }
 }
