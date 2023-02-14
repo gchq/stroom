@@ -28,6 +28,9 @@
 .svgIcon-clear {
   background-image: url("../images/clear.svg");
 }
+.svgIcon-clipboard {
+  background-image: url("../images/clipboard.svg");
+}
 .svgIcon-close {
   background-image: url("../images/close.svg");
 }
@@ -316,6 +319,9 @@
 }
 .svgIcon-refresh-green {
   background-image: url("../images/refresh-green.svg");
+}
+.svgIcon-share {
+  background-image: url("../images/share.svg");
 }
 .svgIcon-show {
   background-image: url("../images/show.svg");

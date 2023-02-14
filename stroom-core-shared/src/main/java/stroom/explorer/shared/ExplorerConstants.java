@@ -10,6 +10,13 @@ public final class ExplorerConstants {
     public static final String FAVOURITES = "Favourites";
     public static final String FOLDER = "Folder";
 
+    /*
+    URL query parameter constants
+     */
+    public static final String OPEN_DOC_ACTION = "open-doc";
+    public static final String DOC_TYPE_QUERY_PARAM = "docType";
+    public static final String DOC_UUID_QUERY_PARAM = "docUuid";
+
     public static final DocRef SYSTEM_DOC_REF = new DocRef(SYSTEM, "0", SYSTEM);
     public static final ExplorerNode SYSTEM_NODE = ExplorerNode.builder()
             .docRef(SYSTEM_DOC_REF)
