@@ -53,6 +53,15 @@ class ProcessorFilterTrackerDaoImpl implements ProcessorFilterTrackerDao {
                                 .fetchOptional())
                 .map(RECORD_TO_PROCESSOR_FILTER_TRACKER_MAPPER);
     }
+
+    public Optional<ProcessorFilterTracker> fetch(final DSLContext context, final int id) {
+        return context
+                .select()
+                .from(PROCESSOR_FILTER_TRACKER)
+                .where(PROCESSOR_FILTER_TRACKER.ID.eq(id))
+                .fetchOptional()
+                .map(RECORD_TO_PROCESSOR_FILTER_TRACKER_MAPPER);
+    }
 //
 //    @Override
 //    public ProcessorFilterTracker update(final ProcessorFilterTracker processorFilterTracker) {
