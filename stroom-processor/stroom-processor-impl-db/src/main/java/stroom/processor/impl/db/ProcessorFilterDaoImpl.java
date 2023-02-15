@@ -2,7 +2,6 @@ package stroom.processor.impl.db;
 
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
-import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.impl.ProcessorFilterDao;
@@ -65,13 +64,16 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     private final ProcessorDbConnProvider processorDbConnProvider;
     private final ProcessorFilterMarshaller marshaller;
     private final ExpressionMapper expressionMapper;
+    private final ProcessorFilterTrackerDaoImpl processorFilterTrackerDaoImpl;
 
     @Inject
     ProcessorFilterDaoImpl(final ProcessorDbConnProvider processorDbConnProvider,
                            final ExpressionMapperFactory expressionMapperFactory,
-                           final ProcessorFilterMarshaller marshaller) {
+                           final ProcessorFilterMarshaller marshaller,
+                           final ProcessorFilterTrackerDaoImpl processorFilterTrackerDaoImpl) {
         this.processorDbConnProvider = processorDbConnProvider;
         this.marshaller = marshaller;
+        this.processorFilterTrackerDaoImpl = processorFilterTrackerDaoImpl;
 
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(ProcessorFilterFields.ID, PROCESSOR_FILTER.ID, Integer::valueOf);
@@ -111,8 +113,12 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                     processorFilterTrackerRecord.attach(context.configuration());
                     processorFilterTrackerRecord.store();
 
-                    final ProcessorFilterTracker persistedTracker =
-                            processorFilterTrackerRecord.into(ProcessorFilterTracker.class);
+                    // The .store() doesn't seem to bring back the default value for status so re-fetch
+                    final ProcessorFilterTracker persistedTracker = processorFilterTrackerDaoImpl.fetch(
+                                    context, processorFilterTrackerRecord.getId())
+                            .orElseThrow(() -> new RuntimeException(
+                                    "Can't find newly created tracker with id" + processorFilterTrackerRecord.getId()));
+
                     marshalled.setProcessorFilterTracker(persistedTracker);
                     processorFilterRecord.setFkProcessorFilterTrackerId(persistedTracker.getId());
 
