@@ -25,6 +25,7 @@ import stroom.core.client.HasSaveRegistry;
 import stroom.core.client.KeyboardInterceptor;
 import stroom.core.client.KeyboardInterceptor.KeyTest;
 import stroom.core.client.MenuKeys;
+import stroom.core.client.UrlConstants;
 import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -80,6 +81,7 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
+import stroom.util.client.ClipboardUtil;
 import stroom.widget.menu.client.presenter.GroupHeading;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
@@ -100,6 +102,7 @@ import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -571,9 +574,19 @@ public class DocumentPluginEventManager extends Plugin {
         }
     }
 
-    private void open(final DocRef docRef, final boolean forceOpen) {
+    public void open(final DocRef docRef, final boolean forceOpen) {
         final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(docRef.getType());
         if (documentPlugin != null) {
+            // Decorate the DocRef with its name from the info service (required by the doc presenter)
+            restFactory.create()
+                    .onSuccess(result -> {
+                        final DocRefInfo docRefInfo = (DocRefInfo) result;
+                        if (docRefInfo.getDocRef() != null) {
+                            docRef.setName(docRefInfo.getDocRef().getName());
+                        }
+                    })
+                    .call(EXPLORER_RESOURCE)
+                    .info(docRef);
             documentPlugin.open(docRef, forceOpen);
         } else {
             throw new IllegalArgumentException("Document type '" + docRef.getType() + "' not registered");
@@ -696,7 +709,7 @@ public class DocumentPluginEventManager extends Plugin {
 //        return docRef;
 //    }
 
-    private void addFavouritesMenuItem(final List<Item> menuItems, final boolean singleSelection) {
+    private void addFavouritesMenuItem(final List<Item> menuItems, final boolean singleSelection, final int priority) {
         final ExplorerNode primarySelection = getPrimarySelection();
 
         // Add the favourites menu item if an item is selected, and it's not a root-level node or a favourite folder
@@ -844,19 +857,24 @@ public class DocumentPluginEventManager extends Plugin {
                 && allowRead
                 && !FeedDoc.DOCUMENT_TYPE.equals(readableItems.get(0).getType());
 
-        addFavouritesMenuItem(menuItems, singleSelection);
+        addFavouritesMenuItem(menuItems, singleSelection, 10);
+        if (singleSelection && getPrimarySelection() != null &&
+                !DocumentTypes.isSystem(getPrimarySelection().getType())) {
+            menuItems.add(createCopyLinkMenuItem(getPrimarySelection(), 11));
+            menuItems.add(new Separator(12));
+        }
 
-        menuItems.add(createInfoMenuItem(readableItems, 3, isInfoEnabled));
-        menuItems.add(createCopyMenuItem(readableItems, 4, isCopyEnabled));
-        menuItems.add(createMoveMenuItem(updatableItems, 5, allowUpdate));
-        menuItems.add(createRenameMenuItem(updatableItems, 6, isRenameEnabled));
-        menuItems.add(createDeleteMenuItem(deletableItems, 7, allowDelete));
+        menuItems.add(createInfoMenuItem(readableItems, 20, isInfoEnabled));
+        menuItems.add(createCopyMenuItem(readableItems, 21, isCopyEnabled));
+        menuItems.add(createMoveMenuItem(updatableItems, 22, allowUpdate));
+        menuItems.add(createRenameMenuItem(updatableItems, 23, isRenameEnabled));
+        menuItems.add(createDeleteMenuItem(deletableItems, 24, allowDelete));
 
         if (securityContext.hasAppPermission(PermissionNames.IMPORT_CONFIGURATION)) {
-            menuItems.add(createImportMenuItem(8));
+            menuItems.add(createImportMenuItem(25));
         }
         if (securityContext.hasAppPermission(PermissionNames.EXPORT_CONFIGURATION)) {
-            menuItems.add(createExportMenuItem(9, readableItems));
+            menuItems.add(createExportMenuItem(26, readableItems));
         }
 
         // Only allow users to change permissions if they have a single item selected.
@@ -865,10 +883,10 @@ public class DocumentPluginEventManager extends Plugin {
                     DocumentPermissionNames.OWNER,
                     true);
             if (ownedItems.size() == 1) {
-                menuItems.add(new Separator(10));
-                menuItems.add(createShowDependenciesMenuItem(ownedItems.get(0), 11));
-                menuItems.add(new Separator(12));
-                menuItems.add(createPermissionsMenuItem(ownedItems.get(0), 13, true));
+                menuItems.add(new Separator(30));
+                menuItems.add(createShowDependenciesMenuItem(ownedItems.get(0), 31));
+                menuItems.add(new Separator(32));
+                menuItems.add(createPermissionsMenuItem(ownedItems.get(0), 33, true));
             }
         }
     }
@@ -948,6 +966,26 @@ public class DocumentPluginEventManager extends Plugin {
 
         return new IconMenuItem(priority, SvgPresets.INFO, SvgPresets.INFO, "Info", null,
                 enabled, command);
+    }
+
+    private MenuItem createCopyLinkMenuItem(final ExplorerNode explorerNode, final int priority) {
+        // Generate a URL that can be used to open a new Stroom window with the target document loaded
+        final String docUrl = Window.Location.createUrlBuilder()
+                .setPath("/")
+                .setParameter(UrlConstants.ACTION, ExplorerConstants.OPEN_DOC_ACTION)
+                .setParameter(ExplorerConstants.DOC_TYPE_QUERY_PARAM, explorerNode.getType())
+                .setParameter(ExplorerConstants.DOC_UUID_QUERY_PARAM, explorerNode.getUuid())
+                .buildString();
+
+        return new IconMenuItem(
+                priority,
+                SvgPresets.SHARE,
+                SvgPresets.SHARE,
+                "Copy Link to Clipboard",
+                null,
+                true,
+                () -> ClipboardUtil.copy(docUrl)
+        );
     }
 
     private MenuItem createCopyMenuItem(final List<ExplorerNode> explorerNodeList,

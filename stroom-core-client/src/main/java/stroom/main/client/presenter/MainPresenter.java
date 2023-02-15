@@ -19,7 +19,9 @@ package stroom.main.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.core.client.KeyboardInterceptor;
+import stroom.core.client.UrlConstants;
 import stroom.core.client.presenter.CorePresenter;
+import stroom.main.client.event.UrlQueryParameterChangeEvent;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.task.client.event.OpenTaskManagerEvent;
@@ -44,6 +46,9 @@ import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
 import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPresenter.MainProxy> {
 
@@ -140,6 +145,22 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
 
         // Start the auto refresh timer.
         startAutoRefresh();
+
+        parseUrlQueryParams();
+    }
+
+    /**
+     * Parse the URL query parameters and fire an event if any exist
+     */
+    private void parseUrlQueryParams() {
+        // Read URL query parameters and fire an event to signal that they've changed
+        final Map<String, String> queryParams = new HashMap<>();
+        Window.Location.getParameterMap().forEach((key, value) -> queryParams.put(key, value.get(value.size() - 1)));
+        final String action = queryParams.get(UrlConstants.ACTION);
+
+        if (queryParams.size() > 0) {
+            UrlQueryParameterChangeEvent.fire(MainPresenter.this, action, queryParams);
+        }
     }
 
     private void startAutoRefresh() {
