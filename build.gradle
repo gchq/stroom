@@ -239,6 +239,7 @@ ext.libs = [
         junit_platform_launcher        : "org.junit.platform:junit-platform-launcher:1.9.0",
         kafka_clients                  : "org.apache.kafka:kafka-clients:$versions.kafka",
         kryo                           : "com.esotericsoftware:kryo:5.0.3",
+        lmax_disruptor                 : "com.lmax:disruptor:3.4.4",
         lmdbjava                       : "org.lmdbjava:lmdbjava:0.8.2",
         log4j_over_slf4j               : "org.slf4j:log4j-over-slf4j", // version controlled by DW BOM
         logback_classic                : "ch.qos.logback:logback-classic", // version controlled by DW BOM

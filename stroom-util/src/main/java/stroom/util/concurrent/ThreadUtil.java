@@ -20,10 +20,12 @@ public class ThreadUtil {
     }
 
     public static void sleepIgnoringInterrupts(final long millis) {
-        try {
-            Thread.sleep(millis);
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
+        if (millis > 0) {
+            try {
+                Thread.sleep(millis);
+            } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
