@@ -42,18 +42,12 @@ public final class SAXParserFactoryFactory {
     private static final String END = "\".";
     private static final String SYSPROP_SAX_PARSER_FACTORY = "javax.xml.parsers.SAXParserFactory";
     private static final String SYSPROP_SET_TO = "System property \"" + SYSPROP_SAX_PARSER_FACTORY + "\" set to \"";
-    private static final String SYSPROP_NOT_SET = "System property \"" + SYSPROP_SAX_PARSER_FACTORY + "\" not set.";
 
     static {
         try {
+            System.setProperty(SYSPROP_SAX_PARSER_FACTORY, DEFAULT_SAX_PARSER_FACTORY);
             final String factoryName = System.getProperty(SYSPROP_SAX_PARSER_FACTORY);
-            if (factoryName == null) {
-                LOGGER.info(SYSPROP_NOT_SET);
-
-                System.setProperty(SYSPROP_SAX_PARSER_FACTORY, DEFAULT_SAX_PARSER_FACTORY);
-            } else {
-                LOGGER.info(SYSPROP_SET_TO + factoryName + END);
-            }
+            LOGGER.info(SYSPROP_SET_TO + factoryName + END);
 
             // Ensure we set the system default.
             SAXParserFactory factory = SAXParserFactory.newInstance();
