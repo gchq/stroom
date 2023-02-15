@@ -19,18 +19,14 @@ set @old_sql_notes = @@sql_notes, sql_notes = 0;
 
 CREATE TABLE IF NOT EXISTS `explorer_favourite`
 (
-    `id`             bigint       NOT NULL AUTO_INCREMENT,
-    `doc_type`       varchar(255) NOT NULL,
-    `doc_uuid`       varchar(255) NOT NULL,
-    `user_uuid`      varchar(255) NOT NULL,
-    `create_time_ms` bigint       NOT NULL,
+    `id`               int          NOT NULL AUTO_INCREMENT,
+    `explorer_node_id` int          NOT NULL,
+    `user_uuid`        varchar(255) NOT NULL,
+    `create_time_ms`   bigint       NOT NULL,
     PRIMARY KEY (`id`),
-    KEY `explorer_favourite_fk_doc_type_doc_uuid` (`doc_type`, `doc_uuid`),
-    KEY `explorer_favourite_user_uuid_idx` (`user_uuid`),
-    KEY `explorer_favourite_user_uuid_doc_type_doc_uuid_idx` (`user_uuid`, `doc_type`, `doc_uuid`),
-    UNIQUE KEY `explorer_favourite_fk_en_type_en_uuid_user_uuid` (`doc_type`, `doc_uuid`, `user_uuid`),
-    CONSTRAINT `explorer_favourite_fk_en_type_en_uuid` FOREIGN KEY (`doc_type`, `doc_uuid`)
-        REFERENCES `explorer_node` (`type`, `uuid`)
+    UNIQUE KEY `explorer_favourite_user_uuid_explorer_node_id_idx` (`explorer_node_id`, `user_uuid`),
+    CONSTRAINT `explorer_favourite_explorer_node_id` FOREIGN KEY (`explorer_node_id`)
+        REFERENCES `explorer_node` (`id`)
         ON DELETE CASCADE
 ) ENGINE = InnoDB
   AUTO_INCREMENT = 446

@@ -29,7 +29,7 @@ public class Keys {
     // UNIQUE and PRIMARY KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final UniqueKey<ExplorerFavouriteRecord> KEY_EXPLORER_FAVOURITE_EXPLORER_FAVOURITE_FK_EN_TYPE_EN_UUID_USER_UUID = Internal.createUniqueKey(ExplorerFavourite.EXPLORER_FAVOURITE, DSL.name("KEY_explorer_favourite_explorer_favourite_fk_en_type_en_uuid_user_uuid"), new TableField[] { ExplorerFavourite.EXPLORER_FAVOURITE.DOC_TYPE, ExplorerFavourite.EXPLORER_FAVOURITE.DOC_UUID, ExplorerFavourite.EXPLORER_FAVOURITE.USER_UUID }, true);
+    public static final UniqueKey<ExplorerFavouriteRecord> KEY_EXPLORER_FAVOURITE_EXPLORER_FAVOURITE_USER_UUID_EXPLORER_NODE_ID_IDX = Internal.createUniqueKey(ExplorerFavourite.EXPLORER_FAVOURITE, DSL.name("KEY_explorer_favourite_explorer_favourite_user_uuid_explorer_node_id_idx"), new TableField[] { ExplorerFavourite.EXPLORER_FAVOURITE.EXPLORER_NODE_ID, ExplorerFavourite.EXPLORER_FAVOURITE.USER_UUID }, true);
     public static final UniqueKey<ExplorerFavouriteRecord> KEY_EXPLORER_FAVOURITE_PRIMARY = Internal.createUniqueKey(ExplorerFavourite.EXPLORER_FAVOURITE, DSL.name("KEY_explorer_favourite_PRIMARY"), new TableField[] { ExplorerFavourite.EXPLORER_FAVOURITE.ID }, true);
     public static final UniqueKey<ExplorerNodeRecord> KEY_EXPLORER_NODE_EXPLORER_NODE_TYPE_UUID = Internal.createUniqueKey(ExplorerNode.EXPLORER_NODE, DSL.name("KEY_explorer_node_explorer_node_type_uuid"), new TableField[] { ExplorerNode.EXPLORER_NODE.TYPE, ExplorerNode.EXPLORER_NODE.UUID }, true);
     public static final UniqueKey<ExplorerNodeRecord> KEY_EXPLORER_NODE_PRIMARY = Internal.createUniqueKey(ExplorerNode.EXPLORER_NODE, DSL.name("KEY_explorer_node_PRIMARY"), new TableField[] { ExplorerNode.EXPLORER_NODE.ID }, true);
@@ -39,5 +39,5 @@ public class Keys {
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final ForeignKey<ExplorerFavouriteRecord, ExplorerNodeRecord> EXPLORER_FAVOURITE_FK_EN_TYPE_EN_UUID = Internal.createForeignKey(ExplorerFavourite.EXPLORER_FAVOURITE, DSL.name("explorer_favourite_fk_en_type_en_uuid"), new TableField[] { ExplorerFavourite.EXPLORER_FAVOURITE.DOC_TYPE, ExplorerFavourite.EXPLORER_FAVOURITE.DOC_UUID }, Keys.KEY_EXPLORER_NODE_EXPLORER_NODE_TYPE_UUID, new TableField[] { ExplorerNode.EXPLORER_NODE.TYPE, ExplorerNode.EXPLORER_NODE.UUID }, true);
+    public static final ForeignKey<ExplorerFavouriteRecord, ExplorerNodeRecord> EXPLORER_FAVOURITE_EXPLORER_NODE_ID = Internal.createForeignKey(ExplorerFavourite.EXPLORER_FAVOURITE, DSL.name("explorer_favourite_explorer_node_id"), new TableField[] { ExplorerFavourite.EXPLORER_FAVOURITE.EXPLORER_NODE_ID }, Keys.KEY_EXPLORER_NODE_PRIMARY, new TableField[] { ExplorerNode.EXPLORER_NODE.ID }, true);
 }

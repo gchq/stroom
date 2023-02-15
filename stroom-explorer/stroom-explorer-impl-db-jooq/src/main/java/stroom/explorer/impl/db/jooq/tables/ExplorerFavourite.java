@@ -10,10 +10,9 @@ import java.util.List;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row5;
+import org.jooq.Row4;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -23,7 +22,6 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import stroom.explorer.impl.db.jooq.Indexes;
 import stroom.explorer.impl.db.jooq.Keys;
 import stroom.explorer.impl.db.jooq.Stroom;
 import stroom.explorer.impl.db.jooq.tables.records.ExplorerFavouriteRecord;
@@ -53,17 +51,12 @@ public class ExplorerFavourite extends TableImpl<ExplorerFavouriteRecord> {
     /**
      * The column <code>stroom.explorer_favourite.id</code>.
      */
-    public final TableField<ExplorerFavouriteRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<ExplorerFavouriteRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "");
 
     /**
-     * The column <code>stroom.explorer_favourite.doc_type</code>.
+     * The column <code>stroom.explorer_favourite.explorer_node_id</code>.
      */
-    public final TableField<ExplorerFavouriteRecord, String> DOC_TYPE = createField(DSL.name("doc_type"), SQLDataType.VARCHAR(255).nullable(false), this, "");
-
-    /**
-     * The column <code>stroom.explorer_favourite.doc_uuid</code>.
-     */
-    public final TableField<ExplorerFavouriteRecord, String> DOC_UUID = createField(DSL.name("doc_uuid"), SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<ExplorerFavouriteRecord, Integer> EXPLORER_NODE_ID = createField(DSL.name("explorer_node_id"), SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
      * The column <code>stroom.explorer_favourite.user_uuid</code>.
@@ -114,13 +107,8 @@ public class ExplorerFavourite extends TableImpl<ExplorerFavouriteRecord> {
     }
 
     @Override
-    public List<Index> getIndexes() {
-        return Arrays.asList(Indexes.EXPLORER_FAVOURITE_EXPLORER_FAVOURITE_FK_DOC_TYPE_DOC_UUID, Indexes.EXPLORER_FAVOURITE_EXPLORER_FAVOURITE_USER_UUID_DOC_TYPE_DOC_UUID_IDX, Indexes.EXPLORER_FAVOURITE_EXPLORER_FAVOURITE_USER_UUID_IDX);
-    }
-
-    @Override
-    public Identity<ExplorerFavouriteRecord, Long> getIdentity() {
-        return (Identity<ExplorerFavouriteRecord, Long>) super.getIdentity();
+    public Identity<ExplorerFavouriteRecord, Integer> getIdentity() {
+        return (Identity<ExplorerFavouriteRecord, Integer>) super.getIdentity();
     }
 
     @Override
@@ -130,12 +118,12 @@ public class ExplorerFavourite extends TableImpl<ExplorerFavouriteRecord> {
 
     @Override
     public List<UniqueKey<ExplorerFavouriteRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.KEY_EXPLORER_FAVOURITE_EXPLORER_FAVOURITE_FK_EN_TYPE_EN_UUID_USER_UUID);
+        return Arrays.asList(Keys.KEY_EXPLORER_FAVOURITE_EXPLORER_FAVOURITE_USER_UUID_EXPLORER_NODE_ID_IDX);
     }
 
     @Override
     public List<ForeignKey<ExplorerFavouriteRecord, ?>> getReferences() {
-        return Arrays.asList(Keys.EXPLORER_FAVOURITE_FK_EN_TYPE_EN_UUID);
+        return Arrays.asList(Keys.EXPLORER_FAVOURITE_EXPLORER_NODE_ID);
     }
 
     private transient ExplorerNode _explorerNode;
@@ -146,7 +134,7 @@ public class ExplorerFavourite extends TableImpl<ExplorerFavouriteRecord> {
      */
     public ExplorerNode explorerNode() {
         if (_explorerNode == null)
-            _explorerNode = new ExplorerNode(this, Keys.EXPLORER_FAVOURITE_FK_EN_TYPE_EN_UUID);
+            _explorerNode = new ExplorerNode(this, Keys.EXPLORER_FAVOURITE_EXPLORER_NODE_ID);
 
         return _explorerNode;
     }
@@ -178,11 +166,11 @@ public class ExplorerFavourite extends TableImpl<ExplorerFavouriteRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row5 type methods
+    // Row4 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row5<Long, String, String, String, Long> fieldsRow() {
-        return (Row5) super.fieldsRow();
+    public Row4<Integer, Integer, String, Long> fieldsRow() {
+        return (Row4) super.fieldsRow();
     }
 }

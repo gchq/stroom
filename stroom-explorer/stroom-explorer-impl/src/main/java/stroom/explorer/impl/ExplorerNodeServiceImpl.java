@@ -421,7 +421,6 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                 .uuid(explorerTreeNode.getUuid())
                 .name(explorerTreeNode.getName())
                 .tags(explorerTreeNode.getTags())
-                .isFavourite(explorerTreeNode.getIsFavourite())
                 .build();
     }
 }

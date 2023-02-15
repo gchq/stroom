@@ -115,6 +115,11 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             // Get the master tree model.
             final TreeModel masterTreeModel = explorerTreeModel.getModel().clone();
 
+            // Generate a hashset of all favourites for the user, so we can mark matching nodes with a star
+            final Set<String> userFavourites = explorerFavService.get().getUserFavourites()
+                    .stream()
+                    .map(DocRef::getUuid)
+                    .collect(Collectors.toSet());
             buildFavouritesNode(masterTreeModel);
 
             // See if we need to open any more folders to see nodes we want to ensure are visible.
@@ -141,6 +146,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     fuzzyMatchPredicate,
                     false,
                     allOpenItems,
+                    userFavourites,
                     0);
 
             // Sort the tree model
@@ -399,6 +405,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                                    final Predicate<DocRef> filterPredicate,
                                    final boolean ignoreNameFilter,
                                    final Set<ExplorerNodeKey> allOpenItems,
+                                   final Set<String> userFavourites,
                                    final int currentDepth) {
         int added = 0;
 
@@ -417,6 +424,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 // parent roots (e.g. System or Favourites)
                 final ExplorerNode childWithParent = child.copy()
                         .rootNodeUuid(Objects.requireNonNullElse(rootNode, child))
+                        .isFavourite(userFavourites.contains(child.getUuid()))
                         .build();
 
                 // We don't want to filter child items if the parent folder matches the name filter.
@@ -433,6 +441,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                         filterPredicate,
                         ignoreChildNameFilter,
                         allOpenItems,
+                        userFavourites,
                         currentDepth + 1);
                 if (hasChildren) {
                     treeModelOut.add(parent, childWithParent);
