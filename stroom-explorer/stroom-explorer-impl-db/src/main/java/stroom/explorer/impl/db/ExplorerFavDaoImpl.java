@@ -3,9 +3,15 @@ package stroom.explorer.impl.db;
 import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
 import stroom.explorer.impl.ExplorerFavDao;
+import stroom.explorer.impl.db.jooq.tables.records.ExplorerFavouriteRecord;
+
+import org.jooq.DSLContext;
+import org.jooq.Record1;
+import org.jooq.SelectConditionStep;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import javax.inject.Inject;
 
 import static stroom.explorer.impl.db.jooq.Tables.EXPLORER_FAVOURITE;
@@ -22,37 +28,24 @@ public class ExplorerFavDaoImpl implements ExplorerFavDao {
 
     @Override
     public void createFavouriteForUser(final DocRef docRef, final String userId) {
-        final int explorerNodeId = getExplorerNodeId(docRef);
-        final int count = JooqUtil.contextResult(explorerDbConnProvider, context -> context
-                .insertInto(EXPLORER_FAVOURITE,
-                        EXPLORER_FAVOURITE.EXPLORER_NODE_ID,
-                        EXPLORER_FAVOURITE.USER_UUID,
-                        EXPLORER_FAVOURITE.CREATE_TIME_MS)
-                .values(explorerNodeId,
-                        userId,
-                        Instant.now().toEpochMilli())
-                .onDuplicateKeyIgnore()
-                .execute());
-
-        if (count != 1) {
-            throw new RuntimeException("Failed to create an EXPLORER_FAVOURITE entry for doc: " +
-                    docRef.getUuid() + ", user: " + userId);
-        }
+        final Integer explorerNodeId = JooqUtil.contextResult(explorerDbConnProvider, context ->
+                getExplorerNodeId(context, docRef).fetchAny(EXPLORER_NODE.ID));
+        Objects.requireNonNull(explorerNodeId);
+        final ExplorerFavouriteRecord record = new ExplorerFavouriteRecord(
+                null,
+                explorerNodeId,
+                userId,
+                Instant.now().toEpochMilli());
+        JooqUtil.tryCreate(explorerDbConnProvider, record, EXPLORER_FAVOURITE.ID);
     }
 
     @Override
     public void deleteFavouriteForUser(final DocRef docRef, final String userId) {
-        final int explorerNodeId = getExplorerNodeId(docRef);
-        final int count = JooqUtil.contextResult(explorerDbConnProvider, context -> context
+        JooqUtil.contextResult(explorerDbConnProvider, context -> context
                 .deleteFrom(EXPLORER_FAVOURITE)
-                .where(EXPLORER_FAVOURITE.USER_UUID.eq(userId))
-                .and(EXPLORER_FAVOURITE.EXPLORER_NODE_ID.eq(explorerNodeId))
+                .where(EXPLORER_FAVOURITE.USER_UUID.eq(userId)
+                        .and(EXPLORER_FAVOURITE.EXPLORER_NODE_ID.in(getExplorerNodeId(context, docRef))))
                 .execute());
-
-        if (count != 1) {
-            throw new RuntimeException("Failed to remove EXPLORER_FAVOURITE entry for doc: " +
-                    docRef.getUuid() + ", user: " + userId);
-        }
     }
 
     @Override
@@ -70,18 +63,16 @@ public class ExplorerFavDaoImpl implements ExplorerFavDao {
 
     @Override
     public boolean isFavourite(final DocRef docRef, final String userId) {
-        final int explorerNodeId = getExplorerNodeId(docRef);
         return JooqUtil.contextResult(explorerDbConnProvider, context -> context
                 .fetchCount(EXPLORER_FAVOURITE,
                         EXPLORER_FAVOURITE.USER_UUID.eq(userId)
-                                .and(EXPLORER_FAVOURITE.EXPLORER_NODE_ID.eq(explorerNodeId))) > 0);
+                                .and(EXPLORER_FAVOURITE.EXPLORER_NODE_ID.in(getExplorerNodeId(context, docRef)))) > 0);
     }
 
-    private int getExplorerNodeId(final DocRef docRef) {
-        return JooqUtil.contextResult(explorerDbConnProvider, context -> context
-                .select()
+    private SelectConditionStep<Record1<Integer>> getExplorerNodeId(final DSLContext context, final DocRef docRef) {
+        return context
+                .select(EXPLORER_NODE.ID)
                 .from(EXPLORER_NODE)
-                .where(EXPLORER_NODE.UUID.eq(docRef.getUuid()))
-                .fetchOne(EXPLORER_NODE.ID));
+                .where(EXPLORER_NODE.UUID.eq(docRef.getUuid()));
     }
 }
