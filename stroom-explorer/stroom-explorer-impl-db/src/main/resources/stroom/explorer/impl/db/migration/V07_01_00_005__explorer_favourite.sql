@@ -28,10 +28,7 @@ CREATE TABLE IF NOT EXISTS `explorer_favourite`
     CONSTRAINT `explorer_favourite_explorer_node_id` FOREIGN KEY (`explorer_node_id`)
         REFERENCES `explorer_node` (`id`)
         ON DELETE CASCADE
-) ENGINE = InnoDB
-  AUTO_INCREMENT = 446
-  DEFAULT CHARACTER SET utf8mb4
-  COLLATE utf8mb4_0900_ai_ci;
+) ENGINE = InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 -- Reset to the original value
 SET SQL_NOTES = @OLD_SQL_NOTES;
