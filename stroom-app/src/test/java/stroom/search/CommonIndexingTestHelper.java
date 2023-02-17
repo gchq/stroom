@@ -86,7 +86,7 @@ public class CommonIndexingTestHelper {
         // Translate data.
         List<ProcessorResult> results = commonTranslationTestHelper.processAll();
 
-        // 3 ref data streams pluss our data streams
+        // 3 ref data streams plus our data streams
         int expectedTaskCount = 3 + dataFileCount;
 
         assertThat(results.size())

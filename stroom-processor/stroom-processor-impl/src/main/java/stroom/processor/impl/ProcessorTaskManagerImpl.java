@@ -363,10 +363,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
             } else {
                 LOGGER.debug("assignTasks is disabled");
             }
-
-            // Have a go at kicking off a fill
-            createTasksAsync();
-            fillTaskQueueAsync();
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -657,7 +653,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
 
         info(taskContext, () -> "Finished");
 
-        progressMonitor.report("QUEUE TASKS", queueProcessTasksState);
+        progressMonitor.report("QUEUED TASKS", queueProcessTasksState);
 
         LOGGER.trace("queueNewTasks() - Finished");
         return totalAdded;

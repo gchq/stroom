@@ -99,13 +99,14 @@ public class CommonTranslationTestHelper {
         // Force creation of stream tasks.
         processorTaskManager.createAndQueueTasks();
 
+        // We have to process 1 task at a time to ensure the ref data gets processed first.
         final List<ProcessorResult> results = new ArrayList<>();
-        ProcessorTaskList processorTasks = processorTaskManager.assignTasks(nodeInfo.getThisNodeName(), 100);
+        ProcessorTaskList processorTasks = processorTaskManager.assignTasks(nodeInfo.getThisNodeName(), 1);
         while (processorTasks.getList().size() > 0) {
             for (final ProcessorTask processorTask : processorTasks.getList()) {
                 results.add(process(processorTask));
             }
-            processorTasks = processorTaskManager.assignTasks(nodeInfo.getThisNodeName(), 100);
+            processorTasks = processorTaskManager.assignTasks(nodeInfo.getThisNodeName(), 1);
         }
 
         return results;
