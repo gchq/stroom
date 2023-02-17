@@ -17,6 +17,7 @@
 
 package stroom.xmlschema.client.presenter;
 
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
@@ -55,8 +56,9 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
                               final XMLSchemaSettingsPresenter settingsPresenter,
                               final XSDBrowserPresenter xsdBrowserPresenter,
                               final EditorPresenter codePresenter,
-                              final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+                              final ClientSecurityContext securityContext,
+                              final RestFactory restFactory) {
+        super(eventBus, view, securityContext, restFactory);
         this.settingsPresenter = settingsPresenter;
         this.xsdBrowserPresenter = xsdBrowserPresenter;
         this.codePresenter = codePresenter;

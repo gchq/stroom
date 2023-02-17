@@ -18,7 +18,7 @@ package stroom.query.client;
 
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DocRefField;
-import stroom.datasource.api.v2.FieldTypes;
+import stroom.datasource.api.v2.FieldType;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
@@ -30,7 +30,6 @@ import stroom.util.shared.StringUtil;
 import stroom.widget.customdatebox.client.MyDateBox;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.InputEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -48,8 +47,10 @@ import java.util.List;
 
 public class TermEditor extends Composite {
 
-    private static final int WIDE_VALUE = 400;
-    private static final int NARROW_VALUE = 175;
+    private static final String ITEM_CLASS_NAME = "termEditor-item";
+    private static final String DROPDOWN_CLASS_NAME = "dropdown";
+    private static final String WIDE_CLASS_NAME = "wide";
+    private static final String NARROW_CLASS_NAME = "narrow";
 
     private final FlowPanel layout;
     private final AutocompleteListBox<AbstractField> fieldListBox;
@@ -62,6 +63,7 @@ public class TermEditor extends Composite {
     private final MyDateBox dateFrom;
     private final MyDateBox dateTo;
     private final Widget docRefWidget;
+    private final Label fieldTypeLabel;
     private final EntityDropDownPresenter docRefPresenter;
     private final List<Widget> activeWidgets = new ArrayList<>();
     private final List<HandlerRegistration> registrations = new ArrayList<>();
@@ -83,8 +85,8 @@ public class TermEditor extends Composite {
             docRefWidget = new Label();
         }
 
-        fixStyle(docRefWidget, 200);
-        docRefWidget.getElement().getStyle().setMarginTop(1, Unit.PX);
+        docRefWidget.addStyleName(ITEM_CLASS_NAME);
+        docRefWidget.addStyleName("docRef");
         docRefWidget.setVisible(false);
 
         fieldListBox = createFieldBox();
@@ -93,19 +95,21 @@ public class TermEditor extends Composite {
         andLabel = createLabel(" and ");
         andLabel.setVisible(false);
 
-        value = createTextBox(WIDE_VALUE);
+        value = createTextBox(WIDE_CLASS_NAME);
         value.setVisible(false);
-        valueFrom = createTextBox(NARROW_VALUE);
+        valueFrom = createTextBox(NARROW_CLASS_NAME);
         valueFrom.setVisible(false);
-        valueTo = createTextBox(NARROW_VALUE);
+        valueTo = createTextBox(NARROW_CLASS_NAME);
         valueTo.setVisible(false);
 
-        date = createDateBox(NARROW_VALUE, utc);
+        date = createDateBox(NARROW_CLASS_NAME, utc);
         date.setVisible(false);
-        dateFrom = createDateBox(NARROW_VALUE, utc);
+        dateFrom = createDateBox(NARROW_CLASS_NAME, utc);
         dateFrom.setVisible(false);
-        dateTo = createDateBox(NARROW_VALUE, utc);
+        dateTo = createDateBox(NARROW_CLASS_NAME, utc);
         dateTo.setVisible(false);
+
+        fieldTypeLabel = createFieldTypeLabel();
 
         layout = new FlowPanel();
         layout.add(fieldListBox);
@@ -118,6 +122,7 @@ public class TermEditor extends Composite {
         layout.add(valueTo);
         layout.add(dateTo);
         layout.add(docRefWidget);
+        layout.add(fieldTypeLabel);
 
         layout.setVisible(false);
         layout.setStyleName("termEditor-layout");
@@ -237,6 +242,10 @@ public class TermEditor extends Composite {
 
         conditionListBox.setSelectedItem(selected);
         changeCondition(field, selected);
+
+        fieldTypeLabel.setText(field.getFieldType().getShortTypeName());
+        fieldTypeLabel.setTitle(field.getFieldType().getDescription());
+        fieldTypeLabel.setVisible(true);
     }
 
     private List<Condition> getConditions(final AbstractField field) {
@@ -252,7 +261,7 @@ public class TermEditor extends Composite {
         } else if (field.getConditions() != null && field.getConditions().size() > 0) {
             conditions = field.getConditions();
         } else {
-            if (FieldTypes.DOC_REF.equals(field.getType())) {
+            if (FieldType.DOC_REF.equals(field.getFieldType())) {
                 conditions = Arrays.asList(
                         Condition.EQUALS,
                         Condition.IN,
@@ -270,7 +279,7 @@ public class TermEditor extends Composite {
                         Condition.IN_DICTIONARY
                 );
 
-            } else if (FieldTypes.DATE.equals(field.getType())) {
+            } else if (FieldType.DATE.equals(field.getFieldType())) {
                 conditions = Arrays.asList(
                         Condition.EQUALS,
                         Condition.GREATER_THAN,
@@ -299,9 +308,9 @@ public class TermEditor extends Composite {
 
     private void changeCondition(final AbstractField field,
                                  final Condition condition) {
-        String indexFieldType = null;
+        FieldType indexFieldType = null;
         if (fieldListBox.getSelectedItem() != null) {
-            indexFieldType = fieldListBox.getSelectedItem().getType();
+            indexFieldType = fieldListBox.getSelectedItem().getFieldType();
         }
 
         if (indexFieldType == null) {
@@ -310,7 +319,7 @@ public class TermEditor extends Composite {
         } else {
             switch (condition) {
                 case EQUALS:
-                    if (FieldTypes.DATE.equals(indexFieldType)) {
+                    if (FieldType.DATE.equals(indexFieldType)) {
                         enterDateMode();
                     } else {
                         enterTextMode();
@@ -323,35 +332,35 @@ public class TermEditor extends Composite {
                     enterTextMode();
                     break;
                 case BETWEEN:
-                    if (FieldTypes.DATE.equals(indexFieldType)) {
+                    if (FieldType.DATE.equals(indexFieldType)) {
                         enterDateRangeMode();
                     } else {
                         enterTextRangeMode();
                     }
                     break;
                 case LESS_THAN:
-                    if (FieldTypes.DATE.equals(indexFieldType)) {
+                    if (FieldType.DATE.equals(indexFieldType)) {
                         enterDateMode();
                     } else {
                         enterTextMode();
                     }
                     break;
                 case LESS_THAN_OR_EQUAL_TO:
-                    if (FieldTypes.DATE.equals(indexFieldType)) {
+                    if (FieldType.DATE.equals(indexFieldType)) {
                         enterDateMode();
                     } else {
                         enterTextMode();
                     }
                     break;
                 case GREATER_THAN:
-                    if (FieldTypes.DATE.equals(indexFieldType)) {
+                    if (FieldType.DATE.equals(indexFieldType)) {
                         enterDateMode();
                     } else {
                         enterTextMode();
                     }
                     break;
                 case GREATER_THAN_OR_EQUAL_TO:
-                    if (FieldTypes.DATE.equals(indexFieldType)) {
+                    if (FieldType.DATE.equals(indexFieldType)) {
                         enterDateMode();
                     } else {
                         enterTextMode();
@@ -557,31 +566,38 @@ public class TermEditor extends Composite {
 
     private AutocompleteListBox<AbstractField> createFieldBox() {
         final AutocompleteListBox<AbstractField> fieldListBox = new AutocompleteListBox<>();
-        fixStyle(fieldListBox, 160);
+        fieldListBox.addStyleName(ITEM_CLASS_NAME);
+        fieldListBox.addStyleName(DROPDOWN_CLASS_NAME);
+        fieldListBox.addStyleName("field");
+        fieldListBox.addStyleName("termEditor-item");
         return fieldListBox;
     }
 
     private ItemListBox<Condition> createConditionBox() {
         final ItemListBox<Condition> conditionListBox = new ItemListBox<>();
-        fixStyle(conditionListBox, 120);
+        conditionListBox.addStyleName(ITEM_CLASS_NAME);
+        conditionListBox.addStyleName(DROPDOWN_CLASS_NAME);
+        conditionListBox.addStyleName("condition");
         return conditionListBox;
     }
 
-    private SuggestBox createTextBox(final int width) {
+    private SuggestBox createTextBox(final String widthClassName) {
         final SuggestBox textBox = new SuggestBox(suggestOracle);
         textBox.addDomHandler(e -> {
             if (!textBox.isSuggestionListShowing()) {
                 textBox.showSuggestionList();
             }
         }, ClickEvent.getType());
-        fixStyle(textBox, width);
+        textBox.addStyleName(ITEM_CLASS_NAME);
+        textBox.addStyleName(widthClassName);
+        textBox.addStyleName("textBox");
         return textBox;
     }
 
-    private MyDateBox createDateBox(final int width,
-                                    final boolean utc) {
+    private MyDateBox createDateBox(final String widthClassName, final boolean utc) {
         final MyDateBox dateBox = new MyDateBox(utc);
-        fixStyle(dateBox, width);
+        dateBox.addStyleName(ITEM_CLASS_NAME);
+        dateBox.addStyleName(widthClassName);
         return dateBox;
     }
 
@@ -592,9 +608,12 @@ public class TermEditor extends Composite {
         return label;
     }
 
-    private void fixStyle(final Widget widget, final int width) {
-        widget.addStyleName("termEditor-item");
-        widget.getElement().getStyle().setWidth(width, Unit.PX);
+    private Label createFieldTypeLabel() {
+        final Label label = new Label("", false);
+        label.addStyleName("termEditor-label");
+        label.addStyleName("fieldType");
+        label.setVisible(false);
+        return label;
     }
 
     private void fireDirty() {

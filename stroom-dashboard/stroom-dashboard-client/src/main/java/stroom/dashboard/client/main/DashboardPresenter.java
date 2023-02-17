@@ -37,6 +37,7 @@ import stroom.dashboard.shared.SplitLayoutConfig;
 import stroom.dashboard.shared.SplitLayoutConfig.Direction;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -44,6 +45,8 @@ import stroom.document.client.event.SaveAsDocumentEvent;
 import stroom.document.client.event.WriteDocumentEvent;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerResource;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Icon;
 import stroom.svg.client.Preset;
@@ -58,6 +61,9 @@ import stroom.widget.menu.client.presenter.SimpleMenuItem;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.MouseUtil;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -77,11 +83,14 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         Consumer<Boolean> {
 
     private static final Logger logger = Logger.getLogger(DashboardPresenter.class.getName());
+
+    private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
     private final ButtonView saveButton;
     private final ButtonView saveAsButton;
     private final DashboardLayoutPresenter layoutPresenter;
     private final Components components;
     private final Provider<QueryInfoPresenter> queryInfoPresenterProvider;
+    private final RestFactory restFactory;
     private final ButtonView addButton;
     private ButtonPanel leftButtons;
     private String lastLabel;
@@ -101,11 +110,13 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                               final Components components,
                               final Provider<RenameTabPresenter> renameTabPresenterProvider,
                               final Provider<QueryInfoPresenter> queryInfoPresenterProvider,
-                              final ClientSecurityContext securityContext) {
+                              final ClientSecurityContext securityContext,
+                              final RestFactory restFactory) {
         super(eventBus, view, securityContext);
         this.layoutPresenter = layoutPresenter;
         this.components = components;
         this.queryInfoPresenterProvider = queryInfoPresenterProvider;
+        this.restFactory = restFactory;
 
         final TabManager tabManager = new TabManager(components, renameTabPresenterProvider, this);
         layoutPresenter.setTabManager(tabManager);
@@ -116,11 +127,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         saveAsButton.setEnabled(false);
 
         registerHandler(saveButton.addClickHandler(event -> save()));
-        registerHandler(saveAsButton.addClickHandler(event -> {
-            if (saveAsButton.isEnabled()) {
-                SaveAsDocumentEvent.fire(DashboardPresenter.this, docRef);
-            }
-        }));
+        registerHandler(saveAsButton.addClickHandler(this::onSaveAsDocument));
 
         layoutPresenter.setFlexLayoutChangeHandler(this);
         layoutPresenter.setComponents(components);
@@ -139,6 +146,16 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     public void save() {
         if (saveButton.isEnabled()) {
             WriteDocumentEvent.fire(DashboardPresenter.this, DashboardPresenter.this);
+        }
+    }
+
+    private void onSaveAsDocument(ClickEvent event) {
+        if (saveAsButton.isEnabled()) {
+            restFactory.create()
+                    .onSuccess(explorerNode ->
+                            SaveAsDocumentEvent.fire(DashboardPresenter.this, (ExplorerNode) explorerNode))
+                    .call(EXPLORER_RESOURCE)
+                    .getFromDocRef(docRef);
         }
     }
 

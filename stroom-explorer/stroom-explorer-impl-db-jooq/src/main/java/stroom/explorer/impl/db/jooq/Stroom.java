@@ -4,6 +4,7 @@
 package stroom.explorer.impl.db.jooq;
 
 
+import stroom.explorer.impl.db.jooq.tables.ExplorerFavourite;
 import stroom.explorer.impl.db.jooq.tables.ExplorerNode;
 import stroom.explorer.impl.db.jooq.tables.ExplorerPath;
 
@@ -13,6 +14,8 @@ import org.jooq.impl.SchemaImpl;
 
 import java.util.Arrays;
 import java.util.List;
+import stroom.explorer.impl.db.jooq.tables.ExplorerNode;
+import stroom.explorer.impl.db.jooq.tables.ExplorerPath;
 
 
 /**
@@ -27,6 +30,11 @@ public class Stroom extends SchemaImpl {
      * The reference instance of <code>stroom</code>
      */
     public static final Stroom STROOM = new Stroom();
+
+    /**
+     * The table <code>stroom.explorer_favourite</code>.
+     */
+    public final ExplorerFavourite EXPLORER_FAVOURITE = ExplorerFavourite.EXPLORER_FAVOURITE;
 
     /**
      * The table <code>stroom.explorer_node</code>.
@@ -54,6 +62,7 @@ public class Stroom extends SchemaImpl {
     @Override
     public final List<Table<?>> getTables() {
         return Arrays.asList(
+            ExplorerFavourite.EXPLORER_FAVOURITE,
             ExplorerNode.EXPLORER_NODE,
             ExplorerPath.EXPLORER_PATH
         );

@@ -46,7 +46,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.FieldTypes;
+import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
 import stroom.dispatch.client.ExportFileCompleteUtil;
@@ -57,6 +57,7 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.instance.client.ClientApplicationInstance;
+import stroom.item.client.presenter.AutocompletePopupView;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.processor.shared.ProcessorExpressionUtil;
 import stroom.query.api.v2.ConditionalFormattingRule;
@@ -98,9 +99,13 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
@@ -134,7 +139,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private final LocationManager locationManager;
     private TableResultRequest tableResultRequest = TableResultRequest.builder()
-            .requestedRange(new OffsetRange(0, 100))
+            .requestedRange(new OffsetRange(0, 1000))
             .build();
     private final List<Column<TableRow, ?>> existingColumns = new ArrayList<>();
     private final List<HandlerRegistration> searchModelHandlerRegistrations = new ArrayList<>();
@@ -154,6 +159,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private int expanderColumnWidth;
     private SearchModel currentSearchModel;
+    private FieldAddPresenter fieldAddPresenter;
     private boolean ignoreRangeChange;
     private int[] maxResults = TableComponentSettings.DEFAULT_MAX_RESULTS;
     private final Set<String> usedFieldIds = new HashSet<>();
@@ -166,10 +172,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final PagerView pagerView,
                           final ClientSecurityContext securityContext,
                           final LocationManager locationManager,
+                          final MenuListPresenter menuListPresenter,
                           final Provider<RenameFieldPresenter> renameFieldPresenterProvider,
                           final Provider<ExpressionPresenter> expressionPresenterProvider,
                           final FormatPresenter formatPresenter,
                           final FilterPresenter filterPresenter,
+                          final Provider<FieldAddPresenter> fieldAddPresenterProvider,
                           final Provider<TableSettingsPresenter> settingsPresenterProvider,
                           final DownloadPresenter downloadPresenter,
                           final AnnotationManager annotationManager,
@@ -180,6 +188,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final UserPreferencesManager userPreferencesManager) {
         super(eventBus, view, settingsPresenterProvider);
         this.locationManager = locationManager;
+        this.fieldAddPresenterProvider = fieldAddPresenterProvider;
         this.downloadPresenter = downloadPresenter;
         this.annotationManager = annotationManager;
         this.restFactory = restFactory;
@@ -209,6 +218,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         fieldsManager = new FieldsManager(
                 this,
+                menuListPresenter,
                 renameFieldPresenterProvider,
                 expressionPresenterProvider,
                 formatPresenter,
@@ -317,7 +327,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void onAddField(final ClickEvent event) {
-        if (currentSearchModel != null) {
+        if (currentSearchModel != null && fieldAddPresenter == null) {
+            fieldAddPresenter = fieldAddPresenterProvider.get();
+
             final List<Field> addFields = new ArrayList<>();
             final IndexLoader indexLoader = currentSearchModel.getIndexLoader();
             if (indexLoader.getIndexFieldNames() != null) {
@@ -388,14 +400,22 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 menuItems.add(createFieldMenuItem(priority++, field));
             }
 
-            final com.google.gwt.dom.client.Element target = event.getNativeEvent().getEventTarget().cast();
+            final AutocompletePopupView<Field> popupView = fieldAddPresenter.getView();
+            popupView.clearItems();
+            popupView.addItems(addFields);
+            popupView.showPopup(popupPosition);
+
             final PopupPosition popupPosition = new PopupPosition(
                     target.getAbsoluteLeft() - 3,
                     target.getAbsoluteTop() + target.getClientHeight() + 1);
             ShowMenuEvent
-                    .builder()
+                    .builder(popupView)
                     .items(menuItems)
                     .popupPosition(popupPosition)
+                    .onHide(() -> {
+                        selectionHandlerRegistration.removeHandler();
+                        fieldAddPresenter = null;
+                    })
                     .fire(this);
         }
     }
@@ -1089,15 +1109,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         return null;
     }
 
-    public interface TableView extends View, HasUiHandlers<TableUiHandlers> {
-
-        void setTableView(View view);
-
-        void setRefreshing(boolean refreshing);
-
-        void setPaused(boolean paused);
-    }
-
     private MenuItem createFieldMenuItem(final int priority, final Field field) {
         final Command command = () -> {
             final String fieldName = field.getName();
@@ -1122,5 +1133,47 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .text(field.getName())
                 .command(command)
                 .build();
+    }
+
+    public interface TableView extends View, HasUiHandlers<TableUiHandlers> {
+
+        void setTableView(View view);
+
+        void setRefreshing(boolean refreshing);
+
+        void setPaused(boolean paused);
+    }
+
+    private class AddSelectionHandler implements SelectionHandler<Field> {
+
+        private final FieldAddPresenter presenter;
+
+        AddSelectionHandler(final FieldAddPresenter presenter) {
+            this.presenter = presenter;
+        }
+
+        @Override
+        public void onSelection(final SelectionEvent<Field> event) {
+            Field field = event.getSelectedItem();
+            if (field != null) {
+                HidePopupEvent.fire(TablePresenter.this, presenter);
+
+                final String fieldName = field.getName();
+                String suffix = "";
+                int count = 1;
+                final Set<String> currentFields = getTableSettings().getFields().stream().map(Field::getName).collect(
+                        Collectors.toSet());
+                while (currentFields.contains(fieldName + suffix)) {
+                    count++;
+                    suffix = " " + count;
+                }
+
+                field = field.copy()
+                        .name(fieldName + suffix)
+                        .id(createRandomFieldId())
+                        .build();
+                fieldsManager.addField(field);
+            }
+        }
     }
 }

@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.core.query;
+package stroom.suggestions.impl;
 
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.SuggestionsResource;
+import stroom.suggestions.api.SuggestionsService;
 
 import java.util.List;
 import javax.inject.Inject;

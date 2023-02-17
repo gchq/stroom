@@ -93,21 +93,11 @@ public class MoveDocumentPresenter
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final ExplorerNode folder = entityTreePresenter.getSelectedItem();
-
-                        DocRef destinationFolderRef = null;
-                        if (folder != null) {
-                            destinationFolderRef = folder.getDocRef();
-                        }
-
-                        final List<DocRef> docRefs = explorerNodeList.stream()
-                                .map(ExplorerNode::getDocRef)
-                                .collect(Collectors.toList());
-
                         MoveDocumentEvent.fire(
                                 MoveDocumentPresenter.this,
                                 MoveDocumentPresenter.this,
-                                docRefs,
-                                destinationFolderRef,
+                                explorerNodeList,
+                                destinationFolder,
                                 getView().getPermissionInheritance());
                     } else {
                         e.hide();

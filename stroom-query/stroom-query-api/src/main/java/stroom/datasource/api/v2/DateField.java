@@ -30,8 +30,6 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public class DateField extends AbstractField {
 
-    private static final long serialVersionUID = 1272545271946712570L;
-
     private static final List<Condition> DEFAULT_CONDITIONS = new ArrayList<>();
 
     static {
@@ -61,7 +59,7 @@ public class DateField extends AbstractField {
 
     @JsonIgnore
     @Override
-    public String getType() {
-        return FieldTypes.DATE;
+    public FieldType getFieldType() {
+        return FieldType.DATE;
     }
 }

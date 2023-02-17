@@ -72,7 +72,8 @@ class ElasticClusterSearchTaskHandler {
                        final Query query,
                        final long now,
                        final DateTimeSettings dateTimeSettings,
-                       final Coprocessors coprocessors) {
+                       final Coprocessors coprocessors,
+                       final ElasticSearchResultCollector resultCollector) {
         SearchProgressLog.increment(queryKey, SearchPhase.CLUSTER_SEARCH_TASK_HANDLER_EXEC);
         this.taskContext = taskContext;
         securityContext.useAsRead(() -> {
@@ -80,7 +81,14 @@ class ElasticClusterSearchTaskHandler {
                 taskContext.info(() -> "Initialising...");
 
                 // Start searching.
-                doSearch(taskContext, queryKey, now, dateTimeSettings, query, coprocessors);
+                doSearch(
+                        taskContext,
+                        queryKey,
+                        now,
+                        dateTimeSettings,
+                        query,
+                        coprocessors,
+                        resultCollector);
             }
         });
     }
@@ -90,7 +98,8 @@ class ElasticClusterSearchTaskHandler {
                           final long now,
                           final DateTimeSettings dateTimeSettings,
                           final Query query,
-                          final Coprocessors coprocessors) {
+                          final Coprocessors coprocessors,
+                          final ElasticSearchResultCollector resultCollector) {
         taskContext.info(() -> "Searching...");
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
 
@@ -114,11 +123,11 @@ class ElasticClusterSearchTaskHandler {
                     now,
                     dateTimeSettings,
                     expression,
-                    coprocessors.getFieldIndex(),
+                    coprocessors,
+                    resultCollector,
                     taskContext,
                     hitCount,
-                    storedDataQueue,
-                    coprocessors.getErrorConsumer());
+                    storedDataQueue);
 
             // Start mapping streams.
             final CompletableFuture<Void> streamMappingFuture = extractionDecorator

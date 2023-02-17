@@ -59,6 +59,10 @@ public class EntityTreePresenter extends MyPresenterWidget<EntityTreePresenter.E
         explorerTree.getTreeModel().setIncludedTypes(types);
     }
 
+    public void setIncludedRootTypes(final String... types) {
+        explorerTree.getTreeModel().setIncludedRootTypes(types);
+    }
+
     public void setTags(final String... tags) {
         explorerTree.getTreeModel().setTags(tags);
     }

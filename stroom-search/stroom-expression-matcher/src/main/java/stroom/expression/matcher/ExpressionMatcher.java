@@ -20,7 +20,7 @@ package stroom.expression.matcher;
 import stroom.collection.api.CollectionService;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DocRefField;
-import stroom.datasource.api.v2.FieldTypes;
+import stroom.datasource.api.v2.FieldType;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.DateTimeSettings;
@@ -221,9 +221,9 @@ public class ExpressionMatcher {
                     return isInFolder(fieldName, docRef, field, attribute);
                 default:
                     throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + field.getType() + " field type");
+                            + field.getFieldType() + " field type");
             }
-        } else if (FieldTypes.DATE.equals(field.getType())) {
+        } else if (FieldType.DATE.equals(field.getFieldType())) {
             switch (condition) {
                 case EQUALS: {
                     final long date1 = getDate(fieldName, attribute);
@@ -274,7 +274,7 @@ public class ExpressionMatcher {
                     return isInFolder(fieldName, docRef, field, attribute);
                 default:
                     throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + field.getType() + " field type");
+                            + field.getFieldType() + " field type");
             }
         } else {
             switch (condition) {
@@ -292,7 +292,7 @@ public class ExpressionMatcher {
                     return isDocRef(fieldName, docRef, field, attribute);
                 default:
                     throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + field.getType() + " field type");
+                            + field.getFieldType() + " field type");
             }
         }
     }
@@ -357,7 +357,7 @@ public class ExpressionMatcher {
                     if (isNumericIn(fieldName, line, attribute)) {
                         return true;
                     }
-                } else if (FieldTypes.DATE.equals(field.getType())) {
+                } else if (FieldType.DATE.equals(field.getFieldType())) {
                     if (isDateIn(fieldName, line, attribute)) {
                         return true;
                     }

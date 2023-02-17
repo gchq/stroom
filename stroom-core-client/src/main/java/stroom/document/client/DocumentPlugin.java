@@ -192,12 +192,14 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
     }
 
     @SuppressWarnings("unchecked")
-    public void saveAs(final DocRef docRef) {
+    public void saveAs(final ExplorerNode explorerNode) {
+        final DocRef docRef = explorerNode.getDocRef();
         final DocumentTabData tabData = documentToTabDataMap.get(docRef);
         if (tabData instanceof DocumentEditPresenter<?, ?>) {
             final DocumentEditPresenter<?, D> presenter = (DocumentEditPresenter<?, D>) tabData;
 
-            final Consumer<DocRef> newDocumentConsumer = newDocRef -> {
+            final Consumer<ExplorerNode> newDocumentConsumer = newNode -> {
+                final DocRef newDocRef = newNode.getDocRef();
                 final Consumer<D> saveConsumer = saved -> {
                     // Read the new document into this presenter.
                     presenter.read(newDocRef, saved);
@@ -223,7 +225,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
             ShowCreateDocumentDialogEvent.fire(
                     DocumentPlugin.this,
                     "Save '" + docRef.getName() + "' as",
-                    ExplorerNode.create(docRef),
+                    explorerNode,
                     docRef.getType(),
                     docRef.getName(),
                     true,
@@ -480,15 +482,6 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
     private void removeTabData(final DocumentTabData tabData) {
         final DocRef docRef = tabDataToDocumentMap.remove(tabData);
         documentToTabDataMap.remove(docRef);
-    }
-
-    /**
-     * This method will highlight the supplied document item in the explorer tree.
-     */
-    public void highlight(final DocRef docRef) {
-        // Open up parent items.
-        final ExplorerNode documentData = ExplorerNode.create(docRef);
-        HighlightExplorerNodeEvent.fire(DocumentPlugin.this, documentData);
     }
 
     protected abstract MyPresenterWidget<?> createEditor();

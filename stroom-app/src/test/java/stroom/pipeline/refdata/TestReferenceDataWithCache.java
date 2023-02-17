@@ -71,8 +71,11 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     private PipelineScopeRunnable pipelineScopeRunnable;
     @Inject
     private RefDataStoreFactory refDataStoreFactory;
+    // Provider so we get new pipeline scoped deps each time
     @Inject
     private Provider<ReferenceData> referenceDataProvider;
+    @Inject
+    private EffectiveStreamService effectiveStreamService;
 
     private RefDataStore refDataStore;
 
@@ -109,7 +112,6 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             pipelineReferences.add(pipelineReference1);
             pipelineReferences.add(pipelineReference2);
 
-            final ReferenceData referenceData = referenceDataProvider.get();
 
             final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
             streamSet.add(EFFECTIVE_STREAM_1);
@@ -127,7 +129,9 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                         return streamSet;
                     }
                 };
+                final ReferenceData referenceData = referenceDataProvider.get();
                 referenceData.setEffectiveStreamCache(effectiveStreamCache);
+
 
                 // Add multiple reference data items to prove that looping over maps
                 // works.
@@ -230,7 +234,6 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             final List<PipelineReference> pipelineReferences = new ArrayList<>();
             pipelineReferences.add(pipelineReference);
 
-            final ReferenceData referenceData = referenceDataProvider.get();
 
             EffectiveStream effectiveStream = new EffectiveStream(0, 0L);
             final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
@@ -247,6 +250,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                         return streamSet;
                     }
                 };
+                final ReferenceData referenceData = referenceDataProvider.get();
                 referenceData.setEffectiveStreamCache(effectiveStreamCache);
 
                 RefStreamDefinition refStreamDefinition = getRefStreamDefinition(pipelineRef,

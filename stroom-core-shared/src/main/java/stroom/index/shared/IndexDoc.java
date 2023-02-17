@@ -126,6 +126,13 @@ public class IndexDoc extends Doc {
         }
     }
 
+    /**
+     * @return A new builder for creating a {@link DocRef} for this document's type.
+     */
+    public static DocRef.TypedBuilder buildDocRef() {
+        return DocRef.builder(DOCUMENT_TYPE);
+    }
+
     public String getDescription() {
         return description;
     }

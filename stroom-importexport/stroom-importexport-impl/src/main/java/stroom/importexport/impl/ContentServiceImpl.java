@@ -166,7 +166,7 @@ class ContentServiceImpl implements ContentService {
 
         LOGGER.info("Exporting all config to temp file {}", tempFile);
         final ExportSummary exportSummary = importExportService.exportConfig(
-                Set.of(ExplorerConstants.ROOT_DOC_REF),
+                Set.of(ExplorerConstants.SYSTEM_DOC_REF),
                 tempFile);
 
         logSummary(tempFile, exportSummary);

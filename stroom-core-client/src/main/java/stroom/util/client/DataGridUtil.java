@@ -1,6 +1,7 @@
 package stroom.util.client;
 
 import stroom.cell.expander.client.ExpanderCell;
+import stroom.cell.info.client.HyperlinkCell;
 import stroom.cell.info.client.SvgCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.EndColumn;
@@ -329,6 +330,12 @@ public class DataGridUtil {
             final Function<T_ROW, String> cellExtractor) {
 
         return new ColumnBuilder<>(cellExtractor, Function.identity(), TextCell::new);
+    }
+
+    public static <T_ROW> ColumnBuilder<T_ROW, String, String, Cell<String>> hyperlinkColumnBuilder(
+            final Function<T_ROW, String> cellExtractor) {
+
+        return new ColumnBuilder<>(cellExtractor, Function.identity(), HyperlinkCell::new);
     }
 
     public static <T_ROW, T_RAW_VAL> ColumnBuilder<T_ROW, T_RAW_VAL, SafeHtml, Cell<SafeHtml>> htmlColumnBuilder(

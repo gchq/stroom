@@ -19,7 +19,6 @@ package stroom.folder.client;
 
 import stroom.core.client.ContentManager;
 import stroom.core.client.ContentManager.CloseHandler;
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
@@ -41,20 +40,17 @@ import javax.inject.Singleton;
 public class FolderPlugin extends DocumentPlugin<DocRef> {
 
     private final Provider<FolderPresenter> editorProvider;
-    private final RestFactory restFactory;
     private final ClientSecurityContext securityContext;
     private final ContentManager contentManager;
 
     @Inject
     public FolderPlugin(final EventBus eventBus,
                         final Provider<FolderPresenter> editorProvider,
-                        final RestFactory restFactory,
                         final ClientSecurityContext securityContext,
                         final ContentManager contentManager,
                         final DocumentPluginEventManager entityPluginEventManager) {
         super(eventBus, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
-        this.restFactory = restFactory;
         this.securityContext = securityContext;
         this.contentManager = contentManager;
     }
