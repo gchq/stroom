@@ -1,16 +1,23 @@
 package stroom.test.common;
 
 import stroom.test.common.DynamicTestBuilder.InitialBuilder;
+import stroom.util.NullSafe;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
 import org.junit.jupiter.api.DynamicTest;
+import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -138,5 +145,48 @@ public class TestUtil {
                 () -> message,
                 Duration.ofSeconds(5),
                 Duration.ofMillis(1));
+    }
+
+    /**
+     * Run runnable with a temporary log level for the supplied classes
+     */
+    public static void withTemporaryLogLevel(final Level logLevel,
+                                             final Class<?> clazz,
+                                             final Runnable runnable) {
+        withTemporaryLogLevel(logLevel, List.of(clazz), runnable);
+    }
+
+    /**
+     * Run runnable with a temporary log level for the supplied classes
+     */
+    public static void withTemporaryLogLevel(final Level logLevel,
+                                             final Collection<Class<?>> classes,
+                                             final Runnable runnable) {
+        final Map<Class<?>, Level> existingLevels = new HashMap<>();
+
+        for (final Class<?> clazz : classes) {
+            final ch.qos.logback.classic.Logger logger = getLogbackLogger(clazz);
+            Objects.requireNonNull(logger);
+            final Level existingLevel = logger.getLevel();
+            existingLevels.put(clazz, existingLevel);
+        }
+
+        try {
+            for (final Class<?> clazz : classes) {
+                final ch.qos.logback.classic.Logger logger = getLogbackLogger(clazz);
+                logger.setLevel(logLevel);
+            }
+            runnable.run();
+        } finally {
+            for (final Class<?> clazz : classes) {
+                final ch.qos.logback.classic.Logger logger = getLogbackLogger(clazz);
+                NullSafe.consume(existingLevels.get(clazz), logger::setLevel);
+            }
+        }
+    }
+
+    private static ch.qos.logback.classic.Logger getLogbackLogger(final Class<?> clazz) {
+        final LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        return loggerContext.getLogger(clazz);
     }
 }
