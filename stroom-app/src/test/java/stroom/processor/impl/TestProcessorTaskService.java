@@ -195,6 +195,6 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
 
     private void createTasks() {
         // Make sure there are no tasks yet.
-        processorTaskManager.createTasks();
+        processorTaskManager.createAndQueueTasks();
     }
 }

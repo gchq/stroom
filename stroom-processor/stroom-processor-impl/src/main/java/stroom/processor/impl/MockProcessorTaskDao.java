@@ -4,7 +4,6 @@ import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.Status;
 import stroom.processor.api.InclusiveRanges;
 import stroom.processor.impl.ProgressMonitor.FilterProgressMonitor;
 import stroom.processor.shared.ProcessorFilter;
@@ -85,15 +84,13 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     }
 
     @Override
-    public CreatedTasks createNewTasks(final ProcessorFilter filter,
-                                       final ProcessorFilterTracker tracker,
-                                       final FilterProgressMonitor filterProgressMonitor,
-                                       final long metaQueryTime,
-                                       final Map<Meta, InclusiveRanges> metaMap,
-                                       final String thisNodeName,
-                                       final Long maxMetaId,
-                                       final boolean reachedLimit,
-                                       final boolean fillTaskQueue) {
+    public int createNewTasks(final ProcessorFilter filter,
+                              final ProcessorFilterTracker tracker,
+                              final FilterProgressMonitor filterProgressMonitor,
+                              final long metaQueryTime,
+                              final Map<Meta, InclusiveRanges> metaMap,
+                              final Long maxMetaId,
+                              final boolean reachedLimit) {
         final long now = System.currentTimeMillis();
 
         metaMap.forEach((meta, eventRanges) -> {
@@ -102,12 +99,6 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
             task.setCreateTimeMs(now);
             task.setStatus(TaskStatus.CREATED);
             task.setStartTimeMs(now);
-
-            if (fillTaskQueue && Status.UNLOCKED.equals(meta.getStatus())) {
-                task.setNodeName(thisNodeName);
-//                availableTasksCreated++;
-            }
-
             task.setMetaId(meta.getId());
 
             String eventRangeData = null;
@@ -125,7 +116,12 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
             dao.create(task);
         });
 
-        return null;
+        return metaMap.size();
+    }
+
+    @Override
+    public int countCreatedTasksForFilter(final int filterId) {
+        return 0;
     }
 
     @Override

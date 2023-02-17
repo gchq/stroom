@@ -28,11 +28,11 @@ import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.TaskStatus;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -94,7 +94,7 @@ public class MockProcessorTaskManager implements ProcessorTaskManager {
     }
 
     @Override
-    public void createTasks() {
+    public void createAndQueueTasks() {
     }
 
     @Override
@@ -111,7 +111,7 @@ public class MockProcessorTaskManager implements ProcessorTaskManager {
     }
 
     @Override
-    public AtomicLong getNextDeleteMs() {
+    public Instant getLastCreateTime() {
         return null;
     }
 

@@ -448,6 +448,7 @@ appConfig:
   processor:
     assignTasks: true
     createTasks: true
+    createTasksFrequency: "PT10S"
     databaseMultiInsertMaxBatchSize: 500
     db:
       connection:
@@ -468,6 +469,7 @@ appConfig:
     deleteAge: "P1D"
     disownDeadTasksAfter: "PT10M"
     fillTaskQueue: true
+    fillTaskQueueFrequency: "PT10S"
     processorCache:
       expireAfterAccess: "PT10S"
       expireAfterWrite: null
@@ -485,6 +487,8 @@ appConfig:
       expireAfterWrite: null
       maximumSize: 1000
     queueSize: 1000
+    taskCreationThreadCount: 5
+    tasksToCreatePerFilter: 1000
   properties:
     db:
       connection:

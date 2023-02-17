@@ -17,11 +17,9 @@ import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.Status;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.InclusiveRanges;
 import stroom.processor.api.InclusiveRanges.InclusiveRange;
-import stroom.processor.impl.CreatedTasks;
 import stroom.processor.impl.ExistingCreatedTask;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorTaskDao;
@@ -66,7 +64,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -131,14 +128,12 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             PROCESSOR_TASK.CREATE_TIME_MS,
             PROCESSOR_TASK.STATUS,
             PROCESSOR_TASK.STATUS_TIME_MS,
-            PROCESSOR_TASK.FK_PROCESSOR_NODE_ID,
             PROCESSOR_TASK.FK_PROCESSOR_FEED_ID,
             PROCESSOR_TASK.META_ID,
             PROCESSOR_TASK.DATA,
             PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID};
     private static final Object[] PROCESSOR_TASK_VALUES = new Object[PROCESSOR_TASK_COLUMNS.length];
 
-    private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
     private final ProcessorNodeCache processorNodeCache;
     private final ProcessorFeedCache processorFeedCache;
     private final ProcessorFilterTrackerDaoImpl processorFilterTrackerDao;
@@ -380,24 +375,19 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
      *                        processor filter.
      * @param streams         The map of streams and optional event ranges to create stream
      *                        tasks for.
-     * @param thisNodeName    This node, the node that will queue the created tasks if possible.
      * @param reachedLimit    For search based stream task creation this indicates if we
      *                        have reached the limit of stream tasks created for a single
      *                        search. This limit is imposed to stop search based task
      *                        creation running forever.
      */
     @Override
-    public synchronized CreatedTasks createNewTasks(final ProcessorFilter filter,
-                                                    final ProcessorFilterTracker tracker,
-                                                    final FilterProgressMonitor filterProgressMonitor,
-                                                    final long streamQueryTime,
-                                                    final Map<Meta, InclusiveRanges> streams,
-                                                    final String thisNodeName,
-                                                    final Long maxMetaId,
-                                                    final boolean reachedLimit,
-                                                    final boolean fillTaskQueue) {
-        final Integer nodeId = processorNodeCache.getOrCreate(thisNodeName);
-
+    public synchronized int createNewTasks(final ProcessorFilter filter,
+                                           final ProcessorFilterTracker tracker,
+                                           final FilterProgressMonitor filterProgressMonitor,
+                                           final long streamQueryTime,
+                                           final Map<Meta, InclusiveRanges> streams,
+                                           final Long maxMetaId,
+                                           final boolean reachedLimit) {
         // Get the current time.
         final long statusTimeMs = System.currentTimeMillis();
         final CreationState creationState = new CreationState();
@@ -432,24 +422,14 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
             bindValues[0] = 1; //version
             bindValues[1] = statusTimeMs; //create_ms
-
-            if (fillTaskQueue && Status.UNLOCKED.equals(meta.getStatus())) {
-                // If the stream is unlocked then take ownership of the
-                // task, i.e. set the node to this node and add it to the task queue.
-                bindValues[2] = TaskStatus.QUEUED.getPrimitiveValue(); //stat
-                bindValues[4] = nodeId; //fk_node_id
-                creationState.availableTasksCreated++;
-            } else {
-                bindValues[2] = TaskStatus.CREATED.getPrimitiveValue(); //stat
-            }
-
+            bindValues[2] = TaskStatus.CREATED.getPrimitiveValue(); //stat
             bindValues[3] = statusTimeMs; //stat_ms
-            bindValues[5] = processorFeedCache.getOrCreate(meta.getFeedName());
-            bindValues[6] = meta.getId(); //fk_strm_id
+            bindValues[4] = processorFeedCache.getOrCreate(meta.getFeedName());
+            bindValues[5] = meta.getId(); //fk_strm_id
             if (eventRangeData != null && !eventRangeData.isEmpty()) {
-                bindValues[7] = eventRangeData; //dat
+                bindValues[6] = eventRangeData; //dat
             }
-            bindValues[8] = filter.getId(); //fk_strm_proc_filt_id
+            bindValues[7] = filter.getId(); //fk_strm_proc_filt_id
             allBindValues[rowCount++] = bindValues;
         }
 
@@ -467,40 +447,12 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     throw e;
                 }
                 filterProgressMonitor.logPhase(Phase.INSERT_NEW_TASKS, durationTimer, allBindValues.length);
-
-                // Select them back.
-                durationTimer = DurationTimer.start();
-                try {
-                    final Condition condition = PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId)
-                            .and(PROCESSOR_TASK.STATUS_TIME_MS.eq(statusTimeMs))
-                            .and(PROCESSOR_TASK.STATUS.eq(TaskStatus.QUEUED.getPrimitiveValue()))
-                            .and(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(filter.getId()));
-                    creationState.selectedTaskList = select(context, condition);
-
-                    taskStatusTraceLog.createdTasks(ProcessorTaskDaoImpl.class, creationState.selectedTaskList);
-
-                    // Ensure that the select has got back the stream tasks that we
-                    // have just inserted. If it hasn't this would be very bad.
-                    if (creationState.selectedTaskList.size() != creationState.availableTasksCreated) {
-                        throw new RuntimeException(
-                                "Unexpected number of stream tasks selected back after insertion.");
-                    }
-
-                    creationState.selectedTaskCount = creationState.selectedTaskList.size();
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e::getMessage, e);
-                    throw e;
-                }
-                filterProgressMonitor.logPhase(Phase.SELECT_NEW_TASKS,
-                        durationTimer,
-                        creationState.selectedTaskCount);
             }
 
             // Update tracker.
             final DurationTimer durationTimer = DurationTimer.start();
             // Anything created?
             if (creationState.totalTasksCreated > 0) {
-                // Done with if because args are not final so can't use lambda
                 log(creationState, creationState.streamIdRange);
 
                 // If we have never created tasks before or the last poll gave
@@ -582,18 +534,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             filterProgressMonitor.logPhase(Phase.UPDATE_TRACKERS, durationTimer, updatedTrackerCount);
         });
 
-        final List<ProcessorTask> list;
-        if (creationState.selectedTaskList != null) {
-            list = convert(creationState.selectedTaskList);
-        } else {
-            list = Collections.emptyList();
-        }
-
-        return new CreatedTasks(
-                list,
-                creationState.availableTasksCreated,
-                creationState.totalTasksCreated,
-                creationState.eventCount);
+        return creationState.totalTasksCreated;
     }
 
     @Override
@@ -689,6 +630,23 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 });
     }
 
+    /**
+     * Count the current number of tasks for a filter in the CREATED state.
+     *
+     * @param filterId The filter to count tasks for.
+     * @return The number of tasks currently CREATED.
+     */
+    @Override
+    public int countCreatedTasksForFilter(final int filterId) {
+        return JooqUtil.contextResult(
+                processorDbConnProvider, context ->
+                        context
+                                .selectCount()
+                                .where(PROCESSOR_TASK.STATUS.eq(TaskStatus.CREATED.getPrimitiveValue()))
+                                .and(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(filterId))
+                                .fetchOne(0, int.class));
+    }
+
     private Result<Record> select(final DSLContext context,
                                   final Condition condition) {
         return context
@@ -771,9 +729,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                      final InclusiveRange streamIdRange) {
         LOGGER.debug(() -> "processProcessorFilter() - Created " +
                 creationState.totalTasksCreated +
-                " tasks (" +
-                creationState.availableTasksCreated +
-                " available) in the range " +
+                " tasks in the range " +
                 streamIdRange);
     }
 
@@ -1272,9 +1228,6 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         InclusiveRange streamIdRange;
         InclusiveRange streamMsRange;
         InclusiveRange eventIdRange;
-        Result<Record> selectedTaskList;
-        int availableTasksCreated;
-        int selectedTaskCount;
         int totalTasksCreated;
         long eventCount;
     }

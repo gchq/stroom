@@ -29,14 +29,14 @@ class TestProgressMonitor {
     void getSummary() {
         final String str = test(false, false, false);
         Assertions.assertThat(str)
-                .contains("Inspected 2/2 filters for task creation"); // 10 + 20
+                .contains("Inspected 2/2 filters"); // 10 + 20
     }
 
     @Test
     void getSummaryPlusPhaseDetail() {
         final String str = test(false, true, true);
         Assertions.assertThat(str)
-                .contains(Phase.SELECT_NEW_TASKS.getPhaseName() + ": " + 30); // 10 + 20
+                .contains(Phase.QUEUE_CREATED_TASKS.getPhaseName() + ": " + 30); // 10 + 20
     }
 
     @Test
@@ -70,7 +70,8 @@ class TestProgressMonitor {
         progressMonitor2.complete();
 
         final String str = progressMonitor
-                .getFullReport(new CreateProcessTasksState(0, 0),
+                .getFullReport("SUMMARY",
+                        new QueueProcessTasksState(0, 0),
                         showFilterDetail,
                         showSummaryPhaseDetail,
                         showFilterPhaseDetail);

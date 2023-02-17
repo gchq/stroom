@@ -97,7 +97,7 @@ public class CommonTranslationTestHelper {
 
     public List<ProcessorResult> processAll() {
         // Force creation of stream tasks.
-        processorTaskManager.createTasks();
+        processorTaskManager.createAndQueueTasks();
 
         final List<ProcessorResult> results = new ArrayList<>();
         ProcessorTaskList processorTasks = processorTaskManager.assignTasks(nodeInfo.getThisNodeName(), 100);

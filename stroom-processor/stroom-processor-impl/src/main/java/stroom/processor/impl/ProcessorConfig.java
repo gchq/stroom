@@ -27,6 +27,10 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
     private boolean fillTaskQueue;
     // TODO 29/11/2021 AT: Make final
     private int queueSize;
+
+
+    private final int tasksToCreatePerFilter;
+    private final int taskCreationThreadCount;
     private final int databaseMultiInsertMaxBatchSize;
 
     private final CacheConfig processorCache;
@@ -36,6 +40,9 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
 
     private final StroomDuration disownDeadTasksAfter;
 
+    private final StroomDuration fillTaskQueueFrequency;
+    private final StroomDuration createTasksFrequency;
+
     public ProcessorConfig() {
         dbConfig = new ProcessorDbConfig();
         assignTasks = true;
@@ -43,6 +50,8 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
         deleteAge = StroomDuration.ofDays(1);
         fillTaskQueue = true;
         queueSize = 1000;
+        tasksToCreatePerFilter = 1000;
+        taskCreationThreadCount = 5;
         databaseMultiInsertMaxBatchSize = 500;
 
         processorCache = CacheConfig.builder()
@@ -62,6 +71,8 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
         disownDeadTasksAfter = StroomDuration.ofMinutes(10);
+        fillTaskQueueFrequency = StroomDuration.ofSeconds(10);
+        createTasksFrequency = StroomDuration.ofSeconds(10);
     }
 
     @SuppressWarnings("unused")
@@ -72,24 +83,32 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
                            @JsonProperty("deleteAge") final StroomDuration deleteAge,
                            @JsonProperty("fillTaskQueue") final boolean fillTaskQueue,
                            @JsonProperty("queueSize") final int queueSize,
+                           @JsonProperty("tasksToCreatePerFilter") final int tasksToCreatePerFilter,
+                           @JsonProperty("taskCreationThreadCount") final int taskCreationThreadCount,
                            @JsonProperty("databaseMultiInsertMaxBatchSize") final int databaseMultiInsertMaxBatchSize,
                            @JsonProperty("processorCache") final CacheConfig processorCache,
                            @JsonProperty("processorFilterCache") final CacheConfig processorFilterCache,
                            @JsonProperty("processorNodeCache") final CacheConfig processorNodeCache,
                            @JsonProperty("processorFeedCache") final CacheConfig processorFeedCache,
-                           @JsonProperty("disownDeadTasksAfter") final StroomDuration disownDeadTasksAfter) {
+                           @JsonProperty("disownDeadTasksAfter") final StroomDuration disownDeadTasksAfter,
+                           @JsonProperty("fillTaskQueueFrequency") final StroomDuration fillTaskQueueFrequency,
+                           @JsonProperty("createTasksFrequency") final StroomDuration createTasksFrequency) {
         this.dbConfig = dbConfig;
         this.assignTasks = assignTasks;
         this.createTasks = createTasks;
         this.deleteAge = deleteAge;
         this.fillTaskQueue = fillTaskQueue;
         this.queueSize = queueSize;
+        this.tasksToCreatePerFilter = tasksToCreatePerFilter;
+        this.taskCreationThreadCount = taskCreationThreadCount;
         this.databaseMultiInsertMaxBatchSize = databaseMultiInsertMaxBatchSize;
         this.processorCache = processorCache;
         this.processorFilterCache = processorFilterCache;
         this.processorNodeCache = processorNodeCache;
         this.processorFeedCache = processorFeedCache;
         this.disownDeadTasksAfter = disownDeadTasksAfter;
+        this.fillTaskQueueFrequency = fillTaskQueueFrequency;
+        this.createTasksFrequency = createTasksFrequency;
     }
 
     @Override
@@ -136,6 +155,17 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
         this.queueSize = queueSize;
     }
 
+    @JsonPropertyDescription("How many tasks should we try to create in the DB per filter. If the queue size is " +
+            "larger then that figure will be used instead.")
+    public int getTasksToCreatePerFilter() {
+        return tasksToCreatePerFilter;
+    }
+
+    @JsonPropertyDescription("The number of concurrent threads to use for task creation.")
+    public int getTaskCreationThreadCount() {
+        return taskCreationThreadCount;
+    }
+
     @JsonPropertyDescription("The maximum number of rows to insert in a single multi insert statement, " +
             "e.g. INSERT INTO X VALUES (...), (...), (...)")
     public int getDatabaseMultiInsertMaxBatchSize() {
@@ -163,20 +193,34 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
         return disownDeadTasksAfter;
     }
 
+    @JsonPropertyDescription("How frequently do we want to try and fill the in memory task queue from the DB.")
+    public StroomDuration getFillTaskQueueFrequency() {
+        return fillTaskQueueFrequency;
+    }
+
+    @JsonPropertyDescription("How frequently do we want to insert new tasks into the DB.")
+    public StroomDuration getCreateTasksFrequency() {
+        return createTasksFrequency;
+    }
+
     @Override
     public String toString() {
         return "ProcessorConfig{" +
                 "dbConfig=" + dbConfig +
                 ", assignTasks=" + assignTasks +
                 ", createTasks=" + createTasks +
-                ", deleteAge='" + deleteAge + '\'' +
+                ", deleteAge=" + deleteAge +
                 ", fillTaskQueue=" + fillTaskQueue +
                 ", queueSize=" + queueSize +
+                ", taskCreationThreadCount=" + taskCreationThreadCount +
                 ", databaseMultiInsertMaxBatchSize=" + databaseMultiInsertMaxBatchSize +
                 ", processorCache=" + processorCache +
                 ", processorFilterCache=" + processorFilterCache +
                 ", processorNodeCache=" + processorNodeCache +
                 ", processorFeedCache=" + processorFeedCache +
+                ", disownDeadTasksAfter=" + disownDeadTasksAfter +
+                ", fillTaskQueueFrequency=" + fillTaskQueueFrequency +
+                ", createTasksFrequency=" + createTasksFrequency +
                 '}';
     }
 

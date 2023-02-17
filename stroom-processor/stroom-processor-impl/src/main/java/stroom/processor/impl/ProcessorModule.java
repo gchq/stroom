@@ -81,7 +81,7 @@ public class ProcessorModule extends AbstractModule {
                         .name(PROCESSOR_TASK_RETENTION_JOB_NAME)
                         .description("Physically delete processor tasks that have been logically " +
                                 "deleted or complete based on age (stroom.processor.deleteAge)")
-                        .schedule(PERIODIC, "1m"))
+                        .schedule(PERIODIC, "10m"))
                 .bindJobTo(ProcessorTaskManagerDisownDeadTasks.class, builder -> builder
                         .name("Processor Task Manager Disown Dead Tasks")
                         .description("Tasks that seem to be stuck processing due to the death of a processing node " +

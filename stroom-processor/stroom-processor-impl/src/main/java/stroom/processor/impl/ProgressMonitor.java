@@ -38,41 +38,48 @@ public class ProgressMonitor {
         this.totalFilterCount = totalFilterCount;
     }
 
-    public void report(final CreateProcessTasksState createProcessTasksState) {
+    public void report(final String title,
+                       final QueueProcessTasksState queueProcessTasksState) {
         LOGGER.info(() -> getFullReport(
-                createProcessTasksState,
+                title,
+                queueProcessTasksState,
                 LOGGER.isDebugEnabled(),
                 LOGGER.isDebugEnabled(),
                 LOGGER.isTraceEnabled()));
     }
 
-    public String getFullReport(final CreateProcessTasksState createProcessTasksState,
+    public String getFullReport(final String title,
+                                final QueueProcessTasksState queueProcessTasksState,
                                 final boolean showFilterDetail,
                                 final boolean showSummaryPhaseDetail,
                                 final boolean showFilterPhaseDetail) {
         final StringBuilder sb = new StringBuilder();
-        addSummary(sb, showSummaryPhaseDetail, createProcessTasksState);
+        addSummary(title, sb, showSummaryPhaseDetail, queueProcessTasksState);
         if (showFilterDetail) {
             addDetail(sb, showFilterPhaseDetail);
         }
         return LogUtil.inBoxOnNewLine(sb.toString());
     }
 
-    private void addSummary(final StringBuilder sb,
+    private void addSummary(final String title,
+                            final StringBuilder sb,
                             final boolean showPhaseDetail,
-                            final CreateProcessTasksState createProcessTasksState) {
-        sb.append("SUMMARY\n");
+                            final QueueProcessTasksState queueProcessTasksState) {
+        sb.append(title);
+        sb.append("\n");
         sb.append("---\n");
         sb.append("Inspected ");
         sb.append(filterProgressMonitorList.size());
         sb.append("/");
         sb.append(totalFilterCount);
-        sb.append(" filters for task creation");
+        sb.append(" filters");
         sb.append("\n");
         sb.append("Total time: ");
         sb.append(totalDuration.get());
         sb.append("\n");
-        createProcessTasksState.report(sb);
+        if (queueProcessTasksState != null) {
+            queueProcessTasksState.report(sb);
+        }
 
         // Only show phase detail in trace log.
         if (showPhaseDetail) {
@@ -103,22 +110,15 @@ public class ProgressMonitor {
                 sb.append("Total create time: ");
                 sb.append(filterProgressMonitor.completeDuration);
                 sb.append("\n");
-                sb.append("Initial queue size: ");
-                sb.append(filterProgressMonitor.initialQueueSize);
+                sb.append("Initial: ");
+                sb.append(filterProgressMonitor.initialCount);
                 sb.append("\n");
-                sb.append("Unowned tasks added to queue: ");
-                sb.append(filterProgressMonitor.queuedUnownedTasks.get());
+                sb.append("Added: ");
+                sb.append(filterProgressMonitor.added.get());
                 sb.append("\n");
-                sb.append("Task records created in DB: ");
-                sb.append(filterProgressMonitor.newTasksInDb.get());
-                sb.append("\n");
-                sb.append("Tasks added to queue after DB creation: ");
-                sb.append(filterProgressMonitor.queuedNewTasks.get());
-                sb.append("\n");
-                sb.append("Final queue size: ");
-                sb.append(filterProgressMonitor.initialQueueSize +
-                        filterProgressMonitor.queuedUnownedTasks.get() +
-                        filterProgressMonitor.queuedNewTasks.get());
+                sb.append("Final count: ");
+                sb.append(filterProgressMonitor.initialCount +
+                        filterProgressMonitor.added.get());
 
                 // Only show phase detail in trace log.
                 if (showPhaseDetail) {
@@ -179,7 +179,6 @@ public class ProgressMonitor {
         CREATE_STREAM_MAP("Create stream map"),
         FIND_META_FOR_FILTER("Find meta records matching filter"),
         INSERT_NEW_TASKS("Inserting new task records"),
-        SELECT_NEW_TASKS("Selecting new task records"),
         UPDATE_TRACKERS("Update trackers"),
         RELEASE_TASKS_FOR_DISABLED_FILTERS("Release tasks for disabled filters");
 
@@ -204,27 +203,16 @@ public class ProgressMonitor {
 
         private final Map<Phase, PhaseDetails> phaseDetailsMap = new ConcurrentHashMap<>();
 
-        private final int initialQueueSize;
-        private final AtomicInteger newTasksInDb = new AtomicInteger();
-        private final AtomicInteger queuedNewTasks = new AtomicInteger();
-        private final AtomicInteger queuedUnownedTasks = new AtomicInteger();
+        private final int initialCount;
+        private final AtomicInteger added = new AtomicInteger();
 
         private Duration completeDuration;
 
         private FilterProgressMonitor(final ProcessorFilter filter,
-                                      final int initialQueueSize) {
+                                      final int initialCount) {
             this.filter = filter;
-            this.initialQueueSize = initialQueueSize;
+            this.initialCount = initialCount;
             this.durationTimer = DurationTimer.start();
-        }
-
-        /**
-         * Record adding tasks that already existed in the database but were unowned being added to the task queue.
-         *
-         * @param count The number of unowned tasks that were added from the database to the task queue.
-         */
-        public void addUnownedTasksToQueue(final int count) {
-            queuedUnownedTasks.addAndGet(count);
         }
 
         /**
@@ -232,34 +220,15 @@ public class ProgressMonitor {
          *
          * @param count The number of task records added to the database.
          */
-        public void addNewTasksInDb(final int count) {
-            newTasksInDb.addAndGet(count);
-        }
-
-        /**
-         * Record the number of tasks that were created on the database and then immediately selected back and added to
-         * the task queue.
-         *
-         * @param count The number of newly created tasks that were added to the database and added to the task queue.
-         */
-        public void addNewTasksToQueue(final int count) {
-            queuedNewTasks.addAndGet(count);
-        }
-
-        /**
-         * Log the duration of a phase with no affected items.
-         * @param phase The phase to log against.
-         * @param durationTimer The duration of the phase.
-         */
-        public void logPhase(final Phase phase,
-                             final DurationTimer durationTimer) {
-            logPhase(phase, durationTimer, 0);
+        public void add(final int count) {
+            added.addAndGet(count);
         }
 
         /**
          * Log the duration of a phase with {@code phase} affected items.
-         * @param phase The phase to log against.
-         * @param durationTimer The duration of the phase.
+         *
+         * @param phase             The phase to log against.
+         * @param durationTimer     The duration of the phase.
          * @param affectedItemCount The number of items affected in the phase.
          */
         public void logPhase(final Phase phase,
@@ -298,7 +267,8 @@ public class ProgressMonitor {
         /**
          * Increment the call count by one, increment the count of items affected by the
          * phase by {@code count} and add the duration.
-         * @param count Number of items affected
+         *
+         * @param count    Number of items affected
          * @param duration The duration to add.
          */
         public void increment(final long count, final Duration duration) {

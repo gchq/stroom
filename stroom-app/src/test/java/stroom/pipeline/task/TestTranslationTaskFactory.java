@@ -356,7 +356,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
             }
 
             // Force creation of stream tasks.
-            processorTaskManager.createTasks();
+            processorTaskManager.createAndQueueTasks();
 
         } catch (final IOException e) {
             e.printStackTrace();

@@ -380,7 +380,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
         addStream(inputFile, feed);
 
-        processorTaskManager.createTasks();
+        processorTaskManager.createAndQueueTasks();
 
         final List<ProcessorTask> tasks = getTasks();
         assertThat(tasks.size())

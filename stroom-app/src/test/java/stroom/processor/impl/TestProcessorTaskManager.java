@@ -84,7 +84,7 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
         commonTestScenarioCreator.createSample2LineRawFile(feedName2, StreamTypeNames.RAW_EVENTS);
 
         assertThat(getTaskCount()).isZero();
-        processorTaskManager.createTasks();
+        processorTaskManager.createAndQueueTasks();
 
         assertThat(getTaskCount()).isZero();
 
@@ -94,15 +94,15 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
         commonTestScenarioCreator.createBasicTranslateStreamProcessor(feedName1);
         commonTestScenarioCreator.createBasicTranslateStreamProcessor(feedName2);
 
-        processorTaskManager.createTasks();
+        processorTaskManager.createAndQueueTasks();
         assertThat(getTaskCount()).isEqualTo(4);
 
         commonTestScenarioCreator.createSample2LineRawFile(feedName1, StreamTypeNames.RAW_EVENTS);
-        processorTaskManager.createTasks();
+        processorTaskManager.createAndQueueTasks();
 
         assertThat(getTaskCount()).isEqualTo(6);
 
-        processorTaskManager.createTasks();
+        processorTaskManager.createAndQueueTasks();
         assertThat(getTaskCount()).isEqualTo(6);
     }
 
@@ -208,7 +208,7 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
 
     private void createTasks(final int callCount, final int expected) {
         LOGGER.logDurationIfInfoEnabled(() ->
-                        processorTaskManager.createTasks(),
+                        processorTaskManager.createAndQueueTasks(),
                 "createTasks " + callCount);
         assertThat(getTaskCount()).isEqualTo(expected);
     }
@@ -252,7 +252,7 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
 
         assertThat(processorTaskManager.getTaskQueueSize()).isEqualTo(0);
 
-        processorTaskManager.createTasks();
+        processorTaskManager.createAndQueueTasks();
 
         assertThat(getTaskCount()).isEqualTo(1);
         assertThat(processorTaskManager.getTaskQueueSize()).isEqualTo(1);
@@ -265,7 +265,7 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
         processorTaskManager.startup();
         assertThat(processorTaskManager.getTaskQueueSize()).isEqualTo(0);
 
-        processorTaskManager.createTasks();
+        processorTaskManager.createAndQueueTasks();
         assertThat(processorTaskManager.getTaskQueueSize()).isEqualTo(1);
     }
 }

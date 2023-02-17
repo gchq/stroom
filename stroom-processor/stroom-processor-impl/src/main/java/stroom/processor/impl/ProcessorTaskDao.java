@@ -39,6 +39,14 @@ public interface ProcessorTaskDao {
                           Instant statusOlderThan);
 
     /**
+     * Count the current number of tasks for a filter in the CREATED state.
+     *
+     * @param filterId The filter to count tasks for.
+     * @return The number of tasks currently CREATED.
+     */
+    int countCreatedTasksForFilter(int filterId);
+
+    /**
      * Create new tasks for the specified filter and add them to the queue.
      *
      * @param filter                The filter to create tasks for
@@ -54,15 +62,13 @@ public interface ProcessorTaskDao {
      * @return A list of tasks that we have created and that are owned by this
      * node and available to be handed to workers (i.e. their associated meta data is not locked).
      */
-    CreatedTasks createNewTasks(ProcessorFilter filter,
-                                ProcessorFilterTracker tracker,
-                                FilterProgressMonitor filterProgressMonitor,
-                                long metaQueryTime,
-                                Map<Meta, InclusiveRanges> metaMap,
-                                String thisNodeName,
-                                Long maxMetaId,
-                                boolean reachedLimit,
-                                boolean fillTaskQueue);
+    int createNewTasks(ProcessorFilter filter,
+                       ProcessorFilterTracker tracker,
+                       FilterProgressMonitor filterProgressMonitor,
+                       long metaQueryTime,
+                       Map<Meta, InclusiveRanges> metaMap,
+                       Long maxMetaId,
+                       boolean reachedLimit);
 
     /**
      * Change the node ownership of the tasks in the id set and select them back to include in the queue.
