@@ -36,7 +36,8 @@ public class ExplorerFavDaoImpl implements ExplorerFavDao {
                 explorerNodeId,
                 userId,
                 Instant.now().toEpochMilli());
-        JooqUtil.tryCreate(explorerDbConnProvider, record, EXPLORER_FAVOURITE.ID);
+        JooqUtil.tryCreate(explorerDbConnProvider, record, EXPLORER_FAVOURITE.EXPLORER_NODE_ID,
+                EXPLORER_FAVOURITE.USER_UUID);
     }
 
     @Override
