@@ -67,6 +67,7 @@ import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.NullSafe;
 import stroom.util.concurrent.ThreadUtil;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
@@ -92,6 +93,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
@@ -129,7 +131,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
     private final SecurityContext securityContext;
     private final ClusterLockService clusterLockService;
     private final TargetNodeSetFactory targetNodeSetFactory;
-    private final ProcessorConfig processorConfig;
     private final DocRefInfoService docRefInfoService;
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
@@ -147,8 +148,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
     /**
      * Do we need to create tasks.
      */
-    private final WaitHelper createTasksWaitHelper = new WaitHelper();
-    private final WaitHelper fillQueueWaitHelper = new WaitHelper();
+    private final Semaphore createTasksSemaphore = new Semaphore(0);
+    private final Semaphore fillQueueSemaphore = new Semaphore(0);
     /**
      * Time to see if we need to try and create more tasks.
      */
@@ -181,7 +182,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                              final SecurityContext securityContext,
                              final ClusterLockService clusterLockService,
                              final TargetNodeSetFactory targetNodeSetFactory,
-                             final ProcessorConfig processorConfig,
                              final DocRefInfoService docRefInfoService) {
 
         this.processorFilterService = processorFilterService;
@@ -198,7 +198,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
         this.securityContext = securityContext;
         this.clusterLockService = clusterLockService;
         this.targetNodeSetFactory = targetNodeSetFactory;
-        this.processorConfig = processorConfig;
         this.docRefInfoService = docRefInfoService;
     }
 
@@ -218,16 +217,16 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                         " previously owned tasks in " +
                         durationTimer.get());
             }
-
-            // Start task creation.
-            createTasksAsync();
-
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         } finally {
             allowAsyncTaskCreation = true;
             allowTaskCreation = true;
         }
+
+        // Now we have started, start task creation.
+        // Start task creation.
+        createTasksAsync();
     }
 
     @Override
@@ -248,22 +247,28 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
             final Executor executor = executorProvider.get(THREAD_POOL);
             CompletableFuture
                     .runAsync(() -> {
-                        while (allowAsyncTaskCreation && !Thread.currentThread().isInterrupted()) {
-                            // Wait for this node to be asked to create tasks.
-                            createTasksWaitHelper.waitForSignal();
+                        try {
+                            while (allowAsyncTaskCreation && !Thread.currentThread().isInterrupted()) {
+                                // Wait for this node to be asked to create tasks.
+                                createTasksSemaphore.acquire();
+                                createTasksSemaphore.drainPermits();
 
-                            // We have been woken up and asked to create tasks.
-                            lastCreateTime = Instant.now();
+                                // We have been woken up and asked to create tasks.
+                                lastCreateTime = Instant.now();
 
-                            // Wake up queue filling.
-                            fillQueueWaitHelper.signal();
+                                // Wake up queue filling.
+                                fillQueueSemaphore.release();
 
-                            final long createdTotal = taskContextFactory.contextResult(
-                                    "Create Tasks",
-                                    this::createTasks).get();
-                            if (createdTotal == 0) {
-                                ThreadUtil.sleep(processorConfig.getCreateTasksFrequency().toMillis());
+                                final long createdTotal = taskContextFactory.contextResult(
+                                        "Create Tasks",
+                                        this::createTasks).get();
+                                if (createdTotal == 0) {
+                                    ThreadUtil.sleep(
+                                            processorConfigProvider.get().getCreateTasksFrequency().toMillis());
+                                }
                             }
+                        } catch (final InterruptedException e) {
+                            throw UncheckedInterruptedException.create(e);
                         }
                     }, executor);
         } catch (final RuntimeException e) {
@@ -277,16 +282,22 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
             final Executor executor = executorProvider.get(THREAD_POOL);
             CompletableFuture
                     .runAsync(() -> {
-                        while (allowAsyncTaskCreation && !Thread.currentThread().isInterrupted()) {
-                            // Wait for this node to be asked to fill the task queue.
-                            fillQueueWaitHelper.waitForSignal();
+                        try {
+                            while (allowAsyncTaskCreation && !Thread.currentThread().isInterrupted()) {
+                                // Wait for this node to be asked to fill the task queue.
+                                fillQueueSemaphore.acquire();
+                                fillQueueSemaphore.drainPermits();
 
-                            final long addedTotal = taskContextFactory.contextResult(
-                                    "Fill task queue",
-                                    this::queueNewTasks).get();
-                            if (addedTotal == 0) {
-                                ThreadUtil.sleep(processorConfig.getFillTaskQueueFrequency().toMillis());
+                                final long addedTotal = taskContextFactory.contextResult(
+                                        "Fill task queue",
+                                        this::queueNewTasks).get();
+                                if (addedTotal == 0) {
+                                    ThreadUtil.sleep(
+                                            processorConfigProvider.get().getFillTaskQueueFrequency().toMillis());
+                                }
                             }
+                        } catch (final InterruptedException e) {
+                            throw UncheckedInterruptedException.create(e);
                         }
                     }, executor);
         } catch (final RuntimeException e) {
@@ -303,7 +314,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
         LOGGER.debug("assignTasks() called for node {}, count {}", nodeName, count);
 
         // Wake up task creation.
-        createTasksWaitHelper.signal();
+        createTasksSemaphore.release();
 
         if (!securityContext.isProcessingUser()) {
             throw new PermissionException(securityContext.getUserId(),
@@ -525,7 +536,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                 final Instant now = Instant.now();
                 final Set<String> activeNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
                 activeNodes.forEach(activeNode -> lastNodeContactTime.put(activeNode, now));
-                final Instant disownTaskAge = now.minus(processorConfig.getDisownDeadTasksAfter());
+                final Instant disownTaskAge = now.minus(processorConfigProvider.get().getDisownDeadTasksAfter());
                 if (lastDisownedTasks.isBefore(disownTaskAge)) {
                     lastDisownedTasks = now;
 
@@ -796,7 +807,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
 
     private long createNewTasks(final TaskContext taskContext) {
         final LongAdder createdTotal = new LongAdder();
-        if (processorConfig.isCreateTasks()) {
+        if (processorConfigProvider.get().isCreateTasks()) {
             LOGGER.trace("createNewTasks() - Starting");
             info(taskContext, () -> "Starting");
 
@@ -827,7 +838,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager, HasSystemInfo {
                                     tasksToCreatePerFilter);
                             if (count > 0) {
                                 // Wake up queue filling.
-                                fillQueueWaitHelper.signal();
+                                fillQueueSemaphore.release();
                                 // Add to the count.
                                 createdTotal.add(count);
                             }

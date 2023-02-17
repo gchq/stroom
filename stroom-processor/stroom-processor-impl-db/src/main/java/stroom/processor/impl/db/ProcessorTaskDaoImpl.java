@@ -642,6 +642,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 processorDbConnProvider, context ->
                         context
                                 .selectCount()
+                                .from(PROCESSOR_TASK)
                                 .where(PROCESSOR_TASK.STATUS.eq(TaskStatus.CREATED.getPrimitiveValue()))
                                 .and(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(filterId))
                                 .fetchOne(0, int.class));

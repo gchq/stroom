@@ -10,4 +10,5 @@ dependencies {
     compile libs.slf4j_api
     compile libs.swagger_annotations
     compile libs.validation_api
+    compile libs.xerces
 }

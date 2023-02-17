@@ -16,6 +16,7 @@
 
 package stroom.legacy.model_6_1;
 
+import org.apache.xerces.jaxp.SAXParserFactoryImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXNotRecognizedException;
@@ -33,31 +34,40 @@ import javax.xml.parsers.SAXParserFactory;
  */
 @Deprecated
 public final class SAXParserFactoryFactory {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SAXParserFactoryFactory.class);
 
-    static final String SECURE_PROCESSING_PROPERTY = "stroom.pipeline.parser.secureProcessing";
-    private static final String DEFAULT_SAX_PARSER_FACTORY = "com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl";
+    private static final String DEFAULT_SAX_PARSER_FACTORY =
+            "org.apache.xerces.jaxp.SAXParserFactoryImpl";
     private static final String IMP_USED = "The SAX Parser factory implementation being used is: ";
     private static final String END = "\".";
     private static final String SYSPROP_SAX_PARSER_FACTORY = "javax.xml.parsers.SAXParserFactory";
     private static final String SYSPROP_SET_TO = "System property \"" + SYSPROP_SAX_PARSER_FACTORY + "\" set to \"";
-    private static final String SYSPROP_NOT_SET = "System property \"" + SYSPROP_SAX_PARSER_FACTORY + "\" not set.";
 
     static {
         try {
+            System.setProperty(SYSPROP_SAX_PARSER_FACTORY, DEFAULT_SAX_PARSER_FACTORY);
             final String factoryName = System.getProperty(SYSPROP_SAX_PARSER_FACTORY);
-            if (factoryName == null) {
-                LOGGER.info(SYSPROP_NOT_SET);
+            LOGGER.info(SYSPROP_SET_TO + factoryName + END);
 
-                System.setProperty(SYSPROP_SAX_PARSER_FACTORY, DEFAULT_SAX_PARSER_FACTORY);
-            } else {
-                LOGGER.info(SYSPROP_SET_TO + factoryName + END);
+            // Ensure we set the system default.
+            SAXParserFactory factory = SAXParserFactory.newInstance();
+            LOGGER.info(IMP_USED + factory.getClass().getName());
+
+            if (!factory.getClass().getName().equals(DEFAULT_SAX_PARSER_FACTORY)) {
+                throw new RuntimeException("Unexpected SAX version");
             }
 
-            final SAXParserFactory factory = newInstance();
+            // Check what version we will create.
+            factory = newInstance();
             LOGGER.info(IMP_USED + factory.getClass().getName());
-        } catch (final Exception ex) {
-            LOGGER.error("Unable to configure SAXParserFactory!", ex);
+
+            if (!factory.getClass().getName().equals(DEFAULT_SAX_PARSER_FACTORY)) {
+                throw new RuntimeException("Unexpected SAX version");
+            }
+
+        } catch (final RuntimeException e) {
+            LOGGER.error("Unable to configure SAXParserFactory!", e);
         }
     }
 
@@ -66,7 +76,7 @@ public final class SAXParserFactoryFactory {
     }
 
     public static SAXParserFactory newInstance() {
-        final SAXParserFactory factory = SAXParserFactory.newInstance();
+        final SAXParserFactory factory = new SAXParserFactoryImpl();
         secureProcessing(factory);
         factory.setNamespaceAware(true);
         factory.setValidating(false);
