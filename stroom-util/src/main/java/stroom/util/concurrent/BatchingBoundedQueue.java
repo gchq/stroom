@@ -11,8 +11,10 @@ import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.Sequence;
 import com.lmax.disruptor.SequenceReportingEventHandler;
 import com.lmax.disruptor.WaitStrategy;
+import com.lmax.disruptor.WorkHandler;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
+import com.lmax.disruptor.util.Util;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -22,7 +24,8 @@ import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ThreadFactory;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
+import java.util.stream.IntStream;
 
 /**
  * A lock free blocking bounded queue supporting multiple producer threads and a single background consumer
@@ -38,13 +41,16 @@ public class BatchingBoundedQueue<T> {
     private final Disruptor<ItemHolder<T>> disruptor;
     private final RingBuffer<ItemHolder<T>> ringBuffer;
     private final WaitStrategy waitStrategy;
-    private final ItemHolderConsumer<T> itemHolderConsumer;
+    private final ItemHandler<T> itemHandler;
+    private final WorkHandler<ItemHolder<T>>[] workHandlers;
     private final int maxBatchSize;
+    private final int consumerCount;
     private final Duration maxItemAge;
 
     /**
      * @param threadFactory Factory for the consumer thread
      * @param waitStrategy  Strategy for waiting producers/consumer
+     * @param consumerCount
      * @param maxBatchSize  Max items to pass to the batchConsumer on each call
      * @param maxItemAge    Approximate max age of an item passed to batchConsumer, where age is
      *                      taken from the time the item is added to the batch
@@ -55,14 +61,17 @@ public class BatchingBoundedQueue<T> {
      */
     public BatchingBoundedQueue(final ThreadFactory threadFactory,
                                 final WaitStrategy waitStrategy,
+                                final int consumerCount,
                                 final int maxBatchSize,
                                 final Duration maxItemAge,
-                                final Consumer<Iterable<T>> batchConsumer) {
+                                final BatchConsumer<T> batchConsumer) {
         this.threadFactory = threadFactory;
         this.waitStrategy = waitStrategy;
         this.maxBatchSize = maxBatchSize;
         this.maxItemAge = maxItemAge;
-        this.itemHolderConsumer = new ItemHolderConsumer<>(batchConsumer, maxBatchSize, maxItemAge);
+        this.consumerCount = consumerCount;
+        this.itemHandler = ItemHandler.buildSingle(maxBatchSize, maxItemAge);
+        this.workHandlers = BatchHandler.buildMultiple(consumerCount, batchConsumer);
         this.disruptor = buildDisruptor();
         this.ringBuffer = disruptor.start();
         setupHeartBeatTimer();
@@ -91,9 +100,15 @@ public class BatchingBoundedQueue<T> {
         return ringBuffer.tryPublishEvent(this::setItemOnHolder, item);
     }
 
+    int getRingSize() {
+        return ringBuffer.getBufferSize();
+    }
+
     private void putHeartBeat() {
         LOGGER.debug("putHeartBeat called");
-        ringBuffer.publishEvent(this::markHolderAsHeartBeat);
+        // Have
+        forEachConsumer(() ->
+                ringBuffer.publishEvent(this::markHolderAsHeartBeat));
     }
 
     /**
@@ -104,10 +119,17 @@ public class BatchingBoundedQueue<T> {
         LOGGER.debug("Shutting down disruptor");
 
         // Send a shutdown item as the last item to ensure everything gets flushed
-        ringBuffer.publishEvent(this::markHolderAsShuttingDown);
+        forEachConsumer(() ->
+                ringBuffer.publishEvent(this::markHolderAsShuttingDown));
 
         // Now block till all items have been consumed
         disruptor.shutdown();
+    }
+
+    private void forEachConsumer(final Runnable runnable) {
+        for (int i = 0; i < consumerCount; i++) {
+            runnable.run();
+        }
     }
 
     private void setItemOnHolder(final ItemHolder<T> itemHolder, final long sequence, T item) {
@@ -126,12 +148,16 @@ public class BatchingBoundedQueue<T> {
     }
 
     private Disruptor<ItemHolder<T>> buildDisruptor() {
-        final int ringSize = nearestPowerOfTwo(maxBatchSize * 2);
+        final int ringSize = Util.ceilingNextPowerOfTwo(maxBatchSize * 2);
 
         LOGGER.debug(() -> LogUtil.message(
-                "Building disruptor with maxBatchSize: {}, maxItemAge: {}, " +
+                "Building disruptor with consumerCount: {}, maxBatchSize: {}, maxItemAge: {}, " +
                         "ringSize: {}, waitStrategy: {}, threadFactory: {}",
-                maxBatchSize, maxItemAge, ringSize, waitStrategy.getClass().getSimpleName(),
+                consumerCount,
+                maxBatchSize,
+                maxItemAge,
+                ringSize,
+                waitStrategy.getClass().getSimpleName(),
                 threadFactory.getClass().getSimpleName()));
 
         final Disruptor<ItemHolder<T>> disruptor = new Disruptor<>(
@@ -141,7 +167,11 @@ public class BatchingBoundedQueue<T> {
                 ProducerType.MULTI,
                 waitStrategy);
 
-        disruptor.handleEventsWith(this.itemHolderConsumer);
+        // Register the handler(s)
+        disruptor.handleEventsWith(itemHandler);
+        //
+        disruptor.after(itemHandler)
+                .handleEventsWithWorkerPool(workHandlers);
 
         return disruptor;
     }
@@ -189,34 +219,92 @@ public class BatchingBoundedQueue<T> {
     // --------------------------------------------------------------------------------
 
 
-    private static final class ItemHolderConsumer<T>
+    private static final class BatchHandler<T> implements WorkHandler<ItemHolder<T>> {
+
+        private final BatchConsumer<T> batchConsumer;
+
+        private BatchHandler(final BatchConsumer<T> batchConsumer) {
+            this.batchConsumer = batchConsumer;
+        }
+
+        private static <T> WorkHandler<ItemHolder<T>>[] buildMultiple(
+                final int consumerCount,
+                final BatchConsumer<T> batchConsumer) {
+
+            //noinspection unchecked
+            return IntStream.range(0, consumerCount)
+                    .boxed()
+                    .map(i -> new BatchHandler<>(batchConsumer))
+                    .toArray(WorkHandler[]::new);
+        }
+
+        @Override
+        public void onEvent(final ItemHolder<T> event) throws Exception {
+            final EventType eventType = event.eventType;
+
+            // HEART_BEAT and SHUTDOWN are only used by the ItemHandler.
+            // All we care about is BATCH ones
+            if (EventType.BATCH.equals(eventType)) {
+                NullSafe.consume(event.getBatch(), batch ->
+                        batchConsumer.accept(batch, event.batchSize));
+            } else {
+                LOGGER.trace("Ignoring event of type {}", eventType);
+            }
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static final class ItemHandler<T>
             implements SequenceReportingEventHandler<ItemHolder<T>>, LifecycleAware {
 
-        private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ItemHolderConsumer.class);
+        private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ItemHandler.class);
 
-        private final Consumer<Iterable<T>> batchConsumer;
+        private final int consumerId;
+        private final int consumerCount;
         private final int maxBatchSize;
         private final Duration maxItemAge;
+
         private Instant batchExpiryTime = null;
-
         private Queue<T> batchQueue = new LinkedList<>();
-
         private int batchCounter = 0; // Getting size of linked list is expensive
         private Sequence sequenceCallback = null;
         private int disruptorBatchSize = 0;
 
-        private ItemHolderConsumer(final Consumer<Iterable<T>> batchConsumer,
-                                   final int maxBatchSize,
-                                   final Duration maxItemAge) {
-            this.batchConsumer = batchConsumer;
+        private ItemHandler(final int consumerId,
+                            final int consumerCount,
+                            final int maxBatchSize,
+                            final Duration maxItemAge) {
+            this.consumerId = consumerId;
+            this.consumerCount = consumerCount;
             this.maxBatchSize = maxBatchSize;
             this.maxItemAge = maxItemAge;
+        }
+
+        public static <T> ItemHandler<T> buildSingle(final int maxBatchSize,
+                                                     final Duration maxItemAge) {
+            return new ItemHandler<>(0, 1, maxBatchSize, maxItemAge);
+        }
+
+        public static <T> ItemHandler<T>[] buildMultiple(final int consumerCount,
+                                                         final int maxBatchSize,
+                                                         final Duration maxItemAge) {
+            ItemHandler<T>[] consumers = new ItemHandler[consumerCount];
+            for (int i = 0; i < consumerCount; i++) {
+                consumers[i] = new ItemHandler<>(i, consumerCount, maxBatchSize, maxItemAge);
+            }
+            return consumers;
         }
 
         @Override
         public void onEvent(final ItemHolder<T> itemHolder,
                             final long sequence,
                             final boolean endOfBatch) {
+
+            LOGGER.debug("consumerId: {}, sequence: {}, endOfBatch: {}, itemHolder: {}",
+                    consumerId, sequence, endOfBatch, itemHolder);
 
             if (LOGGER.isDebugEnabled()) {
                 // Track the batch size used by the disruptor
@@ -227,35 +315,37 @@ public class BatchingBoundedQueue<T> {
                 }
             }
 
-            if (itemHolder != null) {
-                final ItemType itemType = itemHolder.getItemType();
-                final boolean isBatchComplete;
-                switch (itemType) {
-                    case PAYLOAD -> {
-                        if (itemHolder.hasItem()) {
-                            isBatchComplete = addItemToBatchQueue(itemHolder, endOfBatch);
-                        } else {
-                            isBatchComplete = false;
-                        }
+            Objects.requireNonNull(itemHolder);
+            final EventType eventType = itemHolder.getItemType();
+            final boolean isBatchComplete;
+            switch (eventType) {
+                case ITEM -> {
+                    if (itemHolder.hasItem()) {
+                        isBatchComplete = addItemToBatchQueue(itemHolder, endOfBatch);
+                    } else {
+                        isBatchComplete = false;
                     }
-                    case HEART_BEAT -> {
-                        // See if the queue is too old
-                        LOGGER.debug("Received heart beat item");
-                        isBatchComplete = flushBatchQueueIfRequired(false, endOfBatch);
-                    }
-                    case SHUTTING_DOWN -> {
-                        // See if the queue is too old
-                        LOGGER.debug("Received shutting down item");
-                        isBatchComplete = flushBatchQueueIfRequired(true, endOfBatch);
-                    }
-                    default -> throw new IllegalArgumentException("Unknown type " + itemType);
                 }
-
-                if (isBatchComplete) {
-                    LOGGER.debug("Setting sequence");
-                    sequenceCallback.set(sequence);
+                case HEART_BEAT -> {
+                    // See if the queue is too old
+                    LOGGER.debug("Received heart beat event");
+                    isBatchComplete = flushBatchQueueIfRequired(itemHolder, false, endOfBatch);
                 }
+                case SHUTDOWN -> {
+                    // See if the queue is too old
+                    LOGGER.debug("Received shutdown event");
+                    isBatchComplete = flushBatchQueueIfRequired(itemHolder, true, endOfBatch);
+                }
+                default -> throw new IllegalArgumentException("Unknown type " + eventType);
             }
+
+//                if (isBatchComplete) {
+//                    LOGGER.debug("Setting sequence");
+//                    sequenceCallback.set(sequence);
+//                }
+
+            // Let the ring know
+            sequenceCallback.set(sequence);
         }
 
         @Override
@@ -276,7 +366,8 @@ public class BatchingBoundedQueue<T> {
             this.sequenceCallback = sequenceCallback;
         }
 
-        private boolean flushBatchQueueIfRequired(final boolean isForced, final boolean endOfBatch) {
+        private boolean flushBatchQueueIfRequired(final ItemHolder<T> itemHolder, final boolean isForced,
+                                                  final boolean endOfBatch) {
             final boolean isBatchComplete;
             if (NullSafe.hasItems(batchQueue)) {
 
@@ -288,15 +379,15 @@ public class BatchingBoundedQueue<T> {
 
                 if (isForced) {
                     LOGGER.debug("Forced flush       - batch size: {}", batchCounter);
-                    swapQueue();
+                    swapQueue(itemHolder);
                     isBatchComplete = true;
                 } else if (batchCounter >= maxBatchSize) {
                     LOGGER.debug("Batch full         - batch size: {}", batchCounter);
-                    swapQueue();
+                    swapQueue(itemHolder);
                     isBatchComplete = true;
                 } else if (batchExpiryTime != null && Instant.now().isAfter(batchExpiryTime)) {
                     LOGGER.debug("Batch expired      - batch size: {}", batchCounter);
-                    swapQueue();
+                    swapQueue(itemHolder);
                     isBatchComplete = true;
                 } else {
                     LOGGER.debug("Flush not required - batch size: {}", batchCounter);
@@ -309,17 +400,21 @@ public class BatchingBoundedQueue<T> {
             return isBatchComplete;
         }
 
-        private void swapQueue() {
+        private void swapQueue(final ItemHolder<T> itemHolder) {
             LOGGER.debug("Swapping queue");
             if (!batchQueue.isEmpty()) {
                 final Queue<T> queueCopy = batchQueue;
                 batchQueue = new LinkedList<>();
+                final int batchSize = batchCounter;
                 batchCounter = 0;
                 // Null this so we can re-set it when we get the next event
                 batchExpiryTime = null;
 
                 LOGGER.debug(() -> LogUtil.message("Passing {} items to consumer", queueCopy.size()));
-                batchConsumer.accept(queueCopy);
+//                batchConsumer.accept(queueCopy);
+
+                // Put the batch back on the ring so the downstream processors can pick it up
+                itemHolder.setBatch(queueCopy, batchSize);
             } else {
                 LOGGER.debug("Not swapping empty queue");
             }
@@ -339,7 +434,7 @@ public class BatchingBoundedQueue<T> {
             // is quiet
             itemHolder.clear();
 
-            return flushBatchQueueIfRequired(false, endOfBatch);
+            return flushBatchQueueIfRequired(itemHolder, false, endOfBatch);
         }
     }
 
@@ -349,41 +444,76 @@ public class BatchingBoundedQueue<T> {
 
     private static final class ItemHolder<T> implements Clearable {
 
-        private ItemType itemType = ItemType.HEART_BEAT;
+        private EventType eventType = EventType.HEART_BEAT;
         private T item = null;
+        private Iterable<T> batch = null;
+        private int batchSize = -1;
 
         public ItemHolder() {
         }
 
         public void setItem(final T item) {
+            this.eventType = EventType.ITEM;
             this.item = Objects.requireNonNull(item);
-            this.itemType = ItemType.PAYLOAD;
+            this.batch = null;
+            batchSize = -1;
+        }
+
+        public void setBatch(final Iterable<T> batch, final int batchSize) {
+            this.eventType = EventType.BATCH;
+            this.item = null;
+            this.batch = Objects.requireNonNull(batch);
+            this.batchSize = batchSize;
         }
 
         public void setAsHeartBeat() {
+            this.eventType = EventType.HEART_BEAT;
             this.item = null;
-            this.itemType = ItemType.HEART_BEAT;
+            this.batch = null;
+            batchSize = -1;
         }
 
         public void setAsShuttingDown() {
+            this.eventType = EventType.SHUTDOWN;
             this.item = null;
-            this.itemType = ItemType.SHUTTING_DOWN;
+            this.batch = null;
+            batchSize = -1;
         }
 
         public void clear() {
-            setAsHeartBeat();
+            eventType = EventType.EMPTY;
+            item = null;
+            batch = null;
+            batchSize = -1;
         }
 
-        public ItemType getItemType() {
-            return itemType;
+        public EventType getItemType() {
+            return eventType;
         }
 
         public boolean hasItem() {
             return item != null;
         }
 
+        public boolean hasBatch() {
+            return batch != null;
+        }
+
         public T getItem() {
             return item;
+        }
+
+        public Iterable<T> getBatch() {
+            return batch;
+        }
+
+        @Override
+        public String toString() {
+            return "ItemHolder{" +
+                    "eventType=" + eventType +
+                    ", item=" + item +
+                    ", hasBatch=" + hasBatch() +
+                    '}';
         }
     }
 
@@ -391,9 +521,34 @@ public class BatchingBoundedQueue<T> {
     // --------------------------------------------------------------------------------
 
 
-    private enum ItemType {
-        SHUTTING_DOWN,
+    public interface BatchConsumer<T> extends BiConsumer<Iterable<T>, Integer> {
+
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private enum EventType {
+        /**
+         * A shutdown event to indicate the queue has been shut down so batches can be completed.
+         */
+        SHUTDOWN,
+        /**
+         * A heart beat event to allow the queue to check for expired batches
+         */
         HEART_BEAT,
-        PAYLOAD
+        /**
+         * A single item
+         */
+        ITEM,
+        /**
+         * A batch of items
+         */
+        BATCH,
+        /**
+         * An empty event
+         */
+        EMPTY
     }
 }
