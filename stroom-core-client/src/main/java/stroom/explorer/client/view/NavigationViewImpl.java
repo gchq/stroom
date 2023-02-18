@@ -46,7 +46,9 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
     @UiField(provided = true)
     FlowPanel layout;
     @UiField
-    Button logo;
+    SimplePanel logo;
+    @UiField
+    Button mainMenuButton;
     @UiField
     QuickFilter nameFilter;
     @UiField
@@ -73,6 +75,11 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
 
         logo.getElement().appendChild(menuContent);
 
+        final Element mainMenuButtonImage = DOM.createDiv();
+        mainMenuButtonImage.setClassName("main-menu");
+        mainMenuButtonImage.setInnerHTML(SvgImages.MONO_MENU);
+        mainMenuButton.getElement().appendChild(mainMenuButtonImage);
+
         uiConfigCache.get()
                 .onSuccess(uiConfig ->
                         nameFilter.registerPopupTextProvider(() ->
@@ -92,10 +99,10 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
         getUiHandlers().changeQuickFilter(nameFilter.getText());
     }
 
-    @UiHandler("logo")
-    void onLogo(final ClickEvent event) {
+    @UiHandler("mainMenuButton")
+    void onMainMenuButton(final ClickEvent event) {
         if (MouseUtil.isPrimary(event)) {
-            getUiHandlers().showMenu(event.getNativeEvent(), logo.getElement());
+            getUiHandlers().toggleMenu(event.getNativeEvent(), mainMenuButton.getElement());
         }
     }
 

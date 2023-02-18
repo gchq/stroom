@@ -40,6 +40,7 @@ import stroom.svg.client.SvgImages;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
 import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.menu.client.presenter.HideMenuEvent;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -84,6 +85,7 @@ public class NavigationPresenter
     private final InlineSvgButton add;
     private final InlineSvgButton delete;
     private final InlineSvgButton filter;
+    private boolean menuVisible = false;
 
     @Inject
     public NavigationPresenter(final EventBus eventBus,
@@ -225,15 +227,22 @@ public class NavigationPresenter
     }
 
     @Override
-    public void showMenu(final NativeEvent event, final Element target) {
-        final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft(),
-                target.getAbsoluteBottom() + 10);
-        showMenuItems(
-                popupPosition,
-                target);
+    public void toggleMenu(final NativeEvent event, final Element target) {
+        menuVisible = !menuVisible;
+        if (menuVisible) {
+            final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft(),
+                    target.getAbsoluteBottom());
+            showMenuItems(
+                    popupPosition,
+                    target);
+        } else {
+            HideMenuEvent
+                    .builder()
+                    .fire(this);
+        }
     }
 
-    public void showMenuItems(final PopupPosition popupPosition,
+    private void showMenuItems(final PopupPosition popupPosition,
                               final Element autoHidePartner) {
         // Clear the current menus.
         menuItems.clear();
@@ -246,6 +255,7 @@ public class NavigationPresenter
                     .items(items)
                     .popupPosition(popupPosition)
                     .addAutoHidePartner(autoHidePartner)
+                    .onHide(e -> menuVisible = false)
                     .fire(this);
         }
     }

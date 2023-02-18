@@ -537,6 +537,7 @@
 
 .tabBarContainer {
     display: flex;
+    margin-top: 3px;
 }
 
 .curveTabLayoutViewImpl-layout {
@@ -1426,6 +1427,18 @@
     width: 16px;
     height: 16px;
     margin-top: .25rem;
+}
+
+button.main-menu {
+    background-color: transparent;
+    color: white;
+}
+
+button.main-menu svg {
+    width: 18px;
+    height: 18px;
+    margin-top: 6px;
+    margin-right: 12px;
 }
 
 /*
