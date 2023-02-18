@@ -158,12 +158,12 @@
     --menu-item__text-color--selected--hover: #fff; /* #cacbcb; #fff; */
 
     /* Navigation pane */
-    --navigation__background-color: #1976d2;
-    --navigation__background-color--hovered: rgba(0,75,160,.2);
-    --navigation__background-color--selected: rgba(0,75,160,.8);
-    --navigation__background-color--selected-hovered: rgba(0,75,160,1);
-    --navigation__background-color--focussed: rgba(0,75,160,.5);
-    --navigation__background-color--selected--focussed: rgba(0,75,160,1);
+    --navigation__background-color: #004c98;
+    --navigation__background-color--hovered: rgba(10,36,65,.4);
+    --navigation__background-color--selected: rgba(10,36,65,.6);
+    --navigation__background-color--selected-hovered: rgba(10,36,65,.8);
+    --navigation__background-color--focussed: rgba(10,36,65,.5);
+    --navigation__background-color--selected--focussed: rgba(10,36,65,.8);
     --navigation__text-color: #fff;
     --navigation__text-color--selected: #fff;
     --navigation__border-color: var(--navigation__background-color);
