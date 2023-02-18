@@ -1,0 +1,63 @@
+:is(.explorerTree, .stroom-theme-dark) .svgIcon-database {
+    background-image: url("../images/database-dark.svg");
+}
+:is(.explorerTree, .stroom-theme-dark) .svgIcon-jobs {
+    background-image: url("../images/jobs-dark.svg");
+}
+:is(.explorerTree, .stroom-theme-dark) .svgIcon-monitoring {
+    background-image: url("../images/monitoring-dark.svg");
+}
+:is(.explorerTree, .stroom-theme-dark) .svgIcon-nodes {
+    background-image: url("../images/nodes-dark.svg");
+}
+:is(.explorerTree, .stroom-theme-dark) .svgIcon-password {
+    background-image: url("../images/password-dark.svg");
+}
+:is(.explorerTree, .stroom-theme-dark) .svgIcon-volumes {
+    background-image: url("../images/volumes-dark.svg");
+}
+:is(.explorerTree, .stroom-theme-dark) .svgIcon-document-AnnotationsIndex {
+    background-image: url("../images/document/AnnotationsIndex-dark.svg");
+}
+:is(.explorerTree, .stroom-theme-dark) .svgIcon-document-ElasticIndex {
+    background-image: url("../images/document/ElasticIndex-dark.svg");
+}
+:is(.explorerTree, .stroom-theme-dark) .svgIcon-document-KafkaConfig {
+    background-image: url("../images/document/KafkaConfig-dark.svg");
+}
+:is(.explorerTree, .stroom-theme-dark) .svgIcon-document-TextConverter {
+    background-image: url("../images/document/TextConverter-dark.svg");
+}
+:is(.explorerTree, .stroom-theme-dark) .svgIcon-document-XMLSchema {
+    background-image: url("../images/document/XMLSchema-dark.svg");
+}
+:is(.explorerTree, .stroom-theme-dark) .svgIcon-document-XSLT {
+    background-image: url("../images/document/XSLT-dark.svg");
+}
+:is(.explorerTree, .stroom-theme-dark) .svgIcon-pipeline-apache_kafka-icon {
+    background-image: url("../images/pipeline/kafka-dark.svg");
+}
+:is(.explorerTree, .stroom-theme-dark) .svgIcon-pipeline-id {
+    background-image: url("../images/pipeline/id-dark.svg");
+}
+:is(.explorerTree, .stroom-theme-dark) .svgIcon-pipeline-kafka {
+    background-image: url("../images/pipeline/kafka-dark.svg");
+}
+:is(.explorerTree, .stroom-theme-dark) .svgIcon-pipeline-referenceData {
+    background-image: url("../images/pipeline/referenceData-dark.svg");
+}
+:is(.explorerTree, .stroom-theme-dark) .svgIcon-pipeline-text {
+    background-image: url("../images/pipeline/text-dark.svg");
+}
+:is(.explorerTree, .stroom-theme-dark) .svgIcon-pipeline-xml {
+    background-image: url("../images/pipeline/xml-dark.svg");
+}
+:is(.explorerTree, .stroom-theme-dark) .svgIcon-pipeline-xsd {
+    background-image: url("../images/pipeline/xsd-dark.svg");
+}
+:is(.explorerTree, .stroom-theme-dark) .svgIcon-pipeline-xslt {
+    background-image: url("../images/pipeline/xslt-dark.svg");
+}
+:is(.explorerTree, .stroom-theme-dark) .svgIcon-arrow-solid-right {
+    background-image: url('../images/arrow-solid-right-white.svg');
+}
