@@ -29,6 +29,8 @@ import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.explorer.client.event.ShowNewMenuEvent;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationProxy;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
+import stroom.explorer.shared.ExplorerConstants;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.event.CurrentUserChangedEvent;
@@ -168,7 +170,10 @@ public class NavigationPresenter
             getEventBus().fireEvent(new ExplorerTreeSelectEvent(
                     explorerTree.getSelectionModel(),
                     event.getSelectionType()));
-            final boolean enabled = explorerTree.getSelectionModel().getSelectedItems().size() > 0;
+            final ExplorerNode selectedNode = explorerTree.getSelectionModel().getSelected();
+            final boolean enabled = explorerTree.getSelectionModel().getSelectedItems().size() > 0 &&
+                    !ExplorerConstants.isFavouritesNode(selectedNode) &&
+                    !ExplorerConstants.isSystemNode(selectedNode);
             add.setEnabled(enabled);
             delete.setEnabled(enabled);
         }));
