@@ -97,6 +97,7 @@
     display: flex;
     align-items: center;
     height: 34px;
+    padding: 0 2px;
     border: none;
     border-radius: .25rem;
     border: 1px solid transparent;
