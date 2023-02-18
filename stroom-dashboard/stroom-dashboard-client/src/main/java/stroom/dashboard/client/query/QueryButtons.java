@@ -59,13 +59,13 @@ public class QueryButtons extends Composite implements HasUiHandlers<QueryUiHand
 
     public void setMode(final boolean mode) {
         if (mode) {
-            start.addStyleName("QueryButtons-stop");
-            start.removeStyleName("QueryButtons-play");
+            start.addStyleName("QueryButtons-button stop");
+            start.removeStyleName("QueryButtons-button play");
             start.getElement().setInnerHTML(SvgImages.MONO_STOP);
             start.setTitle("Stop Query");
         } else {
-            start.addStyleName("QueryButtons-play");
-            start.removeStyleName("QueryButtons-stop");
+            start.addStyleName("QueryButtons-button play");
+            start.removeStyleName("QueryButtons-button stop");
             start.getElement().setInnerHTML(SvgImages.MONO_PLAY);
             start.setTitle("Execute Query");
         }
