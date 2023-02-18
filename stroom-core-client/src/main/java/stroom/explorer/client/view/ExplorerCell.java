@@ -90,7 +90,8 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
 
             if (item.getIconClassName() != null) {
                 // Add icon
-                content.append(template.icon(getCellClassName() + "-icon " + item.getIconClassName()));
+                content.append(template.icon(getCellClassName() + "-icon " + item.getIconClassName(),
+                        item.getType()));
             }
 
             if (item.getDisplayValue() != null) {
@@ -131,8 +132,8 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
         @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
         SafeHtml expander(String iconClass, SafeStyles styles, SafeHtml icon);
 
-        @Template("<div class=\"{0}\"></div>")
-        SafeHtml icon(String iconClass);
+        @Template("<div class=\"{0}\" title=\"{1}\"></div>")
+        SafeHtml icon(String iconClass, String typeName);
 
         @Template("<div class=\"{0}\">{1}</div>")
         SafeHtml div(String className, SafeHtml content);
