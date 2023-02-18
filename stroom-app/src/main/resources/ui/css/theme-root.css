@@ -177,7 +177,7 @@
     /* Dialog */
     --dialog__background-color: #fff; /*rgb(223, 234, 248);*/
     --dialog__border-color: rgba(var(--black-rgb), .8);
-    --dialog__shadow: 0 0 8px rgba(0, 0, 0, .7);
+    --dialog__shadow: 0 0 50px 10px rgba(0, 0, 0, .7);
     --popup__shadow: 0 0 20px 5px rgba(0, 0, 0, .5);
 
     /* Status */
