@@ -116,16 +116,16 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
             createTasks(1, size);
             assignTasks(1, nodeName, size, 0);
 
-            createTasks(2, size * 2);
+            createTasks(2, size);
             assignTasks(2, nodeName, size, 0);
 
-            createTasks(3, size * 2);
+            createTasks(3, size);
             assignTasks(3, nodeName, size, 0);
 
             // Unlock all meta so tasks can now be queued and assigned.
             metaService.updateStatus(new FindMetaCriteria(), Status.LOCKED, Status.UNLOCKED);
 
-            createTasks(4, size * 2);
+            createTasks(4, size);
             assignTasks(4, nodeName, size, size);
 
             createTasks(5, size * 2);
