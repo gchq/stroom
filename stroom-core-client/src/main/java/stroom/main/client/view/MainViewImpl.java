@@ -49,8 +49,8 @@ public class MainViewImpl extends ViewWithUiHandlers<MainUiHandlers> implements 
     FlowPanel main;
     @UiField
     Spinner spinner;
-    @UiField
-    Button menu;
+//    @UiField
+//    Button menu;
     @UiField
     ResizeLayoutPanel contentPanel;
     private Widget maximisedWidget;
@@ -64,7 +64,7 @@ public class MainViewImpl extends ViewWithUiHandlers<MainUiHandlers> implements 
     public MainViewImpl(final Binder binder) {
         this.widget = binder.createAndBindUi(this);
         banner.setVisible(false);
-        menu.getElement().setInnerHTML(SvgImages.MONO_THREE_DOTS_VERTICAL);
+//        menu.getElement().setInnerHTML(SvgImages.MONO_THREE_DOTS_VERTICAL);
         widget.sinkEvents(Event.KEYEVENTS);
     }
 
@@ -195,12 +195,12 @@ public class MainViewImpl extends ViewWithUiHandlers<MainUiHandlers> implements 
         }
     }
 
-    @UiHandler("menu")
-    void onMenu(final ClickEvent event) {
-        if (MouseUtil.isPrimary(event)) {
-            getUiHandlers().showMenu(event.getNativeEvent(), menu.getElement());
-        }
-    }
+//    @UiHandler("menu")
+//    void onMenu(final ClickEvent event) {
+//        if (MouseUtil.isPrimary(event)) {
+//            getUiHandlers().showMenu(event.getNativeEvent(), menu.getElement());
+//        }
+//    }
 
     public interface Binder extends UiBinder<Widget, MainViewImpl> {
 
