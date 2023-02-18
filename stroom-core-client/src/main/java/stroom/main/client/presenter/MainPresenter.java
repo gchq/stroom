@@ -19,11 +19,10 @@ package stroom.main.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.core.client.MenuKeys;
-import stroom.core.client.KeyboardInterceptor;
 import stroom.core.client.UrlConstants;
 import stroom.core.client.presenter.CorePresenter;
-import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.main.client.event.UrlQueryParameterChangeEvent;
+import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.task.client.event.OpenTaskManagerEvent;
@@ -59,8 +58,8 @@ import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
 import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
 
 import java.util.HashMap;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 
 public class MainPresenter
         extends MyPresenter<MainPresenter.MainView, MainPresenter.MainProxy>
