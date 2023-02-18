@@ -26,12 +26,21 @@
 
 .simplePopup-background {
 	background: var(--page__background-color);
-	border: 1px solid var(--dialog__border-color);
+	border: 2px solid var(--dialog__border-color);
 	box-shadow: var(--popup__shadow);
-	border-radius: 3px;
+	border-radius: 8px;
 }
 
 .simplePopup-content {
-	display: table;
-	padding: 2px 3px;
+	padding: 4px;
+}
+
+.simplePopup-popup .cellTableSelectedRowCell {
+	border-radius: 5px;
+	background-color: transparent;
+}
+
+.simplePopup-popup .cellTableCell:has(.menuItem-separator) {
+	padding-left: 0;
+	padding-right: 0;
 }

@@ -55,6 +55,7 @@
 
 .menuItem-text {
     white-space: nowrap;
+	flex-grow: 1;
 }
 
 .menuItem-simpleText {
@@ -70,4 +71,8 @@
     white-space: nowrap;
     text-align: right;
     flex-grow: 1;
+}
+
+.menuItem-expandArrow {
+	display: flex;
 }

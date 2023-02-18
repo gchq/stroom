@@ -527,3 +527,12 @@
 .stroom-theme-dark .svgIcon-pipeline-xslt {
   background-image: url("../images/pipeline/xslt-dark.svg");
 }
+.svgIcon-arrow-solid-right {
+  background-image: url('../images/arrow-solid-right-black.svg');
+  width: 10px;
+  height: 10px;
+  opacity: 0.8;
+}
+.stroom-theme-dark .svgIcon-arrow-solid-right {
+  background-image: url('../images/arrow-solid-right-white.svg');
+}

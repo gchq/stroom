@@ -36,6 +36,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
+import java.util.Objects;
 
 public class MenuPresenter
         extends MyPresenterWidget<MenuView>
@@ -53,6 +54,15 @@ public class MenuPresenter
         super(eventBus, view);
         this.menuPresenterProvider = menuPresenterProvider;
         view.setUiHandlers(this);
+    }
+
+    @Override
+    public void toggleSubMenu(final MenuItem menuItem, final Element element) {
+        if (currentItem != null && Objects.equals(currentItem, menuItem)) {
+            hideSubMenu();
+        } else {
+            showSubMenu(menuItem, element);
+        }
     }
 
     @Override
@@ -107,6 +117,16 @@ public class MenuPresenter
                 });
             }
         }
+    }
+
+    @Override
+    public void hideSubMenu() {
+        hideChildren(false, false);
+    }
+
+    @Override
+    public boolean subMenuVisible() {
+        return currentMenu != null;
     }
 
     @Override
