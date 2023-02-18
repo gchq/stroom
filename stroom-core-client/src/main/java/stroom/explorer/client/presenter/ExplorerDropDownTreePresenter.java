@@ -151,11 +151,6 @@ class ExplorerDropDownTreePresenter
         explorerTree.getTreeModel().refresh();
     }
 
-    @Override
-    public void focus() {
-        explorerTree.setFocus(true);
-    }
-
     public void setIncludedTypes(final String... includedTypes) {
         explorerTree.getTreeModel().setIncludedTypes(includedTypes);
     }

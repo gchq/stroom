@@ -76,11 +76,6 @@ public class SimplePopup extends AbstractPopupPanel {
     }
 
     @Override
-    protected void onEscapeKeyPressed() {
-        hide(false);
-    }
-
-    @Override
     public void setContent(final Widget widget) {
         content.setWidget(widget);
     }

@@ -87,10 +87,7 @@ import stroom.util.shared.RandomId;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuItem;
-import stroom.widget.menu.client.presenter.ShowMenuEvent;
-import stroom.widget.menu.client.presenter.SimpleMenuItem;
+import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -100,7 +97,6 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -109,7 +105,6 @@ import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -146,6 +141,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final ButtonView addFieldButton;
     private final ButtonView downloadButton;
     private final ButtonView annotateButton;
+    private final Provider<FieldAddPresenter> fieldAddPresenterProvider;
     private final DownloadPresenter downloadPresenter;
     private final AnnotationManager annotationManager;
     private final RestFactory restFactory;
@@ -172,7 +168,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final PagerView pagerView,
                           final ClientSecurityContext securityContext,
                           final LocationManager locationManager,
-                          final MenuListPresenter menuListPresenter,
                           final Provider<RenameFieldPresenter> renameFieldPresenterProvider,
                           final Provider<ExpressionPresenter> expressionPresenterProvider,
                           final FormatPresenter formatPresenter,
@@ -218,7 +213,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         fieldsManager = new FieldsManager(
                 this,
-                menuListPresenter,
                 renameFieldPresenterProvider,
                 expressionPresenterProvider,
                 formatPresenter,
@@ -352,15 +346,15 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     if (indexFieldsMap != null) {
                         final AbstractField indexField = indexFieldsMap.get(indexFieldName);
                         if (indexField != null) {
-                            switch (indexField.getType()) {
-                                case FieldTypes.DATE:
+                            switch (indexField.getFieldType()) {
+                                case DATE:
                                     fieldBuilder.format(Format.DATE_TIME);
                                     break;
-                                case FieldTypes.INTEGER:
-                                case FieldTypes.LONG:
-                                case FieldTypes.FLOAT:
-                                case FieldTypes.DOUBLE:
-                                case FieldTypes.ID:
+                                case INTEGER:
+                                case LONG:
+                                case FLOAT:
+                                case DOUBLE:
+                                case ID:
                                     fieldBuilder.format(Format.NUMBER);
                                     break;
                                 default:
@@ -394,29 +388,24 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     .build();
             addFields.add(custom);
 
-            final List<Item> menuItems = new ArrayList<>();
-            int priority = 0;
-            for (final Field field : addFields) {
-                menuItems.add(createFieldMenuItem(priority++, field));
-            }
+            final Element target = event.getNativeEvent().getEventTarget().cast();
+            final PopupPosition popupPosition = new PopupPosition(
+                    target.getAbsoluteLeft() - 3,
+                    target.getAbsoluteTop() + target.getClientHeight() + 1);
 
             final AutocompletePopupView<Field> popupView = fieldAddPresenter.getView();
             popupView.clearItems();
             popupView.addItems(addFields);
             popupView.showPopup(popupPosition);
 
-            final PopupPosition popupPosition = new PopupPosition(
-                    target.getAbsoluteLeft() - 3,
-                    target.getAbsoluteTop() + target.getClientHeight() + 1);
-            ShowMenuEvent
-                    .builder(popupView)
-                    .items(menuItems)
-                    .popupPosition(popupPosition)
-                    .onHide(() -> {
-                        selectionHandlerRegistration.removeHandler();
-                        fieldAddPresenter = null;
-                    })
-                    .fire(this);
+            final AddSelectionHandler selectionHandler = new AddSelectionHandler(fieldAddPresenter);
+            final HandlerRegistration selectionHandlerRegistration = fieldAddPresenter
+                    .addSelectionHandler(selectionHandler);
+
+            popupView.addCloseHandler(closeEvent -> {
+                selectionHandlerRegistration.removeHandler();
+                fieldAddPresenter = null;
+            });
         }
     }
 
@@ -424,7 +413,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                                   final String indexFieldName) {
         final AbstractField dataSourceField = indexFieldsMap.get(indexFieldName);
         String fieldParam = ParamUtil.makeParam(indexFieldName);
-        if (dataSourceField != null && FieldTypes.DATE.equals(dataSourceField.getType())) {
+        if (dataSourceField != null && FieldType.DATE.equals(dataSourceField.getFieldType())) {
             fieldParam = "formatDate(" + fieldParam + ")";
         }
         final Set<String> allFieldNames = indexFieldsMap.keySet();
@@ -1109,32 +1098,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         return null;
     }
 
-    private MenuItem createFieldMenuItem(final int priority, final Field field) {
-        final Command command = () -> {
-            final String fieldName = field.getName();
-            String suffix = "";
-            int count = 1;
-            final Set<String> currentFields = getTableSettings().getFields().stream().map(Field::getName).collect(
-                    Collectors.toSet());
-            while (currentFields.contains(fieldName + suffix)) {
-                count++;
-                suffix = " " + count;
-            }
-
-            final Field copy = field.copy()
-                    .name(fieldName + suffix)
-                    .id(createRandomFieldId())
-                    .build();
-            fieldsManager.addField(copy);
-        };
-
-        return new SimpleMenuItem.Builder()
-                .priority(priority)
-                .text(field.getName())
-                .command(command)
-                .build();
-    }
-
     public interface TableView extends View, HasUiHandlers<TableUiHandlers> {
 
         void setTableView(View view);
@@ -1156,7 +1119,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         public void onSelection(final SelectionEvent<Field> event) {
             Field field = event.getSelectedItem();
             if (field != null) {
-                HidePopupEvent.fire(TablePresenter.this, presenter);
+                HidePopupEvent
+                        .builder(presenter)
+                        .fire();
 
                 final String fieldName = field.getName();
                 String suffix = "";

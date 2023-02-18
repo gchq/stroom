@@ -22,9 +22,6 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.core.client.HasSave;
 import stroom.core.client.HasSaveRegistry;
-import stroom.core.client.KeyboardInterceptor;
-import stroom.core.client.KeyboardInterceptor.KeyTest;
-import stroom.core.client.MenuKeys;
 import stroom.core.client.UrlConstants;
 import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.Rest;
@@ -90,6 +87,8 @@ import stroom.widget.menu.client.presenter.MenuItem;
 import stroom.widget.menu.client.presenter.Separator;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseOtherTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
@@ -151,14 +150,12 @@ public class DocumentPluginEventManager extends Plugin {
                                       final HasSaveRegistry hasSaveRegistry,
                                       final RestFactory restFactory,
                                       final DocumentTypeCache documentTypeCache,
-                                      final MenuListPresenter menuListPresenter,
                                       final DocumentPluginRegistry documentPluginRegistry,
                                       final ClientSecurityContext securityContext) {
         super(eventBus);
         this.hasSaveRegistry = hasSaveRegistry;
         this.restFactory = restFactory;
         this.documentTypeCache = documentTypeCache;
-        this.menuListPresenter = menuListPresenter;
         this.documentPluginRegistry = documentPluginRegistry;
         this.securityContext = securityContext;
 
@@ -420,51 +417,12 @@ public class DocumentPluginEventManager extends Plugin {
             final boolean singleSelection = selectedItems.size() == 1;
             final ExplorerNode primarySelection = getPrimarySelection();
 
-            if (selectedItems.size() > 0) {
-                fetchPermissions(selectedItems, documentPermissionMap ->
-                                documentTypeCache.fetch(documentTypes -> {
-                                    final List<Item> menuItems = new ArrayList<>();
-
-                                    // Only allow the new menu to appear if we have a single selection.
-                                    addNewMenuItem(menuItems,
-                                            singleSelection,
-                                            documentPermissionMap,
-                                            primarySelection,
-                                            documentTypes);
-                                    addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
-
-                                    ShowMenuEvent
-                                            .builder()
-                                            .items(menuItems)
-                                            .popupPosition(event.getPopupPosition())
-                                            .fire(this);
-
-//                            menuPresenter.setData(menuItems);
-//                            menuPresenter.selectFirstItem();
-//                            final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-//                                @Override
-//                                public void onHideRequest(final boolean autoClose, final boolean ok) {
-//                                    HidePopupEvent.fire(DocumentPluginEventManager.this, menuPresenter);
-//                                }
-//
-//                                @Override
-//                                public void onHide(final boolean autoClose, final boolean ok) {
-//                                    if (event.getCloseHandler() != null) {
-//                                        event.getCloseHandler().accept(true);
-//                                    }
-//                                }
-//                            };
-//                            final PopupPosition popupPosition = new PopupPosition(event.getX(), event.getY());
-//                            ShowPopupEvent.fire(
-//                                    DocumentPluginEventManager.this,
-//                                    menuPresenter,
-//                                    PopupType.POPUP,
-//                                    popupPosition,
-//                                    popupUiHandlers);
-                                })
-                );
+            if (selectedItems.size() > 0 && !ExplorerConstants.isFavouritesNode(primarySelection)) {
+                showItemContextMenu(event, selectedItems, singleSelection, primarySelection);
             }
         }));
+
+        // Handle the context menu for open tabs
         registerHandler(getEventBus().addHandler(ShowTabMenuEvent.getType(), event -> {
             final List<Item> menuItems = new ArrayList<>();
 
@@ -483,6 +441,31 @@ public class DocumentPluginEventManager extends Plugin {
         }));
     }
 
+    private void showItemContextMenu(final ShowExplorerMenuEvent event,
+                                     final List<ExplorerNode> selectedItems,
+                                     final boolean singleSelection,
+                                     final ExplorerNode primarySelection) {
+        fetchPermissions(selectedItems, documentPermissionMap ->
+                documentTypeCache.fetch(documentTypes -> {
+                    final List<Item> menuItems = new ArrayList<>();
+
+                    // Only allow the new menu to appear if we have a single selection.
+                    addNewMenuItem(menuItems,
+                            singleSelection,
+                            documentPermissionMap,
+                            primarySelection,
+                            documentTypes);
+
+                    addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
+
+                    ShowMenuEvent
+                            .builder()
+                            .items(menuItems)
+                            .popupPosition(event.getPopupPosition())
+                            .fire(this);
+                })
+        );
+    }
 
     private void renameItems(final List<ExplorerNode> explorerNodeList) {
         final List<ExplorerNode> dirtyList = new ArrayList<>();
@@ -771,17 +754,15 @@ public class DocumentPluginEventManager extends Plugin {
         // item
         if (singleSelection && primarySelection != null && primarySelection.getDepth() > 0) {
             final boolean isFavourite = primarySelection.getIsFavourite();
-            menuItems.add(new IconMenuItem(
-                    1,
-                    isFavourite ? SvgPresets.FAVOURITES_OUTLINE : SvgPresets.FAVOURITES,
-                    isFavourite ? SvgPresets.FAVOURITES_OUTLINE : SvgPresets.FAVOURITES,
-                    isFavourite ? "Remove from Favourites" : "Add to Favourites",
-                    null,
-                    true,
-                    () -> {
+            menuItems.add(new IconMenuItem.Builder()
+                    .priority(priority)
+                    .icon(isFavourite ? SvgPresets.FAVOURITES_OUTLINE : SvgPresets.FAVOURITES)
+                    .text(isFavourite ? "Remove from Favourites" : "Add to Favourites")
+                    .command(() -> {
                         toggleFavourite(primarySelection.getDocRef(), isFavourite);
                         selectionModel.clear();
-                    }));
+                    })
+                    .build());
         }
     }
 
@@ -1034,15 +1015,12 @@ public class DocumentPluginEventManager extends Plugin {
                 .setParameter(ExplorerConstants.DOC_UUID_QUERY_PARAM, explorerNode.getUuid())
                 .buildString();
 
-        return new IconMenuItem(
-                priority,
-                SvgPresets.SHARE,
-                SvgPresets.SHARE,
-                "Copy Link to Clipboard",
-                null,
-                true,
-                () -> ClipboardUtil.copy(docUrl)
-        );
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgPresets.SHARE)
+                .text("Copy Link to Clipboard")
+                .command(() -> ClipboardUtil.copy(docUrl))
+                .build();
     }
 
     private MenuItem createCopyMenuItem(final List<ExplorerNode> explorerNodeList,
@@ -1143,13 +1121,13 @@ public class DocumentPluginEventManager extends Plugin {
     }
 
     private MenuItem createShowDependenciesMenuItem(final ExplorerNode explorerNode, final int priority) {
-        return new IconMenuItem(priority,
-                SvgPresets.DEPENDENCIES,
-                SvgPresets.DEPENDENCIES,
-                "Dependencies",
-                null,
-                true,
-                () -> ShowDocRefDependenciesEvent.fire(DocumentPluginEventManager.this, explorerNode.getDocRef()));
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgPresets.DEPENDENCIES)
+                .text("Dependencies")
+                .command(() -> ShowDocRefDependenciesEvent.fire(DocumentPluginEventManager.this,
+                        explorerNode.getDocRef()))
+                .build();
     }
 
     void registerPlugin(final String entityType, final DocumentPlugin<?> plugin) {

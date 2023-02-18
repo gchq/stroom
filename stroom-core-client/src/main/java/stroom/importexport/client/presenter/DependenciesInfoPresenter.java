@@ -4,7 +4,7 @@ import stroom.docref.DocRef;
 import stroom.importexport.client.event.ShowDependenciesInfoDialogEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenter;
@@ -28,13 +28,11 @@ public class DependenciesInfoPresenter extends MyPresenter<DependenciesInfoPrese
     @Override
     protected void revealInParent() {
         final PopupSize popupSize = PopupSize.resizable(400, 200);
-        ShowPopupEvent.fire(
-                this,
-                this,
-                PopupType.CLOSE_DIALOG,
-                popupSize,
-                "Dependency Information",
-                null);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.CLOSE_DIALOG)
+                .popupSize(popupSize)
+                .caption("Dependency Information")
+                .fire();
     }
 
     @ProxyEvent
