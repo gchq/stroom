@@ -16,6 +16,7 @@
 
 package stroom.explorer.client.view;
 
+import stroom.about.client.presenter.AboutPresenter;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.client.presenter.NavigationUiHandlers;
 import stroom.explorer.shared.ExplorerTreeFilter;
@@ -37,16 +38,18 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers> implements NavigationView {
 
     private final Widget widget;
+    private final Provider<AboutPresenter> aboutPresenterProvider;
 
     @UiField(provided = true)
     FlowPanel layout;
     @UiField
-    SimplePanel logo;
+    Button logo;
     @UiField
     Button mainMenuButton;
     @UiField
@@ -60,7 +63,11 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
 
     @Inject
     public NavigationViewImpl(final NavigationViewImpl.Binder binder,
-                              final UiConfigCache uiConfigCache) {
+                              final UiConfigCache uiConfigCache,
+                              final Provider<AboutPresenter> aboutPresenterProvider) {
+
+        this.aboutPresenterProvider = aboutPresenterProvider;
+
         layout = new FlowPanel();
         widget = binder.createAndBindUi(this);
 
@@ -68,12 +75,7 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
         logoImage.setClassName("navigation-logo-image");
         logoImage.setInnerHTML(SvgImages.MONO_LOGO);
 
-        final Element menuContent = DOM.createDiv();
-        menuContent.setClassName("navigation-menu-content");
-        menuContent.setTabIndex(-1);
-        menuContent.appendChild(logoImage);
-
-        logo.getElement().appendChild(menuContent);
+        logo.getElement().appendChild(logoImage);
 
         final Element mainMenuButtonImage = DOM.createDiv();
         mainMenuButtonImage.setClassName("main-menu");
@@ -92,6 +94,13 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @UiHandler("logo")
+    void onLogoClick(final ClickEvent event) {
+        if (MouseUtil.isPrimary(event.getNativeEvent())) {
+            aboutPresenterProvider.get().forceReveal();
+        }
     }
 
     @UiHandler("nameFilter")

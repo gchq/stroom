@@ -1433,10 +1433,9 @@
     padding: 6px 0 2px 0;
     background-color: transparent;
     color: white;
-}
-
-.navigation-menu-content {
-
+    border: 0;
+    text-align: left;
+    width: auto;
 }
 
 .navigation-logo-image svg {
