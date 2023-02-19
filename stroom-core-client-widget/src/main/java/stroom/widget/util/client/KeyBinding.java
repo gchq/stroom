@@ -28,7 +28,6 @@ public class KeyBinding {
         add(Action.EXECUTE, KeyCodes.KEY_ENTER, KeyCodes.KEY_MAC_ENTER, '\n', '\r');
         add(Action.SELECT, KeyCodes.KEY_SPACE);
         add(Action.SELECT_ALL, new Builder().keyCode(KeyCodes.KEY_A).ctrl(true).build());
-        add(Action.MENU, KeyCodes.KEY_ALT, KeyCodes.KEY_CONTEXT_MENU);
         add(Action.OK, true, KeyCodes.KEY_ENTER, KeyCodes.KEY_MAC_ENTER, '\n', '\r');
 
         add(Action.ITEM_SAVE, new Builder().keyCode(KeyCodes.KEY_S).ctrl(true).build());
