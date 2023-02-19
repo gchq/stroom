@@ -21,7 +21,6 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
 
     private final ProcessorDbConfig dbConfig;
     private final boolean assignTasks;
-    private final boolean createTasks;
     private final StroomDuration deleteAge;
     // TODO 29/11/2021 AT: Make final
     private boolean fillTaskQueue;
@@ -46,7 +45,6 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
     public ProcessorConfig() {
         dbConfig = new ProcessorDbConfig();
         assignTasks = true;
-        createTasks = true;
         deleteAge = StroomDuration.ofDays(1);
         fillTaskQueue = true;
         queueSize = 1000;
@@ -79,7 +77,6 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
     @JsonCreator
     public ProcessorConfig(@JsonProperty("db") final ProcessorDbConfig dbConfig,
                            @JsonProperty("assignTasks") final boolean assignTasks,
-                           @JsonProperty("createTasks") final boolean createTasks,
                            @JsonProperty("deleteAge") final StroomDuration deleteAge,
                            @JsonProperty("fillTaskQueue") final boolean fillTaskQueue,
                            @JsonProperty("queueSize") final int queueSize,
@@ -95,7 +92,6 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
                            @JsonProperty("createTasksFrequency") final StroomDuration createTasksFrequency) {
         this.dbConfig = dbConfig;
         this.assignTasks = assignTasks;
-        this.createTasks = createTasks;
         this.deleteAge = deleteAge;
         this.fillTaskQueue = fillTaskQueue;
         this.queueSize = queueSize;
@@ -120,11 +116,6 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
     @JsonPropertyDescription("Should the master node assign tasks to workers when tasks are requested?")
     public boolean isAssignTasks() {
         return assignTasks;
-    }
-
-    @JsonPropertyDescription("Should the master node create new tasks for stream processor filters?")
-    public boolean isCreateTasks() {
-        return createTasks;
     }
 
     @JsonPropertyDescription("How long to keep tasks and filters on the database for before deleting them " +
@@ -208,7 +199,6 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
         return "ProcessorConfig{" +
                 "dbConfig=" + dbConfig +
                 ", assignTasks=" + assignTasks +
-                ", createTasks=" + createTasks +
                 ", deleteAge=" + deleteAge +
                 ", fillTaskQueue=" + fillTaskQueue +
                 ", queueSize=" + queueSize +

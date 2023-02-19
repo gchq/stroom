@@ -24,7 +24,6 @@ import stroom.processor.impl.ProcessorFilterDao;
 import stroom.processor.impl.ProcessorModule;
 import stroom.processor.impl.ProcessorTaskDao;
 import stroom.processor.impl.ProcessorTaskDeleteExecutor;
-import stroom.processor.impl.ProcessorTaskManager;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -52,10 +51,7 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
     private final ProcessorDao processorDao;
     private final ProcessorFilterDao processorFilterDao;
     private final ProcessorTaskDao processorTaskDao;
-    private final ProcessorTaskManager processorTaskManager;
     private final TaskContext taskContext;
-
-    private volatile Instant lastRun = Instant.ofEpochMilli(0);
 
     @Inject
     ProcessorTaskDeleteExecutorImpl(final ClusterLockService clusterLockService,
@@ -63,14 +59,12 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
                                     final ProcessorDao processorDao,
                                     final ProcessorFilterDao processorFilterDao,
                                     final ProcessorTaskDao processorTaskDao,
-                                    final ProcessorTaskManager processorTaskManager,
                                     final TaskContext taskContext) {
         this.clusterLockService = clusterLockService;
         this.processorConfig = processorConfig;
         this.processorDao = processorDao;
         this.processorFilterDao = processorFilterDao;
         this.processorTaskDao = processorTaskDao;
-        this.processorTaskManager = processorTaskManager;
         this.taskContext = taskContext;
     }
 
@@ -78,18 +72,9 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
      * Synchronised as we don't want to run more than once concurrently.
      */
     public synchronized void exec() {
-        final Instant lastCreateTime = processorTaskManager.getLastCreateTime();
         try {
-            // See if we have created some tasks since the last time we executed. If we have then worker nodes must
-            // be assuming that we are the master node and there might be new tasks to delete.
-            if (lastCreateTime.isAfter(lastRun)) {
-                taskContext.info(() -> "Deleting old processor tasks");
-                // Remember when we last ran.
-                lastRun = Instant.now();
-                lockAndDelete();
-            } else {
-                LOGGER.debug("No recently assigned tasks.... maybe we aren't in charge of assigning tasks");
-            }
+            taskContext.info(() -> "Deleting old processor tasks");
+            lockAndDelete();
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }

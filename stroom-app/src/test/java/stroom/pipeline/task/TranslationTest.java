@@ -37,7 +37,6 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.node.api.NodeInfo;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
@@ -47,7 +46,7 @@ import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.stepping.SteppingService;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
-import stroom.processor.impl.ProcessorTaskManager;
+import stroom.processor.impl.ProcessorTaskTestHelper;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;
@@ -100,9 +99,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TranslationTest.class);
 
     @Inject
-    private NodeInfo nodeInfo;
-    @Inject
-    private ProcessorTaskManager processorTaskManager;
+    private ProcessorTaskTestHelper processorTaskTestHelper;
     @Inject
     private TaskManager taskManager;
     @Inject
@@ -380,7 +377,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
         addStream(inputFile, feed);
 
-        processorTaskManager.createAndQueueTasks();
+        processorTaskTestHelper.createAndQueueTasks();
 
         final List<ProcessorTask> tasks = getTasks();
         assertThat(tasks.size())
@@ -538,12 +535,12 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
      * @return The next task or null if there are currently no more tasks.
      */
     private List<ProcessorTask> getTasks() {
-        ProcessorTaskList processorTasks = processorTaskManager.assignTasks(nodeInfo.getThisNodeName(), 100);
+        ProcessorTaskList processorTasks = processorTaskTestHelper.assignTasks(100);
         List<ProcessorTask> list = processorTasks.getList();
         final List<ProcessorTask> dataProcessorTasks = new ArrayList<>(list.size());
         while (list.size() > 0) {
             dataProcessorTasks.addAll(list);
-            processorTasks = processorTaskManager.assignTasks(nodeInfo.getThisNodeName(), 100);
+            processorTasks = processorTaskTestHelper.assignTasks(100);
             list = processorTasks.getList();
         }
 

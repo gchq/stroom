@@ -28,7 +28,7 @@ import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.xslt.XsltStore;
 import stroom.processor.api.ProcessorResult;
-import stroom.processor.impl.ProcessorTaskManager;
+import stroom.processor.impl.ProcessorTaskTestHelper;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.CommonTranslationTestHelper;
 import stroom.test.StoreCreationTool;
@@ -84,7 +84,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     @Inject
     private XsltStore xsltStore;
     @Inject
-    private ProcessorTaskManager processorTaskManager;
+    private ProcessorTaskTestHelper processorTaskTestHelper;
 
     /**
      * Tests that valid streams are all processed and put into the processed and
@@ -356,7 +356,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
             }
 
             // Force creation of stream tasks.
-            processorTaskManager.createAndQueueTasks();
+            processorTaskTestHelper.createAndQueueTasks();
 
         } catch (final IOException e) {
             e.printStackTrace();

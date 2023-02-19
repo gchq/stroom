@@ -28,7 +28,6 @@ import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.TaskStatus;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -37,14 +36,14 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class MockProcessorTaskManager implements ProcessorTaskManager {
+public class MockProcessorTaskQueueManager implements ProcessorTaskQueueManager {
 
     private final MetaService metaService;
     private final ProcessorFilterService processorFilterService;
 
     @Inject
-    MockProcessorTaskManager(final MetaService metaService,
-                             final ProcessorFilterService processorFilterService) {
+    MockProcessorTaskQueueManager(final MetaService metaService,
+                                  final ProcessorFilterService processorFilterService) {
         this.metaService = metaService;
         this.processorFilterService = processorFilterService;
     }
@@ -94,10 +93,6 @@ public class MockProcessorTaskManager implements ProcessorTaskManager {
     }
 
     @Override
-    public void createAndQueueTasks() {
-    }
-
-    @Override
     public void startup() {
     }
 
@@ -106,13 +101,12 @@ public class MockProcessorTaskManager implements ProcessorTaskManager {
     }
 
     @Override
-    public void writeQueueStatistics() {
-
+    public void exec() {
     }
 
     @Override
-    public Instant getLastCreateTime() {
-        return null;
+    public void writeQueueStatistics() {
+
     }
 
     @Override
@@ -123,13 +117,5 @@ public class MockProcessorTaskManager implements ProcessorTaskManager {
     @Override
     public Boolean abandonTasks(final ProcessorTaskList processorTaskList) {
         return true;
-    }
-
-    @Override
-    public void setAllowAsyncTaskCreation(final boolean allowAsyncFillTaskStore) {
-    }
-
-    @Override
-    public void setAllowTaskCreation(final boolean allowCreateTasks) {
     }
 }

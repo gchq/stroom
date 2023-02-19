@@ -447,7 +447,6 @@ appConfig:
       maxElements: 1000000
   processor:
     assignTasks: true
-    createTasks: true
     createTasksFrequency: "PT10S"
     databaseMultiInsertMaxBatchSize: 500
     db:

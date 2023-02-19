@@ -47,9 +47,9 @@ import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
+class TestProcessorTaskQueueManager extends AbstractCoreIntegrationTest {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestProcessorTaskManager.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestProcessorTaskQueueManager.class);
 
     private static final int TEST_SIZE = 1000;
 
@@ -60,7 +60,9 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
     @Inject
     private CommonTestControl commonTestControl;
     @Inject
-    private ProcessorTaskManager processorTaskManager;
+    private ProcessorTaskQueueManager processorTaskQueueManager;
+    @Inject
+    private ProcessorTaskTestHelper processorTaskTestHelper;
     @Inject
     private ProcessorTaskService processorTaskService;
     @Inject
@@ -72,8 +74,8 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
 
     @Test
     void testBasic() {
-        processorTaskManager.shutdown();
-        processorTaskManager.startup();
+        processorTaskQueueManager.shutdown();
+        processorTaskQueueManager.startup();
 
         assertThat(getTaskCount()).isZero();
 
@@ -84,7 +86,7 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
         commonTestScenarioCreator.createSample2LineRawFile(feedName2, StreamTypeNames.RAW_EVENTS);
 
         assertThat(getTaskCount()).isZero();
-        processorTaskManager.createAndQueueTasks();
+        processorTaskTestHelper.createAndQueueTasks();
 
         assertThat(getTaskCount()).isZero();
 
@@ -94,15 +96,15 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
         commonTestScenarioCreator.createBasicTranslateStreamProcessor(feedName1);
         commonTestScenarioCreator.createBasicTranslateStreamProcessor(feedName2);
 
-        processorTaskManager.createAndQueueTasks();
+        processorTaskTestHelper.createAndQueueTasks();
         assertThat(getTaskCount()).isEqualTo(4);
 
         commonTestScenarioCreator.createSample2LineRawFile(feedName1, StreamTypeNames.RAW_EVENTS);
-        processorTaskManager.createAndQueueTasks();
+        processorTaskTestHelper.createAndQueueTasks();
 
         assertThat(getTaskCount()).isEqualTo(6);
 
-        processorTaskManager.createAndQueueTasks();
+        processorTaskTestHelper.createAndQueueTasks();
         assertThat(getTaskCount()).isEqualTo(6);
     }
 
@@ -112,7 +114,6 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
         final int size = TEST_SIZE;
         test(size, Status.LOCKED, () -> {
             // All meta is locked so tasks can be created but not queued or assigned.
-
             createTasks(1, size);
             assignTasks(1, nodeName, size, 0);
 
@@ -168,8 +169,8 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
         try {
             processorConfig.setQueueSize(size);
 
-            processorTaskManager.shutdown();
-            processorTaskManager.startup();
+            processorTaskQueueManager.shutdown();
+            processorTaskQueueManager.startup();
 
             assertThat(getTaskCount()).isZero();
             assertThat(getTaskCount()).isZero();
@@ -208,7 +209,7 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
 
     private void createTasks(final int callCount, final int expected) {
         LOGGER.logDurationIfInfoEnabled(() ->
-                        processorTaskManager.createAndQueueTasks(),
+                        processorTaskTestHelper.createAndQueueTasks(),
                 "createTasks " + callCount);
         assertThat(getTaskCount()).isEqualTo(expected);
     }
@@ -218,7 +219,7 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
                              final int count,
                              final int expected) {
         final ProcessorTaskList tasks = LOGGER.logDurationIfInfoEnabled(() ->
-                        processorTaskManager.assignTasks(nodeName, count),
+                        processorTaskQueueManager.assignTasks(nodeName, count),
                 "assignTasks - " + callCount);
         assertThat(tasks.getList().size()).isEqualTo(expected);
     }
@@ -241,8 +242,8 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
 
     @Test
     void testLifecycle() {
-        processorTaskManager.shutdown();
-        processorTaskManager.startup();
+        processorTaskQueueManager.shutdown();
+        processorTaskQueueManager.startup();
 
         assertThat(getTaskCount()).isEqualTo(0);
 
@@ -250,22 +251,22 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
         commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
         commonTestScenarioCreator.createBasicTranslateStreamProcessor(feedName);
 
-        assertThat(processorTaskManager.getTaskQueueSize()).isEqualTo(0);
+        assertThat(processorTaskQueueManager.getTaskQueueSize()).isEqualTo(0);
 
-        processorTaskManager.createAndQueueTasks();
-
-        assertThat(getTaskCount()).isEqualTo(1);
-        assertThat(processorTaskManager.getTaskQueueSize()).isEqualTo(1);
-
-        processorTaskManager.shutdown();
+        processorTaskTestHelper.createAndQueueTasks();
 
         assertThat(getTaskCount()).isEqualTo(1);
-        assertThat(processorTaskManager.getTaskQueueSize()).isEqualTo(0);
+        assertThat(processorTaskQueueManager.getTaskQueueSize()).isEqualTo(1);
 
-        processorTaskManager.startup();
-        assertThat(processorTaskManager.getTaskQueueSize()).isEqualTo(0);
+        processorTaskQueueManager.shutdown();
 
-        processorTaskManager.createAndQueueTasks();
-        assertThat(processorTaskManager.getTaskQueueSize()).isEqualTo(1);
+        assertThat(getTaskCount()).isEqualTo(1);
+        assertThat(processorTaskQueueManager.getTaskQueueSize()).isEqualTo(0);
+
+        processorTaskQueueManager.startup();
+        assertThat(processorTaskQueueManager.getTaskQueueSize()).isEqualTo(0);
+
+        processorTaskTestHelper.createAndQueueTasks();
+        assertThat(processorTaskQueueManager.getTaskQueueSize()).isEqualTo(1);
     }
 }

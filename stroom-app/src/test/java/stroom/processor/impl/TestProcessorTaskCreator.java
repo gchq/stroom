@@ -43,16 +43,16 @@ import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestProcessorTaskManager2 extends AbstractCoreIntegrationTest {
+class TestProcessorTaskCreator extends AbstractCoreIntegrationTest {
 
-    public static final Logger LOGGER = LoggerFactory.getLogger(TestProcessorTaskManager2.class);
+    public static final Logger LOGGER = LoggerFactory.getLogger(TestProcessorTaskCreator.class);
 
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
     private CommonTestControl commonTestControl;
     @Inject
-    private ProcessorTaskManagerImpl processorTaskManager;
+    private ProcessorTaskCreatorImpl processorTaskCreator;
     @Inject
     private ProcessorTaskService processorTaskService;
     @Inject
@@ -70,7 +70,7 @@ class TestProcessorTaskManager2 extends AbstractCoreIntegrationTest {
         assertThat(streams.size()).isEqualTo(1);
 
         ExpressionOperator expression = ExpressionOperator.builder().build();
-        assertThat(processorTaskManager.runSelectMetaQuery(expression,
+        assertThat(processorTaskCreator.runSelectMetaQuery(expression,
                 0,
                 null,
                 null,
@@ -79,7 +79,7 @@ class TestProcessorTaskManager2 extends AbstractCoreIntegrationTest {
                 100).size()).isEqualTo(1);
 
         expression = ExpressionOperator.builder().addTerm(MetaFields.FEED, Condition.EQUALS, feedName).build();
-        assertThat(processorTaskManager.runSelectMetaQuery(expression,
+        assertThat(processorTaskCreator.runSelectMetaQuery(expression,
                 0,
                 null,
                 null,
@@ -88,7 +88,7 @@ class TestProcessorTaskManager2 extends AbstractCoreIntegrationTest {
                 100).size()).isEqualTo(1);
 
         expression = ExpressionOperator.builder().addTerm(MetaFields.FEED, Condition.EQUALS, "otherFed").build();
-        assertThat(processorTaskManager.runSelectMetaQuery(expression,
+        assertThat(processorTaskCreator.runSelectMetaQuery(expression,
                 0,
                 null,
                 null,
@@ -99,7 +99,7 @@ class TestProcessorTaskManager2 extends AbstractCoreIntegrationTest {
         expression = ExpressionOperator.builder().addTerm(MetaFields.PIPELINE,
                 Condition.IS_DOC_REF,
                 new DocRef(PipelineDoc.DOCUMENT_TYPE, "1234")).build();
-        assertThat(processorTaskManager.runSelectMetaQuery(expression,
+        assertThat(processorTaskCreator.runSelectMetaQuery(expression,
                 0,
                 null,
                 null,
@@ -109,7 +109,7 @@ class TestProcessorTaskManager2 extends AbstractCoreIntegrationTest {
 
         // Check DB cleanup.
         expression = ExpressionOperator.builder().build();
-        assertThat(processorTaskManager.runSelectMetaQuery(expression,
+        assertThat(processorTaskCreator.runSelectMetaQuery(expression,
                 0,
                 null,
                 null,
@@ -117,7 +117,7 @@ class TestProcessorTaskManager2 extends AbstractCoreIntegrationTest {
                 false,
                 100).size()).isEqualTo(1);
         streamTaskDeleteExecutor.delete(Instant.EPOCH);
-        assertThat(processorTaskManager.runSelectMetaQuery(expression,
+        assertThat(processorTaskCreator.runSelectMetaQuery(expression,
                 0,
                 null,
                 null,
