@@ -1013,6 +1013,26 @@
     height:50px;
 }
 
+.globalPropertyEditViewImpl-dataType {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.globalPropertyEditViewImpl-dataType > .helpIcon {
+    margin-left: 5px;
+}
+
+.globalPropertyEditViewImpl-attributes {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.globalPropertyEditViewImpl-attributes > .form-group {
+    flex-grow: 1;
+}
+
 .linkTabPanelViewImpl {
     display: flex;
     align-items: center;

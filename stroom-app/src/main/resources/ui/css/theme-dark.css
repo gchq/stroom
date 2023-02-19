@@ -105,9 +105,9 @@
     --curve-tab__svg-color: #fff;
 
     /* Controls */
-    --control__background-color: #24282f;
+    --control__background-color: #151618;
     --control__background-color--disabled: rgba(255, 255, 255, 0.1);
-    --control__border-color: #444444;
+    --control__border-color: #505050;
     --control__border-color--disabled: transparent;
     --control__text-color: #cacbcb;
     --control__text-color--disabled: #666;

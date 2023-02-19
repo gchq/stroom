@@ -20,15 +20,16 @@
     padding: 0;
     border: none;
     border-radius: 0 5px 5px 5px;
+    background-color: transparent;
 }
 
 .gwt-PopupPanel.autocompletePanel input {
     background-image: url('../images/search.svg');
-    background-size: 12px;
+    background-size: 13px;
     background-origin: content-box;
     background-repeat: no-repeat;
     background-position-x: right;
-    background-position-y: 1px;
+    background-position-y: center;
 }
 
 .stroom-theme-dark .gwt-PopupPanel.autocompletePanel input,
@@ -43,9 +44,11 @@
     border-radius: 0;
     width: auto;
     min-width: 200px;
+    height: auto;
 }
 
 .gwt-PopupPanel.autocompletePanel select > option {
     padding: 2px 5px;
     border: none;
+    height: auto;
 }

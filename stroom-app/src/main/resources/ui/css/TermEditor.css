@@ -51,6 +51,7 @@
 
 .termEditor-item.condition {
 	width: auto;
+	padding-right: 25px;
 }
 
 .termEditor-item.docRef {

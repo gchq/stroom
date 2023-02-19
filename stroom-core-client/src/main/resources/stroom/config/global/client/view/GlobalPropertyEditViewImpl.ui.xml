@@ -42,22 +42,24 @@
             </g:FlowPanel>
         </form:FormGroup>
         <form:FormGroup identity="globalPropertyEditDataType" label="Data Type">
-            <g:FlowPanel>
-                <b:ButtonPanel ui:field="dataTypeButtonPanel"/>
-                <g:Label ui:field="dataType" addStyleNames="globalProperties w-100"/>
+            <g:FlowPanel addStyleNames="globalPropertyEditViewImpl-dataType">
+                <g:Label ui:field="dataType" addStyleNames="globalProperties"/>
+                <b:ButtonPanel ui:field="dataTypeButtonPanel" addStyleNames="helpIcon"/>
             </g:FlowPanel>
         </form:FormGroup>
         <form:FormGroup identity="globalPropertyEditSource" label="Source">
-            <g:Label ui:field="source" addStyleNames="globalProperties w-100"/>
+            <g:Label ui:field="source" addStyleNames="globalProperties"/>
         </form:FormGroup>
-        <form:FormGroup>
-            <tickbox:CustomCheckBox ui:field="requireUiRestart" identity="globalPropertyEditRequiresUIRefresh" label="Requires UI Refresh"/>
-        </form:FormGroup>
-        <form:FormGroup>
-            <tickbox:CustomCheckBox ui:field="requireRestart" identity="globalPropertyEditRequiresRestart" label="Requires Restart"/>
-        </form:FormGroup>
-        <form:FormGroup>
-            <tickbox:CustomCheckBox ui:field="readOnly" identity="globalPropertyEditReadOnly" label="Read Only"/>
-        </form:FormGroup>
+        <g:FlowPanel addStyleNames="globalPropertyEditViewImpl-attributes">
+            <form:FormGroup>
+                <tickbox:CustomCheckBox ui:field="requireUiRestart" identity="globalPropertyEditRequiresUIRefresh" label="Requires UI Refresh"/>
+            </form:FormGroup>
+            <form:FormGroup>
+                <tickbox:CustomCheckBox ui:field="requireRestart" identity="globalPropertyEditRequiresRestart" label="Requires Restart"/>
+            </form:FormGroup>
+            <form:FormGroup>
+                <tickbox:CustomCheckBox ui:field="readOnly" identity="globalPropertyEditReadOnly" label="Read Only"/>
+            </form:FormGroup>
+        </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder> 

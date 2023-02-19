@@ -596,7 +596,6 @@ input[type="file"] {
 	color: var(--control__text-color);
 	border-radius: .25rem;
 	height: calc(1.5em + .75rem + 2px);
-	overflow: hidden;
 }
 
 .gwt-TextArea:disabled,
@@ -607,9 +606,9 @@ input[type="file"] {
 .stroom-DropDownTree:disabled,
 .stroom-control:disabled,
 select option:disabled,
-textarea:disabled,textarea:read-only,
-input:disabled,input:read-only,
-input[type="text"]:disabled,input[type="text"]:read-only,
+textarea:disabled,
+input:disabled,
+input[type="text"]:disabled,
 input[type="checkbox"]:disabled,
 input[type="file"]:disabled {
 	border: solid 1px var(--control__border-color--disabled);

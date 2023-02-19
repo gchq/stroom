@@ -141,7 +141,7 @@
 .SimpleTickBox-untick {
 }
 
-.SimpleTickBox.disabled {
+.SimpleTickBox-disabled {
     opacity: 0.5;
 }
 
