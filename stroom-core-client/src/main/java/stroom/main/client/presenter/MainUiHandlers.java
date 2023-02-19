@@ -22,5 +22,5 @@ import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface MainUiHandlers extends UiHandlers {
 
-    void showMenu(NativeEvent event, Element target);
+    void showTabMenu(NativeEvent event, Element target);
 }
