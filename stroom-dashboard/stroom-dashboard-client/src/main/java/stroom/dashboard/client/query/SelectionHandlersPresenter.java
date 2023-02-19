@@ -27,6 +27,7 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.shared.DataSourceResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -283,10 +284,10 @@ public class SelectionHandlersPresenter
         if (dataSource == null) {
             consumer.accept(new ArrayList<>());
         } else if (!dataSource.equals(currentDataSource)) {
-            final Rest<List<AbstractField>> rest = restFactory.create();
+            final Rest<DataSource> rest = restFactory.create();
             rest
                     .onSuccess(result -> {
-                        currentFields = result;
+                        currentFields = result.getFields();
                         currentDataSource = dataSource;
                         consumer.accept(currentFields);
                     })
