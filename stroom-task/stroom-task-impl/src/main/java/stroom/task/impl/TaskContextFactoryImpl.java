@@ -62,7 +62,7 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
         final TaskContext parent = resolveParent(parentContext);
         return createFromConsumer(
                 getTaskId(parent),
-                getUserIdentity(parent),
+                getUserIdentity(parentContext),
                 isUseAsRead(parent),
                 taskName,
                 DEFAULT_TERMINATE_HANDLER_FACTORY,
@@ -87,7 +87,7 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
         final TaskContext parent = resolveParent(parentContext);
         return createFromFunction(
                 getTaskId(parent),
-                getUserIdentity(parent),
+                getUserIdentity(parentContext),
                 isUseAsRead(parent),
                 taskName,
                 DEFAULT_TERMINATE_HANDLER_FACTORY,
@@ -115,7 +115,7 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
         final TaskContext parent = resolveParent(parentContext);
         return createFromConsumer(
                 getTaskId(parent),
-                getUserIdentity(parent),
+                getUserIdentity(parentContext),
                 isUseAsRead(parent),
                 taskName,
                 terminateHandlerFactory,
@@ -143,7 +143,7 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
         final TaskContext parent = resolveParent(parentContext);
         return createFromFunction(
                 getTaskId(parent),
-                getUserIdentity(parent),
+                getUserIdentity(parentContext),
                 isUseAsRead(parent),
                 taskName,
                 terminateHandlerFactory,

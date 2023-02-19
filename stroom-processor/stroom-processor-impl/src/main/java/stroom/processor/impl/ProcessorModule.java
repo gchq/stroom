@@ -96,7 +96,9 @@ public class ProcessorModule extends AbstractModule {
                 .bindJobTo(ProcessorTaskCreatorJob.class, builder -> builder
                         .name("Processor Task Creator")
                         .description("Create Processor Tasks From Processor Filters")
-                        .schedule(PERIODIC, "10s"));
+                        .schedule(PERIODIC, "10s")
+                        .enabled(false)
+                        .advanced(false));
 
         LifecycleBinder.create(binder())
                 .bindStartupTaskTo(ProcessorTaskManagerStartup.class)
