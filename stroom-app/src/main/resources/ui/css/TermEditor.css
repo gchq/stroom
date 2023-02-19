@@ -31,6 +31,7 @@
 	background-position: right;
 	background-origin: border-box;
 	min-width: 50px;
+	max-height: 23px;
 }
 
 .termEditor-item.wide {
@@ -78,6 +79,7 @@
 .termEditor-label.fieldType {
 	padding: 2px 8px;
 	position: absolute;
+	top: 1px;
 	right: -5px;
 	transform: translateX(100%);
 	background-color: rgb(32 148 243 / 60%);
