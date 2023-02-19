@@ -325,6 +325,10 @@
 	padding-top: 1px;
 }
 
+.dialog-content .linkTabBar {
+    margin-bottom: var(--control__gap--vertical);
+}
+
 .linkTabBar-hiddenText {
     display: inline;
     opacity: 0;
@@ -1664,10 +1668,6 @@ button.main-menu svg {
 .form-padding {
     overflow: auto;
     padding: var(--control__gap--vertical) var(--control__gap--horizontal);
-}
-
-.settingsPresenter .linkTabBar {
-    margin-bottom: var(--control__gap--vertical);
 }
 
 .form-group {
