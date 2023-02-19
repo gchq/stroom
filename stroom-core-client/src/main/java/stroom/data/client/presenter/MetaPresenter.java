@@ -49,6 +49,7 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
 
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -74,6 +75,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
     private final Provider<DataUploadPresenter> streamUploadPresenter;
     private final Provider<ExpressionPresenter> streamListFilterPresenter;
     private final ButtonView streamListFilter;
+    private final ButtonView streamListInfo;
 
     private DocRef feedRef;
     private ButtonView streamListUpload;
@@ -127,6 +129,9 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
             streamRelationListRestore = metaRelationListPresenter.add(SvgPresets.UNDO);
             streamRelationListRestore.setTitle("Restore");
         }
+
+        // Selection information
+        streamListInfo = metaListPresenter.add(SvgPresets.INFO.title("Selection summary"));
 
         // Download
         if (securityContext.hasAppPermission(PermissionNames.EXPORT_DATA_PERMISSION)) {
@@ -233,6 +238,13 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
             registerHandler(streamListUpload.addClickHandler(event -> {
                 if (MouseUtil.isPrimary(event)) {
                     streamUploadPresenter.get().show(MetaPresenter.this, feedRef);
+                }
+            }));
+        }
+        if (streamListInfo != null) {
+            registerHandler(streamListInfo.addClickHandler(event -> {
+                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                    metaListPresenter.info();
                 }
             }));
         }
@@ -503,6 +515,9 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
     public void setStreamListSelectableEnabled(final Selection<Long> streamIdSet) {
         final boolean someSelected = isSomeSelected(metaListPresenter, streamIdSet);
 
+        if (streamListInfo != null) {
+            streamListInfo.setEnabled(someSelected);
+        }
         if (streamListDownload != null) {
             streamListDownload.setEnabled(someSelected);
         }

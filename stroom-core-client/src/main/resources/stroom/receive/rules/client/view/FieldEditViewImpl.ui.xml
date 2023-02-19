@@ -5,7 +5,7 @@
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="fieldEditType" label="Type">
-            <l:StringListBox ui:field="type" addStyleNames="w-100"/>
+            <l:ItemListBox ui:field="type" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="fieldEditName" label="Name">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>

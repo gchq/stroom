@@ -31,6 +31,7 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
 import stroom.pipeline.shared.PipelineDoc;
@@ -53,6 +54,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public class ProcessorTaskListPresenter
@@ -105,16 +107,21 @@ public class ProcessorTaskListPresenter
         dataGrid.addColumn(new InfoColumn<ProcessorTask>() {
             @Override
             protected void showInfo(final ProcessorTask row, final int x, final int y) {
+                FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
+                findMetaCriteria.setExpression(MetaExpressionUtil.createDataIdExpression(row.getMetaId()));
+
                 final Rest<ResultPage<MetaRow>> rest = restFactory.create();
                 rest
                         .onSuccess(metaRows -> {
-                            if (metaRows != null && metaRows.size() == 1) {
-                                final MetaRow metaRow = metaRows.getFirst();
-                                showTooltip(x, y, row, metaRow);
-                            }
+                            // Should only get one back
+                            final Meta meta = Optional.ofNullable(metaRows)
+                                    .map(ResultPage::getFirst)
+                                    .map(MetaRow::getMeta)
+                                    .orElse(null);
+                            showTooltip(x, y, row, meta);
                         })
                         .call(META_RESOURCE)
-                        .findMetaRow(FindMetaCriteria.createFromId(row.getMetaId()));
+                        .findMetaRow(findMetaCriteria);
             }
         }, "<br/>", ColumnSizeConstants.ICON_COL);
 
@@ -216,8 +223,10 @@ public class ProcessorTaskListPresenter
         });
     }
 
-    private void showTooltip(final int x, final int y, final ProcessorTask processorTask, final MetaRow metaRow) {
-        final Meta meta = metaRow.getMeta();
+    private void showTooltip(final int x,
+                             final int y,
+                             final ProcessorTask processorTask,
+                             final Meta meta) {
 
         final TooltipUtil.Builder builder = TooltipUtil.builder()
                 .addTwoColTable(tableBuilder -> {
@@ -236,13 +245,20 @@ public class ProcessorTaskListPresenter
                             .addRow("Node", processorTask.getNodeName())
                             .addRow("Feed", processorTask.getFeedName())
                             .addBlankRow()
-                            .addHeaderRow("Stream")
-                            .addRow("Stream Id", meta.getId())
-                            .addRow("Status", meta.getStatus().getDisplayValue())
-                            .addRow("Parent Stream Id", meta.getParentMetaId())
-                            .addRow("Created", toDateString(meta.getCreateMs()))
-                            .addRow("Effective", toDateString(meta.getEffectiveMs()))
-                            .addRow("Stream Type", meta.getTypeName());
+                            .addHeaderRow("Stream");
+
+                    if (meta != null) {
+                        tableBuilder
+                                .addRow("Stream Id", meta.getId())
+                                .addRow("Status", meta.getStatus().getDisplayValue())
+                                .addRow("Parent Stream Id", meta.getParentMetaId())
+                                .addRow("Created", toDateString(meta.getCreateMs()))
+                                .addRow("Effective", toDateString(meta.getEffectiveMs()))
+                                .addRow("Stream Type", meta.getTypeName());
+                    } else {
+                        tableBuilder
+                                .addRow("[Physically deleted]", TooltipUtil.NON_BREAKING_SPACE);
+                    }
 
                     if (processorTask.getProcessorFilter() != null) {
                         if (processorTask.getProcessorFilter().getProcessor() != null) {

@@ -20,6 +20,8 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.SvgButton;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -80,6 +82,7 @@ public class QuickFilter extends FlowPanel
         add(helpButton);
 
         textBox.addKeyUpHandler(event -> onChange());
+        textBox.addKeyDownHandler(event -> onKeyDown(event));
         helpButton.addClickHandler(event -> showHelpPopup());
         clearButton.addClickHandler(event -> clear());
 
@@ -121,6 +124,13 @@ public class QuickFilter extends FlowPanel
         }
     }
 
+    private void onKeyDown(final KeyDownEvent event) {
+        // Clear the text box if ESC is pressed
+        if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE) {
+            textBox.setText("");
+        }
+    }
+
     @Override
     public void clear() {
         textBox.setText("");
@@ -143,6 +153,7 @@ public class QuickFilter extends FlowPanel
     @Override
     public void setText(final String text) {
         textBox.setText(text);
+        onChange();
     }
 
     @Override

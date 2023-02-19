@@ -24,6 +24,7 @@ import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.SuggestionsResource;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle.MultiWordSuggestion;
 import com.google.gwt.user.client.ui.SuggestOracle;
 
@@ -33,10 +34,12 @@ import java.util.List;
 public class AsyncSuggestOracle extends SuggestOracle {
 
     private static final SuggestionsResource SUGGESTIONS_RESOURCE = GWT.create(SuggestionsResource.class);
+    private static final int DEBOUNCE_PERIOD_MILLIS = 500;
 
     private RestFactory restFactory;
     private DocRef dataSource;
     private AbstractField field;
+    private Timer requestTimer;
 
     public void setRestFactory(final RestFactory restFactory) {
         this.restFactory = restFactory;
@@ -58,17 +61,29 @@ public class AsyncSuggestOracle extends SuggestOracle {
     @Override
     public void requestSuggestions(final Request request, final Callback callback) {
         if (restFactory != null && dataSource != null) {
-            final Rest<List<String>> rest = restFactory.create();
-            rest
-                    .onSuccess(result -> {
-                        final List<Suggestion> suggestions = new ArrayList<>();
-                        for (final String string : result) {
-                            suggestions.add(new MultiWordSuggestion(string, string));
-                        }
-                        callback.onSuggestionsReady(request, new Response(suggestions));
-                    })
-                    .call(SUGGESTIONS_RESOURCE)
-                    .fetch(new FetchSuggestionsRequest(dataSource, field, request.getQuery()));
+            // Debounce requests so we don't spam the backend
+            if (requestTimer != null) {
+                requestTimer.cancel();
+            }
+
+            requestTimer = new Timer() {
+                @Override
+                public void run() {
+                    final Rest<List<String>> rest = restFactory.create();
+                    rest
+                            .onSuccess(result -> {
+                                final List<Suggestion> suggestions = new ArrayList<>();
+                                for (final String string : result) {
+                                    suggestions.add(new MultiWordSuggestion(string, string));
+                                }
+                                callback.onSuggestionsReady(request, new Response(suggestions));
+                            })
+                            .call(SUGGESTIONS_RESOURCE)
+                            .fetch(new FetchSuggestionsRequest(dataSource, field, request.getQuery()));
+                }
+            };
+
+            requestTimer.schedule(DEBOUNCE_PERIOD_MILLIS);
         }
     }
 }

@@ -19,6 +19,15 @@ public class DiffUtil {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DiffUtil.class);
 
+    /**
+     * Generates a unified diff of the passed files.
+     *
+     * @param originalFile      The original file to diff
+     * @param revisedFile       The revised file to diff
+     * @param colouredOutput    True if you want ascii colour codes in the output
+     * @param contextLines      Number of lines of context before and after each difference
+     * @return True if any differences exist
+     */
     public static boolean unifiedDiff(final Path originalFile,
                                       final Path revisedFile,
                                       final boolean colouredOutput,

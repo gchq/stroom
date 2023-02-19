@@ -1,6 +1,6 @@
 package stroom.search.elastic.search;
 
-import stroom.util.cache.CacheConfig;
+import stroom.search.elastic.suggest.ElasticSuggestConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
@@ -13,27 +13,33 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder(alphabetic = true)
 public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfig {
 
+    private final boolean highlight;
     private final StroomDuration scrollDuration;
     private final String storeSize;
-    private final CacheConfig searchResultCache;
+    private final ElasticSuggestConfig suggestConfig;
 
     public ElasticSearchConfig() {
+        highlight = true;
         scrollDuration = StroomDuration.ofMinutes(1);
         storeSize = "1000000,100,10,1";
-        searchResultCache = CacheConfig.builder()
-                .maximumSize(10000L)
-                .expireAfterAccess(StroomDuration.ofMinutes(10))
-                .build();
+        suggestConfig = new ElasticSuggestConfig();
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public ElasticSearchConfig(@JsonProperty("scrollDuration") final StroomDuration scrollDuration,
+    public ElasticSearchConfig(@JsonProperty("highlight") final boolean highlight,
+                               @JsonProperty("scrollDuration") final StroomDuration scrollDuration,
                                @JsonProperty("storeSize") final String storeSize,
-                               @JsonProperty("searchResultCache") final CacheConfig searchResultCache) {
+                               @JsonProperty("suggestions") final ElasticSuggestConfig suggestConfig) {
+        this.highlight = highlight;
         this.scrollDuration = scrollDuration;
         this.storeSize = storeSize;
-        this.searchResultCache = searchResultCache;
+        this.suggestConfig = suggestConfig;
+    }
+
+    @JsonPropertyDescription("Highlight matched terms in the source document.")
+    public boolean getHighlight() {
+        return highlight;
     }
 
     @JsonPropertyDescription("Amount of time to allow an Elasticsearch scroll request to continue before aborting.")
@@ -46,16 +52,18 @@ public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfi
         return storeSize;
     }
 
-    public CacheConfig getSearchResultCache() {
-        return searchResultCache;
+    @JsonProperty("suggestions")
+    public ElasticSuggestConfig getSuggestConfig() {
+        return suggestConfig;
     }
 
     @Override
     public String toString() {
         return "ElasticSearchConfig{" +
-                "scrollDuration='" + scrollDuration + "'" +
+                "highlight=" + highlight +
+                ", scrollDuration='" + scrollDuration + "'" +
                 ", storeSize=" + storeSize +
-                ", searchResultCache=" + searchResultCache +
+                ", suggestConfig=" + suggestConfig +
                 '}';
     }
 }

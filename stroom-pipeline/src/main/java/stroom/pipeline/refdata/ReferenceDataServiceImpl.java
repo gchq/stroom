@@ -10,7 +10,6 @@ import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.data.shared.StreamTypeNames;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
-import stroom.datasource.api.v2.FieldTypes;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
@@ -844,14 +843,14 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         // field => fieldType
         AbstractField abstractField = FIELD_NAME_TO_FIELD_MAP.get(expressionTerm.getField());
 
-        return switch (abstractField.getType()) {
-            case FieldTypes.TEXT -> buildTextFieldPredicate(expressionTerm, refStoreEntry ->
+        return switch (abstractField.getFieldType()) {
+            case TEXT -> buildTextFieldPredicate(expressionTerm, refStoreEntry ->
                     (String) FIELD_TO_EXTRACTOR_MAP.get(expressionTerm.getField()).apply(refStoreEntry));
-            case FieldTypes.LONG -> buildLongFieldPredicate(expressionTerm, refStoreEntry ->
+            case LONG -> buildLongFieldPredicate(expressionTerm, refStoreEntry ->
                     (Long) FIELD_TO_EXTRACTOR_MAP.get(expressionTerm.getField()).apply(refStoreEntry));
-            case FieldTypes.DATE -> buildDateFieldPredicate(expressionTerm, refStoreEntry ->
+            case DATE -> buildDateFieldPredicate(expressionTerm, refStoreEntry ->
                     (Long) FIELD_TO_EXTRACTOR_MAP.get(expressionTerm.getField()).apply(refStoreEntry));
-            case FieldTypes.DOC_REF -> buildDocRefFieldPredicate(expressionTerm, refStoreEntry ->
+            case DOC_REF -> buildDocRefFieldPredicate(expressionTerm, refStoreEntry ->
                     (DocRef) FIELD_TO_EXTRACTOR_MAP.get(expressionTerm.getField()).apply(refStoreEntry));
             default -> throw new RuntimeException("Unsupported term " + expressionTerm);
         };
@@ -971,12 +970,12 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     }
 
     private Val convertToVal(final Object object, final AbstractField field) {
-        return switch (field.getType()) {
-            case FieldTypes.TEXT -> ValString.create((String) object);
-            case FieldTypes.INTEGER -> ValInteger.create((Integer) object);
-            case FieldTypes.LONG, FieldTypes.ID, FieldTypes.DATE -> ValLong.create((long) object);
-            case FieldTypes.DOC_REF -> getPipelineNameAsVal((DocRef) object);
-            default -> throw new RuntimeException("Unexpected field type " + field.getType());
+        return switch (field.getFieldType()) {
+            case TEXT -> ValString.create((String) object);
+            case INTEGER -> ValInteger.create((Integer) object);
+            case LONG, ID, DATE -> ValLong.create((long) object);
+            case DOC_REF -> getPipelineNameAsVal((DocRef) object);
+            default -> throw new RuntimeException("Unexpected field type " + field.getFieldType());
         };
     }
 

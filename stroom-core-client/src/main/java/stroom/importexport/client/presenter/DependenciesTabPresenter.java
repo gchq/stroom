@@ -14,7 +14,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
-
 public class DependenciesTabPresenter
         extends ContentTabPresenter<DependenciesTabView>
         implements DependenciesUiHandlers {
@@ -61,8 +60,14 @@ public class DependenciesTabPresenter
         dependenciesPresenter.refresh();
     }
 
+    public void setQuickFilterText(final String text) {
+        getView().setQuickFilterText(text);
+    }
+
     public interface DependenciesTabView extends View, HasUiHandlers<DependenciesUiHandlers> {
 
         void setHelpTooltipText(final SafeHtml helpTooltipText);
+
+        void setQuickFilterText(final String text);
     }
 }

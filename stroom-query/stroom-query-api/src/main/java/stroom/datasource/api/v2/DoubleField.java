@@ -29,8 +29,6 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public class DoubleField extends AbstractNumericField {
 
-    private static final long serialVersionUID = 1272545271946712570L;
-
     public DoubleField(final String name) {
         super(name);
     }
@@ -48,7 +46,7 @@ public class DoubleField extends AbstractNumericField {
 
     @JsonIgnore
     @Override
-    public String getType() {
-        return FieldTypes.DOUBLE;
+    public FieldType getFieldType() {
+        return FieldType.DOUBLE;
     }
 }

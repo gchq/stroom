@@ -32,8 +32,6 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public class DocRefField extends AbstractField {
 
-    private static final long serialVersionUID = 1272545271946712570L;
-
     // Conditions suitable for use when referencing the DocRef by UUID
     private static final List<Condition> DEFAULT_CONDITIONS_UUID = new ArrayList<>();
     // Conditions suitable for use when referencing the DocRef by name
@@ -108,7 +106,7 @@ public class DocRefField extends AbstractField {
 
     @JsonIgnore
     @Override
-    public String getType() {
-        return FieldTypes.DOC_REF;
+    public FieldType getFieldType() {
+        return FieldType.DOC_REF;
     }
 }

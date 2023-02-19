@@ -105,7 +105,7 @@ public class ImportConfigConfirmPresenter extends
         super(eventBus, view, proxy);
         this.rootFolderPresenter = rootFolderPresenter;
 
-        rootFolderPresenter.setSelectedEntityReference(ExplorerConstants.ROOT_DOC_REF);
+        rootFolderPresenter.setSelectedEntityReference(ExplorerConstants.SYSTEM_DOC_REF);
         rootFolderPresenter.setIncludedTypes(ExplorerConstants.FOLDER);
         rootFolderPresenter.setRequiredPermissions(DocumentPermissionNames.READ);
         rootFolderPresenter.setAllowFolderSelection(true);
@@ -146,7 +146,7 @@ public class ImportConfigConfirmPresenter extends
 
         registerHandler(rootFolderPresenter.addDataSelectionHandler(event -> {
             if (event.getSelectedItem() != null &&
-                    event.getSelectedItem().getDocRef().compareTo(ExplorerConstants.ROOT_DOC_REF) != 0 &&
+                    event.getSelectedItem().getDocRef().compareTo(ExplorerConstants.SYSTEM_DOC_REF) != 0 &&
                     event.getSelectedItem().getDocRef().getUuid().length() > 1) {
                 final ExplorerNode entityData = event.getSelectedItem();
                 setRootDocRef(entityData.getDocRef());

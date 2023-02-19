@@ -60,12 +60,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
 
     @Override
     public void ensureRootNodeExists() {
-
-        final ExplorerTreeNode rootNode = new ExplorerTreeNode();
-        rootNode.setName(ExplorerConstants.ROOT_DOC_REF.getName());
-        rootNode.setType(ExplorerConstants.ROOT_DOC_REF.getType());
-        rootNode.setUuid(ExplorerConstants.ROOT_DOC_REF.getUuid());
-
+        final ExplorerTreeNode rootNode = ExplorerTreeNode.create(ExplorerConstants.SYSTEM_DOC_REF);
         if (explorerTreeDao.doesNodeExist(rootNode)) {
             LOGGER.debug("Root node {} already exists", rootNode);
         } else {
@@ -231,7 +226,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     }
 
     @Override
-    public Optional<ExplorerNode> getRoot() {
+    public Optional<ExplorerNode> getNodeWithRoot() {
         final List<ExplorerTreeNode> roots = Optional
                 .ofNullable(explorerTreeDao.getRoots())
                 .filter(r -> r.size() > 0)
@@ -246,11 +241,25 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                 .map(this::createExplorerNode);
     }
 
+    @Override
+    public Optional<ExplorerNode> getNodeWithRoot(final DocRef docRef) {
+        return getNodeForDocRef(docRef)
+                .map(node -> {
+                    final String rootNodeUuid = explorerTreeDao.getRoot(node).getUuid();
+
+                    // Set the root node UUID
+                    return ExplorerNode.builder()
+                            .docRef(docRef)
+                            .rootNodeUuid(rootNodeUuid)
+                            .build();
+                });
+    }
+
     private synchronized void createRoot() {
         final List<ExplorerTreeNode> roots = explorerTreeDao.getRoots();
         if (roots == null || roots.size() == 0) {
             // Insert System root node.
-            final DocRef root = ExplorerConstants.ROOT_DOC_REF;
+            final DocRef root = ExplorerConstants.SYSTEM_DOC_REF;
             addNode(null, root);
         }
     }
@@ -309,7 +318,8 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
         } else {
             return getNodeForDocRef(folderDocRef)
                     .map(fetchFunction)
-                    .map(d -> d.stream().map(this::createExplorerNode)
+                    .map(d -> d.stream()
+                            .map(this::createExplorerNode)
                             .collect(Collectors.toList()))
                     .orElse(Collections.emptyList());
         }
@@ -335,7 +345,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     @Override
     public void deleteAllNodes() {
         explorerTreeDao.removeAll();
-        addNode(null, ExplorerConstants.ROOT_DOC_REF);
+        addNode(null, ExplorerConstants.SYSTEM_DOC_REF);
     }
 
     private void addNode(final DocRef parentFolderRef, final DocRef docRef) {
@@ -406,8 +416,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     }
 
     private ExplorerNode createExplorerNode(final ExplorerTreeNode explorerTreeNode) {
-        return ExplorerNode
-                .builder()
+        return ExplorerNode.builder()
                 .type(explorerTreeNode.getType())
                 .uuid(explorerTreeNode.getUuid())
                 .name(explorerTreeNode.getName())

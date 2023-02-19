@@ -260,12 +260,11 @@ appConfig:
       maxNestedElementDepth: 10
       retryCount: 10
     search:
+      highlight: true
       scrollDuration: "PT1M"
-      searchResultCache:
-        expireAfterAccess: "PT10M"
-        expireAfterWrite: null
-        maximumSize: 10000
       storeSize: "1000000,100,10,1"
+      suggestions:
+        enabled: true
   explorer:
     db:
       connection:

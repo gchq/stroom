@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.core.query;
-
-import stroom.util.guice.RestResourcesBinder;
-
-import com.google.inject.AbstractModule;
-
-public class QueryModule extends AbstractModule {
-
-    @Override
-    protected void configure() {
-        RestResourcesBinder.create(binder())
-                .bind(SuggestionsResourceImpl.class);
-
-        bind(SuggestionsService.class).to(SuggestionsServiceImpl.class);
-    }
+.hyperlinkCell:hover {
+    text-decoration: underline;
+    cursor: pointer;
 }

@@ -51,6 +51,8 @@ import javax.inject.Inject;
 
 class FormatDate extends StroomExtensionFunctionCall {
 
+    public static final String FUNCTION_NAME = "format-date";
+
     private static final Locale LOCALE = Locale.ENGLISH;
     private static final WeekFields WEEK_FIELDS = WeekFields.of(LOCALE);
 

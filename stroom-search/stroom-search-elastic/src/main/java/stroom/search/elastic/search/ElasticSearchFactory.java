@@ -6,6 +6,7 @@ import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
+import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.ErrorConsumer;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
@@ -24,6 +25,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder.BoundaryScannerType;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -63,11 +66,11 @@ public class ElasticSearchFactory {
                                           final long now,
                                           final DateTimeSettings dateTimeSettings,
                                           final ExpressionOperator expression,
-                                          final FieldIndex fieldIndex,
+                                          final Coprocessors coprocessors,
+                                          final ElasticSearchResultCollector resultCollector,
                                           final TaskContext parentContext,
                                           final AtomicLong hitCount,
-                                          final StoredDataQueue storedDataQueue,
-                                          final ErrorConsumer errorConsumer) {
+                                          final StoredDataQueue storedDataQueue) {
         SearchProgressLog.increment(queryKey, SearchPhase.INDEX_SHARD_SEARCH_FACTORY_SEARCH);
 
         // Reload the index.
@@ -80,7 +83,6 @@ public class ElasticSearchFactory {
 
         // Create a map of index fields keyed by name.
         final Map<String, ElasticIndexField> indexFieldsMap = elasticIndexService.getFieldsMap(index);
-        final QueryBuilder queryBuilder = getQuery(expression, indexFieldsMap, dateTimeSettings, now);
         final Runnable runnable = taskContextFactory.childContext(
                 parentContext,
                 "Search Elasticsearch Index",
@@ -88,10 +90,12 @@ public class ElasticSearchFactory {
                 taskContext -> elasticSearchTaskHandler.search(
                         taskContext,
                         index,
-                        queryBuilder,
-                        fieldIndex,
+                        getQuery(expression, indexFieldsMap, dateTimeSettings, now),
+                        getHighlighter(),
+                        coprocessors,
+                        resultCollector,
                         storedDataQueue,
-                        errorConsumer,
+                        coprocessors.getErrorConsumer(),
                         hitCount));
 
         return CompletableFuture
@@ -125,5 +129,13 @@ public class ElasticSearchFactory {
         }
 
         return query;
+    }
+
+    private HighlightBuilder getHighlighter() {
+        return new HighlightBuilder()
+                .field("*")
+                .preTags("")
+                .postTags("")
+                .boundaryScannerType(BoundaryScannerType.WORD);
     }
 }

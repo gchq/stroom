@@ -21,12 +21,16 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Arrays;
 import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class DocumentTypes {
 
-    public static final String[] FOLDER_TYPES = new String[]{ExplorerConstants.SYSTEM, ExplorerConstants.FOLDER};
+    public static final String[] FOLDER_TYPES = new String[]{
+            ExplorerConstants.SYSTEM,
+            ExplorerConstants.FOLDER
+    };
 
     @JsonProperty
     private final List<DocumentType> nonSystemTypes;
@@ -49,7 +53,7 @@ public class DocumentTypes {
     }
 
     public static boolean isFolder(final String type) {
-        return ExplorerConstants.FOLDER.equals(type) || ExplorerConstants.SYSTEM.equals(type);
+        return Arrays.asList(FOLDER_TYPES).contains(type);
     }
 
     public static boolean isSystem(final String type) {

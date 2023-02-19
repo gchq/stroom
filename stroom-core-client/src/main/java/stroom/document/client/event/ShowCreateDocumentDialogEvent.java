@@ -35,14 +35,14 @@ public class ShowCreateDocumentDialogEvent extends GwtEvent<ShowCreateDocumentDi
     private final String docType;
     private final String initialDocName;
     private final boolean allowNullFolder;
-    private final Consumer<DocRef> newDocConsumer;
+    private final Consumer<ExplorerNode> newDocConsumer;
 
     private ShowCreateDocumentDialogEvent(final String dialogCaption,
                                           final ExplorerNode selected,
                                           final String docType,
                                           final String initialDocName,
                                           final boolean allowNullFolder,
-                                          final Consumer<DocRef> newDocConsumer) {
+                                          final Consumer<ExplorerNode> newDocConsumer) {
         this.dialogCaption = dialogCaption;
         this.selected = selected;
         this.docType = docType;
@@ -57,7 +57,7 @@ public class ShowCreateDocumentDialogEvent extends GwtEvent<ShowCreateDocumentDi
                             final String docType,
                             final String initialDocName,
                             final boolean allowNullFolder,
-                            final Consumer<DocRef> newDocConsumer) {
+                            final Consumer<ExplorerNode> newDocConsumer) {
         handlers.fireEvent(
                 new ShowCreateDocumentDialogEvent(
                         dialogCaption,
@@ -105,7 +105,7 @@ public class ShowCreateDocumentDialogEvent extends GwtEvent<ShowCreateDocumentDi
         return allowNullFolder;
     }
 
-    public Consumer<DocRef> getNewDocConsumer() {
+    public Consumer<ExplorerNode> getNewDocConsumer() {
         return newDocConsumer;
     }
 

@@ -29,8 +29,6 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public class FloatField extends AbstractNumericField {
 
-    private static final long serialVersionUID = 1272545271946712570L;
-
     public FloatField(final String name) {
         super(name);
     }
@@ -48,7 +46,7 @@ public class FloatField extends AbstractNumericField {
 
     @JsonIgnore
     @Override
-    public String getType() {
-        return FieldTypes.FLOAT;
+    public FieldType getFieldType() {
+        return FieldType.FLOAT;
     }
 }
