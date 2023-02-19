@@ -255,7 +255,8 @@
     border: 1px solid transparent;
     background-color: transparent;
     color: var(--control__text-color);
-    padding: 6px;
+    padding: 10px;
+    align-items: center;
 }
 
 .curveTabSelector .curveTabSelector-background {
@@ -293,15 +294,15 @@
 }
 
 .curveTabSelector .curveTabSelector-arrows svg {
-    width: 11px;
-    height: 9px;
+    width: 14px;
+    height: 11px;
 }
 
 .curveTabSelector .curveTabSelector-text {
-    font-size: var(--font-size-7);
+    font-size: var(--font-size-11);
     white-space: nowrap;
-    margin-left: 4px;
-    margin-top: 9px;
+    margin-left: 0.25em;
+    margin-top: 1em;
     -moz-user-select: none;
 }
 
