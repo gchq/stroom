@@ -1667,7 +1667,7 @@ button.main-menu svg {
 }
 
 .settingsPresenter .linkTabBar {
-    margin: var(--control__gap--vertical) var(--control__gap--horizontal) 0 var(--control__gap--horizontal);
+    margin-bottom: var(--control__gap--vertical);
 }
 
 .form-group {
