@@ -17,6 +17,7 @@
 .quickFilter {
     display: flex;
 	align-items: center;
+	position: relative;
 }
 
 .quickFilter-container {
@@ -32,23 +33,26 @@
 .quickFilter-textBox {
     width: 100%; /* To allow for info and clear btns */
 	margin: 0;
-	padding-left: 22px;
-	/*border: none !important;*/
+	padding: 0 22px 0 8px;
 	cursor: text;
 }
 
-.quickFilter-clear {
+.quickFilter button {
 	position: absolute;
-	right: 1px;
+	top: 3px;
 }
 
-.quickFilter-infoButton {
-	position: absolute;
-	/*
-	left: 0;
-	top: -1px;
-	top: 0;
-	*/
+.quickFilter button.clear {
+	right: 25px;
+}
+
+.quickFilter button.info {
+	right: 4px;
+}
+
+.quickFilter .svgIcon {
+	width: 18px;
+	height: 18px;
 }
 
 .quickFilter-tooltip {
