@@ -17,8 +17,8 @@
         <form:FormGroup identity="solrIndexSettingsSolrURLs" label="Solr URLs">
             <g:TextArea ui:field="solrUrls" width="400px"/>
         </form:FormGroup>
-        <form:FormGroup identity="solrIndexSettingsUseZK" label="Use ZK">
-            <t:CustomCheckBox ui:field="useZk"/>
+        <form:FormGroup>
+            <t:CustomCheckBox ui:field="useZk" identity="solrIndexSettingsUseZK" label="Use ZK"/>
         </form:FormGroup>
         <form:FormGroup identity="solrIndexSettingsZKHosts" label="ZK Hosts">
             <g:TextArea ui:field="zkHosts" width="400px"/>

@@ -14,19 +14,19 @@
             <valuespinner:ValueSpinner ui:field="decimalPlaces"
                                        addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="formatUseSeparator" identity="formatUseSeparator" label="Use Separator (,)">
-            <v:CustomCheckBox ui:field="separate"/>
+        <form:FormGroup ui:field="formatUseSeparator">
+            <v:CustomCheckBox ui:field="separate" identity="formatUseSeparator" label="Use Separator (,)"/>
         </form:FormGroup>
 
         <!-- Date time settings -->
-        <form:FormGroup ui:field="formatUsePreferences" identity="formatUsePreferences" label="Use Preferences">
-            <v:CustomCheckBox ui:field="usePreferences"/>
+        <form:FormGroup ui:field="formatUsePreferences">
+            <v:CustomCheckBox ui:field="usePreferences" identity="formatUsePreferences" label="Use Preferences"/>
         </form:FormGroup>
         <form:FormGroup ui:field="formatFormat" identity="formatFormat" label="Format">
             <i:StringListBox ui:field="format" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="formatCustom" identity="formatCustom" label="Custom">
-            <v:CustomCheckBox ui:field="custom"/>
+        <form:FormGroup ui:field="formatCustom">
+            <v:CustomCheckBox ui:field="custom" identity="formatCustom" label="Custom"/>
         </form:FormGroup>
         <form:FormGroup ui:field="formatCustomFormat" identity="formatCustomFormat" label="Custom Format">
             <g:TextBox ui:field="text" addStyleNames="w-100"/>
@@ -44,8 +44,8 @@
             </g:FlowPanel>
         </form:FormGroup>
 
-        <form:FormGroup identity="formatWrapText" label="Wrap Text">
-            <v:CustomCheckBox ui:field="wrap"/>
+        <form:FormGroup>
+            <v:CustomCheckBox ui:field="wrap" identity="formatWrapText" label="Wrap Text"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

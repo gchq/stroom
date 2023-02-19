@@ -14,8 +14,8 @@
         <form:FormGroup ui:field="valueContainer" identity="xPathFilterValue" label="Value">
             <g:TextBox ui:field="value" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="ignoreCaseContainer" identity="xPathFilterIgnoreCase" label="Ignore Case">
-            <v:CustomCheckBox ui:field="ignoreCase"/>
+        <form:FormGroup ui:field="ignoreCaseContainer">
+            <v:CustomCheckBox ui:field="ignoreCase" identity="xPathFilterIgnoreCase" label="Ignore Case"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

@@ -8,8 +8,8 @@
         <form:FormGroup identity="searchDownloadFileType" label="File Type">
             <list:ItemListBox ui:field="fileType"/>
         </form:FormGroup>
-        <form:FormGroup identity="searchDownloadSampleOnly" label="Sample Only">
-            <view:CustomCheckBox ui:field="sample"/>
+        <form:FormGroup>
+            <view:CustomCheckBox ui:field="sample" identity="searchDownloadSampleOnly" label="Sample Only"/>
         </form:FormGroup>
         <form:FormGroup identity="searchDownloadSampleSize" label="Sample Size (%)">
             <v:ValueSpinner ui:field="percent"/>
