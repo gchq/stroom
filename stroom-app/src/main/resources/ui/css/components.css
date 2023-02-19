@@ -1585,18 +1585,11 @@ button.main-menu svg {
 }
 
 .navigation-header-button {
-}
-
-.navigation-header-button-add {
     color: rgba(255,255,255,.8);
 }
 
-.navigation-header-button-delete {
-    color: rgba(255,255,255,.8);
-}
-
-.navigation-header-button-filter {
-    color: rgba(255,255,255,.8);
+.navigation-header-button > .inline-svg-button {
+    overflow: visible;
 }
 
 /*

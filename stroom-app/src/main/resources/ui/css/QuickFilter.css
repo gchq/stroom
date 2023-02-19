@@ -39,7 +39,6 @@
 
 .quickFilter button {
 	position: absolute;
-	top: 3px;
 }
 
 .quickFilter button.clear {

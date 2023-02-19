@@ -105,19 +105,19 @@ public class NavigationPresenter
 
         add = new InlineSvgButton();
         add.setSvg(SvgImages.MONO_ADD);
-        add.getElement().addClassName("navigation-header-button navigation-header-button-add");
+        add.getElement().addClassName("navigation-header-button add");
         add.setTitle("New");
         add.setEnabled(false);
 
         delete = new InlineSvgButton();
         delete.setSvg(SvgImages.MONO_DELETE);
-        delete.getElement().addClassName("navigation-header-button navigation-header-button-delete");
+        delete.getElement().addClassName("navigation-header-button delete");
         delete.setTitle("Delete");
         delete.setEnabled(false);
 
         filter = new InlineSvgButton();
         filter.setSvg(SvgImages.MONO_FILTER);
-        filter.getElement().addClassName("navigation-header-button navigation-header-button-filter");
+        filter.getElement().addClassName("navigation-header-button filter");
         filter.setTitle("Filter");
         filter.setEnabled(true);
 
