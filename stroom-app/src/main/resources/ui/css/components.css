@@ -235,11 +235,12 @@
     cursor: pointer;
     margin: 0px 6px 0 4px;
     z-index: 0;
-    color: #aaa;
+    color: var(--curve-tab__svg-color);
+    opacity: 0.8;
 }
 
 .curveTab .curveTab-closeActive svg {
-    color: #fff;
+    opacity: 1;
 }
 
 .curveTabSelector {
@@ -1403,20 +1404,14 @@
 }
 
 .navigation-logo {
-    display: flex;
     flex-grow: 1;
-    padding: 2px;
-    margin: 2px;
+    padding: 6px 0 2px 0;
     background-color: transparent;
     color: white;
 }
 
 .navigation-menu-content {
-    display: flex;
-    justify-content: space-between;
-    align-content: space-between;
-    align-items: center;
-    flex-grow: 1;
+
 }
 
 .navigation-logo-image svg {

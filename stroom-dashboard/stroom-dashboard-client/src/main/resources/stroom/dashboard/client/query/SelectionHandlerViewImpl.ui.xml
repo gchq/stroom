@@ -8,8 +8,8 @@
         <form:FormGroup addStyleNames="dock-min" identity="selectionHandlerComponent" label="Component">
             <i:ItemListBox ui:field="component" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup addStyleNames="dock-min" identity="selectionHandlerEnabled" label="Enabled">
-            <tickbox:CustomCheckBox ui:field="enabled"/>
+        <form:FormGroup addStyleNames="dock-min">
+            <tickbox:CustomCheckBox ui:field="enabled" identity="selectionHandlerEnabled" label="Enabled"/>
         </form:FormGroup>
         <form:FormGroup addStyleNames="dock-max" identity="selectionHandlerExpression"
                         label="Additional Query Expression">

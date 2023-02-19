@@ -37,8 +37,8 @@
     --tooltip__text-color: #fff;
 
     --button__background-image: none;
-    --button__background-color: #262a32;
-    --button__border-color: #14161b;
+    --button__background-color: #333436;
+    --button__border-color: #000;
     --button__text-color: #f1f8f8;
     --button__background-image--active: none;
     --button__background-color--active: #262a32;
@@ -101,13 +101,19 @@
     --page__background-color: #1a1d21;
     --page__text-color: #cacbcb;
 
+    /* Explorer */
+    --curve-tab__svg-color: #fff;
+
     /* Controls */
-    --control__background-color: #1c1f25;
-    --control__background-color--disabled: transparent;
-    --control__border-color: #4d5250;
+    --control__background-color: #24282f;
+    --control__background-color--disabled: rgba(255, 255, 255, 0.1);
+    --control__border-color: #444444;
     --control__border-color--disabled: transparent;
     --control__text-color: #cacbcb;
     --control__text-color--disabled: #666;
+
+    /* Form Group */
+    --form-group__label-color: #eee;
 
     /* Dashboard */
     --dashboard-panel__background-color: #22252c;

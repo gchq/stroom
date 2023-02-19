@@ -9,14 +9,14 @@
         <form:FormGroup identity="processChoicePriority" label="Priority of new filters (unless auto)">
             <v:ValueSpinner ui:field="priority"/>
         </form:FormGroup>
-        <form:FormGroup identity="processChoiceAuto" label="Attempt to automatically set priority">
-            <tickbox:CustomCheckBox ui:field="autoPriority"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="autoPriority" identity="processChoiceAuto" label="Attempt to automatically set priority"/>
         </form:FormGroup>
-        <form:FormGroup identity="processChoiceReprocess" label="Reprocess data">
-            <tickbox:CustomCheckBox ui:field="reprocess"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="reprocess" identity="processChoiceReprocess" label="Reprocess data"/>
         </form:FormGroup>
-        <form:FormGroup identity="processChoiceEnable" label="Enable new filters">
-            <tickbox:CustomCheckBox ui:field="enabled"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="enabled" identity="processChoiceEnable" label="Enable new filters"/>
         </form:FormGroup>
         <form:FormGroup identity="processChoiceMinCreateTime" label="Min Create Time">
             <c:MyDateBox ui:field="minMetaCreateTimeMs"/>

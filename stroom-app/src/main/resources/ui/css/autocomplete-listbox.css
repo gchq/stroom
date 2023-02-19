@@ -1,6 +1,6 @@
 .gwt-TextBox.autocompleteTextBox {
     background-image: url('../images/drop-down.svg');
-    cursor: default;
+    cursor: pointer;
     background-size: 12px;
     background-origin: content-box;
     background-repeat: no-repeat;

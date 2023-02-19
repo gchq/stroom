@@ -31,8 +31,8 @@
         <form:FormGroup identity="userPreferencesDateFormat" label="Date and Time Format">
             <item:StringListBox ui:field="format" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="userPreferencesCustom" label="Custom">
-            <tickbox:CustomCheckBox ui:field="custom"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="custom" identity="userPreferencesCustom" label="Custom"/>
         </form:FormGroup>
         <form:FormGroup identity="userPreferencesCustomFormat" label="Custom Format">
             <g:TextBox ui:field="text" addStyleNames="w-100"/>

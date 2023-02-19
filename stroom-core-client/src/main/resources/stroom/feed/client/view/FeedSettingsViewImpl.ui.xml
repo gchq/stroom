@@ -11,8 +11,8 @@
         <form:FormGroup identity="feedSettingsClassification" label="Classification">
             <g:TextBox ui:field="classification" width="400px"/>
         </form:FormGroup>
-        <form:FormGroup identity="feedSettingsReferenceFeed" label="Reference Feed">
-            <tickbox:CustomCheckBox ui:field="reference"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="reference" identity="feedSettingsReferenceFeed" label="Reference Feed"/>
         </form:FormGroup>
         <form:FormGroup identity="feedSettingsFeedStatus" label="Feed Status">
             <l:ItemListBox ui:field="feedStatus"/>

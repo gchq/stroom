@@ -16,8 +16,8 @@
             <g:TextArea ui:field="defaultValue"
                         addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="globalPropertyEditSetDatabasevalue" label="Set Database value">
-            <tickbox:CustomCheckBox ui:field="useOverride"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="useOverride" identity="globalPropertyEditSetDatabasevalue" label="Set Database value"/>
         </form:FormGroup>
         <form:FormGroup identity="globalPropertyEditDatabaseValue" label="Database Value">
             <g:FlowPanel>
@@ -50,14 +50,14 @@
         <form:FormGroup identity="globalPropertyEditSource" label="Source">
             <g:Label ui:field="source" addStyleNames="globalProperties w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="globalPropertyEditRequiresUIRefresh" label="Requires UI Refresh">
-            <tickbox:CustomCheckBox ui:field="requireUiRestart"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="requireUiRestart" identity="globalPropertyEditRequiresUIRefresh" label="Requires UI Refresh"/>
         </form:FormGroup>
-        <form:FormGroup identity="globalPropertyEditRequiresRestart" label="Requires Restart">
-            <tickbox:CustomCheckBox ui:field="requireRestart"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="requireRestart" identity="globalPropertyEditRequiresRestart" label="Requires Restart"/>
         </form:FormGroup>
-        <form:FormGroup identity="globalPropertyEditReadOnly" label="Read Only">
-            <tickbox:CustomCheckBox ui:field="readOnly"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="readOnly" identity="globalPropertyEditReadOnly" label="Read Only"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

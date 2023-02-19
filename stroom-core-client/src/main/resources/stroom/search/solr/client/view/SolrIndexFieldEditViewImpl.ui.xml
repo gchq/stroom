@@ -17,50 +17,50 @@
         <form:FormGroup identity="solrIndexDefaultValue" label="Default Value">
             <g:TextBox ui:field="defaultValue" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="solrIndexStored" label="Stored">
-            <tickbox:CustomCheckBox ui:field="stored"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="stored" identity="solrIndexStored" label="Stored"/>
         </form:FormGroup>
-        <form:FormGroup identity="solrIndexIndexed" label="Indexed">
-            <tickbox:CustomCheckBox ui:field="indexed"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="indexed" identity="solrIndexIndexed" label="Indexed"/>
         </form:FormGroup>
-        <form:FormGroup identity="solrIndexUninvertible" label="Uninvertible">
-            <tickbox:CustomCheckBox ui:field="uninvertible"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="uninvertible" identity="solrIndexUninvertible" label="Uninvertible"/>
         </form:FormGroup>
-        <form:FormGroup identity="solrIndexDocValues" label="Doc Values">
-            <tickbox:CustomCheckBox ui:field="docValues"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="docValues" identity="solrIndexDocValues" label="Doc Values"/>
         </form:FormGroup>
-        <form:FormGroup identity="solrIndexMultiValued" label="Multi Valued">
-            <tickbox:CustomCheckBox ui:field="multiValued"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="multiValued" identity="solrIndexMultiValued" label="Multi Valued"/>
         </form:FormGroup>
-        <form:FormGroup identity="solrIndexRequired" label="Required">
-            <tickbox:CustomCheckBox ui:field="required"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="required" identity="solrIndexRequired" label="Required"/>
         </form:FormGroup>
-        <form:FormGroup identity="solrIndexOmitNorms" label="Omit Norms">
-            <tickbox:CustomCheckBox ui:field="omitNorms"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="omitNorms" identity="solrIndexOmitNorms" label="Omit Norms"/>
         </form:FormGroup>
-        <form:FormGroup identity="solrIndexOmitPositions" label="Omit Positions">
-            <tickbox:CustomCheckBox ui:field="omitPositions"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="omitPositions" identity="solrIndexOmitPositions" label="Omit Positions"/>
         </form:FormGroup>
-        <form:FormGroup identity="solrIndexOmitTermFreqAndPositions" label="Omit Term Freq And Positions">
-            <tickbox:CustomCheckBox ui:field="omitTermFreqAndPositions"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="omitTermFreqAndPositions" identity="solrIndexOmitTermFreqAndPositions" label="Omit Term Freq And Positions"/>
         </form:FormGroup>
-        <form:FormGroup identity="solrIndexTermVectors" label="Term Vectors">
-            <tickbox:CustomCheckBox ui:field="termVectors"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="termVectors" identity="solrIndexTermVectors" label="Term Vectors"/>
         </form:FormGroup>
-        <form:FormGroup identity="solrIndexTermPositions" label="Term Positions">
-            <tickbox:CustomCheckBox ui:field="termPositions"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="termPositions" identity="solrIndexTermPositions" label="Term Positions"/>
         </form:FormGroup>
-        <form:FormGroup identity="solrIndexTermOffsets" label="Term Offsets">
-            <tickbox:CustomCheckBox ui:field="termOffsets"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="termOffsets" identity="solrIndexTermOffsets" label="Term Offsets"/>
         </form:FormGroup>
-        <form:FormGroup identity="solrIndexTermPayloads" label="Term Payloads">
-            <tickbox:CustomCheckBox ui:field="termPayloads"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="termPayloads" identity="solrIndexTermPayloads" label="Term Payloads"/>
         </form:FormGroup>
-        <form:FormGroup identity="solrIndexSortMissingFirst" label="Sort Missing First">
-            <tickbox:CustomCheckBox ui:field="sortMissingFirst"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="sortMissingFirst" identity="solrIndexSortMissingFirst" label="Sort Missing First"/>
         </form:FormGroup>
-        <form:FormGroup identity="solrIndexSortMissingLast" label="Sort Missing Last">
-            <tickbox:CustomCheckBox ui:field="sortMissingLast"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="sortMissingLast" identity="solrIndexSortMissingLast" label="Sort Missing Last"/>
         </form:FormGroup>
 
         <g:HTML ui:field="synchState" styleName="dock-min"></g:HTML>

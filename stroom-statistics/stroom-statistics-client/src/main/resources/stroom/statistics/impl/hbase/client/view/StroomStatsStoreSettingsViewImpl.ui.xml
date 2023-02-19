@@ -17,8 +17,8 @@
         <form:FormGroup identity="statsSettingsRollUpType" label="Roll Up Type">
             <l:ItemListBox ui:field="rollUpType"/>
         </form:FormGroup>
-        <form:FormGroup identity="statsSettingsEnabled" label="Enabled">
-            <tickbox:CustomCheckBox ui:field="enabled"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="enabled" identity="statsSettingsEnabled" label="Enabled"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

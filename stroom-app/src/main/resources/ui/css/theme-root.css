@@ -17,7 +17,7 @@
     --focus-border--secondary: var(--pink-500);
     --focus-shadow--secondary: inset 0 1px 1px rgba(var(--black-rgb), .075), 0 0 8px rgba(var(--pink-500-rgb), .6); /* pink-500*/
 
-    --text-color: #000;
+    --text-color: #151515;
     --text-color--disabled: #666;
     --border-color: transparent; /*#c5cde2;*/
 
@@ -101,13 +101,19 @@
     --page__background-color: #fff;
     --page__text-color: rgba(0, 0, 0, 0.8);
 
+    /* Explorer */
+    --curve-tab__svg-color: #555;
+
     /* Controls */
     --control__background-color: #fff;
-    --control__background-color--disabled: transparent;
-    --control__border-color: rgba(0, 0, 0, 0.1);
+    --control__background-color--disabled: rgba(0, 0, 0, 0.1);
+    --control__border-color: rgba(0, 0, 0, 0.2);
     --control__border-color--disabled: transparent;
     --control__text-color: rgba(0, 0, 0, 0.8);
     --control__text-color--disabled: #666;
+
+    /* Form Group */
+    --form-group__label-color: #000;
 
     /* Dashboard */
     --dashboard-panel__background-color: rgba(0, 0, 0, 0.025);
