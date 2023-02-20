@@ -179,31 +179,36 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
             final CompletableFuture<?>[] futures = new CompletableFuture[threadCount];
             for (int i = 0; i < threadCount; i++) {
                 futures[i] = CompletableFuture.runAsync(() -> {
-                    final int remaining = tasksToCreatePerFilter - totalTasksCreated.intValue();
-                    final ProcessorFilter filter = filterQueue.poll();
-                    while (remaining > 0 && filter != null && !Thread.currentThread().isInterrupted()) {
-                        try {
-                            // Set the current user to be the one who created the filter so that only streams that the
-                            // user has access to are processed.
-                            securityContext.asUser(securityContext.createIdentity(filter.getCreateUser()), () ->
-                                    taskContextFactory.childContext(parentTaskContext,
-                                            "Create Tasks",
-                                            taskContext -> {
-                                                final int count = filterCount.incrementAndGet();
-                                                parentTaskContext.info(() -> "Creating tasks for " +
-                                                        count +
-                                                        " of " +
-                                                        filters.size() +
-                                                        " filters");
-                                                createTasksForFilter(
-                                                        taskContext,
-                                                        filter,
-                                                        progressMonitor,
-                                                        remaining,
-                                                        totalTasksCreated);
-                                            }).run());
-                        } catch (final RuntimeException e) {
-                            LOGGER.error(e::getMessage, e);
+                    boolean run = true;
+                    while (run) {
+                        final int remaining = tasksToCreatePerFilter - totalTasksCreated.intValue();
+                        final ProcessorFilter filter = filterQueue.poll();
+                        if (remaining > 0 && filter != null && !Thread.currentThread().isInterrupted()) {
+                            try {
+                                // Set the current user to be the one who created the filter so that only streams that
+                                // the user has access to are processed.
+                                securityContext.asUser(securityContext.createIdentity(filter.getCreateUser()), () ->
+                                        taskContextFactory.childContext(parentTaskContext,
+                                                "Create Tasks",
+                                                taskContext -> {
+                                                    final int count = filterCount.incrementAndGet();
+                                                    parentTaskContext.info(() -> "Creating tasks for " +
+                                                            count +
+                                                            " of " +
+                                                            filters.size() +
+                                                            " filters");
+                                                    createTasksForFilter(
+                                                            taskContext,
+                                                            filter,
+                                                            progressMonitor,
+                                                            remaining,
+                                                            totalTasksCreated);
+                                                }).run());
+                            } catch (final RuntimeException e) {
+                                LOGGER.error(e::getMessage, e);
+                            }
+                        } else {
+                            run = false;
                         }
                     }
                 }, executor);

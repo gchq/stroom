@@ -19,17 +19,17 @@ package stroom.job.impl;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.job.api.DistributedTask;
 import stroom.job.api.DistributedTaskFactory;
-import stroom.job.shared.Job;
-import stroom.job.shared.JobNode;
-import stroom.job.shared.JobNode.JobType;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.concurrent.ThreadUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -38,6 +38,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -52,8 +53,7 @@ import javax.inject.Singleton;
 @Singleton
 class DistributedTaskFetcher {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DistributedTaskFetcher.class);
-    private static final long ONE_MINUTE = 60 * 1000;
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DistributedTaskFetcher.class);
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
     private final AtomicBoolean stopping = new AtomicBoolean();
@@ -66,9 +66,10 @@ class DistributedTaskFetcher {
     private final DistributedTaskFactoryRegistry distributedTaskFactoryRegistry;
     private final TargetNodeSetFactory targetNodeSetFactory;
 
-    private long lastFetch;
+    private volatile Instant lastFetch = Instant.ofEpochMilli(0);
     private final ReentrantLock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
+    private final AtomicBoolean needsTasks = new AtomicBoolean();
     private final AtomicBoolean running = new AtomicBoolean();
 
     @Inject
@@ -96,7 +97,7 @@ class DistributedTaskFetcher {
             Thread.sleep(1000);
 
         } catch (final InterruptedException e) {
-            LOGGER.debug(e.getMessage(), e);
+            LOGGER.debug(e::getMessage, e);
 
             // Continue to interrupt this thread.
             Thread.currentThread().interrupt();
@@ -123,31 +124,42 @@ class DistributedTaskFetcher {
             securityContext.asProcessingUser(() -> {
                 try {
                     while (!stopping.get()) {
-                        lock.lockInterruptibly();
-                        try {
-                            final int executingTaskCount =
-                                    taskContextFactory.contextResult("Fetch Tasks", taskContext -> {
-                                        try {
-                                            return doFetch(taskContext);
-                                        } catch (final RuntimeException e) {
-                                            LOGGER.error(e.getMessage(), e);
-                                        }
-                                        return 0;
-                                    }).get();
+                        needsTasks.set(false);
+                        final int executingTaskCount =
+                                taskContextFactory.contextResult("Fetch Tasks", taskContext -> {
+                                    try {
+                                        return doFetch(taskContext);
+                                    } catch (final RuntimeException e) {
+                                        LOGGER.error(e.getMessage(), e);
+                                    }
+                                    return 0;
+                                }).get();
 
-                            if (executingTaskCount == 0) {
-                                // Wait a second before trying to get more tasks.
-                                Thread.sleep(1000);
-                            } else {
-                                // Just wait until a task completes.
-                                condition.await();
+                        // If we didn't get any tasks then wait a second.
+                        if (executingTaskCount == 0) {
+                            ThreadUtil.sleep(1000);
+                        }
+
+                        // If we don't need more tasks right now then lock and await.
+                        if (!needsTasks.get()) {
+                            lock.lockInterruptibly();
+                            try {
+                                // Check that we still don't need tasks since locking.
+                                if (!needsTasks.get()) {
+                                    // Wait up to 10 seconds for a task to complete.
+                                    if (condition.await(10, TimeUnit.SECONDS)) {
+                                        LOGGER.trace("fetch woken up");
+                                    } else {
+                                        LOGGER.trace("fetch await timeout");
+                                    }
+                                }
+                            } finally {
+                                lock.unlock();
                             }
-                        } finally {
-                            lock.unlock();
                         }
                     }
                 } catch (final InterruptedException e) {
-                    LOGGER.debug(e.getMessage(), e);
+                    LOGGER.debug(e::getMessage, e);
                     Thread.currentThread().interrupt();
                 }
             });
@@ -167,9 +179,8 @@ class DistributedTaskFetcher {
         // required to distribute tasks. If it did not get a call every
         // minute it might try and release cached tasks back to the database
         // event though this doesn't happen in the current implementation.
-        final long now = System.currentTimeMillis();
-        final long elapsed = now - lastFetch;
-        final boolean forceFetch = elapsed > ONE_MINUTE;
+        final Instant now = Instant.now();
+        final boolean forceFetch = now.isAfter(lastFetch.plus(1, ChronoUnit.MINUTES));
 
         // Get the trackers.
         final JobNodeTrackerCache.Trackers trackers = jobNodeTrackerCache.getTrackers();
@@ -177,14 +188,8 @@ class DistributedTaskFetcher {
         // Get this node.
         final String nodeName = jobNodeTrackerCache.getNodeName();
 
-        // Create an array of runnable jobs sorted into priority order.
-        final DistributedRequiredTask[] requiredTasks = getDistributedRequiredTasks(trackers);
-
         // Find out how many tasks we need in total.
-        int count = 0;
-        for (final DistributedRequiredTask requiredTask : requiredTasks) {
-            count += requiredTask.getRequiredTaskCount();
-        }
+        final int count = getRequiredTaskCount(trackers);
 
         // If there are some tasks we need to get then get them.
         if (count > 0 || forceFetch) {
@@ -195,14 +200,11 @@ class DistributedTaskFetcher {
                     final String jobName = entry.getKey();
                     final DistributedTaskFactory distributedTaskFactory = entry.getValue();
 
-                    if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("Task request: node=\"" + nodeName + "\"");
-                        if (LOGGER.isTraceEnabled()) {
-                            final String trace = "\nTask request: node=\"" + nodeName + "\"\n"
-                                    + distributedTaskFactory;
-                            LOGGER.trace(trace);
-                        }
-                    }
+                    LOGGER.debug(() -> LogUtil.message("Task request: node=\"{}\"",
+                            nodeName));
+                    LOGGER.trace(() -> LogUtil.message("\nTask request: node=\"{}\"\n{}",
+                            nodeName,
+                            distributedTaskFactory));
 
                     final List<DistributedTask> tasks = distributedTaskFactory.fetch(
                             nodeName,
@@ -223,14 +225,8 @@ class DistributedTaskFetcher {
             final String jobName,
             final List<DistributedTask> tasks) {
         try {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Task response: node=\"" + nodeName + "\"");
-                if (LOGGER.isTraceEnabled()) {
-                    final String trace = "\nTask response: node=\"" + nodeName + "\"\n"
-                            + tasks;
-                    LOGGER.trace(trace);
-                }
-            }
+            LOGGER.debug(() -> LogUtil.message("Task response: node=\"{}\"", nodeName));
+            LOGGER.trace(() -> LogUtil.message("\nTask response: node=\"{}\"\n{}", nodeName, tasks));
 
             // Get the current time to record execution.
             final long now = System.currentTimeMillis();
@@ -264,7 +260,7 @@ class DistributedTaskFetcher {
                 });
             }
         } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.error(e::getMessage, e);
         }
     }
 
@@ -272,54 +268,24 @@ class DistributedTaskFetcher {
         try {
             lock.lockInterruptibly();
             try {
+                needsTasks.set(true);
                 condition.signal();
             } finally {
                 lock.unlock();
             }
         } catch (final InterruptedException e) {
-            LOGGER.debug(e.getMessage(), e);
+            LOGGER.debug(e::getMessage, e);
             Thread.currentThread().interrupt();
         }
     }
 
-    /**
-     * Creates an array of runnable jobs sorted into priority order.
-     */
-    private DistributedRequiredTask[] getDistributedRequiredTasks(final JobNodeTrackerCache.Trackers trackers) {
-        final Collection<JobNodeTracker> trackerList = trackers.getTrackerList();
-
-        // Create a shortlist of runnable jobs.
-        DistributedRequiredTask[] requiredTasks = new DistributedRequiredTask[trackerList.size()];
-        int length = 0;
-
+    private int getRequiredTaskCount(final JobNodeTrackerCache.Trackers trackers) {
+        int totalRequiredTasks = 0;
+        final Collection<JobNodeTracker> trackerList = trackers.getDistributedJobNodeTrackers();
         for (final JobNodeTracker tracker : trackerList) {
-            final JobNode jobNode = tracker.getJobNode();
-            final Job job = jobNode.getJob();
-
-            if (JobType.DISTRIBUTED.equals(jobNode.getJobType())) {
-                // Update the number of tasks that are still required by this
-                // tracker.
-                final int requiredTaskCount = jobNode.getTaskLimit() - tracker.getCurrentTaskCount();
-
-                // The job and job node must be enabled in order for us to
-                // request tasks. If they are then we still want to request
-                // tasks even if the number of tasks required is 0 (or less...).
-                // This is to ensure that the job cache on the distributor keeps
-                // tasks cached even though we aren't actually requesting any at
-                // this time.
-                if (job.isEnabled() && jobNode.isEnabled()) {
-                    // Store the task request.
-                    requiredTasks[length++] = new DistributedRequiredTask(jobNode.getJob().getName(),
-                            requiredTaskCount);
-                }
-            }
+            final int requiredTaskCount = tracker.getJobNode().getTaskLimit() - tracker.getCurrentTaskCount();
+            totalRequiredTasks += requiredTaskCount;
         }
-
-        // Trim the array.
-        final DistributedRequiredTask[] tmp = new DistributedRequiredTask[length];
-        System.arraycopy(requiredTasks, 0, tmp, 0, length);
-        requiredTasks = tmp;
-
-        return requiredTasks;
+        return totalRequiredTasks;
     }
 }
