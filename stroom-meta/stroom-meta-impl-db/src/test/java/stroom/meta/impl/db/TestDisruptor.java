@@ -1,6 +1,7 @@
 package stroom.meta.impl.db;
 
 import stroom.util.concurrent.ThreadUtil;
+import stroom.util.exception.ThrowingRunnable;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -31,6 +32,7 @@ import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -43,6 +45,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class TestDisruptor {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestDisruptor.class);
@@ -50,10 +54,10 @@ public class TestDisruptor {
     //    private static final int RING_SIZE = 2_048;
     private static final int BATCH_SIZE = 1_000;
     private static final int RING_SIZE = nearestPowerOfTwo(BATCH_SIZE * 2);
-    private static final int EVENTS_PER_THREAD = 5_000;
-    private static final int PRODUCER_THREADS = 10;
+    private static final int EVENTS_PER_THREAD = 2_000;
+    private static final int PRODUCER_THREADS = 20;
     private static final Duration MAX_BATCH_AGE = Duration.ofSeconds(1);
-    private static final String WAIT_STRATEGY_NAME = "com.lmax.disruptor.BusySpinWaitStrategy";
+    private static final String WAIT_STRATEGY_NAME = "com.lmax.disruptor.BlockingWaitStrategy";
 
     final LongAdder longAdder = new LongAdder();
     final List<LongAdder> producerCounts = new ArrayList<>();
@@ -86,6 +90,8 @@ public class TestDisruptor {
 
         final ExecutorService executorService = Executors.newFixedThreadPool(PRODUCER_THREADS);
 
+        final CountDownLatch countDownLatch = new CountDownLatch(PRODUCER_THREADS);
+
         final List<CompletableFuture<Void>> futures = IntStream.rangeClosed(1, PRODUCER_THREADS)
                 .boxed()
                 .map(i -> {
@@ -93,6 +99,8 @@ public class TestDisruptor {
                     return CompletableFuture.runAsync(() -> {
                         final LongAdder producerCount = new LongAdder();
                         producerCounts.add(producerCount);
+                        countDownLatch.countDown();
+                        ThrowingRunnable.unchecked(countDownLatch::await);
                         for (int eventCount = 0; eventCount < EVENTS_PER_THREAD; eventCount++) {
                             final DurationTimer durationTimer = DurationTimer.start();
 //                            long sequenceId = ringBuffer.next();
@@ -122,11 +130,18 @@ public class TestDisruptor {
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[]{}))
                 .get();
 
+        LOGGER.info("Waiting for disruptor to shutdown");
+        final Duration shutdownTime = DurationTimer.measure(() -> disruptor.shutdown());
+        LOGGER.info("Disruptor shutdown in {}", shutdownTime);
+
+        final long totalProducerCount = producerCounts.stream()
+                .mapToLong(LongAdder::sum)
+                .sum();
         LOGGER.info("produced: {}, consumed: {}",
-                producerCounts.stream()
-                        .mapToLong(LongAdder::sum)
-                        .sum(),
-                consumer.getConsumedCount());
+                totalProducerCount,
+                consumer.getConsumedCount().sum());
+        assertThat(totalProducerCount)
+                .isEqualTo(consumer.getConsumedCount().sum());
     }
 
 
@@ -152,7 +167,9 @@ public class TestDisruptor {
         final String strategyName = WAIT_STRATEGY_NAME;
         try {
             final Class<?> clazz = Class.forName(strategyName);
-            return (WaitStrategy) clazz.getConstructor().newInstance();
+            final WaitStrategy waitStrategy = (WaitStrategy) clazz.getConstructor().newInstance();
+            LOGGER.info("Using waitStrategy: {}", waitStrategy.getClass());
+            return waitStrategy;
         } catch (Exception e) {
             LOGGER.error("Error finding", e);
             return Objects.requireNonNull(
@@ -168,7 +185,6 @@ public class TestDisruptor {
     public static class ValueHolder implements Clearable {
 
         private Integer value;
-//        public static final EventFactory<ValueEvent> EVENT_FACTORY = ValueEvent::new;
 
         public void setValue(final int value) {
             this.value = value;

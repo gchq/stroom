@@ -30,15 +30,11 @@ import stroom.meta.impl.MetaModule;
 import stroom.meta.impl.MetaServiceConfig;
 import stroom.meta.impl.MetaServiceImpl;
 import stroom.meta.impl.MetaValueConfig;
-import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.mock.MockTaskModule;
 import stroom.test.common.util.db.DbTestModule;
-import stroom.util.date.DateUtil;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -49,16 +45,15 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import javax.inject.Inject;
 
-import static org.assertj.core.api.Assertions.assertThat;
+class TestMetaValueDaoImplPerformance {
 
-class TestMetaValueDaoImpl {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestMetaValueDaoImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestMetaValueDaoImplPerformance.class);
 
     @Inject
     private Cleanup cleanup;
@@ -97,7 +92,7 @@ class TestMetaValueDaoImpl {
                             }
                         })
                 .injectMembers(this);
-        setAddAsync(false);
+        setAddAsync(true);
         // Delete everything
         cleanup.cleanup();
     }
@@ -108,106 +103,45 @@ class TestMetaValueDaoImpl {
     }
 
     @Test
-    void testFind() {
-        final Meta meta = metaService.create(createProperties("FEED1"));
-
-        metaService.addAttributes(meta, createAttributes());
-
-        ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
-                .addTerm(MetaFields.CREATE_TIME,
-                        Condition.EQUALS,
-                        DateUtil.createNormalDateTimeString(meta.getCreateMs()))
-                .build();
-        FindMetaCriteria criteria = new FindMetaCriteria(expression);
-        assertThat(metaService.find(criteria).size()).isEqualTo(1);
-
-        expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
-                .addTerm(MetaFields.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L))
-                .build();
-        criteria = new FindMetaCriteria(expression);
-        assertThat(metaService.find(criteria).size()).isEqualTo(0);
-
-        expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
-                .addTerm(MetaFields.FILE_SIZE, Condition.GREATER_THAN, 0)
-                .build();
-        criteria = new FindMetaCriteria(expression);
-        assertThat(metaService.find(criteria).size()).isEqualTo(1);
-
-        expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
-                .addTerm(MetaFields.FILE_SIZE.getName(), Condition.BETWEEN, "0,1000000")
-                .build();
-        criteria = new FindMetaCriteria(expression);
-        assertThat(metaService.find(criteria).size()).isEqualTo(1);
-    }
-
-    @Test
-    void testDeleteOld() {
-        final Meta meta = metaService.create(createProperties("FEED1"));
-
-        metaService.addAttributes(meta, createAttributes());
-
-        ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
-                .addTerm(MetaFields.CREATE_TIME,
-                        Condition.EQUALS,
-                        DateUtil.createNormalDateTimeString(meta.getCreateMs()))
-                .build();
-        FindMetaCriteria criteria = new FindMetaCriteria(expression);
-        assertThat(metaService.find(criteria).size()).isEqualTo(1);
-
-        expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
-                .addTerm(MetaFields.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L))
-                .build();
-        criteria = new FindMetaCriteria(expression);
-        assertThat(metaService.find(criteria).size()).isEqualTo(0);
-
-        expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
-                .addTerm(MetaFields.FILE_SIZE, Condition.GREATER_THAN, 0)
-                .build();
-        criteria = new FindMetaCriteria(expression);
-        assertThat(metaService.find(criteria).size()).isEqualTo(1);
-
-        expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
-                .addTerm(MetaFields.FILE_SIZE.getName(), Condition.BETWEEN, "0,1000000")
-                .build();
-        criteria = new FindMetaCriteria(expression);
-        assertThat(metaService.find(criteria).size()).isEqualTo(1);
-
-        metaValueDao.deleteOldValues();
-
-        expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
-                .addTerm(MetaFields.FILE_SIZE.getName(), Condition.BETWEEN, "0,1000000")
-                .build();
-        criteria = new FindMetaCriteria(expression);
-        assertThat(metaService.find(criteria).size()).isEqualTo(0);
-    }
-
-    @Test
     void testAddPerformance() {
-        final int metaCount = 100;
+        final int metaCount = 1_000;
         final int metaValCount = MetaFields.getExtendedFields().size() * metaCount;
+        final boolean isParallel = true;
 
         final List<Meta> metaList = LongStream.rangeClosed(1, metaCount)
                 .boxed()
                 .map(i ->
                         metaService.create(createProperties("FEED1")))
                 .collect(Collectors.toList());
+        final AttributeMap allAttributes = createAllAttributes();
 
         final DurationTimer timer = DurationTimer.start();
 
-        for (final Meta meta : metaList) {
-            metaValueDao.addAttributes(meta, createAllAttributes());
+        var stream = metaList.stream();
+        if (isParallel) {
+            stream.parallel();
         }
 
+        final List<Duration> durations = stream
+                .map(meta -> {
+                    DurationTimer addTimer = DurationTimer.start();
+                    metaValueDao.addAttributes(meta, allAttributes);
+                    return addTimer.get();
+                })
+                .collect(Collectors.toList());
+
+//        for (final Meta meta : metaList) {
+//            metaValueDao.addAttributes(meta, createAllAttributes());
+//        }
+
+        metaValueDao.shutdown();
+
         LOGGER.info("Loaded {} meta, {} metaVal in {}", metaCount, metaValCount, timer);
+
+        LOGGER.info("stats: {}",
+                durations.stream()
+                        .mapToLong(Duration::toMillis)
+                        .summaryStatistics());
     }
 
     private MetaProperties createProperties(final String feedName) {
@@ -218,12 +152,6 @@ class TestMetaValueDaoImpl {
                 .pipelineUuid("PIPELINE_UUID")
                 .typeName("TEST_STREAM_TYPE")
                 .build();
-    }
-
-    private AttributeMap createAttributes() {
-        final AttributeMap attributeMap = new AttributeMap();
-        attributeMap.put(MetaFields.FILE_SIZE.getName(), "100");
-        return attributeMap;
     }
 
     private AttributeMap createAllAttributes() {

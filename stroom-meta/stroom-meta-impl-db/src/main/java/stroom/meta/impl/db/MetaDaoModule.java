@@ -42,16 +42,16 @@ public class MetaDaoModule extends AbstractModule {
                 .addBinding(MetaFeedDaoImpl.class);
 
         LifecycleBinder.create(binder())
-                .bindShutdownTaskTo(MetaValueServiceFlush.class);
+                .bindShutdownTaskTo(MetaValueDaoShutdown.class);
 
 
     }
 
-    private static class MetaValueServiceFlush extends RunnableWrapper {
+    private static class MetaValueDaoShutdown extends RunnableWrapper {
 
         @Inject
-        MetaValueServiceFlush(final MetaValueDaoImpl metaValueService) {
-            super(metaValueService::flush);
+        MetaValueDaoShutdown(final MetaValueDaoImpl metaValueDaoImpl) {
+            super(metaValueDaoImpl::shutdown);
         }
     }
 }

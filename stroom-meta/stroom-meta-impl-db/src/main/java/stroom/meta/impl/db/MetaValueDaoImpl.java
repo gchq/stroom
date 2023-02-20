@@ -24,18 +24,22 @@ import stroom.meta.impl.MetaValueConfig;
 import stroom.meta.impl.MetaValueDao;
 import stroom.meta.shared.Meta;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
+import stroom.util.concurrent.BatchingQueue.ResizableBatchingQueue;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.thread.CustomThreadFactory;
 
+import com.lmax.disruptor.BlockingWaitStrategy;
 import org.jooq.BatchBindStep;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,27 +58,46 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MetaValueDaoImpl.class);
 
+    static final int FLUSH_FREQUENCY_SECS = 10;
+    static final Duration FLUSH_FREQUENCY = Duration.ofSeconds(FLUSH_FREQUENCY_SECS);
+
     private static final String LOCK_NAME = "MetaDeleteExecutor";
+    private static final String FLUSH_TASK_NAME = "Meta Value Flush";
 
     private final MetaDbConnProvider metaDbConnProvider;
     private final MetaKeyDao metaKeyService;
     private final Provider<MetaValueConfig> metaValueConfigProvider;
     private final ClusterLockService clusterLockService;
     private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
+    private final ResizableBatchingQueue<Row> batchingQueue;
 
     private volatile List<Row> queue = new ArrayList<>();
+    private volatile Instant queueExpiryTime = Instant.MAX;
 
     @Inject
     MetaValueDaoImpl(final MetaDbConnProvider metaDbConnProvider,
                      final MetaKeyDao metaKeyService,
                      final Provider<MetaValueConfig> metaValueConfigProvider,
                      final ClusterLockService clusterLockService,
-                     final TaskContext taskContext) {
+                     final TaskContext taskContext,
+                     final TaskContextFactory taskContextFactory) {
         this.metaDbConnProvider = metaDbConnProvider;
         this.metaKeyService = metaKeyService;
         this.metaValueConfigProvider = metaValueConfigProvider;
         this.clusterLockService = clusterLockService;
         this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
+
+        // TODO: 20/02/2023 Get values from config
+        this.batchingQueue = new ResizableBatchingQueue<>(
+                new CustomThreadFactory("MetaDaoBatching"),
+                new BlockingWaitStrategy(),
+                32_768,
+                10,
+                metaValueConfigProvider.get().getFlushBatchSize(),
+                Duration.ofSeconds(10),
+                this::insertRecords);
     }
 
     @Override
@@ -92,7 +115,8 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
                                         return Optional.of(row);
                                     } catch (final NumberFormatException e) {
                                         LOGGER.debug(() ->
-                                                LogUtil.message("Ignoring meta attribute value with key: {}, " +
+                                                LogUtil.message(
+                                                        "Ignoring meta attribute value with key: {}, " +
                                                                 "value: {} as value can't be converted to a number. {}",
                                                         entry.getKey(), entry.getValue(), e.getMessage()));
                                         // Silently ignore entries with non-numeric values
@@ -107,54 +131,78 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
             LOGGER.debug("records is empty");
         } else {
             if (metaValueConfigProvider.get().isAddAsync()) {
-                final Optional<List<Row>> optional = add(records, metaValueConfigProvider.get()
-                        .getFlushBatchSize());
-                optional.ifPresent(this::insertRecords);
+                batchingQueue.putAll(records);
             } else {
-                insertRecords(records);
+                insertRecords(records, records.size());
             }
         }
     }
 
-    private synchronized Optional<List<Row>> add(final List<Row> records, final int batchSize) {
-        List<Row> readyForFlush = null;
-        queue.addAll(records);
-        if (queue.size() >= batchSize) {
-            // Switch out the current queue.
-            readyForFlush = queue;
-            queue = new ArrayList<>();
-        }
-        // Return the old queue for flushing if it was switched.
-        return Optional.ofNullable(readyForFlush);
-    }
+//    private void add(final List<Row> records) {
+//        batchingQueue.putAll(r);
+//        List<Row> readyForFlush = null;
+//        // Only update the time when we actuall
+//        if (queue.isEmpty() && NullSafe.hasItems(records)) {
+//            queueExpiryTime = Instant.now().plus(FLUSH_FREQUENCY);
+//        }
+//        queue.addAll(records);
+//        if (queue.size() >= batchSize) {
+//            // Switch out the current queue.
+//            readyForFlush = queue;
+//            queue = new ArrayList<>();
+//        }
+//        // Return the old queue for flushing if it was switched.
+//        return Optional.ofNullable(readyForFlush);
+//    }
+//
+//    private void add2(final List<Row> records, final int batchSize) {
+//
+//
+//    }
 
     @Override
     public void flush() {
-        taskContext.info(() -> "Flushing meta values to the DB");
-        final Optional<List<Row>> optional = add(Collections.emptyList(), 1);
-        optional.ifPresent(this::insertRecords);
+
+        if (metaValueConfigProvider.get().isAddAsync()) {
+            // TODO: 20/02/2023 Might need to make this blocking
+            batchingQueue.flush();
+        }
     }
 
-    private void insertRecords(final List<Row> rows) {
-        final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        LOGGER.debug(() -> "Inserting meta_val batch of " + rows.size());
+//
+//    public void flush(final boolean isForcedFlush) {
+//        if (isForcedFlush || Instant.now().isAfter(queueExpiryTime)) {
+//            flush();
+//        } else {
+//            LOGGER.debug("Skipping flush, queueExpiryTime: {}", queueExpiryTime);
+//        }
+//    }
 
-        JooqUtil.context(metaDbConnProvider, context -> {
-            BatchBindStep batchBindStep = context
-                    .batch(context
-                            .insertInto(META_VAL,
-                                    META_VAL.CREATE_TIME,
-                                    META_VAL.META_ID,
-                                    META_VAL.META_KEY_ID,
-                                    META_VAL.VAL)
-                            .values(null, null, null, (Long) null));
-            for (final Row row : rows) {
-                batchBindStep = batchBindStep.bind(row.getCreateMs(), row.getMetaId(), row.getKeyId(), row.getValue());
-            }
-            batchBindStep.execute();
-        });
+    private void insertRecords(final Iterable<Row> rows, final int batchSize) {
 
-        LOGGER.debug(() -> "Inserted " + rows.size() + " meta_val rows, completed in " + logExecutionTime);
+        taskContextFactory.context(FLUSH_TASK_NAME, taskContext2 -> {
+            final LogExecutionTime logExecutionTime = new LogExecutionTime();
+            taskContext.info(() -> "Flushing meta values to the DB, batch size: " + batchSize);
+            LOGGER.debug(() -> "Inserting meta_val batch of " + batchSize);
+
+            JooqUtil.context(metaDbConnProvider, context -> {
+                BatchBindStep batchBindStep = context
+                        .batch(context
+                                .insertInto(META_VAL,
+                                        META_VAL.CREATE_TIME,
+                                        META_VAL.META_ID,
+                                        META_VAL.META_KEY_ID,
+                                        META_VAL.VAL)
+                                .values(null, null, null, (Long) null));
+                for (final Row row : rows) {
+                    batchBindStep = batchBindStep.bind(
+                            row.getCreateMs(), row.getMetaId(), row.getKeyId(), row.getValue());
+                }
+                batchBindStep.execute();
+            });
+
+            LOGGER.debug(() -> "Inserted " + batchSize + " meta_val rows, completed in " + logExecutionTime);
+        }).run();
     }
 
     @Override
@@ -298,12 +346,17 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
 
     @Override
     public void clear() {
-        clearQueue();
+        // TODO: 17/02/2023 How to clear down the queue
+//        clearQueue();
     }
 
-    private synchronized void clearQueue() {
-        queue.clear();
+    void shutdown() {
+        batchingQueue.shutdown();
     }
+
+//    private synchronized void clearQueue() {
+//        queue.clear();
+//    }
 
     private static final class Row {
 

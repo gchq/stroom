@@ -33,8 +33,7 @@ public class MetaValueConfig extends AbstractConfig {
     @JsonPropertyDescription("If true, stream attributes will be queued in memory until the queue " +
             "reaches 'flushBatchSize'. If false, stream attributes will be written to the database " +
             "immediately and synchronously.")
-    // TODO 01/12/2021 AT: Make final
-    private boolean addAsync;
+    private final boolean addAsync;
 
     public MetaValueConfig() {
         deleteAge = StroomDuration.ofDays(30);
@@ -68,11 +67,6 @@ public class MetaValueConfig extends AbstractConfig {
 
     public boolean isAddAsync() {
         return addAsync;
-    }
-
-    @Deprecated(forRemoval = true)
-    public void setAddAsync(final boolean addAsync) {
-        this.addAsync = addAsync;
     }
 
     public MetaValueConfig withAddAsync(final boolean addAsync) {

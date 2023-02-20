@@ -38,11 +38,11 @@ public class MetaModule extends AbstractModule {
                 .bind(MetaResourceImpl.class);
 
         ScheduledJobsBinder.create(binder())
-                .bindJobTo(FlushDataMetaDb.class, builder -> builder
-                        .name("Flush Data Attributes To DB")
-                        .description("Flush meta data attribute values to the database")
-                        .managed(false)
-                        .schedule(PERIODIC, "10s"))
+//                .bindJobTo(FlushDataMetaDb.class, builder -> builder
+//                        .name("Flush Data Attributes To DB")
+//                        .description("Flush meta data attribute values to the database")
+//                        .managed(false)
+//                        .schedule(PERIODIC, "10s"))
                 .bindJobTo(DataAttributesRetention.class, builder -> builder
                         .name("Attribute Value Data Retention")
                         .description("Delete data attribute values older than system property " +
@@ -63,13 +63,13 @@ public class MetaModule extends AbstractModule {
         return 0;
     }
 
-    private static class FlushDataMetaDb extends RunnableWrapper {
-
-        @Inject
-        FlushDataMetaDb(final MetaValueDao metaValueService) {
-            super(metaValueService::flush);
-        }
-    }
+//    private static class FlushDataMetaDb extends RunnableWrapper {
+//
+//        @Inject
+//        FlushDataMetaDb(final MetaValueDao metaValueDao) {
+//            super(() -> metaValueDao.flush(false));
+//        }
+//    }
 
     private static class DataAttributesRetention extends RunnableWrapper {
 

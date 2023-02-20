@@ -6,6 +6,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 
+import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.LifecycleAware;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.Sequence;
@@ -18,24 +19,26 @@ import com.lmax.disruptor.util.Util;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.stream.IntStream;
 
 /**
- * A lock free blocking bounded queue supporting multiple producer threads and a single background consumer
- * thread.
+ * A lock free blocking bounded queue supporting multiple producer threads and multiple background consumer
+ * threads that consume the batches.
  *
  * @param <T> The type of item in the queue
  */
-public class BatchingBoundedQueue<T> {
+public class BatchingQueue<T> {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BatchingBoundedQueue.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BatchingQueue.class);
 
     private final ThreadFactory threadFactory;
     private final Disruptor<ItemHolder<T>> disruptor;
@@ -43,6 +46,9 @@ public class BatchingBoundedQueue<T> {
     private final WaitStrategy waitStrategy;
     private final ItemHandler<T> itemHandler;
     private final WorkHandler<ItemHolder<T>>[] workHandlers;
+    private final EventHandler<ItemHolder<T>>[] batchHandlers;
+    final BatchConsumer<T> batchConsumer;
+    private final int queueSize;
     private final int maxBatchSize;
     private final int consumerCount;
     private final Duration maxItemAge;
@@ -50,7 +56,9 @@ public class BatchingBoundedQueue<T> {
     /**
      * @param threadFactory Factory for the consumer thread
      * @param waitStrategy  Strategy for waiting producers/consumer
-     * @param consumerCount
+     * @param consumerCount Number of consumer threads to consume completed batches.
+     * @param queueSize     The maximum size of the queue. If it is not a power of 2 then the next
+     *                      highest power of 2 will be used.
      * @param maxBatchSize  Max items to pass to the batchConsumer on each call
      * @param maxItemAge    Approximate max age of an item passed to batchConsumer, where age is
      *                      taken from the time the item is added to the batch
@@ -59,19 +67,24 @@ public class BatchingBoundedQueue<T> {
      *                      the queue is too old or shutdown has been called. {@code batchConsumer} runs in a single
      *                      thread provided by {@code threadFactory}
      */
-    public BatchingBoundedQueue(final ThreadFactory threadFactory,
-                                final WaitStrategy waitStrategy,
-                                final int consumerCount,
-                                final int maxBatchSize,
-                                final Duration maxItemAge,
-                                final BatchConsumer<T> batchConsumer) {
+    public BatchingQueue(final ThreadFactory threadFactory,
+                         final WaitStrategy waitStrategy,
+                         final int queueSize,
+                         final int consumerCount,
+                         final int maxBatchSize,
+                         final Duration maxItemAge,
+                         final BatchConsumer<T> batchConsumer) {
+
         this.threadFactory = threadFactory;
         this.waitStrategy = waitStrategy;
+        this.queueSize = queueSize;
         this.maxBatchSize = maxBatchSize;
         this.maxItemAge = maxItemAge;
         this.consumerCount = consumerCount;
+        this.batchConsumer = batchConsumer;
         this.itemHandler = ItemHandler.buildSingle(maxBatchSize, maxItemAge);
         this.workHandlers = BatchHandler.buildMultiple(consumerCount, batchConsumer);
+        this.batchHandlers = BatchEventHandler.buildMultiple(consumerCount, batchConsumer);
         this.disruptor = buildDisruptor();
         this.ringBuffer = disruptor.start();
         setupHeartBeatTimer();
@@ -86,6 +99,18 @@ public class BatchingBoundedQueue<T> {
         LOGGER.debug("put called for item: {}", item);
         Objects.requireNonNull(item);
         ringBuffer.publishEvent(this::setItemOnHolder, item);
+    }
+
+    /**
+     * Place an item on the queue. This may block if the queue is full.
+     *
+     * @param items The items to place on the queue.
+     */
+    public void putAll(final Collection<T> items) {
+        Objects.requireNonNull(items);
+        LOGGER.debug(() -> LogUtil.message("put called for {} items", NullSafe.size(items)));
+        items.forEach(item ->
+                ringBuffer.publishEvent(this::setItemOnHolder, item));
     }
 
     /**
@@ -113,7 +138,7 @@ public class BatchingBoundedQueue<T> {
 
     /**
      * Shuts the queue and associated threads down. Only call this after
-     * all calls to {@link BatchingBoundedQueue#put(Object)} have finished.
+     * all calls to {@link BatchingQueue#put(Object)} have finished.
      */
     public void shutdown() {
         LOGGER.debug("Shutting down disruptor");
@@ -126,6 +151,14 @@ public class BatchingBoundedQueue<T> {
         disruptor.shutdown();
     }
 
+    /**
+     * Flush all items in the queue. Does not block.
+     */
+    public void flush() {
+        forEachConsumer(() ->
+                ringBuffer.publishEvent(this::markHolderAsFlush));
+    }
+
     private void forEachConsumer(final Runnable runnable) {
         for (int i = 0; i < consumerCount; i++) {
             runnable.run();
@@ -134,21 +167,26 @@ public class BatchingBoundedQueue<T> {
 
     private void setItemOnHolder(final ItemHolder<T> itemHolder, final long sequence, T item) {
         // Place our item into this mutable holder in the ring buffer
-        itemHolder.setItem(item);
+        itemHolder.setWithItem(item);
     }
 
     private void markHolderAsHeartBeat(final ItemHolder<T> itemHolder, final long sequence) {
         // Place our item into this mutable holder in the ring buffer
-        itemHolder.setAsHeartBeat();
+        itemHolder.setWithEventType(EventType.HEART_BEAT);
     }
 
     private void markHolderAsShuttingDown(final ItemHolder<T> itemHolder, final long sequence) {
         // Place our item into this mutable holder in the ring buffer
-        itemHolder.setAsShuttingDown();
+        itemHolder.setWithEventType(EventType.SHUTDOWN);
+    }
+
+    private void markHolderAsFlush(final ItemHolder<T> itemHolder, final long sequence) {
+        // Place our item into this mutable holder in the ring buffer
+        itemHolder.setWithEventType(EventType.FLUSH);
     }
 
     private Disruptor<ItemHolder<T>> buildDisruptor() {
-        final int ringSize = Util.ceilingNextPowerOfTwo(maxBatchSize * 2);
+        final int ringSize = Util.ceilingNextPowerOfTwo(queueSize);
 
         LOGGER.debug(() -> LogUtil.message(
                 "Building disruptor with consumerCount: {}, maxBatchSize: {}, maxItemAge: {}, " +
@@ -171,6 +209,7 @@ public class BatchingBoundedQueue<T> {
         disruptor.handleEventsWith(itemHandler);
         //
         disruptor.after(itemHandler)
+//                .handleEventsWith(batchHandlers);
                 .handleEventsWithWorkerPool(workHandlers);
 
         return disruptor;
@@ -191,6 +230,26 @@ public class BatchingBoundedQueue<T> {
         }, delayMs);
 
         return timer;
+    }
+
+    /**
+     * Copy the queue with new sizes
+     */
+    private BatchingQueue<T> copy(
+            final WaitStrategy waitStrategy,
+            final int consumerCount,
+            final int queueSize,
+            final int maxBatchSize,
+            final Duration maxItemAge) {
+
+        return new BatchingQueue<>(
+                this.threadFactory,
+                waitStrategy,
+                queueSize,
+                consumerCount,
+                maxBatchSize,
+                maxItemAge,
+                this.batchConsumer);
     }
 
     /**
@@ -217,6 +276,82 @@ public class BatchingBoundedQueue<T> {
 
 
     // --------------------------------------------------------------------------------
+
+    private static final class BatchEventHandler<T>
+            implements SequenceReportingEventHandler<ItemHolder<T>>, LifecycleAware {
+
+        private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BatchEventHandler.class);
+
+        private final BatchConsumer<T> batchConsumer;
+        private final int consumerId;
+        private final int consumerCount;
+        private Sequence sequenceCallback = null;
+
+        private BatchEventHandler(final BatchConsumer<T> batchConsumer,
+                                  final int consumerId,
+                                  final int consumerCount) {
+            this.batchConsumer = batchConsumer;
+            this.consumerId = consumerId;
+            this.consumerCount = consumerCount;
+        }
+
+        private static <T> EventHandler<ItemHolder<T>>[] buildMultiple(
+                final int consumerCount,
+                final BatchConsumer<T> batchConsumer) {
+
+            //noinspection unchecked
+            return IntStream.range(0, consumerCount)
+                    .boxed()
+                    .map(i -> new BatchEventHandler<>(batchConsumer, i, consumerCount))
+                    .toArray(BatchEventHandler[]::new);
+        }
+
+        @Override
+        public void onStart() {
+            LOGGER.debug("onStart called, consumerId: {}", consumerId);
+        }
+
+        @Override
+        public void onShutdown() {
+            LOGGER.debug("onShutdown called, consumerId: {}", consumerId);
+        }
+
+        @Override
+        public void setSequenceCallback(final Sequence sequenceCallback) {
+            this.sequenceCallback = sequenceCallback;
+        }
+
+        @Override
+        public void onEvent(final ItemHolder<T> event,
+                            final long sequence,
+                            final boolean endOfBatch) throws Exception {
+
+            if (sequence % consumerCount == consumerId) {
+                final EventType eventType = event.eventType;
+
+                // HEART_BEAT and SHUTDOWN are only used by the ItemHandler.
+                // All we care about is BATCH ones
+                if (EventType.BATCH.equals(eventType)) {
+                    LOGGER.debug("onEvent called, sequence: {}, consumerId: {}, event: {}",
+                            sequence, consumerId, event);
+
+                    NullSafe.consume(event.getBatch(), batch ->
+                            batchConsumer.accept(batch, event.batchSize));
+                } else {
+                    LOGGER.trace("Ignoring event of type {}", eventType);
+                }
+
+//                sequenceCallback.set(sequence);
+
+                if (!EventType.EMPTY.equals(eventType)) {
+                    // Don't advance sequence for empty ones, so we don't add more to the ring till
+                    // we have finished the batch. This way if the ring is size N, then we only ever
+                    // have N items in it, whether as single items or in batches.
+                    sequenceCallback.set(sequence);
+                }
+            }
+        }
+    }
 
 
     private static final class BatchHandler<T> implements WorkHandler<ItemHolder<T>> {
@@ -245,6 +380,7 @@ public class BatchingBoundedQueue<T> {
             // HEART_BEAT and SHUTDOWN are only used by the ItemHandler.
             // All we care about is BATCH ones
             if (EventType.BATCH.equals(eventType)) {
+                LOGGER.debug("Handling batch");
                 NullSafe.consume(event.getBatch(), batch ->
                         batchConsumer.accept(batch, event.batchSize));
             } else {
@@ -336,6 +472,11 @@ public class BatchingBoundedQueue<T> {
                     LOGGER.debug("Received shutdown event");
                     isBatchComplete = flushBatchQueueIfRequired(itemHolder, true, endOfBatch);
                 }
+                case FLUSH -> {
+                    // See if the queue is too old
+                    LOGGER.debug("Received flush event");
+                    isBatchComplete = flushBatchQueueIfRequired(itemHolder, true, endOfBatch);
+                }
                 default -> throw new IllegalArgumentException("Unknown type " + eventType);
             }
 
@@ -350,12 +491,12 @@ public class BatchingBoundedQueue<T> {
 
         @Override
         public void onStart() {
-            LOGGER.debug("Consumer onStart called");
+            LOGGER.debug("onStart called");
         }
 
         @Override
         public void onShutdown() {
-            LOGGER.debug("Consumer onShutdown called");
+            LOGGER.debug("onShutdown called");
 
             // Not sure if we need this
 //            flushBatchQueue(true);
@@ -410,11 +551,11 @@ public class BatchingBoundedQueue<T> {
                 // Null this so we can re-set it when we get the next event
                 batchExpiryTime = null;
 
-                LOGGER.debug(() -> LogUtil.message("Passing {} items to consumer", queueCopy.size()));
 //                batchConsumer.accept(queueCopy);
 
                 // Put the batch back on the ring so the downstream processors can pick it up
-                itemHolder.setBatch(queueCopy, batchSize);
+                LOGGER.debug("Putting batch of {} items on the ring", batchSize);
+                itemHolder.setWithBatch(queueCopy, batchSize);
             } else {
                 LOGGER.debug("Not swapping empty queue");
             }
@@ -427,7 +568,6 @@ public class BatchingBoundedQueue<T> {
                 batchExpiryTime = Instant.now().plus(maxItemAge);
             }
 
-
             batchQueue.add(itemHolder.getItem());
             batchCounter++;
             // Clear the valueHolder so our value doesn't sit in the buffer for ages if the buffer
@@ -436,6 +576,7 @@ public class BatchingBoundedQueue<T> {
 
             return flushBatchQueueIfRequired(itemHolder, false, endOfBatch);
         }
+
     }
 
 
@@ -452,29 +593,22 @@ public class BatchingBoundedQueue<T> {
         public ItemHolder() {
         }
 
-        public void setItem(final T item) {
+        public void setWithItem(final T item) {
             this.eventType = EventType.ITEM;
             this.item = Objects.requireNonNull(item);
             this.batch = null;
             batchSize = -1;
         }
 
-        public void setBatch(final Iterable<T> batch, final int batchSize) {
+        public void setWithBatch(final Iterable<T> batch, final int batchSize) {
             this.eventType = EventType.BATCH;
             this.item = null;
             this.batch = Objects.requireNonNull(batch);
             this.batchSize = batchSize;
         }
 
-        public void setAsHeartBeat() {
-            this.eventType = EventType.HEART_BEAT;
-            this.item = null;
-            this.batch = null;
-            batchSize = -1;
-        }
-
-        public void setAsShuttingDown() {
-            this.eventType = EventType.SHUTDOWN;
+        public void setWithEventType(final EventType eventType) {
+            this.eventType = Objects.requireNonNull(eventType);
             this.item = null;
             this.batch = null;
             batchSize = -1;
@@ -547,8 +681,94 @@ public class BatchingBoundedQueue<T> {
          */
         BATCH,
         /**
-         * An empty event
+         * Trigger a forced flush of the queue
+         */
+        FLUSH,
+        /**
+         * An event with nothing in it
          */
         EMPTY
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class ResizableBatchingQueue<T> {
+
+        private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ResizableBatchingQueue.class);
+
+        private final AtomicReference<BatchingQueue<T>> queueRef;
+
+        public ResizableBatchingQueue(final ThreadFactory threadFactory,
+                                      final WaitStrategy waitStrategy,
+                                      final int queueSize,
+                                      final int consumerCount,
+                                      final int maxBatchSize,
+                                      final Duration maxItemAge,
+                                      final BatchConsumer<T> batchConsumer) {
+
+            final BatchingQueue<T> queue = new BatchingQueue<T>(
+                    threadFactory,
+                    waitStrategy,
+                    queueSize,
+                    consumerCount,
+                    maxBatchSize,
+                    maxItemAge,
+                    batchConsumer);
+            queueRef = new AtomicReference<>(queue);
+        }
+
+        public synchronized void resize(
+                final WaitStrategy waitStrategy,
+                final int queueSize,
+                final int consumerCount,
+                final int maxBatchSize,
+                final Duration maxItemAge) {
+
+            final BatchingQueue<T> existingQueue = queueRef.get();
+
+            LOGGER.info("Creating new queue with new sizes");
+            final BatchingQueue<T> newQueue = existingQueue.copy(
+                    waitStrategy,
+                    queueSize,
+                    consumerCount,
+                    maxBatchSize,
+                    maxItemAge);
+
+            LOGGER.info("Swapping to the new queue");
+            queueRef.set(newQueue);
+
+            LOGGER.info("Shutting down old queue");
+            // new queue is now active, so we can safely shut down the old one
+            existingQueue.shutdown();
+            LOGGER.info("Old queue shut down");
+        }
+
+        public void put(final T item) {
+            queueRef.get().put(item);
+        }
+
+        /**
+         * Place an item on the queue. This may block if the queue is full.
+         *
+         * @param items The items to place on the queue.
+         */
+        public void putAll(final Collection<T> items) {
+            queueRef.get().putAll(items);
+        }
+
+
+        public boolean offer(final T item) {
+            return queueRef.get().offer(item);
+        }
+
+        public void shutdown() {
+            queueRef.get().shutdown();
+        }
+
+        public void flush() {
+            queueRef.get().flush();
+        }
     }
 }

@@ -1,7 +1,7 @@
 package stroom.util.concurrent;
 
 import stroom.test.common.TestUtil;
-import stroom.util.concurrent.BatchingBoundedQueue.BatchConsumer;
+import stroom.util.concurrent.BatchingQueue.BatchConsumer;
 import stroom.util.exception.ThrowingRunnable;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
@@ -35,9 +35,9 @@ import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestBatchingBoundedQueue {
+class TestBatchingQueue {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestBatchingBoundedQueue.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestBatchingQueue.class);
 
     private final ThreadFactory threadFactory = new CustomThreadFactory("BatchingQueue");
     private final WaitStrategy waitStrategy = new BlockingWaitStrategy();
@@ -45,9 +45,10 @@ class TestBatchingBoundedQueue {
     @Test
     void doNothing() {
         // Spin it up then shut down
-        final BatchingBoundedQueue<AtomicLong> batchingQueue = new BatchingBoundedQueue<>(
+        final BatchingQueue<AtomicLong> batchingQueue = new BatchingQueue<>(
                 threadFactory,
                 waitStrategy,
+                48,
                 1,
                 10,
                 Duration.ofSeconds(5),
@@ -61,9 +62,10 @@ class TestBatchingBoundedQueue {
     void put() {
         final List<List<AtomicInteger>> batches = new ArrayList<>();
 
-        final BatchingBoundedQueue<AtomicInteger> batchingQueue = new BatchingBoundedQueue<>(
+        final BatchingQueue<AtomicInteger> batchingQueue = new BatchingQueue<>(
                 threadFactory,
                 waitStrategy,
+                48,
                 1,
                 10,
                 Duration.ofSeconds(5),
@@ -106,9 +108,10 @@ class TestBatchingBoundedQueue {
         final List<List<AtomicInteger>> batches = new ArrayList<>();
 
         final int requiredBatchSize = 2;
-        final BatchingBoundedQueue<AtomicInteger> batchingQueue = new BatchingBoundedQueue<>(
+        final BatchingQueue<AtomicInteger> batchingQueue = new BatchingQueue<>(
                 threadFactory,
                 waitStrategy,
+                48,
                 3,
                 requiredBatchSize,
                 Duration.ofSeconds(1),
@@ -146,7 +149,7 @@ class TestBatchingBoundedQueue {
 
     @Test
     void put_highVolume() {
-        TestUtil.withTemporaryLogLevel(Level.INFO, BatchingBoundedQueue.class, () -> {
+        TestUtil.withTemporaryLogLevel(Level.INFO, BatchingQueue.class, () -> {
             final List<List<AtomicInteger>> batches = new ArrayList<>();
 
             final LongAdder itemCounter = new LongAdder();
@@ -159,10 +162,12 @@ class TestBatchingBoundedQueue {
             final int consumersCount = 10;
             final int itemsPerProducer = 100_000;
 
+            final int queueSize = 2048;
             final int batchSize = 500;
-            final BatchingBoundedQueue<AtomicInteger> batchingQueue = new BatchingBoundedQueue<>(
+            final BatchingQueue<AtomicInteger> batchingQueue = new BatchingQueue<>(
                     threadFactory,
                     waitStrategy,
+                    queueSize,
                     consumersCount,
                     batchSize,
                     Duration.ofSeconds(1),
@@ -207,12 +212,13 @@ class TestBatchingBoundedQueue {
     void putOneThenWait() {
         final List<List<AtomicInteger>> batches = new ArrayList<>();
 
-        final BatchingBoundedQueue<AtomicInteger> batchingQueue = new BatchingBoundedQueue<>(
+        final BatchingQueue<AtomicInteger> batchingQueue = new BatchingQueue<>(
                 threadFactory,
                 waitStrategy,
+                48,
                 1,
                 10,
-                Duration.ofSeconds(1),
+                Duration.ofMillis(400),
                 (batch, batchSize) -> {
                     final List<AtomicInteger> items = new ArrayList<>();
                     batch.iterator().forEachRemaining(items::add);
@@ -221,7 +227,44 @@ class TestBatchingBoundedQueue {
 
         batchingQueue.put(new AtomicInteger(1));
 
-        ThreadUtil.sleepIgnoringInterrupts(3_000);
+        ThreadUtil.sleepIgnoringInterrupts(1_400);
+
+        // batch has expired so we get a partial batch
+        assertThat(batches)
+                .hasSize(1);
+        assertThat(batches.get(0))
+                .hasSize(1);
+
+        batchingQueue.shutdown();
+    }
+
+    @Test
+    void putOneThenFlush() {
+        final List<List<AtomicInteger>> batches = new ArrayList<>();
+
+        final BatchingQueue<AtomicInteger> batchingQueue = new BatchingQueue<>(
+                threadFactory,
+                waitStrategy,
+                48,
+                1,
+                10,
+                Duration.ofSeconds(10),
+                (batch, batchSize) -> {
+                    final List<AtomicInteger> items = new ArrayList<>();
+                    batch.iterator().forEachRemaining(items::add);
+                    batches.add(items);
+                });
+
+        batchingQueue.put(new AtomicInteger(1));
+
+        ThreadUtil.sleepIgnoringInterrupts(100);
+
+        assertThat(batches)
+                .isEmpty();
+
+        batchingQueue.flush();
+
+        ThreadUtil.sleepIgnoringInterrupts(100);
 
         // batch has expired so we get a partial batch
         assertThat(batches)
@@ -236,9 +279,10 @@ class TestBatchingBoundedQueue {
     void put_oneThenShutdown() {
         final List<List<AtomicInteger>> batches = new ArrayList<>();
 
-        final BatchingBoundedQueue<AtomicInteger> batchingQueue = new BatchingBoundedQueue<>(
+        final BatchingQueue<AtomicInteger> batchingQueue = new BatchingQueue<>(
                 threadFactory,
                 waitStrategy,
+                48,
                 1,
                 10,
                 Duration.ofSeconds(1),
@@ -264,9 +308,10 @@ class TestBatchingBoundedQueue {
     void putManyWithSlowConsumer() {
         final List<List<AtomicInteger>> batches = new ArrayList<>();
 
-        final BatchingBoundedQueue<AtomicInteger> batchingQueue = new BatchingBoundedQueue<>(
+        final BatchingQueue<AtomicInteger> batchingQueue = new BatchingQueue<>(
                 threadFactory,
                 waitStrategy,
+                48,
                 1,
                 10,
                 Duration.ofSeconds(1),
