@@ -76,25 +76,29 @@ public abstract class AbstractRefDataStore implements RefDataStore {
                         "Reference Data is in a failed state from a previous load, aborting this load. {}",
                         refStreamDefinition.asUiFriendlyString()));
             } else if (optLoadState.isPresent() && optLoadState.get().equals(ProcessingState.COMPLETE)) {
-                // If we get here then the data was not loaded when we checked before getting the lock
-                // so we waited for the lock and in the mean time another stream did the load
-                // so we can drop out.
+                // If we get here then the data was not loaded when we checked before getting the lock,
+                // so we waited for the lock and in the meantime another stream did the load.
+                // Thus, we can drop out.
                 LOGGER.info("Reference Data is already loaded for {}, so doing nothing", refStreamDefinition);
                 result = false;
-            } else if (optLoadState.isEmpty()
-                    || optLoadState.get().equals(ProcessingState.TERMINATED)
-                    || optLoadState.get().equals(ProcessingState.PURGE_FAILED)) {
+            } else {
                 // Ref stream not in the store or a previous load was terminated part way through so
                 // do the load (again)
+
+                optLoadState.ifPresent(processingState -> {
+                    if (ProcessingState.LOAD_IN_PROGRESS.equals(processingState)
+                            || ProcessingState.PURGE_IN_PROGRESS.equals(processingState)) {
+                        LOGGER.error("Unexpected processing state {}. This should not happen. " +
+                                        "We hold the lock though, so will load anyway. {}",
+                                processingState,
+                                refStreamDefinition.asUiFriendlyString());
+                    }
+                });
+
                 LOGGER.debug("Performing work with loader for {}", refStreamDefinition);
                 work.accept(refDataLoader);
 
                 result = true;
-            } else {
-                throw new RuntimeException(LogUtil.message(
-                        "Unexpected processing state {} for {}",
-                        optLoadState,
-                        refStreamDefinition.asUiFriendlyString()));
             }
         } catch (Exception e) {
             String msg = e.getMessage();
