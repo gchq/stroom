@@ -20,7 +20,6 @@ package stroom.core.receive;
 import stroom.proxy.repo.FileSetProcessor;
 import stroom.proxy.repo.RepositoryProcessor;
 import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.io.PathCreator;
 
@@ -47,8 +46,7 @@ public class ProxyAggregationExecutor {
                              final TaskContextFactory taskContextFactory,
                              final Provider<FileSetProcessor> fileSetProcessorProvider,
                              final ProxyAggregationConfig proxyAggregationConfig,
-                             final PathCreator pathCreator,
-                             final TaskContext taskContext) {
+                             final PathCreator pathCreator) {
         this(
                 executorProvider,
                 taskContextFactory,
@@ -59,8 +57,7 @@ public class ProxyAggregationExecutor {
                 proxyAggregationConfig.getMaxFileScan(),
                 proxyAggregationConfig.getMaxConcurrentMappedFiles(),
                 proxyAggregationConfig.getMaxFilesPerAggregate(),
-                proxyAggregationConfig.getMaxUncompressedFileSizeBytes(),
-                taskContext
+                proxyAggregationConfig.getMaxUncompressedFileSizeBytes()
         );
     }
 
@@ -74,8 +71,7 @@ public class ProxyAggregationExecutor {
                                     final int maxFileScan,
                                     final int maxConcurrentMappedFiles,
                                     final int maxFilesPerAggregate,
-                                    final long maxUncompressedFileSize,
-                                    final TaskContext taskContext) {
+                                    final long maxUncompressedFileSize) {
 
         this.pathCreator = pathCreator;
         this.repositoryProcessor = new RepositoryProcessor(
@@ -87,8 +83,7 @@ public class ProxyAggregationExecutor {
                 maxFileScan,
                 maxConcurrentMappedFiles,
                 maxFilesPerAggregate,
-                maxUncompressedFileSize,
-                taskContext);
+                maxUncompressedFileSize);
     }
 
     private String getAbsoluteProxyDir(final String proxyDir) {

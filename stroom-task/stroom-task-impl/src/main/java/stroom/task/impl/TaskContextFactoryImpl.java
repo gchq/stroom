@@ -2,6 +2,7 @@ package stroom.task.impl;
 
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
+import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
@@ -22,7 +23,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
+class TaskContextFactoryImpl implements TaskContextFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TaskContextFactoryImpl.class);
 
@@ -343,27 +344,11 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
     }
 
     @Override
-    public void info(final Supplier<String> messageSupplier) {
-        final TaskContextImpl taskContext = CurrentTaskContext.currentContext();
-        if (taskContext != null) {
-            taskContext.info(messageSupplier);
+    public TaskContext current() {
+        TaskContext taskContext = CurrentTaskContext.currentContext();
+        if (taskContext == null) {
+            taskContext = new SimpleTaskContext();
         }
-    }
-
-    @Override
-    public TaskId getTaskId() {
-        final TaskContextImpl taskContext = CurrentTaskContext.currentContext();
-        if (taskContext != null) {
-            return taskContext.getTaskId();
-        }
-        return null;
-    }
-
-    @Override
-    public void reset() {
-        final TaskContextImpl taskContext = CurrentTaskContext.currentContext();
-        if (taskContext != null) {
-            taskContext.reset();
-        }
+        return taskContext;
     }
 }

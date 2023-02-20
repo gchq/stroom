@@ -14,8 +14,8 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.task.api.SimpleTaskContext;
-import stroom.task.api.TaskContext;
+import stroom.task.api.SimpleTaskContextFactory;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.time.TimePeriod;
 
 import io.vavr.Tuple;
@@ -56,7 +56,7 @@ class TestDataRetentionPolicyExecutor {
 
     private final ClusterLockService clusterLockService = new MockClusterLockService();
     private final DataRetentionConfig dataRetentionConfig = new DataRetentionConfig();
-    private final TaskContext taskContext = new SimpleTaskContext();
+    private final TaskContextFactory taskContextFactory = new SimpleTaskContextFactory();
 
     @Mock
     private MetaService metaService;
@@ -576,7 +576,7 @@ class TestDataRetentionPolicyExecutor {
                 () -> buildRules(rules),
                 dataRetentionConfig,
                 metaService,
-                taskContext);
+                taskContextFactory);
     }
 
     private void assertPeriod(final TimePeriod actualPeriod,

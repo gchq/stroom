@@ -84,7 +84,6 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
     private final ProcessorTaskDao processorTaskDao;
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
-    private final TaskContext taskContext;
     private final NodeInfo nodeInfo;
     private final Provider<ProcessorConfig> processorConfigProvider;
     private final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider;
@@ -117,7 +116,6 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                                   final ProcessorTaskDao processorTaskDao,
                                   final ExecutorProvider executorProvider,
                                   final TaskContextFactory taskContextFactory,
-                                  final TaskContext taskContext,
                                   final NodeInfo nodeInfo,
                                   final Provider<ProcessorConfig> processorConfigProvider,
                                   final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider,
@@ -128,7 +126,6 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
         this.processorFilterService = processorFilterService;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
-        this.taskContext = taskContext;
         this.nodeInfo = nodeInfo;
         this.processorTaskDao = processorTaskDao;
         this.processorConfigProvider = processorConfigProvider;
@@ -455,7 +452,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
     }
 
     public void exec() {
-        queueNewTasks(taskContext);
+        queueNewTasks(taskContextFactory.current());
     }
 
     private synchronized int queueNewTasks(final TaskContext taskContext) {
@@ -682,6 +679,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
 
     @Override
     public void writeQueueStatistics() {
+        final TaskContext taskContext = taskContextFactory.current();
         info(taskContext, () -> "Writing processor task queue statistics");
         try {
             // Avoid writing loads of same value stats So write every min while

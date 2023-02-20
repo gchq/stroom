@@ -90,7 +90,6 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
     private final ProcessorTaskDao processorTaskDao;
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
-    private final TaskContext taskContext;
     private final Provider<ProcessorConfig> processorConfigProvider;
     private final MetaService metaService;
     private final EventSearch eventSearch;
@@ -108,7 +107,6 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                              final ProcessorTaskDao processorTaskDao,
                              final ExecutorProvider executorProvider,
                              final TaskContextFactory taskContextFactory,
-                             final TaskContext taskContext,
                              final Provider<ProcessorConfig> processorConfigProvider,
                              final MetaService metaService,
                              final EventSearch eventSearch,
@@ -119,7 +117,6 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         this.processorFilterTrackerDao = processorFilterTrackerDao;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
-        this.taskContext = taskContext;
         this.processorTaskDao = processorTaskDao;
         this.processorConfigProvider = processorConfigProvider;
         this.metaService = metaService;
@@ -146,6 +143,7 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
             LOGGER.debug("Locking cluster to create tasks");
             clusterLockService.tryLock(LOCK_NAME, () -> {
                 final LongAdder totalTasksCreated = new LongAdder();
+                final TaskContext taskContext = taskContextFactory.current();
                 createNewTasks(taskContext, totalTasksCreated);
             });
         } catch (final RuntimeException e) {
@@ -172,24 +170,8 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
             // many as the queue has capacity.
             final int tasksToCreatePerFilter =
                     Math.max(processorConfig.getTasksToCreatePerFilter(), processorConfig.getQueueSize());
-            final LinkedBlockingQueue<Runnable> runnableQueue = new LinkedBlockingQueue<>();
-            for (final ProcessorFilter filter : filters) {
-                try {
-                    // Set the current user to be the one who created the filter so that only streams that that user
-                    // has access to are processed.
-                    securityContext.asUser(securityContext.createIdentity(filter.getCreateUser()), () ->
-                            runnableQueue.add(taskContextFactory.childContext(parentTaskContext,
-                                    "Create Tasks",
-                                    taskContext -> createTasksForFilter(
-                                            taskContext,
-                                            filter,
-                                            progressMonitor,
-                                            tasksToCreatePerFilter,
-                                            totalTasksCreated))));
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e::getMessage, e);
-                }
-            }
+            final LinkedBlockingQueue<ProcessorFilter> filterQueue = new LinkedBlockingQueue<>(filters);
+            final AtomicInteger filterCount = new AtomicInteger();
 
             // Now execute all the runnable items.
             final Executor executor = executorProvider.get(THREAD_POOL);
@@ -197,10 +179,32 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
             final CompletableFuture<?>[] futures = new CompletableFuture[threadCount];
             for (int i = 0; i < threadCount; i++) {
                 futures[i] = CompletableFuture.runAsync(() -> {
-                    Runnable runnable = runnableQueue.poll();
-                    while (runnable != null && !Thread.currentThread().isInterrupted()) {
-                        runnable.run();
-                        runnable = runnableQueue.poll();
+                    final int remaining = tasksToCreatePerFilter - totalTasksCreated.intValue();
+                    final ProcessorFilter filter = filterQueue.poll();
+                    while (remaining > 0 && filter != null && !Thread.currentThread().isInterrupted()) {
+                        try {
+                            // Set the current user to be the one who created the filter so that only streams that the
+                            // user has access to are processed.
+                            securityContext.asUser(securityContext.createIdentity(filter.getCreateUser()), () ->
+                                    taskContextFactory.childContext(parentTaskContext,
+                                            "Create Tasks",
+                                            taskContext -> {
+                                                final int count = filterCount.incrementAndGet();
+                                                parentTaskContext.info(() -> "Creating tasks for " +
+                                                        count +
+                                                        " of " +
+                                                        filters.size() +
+                                                        " filters");
+                                                createTasksForFilter(
+                                                        taskContext,
+                                                        filter,
+                                                        progressMonitor,
+                                                        remaining,
+                                                        totalTasksCreated);
+                                            }).run());
+                        } catch (final RuntimeException e) {
+                            LOGGER.error(e::getMessage, e);
+                        }
                     }
                 }, executor);
             }

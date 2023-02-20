@@ -25,6 +25,7 @@ import stroom.processor.impl.ProcessorModule;
 import stroom.processor.impl.ProcessorTaskDao;
 import stroom.processor.impl.ProcessorTaskDeleteExecutor;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -51,7 +52,7 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
     private final ProcessorDao processorDao;
     private final ProcessorFilterDao processorFilterDao;
     private final ProcessorTaskDao processorTaskDao;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
 
     @Inject
     ProcessorTaskDeleteExecutorImpl(final ClusterLockService clusterLockService,
@@ -59,13 +60,13 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
                                     final ProcessorDao processorDao,
                                     final ProcessorFilterDao processorFilterDao,
                                     final ProcessorTaskDao processorTaskDao,
-                                    final TaskContext taskContext) {
+                                    final TaskContextFactory taskContextFactory) {
         this.clusterLockService = clusterLockService;
         this.processorConfig = processorConfig;
         this.processorDao = processorDao;
         this.processorFilterDao = processorFilterDao;
         this.processorTaskDao = processorTaskDao;
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
     }
 
     /**
@@ -73,6 +74,7 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
      */
     public synchronized void exec() {
         try {
+            final TaskContext taskContext = taskContextFactory.current();
             taskContext.info(() -> "Deleting old processor tasks");
             lockAndDelete();
         } catch (final RuntimeException e) {
@@ -108,6 +110,8 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
     // Only public for testing by stroom-app it seems
     @Override
     public void delete(final Instant deleteThreshold) {
+        final TaskContext taskContext = taskContextFactory.current();
+
         // Logically delete tasks that are associated with filters that have been logically deleted for longer than the
         // threshold.
         final AtomicInteger totalCount = new AtomicInteger();

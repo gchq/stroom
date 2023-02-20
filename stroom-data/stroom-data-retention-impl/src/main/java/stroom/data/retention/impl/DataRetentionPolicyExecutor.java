@@ -25,7 +25,7 @@ import stroom.data.retention.api.RetentionRuleOutcome;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.meta.api.MetaService;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -97,7 +97,7 @@ public class DataRetentionPolicyExecutor {
     private final Provider<DataRetentionRules> dataRetentionRulesProvider;
     private final DataRetentionConfig policyConfig;
     private final MetaService metaService;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
     private final AtomicBoolean running = new AtomicBoolean();
 
     @Inject
@@ -105,12 +105,12 @@ public class DataRetentionPolicyExecutor {
                                 final Provider<DataRetentionRules> dataRetentionRulesProvider,
                                 final DataRetentionConfig policyConfig,
                                 final MetaService metaService,
-                                final TaskContext taskContext) {
+                                final TaskContextFactory taskContextFactory) {
         this.clusterLockService = clusterLockService;
         this.dataRetentionRulesProvider = dataRetentionRulesProvider;
         this.policyConfig = policyConfig;
         this.metaService = metaService;
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
     }
 
     public void exec() {
@@ -523,7 +523,7 @@ public class DataRetentionPolicyExecutor {
 
     private void info(final Supplier<String> messageSupplier) {
         LOGGER.info(messageSupplier);
-        taskContext.info(messageSupplier);
+        taskContextFactory.current().info(messageSupplier);
     }
 
     /**

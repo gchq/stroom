@@ -22,7 +22,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.statistics.impl.sql.entity.StatisticStoreCache;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
-import stroom.task.api.SimpleTaskContext;
+import stroom.task.api.SimpleTaskContextFactory;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.concurrent.AtomicSequence;
 import stroom.util.concurrent.SimpleExecutor;
@@ -107,7 +107,7 @@ class TestSQLStatisticEventStore extends StroomUnitTest {
                 null,
                 configProvider,
                 securityContext,
-                new SimpleTaskContext()) {
+                new SimpleTaskContextFactory()) {
             @Override
             public SQLStatisticAggregateMap createAggregateMap() {
                 createCount.incrementAndGet();
@@ -148,7 +148,7 @@ class TestSQLStatisticEventStore extends StroomUnitTest {
                 null,
                 configProvider,
                 securityContext,
-                new SimpleTaskContext()) {
+                new SimpleTaskContextFactory()) {
             @Override
             public SQLStatisticAggregateMap createAggregateMap() {
                 createCount.incrementAndGet();
@@ -239,7 +239,7 @@ class TestSQLStatisticEventStore extends StroomUnitTest {
                 mockSqlStatisticCache,
                 configProvider,
                 securityContext,
-                new SimpleTaskContext());
+                new SimpleTaskContextFactory());
 
         for (int i = 0; i < eventCount; i++) {
             store.putEvent(createEvent(firstEventTimeMs + (i * eventTimeDeltaMs)));

@@ -28,7 +28,7 @@ import stroom.proxy.repo.FileSetKey;
 import stroom.proxy.repo.FileSetProcessor;
 import stroom.proxy.repo.ProxyFileHandler;
 import stroom.receive.common.StreamTargetStroomStreamHandler;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.io.BufferFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -63,20 +63,19 @@ public final class DataStoreFileSetProcessor implements FileSetProcessor {
     private final FeedProperties feedProperties;
     private final MetaStatistics metaStatistics;
     private final boolean aggregate = true;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
     private final ProxyFileHandler proxyFileHandler;
 
     @Inject
     DataStoreFileSetProcessor(final Store store,
                               final FeedProperties feedProperties,
                               final MetaStatistics metaStatistics,
-                              final TaskContext taskContext,
+                              final TaskContextFactory taskContextFactory,
                               final BufferFactory bufferFactory) {
         this.store = store;
         this.feedProperties = feedProperties;
         this.metaStatistics = metaStatistics;
-        this.taskContext = taskContext;
-
+        this.taskContextFactory = taskContextFactory;
         proxyFileHandler = new ProxyFileHandler(bufferFactory);
     }
 
@@ -117,7 +116,7 @@ public final class DataStoreFileSetProcessor implements FileSetProcessor {
             for (final Path file : fileSet.getFiles()) {
                 count++;
                 final long c = count;
-                taskContext.info(() -> "File " + c + " of " + fileSet.getFiles().size());
+                taskContextFactory.current().info(() -> "File " + c + " of " + fileSet.getFiles().size());
 
                 if (Thread.currentThread().isInterrupted()) {
                     break;

@@ -10,7 +10,7 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -30,7 +30,7 @@ public class PrioritisedFilters {
 
     private final ProcessorFilterService processorFilterService;
     private final DocRefInfoService docRefInfoService;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
 
     private final AtomicReference<List<ProcessorFilter>> prioritisedFiltersRef = new AtomicReference<>();
     private volatile Instant lastUpdate = Instant.ofEpochMilli(0);
@@ -38,10 +38,10 @@ public class PrioritisedFilters {
     @Inject
     public PrioritisedFilters(final ProcessorFilterService processorFilterService,
                               final DocRefInfoService docRefInfoService,
-                              final TaskContext taskContext) {
+                              final TaskContextFactory taskContextFactory) {
         this.processorFilterService = processorFilterService;
         this.docRefInfoService = docRefInfoService;
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
     }
 
     public List<ProcessorFilter> get() {
@@ -107,9 +107,7 @@ public class PrioritisedFilters {
 
     private void info(final Supplier<String> messageSupplier) {
         LOGGER.debug(messageSupplier);
-        if (taskContext != null) {
-            taskContext.info(messageSupplier);
-        }
+        taskContextFactory.current().info(messageSupplier);
     }
 
     public void reset() {

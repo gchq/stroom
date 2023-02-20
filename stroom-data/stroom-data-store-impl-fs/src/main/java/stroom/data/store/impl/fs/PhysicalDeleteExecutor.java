@@ -76,7 +76,6 @@ public class PhysicalDeleteExecutor {
     private final PhysicalDelete physicalDelete;
     private final DataVolumeDao dataVolumeDao;
     private final TaskContextFactory taskContextFactory;
-    private final TaskContext taskContext;
     private final ExecutorProvider executorProvider;
     private final FsFileDeleter fsFileDeleter;
 
@@ -89,7 +88,6 @@ public class PhysicalDeleteExecutor {
             final PhysicalDelete physicalDelete,
             final DataVolumeDao dataVolumeDao,
             final TaskContextFactory taskContextFactory,
-            final TaskContext taskContext,
             final ExecutorProvider executorProvider,
             final FsFileDeleter fsFileDeleter) {
         this.clusterLockService = clusterLockService;
@@ -99,7 +97,6 @@ public class PhysicalDeleteExecutor {
         this.physicalDelete = physicalDelete;
         this.dataVolumeDao = dataVolumeDao;
         this.taskContextFactory = taskContextFactory;
-        this.taskContext = taskContext;
         this.executorProvider = executorProvider;
         this.fsFileDeleter = fsFileDeleter;
     }
@@ -188,7 +185,7 @@ public class PhysicalDeleteExecutor {
 
                         // Attempt to delete the files for the streams then the DB records
                         final Set<SimpleMeta> failedMetaIds = deleteCurrentBatch(
-                                taskContext,
+                                taskContextFactory.current(),
                                 simpleMetas,
                                 deleteThreshold, // slidingDeleteThreshold only used for the DB qry
                                 workQueue,
@@ -475,7 +472,7 @@ public class PhysicalDeleteExecutor {
 
     private void info(final Supplier<String> message) {
         try {
-            taskContext.info(message);
+            taskContextFactory.current().info(message);
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         }

@@ -68,7 +68,6 @@ public final class RepositoryProcessor {
     private final int maxConcurrentMappedFiles;
     private final int maxFilesPerAggregate;
     private final long maxUncompressedFileSize;
-    private final TaskContext parentTaskContext;
     private final Path repoPath;
     private final String repoDir;
 
@@ -80,8 +79,7 @@ public final class RepositoryProcessor {
                                final int maxFileScan,
                                final int maxConcurrentMappedFiles,
                                final int maxFilesPerAggregate,
-                               final long maxUncompressedFileSize,
-                               final TaskContext parentTaskContext) {
+                               final long maxUncompressedFileSize) {
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
         this.fileSetProcessorProvider = fileSetProcessorProvider;
@@ -90,7 +88,6 @@ public final class RepositoryProcessor {
         this.maxConcurrentMappedFiles = maxConcurrentMappedFiles;
         this.maxFilesPerAggregate = maxFilesPerAggregate;
         this.maxUncompressedFileSize = maxUncompressedFileSize;
-        this.parentTaskContext = parentTaskContext;
         repoPath = Paths.get(proxyDir);
         repoDir = FileUtil.getCanonicalPath(repoPath);
     }
@@ -153,6 +150,7 @@ public final class RepositoryProcessor {
 
             LOGGER.info("Completed in {}", logExecutionTime);
         };
+        final TaskContext parentTaskContext = taskContextFactory.current();
         final Runnable runnable = taskContextFactory.childContext(parentTaskContext,
                 "Proxy Repository Processor",
                 consumer);

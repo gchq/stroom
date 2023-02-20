@@ -120,8 +120,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
                 10000,
                 10000,
                 maxAggregation,
-                maxStreamSize,
-                null);
+                maxStreamSize);
         proxyAggregationExecutor.exec();
     }
 
