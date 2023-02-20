@@ -163,6 +163,10 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         final ProcessorConfig processorConfig = processorConfigProvider.get();
         final ProgressMonitor progressMonitor = new ProgressMonitor(filters.size());
 
+        parentTaskContext.info(() -> "Creating tasks for " +
+                filters.size() +
+                " filters");
+
         try {
             // We need to create enough tasks to keep the queue full, so we need to either over create or create as
             // many as the queue has capacity.
@@ -173,25 +177,15 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                 try {
                     // Set the current user to be the one who created the filter so that only streams that that user
                     // has access to are processed.
-                    final AtomicInteger filterCount = new AtomicInteger();
                     securityContext.asUser(securityContext.createIdentity(filter.getCreateUser()), () ->
                             runnableQueue.add(taskContextFactory.childContext(parentTaskContext,
                                     "Create Tasks",
-                                    taskContext -> {
-                                        final int count = filterCount.incrementAndGet();
-                                        parentTaskContext.info(() -> "Creating tasks for filters " +
-                                                count + "/" +
-                                                filters.size());
-                                        taskContext.info(() -> "Creating tasks for filter with id = " +
-                                                filter.getId() +
-                                                getPipelineUuid(filter));
-                                        createTasksForFilter(
-                                                taskContext,
-                                                filter,
-                                                progressMonitor,
-                                                tasksToCreatePerFilter,
-                                                totalTasksCreated);
-                                    })));
+                                    taskContext -> createTasksForFilter(
+                                            taskContext,
+                                            filter,
+                                            progressMonitor,
+                                            tasksToCreatePerFilter,
+                                            totalTasksCreated))));
                 } catch (final RuntimeException e) {
                     LOGGER.error(e::getMessage, e);
                 }
