@@ -71,7 +71,10 @@ public abstract class AbstractRefDataStore implements RefDataStore {
 
             if (optLoadState.isPresent() && optLoadState.get().equals(ProcessingState.FAILED)) {
                 // A previous load of this ref stream failed so no point trying again.
-                LOGGER.error("Reference Data is in a failed state for {}", refStreamDefinition);
+                LOGGER.error("Existing reference data load is in a failed state. No point trying again. " +
+                                "If the cause is environmental then purge the ref stream from the store and " +
+                                "perform another lookup. {}",
+                        refStreamDefinition.asUiFriendlyString());
                 throw new RuntimeException(LogUtil.message(
                         "Reference Data is in a failed state from a previous load, aborting this load. {}",
                         refStreamDefinition.asUiFriendlyString()));
