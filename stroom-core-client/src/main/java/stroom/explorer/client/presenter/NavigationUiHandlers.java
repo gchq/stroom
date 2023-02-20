@@ -25,4 +25,6 @@ public interface NavigationUiHandlers extends UiHandlers {
     void changeQuickFilter(String name);
 
     void toggleMenu(NativeEvent event, Element target);
+
+    void showAboutDialog();
 }

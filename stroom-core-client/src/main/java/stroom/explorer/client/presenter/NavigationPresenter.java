@@ -16,6 +16,7 @@
 
 package stroom.explorer.client.presenter;
 
+import stroom.about.client.event.ShowAboutEvent;
 import stroom.activity.client.ActivityChangedEvent;
 import stroom.activity.client.CurrentActivity;
 import stroom.activity.shared.Activity.ActivityDetails;
@@ -240,6 +241,11 @@ public class NavigationPresenter
                     .builder()
                     .fire(this);
         }
+    }
+
+    @Override
+    public void showAboutDialog() {
+        ShowAboutEvent.fire(this);
     }
 
     private void showMenuItems(final PopupPosition popupPosition,

@@ -16,10 +16,6 @@
 
 package stroom.app.client.gin;
 
-import stroom.about.client.presenter.AboutPresenter;
-import stroom.about.client.presenter.AboutPresenter.AboutProxy;
-import stroom.about.client.presenter.AboutPresenter.AboutView;
-import stroom.about.client.view.AboutViewImpl;
 import stroom.content.client.presenter.ContentTabPanePresenter;
 import stroom.content.client.presenter.ContentTabPanePresenter.ContentTabPaneProxy;
 import stroom.core.client.ContentManager;
@@ -122,8 +118,6 @@ public class AppModule extends AbstractPresenterModule {
         bindPresenter(ExplorerTreePresenter.class, ExplorerTreeView.class, ExplorerTreeViewImpl.class,
                 ExplorerTreeProxy.class);
         bindPresenterWidget(TypeFilterPresenter.class, TypeFilterView.class, TypeFilterViewImpl.class);
-
-        bindPresenter(AboutPresenter.class, AboutView.class, AboutViewImpl.class, AboutProxy.class);
 
         bindPresenterWidget(TooltipPresenter.class, TooltipView.class, TooltipViewImpl.class);
 

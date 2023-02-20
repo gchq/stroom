@@ -16,7 +16,6 @@
 
 package stroom.explorer.client.view;
 
-import stroom.about.client.presenter.AboutPresenter;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.client.presenter.NavigationUiHandlers;
 import stroom.explorer.shared.ExplorerTreeFilter;
@@ -38,13 +37,11 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers> implements NavigationView {
 
     private final Widget widget;
-    private final Provider<AboutPresenter> aboutPresenterProvider;
 
     @UiField(provided = true)
     FlowPanel layout;
@@ -63,10 +60,7 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
 
     @Inject
     public NavigationViewImpl(final NavigationViewImpl.Binder binder,
-                              final UiConfigCache uiConfigCache,
-                              final Provider<AboutPresenter> aboutPresenterProvider) {
-
-        this.aboutPresenterProvider = aboutPresenterProvider;
+                              final UiConfigCache uiConfigCache) {
 
         layout = new FlowPanel();
         widget = binder.createAndBindUi(this);
@@ -99,7 +93,7 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
     @UiHandler("logo")
     void onLogoClick(final ClickEvent event) {
         if (MouseUtil.isPrimary(event.getNativeEvent())) {
-            aboutPresenterProvider.get().forceReveal();
+            getUiHandlers().showAboutDialog();
         }
     }
 
