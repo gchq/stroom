@@ -22,10 +22,8 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
     private final ProcessorDbConfig dbConfig;
     private final boolean assignTasks;
     private final StroomDuration deleteAge;
-    // TODO 29/11/2021 AT: Make final
-    private boolean fillTaskQueue;
-    // TODO 29/11/2021 AT: Make final
-    private int queueSize;
+    private final boolean fillTaskQueue;
+    private final int queueSize;
 
 
     private final int tasksToCreatePerFilter;
@@ -131,19 +129,9 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
         return fillTaskQueue;
     }
 
-    @Deprecated(forRemoval = true) // Awaiting refactor to handle immutable config
-    public void setFillTaskQueue(final boolean fillTaskQueue) {
-        this.fillTaskQueue = fillTaskQueue;
-    }
-
     @JsonPropertyDescription("Maximum number of tasks to cache ready for processing, in total and per filter.")
     public int getQueueSize() {
         return queueSize;
-    }
-
-    @Deprecated(forRemoval = true) // Awaiting refactor to handle immutable config
-    public void setQueueSize(final int queueSize) {
-        this.queueSize = queueSize;
     }
 
     @JsonPropertyDescription("How many tasks should we try to create in the DB per filter. If the queue size is " +

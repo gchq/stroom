@@ -252,7 +252,7 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                 }
             });
         } catch (final RuntimeException e) {
-            LOGGER.error(() -> "Error processing filter with id = " + filter.getId() + getPipelineUuid(filter));
+            LOGGER.error(() -> LogUtil.message("Error processing filter: {}", filter.getFilterInfo()));
             LOGGER.debug(e::getMessage, e);
         }
     }
@@ -276,7 +276,7 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
 
             // Skip filters that already have enough tasks.
             if (maxTasks > 0) {
-                info(taskContext, () -> "Creating tasks: " + filter);
+                info(taskContext, filter::getFilterInfo);
                 final FilterProgressMonitor filterProgressMonitor =
                         progressMonitor.logFilter(filter, currentCreatedTasks);
 
@@ -311,9 +311,7 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                 totalTasksCreated);
                     }
                 } catch (final RuntimeException e) {
-                    LOGGER.error(() -> LogUtil.message("Error processing filter with id = {} ({})",
-                            filter.getId(),
-                            getPipelineUuid(filter)));
+                    LOGGER.error(() -> LogUtil.message("Error processing filter: {}", filter.getFilterInfo()));
                     LOGGER.debug(e::getMessage, e);
 
                     // Update the tracker with the error if we can.
@@ -388,7 +386,7 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         info(taskContext, () ->
                 LogUtil.message("createTasks() - Created {} tasks for filter {}",
                         createdTasks,
-                        filter.toString()));
+                        filter.getFilterInfo()));
         totalTasksCreated.add(createdTasks);
     }
 
@@ -504,7 +502,7 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                     info(taskContext, () ->
                             LogUtil.message("createTasks() - Created {} tasks for filter {}",
                                     createdTasks,
-                                    filter.toString()));
+                                    filter.getFilterInfo()));
                 }
             } catch (final Exception e) {
                 LOGGER.error("Error creating tasks for filter {}, {}", filter.getId(), e.getMessage(), e);
@@ -690,15 +688,6 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
 
             return metaService.find(findMetaCriteria).getValues();
         }
-    }
-
-    private String getPipelineUuid(final ProcessorFilter filter) {
-        if (filter != null &&
-                filter.getProcessor() != null &&
-                filter.getProcessor().getPipelineUuid() != null) {
-            return " for pipeline " + filter.getProcessor().getPipelineUuid();
-        }
-        return "";
     }
 }
 

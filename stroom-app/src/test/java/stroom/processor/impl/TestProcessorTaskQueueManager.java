@@ -165,46 +165,38 @@ class TestProcessorTaskQueueManager extends AbstractCoreIntegrationTest {
     }
 
     private void test(final int size, final Status metaStatus, final Runnable runnable) {
-        final int initialQueueSize = processorConfig.getQueueSize();
-        try {
-            processorConfig.setQueueSize(size);
+        processorTaskQueueManager.shutdown();
+        processorTaskQueueManager.startup();
 
-            processorTaskQueueManager.shutdown();
-            processorTaskQueueManager.startup();
+        assertThat(getTaskCount()).isZero();
+        assertThat(getTaskCount()).isZero();
 
-            assertThat(getTaskCount()).isZero();
-            assertThat(getTaskCount()).isZero();
+        final String feedName1 = FileSystemTestUtil.getUniqueTestString();
+        final String feedName2 = FileSystemTestUtil.getUniqueTestString();
 
-            final String feedName1 = FileSystemTestUtil.getUniqueTestString();
-            final String feedName2 = FileSystemTestUtil.getUniqueTestString();
+        // Just try to create tasks to check none exist or are created at this time.
+        createTasks(0, 0);
 
-            // Just try to create tasks to check none exist or are created at this time.
-            createTasks(0, 0);
+        final QueryData findStreamQueryData = QueryData
+                .builder()
+                .dataSource(MetaFields.STREAM_STORE_DOC_REF)
+                .expression(ExpressionOperator.builder()
+                        .addOperator(ExpressionOperator.builder().op(Op.OR)
+                                .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName1)
+                                .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName2)
+                                .build())
+                        .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .build())
+                .build();
 
-            final QueryData findStreamQueryData = QueryData
-                    .builder()
-                    .dataSource(MetaFields.STREAM_STORE_DOC_REF)
-                    .expression(ExpressionOperator.builder()
-                            .addOperator(ExpressionOperator.builder().op(Op.OR)
-                                    .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName1)
-                                    .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName2)
-                                    .build())
-                            .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
-                            .build())
-                    .build();
+        commonTestScenarioCreator.createProcessor(findStreamQueryData);
 
-            commonTestScenarioCreator.createProcessor(findStreamQueryData);
+        LOGGER.logDurationIfInfoEnabled(() -> {
+            addBulkMeta(feedName1, StreamTypeNames.RAW_EVENTS, metaStatus, size);
+            addBulkMeta(feedName2, StreamTypeNames.RAW_EVENTS, metaStatus, size);
+        }, "Creation of test meta");
 
-            LOGGER.logDurationIfInfoEnabled(() -> {
-                addBulkMeta(feedName1, StreamTypeNames.RAW_EVENTS, metaStatus, size);
-                addBulkMeta(feedName2, StreamTypeNames.RAW_EVENTS, metaStatus, size);
-            }, "Creation of test meta");
-
-            runnable.run();
-
-        } finally {
-            processorConfig.setQueueSize(initialQueueSize);
-        }
+        runnable.run();
     }
 
     private void createTasks(final int callCount, final int expected) {

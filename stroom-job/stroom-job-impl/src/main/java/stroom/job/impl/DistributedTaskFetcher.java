@@ -158,7 +158,7 @@ class DistributedTaskFetcher {
 
     private int doFetch(final TaskContext taskContext) {
         int executingTaskCount = 0;
-        taskContext.info(() -> "fetching tasks");
+        taskContext.info(() -> "Fetching tasks");
         LOGGER.trace("Trying to fetch tasks");
 
         // We will force a fetch if it has been more than one minute since

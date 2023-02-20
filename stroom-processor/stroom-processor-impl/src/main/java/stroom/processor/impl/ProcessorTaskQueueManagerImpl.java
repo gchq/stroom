@@ -40,7 +40,6 @@ import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.NullSafe;
 import stroom.util.concurrent.ThreadUtil;
-import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -63,7 +62,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -100,8 +99,8 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
      * Our queue.
      */
     private final ConcurrentHashMap<ProcessorFilter, ProcessorTaskQueue> queueMap = new ConcurrentHashMap<>();
-    private final Semaphore fillQueueSemaphore = new Semaphore(0);
-
+    private final AtomicBoolean fillingQueue = new AtomicBoolean();
+    private final AtomicBoolean needToFillQueue = new AtomicBoolean();
     private volatile int lastQueueSizeForStats = -1;
 
     /**
@@ -160,9 +159,8 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
             LOGGER.error(e.getMessage(), e);
         }
 
-        // Now we have started, start task creation.
-        // Start task creation.
-        fillTaskQueueAsync();
+        // Allow task creation.
+        allowAsyncTaskCreation = true;
     }
 
     @Override
@@ -178,28 +176,34 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
 
     private void fillTaskQueueAsync() {
         try {
-            LOGGER.debug("fillTaskQueueAsync() - Executing fillTaskQueue");
-            final Executor executor = executorProvider.get(THREAD_POOL);
-            CompletableFuture
-                    .runAsync(() -> {
-                        try {
-                            while (allowAsyncTaskCreation && !Thread.currentThread().isInterrupted()) {
-                                // Wait for this node to be asked to fill the task queue.
-                                fillQueueSemaphore.acquire();
-                                fillQueueSemaphore.drainPermits();
+            if (allowAsyncTaskCreation) {
+                if (fillingQueue.compareAndSet(false, true)) {
+                    needToFillQueue.set(false);
 
-                                final long addedTotal = taskContextFactory.contextResult(
-                                        "Fill task queue",
-                                        this::queueNewTasks).get();
-                                if (addedTotal == 0) {
-                                    ThreadUtil.sleep(
-                                            processorConfigProvider.get().getFillTaskQueueFrequency().toMillis());
+                    LOGGER.debug("fillTaskQueueAsync() - Executing fillTaskQueue");
+                    final Executor executor = executorProvider.get(THREAD_POOL);
+                    CompletableFuture
+                            .supplyAsync(taskContextFactory.contextResult(
+                                    "Fill task queue",
+                                    this::queueNewTasks), executor)
+                            .whenComplete((result, error) -> {
+                                if (allowAsyncTaskCreation) {
+                                    if (result == 0) {
+                                        ThreadUtil.sleep(
+                                                processorConfigProvider.get().getFillTaskQueueFrequency().toMillis());
+                                    }
                                 }
-                            }
-                        } catch (final InterruptedException e) {
-                            throw UncheckedInterruptedException.create(e);
-                        }
-                    }, executor);
+
+                                // See if we are required to fill again.
+                                fillingQueue.set(false);
+                                if (needToFillQueue.get()) {
+                                    fillTaskQueueAsync();
+                                }
+                            });
+                } else {
+                    needToFillQueue.set(true);
+                }
+            }
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -224,11 +228,11 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                 // Get local reference to list in case it is swapped out.
                 final List<ProcessorFilter> filters = prioritisedFilters.get();
                 if (filters != null && filters.size() > 0) {
-                    final List<ProcessorTask> dequedTasks = new ArrayList<>(count);
+                    final List<ProcessorTask> toAssign = new ArrayList<>(count);
 
                     // Try and get a bunch of tasks from the queue to assign to the requesting node.
                     int index = 0;
-                    while (dequedTasks.size() < count && index < filters.size()) {
+                    while (toAssign.size() < count && index < filters.size()) {
                         final ProcessorFilter filter = filters.get(index);
 
                         // Get the queue for this filter.
@@ -237,8 +241,8 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                             // Add as many tasks as we can for this filter.
                             ProcessorTask streamTask = queue.poll();
                             while (streamTask != null) {
-                                dequedTasks.add(streamTask);
-                                if (dequedTasks.size() < count) {
+                                toAssign.add(streamTask);
+                                if (toAssign.size() < count) {
                                     streamTask = queue.poll();
                                 } else {
                                     streamTask = null;
@@ -249,8 +253,8 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                     }
 
                     // Now bulk assign the tasks in one query.
-                    if (dequedTasks.size() > 0) {
-                        final Set<Long> idSet = dequedTasks
+                    if (toAssign.size() > 0) {
+                        final Set<Long> idSet = toAssign
                                 .stream()
                                 .map(ProcessorTask::getId)
                                 .collect(Collectors.toSet());
@@ -264,7 +268,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
             LOGGER.error(e.getMessage(), e);
         }
 
-        // Output some trace logging so we can see where tasks go.
+        // Output some trace logging, so we can see where tasks go.
         taskStatusTraceLog.assignTasks(ProcessorTaskQueueManagerImpl.class, assignedStreamTasks, nodeName);
 
         if (LOGGER.isDebugEnabled()) {
@@ -272,8 +276,8 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                     + " tasks (" + count + " requested) to node " + nodeName);
         }
 
-        // Wake up queue filling.
-        fillQueueSemaphore.release();
+        // Kick off a queue fill.
+        fillTaskQueueAsync();
 
         return new ProcessorTaskList(nodeName, assignedStreamTasks);
     }
@@ -291,7 +295,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                     "Only the processing user is allowed to abandon tasks");
         }
 
-        // Output some trace logging so we can see where tasks go.
+        // Output some trace logging, so we can see where tasks go.
         taskStatusTraceLog.abandonTasks(ProcessorTaskQueueManagerImpl.class,
                 processorTaskList.getList(),
                 processorTaskList.getNodeName());
@@ -341,7 +345,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                 }
                 releaseQueuedTask(taskIdSet);
                 return taskIdSet.size();
-            }, () -> "Released tasks for filter " + filter.getId());
+            }, () -> "Released tasks for filter " + filter.getFilterInfo());
         }
         return 0;
     }
@@ -546,11 +550,11 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
             // The filter might have been deleted since we found it.
             if (optionalProcessorFilter.isPresent()) {
                 final ProcessorFilter loadedFilter = optionalProcessorFilter.get();
-                LOGGER.debug("queueTasksForFilter() - processorFilter {}", loadedFilter);
+                LOGGER.debug("queueTasksForFilter() - processorFilter {}", loadedFilter.getFilterInfo());
 
                 // Only try and create tasks if the processor is enabled.
                 if (loadedFilter.isEnabled() && loadedFilter.getProcessor().isEnabled()) {
-                    info(taskContext, () -> "Queueing tasks: " + loadedFilter);
+                    info(taskContext, loadedFilter::getFilterInfo);
 
                     // If there are any tasks for this filter that were previously created but aren't queued and
                     // their associated stream is unlocked then add them to the queue here.
