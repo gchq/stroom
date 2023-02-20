@@ -317,7 +317,11 @@ class TaskContextFactoryImpl implements TaskContextFactory {
                         LOGGER.debug("Clearing interrupted state");
                         if (Thread.interrupted()) {
                             if (currentThread.isInterrupted()) {
-                                LOGGER.error("Unable to clear interrupted state");
+                                try {
+                                    throw new RuntimeException("Unable to clear interrupted state");
+                                } catch (final RuntimeException e) {
+                                    LOGGER.error(e::getMessage, e);
+                                }
                             } else {
                                 LOGGER.debug("Cleared interrupted state");
                             }
