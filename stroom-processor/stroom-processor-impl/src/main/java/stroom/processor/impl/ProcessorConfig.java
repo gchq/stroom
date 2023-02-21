@@ -130,7 +130,8 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
         return fillTaskQueue;
     }
 
-    @JsonPropertyDescription("Maximum number of tasks to cache ready for processing, in total and per filter.")
+    @JsonPropertyDescription("The number of tasks to attempt to queue from filters considered in priority order. " +
+            "Note that this number will be exceeded if we have currently queued tasks from lower priority filters.")
     public int getQueueSize() {
         return queueSize;
     }
