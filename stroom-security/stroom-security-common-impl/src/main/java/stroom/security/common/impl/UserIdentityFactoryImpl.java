@@ -447,14 +447,18 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
                     final String msg = getMessage(response);
                     tokenResponse = mapper.readValue(msg, TokenResponse.class);
                 } else {
-                    throw new AuthenticationException("Received status " +
+                    // Attempt to get content from the response, e.g. an error msg
+                    final String msg = getMessage(response, false);
+
+                    throw new AuthenticationException("Received status '" +
                             response.getStatusLine() +
-                            " from " +
-                            tokenEndpoint);
+                            "' from " +
+                            tokenEndpoint + " :\n" + msg);
                 }
             }
         } catch (final IOException e) {
-            throw new AuthenticationException("Error requesting token from " + tokenEndpoint);
+            throw new AuthenticationException(
+                    "Error requesting token from " + tokenEndpoint + ": " + e.getMessage(), e);
         }
 
         if (tokenResponse == null || tokenResponse.getIdToken() == null) {
@@ -467,6 +471,10 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
     }
 
     private String getMessage(final CloseableHttpResponse response) {
+        return getMessage(response, true);
+    }
+
+    private String getMessage(final CloseableHttpResponse response, final boolean logErrors) {
         String msg = "";
         try {
             final HttpEntity entity = response.getEntity();
@@ -474,7 +482,9 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
                 msg = StreamUtil.streamToString(is);
             }
         } catch (final RuntimeException | IOException e) {
-            LOGGER.error(e.getMessage(), e);
+            if (logErrors) {
+                LOGGER.error(e.getMessage(), e);
+            }
         }
         return msg;
     }
