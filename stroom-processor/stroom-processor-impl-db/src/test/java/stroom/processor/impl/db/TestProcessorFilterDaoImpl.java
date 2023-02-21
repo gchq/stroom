@@ -6,7 +6,6 @@ import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.TaskStatus;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -155,7 +154,7 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
         assertThat(getProcessorTaskCount(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue())))
                 .isEqualTo(0);
 
-        Assertions.assertThat(processorFilterDao.fetch(processorFilter3.getId())
+        assertThat(processorFilterDao.fetch(processorFilter3.getId())
                         .orElseThrow()
                         .isDeleted())
                 .isTrue();
@@ -200,20 +199,24 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
         final ProcessorFilter processorFilter1 = createProcessorFilter(processor1);
         final ProcessorFilterTracker processorFilterTracker1 = processorFilter1.getProcessorFilterTracker();
 
-        Assertions.assertThat(processorFilter1.getId())
+        assertThat(processorFilter1.getId())
                 .isNotNull();
-        Assertions.assertThat(processorFilterTracker1.getId())
+        assertThat(processorFilterTracker1.getId())
                 .isNotNull();
+        assertThat(processorFilterTracker1.getStatus())
+                .isEqualTo(ProcessorFilterTrackerStatus.CREATED); // default value
 
         final ProcessorFilter processorFilter2 = processorFilterDao.fetch(processorFilter1.getId())
                 .orElseThrow();
         final ProcessorFilterTracker processorFilterTracker2 = processorFilter2.getProcessorFilterTracker();
 
-        Assertions.assertThat(processorFilter1.getProcessor())
+        assertThat(processorFilter1.getProcessor())
                 .isEqualTo(processorFilter2.getProcessor());
-        Assertions.assertThat(processorFilter1.getProcessorFilterTracker())
+        assertThat(processorFilter1.getProcessorFilterTracker())
                 .isEqualTo(processorFilter2.getProcessorFilterTracker());
-        Assertions.assertThat(processorFilterTracker1.getId())
+        assertThat(processorFilterTracker1.getId())
                 .isEqualTo(processorFilterTracker2.getId());
+        assertThat(processorFilterTracker1.getStatus())
+                .isEqualTo(processorFilterTracker2.getStatus());
     }
 }
