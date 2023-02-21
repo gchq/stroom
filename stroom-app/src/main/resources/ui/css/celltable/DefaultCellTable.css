@@ -128,11 +128,6 @@
 	color: var(--row__text-color--selected);
 }
 
-.cellTableOddRow:hover,
-.cellTableEvenRow:hover {
-    background-color: var(--row__background-color--hovered);
-}
-
 .cellTableSelectedRow:hover {
     background-color: var(--row__background-color--selected--hovered);
 }

@@ -18,23 +18,26 @@ package stroom.main.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
-import stroom.core.client.MenuKeys;
+import stroom.core.client.HasSaveRegistry;
 import stroom.core.client.UrlConstants;
 import stroom.core.client.presenter.CorePresenter;
+import stroom.document.client.DocumentPluginEventManager;
 import stroom.main.client.event.UrlQueryParameterChangeEvent;
-import stroom.menubar.client.event.BeforeRevealMenubarEvent;
+import stroom.svg.client.SvgPresets;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.task.client.event.OpenTaskManagerEvent;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UiConfig;
+import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tab.client.event.MaximiseEvent;
+import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
 import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -43,6 +46,7 @@ import com.google.gwt.event.dom.client.HasDoubleClickHandlers;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.http.client.UrlBuilder;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -57,6 +61,7 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
 import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,18 +77,29 @@ public class MainPresenter
     @ContentSlot
     public static final Type<RevealContentHandler<?>> CONTENT = new Type<>();
     private final Timer refreshTimer;
+    private final DocumentPluginEventManager documentPluginEventManager;
+    private final HasSaveRegistry hasSaveRegistry;
     private boolean click;
-    private final MenuItems menuItems;
+    private final Command closeAllTabsCommand;
+    private final Command saveAllCommand;
 
     @Inject
     public MainPresenter(final EventBus eventBus,
                          final MainView view,
                          final MainProxy proxy,
-                         final MenuItems menuItems,
-                         final UiConfigCache uiConfigCache) {
+                         final UiConfigCache uiConfigCache,
+                         final DocumentPluginEventManager documentPluginEventManager,
+                         final HasSaveRegistry hasSaveRegistry) {
         super(eventBus, view, proxy);
-        this.menuItems = menuItems;
+        this.documentPluginEventManager = documentPluginEventManager;
+        this.hasSaveRegistry = hasSaveRegistry;
         view.setUiHandlers(this);
+
+        // Handle hotkeys
+        closeAllTabsCommand = () -> RequestCloseAllTabsEvent.fire(MainPresenter.this);
+        KeyBinding.addCommand(Action.ITEM_CLOSE_ALL, closeAllTabsCommand);
+        saveAllCommand = hasSaveRegistry::save;
+        KeyBinding.addCommand(Action.ITEM_SAVE_ALL, saveAllCommand);
 
         // Handle key presses.
         view.asWidget().addDomHandler(event ->
@@ -181,29 +197,35 @@ public class MainPresenter
     }
 
     @Override
-    public void showMenu(final NativeEvent event, final Element target) {
-        final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteRight(),
-                target.getAbsoluteBottom());
-        showMenuItems(
-                popupPosition,
-                target);
+    public void showTabMenu(final NativeEvent event, final Element target) {
+        final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteRight(), target.getAbsoluteBottom());
+        ShowMenuEvent
+                .builder()
+                .items(buildTabMenuItems())
+                .popupPosition(popupPosition)
+                .fire(this);
     }
 
-    public void showMenuItems(final PopupPosition popupPosition,
-                              final Element autoHidePartner) {
-        // Clear the current menus.
-        menuItems.clear();
-        // Tell all plugins to add new menu items.
-        BeforeRevealMenubarEvent.fire(this, menuItems);
-        final List<Item> items = menuItems.getMenuItems(MenuKeys.MAIN_MENU);
-        if (items != null && items.size() > 0) {
-            ShowMenuEvent
-                    .builder()
-                    .items(items)
-                    .popupPosition(popupPosition)
-                    .addAutoHidePartner(autoHidePartner)
-                    .fire(this);
-        }
+    private List<Item> buildTabMenuItems() {
+        final List<Item> menuItems = new ArrayList<>();
+
+        menuItems.add(new IconMenuItem.Builder()
+                .icon(SvgPresets.CLOSE)
+                .text("Close All Tabs")
+                .action(Action.ITEM_CLOSE_ALL)
+                .enabled(documentPluginEventManager.isTabSelected())
+                .command(closeAllTabsCommand)
+                .build());
+
+        menuItems.add(new IconMenuItem.Builder()
+                .icon(SvgPresets.SAVE)
+                .text("Save All")
+                .action(Action.ITEM_SAVE_ALL)
+                .enabled(hasSaveRegistry.isDirty())
+                .command(saveAllCommand)
+                .build());
+
+        return menuItems;
     }
 
     private void startAutoRefresh() {

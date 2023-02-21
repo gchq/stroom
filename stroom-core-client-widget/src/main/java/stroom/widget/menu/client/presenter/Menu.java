@@ -41,9 +41,6 @@ public class Menu {
                     .popupType(PopupType.POPUP)
                     .popupPosition(event.getPopupPosition())
                     .addAutoHidePartner(event.getAutoHidePartners())
-                    .onShow(e -> {
-                        menuPresenter.selectFirstItem(true);
-                    })
                     .onHide(e -> {
                         if (event.getHideHandler() != null) {
                             event.getHideHandler().onHide(e);

@@ -37,8 +37,8 @@
     --tooltip__text-color: #fff;
 
     --button__background-image: none;
-    --button__background-color: #262a32;
-    --button__border-color: #14161b;
+    --button__background-color: #333436;
+    --button__border-color: #000;
     --button__text-color: #f1f8f8;
     --button__background-image--active: none;
     --button__background-color--active: #262a32;
@@ -101,17 +101,23 @@
     --page__background-color: #1a1d21;
     --page__text-color: #cacbcb;
 
+    /* Explorer */
+    --curve-tab__svg-color: #fff;
+
     /* Splitter */
     --splitter__background-color: #1d9bd1;
     --splitter__border-color: #22252c;
 
     /* Controls */
-    --control__background-color: #1c1f25;
-    --control__background-color--disabled: transparent;
-    --control__border-color: #4d5250;
+    --control__background-color: #151618;
+    --control__background-color--disabled: rgba(255, 255, 255, 0.1);
+    --control__border-color: #505050;
     --control__border-color--disabled: transparent;
     --control__text-color: #cacbcb;
     --control__text-color--disabled: #666;
+
+    /* Form Group */
+    --form-group__label-color: #eee;
 
     /* Dashboard */
     --dashboard-panel__background-color: #22252c;
@@ -179,9 +185,9 @@
 
     /* Dialog */
     --dialog__background-color: #1a1d21;
-    --dialog__border-color: #15161b;
-    --dialog__shadow: 0 0 5px 2px rgb(0 0 0 / 100%);
-    --popup__shadow: 0 0 5px 2px rgb(0 0 0 / 100%);
+    --dialog__border-color: #2c2f35;
+    --dialog__shadow: 0 0 50px 10px rgb(0 0 0 / 100%);
+    --popup__shadow: 0 0 20px 5px rgb(0 0 0 / 80%);
 
     /* Status */
     --ok: var(--blue-500);

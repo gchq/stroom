@@ -1,6 +1,6 @@
 .gwt-TextBox.autocompleteTextBox {
     background-image: url('../images/drop-down.svg');
-    cursor: default;
+    cursor: pointer;
     background-size: 12px;
     background-origin: content-box;
     background-repeat: no-repeat;
@@ -20,6 +20,7 @@
     padding: 0;
     border: none;
     border-radius: 0 5px 5px 5px;
+    background-color: transparent;
 }
 
 .autocompleteLayout {
@@ -33,11 +34,11 @@
 
 .gwt-PopupPanel.autocompletePanel input {
     background-image: url('../images/search.svg');
-    background-size: 12px;
+    background-size: 13px;
     background-origin: content-box;
     background-repeat: no-repeat;
     background-position-x: right;
-    background-position-y: 1px;
+    background-position-y: center;
     border-radius: 0;
     height: 22px;
 }

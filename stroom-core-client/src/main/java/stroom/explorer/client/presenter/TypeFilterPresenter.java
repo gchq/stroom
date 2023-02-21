@@ -50,9 +50,11 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         implements HasDataSelectionHandlers<TypeFilterPresenter>,
@@ -61,7 +63,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
     private final Set<String> selected = new HashSet<>();
     private List<DocumentType> visibleTypes;
 
-    private static final String SELECT_ALL_OR_NONE_TEXT = "All/none";
+    private static final String SELECT_ALL_OR_NONE_TEXT = "All / None";
     private static final String SELECT_ALL_OR_NONE_ICON = "svgIcon-document svgIcon-document-SelectAllOrNone";
     private static final DocumentType SELECT_ALL_OR_NONE_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.SYSTEM, SELECT_ALL_OR_NONE_TEXT, SELECT_ALL_OR_NONE_TEXT, SELECT_ALL_OR_NONE_ICON);
@@ -140,7 +142,10 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
     }
 
     public void setDocumentTypes(final DocumentTypes documentTypes) {
-        visibleTypes = documentTypes.getVisibleTypes();
+        visibleTypes = documentTypes.getVisibleTypes()
+                .stream()
+                .sorted(Comparator.comparing(DocumentType::getDisplayType))
+                .collect(Collectors.toList());
         selectAll();
         refreshView();
     }

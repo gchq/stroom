@@ -113,9 +113,10 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
             if (tabPriority.size() > 0) {
                 keyboardSelectedTab = tabPriority.get(0);
                 fireTabSelection(tabPriority.get(0));
+                onResize();
+            } else {
+                selectTab(null);
             }
-
-            onResize();
         }
     }
 
@@ -138,6 +139,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
     public void selectTab(final TabData tabData) {
         if (!EqualsUtil.isEquals(tabData, selectedTab)) {
             selectedTab = tabData;
+            keyboardSelectedTab = tabData;
             if (selectedTab != null) {
                 tabPriority.remove(tabData);
 

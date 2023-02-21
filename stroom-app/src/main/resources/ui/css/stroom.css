@@ -596,7 +596,6 @@ input[type="file"] {
 	color: var(--control__text-color);
 	border-radius: .25rem;
 	height: calc(1.5em + .75rem + 2px);
-	overflow: hidden;
 }
 
 .gwt-TextArea:disabled,

@@ -48,6 +48,8 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
     @UiField
     Button logo;
     @UiField
+    Button mainMenuButton;
+    @UiField
     QuickFilter nameFilter;
     @UiField
     FlowPanel buttonContainer;
@@ -59,6 +61,7 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
     @Inject
     public NavigationViewImpl(final NavigationViewImpl.Binder binder,
                               final UiConfigCache uiConfigCache) {
+
         layout = new FlowPanel();
         widget = binder.createAndBindUi(this);
 
@@ -66,12 +69,12 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
         logoImage.setClassName("navigation-logo-image");
         logoImage.setInnerHTML(SvgImages.MONO_LOGO);
 
-        final Element menuContent = DOM.createDiv();
-        menuContent.setClassName("navigation-menu-content");
-        menuContent.setTabIndex(-1);
-        menuContent.appendChild(logoImage);
+        logo.getElement().appendChild(logoImage);
 
-        logo.getElement().appendChild(menuContent);
+        final Element mainMenuButtonImage = DOM.createDiv();
+        mainMenuButtonImage.setClassName("main-menu");
+        mainMenuButtonImage.setInnerHTML(SvgImages.MONO_MENU);
+        mainMenuButton.getElement().appendChild(mainMenuButtonImage);
 
         uiConfigCache.get()
                 .onSuccess(uiConfig ->
@@ -87,15 +90,22 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
         return widget;
     }
 
+    @UiHandler("logo")
+    void onLogoClick(final ClickEvent event) {
+        if (MouseUtil.isPrimary(event.getNativeEvent())) {
+            getUiHandlers().showAboutDialog();
+        }
+    }
+
     @UiHandler("nameFilter")
     void onFilterChange(final ValueChangeEvent<String> event) {
         getUiHandlers().changeQuickFilter(nameFilter.getText());
     }
 
-    @UiHandler("logo")
-    void onLogo(final ClickEvent event) {
+    @UiHandler("mainMenuButton")
+    void onMainMenuButton(final ClickEvent event) {
         if (MouseUtil.isPrimary(event)) {
-            getUiHandlers().showMenu(event.getNativeEvent(), logo.getElement());
+            getUiHandlers().toggleMenu(event.getNativeEvent(), mainMenuButton.getElement());
         }
     }
 

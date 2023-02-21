@@ -87,8 +87,6 @@ import stroom.widget.menu.client.presenter.MenuItem;
 import stroom.widget.menu.client.presenter.Separator;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseOtherTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseSavedTabsEvent;
@@ -142,9 +140,7 @@ public class DocumentPluginEventManager extends Plugin {
     private MultiSelectionModel<ExplorerNode> selectionModel;
 
     private final Command itemCloseCommand;
-    private final Command itemCloseAllCommand;
     private final Command itemSaveCommand;
-    private final Command itemSaveAllCommand;
 
     @Inject
     public DocumentPluginEventManager(final EventBus eventBus,
@@ -167,13 +163,6 @@ public class DocumentPluginEventManager extends Plugin {
         };
         KeyBinding.addCommand(Action.ITEM_CLOSE, itemCloseCommand);
 
-        itemCloseAllCommand = () -> {
-            if (isTabItemSelected(selectedTab)) {
-                RequestCloseAllTabsEvent.fire(DocumentPluginEventManager.this);
-            }
-        };
-        KeyBinding.addCommand(Action.ITEM_CLOSE_ALL, itemCloseAllCommand);
-
         itemSaveCommand = () -> {
             if (isDirty(selectedTab)) {
                 final HasSave hasSave = (HasSave) selectedTab;
@@ -181,9 +170,6 @@ public class DocumentPluginEventManager extends Plugin {
             }
         };
         KeyBinding.addCommand(Action.ITEM_SAVE, itemSaveCommand);
-
-        itemSaveAllCommand = hasSaveRegistry::save;
-        KeyBinding.addCommand(Action.ITEM_SAVE_ALL, itemSaveAllCommand);
     }
 
     @Override
@@ -1149,6 +1135,10 @@ public class DocumentPluginEventManager extends Plugin {
 
     private boolean isTabItemSelected(final TabData tabData) {
         return tabData != null;
+    }
+
+    public boolean isTabSelected() {
+        return selectedTab != null;
     }
 
     private boolean isDirty(final TabData tabData) {

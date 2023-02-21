@@ -17,7 +17,6 @@
 
 package stroom.app.client.gin;
 
-import stroom.about.client.AboutPlugin;
 import stroom.apikeys.client.ApiKeysPlugin;
 import stroom.core.client.gin.PluginModule;
 import stroom.document.client.DocumentPluginEventManager;
@@ -32,7 +31,6 @@ public class PluginsModule extends PluginModule {
         bindPlugin(DocumentPluginEventManager.class);
 
         bindPlugin(HelpPlugin.class);
-        bindPlugin(AboutPlugin.class);
         bindPlugin(UsersPlugin.class);
         bindPlugin(ApiKeysPlugin.class);
         bindPlugin(TrackersPlugin.class);

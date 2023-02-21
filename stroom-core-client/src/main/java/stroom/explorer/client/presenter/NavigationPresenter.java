@@ -16,6 +16,7 @@
 
 package stroom.explorer.client.presenter;
 
+import stroom.about.client.event.ShowAboutEvent;
 import stroom.activity.client.ActivityChangedEvent;
 import stroom.activity.client.CurrentActivity;
 import stroom.activity.shared.Activity.ActivityDetails;
@@ -29,6 +30,8 @@ import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.explorer.client.event.ShowNewMenuEvent;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationProxy;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
+import stroom.explorer.shared.ExplorerConstants;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.event.CurrentUserChangedEvent;
@@ -38,6 +41,7 @@ import stroom.svg.client.SvgImages;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
 import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.menu.client.presenter.HideMenuEvent;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -82,6 +86,7 @@ public class NavigationPresenter
     private final InlineSvgButton add;
     private final InlineSvgButton delete;
     private final InlineSvgButton filter;
+    private boolean menuVisible = false;
 
     @Inject
     public NavigationPresenter(final EventBus eventBus,
@@ -101,19 +106,19 @@ public class NavigationPresenter
 
         add = new InlineSvgButton();
         add.setSvg(SvgImages.MONO_ADD);
-        add.getElement().addClassName("navigation-header-button navigation-header-button-add");
+        add.getElement().addClassName("navigation-header-button add");
         add.setTitle("New");
         add.setEnabled(false);
 
         delete = new InlineSvgButton();
         delete.setSvg(SvgImages.MONO_DELETE);
-        delete.getElement().addClassName("navigation-header-button navigation-header-button-delete");
+        delete.getElement().addClassName("navigation-header-button delete");
         delete.setTitle("Delete");
         delete.setEnabled(false);
 
         filter = new InlineSvgButton();
         filter.setSvg(SvgImages.MONO_FILTER);
-        filter.getElement().addClassName("navigation-header-button navigation-header-button-filter");
+        filter.getElement().addClassName("navigation-header-button filter");
         filter.setTitle("Filter");
         filter.setEnabled(true);
 
@@ -168,7 +173,10 @@ public class NavigationPresenter
             getEventBus().fireEvent(new ExplorerTreeSelectEvent(
                     explorerTree.getSelectionModel(),
                     event.getSelectionType()));
-            final boolean enabled = explorerTree.getSelectionModel().getSelectedItems().size() > 0;
+            final ExplorerNode selectedNode = explorerTree.getSelectionModel().getSelected();
+            final boolean enabled = explorerTree.getSelectionModel().getSelectedItems().size() > 0 &&
+                    !ExplorerConstants.isFavouritesNode(selectedNode) &&
+                    !ExplorerConstants.isSystemNode(selectedNode);
             add.setEnabled(enabled);
             delete.setEnabled(enabled);
         }));
@@ -220,15 +228,27 @@ public class NavigationPresenter
     }
 
     @Override
-    public void showMenu(final NativeEvent event, final Element target) {
-        final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft(),
-                target.getAbsoluteBottom() + 10);
-        showMenuItems(
-                popupPosition,
-                target);
+    public void toggleMenu(final NativeEvent event, final Element target) {
+        menuVisible = !menuVisible;
+        if (menuVisible) {
+            final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft(),
+                    target.getAbsoluteBottom());
+            showMenuItems(
+                    popupPosition,
+                    target);
+        } else {
+            HideMenuEvent
+                    .builder()
+                    .fire(this);
+        }
     }
 
-    public void showMenuItems(final PopupPosition popupPosition,
+    @Override
+    public void showAboutDialog() {
+        ShowAboutEvent.fire(this);
+    }
+
+    private void showMenuItems(final PopupPosition popupPosition,
                               final Element autoHidePartner) {
         // Clear the current menus.
         menuItems.clear();
@@ -241,6 +261,7 @@ public class NavigationPresenter
                     .items(items)
                     .popupPosition(popupPosition)
                     .addAutoHidePartner(autoHidePartner)
+                    .onHide(e -> menuVisible = false)
                     .fire(this);
         }
     }

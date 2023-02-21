@@ -13,11 +13,11 @@
         <form:FormGroup identity="basicQuerySettingsDataSource" label="Data Source">
             <g:SimplePanel ui:field="dataSource" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicQuerySettingsQueryOnOpen" label="Query On Open">
-            <v:CustomCheckBox ui:field="queryOnOpen"/>
+        <form:FormGroup>
+            <v:CustomCheckBox ui:field="queryOnOpen" identity="basicQuerySettingsQueryOnOpen" label="Query On Open"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicQuerySettingsAutoRefresh" label="Auto Refresh">
-            <v:CustomCheckBox ui:field="autoRefresh"/>
+        <form:FormGroup>
+            <v:CustomCheckBox ui:field="autoRefresh" identity="basicQuerySettingsAutoRefresh" label="Auto Refresh"/>
         </form:FormGroup>
         <form:FormGroup identity="basicQuerySettingsRefreshInterval" label="Refresh Interval">
             <g:TextBox ui:field="refreshInterval" addStyleNames="w-100"/>

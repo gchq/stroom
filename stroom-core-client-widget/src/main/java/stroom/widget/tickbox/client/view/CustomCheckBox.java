@@ -16,10 +16,12 @@
 
 package stroom.widget.tickbox.client.view;
 
+import stroom.widget.form.client.FormGroup;
+import stroom.widget.form.client.FormLabel;
+
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
-import com.google.gwt.dom.client.LabelElement;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style.WhiteSpace;
 import com.google.gwt.editor.client.IsEditor;
@@ -85,30 +87,36 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
             DirectionalTextHelper.DEFAULT_DIRECTION_ESTIMATOR;
 
     final DirectionalTextHelper directionalTextHelper;
-    InputElement inputElem;
-    SpanElement labelElem;
+    final InputElement inputElem;
+    final SpanElement checkmarkElem;
+    final FormLabel label = new FormLabel();
     private LeafValueEditor<Boolean> editor;
     private boolean valueChangeHandlerInitialized;
 
     public CustomCheckBox() {
-        super(DOM.createSpan());
+        super(DOM.createDiv());
         setStyleName("SimpleTickBox");
 
+        final Element checkboxContainer = DOM.createDiv();
+        checkboxContainer.setClassName("checkbox-container");
         inputElem = InputElement.as(DOM.createInputCheck());
-        labelElem = Document.get().createSpanElement();
-        labelElem.setInnerHTML(CHECK);
+        checkmarkElem = Document.get().createSpanElement();
+        checkmarkElem.setInnerHTML(CHECK);
 
-        inputElem.setClassName("SimpleTickBox-checkbox");
-        labelElem.setClassName("SimpleTickBox-checkmark");
+        inputElem.setClassName("checkbox");
+        checkmarkElem.setClassName("checkmark");
 
-        getElement().appendChild(inputElem);
-        getElement().appendChild(labelElem);
+        checkboxContainer.appendChild(inputElem);
+        checkboxContainer.appendChild(checkmarkElem);
+        getElement().appendChild(checkboxContainer);
+
+        getElement().appendChild(label.getElement());
 
 //        String uid = DOM.createUniqueId();
 //        inputElem.setPropertyString("id", uid);
 //        labelElem.setHtmlFor(uid);
 
-        directionalTextHelper = new DirectionalTextHelper(labelElem, true);
+        directionalTextHelper = new DirectionalTextHelper(checkmarkElem, true);
 
         // Accessibility: setting tab index to be 0 by default, ensuring element
         // appears in tab sequence. FocusWidget's setElement method already
@@ -153,6 +161,15 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
      */
     public String getFormValue() {
         return inputElem.getValue();
+    }
+
+    public void setLabel(final String label) {
+        this.label.setLabel(label);
+    }
+
+    public void setIdentity(final String identity) {
+        this.label.setIdentity(identity);
+        this.inputElem.setId(identity);
     }
 
     @Override

@@ -17,7 +17,8 @@
 
 package stroom.app.client.gin;
 
-import stroom.about.client.presenter.AboutPresenter;
+import stroom.about.client.gin.AboutGinjector;
+import stroom.about.client.gin.AboutModule;
 import stroom.activity.client.ActivityModule;
 import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
@@ -98,6 +99,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.proxy.PlaceManager;
 
 @GinModules({
+        AboutModule.class,
         ActivityModule.class,
         AlertModule.class,
         AnnotationModule.class,
@@ -137,6 +139,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         XMLSchemaModule.class
 })
 public interface AppGinjectorUser extends
+        AboutGinjector,
         AlertGinjector,
         CacheGinjector,
         DashboardGinjector,
@@ -186,6 +189,4 @@ public interface AppGinjectorUser extends
     AsyncProvider<ContentTabPanePresenter> getContentTabPanePresenter();
 
     AsyncProvider<ExplorerTreePresenter> getExplorerTreePresenter();
-
-    AsyncProvider<AboutPresenter> getAboutPresenter();
 }

@@ -11,20 +11,20 @@
         <form:FormGroup identity="indexFieldName" label="Name">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="indexFieldStored" label="Stored">
-            <tickbox:CustomCheckBox ui:field="stored"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="stored" identity="indexFieldStored" label="Stored"/>
         </form:FormGroup>
-        <form:FormGroup identity="indexFieldIndexed" label="Indexed">
-            <tickbox:CustomCheckBox ui:field="indexed"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="indexed" identity="indexFieldIndexed" label="Indexed"/>
         </form:FormGroup>
-        <form:FormGroup identity="indexFieldPositions" label="Positions">
-            <tickbox:CustomCheckBox ui:field="positions"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="positions" identity="indexFieldPositions" label="Positions"/>
         </form:FormGroup>
         <form:FormGroup identity="indexFieldAnalyser" label="Analyser">
             <l:ItemListBox ui:field="analyser" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="indexFieldCaseSensitive" label="Case Sensitive">
-            <tickbox:CustomCheckBox ui:field="caseSensitive"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="caseSensitive" identity="indexFieldCaseSensitive" label="Case Sensitive"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

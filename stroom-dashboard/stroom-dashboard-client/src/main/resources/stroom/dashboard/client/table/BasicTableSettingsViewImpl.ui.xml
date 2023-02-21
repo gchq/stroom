@@ -13,8 +13,8 @@
         <form:FormGroup identity="basicTableSettingsQuery" label="Query">
             <i:ItemListBox ui:field="query" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTableSettingsExtractValues" label="Extract Values">
-            <v:CustomCheckBox ui:field="extractValues"/>
+        <form:FormGroup>
+            <v:CustomCheckBox ui:field="extractValues" identity="basicTableSettingsExtractValues" label="Extract Values"/>
         </form:FormGroup>
         <form:FormGroup identity="basicTableSettingsExtractionPipeline" label="Extraction Pipeline">
             <g:SimplePanel ui:field="pipeline" addStyleNames="w-100"/>
@@ -22,8 +22,8 @@
         <form:FormGroup identity="basicTableSettingsMaximumResults" label="Maximum Results">
             <g:TextBox ui:field="maxResults" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTableSettingsShowGroupDetail" label="Show Group Detail">
-            <v:CustomCheckBox ui:field="showDetail"/>
+        <form:FormGroup>
+            <v:CustomCheckBox ui:field="showDetail" identity="basicTableSettingsShowGroupDetail" label="Show Group Detail"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 
