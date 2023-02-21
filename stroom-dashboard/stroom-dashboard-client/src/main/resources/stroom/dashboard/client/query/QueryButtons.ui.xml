@@ -4,7 +4,8 @@
              xmlns:b="urn:import:stroom.widget.button.client">
     <b:ButtonPanel addStyleNames="QueryButtons svg-image-button-group">
         <g:Button ui:field="start" title="Execute Query" enabled="false"
-                  styleName="svg-image-button QueryButtons-play"/>
-        <g:Button ui:field="stop" title="Stop Query" enabled="false" styleName="svg-image-button QueryButtons-stop"/>
+                  styleName="svg-image-button QueryButtons-button play"/>
+        <g:Button ui:field="stop" title="Stop Query" enabled="false"
+                  styleName="svg-image-button QueryButtons-button stop"/>
     </b:ButtonPanel>
 </ui:UiBinder>

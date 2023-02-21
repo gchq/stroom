@@ -38,11 +38,11 @@
         <form:FormGroup identity="basicTextSettingsPipeline" label="Pipeline">
             <g:SimplePanel ui:field="pipeline" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTextSettingsShowAsHTML" label="Show As HTML">
-            <v:CustomCheckBox ui:field="showAsHtml"/>
+        <form:FormGroup>
+            <v:CustomCheckBox ui:field="showAsHtml" identity="basicTextSettingsShowAsHTML" label="Show As HTML"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTextSettingsShowStepping" label="Show Stepping">
-            <v:CustomCheckBox ui:field="showStepping"/>
+        <form:FormGroup>
+            <v:CustomCheckBox ui:field="showStepping" identity="basicTextSettingsShowStepping" label="Show Stepping"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

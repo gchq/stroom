@@ -130,10 +130,14 @@ public class MenuItemCell extends AbstractCell<Item> {
                     if (disabledIcon != null) {
                         inner.append(TEMPLATE.inner("menuItem-icon",
                                 SafeHtmlUtils.fromTrustedString(disabledIcon.asWidget().getElement().getString())));
+                    } else if (enabledIcon != null) {
+                        inner.append(TEMPLATE.inner("menuItem-icon",
+                                SafeHtmlUtils.fromTrustedString(enabledIcon.asWidget().getElement().getString())));
                     } else {
                         inner.append(TEMPLATE.inner("menuItem-icon", SafeHtmlUtils.EMPTY_SAFE_HTML));
                     }
                 }
+
 
                 inner.append(
                         TEMPLATE.inner("menuItem-text", SafeHtmlUtils.fromTrustedString(value.getText())));
@@ -144,6 +148,14 @@ public class MenuItemCell extends AbstractCell<Item> {
                         inner.append(TEMPLATE.inner("menuItem-shortcut",
                                 SafeHtmlUtils.fromTrustedString(shortcut)));
                     }
+                }
+
+                // If this is a parent menu item, render an arrow to the right-hand side
+                if ((value instanceof IconParentMenuItem || value instanceof KeyedParentMenuItem) &&
+                        value.isEnabled()) {
+                    final Icon expandIcon = Icon.create("svgIcon-arrow-solid-right");
+                    inner.append(TEMPLATE.expandArrow("menuItem-expandArrow",
+                            SafeHtmlUtils.fromTrustedString(expandIcon.asWidget().getElement().getString())));
                 }
 
                 String className = "menuItem-outer";
@@ -170,6 +182,9 @@ public class MenuItemCell extends AbstractCell<Item> {
 
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml text(String className, SafeHtml text);
+
+            @Template("<div class=\"{0}\">{1}</div>")
+            SafeHtml expandArrow(String className, SafeHtml icon);
         }
     }
 

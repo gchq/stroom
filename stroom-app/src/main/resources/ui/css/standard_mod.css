@@ -61,7 +61,6 @@ body,table td,select {
     font-weight: 500;
     line-height: 20px;
     vertical-align: middle;
-    height: 1.9rem;
     min-width: 7rem;
 }
 .gwt-Button:active {
@@ -333,12 +332,17 @@ body,table td,select {
 }
 
 .gwt-ListBox {
+	cursor: pointer;
+}
+
+.gwt-ListBox {
 	padding: 0px;
 }
 
 .gwt-TextArea {
 	resize: none;
 	height: 80px;
+	overflow-y: auto;
 }
 textarea {
 	resize: none;
@@ -517,4 +521,8 @@ background: none;
   width: 0px;
   height: 0px;
   overflow: hidden;
+}
+
+.form-label {
+	color: var(--form-group__label-color);
 }

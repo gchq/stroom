@@ -60,6 +60,7 @@
 
     <!-- Import functional areas -->
     <!-- Minimal -->
+    <inherits name="stroom.about.About" />
     <inherits name="stroom.activity.Activity" />
     <inherits name="stroom.annotation.Annotation" />
     <inherits name="stroom.config.Config" />

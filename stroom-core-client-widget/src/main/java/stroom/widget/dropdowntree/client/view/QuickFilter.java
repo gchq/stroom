@@ -72,10 +72,10 @@ public class QuickFilter extends FlowPanel
         textBox.getElement().setAttribute("placeholder", "Quick Filter");
 
         clearButton = SvgButton.create(SvgPresets.CLEAR.title("Clear Filter"));
-        clearButton.addStyleName("quickFilter-clear");
+        clearButton.addStyleName("clear");
 
         helpButton = SvgButton.create(SvgPresets.HELP.title("Quick Filter Syntax Help"));
-        helpButton.addStyleName("quickFilter-infoButton");
+        helpButton.addStyleName("info");
 
         add(textBox);
         add(clearButton);

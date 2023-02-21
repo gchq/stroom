@@ -31,15 +31,25 @@
 	z-index: 4;
 }
 
-.QueryButtons-play:enabled svg {
+.QueryButtons-button svg {
+	width: 12px;
+	height: 12px;
+}
+
+.DashboardViewImpl-top .QueryButtons-button svg {
+	width: 20px;
+	height: 20px;
+}
+
+.QueryButtons-button.play:enabled svg {
     color: #4caf50;
 }
 
-.QueryButtons-pause:enabled svg {
+.QueryButtons-button.pause:enabled svg {
     color: #2196f3;
 }
 
-.QueryButtons-stop:enabled svg {
+.QueryButtons-button.stop:enabled svg {
     color: #d32f2f;
 }
 

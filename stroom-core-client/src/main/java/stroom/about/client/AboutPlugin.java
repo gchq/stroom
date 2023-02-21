@@ -16,6 +16,8 @@
 
 package stroom.about.client;
 
+import stroom.about.client.event.ShowAboutEvent;
+import stroom.about.client.event.ShowAboutEvent.ShowAboutHandler;
 import stroom.about.client.presenter.AboutPresenter;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
@@ -32,7 +34,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class AboutPlugin extends Plugin {
+public class AboutPlugin extends Plugin implements ShowAboutHandler {
 
     private final Provider<AboutPresenter> provider;
 
@@ -40,6 +42,13 @@ public class AboutPlugin extends Plugin {
     public AboutPlugin(final EventBus eventBus, final Provider<AboutPresenter> provider) {
         super(eventBus);
         this.provider = provider;
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+
+        registerHandler(getEventBus().addHandler(ShowAboutEvent.getType(), this));
     }
 
     @Override
@@ -59,5 +68,10 @@ public class AboutPlugin extends Plugin {
                         .text("About")
                         .command(() -> provider.get().forceReveal())
                         .build());
+    }
+
+    @Override
+    public void onShow(final ShowAboutEvent event) {
+        provider.get().show();
     }
 }

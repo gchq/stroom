@@ -40,8 +40,8 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
 
         final ScrollPanel scrollPanel = new ScrollPanel(cellTable);
         scrollPanel.getElement().getStyle().setProperty("minWidth", 50 + "px");
-        scrollPanel.getElement().getStyle().setProperty("maxWidth", 600 + "px");
-        scrollPanel.getElement().getStyle().setProperty("maxHeight", 600 + "px");
+        scrollPanel.getElement().getStyle().setProperty("maxWidth", 400 + "px");
+        scrollPanel.getElement().getStyle().setProperty("maxHeight", 500 + "px");
 
         final Column<Item, Item> iconColumn = new Column<Item, Item>(new MenuItemCell()) {
             @Override
@@ -63,10 +63,23 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
 
     public void showSubMenu(final Item item) {
         if (getUiHandlers() != null && item instanceof MenuItem) {
+            getUiHandlers().showSubMenu((MenuItem) item, getRowElement(item));
+        }
+    }
+
+    public void toggleSubMenu(final Item item) {
+        if (getUiHandlers() != null && item instanceof MenuItem) {
+            getUiHandlers().toggleSubMenu((MenuItem) item, getRowElement(item));
+        }
+    }
+
+    private Element getRowElement(final Item item) {
+        if (getUiHandlers() != null && item instanceof MenuItem) {
             final List<Item> items = cellTable.getVisibleItems();
             final int row = items.indexOf(item);
-            final Element rowElement = cellTable.getRowElement(row);
-            getUiHandlers().showSubMenu((MenuItem) item, rowElement);
+            return cellTable.getRowElement(row);
+        } else {
+            return null;
         }
     }
 
@@ -203,8 +216,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
                 if (item instanceof MenuItem && ((MenuItem) item).getCommand() != null) {
                     execute((MenuItem) item);
                 } else {
-                    showSubMenu(item);
-//                        focusSubMenu();
+                    toggleSubMenu(item);
                 }
             }
         }
@@ -214,9 +226,8 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
             final Item item = e.getValue();
             if (isSelectable(item)) {
                 final int row = cellTable.getVisibleItems().indexOf(item);
-                if (row != mouseOverRow) {
+                if (row != mouseOverRow && !getUiHandlers().subMenuVisible()) {
                     selectRow(row, false);
-                    showSubMenu(item);
                     mouseOverRow = row;
                 }
             }

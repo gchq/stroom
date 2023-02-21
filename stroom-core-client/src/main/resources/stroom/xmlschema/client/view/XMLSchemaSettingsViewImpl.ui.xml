@@ -16,8 +16,8 @@
         <form:FormGroup identity="xmlSchemaSettingSchemaGroup" label="Schema Group">
             <g:TextBox ui:field="schemaGroup" width="400px"/>
         </form:FormGroup>
-        <form:FormGroup identity="xmlSchemaSettingDeprecated" label="Deprecated">
-            <tickbox:CustomCheckBox ui:field="deprecated"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="deprecated" identity="xmlSchemaSettingDeprecated" label="Deprecated"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

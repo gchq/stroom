@@ -8,8 +8,8 @@
         <form:FormGroup identity="dataRetentionRuleRuleName" label="Rule Name (optional)">
                 <g:TextBox ui:field="name" />
         </form:FormGroup>
-        <form:FormGroup identity="dataRetentionRuleKeepForever" label="Keep Forever">
-            <tickbox:CustomCheckBox ui:field="forever"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="forever" identity="dataRetentionRuleKeepForever" label="Keep Forever"/>
         </form:FormGroup>
         <form:FormGroup ui:field="retainLabel" identity="dataRetentionRuleRetainFor" label="Retain For">
             <g:FlowPanel>

@@ -50,7 +50,7 @@ public class MainViewImpl extends ViewWithUiHandlers<MainUiHandlers> implements 
     @UiField
     Spinner spinner;
     @UiField
-    Button menu;
+    Button tabMenu;
     @UiField
     ResizeLayoutPanel contentPanel;
     private Widget maximisedWidget;
@@ -64,7 +64,7 @@ public class MainViewImpl extends ViewWithUiHandlers<MainUiHandlers> implements 
     public MainViewImpl(final Binder binder) {
         this.widget = binder.createAndBindUi(this);
         banner.setVisible(false);
-        menu.getElement().setInnerHTML(SvgImages.MONO_THREE_DOTS_VERTICAL);
+        tabMenu.getElement().setInnerHTML(SvgImages.MONO_THREE_DOTS_VERTICAL);
         widget.sinkEvents(Event.KEYEVENTS);
     }
 
@@ -195,10 +195,10 @@ public class MainViewImpl extends ViewWithUiHandlers<MainUiHandlers> implements 
         }
     }
 
-    @UiHandler("menu")
-    void onMenu(final ClickEvent event) {
+    @UiHandler("tabMenu")
+    void onTabMenu(final ClickEvent event) {
         if (MouseUtil.isPrimary(event)) {
-            getUiHandlers().showMenu(event.getNativeEvent(), menu.getElement());
+            getUiHandlers().showTabMenu(event.getNativeEvent(), tabMenu.getElement());
         }
     }
 

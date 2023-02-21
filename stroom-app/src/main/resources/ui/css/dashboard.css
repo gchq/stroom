@@ -19,7 +19,11 @@
 
 .DashboardViewImpl-top {
     gap: var(--control__padding--horizontal);
-    padding: 0 var(--control__padding--horizontal) var(--control__padding--vertical) 0;
+    padding: 0 0 var(--control__padding--vertical) 0;
+}
+
+.DashboardViewImpl-top > input {
+	height: auto;
 }
 
 .DashboardViewImpl-content {

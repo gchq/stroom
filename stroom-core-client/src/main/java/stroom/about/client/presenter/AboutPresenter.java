@@ -39,6 +39,9 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 public class AboutPresenter extends MyPresenter<AboutPresenter.AboutView, AboutPresenter.AboutProxy> {
 
     private static final SessionInfoResource SESSION_INFO_RESOURCE = GWT.create(SessionInfoResource.class);
+    private final RestFactory restFactory;
+    private final UiConfigCache clientPropertyCache;
+    private final DateTimeFormatter dateTimeFormatter;
 
     @Inject
     public AboutPresenter(final EventBus eventBus,
@@ -48,22 +51,31 @@ public class AboutPresenter extends MyPresenter<AboutPresenter.AboutView, AboutP
                           final UiConfigCache clientPropertyCache,
                           final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view, proxy);
+        this.restFactory = restFactory;
+        this.clientPropertyCache = clientPropertyCache;
+        this.dateTimeFormatter = dateTimeFormatter;
 
+        buildContent();
+    }
+
+    private void buildContent() {
         final Rest<SessionInfo> rest = restFactory.create();
         rest
                 .onSuccess(sessionInfo -> {
                     final BuildInfo buildInfo = sessionInfo.getBuildInfo();
-                    view.getBuildVersion().setText("Build Version: " + buildInfo.getBuildVersion());
-                    view.getBuildDate().setText("Build Date: " + dateTimeFormatter.format(buildInfo.getBuildTime()));
-                    view.getUpDate().setText("Up Date: " + dateTimeFormatter.format(buildInfo.getUpTime()));
-                    view.getNodeName().setText("Node Name: " + sessionInfo.getNodeName());
+                    getView().getBuildVersion().setText("Build Version: " + buildInfo.getBuildVersion());
+                    getView().getBuildDate().setText("Build Date: " +
+                            dateTimeFormatter.format(buildInfo.getBuildTime()));
+                    getView().getUpDate().setText("Up Date: " +
+                            dateTimeFormatter.format(buildInfo.getUpTime()));
+                    getView().getNodeName().setText("Node Name: " + sessionInfo.getNodeName());
                 })
                 .onFailure(caught -> AlertEvent.fireError(AboutPresenter.this, caught.getMessage(), null))
                 .call(SESSION_INFO_RESOURCE)
                 .get();
 
         clientPropertyCache.get()
-                .onSuccess(result -> view.setHTML(result.getAboutHtml()))
+                .onSuccess(result -> getView().setHTML(result.getAboutHtml()))
                 .onFailure(caught -> AlertEvent.fireError(AboutPresenter.this, caught.getMessage(), null));
     }
 
@@ -73,6 +85,10 @@ public class AboutPresenter extends MyPresenter<AboutPresenter.AboutView, AboutP
                 .popupType(PopupType.CLOSE_DIALOG)
                 .caption("About")
                 .fire();
+    }
+
+    public void show() {
+        revealInParent();
     }
 
     @ProxyCodeSplit

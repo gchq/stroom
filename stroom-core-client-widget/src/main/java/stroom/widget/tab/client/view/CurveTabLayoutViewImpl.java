@@ -38,6 +38,8 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class CurveTabLayoutViewImpl extends ViewWithUiHandlers<CurveTabLayoutUiHandlers> implements CurveTabLayoutView {
 
+    private static final String SHOW_SIDEBAR = "Show Sidebar";
+    private static final String HIDE_SIDEBAR = "Hide Sidebar";
     private final Widget widget;
 
     @UiField(provided = true)
@@ -63,6 +65,7 @@ public class CurveTabLayoutViewImpl extends ViewWithUiHandlers<CurveTabLayoutUiH
         };
         widget = binder.createAndBindUi(this);
         menu.getElement().setInnerHTML(SvgImages.MONO_HIDE_MENU);
+        menu.getElement().setTitle(HIDE_SIDEBAR);
         menuVisible = true;
     }
 
@@ -101,9 +104,11 @@ public class CurveTabLayoutViewImpl extends ViewWithUiHandlers<CurveTabLayoutUiH
         if (menuVisible) {
             menuVisible = false;
             menu.getElement().setInnerHTML(SvgImages.MONO_SHOW_MENU);
+            menu.getElement().setTitle(SHOW_SIDEBAR);
         } else {
             menuVisible = true;
             menu.getElement().setInnerHTML(SvgImages.MONO_HIDE_MENU);
+            menu.getElement().setTitle(HIDE_SIDEBAR);
         }
         getUiHandlers().maximise();
     }

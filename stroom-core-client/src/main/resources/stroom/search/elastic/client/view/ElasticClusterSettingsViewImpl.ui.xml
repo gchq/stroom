@@ -13,8 +13,8 @@
         <form:FormGroup identity="elasticClusterSettingsCAcertificate" label="CA certificate">
             <g:TextArea ui:field="caCertificate" width="400px"/>
         </form:FormGroup>
-        <form:FormGroup identity="elasticClusterSettingsUseauthentication" label="Use authentication">
-            <t:CustomCheckBox ui:field="useAuthentication"/>
+        <form:FormGroup>
+            <t:CustomCheckBox ui:field="useAuthentication" identity="elasticClusterSettingsUseauthentication" label="Use authentication"/>
         </form:FormGroup>
         <form:FormGroup identity="elasticClusterSettingsAPIKeyId" label="API Key Id">
             <g:TextBox ui:field="apiKeyId" width="400px"/>
