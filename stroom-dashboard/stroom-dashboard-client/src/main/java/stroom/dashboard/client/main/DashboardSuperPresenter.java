@@ -18,7 +18,6 @@
 package stroom.dashboard.client.main;
 
 import stroom.dashboard.shared.DashboardDoc;
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
@@ -45,10 +44,9 @@ public class DashboardSuperPresenter
     public DashboardSuperPresenter(final EventBus eventBus,
                                    final LinkTabPanelView view,
                                    final ClientSecurityContext securityContext,
-                                   final RestFactory restFactory,
                                    final Provider<DashboardSettingsPresenter> settingsPresenterProvider,
                                    final Provider<DashboardPresenter> dashboardPresenterProvider) {
-        super(eventBus, view, securityContext, restFactory);
+        super(eventBus, view, securityContext);
         dashboardPresenter = dashboardPresenterProvider.get();
 
         tabContentProvider.setDirtyHandler(event -> {

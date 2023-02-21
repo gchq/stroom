@@ -17,7 +17,6 @@
 
 package stroom.pipeline.client.presenter;
 
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
@@ -48,11 +47,10 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
     @Inject
     public TextConverterPresenter(final EventBus eventBus,
                                   final LinkTabPanelView view,
-                                  final RestFactory restFactory,
                                   final TextConverterSettingsPresenter settingsPresenter,
                                   final Provider<EditorPresenter> editorPresenterProvider,
                                   final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext, restFactory);
+        super(eventBus, view, securityContext);
         this.settingsPresenter = settingsPresenter;
         this.editorPresenterProvider = editorPresenterProvider;
 

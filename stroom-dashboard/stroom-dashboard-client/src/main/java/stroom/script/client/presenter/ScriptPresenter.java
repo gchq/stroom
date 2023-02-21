@@ -19,7 +19,6 @@ package stroom.script.client.presenter;
 
 import stroom.dashboard.client.vis.ClearFunctionCacheEvent;
 import stroom.dashboard.client.vis.ClearScriptCacheEvent;
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
@@ -54,9 +53,8 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
                            final LinkTabPanelView view,
                            final ScriptSettingsPresenter settingsPresenter,
                            final ClientSecurityContext securityContext,
-                           final Provider<EditorPresenter> editorPresenterProvider,
-                           final RestFactory restFactory) {
-        super(eventBus, view, securityContext, restFactory);
+                           final Provider<EditorPresenter> editorPresenterProvider) {
+        super(eventBus, view, securityContext);
         this.settingsPresenter = settingsPresenter;
         this.editorPresenterProvider = editorPresenterProvider;
 

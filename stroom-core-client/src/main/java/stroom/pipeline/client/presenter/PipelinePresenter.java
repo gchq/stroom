@@ -19,7 +19,6 @@ package stroom.pipeline.client.presenter;
 
 import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
@@ -54,14 +53,13 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
     @Inject
     public PipelinePresenter(final EventBus eventBus,
                              final LinkTabPanelView view,
-                             final RestFactory restFactory,
                              final Provider<PipelineSettingsPresenter> settingsPresenter,
                              final Provider<MetaPresenter> streamPresenterProvider,
                              final Provider<PipelineStructurePresenter> structurePresenter,
                              final Provider<ProcessorPresenter> processorPresenter,
                              final Provider<ProcessorTaskPresenter> streamTaskPresenterProvider,
                              final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext, restFactory);
+        super(eventBus, view, securityContext);
 
         tabContentProvider.setDirtyHandler(event -> {
             if (event.isDirty()) {

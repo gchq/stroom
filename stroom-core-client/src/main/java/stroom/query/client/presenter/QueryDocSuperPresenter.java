@@ -17,7 +17,6 @@
 
 package stroom.query.client.presenter;
 
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
@@ -46,9 +45,8 @@ public class QueryDocSuperPresenter
                                   final LinkTabPanelView view,
                                   final Provider<QueryDocSettingsPresenter> settingsPresenterProvider,
                                   final Provider<QueryDocPresenter> queryDocPresenterProvider,
-                                  final ClientSecurityContext securityContext,
-                                  final RestFactory restFactory) {
-        super(eventBus, view, securityContext, restFactory);
+                                  final ClientSecurityContext securityContext) {
+        super(eventBus, view, securityContext);
         queryDocPresenter = queryDocPresenterProvider.get();
 
         tabContentProvider.setDirtyHandler(event -> {

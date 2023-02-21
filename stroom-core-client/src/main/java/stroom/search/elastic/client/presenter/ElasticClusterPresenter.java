@@ -17,7 +17,6 @@
 
 package stroom.search.elastic.client.presenter;
 
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
@@ -33,6 +32,7 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class ElasticClusterPresenter extends DocumentEditTabPresenter<LinkTabPanelView, ElasticClusterDoc> {
+
     private static final TabData SETTINGS = new TabDataImpl("Settings");
 
     private final TabContentProvider<ElasticClusterDoc> tabContentProvider = new TabContentProvider<>();
@@ -41,11 +41,9 @@ public class ElasticClusterPresenter extends DocumentEditTabPresenter<LinkTabPan
     public ElasticClusterPresenter(
             final EventBus eventBus,
             final LinkTabPanelView view,
-            final RestFactory restFactory,
             final Provider<ElasticClusterSettingsPresenter> clusterSettingsPresenter,
-            final ClientSecurityContext securityContext
-    ) {
-        super(eventBus, view, securityContext, restFactory);
+            final ClientSecurityContext securityContext) {
+        super(eventBus, view, securityContext);
 
         tabContentProvider.setDirtyHandler(event -> {
             if (event.isDirty()) {

@@ -265,10 +265,18 @@ public class DocumentPluginEventManager extends Plugin {
 
         // 6. Handle save as events.
         registerHandler(getEventBus().addHandler(SaveAsDocumentEvent.getType(), event -> {
-            final DocumentPlugin<?> plugin = documentPluginRegistry.get(event.getExplorerNode().getType());
-            if (plugin != null) {
-                plugin.saveAs(event.getExplorerNode());
-            }
+            // First get the explorer node for the docref.
+            final Rest<ExplorerNode> rest = restFactory.create();
+            rest
+                    .onSuccess(explorerNode -> {
+                        // Now we have the explorer node proceed with the save as.
+                        final DocumentPlugin<?> plugin = documentPluginRegistry.get(explorerNode.getType());
+                        if (plugin != null) {
+                            plugin.saveAs(explorerNode);
+                        }
+                    })
+                    .call(EXPLORER_RESOURCE)
+                    .getFromDocRef(event.getDocRef());
         }));
 
         //////////////////////////////
@@ -744,8 +752,12 @@ public class DocumentPluginEventManager extends Plugin {
             final boolean isFavourite = primarySelection.getIsFavourite();
             menuItems.add(new IconMenuItem.Builder()
                     .priority(priority)
-                    .icon(isFavourite ? SvgPresets.FAVOURITES_OUTLINE : SvgPresets.FAVOURITES)
-                    .text(isFavourite ? "Remove from Favourites" : "Add to Favourites")
+                    .icon(isFavourite
+                            ? SvgPresets.FAVOURITES_OUTLINE
+                            : SvgPresets.FAVOURITES)
+                    .text(isFavourite
+                            ? "Remove from Favourites"
+                            : "Add to Favourites")
                     .command(() -> {
                         toggleFavourite(primarySelection.getDocRef(), isFavourite);
                         selectionModel.clear();
