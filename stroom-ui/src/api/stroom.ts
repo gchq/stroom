@@ -9,6 +9,12 @@
  * ---------------------------------------------------------------
  */
 
+export interface AbstractAlertRule {
+  executionDelay?: string;
+  executionFrequency?: string;
+  type: string;
+}
+
 export interface AbstractFetchDataResult {
   availableChildStreamTypes?: string[];
   classification?: string;
@@ -44,7 +50,7 @@ export interface AbstractField {
   )[];
   name?: string;
   queryable?: boolean;
-  type?: string;
+  type: string;
 }
 
 export interface Account {
@@ -142,6 +148,9 @@ export type AddPermissionEvent = PermissionChangeEvent & {
 };
 
 export interface AlertRuleDoc {
+  alertRule?: AbstractAlertRule;
+  alertRuleType?: "EVENT" | "THRESHOLD";
+
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
@@ -287,7 +296,7 @@ export interface BuildInfo {
 }
 
 export interface BulkActionResult {
-  docRefs?: DocRef[];
+  explorerNodes?: ExplorerNode[];
   message?: string;
 }
 
@@ -933,7 +942,7 @@ export interface ElasticIndexDoc {
 export interface ElasticIndexField {
   fieldName?: string;
   fieldType?: string;
-  fieldUse?: "ID" | "BOOLEAN" | "INTEGER" | "LONG" | "FLOAT" | "DOUBLE" | "DATE" | "TEXT" | "IPV4_ADDRESS";
+  fieldUse?: "ID" | "BOOLEAN" | "INTEGER" | "LONG" | "FLOAT" | "DOUBLE" | "DATE" | "TEXT" | "KEYWORD" | "IPV4_ADDRESS";
   indexed?: boolean;
 }
 
@@ -1008,9 +1017,18 @@ export interface ExplorerNode {
   /** @format int32 */
   depth?: number;
   iconClassName?: string;
+  isFavourite?: boolean;
   name?: string;
   nodeState?: "OPEN" | "CLOSED" | "LEAF";
+  rootNodeUuid?: string;
   tags?: string;
+  type?: string;
+  uniqueKey?: ExplorerNodeKey;
+  uuid?: string;
+}
+
+export interface ExplorerNodeKey {
+  rootNodeUuid?: string;
   type?: string;
   uuid?: string;
 }
@@ -1023,15 +1041,13 @@ export interface ExplorerNodePermissions {
 }
 
 export interface ExplorerServiceCopyRequest {
-  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  destinationFolderRef?: DocRef;
-  docRefs?: DocRef[];
+  destinationFolder?: ExplorerNode;
+  explorerNodes?: ExplorerNode[];
   permissionInheritance?: "NONE" | "SOURCE" | "DESTINATION" | "COMBINED";
 }
 
 export interface ExplorerServiceCreateRequest {
-  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  destinationFolderRef?: DocRef;
+  destinationFolder?: ExplorerNode;
   docName?: string;
   docType?: string;
   permissionInheritance?: "NONE" | "SOURCE" | "DESTINATION" | "COMBINED";
@@ -1042,20 +1058,18 @@ export interface ExplorerServiceDeleteRequest {
 }
 
 export interface ExplorerServiceMoveRequest {
-  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  destinationFolderRef?: DocRef;
-  docRefs?: DocRef[];
+  destinationFolder?: ExplorerNode;
+  explorerNodes?: ExplorerNode[];
   permissionInheritance?: "NONE" | "SOURCE" | "DESTINATION" | "COMBINED";
 }
 
 export interface ExplorerServiceRenameRequest {
   docName?: string;
-
-  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  docRef?: DocRef;
+  explorerNode?: ExplorerNode;
 }
 
 export interface ExplorerTreeFilter {
+  includedRootTypes?: string[];
   includedTypes?: string[];
   nameFilter?: string;
   nameFilterChange?: boolean;
@@ -1174,10 +1188,10 @@ export type FetchDataResult = AbstractFetchDataResult & {
 };
 
 export interface FetchExplorerNodeResult {
-  openedItems?: string[];
+  openedItems?: ExplorerNodeKey[];
   qualifiedFilterInput?: string;
   rootNodes?: ExplorerNode[];
-  temporaryOpenedItems?: string[];
+  temporaryOpenedItems?: ExplorerNodeKey[];
 }
 
 export interface FetchLinkedScriptRequest {
@@ -1295,13 +1309,13 @@ export interface FindElementDocRequest {
 }
 
 export interface FindExplorerNodeCriteria {
-  ensureVisible?: string[];
+  ensureVisible?: ExplorerNodeKey[];
   filter?: ExplorerTreeFilter;
 
   /** @format int32 */
   minDepth?: number;
-  openItems?: string[];
-  temporaryOpenedItems?: string[];
+  openItems?: ExplorerNodeKey[];
+  temporaryOpenedItems?: ExplorerNodeKey[];
 }
 
 export interface FindFsVolumeCriteria {
@@ -1796,6 +1810,8 @@ export interface KafkaConfigDoc {
 }
 
 export type KeyValueInputComponentSettings = ComponentSettings & { text?: string };
+
+export type KeywordField = AbstractField;
 
 export interface LayoutConfig {
   preferredSize?: Size;
@@ -2394,6 +2410,7 @@ export type QueryComponentSettings = ComponentSettings & {
   dataSource?: DocRef;
   expression?: ExpressionOperator;
   lastQueryKey?: QueryKey;
+  lastQueryNode?: string;
   selectionHandlers?: ComponentSelectionHandler[];
 };
 
@@ -3512,6 +3529,8 @@ export interface ThemeConfig {
   tubeOpacity?: string;
   tubeVisible?: string;
 }
+
+export type ThresholdAlertRule = AbstractAlertRule & { threshold?: number; thresholdField?: string };
 
 export interface TimeRange {
   condition?:
@@ -5134,12 +5153,16 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @tags Dashboards
      * @name DownloadDashboardSearchResults
      * @summary Download search results
-     * @request POST:/dashboard/v1/downloadSearchResults
+     * @request POST:/dashboard/v1/downloadSearchResults/{nodeName}
      * @secure
      */
-    downloadDashboardSearchResults: (data: DownloadSearchResultsRequest, params: RequestParams = {}) =>
+    downloadDashboardSearchResults: (
+      nodeName: string,
+      data: DownloadSearchResultsRequest,
+      params: RequestParams = {},
+    ) =>
       this.request<any, ResourceGeneration>({
-        path: `/dashboard/v1/downloadSearchResults`,
+        path: `/dashboard/v1/downloadSearchResults/${nodeName}`,
         method: "POST",
         body: data,
         secure: true,
@@ -5187,12 +5210,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @tags Dashboards
      * @name DashboardSearch
      * @summary Perform a new search or get new results
-     * @request POST:/dashboard/v1/search
+     * @request POST:/dashboard/v1/search/{nodeName}
      * @secure
      */
-    dashboardSearch: (data: DashboardSearchRequest, params: RequestParams = {}) =>
+    dashboardSearch: (nodeName: string, data: DashboardSearchRequest, params: RequestParams = {}) =>
       this.request<any, DashboardSearchResponse>({
-        path: `/dashboard/v1/search`,
+        path: `/dashboard/v1/search/${nodeName}`,
         method: "POST",
         body: data,
         secure: true,
@@ -5715,7 +5738,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     createExplorerItem: (data: ExplorerServiceCreateRequest, params: RequestParams = {}) =>
-      this.request<any, DocRef>({
+      this.request<any, ExplorerNode>({
         path: `/explorer/v2/create`,
         method: "POST",
         body: data,
@@ -5821,6 +5844,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Explorer (v2)
+     * @name GetRootNodeRef
+     * @summary Get a node from a document reference, decorated with its root node UUID
+     * @request POST:/explorer/v2/getFromDocRef
+     * @secure
+     */
+    getRootNodeRef: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, ExplorerNode>({
+        path: `/explorer/v2/getFromDocRef`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Explorer (v2)
      * @name FetchExplorerItemInfo
      * @summary Get document info
      * @request POST:/explorer/v2/info
@@ -5865,12 +5907,68 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     renameExplorerItems: (data: ExplorerServiceRenameRequest, params: RequestParams = {}) =>
-      this.request<any, DocRef>({
+      this.request<any, ExplorerNode>({
         path: `/explorer/v2/rename`,
         method: "PUT",
         body: data,
         secure: true,
         type: ContentType.Json,
+        ...params,
+      }),
+  };
+  explorerFavourite = {
+    /**
+     * No description
+     *
+     * @tags Explorer Favourites
+     * @name CreateUserFavourite
+     * @summary Set a document as a favourite for the current user
+     * @request POST:/explorerFavourite/v1/createUserFavourite
+     * @secure
+     */
+    createUserFavourite: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/explorerFavourite/v1/createUserFavourite`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Explorer Favourites
+     * @name DeleteUserFavourite
+     * @summary Unset a document as favourite for the current user
+     * @request DELETE:/explorerFavourite/v1/deleteUserFavourite
+     * @secure
+     */
+    deleteUserFavourite: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/explorerFavourite/v1/deleteUserFavourite`,
+        method: "DELETE",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Explorer Favourites
+     * @name GetUserFavourites
+     * @summary Retrieve all DocRefs the current user has marked as favourite
+     * @request GET:/explorerFavourite/v1/getUserFavourites
+     * @secure
+     */
+    getUserFavourites: (params: RequestParams = {}) =>
+      this.request<any, DocRef[]>({
+        path: `/explorerFavourite/v1/getUserFavourites`,
+        method: "GET",
+        secure: true,
         ...params,
       }),
   };
@@ -7644,12 +7742,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @tags Queries
      * @name DownloadQuerySearchResults
      * @summary Download search results
-     * @request POST:/query/v1/downloadSearchResults
+     * @request POST:/query/v1/downloadSearchResults/{nodeName}
      * @secure
      */
-    downloadQuerySearchResults: (data: DownloadQueryResultsRequest, params: RequestParams = {}) =>
+    downloadQuerySearchResults: (nodeName: string, data: DownloadQueryResultsRequest, params: RequestParams = {}) =>
       this.request<any, ResourceGeneration>({
-        path: `/query/v1/downloadSearchResults`,
+        path: `/query/v1/downloadSearchResults/${nodeName}`,
         method: "POST",
         body: data,
         secure: true,
@@ -7680,12 +7778,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @tags Queries
      * @name QuerySearch
      * @summary Perform a new search or get new results
-     * @request POST:/query/v1/search
+     * @request POST:/query/v1/search/{nodeName}
      * @secure
      */
-    querySearch: (data: QuerySearchRequest, params: RequestParams = {}) =>
+    querySearch: (nodeName: string, data: QuerySearchRequest, params: RequestParams = {}) =>
       this.request<any, DashboardSearchResponse>({
-        path: `/query/v1/search`,
+        path: `/query/v1/search/${nodeName}`,
         method: "POST",
         body: data,
         secure: true,
@@ -7933,6 +8031,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     destroyResultStore: (nodeName: string, data: DestroyStoreRequest, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/result-store/v1/destroy/${nodeName}`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags ResultStore
+     * @name ResultStoreExists
+     * @summary Determines if the requested result store still exists
+     * @request POST:/result-store/v1/exists/{nodeName}
+     * @secure
+     */
+    resultStoreExists: (nodeName: string, data: QueryKey, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/result-store/v1/exists/${nodeName}`,
         method: "POST",
         body: data,
         secure: true,
