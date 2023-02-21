@@ -80,7 +80,7 @@ public class SessionResourceImpl implements SessionResource {
                 // If we have completed the front channel flow then we will have a state id.
                 final String code = getParam(postAuthRedirectUri, OpenId.CODE);
                 final String stateId = getParam(postAuthRedirectUri, OpenId.STATE);
-                final String redirectUri = openIdManager.redirect(request, code, stateId, postAuthRedirectUri);
+                final String redirectUri = openIdManager.redirect(request, code, stateId);
 
                 // We might have completed the back channel authentication now so see if we have a user session.
                 userIdentity = UserIdentitySessionUtil.get(request.getSession(false));
@@ -129,7 +129,7 @@ public class SessionResourceImpl implements SessionResource {
             UserIdentitySessionUtil.set(session, null);
         }
 
-        final String url = openIdManagerProvider.get().logout(request, redirectUri);
+        final String url = openIdManagerProvider.get().logout(request);
         return new UrlResponse(url);
     }
 
