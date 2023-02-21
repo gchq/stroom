@@ -2298,6 +2298,7 @@ export interface ProcessorFilterTracker {
 
   /** @format int64 */
   maxMetaCreateMs?: number;
+  message?: string;
 
   /** @format int64 */
   metaCount?: number;
@@ -2313,7 +2314,7 @@ export interface ProcessorFilterTracker {
 
   /** @format int64 */
   minMetaId?: number;
-  status?: string;
+  status?: "CREATED" | "COMPLETE" | "ERROR";
 
   /** @format int32 */
   version?: number;
@@ -2351,7 +2352,7 @@ export interface ProcessorTask {
 
   /** @format int64 */
   startTimeMs?: number;
-  status?: "UNPROCESSED" | "ASSIGNED" | "PROCESSING" | "COMPLETE" | "FAILED" | "DELETED";
+  status?: "CREATED" | "QUEUED" | "ASSIGNED" | "PROCESSING" | "COMPLETE" | "FAILED" | "DELETED";
 
   /** @format int64 */
   statusTimeMs?: number;
@@ -2375,7 +2376,7 @@ export interface ProcessorTaskSummary {
 
   /** @format int32 */
   priority?: number;
-  status?: "UNPROCESSED" | "ASSIGNED" | "PROCESSING" | "COMPLETE" | "FAILED" | "DELETED";
+  status?: "CREATED" | "QUEUED" | "ASSIGNED" | "PROCESSING" | "COMPLETE" | "FAILED" | "DELETED";
 }
 
 export interface Prop {

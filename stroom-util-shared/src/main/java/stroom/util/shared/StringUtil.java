@@ -112,6 +112,12 @@ public class StringUtil {
                 : "";
     }
 
+    public static String pluralSuffix(final long count) {
+        return count > 1
+                ? "s"
+                : "";
+    }
+
     /**
      * Null safe trimming of leading/trailing whitespace.
      */

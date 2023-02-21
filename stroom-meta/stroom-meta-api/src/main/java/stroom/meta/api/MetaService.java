@@ -9,10 +9,13 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.SelectionSummary;
+import stroom.meta.shared.SimpleMeta;
 import stroom.meta.shared.Status;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
 
+import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -31,7 +34,7 @@ public interface MetaService {
      * @param properties The properties that the newly created meta data will have.
      * @return A new locked meta data ready to associate written data with.
      */
-    Meta create(final MetaProperties properties);
+    Meta create(MetaProperties properties);
 
     /**
      * Get meta data from the meta service by id.
@@ -39,7 +42,7 @@ public interface MetaService {
      * @param id The id of the meta data to retrieve.
      * @return An unlocked meta data for the supplied id or null if no unlocked meta data can be found.
      */
-    Meta getMeta(final long id);
+    Meta getMeta(long id);
 
     /**
      * Get meta data from the meta service by id.
@@ -49,7 +52,7 @@ public interface MetaService {
      * @return An unlocked meta data for the supplied id or null if no unlocked meta data records
      * can be found unless anyStatus is true.
      */
-    Meta getMeta(final long id, final boolean anyStatus);
+    Meta getMeta(long id, boolean anyStatus);
 
     /**
      * Change the status of the specified meta data if the current status is as specified.
@@ -59,7 +62,7 @@ public interface MetaService {
      * @param newStatus     The new status.
      * @return The updated meta data.
      */
-    Meta updateStatus(final Meta meta, final Status currentStatus, final Status newStatus);
+    Meta updateStatus(Meta meta, Status currentStatus, Status newStatus);
 
     /**
      * Change the status of meta data records that match the supplied criteria.
@@ -69,7 +72,7 @@ public interface MetaService {
      * @param status        The new status.
      * @return The number of meta data records that are updated.
      */
-    int updateStatus(final FindMetaCriteria criteria, final Status currentStatus, final Status status);
+    int updateStatus(FindMetaCriteria criteria, Status currentStatus, Status status);
 
 
     /**
@@ -78,7 +81,7 @@ public interface MetaService {
      * @param meta       The meta data to add attributes to.
      * @param attributes A map of key/value attributes.
      */
-    void addAttributes(final Meta meta, final AttributeMap attributes);
+    void addAttributes(Meta meta, AttributeMap attributes);
 
     /**
      * Delete meta data by id. Note that this method will only delete unlocked meta data records.
@@ -88,10 +91,10 @@ public interface MetaService {
      * @param id The id of the meta data to delete.
      * @return The number of meta data records deleted.
      */
-    int delete(final long id);
+    int delete(long id);
 
-    int delete(final List<DataRetentionRuleAction> ruleActions,
-               final TimePeriod deletionPeriod);
+    int delete(List<DataRetentionRuleAction> ruleActions,
+               TimePeriod deletionPeriod);
 
     /**
      * Delete meta data by id with an option to delete regardless of lock status.
@@ -137,7 +140,7 @@ public interface MetaService {
      * Return true if the passed meta type name is a 'raw' type, i.e. used for receipt of
      * raw data.
      */
-    default boolean isRaw(final String typeName) {
+    default boolean isRaw(String typeName) {
         return typeName != null
                 && getRawTypes().contains(typeName);
     }
@@ -148,7 +151,7 @@ public interface MetaService {
      * @param criteria The criteria to find matching meta data records with.
      * @return A list of matching meta data records.
      */
-    ResultPage<Meta> find(final FindMetaCriteria criteria);
+    ResultPage<Meta> find(FindMetaCriteria criteria);
 
     /**
      * Find meta data records and attributes that match the specified criteria.
@@ -156,7 +159,7 @@ public interface MetaService {
      * @param criteria The criteria to find matching meta data records with.
      * @return A list of matching meta data records that includes attributes.
      */
-    ResultPage<MetaRow> findRows(final FindMetaCriteria criteria);
+    ResultPage<MetaRow> findRows(FindMetaCriteria criteria);
 
     /**
      * Find meta data records and attributes that match the specified criteria and are decorated with data
@@ -165,7 +168,7 @@ public interface MetaService {
      * @param criteria The criteria to find matching meta data records with.
      * @return A list of matching meta data records that includes attributes.
      */
-    ResultPage<MetaRow> findDecoratedRows(final FindMetaCriteria criteria);
+    ResultPage<MetaRow> findDecoratedRows(FindMetaCriteria criteria);
 
     /**
      * Find meta data records and attributes that are related to the supplied record id.
@@ -173,7 +176,7 @@ public interface MetaService {
      * @param id The id of the meta data to find related data for.
      * @return A list of matching meta data records that includes attributes.
      */
-    List<MetaRow> findRelatedData(final long id, final boolean anyStatus);
+    List<MetaRow> findRelatedData(long id, boolean anyStatus);
 
     /**
      * Find meta data for reprocessing where child records match the specified criteria.
@@ -208,7 +211,7 @@ public interface MetaService {
      * @param criteria the search criteria
      * @return the list of matches
      */
-    Set<EffectiveMeta> findEffectiveData(final EffectiveMetaDataCriteria criteria);
+    Set<EffectiveMeta> findEffectiveData(EffectiveMetaDataCriteria criteria);
 
     /**
      * Get a distinct list of processor UUIds for meta data matching the supplied criteria.
@@ -221,13 +224,20 @@ public interface MetaService {
 
     List<DataRetentionTracker> getRetentionTrackers();
 
-    void setTracker(final DataRetentionTracker dataRetentionTracker);
+    void setTracker(DataRetentionTracker dataRetentionTracker);
 
-    void deleteTrackers(final String rulesVersion);
+    void deleteTrackers(String rulesVersion);
 
-    List<DataRetentionDeleteSummary> getRetentionDeleteSummary(final String queryId,
-                                                               final DataRetentionRules rules,
-                                                               final FindDataRetentionImpactCriteria criteria);
+    List<DataRetentionDeleteSummary> getRetentionDeleteSummary(String queryId,
+                                                               DataRetentionRules rules,
+                                                               FindDataRetentionImpactCriteria criteria);
 
     boolean cancelRetentionDeleteSummary(final String queryId);
+
+    Set<Long> findLockedMeta(Collection<Long> metaIdCollection);
+
+    List<SimpleMeta> getLogicallyDeleted(final Instant deleteThreshold,
+                                         final int batchSize,
+                                         final Set<Long> metaIdExcludeSet);
+
 }

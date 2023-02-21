@@ -25,16 +25,32 @@ import stroom.util.shared.PrimitiveValueConverter;
  */
 public enum TaskStatus implements HasDisplayValue, HasPrimitiveValue {
     /**
-     * Unprocessed - yet to be locked
+     * The task has been created but not currently queued for processing.
      */
-    UNPROCESSED("Unprocessed", 1),
+    CREATED("Created", 0),
     /**
-     * Assigned - someone has locked it
+     * The task is queued for processing.
+     */
+    QUEUED("Queued", 1),
+    /**
+     * It has been assigned to a node for processing.
      */
     ASSIGNED("Assigned", 2),
+    /**
+     * A node is processing.
+     */
     PROCESSING("Processing", 3),
+    /**
+     * A node has completed processing the task.
+     */
     COMPLETE("Complete", 10),
+    /**
+     * The task failed to process for some reason.
+     */
     FAILED("Failed", 22),
+    /**
+     * The task has been deleted.
+     */
     DELETED("Deleted", 99);
 
     public static final PrimitiveValueConverter<TaskStatus> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(

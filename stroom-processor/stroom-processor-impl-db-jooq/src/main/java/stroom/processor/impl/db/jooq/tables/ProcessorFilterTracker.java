@@ -13,7 +13,7 @@ import org.jooq.ForeignKey;
 import org.jooq.Identity;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row12;
+import org.jooq.Row13;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -94,9 +94,9 @@ public class ProcessorFilterTracker extends TableImpl<ProcessorFilterTrackerReco
     public final TableField<ProcessorFilterTrackerRecord, Integer> LAST_POLL_TASK_COUNT = createField(DSL.name("last_poll_task_count"), SQLDataType.INTEGER, this, "");
 
     /**
-     * The column <code>stroom.processor_filter_tracker.status</code>.
+     * The column <code>stroom.processor_filter_tracker.message</code>.
      */
-    public final TableField<ProcessorFilterTrackerRecord, String> STATUS = createField(DSL.name("status"), SQLDataType.VARCHAR(255), this, "");
+    public final TableField<ProcessorFilterTrackerRecord, String> MESSAGE = createField(DSL.name("message"), SQLDataType.VARCHAR(255), this, "");
 
     /**
      * The column <code>stroom.processor_filter_tracker.meta_count</code>.
@@ -107,6 +107,11 @@ public class ProcessorFilterTracker extends TableImpl<ProcessorFilterTrackerReco
      * The column <code>stroom.processor_filter_tracker.event_count</code>.
      */
     public final TableField<ProcessorFilterTrackerRecord, Long> EVENT_COUNT = createField(DSL.name("event_count"), SQLDataType.BIGINT, this, "");
+
+    /**
+     * The column <code>stroom.processor_filter_tracker.status</code>.
+     */
+    public final TableField<ProcessorFilterTrackerRecord, Byte> STATUS = createField(DSL.name("status"), SQLDataType.TINYINT.nullable(false).defaultValue(DSL.inline("0", SQLDataType.TINYINT)), this, "");
 
     private ProcessorFilterTracker(Name alias, Table<ProcessorFilterTrackerRecord> aliased) {
         this(alias, aliased, null);
@@ -190,11 +195,11 @@ public class ProcessorFilterTracker extends TableImpl<ProcessorFilterTrackerReco
     }
 
     // -------------------------------------------------------------------------
-    // Row12 type methods
+    // Row13 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row12<Integer, Integer, Long, Long, Long, Long, Long, Long, Integer, String, Long, Long> fieldsRow() {
-        return (Row12) super.fieldsRow();
+    public Row13<Integer, Integer, Long, Long, Long, Long, Long, Long, Integer, String, Long, Long, Byte> fieldsRow() {
+        return (Row13) super.fieldsRow();
     }
 }

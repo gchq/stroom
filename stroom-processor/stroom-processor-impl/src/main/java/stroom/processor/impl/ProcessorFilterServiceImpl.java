@@ -204,7 +204,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     public boolean delete(final int id) {
         return securityContext.secureResult(PERMISSION, () -> {
             if (processorFilterDao.logicalDeleteByProcessorFilterId(id) > 0) {
-                // Logically delete any associated unprocessed tasks.
+                // Logically delete any associated tasks that have not yet finished processing.
                 // Once the filter is logically deleted no new tasks will be created for it
                 // but we may still have active tasks for 'deleted' filters.
                 processorTaskDao.logicalDeleteByProcessorFilterId(id);

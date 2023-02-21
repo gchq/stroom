@@ -6,6 +6,7 @@ import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorFilterTracker;
+import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorRow;
 import stroom.widget.customdatebox.client.ClientDateUtil;
@@ -95,7 +96,7 @@ public class ProcessorInfoBuilder {
                         SafeHtmlUtil.from(tracker.getMetaCount()));
                 tb.row(SafeHtmlUtil.from("Events"),
                         SafeHtmlUtil.from(tracker.getEventCount()));
-                tb.row("Status", tracker.getStatus());
+                tb.row("Status", getStatusMessage(tracker));
             }
         }
 
@@ -108,5 +109,15 @@ public class ProcessorInfoBuilder {
         if (ms != null) {
             tb.row(label, dateTimeFormatter.format(ms) + " (" + ms + ")");
         }
+    }
+
+    public static String getStatusMessage(final ProcessorFilterTracker tracker) {
+        String status = null;
+        if (tracker.getMessage() != null && tracker.getMessage().length() > 0) {
+            status = tracker.getStatus().getDisplayValue() + ": " + tracker.getMessage();
+        } else if (!ProcessorFilterTrackerStatus.CREATED.equals(tracker.getStatus())) {
+            status = tracker.getStatus().getDisplayValue();
+        }
+        return status;
     }
 }

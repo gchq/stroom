@@ -1,5 +1,6 @@
 package stroom.db.util;
 
+import stroom.util.NullSafe;
 import stroom.util.db.DbMigrationState;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -8,10 +9,13 @@ import stroom.util.logging.LogUtil;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
 import org.flywaydb.core.api.MigrationInfo;
+import org.flywaydb.core.api.MigrationVersion;
+import org.flywaydb.core.api.configuration.FluentConfiguration;
 import org.flywaydb.core.api.output.MigrateResult;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
@@ -66,20 +70,40 @@ public final class FlywayUtil {
     }
 
     public static void migrate(final DataSource dataSource,
-                               final String flywayLocations,
+                               final List<String> flywayLocations,
                                final String flywayTableName,
                                final String moduleName) {
-        LOGGER.info(""
-                + "\n-----------------------------------------------------------"
-                + "\n  Migrating database module: " + moduleName
-                + "\n-----------------------------------------------------------");
+        migrate(dataSource, flywayLocations, null, flywayTableName, moduleName);
+    }
 
-        final Flyway flyway = Flyway.configure()
+    public static void migrate(final DataSource dataSource,
+                               final List<String> flywayLocations,
+                               final MigrationVersion target,
+                               final String flywayTableName,
+                               final String moduleName) {
+
+        LOGGER.info(LogUtil.inBoxOnNewLine("Migrating database module: {}", moduleName));
+
+        final String[] migrationLocations = NullSafe.list(flywayLocations)
+                .stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .toArray(String[]::new);
+
+        final FluentConfiguration fluentConfiguration = Flyway.configure()
                 .dataSource(dataSource)
-                .locations(flywayLocations)
+                .locations(migrationLocations)
                 .table(flywayTableName)
-                .baselineOnMigrate(true)
-                .load();
+                .baselineOnMigrate(true);
+
+        // Set the target for the migration, i.e. only migrate up to this point.
+        // Used for testing migrations.
+        if (target != null) {
+            LOGGER.info("Migrating with target version (inc.): {}", target);
+            fluentConfiguration.target(target);
+        }
+
+        final Flyway flyway = fluentConfiguration.load();
 
         final String statesInfo = Arrays.stream(flyway.info().all())
                 .collect(Collectors.groupingBy(MigrationInfo::getState))

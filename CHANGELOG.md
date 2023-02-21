@@ -13,6 +13,28 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#3255** : Fix error when creating a new processor filter.
+
+* Issue **#3204** : More changes to improve task creation performance.
+
+* Issue **#3204** : Split UNPROCESSED(1) task state into CREATED(0) and QUEUED(1) to improve task creation performance and management.
+
+* Issue **#3204** : Change processor_filter_tracker to have a status enum and an optional message.
+
+* Issue **#3225** : Improve performance of the database query used to find logically deleted streams for the `Data Delete` job. Add the index `meta_status_status_time_idx` on table `meta`. Add a summary log for the job.
+
+* Issue **#3231** : Change severity from ERROR to WARN when a reference lookup is performed with no reference loaders configured.
+
+* Issue **#3136** : Improve ref data lookup trace logging. Refactor effective streams query.
+
+* De-dup error message text produced by XSLT functions.
+
+* Issue **#3218** : Fix XSLT and dashboard `hash()` functions stripping leading zeros from the hash result.
+
+* Issue **#3221** : Queue all unowned tasks unless associated meta is locked. Tasks for deleted meta will be processed and complete as expected where meta is deleted.
+
+* Issue **#3220** : Fix Info tooltip on Active Tasks sub-tab not showing when stream is not unlocked or is physically deleted.
+
 * Issue **#3204** : Improve task creation logging to list considered filters in order and provide queue information.
 
 * Issue **#3195** : Fix editor highlight positions being incorrectly calculated.
