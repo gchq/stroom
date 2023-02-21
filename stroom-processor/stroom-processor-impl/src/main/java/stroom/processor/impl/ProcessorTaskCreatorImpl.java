@@ -278,7 +278,7 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                 tracker.getLastPollTaskCount() > 0 ||
                 Instant
                         .ofEpochMilli(tracker.getLastPollMs())
-                        .plus(processorConfigProvider.get().getDurationToSkipNonProducingFilters())
+                        .plus(processorConfigProvider.get().getSkipNonProducingFiltersDuration())
                         .isBefore(Instant.now())) {
             final int currentCreatedTasks = processorTaskDao.countCreatedTasksForFilter(filter.getId());
             final int maxTasks = tasksToCreatePerFilter - currentCreatedTasks;

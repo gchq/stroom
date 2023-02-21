@@ -37,8 +37,8 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
 
     private final StroomDuration disownDeadTasksAfter;
 
-    private final StroomDuration fillTaskQueueFrequency;
-    private final StroomDuration durationToSkipNonProducingFilters;
+    private final StroomDuration waitToQueueTasksDuration;
+    private final StroomDuration skipNonProducingFiltersDuration;
 
     public ProcessorConfig() {
         dbConfig = new ProcessorDbConfig();
@@ -67,8 +67,8 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
         disownDeadTasksAfter = StroomDuration.ofMinutes(10);
-        fillTaskQueueFrequency = StroomDuration.ofSeconds(10);
-        durationToSkipNonProducingFilters = StroomDuration.ofSeconds(10);
+        waitToQueueTasksDuration = StroomDuration.ofSeconds(10);
+        skipNonProducingFiltersDuration = StroomDuration.ofSeconds(10);
     }
 
     @SuppressWarnings("unused")
@@ -86,9 +86,9 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
                            @JsonProperty("processorNodeCache") final CacheConfig processorNodeCache,
                            @JsonProperty("processorFeedCache") final CacheConfig processorFeedCache,
                            @JsonProperty("disownDeadTasksAfter") final StroomDuration disownDeadTasksAfter,
-                           @JsonProperty("fillTaskQueueFrequency") final StroomDuration fillTaskQueueFrequency,
-                           @JsonProperty("durationToSkipNonProducingFilters") final StroomDuration
-                                   durationToSkipNonProducingFilters) {
+                           @JsonProperty("waitToQueueTasksDuration") final StroomDuration waitToQueueTasksDuration,
+                           @JsonProperty("skipNonProducingFiltersDuration") final StroomDuration
+                                   skipNonProducingFiltersDuration) {
         this.dbConfig = dbConfig;
         this.assignTasks = assignTasks;
         this.deleteAge = deleteAge;
@@ -102,8 +102,8 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
         this.processorNodeCache = processorNodeCache;
         this.processorFeedCache = processorFeedCache;
         this.disownDeadTasksAfter = disownDeadTasksAfter;
-        this.fillTaskQueueFrequency = fillTaskQueueFrequency;
-        this.durationToSkipNonProducingFilters = durationToSkipNonProducingFilters;
+        this.waitToQueueTasksDuration = waitToQueueTasksDuration;
+        this.skipNonProducingFiltersDuration = skipNonProducingFiltersDuration;
     }
 
     @Override
@@ -175,15 +175,16 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
         return disownDeadTasksAfter;
     }
 
-    @JsonPropertyDescription("How frequently do we want to try and fill the in memory task queue from the DB.")
-    public StroomDuration getFillTaskQueueFrequency() {
-        return fillTaskQueueFrequency;
+    @JsonPropertyDescription("How long should we wait to queue new tasks if we previously managed to queue 0 new " +
+            "tasks.")
+    public StroomDuration getWaitToQueueTasksDuration() {
+        return waitToQueueTasksDuration;
     }
 
     @JsonPropertyDescription("How long should we wait before retrying task creation for previously non producing " +
             "filters.")
-    public StroomDuration getDurationToSkipNonProducingFilters() {
-        return durationToSkipNonProducingFilters;
+    public StroomDuration getSkipNonProducingFiltersDuration() {
+        return skipNonProducingFiltersDuration;
     }
 
     @Override
@@ -202,8 +203,8 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
                 ", processorNodeCache=" + processorNodeCache +
                 ", processorFeedCache=" + processorFeedCache +
                 ", disownDeadTasksAfter=" + disownDeadTasksAfter +
-                ", fillTaskQueueFrequency=" + fillTaskQueueFrequency +
-                ", durationToSkipNonProducingFilters=" + durationToSkipNonProducingFilters +
+                ", waitToQueueTasksDuration=" + waitToQueueTasksDuration +
+                ", skipNonProducingFiltersDuration=" + skipNonProducingFiltersDuration +
                 '}';
     }
 

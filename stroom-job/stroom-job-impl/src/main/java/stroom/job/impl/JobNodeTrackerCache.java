@@ -73,8 +73,11 @@ class JobNodeTrackerCache {
             final long delta = System.currentTimeMillis() - lastRefreshMs;
             if (delta > DEFAULT_REFRESH_INTERVAL) {
                 if (refreshingTrackers.compareAndSet(false, true)) {
-                    updateTrackers();
-                    refreshingTrackers.set(false);
+                    try {
+                        updateTrackers();
+                    } finally {
+                        refreshingTrackers.set(false);
+                    }
                 }
             }
         }

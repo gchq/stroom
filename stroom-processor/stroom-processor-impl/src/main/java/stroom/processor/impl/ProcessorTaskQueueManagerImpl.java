@@ -82,7 +82,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
 
     private final ProcessorFilterService processorFilterService;
     private final ProcessorTaskDao processorTaskDao;
-    private final ExecutorProvider executorProvider;
+    private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final NodeInfo nodeInfo;
     private final Provider<ProcessorConfig> processorConfigProvider;
@@ -124,7 +124,6 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                                   final TargetNodeSetFactory targetNodeSetFactory,
                                   final PrioritisedFilters prioritisedFilters) {
         this.processorFilterService = processorFilterService;
-        this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
         this.nodeInfo = nodeInfo;
         this.processorTaskDao = processorTaskDao;
@@ -134,6 +133,8 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
         this.securityContext = securityContext;
         this.targetNodeSetFactory = targetNodeSetFactory;
         this.prioritisedFilters = prioritisedFilters;
+
+        executor = executorProvider.get(THREAD_POOL);
     }
 
     @Override
@@ -172,37 +173,39 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
     }
 
     private void fillTaskQueueAsync() {
-        try {
-            if (allowAsyncTaskCreation) {
-                if (fillingQueue.compareAndSet(false, true)) {
+        if (allowAsyncTaskCreation) {
+            if (fillingQueue.compareAndSet(false, true)) {
+                try {
                     needToFillQueue.set(false);
 
                     LOGGER.debug("fillTaskQueueAsync() - Executing fillTaskQueue");
-                    final Executor executor = executorProvider.get(THREAD_POOL);
-                    CompletableFuture
-                            .supplyAsync(taskContextFactory.contextResult(
-                                    "Fill task queue",
-                                    this::queueNewTasks), executor)
-                            .whenComplete((result, error) -> {
-                                if (allowAsyncTaskCreation) {
-                                    if (result == 0) {
-                                        ThreadUtil.sleep(
-                                                processorConfigProvider.get().getFillTaskQueueFrequency().toMillis());
-                                    }
-                                }
+                    securityContext.asProcessingUser(() ->
+                            CompletableFuture
+                                    .supplyAsync(taskContextFactory.contextResult(
+                                            "Fill task queue",
+                                            this::queueNewTasks), executor)
+                                    .whenComplete((result, error) -> {
+                                        try {
+                                            if (allowAsyncTaskCreation && result == 0) {
+                                                ThreadUtil.sleep(processorConfigProvider.get()
+                                                        .getWaitToQueueTasksDuration().toMillis());
+                                            }
+                                        } finally {
+                                            fillingQueue.set(false);
+                                        }
 
-                                // See if we are required to fill again.
-                                fillingQueue.set(false);
-                                if (needToFillQueue.get()) {
-                                    fillTaskQueueAsync();
-                                }
-                            });
-                } else {
-                    needToFillQueue.set(true);
+                                        // See if we are required to fill again.
+                                        if (needToFillQueue.get()) {
+                                            fillTaskQueueAsync();
+                                        }
+                                    }));
+                } catch (final RuntimeException e) {
+                    fillingQueue.set(false);
+                    LOGGER.error(e::getMessage, e);
                 }
+            } else {
+                needToFillQueue.set(true);
             }
-        } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
         }
     }
 
