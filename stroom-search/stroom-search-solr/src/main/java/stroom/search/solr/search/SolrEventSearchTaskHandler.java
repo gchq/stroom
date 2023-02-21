@@ -107,7 +107,6 @@ public class SolrEventSearchTaskHandler {
             // Create the search result store.
             final ResultStore resultStore = resultStoreFactory.create(
                     null,
-                    null,
                     coprocessors);
 
             try {

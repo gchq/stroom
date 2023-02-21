@@ -81,41 +81,51 @@ class ExplorerResourceImpl implements ExplorerResource {
     }
 
     @Override
-    public DocRef create(final ExplorerServiceCreateRequest request) {
+    public ExplorerNode create(final ExplorerServiceCreateRequest request) {
         return explorerServiceProvider.get().create(request.getDocType(),
                 request.getDocName(),
-                request.getDestinationFolderRef(),
+                request.getDestinationFolder(),
                 request.getPermissionInheritance());
     }
 
     @Override
     public BulkActionResult delete(final ExplorerServiceDeleteRequest request) {
-        return explorerServiceProvider.get().delete(request.getDocRefs());
+        final List<ExplorerNode> explorerNodes = request.getDocRefs()
+                .stream()
+                .map(this::getFromDocRef)
+                .toList();
+        return explorerServiceProvider.get().delete(explorerNodes);
     }
 
     @Override
     public BulkActionResult copy(final ExplorerServiceCopyRequest request) {
-        return explorerServiceProvider.get().copy(request.getDocRefs(),
-                request.getDestinationFolderRef(),
+        return explorerServiceProvider.get().copy(request.getExplorerNodes(),
+                request.getDestinationFolder(),
                 request.getPermissionInheritance());
     }
 
     @Override
     public BulkActionResult move(final ExplorerServiceMoveRequest request) {
-        return explorerServiceProvider.get().move(request.getDocRefs(),
-                request.getDestinationFolderRef(),
+        return explorerServiceProvider.get().move(request.getExplorerNodes(),
+                request.getDestinationFolder(),
                 request.getPermissionInheritance());
     }
 
     @Override
-    public DocRef rename(final ExplorerServiceRenameRequest request) {
-        return explorerServiceProvider.get().rename(request.getDocRef(), request.getDocName());
+    public ExplorerNode rename(final ExplorerServiceRenameRequest request) {
+        return explorerServiceProvider.get().rename(request.getExplorerNode(), request.getDocName());
     }
 
     @Override
     @AutoLogged(OperationType.VIEW)
     public DocRefInfo info(final DocRef docRef) {
         return docRefInfoServiceProvider.get().info(docRef).orElse(null);
+    }
+
+    @Override
+    @AutoLogged(OperationType.VIEW)
+    public ExplorerNode getFromDocRef(final DocRef docRef) {
+        return explorerNodeServiceProvider.get().getNodeWithRoot(docRef).orElse(null);
     }
 
     @Override
@@ -162,6 +172,7 @@ class ExplorerResourceImpl implements ExplorerResource {
                     final ExplorerTreeFilter requestFilter = request.getFilter();
                     final ExplorerTreeFilter qualifiedFilter = new ExplorerTreeFilter(
                             requestFilter.getIncludedTypes(),
+                            requestFilter.getIncludedRootTypes(),
                             requestFilter.getTags(),
                             requestFilter.getRequiredPermissions(),
                             result.getQualifiedFilterInput(),

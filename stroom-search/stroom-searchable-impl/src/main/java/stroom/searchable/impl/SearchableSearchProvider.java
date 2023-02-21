@@ -142,7 +142,6 @@ class SearchableSearchProvider implements SearchProvider {
 
         final ResultStore resultStore = resultStoreFactory.create(
                 searchRequest.getSearchRequestSource(),
-                null,
                 coprocessors);
         final String searchKey = searchRequest.getKey().toString();
         final String taskName = getTaskName(searchable.getDocRef());

@@ -21,7 +21,7 @@ public class DataStoreXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         BitmapLookupFunction(final Provider<BitmapLookup> functionCallProvider) {
             super(
-                    "bitmap-lookup",
+                    BitmapLookup.FUNCTION_NAME,
                     2,
                     5,
                     new SequenceType[]{
@@ -40,7 +40,7 @@ public class DataStoreXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         LookupFunction(final Provider<Lookup> functionCallProvider) {
             super(
-                    "lookup",
+                    Lookup.FUNCTION_NAME,
                     2,
                     5,
                     new SequenceType[]{

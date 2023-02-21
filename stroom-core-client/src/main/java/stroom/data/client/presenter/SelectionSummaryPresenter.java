@@ -12,6 +12,7 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.shared.GWT;
+import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -55,8 +56,9 @@ public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView
                     .getSelectionSummary(criteria);
         }
 
+        final PopupType popupType = postAction != null ? PopupType.OK_CANCEL_DIALOG : PopupType.CLOSE_DIALOG;
         ShowPopupEvent.builder(this)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupType(popupType)
                 .caption(caption)
                 .onHideRequest(e -> {
                     if (e.isOk()) {
@@ -70,8 +72,12 @@ public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView
     private void update(final String postAction, final String action, final SelectionSummary result) {
         final SafeHtmlBuilder sb = new SafeHtmlBuilder();
         appendRow(sb, "item", "items", result.getItemCount());
-        sb.appendEscaped(" will be ");
-        sb.appendEscaped(postAction);
+        if (postAction != null) {
+            sb.appendEscaped(" will be ");
+            sb.appendEscaped(postAction);
+        } else {
+            sb.appendEscaped(" selected.");
+        }
         sb.appendHtmlConstant("</br>");
         sb.appendHtmlConstant("</br>");
         sb.appendEscaped("The selected items include:");
@@ -97,22 +103,26 @@ public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView
         } else {
             sb.appendEscaped("Created at any time.");
         }
-        sb.appendHtmlConstant("</br>");
-        sb.appendHtmlConstant("<b>");
-        sb.appendEscaped("Unless the database is modified in the meantime.");
-        sb.appendHtmlConstant("</b>");
-        sb.appendHtmlConstant("</br>");
-        sb.appendHtmlConstant("</br>");
-        sb.appendEscaped("Are you sure you want to ");
-        sb.appendEscaped(action);
-        sb.appendEscaped("?");
-
-        getView().setQuestion(sb.toSafeHtml());
+        if (action != null) {
+            sb.appendHtmlConstant("</br>");
+            sb.appendHtmlConstant("</br>");
+            sb.appendHtmlConstant("<b>");
+            sb.appendEscaped("Unless the database is modified in the meantime.");
+            sb.appendHtmlConstant("</b>");
+            sb.appendHtmlConstant("</br>");
+            sb.appendHtmlConstant("</br>");
+            sb.appendEscaped("Are you sure you want to ");
+            sb.appendEscaped(action);
+            sb.appendEscaped("?");
+            getView().setQuestion(sb.toSafeHtml());
+        } else {
+            getView().setInfo(sb.toSafeHtml());
+        }
     }
 
     private void appendRow(final SafeHtmlBuilder sb, final String type, final String pluralType, final long count) {
         sb.appendHtmlConstant("<b>");
-        sb.append(count);
+        sb.appendEscaped(NumberFormat.getDecimalFormat().format(count));
         sb.appendHtmlConstant("</b>");
         sb.appendEscaped(" ");
 

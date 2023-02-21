@@ -37,7 +37,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -49,7 +48,7 @@ public class ResultStore {
 
     private final ConcurrentHashMap<String, Set<Throwable>> errors = new ConcurrentHashMap<>();
     private final SearchRequestSource searchRequestSource;
-    private final List<String> highlights;
+    private final Set<String> highlights = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final Coprocessors coprocessors;
     private final String userId;
     private final Instant creationTime;
@@ -65,15 +64,10 @@ public class ResultStore {
                        final SerialisersFactory serialisersFactory,
                        final SizesProvider sizesProvider,
                        final String userId,
-                       final List<String> highlights,
                        final Coprocessors coprocessors,
                        final String nodeName,
                        final ResultStoreSettings resultStoreSettings) {
         this.searchRequestSource = searchRequestSource;
-        this.highlights = Optional
-                .ofNullable(highlights)
-                .map(Collections::unmodifiableList)
-                .orElse(Collections.emptyList());
         this.coprocessors = coprocessors;
         this.userId = userId;
         this.creationTime = Instant.now();
@@ -221,7 +215,7 @@ public class ResultStore {
     }
 
     public List<String> getHighlights() {
-        return highlights;
+        return List.copyOf(highlights);
     }
 
     public DataStore getData(final String componentId) {
@@ -271,5 +265,9 @@ public class ResultStore {
         return "StoreImpl{" +
                 ", complete=" + coprocessors.getCompletionState() +
                 '}';
+    }
+
+    public void addHighlights(final Set<String> highlights) {
+        this.highlights.addAll(highlights);
     }
 }

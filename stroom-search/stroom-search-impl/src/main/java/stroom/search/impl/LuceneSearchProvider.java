@@ -44,7 +44,6 @@ import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -170,8 +169,8 @@ public class LuceneSearchProvider implements SearchProvider {
         // Create the search result collector.
         final ResultStore resultStore = resultStoreFactory.create(
                 searchRequest.getSearchRequestSource(),
-                new ArrayList<>(highlights),
                 coprocessors);
+        resultStore.addHighlights(highlights);
 
         luceneSearchExecutor.start(asyncSearchTask, resultStore);
 

@@ -1,4 +1,4 @@
-package stroom.core.query;
+package stroom.core.meta;
 
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
@@ -9,6 +9,7 @@ import stroom.pipeline.PipelineStore;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
+import stroom.suggestions.api.SuggestionsService;
 import stroom.task.api.SimpleTaskContextFactory;
 import stroom.task.api.TaskContextFactory;
 
@@ -25,7 +26,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @ExtendWith(MockitoExtension.class)
-class TestSuggestionsServiceImpl {
+class TestMetaSuggestionsQueryHandler {
 
     @Mock
     private FeedStore feedStore;
@@ -35,6 +36,9 @@ class TestSuggestionsServiceImpl {
 
     @Mock
     private PipelineStore pipelineStore;
+
+    @Mock
+    private SuggestionsService suggestionsService;
 
     @Mock
     private DocRefInfoService docRefInfoService;
@@ -130,15 +134,10 @@ class TestSuggestionsServiceImpl {
                 .isEmpty();
     }
 
-    private List<String> doFeedNameTest(final Set<String> metaFeedNames,
-                                        final Set<String> storeFeedNames) {
-        final SuggestionsService suggestionsService = new SuggestionsServiceImpl(
-                metaService,
-                pipelineStore,
-                securityContext,
-                feedStore,
-                docRefInfoService,
-                taskContextFactory);
+    private List<String> doFeedNameTest(final Set<String> metaFeedNames, final Set<String> storeFeedNames) {
+        final MetaSuggestionsQueryHandlerImpl queryHandler = new MetaSuggestionsQueryHandlerImpl(
+                metaService, pipelineStore, securityContext, feedStore, taskContextFactory, docRefInfoService,
+                suggestionsService);
 
         final String userInput = "feed";
         final FetchSuggestionsRequest request = new FetchSuggestionsRequest(
@@ -154,6 +153,6 @@ class TestSuggestionsServiceImpl {
                         .map(name -> DocRef.builder().name(name).build())
                         .collect(Collectors.toList()));
 
-        return suggestionsService.fetch(request);
+        return queryHandler.getSuggestions(request);
     }
 }

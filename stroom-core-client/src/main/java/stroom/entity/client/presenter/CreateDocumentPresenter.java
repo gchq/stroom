@@ -57,7 +57,7 @@ public class CreateDocumentPresenter
     private String caption;
     private String name = "";
     private boolean allowNullFolder;
-    private Consumer<DocRef> newDocConsumer;
+    private Consumer<ExplorerNode> newDocConsumer;
 
     @Inject
     public CreateDocumentPresenter(final EventBus eventBus,
@@ -113,8 +113,8 @@ public class CreateDocumentPresenter
     @Override
     public void onHideRequest(final HidePopupRequestEvent e) {
         if (e.isOk()) {
-            final DocRef destinationFolderRef = getFolder();
-            if (!allowNullFolder && destinationFolderRef == null) {
+            final ExplorerNode destinationFolder = getFolder();
+            if (!allowNullFolder && destinationFolder == null) {
                 AlertEvent.fireWarn(CreateDocumentPresenter.this,
                         "No parent folder has been selected",
                         null);
@@ -132,7 +132,7 @@ public class CreateDocumentPresenter
                             CreateDocumentPresenter.this,
                             docType,
                             docName,
-                            destinationFolderRef,
+                            destinationFolder,
                             getView().getPermissionInheritance(),
                             newDocConsumer);
                 }
@@ -142,13 +142,8 @@ public class CreateDocumentPresenter
         }
     }
 
-    private DocRef getFolder() {
-        final ExplorerNode selected = entityTreePresenter.getSelectedItem();
-        if (selected != null) {
-            return selected.getDocRef();
-        }
-
-        return null;
+    private ExplorerNode getFolder() {
+        return entityTreePresenter.getSelectedItem();
     }
 
     public interface CreateDocumentView extends View, Focus, HasUiHandlers<HideRequestUiHandlers> {

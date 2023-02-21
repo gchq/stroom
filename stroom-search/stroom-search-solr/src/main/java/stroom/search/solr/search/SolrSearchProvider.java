@@ -45,7 +45,6 @@ import stroom.task.api.TaskContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -172,8 +171,8 @@ public class SolrSearchProvider implements SearchProvider {
         // Create the search result store.
         final ResultStore resultStore = resultStoreFactory.create(
                 searchRequest.getSearchRequestSource(),
-                new ArrayList<>(highlights),
                 coprocessors);
+        resultStore.addHighlights(highlights);
 
         // Start asynchronous search execution.
         solrSearchExecutor.start(asyncSearchTask, resultStore);

@@ -18,6 +18,7 @@
 package stroom.receive.rules.shared;
 
 import stroom.datasource.api.v2.AbstractField;
+import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -66,6 +67,13 @@ public class ReceiveDataRules extends Doc {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.fields = fields;
         this.rules = rules;
+    }
+
+    /**
+     * @return A new builder for creating a {@link DocRef} for this document's type.
+     */
+    public static DocRef.TypedBuilder buildDocRef() {
+        return DocRef.builder(DOCUMENT_TYPE);
     }
 
     public List<AbstractField> getFields() {

@@ -17,7 +17,7 @@
 
 package stroom.document.client.event;
 
-import stroom.docref.DocRef;
+import stroom.explorer.shared.ExplorerNode;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -28,20 +28,20 @@ public class RenameDocumentEvent extends GwtEvent<RenameDocumentEvent.Handler> {
 
     private static Type<Handler> TYPE;
     private final PresenterWidget<?> presenter;
-    private final DocRef docRef;
+    private final ExplorerNode explorerNode;
     private final String docName;
 
     private RenameDocumentEvent(final PresenterWidget<?> presenter,
-                                final DocRef docRef,
+                                final ExplorerNode explorerNode,
                                 final String docName) {
         this.presenter = presenter;
-        this.docRef = docRef;
+        this.explorerNode = explorerNode;
         this.docName = docName;
     }
 
     public static void fire(final HasHandlers handlers,
                             final PresenterWidget<?> presenter,
-                            final DocRef docRef,
+                            final ExplorerNode docRef,
                             final String docName) {
         handlers.fireEvent(new RenameDocumentEvent(presenter, docRef, docName));
     }
@@ -67,8 +67,8 @@ public class RenameDocumentEvent extends GwtEvent<RenameDocumentEvent.Handler> {
         return presenter;
     }
 
-    public DocRef getDocRef() {
-        return docRef;
+    public ExplorerNode getExplorerNode() {
+        return explorerNode;
     }
 
     public String getDocName() {

@@ -122,7 +122,6 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
         // Logically delete tasks that are associated with filters that have been logically deleted for longer than the
         // threshold.
         final AtomicInteger totalCount = new AtomicInteger();
-        int count = 0;
         taskContext.info(() -> "Logically deleting processor tasks for deleted processor filters");
         runWithCountAndTimeLogging(
                 () -> processorTaskDao.logicalDeleteForDeletedProcessorFilters(deleteThreshold),
@@ -130,7 +129,9 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
                 "Logically deleted {} processor tasks for deleted processor filters");
 
         // Logically delete COMPLETE processor filters with no outstanding tasks where the tracker last poll is older
-        // than the threshold
+        // than the threshold. Note that COMPLETE just means that we have finished producing tasks on the DB, but we
+        // can't delete the filter until all associated tasks have been processed otherwise they will never be picked
+        // up.
         taskContext.info(() -> "Logically deleting old processor filters with a state of COMPLETED and no tasks");
         runWithCountAndTimeLogging(
                 () -> processorFilterDao.logicallyDeleteOldProcessorFilters(deleteThreshold),

@@ -25,6 +25,8 @@ import net.sf.saxon.trans.XPathException;
 
 class Log extends StroomExtensionFunctionCall {
 
+    public static final String FUNCTION_NAME = "log";
+
     @Override
     protected Sequence call(String functionName, XPathContext context, Sequence[] arguments) {
         try {

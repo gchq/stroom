@@ -871,3 +871,10 @@ select option:disabled {
     color: #8f8f8f;
     cursor: default;
 }
+textarea.clipboardCopy {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	opacity: 1;
+	z-index: -1;
+}

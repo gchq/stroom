@@ -17,7 +17,6 @@
 
 package stroom.entity.client.presenter;
 
-import stroom.docref.DocRef;
 import stroom.document.client.event.MoveDocumentEvent;
 import stroom.document.client.event.ShowMoveDocumentDialogEvent;
 import stroom.entity.client.presenter.MoveDocumentPresenter.MoveDocumentProxy;
@@ -40,7 +39,6 @@ import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class MoveDocumentPresenter
         extends MyPresenter<MoveDocumentView, MoveDocumentProxy>
@@ -93,21 +91,11 @@ public class MoveDocumentPresenter
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final ExplorerNode folder = entityTreePresenter.getSelectedItem();
-
-                        DocRef destinationFolderRef = null;
-                        if (folder != null) {
-                            destinationFolderRef = folder.getDocRef();
-                        }
-
-                        final List<DocRef> docRefs = explorerNodeList.stream()
-                                .map(ExplorerNode::getDocRef)
-                                .collect(Collectors.toList());
-
                         MoveDocumentEvent.fire(
                                 MoveDocumentPresenter.this,
                                 MoveDocumentPresenter.this,
-                                docRefs,
-                                destinationFolderRef,
+                                explorerNodeList,
+                                folder,
                                 getView().getPermissionInheritance());
                     } else {
                         e.hide();

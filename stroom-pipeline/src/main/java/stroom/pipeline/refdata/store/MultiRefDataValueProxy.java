@@ -73,6 +73,15 @@ public class MultiRefDataValueProxy implements RefDataValueProxy {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public Optional<MapDefinition> getSuccessfulMapDefinition() {
+        return refDataValueProxies.stream()
+                .map(SingleRefDataValueProxy::getSuccessfulMapDefinition)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .findFirst();
+    }
+
     /**
      * Merge the two proxies into one combined one that will use each contained proxy to try to get a value.
      * Argument order is CRITICAL to ensure lookups are done in the correct order.

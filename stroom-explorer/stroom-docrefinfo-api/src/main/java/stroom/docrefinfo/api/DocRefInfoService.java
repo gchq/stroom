@@ -13,7 +13,7 @@ public interface DocRefInfoService {
      */
     List<DocRef> findByType(final String type);
 
-    Optional<DocRefInfo> info(DocRef docRef);
+    Optional<DocRefInfo> info(final DocRef docRef);
 
     Optional<String> name(DocRef docRef);
 

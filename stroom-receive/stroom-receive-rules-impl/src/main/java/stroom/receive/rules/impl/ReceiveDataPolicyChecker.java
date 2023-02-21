@@ -18,7 +18,6 @@
 package stroom.receive.rules.impl;
 
 import stroom.datasource.api.v2.AbstractField;
-import stroom.datasource.api.v2.FieldTypes;
 import stroom.docref.DocRef;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.ExpressionMatcherFactory;
@@ -181,8 +180,8 @@ class ReceiveDataPolicyChecker {
             fieldMap.forEach((fieldName, field) -> {
                 try {
                     final String string = attributeMap.get(fieldName);
-                    switch (field.getType()) {
-                        case FieldTypes.TEXT:
+                    switch (field.getFieldType()) {
+                        case TEXT:
                             map.put(fieldName, string);
                             break;
                         default:

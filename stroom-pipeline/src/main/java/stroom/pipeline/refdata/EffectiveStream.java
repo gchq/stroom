@@ -19,6 +19,7 @@ package stroom.pipeline.refdata;
 import stroom.meta.api.EffectiveMeta;
 import stroom.util.date.DateUtil;
 
+import java.time.Instant;
 import java.util.Objects;
 
 class EffectiveStream implements Comparable<EffectiveStream> {
@@ -37,6 +38,14 @@ class EffectiveStream implements Comparable<EffectiveStream> {
         this.streamId = streamId;
         this.effectiveMs = effectiveMs;
         this.hashCode = Objects.hash(streamId, effectiveMs);
+    }
+
+    static EffectiveStream of(final long streamId, final long effectiveMs) {
+        return new EffectiveStream(streamId, effectiveMs);
+    }
+
+    static EffectiveStream of(final long streamId, final Instant effective) {
+        return new EffectiveStream(streamId, Objects.requireNonNull(effective).toEpochMilli());
     }
 
     long getStreamId() {

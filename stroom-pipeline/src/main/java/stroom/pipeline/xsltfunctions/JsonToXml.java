@@ -37,6 +37,8 @@ import java.io.StringReader;
 
 class JsonToXml extends StroomExtensionFunctionCall {
 
+    public static final String FUNCTION_NAME = "json-to-xml";
+
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
         Sequence result = EmptyAtomicSequence.getInstance();
@@ -71,7 +73,11 @@ class JsonToXml extends StroomExtensionFunctionCall {
         final JSONParser parser = new JSONParser(new JSONFactoryConfig(), false);
         parser.setContentHandler(contentHandler);
 
-        parser.parse(new InputSource(new StringReader(json)));
+        try {
+            parser.parse(new InputSource(new StringReader(json)));
+        } catch (Exception e) {
+            throw new RuntimeException("Error parsing JSON - " + e.getMessage(), e);
+        }
 
         Sequence sequence = builder.getCurrentRoot();
 

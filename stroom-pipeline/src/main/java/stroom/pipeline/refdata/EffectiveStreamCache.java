@@ -191,6 +191,7 @@ public class EffectiveStreamCache implements Clearable {
                                 effectiveMetaList.stream()
                                         .map(EffectiveMeta::getId)
                                         .map(val -> Long.toString(val))
+                                        .sorted()
                                         .collect(Collectors.joining(", ")),
                                 key.getFeed(),
                                 Instant.ofEpochMilli(effectiveMs),

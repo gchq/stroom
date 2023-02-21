@@ -145,7 +145,6 @@ class TestSearchResultCreation {
                 new SerialisersFactory(),
                 sizesProvider,
                 null,
-                null,
                 coprocessors,
                 "node",
                 new ResultStoreSettingsFactory().get());
@@ -276,7 +275,6 @@ class TestSearchResultCreation {
                 new SerialisersFactory(),
                 sizesProvider,
                 "test_user_id",
-                null,
                 coprocessors2,
                 "node",
                 new ResultStoreSettingsFactory().get());
@@ -354,7 +352,6 @@ class TestSearchResultCreation {
                 new SerialisersFactory(),
                 sizesProvider,
                 "test_user_id",
-                null,
                 coprocessors2,
                 "node",
                 new ResultStoreSettingsFactory().get());
@@ -461,7 +458,6 @@ class TestSearchResultCreation {
 
         final ResultStore resultStore = new ResultStore(
                 searchRequest.getSearchRequestSource(),
-                null,
                 null,
                 null,
                 null,

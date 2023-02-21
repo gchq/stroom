@@ -210,6 +210,10 @@ include 'stroom-query:stroom-query-api'
 include 'stroom-query:stroom-query-common'
 include 'stroom-query:stroom-query-impl'
 
+// Suggestions
+include 'stroom-suggestions:stroom-suggestions-api'
+include 'stroom-suggestions:stroom-suggestions-impl'
+
 // Resource store
 include 'stroom-resource:stroom-resource-api'
 include 'stroom-resource:stroom-resource-impl'

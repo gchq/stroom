@@ -28,6 +28,11 @@ public interface SecurityContext {
      */
     String getUserId();
 
+    /**
+     * Retrieve the user's UUID if supported by the type of user.
+     */
+    String getUserUuid();
+
 
     UserIdentity createIdentity(String userId);
 

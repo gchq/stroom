@@ -114,7 +114,20 @@ public interface ProcessorTaskDao {
 
     int logicalDeleteByProcessorFilterId(int processorFilterId);
 
+    /**
+     * Logically delete tasks that are associated with filters that have been logically deleted for longer than the
+     * threshold.
+     *
+     * @param deleteThreshold Only logically delete tasks with an update time older than the threshold.
+     * @return The number of logically deleted tasks.
+     */
     int logicalDeleteForDeletedProcessorFilters(Instant deleteThreshold);
 
+    /**
+     * Physically delete tasks that are logically deleted or complete for longer than the threshold.
+     *
+     * @param deleteThreshold Only physically delete tasks with an update time older than the threshold.
+     * @return The number of physically deleted tasks.
+     */
     int physicallyDeleteOldTasks(Instant deleteThreshold);
 }

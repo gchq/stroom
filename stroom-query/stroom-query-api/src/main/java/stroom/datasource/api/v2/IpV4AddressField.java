@@ -29,8 +29,6 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public class IpV4AddressField extends AbstractNumericField {
 
-    private static final long serialVersionUID = 1272545271946712570L;
-
     public IpV4AddressField(final String name) {
         super(name);
     }
@@ -48,7 +46,7 @@ public class IpV4AddressField extends AbstractNumericField {
 
     @JsonIgnore
     @Override
-    public String getType() {
-        return FieldTypes.IPV4_ADDRESS;
+    public FieldType getFieldType() {
+        return FieldType.IPV4_ADDRESS;
     }
 }

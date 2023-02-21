@@ -26,6 +26,7 @@ import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.client.presenter.EntityCheckTreePresenter;
 import stroom.explorer.client.presenter.TypeFilterPresenter;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.client.event.ExportConfigEvent;
 import stroom.importexport.shared.ContentResource;
@@ -83,6 +84,9 @@ public class ExportConfigPresenter
         this.documentTypeCache = documentTypeCache;
         view.setTreeView(treePresenter.getView());
         view.setUiHandlers(this);
+
+        // Only show the System node at the root for export
+        treePresenter.setIncludedRootTypes(ExplorerConstants.SYSTEM);
     }
 
     @Override

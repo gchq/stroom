@@ -18,23 +18,23 @@ package stroom.explorer.client.presenter;
 
 import stroom.explorer.shared.ExplorerTreeFilter;
 
-import java.util.HashSet;
 import java.util.Set;
 
 public class ExplorerTreeFilterBuilder {
 
     private Set<String> includedTypes;
+    private Set<String> includedRootTypes;
     private Set<String> tags;
     private Set<String> requiredPermissions;
     private String nameFilter;
     private boolean nameFilterChange;
 
     public void setIncludedTypeSet(final Set<String> types) {
-        if (types == null) {
-            includedTypes = null;
-        } else {
-            includedTypes = new HashSet<>(types);
-        }
+        includedTypes = types;
+    }
+
+    public void setIncludedRootTypeSet(final Set<String> types) {
+        includedRootTypes = types;
     }
 
     /**
@@ -44,6 +44,10 @@ public class ExplorerTreeFilterBuilder {
      */
     public void setIncludedTypes(final String... types) {
         this.includedTypes = SetUtil.toSet(types);
+    }
+
+    public void setIncludedRootTypes(final String... types) {
+        this.includedRootTypes = SetUtil.toSet(types);
     }
 
     public void setTags(final String... tags) {
@@ -87,6 +91,7 @@ public class ExplorerTreeFilterBuilder {
 
         return new ExplorerTreeFilter(
                 SetUtil.copySet(includedTypes),
+                SetUtil.copySet(includedRootTypes),
                 SetUtil.copySet(tags),
                 SetUtil.copySet(requiredPermissions),
                 nameFilter,

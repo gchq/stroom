@@ -24,7 +24,9 @@ import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.DocumentTypes;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.dropdowntree.client.view.DropDownTreeUiHandlers;
@@ -36,6 +38,7 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.SelectionType;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -45,7 +48,10 @@ class ExplorerDropDownTreePresenter
         extends MyPresenterWidget<DropDownTreeView>
         implements DropDownTreeUiHandlers, HasDataSelectionHandlers<ExplorerNode> {
 
+    private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
+
     private final ExtendedExplorerTree explorerTree;
+    private final RestFactory restFactory;
     private boolean allowFolderSelection;
     private String caption = "Choose item";
     private ExplorerNode selectedExplorerNode;
@@ -56,6 +62,8 @@ class ExplorerDropDownTreePresenter
                                   final RestFactory restFactory,
                                   final UiConfigCache uiConfigCache) {
         super(eventBus, view);
+        this.restFactory = restFactory;
+
         getView().setUiHandlers(this);
 
         explorerTree = new ExtendedExplorerTree(this, restFactory);
@@ -147,6 +155,10 @@ class ExplorerDropDownTreePresenter
         explorerTree.getTreeModel().setIncludedTypes(includedTypes);
     }
 
+    public void setIncludedRootTypes(final String... types) {
+        explorerTree.getTreeModel().setIncludedRootTypes(types);
+    }
+
     public void setTags(final String... tags) {
         explorerTree.getTreeModel().setTags(tags);
     }
@@ -164,7 +176,11 @@ class ExplorerDropDownTreePresenter
     }
 
     public void setSelectedEntityReference(final DocRef docRef) {
-        setSelectedEntityData(ExplorerNode.create(docRef));
+        restFactory
+                .create()
+                .onSuccess(explorerNode -> setSelectedEntityData((ExplorerNode) explorerNode))
+                .call(EXPLORER_RESOURCE)
+                .getFromDocRef(docRef);
     }
 
     private ExplorerNode getSelectedEntityData() {
@@ -205,6 +221,7 @@ class ExplorerDropDownTreePresenter
                                     final RestFactory restFactory) {
             super(restFactory, false);
             this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;
+            this.getTreeModel().setIncludedRootTypes(ExplorerConstants.SYSTEM);
         }
 
         @Override

@@ -24,7 +24,9 @@ import stroom.dashboard.expression.v1.ValInteger;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.dashboard.expression.v1.ValuesConsumer;
+import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.ErrorConsumer;
+import stroom.query.common.v2.ResultStore;
 import stroom.search.elastic.ElasticClientCache;
 import stroom.search.elastic.ElasticClusterStore;
 import stroom.search.elastic.shared.ElasticClusterDoc;
@@ -47,15 +49,19 @@ import org.elasticsearch.action.search.SearchScrollRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.document.DocumentField;
+import org.elasticsearch.common.text.Text;
 import org.elasticsearch.core.TimeValue;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import org.elasticsearch.search.slice.SliceBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -63,6 +69,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class ElasticSearchTaskHandler {
 
@@ -70,19 +77,19 @@ public class ElasticSearchTaskHandler {
     public static final ThreadPool SCROLL_REQUEST_THREAD_POOL =
             new ThreadPoolImpl("Elasticsearch Scroll Request");
 
-    private final ElasticSearchConfig elasticSearchConfig;
+    private final Provider<ElasticSearchConfig> elasticSearchConfigProvider;
     private final ElasticClientCache elasticClientCache;
     private final ElasticClusterStore elasticClusterStore;
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
 
     @Inject
-    ElasticSearchTaskHandler(final ElasticSearchConfig elasticSearchConfig,
+    ElasticSearchTaskHandler(final Provider<ElasticSearchConfig> elasticSearchConfigProvider,
                              final ElasticClientCache elasticClientCache,
                              final ElasticClusterStore elasticClusterStore,
                              final ExecutorProvider executorProvider,
                              final TaskContextFactory taskContextFactory) {
-        this.elasticSearchConfig = elasticSearchConfig;
+        this.elasticSearchConfigProvider = elasticSearchConfigProvider;
         this.elasticClientCache = elasticClientCache;
         this.elasticClusterStore = elasticClusterStore;
         this.executorProvider = executorProvider;
@@ -91,8 +98,10 @@ public class ElasticSearchTaskHandler {
 
     public void search(final TaskContext taskContext,
                        final ElasticIndexDoc elasticIndex,
-                       final QueryBuilder query,
-                       final FieldIndex fieldIndex,
+                       final QueryBuilder queryBuilder,
+                       final HighlightBuilder highlightBuilder,
+                       final Coprocessors coprocessors,
+                       final ResultStore resultStore,
                        final ValuesConsumer valuesConsumer,
                        final ErrorConsumer errorConsumer,
                        final AtomicLong hitCount) {
@@ -106,8 +115,10 @@ public class ElasticSearchTaskHandler {
             final CompletableFuture<Void> searchFuture = executeSearch(
                     taskContext,
                     elasticIndex,
-                    query,
-                    fieldIndex,
+                    queryBuilder,
+                    highlightBuilder,
+                    coprocessors,
+                    resultStore,
                     valuesConsumer,
                     errorConsumer,
                     hitCount,
@@ -127,8 +138,10 @@ public class ElasticSearchTaskHandler {
 
     private CompletableFuture<Void> executeSearch(final TaskContext parentContext,
                                                   final ElasticIndexDoc elasticIndex,
-                                                  final QueryBuilder query,
-                                                  final FieldIndex fieldIndex,
+                                                  final QueryBuilder queryBuilder,
+                                                  final HighlightBuilder highlightBuilder,
+                                                  final Coprocessors coprocessors,
+                                                  final ResultStore resultStore,
                                                   final ValuesConsumer valuesConsumer,
                                                   final ErrorConsumer errorConsumer,
                                                   final AtomicLong hitCount,
@@ -147,8 +160,10 @@ public class ElasticSearchTaskHandler {
                             TerminateHandlerFactory.NOOP_FACTORY,
                             taskContext -> searchSlice(
                                     elasticIndex,
-                                    query,
-                                    fieldIndex,
+                                    queryBuilder,
+                                    highlightBuilder,
+                                    coprocessors,
+                                    resultStore,
                                     valuesConsumer,
                                     errorConsumer,
                                     hitCount,
@@ -168,8 +183,10 @@ public class ElasticSearchTaskHandler {
     }
 
     private void searchSlice(final ElasticIndexDoc elasticIndex,
-                             final QueryBuilder query,
-                             final FieldIndex fieldIndex,
+                             final QueryBuilder queryBuilder,
+                             final HighlightBuilder highlightBuilder,
+                             final Coprocessors coprocessors,
+                             final ResultStore resultStore,
                              final ValuesConsumer valuesConsumer,
                              final ErrorConsumer errorConsumer,
                              final AtomicLong hitCount,
@@ -178,23 +195,27 @@ public class ElasticSearchTaskHandler {
                              final TaskContext taskContext) {
         try {
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder()
-                    .query(query)
+                    .query(queryBuilder)
                     .fetchSource(false)
                     .size(elasticIndex.getSearchScrollSize());
 
+            if (elasticSearchConfigProvider.get().getHighlight()) {
+                searchSourceBuilder.highlighter(highlightBuilder);
+            }
+
             // Limit the returned fields to what the values consumers require
+            final FieldIndex fieldIndex = coprocessors.getFieldIndex();
             for (String field : fieldIndex.getFieldNames()) {
                 searchSourceBuilder.fetchField(field);
             }
 
             // Number of slices needs to be > 1 else an exception is raised
             if (elasticIndex.getSearchSlices() > 1) {
-                searchSourceBuilder.slice(new SliceBuilder(slice,
-                        elasticIndex.getSearchSlices()));
+                searchSourceBuilder.slice(new SliceBuilder(slice, elasticIndex.getSearchSlices()));
             }
 
-            final Scroll scroll = new Scroll(
-                    TimeValue.timeValueSeconds(elasticSearchConfig.getScrollDuration().getDuration().getSeconds()));
+            final long scrollSeconds = elasticSearchConfigProvider.get().getScrollDuration().getDuration().getSeconds();
+            final Scroll scroll = new Scroll(TimeValue.timeValueSeconds(scrollSeconds));
             final SearchRequest searchRequest = new SearchRequest(elasticIndex.getIndexName())
                     .source(searchSourceBuilder)
                     .scroll(scroll);
@@ -204,7 +225,7 @@ public class ElasticSearchTaskHandler {
 
             // Retrieve the initial result batch
             SearchHit[] searchHits = searchResponse.getHits().getHits();
-            processResultBatch(fieldIndex, valuesConsumer, errorConsumer, hitCount, searchHits);
+            processResultBatch(fieldIndex, resultStore, valuesConsumer, errorConsumer, hitCount, searchHits);
             int totalHitCount = searchHits.length;
 
             // Continue requesting results until we have all results
@@ -213,7 +234,7 @@ public class ElasticSearchTaskHandler {
                 searchResponse = elasticClient.scroll(scrollRequest, RequestOptions.DEFAULT);
                 searchHits = searchResponse.getHits().getHits();
 
-                processResultBatch(fieldIndex, valuesConsumer, errorConsumer, hitCount, searchHits);
+                processResultBatch(fieldIndex, resultStore, valuesConsumer, errorConsumer, hitCount, searchHits);
 
                 totalHitCount += searchHits.length;
                 final Integer finalTotalHitCount = totalHitCount;
@@ -238,6 +259,7 @@ public class ElasticSearchTaskHandler {
      * Receive a batch of search hits and send each one to the values consumer
      */
     private void processResultBatch(final FieldIndex fieldIndex,
+                                    final ResultStore resultStore,
                                     final ValuesConsumer valuesConsumer,
                                     final ErrorConsumer errorConsumer,
                                     final AtomicLong hitCount,
@@ -245,6 +267,15 @@ public class ElasticSearchTaskHandler {
         try {
             for (final SearchHit searchHit : searchHits) {
                 hitCount.incrementAndGet();
+
+                // Add highlights
+                if (elasticSearchConfigProvider.get().getHighlight()) {
+                    for (final HighlightField highlightField : searchHit.getHighlightFields().values()) {
+                        resultStore.addHighlights(Arrays.stream(highlightField.getFragments())
+                                .map(Text::string)
+                                .collect(Collectors.toSet()));
+                    }
+                }
 
                 final Map<String, DocumentField> mapSearchHit = searchHit.getFields();
                 Val[] values = null;

@@ -96,7 +96,7 @@ class TestMetaDaoImpl {
     private static final String RAW_STREAM_TYPE_NAME = "RAW_TEST_STREAM_TYPE";
     private static final String PROCESSED_STREAM_TYPE_NAME = "TEST_STREAM_TYPE";
     private static final String RAW_REF_STREAM_TYPE_NAME = "RAW_REF_STREAM_TYPE";
-    private static final String REF_STREAM_TYPE_NAME = "REF_STREAM_TYPE";
+    private static final String REF_STREAM_TYPE_NAME = StreamTypeNames.REFERENCE;
 
     private static final String TEST1_FEED_NAME = "TEST1";
     private static final String TEST2_FEED_NAME = "TEST2";
@@ -747,7 +747,7 @@ class TestMetaDaoImpl {
                 })
                 .withAssertions(testOutcome -> {
                     Assertions.assertThat(testOutcome.getActualOutput())
-                            .containsAll(testOutcome.getExpectedOutput());
+                            .containsExactlyInAnyOrderElementsOf(testOutcome.getExpectedOutput());
                 })
                 .addNamedCase(
                         "No effective streams", // Range before all streams

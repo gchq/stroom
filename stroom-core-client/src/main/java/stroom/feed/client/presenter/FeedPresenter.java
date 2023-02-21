@@ -19,6 +19,7 @@ package stroom.feed.client.presenter;
 
 import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
@@ -48,10 +49,11 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
     public FeedPresenter(final EventBus eventBus,
                          final LinkTabPanelView view,
                          final ClientSecurityContext securityContext,
+                         final RestFactory restFactory,
                          final Provider<FeedSettingsPresenter> settingsPresenterProvider,
                          final Provider<MetaPresenter> metaPresenterProvider,
                          final Provider<ProcessorTaskPresenter> taskPresenterProvider) {
-        super(eventBus, view, securityContext);
+        super(eventBus, view, securityContext, restFactory);
 
         tabContentProvider.setDirtyHandler(event -> {
             if (event.isDirty()) {

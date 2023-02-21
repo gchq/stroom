@@ -18,6 +18,7 @@
 package stroom.alert.rule.client.presenter;
 
 import stroom.alert.rule.shared.AlertRuleDoc;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
@@ -37,9 +38,10 @@ public class AlertRulePresenter extends DocumentEditTabPresenter<LinkTabPanelVie
     @Inject
     public AlertRulePresenter(final EventBus eventBus,
                               final LinkTabPanelView view,
+                              final RestFactory restFactory,
                               final AlertRuleSettingsPresenter settingsPresenter,
                               final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext);
+        super(eventBus, view, securityContext, restFactory);
         this.settingsPresenter = settingsPresenter;
 
         settingsPresenter.addDirtyHandler(event -> {

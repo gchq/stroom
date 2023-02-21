@@ -3,8 +3,10 @@ package stroom.explorer.client.view;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.explorer.client.presenter.TickBoxSelectionModel;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.svg.client.SvgImages;
+import stroom.svg.client.SvgPresets;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
@@ -88,13 +90,22 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
 
             if (item.getIconClassName() != null) {
                 // Add icon
-                content.append(template.icon(getCellClassName() + "-icon " + item.getIconClassName()));
+                content.append(template.icon(getCellClassName() + "-icon " + item.getIconClassName(),
+                        item.getType()));
             }
 
             if (item.getDisplayValue() != null) {
                 // Add text
                 content.append(template.div(getCellClassName() + "-text",
                         SafeHtmlUtils.fromString(item.getDisplayValue())));
+            }
+
+            // If the item is a favourite and not part of the Favourites node, display a star next to it
+            if (item.getIsFavourite() && item.getRootNodeUuid() != null &&
+                    !ExplorerConstants.FAVOURITES_DOC_REF.getUuid().equals(item.getRootNodeUuid())) {
+                content.append(template.favIcon(
+                        SvgPresets.FAVOURITES.getClassName() + " small",
+                        "Item is a favourite"));
             }
 
             sb.append(template.outer(content.toSafeHtml()));
@@ -121,11 +132,14 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
         @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
         SafeHtml expander(String iconClass, SafeStyles styles, SafeHtml icon);
 
-        @Template("<div class=\"{0}\"></div>")
-        SafeHtml icon(String iconClass);
+        @Template("<div class=\"{0}\" title=\"{1}\"></div>")
+        SafeHtml icon(String iconClass, String typeName);
 
         @Template("<div class=\"{0}\">{1}</div>")
         SafeHtml div(String className, SafeHtml content);
+
+        @Template("<div class=\"{0}\" title=\"{1}\"></div>")
+        SafeHtml favIcon(String iconClass, String title);
 
         @Template("<div class=\"explorerCell\">{0}</div>")
         SafeHtml outer(SafeHtml content);

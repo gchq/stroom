@@ -188,7 +188,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                 };
 
                 final ReferenceData referenceData = new ReferenceData(
-                        effectiveStreamCache,
+                        new EffectiveStreamService(effectiveStreamCache),
                         new FeedHolder(),
                         null,
                         null,
@@ -274,7 +274,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                 };
 
                 final ReferenceData referenceData = new ReferenceData(
-                        effectiveStreamCache,
+                        new EffectiveStreamService(effectiveStreamCache),
                         new FeedHolder(),
                         null,
                         null,
@@ -510,7 +510,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                 };
 
                 final ReferenceData referenceData = new ReferenceData(
-                        effectiveStreamCache,
+                        new EffectiveStreamService(effectiveStreamCache),
                         new FeedHolder(),
                         null,
                         null,
@@ -589,7 +589,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                 };
 
                 final ReferenceData referenceData = new ReferenceData(
-                        effectiveStreamCache,
+                        new EffectiveStreamService(effectiveStreamCache),
                         new FeedHolder(),
                         null,
                         null,

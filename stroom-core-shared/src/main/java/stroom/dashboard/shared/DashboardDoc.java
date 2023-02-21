@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
 
 import com.fasterxml.jackson.annotation.JsonCreator;

@@ -100,7 +100,6 @@ public class EventSearchTaskHandler {
                 // Create the search result collector.
                 final ResultStore resultStore = resultStoreFactory.create(
                         null,
-                        null,
                         coprocessors);
                 try {
                     luceneSearchExecutor.start(asyncSearchTask, resultStore);

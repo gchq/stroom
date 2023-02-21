@@ -33,7 +33,6 @@ public final class ResultStoreFactory {
      * @param store The underlying store to use for creating the search responses.
      */
     public ResultStore create(final SearchRequestSource searchRequestSource,
-                              final List<String> highlights,
                               final Coprocessors coprocessors) {
         final String userId = securityContext.getUserId();
         Objects.requireNonNull(userId, "No user is logged in");
@@ -43,7 +42,6 @@ public final class ResultStoreFactory {
                 serialisersFactory,
                 sizesProvider,
                 userId,
-                highlights,
                 coprocessors,
                 nodeInfo.getThisNodeName(),
                 resultStoreSettingsFactory.get());

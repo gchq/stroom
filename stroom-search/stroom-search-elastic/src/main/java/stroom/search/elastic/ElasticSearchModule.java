@@ -27,6 +27,9 @@ import stroom.search.elastic.search.ElasticIndexQueryResourceImpl;
 import stroom.search.elastic.search.ElasticSearchProvider;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.search.elastic.suggest.ElasticSuggestionsQueryHandler;
+import stroom.search.elastic.suggest.ElasticSuggestionsQueryHandlerImpl;
+import stroom.suggestions.api.SuggestionsServiceBinder;
 import stroom.util.RunnableWrapper;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
@@ -47,7 +50,11 @@ public class ElasticSearchModule extends AbstractModule {
 
         // Services
 
-        bind(stroom.search.elastic.ElasticIndexService.class).to(ElasticSearchProvider.class);
+        bind(ElasticIndexService.class).to(ElasticSearchProvider.class);
+        bind(ElasticSuggestionsQueryHandler.class).to(ElasticSuggestionsQueryHandlerImpl.class);
+
+        SuggestionsServiceBinder.create(binder())
+                .bind(ElasticIndexDoc.DOCUMENT_TYPE, ElasticSuggestionsQueryHandler.class);
 
         // Caches
 

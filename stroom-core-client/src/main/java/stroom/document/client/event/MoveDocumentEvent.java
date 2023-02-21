@@ -18,6 +18,7 @@
 package stroom.document.client.event;
 
 import stroom.docref.DocRef;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 
 import com.google.gwt.event.shared.EventHandler;
@@ -31,26 +32,26 @@ public class MoveDocumentEvent extends GwtEvent<MoveDocumentEvent.Handler> {
 
     private static Type<Handler> TYPE;
     private final PresenterWidget<?> presenter;
-    private final List<DocRef> docRefs;
-    private final DocRef destinationFolderRef;
+    private final List<ExplorerNode> explorerNodes;
+    private final ExplorerNode destinationFolder;
     private final PermissionInheritance permissionInheritance;
 
     private MoveDocumentEvent(final PresenterWidget<?> presenter,
-                              final List<DocRef> docRefs,
-                              final DocRef destinationFolderRef,
+                              final List<ExplorerNode> explorerNodes,
+                              final ExplorerNode destinationFolder,
                               final PermissionInheritance permissionInheritance) {
         this.presenter = presenter;
-        this.docRefs = docRefs;
-        this.destinationFolderRef = destinationFolderRef;
+        this.explorerNodes = explorerNodes;
+        this.destinationFolder = destinationFolder;
         this.permissionInheritance = permissionInheritance;
     }
 
     public static void fire(final HasHandlers handlers,
                             final PresenterWidget<?> presenter,
-                            final List<DocRef> docRefs,
-                            final DocRef destinationFolderRef,
+                            final List<ExplorerNode> explorerNodes,
+                            final ExplorerNode destinationFolder,
                             final PermissionInheritance permissionInheritance) {
-        handlers.fireEvent(new MoveDocumentEvent(presenter, docRefs, destinationFolderRef, permissionInheritance));
+        handlers.fireEvent(new MoveDocumentEvent(presenter, explorerNodes, destinationFolder, permissionInheritance));
     }
 
     public static Type<Handler> getType() {
@@ -74,12 +75,12 @@ public class MoveDocumentEvent extends GwtEvent<MoveDocumentEvent.Handler> {
         return presenter;
     }
 
-    public List<DocRef> getDocRefs() {
-        return docRefs;
+    public List<ExplorerNode> getExplorerNodes() {
+        return explorerNodes;
     }
 
-    public DocRef getDestinationFolderRef() {
-        return destinationFolderRef;
+    public ExplorerNode getDestinationFolder() {
+        return destinationFolder;
     }
 
     public PermissionInheritance getPermissionInheritance() {

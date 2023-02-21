@@ -37,7 +37,9 @@ class SourceId extends StroomExtensionFunctionCall {
     }
 
     @Override
-    protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
+    protected Sequence call(final String functionName,
+                            final XPathContext context,
+                            final Sequence[] arguments) {
         String result = null;
 
         try {

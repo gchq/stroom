@@ -503,6 +503,20 @@ public abstract class AbstractMetaListPresenter
         });
     }
 
+    public void info() {
+        final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
+        validateExpression(expression, exp -> {
+            final FindMetaCriteria criteria = expressionToNonPagedCriteria(exp);
+            showSummary(
+                    criteria,
+                    null,
+                    null,
+                    "Selection Summary",
+                    false,
+                    null);
+        });
+    }
+
     public void download() {
         validateSelection("download", () -> {
             final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());

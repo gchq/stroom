@@ -29,7 +29,7 @@ class TestProgressMonitor {
     void getSummary() {
         final String str = test(false, false);
         Assertions.assertThat(str)
-                .contains("Created tasks for 2/2 filters"); // 10 + 20
+                .contains("Inspected 2/2 filters for task creation"); // 10 + 20
     }
 
     @Test

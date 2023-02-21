@@ -72,9 +72,6 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticSearchProvider.class);
 
     private final ElasticIndexCache elasticIndexCache;
-    private final Executor executor;
-    private final TaskContextFactory taskContextFactory;
-    private final Provider<ElasticAsyncSearchTaskHandler> elasticAsyncSearchTaskHandlerProvider;
     private final SecurityContext securityContext;
     private final CoprocessorsFactory coprocessorsFactory;
     private final ResultStoreFactory resultStoreFactory;
@@ -97,9 +94,6 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
             final SecurityContext securityContext,
             final ElasticSearchExecutor elasticSearchExecutor) {
         this.elasticIndexCache = elasticIndexCache;
-        this.executor = executor;
-        this.taskContextFactory = taskContextFactory;
-        this.elasticAsyncSearchTaskHandlerProvider = elasticAsyncSearchTaskHandlerProvider;
         this.securityContext = securityContext;
         this.coprocessorsFactory = coprocessorsFactory;
         this.resultStoreFactory = resultStoreFactory;
@@ -148,7 +142,6 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         // Create the search result collector.
         final ResultStore resultStore = resultStoreFactory.create(
                 searchRequest.getSearchRequestSource(),
-                null,
                 coprocessors);
         elasticSearchExecutor.start(asyncSearchTask, resultStore);
         return resultStore;

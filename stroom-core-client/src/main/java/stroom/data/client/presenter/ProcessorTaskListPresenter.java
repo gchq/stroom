@@ -31,6 +31,7 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
 import stroom.pipeline.shared.PipelineDoc;
@@ -56,6 +57,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public class ProcessorTaskListPresenter
@@ -108,16 +110,21 @@ public class ProcessorTaskListPresenter
         dataGrid.addColumn(new InfoColumn<ProcessorTask>() {
             @Override
             protected void showInfo(final ProcessorTask row, final int x, final int y) {
+                FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
+                findMetaCriteria.setExpression(MetaExpressionUtil.createDataIdExpression(row.getMetaId()));
+
                 final Rest<ResultPage<MetaRow>> rest = restFactory.create();
                 rest
                         .onSuccess(metaRows -> {
-                            if (metaRows != null && metaRows.size() == 1) {
-                                final MetaRow metaRow = metaRows.getFirst();
-                                showTooltip(x, y, row, metaRow);
-                            }
+                            // Should only get one back
+                            final Meta meta = Optional.ofNullable(metaRows)
+                                    .map(ResultPage::getFirst)
+                                    .map(MetaRow::getMeta)
+                                    .orElse(null);
+                            showTooltip(x, y, row, meta);
                         })
                         .call(META_RESOURCE)
-                        .findMetaRow(FindMetaCriteria.createFromId(row.getMetaId()));
+                        .findMetaRow(findMetaCriteria);
             }
         }, "<br/>", ColumnSizeConstants.ICON_COL);
 
@@ -219,8 +226,10 @@ public class ProcessorTaskListPresenter
         });
     }
 
-    private void showTooltip(final int x, final int y, final ProcessorTask processorTask, final MetaRow metaRow) {
-        final Meta meta = metaRow.getMeta();
+    private void showTooltip(final int x,
+                             final int y,
+                             final ProcessorTask processorTask,
+                             final Meta meta) {
 
         final TableBuilder tb = new TableBuilder();
         tb
@@ -238,15 +247,21 @@ public class ProcessorTaskListPresenter
                 .row("End Time", toDateString(processorTask.getEndTimeMs()))
                 .row("Node", processorTask.getNodeName())
                 .row("Feed", processorTask.getFeedName())
-                .row()
+                .row();
 
-                .row(TableCell.header("Stream", 2))
-                .row("Stream Id", String.valueOf(meta.getId()))
-                .row("Status", meta.getStatus().getDisplayValue())
-                .row("Parent Stream Id", String.valueOf(meta.getParentMetaId()))
-                .row("Created", toDateString(meta.getCreateMs()))
-                .row("Effective", toDateString(meta.getEffectiveMs()))
-                .row("Stream Type", meta.getTypeName());
+        if (meta != null) {
+            tb
+                    .row(TableCell.header("Stream", 2))
+                    .row("Stream Id", String.valueOf(meta.getId()))
+                    .row("Status", meta.getStatus().getDisplayValue())
+                    .row("Parent Stream Id", String.valueOf(meta.getParentMetaId()))
+                    .row("Created", toDateString(meta.getCreateMs()))
+                    .row("Effective", toDateString(meta.getEffectiveMs()))
+                    .row("Stream Type", meta.getTypeName());
+        } else {
+            tb
+                    .row(TableCell.data("[Physically deleted]", 2));
+        }
 
         if (processorTask.getProcessorFilter() != null) {
             if (processorTask.getProcessorFilter().getProcessor() != null) {
@@ -270,63 +285,6 @@ public class ProcessorTaskListPresenter
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
         htmlBuilder.div(tb::write, Attribute.className("infoTable"));
         tooltipPresenter.show(htmlBuilder.toSafeHtml(), x, y);
-
-
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//        final TooltipUtil.Builder builder = TooltipUtil.builder()
-//                .addTwoColTable(tableBuilder -> {
-//                    tableBuilder.addHeaderRow("Stream Task")
-//                            .addRow("Stream Task Id", processorTask.getId())
-//                            .addRow("Status", processorTask.getStatus().getDisplayValue());
-//
-//                    if (processorTask.getProcessorFilter() != null) {
-//                        tableBuilder.addRow("Priority", processorTask.getProcessorFilter().getPriority());
-//                    }
-//
-//                    tableBuilder
-//                            .addRow("Status Time", toDateString(processorTask.getStatusTimeMs()))
-//                            .addRow("Start Time", toDateString(processorTask.getStartTimeMs()))
-//                            .addRow("End Time", toDateString(processorTask.getEndTimeMs()))
-//                            .addRow("Node", processorTask.getNodeName())
-//                            .addRow("Feed", processorTask.getFeedName())
-//                            .addBlankRow()
-//                            .addHeaderRow("Stream")
-//                            .addRow("Stream Id", meta.getId())
-//                            .addRow("Status", meta.getStatus().getDisplayValue())
-//                            .addRow("Parent Stream Id", meta.getParentMetaId())
-//                            .addRow("Created", toDateString(meta.getCreateMs()))
-//                            .addRow("Effective", toDateString(meta.getEffectiveMs()))
-//                            .addRow("Stream Type", meta.getTypeName());
-//
-//                    if (processorTask.getProcessorFilter() != null) {
-//                        if (processorTask.getProcessorFilter().getProcessor() != null) {
-//                            if (processorTask.getProcessorFilter().getProcessor().getPipelineUuid() != null) {
-//                                tableBuilder
-//                                        .addBlankRow()
-//                                        .addHeaderRow("Stream Processor")
-//                                        .addRow("Stream Processor Id",
-//                                                processorTask.getProcessorFilter().getProcessor().getId())
-//                                        .addRow("Stream Processor Filter Id",
-//                                                processorTask.getProcessorFilter().getId());
-//                                if (processorTask.getProcessorFilter().getProcessor().getPipelineUuid() != null) {
-//                                    tableBuilder.addRow("Stream Processor Pipeline",
-//                                            DocRefUtil.createSimpleDocRefString(
-//                                                    processorTask.getProcessorFilter().getPipeline()));
-//                                }
-//                            }
-//                        }
-//                    }
-//                    return tableBuilder.build();
-//                });
-//        tooltipPresenter.show(builder.build(), x, y);
     }
 
     private String toDateString(final Long ms) {

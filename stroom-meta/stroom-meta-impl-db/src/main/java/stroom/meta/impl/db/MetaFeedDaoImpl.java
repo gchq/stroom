@@ -86,6 +86,10 @@ class MetaFeedDaoImpl implements MetaFeedDao, Clearable {
                 .fetchOptional(META_FEED.ID));
     }
 
+    /**
+     * For a list of wild-carded names, return 0-* IDs for each one.
+     * @param names e.g. 'TEST_*' or 'TEST_FEED'
+     */
     Map<String, List<Integer>> find(final List<String> names) {
         final Condition condition = JooqUtil.createWildCardedStringsCondition(
                 META_FEED.NAME, names, true, BooleanOperator.OR);

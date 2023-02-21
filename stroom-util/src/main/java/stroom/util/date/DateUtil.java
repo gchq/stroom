@@ -44,6 +44,7 @@ public final class DateUtil {
 
     /**
      * Create a 'normal' type date.
+     * @param ms The date to create the string for.
      */
     public static String createNormalDateTimeString(final Long ms) {
         if (ms == null) {
@@ -53,7 +54,19 @@ public final class DateUtil {
     }
 
     /**
-     * Create a 'file' format date string witht he current system time.
+     * Create a 'normal' type date.
+     * @param instant The date to create the string for.
+     */
+    public static String createNormalDateTimeString(final Instant instant) {
+        if (instant == null) {
+            return "";
+        } else {
+            return NORMAL_STROOM_TIME_FORMATTER.format(instant.atZone(ZoneOffset.UTC));
+        }
+    }
+
+    /**
+     * Create a 'file' format date string with the current system time.
      *
      * @return string The date as a 'file' format date string.
      */
@@ -69,6 +82,16 @@ public final class DateUtil {
      */
     public static String createFileDateTimeString(final long ms) {
         return FILE_TIME_STROOM_TIME_FORMATTER.format(Instant.ofEpochMilli(ms).atZone(ZoneOffset.UTC));
+    }
+
+    /**
+     * Create a 'file' format date string.
+     *
+     * @param instant The date to create the string for.
+     * @return string The date as a 'file' format date string.
+     */
+    public static String createFileDateTimeString(final Instant instant) {
+        return FILE_TIME_STROOM_TIME_FORMATTER.format(instant.atZone(ZoneOffset.UTC));
     }
 
     /**

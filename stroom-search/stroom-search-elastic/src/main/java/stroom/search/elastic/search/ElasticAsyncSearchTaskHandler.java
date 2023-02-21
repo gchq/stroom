@@ -79,7 +79,8 @@ public class ElasticAsyncSearchTaskHandler {
                                 query,
                                 task.getNow(),
                                 task.getDateTimeSettings(),
-                                coprocessors);
+                                coprocessors,
+                                resultStore);
 
                         // Await completion.
                         parentContext.info(() -> task.getSearchName() + " - searching");

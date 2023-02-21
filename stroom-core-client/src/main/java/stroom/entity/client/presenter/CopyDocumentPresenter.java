@@ -95,21 +95,11 @@ public class CopyDocumentPresenter
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final ExplorerNode folder = entityTreePresenter.getSelectedItem();
-
-                        DocRef destinationFolderRef = null;
-                        if (folder != null) {
-                            destinationFolderRef = folder.getDocRef();
-                        }
-
-                        final List<DocRef> docRefs = explorerNodeList.stream()
-                                .map(ExplorerNode::getDocRef)
-                                .collect(Collectors.toList());
-
                         CopyDocumentEvent.fire(
                                 CopyDocumentPresenter.this,
                                 CopyDocumentPresenter.this,
-                                docRefs,
-                                destinationFolderRef,
+                                explorerNodeList,
+                                folder,
                                 getView().getPermissionInheritance());
                     } else {
                         e.hide();

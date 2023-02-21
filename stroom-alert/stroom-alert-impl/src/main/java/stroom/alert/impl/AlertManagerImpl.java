@@ -189,7 +189,7 @@ public class AlertManagerImpl implements AlertManager {
 
         final String[] path = folderPath.trim().split("/");
 
-        final Optional<ExplorerNode> folder = explorerNodeService.getRoot();
+        final Optional<ExplorerNode> folder = explorerNodeService.getNodeWithRoot();
 
         if (folder.isEmpty()) {
             throw new IllegalStateException("Unable to find root folder explorer node.");

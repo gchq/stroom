@@ -103,7 +103,7 @@ public class NameDocumentPresenter
             } else {
                 RenameDocumentEvent.fire(NameDocumentPresenter.this,
                         NameDocumentPresenter.this,
-                        entity.getDocRef(),
+                        entity,
                         entityName);
             }
         } else {

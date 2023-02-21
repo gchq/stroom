@@ -17,6 +17,7 @@
 
 package stroom.view.client.presenter;
 
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
@@ -41,8 +42,9 @@ public class ViewPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Vi
     public ViewPresenter(final EventBus eventBus,
                          final LinkTabPanelView view,
                          final ClientSecurityContext securityContext,
+                         final RestFactory restFactory,
                          final Provider<ViewSettingsPresenter> settingsPresenterProvider) {
-        super(eventBus, view, securityContext);
+        super(eventBus, view, securityContext, restFactory);
 
         tabContentProvider.setDirtyHandler(event -> {
             if (event.isDirty()) {
