@@ -98,7 +98,7 @@ class AlertRuleStoreImpl implements AlertRuleStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(DocumentTypeGroup.SEARCH, AlertRuleDoc.DOCUMENT_TYPE, AlertRuleDoc.DOCUMENT_TYPE);
+        return new DocumentType(DocumentTypeGroup.SEARCH, AlertRuleDoc.DOCUMENT_TYPE, "Alert Rule");
     }
 
     ////////////////////////////////////////////////////////////////////////
