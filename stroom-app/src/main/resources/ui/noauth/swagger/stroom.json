@@ -1803,9 +1803,17 @@
         "tags" : [ "Dashboards" ]
       }
     },
-    "/dashboard/v1/downloadSearchResults" : {
+    "/dashboard/v1/downloadSearchResults/{nodeName}" : {
       "post" : {
         "operationId" : "downloadDashboardSearchResults",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "nodeName",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -1877,9 +1885,17 @@
         "tags" : [ "Dashboards" ]
       }
     },
-    "/dashboard/v1/search" : {
+    "/dashboard/v1/search/{nodeName}" : {
       "post" : {
         "operationId" : "dashboardSearch",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "nodeName",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -2729,7 +2745,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/DocRef"
+                  "$ref" : "#/components/schemas/ExplorerNode"
                 }
               }
             },
@@ -2894,6 +2910,36 @@
         "tags" : [ "Explorer (v2)" ]
       }
     },
+    "/explorer/v2/getFromDocRef" : {
+      "post" : {
+        "operationId" : "getRootNodeRef",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DocRef"
+              }
+            }
+          },
+          "description" : "docRef",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ExplorerNode"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Get a node from a document reference, decorated with its root node UUID",
+        "tags" : [ "Explorer (v2)" ]
+      }
+    },
     "/explorer/v2/info" : {
       "post" : {
         "operationId" : "fetchExplorerItemInfo",
@@ -2973,7 +3019,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/DocRef"
+                  "$ref" : "#/components/schemas/ExplorerNode"
                 }
               }
             },
@@ -2982,6 +3028,80 @@
         },
         "summary" : "Rename explorer items",
         "tags" : [ "Explorer (v2)" ]
+      }
+    },
+    "/explorerFavourite/v1/createUserFavourite" : {
+      "post" : {
+        "operationId" : "createUserFavourite",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DocRef"
+              }
+            }
+          },
+          "description" : "docRef",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : { }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Set a document as a favourite for the current user",
+        "tags" : [ "Explorer Favourites" ]
+      }
+    },
+    "/explorerFavourite/v1/deleteUserFavourite" : {
+      "delete" : {
+        "operationId" : "deleteUserFavourite",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DocRef"
+              }
+            }
+          },
+          "description" : "docRef",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : { }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Unset a document as favourite for the current user",
+        "tags" : [ "Explorer Favourites" ]
+      }
+    },
+    "/explorerFavourite/v1/getUserFavourites" : {
+      "get" : {
+        "operationId" : "getUserFavourites",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/DocRef"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Retrieve all DocRefs the current user has marked as favourite",
+        "tags" : [ "Explorer Favourites" ]
       }
     },
     "/export/v1" : {
@@ -5825,9 +5945,17 @@
         "tags" : [ "Processor Tasks" ]
       }
     },
-    "/query/v1/downloadSearchResults" : {
+    "/query/v1/downloadSearchResults/{nodeName}" : {
       "post" : {
         "operationId" : "downloadQuerySearchResults",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "nodeName",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -5877,9 +6005,17 @@
         "tags" : [ "Queries" ]
       }
     },
-    "/query/v1/search" : {
+    "/query/v1/search/{nodeName}" : {
       "post" : {
         "operationId" : "querySearch",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "nodeName",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -6318,6 +6454,44 @@
           }
         },
         "summary" : "Destroy a search result store for a node",
+        "tags" : [ "ResultStore" ]
+      }
+    },
+    "/result-store/v1/exists/{nodeName}" : {
+      "post" : {
+        "operationId" : "resultStoreExists",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "nodeName",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/QueryKey"
+              }
+            }
+          },
+          "description" : "queryKey",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Determines if the requested result store still exists",
         "tags" : [ "ResultStore" ]
       }
     },
@@ -8877,6 +9051,24 @@
   },
   "components" : {
     "schemas" : {
+      "AbstractAlertRule" : {
+        "type" : "object",
+        "discriminator" : {
+          "propertyName" : "type"
+        },
+        "properties" : {
+          "executionDelay" : {
+            "type" : "string"
+          },
+          "executionFrequency" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "type" ]
+      },
       "AbstractFetchDataResult" : {
         "type" : "object",
         "discriminator" : {
@@ -8949,7 +9141,8 @@
           "type" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "type" ]
       },
       "Account" : {
         "type" : "object",
@@ -9155,6 +9348,13 @@
       "AlertRuleDoc" : {
         "type" : "object",
         "properties" : {
+          "alertRule" : {
+            "$ref" : "#/components/schemas/AbstractAlertRule"
+          },
+          "alertRuleType" : {
+            "type" : "string",
+            "enum" : [ "EVENT", "THRESHOLD" ]
+          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -9464,10 +9664,10 @@
       "BulkActionResult" : {
         "type" : "object",
         "properties" : {
-          "docRefs" : {
+          "explorerNodes" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/DocRef"
+              "$ref" : "#/components/schemas/ExplorerNode"
             }
           },
           "message" : {
@@ -10940,7 +11140,7 @@
           },
           "fieldUse" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "IPV4_ADDRESS" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS" ]
           },
           "indexed" : {
             "type" : "boolean"
@@ -11094,6 +11294,9 @@
           "iconClassName" : {
             "type" : "string"
           },
+          "isFavourite" : {
+            "type" : "boolean"
+          },
           "name" : {
             "type" : "string"
           },
@@ -11101,7 +11304,27 @@
             "type" : "string",
             "enum" : [ "OPEN", "CLOSED", "LEAF" ]
           },
+          "rootNodeUuid" : {
+            "type" : "string"
+          },
           "tags" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "uniqueKey" : {
+            "$ref" : "#/components/schemas/ExplorerNodeKey"
+          },
+          "uuid" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ExplorerNodeKey" : {
+        "type" : "object",
+        "properties" : {
+          "rootNodeUuid" : {
             "type" : "string"
           },
           "type" : {
@@ -11140,13 +11363,13 @@
       "ExplorerServiceCopyRequest" : {
         "type" : "object",
         "properties" : {
-          "destinationFolderRef" : {
-            "$ref" : "#/components/schemas/DocRef"
+          "destinationFolder" : {
+            "$ref" : "#/components/schemas/ExplorerNode"
           },
-          "docRefs" : {
+          "explorerNodes" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/DocRef"
+              "$ref" : "#/components/schemas/ExplorerNode"
             }
           },
           "permissionInheritance" : {
@@ -11158,8 +11381,8 @@
       "ExplorerServiceCreateRequest" : {
         "type" : "object",
         "properties" : {
-          "destinationFolderRef" : {
-            "$ref" : "#/components/schemas/DocRef"
+          "destinationFolder" : {
+            "$ref" : "#/components/schemas/ExplorerNode"
           },
           "docName" : {
             "type" : "string"
@@ -11187,13 +11410,13 @@
       "ExplorerServiceMoveRequest" : {
         "type" : "object",
         "properties" : {
-          "destinationFolderRef" : {
-            "$ref" : "#/components/schemas/DocRef"
+          "destinationFolder" : {
+            "$ref" : "#/components/schemas/ExplorerNode"
           },
-          "docRefs" : {
+          "explorerNodes" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/DocRef"
+              "$ref" : "#/components/schemas/ExplorerNode"
             }
           },
           "permissionInheritance" : {
@@ -11208,14 +11431,21 @@
           "docName" : {
             "type" : "string"
           },
-          "docRef" : {
-            "$ref" : "#/components/schemas/DocRef"
+          "explorerNode" : {
+            "$ref" : "#/components/schemas/ExplorerNode"
           }
         }
       },
       "ExplorerTreeFilter" : {
         "type" : "object",
         "properties" : {
+          "includedRootTypes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          },
           "includedTypes" : {
             "type" : "array",
             "items" : {
@@ -11462,7 +11692,7 @@
           "openedItems" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/ExplorerNodeKey"
             }
           },
           "qualifiedFilterInput" : {
@@ -11477,7 +11707,7 @@
           "temporaryOpenedItems" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/ExplorerNodeKey"
             },
             "uniqueItems" : true
           }
@@ -11723,7 +11953,7 @@
           "ensureVisible" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/ExplorerNodeKey"
             },
             "uniqueItems" : true
           },
@@ -11737,14 +11967,14 @@
           "openItems" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/ExplorerNodeKey"
             },
             "uniqueItems" : true
           },
           "temporaryOpenedItems" : {
             "type" : "array",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/ExplorerNodeKey"
             },
             "uniqueItems" : true
           }
@@ -12844,6 +13074,12 @@
               "type" : "string"
             }
           }
+        } ]
+      },
+      "KeywordField" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractField"
         } ]
       },
       "LayoutConfig" : {
@@ -14147,6 +14383,9 @@
             },
             "lastQueryKey" : {
               "$ref" : "#/components/schemas/QueryKey"
+            },
+            "lastQueryNode" : {
+              "type" : "string"
             },
             "selectionHandlers" : {
               "type" : "array",
@@ -16585,6 +16824,23 @@
             "type" : "string"
           }
         }
+      },
+      "ThresholdAlertRule" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractAlertRule"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "threshold" : {
+              "type" : "integer",
+              "format" : "int64"
+            },
+            "thresholdField" : {
+              "type" : "string"
+            }
+          }
+        } ]
       },
       "TimeRange" : {
         "type" : "object",
