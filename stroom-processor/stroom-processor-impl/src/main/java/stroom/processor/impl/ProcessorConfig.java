@@ -26,7 +26,7 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
     private final int queueSize;
 
 
-    private final int tasksToCreatePerFilter;
+    private final int tasksToCreate;
     private final int taskCreationThreadCount;
     private final int databaseMultiInsertMaxBatchSize;
 
@@ -38,7 +38,7 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
     private final StroomDuration disownDeadTasksAfter;
 
     private final StroomDuration fillTaskQueueFrequency;
-    private final StroomDuration createTasksFrequency;
+    private final StroomDuration durationToSkipNonProducingFilters;
 
     public ProcessorConfig() {
         dbConfig = new ProcessorDbConfig();
@@ -46,7 +46,7 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
         deleteAge = StroomDuration.ofDays(1);
         fillTaskQueue = true;
         queueSize = 1000;
-        tasksToCreatePerFilter = 1000;
+        tasksToCreate = 1000;
         taskCreationThreadCount = 5;
         databaseMultiInsertMaxBatchSize = 500;
 
@@ -68,7 +68,7 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
                 .build();
         disownDeadTasksAfter = StroomDuration.ofMinutes(10);
         fillTaskQueueFrequency = StroomDuration.ofSeconds(10);
-        createTasksFrequency = StroomDuration.ofSeconds(10);
+        durationToSkipNonProducingFilters = StroomDuration.ofSeconds(10);
     }
 
     @SuppressWarnings("unused")
@@ -78,7 +78,7 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
                            @JsonProperty("deleteAge") final StroomDuration deleteAge,
                            @JsonProperty("fillTaskQueue") final boolean fillTaskQueue,
                            @JsonProperty("queueSize") final int queueSize,
-                           @JsonProperty("tasksToCreatePerFilter") final int tasksToCreatePerFilter,
+                           @JsonProperty("tasksToCreate") final int tasksToCreate,
                            @JsonProperty("taskCreationThreadCount") final int taskCreationThreadCount,
                            @JsonProperty("databaseMultiInsertMaxBatchSize") final int databaseMultiInsertMaxBatchSize,
                            @JsonProperty("processorCache") final CacheConfig processorCache,
@@ -87,13 +87,14 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
                            @JsonProperty("processorFeedCache") final CacheConfig processorFeedCache,
                            @JsonProperty("disownDeadTasksAfter") final StroomDuration disownDeadTasksAfter,
                            @JsonProperty("fillTaskQueueFrequency") final StroomDuration fillTaskQueueFrequency,
-                           @JsonProperty("createTasksFrequency") final StroomDuration createTasksFrequency) {
+                           @JsonProperty("durationToSkipNonProducingFilters") final StroomDuration
+                                   durationToSkipNonProducingFilters) {
         this.dbConfig = dbConfig;
         this.assignTasks = assignTasks;
         this.deleteAge = deleteAge;
         this.fillTaskQueue = fillTaskQueue;
         this.queueSize = queueSize;
-        this.tasksToCreatePerFilter = tasksToCreatePerFilter;
+        this.tasksToCreate = tasksToCreate;
         this.taskCreationThreadCount = taskCreationThreadCount;
         this.databaseMultiInsertMaxBatchSize = databaseMultiInsertMaxBatchSize;
         this.processorCache = processorCache;
@@ -102,7 +103,7 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
         this.processorFeedCache = processorFeedCache;
         this.disownDeadTasksAfter = disownDeadTasksAfter;
         this.fillTaskQueueFrequency = fillTaskQueueFrequency;
-        this.createTasksFrequency = createTasksFrequency;
+        this.durationToSkipNonProducingFilters = durationToSkipNonProducingFilters;
     }
 
     @Override
@@ -134,10 +135,12 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
         return queueSize;
     }
 
-    @JsonPropertyDescription("How many tasks should we try to create in the DB per filter. If the queue size is " +
-            "larger then that figure will be used instead.")
-    public int getTasksToCreatePerFilter() {
-        return tasksToCreatePerFilter;
+    @JsonPropertyDescription("How many tasks should we try to create in the DB. If the queue size is " +
+            "larger then that figure will be used instead as we want to be able to fill the queue. " +
+            "Note that the number of tasks created may be greater than this number as each task creation thread will " +
+            "try and create the same number of tasks.")
+    public int getTasksToCreate() {
+        return tasksToCreate;
     }
 
     @JsonPropertyDescription("The number of concurrent threads to use for task creation.")
@@ -177,9 +180,10 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
         return fillTaskQueueFrequency;
     }
 
-    @JsonPropertyDescription("How frequently do we want to insert new tasks into the DB.")
-    public StroomDuration getCreateTasksFrequency() {
-        return createTasksFrequency;
+    @JsonPropertyDescription("How long should we wait before retrying task creation for previously non producing " +
+            "filters.")
+    public StroomDuration getDurationToSkipNonProducingFilters() {
+        return durationToSkipNonProducingFilters;
     }
 
     @Override
@@ -190,6 +194,7 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
                 ", deleteAge=" + deleteAge +
                 ", fillTaskQueue=" + fillTaskQueue +
                 ", queueSize=" + queueSize +
+                ", tasksToCreate=" + tasksToCreate +
                 ", taskCreationThreadCount=" + taskCreationThreadCount +
                 ", databaseMultiInsertMaxBatchSize=" + databaseMultiInsertMaxBatchSize +
                 ", processorCache=" + processorCache +
@@ -198,7 +203,7 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
                 ", processorFeedCache=" + processorFeedCache +
                 ", disownDeadTasksAfter=" + disownDeadTasksAfter +
                 ", fillTaskQueueFrequency=" + fillTaskQueueFrequency +
-                ", createTasksFrequency=" + createTasksFrequency +
+                ", durationToSkipNonProducingFilters=" + durationToSkipNonProducingFilters +
                 '}';
     }
 

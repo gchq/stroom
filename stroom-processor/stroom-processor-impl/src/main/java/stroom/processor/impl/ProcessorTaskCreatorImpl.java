@@ -169,7 +169,7 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
             // We need to create enough tasks to keep the queue full, so we need to either over create or create as
             // many as the queue has capacity.
             final int tasksToCreatePerFilter =
-                    Math.max(processorConfig.getTasksToCreatePerFilter(), processorConfig.getQueueSize());
+                    Math.max(processorConfig.getTasksToCreate(), processorConfig.getQueueSize());
             final LinkedBlockingQueue<ProcessorFilter> filterQueue = new LinkedBlockingQueue<>(filters);
             final AtomicInteger filterCount = new AtomicInteger();
 
@@ -278,7 +278,7 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                 tracker.getLastPollTaskCount() > 0 ||
                 Instant
                         .ofEpochMilli(tracker.getLastPollMs())
-                        .plus(processorConfigProvider.get().getCreateTasksFrequency())
+                        .plus(processorConfigProvider.get().getDurationToSkipNonProducingFilters())
                         .isBefore(Instant.now())) {
             final int currentCreatedTasks = processorTaskDao.countCreatedTasksForFilter(filter.getId());
             final int maxTasks = tasksToCreatePerFilter - currentCreatedTasks;
