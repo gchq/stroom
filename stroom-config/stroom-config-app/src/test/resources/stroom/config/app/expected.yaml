@@ -565,10 +565,6 @@ appConfig:
       maxStringFieldLength: 1000
       minPayloadSize: "1M"
       offHeapResults: true
-      searchResultCache:
-        expireAfterAccess: null
-        expireAfterWrite: null
-        maximumSize: null
       storeSize: "1000000,100,10,1"
       valueQueueSize: 1000000
     shard:
