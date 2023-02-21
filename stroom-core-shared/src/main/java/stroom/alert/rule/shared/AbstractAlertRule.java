@@ -16,6 +16,8 @@
 
 package stroom.alert.rule.shared;
 
+import stroom.query.api.v2.TableResult;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -62,9 +64,13 @@ public abstract class AbstractAlertRule {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof final AbstractAlertRule that)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
+        if (!super.equals(o)) {
+            return false;
+        }
+        final AbstractAlertRule that = (AbstractAlertRule) o;
         return Objects.equals(executionDelay, that.executionDelay) &&
                 Objects.equals(executionFrequency, that.executionFrequency);
     }
