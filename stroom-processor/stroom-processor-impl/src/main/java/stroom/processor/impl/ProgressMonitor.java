@@ -79,6 +79,21 @@ public class ProgressMonitor {
         sb.append("\n");
         if (queueProcessTasksState != null) {
             queueProcessTasksState.report(sb);
+        } else {
+            final AtomicInteger initialCount = new AtomicInteger();
+            final AtomicInteger added = new AtomicInteger();
+            filterProgressMonitorList.forEach(filterProgressMonitor -> {
+                initialCount.addAndGet(filterProgressMonitor.initialCount);
+                added.addAndGet(filterProgressMonitor.added.get());
+            });
+            sb.append("Initial: ");
+            sb.append(initialCount.get());
+            sb.append("\n");
+            sb.append("Added: ");
+            sb.append(added.get());
+            sb.append("\n");
+            sb.append("Final: ");
+            sb.append(initialCount.get() + added.get());
         }
 
         // Only show phase detail in trace log.
@@ -116,7 +131,7 @@ public class ProgressMonitor {
                 sb.append("Added: ");
                 sb.append(filterProgressMonitor.added.get());
                 sb.append("\n");
-                sb.append("Final count: ");
+                sb.append("Final: ");
                 sb.append(filterProgressMonitor.initialCount +
                         filterProgressMonitor.added.get());
 

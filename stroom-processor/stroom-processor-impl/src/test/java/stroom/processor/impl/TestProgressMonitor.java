@@ -10,6 +10,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 class TestProgressMonitor {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestProgressMonitor.class);
@@ -77,5 +79,45 @@ class TestProgressMonitor {
                         showFilterPhaseDetail);
         LOGGER.info(str);
         return str;
+    }
+
+    @Test
+    void testCreateInfo() {
+        testCreate(false, false, false);
+    }
+
+    @Test
+    void testCreateDebug() {
+        testCreate(true, true, false);
+    }
+
+    @Test
+    void testCreateTrace() {
+        testCreate(true, true, true);
+    }
+
+    private void testCreate(final boolean showFilterDetail,
+                            final boolean showSummaryPhaseDetail,
+                            final boolean showFilterPhaseDetail) {
+        final ProgressMonitor progressMonitor = new ProgressMonitor(2);
+        final FilterProgressMonitor progressMonitor1 = progressMonitor.logFilter(PROCESSOR_FILTER_1, 0);
+        final FilterProgressMonitor progressMonitor2 = progressMonitor.logFilter(PROCESSOR_FILTER_2, 0);
+
+        for (final FilterProgressMonitor fpm : List.of(progressMonitor1, progressMonitor2)) {
+            DurationTimer durationTimer = DurationTimer.start();
+            fpm.logPhase(Phase.FIND_META_FOR_FILTER, durationTimer, 200);
+            fpm.add(200);
+            fpm.logPhase(Phase.CREATE_STREAM_MAP,
+                    durationTimer,
+                    100);
+            fpm.complete();
+        }
+
+        LOGGER.info(() -> progressMonitor.getFullReport(
+                "CREATE NEW TASKS",
+                null,
+                showFilterDetail,
+                showSummaryPhaseDetail,
+                showFilterPhaseDetail));
     }
 }

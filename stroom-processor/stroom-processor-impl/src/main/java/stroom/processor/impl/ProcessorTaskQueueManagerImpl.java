@@ -526,7 +526,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
 
         info(taskContext, () -> "Finished");
 
-        progressMonitor.report("QUEUED TASKS", queueProcessTasksState);
+        progressMonitor.report("ADD TASKS TO QUEUE", queueProcessTasksState);
 
         LOGGER.trace("queueNewTasks() - Finished");
         return totalAdded;
