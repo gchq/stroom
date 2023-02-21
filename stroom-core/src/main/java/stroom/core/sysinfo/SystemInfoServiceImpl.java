@@ -3,6 +3,8 @@ package stroom.core.sysinfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.sysinfo.HasSystemInfo;
@@ -22,6 +24,8 @@ import javax.inject.Inject;
 // If we make it a singleton due to systemInfoSuppliers then we would
 // probably need the injected set to be a map of providers instead.
 public class SystemInfoServiceImpl implements SystemInfoService {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SystemInfoServiceImpl.class);
 
     private final Map<String, HasSystemInfo> systemInfoSuppliers;
     private final SecurityContext securityContext;
@@ -71,9 +75,15 @@ public class SystemInfoServiceImpl implements SystemInfoService {
         // We should have a user in context as this is coming from an authenticated rest api
         final HasSystemInfo systemInfoSupplier = systemInfoSuppliers.get(providerName);
 
-        return NullSafe.getAsOptional(
-                systemInfoSupplier,
-                supplier -> supplier.getSystemInfo(params));
+        try {
+            return NullSafe.getAsOptional(
+                    systemInfoSupplier,
+                    supplier -> supplier.getSystemInfo(params));
+        } catch (Exception e) {
+            LOGGER.error("Error getting system info for {} with params {}: {}",
+                    providerName, params, e.getMessage(), e);
+            throw e;
+        }
     }
 
     private void checkPermission() {

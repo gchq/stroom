@@ -12,6 +12,84 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#3255** : Fix error when creating a new processor filter.
+
+* Issue **#3204** : More changes to improve task creation performance.
+
+* Issue **#3204** : Split UNPROCESSED(1) task state into CREATED(0) and QUEUED(1) to improve task creation performance and management.
+
+* Issue **#3204** : Change processor_filter_tracker to have a status enum and an optional message.
+
+* Issue **#3225** : Improve performance of the database query used to find logically deleted streams for the `Data Delete` job. Add the index `meta_status_status_time_idx` on table `meta`. Add a summary log for the job.
+
+* Issue **#3231** : Change severity from ERROR to WARN when a reference lookup is performed with no reference loaders configured.
+
+
+## [v7.1-beta.23] - 2023-02-02
+
+* Issue **#3136** : Improve ref data lookup trace logging. Refactor effective streams query.
+
+* De-dup error message text produced by XSLT functions.
+
+* Issue **#3218** : Fix XSLT and dashboard `hash()` functions stripping leading zeros from the hash result.
+
+* Issue **#3221** : Queue all unowned tasks unless associated meta is locked. Tasks for deleted meta will be processed and complete as expected where meta is deleted.
+
+* Issue **#3220** : Fix Info tooltip on Active Tasks sub-tab not showing when stream is not unlocked or is physically deleted.
+
+
+## [v7.1-beta.22] - 2023-01-27
+
+* Issue **#3204** : Improve task creation logging to list considered filters in order and provide queue information.
+
+* Issue **#3195** : Fix editor highlight positions being incorrectly calculated.
+
+* Issue **#3204** : Fix slow physical deletion of completed/deleted tasks.
+
+* Issue **#3204** : Improve task creation performance. Add system info for inspecting task queues.
+
+* Improve performance of power of ten method in ref data byte buffer pool.
+
+* Issue **#3209** : Fix logging of slow batch SQL.
+
+* Issue **#3192** : Fix duplicate user events for exported processor filters.
+
+* Issue **#3197** : Fix NPE when modifying a property value, (back-porting #3143).
+
+
+## [v7.1-beta.21] - 2023-01-19
+
+* Add logging of queries that take >2s to execute. Enabled by setting `stroom.db.util.SlowQueryExecuteListener: DEBUG`.
+
+* Add info logging to the export all api resource. Outputs the number of docs export along with counts by type.
+
+* Issue **#3194** : Fix for JDK XML 1.1 parser bug.
+
+
+## [v7.1-beta.20] - 2023-01-16
+
+* Issue **#3189** : Change effective stream query to use inner joins.
+
+
+## [v7.1-beta.19] - 2023-01-13
+
+* Issue **#3163** : Add filter to expression field picker.
+
+* Issue **#3171** : Fix stroom booting successfully when there have been failed migrations.
+
+* Issue **#3177** : Stop logical deletes changing the update time if already logically deleted. Add more info logging. Change task name used in logs from `Processor Task Delete Executor` to match job name `Processor Task Retention`.
+
+* Fix property name mentioned in _Processor Task Retention_ job description.
+
+* Issue **#3177** : Fix bad SQL in _Processor Task Retention_ that results in tasks not being deleted. Fix logical deletion of processor filters and processors that result in processor tasks being incorrectly deleted.
+
+* Issue **#3111** : Revert previous change that added double quote handling. Now we only trim leading/trailing whitespace from expression terms.
+
+* Issue **#3180** : Enable "in dictionary" condition for "Id" fields.
+
+* Issue **#1876** : Add `distinct` dashboard expression function for returning a list of unique values.
+
+
 ## [v7.1-beta.18-test-open-id] - 2023-01-06
 
 * Issue **#3112** : Change meta key `UploadUser` to `UploadUserId`. Add meta key `UploadUserUsername` to hold the `preferred_username` from the IDP. **NOTE**: the stroom property `receive.requireTokenAuthentication` and proxy property `receivedDataConfig.requireTokenAuthentication` have both been replaced by `tokenAuthenticationEnabled`, `certificateAuthenticationEnabled` and `authenticationRequired`, allowing authentication to be disabled and the mechanism to be controlled on data receipt. Remove properties `receive.unknownClassification` and `receive.feedNamePattern` as they are unused and duplicates of other properties. Replace property `security.authentication.useInternal` (boolean) with `security.authentication.identityProviderType` (`INTERNAL`|`EXTERNAL`|`TEST`). Add property `addOpenIdAccessToken` to the HTTP forward config. Remove property `useDefaultOpenIdCredentials` as this is now covered by `security.authentication.identityProviderType`. In proxy YAML config, replaced `forwardDestinations` with `forwardFileDestinations` and `forwardHttpDestinations`; replaced `receiveDataConfig` with `receive`.
@@ -4466,7 +4544,12 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.18-test-open-id...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.23...HEAD
+[v7.1-beta.23]: https://github.com/gchq/stroom/compare/v7.1-beta.22...v7.1-beta.23
+[v7.1-beta.22]: https://github.com/gchq/stroom/compare/v7.1-beta.21...v7.1-beta.22
+[v7.1-beta.21]: https://github.com/gchq/stroom/compare/v7.1-beta.20...v7.1-beta.21
+[v7.1-beta.20]: https://github.com/gchq/stroom/compare/v7.1-beta.19...v7.1-beta.20
+[v7.1-beta.19]: https://github.com/gchq/stroom/compare/v7.1-beta.18...v7.1-beta.19
 [v7.1-beta.18-test-open-id]: https://github.com/gchq/stroom/compare/v7.1-beta.18...v7.1-beta.18-test-open-id
 [v7.1-beta.18]: https://github.com/gchq/stroom/compare/v7.1-beta.17...v7.1-beta.18
 [v7.1-beta.17]: https://github.com/gchq/stroom/compare/v7.1-beta.16...v7.1-beta.17

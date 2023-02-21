@@ -17,11 +17,11 @@
 package stroom.importexport.impl;
 
 import stroom.docref.DocRef;
+import stroom.importexport.api.ExportSummary;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.util.io.FileUtil;
 import stroom.util.io.TempDirProvider;
-import stroom.util.shared.Message;
 import stroom.util.zip.ZipUtil;
 
 import java.io.IOException;
@@ -77,19 +77,23 @@ public class ImportExportServiceImpl implements ImportExportService {
 
     /**
      * Export the selected folder data.
+     * @return
      */
     @Override
-    public void exportConfig(final Set<DocRef> docRefs, final Path zipFile,
-                             final List<Message> messageList) {
+    public ExportSummary exportConfig(final Set<DocRef> docRefs,
+                                      final Path zipFile) {
         final Path explodeDir = workingZipDir(zipFile);
         try {
             Files.createDirectories(explodeDir);
 
             // Serialize the config in a human readable tree structure.
-            importExportSerializer.write(explodeDir, docRefs, true, messageList);
+            final ExportSummary exportSummary = importExportSerializer.write(
+                    explodeDir, docRefs, true);
 
             // Now zip the dir.
             ZipUtil.zip(zipFile, explodeDir);
+
+            return exportSummary;
 
         } catch (final IOException e) {
             throw new RuntimeException(e.getMessage(), e);

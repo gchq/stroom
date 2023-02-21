@@ -308,4 +308,24 @@ class TestByteBufferPoolImpl4 {
         }
         return byteBufferPool;
     }
+
+    @Test
+    void testIsPowerOf10() {
+        int i = 1;
+
+        while (i <= 1_000_000_000) {
+
+            // Make sure numbers either side are not powers of ten
+            if (i > 1) {
+                Assertions.assertThat(ByteBufferPoolImpl4.isPowerOf10(i - 1))
+                        .isFalse();
+            }
+            Assertions.assertThat(ByteBufferPoolImpl4.isPowerOf10(i))
+                    .isTrue();
+
+            Assertions.assertThat(ByteBufferPoolImpl4.isPowerOf10(i + 1))
+                    .isFalse();
+            i *= 10;
+        }
+    }
 }

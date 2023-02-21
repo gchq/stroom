@@ -28,6 +28,8 @@ import javax.inject.Inject;
 
 class CurrentUser extends StroomExtensionFunctionCall {
 
+    public static final String FUNCTION_NAME = "current-user";
+
     private final CurrentUserHolder currentUserHolder;
 
     @Inject

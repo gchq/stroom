@@ -28,6 +28,7 @@ import stroom.processor.shared.ProcessorTaskResource;
 import stroom.searchable.api.Searchable;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.HasSystemInfoBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
 
@@ -38,6 +39,8 @@ import javax.inject.Inject;
 import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class ProcessorModule extends AbstractModule {
+
+    public static final String PROCESSOR_TASK_RETENTION_JOB_NAME = "Processor Task Retention";
 
     @Override
     protected void configure() {
@@ -66,15 +69,18 @@ public class ProcessorModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(ProcessorFilterImportExportHandlerImpl.class);
 
+        HasSystemInfoBinder.create(binder())
+                        .bind(ProcessorTaskManagerImpl.class);
+
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(ProcessorTaskQueueStatistics.class, builder -> builder
                         .name("Processor Task Queue Statistics")
                         .description("Write statistics about the size of the task queue")
                         .schedule(PERIODIC, "1m"))
                 .bindJobTo(ProcessorTaskRetention.class, builder -> builder
-                        .name("Processor Task Retention")
+                        .name(PROCESSOR_TASK_RETENTION_JOB_NAME)
                         .description("Physically delete processor tasks that have been logically " +
-                                "deleted or complete based on age (stroom.processor.deletePurgeAge)")
+                                "deleted or complete based on age (stroom.processor.deleteAge)")
                         .schedule(PERIODIC, "1m"))
                 .bindJobTo(ProcessorTaskManagerDisownDeadTasks.class, builder -> builder
                         .name("Processor Task Manager Disown Dead Tasks")

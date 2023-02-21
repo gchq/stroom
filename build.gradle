@@ -279,6 +279,7 @@ ext.libs = [
         wiremock                       : 'com.github.tomakehurst:wiremock-jre8:2.35.0',
         wix_embedded_mysql             : "com.wix:wix-embedded-mysql:4.6.1",
         ws_rs_api                      : "javax.ws.rs:javax.ws.rs-api:2.1.1",
+        xerces                         : "xerces:xercesImpl:2.12.2",
         xml_apis                       : "xml-apis:xml-apis:2.0.2",
         zero_allocation_hashing        : "net.openhft:zero-allocation-hashing:0.15",
         zookeeper                      : "org.apache.zookeeper:zookeeper:$versions.zookeeper",
@@ -361,10 +362,6 @@ subprojects {
             exclude group: "log4j", module: "log4j"
             exclude group: "commons-logging", module: "commons-logging"
 //            exclude group: "javax.validation", module: "validation-api"
-            exclude module: 'xercesImpl'
-//            exclude group: "javax.xml.bind", module: "jsr173_api"
-//            exclude group: "io.dropwizard", module: "dropwizard-core"
-//            exclude group: "io.dropwizard", module: "dropwizard-validation"
 
             resolutionStrategy {
                 // A very hacky way of finding out what version of slf4j is in the dropwizard BOM
@@ -415,6 +412,7 @@ subprojects {
 
                 forcedModules = [
                         // This is how to force a dep to a specific version
+                        libs.xerces,
 
                         // Curator will drag in a more recent version of zk but will support older versions so
                         // substitute it here. See NOTE in versions block above.

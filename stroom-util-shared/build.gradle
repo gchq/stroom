@@ -11,11 +11,13 @@ dependencies {
     testImplementation project(':stroom-test-common')
 
     testImplementation libs.assertj_core
+    testImplementation libs.guice5
     testImplementation libs.jackson_core
     testImplementation libs.jackson_databind
     testImplementation libs.junit_jupiter_api
     testImplementation libs.junit_jupiter_params
     testImplementation libs.slf4j_api
+    testImplementation libs.vavr
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jakarta_activation

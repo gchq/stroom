@@ -63,7 +63,7 @@ public class ExplorerNodePermissionsServiceImpl implements ExplorerNodePermissio
 
             // If no entity reference has been passed then assume root folder.
             if (docRef == null) {
-                docRef = ExplorerConstants.ROOT_DOC_REF;
+                docRef = ExplorerConstants.SYSTEM_DOC_REF;
             }
 
             // Add special permissions for folders to control creation of sub items.

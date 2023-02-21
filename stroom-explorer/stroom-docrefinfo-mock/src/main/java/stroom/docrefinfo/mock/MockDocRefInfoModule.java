@@ -43,6 +43,16 @@ public class MockDocRefInfoModule extends AbstractModule {
             public List<DocRef> findByType(final String type) {
                 return Collections.emptyList();
             }
+
+            @Override
+            public DocRef decorate(final DocRef docRef) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public List<DocRef> decorate(final List<DocRef> docRefs) {
+                throw new UnsupportedOperationException();
+            }
         };
     }
 }

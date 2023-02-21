@@ -77,7 +77,7 @@ class RefDataStoreHolder {
 
     /**
      * Check if the map exists in this {@link RefStreamDefinition} to determine if we need to bother
-     * doing a lookup. If we haven't loaded refStreamDefinition yet then return true.
+     * doing a lookup. If we haven't loaded refStreamDefinition yet then return UNKNOWN.
      * This saves having to do multiple pointless gets on the store to find there is no map
      */
     MapAvailability getMapAvailabilityInStream(final PipelineReference pipelineReference,
@@ -153,16 +153,18 @@ class RefDataStoreHolder {
 
         /**
          * We have established, via querying the DB that the map is present in the stream
+         * so a lookup is required.
          */
         PRESENT(true),
 
         /**
          * We have established, via querying the DB that the map is NOT present in the stream
+         * so there is no point in doing a lookup.
          */
         NOT_PRESENT(false),
 
         /**
-         * We don't yet know if the map is in the stream or not.
+         * We don't yet know if the map is in the stream or not, so we have to do a lookup.
          */
         UNKNOWN(true);
 

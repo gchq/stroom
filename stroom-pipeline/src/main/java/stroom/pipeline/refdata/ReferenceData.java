@@ -65,7 +65,7 @@ public class ReferenceData {
     // Maps can be nested during the look up process e.g. "MAP1/MAP2"
     private static final int MINIMUM_BYTE_COUNT = 10;
 
-    private EffectiveStreamCache effectiveStreamCache;
+    private final EffectiveStreamService effectiveStreamService;
     private final FeedHolder feedHolder;
     private final MetaHolder metaHolder;
     private final ContextDataLoader contextDataLoader;
@@ -77,9 +77,8 @@ public class ReferenceData {
     private final PipelineStore pipelineStore;
     private final SecurityContext securityContext;
 
-
     @Inject
-    ReferenceData(final EffectiveStreamCache effectiveStreamCache,
+    ReferenceData(final EffectiveStreamService effectiveStreamService,
                   final FeedHolder feedHolder,
                   final MetaHolder metaHolder,
                   final ContextDataLoader contextDataLoader,
@@ -89,7 +88,7 @@ public class ReferenceData {
                   final RefDataLoaderHolder refDataLoaderHolder,
                   final PipelineStore pipelineStore,
                   final SecurityContext securityContext) {
-        this.effectiveStreamCache = effectiveStreamCache;
+        this.effectiveStreamService = effectiveStreamService;
         this.feedHolder = feedHolder;
         this.metaHolder = metaHolder;
         this.contextDataLoader = contextDataLoader;
@@ -112,10 +111,11 @@ public class ReferenceData {
      * @param pipelineReferences The references to look for reference data in.
      * @param lookupIdentifier   The identifier to lookup in the reference data
      * @param result             The reference result object containing the proxy object for performing the lookup
+     * @return The passed result object
      */
-    public void ensureReferenceDataAvailability(final List<PipelineReference> pipelineReferences,
-                                                final LookupIdentifier lookupIdentifier,
-                                                final ReferenceDataResult result) {
+    public ReferenceDataResult ensureReferenceDataAvailability(final List<PipelineReference> pipelineReferences,
+                                                               final LookupIdentifier lookupIdentifier,
+                                                               final ReferenceDataResult result) {
 
         LOGGER.debug("ensureReferenceDataAvailability({}, {})", lookupIdentifier, pipelineReferences);
 
@@ -181,6 +181,8 @@ public class ReferenceData {
             // non-nested map so just do a lookup
             doGetValue(pipelineReferences, lookupIdentifier, result);
         }
+        // Return the passed result object to aid with mocking in tests
+        return result;
     }
 
     private void logMapLocations(final ReferenceDataResult result) {
@@ -286,7 +288,7 @@ public class ReferenceData {
                 partIndex);
 
         // This is a context stream so the context stream is the effective stream
-        result.addEffectiveStream(refStreamDefinition);
+        result.addEffectiveStream(pipelineReference, refStreamDefinition);
 
         // Establish if we have the data for the context stream in the store
         // Context data is only relevant to the event stream it is associated with so is therefore
@@ -368,14 +370,14 @@ public class ReferenceData {
                                     final MapAvailability mapAvailability) {
 
         result.logLazyTemplate(Severity.INFO,
-                "Availability of map '{}' is '{}' in pipeline: '{}' feed: '{}', stream: {}, " +
+                "Availability of map '{}' is '{}' in stream: {}, feed: '{}', pipeline: '{}', " +
                         "lookup required: {}",
                 () -> Arrays.asList(
                         mapName,
                         mapAvailability,
-                        pipelineReference.getPipeline().getName(),
-                        pipelineReference.getFeed().getName(),
                         refStreamDefinition.getStreamId(),
+                        pipelineReference.getFeed().getName(),
+                        pipelineReference.getPipeline().getName(),
                         mapAvailability.isLookupRequired()));
     }
 
@@ -438,9 +440,6 @@ public class ReferenceData {
             final String keyName,
             final ReferenceDataResult result) {
 
-        // Make sure the reference feed is persistent otherwise lookups will
-        // fail as the equals method will only test for feeds that are the
-        // same object instance rather than id.
         if (pipelineReference.getFeed() == null ||
                 pipelineReference.getFeed().getUuid() == null ||
                 pipelineReference.getFeed().getUuid().isEmpty() ||
@@ -460,13 +459,16 @@ public class ReferenceData {
                         ));
 
         if (hasPermission) {
-            final EffectiveStream effectiveStream = determineEffectiveStream(pipelineReference, time, result);
+            // Find the latest ref stream that is before our lookup time
+            final Optional<EffectiveStream> optEffectiveStream = effectiveStreamService.determineEffectiveStream(
+                    pipelineReference, time, result);
 
             // If we have an effective stream then use it.
-            if (effectiveStream != null) {
+            if (optEffectiveStream.isPresent()) {
+                final EffectiveStream effectiveStream = optEffectiveStream.get();
 
                 result.logLazyTemplate(Severity.INFO,
-                        "Checking stream: {} from feed: '{}' for presence of map '{}' " +
+                        "Checking effective stream: {} feed: '{}' for presence of map '{}' " +
                                 "(effective time: {}, lookup time: {})",
                         () -> Arrays.asList(effectiveStream.getStreamId(),
                                 pipelineReference.getFeed().getName(),
@@ -479,7 +481,7 @@ public class ReferenceData {
                         getPipelineVersion(pipelineReference),
                         effectiveStream.getStreamId());
 
-                result.addEffectiveStream(refStreamDefinition);
+                result.addEffectiveStream(pipelineReference, refStreamDefinition);
 
                 MapAvailability mapAvailability = refDataStoreHolder.getMapAvailabilityInStream(
                         pipelineReference, refStreamDefinition, mapName);
@@ -491,13 +493,13 @@ public class ReferenceData {
                     final RefDataStore offHeapRefDataStore = refDataStoreHolder.getOffHeapRefDataStore();
 
                     // load the ref stream into the store if not already there
-                    final boolean isAvailableForLookups = ensureRefStreamAvailability(
+                    final boolean isRefStreamAvailableForLookups = ensureRefStreamAvailability(
                             result,
                             pipelineReference,
                             refStreamDefinition,
                             offHeapRefDataStore);
 
-                    if (isAvailableForLookups) {
+                    if (isRefStreamAvailableForLookups) {
                         // now we should have the required data in the store (unless the max age is set far too small)
                         // Note however that the effective stream may not contain the map we are interested in. A data
                         // may have two ref loaders on it.  When a lookup is done it must try the lookup against the two
@@ -507,6 +509,7 @@ public class ReferenceData {
                             // Re-check the availability now we have the facts
                             mapAvailability = refDataStoreHolder.getMapAvailabilityInStream(
                                     pipelineReference, refStreamDefinition, mapName);
+
                             logMapAvailability(pipelineReference,
                                     mapName,
                                     result,
@@ -525,13 +528,8 @@ public class ReferenceData {
                     }
                 }
             } else {
-                result.logLazyTemplate(
-                        Severity.WARNING,
-                        "No effective stream can be found for feed '{}' and lookup time '{}'. " +
-                                "Check a reference data stream exists with an effective time that is before the " +
-                                "lookup time.",
-                        () -> Arrays.asList(pipelineReference.getFeed().getName(),
-                                Instant.ofEpochMilli(time).toString()));
+                // No eff stream.  We have already logged the fact in the EffectiveStreamService,
+                // so just move on to the next pipelineReference.
             }
         } else {
             result.logLazyTemplate(
@@ -563,12 +561,12 @@ public class ReferenceData {
                     offHeapRefDataStore.getLoadState(refStreamDefinition);
 
             result.logLazyTemplate(Severity.INFO,
-                    "Load status of stream '{}' is '{}' for pipeline: '{}' feed: '{}'",
+                    "Load status of stream {} is '{}', feed '{}', pipeline: '{}'",
                     () -> Arrays.asList(
                             refStreamDefinition.getStreamId(),
                             optLoadState.map(ProcessingState::toString).orElse("NOT_LOADED"),
-                            pipelineReference.getPipeline().getName(),
-                            pipelineReference.getFeed().getName()));
+                            pipelineReference.getFeed().getName(),
+                            pipelineReference.getPipeline().getName()));
 
             final boolean isRefLoadRequired = optLoadState
                     .filter(loadState ->
@@ -608,7 +606,6 @@ public class ReferenceData {
                         // pipeline process
                         refDataLoaderHolder.markRefStreamAsAvailable(refStreamDefinition);
 
-
                         isAvailableForLookups = true;
                     } else {
                         isAvailableForLookups = false;
@@ -630,63 +627,10 @@ public class ReferenceData {
         return isAvailableForLookups;
     }
 
-    private EffectiveStream determineEffectiveStream(final PipelineReference pipelineReference,
-                                                     final long time,
-                                                     final ReferenceDataResult result) {
-
-        LOGGER.trace(() -> LogUtil.message("determineEffectiveStream({}, {})",
-                pipelineReference, Instant.ofEpochMilli(time)));
-        // Create a window of approx 10 days to cache effective streams.
-        // First round down the time to the nearest 10 days approx (actually more like 11.5, one billion milliseconds).
-        final long fromMs = (time / APPROX_TEN_DAYS) * APPROX_TEN_DAYS;
-        final long toMs = fromMs + APPROX_TEN_DAYS;
-
-        // Create a key to find a set of effective times in the pool.
-        final EffectiveStreamKey effectiveStreamKey = new EffectiveStreamKey(
-                pipelineReference.getFeed().getName(),
-                pipelineReference.getStreamType(),
-                fromMs,
-                toMs);
-
-        // Try and fetch a tree set of effective streams for this key.
-        final NavigableSet<EffectiveStream> effectiveStreams = effectiveStreamCache.get(effectiveStreamKey);
-
-        final EffectiveStream effectiveStream;
-
-        if (effectiveStreams != null && effectiveStreams.size() > 0) {
-            result.logLazyTemplate(Severity.INFO,
-                    "Found {} cached effective stream{} (from {} to {}) " +
-                            "for effective stream key: {}",
-                    () -> Arrays.asList(
-                            effectiveStreams.size(),
-                            StringUtil.pluralSuffix(effectiveStreams.size()),
-                            Instant.ofEpochMilli(effectiveStreams.first().getEffectiveMs()),
-                            Instant.ofEpochMilli(effectiveStreams.last().getEffectiveMs()),
-                            effectiveStreamKey));
-
-            if (LOGGER.isTraceEnabled()) {
-                final String streams = effectiveStreams.stream()
-                        .map(stream -> stream.getStreamId() + " - "
-                                + Instant.ofEpochMilli(stream.getEffectiveMs()))
-                        .collect(Collectors.joining("\n"));
-                LOGGER.trace("Comparing {} to Effective streams:\n{}", Instant.ofEpochMilli(time), streams);
-            }
-
-            // Try and find the stream before the requested time that is less
-            // than or equal to it.
-            effectiveStream = effectiveStreams.floor(new EffectiveStream(0, time));
-        } else {
-            // No need to log here as it will get logged by the caller
-            effectiveStream = null;
-        }
-        return effectiveStream;
-    }
-
-
     /**
      * For testing
      */
     void setEffectiveStreamCache(final EffectiveStreamCache effectiveStreamcache) {
-        this.effectiveStreamCache = effectiveStreamcache;
+        effectiveStreamService.setEffectiveStreamCache(effectiveStreamcache);
     }
 }

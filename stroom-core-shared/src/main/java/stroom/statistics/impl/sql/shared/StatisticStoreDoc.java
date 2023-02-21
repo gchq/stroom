@@ -16,6 +16,7 @@
 
 package stroom.statistics.impl.sql.shared;
 
+import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -110,6 +111,13 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
         if (this.precision == null) {
             this.precision = DEFAULT_PRECISION;
         }
+    }
+
+    /**
+     * @return A new builder for creating a {@link DocRef} for this document's type.
+     */
+    public static DocRef.TypedBuilder buildDocRef() {
+        return DocRef.builder(DOCUMENT_TYPE);
     }
 
     public String getDescription() {

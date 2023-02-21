@@ -12,22 +12,23 @@ import java.util.Set;
 public class FindExplorerNodeCriteria {
 
     @JsonProperty
-    private final Set<String> openItems;
+    private final Set<ExplorerNodeKey> openItems;
     @JsonProperty
-    private final Set<String> temporaryOpenedItems;
+    private final Set<ExplorerNodeKey> temporaryOpenedItems;
     @JsonProperty
     private final ExplorerTreeFilter filter;
     @JsonProperty
     private final Integer minDepth;
     @JsonProperty
-    private final Set<String> ensureVisible;
+    private final Set<ExplorerNodeKey> ensureVisible;
 
     @JsonCreator
-    public FindExplorerNodeCriteria(@JsonProperty("openItems") final Set<String> openItems,
-                                    @JsonProperty("temporaryOpenedItems") final Set<String> temporaryOpenedItems,
-                                    @JsonProperty("filter") final ExplorerTreeFilter filter,
-                                    @JsonProperty("minDepth") final Integer minDepth,
-                                    @JsonProperty("ensureVisible") final Set<String> ensureVisible) {
+    public FindExplorerNodeCriteria(
+            @JsonProperty("openItems") final Set<ExplorerNodeKey> openItems,
+            @JsonProperty("temporaryOpenedItems") final Set<ExplorerNodeKey> temporaryOpenedItems,
+            @JsonProperty("filter") final ExplorerTreeFilter filter,
+            @JsonProperty("minDepth") final Integer minDepth,
+            @JsonProperty("ensureVisible") final Set<ExplorerNodeKey> ensureVisible) {
         this.openItems = openItems;
         this.temporaryOpenedItems = temporaryOpenedItems;
         this.filter = filter;
@@ -35,11 +36,11 @@ public class FindExplorerNodeCriteria {
         this.ensureVisible = ensureVisible;
     }
 
-    public Set<String> getOpenItems() {
+    public Set<ExplorerNodeKey> getOpenItems() {
         return openItems;
     }
 
-    public Set<String> getTemporaryOpenedItems() {
+    public Set<ExplorerNodeKey> getTemporaryOpenedItems() {
         return temporaryOpenedItems;
     }
 
@@ -51,7 +52,7 @@ public class FindExplorerNodeCriteria {
         return minDepth;
     }
 
-    public Set<String> getEnsureVisible() {
+    public Set<ExplorerNodeKey> getEnsureVisible() {
         return ensureVisible;
     }
 

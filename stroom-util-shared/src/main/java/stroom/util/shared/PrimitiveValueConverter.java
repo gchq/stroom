@@ -30,9 +30,19 @@ public class PrimitiveValueConverter<E extends HasPrimitiveValue> {
         }
     }
 
-    public E fromPrimitiveValue(Byte i) {
+    public E fromPrimitiveValue(final Byte i) {
         if (i == null) {
             return null;
+        }
+        return map.get(i);
+    }
+
+    /**
+     * Converts a primitive or returns defaultValue if it is null
+     */
+    public E fromPrimitiveValue(final Byte i, final E defaultValue) {
+        if (i == null) {
+            return defaultValue;
         }
         return map.get(i);
     }

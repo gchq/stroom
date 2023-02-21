@@ -91,7 +91,7 @@ public class NameDocumentPresenter extends MyPresenter<NameDocumentView, NameDoc
                 AlertEvent.fireWarn(NameDocumentPresenter.this,
                         "You must provide a new name for " + entity.getDisplayValue(), null);
             } else {
-                RenameDocumentEvent.fire(this, this, entity.getDocRef(), entityName);
+                RenameDocumentEvent.fire(this, this, entity, entityName);
             }
         } else {
             HidePopupEvent.fire(this, this, autoClose, ok);

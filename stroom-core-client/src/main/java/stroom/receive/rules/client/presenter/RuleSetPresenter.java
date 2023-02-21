@@ -17,6 +17,7 @@
 
 package stroom.receive.rules.client.presenter;
 
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.ContentCallback;
@@ -46,9 +47,10 @@ public class RuleSetPresenter extends DocumentEditTabPresenter<LinkTabPanelView,
     public RuleSetPresenter(final EventBus eventBus,
                             final LinkTabPanelView view,
                             final ClientSecurityContext securityContext,
+                            final RestFactory restFactory,
                             final Provider<RuleSetSettingsPresenter> settingsPresenterProvider,
                             final Provider<FieldListPresenter> fieldListPresenterProvider) {
-        super(eventBus, view, securityContext);
+        super(eventBus, view, securityContext, restFactory);
 
         tabContentProvider.setDirtyHandler(event -> {
             if (event.isDirty()) {

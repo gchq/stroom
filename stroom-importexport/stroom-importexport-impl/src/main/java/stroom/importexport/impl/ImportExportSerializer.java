@@ -17,9 +17,9 @@
 package stroom.importexport.impl;
 
 import stroom.docref.DocRef;
+import stroom.importexport.api.ExportSummary;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
-import stroom.util.shared.Message;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -43,12 +43,14 @@ public interface ImportExportSerializer {
 
     /**
      * Walk the supplied tree of DocRefs and export all to the given path
-     *
-     * @param dir             Where to serialize the DocRef items to.
+     *  @param dir             Where to serialize the DocRef items to.
      * @param docRefs         Set of the DocRefs and root folder DocRefs (as per that returned by
      *                        ImportExportSerializer.read()
      * @param omitAuditFields do not export audit fields (e.g. last update time / last update user)
      * @param messageList
+     * @return
      */
-    void write(Path dir, Set<DocRef> docRefs, boolean omitAuditFields, List<Message> messageList);
+    ExportSummary write(final Path dir,
+                        final Set<DocRef> docRefs,
+                        final boolean omitAuditFields);
 }

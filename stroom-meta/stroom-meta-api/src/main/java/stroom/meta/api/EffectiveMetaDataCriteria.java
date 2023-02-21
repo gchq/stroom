@@ -18,6 +18,8 @@ package stroom.meta.api;
 
 import stroom.util.Period;
 
+import java.util.Objects;
+
 /**
  * Class used as the search criteria for effective type searches.
  * These are from date range based searches.
@@ -28,13 +30,10 @@ public class EffectiveMetaDataCriteria {
     private String feed;
     private String type;
 
-    public EffectiveMetaDataCriteria() {
-    }
-
     public EffectiveMetaDataCriteria(final Period effectivePeriod, final String feed, final String type) {
-        this.effectivePeriod = effectivePeriod;
-        this.feed = feed;
-        this.type = type;
+        this.effectivePeriod = Objects.requireNonNull(effectivePeriod);
+        this.feed = Objects.requireNonNull(feed);
+        this.type = Objects.requireNonNull(type);
     }
 
     public String getFeed() {

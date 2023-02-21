@@ -16,6 +16,7 @@
 
 package stroom.index.shared;
 
+import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.docstore.shared.Doc;
 
@@ -119,6 +120,13 @@ public class IndexDoc extends Doc {
         if (this.shardsPerPartition == null) {
             this.shardsPerPartition = DEFAULT_SHARDS_PER_PARTITION;
         }
+    }
+
+    /**
+     * @return A new builder for creating a {@link DocRef} for this document's type.
+     */
+    public static DocRef.TypedBuilder buildDocRef() {
+        return DocRef.builder(DOCUMENT_TYPE);
     }
 
     public String getDescription() {

@@ -16,6 +16,7 @@
 
 package stroom.statistics.impl.hbase.shared;
 
+import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -103,6 +104,13 @@ public class StroomStatsStoreDoc extends Doc {
         if (this.precision == null) {
             this.precision = DEFAULT_PRECISION_INTERVAL;
         }
+    }
+
+    /**
+     * @return A new builder for creating a {@link DocRef} for this document's type.
+     */
+    public static DocRef.TypedBuilder buildDocRef() {
+        return DocRef.builder(DOCUMENT_TYPE);
     }
 
     public String getDescription() {

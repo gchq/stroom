@@ -3,6 +3,7 @@ package stroom.event.logging.impl;
 import stroom.docref.DocRef;
 import stroom.event.logging.api.ObjectInfoProvider;
 import stroom.explorer.shared.BulkActionResult;
+import stroom.explorer.shared.ExplorerNode;
 
 import event.logging.BaseObject;
 import event.logging.Data;
@@ -22,13 +23,13 @@ class BulkActionResultObjectInfoProvider  implements ObjectInfoProvider {
                 .withType("BulkActionResult")
                 .withDescription("Bulk Action Result" +
                         ((bulkActionResult.getMessage() != null) ? ": " + bulkActionResult.getMessage() : ""));
-        if (bulkActionResult.getDocRefs() != null) {
-            builder.withName("" + bulkActionResult.getDocRefs().size() + " docrefs; see data elements");
+        if (bulkActionResult.getExplorerNodes() != null) {
+            builder.withName("" + bulkActionResult.getExplorerNodes().size() + " docrefs; see data elements");
 
-            Iterator<DocRef> itr = bulkActionResult.getDocRefs().iterator();
+            Iterator<ExplorerNode> itr = bulkActionResult.getExplorerNodes().iterator();
             int index = 1;
             while (itr.hasNext()) {
-                final DocRef docRef = itr.next();
+                final ExplorerNode docRef = itr.next();
                 builder.addData(Data.builder().withName("itemName" + index).withValue(docRef.getName()).build());
                 builder.addData(Data.builder().withName("itemType" + index).withValue(docRef.getType()).build());
                 builder.addData(Data.builder().withName("itemUuid" + index).withValue(docRef.getUuid()).build());

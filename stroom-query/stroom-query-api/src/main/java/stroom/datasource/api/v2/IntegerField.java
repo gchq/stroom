@@ -29,8 +29,6 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public class IntegerField extends AbstractNumericField {
 
-    private static final long serialVersionUID = 1272545271946712570L;
-
     public IntegerField(final String name) {
         super(name);
     }
@@ -48,7 +46,7 @@ public class IntegerField extends AbstractNumericField {
 
     @JsonIgnore
     @Override
-    public String getType() {
-        return FieldTypes.INTEGER;
+    public FieldType getFieldType() {
+        return FieldType.INTEGER;
     }
 }

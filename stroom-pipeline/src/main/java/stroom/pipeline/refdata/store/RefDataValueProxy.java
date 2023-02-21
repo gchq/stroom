@@ -32,6 +32,11 @@ public interface RefDataValueProxy {
     List<MapDefinition> getMapDefinitions();
 
     /**
+     * @return The map definition that provided a successful lookup or empty if key not found.
+     */
+    Optional<MapDefinition> getSuccessfulMapDefinition();
+
+    /**
      * Materialise the value that this is proxying. The consumeValue() method should be preferred
      * as this method will involve the added cost of copying the contents of the value.
      *

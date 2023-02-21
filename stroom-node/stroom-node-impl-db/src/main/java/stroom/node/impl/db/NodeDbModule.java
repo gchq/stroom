@@ -4,6 +4,7 @@ import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 import stroom.node.impl.NodeConfig.NodeDbConfig;
 
+import java.util.List;
 import javax.sql.DataSource;
 
 public class NodeDbModule extends AbstractFlyWayDbModule<NodeDbConfig, NodeDbConnProvider> {
@@ -23,8 +24,8 @@ public class NodeDbModule extends AbstractFlyWayDbModule<NodeDbConfig, NodeDbCon
     }
 
     @Override
-    protected String getFlyWayLocation() {
-        return FLYWAY_LOCATIONS;
+    protected List<String> getFlyWayLocations() {
+        return List.of(FLYWAY_LOCATIONS);
     }
 
     @Override

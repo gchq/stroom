@@ -112,7 +112,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         // Make sure stream attributes get flushed straight away.
         setConfigValueMapper(MetaValueConfig.class, metaValueConfig -> metaValueConfig.withAddAsync(false));
 
-        final Optional<ExplorerNode> system = explorerNodeService.getRoot();
+        final Optional<ExplorerNode> system = explorerNodeService.getNodeWithRoot();
         final DocRef root = system.get().getDocRef();
         final DocRef folder1 = new DocRef("Folder", UUID.randomUUID().toString(), "Folder 1");
         folder2 = new DocRef("Folder", UUID.randomUUID().toString(), "Folder 2");
@@ -615,16 +615,12 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         buildRefData(feed3, 2010, 2, StreamTypeNames.REFERENCE, false);
         buildRefData(feed3, 2011, 2, StreamTypeNames.REFERENCE, false);
 
-        final EffectiveMetaDataCriteria criteria = new EffectiveMetaDataCriteria();
-        criteria.setType(StreamTypeNames.REFERENCE);
-
-        // feed2 or feed1
-        criteria.setFeed(feed2);
-//        criteria.getFeedIdSet().add(feedService.loadByName(feed1));
-
         // 2009 to 2010
-        criteria.setEffectivePeriod(new Period(DateUtil.parseNormalDateTimeString("2009-01-01T00:00:00.000Z"),
-                DateUtil.parseNormalDateTimeString("2010-01-01T00:00:00.000Z")));
+        EffectiveMetaDataCriteria criteria = new EffectiveMetaDataCriteria(
+                new Period(DateUtil.parseNormalDateTimeString("2009-01-01T00:00:00.000Z"),
+                        DateUtil.parseNormalDateTimeString("2010-01-01T00:00:00.000Z")),
+                feed2,
+                StreamTypeNames.REFERENCE);
 
         Set<EffectiveMeta> set = metaService.findEffectiveData(criteria);
 
@@ -633,8 +629,11 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         // Try another test that picks up no tom within period but it should get
         // the last one as it would be the most effective.
-        criteria.setEffectivePeriod(new Period(DateUtil.parseNormalDateTimeString("2013-01-01T00:00:00.000Z"),
-                DateUtil.parseNormalDateTimeString("2014-01-01T00:00:00.000Z")));
+        criteria = new EffectiveMetaDataCriteria(
+                new Period(DateUtil.parseNormalDateTimeString("2013-01-01T00:00:00.000Z"),
+                DateUtil.parseNormalDateTimeString("2014-01-01T00:00:00.000Z")),
+                feed2,
+                StreamTypeNames.REFERENCE);
 
         set = metaService.findEffectiveData(criteria);
 

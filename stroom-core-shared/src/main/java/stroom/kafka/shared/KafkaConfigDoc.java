@@ -16,6 +16,7 @@
 
 package stroom.kafka.shared;
 
+import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
 import stroom.util.shared.HasData;
 
@@ -71,6 +72,13 @@ public class KafkaConfigDoc extends Doc implements HasData {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.data = data;
+    }
+
+    /**
+     * @return A new builder for creating a {@link DocRef} for this document's type.
+     */
+    public static DocRef.TypedBuilder buildDocRef() {
+        return DocRef.builder(DOCUMENT_TYPE);
     }
 
     public String getDescription() {

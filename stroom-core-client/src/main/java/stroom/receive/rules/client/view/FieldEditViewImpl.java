@@ -17,8 +17,8 @@
 
 package stroom.receive.rules.client.view;
 
-import stroom.datasource.api.v2.FieldTypes;
-import stroom.item.client.StringListBox;
+import stroom.datasource.api.v2.FieldType;
+import stroom.item.client.ItemListBox;
 import stroom.receive.rules.client.presenter.FieldEditPresenter.FieldEditView;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -32,14 +32,14 @@ public class FieldEditViewImpl extends ViewImpl implements FieldEditView {
 
     private final Widget widget;
     @UiField
-    StringListBox type;
+    ItemListBox<FieldType> type;
     @UiField
     TextBox name;
 
     @Inject
     public FieldEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        type.addItems(FieldTypes.TYPES);
+        type.addItems(FieldType.TYPES);
     }
 
     @Override
@@ -48,13 +48,13 @@ public class FieldEditViewImpl extends ViewImpl implements FieldEditView {
     }
 
     @Override
-    public String getType() {
-        return type.getSelected();
+    public FieldType getFieldType() {
+        return type.getSelectedItem();
     }
 
     @Override
-    public void setType(final String type) {
-        this.type.setSelected(type);
+    public void setFieldType(final FieldType type) {
+        this.type.setSelectedItem(type);
     }
 
     @Override

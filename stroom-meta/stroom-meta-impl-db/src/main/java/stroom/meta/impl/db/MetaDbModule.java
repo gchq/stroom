@@ -4,6 +4,7 @@ import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 import stroom.meta.impl.MetaServiceConfig.MetaServiceDbConfig;
 
+import java.util.List;
 import javax.sql.DataSource;
 
 public class MetaDbModule extends AbstractFlyWayDbModule<MetaServiceDbConfig, MetaDbConnProvider> {
@@ -23,8 +24,8 @@ public class MetaDbModule extends AbstractFlyWayDbModule<MetaServiceDbConfig, Me
     }
 
     @Override
-    protected String getFlyWayLocation() {
-        return FLYWAY_LOCATIONS;
+    protected List<String> getFlyWayLocations() {
+        return List.of(FLYWAY_LOCATIONS);
     }
 
     @Override

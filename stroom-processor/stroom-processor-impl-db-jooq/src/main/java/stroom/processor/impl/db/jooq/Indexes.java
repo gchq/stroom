@@ -4,12 +4,12 @@
 package stroom.processor.impl.db.jooq;
 
 
+import stroom.processor.impl.db.jooq.tables.ProcessorTask;
+
 import org.jooq.Index;
 import org.jooq.OrderField;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
-
-import stroom.processor.impl.db.jooq.tables.ProcessorTask;
 
 
 /**
@@ -22,6 +22,8 @@ public class Indexes {
     // INDEX definitions
     // -------------------------------------------------------------------------
 
+    public static final Index PROCESSOR_TASK_PROCESSOR_TASK_FILTER_ID_STATUS_ID_META_ID = Internal.createIndex(DSL.name("processor_task_filter_id_status_id_meta_id"), ProcessorTask.PROCESSOR_TASK, new OrderField[] { ProcessorTask.PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID, ProcessorTask.PROCESSOR_TASK.STATUS, ProcessorTask.PROCESSOR_TASK.ID, ProcessorTask.PROCESSOR_TASK.META_ID }, false);
     public static final Index PROCESSOR_TASK_PROCESSOR_TASK_META_ID_IDX = Internal.createIndex(DSL.name("processor_task_meta_id_idx"), ProcessorTask.PROCESSOR_TASK, new OrderField[] { ProcessorTask.PROCESSOR_TASK.META_ID }, false);
     public static final Index PROCESSOR_TASK_PROCESSOR_TASK_STATUS_CREATE_TIME_MS_IDX = Internal.createIndex(DSL.name("processor_task_status_create_time_ms_idx"), ProcessorTask.PROCESSOR_TASK, new OrderField[] { ProcessorTask.PROCESSOR_TASK.STATUS, ProcessorTask.PROCESSOR_TASK.CREATE_TIME_MS }, false);
+    public static final Index PROCESSOR_TASK_PROCESSOR_TASK_STATUS_TIME_MS_STATUS_IDX = Internal.createIndex(DSL.name("processor_task_status_time_ms_status_idx"), ProcessorTask.PROCESSOR_TASK, new OrderField[] { ProcessorTask.PROCESSOR_TASK.STATUS_TIME_MS, ProcessorTask.PROCESSOR_TASK.STATUS }, false);
 }

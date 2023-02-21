@@ -7,6 +7,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import java.time.Instant;
 import java.util.Objects;
 
+// TODO: 08/02/2023 May want to consider combining this with SimpleMeta class
 // Could maybe have used the EffectiveStream class but this has feed/type in which aids
 // debugging.
 public class EffectiveMeta {

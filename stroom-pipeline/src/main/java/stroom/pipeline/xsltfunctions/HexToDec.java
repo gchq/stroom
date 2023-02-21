@@ -23,14 +23,26 @@ import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
 
 class HexToDec extends StroomExtensionFunctionCall {
+
+    public static final String FUNCTION_NAME = "hex-to-dec";
+
     @Override
     protected Sequence call(String functionName, XPathContext context, Sequence[] arguments) {
         String result = null;
 
+        String hex = null;
         try {
-            final String hex = getSafeString(functionName, context, arguments, 0);
-            final Long l = Long.parseLong(hex, 16);
+            hex = getSafeString(functionName, context, arguments, 0);
+            final long l = Long.parseLong(hex, 16);
             result = Long.toString(l);
+        } catch (NumberFormatException nfe) {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("Error converting input '")
+                    .append(hex)
+                    .append("' to decimal.");
+
+            // exception msg is not very useful
+            outputWarning(context, sb, null);
         } catch (final XPathException | RuntimeException e) {
             final StringBuilder sb = new StringBuilder();
             sb.append(e.getMessage());

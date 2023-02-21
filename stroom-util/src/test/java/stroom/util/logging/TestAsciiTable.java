@@ -115,6 +115,58 @@ class TestAsciiTable {
     }
 
     @Test
+    void testAuto_singleCol_String() {
+
+        final List<String> sourceData = List.of(
+                "One",
+                "Two",
+                "Three");
+
+        final String table = AsciiTable.from(sourceData);
+
+        LOGGER.info("table:\n{}", table);
+
+        final List<String> lines = table.lines()
+                .collect(Collectors.toList());
+
+        Assertions.assertThat(lines)
+                .hasSize(5); // header + line + 3 rows
+
+        Assertions.assertThat(lines.get(0))
+                .contains("String");
+        Assertions.assertThat(lines.get(1))
+                .matches("(\\|-+)+\\|");
+        Assertions.assertThat(lines.get(2))
+                .contains("One");
+    }
+
+    @Test
+    void testAuto_singleCol_int() {
+
+        final List<Integer> sourceData = List.of(
+                1,
+                2,
+                3);
+
+        final String table = AsciiTable.from(sourceData);
+
+        LOGGER.info("table:\n{}", table);
+
+        final List<String> lines = table.lines()
+                .collect(Collectors.toList());
+
+        Assertions.assertThat(lines)
+                .hasSize(5); // header + line + 3 rows
+
+        Assertions.assertThat(lines.get(0))
+                .contains("Integer");
+        Assertions.assertThat(lines.get(1))
+                .matches("(\\|-+)+\\|");
+        Assertions.assertThat(lines.get(2))
+                .contains("1");
+    }
+
+    @Test
     void testAuto_sorted() {
 
         final List<Pojo> sourceData = List.of(

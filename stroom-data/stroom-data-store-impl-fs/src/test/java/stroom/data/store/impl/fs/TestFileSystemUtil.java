@@ -113,7 +113,8 @@ class TestFileSystemUtil {
         when(meta.getId()).thenReturn(1001001L);
         when(meta.getTypeName()).thenReturn(StreamTypeNames.RAW_EVENTS);
         when(meta.getFeedName()).thenReturn("TEST_FEED");
-        when(meta.getCreateMs()).thenReturn(DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z"));
+        when(meta.getCreateMs())
+                .thenReturn(DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z"));
 
         final FsFeedPathDao fileSystemFeedPaths = mock(FsFeedPathDao.class);
         when(fileSystemFeedPaths.getOrCreatePath(any())).thenReturn("1");

@@ -27,6 +27,8 @@ import javax.inject.Inject;
 
 class Put extends StroomExtensionFunctionCall {
 
+    public static final String FUNCTION_NAME = "put";
+
     private final TaskScopeMap map;
 
     @Inject

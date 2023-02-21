@@ -94,21 +94,11 @@ public class MoveDocumentPresenter
     public void onHideRequest(final boolean autoClose, final boolean ok) {
         if (ok) {
             final ExplorerNode folder = entityTreePresenter.getSelectedItem();
-
-            DocRef destinationFolderRef = null;
-            if (folder != null) {
-                destinationFolderRef = folder.getDocRef();
-            }
-
-            final List<DocRef> docRefs = explorerNodeList.stream()
-                    .map(ExplorerNode::getDocRef)
-                    .collect(Collectors.toList());
-
             MoveDocumentEvent.fire(
                     this,
                     this,
-                    docRefs,
-                    destinationFolderRef,
+                    explorerNodeList,
+                    folder,
                     getView().getPermissionInheritance());
         } else {
             HidePopupEvent.fire(this, this, autoClose, ok);

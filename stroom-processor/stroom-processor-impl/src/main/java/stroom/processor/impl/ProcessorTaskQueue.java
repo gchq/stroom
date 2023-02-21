@@ -43,6 +43,14 @@ public class ProcessorTaskQueue {
         return queue.size();
     }
 
+    public boolean isEmpty() {
+        return queue.isEmpty();
+    }
+
+    public boolean hasItems() {
+        return !queue.isEmpty();
+    }
+
     public boolean compareAndSetFilling(final boolean expect, final boolean update) {
         return this.filling.compareAndSet(expect, update);
     }

@@ -9,6 +9,7 @@ import org.jooq.OrderField;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
 
+import stroom.explorer.impl.db.jooq.tables.ExplorerFavourite;
 import stroom.explorer.impl.db.jooq.tables.ExplorerPath;
 
 
@@ -22,6 +23,9 @@ public class Indexes {
     // INDEX definitions
     // -------------------------------------------------------------------------
 
+    public static final Index EXPLORER_FAVOURITE_EXPLORER_FAVOURITE_FK_DOC_TYPE_DOC_UUID = Internal.createIndex(DSL.name("explorer_favourite_fk_doc_type_doc_uuid"), ExplorerFavourite.EXPLORER_FAVOURITE, new OrderField[] { ExplorerFavourite.EXPLORER_FAVOURITE.DOC_TYPE, ExplorerFavourite.EXPLORER_FAVOURITE.DOC_UUID }, false);
+    public static final Index EXPLORER_FAVOURITE_EXPLORER_FAVOURITE_USER_UUID_DOC_TYPE_DOC_UUID_IDX = Internal.createIndex(DSL.name("explorer_favourite_user_uuid_doc_type_doc_uuid_idx"), ExplorerFavourite.EXPLORER_FAVOURITE, new OrderField[] { ExplorerFavourite.EXPLORER_FAVOURITE.USER_UUID, ExplorerFavourite.EXPLORER_FAVOURITE.DOC_TYPE, ExplorerFavourite.EXPLORER_FAVOURITE.DOC_UUID }, false);
+    public static final Index EXPLORER_FAVOURITE_EXPLORER_FAVOURITE_USER_UUID_IDX = Internal.createIndex(DSL.name("explorer_favourite_user_uuid_idx"), ExplorerFavourite.EXPLORER_FAVOURITE, new OrderField[] { ExplorerFavourite.EXPLORER_FAVOURITE.USER_UUID }, false);
     public static final Index EXPLORER_PATH_EXPLORER_PATH_ANCESTOR_DEPTH_ORDER_INDEX = Internal.createIndex(DSL.name("explorer_path_ancestor_depth_order_index"), ExplorerPath.EXPLORER_PATH, new OrderField[] { ExplorerPath.EXPLORER_PATH.ANCESTOR, ExplorerPath.EXPLORER_PATH.DEPTH, ExplorerPath.EXPLORER_PATH.ORDER_INDEX }, false);
     public static final Index EXPLORER_PATH_EXPLORER_PATH_DEPTH = Internal.createIndex(DSL.name("explorer_path_depth"), ExplorerPath.EXPLORER_PATH, new OrderField[] { ExplorerPath.EXPLORER_PATH.DEPTH }, false);
     public static final Index EXPLORER_PATH_EXPLORER_PATH_DESCENDANT = Internal.createIndex(DSL.name("explorer_path_descendant"), ExplorerPath.EXPLORER_PATH, new OrderField[] { ExplorerPath.EXPLORER_PATH.DESCENDANT }, false);

@@ -466,7 +466,7 @@ class TestMetaServiceImpl {
                                                             .minus(k, ChronoUnit.MILLIS))));
                 })
                 .collect(BatchingCollector.of(insertBatchSize, batch -> {
-                    metaDao.create(batch, Status.UNLOCKED);
+                    metaDao.bulkCreate(batch, Status.UNLOCKED);
                     counter.addAndGet(batch.size());
                     LOGGER.info("Processed {} of {}", counter.get(), totalRows);
                 }));
@@ -551,7 +551,7 @@ class TestMetaServiceImpl {
                                                             .minus(k, ChronoUnit.MILLIS))));
                 })
                 .collect(BatchingCollector.of(insertBatchSize, batch -> {
-                    metaDao.create(batch, Status.UNLOCKED);
+                    metaDao.bulkCreate(batch, Status.UNLOCKED);
                     counter.addAndGet(batch.size());
                     LOGGER.info("Processed {} of {}", counter.get(), totalRows);
                 }));

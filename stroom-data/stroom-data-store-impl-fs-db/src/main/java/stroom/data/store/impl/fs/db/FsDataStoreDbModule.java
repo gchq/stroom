@@ -20,6 +20,7 @@ import stroom.data.store.impl.fs.DataStoreServiceConfig.DataStoreServiceDbConfig
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 
+import java.util.List;
 import javax.sql.DataSource;
 
 public class FsDataStoreDbModule extends AbstractFlyWayDbModule<DataStoreServiceDbConfig, FsDataStoreDbConnProvider> {
@@ -39,8 +40,8 @@ public class FsDataStoreDbModule extends AbstractFlyWayDbModule<DataStoreService
     }
 
     @Override
-    protected String getFlyWayLocation() {
-        return FLYWAY_LOCATIONS;
+    protected List<String> getFlyWayLocations() {
+        return List.of(FLYWAY_LOCATIONS);
     }
 
     @Override

@@ -28,6 +28,9 @@
 .svgIcon-clear {
   background-image: url("../images/clear.svg");
 }
+.svgIcon-clipboard {
+  background-image: url("../images/clipboard.svg");
+}
 .svgIcon-close {
   background-image: url("../images/close.svg");
 }
@@ -78,6 +81,14 @@
 }
 .svgIcon-favourites {
   background-image: url("../images/favourites.svg");
+}
+.svgIcon-favourites.small {
+  background-size: 80%;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.svgIcon-favourites-outline {
+  background-image: url("../images/favourites-outline.svg");
 }
 .svgIcon-feed {
   background-image: url("../images/feed.svg");
@@ -309,6 +320,9 @@
 .svgIcon-refresh-green {
   background-image: url("../images/refresh-green.svg");
 }
+.svgIcon-share {
+  background-image: url("../images/share.svg");
+}
 .svgIcon-show {
   background-image: url("../images/show.svg");
 }
@@ -341,6 +355,9 @@
 }
 .svgIcon-document-ElasticIndex {
   background-image: url("../images/document/ElasticIndex.svg");
+}
+.svgIcon-document-Favourites {
+  background-image: url("../images/document/Favourites.svg");
 }
 .stroom-theme-dark .svgIcon-document-ElasticIndex {
   background-image: url("../images/document/ElasticIndex-dark.svg");

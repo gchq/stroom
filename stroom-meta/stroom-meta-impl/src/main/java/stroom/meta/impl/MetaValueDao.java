@@ -20,6 +20,7 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.Meta;
 import stroom.util.shared.Flushable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -31,5 +32,5 @@ public interface MetaValueDao extends Flushable {
 
     void deleteOldValues();
 
-    int delete(List<Long> metaIdList);
+    int delete(Collection<Long> metaIdList);
 }
