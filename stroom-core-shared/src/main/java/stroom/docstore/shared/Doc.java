@@ -201,7 +201,7 @@ public abstract class Doc implements HasAuditInfo, HasUuid, HasType {
                 '}';
     }
 
-    public static abstract class AbstractBuilder<T extends Doc, B extends AbstractBuilder<T, ?>> {
+    public abstract static class AbstractBuilder<T extends Doc, B extends AbstractBuilder<T, ?>> {
 
         protected String type;
         protected String uuid;

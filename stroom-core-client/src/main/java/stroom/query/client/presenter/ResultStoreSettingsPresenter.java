@@ -53,22 +53,27 @@ public class ResultStoreSettingsPresenter extends MyPresenterWidget<ResultStoreS
         read(resultStoreInfo);
 
         final PopupSize popupSize = PopupSize.resizableX();
-        ShowPopupEvent.builder(this).popupType(PopupType.OK_CANCEL_DIALOG).popupSize(popupSize).caption(title).onShow(
-                event -> getView().focus()).onHideRequest(event -> {
-            if (event.isOk()) {
-                final UpdateStoreRequest updateStoreRequest = write();
-                try {
-                    resultStoreModel.updateSettings(resultStoreInfo.getNodeName(),
-                            updateStoreRequest,
-                            consumer);
-
-                } catch (final RuntimeException e) {
-                    AlertEvent.fireError(ResultStoreSettingsPresenter.this, e.getMessage(), null);
-                }
-            } else {
-                consumer.accept(false);
-            }
-        }).fire();
+        ShowPopupEvent
+                .builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption(title)
+                .onShow(event -> getView().focus())
+                .onHideRequest(event -> {
+                    if (event.isOk()) {
+                        final UpdateStoreRequest updateStoreRequest = write();
+                        try {
+                            resultStoreModel.updateSettings(resultStoreInfo.getNodeName(),
+                                    updateStoreRequest,
+                                    consumer);
+                        } catch (final RuntimeException e) {
+                            AlertEvent.fireError(ResultStoreSettingsPresenter.this,
+                                    e.getMessage(), null);
+                        }
+                    } else {
+                        consumer.accept(false);
+                    }
+                }).fire();
     }
 
     void hide() {

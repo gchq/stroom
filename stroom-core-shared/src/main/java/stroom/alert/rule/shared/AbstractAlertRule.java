@@ -16,8 +16,6 @@
 
 package stroom.alert.rule.shared;
 
-import stroom.query.api.v2.TableResult;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -80,7 +78,7 @@ public abstract class AbstractAlertRule {
         return Objects.hash(executionDelay, executionFrequency);
     }
 
-    public static abstract class AbstractBuilder<T extends AbstractAlertRule, B extends AbstractBuilder<T, ?>> {
+    public abstract static class AbstractBuilder<T extends AbstractAlertRule, B extends AbstractBuilder<T, ?>> {
 
         protected String executionDelay;
         protected String executionFrequency;

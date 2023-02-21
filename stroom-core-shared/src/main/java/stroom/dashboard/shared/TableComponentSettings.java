@@ -98,7 +98,8 @@ public class TableComponentSettings implements ComponentSettings {
             @JsonProperty("extractionPipeline") final DocRef extractionPipeline,
             @JsonProperty("maxResults") final List<Integer> maxResults,
             @JsonProperty("showDetail") final Boolean showDetail,
-            @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule> conditionalFormattingRules,
+            @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule>
+                    conditionalFormattingRules,
             @JsonProperty("modelVersion") final String modelVersion) {
 
         this.queryId = queryId;

@@ -200,17 +200,16 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
 
                 HtmlBuilder htmlBuilder = new HtmlBuilder();
                 htmlBuilder.div(hb1 ->
-                                hb1.div(hb2 ->
-                                                hb2.span(hb3 ->
-                                                                hb3.append(THOUSANDS_FORMATTER
-                                                                        .format(pingResult.getPing())),
-                                                        Attribute.className("nodePingBar-text")),
-                                        Attribute.className("nodePingBar-bar " +
-                                                barColourClass),
-                                        Attribute.style("width:" +
-                                                barWidthPct +
-                                                "%"))
-                        , Attribute.className("nodePingBar-outer"));
+                        hb1.div(hb2 ->
+                                        hb2.span(hb3 ->
+                                                        hb3.append(THOUSANDS_FORMATTER
+                                                                .format(pingResult.getPing())),
+                                                Attribute.className("nodePingBar-text")),
+                                Attribute.className("nodePingBar-bar " +
+                                        barColourClass),
+                                Attribute.style("width:" +
+                                        barWidthPct +
+                                        "%")), Attribute.className("nodePingBar-outer"));
                 return htmlBuilder.toSafeHtml();
             }
             return SafeHtmlUtil.getSafeHtml("-");

@@ -162,7 +162,7 @@ class TestSingleEventAlerts extends StroomIntegrationTest {
         viewStore.writeDocument(viewDoc);
 
         // Add alert
-        final String query = """    
+        final String query = """
                 "index_view"
                 | where UserId = user5
                 | table StreamId, EventId, UserId""";

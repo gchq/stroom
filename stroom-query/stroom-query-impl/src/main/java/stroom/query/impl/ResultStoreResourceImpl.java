@@ -22,6 +22,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.client.Entity;
 
+@AutoLogged(OperationType.UNLOGGED)
 public class ResultStoreResourceImpl implements ResultStoreResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ResultStoreResourceImpl.class);
