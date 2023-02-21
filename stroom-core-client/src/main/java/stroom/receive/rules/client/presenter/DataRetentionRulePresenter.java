@@ -21,6 +21,7 @@ import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.TimeUnit;
 import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.shared.DataSourceResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -52,13 +53,13 @@ public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionR
         this.editExpressionPresenter = editExpressionPresenter;
         view.setExpressionView(editExpressionPresenter.getView());
 
-        final Rest<List<AbstractField>> rest = restFactory.create();
+        final Rest<DataSource> rest = restFactory.create();
         rest
                 .onSuccess(result ->
                         editExpressionPresenter.init(
                                 restFactory,
                                 MetaFields.STREAM_STORE_DOC_REF,
-                                result))
+                                result.getFields()))
                 .call(DATA_SOURCE_RESOURCE)
                 .fetch(MetaFields.STREAM_STORE_DOC_REF);
     }
