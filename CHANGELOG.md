@@ -12,6 +12,24 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.1-beta.23-test-open-id] - 2023-02-21
+
+* Issue **#3039** : Display search suggestions and type hints in dashboards.
+
+* Issue **#3045** : Add stream selection info action button to meta view.
+
+* Issue **#3128** : Allow enumeration of meta keys in XSLT.
+
+* Issue **#3195** : Add Elasticsearch hit highlighting.
+
+* Issue **#3214** : Use auto-complete list for adding dashboard table fields.
+
+* Issue **#3216** : Add 'Dependencies' to explorer item context menu, to display dependencies for that item.
+
+* Issue **#3206** : Add ability for users to set Explorer items as favourites.
+
+* Issue **#3244** : Add 'Copy link to clipboard' Explorer menu item.
+
 * Issue **#3255** : Fix error when creating a new processor filter.
 
 * Issue **#3204** : More changes to improve task creation performance.
@@ -4544,7 +4562,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.23...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id...HEAD
+[v7.1-beta.23-test-open-id]: https://github.com/gchq/stroom/compare/v7.1-beta.23...v7.1-beta.23-test-open-id
 [v7.1-beta.23]: https://github.com/gchq/stroom/compare/v7.1-beta.22...v7.1-beta.23
 [v7.1-beta.22]: https://github.com/gchq/stroom/compare/v7.1-beta.21...v7.1-beta.22
 [v7.1-beta.21]: https://github.com/gchq/stroom/compare/v7.1-beta.20...v7.1-beta.21
