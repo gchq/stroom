@@ -8,6 +8,11 @@ import stroom.explorer.impl.ExplorerTreePath;
 import stroom.explorer.impl.TreeModel;
 import stroom.explorer.impl.db.jooq.tables.records.ExplorerNodeRecord;
 import stroom.explorer.shared.ExplorerNode;
+<<<<<<< Updated upstream
+=======
+import stroom.security.api.SecurityContext;
+import stroom.security.api.exception.AuthenticationException;
+>>>>>>> Stashed changes
 
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
