@@ -219,6 +219,7 @@ final class OpenIdPostBuilder {
                     msg = StreamUtil.streamToString(is);
                 }
             } catch (final Exception e) {
+                // Just swallow it in case there is no content
             }
         }
         return msg;
