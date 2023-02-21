@@ -133,12 +133,13 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
     }
 
     @Override
-    public void write(final DictionaryDoc dictionary) {
+    public DictionaryDoc write(final DictionaryDoc dictionary) {
         if (imports.size() == 0) {
             dictionary.setImports(null);
         } else {
             dictionary.setImports(imports);
         }
+        return dictionary;
     }
 
     @Override

@@ -120,7 +120,7 @@ public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSetti
     }
 
     @Override
-    protected void onWrite(final IndexDoc index) {
+    protected IndexDoc onWrite(final IndexDoc index) {
         index.setDescription(getView().getDescription().getText().trim());
         index.setMaxDocsPerShard(getView().getMaxDocsPerShard());
         index.setShardsPerPartition(getView().getShardsPerPartition());
@@ -135,6 +135,7 @@ public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSetti
         }
         index.setVolumeGroupName(volumeGroupName);
         index.setDefaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference());
+        return index;
     }
 
     private void updateRetentionAge(final SupportedRetentionAge selected) {

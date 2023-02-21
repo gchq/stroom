@@ -102,11 +102,12 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
     }
 
     @Override
-    protected void onWrite(final ScriptDoc script) {
-        settingsPresenter.write(script);
+    protected ScriptDoc onWrite(ScriptDoc script) {
+        script = settingsPresenter.write(script);
         if (codePresenter != null) {
             script.setData(codePresenter.getText());
         }
+        return script;
     }
 
     @Override

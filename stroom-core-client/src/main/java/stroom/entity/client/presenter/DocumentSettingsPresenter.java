@@ -75,8 +75,8 @@ public abstract class DocumentSettingsPresenter<V extends View, D> extends MyPre
     }
 
     @Override
-    public final void write(final D entity) {
-        onWrite(entity);
+    public final D write(D entity) {
+        return onWrite(entity);
     }
 
     @Override
@@ -98,7 +98,7 @@ public abstract class DocumentSettingsPresenter<V extends View, D> extends MyPre
 
     protected abstract void onRead(DocRef docRef, D entity);
 
-    protected abstract void onWrite(D entity);
+    protected abstract D onWrite(D entity);
 
     protected HandlerRegistration addDirtyHandler(final TickBox tickBox) {
         return tickBox.addValueChangeHandler(event -> setDirty(true));

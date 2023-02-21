@@ -177,16 +177,15 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
         if (tabData instanceof DocumentEditPresenter<?, ?>) {
             final DocumentEditPresenter<?, D> presenter = (DocumentEditPresenter<?, D>) tabData;
             if (presenter.isDirty()) {
-                final D document = presenter.getEntity();
-                presenter.write(document);
+                D document = presenter.getEntity();
+                document = presenter.write(document);
+                final D finalDocument = document;
                 save(getDocRef(document), document,
                         doc -> presenter.read(getDocRef(doc), doc),
-                        throwable -> {
-                            AlertEvent.fireError(
-                                    this,
-                                    "Unable to save document " + document,
-                                    throwable.getMessage(), null);
-                        });
+                        throwable -> AlertEvent.fireError(
+                                this,
+                                "Unable to save document " + finalDocument,
+                                throwable.getMessage(), null));
             }
         }
     }
@@ -209,7 +208,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 
                 final Consumer<D> loadConsumer = document -> {
                     // Write to the newly created document.
-                    presenter.write(document);
+                    document = presenter.write(document);
                     // Save the new document and read it back into the presenter.
                     save(newDocRef, document, saveConsumer, null);
                 };

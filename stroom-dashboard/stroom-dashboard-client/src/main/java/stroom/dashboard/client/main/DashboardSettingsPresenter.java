@@ -47,8 +47,9 @@ public class DashboardSettingsPresenter extends DocumentSettingsPresenter<Dashbo
     }
 
     @Override
-    protected void onWrite(final DashboardDoc doc) {
+    protected DashboardDoc onWrite(final DashboardDoc doc) {
         doc.setDescription(getView().getDescription().getText().trim());
+        return doc;
     }
 
     @Override

@@ -316,7 +316,8 @@ public class RuleSetSettingsPresenter
     }
 
     @Override
-    public void write(final ReceiveDataRules entity) {
+    public ReceiveDataRules write(final ReceiveDataRules entity) {
+        return entity;
     }
 
     @Override

@@ -89,11 +89,12 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
     }
 
     @Override
-    protected void onWrite(final TextConverterDoc textConverter) {
-        settingsPresenter.write(textConverter);
+    protected TextConverterDoc onWrite(TextConverterDoc textConverter) {
+        textConverter = settingsPresenter.write(textConverter);
         if (codePresenter != null) {
             textConverter.setData(codePresenter.getText());
         }
+        return textConverter;
     }
 
     @Override

@@ -247,8 +247,9 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<PagerView>
     }
 
     @Override
-    public void write(final StatisticStoreDoc entity) {
+    public StatisticStoreDoc write(final StatisticStoreDoc entity) {
         entity.setConfig(statisticsDataSourceData);
+        return entity;
     }
 
     @Override

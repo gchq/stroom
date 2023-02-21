@@ -81,8 +81,8 @@ public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, I
     }
 
     @Override
-    protected void onWrite(final IndexDoc index) {
-        tabContentProvider.write(index);
+    protected IndexDoc onWrite(final IndexDoc index) {
+        return tabContentProvider.write(index);
     }
 
     @Override

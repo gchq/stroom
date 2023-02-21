@@ -110,8 +110,8 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
 
     @Override
     public void onTestIndex() {
-        final ElasticIndexDoc index = new ElasticIndexDoc();
-        onWrite(index);
+        ElasticIndexDoc index = new ElasticIndexDoc();
+        index = onWrite(index);
 
         final Rest<ElasticIndexTestResponse> rest = restFactory.create();
         rest
@@ -152,7 +152,7 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
     }
 
     @Override
-    protected void onWrite(final ElasticIndexDoc index) {
+    protected ElasticIndexDoc onWrite(final ElasticIndexDoc index) {
         index.setDescription(getView().getDescription().trim());
         index.setClusterRef(clusterPresenter.getSelectedEntityReference());
 
@@ -169,6 +169,7 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
         index.setTimeField(getView().getTimeField());
         index.setRetentionExpression(editExpressionPresenter.write());
         index.setDefaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference());
+        return index;
     }
 
     public interface ElasticIndexSettingsView

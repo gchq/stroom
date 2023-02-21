@@ -83,7 +83,7 @@ public class StroomStatsStoreSettingsPresenter
     }
 
     @Override
-    public void write(final StroomStatsStoreDoc stroomStatsStoreEntity) {
+    public StroomStatsStoreDoc write(final StroomStatsStoreDoc stroomStatsStoreEntity) {
         if (stroomStatsStoreEntity != null) {
             stroomStatsStoreEntity.setDescription(getView().getDescription().getText());
             stroomStatsStoreEntity.setStatisticType(getView().getStatisticType());
@@ -91,6 +91,7 @@ public class StroomStatsStoreSettingsPresenter
             stroomStatsStoreEntity.setPrecision(getView().getPrecision());
             stroomStatsStoreEntity.setRollUpType(getView().getRollUpType());
         }
+        return stroomStatsStoreEntity;
     }
 
     @Override

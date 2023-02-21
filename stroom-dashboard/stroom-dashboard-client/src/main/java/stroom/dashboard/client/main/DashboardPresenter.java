@@ -397,7 +397,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     }
 
     @Override
-    protected void onWrite(final DashboardDoc dashboard) {
+    protected DashboardDoc onWrite(final DashboardDoc dashboard) {
         final List<ComponentConfig> componentDataList = new ArrayList<>(components.size());
         for (final Component component : components) {
             final ComponentConfig componentConfig = component.write();
@@ -419,6 +419,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         dashboardConfig.setPreferredSize(preferredSize);
         dashboardConfig.setTabVisibility(TabVisibility.SHOW_ALL);
         dashboard.setDashboardConfig(dashboardConfig);
+        return dashboard;
     }
 
     @Override

@@ -78,8 +78,8 @@ public class ElasticIndexPresenter extends DocumentEditTabPresenter<LinkTabPanel
     }
 
     @Override
-    protected void onWrite(final ElasticIndexDoc index) {
-        tabContentProvider.write(index);
+    protected ElasticIndexDoc onWrite(final ElasticIndexDoc index) {
+        return tabContentProvider.write(index);
     }
 
     @Override

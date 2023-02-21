@@ -389,8 +389,9 @@ public class IndexFieldListPresenter extends MyPresenterWidget<PagerView>
     }
 
     @Override
-    public void write(final IndexDoc entity) {
+    public IndexDoc write(final IndexDoc entity) {
         entity.setFields(indexFields);
+        return entity;
     }
 
     @Override

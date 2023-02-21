@@ -169,7 +169,7 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
 
     @Override
     public int getDecimalPlaces() {
-        return this.decimalPlaces.getValue();
+        return this.decimalPlaces.getIntValue();
     }
 
     @Override
@@ -250,7 +250,7 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
 
     @Override
     public Integer getTimeZoneOffsetHours() {
-        final int val = this.timeZoneOffsetHours.getValue();
+        final int val = this.timeZoneOffsetHours.getIntValue();
         if (val == 0) {
             return null;
         }
@@ -268,7 +268,7 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
 
     @Override
     public Integer getTimeZoneOffsetMinutes() {
-        final int val = this.timeZoneOffsetMinutes.getValue();
+        final int val = this.timeZoneOffsetMinutes.getIntValue();
         if (val == 0) {
             return null;
         }

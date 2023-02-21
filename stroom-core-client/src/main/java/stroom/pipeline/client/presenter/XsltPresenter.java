@@ -86,11 +86,12 @@ public class XsltPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Xs
     }
 
     @Override
-    protected void onWrite(final XsltDoc xslt) {
-        settingsPresenter.write(xslt);
+    protected XsltDoc onWrite(XsltDoc xslt) {
+        xslt = settingsPresenter.write(xslt);
         if (codePresenter != null) {
             xslt.setData(codePresenter.getText());
         }
+        return xslt;
     }
 
     @Override

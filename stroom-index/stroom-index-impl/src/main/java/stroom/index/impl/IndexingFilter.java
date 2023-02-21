@@ -96,14 +96,14 @@ class IndexingFilter extends AbstractXMLFilter {
     private final Map<Partition, IndexShardKey> indexShardKeyMap = new HashMap<>();
     private Document document;
 
-    private int fieldsIndexed = 0;
+    private int fieldsIndexed;
 
     private Locator locator;
 
 
-    private AlertProcessor alertProcessor = null;
-    private Long currentEventTime = null;
-    private Partition defaultPartition = null;
+    private Optional<AlertProcessor> alertProcessor;
+    private Long currentEventTime;
+    private Partition defaultPartition;
 
     @Inject
     IndexingFilter(final MetaHolder metaHolder,
@@ -342,14 +342,10 @@ class IndexingFilter extends AbstractXMLFilter {
     private void checkAlerts() {
         try {
             if (alertProcessor == null) {
-                final Optional<AlertProcessor> processor =
-                        alertManager.createAlertProcessor(new DocRef(IndexDoc.DOCUMENT_TYPE,
-                                indexRef.getUuid()));
-                processor.ifPresent(value -> alertProcessor = value);
+                alertProcessor = alertManager.createAlertProcessor(new DocRef(IndexDoc.DOCUMENT_TYPE,
+                        indexRef.getUuid()));
             }
-            if (alertProcessor != null) {
-                alertProcessor.addIfNeeded(document);
-            }
+            alertProcessor.ifPresent(ap -> ap.addIfNeeded(document));
 
         } catch (RuntimeException ex) {
             LOGGER.error(ex.getMessage(), ex);
@@ -362,7 +358,7 @@ class IndexingFilter extends AbstractXMLFilter {
     @Override
     public void endProcessing() {
         if (alertProcessor != null) {
-            alertProcessor.createAlerts();
+            alertProcessor.ifPresent(AlertProcessor::createAlerts);
         }
 
         super.endProcessing();

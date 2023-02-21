@@ -73,8 +73,8 @@ public class ElasticClusterPresenter extends DocumentEditTabPresenter<LinkTabPan
     }
 
     @Override
-    protected void onWrite(final ElasticClusterDoc cluster) {
-        tabContentProvider.write(cluster);
+    protected ElasticClusterDoc onWrite(final ElasticClusterDoc cluster) {
+        return tabContentProvider.write(cluster);
     }
 
     @Override

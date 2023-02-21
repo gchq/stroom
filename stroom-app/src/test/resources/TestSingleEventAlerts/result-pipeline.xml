@@ -49,6 +49,13 @@
             </value>
          </property>
          <property>
+            <element>xmlWriter</element>
+            <name>indentOutput</name>
+            <value>
+               <boolean>true</boolean>
+            </value>
+         </property>
+         <property>
             <element>streamAppender</element>
             <name>streamType</name>
             <value>

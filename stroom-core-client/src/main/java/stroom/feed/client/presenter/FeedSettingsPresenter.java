@@ -136,7 +136,7 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
     }
 
     @Override
-    protected void onWrite(final FeedDoc feed) {
+    protected FeedDoc onWrite(final FeedDoc feed) {
         feed.setDescription(getView().getDescription().getText().trim());
         feed.setReference(getView().getReference().getValue());
         feed.setClassification(getView().getClassification().getText());
@@ -145,6 +145,7 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
         feed.setStreamType(getView().getReceivedType().getSelected());
         // Set the process stage.
         feed.setStatus(getView().getFeedStatus().getSelectedItem());
+        return feed;
     }
 
     private String ensureEncoding(final String encoding) {

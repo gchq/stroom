@@ -124,7 +124,7 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
 
     @Override
     public int getMaxDocsPerShard() {
-        return this.maxDocsPerShard.getValue();
+        return this.maxDocsPerShard.getIntValue();
     }
 
     @Override
@@ -134,7 +134,7 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
 
     @Override
     public int getShardsPerPartition() {
-        return this.shardsPerPartition.getValue();
+        return this.shardsPerPartition.getIntValue();
     }
 
     @Override
@@ -154,7 +154,7 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
 
     @Override
     public int getPartitionSize() {
-        return this.partitionSize.getValue();
+        return this.partitionSize.getIntValue();
     }
 
     @Override

@@ -111,7 +111,7 @@ public class DataRetentionRuleViewImpl extends ViewImpl implements DataRetention
 
     @Override
     public int getAge() {
-        return age.getValue();
+        return age.getIntValue();
     }
 
     @Override

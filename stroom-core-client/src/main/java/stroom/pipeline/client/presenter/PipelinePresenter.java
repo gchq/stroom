@@ -117,8 +117,8 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
     }
 
     @Override
-    protected void onWrite(final PipelineDoc pipelineDoc) {
-        tabContentProvider.write(pipelineDoc);
+    protected PipelineDoc onWrite(final PipelineDoc pipelineDoc) {
+        return tabContentProvider.write(pipelineDoc);
     }
 
     @Override

@@ -252,8 +252,9 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<PagerV
     }
 
     @Override
-    public void write(final StroomStatsStoreDoc entity) {
+    public StroomStatsStoreDoc write(final StroomStatsStoreDoc entity) {
         entity.setConfig(stroomStatsStoreEntityData);
+        return entity;
     }
 
     @Override

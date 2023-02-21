@@ -76,8 +76,8 @@ public class DashboardSuperPresenter
     }
 
     @Override
-    protected void onWrite(final DashboardDoc feed) {
-        tabContentProvider.write(feed);
+    protected DashboardDoc onWrite(DashboardDoc feed) {
+        return tabContentProvider.write(feed);
     }
 
     @Override

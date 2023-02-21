@@ -266,9 +266,10 @@ public class StroomStatsStoreCustomMaskListPresenter
     }
 
     @Override
-    public void write(final StroomStatsStoreDoc entity) {
+    public StroomStatsStoreDoc write(final StroomStatsStoreDoc entity) {
         entity.getConfig().setCustomRollUpMasks(
                 new HashSet<>(maskList.getMasks()));
+        return entity;
     }
 
     @Override

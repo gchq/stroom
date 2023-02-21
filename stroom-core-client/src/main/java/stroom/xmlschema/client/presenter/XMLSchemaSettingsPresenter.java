@@ -69,12 +69,13 @@ public class XMLSchemaSettingsPresenter
     }
 
     @Override
-    public void onWrite(final XmlSchemaDoc xmlSchema) {
+    public XmlSchemaDoc onWrite(final XmlSchemaDoc xmlSchema) {
         xmlSchema.setDescription(getView().getDescription().getText().trim());
         xmlSchema.setNamespaceURI(getView().getNamespaceURI().getText().trim());
         xmlSchema.setSystemId(getView().getSystemId().getText());
         xmlSchema.setSchemaGroup(getView().getSchemaGroup().getText());
         xmlSchema.setDeprecated(getView().getDeprecated().getValue());
+        return xmlSchema;
     }
 
     public interface XMLSchemaSettingsView extends View {

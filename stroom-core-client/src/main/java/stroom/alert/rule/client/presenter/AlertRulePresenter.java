@@ -68,8 +68,8 @@ public class AlertRulePresenter extends DocumentEditTabPresenter<LinkTabPanelVie
     }
 
     @Override
-    protected void onWrite(final AlertRuleDoc entity) {
-        settingsPresenter.write(entity);
+    protected AlertRuleDoc onWrite(final AlertRuleDoc entity) {
+        return settingsPresenter.write(entity);
     }
 
     @Override

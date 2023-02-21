@@ -128,11 +128,12 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
     }
 
     @Override
-    protected void onWrite(final XmlSchemaDoc xmlSchema) {
-        settingsPresenter.write(xmlSchema);
+    protected XmlSchemaDoc onWrite(XmlSchemaDoc xmlSchema) {
+        xmlSchema = settingsPresenter.write(xmlSchema);
         if (shownText) {
             xmlSchema.setData(codePresenter.getText().trim());
         }
+        return xmlSchema;
     }
 
     @Override

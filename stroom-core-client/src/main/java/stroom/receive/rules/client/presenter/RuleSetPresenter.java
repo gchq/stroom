@@ -84,8 +84,8 @@ public class RuleSetPresenter extends DocumentEditTabPresenter<LinkTabPanelView,
     }
 
     @Override
-    protected void onWrite(final ReceiveDataRules dataReceiptPolicy) {
-        tabContentProvider.write(dataReceiptPolicy);
+    protected ReceiveDataRules onWrite(ReceiveDataRules dataReceiptPolicy) {
+        return tabContentProvider.write(dataReceiptPolicy);
     }
 
     @Override

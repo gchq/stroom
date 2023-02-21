@@ -68,6 +68,7 @@ dependencies {
     implementation project(':stroom-activity:stroom-activity-impl')
     implementation project(':stroom-activity:stroom-activity-impl-db')
     implementation project(':stroom-activity:stroom-activity-impl-db-jooq')
+    implementation project(':stroom-alert:stroom-alert-api')
     implementation project(':stroom-alert:stroom-alert-impl')
     implementation project(':stroom-alert:stroom-alert-rule-impl')
     implementation project(':stroom-annotation:stroom-annotation-api')

@@ -79,7 +79,7 @@ public class StatisticsDataSourceSettingsPresenter
     }
 
     @Override
-    public void write(final StatisticStoreDoc statisticsDataSource) {
+    public StatisticStoreDoc write(final StatisticStoreDoc statisticsDataSource) {
         if (statisticsDataSource != null) {
             statisticsDataSource.setDescription(getView().getDescription().getText());
             statisticsDataSource.setStatisticType(getView().getStatisticType());
@@ -87,6 +87,7 @@ public class StatisticsDataSourceSettingsPresenter
             statisticsDataSource.setPrecision(getView().getPrecision().columnInterval());
             statisticsDataSource.setRollUpType(getView().getRollUpType());
         }
+        return statisticsDataSource;
     }
 
     @Override

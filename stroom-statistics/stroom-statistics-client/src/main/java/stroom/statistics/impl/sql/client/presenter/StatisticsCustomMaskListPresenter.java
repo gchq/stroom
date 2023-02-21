@@ -261,9 +261,10 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<PagerVi
     }
 
     @Override
-    public void write(final StatisticStoreDoc entity) {
+    public StatisticStoreDoc write(final StatisticStoreDoc entity) {
         entity.getConfig()
                 .setCustomRollUpMasks(new HashSet<>(maskList.getMasks()));
+        return entity;
     }
 
     @Override

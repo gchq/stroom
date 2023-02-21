@@ -268,7 +268,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
     }
 
     @Override
-    public void write(final PipelineDoc pipeline) {
+    public PipelineDoc write(final PipelineDoc pipeline) {
         // Only write if we have been revealed and therefore created a pipeline
         // model.
         if (pipelineModel != null) {
@@ -283,6 +283,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                 AlertEvent.fireError(this, e.getMessage(), null);
             }
         }
+        return pipeline;
     }
 
     @Override

@@ -79,7 +79,7 @@ public class DownloadViewImpl extends ViewImpl implements DownloadView {
 
     @Override
     public int getPercent() {
-        return percent.getValue();
+        return percent.getIntValue();
     }
 
     @UiHandler("sample")

@@ -91,8 +91,8 @@ public class StroomStatsStorePresenter extends DocumentEditTabPresenter<LinkTabP
     }
 
     @Override
-    protected void onWrite(final StroomStatsStoreDoc stroomStatsStoreEntity) {
-        tabContentProvider.write(stroomStatsStoreEntity);
+    protected StroomStatsStoreDoc onWrite(final StroomStatsStoreDoc stroomStatsStoreEntity) {
+        return tabContentProvider.write(stroomStatsStoreEntity);
     }
 
     @Override

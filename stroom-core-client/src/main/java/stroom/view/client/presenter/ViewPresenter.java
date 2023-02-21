@@ -70,8 +70,8 @@ public class ViewPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Vi
     }
 
     @Override
-    protected void onWrite(final ViewDoc view) {
-        tabContentProvider.write(view);
+    protected ViewDoc onWrite(final ViewDoc view) {
+        return tabContentProvider.write(view);
     }
 
     @Override

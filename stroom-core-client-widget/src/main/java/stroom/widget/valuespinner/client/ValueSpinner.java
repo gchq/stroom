@@ -154,8 +154,12 @@ public class ValueSpinner extends Composite implements Focus {
         spinner.setMinStep(minStep);
     }
 
-    public int getValue() {
+    public int getIntValue() {
         return (int) getSpinner().getValue();
+    }
+
+    public long getValue() {
+        return getSpinner().getValue();
     }
 
     public void setValue(final long value) {

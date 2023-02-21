@@ -192,8 +192,9 @@ public class QueryDocPresenter
     }
 
     @Override
-    protected void onWrite(final QueryDoc entity) {
+    protected QueryDoc onWrite(final QueryDoc entity) {
         entity.setQuery(codePresenter.getText());
+        return entity;
     }
 
     @Override

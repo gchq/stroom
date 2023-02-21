@@ -17,17 +17,20 @@
 package stroom.alert.rule.client.view;
 
 import stroom.alert.rule.client.presenter.AlertRuleSettingsPresenter.AlertRuleSettingsView;
+import stroom.alert.rule.shared.AlertRuleType;
 import stroom.alert.rule.shared.QueryLanguageVersion;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.item.client.ItemListBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.dom.client.InputEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
@@ -46,6 +49,16 @@ public class AlertRuleSettingsViewImpl
     SimplePanel query;
     @UiField
     CustomCheckBox enabled;
+    @UiField
+    ItemListBox<AlertRuleType> alertRuleType;
+    @UiField
+    TextBox executionDelay;
+    @UiField
+    TextBox executionFrequency;
+    @UiField
+    TextBox thresholdField;
+    @UiField
+    ValueSpinner threshold;
 
     @Inject
     public AlertRuleSettingsViewImpl(final Binder binder) {
@@ -55,6 +68,9 @@ public class AlertRuleSettingsViewImpl
         languageVersion.addItem(QueryLanguageVersion.SIGMA);
 
         description.addDomHandler(e -> getUiHandlers().onDirty(), InputEvent.getType());
+
+        alertRuleType.addItem(AlertRuleType.EVENT);
+        alertRuleType.addItem(AlertRuleType.THRESHOLD);
     }
 
     @Override
@@ -98,6 +114,57 @@ public class AlertRuleSettingsViewImpl
     @Override
     public void setEnabled(final boolean enabled) {
         this.enabled.setValue(enabled);
+    }
+
+
+    @Override
+    public AlertRuleType getAlertRuleType() {
+        return this.alertRuleType.getSelectedItem();
+    }
+
+    @Override
+    public void setAlertRuleType(final AlertRuleType alertRuleType) {
+        this.alertRuleType.setSelectedItem(alertRuleType);
+    }
+
+    @Override
+    public String getExecutionDelay() {
+        return this.executionDelay.getValue();
+    }
+
+    @Override
+    public void setExecutionDelay(final String executionDelay) {
+        this.executionDelay.setValue(executionDelay);
+    }
+
+    @Override
+    public String getExecutionFrequency() {
+        return this.executionFrequency.getValue();
+    }
+
+    @Override
+    public void setExecutionFrequency(final String executionFrequency) {
+        this.executionFrequency.setValue(executionFrequency);
+    }
+
+    @Override
+    public String getThresholdField() {
+        return this.thresholdField.getValue();
+    }
+
+    @Override
+    public void setThresholdField(final String thresholdField) {
+        this.thresholdField.setValue(thresholdField);
+    }
+
+    @Override
+    public long getThreshold() {
+        return this.threshold.getValue();
+    }
+
+    @Override
+    public void setThreshold(final long threshold) {
+        this.threshold.setValue(threshold);
     }
 
     @Override

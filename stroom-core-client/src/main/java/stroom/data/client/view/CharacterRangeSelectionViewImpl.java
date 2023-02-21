@@ -100,7 +100,7 @@ public class CharacterRangeSelectionViewImpl
 
                     case COUNT:
                         fromLineCol.getLocation().ifPresent(dataRangeBuilder::fromLocation);
-                        dataRangeBuilder.withLength((long) toCharCount.getValue());
+                        dataRangeBuilder.withLength((long) toCharCount.getIntValue());
 
                         break;
                 }
@@ -110,14 +110,14 @@ public class CharacterRangeSelectionViewImpl
                 switch (toType.getSelectedItem()) {
                     case OFFSET:
                         dataRangeBuilder
-                                .fromCharOffset(toZeroBased(fromCharOffset.getValue()))
-                                .toCharOffset((long) toCharOffset.getValue() - ONE_TO_ZERO_BASED_DECREMENT);
+                                .fromCharOffset(toZeroBased(fromCharOffset.getIntValue()))
+                                .toCharOffset((long) toCharOffset.getIntValue() - ONE_TO_ZERO_BASED_DECREMENT);
 
                         break;
                     case COUNT:
                         dataRangeBuilder
-                                .fromCharOffset(toZeroBased(fromCharOffset.getValue()))
-                                .withLength((long) toCharCount.getValue());
+                                .fromCharOffset(toZeroBased(fromCharOffset.getIntValue()))
+                                .withLength((long) toCharCount.getIntValue());
 
                         break;
                 }

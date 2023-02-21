@@ -92,8 +92,8 @@ public class StatisticsDataSourcePresenter extends DocumentEditTabPresenter<Link
     }
 
     @Override
-    protected void onWrite(final StatisticStoreDoc statisticsDataSource) {
-        tabContentProvider.write(statisticsDataSource);
+    protected StatisticStoreDoc onWrite(final StatisticStoreDoc statisticsDataSource) {
+        return tabContentProvider.write(statisticsDataSource);
     }
 
     @Override

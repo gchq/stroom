@@ -54,8 +54,9 @@ public class QueryDocSettingsPresenter extends DocumentSettingsPresenter<QueryDo
     }
 
     @Override
-    protected void onWrite(final QueryDoc query) {
+    protected QueryDoc onWrite(final QueryDoc query) {
         query.setDescription(getView().getDescription().getText().trim());
+        return query;
     }
 
     @Override

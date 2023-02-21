@@ -91,14 +91,15 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
     }
 
     @Override
-    protected void onWrite(final FeedDoc feed) {
-        tabContentProvider.write(feed);
+    protected FeedDoc onWrite(FeedDoc feed) {
+        feed = tabContentProvider.write(feed);
         // Something has changed, e.g. the encoding so refresh the meta presenter to reflect it
         final PresenterWidget<?> presenter = tabContentProvider.getPresenter(DATA);
         if (presenter instanceof MetaPresenter) {
             final MetaPresenter metaPresenter = (MetaPresenter) presenter;
             metaPresenter.refreshData();
         }
+        return feed;
     }
 
     @Override

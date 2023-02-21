@@ -59,7 +59,7 @@ public class ProcessChoiceViewImpl extends ViewImpl implements ProcessChoicePres
 
     @Override
     public int getPriority() {
-        return priority.getValue();
+        return priority.getIntValue();
     }
 
     @Override

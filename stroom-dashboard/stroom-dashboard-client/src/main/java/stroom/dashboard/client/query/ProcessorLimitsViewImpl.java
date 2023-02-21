@@ -58,7 +58,7 @@ public class ProcessorLimitsViewImpl extends ViewImpl implements ProcessorLimits
 
     @Override
     public Long getRecordLimit() {
-        return Long.valueOf(recordLimit.getValue());
+        return Long.valueOf(recordLimit.getIntValue());
     }
 
     @Override
@@ -70,7 +70,7 @@ public class ProcessorLimitsViewImpl extends ViewImpl implements ProcessorLimits
 
     @Override
     public Long getTimeLimitMins() {
-        return Long.valueOf(timeLimit.getValue());
+        return Long.valueOf(timeLimit.getIntValue());
     }
 
     @Override

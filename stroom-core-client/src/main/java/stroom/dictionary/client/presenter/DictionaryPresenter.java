@@ -123,11 +123,12 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
     }
 
     @Override
-    protected void onWrite(final DictionaryDoc doc) {
-        settingsPresenter.write(doc);
+    protected DictionaryDoc onWrite(DictionaryDoc doc) {
+        doc = settingsPresenter.write(doc);
         if (codePresenter != null) {
             doc.setData(codePresenter.getText());
         }
+        return doc;
     }
 
     @Override

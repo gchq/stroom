@@ -160,10 +160,10 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
             final String value = listBox.getItemText(listBox.getSelectedIndex());
             property.setValue(new PipelinePropertyValue(Boolean.valueOf(value)));
         } else if ("int".equals(propertyType.getType())) {
-            final Integer value = valueSpinner.getValue();
+            final Integer value = valueSpinner.getIntValue();
             property.setValue(new PipelinePropertyValue(value));
         } else if ("long".equals(propertyType.getType())) {
-            final Long value = (long) valueSpinner.getValue();
+            final Long value = (long) valueSpinner.getIntValue();
             property.setValue(new PipelinePropertyValue(value));
         } else if ("String".equals(propertyType.getType())) {
             property.setValue(new PipelinePropertyValue(textBox.getText()));

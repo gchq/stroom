@@ -191,4 +191,74 @@ public abstract class Doc implements HasAuditInfo, HasUuid, HasType {
                 ", name='" + name + '\'' +
                 '}';
     }
+
+    public static abstract class AbstractBuilder<T extends Doc, B extends AbstractBuilder<T, ?>> {
+
+        protected String type;
+        protected String uuid;
+        protected String name;
+        protected String version;
+        protected Long createTimeMs;
+        protected Long updateTimeMs;
+        protected String createUser;
+        protected String updateUser;
+
+        public AbstractBuilder() {
+        }
+
+        public AbstractBuilder(final Doc doc) {
+            this.type = doc.type;
+            this.uuid = doc.uuid;
+            this.name = doc.name;
+            this.version = doc.version;
+            this.createTimeMs = doc.createTimeMs;
+            this.updateTimeMs = doc.updateTimeMs;
+            this.createUser = doc.createUser;
+            this.updateUser = doc.updateUser;
+        }
+
+        public B type(final String type) {
+            this.type = type;
+            return self();
+        }
+
+        public B uuid(final String uuid) {
+            this.uuid = uuid;
+            return self();
+        }
+
+        public B name(final String name) {
+            this.name = name;
+            return self();
+        }
+
+        public B version(final String version) {
+            this.version = version;
+            return self();
+        }
+
+        public B createTimeMs(final Long createTimeMs) {
+            this.createTimeMs = createTimeMs;
+            return self();
+        }
+
+        public B updateTimeMs(final Long updateTimeMs) {
+            this.updateTimeMs = updateTimeMs;
+            return self();
+        }
+
+        public B createUser(final String createUser) {
+            this.createUser = createUser;
+            return self();
+        }
+
+        public B updateUser(final String updateUser) {
+            this.updateUser = updateUser;
+            return self();
+        }
+
+        protected abstract B self();
+
+        public abstract T build();
+    }
 }

@@ -112,7 +112,7 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
 
     @Override
     public int getSearchSlices() {
-        return searchSlices.getValue();
+        return searchSlices.getIntValue();
     }
 
     @Override
@@ -122,7 +122,7 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
 
     @Override
     public int getSearchScrollSize() {
-        return searchScrollSize.getValue();
+        return searchScrollSize.getIntValue();
     }
 
     @Override

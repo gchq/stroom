@@ -17,18 +17,21 @@
 package stroom.alert.impl;
 
 import stroom.alert.api.AlertDefinition;
+import stroom.alert.api.AlertManager;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 class RuleConfig {
     private final String queryId;
     private final ExpressionOperator expression;
     private final DocRef pipeline;
     private final List<AlertDefinition> alertDefinitions;
+    private final String dashboardNames;
     private final Map<String, String> params;
 
     RuleConfig(final String dashboardUUID,
@@ -42,6 +45,10 @@ class RuleConfig {
         this.pipeline = pipeline;
         this.alertDefinitions = alertDefinitions;
         this.params = params;
+
+        dashboardNames = alertDefinitions.stream()
+                .map(a -> a.getAttributes().get(AlertManager.DASHBOARD_NAME_KEY))
+                .collect(Collectors.joining(", "));
     }
 
     public String getQueryId() {
@@ -54,6 +61,10 @@ class RuleConfig {
 
     public List<AlertDefinition> getAlertDefinitions() {
         return alertDefinitions;
+    }
+
+    public String getDashboardNames() {
+        return dashboardNames;
     }
 
     public Map<String, String> getParams() {

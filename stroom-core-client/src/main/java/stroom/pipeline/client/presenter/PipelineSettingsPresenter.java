@@ -48,11 +48,12 @@ public class PipelineSettingsPresenter
     }
 
     @Override
-    protected void onWrite(final PipelineDoc pipelineDoc) {
+    protected PipelineDoc onWrite(final PipelineDoc pipelineDoc) {
         if (!getView().getDescription().trim().equals(pipelineDoc.getDescription())) {
             pipelineDoc.setDescription(getView().getDescription().trim());
             setDirty(true);
         }
+        return pipelineDoc;
     }
 
     public interface PipelineSettingsView extends View, HasUiHandlers<PipelineSettingsUiHandlers> {

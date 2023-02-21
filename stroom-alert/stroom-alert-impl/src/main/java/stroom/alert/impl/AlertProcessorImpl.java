@@ -46,6 +46,7 @@ import stroom.search.impl.SearchExpressionQueryBuilder;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
@@ -183,17 +184,17 @@ public class AlertProcessorImpl implements AlertProcessor {
                     //                 System.out.println ("Found a matching query rule");
 
                     alertQueryHits.addQueryHitForRule(rule, eventId);
-                    LOGGER.debug("Adding {}:{} to rule {} from dashboards {}", currentStreamId,
+                    LOGGER.debug(() -> LogUtil.message(
+                            "Adding {}:{} to rule {} from dashboards {}",
+                            currentStreamId,
                             eventId, rule.getQueryId(),
-                            rule.getAlertDefinitions().stream()
-                                    .map(a -> a.getAttributes().get(AlertManager.DASHBOARD_NAME_KEY))
-                                    .collect(Collectors.joining(", ")));
+                            rule.getDashboardNames()));
                 } else {
-                    LOGGER.trace("Not adding {}:{} to rule {} from dashboards {}", currentStreamId,
+                    LOGGER.trace(() -> LogUtil.message(
+                            "Not adding {}:{} to rule {} from dashboards {}",
+                            currentStreamId,
                             eventId, rule.getQueryId(),
-                            rule.getAlertDefinitions().stream()
-                                    .map(a -> a.getAttributes().get(AlertManager.DASHBOARD_NAME_KEY))
-                                    .collect(Collectors.joining(", ")));
+                            rule.getDashboardNames()));
                 }
             }
         } catch (IOException ex) {

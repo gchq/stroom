@@ -135,11 +135,12 @@ public class ViewSettingsPresenter extends DocumentSettingsPresenter<ViewSetting
     }
 
     @Override
-    protected void onWrite(final ViewDoc entity) {
+    protected ViewDoc onWrite(final ViewDoc entity) {
         entity.setDescription(getView().getDescription().getText().trim());
         entity.setDataSource(dataSourceSelectionPresenter.getSelectedEntityReference());
         entity.setPipeline(pipelineSelectionPresenter.getSelectedEntityReference());
         entity.setFilter(expressionPresenter.write());
+        return entity;
     }
 
     @Override

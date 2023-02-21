@@ -350,8 +350,9 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
     }
 
     @Override
-    public void write(final SolrIndexDoc entity) {
+    public SolrIndexDoc write(final SolrIndexDoc entity) {
         entity.setFields(fields);
+        return entity;
     }
 
     @Override

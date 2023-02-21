@@ -92,8 +92,8 @@ public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIn
 
     @Override
     public void onTestConnection() {
-        final SolrIndexDoc index = new SolrIndexDoc();
-        onWrite(index);
+        SolrIndexDoc index = new SolrIndexDoc();
+        index = onWrite(index);
 
         final Rest<SolrConnectionTestResponse> rest = restFactory.create();
         rest
@@ -138,7 +138,7 @@ public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIn
     }
 
     @Override
-    protected void onWrite(final SolrIndexDoc index) {
+    protected SolrIndexDoc onWrite(final SolrIndexDoc index) {
         final SolrConnectionConfig connectionConfig = new SolrConnectionConfig();
         connectionConfig.setInstanceType(getView().getInstanceType());
         connectionConfig.setSolrUrls(getView().getSolrUrls());
@@ -155,6 +155,7 @@ public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIn
         }
         index.setRetentionExpression(editExpressionPresenter.write());
         index.setDefaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference());
+        return index;
     }
 
     public interface SolrIndexSettingsView

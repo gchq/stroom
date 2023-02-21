@@ -74,8 +74,8 @@ public class QueryDocSuperPresenter
     }
 
     @Override
-    protected void onWrite(final QueryDoc queryDoc) {
-        tabContentProvider.write(queryDoc);
+    protected QueryDoc onWrite(final QueryDoc queryDoc) {
+        return tabContentProvider.write(queryDoc);
     }
 
     @Override

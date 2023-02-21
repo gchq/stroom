@@ -85,8 +85,8 @@ public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPane
     }
 
     @Override
-    protected void onWrite(final VisualisationDoc visualisation) {
-        settingsPresenter.write(visualisation);
+    protected VisualisationDoc onWrite(final VisualisationDoc visualisation) {
+        return settingsPresenter.write(visualisation);
     }
 
     @Override

@@ -290,7 +290,7 @@ public final class UserPreferencesViewImpl
 
     @Override
     public Integer getTimeZoneOffsetHours() {
-        final int val = this.timeZoneOffsetHours.getValue();
+        final int val = this.timeZoneOffsetHours.getIntValue();
         if (val == 0) {
             return null;
         }
@@ -308,7 +308,7 @@ public final class UserPreferencesViewImpl
 
     @Override
     public Integer getTimeZoneOffsetMinutes() {
-        final int val = this.timeZoneOffsetMinutes.getValue();
+        final int val = this.timeZoneOffsetMinutes.getIntValue();
         if (val == 0) {
             return null;
         }

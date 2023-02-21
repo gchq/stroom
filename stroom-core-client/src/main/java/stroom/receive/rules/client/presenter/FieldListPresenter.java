@@ -302,8 +302,9 @@ public class FieldListPresenter extends MyPresenterWidget<PagerView>
     }
 
     @Override
-    public void write(final ReceiveDataRules policy) {
+    public ReceiveDataRules write(final ReceiveDataRules policy) {
         policy.setFields(fields);
+        return policy;
     }
 
     @Override

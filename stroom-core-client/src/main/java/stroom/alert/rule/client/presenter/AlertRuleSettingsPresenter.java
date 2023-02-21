@@ -18,8 +18,11 @@
 package stroom.alert.rule.client.presenter;
 
 import stroom.alert.rule.client.presenter.AlertRuleSettingsPresenter.AlertRuleSettingsView;
+import stroom.alert.rule.shared.AbstractAlertRule;
 import stroom.alert.rule.shared.AlertRuleDoc;
+import stroom.alert.rule.shared.AlertRuleType;
 import stroom.alert.rule.shared.QueryLanguageVersion;
+import stroom.alert.rule.shared.ThresholdAlertRule;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
@@ -37,6 +40,7 @@ import javax.inject.Provider;
 public class AlertRuleSettingsPresenter
         extends DocumentSettingsPresenter<AlertRuleSettingsView, AlertRuleDoc>
         implements DirtyUiHandlers {
+
     private final EditorPresenter codePresenter;
     private boolean readOnly = true;
 
@@ -68,14 +72,38 @@ public class AlertRuleSettingsPresenter
             codePresenter.setText(alertRule.getQuery());
         }
         getView().setEnabled(alertRule.isEnabled());
+        getView().setAlertRuleType(alertRule.getAlertRuleType());
+
+        final AbstractAlertRule abstractAlertRule = alertRule.getAlertRule();
+        if (abstractAlertRule instanceof ThresholdAlertRule) {
+            final ThresholdAlertRule thresholdAlertRule = (ThresholdAlertRule) abstractAlertRule;
+            getView().setExecutionDelay(thresholdAlertRule.getExecutionDelay());
+            getView().setExecutionFrequency(thresholdAlertRule.getExecutionFrequency());
+            getView().setThresholdField(thresholdAlertRule.getThresholdField());
+            getView().setThreshold(thresholdAlertRule.getThreshold());
+        }
     }
 
     @Override
-    protected void onWrite(final AlertRuleDoc alertRule) {
-        alertRule.setDescription(getView().getDescription());
-        alertRule.setLanguageVersion(getView().getLanguageVersion());
-        alertRule.setQuery(codePresenter.getText());
-        alertRule.setEnabled(getView().isEnabled());
+    protected AlertRuleDoc onWrite(final AlertRuleDoc alertRule) {
+        AbstractAlertRule rule = null;
+        if (AlertRuleType.THRESHOLD.equals(getView().getAlertRuleType())) {
+            rule = ThresholdAlertRule.builder()
+                    .executionDelay(getView().getExecutionDelay())
+                    .executionFrequency(getView().getExecutionFrequency())
+                    .thresholdField(getView().getThresholdField())
+                    .threshold(getView().getThreshold())
+                    .build();
+        }
+
+        return alertRule.copy()
+                .description(getView().getDescription())
+                .languageVersion(getView().getLanguageVersion())
+                .query(codePresenter.getText())
+                .enabled(getView().isEnabled())
+                .alertRuleType(getView().getAlertRuleType())
+                .alertRule(rule)
+                .build();
     }
 
     @Override
@@ -103,5 +131,25 @@ public class AlertRuleSettingsPresenter
         boolean isEnabled();
 
         void setEnabled(final boolean enabled);
+
+        AlertRuleType getAlertRuleType();
+
+        void setAlertRuleType(AlertRuleType alertRuleType);
+
+        String getExecutionDelay();
+
+        void setExecutionDelay(String executionDelay);
+
+        String getExecutionFrequency();
+
+        void setExecutionFrequency(String executionFrequency);
+
+        String getThresholdField();
+
+        void setThresholdField(String thresholdField);
+
+        long getThreshold();
+
+        void setThreshold(long threshold);
     }
 }

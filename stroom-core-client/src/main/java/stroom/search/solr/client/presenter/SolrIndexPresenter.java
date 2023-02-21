@@ -76,8 +76,8 @@ public class SolrIndexPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
     }
 
     @Override
-    protected void onWrite(final SolrIndexDoc index) {
-        tabContentProvider.write(index);
+    protected SolrIndexDoc onWrite(final SolrIndexDoc index) {
+        return tabContentProvider.write(index);
     }
 
     @Override

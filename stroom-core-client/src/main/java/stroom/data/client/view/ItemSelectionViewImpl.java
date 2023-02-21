@@ -67,7 +67,7 @@ public class ItemSelectionViewImpl
 
     @Override
     public long getItemNo() {
-        return toZeroBased(itemNoSpinner.getValue());
+        return toZeroBased(itemNoSpinner.getIntValue());
     }
 
     @Override
