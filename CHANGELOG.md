@@ -12,6 +12,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0.23-beta.2] - 2023-02-21
+
+* Issue **#3274** : Fix NPE thrown during task queueing.
+
+
 ## [v7.0.23-beta.1] - 2023-02-20
 
 * Issue **#3259** : Make task creation and queueing multi threaded.
@@ -4788,7 +4793,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.23-beta.1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.23-beta.2...HEAD
+[v7.0.23-beta.2]: https://github.com/gchq/stroom/compare/v7.0.23-beta.1...v7.0.23-beta.2
 [v7.0.23-beta.1]: https://github.com/gchq/stroom/compare/v7.0.22...v7.0.23-beta.1
 [v7.0.22]: https://github.com/gchq/stroom/compare/v7.0.21...v7.0.22
 [v7.0.21]: https://github.com/gchq/stroom/compare/v7.0.20...v7.0.21
