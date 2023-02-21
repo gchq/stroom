@@ -33,7 +33,7 @@ public class FsDataStoreJobsModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(DataDelete.class, builder -> builder
-                        .name("Data Delete")
+                        .name(PhysicalDeleteExecutor.TASK_NAME)
                         .description("Physically delete meta data and associated files that have been logically " +
                                 "deleted based on age of delete (stroom.data.store.deletePurgeAge)")
                         .schedule(CRON, "0 0 *")

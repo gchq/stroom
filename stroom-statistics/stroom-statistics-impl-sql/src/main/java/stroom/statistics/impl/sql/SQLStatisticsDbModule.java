@@ -20,6 +20,7 @@ import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 import stroom.statistics.impl.sql.SQLStatisticsConfig.SQLStatisticsDbConfig;
 
+import java.util.List;
 import javax.sql.DataSource;
 
 public class SQLStatisticsDbModule extends AbstractFlyWayDbModule<SQLStatisticsDbConfig, SQLStatisticsDbConnProvider> {
@@ -39,8 +40,8 @@ public class SQLStatisticsDbModule extends AbstractFlyWayDbModule<SQLStatisticsD
     }
 
     @Override
-    protected String getFlyWayLocation() {
-        return FLYWAY_LOCATIONS;
+    protected List<String> getFlyWayLocations() {
+        return List.of(FLYWAY_LOCATIONS);
     }
 
     @Override

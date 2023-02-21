@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class Meta {
+public class Meta implements SimpleMeta {
 
     @JsonProperty
     private long id;

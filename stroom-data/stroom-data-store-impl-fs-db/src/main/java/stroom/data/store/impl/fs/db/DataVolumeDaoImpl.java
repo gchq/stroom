@@ -4,6 +4,7 @@ import stroom.data.store.impl.fs.DataVolumeDao;
 import stroom.data.store.impl.fs.FindDataVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.db.util.JooqUtil;
+import stroom.util.NullSafe;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.ResultPage;
 
@@ -72,11 +73,15 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
     }
 
     @Override
-    public int delete(final List<Long> metaIdList) {
-        return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
-                .deleteFrom(FS_META_VOLUME)
-                .where(FS_META_VOLUME.META_ID.in(metaIdList))
-                .execute());
+    public int delete(final Collection<Long> metaIdList) {
+        if (NullSafe.hasItems(metaIdList)) {
+            return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
+                    .deleteFrom(FS_META_VOLUME)
+                    .where(FS_META_VOLUME.META_ID.in(metaIdList))
+                    .execute());
+        } else {
+            return 0;
+        }
     }
 
     private DataVolume createDataVolume(final long metaId,

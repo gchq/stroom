@@ -4,6 +4,7 @@ import stroom.processor.impl.ProcessorTaskDeleteExecutor;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
+import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.TaskStatus;
 
 import org.junit.jupiter.api.Test;
@@ -27,7 +28,6 @@ class TestProcessorTaskDeleteExecutorImpl extends AbstractProcessorTest {
     ProcessorFilter processorFilter3;
     ProcessorFilterTracker processorFilterTracker1;
     ProcessorFilterTracker processorFilterTracker2;
-    ProcessorFilterTracker processorFilterTracker3;
 
     @Test
     void delete1() {
@@ -42,12 +42,12 @@ class TestProcessorTaskDeleteExecutorImpl extends AbstractProcessorTest {
         processorFilter1a = createProcessorFilter(processor1);
         processorFilterTracker1 = processorFilter1a.getProcessorFilterTracker();
         processorFilterTracker1.setLastPollMs(Instant.now().minus(3, ChronoUnit.DAYS).toEpochMilli());
-        processorFilterTracker1.setStatus(ProcessorFilterTracker.COMPLETE);
+        processorFilterTracker1.setStatus(ProcessorFilterTrackerStatus.COMPLETE);
         processorFilterTrackerDao.update(processorFilterTracker1);
 
 
         processorFilter1b = createProcessorFilter(processor1);
-        createProcessorTask(processorFilter1b, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter1b, TaskStatus.CREATED, NODE1, FEED);
         createProcessorTask(processorFilter1b, TaskStatus.ASSIGNED, NODE1, FEED);
         createProcessorTask(processorFilter1b, TaskStatus.PROCESSING, NODE1, FEED);
 
@@ -67,15 +67,15 @@ class TestProcessorTaskDeleteExecutorImpl extends AbstractProcessorTest {
         processorFilter2 = createProcessorFilter(processor2);
         processorFilterTracker2 = processorFilter2.getProcessorFilterTracker();
         processorFilterTracker2.setLastPollMs(Instant.now().minus(3, ChronoUnit.DAYS).toEpochMilli());
-        processorFilterTracker2.setStatus(ProcessorFilterTracker.ERROR);
+        processorFilterTracker2.setStatus(ProcessorFilterTrackerStatus.ERROR);
         processorFilterTrackerDao.update(processorFilterTracker2);
 
-        createProcessorTask(processorFilter2, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter2, TaskStatus.CREATED, NODE1, FEED);
         createProcessorTask(processorFilter2, TaskStatus.ASSIGNED, NODE1, FEED);
         createProcessorTask(processorFilter2, TaskStatus.PROCESSING, NODE1, FEED);
 
         processorFilter3 = createProcessorFilter(processor3);
-        createProcessorTask(processorFilter3, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter3, TaskStatus.CREATED, NODE1, FEED);
         createProcessorTask(processorFilter3, TaskStatus.ASSIGNED, NODE1, FEED);
         createProcessorTask(processorFilter3, TaskStatus.PROCESSING, NODE1, FEED);
 

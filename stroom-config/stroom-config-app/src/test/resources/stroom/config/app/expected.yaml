@@ -216,6 +216,7 @@ appConfig:
           prepStmtCacheSize: 25
           prepStmtCacheSqlLimit: 256
       deleteBatchSize: 1000
+      deleteFailureThreshold: 100
       deletePurgeAge: "P7D"
       fileSystemCleanBatchSize: 20
       fileSystemCleanDeleteOut: false

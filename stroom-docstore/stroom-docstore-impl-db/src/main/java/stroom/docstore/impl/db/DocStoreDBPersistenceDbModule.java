@@ -20,6 +20,7 @@ import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 import stroom.docstore.impl.db.DocStoreConfig.DocStoreDbConfig;
 
+import java.util.List;
 import javax.sql.DataSource;
 
 public class DocStoreDBPersistenceDbModule extends AbstractFlyWayDbModule<DocStoreDbConfig, DocStoreDbConnProvider> {
@@ -39,8 +40,8 @@ public class DocStoreDBPersistenceDbModule extends AbstractFlyWayDbModule<DocSto
     }
 
     @Override
-    protected String getFlyWayLocation() {
-        return FLYWAY_LOCATIONS;
+    protected List<String> getFlyWayLocations() {
+        return List.of(FLYWAY_LOCATIONS);
     }
 
     @Override

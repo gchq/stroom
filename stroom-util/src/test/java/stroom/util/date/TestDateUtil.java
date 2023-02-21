@@ -17,30 +17,41 @@
 package stroom.util.date;
 
 
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 
 import java.time.Instant;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestDateUtil {
 
-    @Test
-    void testSimpleZuluTimes() {
-        doTest("2008-11-18T09:47:50.548Z");
-        doTest("2008-11-18T09:47:00.000Z");
-        doTest("2008-11-18T13:47:00.000Z");
-        doTest("2008-01-01T13:47:00.000Z");
-        doTest("2008-08-01T13:47:00.000Z");
+    @TestFactory
+    Stream<DynamicTest> testSimpleZuluTimes() {
+        return Stream.of("2008-11-18T09:47:50.548Z",
+                        "2008-11-18T09:47:00.000Z",
+                        "2008-11-18T13:47:00.000Z",
+                        "2008-01-01T13:47:00.000Z",
+                        "2008-08-01T13:47:00.000Z")
+                .map(dateStr -> DynamicTest.dynamicTest(dateStr, () -> {
+                    doTest(dateStr);
+                }));
     }
 
+
     private void doTest(final String dateString) {
-        final long date = DateUtil.parseNormalDateTimeString(dateString);
+        final long epochMs = DateUtil.parseNormalDateTimeString(dateString);
+        final Instant instant = DateUtil.parseNormalDateTimeStringToInstant(dateString);
+
+        assertThat(epochMs)
+                .isEqualTo(instant.toEpochMilli());
 
         // Convert Back to string
-        assertThat(DateUtil.createNormalDateTimeString(date))
+        assertThat(DateUtil.createNormalDateTimeString(epochMs))
                 .isEqualTo(dateString)
-                .isEqualTo(DateUtil.createNormalDateTimeString(Instant.ofEpochMilli(date)));
+                .isEqualTo(DateUtil.createNormalDateTimeString(Instant.ofEpochMilli(epochMs)));
     }
 
     @Test

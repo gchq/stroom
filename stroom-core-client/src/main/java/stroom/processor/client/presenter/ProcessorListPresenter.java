@@ -45,6 +45,7 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterExpressionUtil;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.ProcessorFilterRow;
+import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorListRowResultPage;
 import stroom.processor.shared.ProcessorResource;
@@ -418,7 +419,12 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
                 String status = null;
                 if (row instanceof ProcessorFilterRow) {
                     final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
-                    status = processorFilterRow.getProcessorFilter().getProcessorFilterTracker().getStatus();
+                    final ProcessorFilterTracker tracker = processorFilterRow
+                            .getProcessorFilter()
+                            .getProcessorFilterTracker();
+                    status = tracker != null
+                            ? tracker.getMessage()
+                            : "";
                 }
                 return status;
             }

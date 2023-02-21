@@ -87,10 +87,11 @@ public interface ProcessorTaskDao {
     /**
      * Release ownership for a set of tasks and abandon processing.
      *
-     * @param idSet The ids of the tasks to release.
+     * @param idSet         The ids of the tasks to release.
+     * @param currentStatus The current status of tasks to release.
      * @return The number of tasks changed.
      */
-    int releaseTasks(Set<Long> idSet);
+    int releaseTasks(Set<Long> idSet, Set<TaskStatus> currentStatus);
 
     ResultPage<ProcessorTask> changeTaskStatus(ExpressionCriteria criteria,
                                                String nodeName,
@@ -130,4 +131,7 @@ public interface ProcessorTaskDao {
      * @return The number of physically deleted tasks.
      */
     int physicallyDeleteOldTasks(Instant deleteThreshold);
+
+
+    List<ExistingCreatedTask> findExistingCreatedTasks(long lastTaskId, int filterId, int limit);
 }
