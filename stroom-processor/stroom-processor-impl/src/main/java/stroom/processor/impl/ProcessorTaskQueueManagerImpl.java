@@ -51,7 +51,6 @@ import stroom.util.sysinfo.SystemInfoResult;
 import java.time.Instant;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -222,17 +221,16 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                     "Only the processing user is allowed to assign tasks");
         }
 
-        List<ProcessorTask> assignedStreamTasks = Collections.emptyList();
+        final List<ProcessorTask> assignedStreamTasks = new ArrayList<>();
         try {
             if (processorConfigProvider.get().isAssignTasks() && count > 0) {
                 // Get local reference to list in case it is swapped out.
                 final List<ProcessorFilter> filters = prioritisedFilters.get();
                 if (filters != null && filters.size() > 0) {
-                    final List<ProcessorTask> toAssign = new ArrayList<>(count);
 
                     // Try and get a bunch of tasks from the queue to assign to the requesting node.
                     int index = 0;
-                    while (toAssign.size() < count && index < filters.size()) {
+                    while (assignedStreamTasks.size() < count && index < filters.size()) {
                         final ProcessorFilter filter = filters.get(index);
 
                         // Get the queue for this filter.
@@ -241,8 +239,8 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                             // Add as many tasks as we can for this filter.
                             ProcessorTask streamTask = queue.poll();
                             while (streamTask != null) {
-                                toAssign.add(streamTask);
-                                if (toAssign.size() < count) {
+                                assignedStreamTasks.add(streamTask);
+                                if (assignedStreamTasks.size() < count) {
                                     streamTask = queue.poll();
                                 } else {
                                     streamTask = null;
@@ -250,15 +248,6 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                             }
                         }
                         index++;
-                    }
-
-                    // Now bulk assign the tasks in one query.
-                    if (toAssign.size() > 0) {
-                        final Set<Long> idSet = toAssign
-                                .stream()
-                                .map(ProcessorTask::getId)
-                                .collect(Collectors.toSet());
-                        assignedStreamTasks = processorTaskDao.assignTasks(idSet, nodeName);
                     }
                 }
             } else {
@@ -308,7 +297,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                         .stream()
                         .map(ProcessorTask::getId)
                         .collect(Collectors.toSet());
-                processorTaskDao.releaseTasks(idSet, Set.of(TaskStatus.ASSIGNED, TaskStatus.PROCESSING));
+                processorTaskDao.releaseTasks(idSet, TaskStatus.PROCESSING);
 
             } catch (final RuntimeException e) {
                 LOGGER.error("abandon() - {}", processorTaskList, e);
@@ -353,7 +342,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
     private void releaseQueuedTask(final Set<Long> taskIdSet) {
         if (taskIdSet.size() > 0) {
             try {
-                processorTaskDao.releaseTasks(taskIdSet, Set.of(TaskStatus.QUEUED));
+                processorTaskDao.releaseTasks(taskIdSet, TaskStatus.QUEUED);
             } catch (final RuntimeException e) {
                 LOGGER.error("release() - {}", taskIdSet, e);
             }

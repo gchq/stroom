@@ -46,7 +46,6 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
         final long now = System.currentTimeMillis();
         dao.getMap().values().forEach(task -> {
             if (TaskStatus.CREATED.equals(task.getStatus()) ||
-                    TaskStatus.ASSIGNED.equals(task.getStatus()) ||
                     TaskStatus.PROCESSING.equals(task.getStatus())) {
 
                 boolean release = false;
@@ -131,12 +130,7 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     }
 
     @Override
-    public List<ProcessorTask> assignTasks(final Set<Long> idSet, final String nodeName) {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public int releaseTasks(final Set<Long> idSet, final Set<TaskStatus> currentStatus) {
+    public int releaseTasks(final Set<Long> idSet, final TaskStatus currentStatus) {
         return 0;
     }
 

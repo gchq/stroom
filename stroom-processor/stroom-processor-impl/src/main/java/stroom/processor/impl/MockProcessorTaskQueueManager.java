@@ -80,7 +80,7 @@ public class MockProcessorTaskQueueManager implements ProcessorTaskQueueManager 
                             streamTask.setMetaId(meta.getId());
                             streamTask.setProcessorFilter(filter);
                             streamTask.setNodeName(nodeName);
-                            streamTask.setStatus(TaskStatus.ASSIGNED);
+                            streamTask.setStatus(TaskStatus.PROCESSING);
 
                             taskList.add(streamTask);
                         }

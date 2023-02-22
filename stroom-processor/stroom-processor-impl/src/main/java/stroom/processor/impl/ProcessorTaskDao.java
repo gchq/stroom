@@ -81,23 +81,13 @@ public interface ProcessorTaskDao {
                                            String thisNodeName);
 
     /**
-     * Assign a set of tasks to a node for processing.
-     *
-     * @param idSet        The ids of the tasks to assign.
-     * @param thisNodeName The node name to assign the tasks to.
-     * @return A list of tasks to queue.
-     */
-    List<ProcessorTask> assignTasks(Set<Long> idSet,
-                                    String nodeName);
-
-    /**
      * Release ownership for a set of tasks and abandon processing.
      *
      * @param idSet         The ids of the tasks to release.
      * @param currentStatus The current status of tasks to release.
      * @return The number of tasks changed.
      */
-    int releaseTasks(Set<Long> idSet, Set<TaskStatus> currentStatus);
+    int releaseTasks(Set<Long> idSet, TaskStatus currentStatus);
 
     ProcessorTask changeTaskStatus(ProcessorTask processorTask,
                                    String nodeName,

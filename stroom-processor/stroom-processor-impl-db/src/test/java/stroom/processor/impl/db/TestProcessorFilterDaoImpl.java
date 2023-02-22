@@ -38,12 +38,12 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
 
         processorFilter1 = createProcessorFilter(processor1);
         createProcessorTask(processorFilter1, TaskStatus.CREATED, NODE1, FEED);
-        createProcessorTask(processorFilter1, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(processorFilter1, TaskStatus.QUEUED, NODE1, FEED);
         createProcessorTask(processorFilter1, TaskStatus.PROCESSING, NODE1, FEED);
 
         processorFilter2 = createProcessorFilter(processor2);
         createProcessorTask(processorFilter2, TaskStatus.CREATED, NODE1, FEED);
-        createProcessorTask(processorFilter2, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(processorFilter2, TaskStatus.QUEUED, NODE1, FEED);
         createProcessorTask(processorFilter2, TaskStatus.PROCESSING, NODE1, FEED);
 
         assertThat(getProcessorCount(null))
@@ -96,7 +96,7 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
         processorFilterTracker1.setStatus(ProcessorFilterTrackerStatus.COMPLETE);
         processorFilterTrackerDao.update(processorFilterTracker1);
         createProcessorTask(processorFilter1, TaskStatus.CREATED, NODE1, FEED);
-        createProcessorTask(processorFilter1, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(processorFilter1, TaskStatus.QUEUED, NODE1, FEED);
         createProcessorTask(processorFilter1, TaskStatus.PROCESSING, NODE1, FEED);
 
         // This one is not COMPLETE but has tasks so won't get logically deleted
@@ -106,7 +106,7 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
         processorFilterTracker2.setStatus(ProcessorFilterTrackerStatus.ERROR);
         processorFilterTrackerDao.update(processorFilterTracker2);
         createProcessorTask(processorFilter2, TaskStatus.CREATED, NODE1, FEED);
-        createProcessorTask(processorFilter2, TaskStatus.ASSIGNED, NODE1, FEED);
+        createProcessorTask(processorFilter2, TaskStatus.QUEUED, NODE1, FEED);
         createProcessorTask(processorFilter2, TaskStatus.PROCESSING, NODE1, FEED);
 
         // This one is COMPLETE and has no tasks so will get logically deleted
