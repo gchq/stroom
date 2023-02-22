@@ -12,6 +12,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0.23-beta.5] - 2023-02-22
+
+* Issue **#3276** : Remove ASSIGNED task status and guard for task creation deadlocks.
+
+
 ## [v7.0.23-beta.4] - 2023-02-21
 
 * Issue **#3274** : Improve progress monitoring.
@@ -4805,7 +4810,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.23-beta.4...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.23-beta.5...HEAD
+[v7.0.23-beta.5]: https://github.com/gchq/stroom/compare/v7.0.23-beta.4...v7.0.23-beta.5
 [v7.0.23-beta.4]: https://github.com/gchq/stroom/compare/v7.0.23-beta.3...v7.0.23-beta.4
 [v7.0.23-beta.3]: https://github.com/gchq/stroom/compare/v7.0.23-beta.2...v7.0.23-beta.3
 [v7.0.23-beta.2]: https://github.com/gchq/stroom/compare/v7.0.23-beta.1...v7.0.23-beta.2
