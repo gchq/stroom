@@ -30,7 +30,6 @@ import java.util.Base64;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
@@ -194,13 +193,14 @@ final class OpenIdPostBuilder {
 
     public static String httpPostToString(final HttpPost httpPost) {
 
-        final String headers = Arrays.stream(httpPost.getAllHeaders())
-                .map(Object::toString)
-                .collect(Collectors.joining("\n"));
+        final String padding = "  ";
+        final String headers = LogUtil.toPaddedMultiLine(padding, Arrays.asList(httpPost.getAllHeaders()));
 
         String content = getContent(httpPost.getEntity());
         if (content.contains("&")) {
-            content = String.join("\n", content.split("&"));
+            content = LogUtil.toPaddedMultiLine(padding, Arrays.asList(content.split("&")));
+        } else {
+            content = padding + content;
         }
 
         return LogUtil.message("""

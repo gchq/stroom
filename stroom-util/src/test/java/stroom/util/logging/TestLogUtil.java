@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -103,5 +104,12 @@ class TestLogUtil {
 
         assertThat(LogUtil.withPercentage(null, (int) 100))
                 .isNull();
+    }
+
+    @Test
+    void test() {
+        final String output = LogUtil.toPaddedMultiLine("  ", List.of("one", "two", "three"), String::toUpperCase);
+        assertThat(output)
+                .isEqualTo("  ONE\n" + "  TWO\n" + "  THREE");
     }
 }

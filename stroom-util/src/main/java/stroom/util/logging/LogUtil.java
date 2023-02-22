@@ -1,12 +1,17 @@
 package stroom.util.logging;
 
+import stroom.util.NullSafe;
 import stroom.util.concurrent.DurationAdder;
 
+import com.google.common.base.Function;
 import com.google.common.base.Strings;
 import org.slf4j.helpers.MessageFormatter;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collection;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public final class LogUtil {
 
@@ -178,6 +183,26 @@ public final class LogUtil {
      */
     public static <T> String withPercentage(final T value, final T total) {
         return withPercentage(value, value, total);
+    }
+
+    public static <T> String toPaddedMultiLine(final String padding,
+                                               final Collection<T> items) {
+        return toPaddedMultiLine(padding, items, Objects::toString);
+    }
+
+    public static <T> String toPaddedMultiLine(final String padding,
+                                        final Collection<T> items,
+                                        final Function<T, String> itemMapper) {
+        if (items == null || items.isEmpty()) {
+            return "";
+        } else {
+            return items.stream()
+                    .filter(Objects::nonNull)
+                    .map(itemMapper)
+                    .filter(str1 -> !NullSafe.isBlankString(str1))
+                    .map(str -> Objects.requireNonNullElse(padding, "") + str)
+                    .collect(Collectors.joining("\n"));
+        }
     }
 
     private static <T> String withPercentage(final Object originalValue,
