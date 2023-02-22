@@ -12,6 +12,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.1-beta.23-test-open-id-3] - 2023-02-22
+
+* Issue **#3112** : Fix code format to pass build.
+
+
 ## [v7.1-beta.23-test-open-id-2] - 2023-02-22
 
 * Issue **#3112** : Add property `clientCredentialsScopes` and rename `requestScope` to `requestScopes`, changing it to a list of strings.
@@ -4567,7 +4572,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id-2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id-3...HEAD
+[v7.1-beta.23-test-open-id-3]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id-2...v7.1-beta.23-test-open-id-3
 [v7.1-beta.23-test-open-id-2]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id...v7.1-beta.23-test-open-id-2
 [v7.1-beta.23-test-open-id]: https://github.com/gchq/stroom/compare/v7.1-beta.23...v7.1-beta.23-test-open-id
 [v7.1-beta.23]: https://github.com/gchq/stroom/compare/v7.1-beta.22...v7.1-beta.23
