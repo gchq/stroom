@@ -45,9 +45,14 @@ public class TestAppConfigValidator extends AbstractCoreIntegrationTest {
         // Add a raw type that is not in the set of types so should fail validation
         rawTypes.add("foo");
         MetaServiceConfig metaServiceConfig = new MetaServiceConfig(
-                null, null, null, null, null,
+                null,
+                null,
+                null,
+                null,
+                null,
                 types,
-                rawTypes);
+                rawTypes,
+                0);
 
         final Result<AbstractConfig> result = appConfigValidator.validate(metaServiceConfig);
         result.handleViolations((violation, severity) -> LOGGER.error("Got {} violation {}",

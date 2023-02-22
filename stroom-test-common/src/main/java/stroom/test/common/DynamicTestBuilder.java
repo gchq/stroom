@@ -460,7 +460,12 @@ class DynamicTestBuilder {
                         .append(tupleStr)
                         .append(")");
             } else {
-                final String valStr = value.toString();
+                String valStr = value.toString();
+                // No point outputting the lambda reference as it doesn't help
+                if (valStr.contains("$$Lambda")) {
+                    valStr = "lambda";
+                }
+
                 stringBuilder.append("'")
                         .append(valStr)
                         .append("'");

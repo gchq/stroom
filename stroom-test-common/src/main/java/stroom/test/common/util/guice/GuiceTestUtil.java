@@ -52,6 +52,7 @@ public class GuiceTestUtil {
     private GuiceTestUtil() {
     }
 
+
     public static String dumpGuiceModuleHierarchy(final com.google.inject.Module... modules) {
         final Map<String, ModuleInfo> allModuleInfoMap = buildModuleInfoMap(modules);
 

@@ -28,6 +28,7 @@ import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.impl.MetaDao;
+import stroom.meta.impl.MetaServiceConfig;
 import stroom.meta.impl.db.jooq.tables.MetaFeed;
 import stroom.meta.impl.db.jooq.tables.MetaProcessor;
 import stroom.meta.impl.db.jooq.tables.MetaType;
@@ -47,6 +48,7 @@ import stroom.query.common.v2.DateExpressionParser;
 import stroom.util.NullSafe;
 import stroom.util.Period;
 import stroom.util.collections.BatchingIterator;
+import stroom.util.logging.DurationTimer;
 import stroom.util.logging.DurationTimer.TimedResult;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -65,6 +67,7 @@ import org.jooq.Condition;
 import org.jooq.Cursor;
 import org.jooq.DSLContext;
 import org.jooq.Field;
+import org.jooq.Name;
 import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Record1;
@@ -98,7 +101,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -166,6 +168,7 @@ public class MetaDaoImpl implements MetaDao, Clearable {
     private final MetaProcessorDaoImpl metaProcessorDao;
     private final MetaKeyDaoImpl metaKeyDao;
     private final Provider<DataRetentionConfig> dataRetentionConfigProvider;
+    private final Provider<MetaServiceConfig> metaServiceConfigProvider;
     private final DocRefInfoService docRefInfoService;
     private final ExpressionMapper expressionMapper;
     private final MetaExpressionMapper metaExpressionMapper;
@@ -183,6 +186,7 @@ public class MetaDaoImpl implements MetaDao, Clearable {
                 final MetaProcessorDaoImpl metaProcessorDao,
                 final MetaKeyDaoImpl metaKeyDao,
                 final Provider<DataRetentionConfig> dataRetentionConfigProvider,
+                final Provider<MetaServiceConfig> metaServiceConfigProvider,
                 final ExpressionMapperFactory expressionMapperFactory,
                 final DocRefInfoService docRefInfoService,
                 final TermHandlerFactory termHandlerFactory) {
@@ -192,6 +196,7 @@ public class MetaDaoImpl implements MetaDao, Clearable {
         this.metaProcessorDao = metaProcessorDao;
         this.metaKeyDao = metaKeyDao;
         this.dataRetentionConfigProvider = dataRetentionConfigProvider;
+        this.metaServiceConfigProvider = metaServiceConfigProvider;
         this.docRefInfoService = docRefInfoService;
 
         // Extended meta fields.
@@ -519,71 +524,251 @@ public class MetaDaoImpl implements MetaDao, Clearable {
     public int updateStatus(final FindMetaCriteria criteria,
                             final Status currentStatus,
                             final Status newStatus,
-                            final long statusTime) {
+                            final long statusTime,
+                            final boolean usesUniqueIds) {
+
         Objects.requireNonNull(newStatus, "New status is null");
         if (Objects.equals(newStatus, currentStatus)) {
             // The status is not being updated.
             throw new RuntimeException("New and current status are equal");
         }
 
-        final byte newStatusId = MetaStatusId.getPrimitiveValue(newStatus);
+        Objects.requireNonNull(criteria);
+        final ExpressionOperator expression = Objects.requireNonNull(criteria.getExpression());
 
-        final Condition criteriaCondition = expressionMapper.apply(criteria.getExpression());
-
-        // Add a condition if we should check current status.
-        final List<Condition> conditions;
-        if (currentStatus != null) {
-            final byte currentStatusId = MetaStatusId.getPrimitiveValue(currentStatus);
-            conditions = Stream.of(criteriaCondition, meta.STATUS.eq(currentStatusId))
-                    .collect(Collectors.toList());
+        if (usesUniqueIds) {
+            return updateStatusWithId(expression, currentStatus, newStatus, statusTime);
         } else {
-            conditions = Stream.of(criteriaCondition, meta.STATUS.ne(newStatusId))
-                    .collect(Collectors.toList());
+            return updateStatusWithTempTable(expression, currentStatus, newStatus, statusTime);
         }
+    }
 
-        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(),
-                new HashSet<>());
+    private int updateStatusWithId(final ExpressionOperator expression,
+                                   final Status currentStatus,
+                                   final Status newStatus,
+                                   final long statusTime) {
 
-        final int updateCount;
-        final boolean containsPipelineCondition = NullSafe.test(
-                criteria.getExpression(),
-                expr ->
-                        expr.containsField(MetaFields.PIPELINE.getName(), MetaFields.PIPELINE_NAME.getName()));
+        final byte newStatusId = MetaStatusId.getPrimitiveValue(newStatus);
+        final Table<?> metaWithJoins = buildMeteWithOptionalJoins(expression);
 
-        // TODO: 20/10/2022 You can do joins in the update to avoid the sub-select.
-        //  See logicalDelete() above.
-        if (usedValKeys.isEmpty() && !containsPipelineCondition) {
-            updateCount = JooqUtil.contextResult(metaDbConnProvider, context ->
-                    context
-                            .update(meta)
-                            .set(meta.STATUS, newStatusId)
-                            .set(meta.STATUS_TIME, statusTime)
-                            .where(conditions)
-                            .execute());
-        } else {
-            final Select ids = metaExpressionMapper.addJoins(
-                            DSL
-                                    .selectDistinct(meta.ID)
-                                    .from(meta)
-                                    .leftOuterJoin(metaProcessor)
-                                    .on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
-                            meta.ID,
-                            usedValKeys)
+        final Condition conditions = createUpdateStatusCondition(expression, currentStatus, newStatus);
+
+        final DurationTimer durationTimer = DurationTimer.start();
+        final Integer updateCount = JooqUtil.contextResult(metaDbConnProvider, context -> {
+            // If expression is not targeting rows by ID then this is likely to create gap or next key locks
+            // which will block ingest/processing.
+            final var update = context.update(metaWithJoins)
+                    .set(meta.STATUS, newStatusId)
+                    .set(meta.STATUS_TIME, statusTime)
                     .where(conditions);
 
-            Condition extendedAttrCond = meta.ID.in(ids);
-            updateCount = JooqUtil.contextResult(metaDbConnProvider, context ->
-                    context
-                            .update(meta)
-                            .set(meta.STATUS, newStatusId)
-                            .set(meta.STATUS_TIME, statusTime)
-                            .where(extendedAttrCond)
-                            .execute());
-        }
+            LOGGER.trace("Update SQL:\n{}", update);
+
+            return update.execute();
+        });
+
+        LOGGER.debug("Set the status of {} meta rows to {} in {}. Expression: {}",
+                updateCount, newStatus, durationTimer, expression);
+
         return updateCount;
     }
 
-    private Condition getFilterCriteriaCondition(final FindDataRetentionImpactCriteria criteria) {
+    private int updateStatusWithTempTable(final ExpressionOperator expression,
+                                          final Status currentStatus,
+                                          final Status newStatus,
+                                          final long statusTime) {
+
+        final byte newStatusId = MetaStatusId.getPrimitiveValue(newStatus);
+        final int batchSize = metaServiceConfigProvider.get().getMetaStatusUpdateBatchSize();
+
+        final Table<?> metaWithJoins = buildMeteWithOptionalJoins(expression);
+        final Condition conditions = createUpdateStatusCondition(expression, currentStatus, newStatus);
+        final Condition statusCondition = getStatusCondition(currentStatus, newStatus);
+
+        final Select<Record1<Long>> select;
+        if (batchSize <= 0) {
+            // 0 == one big batch
+            select = DSL.selectDistinct(meta.ID)
+                    .from(metaWithJoins)
+                    .where(conditions);
+        } else {
+            select = DSL.selectDistinct(meta.ID)
+                    .from(metaWithJoins)
+                    .where(conditions)
+                    .limit(batchSize);
+        }
+
+        final Name metaIdsTempTblName = DSL.name("meta_ids_temp");
+        final Table<Record> metaIdsTempTbl = DSL.table(metaIdsTempTblName);
+        final Name metaIdColName = DSL.name("meta_ids_temp", "id");
+        final Field<Long> metaIdColField = DSL.field(metaIdColName, Long.class);
+
+        final AtomicInteger insertCount = new AtomicInteger();
+        final AtomicInteger totalUpdateCount = new AtomicInteger();
+        final DurationTimer durationTimer = DurationTimer.start();
+
+        // We do this multi-stage deletion to try and avoid next-key or gap locks that end up locking
+        // other meta rows and stopping processing. This approach means we update using ID to uniquely
+        // access rows.
+        do {
+            JooqUtil.transaction(metaDbConnProvider, context -> {
+                try {
+                    // Temp table of all the IDs we want to update
+                    // Need to do it as a create then insert so we get the count
+                    context.createTemporaryTable(metaIdsTempTblName)
+                            .column(metaIdColField)
+                            .execute();
+
+                    final var insert = context.insertInto(metaIdsTempTbl)
+                            .select(select);
+                    LOGGER.trace("Insert SQL:\n{}", insert);
+
+                    insertCount.set(insert.execute());
+                    LOGGER.debug("Inserted {} meta ids into temporary table", insertCount);
+
+                    if (insertCount.get() > 0) {
+                        final var update = context
+                                .update(meta.innerJoin(metaIdsTempTbl)
+                                        .on(meta.ID.eq(metaIdColField)))
+                                .set(meta.STATUS, newStatusId)
+                                .set(meta.STATUS_TIME, statusTime)
+                                .where(statusCondition); // Re-use the status condition in case anything changed
+                        LOGGER.trace("Update SQL:\n{}", update);
+
+                        final int updateCount = update.execute();
+                        //                    final int updateCount = 0;
+                        totalUpdateCount.addAndGet(updateCount);
+
+                        LOGGER.debug("Updated {} meta rows", updateCount);
+
+                        // Remove all the temp rows
+                        context.deleteFrom(metaIdsTempTbl)
+                                .execute();
+                    }
+                } finally {
+                    // Temp table lives for the life of the session so if we go round again
+                    // or if the session is returned to the pool, make sure it is gone.
+                    context.dropTableIfExists(metaIdsTempTblName)
+                            .execute();
+                }
+            });
+        } while (batchSize > 0 && insertCount.get() >= batchSize);
+
+        LOGGER.debug("Set the status of {} meta rows to {} using batchSize {} in {}. Expression: {}",
+                totalUpdateCount, newStatus, batchSize, durationTimer, expression);
+
+        return totalUpdateCount.get();
+    }
+
+    private Condition getStatusCondition(
+            final Status currentStatus,
+            final Status newStatus) {
+
+        if (currentStatus != null) {
+            final byte currentStatusId = MetaStatusId.getPrimitiveValue(currentStatus);
+            return meta.STATUS.eq(currentStatusId);
+        } else {
+            final byte newStatusId = MetaStatusId.getPrimitiveValue(newStatus);
+            return meta.STATUS.ne(newStatusId);
+        }
+    }
+
+    private Table<?> buildMeteWithOptionalJoins(final ExpressionOperator expression) {
+        Table<?> table = meta;
+
+        // Add a condition if we should check current status.
+        final boolean containsPipelineCondition = NullSafe.test(
+                expression,
+                expr ->
+                        expr.containsField(MetaFields.PIPELINE.getName(), MetaFields.PIPELINE_NAME.getName()));
+
+        if (containsPipelineCondition) {
+            // Only add in the join to meta_processor if we need it
+            table = table.leftOuterJoin(metaProcessor)
+                    .on(meta.PROCESSOR_ID.eq(metaProcessor.ID));
+        }
+
+        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(expression, new HashSet<>());
+        if (NullSafe.hasItems(usedValKeys)) {
+            // Add 1-* joins to meta_val if we need them.
+            table = metaExpressionMapper.addJoins(table, meta.ID, usedValKeys);
+        }
+
+        return table;
+    }
+
+    private Condition createUpdateStatusCondition(final ExpressionOperator expression,
+                                                  final Status currentStatus,
+                                                  final Status newStatus) {
+
+        Objects.requireNonNull(newStatus, "New status is null");
+        if (Objects.equals(newStatus, currentStatus)) {
+            // The status is not being updated.
+            throw new RuntimeException("New and current status are equal");
+        }
+
+        final Condition criteriaCondition = expressionMapper.apply(expression);
+        final Condition statusCondition = getStatusCondition(currentStatus, newStatus);
+        return JooqUtil.andConditions(criteriaCondition, statusCondition);
+    }
+
+//    private Select<Record1<Long>> buildUpdateStatusSelect(final ExpressionOperator expression,
+//                                                          final Status currentStatus,
+//                                                          final Status newStatus,
+//                                                          final int batchSize) {
+//
+//        Objects.requireNonNull(newStatus, "New status is null");
+//        if (Objects.equals(newStatus, currentStatus)) {
+//            // The status is not being updated.
+//            throw new RuntimeException("New and current status are equal");
+//        }
+//
+//        final Condition criteriaCondition = expressionMapper.apply(expression);
+//        final Condition statusCondition = getStatusCondition(currentStatus, newStatus);
+//        final Condition combinedConditions = JooqUtil.andConditions(criteriaCondition, statusCondition);
+//
+//        // Add a condition if we should check current status.
+//        final boolean containsPipelineCondition = NullSafe.test(
+//                expression,
+//                expr ->
+//                        expr.containsField(MetaFields.PIPELINE.getName(), MetaFields.PIPELINE_NAME.getName()));
+//
+//        Table<?> fromPart = meta;
+//
+//        if (containsPipelineCondition) {
+//            // Only add in the join to meta_processor if we need it
+//            fromPart = fromPart.leftOuterJoin(metaProcessor)
+//                    .on(meta.PROCESSOR_ID.eq(metaProcessor.ID));
+//        }
+//
+//        // TODO: 21/02/2023 See https://github.com/gchq/stroom/issues/3253 for changing meta_val
+//        //  to be a single row to avoid all these horrible joins
+//        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(expression, new HashSet<>());
+//        if (NullSafe.hasItems(usedValKeys)) {
+//            // Add 1-* joins to meta_val if we need them.
+//            fromPart = metaExpressionMapper.addJoins(fromPart, meta.ID, usedValKeys);
+//        }
+//
+//        // As we are limiting, it is key that the conditions ensure we don't pick up
+//        // rows we have updated, i.e. the condition on status being == or !=
+//        final Select<Record1<Long>> select;
+//        if (batchSize <= 0) {
+//            // 0 == one big batch
+//            select = DSL.selectDistinct(meta.ID)
+//                    .from(fromPart)
+//                    .where(combinedConditions);
+//        } else {
+//            select = DSL.selectDistinct(meta.ID)
+//                    .from(fromPart)
+//                    .where(combinedConditions)
+//                    .limit(batchSize);
+//        }
+//
+//        LOGGER.trace("SQL:\n{}", select);
+//        return select;
+//    }
+
+    private Condition getFilterCriteriaCondition(final ExpressionCriteria criteria) {
         final Condition filterCondition;
         if (criteria != null
                 && criteria.getExpression() != null
@@ -615,7 +800,7 @@ public class MetaDaoImpl implements MetaDao, Clearable {
             CaseConditionStep<Integer> ruleNoCaseConditionStep = null;
             final Map<Integer, DataRetentionRule> numberToRuleMap = new HashMap<>();
             // Order is critical here as we are building a case statement
-            // Highest priority rules first, i.e. largest rule number
+            // The highest priority rules first, i.e. the largest rule number
             final Map<Integer, Condition> ruleNoToConditionMap = activeRules.stream()
                     .collect(Collectors.toMap(
                             DataRetentionRule::getRuleNumber,
@@ -806,7 +991,8 @@ public class MetaDaoImpl implements MetaDao, Clearable {
             final byte statusIdDeleted = MetaStatusId.getPrimitiveValue(Status.DELETED);
 
             final List<Condition> baseConditions = createRetentionDeleteConditions(ruleActions);
-            final boolean rulesUsePipelineField = ruleActionsContainField(MetaFields.PIPELINE.getName(), ruleActions)
+            final boolean rulesUsePipelineField = ruleActionsContainField(MetaFields.PIPELINE.getName(),
+                    ruleActions)
                     || ruleActionsContainField(MetaFields.PIPELINE_NAME.getName(), ruleActions);
 
             final List<Condition> conditions = new ArrayList<>(baseConditions);
@@ -1063,7 +1249,8 @@ public class MetaDaoImpl implements MetaDao, Clearable {
     public int count(final FindMetaCriteria criteria) {
 
         final Collection<Condition> conditions = createCondition(criteria);
-        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(), new HashSet<>());
+        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(),
+                new HashSet<>());
 
         final Object result = JooqUtil.contextResult(metaDbConnProvider, context ->
                         metaExpressionMapper.addJoins(
@@ -1391,7 +1578,8 @@ public class MetaDaoImpl implements MetaDao, Clearable {
     public SelectionSummary getSelectionSummary(final FindMetaCriteria criteria) {
         final PageRequest pageRequest = criteria.getPageRequest();
         final Collection<Condition> conditions = createCondition(criteria);
-        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(), new HashSet<>());
+        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(),
+                new HashSet<>());
 
         int offset = JooqUtil.getOffset(pageRequest);
         int numberOfRows = JooqUtil.getLimit(pageRequest, false);
@@ -1442,7 +1630,8 @@ public class MetaDaoImpl implements MetaDao, Clearable {
         final PageRequest pageRequest = criteria.getPageRequest();
         final Collection<Condition> conditions = createCondition(criteria);
 
-        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(), new HashSet<>());
+        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(),
+                new HashSet<>());
 
         int offset = JooqUtil.getOffset(pageRequest);
         int numberOfRows = JooqUtil.getLimit(pageRequest, false);
@@ -1564,7 +1753,8 @@ public class MetaDaoImpl implements MetaDao, Clearable {
     @Override
     public List<String> getProcessorUuidList(final FindMetaCriteria criteria) {
         final Collection<Condition> conditions = createCondition(criteria);
-        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(), new HashSet<>());
+        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(),
+                new HashSet<>());
 
         return JooqUtil.contextResult(metaDbConnProvider,
                         context -> {

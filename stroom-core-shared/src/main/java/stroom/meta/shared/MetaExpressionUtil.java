@@ -6,6 +6,7 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -20,10 +21,18 @@ public final class MetaExpressionUtil {
     }
 
     public static ExpressionOperator createDataIdSetExpression(final Set<Long> idSet) {
-        final String delimitedList = idSet.stream().map(String::valueOf).collect(Collectors.joining(","));
-        return ExpressionOperator.builder().op(Op.AND)
-                .addTerm(MetaFields.ID.getName(), Condition.IN, delimitedList)
-                .build();
+        Objects.requireNonNull(idSet);
+        if (idSet.size() == 1) {
+            // No point using an IN list for one ID
+            return createDataIdExpression(idSet.iterator().next());
+        } else {
+            final String delimitedList = idSet.stream()
+                    .map(String::valueOf)
+                    .collect(Collectors.joining(","));
+            return ExpressionOperator.builder().op(Op.AND)
+                    .addTerm(MetaFields.ID.getName(), Condition.IN, delimitedList)
+                    .build();
+        }
     }
 
     public static ExpressionOperator createDataIdExpression(final long id) {

@@ -65,7 +65,14 @@ public interface MetaDao {
      */
     SelectionSummary getReprocessSelectionSummary(FindMetaCriteria criteria);
 
-    int updateStatus(FindMetaCriteria criteria, Status currentStatus, Status newStatus, long statusTime);
+    /**
+     * A bulk update of status that uses a temporary table to avoid locks.
+     */
+    int updateStatus(FindMetaCriteria criteria,
+                     Status currentStatus,
+                     Status newStatus,
+                     long statusTime,
+                     boolean usesUniqueIds);
 
     /**
      * Physically delete the records from the database.
