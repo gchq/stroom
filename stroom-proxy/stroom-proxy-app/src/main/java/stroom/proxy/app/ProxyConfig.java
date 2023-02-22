@@ -14,7 +14,7 @@ import stroom.proxy.repo.ProxyDbConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.security.openid.api.IdpType;
-import stroom.security.openid.api.OpenIdConfig;
+import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.util.NullSafe;
 import stroom.util.config.annotations.RequiresProxyRestart;
 import stroom.util.shared.AbstractConfig;
@@ -310,7 +310,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                     proxySecurityConfig,
                     ProxySecurityConfig::getAuthenticationConfig,
                     ProxyAuthenticationConfig::getOpenIdConfig,
-                    OpenIdConfig::getIdentityProviderType,
+                    AbstractOpenIdConfig::getIdentityProviderType,
                     IdpType.EXTERNAL_IDP::equals);
         } else {
             return true;

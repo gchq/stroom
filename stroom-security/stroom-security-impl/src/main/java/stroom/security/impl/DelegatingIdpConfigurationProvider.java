@@ -4,10 +4,11 @@ import stroom.config.common.UriFactory;
 import stroom.security.common.impl.ExternalIdpConfigurationProvider;
 import stroom.security.common.impl.IdpConfigurationProvider;
 import stroom.security.openid.api.IdpType;
-import stroom.security.openid.api.OpenIdConfig;
+import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.OpenIdConfigurationResponse;
 import stroom.util.NullSafe;
 
+import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -20,7 +21,7 @@ public class DelegatingIdpConfigurationProvider implements IdpConfigurationProvi
     private final InternalIdpConfigurationProvider internalIdpConfigurationProvider;
     private final ExternalIdpConfigurationProvider externalIdpConfigurationProvider;
     private final StroomTestIdpConfigurationProvider stroomTestIdpConfigurationProvider;
-    private final Provider<OpenIdConfig> openIdConfigProvider;
+    private final Provider<AbstractOpenIdConfig> openIdConfigProvider;
     private final UriFactory uriFactory;
 
     @Inject
@@ -28,7 +29,7 @@ public class DelegatingIdpConfigurationProvider implements IdpConfigurationProvi
             final InternalIdpConfigurationProvider internalIdpConfigurationProvider,
             final ExternalIdpConfigurationProvider externalIdpConfigurationProvider,
             final StroomTestIdpConfigurationProvider stroomTestIdpConfigurationProvider,
-            final Provider<OpenIdConfig> openIdConfigProvider,
+            final Provider<AbstractOpenIdConfig> openIdConfigProvider,
             final UriFactory uriFactory) {
 
         this.internalIdpConfigurationProvider = internalIdpConfigurationProvider;
@@ -100,8 +101,13 @@ public class DelegatingIdpConfigurationProvider implements IdpConfigurationProvi
     }
 
     @Override
-    public String getRequestScope() {
-        return getDelegate().getRequestScope();
+    public List<String> getRequestScopes() {
+        return getDelegate().getRequestScopes();
+    }
+
+    @Override
+    public List<String> getClientCredentialsScopes() {
+        return getDelegate().getRequestScopes();
     }
 
     @Override

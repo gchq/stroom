@@ -9,13 +9,14 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.dropwizard.validation.ValidationMethod;
 
+import java.util.List;
 import java.util.Objects;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
 
 @JsonPropertyOrder(alphabetic = true)
-public abstract class OpenIdConfig
+public abstract class AbstractOpenIdConfig
         extends AbstractConfig
         implements OpenIdConfiguration {
 
@@ -93,9 +94,17 @@ public abstract class OpenIdConfig
     private final String clientSecret;
 
     /**
-     * If a custom auth flow request scope is required then this should be set.
+     * If custom auth flow request scopes are required then this should be set to replace the defaults
+     * of 'openid' and 'email'.
      */
-    private final String requestScope;
+    private final List<String> requestScopes;
+
+    /**
+     * If custom scopes are required for client_credentials requests then this should be set to replace the default
+     * of 'openid'.
+     */
+    private final List<String> clientCredentialsScopes;
+
 
     /**
      * Whether to validate the audience in JWT token, when the audience is expected to be the clientId.
@@ -103,7 +112,7 @@ public abstract class OpenIdConfig
     private final boolean validateAudience;
 
 
-    public OpenIdConfig() {
+    public AbstractOpenIdConfig() {
         identityProviderType = getDefaultIdpType();
         openIdConfigurationEndpoint = null;
         issuer = null;
@@ -115,7 +124,8 @@ public abstract class OpenIdConfig
         formTokenRequest = true;
         clientSecret = null;
         clientId = null;
-        requestScope = null;
+        requestScopes = OpenId.DEFAULT_REQUEST_SCOPES;
+        clientCredentialsScopes = OpenId.DEFAULT_CLIENT_CREDENTIALS_SCOPES;
         validateAudience = true;
     }
 
@@ -123,19 +133,20 @@ public abstract class OpenIdConfig
     public abstract IdpType getDefaultIdpType();
 
     @JsonCreator
-    public OpenIdConfig(@JsonProperty(PROP_NAME_IDP_TYPE) final IdpType identityProviderType,
-                        @JsonProperty(PROP_NAME_CONFIGURATION_ENDPOINT) final String openIdConfigurationEndpoint,
-                        @JsonProperty("issuer") final String issuer,
-                        @JsonProperty("authEndpoint") final String authEndpoint,
-                        @JsonProperty("tokenEndpoint") final String tokenEndpoint,
-                        @JsonProperty("jwksUri") final String jwksUri,
-                        @JsonProperty("logoutEndpoint") final String logoutEndpoint,
-                        @JsonProperty("logoutRedirectParamName") final String logoutRedirectParamName,
-                        @JsonProperty("formTokenRequest") final boolean formTokenRequest,
-                        @JsonProperty("clientId") final String clientId,
-                        @JsonProperty("clientSecret") final String clientSecret,
-                        @JsonProperty("requestScope") final String requestScope,
-                        @JsonProperty("validateAudience") final boolean validateAudience) {
+    public AbstractOpenIdConfig(@JsonProperty(PROP_NAME_IDP_TYPE) final IdpType identityProviderType,
+                                @JsonProperty(PROP_NAME_CONFIGURATION_ENDPOINT) final String openIdConfigurationEndpoint,
+                                @JsonProperty("issuer") final String issuer,
+                                @JsonProperty("authEndpoint") final String authEndpoint,
+                                @JsonProperty("tokenEndpoint") final String tokenEndpoint,
+                                @JsonProperty("jwksUri") final String jwksUri,
+                                @JsonProperty("logoutEndpoint") final String logoutEndpoint,
+                                @JsonProperty("logoutRedirectParamName") final String logoutRedirectParamName,
+                                @JsonProperty("formTokenRequest") final boolean formTokenRequest,
+                                @JsonProperty("clientId") final String clientId,
+                                @JsonProperty("clientSecret") final String clientSecret,
+                                @JsonProperty("requestScopes") final List<String> requestScopes,
+                                @JsonProperty("clientCredentialsScopes") final List<String> clientCredentialsScopes,
+                                @JsonProperty("validateAudience") final boolean validateAudience) {
         this.identityProviderType = identityProviderType;
         this.openIdConfigurationEndpoint = openIdConfigurationEndpoint;
         this.issuer = issuer;
@@ -147,7 +158,8 @@ public abstract class OpenIdConfig
         this.formTokenRequest = formTokenRequest;
         this.clientId = clientId;
         this.clientSecret = clientSecret;
-        this.requestScope = requestScope;
+        this.requestScopes = requestScopes;
+        this.clientCredentialsScopes = clientCredentialsScopes;
         this.validateAudience = validateAudience;
     }
 
@@ -248,9 +260,19 @@ public abstract class OpenIdConfig
 
     @Override
     @JsonProperty
-    @JsonPropertyDescription("If a custom auth flow request scope is required then this should be set.")
-    public String getRequestScope() {
-        return requestScope;
+    @JsonPropertyDescription("If custom auth flow request scopes are required then this should be set to replace " +
+            "the defaults of 'openid' and 'email'.")
+    public List<String> getRequestScopes() {
+        return requestScopes;
+    }
+
+    @Override
+    @JsonProperty
+    @JsonPropertyDescription("If custom scopes are required for client_credentials requests then this should be " +
+            "set to replace the default of 'openid'. E.g. for Azure AD you will likely need to set this to 'openid' " +
+            "and '<your-app-id-uri>/.default>'.")
+    public List<String> getClientCredentialsScopes() {
+        return clientCredentialsScopes;
     }
 
     @Override
@@ -284,7 +306,7 @@ public abstract class OpenIdConfig
                 ", formTokenRequest=" + formTokenRequest +
                 ", clientId='" + clientId + '\'' +
                 ", clientSecret='" + clientSecret + '\'' +
-                ", requestScope='" + requestScope + '\'' +
+                ", requestScopes='" + requestScopes + '\'' +
                 ", validateAudience=" + validateAudience +
                 '}';
     }
@@ -297,7 +319,7 @@ public abstract class OpenIdConfig
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final OpenIdConfig that = (OpenIdConfig) o;
+        final AbstractOpenIdConfig that = (AbstractOpenIdConfig) o;
         return formTokenRequest == that.formTokenRequest
                 && validateAudience == that.validateAudience
                 && identityProviderType == that.identityProviderType
@@ -310,7 +332,7 @@ public abstract class OpenIdConfig
                 && Objects.equals(logoutRedirectParamName, that.logoutRedirectParamName)
                 && Objects.equals(clientId, that.clientId)
                 && Objects.equals(clientSecret, that.clientSecret)
-                && Objects.equals(requestScope, that.requestScope);
+                && Objects.equals(requestScopes, that.requestScopes);
     }
 
     @Override
@@ -326,7 +348,7 @@ public abstract class OpenIdConfig
                 formTokenRequest,
                 clientId,
                 clientSecret,
-                requestScope,
+                requestScopes,
                 validateAudience);
     }
 

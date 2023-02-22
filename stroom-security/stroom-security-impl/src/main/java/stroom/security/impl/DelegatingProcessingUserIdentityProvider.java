@@ -3,7 +3,7 @@ package stroom.security.impl;
 import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.UserIdentity;
 import stroom.security.openid.api.IdpType;
-import stroom.security.openid.api.OpenIdConfig;
+import stroom.security.openid.api.AbstractOpenIdConfig;
 
 import java.util.Map;
 import java.util.Objects;
@@ -17,11 +17,11 @@ import javax.inject.Provider;
 public class DelegatingProcessingUserIdentityProvider implements ProcessingUserIdentityProvider {
 
     private final Map<IdpType, ProcessingUserIdentityProvider> delegates;
-    private final Provider<OpenIdConfig> openIdConfigProvider;
+    private final Provider<AbstractOpenIdConfig> openIdConfigProvider;
 
     @Inject // MapBinder injection
     public DelegatingProcessingUserIdentityProvider(final Map<IdpType, ProcessingUserIdentityProvider> delegates,
-                                                    final Provider<OpenIdConfig> openIdConfigProvider) {
+                                                    final Provider<AbstractOpenIdConfig> openIdConfigProvider) {
         this.delegates = delegates;
         this.openIdConfigProvider = openIdConfigProvider;
     }

@@ -2,14 +2,13 @@ package stroom.security.impl;
 
 import stroom.config.common.UriFactory;
 import stroom.security.common.impl.IdpConfigurationProvider;
+import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
-import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdClientFactory;
-import stroom.security.openid.api.OpenIdConfig;
 import stroom.security.openid.api.OpenIdConfigurationResponse;
-import stroom.util.NullSafe;
 import stroom.util.shared.ResourcePaths;
 
+import java.util.List;
 import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -40,13 +39,9 @@ public class InternalIdpConfigurationProvider implements IdpConfigurationProvide
     static final String INTERNAL_LOGOUT_ENDPOINT = ResourcePaths.buildAuthenticatedApiPath(
             AUTHENTICATION_BASE_PATH, "/logout");
 
-    static final String DEFAULT_REQUEST_SCOPE = "" +
-            OpenId.SCOPE__OPENID +
-            " " +
-            OpenId.SCOPE__EMAIL;
 
     private final UriFactory uriFactory;
-    private final Provider<OpenIdConfig> openIdConfigProvider;
+    private final Provider<AbstractOpenIdConfig> openIdConfigProvider;
     private final OpenIdClientFactory openIdClientDetailsFactory;
 
     private volatile String lastConfigurationEndpoint;
@@ -54,7 +49,7 @@ public class InternalIdpConfigurationProvider implements IdpConfigurationProvide
 
     @Inject
     public InternalIdpConfigurationProvider(final UriFactory uriFactory,
-                                            final Provider<OpenIdConfig> openIdConfigProvider,
+                                            final Provider<AbstractOpenIdConfig> openIdConfigProvider,
                                             final OpenIdClientFactory openIdClientDetailsFactory) {
         this.uriFactory = uriFactory;
         this.openIdConfigProvider = openIdConfigProvider;
@@ -63,8 +58,8 @@ public class InternalIdpConfigurationProvider implements IdpConfigurationProvide
 
     @Override
     public OpenIdConfigurationResponse getConfigurationResponse() {
-        final OpenIdConfig openIdConfig = openIdConfigProvider.get();
-        final String configurationEndpoint = openIdConfig.getOpenIdConfigurationEndpoint();
+        final AbstractOpenIdConfig abstractOpenIdConfig = openIdConfigProvider.get();
+        final String configurationEndpoint = abstractOpenIdConfig.getOpenIdConfigurationEndpoint();
         if (isNewResponseRequired(configurationEndpoint)) {
             synchronized (this) {
                 if (isNewResponseRequired(configurationEndpoint)) {
@@ -115,11 +110,17 @@ public class InternalIdpConfigurationProvider implements IdpConfigurationProvide
     }
 
     @Override
-    public String getRequestScope() {
-        final OpenIdConfig openIdConfig = openIdConfigProvider.get();
-        return NullSafe.isBlankString(openIdConfig.getRequestScope())
-                ? DEFAULT_REQUEST_SCOPE
-                : openIdConfig.getRequestScope();
+    public List<String> getRequestScopes() {
+        return openIdConfigProvider.get().getRequestScopes();
+//        final AbstractOpenIdConfig abstractOpenIdConfig = openIdConfigProvider.get();
+//        return NullSafe.isEmptyCollection(abstractOpenIdConfig.getRequestScopes())
+//                ? OpenId.DEFAULT_REQUEST_SCOPES
+//                : abstractOpenIdConfig.getRequestScopes();
+    }
+
+    @Override
+    public List<String> getClientCredentialsScopes() {
+        return openIdConfigProvider.get().getClientCredentialsScopes();
     }
 
     @Override

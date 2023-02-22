@@ -1,5 +1,7 @@
 package stroom.config.global.impl;
 
+import stroom.security.openid.api.AbstractOpenIdConfig;
+
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
@@ -649,7 +651,7 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.security.openid.api.OpenIdConfig getOpenIdConfig2(
+    AbstractOpenIdConfig getOpenIdConfig2(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.security.impl.StroomOpenIdConfig.class);

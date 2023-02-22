@@ -18,7 +18,7 @@ package stroom.security.identity.token;
 
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.JsonWebKeyFactory;
-import stroom.security.openid.api.OpenIdConfig;
+import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.PublicJsonWebKeyProvider;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LambdaLogger;
@@ -47,7 +47,7 @@ public class JwkCache implements PublicJsonWebKeyProvider {
     JwkCache(final JwkDao jwkDao,
              final DefaultOpenIdCredentials defaultOpenIdCredentials,
              final JsonWebKeyFactory jsonWebKeyFactory,
-             final Provider<OpenIdConfig> openIdConfigProvider) {
+             final Provider<AbstractOpenIdConfig> openIdConfigProvider) {
 
         cache = Caffeine.newBuilder()
                 .maximumSize(100)

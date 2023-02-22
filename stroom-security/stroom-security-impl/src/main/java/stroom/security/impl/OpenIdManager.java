@@ -6,6 +6,7 @@ import stroom.security.common.impl.UserIdentityFactoryImpl;
 import stroom.security.common.impl.UserIdentitySessionUtil;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
+import stroom.util.NullSafe;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -15,6 +16,7 @@ import stroom.util.servlet.UserAgentSessionUtil;
 
 import com.google.common.base.Strings;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -171,9 +173,10 @@ class OpenIdManager {
                 uriBuilder,
                 redirectParamName,
                 state.getUri());
-        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.SCOPE, OpenId.SCOPE__OPENID +
-                " " +
-                OpenId.SCOPE__EMAIL);
+        final List<String> requestScopes = openIdConfiguration.getRequestScopes();
+        if (NullSafe.hasItems(requestScopes)) {
+            uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.SCOPE, String.join(" ", requestScopes));
+        }
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.STATE, state.getId());
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.NONCE, state.getNonce());
 

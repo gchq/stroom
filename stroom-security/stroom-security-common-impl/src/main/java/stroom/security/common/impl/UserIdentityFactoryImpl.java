@@ -7,7 +7,7 @@ import stroom.security.api.UserIdentityFactory;
 import stroom.security.api.exception.AuthenticationException;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenId;
-import stroom.security.openid.api.OpenIdConfig;
+import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenResponse;
 import stroom.util.NullSafe;
@@ -539,7 +539,7 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
             default:
                 throw new RuntimeException(LogUtil.message("{} is not supported for property {}.",
                         openIdConfiguration.getIdentityProviderType(),
-                        OpenIdConfig.PROP_NAME_IDP_TYPE));
+                        AbstractOpenIdConfig.PROP_NAME_IDP_TYPE));
         }
     }
 
@@ -555,12 +555,16 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
     private void createOrUpdateExternalServiceUser(final OpenIdConfiguration openIdConfiguration) {
         final ObjectMapper mapper = getObjectMapper();
         final String tokenEndpoint = openIdConfiguration.getTokenEndpoint();
-        final HttpPost httpPost = new OpenIdPostBuilder(tokenEndpoint, openIdConfiguration, mapper)
+        final OpenIdPostBuilder builder = new OpenIdPostBuilder(tokenEndpoint, openIdConfiguration, mapper)
                 .withGrantType(OpenId.GRANT_TYPE__CLIENT_CREDENTIALS)
                 .withClientId(openIdConfiguration.getClientId())
-                .withClientSecret(openIdConfiguration.getClientSecret())
-                .addScope(OpenId.SCOPE__OPENID)
-                .build();
+                .withClientSecret(openIdConfiguration.getClientSecret());
+
+        if (NullSafe.hasItems(openIdConfiguration.getClientCredentialsScopes())) {
+            builder.withScopes(openIdConfiguration.getClientCredentialsScopes());
+        }
+
+        final HttpPost httpPost = builder.build();
 
         final TokenResponse tokenResponse = getTokenResponse(mapper, httpPost, tokenEndpoint);
 

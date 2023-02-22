@@ -7,7 +7,7 @@ import stroom.security.common.impl.IdpIdentityMapper;
 import stroom.security.common.impl.JwtUtil;
 import stroom.security.common.impl.UserIdentityImpl;
 import stroom.security.openid.api.IdpType;
-import stroom.security.openid.api.OpenIdConfig;
+import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.TokenResponse;
 import stroom.security.shared.User;
 import stroom.util.NullSafe;
@@ -34,13 +34,13 @@ public class IdpIdentityToStroomUserMapper implements IdpIdentityMapper {
     private final ProcessingUserIdentityProvider processingUserIdentityProvider;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final UserCache userCache;
-    private final Provider<OpenIdConfig> openIdConfigProvider;
+    private final Provider<AbstractOpenIdConfig> openIdConfigProvider;
 
     @Inject
     public IdpIdentityToStroomUserMapper(final ProcessingUserIdentityProvider processingUserIdentityProvider,
                                          final DefaultOpenIdCredentials defaultOpenIdCredentials,
                                          final UserCache userCache,
-                                         final Provider<OpenIdConfig> openIdConfigProvider) {
+                                         final Provider<AbstractOpenIdConfig> openIdConfigProvider) {
         this.processingUserIdentityProvider = processingUserIdentityProvider;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.userCache = userCache;

@@ -109,6 +109,8 @@ proxyConfig:
       authenticationRequired: true
       openId:
         authEndpoint: null
+        clientCredentialsScopes:
+        - "openid"
         clientId: null
         clientSecret: null
         formTokenRequest: true
@@ -118,7 +120,9 @@ proxyConfig:
         logoutEndpoint: null
         logoutRedirectParamName: "post_logout_redirect_uri"
         openIdConfigurationEndpoint: null
-        requestScope: null
+        requestScopes:
+        - "openid"
+        - "email"
         tokenEndpoint: null
         validateAudience: true
   sqsConnectors: []

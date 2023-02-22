@@ -3,7 +3,7 @@ package stroom.proxy.app.guice;
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.ProxyOpenIdConfig;
 import stroom.proxy.app.ProxyPathConfig;
-import stroom.security.openid.api.OpenIdConfig;
+import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.util.NullSafe;
 import stroom.util.io.PathConfig;
 import stroom.util.logging.LambdaLogger;
@@ -43,7 +43,7 @@ public class GenerateProxyConfigProvidersModule {
     // extra impl => iface mappings where we map a config class to another iface
     static final Map<Class<? extends AbstractConfig>, Class<? extends AbstractConfig>> CUSTOM_CLASS_MAPPINGS = Map.of(
             ProxyPathConfig.class, PathConfig.class,
-            ProxyOpenIdConfig.class, OpenIdConfig.class
+            ProxyOpenIdConfig.class, AbstractOpenIdConfig.class
     );
 
     private static final String CLASS_HEADER = """

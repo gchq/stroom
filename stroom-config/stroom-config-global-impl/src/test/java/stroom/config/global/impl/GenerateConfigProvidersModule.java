@@ -1,7 +1,7 @@
 package stroom.config.global.impl;
 
 import stroom.security.impl.StroomOpenIdConfig;
-import stroom.security.openid.api.OpenIdConfig;
+import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -40,7 +40,7 @@ public class GenerateConfigProvidersModule {
     // extra impl => iface mappings where we map a config class to another iface
     // (Stroom)PathConfig is not bound in ConfigProvidersModule, it is bound in AppConfigModule
     static final Map<Class<? extends AbstractConfig>, Class<? extends AbstractConfig>> CUSTOM_CLASS_MAPPINGS = Map.of(
-            StroomOpenIdConfig.class, OpenIdConfig.class
+            StroomOpenIdConfig.class, AbstractOpenIdConfig.class
     );
 
     private static final String CLASS_HEADER = """

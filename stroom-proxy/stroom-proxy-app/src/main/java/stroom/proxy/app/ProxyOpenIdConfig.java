@@ -1,7 +1,7 @@
 package stroom.proxy.app;
 
 import stroom.security.openid.api.IdpType;
-import stroom.security.openid.api.OpenIdConfig;
+import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.util.shared.IsProxyConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -11,10 +11,11 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.dropwizard.validation.ValidationMethod;
 
+import java.util.List;
 import javax.validation.constraints.NotNull;
 
 @JsonPropertyOrder(alphabetic = true)
-public class ProxyOpenIdConfig extends OpenIdConfig implements IsProxyConfig {
+public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyConfig {
 
     public ProxyOpenIdConfig() {
         super();
@@ -32,7 +33,8 @@ public class ProxyOpenIdConfig extends OpenIdConfig implements IsProxyConfig {
                              @JsonProperty("formTokenRequest") final boolean formTokenRequest,
                              @JsonProperty("clientId") final String clientId,
                              @JsonProperty("clientSecret") final String clientSecret,
-                             @JsonProperty("requestScope") final String requestScope,
+                             @JsonProperty("requestScopes") final List<String> requestScopes,
+                             @JsonProperty("clientCredentialsScopes") final List<String> clientCredentialsScopes,
                              @JsonProperty("validateAudience") final boolean validateAudience) {
         super(identityProviderType,
                 openIdConfigurationEndpoint,
@@ -45,7 +47,8 @@ public class ProxyOpenIdConfig extends OpenIdConfig implements IsProxyConfig {
                 formTokenRequest,
                 clientId,
                 clientSecret,
-                requestScope,
+                requestScopes,
+                clientCredentialsScopes,
                 validateAudience);
     }
 
@@ -89,7 +92,8 @@ public class ProxyOpenIdConfig extends OpenIdConfig implements IsProxyConfig {
                 isFormTokenRequest(),
                 getClientSecret(),
                 getClientId(),
-                getRequestScope(),
+                getRequestScopes(),
+                getClientCredentialsScopes(),
                 isValidateAudience());
     }
 }

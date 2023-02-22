@@ -1,7 +1,7 @@
 package stroom.security.impl;
 
 import stroom.security.openid.api.IdpType;
-import stroom.security.openid.api.OpenIdConfig;
+import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.test.common.AbstractValidatorTest;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
@@ -64,9 +64,9 @@ class TestStroomOpenIdConfig extends AbstractValidatorTest {
 
             LOGGER.info("json\n{}", json);
 
-            final OpenIdConfig openIdConfig2 = objectMapper.readValue(json, StroomOpenIdConfig.class);
+            final AbstractOpenIdConfig abstractOpenIdConfig2 = objectMapper.readValue(json, StroomOpenIdConfig.class);
 
-            Assertions.assertThat(openIdConfig2)
+            Assertions.assertThat(abstractOpenIdConfig2)
                     .isEqualTo(stroomOpenIdConfig);
 
             // Use lower case enum values to make sure we can de-ser them
@@ -78,9 +78,9 @@ class TestStroomOpenIdConfig extends AbstractValidatorTest {
 
             LOGGER.info("json2\n{}", json2);
 
-            final OpenIdConfig openIdConfig3 = objectMapper.readValue(json2, StroomOpenIdConfig.class);
+            final AbstractOpenIdConfig abstractOpenIdConfig3 = objectMapper.readValue(json2, StroomOpenIdConfig.class);
 
-            Assertions.assertThat(openIdConfig3)
+            Assertions.assertThat(abstractOpenIdConfig3)
                     .isEqualTo(stroomOpenIdConfig);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);

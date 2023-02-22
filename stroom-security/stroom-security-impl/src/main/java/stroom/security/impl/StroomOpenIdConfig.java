@@ -1,7 +1,7 @@
 package stroom.security.impl;
 
 import stroom.security.openid.api.IdpType;
-import stroom.security.openid.api.OpenIdConfig;
+import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -10,8 +10,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.dropwizard.validation.ValidationMethod;
 
+import java.util.List;
+
 @JsonPropertyOrder(alphabetic = true)
-public class StroomOpenIdConfig extends OpenIdConfig implements IsStroomConfig {
+public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroomConfig {
 
     public StroomOpenIdConfig() {
         super();
@@ -29,7 +31,8 @@ public class StroomOpenIdConfig extends OpenIdConfig implements IsStroomConfig {
                               @JsonProperty("formTokenRequest") final boolean formTokenRequest,
                               @JsonProperty("clientId") final String clientId,
                               @JsonProperty("clientSecret") final String clientSecret,
-                              @JsonProperty("requestScope") final String requestScope,
+                              @JsonProperty("requestScopes") final List<String> requestScopes,
+                              @JsonProperty("clientCredentialsScopes") final List<String> clientCredentialsScopes,
                               @JsonProperty("validateAudience") final boolean validateAudience) {
         super(identityProviderType,
                 openIdConfigurationEndpoint,
@@ -42,7 +45,8 @@ public class StroomOpenIdConfig extends OpenIdConfig implements IsStroomConfig {
                 formTokenRequest,
                 clientId,
                 clientSecret,
-                requestScope,
+                requestScopes,
+                clientCredentialsScopes,
                 validateAudience);
     }
 
@@ -75,7 +79,8 @@ public class StroomOpenIdConfig extends OpenIdConfig implements IsStroomConfig {
                 isFormTokenRequest(),
                 getClientSecret(),
                 getClientId(),
-                getRequestScope(),
+                getRequestScopes(),
+                getClientCredentialsScopes(),
                 isValidateAudience());
     }
 }

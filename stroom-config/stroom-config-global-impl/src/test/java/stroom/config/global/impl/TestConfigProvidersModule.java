@@ -4,7 +4,7 @@ import stroom.config.app.AppConfig;
 import stroom.config.app.AppConfigModule;
 import stroom.config.app.ConfigHolder;
 import stroom.security.impl.StroomOpenIdConfig;
-import stroom.security.openid.api.OpenIdConfig;
+import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.util.io.PathConfig;
 import stroom.util.io.StroomPathConfig;
 import stroom.util.logging.LambdaLogger;
@@ -32,7 +32,7 @@ public class TestConfigProvidersModule {
 
     private static final Set<Class<?>> SPECIAL_CASE_CLASSES = Set.of(
             PathConfig.class,
-            OpenIdConfig.class);
+            AbstractOpenIdConfig.class);
 
     @Test
     void testProviderMethodPresence() {

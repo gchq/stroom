@@ -1,7 +1,7 @@
 package stroom.security.common.impl;
 
 import stroom.security.openid.api.IdpType;
-import stroom.security.openid.api.OpenIdConfig;
+import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.OpenIdConfigurationResponse;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LambdaLogger;
@@ -9,6 +9,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -61,7 +62,12 @@ public class TestIdpConfigurationProvider implements IdpConfigurationProvider {
     }
 
     @Override
-    public String getRequestScope() {
+    public List<String> getRequestScopes() {
+        throw new UnsupportedOperationException("Not supported for this implementation");
+    }
+
+    @Override
+    public List<String> getClientCredentialsScopes() {
         throw new UnsupportedOperationException("Not supported for this implementation");
     }
 
@@ -109,7 +115,7 @@ public class TestIdpConfigurationProvider implements IdpConfigurationProvider {
             synchronized (this) {
                 if (now.isAfter(nextWarningTime)) {
                     LOGGER.warn("Using default and publicly available Open ID authentication credentials. " +
-                            "This is totally insecure! Set property " + OpenIdConfig.PROP_NAME_IDP_TYPE +
+                            "This is totally insecure! Set property " + AbstractOpenIdConfig.PROP_NAME_IDP_TYPE +
                             " to " + IdpType.EXTERNAL_IDP + "/" + IdpType.INTERNAL_IDP + ".");
                     nextWarningTime = Instant.now().plus(TIME_BETWEEN_WARNINGS);
                 }
