@@ -2,8 +2,8 @@ package stroom.security.impl;
 
 import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.StandardJwtContextFactory;
-import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.AbstractOpenIdConfig;
+import stroom.security.openid.api.IdpType;
 import stroom.util.NullSafe;
 
 import org.jose4j.jwt.consumer.JwtContext;

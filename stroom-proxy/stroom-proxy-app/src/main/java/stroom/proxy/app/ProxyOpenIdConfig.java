@@ -1,7 +1,7 @@
 package stroom.proxy.app;
 
-import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.AbstractOpenIdConfig;
+import stroom.security.openid.api.IdpType;
 import stroom.util.shared.IsProxyConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;

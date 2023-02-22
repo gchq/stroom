@@ -1,7 +1,7 @@
 package stroom.security.common.impl;
 
-import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.AbstractOpenIdConfig;
+import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfigurationResponse;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LambdaLogger;

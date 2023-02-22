@@ -1,7 +1,7 @@
 package stroom.proxy.app;
 
-import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.AbstractOpenIdConfig;
+import stroom.security.openid.api.IdpType;
 import stroom.test.common.AbstractValidatorTest;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;

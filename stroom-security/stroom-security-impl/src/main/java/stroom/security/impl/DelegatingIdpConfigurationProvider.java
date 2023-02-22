@@ -3,8 +3,8 @@ package stroom.security.impl;
 import stroom.config.common.UriFactory;
 import stroom.security.common.impl.ExternalIdpConfigurationProvider;
 import stroom.security.common.impl.IdpConfigurationProvider;
-import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.AbstractOpenIdConfig;
+import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfigurationResponse;
 import stroom.util.NullSafe;
 
