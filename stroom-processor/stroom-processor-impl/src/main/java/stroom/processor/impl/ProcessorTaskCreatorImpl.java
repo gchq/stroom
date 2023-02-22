@@ -261,7 +261,10 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                 }
             });
         } catch (final RuntimeException e) {
-            LOGGER.error(() -> LogUtil.message("Error processing filter: {}", filter.getFilterInfo()));
+            LOGGER.error(() -> LogUtil.message("Error processing filter: {} {} - {}",
+                    filter.getFilterInfo(),
+                    e.getClass().getSimpleName(),
+                    e.getMessage()), e);
             LOGGER.debug(e::getMessage, e);
         }
     }
@@ -320,7 +323,10 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                 totalTasksCreated);
                     }
                 } catch (final RuntimeException e) {
-                    LOGGER.error(() -> LogUtil.message("Error processing filter: {}", filter.getFilterInfo()));
+                    LOGGER.error(() -> LogUtil.message("Error creating tasks for filter: {} {} - {}",
+                            filter.getFilterInfo(),
+                            e.getClass().getSimpleName(),
+                            e.getMessage()), e);
                     LOGGER.debug(e::getMessage, e);
 
                     // Update the tracker with the error if we can.

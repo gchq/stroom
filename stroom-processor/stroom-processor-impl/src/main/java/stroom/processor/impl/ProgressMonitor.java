@@ -11,6 +11,7 @@ import stroom.util.logging.LogUtil;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -28,7 +29,8 @@ public class ProgressMonitor {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProgressMonitor.class);
 
 
-    private final List<FilterProgressMonitor> filterProgressMonitorList = new ArrayList<>();
+    private final List<FilterProgressMonitor> filterProgressMonitorList =
+            Collections.synchronizedList(new ArrayList<>());
 
     private final int totalFilterCount;
     private final DurationTimer totalDuration;
@@ -65,79 +67,83 @@ public class ProgressMonitor {
                             final StringBuilder sb,
                             final boolean showPhaseDetail,
                             final QueueProcessTasksState queueProcessTasksState) {
-        sb.append(title);
-        sb.append("\n");
-        sb.append("---\n");
-        sb.append("Inspected ");
-        sb.append(filterProgressMonitorList.size());
-        sb.append("/");
-        sb.append(totalFilterCount);
-        sb.append(" filters");
-        sb.append("\n");
-        sb.append("Total time: ");
-        sb.append(totalDuration.get());
-        sb.append("\n");
-        if (queueProcessTasksState != null) {
-            queueProcessTasksState.report(sb);
-        } else {
-            final AtomicInteger initialCount = new AtomicInteger();
-            final AtomicInteger added = new AtomicInteger();
-            filterProgressMonitorList.forEach(filterProgressMonitor -> {
-                initialCount.addAndGet(filterProgressMonitor.initialCount);
-                added.addAndGet(filterProgressMonitor.added.get());
-            });
-            sb.append("Initial: ");
-            sb.append(initialCount.get());
+        synchronized (filterProgressMonitorList) {
+            sb.append(title);
             sb.append("\n");
-            sb.append("Added: ");
-            sb.append(added.get());
+            sb.append("---\n");
+            sb.append("Inspected ");
+            sb.append(filterProgressMonitorList.size());
+            sb.append("/");
+            sb.append(totalFilterCount);
+            sb.append(" filters");
             sb.append("\n");
-            sb.append("Final: ");
-            sb.append(initialCount.get() + added.get());
-        }
-
-        // Only show phase detail in trace log.
-        if (showPhaseDetail) {
-            final Map<Phase, PhaseDetails> combinedPhaseDetailsMap = new HashMap<>();
-            for (final FilterProgressMonitor filterProgressMonitor : filterProgressMonitorList) {
-                for (final Entry<Phase, PhaseDetails> entry : filterProgressMonitor.phaseDetailsMap.entrySet()) {
-                    final Phase phase = entry.getKey();
-                    final PhaseDetails filterPhaseDetails = entry.getValue();
-
-                    combinedPhaseDetailsMap
-                            .computeIfAbsent(phase, k -> new PhaseDetails(phase))
-                            .add(filterPhaseDetails);
-                }
+            sb.append("Total time: ");
+            sb.append(totalDuration.get());
+            sb.append("\n");
+            if (queueProcessTasksState != null) {
+                queueProcessTasksState.report(sb);
+            } else {
+                final AtomicInteger initialCount = new AtomicInteger();
+                final AtomicInteger added = new AtomicInteger();
+                filterProgressMonitorList.forEach(filterProgressMonitor -> {
+                    initialCount.addAndGet(filterProgressMonitor.initialCount);
+                    added.addAndGet(filterProgressMonitor.added.get());
+                });
+                sb.append("Initial: ");
+                sb.append(initialCount.get());
+                sb.append("\n");
+                sb.append("Added: ");
+                sb.append(added.get());
+                sb.append("\n");
+                sb.append("Final: ");
+                sb.append(initialCount.get() + added.get());
             }
-            appendPhaseDetails(sb, combinedPhaseDetailsMap.values());
+
+            // Only show phase detail in trace log.
+            if (showPhaseDetail) {
+                final Map<Phase, PhaseDetails> combinedPhaseDetailsMap = new HashMap<>();
+                for (final FilterProgressMonitor filterProgressMonitor : filterProgressMonitorList) {
+                    for (final Entry<Phase, PhaseDetails> entry : filterProgressMonitor.phaseDetailsMap.entrySet()) {
+                        final Phase phase = entry.getKey();
+                        final PhaseDetails filterPhaseDetails = entry.getValue();
+
+                        combinedPhaseDetailsMap
+                                .computeIfAbsent(phase, k -> new PhaseDetails(phase))
+                                .add(filterPhaseDetails);
+                    }
+                }
+                appendPhaseDetails(sb, combinedPhaseDetailsMap.values());
+            }
         }
     }
 
     private void addDetail(final StringBuilder sb, final boolean showPhaseDetail) {
-        if (filterProgressMonitorList.size() > 0) {
-            sb.append("\n\nDETAIL");
-            for (final FilterProgressMonitor filterProgressMonitor : filterProgressMonitorList) {
-                final ProcessorFilter filter = filterProgressMonitor.filter;
-                sb.append("\n---\n");
-                sb.append("Filter (");
-                appendFilter(sb, filter);
-                sb.append(")\n");
-                sb.append("Total create time: ");
-                sb.append(filterProgressMonitor.completeDuration);
-                sb.append("\n");
-                sb.append("Initial: ");
-                sb.append(filterProgressMonitor.initialCount);
-                sb.append("\n");
-                sb.append("Added: ");
-                sb.append(filterProgressMonitor.added.get());
-                sb.append("\n");
-                sb.append("Final: ");
-                sb.append(filterProgressMonitor.initialCount +
-                        filterProgressMonitor.added.get());
+        synchronized (filterProgressMonitorList) {
+            if (filterProgressMonitorList.size() > 0) {
+                sb.append("\n\nDETAIL");
+                for (final FilterProgressMonitor filterProgressMonitor : filterProgressMonitorList) {
+                    final ProcessorFilter filter = filterProgressMonitor.filter;
+                    sb.append("\n---\n");
+                    sb.append("Filter (");
+                    appendFilter(sb, filter);
+                    sb.append(")\n");
+                    sb.append("Total create time: ");
+                    sb.append(filterProgressMonitor.completeDuration);
+                    sb.append("\n");
+                    sb.append("Initial: ");
+                    sb.append(filterProgressMonitor.initialCount);
+                    sb.append("\n");
+                    sb.append("Added: ");
+                    sb.append(filterProgressMonitor.added.get());
+                    sb.append("\n");
+                    sb.append("Final: ");
+                    sb.append(filterProgressMonitor.initialCount +
+                            filterProgressMonitor.added.get());
 
-                // Only show phase detail in trace log.
-                if (showPhaseDetail) {
-                    appendPhaseDetails(sb, filterProgressMonitor.phaseDetailsMap.values());
+                    // Only show phase detail in trace log.
+                    if (showPhaseDetail) {
+                        appendPhaseDetails(sb, filterProgressMonitor.phaseDetailsMap.values());
+                    }
                 }
             }
         }
