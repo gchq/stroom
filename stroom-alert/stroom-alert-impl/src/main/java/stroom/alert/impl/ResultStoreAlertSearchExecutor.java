@@ -142,7 +142,7 @@ public class ResultStoreAlertSearchExecutor {
                                         final Instant from,
                                         final Instant to,
                                         final RecordConsumer recordConsumer) {
-        final QueryKey queryKey = new QueryKey(alertRuleDoc.getUuid());
+        final QueryKey queryKey = alertRuleDoc.getQueryKey();
         final Optional<ResultStore> optionalResultStore = resultStoreManager.getIfPresent(queryKey);
         if (optionalResultStore.isPresent()) {
             // Create a search request.

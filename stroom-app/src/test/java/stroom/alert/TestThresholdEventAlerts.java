@@ -42,6 +42,9 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.processor.api.ProcessorResult;
+import stroom.query.api.v2.QueryKey;
+import stroom.query.common.v2.ResultStore;
+import stroom.query.common.v2.ResultStoreManager;
 import stroom.resource.impl.ResourceModule;
 import stroom.search.CommonIndexingTestHelper;
 import stroom.security.mock.MockSecurityContextModule;
@@ -69,6 +72,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.OptionalInt;
 import javax.inject.Inject;
 
@@ -123,6 +127,8 @@ class TestThresholdEventAlerts extends StroomIntegrationTest {
     private FeedStore feedStore;
     @Inject
     private ResultStoreAlertSearchExecutor resultStoreAlertSearchExecutor;
+    @Inject
+    private ResultStoreManager resultStoreManager;
 
     @BeforeEach
     final void importSchemas() {
@@ -130,7 +136,7 @@ class TestThresholdEventAlerts extends StroomIntegrationTest {
     }
 
     @Test
-    void testSimple() {
+    void testSimple() throws Exception {
         // Add some data.
         commonTranslationTestHelper.setup();
         // Translate data.
@@ -203,8 +209,14 @@ class TestThresholdEventAlerts extends StroomIntegrationTest {
         results.forEach(this::assertProcessorResult);
 
 
-        // Wait for data to flush to result store.
-        ThreadUtil.sleep(2000);
+
+        // We need to get the result store and tell it to complete just to ensure the data is flushed.
+        // Under normal operating conditions we wouldn't tell the store to complete as it would accumulate data on
+        // an ongoing basis.
+        final Optional<ResultStore> optionalResultStore = resultStoreManager.getIfPresent(alertRuleDoc.getQueryKey());
+        final ResultStore resultStore = optionalResultStore.orElseThrow();
+        resultStore.signalComplete();
+        resultStore.awaitCompletion();
 
 
         // Now run the aggregate search process.

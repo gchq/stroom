@@ -31,7 +31,7 @@ public class AggregateRuleValuesConsumerFactory {
     }
 
     public ValuesConsumer create(final AlertRuleConfig alertRuleConfig) {
-        final QueryKey queryKey = new QueryKey(alertRuleConfig.getUuid());
+        final QueryKey queryKey = alertRuleConfig.getQueryKey();
         final Optional<ResultStore> existingResultStore = resultStoreManager.getIfPresent(queryKey);
         ResultStore resultStore;
         if (existingResultStore.isPresent()) {

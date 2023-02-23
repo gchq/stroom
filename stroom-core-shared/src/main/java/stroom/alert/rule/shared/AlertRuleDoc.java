@@ -17,8 +17,10 @@
 package stroom.alert.rule.shared;
 
 import stroom.docstore.shared.Doc;
+import stroom.query.api.v2.QueryKey;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -100,6 +102,11 @@ public class AlertRuleDoc extends Doc {
 
     public AbstractAlertRule getAlertRule() {
         return alertRule;
+    }
+
+    @JsonIgnore
+    public QueryKey getQueryKey() {
+        return new QueryKey(getUuid() + " - " + getName());
     }
 
     @Override

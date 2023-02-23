@@ -21,9 +21,12 @@ import stroom.alert.api.AlertManager;
 import stroom.alert.rule.shared.AlertRuleDoc;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.shared.QueryContext;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.util.Collection;
 import java.util.List;
@@ -92,5 +95,10 @@ class AlertRuleConfig implements RuleConfig {
 
     public SearchRequest getSearchRequest() {
         return searchRequest;
+    }
+
+    @JsonIgnore
+    public QueryKey getQueryKey() {
+        return alertRuleDoc.getQueryKey();
     }
 }
