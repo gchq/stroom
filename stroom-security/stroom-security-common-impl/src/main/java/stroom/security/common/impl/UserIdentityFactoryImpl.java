@@ -41,6 +41,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -233,7 +234,7 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
                 .withRedirectUri(state.getUri())
                 .build();
 
-        final TokenResponse tokenResponse = getTokenResponse(mapper, httpPost, tokenEndpoint);
+        final TokenResponse tokenResponse = getTokenResponse(mapper, httpPost, tokenEndpoint, true);
 
         final Optional<UserIdentity> optUserIdentity = jwtContextFactory.getJwtContext(tokenResponse.getIdToken())
                 .flatMap(jwtContext ->
@@ -412,7 +413,7 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
                 .withClientSecret(openIdConfiguration.getClientSecret())
                 .build();
 
-        final TokenResponse newTokenResponse = getTokenResponse(mapper, httpPost, tokenEndpoint);
+        final TokenResponse newTokenResponse = getTokenResponse(mapper, httpPost, tokenEndpoint, true);
 
         final JwtClaims jwtClaims = jwtContextFactory.getJwtContext(newTokenResponse.getIdToken())
                 .map(JwtContext::getJwtClaims)
@@ -439,7 +440,8 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
 
     private TokenResponse getTokenResponse(final ObjectMapper mapper,
                                            final HttpPost httpPost,
-                                           final String tokenEndpoint) {
+                                           final String tokenEndpoint,
+                                           final boolean expectingIdToken) {
         TokenResponse tokenResponse = null;
         try (final CloseableHttpClient httpClient = httpClientProvider.get()) {
             try (final CloseableHttpResponse response = httpClient.execute(httpPost)) {
@@ -461,10 +463,12 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
                     "Error requesting token from " + tokenEndpoint + ": " + e.getMessage(), e);
         }
 
-        if (tokenResponse == null || tokenResponse.getIdToken() == null) {
-            throw new AuthenticationException("'" +
+        if (tokenResponse == null) {
+            throw new AuthenticationException("Null tokenResponse using url: " + tokenEndpoint);
+        } else if (expectingIdToken && tokenResponse.getIdToken() == null) {
+            throw new AuthenticationException("Expecting '" +
                     OpenId.ID_TOKEN +
-                    "' not provided in response");
+                    "' to be in response but it is absent. Using url: " + tokenEndpoint);
         }
 
         return tokenResponse;
@@ -566,7 +570,8 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
 
         final HttpPost httpPost = builder.build();
 
-        final TokenResponse tokenResponse = getTokenResponse(mapper, httpPost, tokenEndpoint);
+        // Only need the access token for a client_credentials flow
+        final TokenResponse tokenResponse = getTokenResponse(mapper, httpPost, tokenEndpoint, false);
 
         final FetchTokenResult fetchTokenResult = jwtContextFactory.getJwtContext(tokenResponse.getAccessToken())
                 .map(jwtContext ->
@@ -593,11 +598,16 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
 
     private void consumeFromRefreshQueue() {
         try {
-            final AbstractTokenUserIdentity userIdentity = refreshTokensDelayQueue.take();
-            // It is possible that something else has refreshed the token
-            LOGGER.debug("Consuming userIdentity {} from refresh queue (size after: {})",
-                    userIdentity, refreshTokensDelayQueue.size());
-            refresh(userIdentity);
+            // We are called in an infinite while loop so drop out every 2s to allow
+            // checking of shutdown state
+            final AbstractTokenUserIdentity userIdentity = refreshTokensDelayQueue.poll(
+                    2, TimeUnit.SECONDS);
+            if (userIdentity != null) {
+                // It is possible that something else has refreshed the token
+                LOGGER.debug("Consuming userIdentity {} from refresh queue (size after: {})",
+                        userIdentity, refreshTokensDelayQueue.size());
+                refresh(userIdentity);
+            }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             LOGGER.debug("Refresh delay queue interrupted, assume shutdown is happening so do no more");
