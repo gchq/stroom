@@ -107,7 +107,7 @@ public class DelegatingIdpConfigurationProvider implements IdpConfigurationProvi
 
     @Override
     public List<String> getClientCredentialsScopes() {
-        return getDelegate().getRequestScopes();
+        return getDelegate().getClientCredentialsScopes();
     }
 
     @Override
