@@ -16,16 +16,17 @@
 
 package stroom.search.extraction;
 
+import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
+import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.security.api.SecurityContext;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
@@ -59,18 +60,17 @@ import static stroom.index.shared.IndexConstants.STREAM_ID;
 
 @ConfigurableElement(type = "XPathExtractionOutputFilter", category = Category.FILTER, roles = {
         PipelineElementType.ROLE_TARGET}, icon = ElementIcons.XML_SEARCH)
-public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilter {
+public class XPathExtractionOutputFilter extends AbstractXMLFilter {
 
     private static final String DEFAULT_MULTIPLE_STRING_DELIMITER = ",";
     private final ErrorReceiverProxy errorReceiverProxy;
-    private final SecurityContext securityContext;
+    private final ExtractionStateHolder extractionStateHolder;
     private final LocationFactoryProxy locationFactory;
     private final Configuration config = new Configuration();
     private final PipelineConfiguration pipeConfig = config.makePipelineConfiguration();
     private final Processor processor = new Processor(config);
     private final XPathCompiler compiler = processor.newXPathCompiler();
     private String multipleValueDelimiter = DEFAULT_MULTIPLE_STRING_DELIMITER;
-    private final boolean createJson = false;
     private Locator locator;
     private TinyBuilder builder = null;
 
@@ -86,14 +86,14 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
     private String topLevelQName = null;
     private Attributes topLevelAtts = null;
 
+
     @Inject
     public XPathExtractionOutputFilter(final LocationFactoryProxy locationFactory,
-                                       final SecurityContext securityContext,
-                                       final ErrorReceiverProxy errorReceiverProxy) {
+                                       final ErrorReceiverProxy errorReceiverProxy,
+                                       final ExtractionStateHolder extractionStateHolder) {
         this.locationFactory = locationFactory;
         this.errorReceiverProxy = errorReceiverProxy;
-        this.securityContext = securityContext;
-
+        this.extractionStateHolder = extractionStateHolder;
     }
 
     /**
@@ -127,7 +127,7 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
                 topLevelUri = uri;
                 topLevelQName = qName;
                 topLevelAtts = atts;
-                count++;
+                extractionStateHolder.incrementCount();
 
             } else if (depth == 2) {
                 if (!secondLevelElementToCreateDocs.equals((localName))) {
@@ -164,9 +164,10 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
 
 
     private void createXPathExecutables() {
+        final FieldIndex fieldIndex = extractionStateHolder.getFieldIndex();
         xPathExecutables = new XPathExecutable[fieldIndex.size()];
 
-        fieldIndex.forEach((fieldName, index) -> {
+        fieldIndex.forEach((index, fieldName) -> {
             String xpathPart = fieldName;
 
             if (EVENT_ID.equals(xpathPart)) {
@@ -235,6 +236,7 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
                 }
 
                 if (hasChildElement) {
+                    boolean createJson = false;
                     if (createJson) {
                         String serialisedForm = complexElementToJson(node.toString());
                         thisVal.append(serialisedForm);
@@ -321,7 +323,7 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
 
                         values[field] = ValString.create(thisVal.toString());
                     }
-                    receiver.add(values);
+                    extractionStateHolder.getReceiver().add(values);
 
                 } catch (SaxonApiException ex) {
                     log(Severity.ERROR, "Unable to evaluate XPaths", ex);

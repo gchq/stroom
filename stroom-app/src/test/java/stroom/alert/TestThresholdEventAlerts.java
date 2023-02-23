@@ -18,10 +18,12 @@ package stroom.alert;
 
 
 import stroom.alert.impl.AlertManagerImpl;
+import stroom.alert.impl.ResultStoreAlertSearchExecutor;
 import stroom.alert.rule.impl.AlertRuleStore;
 import stroom.alert.rule.shared.AlertRuleDoc;
 import stroom.alert.rule.shared.AlertRuleType;
 import stroom.alert.rule.shared.QueryLanguageVersion;
+import stroom.alert.rule.shared.ThresholdAlertRule;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
@@ -29,6 +31,7 @@ import stroom.data.store.api.Source;
 import stroom.data.store.api.SourceUtil;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
+import stroom.feed.api.FeedStore;
 import stroom.index.VolumeTestConfigModule;
 import stroom.index.impl.IndexShardManager;
 import stroom.index.impl.IndexShardManager.IndexShardAction;
@@ -49,6 +52,7 @@ import stroom.test.StoreCreationTool;
 import stroom.test.StroomIntegrationTest;
 import stroom.test.common.ProjectPathUtil;
 import stroom.test.common.StroomPipelineTestFileUtil;
+import stroom.util.concurrent.ThreadUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 import stroom.view.impl.ViewStore;
@@ -82,7 +86,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
 @IncludeModule(MockIndexShardWriterExecutorModule.class)
-class TestSingleEventAlerts extends StroomIntegrationTest {
+class TestThresholdEventAlerts extends StroomIntegrationTest {
 
     @Inject
     private ContentImportService contentImportService;
@@ -115,6 +119,10 @@ class TestSingleEventAlerts extends StroomIntegrationTest {
     private AlertManagerImpl alertManager;
     @Inject
     private AlertRuleStore alertRuleStore;
+    @Inject
+    private FeedStore feedStore;
+    @Inject
+    private ResultStoreAlertSearchExecutor resultStoreAlertSearchExecutor;
 
     @BeforeEach
     final void importSchemas() {
@@ -165,15 +173,25 @@ class TestSingleEventAlerts extends StroomIntegrationTest {
         final String query = """
                 "index_view"
                 | where UserId = user5
-                | table StreamId, EventId, UserId""";
+                | eval count = count()
+                | group by UserId
+                | table UserId, count""";
 
-        final DocRef alertRuleDocRef = alertRuleStore.createDocument("Single Event Rule");
+        final ThresholdAlertRule thresholdAlertRule = ThresholdAlertRule.builder()
+                .threshold(3)
+                .thresholdField("count")
+                .executionDelay("PT1S")
+                .executionFrequency("PT1S")
+                .build();
+
+        final DocRef alertRuleDocRef = alertRuleStore.createDocument("Threshold Event Rule");
         AlertRuleDoc alertRuleDoc = alertRuleStore.readDocument(alertRuleDocRef);
         alertRuleDoc = alertRuleDoc.copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
                 .enabled(true)
-                .alertRuleType(AlertRuleType.EVENT)
+                .alertRuleType(AlertRuleType.THRESHOLD)
+                .alertRule(thresholdAlertRule)
                 .build();
         alertRuleStore.writeDocument(alertRuleDoc);
         alertManager.refreshRules();
@@ -184,8 +202,17 @@ class TestSingleEventAlerts extends StroomIntegrationTest {
 
         results.forEach(this::assertProcessorResult);
 
-//        // Flush all newly created index shards.
-//        indexShardManager.performAction(FindIndexShardCriteria.matchAll(), IndexShardAction.FLUSH);
+
+        // Wait for data to flush to result store.
+        ThreadUtil.sleep(2000);
+
+
+        // Now run the aggregate search process.
+        final DocRef detections = feedStore.createDocument("DETECTIONS");
+        resultStoreAlertSearchExecutor.setFeedName(detections.getName());
+        resultStoreAlertSearchExecutor.exec();
+
+
 
         // As we have created alerts ensure we now have more streams.
         final ResultPage<Meta> resultPage = metaService.find(new FindMetaCriteria());
@@ -194,7 +221,7 @@ class TestSingleEventAlerts extends StroomIntegrationTest {
         final Meta newestMeta = resultPage.getValues().get(resultPage.size() - 1);
         try (final Source source = streamStore.openSource(newestMeta.getId())) {
             final String result = SourceUtil.readString(source);
-            assertThat(result.split("<record>").length).isEqualTo(6);
+            assertThat(result.split("<record>").length).isEqualTo(2);
             assertThat(result).contains("user5");
         } catch (final IOException e) {
             throw new UncheckedIOException(e);

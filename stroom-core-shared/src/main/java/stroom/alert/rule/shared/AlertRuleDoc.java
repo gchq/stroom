@@ -82,49 +82,25 @@ public class AlertRuleDoc extends Doc {
         return description;
     }
 
-//    public void setDescription(final String description) {
-//        this.description = description;
-//    }
-
     public QueryLanguageVersion getLanguageVersion() {
         return languageVersion;
     }
-
-//    public void setLanguageVersion(final QueryLanguageVersion languageVersion) {
-//        this.languageVersion = languageVersion;
-//    }
 
     public String getQuery() {
         return query;
     }
 
-//    public void setQuery(final String query) {
-//        this.query = query;
-//    }
-
     public boolean isEnabled() {
         return enabled;
     }
-
-//    public void setEnabled(final boolean enabled) {
-//        this.enabled = enabled;
-//    }
 
     public AlertRuleType getAlertRuleType() {
         return alertRuleType;
     }
 
-//    public void setAlertRuleType(final AlertRuleType alertRuleType) {
-//        this.alertRuleType = alertRuleType;
-//    }
-
     public AbstractAlertRule getAlertRule() {
         return alertRule;
     }
-
-//    public void setAlertRule(final AbstractAlertRule alertRule) {
-//        this.alertRule = alertRule;
-//    }
 
     @Override
     public boolean equals(final Object o) {

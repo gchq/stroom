@@ -2,6 +2,7 @@ package stroom.search.extraction;
 
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.data.store.api.DataException;
 import stroom.docref.DocRef;
 import stroom.index.shared.IndexConstants;
@@ -13,7 +14,6 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
-import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.ErrorConsumer;
 import stroom.query.common.v2.SearchProgressLog;
@@ -68,7 +68,7 @@ public class ExtractionDecorator {
     private final Map<DocRef, PipelineData> pipelineDataMap = new ConcurrentHashMap<>();
     private final StreamEventMap streamEventMap;
     private final StoredDataQueue storedDataQueue;
-    private final Map<DocRef, ExtractionReceiver> receivers;
+    private final Map<DocRef, ValuesConsumer> receivers;
 
     ExtractionDecorator(final ExtractionConfig extractionConfig,
                         final ExecutorProvider executorProvider,
@@ -110,36 +110,15 @@ public class ExtractionDecorator {
             final FieldIndex fieldIndex = coprocessors.getFieldIndex();
 
             // Create a receiver that will send data to all coprocessors.
-            ExtractionReceiver receiver;
+            ValuesConsumer receiver;
             if (coprocessorSet.size() == 1) {
-                final Coprocessor coprocessor = coprocessorSet.iterator().next();
-                receiver = new ExtractionReceiver() {
-                    @Override
-                    public void add(final Val[] values) {
-                        coprocessor.add(values);
-                    }
-
-                    @Override
-                    public FieldIndex getFieldIndex() {
-                        return fieldIndex;
-                    }
-                };
+                receiver = coprocessorSet.iterator().next();
             } else {
-                receiver = new ExtractionReceiver() {
-                    @Override
-                    public void add(final Val[] values) {
-                        coprocessorSet.forEach(coprocessor -> coprocessor.add(values));
-                    }
-
-                    @Override
-                    public FieldIndex getFieldIndex() {
-                        return fieldIndex;
-                    }
-                };
+                receiver = values -> coprocessorSet.forEach(coprocessor -> coprocessor.add(values));
             }
 
             // Decorate result with annotations.
-            receiver = receiverDecoratorFactory.create(receiver, query);
+            receiver = receiverDecoratorFactory.create(receiver, fieldIndex, query);
             receivers.put(docRef, receiver);
         });
 
@@ -162,7 +141,7 @@ public class ExtractionDecorator {
 
     private Runnable mapStreams(final TaskContext parentContext,
                                 final StoredDataQueue storedDataQueue,
-                                final Map<DocRef, ExtractionReceiver> receivers,
+                                final Map<DocRef, ValuesConsumer> receivers,
                                 final Coprocessors coprocessors) {
         // Create an object to make event lists from raw index data.
         final EventFactory eventFactory = new EventFactory(coprocessors.getFieldIndex());
@@ -311,9 +290,9 @@ public class ExtractionDecorator {
             try {
                 Meta meta = null;
 
-                for (final Entry<DocRef, ExtractionReceiver> entry : receivers.entrySet()) {
+                for (final Entry<DocRef, ValuesConsumer> entry : receivers.entrySet()) {
                     final DocRef docRef = entry.getKey();
-                    final ExtractionReceiver receiver = entry.getValue();
+                    final ValuesConsumer receiver = entry.getValue();
 
                     if (docRef != null) {
                         SearchProgressLog.add(queryKey, SearchPhase.EXTRACTION_DECORATOR_FACTORY_CREATE_TASKS_DOCREF,
@@ -333,9 +312,7 @@ public class ExtractionDecorator {
                                     docRef,
                                     receiver,
                                     errorConsumer,
-                                    pipelineData,
-                                    null,
-                                    null);
+                                    pipelineData);
                         });
 
                         extractionCount.add(events.size());

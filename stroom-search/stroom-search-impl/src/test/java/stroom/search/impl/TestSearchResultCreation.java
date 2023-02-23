@@ -23,7 +23,6 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
@@ -39,7 +38,6 @@ import stroom.query.common.v2.SearchDebugUtil;
 import stroom.query.common.v2.SerialisersFactory;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.SizesProvider;
-import stroom.search.extraction.ExtractionReceiver;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
@@ -125,10 +123,10 @@ class TestSearchResultCreation {
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
                 false);
-        final ExtractionReceiver consumer = createExtractionReceiver(coprocessors);
+        final ValuesConsumer consumer = createExtractionReceiver(coprocessors);
 
         // Reorder values if field mappings have changed.
-        final int[] mappings = createMappings(consumer);
+        final int[] mappings = createMappings(coprocessors.getFieldIndex());
 
         // Add data to the consumer.
         final String[] lines = getLines();
@@ -235,10 +233,10 @@ class TestSearchResultCreation {
                 searchRequest.getQuery().getParams(),
                 true);
 
-        final ExtractionReceiver consumer = createExtractionReceiver(coprocessors);
+        final ValuesConsumer consumer = createExtractionReceiver(coprocessors);
 
         // Reorder values if field mappings have changed.
-        final int[] mappings = createMappings(consumer);
+        final int[] mappings = createMappings(coprocessors.getFieldIndex());
 
         final QueryKey queryKey2 = new QueryKey(UUID.randomUUID().toString());
         final Coprocessors coprocessors2 = coprocessorsFactory.create(
@@ -310,10 +308,10 @@ class TestSearchResultCreation {
                 searchRequest.getQuery().getParams(),
                 true);
 
-        final ExtractionReceiver consumer1 = createExtractionReceiver(coprocessors);
+        final ValuesConsumer consumer1 = createExtractionReceiver(coprocessors);
 
         // Reorder values if field mappings have changed.
-        final int[] mappings = createMappings(consumer1);
+        final int[] mappings = createMappings(coprocessors.getFieldIndex());
 
         final QueryKey queryKey2 = new QueryKey(UUID.randomUUID().toString());
         final Coprocessors coprocessors2 = coprocessorsFactory.create(
@@ -399,10 +397,10 @@ class TestSearchResultCreation {
                 searchRequest.getQuery().getParams(),
                 false);
 
-        final ExtractionReceiver consumer = createExtractionReceiver(coprocessors);
+        final ValuesConsumer consumer = createExtractionReceiver(coprocessors);
 
         // Reorder values if field mappings have changed.
-        final int[] mappings = createMappings(consumer);
+        final int[] mappings = createMappings(coprocessors.getFieldIndex());
 
         final QueryKey queryKey2 = new QueryKey(UUID.randomUUID().toString());
         final Coprocessors coprocessors2 = coprocessorsFactory.create(
@@ -503,8 +501,7 @@ class TestSearchResultCreation {
         }
     }
 
-    private int[] createMappings(ExtractionReceiver receiver) {
-        final FieldIndex fieldIndex = receiver.getFieldIndex();
+    private int[] createMappings(final FieldIndex fieldIndex) {
         final int[] mappings = new int[4];
         mappings[0] = fieldIndex.getPos("EventTime");
         mappings[1] = fieldIndex.getPos("UserId");
@@ -536,42 +533,18 @@ class TestSearchResultCreation {
         };
     }
 
-    private ExtractionReceiver createExtractionReceiver(final Coprocessors coprocessors) {
-        final Map<DocRef, ExtractionReceiver> receivers = new HashMap<>();
+    private ValuesConsumer createExtractionReceiver(final Coprocessors coprocessors) {
+        final Map<DocRef, ValuesConsumer> receivers = new HashMap<>();
         coprocessors.forEachExtractionCoprocessor((docRef, coprocessorSet) -> {
             // Create a receiver that will send data to all coprocessors.
-            ExtractionReceiver receiver;
+            ValuesConsumer receiver;
             if (coprocessorSet.size() == 1) {
-                final Coprocessor coprocessor = coprocessorSet.iterator().next();
-                final FieldIndex fieldIndex = coprocessors.getFieldIndex();
-                receiver = new ExtractionReceiver() {
-                    @Override
-                    public void add(final Val[] values) {
-                        coprocessor.add(values);
-                    }
-
-                    @Override
-                    public FieldIndex getFieldIndex() {
-                        return fieldIndex;
-                    }
-                };
+                receiver = coprocessorSet.iterator().next();
             } else {
                 // We assume all coprocessors for the same extraction use the same field index map.
                 // This is only the case at the moment as the CoprocessorsFactory creates field index maps this way.
-                final FieldIndex fieldIndex = coprocessors.getFieldIndex();
-                receiver = new ExtractionReceiver() {
-                    @Override
-                    public void add(final Val[] values) {
-                        coprocessorSet.forEach(coprocessor -> coprocessor.add(values));
-                    }
-
-                    @Override
-                    public FieldIndex getFieldIndex() {
-                        return fieldIndex;
-                    }
-                };
+                receiver = values -> coprocessorSet.forEach(coprocessor -> coprocessor.add(values));
             }
-
             receivers.put(docRef, receiver);
         });
 

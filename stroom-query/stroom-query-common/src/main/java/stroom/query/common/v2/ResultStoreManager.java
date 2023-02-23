@@ -118,7 +118,7 @@ public final class ResultStoreManager implements Clearable {
         }
     }
 
-    private Optional<ResultStore> getIfPresent(final QueryKey key) {
+    public Optional<ResultStore> getIfPresent(final QueryKey key) {
         return Optional.ofNullable(resultStoreMap.get(key));
     }
 
@@ -535,5 +535,9 @@ public final class ResultStoreManager implements Clearable {
             return null;
         }
         return duration.getValueAsStr();
+    }
+
+    public void put(final QueryKey queryKey, final ResultStore resultStore) {
+        resultStoreMap.put(queryKey, resultStore);
     }
 }
