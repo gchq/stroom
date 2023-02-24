@@ -9,13 +9,16 @@ import stroom.alert.rule.shared.AlertRuleDoc;
 import stroom.alert.rule.shared.AlertRuleType;
 import stroom.alert.rule.shared.ThresholdAlertRule;
 import stroom.docref.DocRef;
+import stroom.query.api.v2.Field;
+import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.Result;
+import stroom.query.api.v2.ResultBuilder;
+import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
+import stroom.query.api.v2.TableResultBuilder;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreManager;
@@ -31,6 +34,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -155,59 +159,14 @@ public class ResultStoreAlertSearchExecutor {
             final Query query = searchRequest.getQuery().copy().timeRange(timeRange).build();
             searchRequest = searchRequest.copy().key(queryKey).query(query).incremental(true).build();
             // Perform the search.
-            final SearchResponse searchResponse = resultStoreManager.search(searchRequest);
-            if (searchResponse.getErrors() != null) {
-                for (final String error : searchResponse.getErrors()) {
-                    LOGGER.error(error);
-                }
+            final Map<String, ResultBuilder<?>> resultBuilderMap = new HashMap<>();
+            for (final ResultRequest resultRequest : searchRequest.getResultRequests()) {
+                final TableResultConsumer tableResultConsumer =
+                        new TableResultConsumer(alertRuleDoc, thresholdAlertRule, recordConsumer);
+                resultBuilderMap.put(resultRequest.getComponentId(), tableResultConsumer);
             }
 
-            final List<Result> results = searchResponse.getResults();
-            if (results != null) {
-                for (final Result result : results) {
-                    if (result instanceof TableResult) {
-                        final TableResult tableResult = (TableResult) result;
-
-                        int thresholdFieldIndex = -1;
-                        for (int i = 0; i < tableResult.getFields().size(); i++) {
-                            if (thresholdAlertRule.getThresholdField() != null &&
-                                    thresholdAlertRule.getThresholdField()
-                                            .equals(tableResult.getFields().get(i).getName())) {
-                                thresholdFieldIndex = i;
-                                break;
-                            }
-                        }
-
-                        if (thresholdFieldIndex == -1) {
-                            throw new RuntimeException("Unable to find threshold field: " +
-                                    thresholdAlertRule.getThresholdField());
-                        }
-
-                        for (final Row row : tableResult.getRows()) {
-                            final List<String> values = row.getValues();
-                            // See if the threshold field value has been exceeded.
-                            final String stringValue = values.get(thresholdFieldIndex);
-                            try {
-                                final long value = Long.parseLong(stringValue);
-                                if (value > thresholdAlertRule.getThreshold()) {
-                                    // Match - dump record.
-                                    final List<Data> rows = new ArrayList<>();
-                                    rows.add(new Data(AlertManager.DETECT_TIME_DATA_ELEMENT_NAME_ATTR,
-                                            DateUtil.createNormalDateTimeString()));
-                                    rows.add(new Data("alertRuleUuid", alertRuleDoc.getUuid()));
-                                    rows.add(new Data("alertRuleName", alertRuleDoc.getName()));
-                                    for (int i = 0; i < tableResult.getFields().size(); i++) {
-                                        rows.add(new Data(tableResult.getFields().get(i).getName(), values.get(i)));
-                                    }
-                                    recordConsumer.accept(new Record(rows));
-                                }
-                            } catch (final NumberFormatException e) {
-                                LOGGER.error(e::getMessage, e);
-                            }
-                        }
-                    }
-                }
-            }
+            final boolean complete = resultStoreManager.search(searchRequest, resultBuilderMap);
 
             // Remember last successful execution.
             lastExecutionTimes.put(alertRuleDoc, to);
@@ -227,6 +186,98 @@ public class ResultStoreAlertSearchExecutor {
             return instant.truncatedTo(ChronoUnit.HOURS);
         } else {
             return instant.truncatedTo(ChronoUnit.DAYS);
+        }
+    }
+
+    private static class TableResultConsumer implements TableResultBuilder {
+
+        private final AlertRuleDoc alertRuleDoc;
+        private final ThresholdAlertRule thresholdAlertRule;
+        private final RecordConsumer recordConsumer;
+
+        private List<Field> fields;
+        private int thresholdFieldIndex = -1;
+
+        public TableResultConsumer(final AlertRuleDoc alertRuleDoc,
+                                   final ThresholdAlertRule thresholdAlertRule,
+                                   final RecordConsumer recordConsumer) {
+            this.alertRuleDoc = alertRuleDoc;
+            this.thresholdAlertRule = thresholdAlertRule;
+            this.recordConsumer = recordConsumer;
+        }
+
+        @Override
+        public TableResultConsumer componentId(final String componentId) {
+            return this;
+        }
+
+        @Override
+        public TableResultConsumer errors(final List<String> errors) {
+            for (final String error : errors) {
+                LOGGER.error(error);
+            }
+            return this;
+        }
+
+        @Override
+        public TableResultConsumer fields(final List<Field> fields) {
+            this.fields = fields;
+
+            for (int i = 0; i < fields.size(); i++) {
+                if (thresholdAlertRule.getThresholdField() != null &&
+                        thresholdAlertRule.getThresholdField()
+                                .equals(fields.get(i).getName())) {
+                    thresholdFieldIndex = i;
+                    break;
+                }
+            }
+
+            if (thresholdFieldIndex == -1) {
+                throw new RuntimeException("Unable to find threshold field: " +
+                        thresholdAlertRule.getThresholdField());
+            }
+
+            return this;
+        }
+
+        @Override
+        public TableResultConsumer addRow(final Row row) {
+            final List<String> values = row.getValues();
+            // See if the threshold field value has been exceeded.
+            final String stringValue = values.get(thresholdFieldIndex);
+            try {
+                final long value = Long.parseLong(stringValue);
+                if (value > thresholdAlertRule.getThreshold()) {
+                    // Match - dump record.
+                    final List<Data> rows = new ArrayList<>();
+                    rows.add(new Data(AlertManager.DETECT_TIME_DATA_ELEMENT_NAME_ATTR,
+                            DateUtil.createNormalDateTimeString()));
+                    rows.add(new Data("alertRuleUuid", alertRuleDoc.getUuid()));
+                    rows.add(new Data("alertRuleName", alertRuleDoc.getName()));
+                    for (int i = 0; i < fields.size(); i++) {
+                        rows.add(new Data(fields.get(i).getName(), values.get(i)));
+                    }
+                    recordConsumer.accept(new Record(rows));
+                }
+            } catch (final NumberFormatException e) {
+                LOGGER.error(e::getMessage, e);
+            }
+            return this;
+        }
+
+        @Override
+        public TableResultConsumer resultRange(final OffsetRange resultRange) {
+            return this;
+        }
+
+        @Override
+        public TableResultConsumer totalResults(final Integer totalResults) {
+            return this;
+        }
+
+        @Override
+        public TableResult build() {
+            return null;
         }
     }
 }

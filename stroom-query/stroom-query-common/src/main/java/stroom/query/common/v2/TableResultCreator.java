@@ -22,9 +22,12 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Result;
+import stroom.query.api.v2.ResultBuilder;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableResult;
+import stroom.query.api.v2.TableResult.TableResultBuilderImpl;
+import stroom.query.api.v2.TableResultBuilder;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.FieldFormatter;
 
@@ -50,6 +53,8 @@ public class TableResultCreator implements ResultCreator {
     private final Sizes defaultMaxResultsSizes;
     private volatile List<Field> latestFields;
 
+    private final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
+
     public TableResultCreator(final SerialisersFactory serialisersFactory,
                               final FieldFormatter fieldFormatter,
                               final Sizes defaultMaxResultsSizes) {
@@ -59,11 +64,22 @@ public class TableResultCreator implements ResultCreator {
     }
 
     @Override
-    public Result create(final DataStore dataStore, final ResultRequest resultRequest) {
-        final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
+    public Result create(final DataStore dataStore,
+                         final ResultRequest resultRequest) {
+        final TableResultBuilderImpl tableResultBuilder = TableResult.builder();
+        create(dataStore, resultRequest, tableResultBuilder);
+        tableResultBuilder.errors(errorConsumer.getErrors());
+        return tableResultBuilder.build();
+    }
+
+    @Override
+    public void create(final DataStore dataStore,
+                       final ResultRequest resultRequest,
+                       final ResultBuilder<?> resultBuilder) {
+        final TableResultBuilder tableResultBuilder = (TableResultBuilder) resultBuilder;
         final Serialisers serialisers = serialisersFactory.create(errorConsumer);
-        final List<Row> resultList = new ArrayList<>();
         final AtomicInteger totalResults = new AtomicInteger();
+        final AtomicInteger currentLength = new AtomicInteger();
 
         final int offset;
         final int length;
@@ -87,6 +103,8 @@ public class TableResultCreator implements ResultCreator {
             latestFields = tableSettings != null
                     ? tableSettings.getFields()
                     : Collections.emptyList();
+            tableResultBuilder.fields(latestFields);
+
             // Create a set of sizes that are the minimum values for the combination of user provided sizes for
             // the table and the default maximum sizes.
             final Sizes maxResults = Sizes.min(
@@ -110,7 +128,8 @@ public class TableResultCreator implements ResultCreator {
                             offset,
                             length,
                             openGroups,
-                            resultList,
+                            tableResultBuilder,
+                            currentLength,
                             data.get(),
                             0,
                             totalResults,
@@ -121,13 +140,8 @@ public class TableResultCreator implements ResultCreator {
             errorConsumer.add(e);
         }
 
-        return new TableResult(
-                resultRequest.getComponentId(),
-                latestFields,
-                resultList,
-                new OffsetRange(offset, resultList.size()),
-                totalResults.get(),
-                errorConsumer.getErrors());
+        tableResultBuilder.resultRange(new OffsetRange(offset, currentLength.get()));
+        tableResultBuilder.totalResults(totalResults.get());
     }
 
     private void addTableResults(final Data data,
@@ -136,7 +150,8 @@ public class TableResultCreator implements ResultCreator {
                                  final int offset,
                                  final int length,
                                  final Set<Key> openGroups,
-                                 final List<Row> resultList,
+                                 final TableResultBuilder tableResultBuilder,
+                                 final AtomicInteger currentLength,
                                  final Items items,
                                  final int depth,
                                  final AtomicInteger pos,
@@ -149,10 +164,11 @@ public class TableResultCreator implements ResultCreator {
             boolean hide = false;
 
             // If the result is within the requested window (offset + length) then add it.
-            if (pos.get() >= offset && resultList.size() < length) {
+            if (pos.get() >= offset && currentLength.get() < length) {
                 final Row row = rowCreator.create(fields, item, depth, errorConsumer);
                 if (row != null) {
-                    resultList.add(row);
+                    tableResultBuilder.addRow(row);
+                    currentLength.incrementAndGet();
                 } else {
                     hide = true;
                 }
@@ -176,7 +192,8 @@ public class TableResultCreator implements ResultCreator {
                             offset,
                             length,
                             openGroups,
-                            resultList,
+                            tableResultBuilder,
+                            currentLength,
                             data.get(item.getKey()),
                             depth + 1,
                             pos,

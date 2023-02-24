@@ -16,6 +16,7 @@
 
 package stroom.query.common.v2;
 
+import stroom.query.api.v2.ResultBuilder;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchResponse;
@@ -36,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -254,6 +256,13 @@ public class ResultStore {
         final SearchResponse response = searchResponseCreator.create(request);
         lastAccessTime = Instant.now();
         return response;
+    }
+
+    public boolean search(final SearchRequest request,
+                                 final Map<String, ResultBuilder<?>> resultBuilderMap) {
+        final boolean complete = searchResponseCreator.create(request, resultBuilderMap);
+        lastAccessTime = Instant.now();
+        return complete;
     }
 
     public void setResultStoreSettings(final ResultStoreSettings resultStoreSettings) {

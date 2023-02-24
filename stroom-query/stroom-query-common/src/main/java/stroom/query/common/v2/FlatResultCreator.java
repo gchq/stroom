@@ -20,10 +20,12 @@ import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.FlatResult;
+import stroom.query.api.v2.FlatResultBuilder;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
+import stroom.query.api.v2.ResultBuilder;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.FieldFormatter;
@@ -41,7 +43,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 public class FlatResultCreator implements ResultCreator {
 
@@ -69,7 +70,7 @@ public class FlatResultCreator implements ResultCreator {
         final List<TableSettings> tableSettings = resultRequest.getMappings()
                 .stream()
                 .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+                .toList();
 
         if (tableSettings.size() > 1) {
             mappers = new ArrayList<>(tableSettings.size() - 1);
@@ -162,6 +163,17 @@ public class FlatResultCreator implements ResultCreator {
 
     @Override
     public Result create(final DataStore dataStore, final ResultRequest resultRequest) {
+        FlatResultBuilder flatResultBuilder = FlatResult.builder();
+        create(dataStore, resultRequest, flatResultBuilder);
+        return flatResultBuilder.build();
+    }
+
+    @Override
+    public void create(final DataStore dataStore,
+                       final ResultRequest resultRequest,
+                       final ResultBuilder<?> resultBuilder) {
+        final FlatResultBuilder flatResultBuilder = (FlatResultBuilder) resultBuilder;
+
         if (!errorConsumer.hasErrors()) {
             try {
                 // Map data.
@@ -220,14 +232,12 @@ public class FlatResultCreator implements ResultCreator {
                 structure.add(Field.builder().name(":Depth").build());
                 structure.addAll(this.fields);
 
-                return FlatResult
-                        .builder()
+                flatResultBuilder
                         .componentId(resultRequest.getComponentId())
                         .size(totalResults.get())
                         .errors(errorConsumer.getErrors())
                         .structure(structure)
-                        .values(results)
-                        .build();
+                        .values(results);
 
             } catch (final UncheckedInterruptedException e) {
                 LOGGER.debug(e::getMessage, e);
@@ -239,8 +249,9 @@ public class FlatResultCreator implements ResultCreator {
             }
         }
 
-        return new FlatResult(resultRequest.getComponentId(), null, null, 0L,
-                errorConsumer.getErrors());
+        flatResultBuilder
+                .componentId(resultRequest.getComponentId())
+                .errors(errorConsumer.getErrors());
     }
 
     private void addResults(final Data data,
