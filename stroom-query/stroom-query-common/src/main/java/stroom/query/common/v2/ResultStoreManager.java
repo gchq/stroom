@@ -239,9 +239,8 @@ public final class ResultStoreManager implements Clearable {
             final Optional<ResultStore> optionalResultStore =
                     getIfPresent(queryKey);
 
-            final String message = "No active search found for key = " + queryKey;
             resultStore = optionalResultStore.orElseThrow(() ->
-                    new RuntimeException(message));
+                    new RuntimeException("No active search found for key = " + queryKey));
 
             // Check user identity.
             if (!resultStore.getUserId().equals(userId)) {

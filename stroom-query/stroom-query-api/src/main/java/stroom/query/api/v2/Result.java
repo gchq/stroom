@@ -139,8 +139,5 @@ public abstract class Result {
         }
 
         abstract T_CHILD_CLASS self();
-
-//        public abstract T build();
     }
-
 }

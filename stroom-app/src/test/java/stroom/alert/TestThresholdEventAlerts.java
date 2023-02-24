@@ -180,8 +180,9 @@ class TestThresholdEventAlerts extends StroomIntegrationTest {
                 "index_view"
                 | where UserId = user5
                 | eval count = count()
-                | group by UserId
-                | table UserId, count""";
+                | eval EventTime = floorYear(EventTime)
+                | group by EventTime, UserId
+                | table EventTime, UserId, count""";
 
         final ThresholdAlertRule thresholdAlertRule = ThresholdAlertRule.builder()
                 .threshold(3)
