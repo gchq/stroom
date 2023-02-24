@@ -278,11 +278,11 @@ public class TableResultCreator implements ResultCreator {
 
         public static Optional<RowCreator> create(final FieldFormatter fieldFormatter,
                                                   final TableSettings tableSettings) {
-            if (tableSettings != null && tableSettings.getRowFilter() != null) {
+            if (tableSettings != null && tableSettings.getAggregateFilter() != null) {
                 final FieldExpressionMatcher expressionMatcher =
                         new FieldExpressionMatcher(tableSettings.getFields());
                 return Optional.of(new FilteredRowCreator(fieldFormatter,
-                        tableSettings.getRowFilter(),
+                        tableSettings.getAggregateFilter(),
                         expressionMatcher));
             }
             return Optional.empty();
@@ -361,7 +361,7 @@ public class TableResultCreator implements ResultCreator {
                         final FieldExpressionMatcher expressionMatcher =
                                 new FieldExpressionMatcher(tableSettings.getFields());
                         return Optional.of(new ConditionalFormattingRowCreator(fieldFormatter,
-                                tableSettings.getRowFilter(),
+                                tableSettings.getAggregateFilter(),
                                 rules,
                                 expressionMatcher));
                     }

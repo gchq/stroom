@@ -55,9 +55,12 @@ public final class TableSettings {
     @JsonProperty
     private final List<Field> fields;
 
+    /**
+     * A filter to apply to aggregated values.
+     */
     @Schema
     @JsonProperty
-    private final ExpressionOperator rowFilter;
+    private final ExpressionOperator aggregateFilter;
 
     @JsonPropertyDescription("TODO")
     @JsonProperty
@@ -89,7 +92,7 @@ public final class TableSettings {
     public TableSettings(
             @JsonProperty("queryId") final String queryId,
             @JsonProperty("fields") final List<Field> fields,
-            @JsonProperty("rowFilter") final ExpressionOperator rowFilter,
+            @JsonProperty("aggregateFilter") final ExpressionOperator aggregateFilter,
             @JsonProperty("extractValues") final Boolean extractValues,
             @JsonProperty("extractionPipeline") final DocRef extractionPipeline,
             @JsonProperty("maxResults") final List<Integer> maxResults,
@@ -98,7 +101,7 @@ public final class TableSettings {
                     conditionalFormattingRules) {
         this.queryId = queryId;
         this.fields = fields;
-        this.rowFilter = rowFilter;
+        this.aggregateFilter = aggregateFilter;
         this.extractValues = extractValues;
         this.extractionPipeline = extractionPipeline;
         this.maxResults = maxResults;
@@ -114,8 +117,8 @@ public final class TableSettings {
         return fields;
     }
 
-    public ExpressionOperator getRowFilter() {
-        return rowFilter;
+    public ExpressionOperator getAggregateFilter() {
+        return aggregateFilter;
     }
 
     public Boolean getExtractValues() {
@@ -163,7 +166,7 @@ public final class TableSettings {
         final TableSettings that = (TableSettings) o;
         return Objects.equals(queryId, that.queryId) &&
                 Objects.equals(fields, that.fields) &&
-                Objects.equals(rowFilter, that.rowFilter) &&
+                Objects.equals(aggregateFilter, that.aggregateFilter) &&
                 Objects.equals(extractValues, that.extractValues) &&
                 Objects.equals(extractionPipeline, that.extractionPipeline) &&
                 Objects.equals(maxResults, that.maxResults) &&
@@ -175,7 +178,7 @@ public final class TableSettings {
     public int hashCode() {
         return Objects.hash(queryId,
                 fields,
-                rowFilter,
+                aggregateFilter,
                 extractValues,
                 extractionPipeline,
                 maxResults,
@@ -188,7 +191,7 @@ public final class TableSettings {
         return "TableSettings{" +
                 "queryId='" + queryId + '\'' +
                 ", fields=" + fields +
-                ", filter=" + rowFilter +
+                ", filter=" + aggregateFilter +
                 ", extractValues=" + extractValues +
                 ", extractionPipeline=" + extractionPipeline +
                 ", maxResults=" + maxResults +
@@ -212,7 +215,7 @@ public final class TableSettings {
 
         protected String queryId;
         protected List<Field> fields;
-        protected ExpressionOperator rowFilter;
+        protected ExpressionOperator aggregateFilter;
         protected Boolean extractValues;
         protected DocRef extractionPipeline;
         protected List<Integer> maxResults;
@@ -227,7 +230,7 @@ public final class TableSettings {
             this.fields = tableSettings.getFields() == null
                     ? null
                     : new ArrayList<>(tableSettings.getFields());
-            this.rowFilter = tableSettings.rowFilter;
+            this.aggregateFilter = tableSettings.aggregateFilter;
             this.extractValues = tableSettings.getExtractValues();
             this.extractionPipeline = tableSettings.getExtractionPipeline();
             this.maxResults = tableSettings.getMaxResults() == null
@@ -253,8 +256,8 @@ public final class TableSettings {
             return this;
         }
 
-        public Builder rowFilter(final ExpressionOperator rowFilter) {
-            this.rowFilter = rowFilter;
+        public Builder aggregateFilter(final ExpressionOperator rowFilter) {
+            this.aggregateFilter = rowFilter;
             return this;
         }
 
@@ -365,7 +368,7 @@ public final class TableSettings {
             return new TableSettings(
                     queryId,
                     fields,
-                    rowFilter,
+                    aggregateFilter,
                     extractValues,
                     extractionPipeline,
                     maxResults,
