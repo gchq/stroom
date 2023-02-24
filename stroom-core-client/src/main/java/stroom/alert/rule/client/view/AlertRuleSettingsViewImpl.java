@@ -32,6 +32,7 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class AlertRuleSettingsViewImpl
@@ -56,6 +57,8 @@ public class AlertRuleSettingsViewImpl
     TextBox executionDelay;
     @UiField
     TextBox executionFrequency;
+    @UiField
+    SimplePanel destinationFeed;
 
     @Inject
     public AlertRuleSettingsViewImpl(final Binder binder) {
@@ -152,6 +155,11 @@ public class AlertRuleSettingsViewImpl
     @Override
     public void setExecutionFrequency(final String executionFrequency) {
         this.executionFrequency.setValue(executionFrequency);
+    }
+
+    @Override
+    public void setDestinationFeedView(final View view) {
+        this.destinationFeed.setWidget(view.asWidget());
     }
 
     @Override

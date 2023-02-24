@@ -6229,9 +6229,13 @@ components:
       discriminator:
         propertyName: type
       properties:
+        destinationFeed:
+          $ref: '#/components/schemas/DocRef'
         executionDelay:
           type: string
         executionFrequency:
+          type: string
+        timeField:
           type: string
         type:
           type: string
@@ -11810,6 +11814,8 @@ components:
         including which fields should be included and what sorting, grouping, filtering,
         limiting, etc. should be applied
       properties:
+        aggregateFilter:
+          $ref: '#/components/schemas/ExpressionOperator'
         extractValues:
           type: boolean
         extractionPipeline:
@@ -11841,6 +11847,8 @@ components:
             will include the full detail of any results aggregated into a group as
             well as their aggregates. A value of false will only include the aggregated
             values for each group. Defaults to false.
+        valueFilter:
+          $ref: '#/components/schemas/ExpressionOperator'
       required:
       - fields
       - queryId
@@ -11989,13 +11997,6 @@ components:
       type: object
       allOf:
       - $ref: '#/components/schemas/AbstractAlertRule'
-      - type: object
-        properties:
-          threshold:
-            type: integer
-            format: int64
-          thresholdField:
-            type: string
     TimeRange:
       type: object
       properties:

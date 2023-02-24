@@ -27,6 +27,9 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
+import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.feed.shared.FeedDoc;
+import stroom.security.shared.DocumentPermissionNames;
 
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -35,6 +38,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
+import java.util.Objects;
 import javax.inject.Provider;
 
 public class AlertRuleSettingsPresenter
@@ -42,13 +46,21 @@ public class AlertRuleSettingsPresenter
         implements DirtyUiHandlers {
 
     private final EditorPresenter codePresenter;
+    private final EntityDropDownPresenter feedPresenter;
     private boolean readOnly = true;
+
+    private DocRef destinationFeed;
 
     @Inject
     public AlertRuleSettingsPresenter(final EventBus eventBus,
                                       final AlertRuleSettingsView view,
-                                      final Provider<EditorPresenter> editorPresenterProvider) {
+                                      final Provider<EditorPresenter> editorPresenterProvider,
+                                      final EntityDropDownPresenter feedPresenter) {
         super(eventBus, view);
+        this.feedPresenter = feedPresenter;
+
+        feedPresenter.setIncludedTypes(FeedDoc.DOCUMENT_TYPE);
+        feedPresenter.setRequiredPermissions(DocumentPermissionNames.READ);
 
         codePresenter = editorPresenterProvider.get();
         codePresenter.setMode(AceEditorMode.STROOM_QUERY);
@@ -62,6 +74,18 @@ public class AlertRuleSettingsPresenter
 
         view.setUiHandlers(this);
         view.setQueryWidget(codePresenter.getWidget());
+        view.setDestinationFeedView(feedPresenter.getView());
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(feedPresenter.addDataSelectionHandler(selection -> {
+            if (!Objects.equals(feedPresenter.getSelectedEntityReference(), destinationFeed)) {
+                setDirty(true);
+                destinationFeed = feedPresenter.getSelectedEntityReference();
+            }
+        }));
     }
 
     @Override
@@ -80,6 +104,8 @@ public class AlertRuleSettingsPresenter
             getView().setTimeField(thresholdAlertRule.getTimeField());
             getView().setExecutionDelay(thresholdAlertRule.getExecutionDelay());
             getView().setExecutionFrequency(thresholdAlertRule.getExecutionFrequency());
+            destinationFeed = thresholdAlertRule.getDestinationFeed();
+            feedPresenter.setSelectedEntityReference(destinationFeed);
         }
     }
 
@@ -91,6 +117,7 @@ public class AlertRuleSettingsPresenter
                     .timeField(getView().getTimeField())
                     .executionDelay(getView().getExecutionDelay())
                     .executionFrequency(getView().getExecutionFrequency())
+                    .destinationFeed(feedPresenter.getSelectedEntityReference())
                     .build();
         }
 
@@ -145,5 +172,7 @@ public class AlertRuleSettingsPresenter
         String getExecutionFrequency();
 
         void setExecutionFrequency(String executionFrequency);
+
+        void setDestinationFeedView(View view);
     }
 }

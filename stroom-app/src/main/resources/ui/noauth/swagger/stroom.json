@@ -9057,10 +9057,16 @@
           "propertyName" : "type"
         },
         "properties" : {
+          "destinationFeed" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
           "executionDelay" : {
             "type" : "string"
           },
           "executionFrequency" : {
+            "type" : "string"
+          },
+          "timeField" : {
             "type" : "string"
           },
           "type" : {
@@ -16591,6 +16597,9 @@
         "type" : "object",
         "description" : "An object to describe how the query results should be returned, including which fields should be included and what sorting, grouping, filtering, limiting, etc. should be applied",
         "properties" : {
+          "aggregateFilter" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
           "extractValues" : {
             "type" : "boolean"
           },
@@ -16620,6 +16629,9 @@
           "showDetail" : {
             "type" : "boolean",
             "description" : "When grouping is used a value of true indicates that the results will include the full detail of any results aggregated into a group as well as their aggregates. A value of false will only include the aggregated values for each group. Defaults to false."
+          },
+          "valueFilter" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
           }
         },
         "required" : [ "fields", "queryId" ]
@@ -16833,17 +16845,6 @@
         "type" : "object",
         "allOf" : [ {
           "$ref" : "#/components/schemas/AbstractAlertRule"
-        }, {
-          "type" : "object",
-          "properties" : {
-            "threshold" : {
-              "type" : "integer",
-              "format" : "int64"
-            },
-            "thresholdField" : {
-              "type" : "string"
-            }
-          }
         } ]
       },
       "TimeRange" : {

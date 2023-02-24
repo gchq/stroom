@@ -31,5 +31,8 @@
         <form:FormGroup identity="alertRuleSettingsExecutionFrequency" label="Execution Frequency">
             <g:TextBox ui:field="executionFrequency"/>
         </form:FormGroup>
+        <form:FormGroup identity="alertRuleSettingsDestinationFeed" label="Destination Feed For Alerts">
+            <g:SimplePanel ui:field="destinationFeed"/>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

@@ -17,7 +17,6 @@
 
 package stroom.search.extraction;
 
-import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
@@ -108,7 +107,6 @@ public class ExtractionTaskHandler {
                         final long streamId,
                         final long[] eventIds,
                         final DocRef pipelineRef,
-                        final ValuesConsumer receiver,
                         final ErrorConsumer errorConsumer,
                         final PipelineData pipelineData) throws DataException {
         Meta meta = null;
@@ -144,9 +142,6 @@ public class ExtractionTaskHandler {
                 // just counting events.
                 idEnrichmentExpectedIds.setStreamId(streamId);
                 idEnrichmentExpectedIds.setEventIds(eventIds);
-
-                extractionStateHolder.setQueryKey(queryKey);
-                extractionStateHolder.setReceiver(receiver);
 
                 // Process the stream segments.
                 processData(queryKey, source, eventIds, pipelineRef, pipeline, errorConsumer);

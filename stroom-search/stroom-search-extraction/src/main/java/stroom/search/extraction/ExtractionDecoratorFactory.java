@@ -24,6 +24,7 @@ public class ExtractionDecoratorFactory {
     private final PipelineStore pipelineStore;
     private final PipelineDataCache pipelineDataCache;
     private final Provider<ExtractionTaskHandler> handlerProvider;
+    private final Provider<ExtractionStateHolder> extractionStateHolderProvider;
 
     @Inject
     ExtractionDecoratorFactory(final ExtractionConfig extractionConfig,
@@ -35,7 +36,8 @@ public class ExtractionDecoratorFactory {
                                final MetaService metaService,
                                final PipelineStore pipelineStore,
                                final PipelineDataCache pipelineDataCache,
-                               final Provider<ExtractionTaskHandler> handlerProvider) {
+                               final Provider<ExtractionTaskHandler> handlerProvider,
+                               final Provider<ExtractionStateHolder> extractionStateHolderProvider) {
         this.extractionConfig = extractionConfig;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
@@ -46,6 +48,7 @@ public class ExtractionDecoratorFactory {
         this.pipelineStore = pipelineStore;
         this.pipelineDataCache = pipelineDataCache;
         this.handlerProvider = handlerProvider;
+        this.extractionStateHolderProvider = extractionStateHolderProvider;
     }
 
     public ExtractionDecorator create(final QueryKey queryKey) {
@@ -60,6 +63,7 @@ public class ExtractionDecoratorFactory {
                 pipelineStore,
                 pipelineDataCache,
                 handlerProvider,
+                extractionStateHolderProvider,
                 queryKey);
     }
 }

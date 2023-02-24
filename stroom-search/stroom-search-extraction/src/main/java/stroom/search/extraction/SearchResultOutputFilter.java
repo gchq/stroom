@@ -16,6 +16,7 @@
 
 package stroom.search.extraction;
 
+import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -23,6 +24,7 @@ import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.SearchDebugUtil;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
@@ -43,19 +45,27 @@ public class SearchResultOutputFilter extends AbstractXMLFilter {
 
     private final ExtractionStateHolder extractionStateHolder;
 
+    private QueryKey queryKey;
+    private FieldIndex fieldIndex;
+    private Val[] values;
+
     @Inject
     public SearchResultOutputFilter(final ExtractionStateHolder extractionStateHolder) {
         this.extractionStateHolder = extractionStateHolder;
     }
 
-    private Val[] values;
-
+    @Override
+    public void startProcessing() {
+        super.startProcessing();
+        this.queryKey = extractionStateHolder.getQueryKey();
+        this.fieldIndex = extractionStateHolder.getFieldIndex();
+    }
 
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
             throws SAXException {
         if (DATA.equals(localName) && values != null) {
-            SearchProgressLog.increment(extractionStateHolder.getQueryKey(),
+            SearchProgressLog.increment(queryKey,
                     SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_START_DATA);
             String name = atts.getValue(NAME);
             String value = atts.getValue(VALUE);
@@ -64,23 +74,23 @@ public class SearchResultOutputFilter extends AbstractXMLFilter {
                 value = value.trim();
 
                 if (name.length() > 0 && value.length() > 0) {
-                    final Integer pos = extractionStateHolder.getFieldIndex().getPos(name);
+                    final Integer pos = fieldIndex.getPos(name);
                     if (pos != null) {
                         values[pos] = ValString.create(value);
                     }
                 }
             }
         } else if (RECORD.equals(localName)) {
-            SearchProgressLog.increment(extractionStateHolder.getQueryKey(),
+            SearchProgressLog.increment(queryKey,
                     SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_START_RECORD);
-            values = new Val[extractionStateHolder.getFieldIndex().size()];
+            values = new Val[fieldIndex.size()];
         }
     }
 
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         if (RECORD.equals(localName)) {
-            SearchProgressLog.increment(extractionStateHolder.getQueryKey(),
+            SearchProgressLog.increment(queryKey,
                     SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_END_RECORD);
             SearchDebugUtil.writeExtractionData(values);
             extractionStateHolder.getReceiver().add(values);

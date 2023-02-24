@@ -10,8 +10,11 @@
  */
 
 export interface AbstractAlertRule {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  destinationFeed?: DocRef;
   executionDelay?: string;
   executionFrequency?: string;
+  timeField?: string;
   type: string;
 }
 
@@ -3430,6 +3433,8 @@ export type TableResultRequest = ComponentResultRequest & {
  * An object to describe how the query results should be returned, including which fields should be included and what sorting, grouping, filtering, limiting, etc. should be applied
  */
 export interface TableSettings {
+  /** A logical addOperator term in a query expression tree */
+  aggregateFilter?: ExpressionOperator;
   extractValues?: boolean;
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
@@ -3447,6 +3452,9 @@ export interface TableSettings {
 
   /** When grouping is used a value of true indicates that the results will include the full detail of any results aggregated into a group as well as their aggregates. A value of false will only include the aggregated values for each group. Defaults to false. */
   showDetail?: boolean;
+
+  /** A logical addOperator term in a query expression tree */
+  valueFilter?: ExpressionOperator;
 }
 
 export interface TaskId {
@@ -3531,7 +3539,7 @@ export interface ThemeConfig {
   tubeVisible?: string;
 }
 
-export type ThresholdAlertRule = AbstractAlertRule & { threshold?: number; thresholdField?: string };
+export type ThresholdAlertRule = AbstractAlertRule;
 
 export interface TimeRange {
   condition?:

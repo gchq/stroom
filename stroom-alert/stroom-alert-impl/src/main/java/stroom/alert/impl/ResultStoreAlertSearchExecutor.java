@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Inject;
@@ -57,8 +58,6 @@ public class ResultStoreAlertSearchExecutor {
     // TODO : Make persistent with DB.
     private final Map<AlertRuleDoc, Instant> lastExecutionTimes = new ConcurrentHashMap<>();
 
-    private String feedName;
-
     @Inject
     public ResultStoreAlertSearchExecutor(final ResultStoreManager resultStoreManager,
                                           final AlertRuleSearchRequestHelper alertRuleSearchRequestHelper,
@@ -76,32 +75,49 @@ public class ResultStoreAlertSearchExecutor {
         this.pipelineScopeRunnable = pipelineScopeRunnable;
     }
 
-    public void setFeedName(final String feedName) {
-        this.feedName = feedName;
-    }
-
     public void exec() {
         securityContext.asProcessingUser(() -> {
-            pipelineScopeRunnable.scopeRunnable(() -> {
-                final DetectionsWriter detectionsWriter = detectionsWriterProvider.get();
-                detectionsWriter.setFeedName(feedName);
-                detectionsWriter.start();
-                try {
-                    final AlertRuleStore alertRuleStore = alertRuleStoreProvider.get();
-                    final List<DocRef> docRefList = alertRuleStore.list();
-                    for (final DocRef docRef : docRefList) {
-                        final AlertRuleDoc alertRuleDoc = alertRuleStore.readDocument(docRef);
-                        if (AlertRuleType.THRESHOLD.equals(alertRuleDoc.getAlertRuleType())) {
-                            final AbstractAlertRule alertRule = alertRuleDoc.getAlertRule();
-                            if (alertRule instanceof ThresholdAlertRule) {
-                                execThresholdAlertRule(alertRuleDoc, (ThresholdAlertRule) alertRule, detectionsWriter);
-                            }
+            // Group aggregate rules by destination feed.
+            final Map<DocRef, List<AlertRuleDoc>> rulesByDestinationFeed = new HashMap<>();
+            final AlertRuleStore alertRuleStore = alertRuleStoreProvider.get();
+            final List<DocRef> docRefList = alertRuleStore.list();
+            for (final DocRef docRef : docRefList) {
+                final AlertRuleDoc alertRuleDoc = alertRuleStore.readDocument(docRef);
+                if (AlertRuleType.THRESHOLD.equals(alertRuleDoc.getAlertRuleType())) {
+                    final AbstractAlertRule alertRule = alertRuleDoc.getAlertRule();
+                    if (alertRule instanceof ThresholdAlertRule) {
+                        final DocRef destinationFeed = alertRule.getDestinationFeed();
+                        if (destinationFeed != null) {
+                            rulesByDestinationFeed
+                                    .computeIfAbsent(destinationFeed, k -> new ArrayList<>())
+                                    .add(alertRuleDoc);
                         }
                     }
-                } finally {
-                    detectionsWriter.end();
                 }
-            });
+            }
+
+            // Now run them.
+            for (final Entry<DocRef, List<AlertRuleDoc>> entry : rulesByDestinationFeed.entrySet()) {
+                final DocRef feedDocRef = entry.getKey();
+                pipelineScopeRunnable.scopeRunnable(() -> {
+                    final DetectionsWriter detectionsWriter = detectionsWriterProvider.get();
+                    detectionsWriter.setFeed(feedDocRef);
+                    detectionsWriter.start();
+                    try {
+                        for (final AlertRuleDoc alertRuleDoc : entry.getValue()) {
+                            try {
+                                execThresholdAlertRule(alertRuleDoc,
+                                        (ThresholdAlertRule) alertRuleDoc.getAlertRule(),
+                                        detectionsWriter);
+                            } catch (final RuntimeException e) {
+                                LOGGER.error(e::getMessage, e);
+                            }
+                        }
+                    } finally {
+                        detectionsWriter.end();
+                    }
+                });
+            }
         });
     }
 

@@ -181,10 +181,15 @@ class TestThresholdEventAlerts extends StroomIntegrationTest {
                 | having count > 3
                 | table EventTime, UserId, count""";
 
+        // Create somewhere to put the alerts.
+        final DocRef detections = feedStore.createDocument("DETECTIONS");
+
+        // Create the rule.
         final ThresholdAlertRule thresholdAlertRule = ThresholdAlertRule.builder()
                 .timeField("EventTime")
                 .executionDelay("PT1S")
                 .executionFrequency("PT1S")
+                .destinationFeed(detections)
                 .build();
 
         final DocRef alertRuleDocRef = alertRuleStore.createDocument("Threshold Event Rule");
@@ -214,12 +219,8 @@ class TestThresholdEventAlerts extends StroomIntegrationTest {
         resultStore.signalComplete();
         resultStore.awaitCompletion();
 
-
         // Now run the aggregate search process.
-        final DocRef detections = feedStore.createDocument("DETECTIONS");
-        resultStoreAlertSearchExecutor.setFeedName(detections.getName());
         resultStoreAlertSearchExecutor.exec();
-
 
         // As we have created alerts ensure we now have more streams.
         final ResultPage<Meta> resultPage = metaService.find(new FindMetaCriteria());

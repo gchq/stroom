@@ -16,6 +16,8 @@
 
 package stroom.alert.rule.shared;
 
+import stroom.docref.DocRef;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -29,8 +31,9 @@ public class ThresholdAlertRule extends AbstractAlertRule {
     @JsonCreator
     public ThresholdAlertRule(@JsonProperty("executionDelay") final String executionDelay,
                               @JsonProperty("executionFrequency") final String executionFrequency,
-                              @JsonProperty("timeField") final String timeField) {
-        super(timeField, executionDelay, executionFrequency);
+                              @JsonProperty("timeField") final String timeField,
+                              @JsonProperty("destinationFeed") final DocRef destinationFeed) {
+        super(timeField, executionDelay, executionFrequency, destinationFeed);
     }
 
     public static Builder builder() {
@@ -58,7 +61,7 @@ public class ThresholdAlertRule extends AbstractAlertRule {
 
         @Override
         public ThresholdAlertRule build() {
-            return new ThresholdAlertRule(executionDelay, executionFrequency, timeField);
+            return new ThresholdAlertRule(executionDelay, executionFrequency, timeField, destinationFeed);
         }
     }
 }

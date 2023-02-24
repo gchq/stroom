@@ -59,9 +59,10 @@ public class Lifespan {
             return false;
         }
         final Lifespan lifespan = (Lifespan) o;
-        return destroyOnTabClose == lifespan.destroyOnTabClose && destroyOnWindowClose == lifespan.destroyOnWindowClose && Objects.equals(
-                timeToIdle,
-                lifespan.timeToIdle) && Objects.equals(timeToLive, lifespan.timeToLive);
+        return destroyOnTabClose == lifespan.destroyOnTabClose &&
+                destroyOnWindowClose == lifespan.destroyOnWindowClose &&
+                Objects.equals(timeToIdle, lifespan.timeToIdle) &&
+                Objects.equals(timeToLive, lifespan.timeToLive);
     }
 
     @Override

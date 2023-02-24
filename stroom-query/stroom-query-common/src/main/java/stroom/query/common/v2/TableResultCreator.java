@@ -77,6 +77,7 @@ public class TableResultCreator implements ResultCreator {
                        final ResultRequest resultRequest,
                        final ResultBuilder<?> resultBuilder) {
         final TableResultBuilder tableResultBuilder = (TableResultBuilder) resultBuilder;
+
         final Serialisers serialisers = serialisersFactory.create(errorConsumer);
         final AtomicInteger totalResults = new AtomicInteger();
         final AtomicInteger currentLength = new AtomicInteger();
@@ -96,8 +97,6 @@ public class TableResultCreator implements ResultCreator {
             //What is the interaction between the paging and the maxResults? The assumption is that
             //maxResults defines the max number of records to come back and the paging can happen up to
             //that maxResults threshold
-
-            Set<Key> openGroups = OpenGroupsConverter.convertSet(serialisers, resultRequest.getOpenGroups());
 
             TableSettings tableSettings = resultRequest.getMappings().get(0);
             latestFields = tableSettings != null
@@ -124,6 +123,7 @@ public class TableResultCreator implements ResultCreator {
             }
             final RowCreator rowCreator = optionalRowCreator.orElse(null);
 
+            final Set<Key> openGroups = OpenGroupsConverter.convertSet(serialisers, resultRequest.getOpenGroups());
             dataStore.getData(data ->
                     addTableResults(data,
                             latestFields.toArray(new Field[0]),
@@ -143,6 +143,7 @@ public class TableResultCreator implements ResultCreator {
             errorConsumer.add(e);
         }
 
+        tableResultBuilder.componentId(resultRequest.getComponentId());
         tableResultBuilder.resultRange(new OffsetRange(offset, currentLength.get()));
         tableResultBuilder.totalResults(totalResults.get());
     }

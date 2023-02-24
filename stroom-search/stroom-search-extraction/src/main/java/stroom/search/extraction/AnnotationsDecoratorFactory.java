@@ -6,5 +6,5 @@ import stroom.query.api.v2.Query;
 
 public interface AnnotationsDecoratorFactory {
 
-    ValuesConsumer create(ValuesConsumer receiver, FieldIndex fieldIndex, Query query);
+    ValuesConsumer create(ValuesConsumer valuesConsumer, FieldIndex fieldIndex, Query query);
 }

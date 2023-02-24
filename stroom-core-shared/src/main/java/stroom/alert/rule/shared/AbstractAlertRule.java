@@ -16,6 +16,8 @@
 
 package stroom.alert.rule.shared;
 
+import stroom.docref.DocRef;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -43,14 +45,18 @@ public abstract class AbstractAlertRule {
     private final String executionDelay;
     @JsonProperty
     private final String executionFrequency;
+    @JsonProperty
+    private final DocRef destinationFeed;
 
     @JsonCreator
     public AbstractAlertRule(@JsonProperty("timeField") final String timeField,
                              @JsonProperty("executionDelay") final String executionDelay,
-                             @JsonProperty("executionFrequency") final String executionFrequency) {
+                             @JsonProperty("executionFrequency") final String executionFrequency,
+                             @JsonProperty("destinationFeed") final DocRef destinationFeed) {
         this.timeField = timeField;
         this.executionDelay = executionDelay;
         this.executionFrequency = executionFrequency;
+        this.destinationFeed = destinationFeed;
     }
 
     public String getTimeField() {
@@ -65,6 +71,10 @@ public abstract class AbstractAlertRule {
         return executionFrequency;
     }
 
+    public DocRef getDestinationFeed() {
+        return destinationFeed;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -75,12 +85,13 @@ public abstract class AbstractAlertRule {
         }
         final AbstractAlertRule that = (AbstractAlertRule) o;
         return Objects.equals(timeField, that.timeField) && Objects.equals(executionDelay,
-                that.executionDelay) && Objects.equals(executionFrequency, that.executionFrequency);
+                that.executionDelay) && Objects.equals(executionFrequency,
+                that.executionFrequency) && Objects.equals(destinationFeed, that.destinationFeed);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(timeField, executionDelay, executionFrequency);
+        return Objects.hash(timeField, executionDelay, executionFrequency, destinationFeed);
     }
 
     @Override
@@ -89,6 +100,7 @@ public abstract class AbstractAlertRule {
                 "timeField='" + timeField + '\'' +
                 ", executionDelay='" + executionDelay + '\'' +
                 ", executionFrequency='" + executionFrequency + '\'' +
+                ", destinationFeed=" + destinationFeed +
                 '}';
     }
 
@@ -97,6 +109,7 @@ public abstract class AbstractAlertRule {
         protected String timeField = "EventTime";
         protected String executionDelay;
         protected String executionFrequency;
+        protected DocRef destinationFeed;
 
         public AbstractBuilder() {
         }
@@ -105,6 +118,7 @@ public abstract class AbstractAlertRule {
             this.timeField = alertRule.timeField;
             this.executionDelay = alertRule.executionDelay;
             this.executionFrequency = alertRule.executionFrequency;
+            this.destinationFeed = alertRule.destinationFeed;
         }
 
         public B timeField(final String timeField) {
@@ -119,6 +133,11 @@ public abstract class AbstractAlertRule {
 
         public B executionFrequency(final String executionFrequency) {
             this.executionFrequency = executionFrequency;
+            return self();
+        }
+
+        public B destinationFeed(final DocRef destinationFeed) {
+            this.destinationFeed = destinationFeed;
             return self();
         }
 

@@ -212,8 +212,7 @@ public class AlertProcessorImpl implements AlertProcessor {
                 long[] eventIds = alertQueryHits.getSortedQueryHitsForRule(ruleConfig);
                 if (eventIds != null && eventIds.length > 0) {
                     final DetectionsWriter detectionsWriter = detectionsWriterProvider.get();
-                    final MultiValuesConsumer multiValuesConsumer =
-                            multiValuesReceiverFactory.create(ruleConfig, detectionsWriter);
+                    multiValuesReceiverFactory.create(ruleConfig, detectionsWriter);
 
                     final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
                     try {
@@ -225,7 +224,6 @@ public class AlertProcessorImpl implements AlertProcessor {
                                 currentStreamId,
                                 eventIds,
                                 pipeline,
-                                multiValuesConsumer,
                                 errorConsumer,
                                 pipelineData);
                         numTasks++;

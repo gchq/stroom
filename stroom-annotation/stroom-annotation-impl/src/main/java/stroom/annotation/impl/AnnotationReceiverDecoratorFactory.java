@@ -78,7 +78,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
     }
 
     @Override
-    public ValuesConsumer create(final ValuesConsumer receiver,
+    public ValuesConsumer create(final ValuesConsumer valuesConsumer,
                                  final FieldIndex fieldIndex,
                                  final Query query) {
         final Integer annotationIdIndex = fieldIndex.getPos(AnnotationFields.ID);
@@ -86,7 +86,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
         final Integer eventIdIndex = fieldIndex.getPos(IndexConstants.EVENT_ID);
 
         if (annotationIdIndex == null && (streamIdIndex == null || eventIdIndex == null)) {
-            return receiver;
+            return valuesConsumer;
         }
 
         // Do we need to filter based on annotation attributes?
@@ -96,7 +96,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
         usedFields.retainAll(AnnotationFields.FIELD_MAP.keySet());
 
         if (filter == null && usedFields.size() == 0) {
-            return receiver;
+            return valuesConsumer;
         }
 
         final Annotation defaultAnnotation = createDefaultAnnotation();
@@ -141,7 +141,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
                             setValue(copy, fieldIndex, field, annotation);
                         }
 
-                        receiver.add(copy);
+                        valuesConsumer.add(copy);
                     }
                 } catch (final RuntimeException e) {
                     LOGGER.debug(e::getMessage, e);
