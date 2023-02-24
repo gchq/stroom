@@ -384,7 +384,8 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
 
     private void addUserIdentityToRefreshQueueIfRequired(final UserIdentity userIdentity) {
         if (userIdentity instanceof final AbstractTokenUserIdentity tokenUserIdentity) {
-            LOGGER.debug("Adding identity to the refresh queue: {}", userIdentity);
+            LOGGER.debug(() -> LogUtil.message("Adding identity to the refresh queue, userIdentity: {}, delay: {}",
+                    userIdentity, Duration.ofMillis(tokenUserIdentity.getDelay(TimeUnit.MILLISECONDS))));
 
             if (tokenUserIdentity.hasRefreshToken()
                     || tokenUserIdentity instanceof ServiceUserIdentity) {
@@ -549,10 +550,11 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
 
     private void createOrUpdateTestServiceUser() {
         if (serviceUserIdentity == null) {
-            LOGGER.info("Created service user identity {}", serviceUserIdentity);
             serviceUserIdentity = new DefaultOpenIdCredsUserIdentity(
                     defaultOpenIdCredentials.getApiKeyUserEmail(),
                     defaultOpenIdCredentials.getApiKey());
+            LOGGER.info("Created test service user identity {} {}",
+                    serviceUserIdentity.getClass().getSimpleName(), serviceUserIdentity);
         }
     }
 
@@ -581,15 +583,17 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
                 });
 
         if (serviceUserIdentity == null) {
-            LOGGER.info("Created service user identity {}", serviceUserIdentity);
             serviceUserIdentity = new ServiceUserIdentity(fetchTokenResult.tokenResponse, fetchTokenResult.jwtClaims);
+            LOGGER.info("Created external IDP service user identity {} {}",
+                    serviceUserIdentity.getClass().getSimpleName(), serviceUserIdentity);
         } else {
             if (!(serviceUserIdentity instanceof final ServiceUserIdentity serviceUserIdentity2)) {
                 throw new RuntimeException(LogUtil.message("Unexpected type {}",
                         serviceUserIdentity.getClass().getSimpleName()));
             }
-            LOGGER.info("Updated service user identity {}", serviceUserIdentity);
             serviceUserIdentity2.updateTokens(fetchTokenResult.tokenResponse, fetchTokenResult.jwtClaims);
+            LOGGER.info("Updated external IDP service user identity {} {}",
+                    serviceUserIdentity2.getClass().getSimpleName(), serviceUserIdentity2);
         }
 
         // Add the identity onto the queue so the tokens get refreshed

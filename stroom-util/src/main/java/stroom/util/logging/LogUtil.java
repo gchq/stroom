@@ -205,6 +205,17 @@ public final class LogUtil {
         }
     }
 
+    /**
+     * Returns the simple class name with the message
+     */
+    public static String exceptionMessage(final Throwable t) {
+        if (t == null) {
+            return null;
+        } else {
+            return t.getClass() + " " + t.getMessage();
+        }
+    }
+
     private static <T> String withPercentage(final Object originalValue,
                                              final T value,
                                              final T total) {

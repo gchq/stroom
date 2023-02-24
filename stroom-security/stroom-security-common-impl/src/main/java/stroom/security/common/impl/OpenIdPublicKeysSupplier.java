@@ -7,6 +7,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.JsonWebKeySet;
 import org.jose4j.jwk.PublicJsonWebKey;
 import org.jose4j.jwk.PublicJsonWebKey.Factory;
@@ -14,10 +15,12 @@ import org.jose4j.lang.JoseException;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -132,7 +135,10 @@ public class OpenIdPublicKeysSupplier implements Supplier<JsonWebKeySet> {
                     .plus(MAX_KEY_SET_AGE)
                     .toEpochMilli();
             LOGGER.info("Fetched jsonWebKeySet for uri {}", jwksUri);
-            return new KeySetWrapper(new JsonWebKeySet(json), expiryEpochMs);
+            final JsonWebKeySet jsonWebKeySet = new JsonWebKeySet(json);
+            LOGGER.debug(() -> LogUtil.message("Fetched the following keys for uri {}\n{}",
+                    jwksUri, dumpJsonWebKeySet(jsonWebKeySet)));
+            return new KeySetWrapper(jsonWebKeySet, expiryEpochMs);
         } catch (JoseException e) {
             LOGGER.error("Error building JsonWebKeySet from json: {}", json, e);
         } catch (Exception e) {
@@ -141,6 +147,24 @@ public class OpenIdPublicKeysSupplier implements Supplier<JsonWebKeySet> {
         }
         return null;
 //        }
+    }
+
+    private String dumpJsonWebKeySet(final JsonWebKeySet jsonWebKeySet) {
+        if (jsonWebKeySet == null) {
+            return "";
+        } else {
+            final List<String> lines = jsonWebKeySet.getJsonWebKeys()
+                    .stream()
+                    .map(jsonWebKey -> {
+                        return LogUtil.message("{}: {}, {}: {}",
+                                JsonWebKey.KEY_TYPE_PARAMETER,
+                                jsonWebKey.getKeyType(),
+                                JsonWebKey.ALGORITHM_PARAMETER,
+                                jsonWebKey.getAlgorithm());
+                    })
+                    .collect(Collectors.toList());
+            return LogUtil.toPaddedMultiLine("  ", lines);
+        }
     }
 
 

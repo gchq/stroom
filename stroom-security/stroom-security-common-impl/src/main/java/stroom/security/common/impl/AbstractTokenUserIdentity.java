@@ -152,12 +152,12 @@ public abstract class AbstractTokenUserIdentity implements UserIdentity, HasJwt,
                     work.accept(this);
                     didWork = true;
                 } else {
-                    LOGGER.debug("Work not required");
+                    LOGGER.trace("Work not required");
                     didWork = false;
                 }
             }
         } else {
-            LOGGER.debug("Work not required");
+            LOGGER.trace("Work not required");
             didWork = false;
         }
         return didWork;

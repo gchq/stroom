@@ -25,7 +25,7 @@ public final class JwtUtil {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JwtUtil.class);
 
-    private static final String BEARER = "Bearer ";
+    static final String BEARER = "Bearer ";
     private static final String CORP_PREFIX = "corp_";
     private static final String IDENTITIES = "identities";
     private static final String USER_ID = "userId";
@@ -47,19 +47,22 @@ public final class JwtUtil {
     /**
      * Get the JSON Web Signature from the specified request header
      */
-    public static Optional<String> getJwsFromHeader(final HttpServletRequest request, final String headerName) {
-        Optional<String> jws = Optional.empty();
-        final String value = request.getHeader(headerName);
-        if (value != null && !value.isBlank()) {
-            if (value.startsWith(BEARER)) {
-                // This chops out 'Bearer' so we get just the token.
-                jws = Optional.of(value.substring(BEARER.length()));
-            } else {
-                jws = Optional.of(value);
-            }
-            jws.ifPresent(s -> LOGGER.debug(() -> "Found auth header in request: {" + headerName + "=" + s + "}"));
-        }
-        return jws;
+    public static Optional<String> getJwsFromHeader(final HttpServletRequest request,
+                                                    final String headerName) {
+        return Optional.ofNullable(request.getHeader(headerName))
+                .filter(str -> !str.isBlank())
+                .map(str -> {
+                    final String jws;
+                    if (str.startsWith(BEARER)) {
+                        // This chops out 'Bearer' so we get just the token.
+                        jws = str.substring(BEARER.length());
+                    } else {
+                        jws = str;
+                    }
+                    LOGGER.debug(() ->
+                            "Found auth header in request: {" + headerName + "=" + jws + "}");
+                    return jws;
+                });
     }
 
     public static String getEmail(final JwtClaims jwtClaims) {

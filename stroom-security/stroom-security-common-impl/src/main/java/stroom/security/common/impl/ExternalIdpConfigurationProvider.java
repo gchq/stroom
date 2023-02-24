@@ -77,8 +77,10 @@ public class ExternalIdpConfigurationProvider
         final HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
         final AbstractOpenIdConfig abstractOpenIdConfig = openIdConfigProvider.get();
         final String configurationEndpoint = abstractOpenIdConfig.getOpenIdConfigurationEndpoint();
+        final IdpType idpType = abstractOpenIdConfig.getIdentityProviderType();
+        LOGGER.debug("Checking health, idpType: {}, configurationEndpoint: {}", idpType, configurationEndpoint);
 
-        if (!IdpType.EXTERNAL_IDP.equals(abstractOpenIdConfig.getIdentityProviderType())) {
+        if (!IdpType.EXTERNAL_IDP.equals(idpType)) {
             resultBuilder
                     .healthy()
                     .withMessage("Not using external IDP (Using "
@@ -95,6 +97,7 @@ public class ExternalIdpConfigurationProvider
             // Hit the config endpoint to check the IDP is accessible.
             // Even if we already have the config from it, if we can't see the IDP we have problems.
             try {
+                resultBuilder.withDetail("configUri", configurationEndpoint);
                 OpenIdConfigurationResponse response = fetchOpenIdConfigurationResponse(
                         configurationEndpoint, abstractOpenIdConfig);
                 if (response != null) {

@@ -26,6 +26,7 @@ public class OpenId {
     public static final String CLIENT_ID = "client_id";
     public static final String CLIENT_SECRET = "client_secret";
     public static final String CODE = "code";
+    public static final String KEY_ID = "kid";
     public static final String GRANT_TYPE = "grant_type";
     public static final String NONCE = "nonce";
     public static final String PROMPT = "prompt";

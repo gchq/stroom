@@ -10,7 +10,13 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import io.vavr.Tuple;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
+import org.eclipse.jetty.http.HttpStatus;
+import org.jose4j.base64url.SimplePEMEncoder;
 import org.jose4j.jwk.JsonWebKeySet;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
@@ -19,29 +25,55 @@ import org.jose4j.jwt.consumer.JwtContext;
 import org.jose4j.keys.resolvers.JwksVerificationKeyResolver;
 import org.jose4j.keys.resolvers.VerificationKeyResolver;
 
+import java.nio.charset.StandardCharsets;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
+import java.time.Duration;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.Base64;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Response;
 
+@Singleton // for ObjectMapper and cache
 public class StandardJwtContextFactory implements JwtContextFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StandardJwtContextFactory.class);
 
+    // TODO: 24/02/2023 These header keys ought to be in config
     private static final String AMZN_OIDC_ACCESS_TOKEN_HEADER = "x-amzn-oidc-accesstoken";
     private static final String AMZN_OIDC_IDENTITY_HEADER = "x-amzn-oidc-identity";
     private static final String AMZN_OIDC_DATA_HEADER = "x-amzn-oidc-data";
+    private static final String AMZN_OIDC_SIGNER_HEADER_KEY = "signer";
+    private static final String AMZN_OIDC_SIGNER_HEADER_PREFIX = "arn:";
     private static final String AUTHORIZATION_HEADER = HttpHeaders.AUTHORIZATION;
+    private static final String CACHE_NAME = "AWS Public Key Cache";
 
     private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
     private final OpenIdPublicKeysSupplier openIdPublicKeysSupplier;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
+
+    // Stateful things
+    private volatile LoadingCache<String, PublicKey> awsPublicKeyCache = null; // uri => publicKey
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Inject
     public StandardJwtContextFactory(final Provider<OpenIdConfiguration> openIdConfigurationProvider,
@@ -50,6 +82,29 @@ public class StandardJwtContextFactory implements JwtContextFactory {
         this.openIdConfigurationProvider = openIdConfigurationProvider;
         this.openIdPublicKeysSupplier = openIdPublicKeysSupplier;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
+    }
+
+    private LoadingCache<String, PublicKey> createAwsPublicKeyCache() {
+        LOGGER.info("Creating cache for AWS public keys");
+        // TODO: 24/02/2023 Probably ought to come from config
+        // Need to use caffeine rather than StroomCache as this is used in proxy which
+        // doesn't have it
+        final LoadingCache<String, PublicKey> awsPublicKeyCache;
+        awsPublicKeyCache = Caffeine.newBuilder()
+                .maximumSize(1_000)
+                .expireAfterAccess(Duration.ofHours(1))
+                .build(this::fetchAwsPublicKey);
+
+        final Timer timer = new Timer("AWS public key cache eviction timer", true);
+        timer.schedule(new TimerTask() {
+                           @Override
+                           public void run() {
+                               awsPublicKeyCache.cleanUp();
+                           }
+                       },
+                Duration.ofMinutes(1).toMillis(),
+                Duration.ofMinutes(1).toMillis());
+        return awsPublicKeyCache;
     }
 
     @Override
@@ -89,32 +144,106 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                             AMZN_OIDC_ACCESS_TOKEN_HEADER,
                             AMZN_OIDC_IDENTITY_HEADER,
                             AMZN_OIDC_DATA_HEADER)
-                    .map(key -> Tuple.of(key, request.getHeader(key)))
-                    .filter(keyValue -> keyValue._2 != null)
-                    .map(keyValue -> keyValue._1 + "=" + keyValue._2)
+                    .map(key -> new SimpleEntry<>(key, request.getHeader(key)))
+                    .filter(entry -> entry.getValue() != null)
+                    .map(keyValue -> keyValue.getKey() + "=" + keyValue.getValue())
                     .collect(Collectors.joining(" "));
             LOGGER.debug("uri: {}, headers: {}", request.getRequestURI(), headers);
         }
 
-        final Optional<String> optionalJwt = getTokenFromHeader(request);
+        final Optional<HeaderToken> optionalJwt = getTokenFromHeader(request);
+
         return optionalJwt
-                .flatMap(this::getJwtContext)
+                .flatMap(headerToken -> {
+                    if (AMZN_OIDC_DATA_HEADER.equals(headerToken.header)) {
+                        final JwsParts jwsParts = parseJws(headerToken.jwt);
+                        return getAwsJwtContext(jwsParts);
+                    } else {
+                        return getStandardJwtContext(headerToken.jwt);
+                    }
+                })
                 .or(() -> {
                     LOGGER.debug(() -> "No JWS found in headers in request to " + request.getRequestURI());
                     return Optional.empty();
                 });
     }
 
-    private Optional<String> getTokenFromHeader(final HttpServletRequest request) {
+    private Optional<HeaderToken> getTokenFromHeader(final HttpServletRequest request) {
+        // When using an AWS ELB/ALB that is integrated with the IDP, the ELB/ALB will
+        // do the auth flow and just pass us a different header containing the claims obtained
+        // from the IDP. See
+        // https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-authenticate-users.html
+        // We may be dealing with requests of either form
         return JwtUtil.getJwsFromHeader(request, AMZN_OIDC_DATA_HEADER)
-                .or(() -> JwtUtil.getJwsFromHeader(request, AUTHORIZATION_HEADER));
+                .map(jws -> new HeaderToken(AMZN_OIDC_DATA_HEADER, jws))
+                .or(() ->
+                        JwtUtil.getJwsFromHeader(request, AUTHORIZATION_HEADER)
+                                .map(jws -> new HeaderToken(AUTHORIZATION_HEADER, jws)));
     }
 
-    /**
-     * Verify the JSON Web Signature and then extract the user identity from it
-     */
-    @Override
-    public Optional<JwtContext> getJwtContext(final String jwt) {
+    private JwsParts parseJws(final String jws) {
+        LOGGER.debug(() -> "jws=" + jws);
+
+        // Step 1: Get the key id from JWT headers (the kid field)
+        final String[] parts = jws.split("\\.");
+        final String header = parts[0];
+        final String payload = parts[1];
+        final String signature = parts[2];
+
+        LOGGER.debug(() -> "header=" + header + ", payload=" + payload + ", signature=" + signature);
+
+        final String decodedHeader;
+        try {
+            decodedHeader = new String(Base64.getDecoder().decode(header), StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            throw new RuntimeException(LogUtil.message("jws is not in BASE64 format: {}",
+                    LogUtil.exceptionMessage(e)), e);
+        }
+
+        LOGGER.debug("decodedHeader: {}", decodedHeader);
+
+        try {
+            final Map<String, String> headerMap = objectMapper.readValue(
+                    decodedHeader,
+                    new TypeReference<HashMap<String, String>>() {});
+            LOGGER.debug("headerMap: {}", headerMap);
+
+            return new JwsParts(
+                    jws,
+                    header,
+                    payload,
+                    signature,
+                    headerMap);
+
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(LogUtil.message("Error parsing header as json: {}. decodedHeader:\n{}",
+                    LogUtil.exceptionMessage(e), decodedHeader), e);
+        }
+    }
+
+    private Optional<JwtContext> getAwsJwtContext(final JwsParts jwsParts) {
+        final PublicKey publicKey = getAwsPublicKey(jwsParts);
+        Objects.requireNonNull(publicKey, "Couldn't get public key");
+
+        try {
+            final JwtConsumerBuilder builder = new JwtConsumerBuilder()
+                    .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims
+                    // to account for clock skew
+                    .setRequireSubject() // the JWT must have a subject claim
+                    .setVerificationKey(publicKey)
+                    .setRelaxVerificationKeyValidation() // relaxes key length requirement
+                    .setExpectedIssuer(openIdConfigurationProvider.get().getIssuer());
+            final JwtConsumer jwtConsumer = builder.build();
+            return Optional.ofNullable(jwtConsumer.process(jwsParts.jws));
+
+        } catch (Exception e) {
+            LOGGER.debug(e::getMessage, e);
+            throw new RuntimeException(LogUtil.message("Error getting jwt context for AWS JWT: {}",
+                    LogUtil.exceptionMessage(e)), e);
+        }
+    }
+
+    private Optional<JwtContext> getStandardJwtContext(final String jwt) {
         Objects.requireNonNull(jwt, "Null JWS");
         LOGGER.debug(() -> "Found auth header in request. It looks like this: " + jwt);
 
@@ -144,6 +273,24 @@ public class StandardJwtContextFactory implements JwtContextFactory {
         } catch (final RuntimeException | InvalidJwtException e) {
             LOGGER.debug(() -> "Unable to verify token: " + e.getMessage(), e);
             throw new AuthenticationException(e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Verify the JSON Web Signature and then extract the user identity from it
+     */
+    @Override
+    public Optional<JwtContext> getJwtContext(final String jwt) {
+        // We don't know if this is signed by the IDP or aws so crack it open
+        final JwsParts jwsParts = parseJws(jwt);
+        if (jwsParts.getHeaderValue(AMZN_OIDC_SIGNER_HEADER_KEY)
+                .filter(val -> !val.isBlank())
+                .filter(val -> val.startsWith(AMZN_OIDC_SIGNER_HEADER_PREFIX))
+                .isPresent()) {
+            // This jwt was signed by AWS
+            return getAwsJwtContext(jwsParts);
+        } else {
+            return getStandardJwtContext(jwt);
         }
     }
 
@@ -185,6 +332,8 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                 ? defaultOpenIdCredentials.getOauth2Issuer()
                 : openIdConfiguration.getIssuer();
 
+        LOGGER.debug("Expecting issuer: {}", issuer);
+
         final JwtConsumerBuilder builder = new JwtConsumerBuilder()
                 .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account
                 //                                   for clock skew
@@ -207,5 +356,119 @@ public class StandardJwtContextFactory implements JwtContextFactory {
             builder.setSkipDefaultAudienceValidation();
         }
         return builder.build();
+    }
+
+    private PublicKey getAwsPublicKey(final JwsParts jwsParts) {
+        final String signer = jwsParts.getHeaderValue(AMZN_OIDC_SIGNER_HEADER_KEY)
+                .orElseThrow(() -> new RuntimeException(LogUtil.message("Missing '{}' key in jws header {}",
+                        AMZN_OIDC_SIGNER_HEADER_KEY, jwsParts.header)));
+
+        if (NullSafe.isBlankString(signer)) {
+            throw new RuntimeException(LogUtil.message("Blank value for '{}' key in jws header {}",
+                    AMZN_OIDC_SIGNER_HEADER_KEY, jwsParts.header));
+        }
+        // Signer is an Amazon Resource Name of the form:
+        // arn:partition:service:region:account-id:resource-id
+
+        final String[] signerParts = signer.split(signer);
+        if (signerParts.length < 4) {
+            throw new RuntimeException(LogUtil.message("Unable to parse value for '{}' key in jws header {}",
+                    AMZN_OIDC_SIGNER_HEADER_KEY, signer));
+        }
+        final String awsRegion = signerParts[3];
+
+        final String keyId = jwsParts.getHeaderValue(OpenId.KEY_ID)
+                .orElseThrow(() -> new RuntimeException(LogUtil.message("Missing '{}' key in jws header {}",
+                        OpenId.KEY_ID, jwsParts.header)));
+
+        // TODO: 24/02/2023 Ought to come from config
+        final String uri = LogUtil.message("https://public-keys.auth.elb.{}.amazonaws.com/{}",
+                awsRegion, keyId);
+
+        // Lazy initialise the cache and its timer in case we never deal with aws keys
+        if (awsPublicKeyCache == null) {
+            synchronized (this) {
+                if (awsPublicKeyCache == null) {
+                    awsPublicKeyCache = createAwsPublicKeyCache();
+                }
+            }
+        }
+
+        return awsPublicKeyCache.get(uri);
+    }
+
+    private PublicKey fetchAwsPublicKey(final String uri) {
+
+        LOGGER.debug(() -> "Fetching AWS public key from \"" + uri + "\"");
+        final Client client = ClientBuilder.newClient();
+        // Don't use injected WebTargetFactory as that slaps a token on which we don't want in
+        // this case as it is an unauthenticated endpoint
+        final WebTarget target = client.target(uri);
+        final Response res = target
+                .request()
+                .get();
+        if (res.getStatus() == HttpStatus.OK_200) {
+            final String pubKey = res.readEntity(String.class);
+            LOGGER.debug(() -> "Received public key \"" + pubKey + "\"");
+
+            // The public key is PEM format.
+            return decodePublicKey(pubKey, "EC");
+        } else {
+            throw new RuntimeException("Unable to retrieve public key from \"" +
+                    uri +
+                    "\"" +
+                    res.getStatus() +
+                    ": " +
+                    res.readEntity(String.class));
+        }
+    }
+
+    private PublicKey decodePublicKey(final String pem, final String alg) {
+        PublicKey publicKey = null;
+
+        try {
+            // decode to its constituent bytes
+            String publicKeyPEM = pem;
+            publicKeyPEM = publicKeyPEM.replace("-----BEGIN PUBLIC KEY-----\n", "");
+            publicKeyPEM = publicKeyPEM.replace("-----END PUBLIC KEY-----", "");
+
+            byte[] publicKeyBytes = SimplePEMEncoder.decode(publicKeyPEM);
+
+            // create a key object from the bytes
+            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
+            KeyFactory keyFactory = KeyFactory.getInstance(alg);
+            publicKey = keyFactory.generatePublic(keySpec);
+
+        } catch (final RuntimeException | NoSuchAlgorithmException | InvalidKeySpecException e) {
+            LOGGER.error(alg + " " + e.getMessage(), e);
+        }
+
+        return publicKey;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record HeaderToken(
+            String header,
+            String jwt) {
+
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record JwsParts(
+            String jws,
+            String header,
+            String payload,
+            String signature,
+            Map<String, String> headerMap) {
+
+        Optional<String> getHeaderValue(final String key) {
+            return Optional.ofNullable(headerMap.get(key));
+        }
     }
 }
