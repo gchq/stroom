@@ -11,7 +11,6 @@ import stroom.alert.rule.shared.ThresholdAlertRule;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultBuilder;
 import stroom.query.api.v2.ResultRequest;
@@ -19,7 +18,6 @@ import stroom.query.api.v2.Row;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableResultBuilder;
-import stroom.query.api.v2.TimeRange;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.security.api.SecurityContext;
@@ -151,22 +149,21 @@ public class ResultStoreAlertSearchExecutor {
         if (optionalResultStore.isPresent()) {
             // Create a search request.
             SearchRequest searchRequest = alertRuleSearchRequestHelper.create(alertRuleDoc);
-            // Narrow the search time range.
-            final TimeRange timeRange = new TimeRange(
-                    "Custom",
-                    DateUtil.createNormalDateTimeString(from),
-                    DateUtil.createNormalDateTimeString(to));
-            final Query query = searchRequest.getQuery().copy().timeRange(timeRange).build();
-            searchRequest = searchRequest.copy().key(queryKey).query(query).incremental(true).build();
+            // Create a time filter. Note the filter times are exclusive.
+            final TimeFilter timeFilter = new TimeFilter(thresholdAlertRule.getTimeField(),
+                    from,
+                    to.plusMillis(1));
+
+            searchRequest = searchRequest.copy().key(queryKey).incremental(true).build();
             // Perform the search.
             final Map<String, ResultBuilder<?>> resultBuilderMap = new HashMap<>();
             for (final ResultRequest resultRequest : searchRequest.getResultRequests()) {
                 final TableResultConsumer tableResultConsumer =
-                        new TableResultConsumer(alertRuleDoc, thresholdAlertRule, recordConsumer);
+                        new TableResultConsumer(alertRuleDoc, thresholdAlertRule, recordConsumer, timeFilter);
                 resultBuilderMap.put(resultRequest.getComponentId(), tableResultConsumer);
             }
 
-            final boolean complete = resultStoreManager.search(searchRequest, resultBuilderMap);
+            resultStoreManager.search(searchRequest, resultBuilderMap);
 
             // Remember last successful execution.
             lastExecutionTimes.put(alertRuleDoc, to);
@@ -191,19 +188,25 @@ public class ResultStoreAlertSearchExecutor {
 
     private static class TableResultConsumer implements TableResultBuilder {
 
+        private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TableResultConsumer.class);
+
         private final AlertRuleDoc alertRuleDoc;
         private final ThresholdAlertRule thresholdAlertRule;
         private final RecordConsumer recordConsumer;
+        private final TimeFilter timeFilter;
 
         private List<Field> fields;
+        private int timeFieldIndex = -1;
         private int thresholdFieldIndex = -1;
 
         public TableResultConsumer(final AlertRuleDoc alertRuleDoc,
                                    final ThresholdAlertRule thresholdAlertRule,
-                                   final RecordConsumer recordConsumer) {
+                                   final RecordConsumer recordConsumer,
+                                   final TimeFilter timeFilter) {
             this.alertRuleDoc = alertRuleDoc;
             this.thresholdAlertRule = thresholdAlertRule;
             this.recordConsumer = recordConsumer;
+            this.timeFilter = timeFilter;
         }
 
         @Override
@@ -223,18 +226,30 @@ public class ResultStoreAlertSearchExecutor {
         public TableResultConsumer fields(final List<Field> fields) {
             this.fields = fields;
 
-            for (int i = 0; i < fields.size(); i++) {
-                if (thresholdAlertRule.getThresholdField() != null &&
-                        thresholdAlertRule.getThresholdField()
-                                .equals(fields.get(i).getName())) {
-                    thresholdFieldIndex = i;
-                    break;
+            try {
+                for (int i = 0; i < fields.size(); i++) {
+                    if (thresholdAlertRule.getThresholdField() != null &&
+                            thresholdAlertRule.getThresholdField()
+                                    .equals(fields.get(i).getName())) {
+                        thresholdFieldIndex = i;
+                    } else if (timeFilter.timeField()
+                            .equals(fields.get(i).getName())) {
+                        timeFieldIndex = i;
+                    }
                 }
-            }
 
-            if (thresholdFieldIndex == -1) {
-                throw new RuntimeException("Unable to find threshold field: " +
-                        thresholdAlertRule.getThresholdField());
+                if (thresholdFieldIndex == -1) {
+                    throw new RuntimeException("Unable to find threshold field: " +
+                            thresholdAlertRule.getThresholdField());
+                }
+
+                if (timeFieldIndex == -1) {
+                    throw new RuntimeException("Unable to find time field: " +
+                            timeFilter.timeField());
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.error(e::getMessage, e);
+                throw e;
             }
 
             return this;
@@ -242,26 +257,44 @@ public class ResultStoreAlertSearchExecutor {
 
         @Override
         public TableResultConsumer addRow(final Row row) {
-            final List<String> values = row.getValues();
-            // See if the threshold field value has been exceeded.
-            final String stringValue = values.get(thresholdFieldIndex);
             try {
-                final long value = Long.parseLong(stringValue);
-                if (value > thresholdAlertRule.getThreshold()) {
-                    // Match - dump record.
-                    final List<Data> rows = new ArrayList<>();
-                    rows.add(new Data(AlertManager.DETECT_TIME_DATA_ELEMENT_NAME_ATTR,
-                            DateUtil.createNormalDateTimeString()));
-                    rows.add(new Data("alertRuleUuid", alertRuleDoc.getUuid()));
-                    rows.add(new Data("alertRuleName", alertRuleDoc.getName()));
-                    for (int i = 0; i < fields.size(); i++) {
-                        rows.add(new Data(fields.get(i).getName(), values.get(i)));
-                    }
-                    recordConsumer.accept(new Record(rows));
+                final List<String> values = row.getValues();
+                // See if we match the time filter.
+                final String timeString = values.get(timeFieldIndex);
+                Instant time;
+                try {
+                    time = Instant.ofEpochMilli(Long.parseLong(timeString));
+                } catch (final RuntimeException e) {
+                    LOGGER.debug(e::getMessage, e);
+                    time = DateUtil.parseNormalDateTimeStringToInstant(timeString);
                 }
-            } catch (final NumberFormatException e) {
+
+                if (timeFilter.from().isBefore(time) && timeFilter.to().isAfter(time)) {
+                    // See if the threshold field value has been exceeded.
+                    final String stringValue = values.get(thresholdFieldIndex);
+                    try {
+                        final long value = Long.parseLong(stringValue);
+                        if (value > thresholdAlertRule.getThreshold()) {
+                            // Match - dump record.
+                            final List<Data> rows = new ArrayList<>();
+                            rows.add(new Data(AlertManager.DETECT_TIME_DATA_ELEMENT_NAME_ATTR,
+                                    DateUtil.createNormalDateTimeString()));
+                            rows.add(new Data("alertRuleUuid", alertRuleDoc.getUuid()));
+                            rows.add(new Data("alertRuleName", alertRuleDoc.getName()));
+                            for (int i = 0; i < fields.size(); i++) {
+                                rows.add(new Data(fields.get(i).getName(), values.get(i)));
+                            }
+                            recordConsumer.accept(new Record(rows));
+                        }
+                    } catch (final NumberFormatException e) {
+                        LOGGER.error(e::getMessage, e);
+                    }
+                }
+            } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
+                throw e;
             }
+
             return this;
         }
 

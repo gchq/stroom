@@ -362,7 +362,7 @@ public class SearchRequestBuilder {
         final TableSettings tableSettings = tableSettingsBuilder
                 .extractValues(extractValues)
 //                .extractionPipeline(resultPipeline)
-                .showDetail(true)
+//                .showDetail(true)
                 .build();
 
         final ResultRequest tableResultRequest = new ResultRequest("1234",

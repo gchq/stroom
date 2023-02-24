@@ -16,8 +16,6 @@
 
 package stroom.alert.rule.shared;
 
-import stroom.query.api.v2.TimeRange;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -31,6 +29,8 @@ import java.util.Objects;
 public class ThresholdAlertRule extends AbstractAlertRule {
 
     @JsonProperty
+    private final String timeField;
+    @JsonProperty
     private final String thresholdField;
     @JsonProperty
     private final long threshold;
@@ -38,11 +38,17 @@ public class ThresholdAlertRule extends AbstractAlertRule {
     @JsonCreator
     public ThresholdAlertRule(@JsonProperty("executionDelay") final String executionDelay,
                               @JsonProperty("executionFrequency") final String executionFrequency,
+                              @JsonProperty("timeField") final String timeField,
                               @JsonProperty("thresholdField") final String thresholdField,
                               @JsonProperty("threshold") final long threshold) {
         super(executionDelay, executionFrequency);
+        this.timeField = timeField;
         this.thresholdField = thresholdField;
         this.threshold = threshold;
+    }
+
+    public String getTimeField() {
+        return timeField;
     }
 
     public String getThresholdField() {
@@ -65,12 +71,13 @@ public class ThresholdAlertRule extends AbstractAlertRule {
             return false;
         }
         final ThresholdAlertRule that = (ThresholdAlertRule) o;
-        return threshold == that.threshold && Objects.equals(thresholdField, that.thresholdField);
+        return threshold == that.threshold && Objects.equals(timeField,
+                that.timeField) && Objects.equals(thresholdField, that.thresholdField);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), thresholdField, threshold);
+        return Objects.hash(super.hashCode(), timeField, thresholdField, threshold);
     }
 
     public static Builder builder() {
@@ -83,6 +90,7 @@ public class ThresholdAlertRule extends AbstractAlertRule {
 
     public static class Builder extends AbstractBuilder<ThresholdAlertRule, Builder> {
 
+        private String timeField = "EventTime";
         private String thresholdField;
         private long threshold;
 
@@ -91,8 +99,14 @@ public class ThresholdAlertRule extends AbstractAlertRule {
 
         public Builder(final ThresholdAlertRule alertRule) {
             super(alertRule);
+            this.timeField = alertRule.timeField;
             this.thresholdField = alertRule.thresholdField;
             this.threshold = alertRule.threshold;
+        }
+
+        public Builder timeField(final String timeField) {
+            this.timeField = timeField;
+            return this;
         }
 
         public Builder thresholdField(final String thresholdField) {
@@ -112,7 +126,7 @@ public class ThresholdAlertRule extends AbstractAlertRule {
 
         @Override
         public ThresholdAlertRule build() {
-            return new ThresholdAlertRule(executionDelay, executionFrequency, thresholdField, threshold);
+            return new ThresholdAlertRule(executionDelay, executionFrequency, timeField, thresholdField, threshold);
         }
     }
 }
