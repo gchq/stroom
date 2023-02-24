@@ -5,7 +5,7 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:v="urn:import:stroom.widget.valuespinner.client">
+>
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="alertRuleSettingsDescription" label="Description">
             <g:TextArea ui:field="description" width="400px"/>
@@ -22,17 +22,14 @@
         <form:FormGroup identity="alertRuleSettingsAlertRuleType" label="Alert Rule Type">
             <l:ItemListBox ui:field="alertRuleType"/>
         </form:FormGroup>
+        <form:FormGroup identity="alertRuleSettingsTimeField" label="Time Field">
+            <g:TextBox ui:field="timeField"/>
+        </form:FormGroup>
         <form:FormGroup identity="alertRuleSettingsExecutionDelay" label="Execution Delay">
             <g:TextBox ui:field="executionDelay"/>
         </form:FormGroup>
         <form:FormGroup identity="alertRuleSettingsExecutionFrequency" label="Execution Frequency">
             <g:TextBox ui:field="executionFrequency"/>
-        </form:FormGroup>
-        <form:FormGroup identity="alertRuleSettingsThresholdField" label="Threshold Field">
-            <g:TextBox ui:field="thresholdField"/>
-        </form:FormGroup>
-        <form:FormGroup identity="alertRuleSettingsThreshold" label="Threshold">
-            <v:ValueSpinner ui:field="threshold" addStyleNames="allow-focus"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

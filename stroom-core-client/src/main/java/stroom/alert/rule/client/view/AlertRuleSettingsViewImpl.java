@@ -23,7 +23,6 @@ import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.item.client.ItemListBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
-import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.dom.client.InputEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -52,13 +51,11 @@ public class AlertRuleSettingsViewImpl
     @UiField
     ItemListBox<AlertRuleType> alertRuleType;
     @UiField
+    TextBox timeField;
+    @UiField
     TextBox executionDelay;
     @UiField
     TextBox executionFrequency;
-    @UiField
-    TextBox thresholdField;
-    @UiField
-    ValueSpinner threshold;
 
     @Inject
     public AlertRuleSettingsViewImpl(final Binder binder) {
@@ -128,6 +125,16 @@ public class AlertRuleSettingsViewImpl
     }
 
     @Override
+    public String getTimeField() {
+        return this.timeField.getValue();
+    }
+
+    @Override
+    public void setTimeField(final String timeField) {
+        this.timeField.setValue(timeField);
+    }
+
+    @Override
     public String getExecutionDelay() {
         return this.executionDelay.getValue();
     }
@@ -145,26 +152,6 @@ public class AlertRuleSettingsViewImpl
     @Override
     public void setExecutionFrequency(final String executionFrequency) {
         this.executionFrequency.setValue(executionFrequency);
-    }
-
-    @Override
-    public String getThresholdField() {
-        return this.thresholdField.getValue();
-    }
-
-    @Override
-    public void setThresholdField(final String thresholdField) {
-        this.thresholdField.setValue(thresholdField);
-    }
-
-    @Override
-    public long getThreshold() {
-        return this.threshold.getValue();
-    }
-
-    @Override
-    public void setThreshold(final long threshold) {
-        this.threshold.setValue(threshold);
     }
 
     @Override

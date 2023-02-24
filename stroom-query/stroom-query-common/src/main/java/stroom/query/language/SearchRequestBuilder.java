@@ -20,6 +20,7 @@ import stroom.query.language.PipeGroup.PipeOperation;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -56,8 +57,8 @@ public class SearchRequestBuilder {
         // Add data source.
         List<AbstractToken> remaining = addDataSource(childTokens, queryBuilder::dataSource);
 
-        // Add expression.
-        remaining = addExpression(remaining, queryBuilder::expression);
+        // Add where expression.
+        remaining = addExpression(remaining, PipeOperation.WHERE, queryBuilder::expression);
 
         // Try to make a query.
         Query query = queryBuilder.build();
@@ -90,6 +91,7 @@ public class SearchRequestBuilder {
     }
 
     private List<AbstractToken> addExpression(final List<AbstractToken> tokens,
+                                              final PipeOperation pipeOperation,
                                               final Consumer<ExpressionOperator> expressionConsumer) {
         List<AbstractToken> whereGroup = null;
         int i = 0;
@@ -97,7 +99,7 @@ public class SearchRequestBuilder {
             final AbstractToken token = tokens.get(i);
             if (token instanceof PipeGroup) {
                 final PipeGroup pipeGroup = (PipeGroup) token;
-                if (PipeOperation.WHERE.equals(pipeGroup.getPipeOperation())) {
+                if (pipeOperation.equals(pipeGroup.getPipeOperation())) {
                     if (whereGroup == null) {
                         whereGroup = new ArrayList<>();
                     }
@@ -223,7 +225,7 @@ public class SearchRequestBuilder {
                     final PipeGroup pipeGroup = (PipeGroup) token;
                     final PipeOperation pipeOperation = pipeGroup.getPipeOperation();
                     switch (pipeOperation) {
-                        case WHERE, AND -> builder = addAnd(builder, pipeGroup.getChildren());
+                        case WHERE, HAVING,AND -> builder = addAnd(builder, pipeGroup.getChildren());
                         case OR -> builder = addOr(builder, pipeGroup.getChildren());
                         case NOT -> builder = addNot(builder, pipeGroup.getChildren());
                         default -> throw new TokenException(token, "Unexpected pipe operation in query");
@@ -310,35 +312,52 @@ public class SearchRequestBuilder {
 
         final TableSettings.Builder tableSettingsBuilder = TableSettings.builder();
 
-        int i = 0;
-        for (; i < tokens.size(); i++) {
-            final AbstractToken token = tokens.get(i);
+        int lastTokenCount = -1;
+        List<AbstractToken> remaining = new LinkedList<>(tokens);
+        while (remaining.size() > 0 && lastTokenCount != remaining.size()) {
+            final AbstractToken token = remaining.get(0);
             if (token instanceof PipeGroup) {
                 final PipeGroup pipeGroup = (PipeGroup) token;
                 switch (pipeGroup.getPipeOperation()) {
-                    case EVAL -> processEvalPipeOperation(
-                            pipeGroup,
-                            functions);
-                    case SORT -> processSortPipeOperation(
-                            pipeGroup,
-                            sortMap);
+                    case EVAL -> {
+                        processEvalPipeOperation(
+                                pipeGroup,
+                                functions);
+                        remaining.remove(0);
+                    }
+                    case SORT -> {
+                        processSortPipeOperation(
+                                pipeGroup,
+                                sortMap);
+                        remaining.remove(0);
+                    }
                     case GROUP -> {
                         processGroupPipeOperation(
                                 pipeGroup,
                                 groupMap,
                                 groupDepth);
                         groupDepth++;
+                        remaining.remove(0);
                     }
-                    case TABLE -> processTablePipeOperation(
-                            pipeGroup,
-                            functions,
-                            sortMap,
-                            groupMap,
-                            filterMap,
-                            tableSettingsBuilder);
-                    case LIMIT -> processLimitPipeOperation(
-                            pipeGroup,
-                            tableSettingsBuilder);
+                    case HAVING -> {
+                        remaining = addExpression(remaining, PipeOperation.HAVING, tableSettingsBuilder::rowFilter);
+                    }
+                    case TABLE -> {
+                        processTablePipeOperation(
+                                pipeGroup,
+                                functions,
+                                sortMap,
+                                groupMap,
+                                filterMap,
+                                tableSettingsBuilder);
+                        remaining.remove(0);
+                    }
+                    case LIMIT -> {
+                        processLimitPipeOperation(
+                                pipeGroup,
+                                tableSettingsBuilder);
+                        remaining.remove(0);
+                    }
                 }
 
 //                if (PipeOperation.RENAME.equals(pipeGroup.getPipeOperation())) {
@@ -373,10 +392,7 @@ public class SearchRequestBuilder {
                 Fetch.ALL);
         resultRequests.add(tableResultRequest);
 
-        if (i < tokens.size()) {
-            return tokens.subList(i, tokens.size());
-        }
-        return Collections.emptyList();
+        return remaining;
     }
 
 //    private void processRenamePipeOperation(final PipeGroup pipeGroup,

@@ -77,10 +77,9 @@ public class AlertRuleSettingsPresenter
         final AbstractAlertRule abstractAlertRule = alertRule.getAlertRule();
         if (abstractAlertRule instanceof ThresholdAlertRule) {
             final ThresholdAlertRule thresholdAlertRule = (ThresholdAlertRule) abstractAlertRule;
+            getView().setTimeField(thresholdAlertRule.getTimeField());
             getView().setExecutionDelay(thresholdAlertRule.getExecutionDelay());
             getView().setExecutionFrequency(thresholdAlertRule.getExecutionFrequency());
-            getView().setThresholdField(thresholdAlertRule.getThresholdField());
-            getView().setThreshold(thresholdAlertRule.getThreshold());
         }
     }
 
@@ -89,10 +88,9 @@ public class AlertRuleSettingsPresenter
         AbstractAlertRule rule = null;
         if (AlertRuleType.THRESHOLD.equals(getView().getAlertRuleType())) {
             rule = ThresholdAlertRule.builder()
+                    .timeField(getView().getTimeField())
                     .executionDelay(getView().getExecutionDelay())
                     .executionFrequency(getView().getExecutionFrequency())
-                    .thresholdField(getView().getThresholdField())
-                    .threshold(getView().getThreshold())
                     .build();
         }
 
@@ -136,6 +134,10 @@ public class AlertRuleSettingsPresenter
 
         void setAlertRuleType(AlertRuleType alertRuleType);
 
+        String getTimeField();
+
+        void setTimeField(String timeField);
+
         String getExecutionDelay();
 
         void setExecutionDelay(String executionDelay);
@@ -143,13 +145,5 @@ public class AlertRuleSettingsPresenter
         String getExecutionFrequency();
 
         void setExecutionFrequency(String executionFrequency);
-
-        String getThresholdField();
-
-        void setThresholdField(String thresholdField);
-
-        long getThreshold();
-
-        void setThreshold(long threshold);
     }
 }

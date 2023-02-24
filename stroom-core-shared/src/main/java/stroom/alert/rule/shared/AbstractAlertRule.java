@@ -38,15 +38,23 @@ import java.util.Objects;
 public abstract class AbstractAlertRule {
 
     @JsonProperty
+    private final String timeField;
+    @JsonProperty
     private final String executionDelay;
     @JsonProperty
     private final String executionFrequency;
 
     @JsonCreator
-    public AbstractAlertRule(@JsonProperty("executionDelay") final String executionDelay,
+    public AbstractAlertRule(@JsonProperty("timeField") final String timeField,
+                             @JsonProperty("executionDelay") final String executionDelay,
                              @JsonProperty("executionFrequency") final String executionFrequency) {
+        this.timeField = timeField;
         this.executionDelay = executionDelay;
         this.executionFrequency = executionFrequency;
+    }
+
+    public String getTimeField() {
+        return timeField;
     }
 
     public String getExecutionDelay() {
@@ -65,21 +73,28 @@ public abstract class AbstractAlertRule {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        if (!super.equals(o)) {
-            return false;
-        }
         final AbstractAlertRule that = (AbstractAlertRule) o;
-        return Objects.equals(executionDelay, that.executionDelay) &&
-                Objects.equals(executionFrequency, that.executionFrequency);
+        return Objects.equals(timeField, that.timeField) && Objects.equals(executionDelay,
+                that.executionDelay) && Objects.equals(executionFrequency, that.executionFrequency);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(executionDelay, executionFrequency);
+        return Objects.hash(timeField, executionDelay, executionFrequency);
+    }
+
+    @Override
+    public String toString() {
+        return "AbstractAlertRule{" +
+                "timeField='" + timeField + '\'' +
+                ", executionDelay='" + executionDelay + '\'' +
+                ", executionFrequency='" + executionFrequency + '\'' +
+                '}';
     }
 
     public abstract static class AbstractBuilder<T extends AbstractAlertRule, B extends AbstractBuilder<T, ?>> {
 
+        protected String timeField = "EventTime";
         protected String executionDelay;
         protected String executionFrequency;
 
@@ -87,7 +102,14 @@ public abstract class AbstractAlertRule {
         }
 
         public AbstractBuilder(final AbstractAlertRule alertRule) {
+            this.timeField = alertRule.timeField;
+            this.executionDelay = alertRule.executionDelay;
             this.executionFrequency = alertRule.executionFrequency;
+        }
+
+        public B timeField(final String timeField) {
+            this.timeField = timeField;
+            return self();
         }
 
         public B executionDelay(final String executionDelay) {

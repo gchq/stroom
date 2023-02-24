@@ -38,16 +38,16 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-public class ConditionalFormattingExpressionMatcher {
+public class FieldExpressionMatcher {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConditionalFormattingExpressionMatcher.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FieldExpressionMatcher.class);
     private static final String DELIMITER = ",";
 
     private final Map<String, Pattern> patternCache = new HashMap<>();
 
     private final Map<String, Field> fieldNameToFieldMap;
 
-    public ConditionalFormattingExpressionMatcher(final List<Field> fields) {
+    public FieldExpressionMatcher(final List<Field> fields) {
         this.fieldNameToFieldMap = new HashMap<>();
         for (final Field field : fields) {
             fieldNameToFieldMap.putIfAbsent(field.getName(), field);

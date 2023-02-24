@@ -34,15 +34,12 @@ import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.index.VolumeTestConfigModule;
 import stroom.index.impl.IndexShardManager;
-import stroom.index.impl.IndexShardManager.IndexShardAction;
 import stroom.index.mock.MockIndexShardWriterExecutorModule;
-import stroom.index.shared.FindIndexShardCriteria;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.processor.api.ProcessorResult;
-import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.resource.impl.ResourceModule;
@@ -55,7 +52,6 @@ import stroom.test.StoreCreationTool;
 import stroom.test.StroomIntegrationTest;
 import stroom.test.common.ProjectPathUtil;
 import stroom.test.common.StroomPipelineTestFileUtil;
-import stroom.util.concurrent.ThreadUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 import stroom.view.impl.ViewStore;
@@ -182,11 +178,11 @@ class TestThresholdEventAlerts extends StroomIntegrationTest {
                 | eval count = count()
                 | eval EventTime = floorYear(EventTime)
                 | group by EventTime, UserId
+                | having count > 3
                 | table EventTime, UserId, count""";
 
         final ThresholdAlertRule thresholdAlertRule = ThresholdAlertRule.builder()
-                .threshold(3)
-                .thresholdField("count")
+                .timeField("EventTime")
                 .executionDelay("PT1S")
                 .executionFrequency("PT1S")
                 .build();
@@ -210,7 +206,6 @@ class TestThresholdEventAlerts extends StroomIntegrationTest {
         results.forEach(this::assertProcessorResult);
 
 
-
         // We need to get the result store and tell it to complete just to ensure the data is flushed.
         // Under normal operating conditions we wouldn't tell the store to complete as it would accumulate data on
         // an ongoing basis.
@@ -224,7 +219,6 @@ class TestThresholdEventAlerts extends StroomIntegrationTest {
         final DocRef detections = feedStore.createDocument("DETECTIONS");
         resultStoreAlertSearchExecutor.setFeedName(detections.getName());
         resultStoreAlertSearchExecutor.exec();
-
 
 
         // As we have created alerts ensure we now have more streams.

@@ -55,6 +55,10 @@ public final class TableSettings {
     @JsonProperty
     private final List<Field> fields;
 
+    @Schema
+    @JsonProperty
+    private final ExpressionOperator rowFilter;
+
     @JsonPropertyDescription("TODO")
     @JsonProperty
     private final Boolean extractValues;
@@ -85,14 +89,16 @@ public final class TableSettings {
     public TableSettings(
             @JsonProperty("queryId") final String queryId,
             @JsonProperty("fields") final List<Field> fields,
+            @JsonProperty("rowFilter") final ExpressionOperator rowFilter,
             @JsonProperty("extractValues") final Boolean extractValues,
             @JsonProperty("extractionPipeline") final DocRef extractionPipeline,
             @JsonProperty("maxResults") final List<Integer> maxResults,
             @JsonProperty("showDetail") final Boolean showDetail,
-            @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule> conditionalFormattingRules) {
-
+            @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule>
+                    conditionalFormattingRules) {
         this.queryId = queryId;
         this.fields = fields;
+        this.rowFilter = rowFilter;
         this.extractValues = extractValues;
         this.extractionPipeline = extractionPipeline;
         this.maxResults = maxResults;
@@ -106,6 +112,10 @@ public final class TableSettings {
 
     public List<Field> getFields() {
         return fields;
+    }
+
+    public ExpressionOperator getRowFilter() {
+        return rowFilter;
     }
 
     public Boolean getExtractValues() {
@@ -153,6 +163,7 @@ public final class TableSettings {
         final TableSettings that = (TableSettings) o;
         return Objects.equals(queryId, that.queryId) &&
                 Objects.equals(fields, that.fields) &&
+                Objects.equals(rowFilter, that.rowFilter) &&
                 Objects.equals(extractValues, that.extractValues) &&
                 Objects.equals(extractionPipeline, that.extractionPipeline) &&
                 Objects.equals(maxResults, that.maxResults) &&
@@ -164,6 +175,7 @@ public final class TableSettings {
     public int hashCode() {
         return Objects.hash(queryId,
                 fields,
+                rowFilter,
                 extractValues,
                 extractionPipeline,
                 maxResults,
@@ -176,6 +188,7 @@ public final class TableSettings {
         return "TableSettings{" +
                 "queryId='" + queryId + '\'' +
                 ", fields=" + fields +
+                ", filter=" + rowFilter +
                 ", extractValues=" + extractValues +
                 ", extractionPipeline=" + extractionPipeline +
                 ", maxResults=" + maxResults +
@@ -199,6 +212,7 @@ public final class TableSettings {
 
         protected String queryId;
         protected List<Field> fields;
+        protected ExpressionOperator rowFilter;
         protected Boolean extractValues;
         protected DocRef extractionPipeline;
         protected List<Integer> maxResults;
@@ -213,6 +227,7 @@ public final class TableSettings {
             this.fields = tableSettings.getFields() == null
                     ? null
                     : new ArrayList<>(tableSettings.getFields());
+            this.rowFilter = tableSettings.rowFilter;
             this.extractValues = tableSettings.getExtractValues();
             this.extractionPipeline = tableSettings.getExtractionPipeline();
             this.maxResults = tableSettings.getMaxResults() == null
@@ -235,6 +250,11 @@ public final class TableSettings {
 
         public Builder fields(final List<Field> fields) {
             this.fields = fields;
+            return this;
+        }
+
+        public Builder rowFilter(final ExpressionOperator rowFilter) {
+            this.rowFilter = rowFilter;
             return this;
         }
 
@@ -345,6 +365,7 @@ public final class TableSettings {
             return new TableSettings(
                     queryId,
                     fields,
+                    rowFilter,
                     extractValues,
                     extractionPipeline,
                     maxResults,

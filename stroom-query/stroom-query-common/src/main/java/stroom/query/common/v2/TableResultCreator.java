@@ -117,7 +117,10 @@ public class TableResultCreator implements ResultCreator {
             Optional<RowCreator> optionalRowCreator =
                     ConditionalFormattingRowCreator.create(fieldFormatter, tableSettings);
             if (optionalRowCreator.isEmpty()) {
-                optionalRowCreator = SimpleRowCreator.create(fieldFormatter);
+                optionalRowCreator = FilteredRowCreator.create(fieldFormatter, tableSettings);
+                if (optionalRowCreator.isEmpty()) {
+                    optionalRowCreator = SimpleRowCreator.create(fieldFormatter);
+                }
             }
             final RowCreator rowCreator = optionalRowCreator.orElse(null);
 
@@ -259,16 +262,87 @@ public class TableResultCreator implements ResultCreator {
         }
     }
 
+    private static class FilteredRowCreator implements RowCreator {
+
+        private final FieldFormatter fieldFormatter;
+        private final ExpressionOperator rowFilter;
+        private final FieldExpressionMatcher expressionMatcher;
+
+        private FilteredRowCreator(final FieldFormatter fieldFormatter,
+                                   final ExpressionOperator rowFilter,
+                                   final FieldExpressionMatcher expressionMatcher) {
+            this.fieldFormatter = fieldFormatter;
+            this.rowFilter = rowFilter;
+            this.expressionMatcher = expressionMatcher;
+        }
+
+        public static Optional<RowCreator> create(final FieldFormatter fieldFormatter,
+                                                  final TableSettings tableSettings) {
+            if (tableSettings != null && tableSettings.getRowFilter() != null) {
+                final FieldExpressionMatcher expressionMatcher =
+                        new FieldExpressionMatcher(tableSettings.getFields());
+                return Optional.of(new FilteredRowCreator(fieldFormatter,
+                        tableSettings.getRowFilter(),
+                        expressionMatcher));
+            }
+            return Optional.empty();
+        }
+
+        @Override
+        public Row create(final Field[] fields,
+                          final Item item,
+                          final int depth,
+                          final ErrorConsumer errorConsumer) {
+            Row row = null;
+
+            final Map<String, Object> fieldIdToValueMap = new HashMap<>();
+            final List<String> stringValues = new ArrayList<>(fields.length);
+            for (int i = 0; i < fields.length; i++) {
+                final Field field = fields[i];
+                final Val val = item.getValue(i, true);
+                final String string = fieldFormatter.format(field, val);
+                stringValues.add(string);
+                fieldIdToValueMap.put(field.getName(), string);
+            }
+
+            try {
+                // See if we can exit early by applying row filter.
+                if (!expressionMatcher.match(fieldIdToValueMap, rowFilter)) {
+                    return null;
+                }
+
+                row = Row.builder()
+                        .groupKey(OpenGroupsConverter.encode(item.getKey()))
+                        .values(stringValues)
+                        .depth(depth)
+                        .build();
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e.getMessage(), e);
+                errorConsumer.add(e);
+            }
+
+            return row;
+        }
+
+        @Override
+        public boolean hidesRows() {
+            return true;
+        }
+    }
+
     private static class ConditionalFormattingRowCreator implements RowCreator {
 
         private final FieldFormatter fieldFormatter;
+        private final ExpressionOperator rowFilter;
         private final List<ConditionalFormattingRule> rules;
-        private final ConditionalFormattingExpressionMatcher expressionMatcher;
+        private final FieldExpressionMatcher expressionMatcher;
 
         private ConditionalFormattingRowCreator(final FieldFormatter fieldFormatter,
+                                                final ExpressionOperator rowFilter,
                                                 final List<ConditionalFormattingRule> rules,
-                                                final ConditionalFormattingExpressionMatcher expressionMatcher) {
+                                                final FieldExpressionMatcher expressionMatcher) {
             this.fieldFormatter = fieldFormatter;
+            this.rowFilter = rowFilter;
             this.rules = rules;
             this.expressionMatcher = expressionMatcher;
         }
@@ -284,9 +358,10 @@ public class TableResultCreator implements ResultCreator {
                             .filter(ConditionalFormattingRule::isEnabled)
                             .collect(Collectors.toList());
                     if (rules.size() > 0) {
-                        final ConditionalFormattingExpressionMatcher expressionMatcher =
-                                new ConditionalFormattingExpressionMatcher(tableSettings.getFields());
+                        final FieldExpressionMatcher expressionMatcher =
+                                new FieldExpressionMatcher(tableSettings.getFields());
                         return Optional.of(new ConditionalFormattingRowCreator(fieldFormatter,
+                                tableSettings.getRowFilter(),
                                 rules,
                                 expressionMatcher));
                     }
@@ -317,6 +392,13 @@ public class TableResultCreator implements ResultCreator {
             ConditionalFormattingRule matchingRule = null;
 
             try {
+                // See if we can exit early by applying row filter.
+                if (rowFilter != null) {
+                    if (!expressionMatcher.match(fieldIdToValueMap, rowFilter)) {
+                        return null;
+                    }
+                }
+
                 for (final ConditionalFormattingRule rule : rules) {
                     try {
                         final ExpressionOperator operator = rule.getExpression();
@@ -359,12 +441,11 @@ public class TableResultCreator implements ResultCreator {
                     row = builder.build();
                 }
             } else {
-                final Row.Builder builder = Row.builder()
+                row = Row.builder()
                         .groupKey(OpenGroupsConverter.encode(item.getKey()))
                         .values(stringValues)
-                        .depth(depth);
-
-                row = builder.build();
+                        .depth(depth)
+                        .build();
             }
 
             return row;
