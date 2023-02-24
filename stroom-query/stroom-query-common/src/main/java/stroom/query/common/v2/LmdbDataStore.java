@@ -29,6 +29,7 @@ import stroom.dashboard.expression.v1.ValString;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.lmdb.LmdbEnvFactory;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
@@ -54,6 +55,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
@@ -79,6 +81,8 @@ public class LmdbDataStore implements DataStore {
     private final ResultStoreConfig resultStoreConfig;
     private final Dbi<ByteBuffer> dbi;
 
+    private final FieldExpressionMatcher fieldExpressionMatcher;
+    private final ExpressionOperator valueFilter;
     private final CompiledField[] compiledFields;
     private final CompiledSorter<Item>[] compiledSorters;
     private final CompiledDepths compiledDepths;
@@ -126,6 +130,8 @@ public class LmdbDataStore implements DataStore {
         this.errorConsumer = errorConsumer;
 
         queue = new LmdbKVQueue(resultStoreConfig.getValueQueueSize());
+        valueFilter = tableSettings.getValueFilter();
+        fieldExpressionMatcher = new FieldExpressionMatcher(tableSettings.getFields());
         compiledFields = CompiledFields.create(tableSettings.getFields(), fieldIndex, paramMap);
         compiledDepths = new CompiledDepths(compiledFields, tableSettings.showDetail());
         compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), compiledFields);
@@ -192,6 +198,8 @@ public class LmdbDataStore implements DataStore {
                 groupValues = new Val[groupSize];
             }
 
+            Map<String, Object> fieldIdToValueMap = null;
+
             int groupIndex = 0;
             for (int fieldIndex = 0; fieldIndex < compiledFields.length; fieldIndex++) {
                 final CompiledField compiledField = compiledFields[fieldIndex];
@@ -203,14 +211,32 @@ public class LmdbDataStore implements DataStore {
 
                     // If this is the first level then check if we should filter out this data.
                     if (depth == 0) {
+                        if (valueFilter != null) {
+                            if (value == null) {
+                                generator = expression.createGenerator();
+                                generator.set(values);
+
+                                // If we are filtering then we need to evaluate this field
+                                // now so that we can filter the resultant value.
+                                value = generator.eval(null);
+                            }
+
+                            if (fieldIdToValueMap == null) {
+                                fieldIdToValueMap = new HashMap<>();
+                            }
+                            fieldIdToValueMap.put(compiledField.getField().getName(), value.toString());
+                        }
+
                         final CompiledFilter compiledFilter = compiledField.getCompiledFilter();
                         if (compiledFilter != null) {
-                            generator = expression.createGenerator();
-                            generator.set(values);
+                            if (value == null) {
+                                generator = expression.createGenerator();
+                                generator.set(values);
 
-                            // If we are filtering then we need to evaluate this field
-                            // now so that we can filter the resultant value.
-                            value = generator.eval(null);
+                                // If we are filtering then we need to evaluate this field
+                                // now so that we can filter the resultant value.
+                                value = generator.eval(null);
+                            }
 
                             if (!compiledFilter.match(value.toString())) {
                                 // We want to exclude this item so get out of this method ASAP.
@@ -239,6 +265,13 @@ public class LmdbDataStore implements DataStore {
                         }
                         generators[fieldIndex] = generator;
                     }
+                }
+            }
+
+            if (fieldIdToValueMap != null) {
+                // If the value filter doesn't match then get out of here now.
+                if (!fieldExpressionMatcher.match(fieldIdToValueMap, valueFilter)) {
+                    return;
                 }
             }
 

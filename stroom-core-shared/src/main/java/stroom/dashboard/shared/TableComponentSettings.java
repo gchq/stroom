@@ -378,6 +378,7 @@ public class TableComponentSettings implements ComponentSettings {
                     queryId,
                     fields,
                     null,
+                    null,
                     extractValues,
                     extractionPipeline,
                     maxResults,

@@ -56,6 +56,13 @@ public final class TableSettings {
     private final List<Field> fields;
 
     /**
+     * A filter to apply to raw values.
+     */
+    @Schema
+    @JsonProperty
+    private final ExpressionOperator valueFilter;
+
+    /**
      * A filter to apply to aggregated values.
      */
     @Schema
@@ -92,6 +99,7 @@ public final class TableSettings {
     public TableSettings(
             @JsonProperty("queryId") final String queryId,
             @JsonProperty("fields") final List<Field> fields,
+            @JsonProperty("valueFilter") final ExpressionOperator valueFilter,
             @JsonProperty("aggregateFilter") final ExpressionOperator aggregateFilter,
             @JsonProperty("extractValues") final Boolean extractValues,
             @JsonProperty("extractionPipeline") final DocRef extractionPipeline,
@@ -101,6 +109,7 @@ public final class TableSettings {
                     conditionalFormattingRules) {
         this.queryId = queryId;
         this.fields = fields;
+        this.valueFilter = valueFilter;
         this.aggregateFilter = aggregateFilter;
         this.extractValues = extractValues;
         this.extractionPipeline = extractionPipeline;
@@ -115,6 +124,10 @@ public final class TableSettings {
 
     public List<Field> getFields() {
         return fields;
+    }
+
+    public ExpressionOperator getValueFilter() {
+        return valueFilter;
     }
 
     public ExpressionOperator getAggregateFilter() {
@@ -215,6 +228,7 @@ public final class TableSettings {
 
         protected String queryId;
         protected List<Field> fields;
+        protected ExpressionOperator valueFilter;
         protected ExpressionOperator aggregateFilter;
         protected Boolean extractValues;
         protected DocRef extractionPipeline;
@@ -230,6 +244,7 @@ public final class TableSettings {
             this.fields = tableSettings.getFields() == null
                     ? null
                     : new ArrayList<>(tableSettings.getFields());
+            this.valueFilter = tableSettings.valueFilter;
             this.aggregateFilter = tableSettings.aggregateFilter;
             this.extractValues = tableSettings.getExtractValues();
             this.extractionPipeline = tableSettings.getExtractionPipeline();
@@ -253,6 +268,11 @@ public final class TableSettings {
 
         public Builder fields(final List<Field> fields) {
             this.fields = fields;
+            return this;
+        }
+
+        public Builder valueFilter(final ExpressionOperator valueFilter) {
+            this.valueFilter = valueFilter;
             return this;
         }
 
@@ -368,6 +388,7 @@ public final class TableSettings {
             return new TableSettings(
                     queryId,
                     fields,
+                    valueFilter,
                     aggregateFilter,
                     extractValues,
                     extractionPipeline,

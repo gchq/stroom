@@ -225,7 +225,7 @@ public class SearchRequestBuilder {
                     final PipeGroup pipeGroup = (PipeGroup) token;
                     final PipeOperation pipeOperation = pipeGroup.getPipeOperation();
                     switch (pipeOperation) {
-                        case WHERE, HAVING, AND -> builder = addAnd(builder, pipeGroup.getChildren());
+                        case WHERE, HAVING, FILTER, AND -> builder = addAnd(builder, pipeGroup.getChildren());
                         case OR -> builder = addOr(builder, pipeGroup.getChildren());
                         case NOT -> builder = addNot(builder, pipeGroup.getChildren());
                         default -> throw new TokenException(token, "Unexpected pipe operation in query");
@@ -319,6 +319,10 @@ public class SearchRequestBuilder {
             if (token instanceof PipeGroup) {
                 final PipeGroup pipeGroup = (PipeGroup) token;
                 switch (pipeGroup.getPipeOperation()) {
+                    case FILTER -> {
+                        remaining =
+                                addExpression(remaining, PipeOperation.FILTER, tableSettingsBuilder::valueFilter);
+                    }
                     case EVAL -> {
                         processEvalPipeOperation(
                                 pipeGroup,
