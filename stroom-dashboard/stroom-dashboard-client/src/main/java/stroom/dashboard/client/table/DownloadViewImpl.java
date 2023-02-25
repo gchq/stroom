@@ -62,7 +62,7 @@ public class DownloadViewImpl extends ViewImpl implements DownloadView {
         fileType.addSelectionHandler(event -> {
             downloadAllTables.setEnabled(isExcelFileTypeSelected());
             if (!isExcelFileTypeSelected()) {
-                downloadAllTables.setBooleanValue(false);
+                downloadAllTables.setValue(false);
             }
         });
     }
@@ -88,7 +88,7 @@ public class DownloadViewImpl extends ViewImpl implements DownloadView {
 
     @Override
     public boolean downloadAllTables() {
-        return downloadAllTables.getBooleanValue();
+        return downloadAllTables.getValue();
     }
 
     @Override
