@@ -26,6 +26,7 @@ public final class SvgPresets {
     public static final Preset ALERT = enabled("svgIcon-alert", "Alert");
     public static final Preset ANNOTATE = disabled("svgIcon-edit", "Annotate");
     public static final Preset CLEAR = disabled("svgIcon-clear", "Clear");
+    public static final Preset CLIPBOARD = disabled("svgIcon-clipboard", "Clipboard");
     public static final Preset CLOSE = disabled("svgIcon-close", "Close");
     public static final Preset COPY = disabled("svgIcon-copy", "Copy");
     public static final Preset DATABASE = enabled("svgIcon-database", "Database");
@@ -69,7 +70,7 @@ public final class SvgPresets {
     public static final Preset MOVE = disabled("svgIcon-move", "Move");
     public static final Preset NEW_ITEM = enabled("svgIcon-add", "New");
     public static final Preset NODES = enabled("svgIcon-nodes", "Nodes");
-    public static final Preset OPEN = disabled("svgIcon-edit", "Open");
+    public static final Preset OPEN = disabled("svgIcon-open", "Open");
     public static final Preset OPERATOR = enabled("svgIcon-operator", "Add Operator");
     public static final Preset PASSWORD = enabled("svgIcon-password", "Change Password");
     public static final Preset PROCESS = disabled("svgIcon-process", "Process");
@@ -85,6 +86,7 @@ public final class SvgPresets {
     public static final Preset SETTINGS_BLUE = enabled("svgIcon-settings-blue", "Settings");
     public static final Preset SHARD_CLOSE = disabled("svgIcon-shard-close", "Close Selected Shards");
     public static final Preset SHARD_FLUSH = disabled("svgIcon-shard-flush", "Flush Selected Shards");
+    public static final Preset SHARE = enabled("svgIcon-share", "Share");
     public static final Preset TABLE = enabled("svgIcon-table", "Table");
     public static final Preset TABLE_NESTED = enabled("svgIcon-table-nested", "Nested Table");
     public static final Preset UNDO = disabled("svgIcon-undo", "Undo");

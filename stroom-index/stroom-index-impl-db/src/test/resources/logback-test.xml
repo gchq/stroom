@@ -8,12 +8,12 @@
         </encoder>
     </appender>
 
-    <logger name="stroom" level="info" />
+    <logger name="stroom" level="info"/>
 
-    <logger name="stroom.index" level="debug" />
+    <logger name="stroom.index" level="debug"/>
 
     <root level="error">
-        <appender-ref ref="STDOUT" />
+        <appender-ref ref="STDOUT"/>
     </root>
 
 </configuration>

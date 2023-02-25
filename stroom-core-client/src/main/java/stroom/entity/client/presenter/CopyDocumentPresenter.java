@@ -27,11 +27,9 @@ import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -46,13 +44,15 @@ import java.util.stream.Collectors;
 
 public class CopyDocumentPresenter
         extends MyPresenter<CopyDocumentView, CopyDocumentProxy>
-        implements ShowCopyDocumentDialogEvent.Handler, PopupUiHandlers {
+        implements ShowCopyDocumentDialogEvent.Handler {
 
     private final EntityTreePresenter entityTreePresenter;
     private List<ExplorerNode> explorerNodeList;
 
     @Inject
-    public CopyDocumentPresenter(final EventBus eventBus, final CopyDocumentView view, final CopyDocumentProxy proxy,
+    public CopyDocumentPresenter(final EventBus eventBus,
+                                 final CopyDocumentView view,
+                                 final CopyDocumentProxy proxy,
                                  final EntityTreePresenter entityTreePresenter) {
         super(eventBus, view, proxy);
         this.entityTreePresenter = entityTreePresenter;
@@ -87,27 +87,25 @@ public class CopyDocumentPresenter
         getView().setPermissionInheritance(PermissionInheritance.DESTINATION);
 
         final PopupSize popupSize = PopupSize.resizable(400, 550);
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, this);
-    }
-
-    @Override
-    public void onHideRequest(final boolean autoClose, final boolean ok) {
-        if (ok) {
-            final ExplorerNode folder = entityTreePresenter.getSelectedItem();
-            CopyDocumentEvent.fire(
-                    this,
-                    this,
-                    explorerNodeList,
-                    folder,
-                    getView().getPermissionInheritance());
-        } else {
-            HidePopupEvent.fire(this, this, autoClose, ok);
-        }
-    }
-
-    @Override
-    public void onHide(final boolean autoClose, final boolean ok) {
-        // Do nothing.
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption(caption)
+                .onShow(e -> entityTreePresenter.focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        final ExplorerNode folder = entityTreePresenter.getSelectedItem();
+                        CopyDocumentEvent.fire(
+                                CopyDocumentPresenter.this,
+                                CopyDocumentPresenter.this,
+                                explorerNodeList,
+                                folder,
+                                getView().getPermissionInheritance());
+                    } else {
+                        e.hide();
+                    }
+                })
+                .fire();
     }
 
     public interface CopyDocumentView extends View {

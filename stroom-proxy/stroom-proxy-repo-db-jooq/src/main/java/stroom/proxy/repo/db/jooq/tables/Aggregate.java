@@ -4,8 +4,10 @@
 package stroom.proxy.repo.db.jooq.tables;
 
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.proxy.repo.db.jooq.DefaultSchema;
+import stroom.proxy.repo.db.jooq.Indexes;
+import stroom.proxy.repo.db.jooq.Keys;
+import stroom.proxy.repo.db.jooq.tables.records.AggregateRecord;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
@@ -22,10 +24,8 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import stroom.proxy.repo.db.jooq.DefaultSchema;
-import stroom.proxy.repo.db.jooq.Indexes;
-import stroom.proxy.repo.db.jooq.Keys;
-import stroom.proxy.repo.db.jooq.tables.records.AggregateRecord;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**

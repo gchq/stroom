@@ -28,7 +28,6 @@ public class ExplorerTreeNode implements HasIntegerId {
     private String uuid;
     private String name;
     private String tags;
-    private boolean isFavourite;
 
     public ExplorerTreeNode() {
     }
@@ -37,14 +36,12 @@ public class ExplorerTreeNode implements HasIntegerId {
                             final String type,
                             final String uuid,
                             final String name,
-                            final String tags,
-                            final boolean isFavourite) {
+                            final String tags) {
         this.id = id;
         this.type = type;
         this.uuid = uuid;
         this.name = name;
         this.tags = tags;
-        this.isFavourite = isFavourite;
     }
 
     public static ExplorerTreeNode create(final DocRef docRef) {
@@ -100,10 +97,6 @@ public class ExplorerTreeNode implements HasIntegerId {
         this.tags = tags;
     }
 
-    public boolean getIsFavourite() {
-        return isFavourite;
-    }
-
     public DocRef getDocRef() {
         return new DocRef(type, uuid, name);
     }
@@ -115,7 +108,6 @@ public class ExplorerTreeNode implements HasIntegerId {
         clone.uuid = uuid;
         clone.name = name;
         clone.tags = tags;
-        clone.isFavourite = isFavourite;
         return clone;
     }
 
@@ -144,7 +136,6 @@ public class ExplorerTreeNode implements HasIntegerId {
                 ", uuid='" + uuid + '\'' +
                 ", name='" + name + '\'' +
                 ", tags='" + tags + '\'' +
-                ", isFavourite=" + isFavourite +
                 '}';
     }
 }

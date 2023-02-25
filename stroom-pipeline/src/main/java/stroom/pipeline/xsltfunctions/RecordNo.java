@@ -24,6 +24,7 @@ import stroom.util.NullSafe;
 import javax.inject.Inject;
 
 class RecordNo extends AbstractLocationFunction {
+
     @Inject
     RecordNo(final LocationHolder locationHolder) {
         super(locationHolder);

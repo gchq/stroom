@@ -19,7 +19,6 @@ import stroom.processor.impl.ProcessorTaskManager;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorTaskRecord;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.TaskStatus;
@@ -168,22 +167,6 @@ class AbstractProcessorTest {
         processorFilter.setUuid(UUID.randomUUID().toString());
 
         return processorFilterDao.create(processorFilter);
-    }
-
-    protected ProcessorFilterTracker createProcessorFilterTracker(final ProcessorFilter processorFilter,
-                                                                  final boolean isComplete) {
-        final ProcessorFilterTracker processorFilterTracker = new ProcessorFilterTracker();
-        if (isComplete) {
-            processorFilterTracker.setStatus(ProcessorFilterTracker.COMPLETE);
-        }
-        processorFilterTracker.setMinMetaId(1);
-        processorFilterTracker.setMinEventId(1);
-        processorFilterTracker.setLastPollMs(Instant.now().toEpochMilli());
-
-        final ProcessorFilterTracker processorFilterTracker2 = processorFilterTrackerDao.create(processorFilterTracker);
-        processorFilter.setProcessorFilterTracker(processorFilterTracker2);
-
-        return processorFilterTracker2;
     }
 
     protected void createProcessorTask(final ProcessorFilter processorFilter,

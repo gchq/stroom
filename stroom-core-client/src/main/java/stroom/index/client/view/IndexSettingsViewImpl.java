@@ -28,9 +28,12 @@ import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHandlers>
@@ -49,9 +52,13 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
     @UiField
     ValueSpinner shardsPerPartition;
     @UiField
+    TextBox timeField;
+    @UiField
     ItemListBox<SupportedRetentionAge> retentionAge;
     @UiField
     StringListBox volumeGroups;
+    @UiField
+    SimplePanel defaultExtractionPipeline;
 
     @Inject
     public IndexSettingsViewImpl(final Binder binder) {
@@ -87,6 +94,11 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
                 getUiHandlers().onChange();
             }
         });
+        timeField.addChangeHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onChange();
+            }
+        });
         retentionAge.addSelectionHandler(event -> {
             if (getUiHandlers() != null) {
                 getUiHandlers().onChange();
@@ -112,7 +124,7 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
 
     @Override
     public int getMaxDocsPerShard() {
-        return this.maxDocsPerShard.getValue();
+        return this.maxDocsPerShard.getIntValue();
     }
 
     @Override
@@ -122,7 +134,7 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
 
     @Override
     public int getShardsPerPartition() {
-        return this.shardsPerPartition.getValue();
+        return this.shardsPerPartition.getIntValue();
     }
 
     @Override
@@ -142,12 +154,22 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
 
     @Override
     public int getPartitionSize() {
-        return this.partitionSize.getValue();
+        return this.partitionSize.getIntValue();
     }
 
     @Override
     public void setPartitionSize(final int size) {
         this.partitionSize.setValue(size);
+    }
+
+    @Override
+    public String getTimeField() {
+        return timeField.getValue();
+    }
+
+    @Override
+    public void setTimeField(final String partitionTimeField) {
+        this.timeField.setValue(partitionTimeField);
     }
 
     @Override
@@ -158,6 +180,11 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
     @Override
     public StringListBox getVolumeGroups() {
         return volumeGroups;
+    }
+
+    @Override
+    public void setDefaultExtractionPipelineView(final View view) {
+        this.defaultExtractionPipeline.setWidget(view.asWidget());
     }
 
     @Override

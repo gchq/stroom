@@ -42,7 +42,7 @@ public class AlertModule  extends AbstractModule {
 
         @Inject
         AlertManagerCacheRefresh(final AlertManager alertManager) {
-            super(alertManager::initialiseCache);
+            super(alertManager::refreshRules);
         }
     }
 

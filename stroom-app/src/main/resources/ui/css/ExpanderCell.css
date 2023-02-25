@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-.expanderCell-active {
-	
+.expanderCell-expanderIcon {
+	display: flex;
 }
 
-.expanderCell-active img {
+.expanderCell-expanderIcon svg {
+    width: .7rem;
+    height: .7rem;
+}
+
+.expanderCell-active {
 	cursor:pointer;
 	cursor:hand;
-}
-
-.expanderCell-expanderIcon {
-    width: 14px;
-    height: 14px;
 }

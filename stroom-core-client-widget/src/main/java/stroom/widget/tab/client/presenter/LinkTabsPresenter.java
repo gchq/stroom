@@ -32,7 +32,6 @@ public class LinkTabsPresenter extends MyPresenterWidget<LinkTabsLayoutView> {
 
     private TabData firstTab;
     private TabData selectedTab;
-    private final boolean firstShowing = true;
 
     @Inject
     public LinkTabsPresenter(final EventBus eventBus, final LinkTabsLayoutView view) {
@@ -68,6 +67,7 @@ public class LinkTabsPresenter extends MyPresenterWidget<LinkTabsLayoutView> {
                 }
             }
         }));
+        registerHandler(getView().getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
     }
 
     public void changeSelectedTab(final TabData tab) {

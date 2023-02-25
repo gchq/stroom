@@ -27,32 +27,31 @@
 	position: relative;
 	width: 100%;
 	height: 100%;
-	border: 1px solid var(--dialog-border-color);
+	border: thin solid var(--dialog__border-color);
 	border-radius: 6px;
 	background-image: var(--dialog-background-image);
-	background-color: var(--dialog-background-color);
-	box-shadow: var(--dialog-shadow);
+	background-color: var(--dialog__background-color);
+	box-shadow: var(--dialog__shadow);
 	overflow: hidden;
 	display: flex;
 	flex-direction: column;
 }
 
 .dialog-titleBar {
-	background-image: var(--dialog-titlebar-background-image);
-	background-color: var(--dialog-titlebar-background-color);
-	border-bottom: 1px solid var(--dialog-titlebar-border-color);
 	flex-grow: 0;
 }
 
 .dialog-titleText {
     width: 100%;
-    padding: 7px 10px;
-    font-weight: bold;
-    color: var(--dialog-titlebar-text-color);
+    padding: var(--dialog__padding--vertical) var(--dialog__padding--horizontal) 0 var(--dialog__padding--horizontal);
+    color: var(--text-color);
     cursor: default;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    margin-bottom: 0;
+    line-height: 1.5;
+    font-size: 1.5rem;
 }
 
 .dialog-body {
@@ -62,15 +61,15 @@
 
 .dialog-content {
     flex-grow: 1;
-    overflow: hidden;
-    padding: 8px 8px 0 8px;
+    overflow: auto;
+    padding: var(--control__gap--vertical) var(--control__gap--horizontal);
 }
 
 .dialog-buttons {
     width: 100%;
-    padding: 8px;
+    padding: 0 var(--dialog__padding--horizontal) var(--dialog__padding--vertical) var(--dialog__padding--horizontal);
     flex-grow: 0;
-    gap: 8px;
+    gap: var(--dialog__padding--horizontal);
     display: flex;
     justify-content: flex-end;
 }

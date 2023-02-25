@@ -22,6 +22,7 @@ import stroom.util.shared.HasCapacity;
 import java.util.List;
 
 public class RandomCapacitySelector extends AbstractSelector {
+
     public static final String NAME = "Random";
 
     public RandomCapacitySelector() {

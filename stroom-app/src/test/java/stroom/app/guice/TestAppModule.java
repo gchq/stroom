@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import javax.validation.constraints.NotNull;
 
 class TestAppModule extends AbstractCoreIntegrationTest {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestAppModule.class);
 
     @Disabled // manual test to dump the guice modules/bindings tree. Needs a db connection

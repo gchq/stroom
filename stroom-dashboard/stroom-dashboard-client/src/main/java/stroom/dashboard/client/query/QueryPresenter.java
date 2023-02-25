@@ -18,16 +18,15 @@ package stroom.dashboard.client.query;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.LocationManager;
+import stroom.core.client.event.WindowCloseEvent;
 import stroom.dashboard.client.HasSelection;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
+import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.Components;
-import stroom.dashboard.client.main.DataSourceFieldsMap;
-import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.Queryable;
 import stroom.dashboard.client.main.SearchModel;
-import stroom.dashboard.client.table.TimeZones;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSelectionHandler;
@@ -45,20 +44,26 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.client.presenter.EntityChooser;
-import stroom.instance.client.ClientApplicationInstance;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.preferences.client.UserPreferencesManager;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.Limits;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.QueryData;
+import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.ResultStoreInfo;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
+import stroom.query.client.presenter.DateTimeSettingsFactory;
+import stroom.query.client.presenter.QueryUiHandlers;
+import stroom.query.client.presenter.ResultStoreModel;
+import stroom.query.client.view.QueryButtons;
+import stroom.query.shared.ResultStoreResource;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
@@ -68,40 +73,41 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResourceGeneration;
+import stroom.view.client.presenter.DataSourceFieldsMap;
+import stroom.view.client.presenter.IndexLoader;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuListPresenter;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.QueryView>
-        implements QueryUiHandlers, HasDirtyHandlers, Queryable {
+        implements HasDirtyHandlers, Queryable {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
+    private static final ResultStoreResource RESULT_STORE_RESOURCE = GWT.create(ResultStoreResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
 
-    public static final ComponentType TYPE = new ComponentType(0, "query", "Query");
+    public static final ComponentType TYPE = new ComponentType(0, "query", "Query", ComponentUse.PANEL);
     static final int TEN_SECONDS = 10000;
 
     private final ExpressionTreePresenter expressionPresenter;
@@ -110,7 +116,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final Provider<EntityChooser> pipelineSelection;
     private final Provider<QueryInfoPresenter> queryInfoPresenterProvider;
     private final ProcessorLimitsPresenter processorLimitsPresenter;
-    private final MenuListPresenter menuListPresenter;
     private final RestFactory restFactory;
     private final LocationManager locationManager;
 
@@ -124,8 +129,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final ButtonView favouriteButton;
     private final ButtonView downloadQueryButton;
     private final ButtonView warningsButton;
-
-    private String params;
     private List<String> currentWarnings;
     private ButtonView processButton;
     private long defaultProcessorTimeLimit;
@@ -138,7 +141,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     @Inject
     public QueryPresenter(final EventBus eventBus,
                           final QueryView view,
-                          final ClientApplicationInstance applicationInstance,
                           final Provider<QuerySettingsPresenter> settingsPresenterProvider,
                           final ExpressionTreePresenter expressionPresenter,
                           final QueryHistoryPresenter historyPresenter,
@@ -146,13 +148,13 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                           final Provider<EntityChooser> pipelineSelection,
                           final Provider<QueryInfoPresenter> queryInfoPresenterProvider,
                           final ProcessorLimitsPresenter processorLimitsPresenter,
-                          final MenuListPresenter menuListPresenter,
+                          final IndexLoader indexLoader,
                           final RestFactory restFactory,
                           final ClientSecurityContext securityContext,
                           final UiConfigCache clientPropertyCache,
                           final LocationManager locationManager,
-                          final TimeZones timeZones,
-                          final UserPreferencesManager userPreferencesManager) {
+                          final DateTimeSettingsFactory dateTimeSettingsFactory,
+                          final ResultStoreModel resultStoreModel) {
         super(eventBus, view, settingsPresenterProvider);
         this.expressionPresenter = expressionPresenter;
         this.historyPresenter = historyPresenter;
@@ -160,12 +162,26 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         this.pipelineSelection = pipelineSelection;
         this.queryInfoPresenterProvider = queryInfoPresenterProvider;
         this.processorLimitsPresenter = processorLimitsPresenter;
-        this.menuListPresenter = menuListPresenter;
+        this.indexLoader = indexLoader;
         this.restFactory = restFactory;
         this.locationManager = locationManager;
 
         view.setExpressionView(expressionPresenter.getView());
-        view.setUiHandlers(this);
+        view.getQueryButtons().setUiHandlers(new QueryUiHandlers() {
+            @Override
+            public void start() {
+                if (searchModel.getMode()) {
+                    QueryPresenter.this.stop();
+                } else {
+                    queryInfoPresenterProvider.get().show(lastUsedQueryInfo, state -> {
+                        if (state.isOk()) {
+                            lastUsedQueryInfo = state.getQueryInfo();
+                            QueryPresenter.this.start();
+                        }
+                    });
+                }
+            }
+        });
 
         expressionPresenter.setUiHandlers(new ExpressionUiHandlers() {
             @Override
@@ -195,14 +211,13 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         warningsButton = view.addButton(SvgPresets.ALERT.title("Show Warnings"));
         warningsButton.setVisible(false);
 
-        indexLoader = new IndexLoader(getEventBus(), restFactory);
         searchModel = new SearchModel(
                 restFactory,
-                applicationInstance,
-                this,
                 indexLoader,
-                timeZones,
-                userPreferencesManager);
+                dateTimeSettingsFactory,
+                resultStoreModel);
+        searchModel.addErrorListener(this::setErrors);
+        searchModel.addModeListener(this::setMode);
 
         clientPropertyCache.get()
                 .onSuccess(result -> {
@@ -213,6 +228,11 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     @Override
+    public void setResultStoreInfo(final ResultStoreInfo resultStoreInfo) {
+        searchModel.setResultStoreInfo(resultStoreInfo);
+    }
+
+    @Override
     protected void onBind() {
         super.onBind();
 
@@ -220,37 +240,36 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         registerHandler(expressionPresenter.addContextMenuHandler(event -> {
             final List<Item> menuItems = addExpressionActionsToMenu();
             if (menuItems.size() > 0) {
-                final PopupPosition popupPosition = new PopupPosition(event.getX(), event.getY());
-                showMenu(popupPosition, menuItems);
+                showMenu(menuItems, event.getPopupPosition());
             }
         }));
         registerHandler(addOperatorButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 addOperator();
             }
         }));
         registerHandler(addTermButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 addTerm();
             }
         }));
         registerHandler(disableItemButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 disable();
             }
         }));
         registerHandler(deleteItemButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 delete();
             }
         }));
         registerHandler(historyButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 historyPresenter.show(QueryPresenter.this, getComponents().getDashboard().getUuid());
             }
         }));
         registerHandler(favouriteButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 final ExpressionOperator root = expressionPresenter.write();
                 favouritesPresenter.show(
                         QueryPresenter.this,
@@ -262,13 +281,13 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         }));
         if (processButton != null) {
             registerHandler(processButton.addClickHandler(event -> {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (MouseUtil.isPrimary(event)) {
                     choosePipeline();
                 }
             }));
         }
         registerHandler(warningsButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 showWarnings();
             }
         }));
@@ -276,6 +295,11 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                 loadedDataSource(indexLoader.getLoadedDataSourceRef(), indexLoader.getDataSourceFieldsMap())));
 
         registerHandler(downloadQueryButton.addClickHandler(event -> downloadQuery()));
+
+        registerHandler(getEventBus().addHandler(WindowCloseEvent.getType(), event -> {
+            // If a user is even attempting to close the browser or browser tab then destroy the query.
+            searchModel.reset(DestroyReason.WINDOW_CLOSE);
+        }));
     }
 
     @Override
@@ -329,7 +353,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 //                          this.params = params;
 //                          lastUsedQueryInfo = null;
 
-                            stop();
+                            searchModel.reset(DestroyReason.NO_LONGER_NEEDED);
                             run(true, true, decorator);
                         }
                     }
@@ -363,6 +387,16 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 //                }
 //            }
         }));
+    }
+
+    @Override
+    public void addModeListener(final Consumer<Boolean> consumer) {
+        searchModel.addModeListener(consumer);
+    }
+
+    @Override
+    public void removeModeListener(final Consumer<Boolean> consumer) {
+        searchModel.removeModeListener(consumer);
     }
 
     public void setErrors(final List<String> errors) {
@@ -474,7 +508,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         final QueryData queryData = new QueryData();
         queryData.setDataSource(getQuerySettings().getDataSource());
         queryData.setExpression(root);
-        queryData.setParams(params);
+        queryData.setParams(getDashboardContext().getCombinedParams());
+        queryData.setTimeRange(getDashboardContext().getTimeRange());
 
         final EntityChooser chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Process Results With");
@@ -493,28 +528,25 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private void setProcessorLimits(final QueryData queryData, final DocRef pipeline) {
         processorLimitsPresenter.setTimeLimitMins(defaultProcessorTimeLimit);
         processorLimitsPresenter.setRecordLimit(defaultProcessorRecordLimit);
-        ShowPopupEvent.fire(this, processorLimitsPresenter, PopupType.OK_CANCEL_DIALOG,
-                "Process Search Results", new PopupUiHandlers() {
-                    @Override
-                    public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        if (ok) {
-                            final Limits limits = new Limits();
-                            if (processorLimitsPresenter.getRecordLimit() != null) {
-                                limits.setEventCount(processorLimitsPresenter.getRecordLimit());
-                            }
-                            if (processorLimitsPresenter.getTimeLimitMins() != null) {
-                                limits.setDurationMs(processorLimitsPresenter.getTimeLimitMins() * 60 * 1000);
-                            }
-                            queryData.setLimits(limits);
-                            openEditor(queryData, pipeline);
+        ShowPopupEvent.builder(processorLimitsPresenter)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .caption("Process Search Results")
+                .onShow(e -> processorLimitsPresenter.getView().focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        final Limits limits = new Limits();
+                        if (processorLimitsPresenter.getRecordLimit() != null) {
+                            limits.setEventCount(processorLimitsPresenter.getRecordLimit());
                         }
-                        HidePopupEvent.fire(QueryPresenter.this, processorLimitsPresenter);
+                        if (processorLimitsPresenter.getTimeLimitMins() != null) {
+                            limits.setDurationMs(processorLimitsPresenter.getTimeLimitMins() * 60 * 1000);
+                        }
+                        queryData.setLimits(limits);
+                        openEditor(queryData, pipeline);
                     }
-
-                    @Override
-                    public void onHide(final boolean autoClose, final boolean ok) {
-                    }
-                });
+                    e.hide();
+                })
+                .fire();
     }
 
     private void openEditor(final QueryData queryData, final DocRef pipeline) {
@@ -550,13 +582,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     @Override
-    public void onQuery(final String params, final String queryInfo) {
-        this.params = params;
+    public void setQueryInfo(final String queryInfo) {
         lastUsedQueryInfo = queryInfo;
-        if (initialised) {
-            stop();
-            run(true, true);
-        }
     }
 
     @Override
@@ -566,16 +593,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     @Override
     public void start() {
-        if (SearchModel.Mode.INACTIVE.equals(searchModel.getMode())) {
-            queryInfoPresenterProvider.get().show(lastUsedQueryInfo, state -> {
-                if (state.isOk()) {
-                    lastUsedQueryInfo = state.getQueryInfo();
-                    run(true, true);
-                }
-            });
-        } else {
-            run(true, true);
-        }
+        run(true, true);
     }
 
     @Override
@@ -584,7 +602,12 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             autoRefreshTimer.cancel();
             autoRefreshTimer = null;
         }
-        searchModel.destroy();
+        searchModel.stop();
+    }
+
+    @Override
+    public boolean getMode() {
+        return searchModel.getMode();
     }
 
     private void run(final boolean incremental,
@@ -610,7 +633,43 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             final ExpressionOperator decorated = expressionDecorator.apply(root);
 
             // Start search.
-            searchModel.search(decorated, params, incremental, storeHistory, lastUsedQueryInfo);
+            searchModel.startNewSearch(
+                    decorated,
+                    getDashboardContext().getCombinedParams(),
+                    getDashboardContext().getTimeRange(),
+                    incremental,
+                    storeHistory,
+                    lastUsedQueryInfo,
+                    null,
+                    null);
+        }
+    }
+
+    private void resume(final String node,
+                        final QueryKey queryKey) {
+        final DocRef dataSourceRef = getQuerySettings().getDataSource();
+
+        if (dataSourceRef == null) {
+            warnNoDataSource();
+        } else {
+            currentWarnings = null;
+            expressionPresenter.clearSelection();
+
+            warningsButton.setVisible(false);
+
+            // Write expression.
+            final ExpressionOperator root = expressionPresenter.write();
+
+            // Start search.
+            searchModel.startNewSearch(
+                    root,
+                    getDashboardContext().getCombinedParams(),
+                    getDashboardContext().getTimeRange(),
+                    true,
+                    false,
+                    lastUsedQueryInfo,
+                    node,
+                    queryKey);
         }
     }
 
@@ -653,6 +712,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         setSettings(getQuerySettings()
                 .copy()
                 .expression(expressionPresenter.write())
+                .lastQueryKey(searchModel.getCurrentQueryKey())
+                .lastQueryNode(searchModel.getCurrentNode())
                 .build());
         return super.write();
     }
@@ -662,9 +723,16 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     @Override
+    public void onClose() {
+        super.onClose();
+        searchModel.reset(DestroyReason.TAB_CLOSE);
+        initialised = false;
+    }
+
+    @Override
     public void onRemove() {
         super.onRemove();
-        stop();
+        searchModel.reset(DestroyReason.NO_LONGER_NEEDED);
         initialised = false;
     }
 
@@ -680,6 +748,19 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             final Automate automate = getQuerySettings().getAutomate();
             if (queryOnOpen || automate.isOpen()) {
                 run(true, false);
+
+            } else if (getQuerySettings().getLastQueryKey() != null) {
+                // See if the result store exists before we try and resume a query.
+                final Rest<Boolean> rest = restFactory.create();
+                rest
+                        .onSuccess(result -> {
+                            if (result != null && result) {
+                                // Resume search if we have a stored query key.
+                                resume(getQuerySettings().getLastQueryNode(), getQuerySettings().getLastQueryKey());
+                            }
+                        })
+                        .call(RESULT_STORE_RESOURCE)
+                        .exists(getQuerySettings().getLastQueryNode(), getQuerySettings().getLastQueryKey());
             }
         }
     }
@@ -708,11 +789,11 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         expressionPresenter.read(root);
     }
 
-    public void setMode(final SearchModel.Mode mode) {
+    public void setMode(final boolean mode) {
         getView().setMode(mode);
 
         // If this is the end of a query then schedule a refresh.
-        if (SearchModel.Mode.INACTIVE.equals(mode)) {
+        if (!mode) {
             scheduleRefresh();
         }
     }
@@ -740,7 +821,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                             stop();
                         } else {
                             // Make sure search is currently inactive before we attempt to execute a new query.
-                            if (SearchModel.Mode.INACTIVE.equals(searchModel.getMode())) {
+                            if (!searchModel.getMode()) {
                                 QueryPresenter.this.run(false, false);
                             }
                         }
@@ -758,13 +839,32 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         final boolean hasSelection = selectedItem != null;
 
         final List<Item> menuItems = new ArrayList<>();
-        menuItems.add(new IconMenuItem(1, SvgPresets.ADD, SvgPresets.ADD, "Add Term", null, true, this::addTerm));
-        menuItems.add(new IconMenuItem(2, SvgPresets.OPERATOR, SvgPresets.OPERATOR, "Add Operator", null,
-                true, this::addOperator));
-        menuItems.add(new IconMenuItem(3, SvgPresets.DISABLE, SvgPresets.DISABLE, getEnableDisableText(),
-                null, hasSelection, this::disable));
-        menuItems.add(new IconMenuItem(4, SvgPresets.DELETE, SvgPresets.DELETE, "Delete", null,
-                hasSelection, this::delete));
+        menuItems.add(new IconMenuItem.Builder()
+                .priority(1)
+                .icon(SvgPresets.ADD)
+                .text("Add Term")
+                .command(this::addTerm)
+                .build());
+        menuItems.add(new IconMenuItem.Builder()
+                .priority(2)
+                .icon(SvgPresets.OPERATOR)
+                .text("Add Operator")
+                .command(this::addOperator)
+                .build());
+        menuItems.add(new IconMenuItem.Builder()
+                .priority(3)
+                .icon(SvgPresets.DISABLE)
+                .text(getEnableDisableText())
+                .enabled(hasSelection)
+                .command(this::disable)
+                .build());
+        menuItems.add(new IconMenuItem.Builder()
+                .priority(4)
+                .icon(SvgPresets.DELETE)
+                .text("Delete")
+                .enabled(hasSelection)
+                .command(this::delete)
+                .build());
 
         return menuItems;
     }
@@ -784,20 +884,13 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         return null;
     }
 
-    private void showMenu(final PopupPosition popupPosition, final List<Item> menuItems) {
-        menuListPresenter.setData(menuItems);
-
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                HidePopupEvent.fire(QueryPresenter.this, menuListPresenter);
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-            }
-        };
-        ShowPopupEvent.fire(this, menuListPresenter, PopupType.POPUP, popupPosition, popupUiHandlers);
+    private void showMenu(final List<Item> menuItems,
+                          final PopupPosition popupPosition) {
+        ShowMenuEvent
+                .builder()
+                .items(menuItems)
+                .popupPosition(popupPosition)
+                .fire(this);
     }
 
     private void downloadQuery() {
@@ -805,7 +898,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
             final DashboardSearchRequest searchRequest = searchModel.createDownloadQueryRequest(
                     expressionPresenter.write(),
-                    params);
+                    getDashboardContext().getCombinedParams(),
+                    getDashboardContext().getTimeRange());
 
             final Rest<ResourceGeneration> rest = restFactory.create();
             rest
@@ -816,14 +910,16 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         }
     }
 
-    public interface QueryView extends View, HasUiHandlers<QueryUiHandlers> {
+    public interface QueryView extends View {
 
         ButtonView addButton(Preset preset);
 
         void setExpressionView(View view);
 
-        void setMode(SearchModel.Mode mode);
+        void setMode(boolean mode);
 
         void setEnabled(boolean enabled);
+
+        QueryButtons getQueryButtons();
     }
 }

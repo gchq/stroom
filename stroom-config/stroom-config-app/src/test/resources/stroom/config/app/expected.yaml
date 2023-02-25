@@ -114,11 +114,6 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
-  dashboard:
-    applicationInstanceCache:
-      expireAfterAccess: "PT5M"
-      expireAfterWrite: null
-      maximumSize: null
   data:
     filesystemVolume:
       createDefaultStreamVolumesOnStart: true
@@ -216,16 +211,11 @@ appConfig:
           prepStmtCacheSize: 25
           prepStmtCacheSqlLimit: 256
       deleteBatchSize: 1000
+      deleteFailureThreshold: 100
       deletePurgeAge: "P7D"
       fileSystemCleanBatchSize: 20
       fileSystemCleanDeleteOut: false
       fileSystemCleanOldAge: "P1D"
-  dataSourceUrl:
-    elasticIndex: "/api/stroom-elastic-index/v2"
-    index: "/api/stroom-index/v2"
-    searchable: "/api/searchable/v2"
-    solrIndex: "/api/stroom-solr-index/v2"
-    statisticStore: "/api/sqlstatistics/v2"
   docstore:
     db:
       connection:
@@ -576,10 +566,6 @@ appConfig:
       maxStringFieldLength: 1000
       minPayloadSize: "1M"
       offHeapResults: true
-      searchResultCache:
-        expireAfterAccess: "PT10M"
-        expireAfterWrite: null
-        maximumSize: 10000
       storeSize: "1000000,100,10,1"
       valueQueueSize: 1000000
     shard:
@@ -911,7 +897,6 @@ appConfig:
       editorTitle: "Edit Activity"
       enabled: false
       managerTitle: "Choose Activity"
-    applicationInstanceKeepAliveIntervalMs: 10000
     defaultMaxResults: "1000000,100,10,1"
     helpSubPathExpressions: "/user-guide/dashboards/expressions/"
     helpSubPathJobs: "/user-guide/jobs/"

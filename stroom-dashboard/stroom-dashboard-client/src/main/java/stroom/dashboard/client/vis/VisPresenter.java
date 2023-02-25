@@ -20,6 +20,7 @@ import stroom.dashboard.client.HasSelection;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
+import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
@@ -38,6 +39,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.ChangeThemeEvent;
 import stroom.editor.client.presenter.CurrentTheme;
+import stroom.preferences.client.Themes;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.VisResult;
@@ -56,8 +58,6 @@ import stroom.visualisation.shared.VisualisationResource;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONValue;
@@ -67,29 +67,29 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.Layer;
 import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
 public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisView>
-        implements ResultComponent, StatusHandler, SelectionUiHandlers, HasSelection {
+        implements ResultComponent, StatusHandler, SelectionUiHandlers, HasSelection, VisUiHandlers {
 
     private static final ScriptResource SCRIPT_RESOURCE = GWT.create(ScriptResource.class);
     private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);
 
-    public static final ComponentType TYPE = new ComponentType(4, "vis", "Visualisation");
+    public static final ComponentType TYPE = new ComponentType(4, "vis", "Visualisation", ComponentUse.PANEL);
     private static final long UPDATE_INTERVAL = 2000;
 
     private final VisFunctionCache visFunctionCache;
     private final ScriptCache scriptCache;
     private final RestFactory restFactory;
     private final CurrentTheme currentTheme;
-    private final VisPane visPane;
     private final VisFrame visFrame;
 
     private VisFunction currentFunction;
@@ -103,12 +103,13 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     private long nextUpdate;
     private Timer updateTimer;
     private JavaScriptObject lastData;
-    private double opacity = 0;
-    private Fetch fetch;
+    //    private double opacity = 0;
     private TablePresenter linkedTablePresenter;
 
     private final Timer timer;
     private List<Map<String, String>> currentSelection;
+    private boolean pause;
+    private int currentRequestCount;
 
     @Inject
     public VisPresenter(final EventBus eventBus, final VisView view,
@@ -122,14 +123,9 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         this.currentTheme = currentTheme;
 
         visFrame = new VisFrame(eventBus);
-        visPane = visFrame;
         visFrame.setUiHandlers(this);
-        view.setVisPane(visPane);
-
-        final Style style = visFrame.getElement().getStyle();
-        style.setPosition(Position.ABSOLUTE);
-        style.setOpacity(0);
-        style.setZIndex(2);
+        view.setVisFrame(visFrame);
+        view.setUiHandlers(this);
 
         RootPanel.get().add(visFrame);
 
@@ -142,6 +138,17 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     }
 
     @Override
+    public void onPause() {
+        if (pause) {
+            this.pause = false;
+            refresh();
+        } else {
+            this.pause = true;
+        }
+        getView().setPaused(this.pause);
+    }
+
+    @Override
     public void onSelection(final List<Map<String, String>> selection) {
         if (!Objects.equals(currentSelection, selection)) {
             currentSelection = selection;
@@ -149,19 +156,25 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         }
     }
 
-    @Override
-    public double getOpacity() {
-        return this.opacity;
-    }
-
     /*****************
      * Start of Layout
      *****************/
+//    @Override
+//    public void setOpacity(final double opacity) {
+//        this.opacity = opacity;
+//        getWidget().getElement().getStyle().setOpacity(opacity);
+//        visFrame.getElement().getStyle().setOpacity(opacity);
+//    }
+
+//    @Override
+//    public double getOpacity() {
+//        return this.opacity;
+//    }
+//
     @Override
-    public void setOpacity(final double opacity) {
-        this.opacity = opacity;
-        getWidget().getElement().getStyle().setOpacity(opacity);
-        visFrame.getElement().getStyle().setOpacity(opacity);
+    public void setLayerVisible(final boolean fade, final boolean visible) {
+        super.setLayerVisible(fade, visible);
+        Layer.setLayerVisible(visFrame.getElement(), fade, visible);
     }
 
     @Override
@@ -205,10 +218,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     }
 
     private String getClassName(final String theme) {
-        if (theme != null && theme.toLowerCase(Locale.ROOT).contains("dark")) {
-            return "vis stroom-theme-dark";
-        }
-        return "vis";
+        return "vis " + Themes.getClassName(theme);
     }
 
     @Override
@@ -285,32 +295,24 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         currentSettings = null;
         currentData = null;
         lastData = null;
-        fetch = null;
 
         if (!searching) {
             searching = true;
-            visPane.start();
+            visFrame.start();
             updateStatusMessage();
         }
+
+        getView().setRefreshing(true);
     }
 
     @Override
     public void endSearch() {
         if (searching) {
             searching = false;
-            visPane.end();
+            visFrame.end();
             updateStatusMessage();
         }
-    }
-
-    @Override
-    public void setWantsData(final boolean wantsData) {
-        getView().setRefreshing(wantsData);
-        if (wantsData) {
-            this.fetch = Fetch.CHANGES;
-        } else {
-            this.fetch = Fetch.NONE;
-        }
+        getView().setRefreshing(false);
     }
 
     private void cleanupSearchModelAssociation() {
@@ -322,8 +324,36 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         }
     }
 
+    private void refresh() {
+        currentRequestCount++;
+        getView().setPaused(pause && currentRequestCount == 0);
+        getView().setRefreshing(true);
+        currentSearchModel.refresh(getComponentConfig().getId(), result -> {
+            try {
+                if (result != null) {
+                    setDataInternal(result);
+                }
+            } catch (final Exception e) {
+                GWT.log(e.getMessage());
+            }
+            currentRequestCount--;
+            getView().setPaused(pause && currentRequestCount == 0);
+            getView().setRefreshing(currentSearchModel.getMode());
+        });
+    }
+
+    void clear() {
+        setDataInternal(null);
+    }
+
     @Override
     public void setData(final Result componentResult) {
+        if (!pause) {
+            setDataInternal(componentResult);
+        }
+    }
+
+    private void setDataInternal(final Result componentResult) {
         try {
             if (getVisSettings() != null && getVisSettings().getVisualisation() != null) {
                 if (componentResult != null) {
@@ -468,7 +498,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     private void startInjectingScripts(final List<ScriptDoc> scripts, final VisFunction function) {
         function.setStatus(LoadStatus.INJECTING_SCRIPT);
         // Inject returned scripts.
-        visPane.injectScripts(scripts, function);
+        visFrame.injectScripts(scripts, function);
     }
 
     @Override
@@ -479,7 +509,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
                 try {
                     if (loadedFunction == null || !loadedFunction.equals(function)) {
                         loadedFunction = function;
-                        visPane.setVisType(function.getFunctionName(), getClassName(currentTheme.getTheme()));
+                        visFrame.setVisType(function.getFunctionName(), getClassName(currentTheme.getTheme()));
                     }
 
                     if (currentData != null) {
@@ -605,7 +635,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     }
 
     private void refreshVisualisation() {
-        visPane.setData(getComponents().getContext(), currentSettings, currentData);
+        visFrame.setData(getComponents().getContext(), currentSettings, currentData);
     }
 
     @Override
@@ -614,7 +644,12 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     }
 
     @Override
-    public ComponentResultRequest getResultRequest() {
+    public boolean isPaused() {
+        return pause;
+    }
+
+    @Override
+    public ComponentResultRequest getResultRequest(final Fetch fetch) {
         // Update table settings.
         updateLinkedTableSettings();
         return VisResultRequest
@@ -704,14 +739,16 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         return currentSelection;
     }
 
-    public interface VisView extends View, RequiresResize {
+    public interface VisView extends View, RequiresResize, HasUiHandlers<VisUiHandlers> {
 
         void setRefreshing(boolean refreshing);
+
+        void setPaused(boolean paused);
 
         void showMessage(String message);
 
         void hideMessage();
 
-        void setVisPane(VisPane visPane);
+        void setVisFrame(VisFrame visFrame);
     }
 }

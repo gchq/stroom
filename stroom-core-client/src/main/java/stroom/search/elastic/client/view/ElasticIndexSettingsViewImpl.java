@@ -19,7 +19,6 @@ package stroom.search.elastic.client.view;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.search.elastic.client.presenter.ElasticIndexSettingsPresenter.ElasticIndexSettingsView;
 import stroom.search.elastic.client.presenter.ElasticIndexSettingsUiHandlers;
-import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -53,6 +52,10 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     Button testConnection;
     @UiField
     SimplePanel retentionExpressionPanel;
+    @UiField
+    TextBox timeField;
+    @UiField
+    SimplePanel defaultExtractionPipeline;
 
     @Inject
     public ElasticIndexSettingsViewImpl(final Binder binder) {
@@ -60,6 +63,7 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
 
         description.addKeyDownHandler(e -> fireChange());
         indexName.addKeyDownHandler(e -> fireChange());
+        timeField.addKeyDownHandler(e -> fireChange());
 
         searchSlices.setMin(1L);
         searchSlices.setMax(1000L);
@@ -108,7 +112,7 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
 
     @Override
     public int getSearchSlices() {
-        return searchSlices.getValue();
+        return searchSlices.getIntValue();
     }
 
     @Override
@@ -118,7 +122,7 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
 
     @Override
     public int getSearchScrollSize() {
-        return searchScrollSize.getValue();
+        return searchScrollSize.getIntValue();
     }
 
     @Override
@@ -129,6 +133,21 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     @Override
     public void setRetentionExpressionView(final View view) {
         retentionExpressionPanel.setWidget(view.asWidget());
+    }
+
+    @Override
+    public String getTimeField() {
+        return timeField.getValue();
+    }
+
+    @Override
+    public void setTimeField(final String partitionTimeField) {
+        this.timeField.setValue(partitionTimeField);
+    }
+
+    @Override
+    public void setDefaultExtractionPipelineView(final View view) {
+        this.defaultExtractionPipeline.setWidget(view.asWidget());
     }
 
     @Override

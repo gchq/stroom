@@ -8,6 +8,7 @@ import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.DateField;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
@@ -22,6 +23,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.SelectionSummary;
+import stroom.meta.shared.SimpleMeta;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
@@ -38,7 +40,9 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
 
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -263,7 +267,15 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     @Override
     public DataSource getDataSource() {
-        return new DataSource(MetaFields.getAllFields());
+        return DataSource
+                .builder()
+                .fields(MetaFields.getAllFields())
+                .build();
+    }
+
+    @Override
+    public DateField getTimeField() {
+        return MetaFields.CREATE_TIME;
     }
 
     @Override
@@ -694,7 +706,19 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     @Override
+    public List<SimpleMeta> getLogicallyDeleted(final Instant deleteThreshold,
+                                                final int batchSize,
+                                                final Set<Long> metaIdExcludeSet) {
+        return metaDao.getLogicallyDeleted(deleteThreshold, batchSize, metaIdExcludeSet);
+    }
+
+    @Override
     public List<String> getProcessorUuidList(final FindMetaCriteria criteria) {
         return metaDao.getProcessorUuidList(criteria);
+    }
+
+    @Override
+    public Set<Long> findLockedMeta(final Collection<Long> metaIdCollection) {
+        return metaDao.findLockedMeta(metaIdCollection);
     }
 }

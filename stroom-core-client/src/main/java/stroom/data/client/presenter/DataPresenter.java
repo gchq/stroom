@@ -53,21 +53,18 @@ import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
-import stroom.widget.tooltip.client.presenter.TooltipUtil;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.TableBuilder;
+import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.dom.client.Style.VerticalAlign;
-import com.google.gwt.dom.client.Style.WhiteSpace;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.safecss.shared.SafeStyles;
-import com.google.gwt.safecss.shared.SafeStylesBuilder;
-import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.LayerContainer;
@@ -86,32 +83,12 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> implements TextUiHandlers {
+public class DataPresenter
+        extends MyPresenterWidget<ClassificationWrapperView>
+        implements TextUiHandlers, Focus {
 
     private static final DataResource DATA_RESOURCE = com.google.gwt.core.shared.GWT.create(DataResource.class);
     private static final MetaResource META_RESOURCE = com.google.gwt.core.shared.GWT.create(MetaResource.class);
-
-    private static final SafeStyles META_SECTION_HEAD_STYLES = new SafeStylesBuilder()
-            .paddingLeft(0.2, Unit.EM)
-            .whiteSpace(WhiteSpace.NOWRAP)
-            .trustedColor("#1e88e5")
-            .fontWeight(FontWeight.BOLD)
-            .fontSize(125, Unit.PCT)
-            .toSafeStyles();
-
-    private static final SafeStyles META_SECTION_CELL_STYLES = new SafeStylesBuilder()
-            .height(2, Unit.EM)
-            .whiteSpace(WhiteSpace.NOWRAP)
-            .verticalAlign(VerticalAlign.BOTTOM)
-            .toSafeStyles();
-
-    private static final SafeStyles META_KEY_STYLES = new SafeStylesBuilder()
-            .paddingLeft(1, Unit.EM)
-            .paddingRight(1, Unit.EM)
-            .whiteSpace(WhiteSpace.NOWRAP)
-            .append(SafeStylesUtils.fromTrustedNameAndValue("line-height", "1.4em"))
-            .append(SafeStylesUtils.fromTrustedNameAndValue("font-weight", "500"))
-            .toSafeStyles();
 
     private static final String CONTEXT_TAB_NAME = "Context";
     private static final String DATA_PREVIEW_TAB_NAME = "Data Preview";
@@ -131,6 +108,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private final TabData infoTab = new TabDataImpl(INFO_TAB_NAME);
     private final TabData contextTab = new TabDataImpl(CONTEXT_TAB_NAME);
 
+    private final DataView dataView;
+    private final ClassificationWrapperView classificationWrapperView;
     private final HtmlPresenter htmlPresenter;
     private final TextPresenter textPresenter;
     private final ItemNavigatorPresenter itemNavigatorPresenter;
@@ -164,7 +143,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private Long highlightPartIndex;
     private String highlightChildDataType;
     private boolean playButtonVisible;
-    private ClassificationUiHandlers classificationUiHandlers;
     private BeginSteppingHandler beginSteppingHandler;
     private boolean steppingSource;
     private boolean ignoreActions;
@@ -177,7 +155,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     public DataPresenter(final EventBus eventBus,
                          final HtmlPresenter htmlPresenter,
                          final ItemNavigatorPresenter itemNavigatorPresenter,
-                         final DataView view,
+                         final DataView dataView,
+                         final ClassificationWrapperView classificationWrapperView,
                          final TextPresenter textPresenter,
                          final ProgressPresenter progressPresenter,
                          final MarkerListPresenter markerListPresenter,
@@ -185,7 +164,10 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                          final UiConfigCache uiConfigCache,
                          final ClientSecurityContext securityContext,
                          final RestFactory restFactory) {
-        super(eventBus, view);
+        super(eventBus, classificationWrapperView);
+        classificationWrapperView.setContent(dataView);
+        this.dataView = dataView;
+        this.classificationWrapperView = classificationWrapperView;
         this.htmlPresenter = htmlPresenter;
         this.itemNavigatorPresenter = itemNavigatorPresenter;
         this.textPresenter = textPresenter;
@@ -219,12 +201,17 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         userHasPipelineSteppingPermission = securityContext.hasAppPermission(PermissionNames.STEPPING_PERMISSION);
 
         itemNavigatorPresenter.setDisplay(noNavigatorData);
-        view.addSourceLinkClickHandler(event ->
+        dataView.addSourceLinkClickHandler(event ->
                 openSourcePresenter());
-        view.setSourceLinkVisible(true, true);
-        view.setNavigatorView(itemNavigatorPresenter.getView());
-        view.setProgressView(progressPresenter.getView());
+        dataView.setSourceLinkVisible(true, true);
+        dataView.setNavigatorView(itemNavigatorPresenter.getView());
+        dataView.setProgressView(progressPresenter.getView());
         progressPresenter.setVisible(false);
+    }
+
+    @Override
+    public void focus() {
+        dataView.focus();
     }
 
     private void setCurrentRecordIndex(final long recordIndex) {
@@ -264,13 +251,13 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     private void addTab(final TabData tab) {
-        getView().getTabBar()
+        dataView.getTabBar()
                 .addTab(tab);
         hideTab(tab, true);
     }
 
     private void hideTab(final TabData tab, final boolean hide) {
-        getView().getTabBar()
+        dataView.getTabBar()
                 .setTabHidden(tab, hide);
     }
 
@@ -278,8 +265,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     protected void onBind() {
         super.onBind();
 
-        registerHandler(getView().getTabBar().addSelectionHandler(event ->
+        registerHandler(dataView.getTabBar().addSelectionHandler(event ->
                 onNewTabSelected(event.getSelectedItem())));
+        registerHandler(dataView.getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
     }
 
     private void onNewTabSelected(final TabData tab) {
@@ -295,16 +283,16 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                     effectiveChildStreamType = INFO_PSEUDO_STREAM_TYPE;
                     showHtmlPresenter();
                     fetchMetaInfoData(getCurrentMetaId());
-                    getView().setSourceLinkVisible(false, false);
+                    dataView.setSourceLinkVisible(false, false);
                     setNavigationControlsVisible(false);
-                    getView().setProgressView(null);
+                    dataView.setProgressView(null);
                     itemNavigatorPresenter.refreshNavigator();
                     refreshProgressBar(false);
                     refreshTextPresenterContent();
                 } else {
-//                    getView().setSourceLinkVisible(true, true);
+//                    dataView.setSourceLinkVisible(true, true);
                     setNavigationControlsVisible(true);
-                    getView().setProgressView(progressPresenter.getView());
+                    dataView.setProgressView(progressPresenter.getView());
                     if (META_TAB_NAME.equals(tab.getLabel())) {
                         fetchDataForCurrentStreamNo(StreamTypeNames.META);
                         refreshProgressBar(false);
@@ -522,13 +510,13 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 if (sourceLocation.getDataRange() != null) {
                     // We are displaying a specific range of the data so hide the
                     // nav controls
-                    getView().setNavigatorView(null);
+                    dataView.setNavigatorView(null);
                 }
                 highlights = new ArrayList<>();
                 if (sourceLocation.getFirstHighlight() != null) {
                     sourceLocation.getFirstHighlight()
-                                    .getAsTextRange()
-                                            .ifPresent(highlights::add);
+                            .getAsTextRange()
+                            .ifPresent(highlights::add);
                 }
                 highlightMetaId = sourceLocation.getMetaId();
                 highlightPartIndex = sourceLocation.getPartIndex();
@@ -617,7 +605,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 + ":"
                 + currentRecordNo, "");
         itemNavigatorPresenter.setDisplay(noNavigatorData);
-        getView().setSourceLinkVisible(false, false);
+        dataView.setSourceLinkVisible(false, false);
         showTextPresenter();
     }
 
@@ -889,14 +877,14 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
             // Let the classification handler know that the classification has
             // changed.
-            classificationUiHandlers.setClassification(result.getClassification());
+            classificationWrapperView.setClassification(result.getClassification());
 
             refresh(result);
             updateAvailableAndSelectedTabs(
                     result.getStreamTypeName(),
                     result.getAvailableChildStreamTypes());
         } else {
-            classificationUiHandlers.setClassification("");
+            classificationWrapperView.setClassification("");
 
             refresh(result);
             updateAvailableAndSelectedTabs(null, null);
@@ -960,35 +948,35 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             itemNavigatorPresenter.refreshNavigator();
         }
 
-        if (getView().getTabBar().getSelectedTab() != null) {
-            lastTabName = getView().getTabBar().getSelectedTab().getLabel();
+        if (dataView.getTabBar().getSelectedTab() != null) {
+            lastTabName = dataView.getTabBar().getSelectedTab().getLabel();
         }
     }
 
     private void setActiveTab(final TabData tab, final String streamType) {
 //        GWT.log("Setting active tab to " + tab.getLabel());
-        getView().getTabBar().selectTab(tab);
+        dataView.getTabBar().selectTab(tab);
         currentTabName = tab.getLabel();
         updateEditorDisplay();
     }
 
     private void showHtmlPresenter() {
         itemNavigatorPresenter.setDisplay(noNavigatorData);
-        getView().getLayerContainer().show(htmlPresenter);
+        dataView.getLayerContainer().show(htmlPresenter);
     }
 
     private void showTextPresenter() {
         itemNavigatorPresenter.setDisplay(navigatorData);
-        getView().getLayerContainer().show(textPresenter);
+        dataView.getLayerContainer().show(textPresenter);
     }
 
     private void showMarkerPresenter() {
         itemNavigatorPresenter.setDisplay(navigatorData);
-        getView().getLayerContainer().show(markerListPresenter);
+        dataView.getLayerContainer().show(markerListPresenter);
     }
 
     private void hidePresenters() {
-        getView().getLayerContainer().clear();
+        dataView.getLayerContainer().clear();
     }
 
     private void refresh(final AbstractFetchDataResult result) {
@@ -1004,12 +992,12 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         if (result != null && result.hasErrors()) {
             // Data may be multi-part so one part may have errors but the rest not
             setNavigationControlsVisible(true);
-            getView().setSourceLinkVisible(true, false);
-            getView().setProgressView(null);
+            dataView.setSourceLinkVisible(true, false);
+            dataView.setProgressView(null);
         } else {
             setNavigationControlsVisible(true);
-            getView().setSourceLinkVisible(true, true);
-            getView().setProgressView(progressPresenter.getView());
+            dataView.setSourceLinkVisible(true, true);
+            dataView.setProgressView(progressPresenter.getView());
             refreshProgressBar(result != null);
             itemNavigatorPresenter.refreshNavigator();
             refreshHighlights(result);
@@ -1093,10 +1081,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         this.beginSteppingHandler = beginSteppingHandler;
     }
 
-    public void setClassificationUiHandlers(final ClassificationUiHandlers classificationUiHandlers) {
-        this.classificationUiHandlers = classificationUiHandlers;
-    }
-
     public void setSteppingSource(final boolean steppingSource) {
         this.steppingSource = steppingSource;
         errorMarkerMode = !steppingSource;
@@ -1104,61 +1088,46 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     public void setNavigationControlsVisible(final boolean visible) {
         if (visible) {
-            getView().setNavigatorView(itemNavigatorPresenter.getView());
+            dataView.setNavigatorView(itemNavigatorPresenter.getView());
         } else {
-            getView().setNavigatorView(null);
+            dataView.setNavigatorView(null);
         }
     }
 
-    private void fetchMetaInfoData(long metaId) {
-        final Rest<List<DataInfoSection>> rest = restFactory.create();
-        rest
-                .onSuccess(this::handleMetaInfoResult)
-                .call(DATA_RESOURCE)
-                .viewInfo(metaId);
+    private void fetchMetaInfoData(final Long metaId) {
+        if (metaId != null) {
+            final Rest<List<DataInfoSection>> rest = restFactory.create();
+            rest
+                    .onSuccess(this::handleMetaInfoResult)
+                    .call(DATA_RESOURCE)
+                    .viewInfo(metaId);
+        }
     }
 
     private void handleMetaInfoResult(final List<DataInfoSection> dataInfoSections) {
-        final TooltipUtil.Builder builder = TooltipUtil.builder();
+        final TableBuilder tableBuilder = new TableBuilder();
+        for (final DataInfoSection section : dataInfoSections) {
+            // Add the section header.
+            tableBuilder.row(TableCell.header(section.getTitle(), 2));
 
-        builder.addTwoColTable(tableBuilder -> {
-            for (final DataInfoSection section : dataInfoSections) {
-                // Add the section header
+            // Add rows.
+            section.getEntries()
+                    .forEach(entry ->
+                            tableBuilder
+                                    .row(SafeHtmlUtils.fromString(entry.getKey()),
+                                            replaceJavaLineBreaks(entry.getValue())));
+        }
 
-                tableBuilder.addRow(
-                        new SafeHtmlBuilder()
-                                .appendHtmlConstant("<span style=\"" + META_SECTION_HEAD_STYLES.asString() + "\">")
-                                .appendEscaped(section.getTitle())
-                                .appendHtmlConstant("</span>")
-                                .toSafeHtml(),
-                        null,
-                        true,
-                        META_SECTION_CELL_STYLES);
-
-                section.getEntries()
-                        .forEach(entry ->
-                                tableBuilder.addRow(
-                                        TooltipUtil.styledSpan(entry.getKey(), META_KEY_STYLES),
-                                        replaceJavaLineBreaks(entry.getValue()),
-                                        true));
-            }
-            return tableBuilder.build();
-        });
-
-        htmlPresenter.setHtml(builder.build().asString());
+        final HtmlBuilder htmlBuilder = new HtmlBuilder();
+        htmlBuilder.div(tableBuilder::write, Attribute.className("infoTable"));
+        htmlPresenter.setHtml(htmlBuilder.toSafeHtml().asString());
     }
 
     private SafeHtml replaceJavaLineBreaks(final String str) {
         if (str != null) {
-            String[] parts = str.split("\\n");
-            SafeHtmlBuilder safeHtmlBuilder = new SafeHtmlBuilder();
-            for (int i = 0; i < parts.length; i++) {
-                safeHtmlBuilder.append(SafeHtmlUtils.fromString(parts[i]));
-                if (i != parts.length - 1) {
-                    safeHtmlBuilder.appendHtmlConstant("</br>");
-                }
-            }
-            return safeHtmlBuilder.toSafeHtml();
+            HtmlBuilder sb = new HtmlBuilder();
+            sb.appendEscapedLines(str);
+            return sb.toSafeHtml();
         } else {
             return null;
         }
@@ -1223,13 +1192,13 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 .collect(Collectors.joining("\n"));
 
         textPresenter.setErrorText(title, errorText);
-        getView().setSourceLinkVisible(false, false);
+        dataView.setSourceLinkVisible(false, false);
         showTextPresenter();
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    public interface DataView extends View {
+    public interface DataView extends View, Focus {
 
         void addSourceLinkClickHandler(final ClickHandler clickHandler);
 

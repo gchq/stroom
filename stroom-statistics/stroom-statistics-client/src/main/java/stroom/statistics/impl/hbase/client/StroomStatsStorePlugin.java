@@ -45,7 +45,9 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
+import javax.inject.Singleton;
 
+@Singleton
 public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> {
 
     private static final StatsStoreResource STATS_STORE_RESOURCE = GWT.create(StatsStoreResource.class);

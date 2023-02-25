@@ -9,7 +9,7 @@
       <list>
         <ConfigurationLocation id="bundled-sun-checks" type="BUNDLED" scope="All" description="Sun Checks">(bundled)</ConfigurationLocation>
         <ConfigurationLocation id="bundled-google-checks" type="BUNDLED" scope="All" description="Google Checks">(bundled)</ConfigurationLocation>
-        <ConfigurationLocation id="aaec3da0-1141-44ce-8e87-0275b7f7fa7a" type="PROJECT_RELATIVE" scope="All" description="Stroom">
+        <ConfigurationLocation id="0fd7bc82-5b60-4ed2-a853-95355bfaba1a" type="PROJECT_RELATIVE" scope="All" description="Stroom">
           $PROJECT_DIR$/config/checkstyle/checkstyle.xml
           <option name="properties">
             <map>

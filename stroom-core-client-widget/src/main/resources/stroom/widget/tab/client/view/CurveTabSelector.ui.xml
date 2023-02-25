@@ -1,15 +1,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
-<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder">
     <div class="curveTabSelector">
-        <div class="curveTabSelector-background">
-            <div class="curveTabSelector-leftBackground"/>
-            <div class="curveTabSelector-midBackground"/>
-            <div class="curveTabSelector-rightBackground"/>
-        </div>
-        <div class="curveTabSelector-foreground">
-            <div class="curveTabSelector-arrows"/>
-            <div ui:field="text" class="curveTabSelector-text"/>
-        </div>
+        <div class="curveTabSelector-background"/>
+        <div ui:field="arrows" class="curveTabSelector-arrows"/>
+        <div ui:field="text" class="curveTabSelector-text"/>
     </div>
 </ui:UiBinder> 

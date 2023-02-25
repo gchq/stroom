@@ -17,28 +17,31 @@
 package stroom.dashboard.client.vis;
 
 import stroom.dashboard.client.vis.VisPresenter.VisView;
+import stroom.svg.client.SvgImages;
 import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
+import stroom.widget.util.client.ElementUtil;
+import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
+import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class VisViewImpl extends ViewImpl implements VisView {
+public class VisViewImpl extends ViewWithUiHandlers<VisUiHandlers>
+        implements VisView {
 
     private final FlowPanel widget;
     private final SimplePanel visContainer;
-    private final SpinnerSmall spinnerSmall;
     private final SimplePanel messagePanel;
     private final Label message;
 
-    private VisPane visPane;
+    private VisFrame visFrame;
 
     @Inject
     public VisViewImpl() {
@@ -53,16 +56,21 @@ public class VisViewImpl extends ViewImpl implements VisView {
         visContainer = new SimplePanel();
         visContainer.setStyleName("dashboardVis-innerLayout");
 
-        spinnerSmall = new SpinnerSmall();
+        final SpinnerSmall spinnerSmall = new SpinnerSmall();
         spinnerSmall.setStyleName("dashboardVis-smallSpinner");
-        spinnerSmall.setVisible(false);
+        spinnerSmall.setTitle("Pause Update");
+
+        final Button pause = new Button();
+        pause.setStyleName("dashboardVis-pause svg-image-button");
+        pause.getElement().setInnerHTML(SvgImages.MONO_PAUSE);
+        pause.setTitle("Resume Update");
 
         widget = new FlowPanel() {
             @Override
             protected void onAttach() {
                 super.onAttach();
-                if (visPane != null) {
-                    visPane.asWidget().setVisible(true);
+                if (visFrame != null) {
+                    visFrame.asWidget().setVisible(true);
                 }
                 GlobalResizeObserver.addListener(getElement(), element -> {
                     if (widget.getOffsetWidth() > 0 && widget.getOffsetHeight() > 0) {
@@ -75,15 +83,27 @@ public class VisViewImpl extends ViewImpl implements VisView {
             protected void onDetach() {
                 GlobalResizeObserver.removeListener(getElement());
                 super.onDetach();
-                if (visPane != null) {
-                    visPane.asWidget().setVisible(false);
+                if (visFrame != null) {
+                    visFrame.asWidget().setVisible(false);
                 }
             }
         };
         widget.setStyleName("dashboardVis-outerLayout");
         widget.add(visContainer);
         widget.add(spinnerSmall);
+        widget.add(pause);
         widget.add(messagePanel);
+
+        spinnerSmall.addDomHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onPause();
+            }
+        }, ClickEvent.getType());
+        pause.addDomHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onPause();
+            }
+        }, ClickEvent.getType());
     }
 
     @Override
@@ -93,40 +113,80 @@ public class VisViewImpl extends ViewImpl implements VisView {
 
     @Override
     public void setRefreshing(final boolean refreshing) {
-        spinnerSmall.setVisible(refreshing);
+        if (refreshing) {
+            widget.addStyleName("refreshing");
+        } else {
+            widget.removeStyleName("refreshing");
+        }
     }
 
     @Override
-    public void setVisPane(final VisPane visPane) {
-        this.visPane = visPane;
+    public void setPaused(final boolean paused) {
+        if (paused) {
+            widget.addStyleName("paused");
+        } else {
+            widget.removeStyleName("paused");
+        }
+    }
+
+    public void setVisFrame(final VisFrame visFrame) {
+        this.visFrame = visFrame;
         onResize();
     }
 
     @Override
     public void onResize() {
-        if (visPane != null) {
-            final Style style = visPane.asWidget().getElement().getStyle();
-            Element ref = visContainer.getElement();
-            while (ref != null &&
-                    (ref.getClassName() == null ||
-                            !ref.getClassName().contains("tabLayout-contentInner"))) {
-                ref = ref.getParentElement();
-            }
+        if (visFrame != null) {
+            final Element ref = getParentByClass(visContainer.getElement(), "tabLayout-contentOuter");
+            final Element dashboard = getParentByClass(ref, "dashboard-scrollPanel");
 
             if (ref != null) {
-                style.setLeft(ref.getAbsoluteLeft(), Unit.PX);
-                style.setTop(ref.getAbsoluteTop(), Unit.PX);
-                style.setWidth(ref.getClientWidth(), Unit.PX);
-                style.setHeight(ref.getClientHeight(), Unit.PX);
-                visPane.onResize();
+                final Rect inner = ElementUtil.getBoundingClientRectPlusWindowScroll(ref);
+                if (dashboard != null) {
+                    final Rect outer = ElementUtil.getClientRect(dashboard);
+                    final Rect min = Rect.min(outer, inner);
+
+                    visFrame.setContainerPositionAndSize(
+                            min.getLeft(),
+                            min.getTop(),
+                            min.getWidth(),
+                            min.getHeight());
+
+                    visFrame.setInnerPositionAndSize(
+                            Math.min(0, inner.getLeft() - outer.getLeft()),
+                            Math.min(0, inner.getTop() - outer.getTop()),
+                            inner.getWidth(),
+                            inner.getHeight());
+                } else {
+                    visFrame.setInnerPositionAndSize(
+                            inner.getLeft(),
+                            inner.getTop(),
+                            inner.getWidth(),
+                            inner.getHeight());
+                }
+
+                visFrame.onResize();
+
             } else {
-                style.setLeft(-1000, Unit.PX);
-                style.setTop(-1000, Unit.PX);
-                style.setWidth(1000, Unit.PX);
-                style.setHeight(1000, Unit.PX);
-                visPane.onResize();
+                visFrame.setContainerPositionAndSize(
+                        -1000,
+                        -1000,
+                        1000,
+                        1000);
+
+                visFrame.onResize();
             }
         }
+    }
+
+    private Element getParentByClass(final Element element, final String className) {
+        Element el = element;
+        while (el != null &&
+                (el.getClassName() == null ||
+                        !el.getClassName().contains(className))) {
+            el = el.getParentElement();
+        }
+        return el;
     }
 
     @Override

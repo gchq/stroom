@@ -32,10 +32,10 @@ import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -83,7 +83,8 @@ public class ImportConfigPresenter
                                 warning("The import package contains nothing that can be imported into " +
                                         "this version of Stroom.");
                             } else {
-                                hide();
+                                HidePopupEvent.builder(ImportConfigPresenter.this).fire();
+                                enableButtons();
                                 ImportConfigConfirmEvent.fire(ImportConfigPresenter.this, response);
                             }
                         })
@@ -105,38 +106,24 @@ public class ImportConfigPresenter
     }
 
     private void show() {
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    // Disable popup buttons as we are submitting.
-                    disableButtons();
-                    getView().getForm().submit();
-                } else {
-                    hide();
-                }
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                // Do nothing.
-            }
-        };
-
-        EnablePopupEvent.fire(this, this);
+        EnablePopupEvent.builder(this).fire();
         final PopupSize popupSize = PopupSize.resizableX();
-        ShowPopupEvent.fire(
-                this,
-                this,
-                PopupType.OK_CANCEL_DIALOG,
-                popupSize,
-                "Import",
-                popupUiHandlers);
-    }
-
-    private void hide() {
-        HidePopupEvent.fire(this, this, false, true);
-        enableButtons();
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Import")
+                .onShow(e -> getView().focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        // Disable popup buttons as we are submitting.
+                        disableButtons();
+                        getView().getForm().submit();
+                    } else {
+                        e.hide();
+                        enableButtons();
+                    }
+                })
+                .fire();
     }
 
     private void warning(final String message) {
@@ -148,11 +135,11 @@ public class ImportConfigPresenter
     }
 
     private void disableButtons() {
-        DisablePopupEvent.fire(this, this);
+        DisablePopupEvent.builder(this).fire();
     }
 
     private void enableButtons() {
-        EnablePopupEvent.fire(this, this);
+        EnablePopupEvent.builder(this).fire();
     }
 
     @ProxyEvent
@@ -166,7 +153,7 @@ public class ImportConfigPresenter
         show();
     }
 
-    public interface ImportConfigView extends View {
+    public interface ImportConfigView extends View, Focus {
 
         FormPanel getForm();
     }

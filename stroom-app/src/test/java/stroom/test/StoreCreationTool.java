@@ -922,6 +922,23 @@ public final class StoreCreationTool {
         return pipelineRefAndDoc._1();
     }
 
+    public DocRef getSearchResultPipeline(final String name, final Path pipelineLocation, final Path xsltLocation) {
+        final DocRef pipelineRef = getPipeline(name, pipelineLocation);
+        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+
+        // Setup the xslt.
+        final DocRef xslt = getXSLT(name, xsltLocation);
+        final PipelineData pipelineData = pipelineDoc.getPipelineData();
+
+        // Change some properties.
+        if (xslt != null) {
+            pipelineData.addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xslt));
+        }
+
+        pipelineStore.writeDocument(pipelineDoc);
+        return pipelineRef;
+    }
+
     public DocRef ensurePath(final String path) {
         return ensurePath(ExplorerConstants.SYSTEM_DOC_REF, path);
     }

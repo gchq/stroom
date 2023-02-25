@@ -48,7 +48,8 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
     void list() {
         initNodes();
 
-        final String subPath = ResourcePaths.buildPath(NodeResource.FIND_PATH_PART);;
+        final String subPath = ResourcePaths.buildPath(NodeResource.FIND_PATH_PART);
+        ;
 
         final FetchNodeStatusResponse expectedResponse = getTestNodes().stream()
                 .map(testNode -> {

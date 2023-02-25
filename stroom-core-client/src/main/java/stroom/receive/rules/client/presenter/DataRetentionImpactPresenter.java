@@ -20,8 +20,8 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.config.global.client.presenter.ListDataProvider;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.EditExpressionPresenter;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionDeleteSummaryRequest;
 import stroom.data.retention.shared.DataRetentionDeleteSummaryResponse;
@@ -38,11 +38,10 @@ import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.NumberFormat;
@@ -61,7 +60,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public class DataRetentionImpactPresenter
-        extends MyPresenterWidget<DataGridView<DataRetentionImpactRow>> {
+        extends MyPresenterWidget<PagerView> {
 
     private static final DataRetentionRulesResource RETENTION_RULES_RESOURCE =
             GWT.create(DataRetentionRulesResource.class);
@@ -82,6 +81,8 @@ public class DataRetentionImpactPresenter
         FILTERABLE_FIELDS.add(MetaFields.TYPE);
     }
 
+    private final MyDataGrid<DataRetentionImpactRow> dataGrid;
+    private final MultiSelectionModelImpl<DataRetentionImpactRow> selectionModel;
     private final ListDataProvider<DataRetentionImpactRow> dataProvider = new ListDataProvider<>();
     private final RestFactory restFactory;
     private final Provider<EditExpressionPresenter> editExpressionPresenterProvider;
@@ -104,20 +105,26 @@ public class DataRetentionImpactPresenter
 
     @Inject
     public DataRetentionImpactPresenter(final EventBus eventBus,
+                                        final PagerView view,
                                         final RestFactory restFactory,
                                         final Provider<EditExpressionPresenter> editExpressionPresenterProvider) {
-        super(eventBus, new DataGridViewImpl<>(true));
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(false);
+        view.setDataWidget(dataGrid);
+
         this.restFactory = restFactory;
         this.editExpressionPresenterProvider = editExpressionPresenterProvider;
 
-        runButton = getView().addButton(SvgPresets.RUN.title(BTN_TITLE_RUN_QUERY));
-        stopButton = getView().addButton(SvgPresets.STOP.title(BTN_TITLE_STOP_QUERY));
-        filterButton = getView().addButton(SvgPresets.FILTER.title(BTN_TITLE_SET_FILTER));
-        flatNestedToggleButton = getView().addToggleButton(
+        runButton = view.addButton(SvgPresets.RUN.title(BTN_TITLE_RUN_QUERY));
+        stopButton = view.addButton(SvgPresets.STOP.title(BTN_TITLE_STOP_QUERY));
+        filterButton = view.addButton(SvgPresets.FILTER.title(BTN_TITLE_SET_FILTER));
+        flatNestedToggleButton = view.addToggleButton(
                 SvgPresets.TABLE.title(BTN_TITLE_FLAT_TABLE),
                 SvgPresets.TABLE_NESTED.title(BTN_TITLE_NESTED_TABLE));
-        expandAllButton = getView().addButton(SvgPresets.EXPAND_DOWN.title(BTN_TITLE_EXPAND_ALL));
-        collapseAllButton = getView().addButton(SvgPresets.COLLAPSE_UP.title(BTN_TITLE_COLLAPSE_ALL));
+        expandAllButton = view.addButton(SvgPresets.EXPAND_DOWN.title(BTN_TITLE_EXPAND_ALL));
+        collapseAllButton = view.addButton(SvgPresets.COLLAPSE_UP.title(BTN_TITLE_COLLAPSE_ALL));
 
         updateButtonStates();
 
@@ -127,7 +134,7 @@ public class DataRetentionImpactPresenter
         initColumns();
 
 
-        dataProvider.addDataDisplay(getView().getDataDisplay());
+        dataProvider.addDataDisplay(dataGrid);
         dataProvider.setListUpdater(this::refreshSourceData);
     }
 
@@ -135,10 +142,10 @@ public class DataRetentionImpactPresenter
         sourceData = null;
         dataProvider.setCompleteList(Collections.emptyList());
         treeAction.reset();
-        getView().clearColumnSortList();
+        dataGrid.clearColumnSortList();
         if (criteria != null && criteria.getSortList() != null) {
             criteria.getSortList().clear();
-            getView().redrawHeaders();
+            dataGrid.redrawHeaders();
         }
     }
 
@@ -160,7 +167,6 @@ public class DataRetentionImpactPresenter
                 .onSuccess(response -> {
                     // check we are expecting the results
                     if (isQueryRunning && currentQueryId.equals(response.getQueryId())) {
-
                         this.sourceData = response.getValues() != null
                                 ? response.getValues()
                                 : Collections.emptyList();
@@ -288,29 +294,18 @@ public class DataRetentionImpactPresenter
         editExpressionPresenter.init(restFactory, MetaFields.STREAM_STORE_DOC_REF, FILTERABLE_FIELDS);
 
         final PopupSize popupSize = PopupSize.resizable(800, 400);
-        ShowPopupEvent.fire(
-                DataRetentionImpactPresenter.this,
-                editExpressionPresenter,
-                PopupType.OK_CANCEL_DIALOG,
-                popupSize,
-                "Query Filter",
-                new PopupUiHandlers() {
-                    @Override
-                    public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        if (ok) {
-                            criteria.setExpression(editExpressionPresenter.write());
-                        }
-
-                        HidePopupEvent.fire(
-                                DataRetentionImpactPresenter.this,
-                                editExpressionPresenter);
+        ShowPopupEvent.builder(editExpressionPresenter)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Query Filter")
+                .onShow(e -> editExpressionPresenter.focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        criteria.setExpression(editExpressionPresenter.write());
                     }
-
-                    @Override
-                    public void onHide(final boolean autoClose, final boolean ok) {
-                        // Do nothing.
-                    }
-                });
+                    e.hide();
+                })
+                .fire();
     }
 
     public void setDataRetentionRules(final DataRetentionRules dataRetentionRules) {
@@ -349,13 +344,13 @@ public class DataRetentionImpactPresenter
     private void initColumns() {
 
         DataGridUtil.addExpanderColumn(
-                getView(),
+                dataGrid,
                 DataRetentionImpactRow::getExpander,
                 treeAction,
                 this::refreshVisibleData,
                 36); // Need space for three expander levels
 
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getRuleNumber, Object::toString)
                         .rightAligned()
                         .withSorting(DataRetentionImpactRow.FIELD_NAME_RULE_NO)
@@ -363,35 +358,35 @@ public class DataRetentionImpactPresenter
                 DataGridUtil.createRightAlignedHeader(DataRetentionImpactRow.FIELD_NAME_RULE_NO),
                 ColumnSizeConstants.SMALL_COL);
 
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getRuleName)
                         .withSorting(DataRetentionImpactRow.FIELD_NAME_RULE_NAME)
                         .build(),
                 DataRetentionImpactRow.FIELD_NAME_RULE_NAME,
                 200);
 
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getRuleAgeStr)
                         .withSorting(DataRetentionImpactRow.FIELD_NAME_RULE_AGE)
                         .build(),
                 DataRetentionImpactRow.FIELD_NAME_RULE_AGE,
                 ColumnSizeConstants.MEDIUM_COL);
 
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getType)
                         .withSorting(DataRetentionImpactRow.FIELD_NAME_TYPE)
                         .build(),
                 DataRetentionImpactRow.FIELD_NAME_TYPE,
                 ColumnSizeConstants.MEDIUM_COL);
 
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getFeed)
                         .withSorting(DataRetentionImpactRow.FIELD_NAME_FEED)
                         .build(),
                 DataRetentionImpactRow.FIELD_NAME_FEED,
                 ColumnSizeConstants.BIG_COL);
 
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(this::getIndentedCountCellText)
                         .rightAligned()
                         .withSorting(DataRetentionImpactRow.FIELD_NAME_DELETE_COUNT)
@@ -399,9 +394,9 @@ public class DataRetentionImpactPresenter
                 DataGridUtil.createRightAlignedHeader(DataRetentionImpactRow.FIELD_NAME_DELETE_COUNT),
                 150);
 
-        DataGridUtil.addEndColumn(getView());
+        DataGridUtil.addEndColumn(dataGrid);
 
-        DataGridUtil.addColumnSortHandler(getView(), criteria, this::refreshVisibleData);
+        DataGridUtil.addColumnSortHandler(dataGrid, criteria, this::refreshVisibleData);
     }
 
     public ButtonView addButton(final Preset preset) {
@@ -419,7 +414,7 @@ public class DataRetentionImpactPresenter
     }
 
     public DataRetentionImpactRow getSelectedItem() {
-        return getView().getSelectionModel().getSelected();
+        return selectionModel.getSelected();
     }
 
 }

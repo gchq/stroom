@@ -23,8 +23,7 @@ import stroom.data.client.presenter.CharacterNavigatorPresenter;
 import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
 import stroom.data.client.presenter.CharacterRangeSelectionPresenter;
 import stroom.data.client.presenter.CharacterRangeSelectionPresenter.CharacterRangeSelectionView;
-import stroom.data.client.presenter.ClassificationWrapperPresenter;
-import stroom.data.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
+import stroom.data.client.presenter.ClassificationWrapperView;
 import stroom.data.client.presenter.DataDisplaySupport;
 import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DataPresenter.DataView;
@@ -68,9 +67,9 @@ import stroom.editor.client.presenter.DelegatingAceCompleter;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
 import stroom.editor.client.view.EditorViewImpl;
-import stroom.widget.dropdowntree.client.presenter.DropDownPresenter.DropDrownView;
-import stroom.widget.dropdowntree.client.presenter.DropDownTreePresenter.DropDownTreeView;
+import stroom.widget.dropdowntree.client.view.DropDownTreeView;
 import stroom.widget.dropdowntree.client.view.DropDownTreeViewImpl;
+import stroom.widget.dropdowntree.client.view.DropDownView;
 import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
 import stroom.widget.progress.client.presenter.ProgressPresenter;
 import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
@@ -87,10 +86,6 @@ public class StreamStoreModule extends PluginModule {
 
         bind(DelegatingAceCompleter.class).asEagerSingleton();
 
-        bindPresenterWidget(
-                ClassificationWrapperPresenter.class,
-                ClassificationWrapperView.class,
-                ClassificationWrapperViewImpl.class);
         bindPresenterWidget(
                 MetaPresenter.class,
                 MetaView.class,
@@ -155,7 +150,8 @@ public class StreamStoreModule extends PluginModule {
 
         bind(ProcessorTaskListPresenter.class);
 
-        bindSharedView(DropDrownView.class, DropDownViewImpl.class);
+        bindSharedView(DropDownView.class, DropDownViewImpl.class);
         bindSharedView(DropDownTreeView.class, DropDownTreeViewImpl.class);
+        bindSharedView(ClassificationWrapperView.class, ClassificationWrapperViewImpl.class);
     }
 }

@@ -17,7 +17,6 @@
 
 package stroom.pipeline.client.presenter;
 
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
@@ -48,11 +47,10 @@ public class XsltPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Xs
     @Inject
     public XsltPresenter(final EventBus eventBus,
                          final LinkTabPanelView view,
-                         final RestFactory restFactory,
                          final XsltSettingsPresenter settingsPresenter,
                          final Provider<EditorPresenter> editorPresenterProvider,
                          final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext, restFactory);
+        super(eventBus, view, securityContext);
         this.settingsPresenter = settingsPresenter;
         this.editorPresenterProvider = editorPresenterProvider;
 
@@ -88,11 +86,12 @@ public class XsltPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Xs
     }
 
     @Override
-    protected void onWrite(final XsltDoc xslt) {
-        settingsPresenter.write(xslt);
+    protected XsltDoc onWrite(XsltDoc xslt) {
+        xslt = settingsPresenter.write(xslt);
         if (codePresenter != null) {
             xslt.setData(codePresenter.getText());
         }
+        return xslt;
     }
 
     @Override

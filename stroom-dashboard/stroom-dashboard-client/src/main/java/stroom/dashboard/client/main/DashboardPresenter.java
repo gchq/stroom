@@ -19,52 +19,48 @@ package stroom.dashboard.client.main;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
-import stroom.core.client.HasSave;
+import stroom.dashboard.client.flexlayout.FlexLayout;
 import stroom.dashboard.client.flexlayout.FlexLayoutChangeHandler;
 import stroom.dashboard.client.flexlayout.PositionAndSize;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
+import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.DashboardPresenter.DashboardView;
 import stroom.dashboard.client.query.QueryInfoPresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardConfig.TabVisibility;
 import stroom.dashboard.shared.DashboardDoc;
+import stroom.dashboard.shared.Dimension;
 import stroom.dashboard.shared.LayoutConfig;
+import stroom.dashboard.shared.LayoutConstraints;
 import stroom.dashboard.shared.Size;
 import stroom.dashboard.shared.SplitLayoutConfig;
-import stroom.dashboard.shared.SplitLayoutConfig.Direction;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.document.client.event.SaveAsDocumentEvent;
-import stroom.document.client.event.WriteDocumentEvent;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.ExplorerNode;
-import stroom.explorer.shared.ExplorerResource;
+import stroom.query.api.v2.Param;
+import stroom.query.api.v2.ParamUtil;
+import stroom.query.api.v2.ResultStoreInfo;
+import stroom.query.api.v2.SearchRequestSource;
+import stroom.query.api.v2.TimeRange;
+import stroom.query.client.presenter.QueryUiHandlers;
+import stroom.query.client.view.QueryButtons;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Icon;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
-import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.RandomId;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.menu.client.presenter.MenuListPresenter;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.menu.client.presenter.Item;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
+import stroom.widget.menu.client.presenter.SimpleMenuItem;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -74,107 +70,60 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class DashboardPresenter extends DocumentEditPresenter<DashboardView, DashboardDoc>
-        implements FlexLayoutChangeHandler, DocumentTabData, DashboardUiHandlers, HasSave {
+        implements FlexLayoutChangeHandler, DocumentTabData, DashboardUiHandlers, QueryUiHandlers,
+        Consumer<Boolean> {
 
     private static final Logger logger = Logger.getLogger(DashboardPresenter.class.getName());
-
-    private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
-    private final ButtonView saveButton;
-    private final ButtonView saveAsButton;
-    private final DashboardLayoutPresenter layoutPresenter;
-    private final Provider<ComponentAddPresenter> addPresenterProvider;
+    private final FlexLayout layoutPresenter;
     private final Components components;
     private final Provider<QueryInfoPresenter> queryInfoPresenterProvider;
-    private final RestFactory restFactory;
-    private final ButtonView addButton;
-    private ButtonPanel leftButtons;
-    private ButtonPanel rightButtons;
+    private final Provider<LayoutConstraintPresenter> layoutConstraintPresenterProvider;
     private String lastLabel;
     private boolean loaded;
     private String customTitle;
     private DocRef docRef;
 
-    private String currentParams;
+    private final DashboardContext dashboardContext = new DashboardContext();
     private String lastUsedQueryInfo;
     private boolean embedded;
     private boolean queryOnOpen;
 
+    private LayoutConstraints layoutConstraints = new LayoutConstraints(true, true);
+    private Size preferredSize = new Size();
+    private boolean designMode;
+
+    private ResultStoreInfo resultStoreInfo;
+
     @Inject
     public DashboardPresenter(final EventBus eventBus,
                               final DashboardView view,
-                              final DashboardLayoutPresenter layoutPresenter,
-                              final Provider<ComponentAddPresenter> addPresenterProvider,
+                              final FlexLayout flexLayout,
                               final Components components,
-                              final MenuListPresenter menuListPresenter,
                               final Provider<RenameTabPresenter> renameTabPresenterProvider,
                               final Provider<QueryInfoPresenter> queryInfoPresenterProvider,
-                              final ClientSecurityContext securityContext,
-                              final RestFactory restFactory) {
+                              final Provider<LayoutConstraintPresenter> layoutConstraintPresenterProvider,
+                              final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
-        this.layoutPresenter = layoutPresenter;
-        this.addPresenterProvider = addPresenterProvider;
+        this.layoutPresenter = flexLayout;
         this.components = components;
         this.queryInfoPresenterProvider = queryInfoPresenterProvider;
-        this.restFactory = restFactory;
+        this.layoutConstraintPresenterProvider = layoutConstraintPresenterProvider;
 
-        final TabManager tabManager = new TabManager(components, menuListPresenter, renameTabPresenterProvider, this);
-        layoutPresenter.setTabManager(tabManager);
+        final TabManager tabManager = new TabManager(components, renameTabPresenterProvider, this);
+        flexLayout.setTabManager(tabManager);
 
-        saveButton = addButtonLeft(SvgPresets.SAVE);
-        saveAsButton = addButtonLeft(SvgPresets.SAVE_AS);
-        saveButton.setEnabled(false);
-        saveAsButton.setEnabled(false);
-
-        registerHandler(saveButton.addClickHandler(event -> save()));
-        registerHandler(saveAsButton.addClickHandler(this::onSaveAsDocument));
-
-        layoutPresenter.setFlexLayoutChangeHandler(this);
-        layoutPresenter.setComponents(components);
-        view.setContent(layoutPresenter.getView());
-
-        addButton = addButtonLeft(SvgPresets.ADD);
-        addButton.setTitle("Add Component");
-        addButton.setEnabled(false);
-
+        flexLayout.setChangeHandler(this);
+        flexLayout.setComponents(components);
+        view.setContent(flexLayout);
         view.setUiHandlers(this);
-    }
 
-    @Override
-    public void save() {
-        if (saveButton.isEnabled()) {
-            WriteDocumentEvent.fire(DashboardPresenter.this, DashboardPresenter.this);
-        }
-    }
-
-    private void onSaveAsDocument(ClickEvent event) {
-        if (saveAsButton.isEnabled()) {
-            restFactory.create()
-                    .onSuccess(explorerNode ->
-                            SaveAsDocumentEvent.fire(DashboardPresenter.this, (ExplorerNode) explorerNode))
-                    .call(EXPLORER_RESOURCE)
-                    .getFromDocRef(docRef);
-        }
-    }
-
-    private ButtonView addButtonLeft(final Preset preset) {
-        if (leftButtons == null) {
-            leftButtons = new ButtonPanel();
-            addWidgetLeft(leftButtons);
-        }
-
-        return leftButtons.addButton(preset);
-    }
-
-    private void addWidgetLeft(final Widget widget) {
-        getView().addWidgetLeft(widget);
-    }
-
-    private void addWidgetRight(final Widget widget) {
-        getView().addWidgetRight(widget);
+        view.getQueryButtons().setUiHandlers(this);
     }
 
     @Override
@@ -186,30 +135,94 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         components.removeAll();
     }
 
-    private void onAdd(final ClickEvent event) {
-        final ComponentAddPresenter presenter = addPresenterProvider.get();
-        final AddSelectionHandler selectionHandler = new AddSelectionHandler(presenter);
-        final HandlerRegistration handlerRegistration = presenter.addSelectionChangeHandler(selectionHandler);
-        selectionHandler.setHandlerRegistration(handlerRegistration);
-        presenter.setTypes(components.getComponentTypes());
-        presenter.clearSelection();
+    @Override
+    public void onAddPanel(final ClickEvent event) {
+        onAdd(event, ComponentUse.PANEL);
+    }
 
+    @Override
+    public void onAddInput(final ClickEvent event) {
+        onAdd(event, ComponentUse.INPUT);
+    }
+
+    @Override
+    public void onConstraints(final ClickEvent event) {
+        final LayoutConstraintPresenter presenter = layoutConstraintPresenterProvider.get();
+        final HandlerRegistration handlerRegistration = presenter.addValueChangeHandler(e -> {
+            if (!Objects.equals(e.getValue(), layoutConstraints)) {
+                setDirty(true);
+                layoutConstraints = e.getValue();
+                layoutPresenter.setLayoutConstraints(layoutConstraints);
+            }
+        });
+        presenter.read(layoutConstraints);
+        ShowPopupEvent.builder(presenter)
+                .popupType(PopupType.CLOSE_DIALOG)
+//                .popupSize(PopupSize.resizableX(500))
+                .caption("Set Layout Constraints")
+                .onShow(e -> presenter.getView().focus())
+                .onHide(e -> {
+                    handlerRegistration.removeHandler();
+                })
+                .fire();
+    }
+
+    @Override
+    public void onDesign(final ClickEvent event) {
+        designMode = !designMode;
+        getView().setDesignMode(designMode);
+        layoutPresenter.setDesignMode(designMode);
+    }
+
+    private void onAdd(final ClickEvent event, final ComponentUse componentUse) {
         final com.google.gwt.dom.client.Element target = event.getNativeEvent().getEventTarget().cast();
 
         final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft() - 3,
                 target.getAbsoluteTop() + target.getClientHeight() + 1);
-        ShowPopupEvent.fire(this, presenter, PopupType.POPUP, popupPosition, null, target);
+
+        final List<Item> menuItems = new ArrayList<>();
+        for (final ComponentType type : components.getComponentTypes()) {
+            if (componentUse.equals(type.getUse())) {
+                menuItems.add(new SimpleMenuItem.Builder()
+                        .text(type.getName())
+                        .command(() -> addComponent(type))
+                        .build());
+            }
+        }
+
+        ShowMenuEvent
+                .builder()
+                .items(menuItems)
+                .popupPosition(popupPosition)
+                .fire(this);
+    }
+
+    @Override
+    public void onTimeRange(final TimeRange timeRange) {
+        if (!Objects.equals(dashboardContext.getTimeRange(), timeRange)) {
+            setTimeRange(timeRange);
+            start();
+        }
+    }
+
+    private void setTimeRange(final TimeRange timeRange) {
+        dashboardContext.setTimeRange(timeRange);
+        getView().setTimeRange(timeRange);
     }
 
     public void setParams(final String params) {
         logger.log(Level.INFO, "Dashboard Presenter setParams " + params);
-
-        this.currentParams = params;
+        final List<Param> coreParams = ParamUtil.parse(params);
+        dashboardContext.setCoreParams(coreParams);
     }
 
     void setEmbedded(final boolean embedded) {
         this.embedded = embedded;
         getView().setEmbedded(embedded);
+    }
+
+    public void setResultStoreInfo(final ResultStoreInfo resultStoreInfo) {
+        this.resultStoreInfo = resultStoreInfo;
     }
 
     public void setQueryOnOpen(final boolean queryOnOpen) {
@@ -224,20 +237,34 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
             components.setDashboard(dashboard);
             components.clear();
-            LayoutConfig layoutData = null;
+            LayoutConfig layoutConfig = null;
 
             final DashboardConfig dashboardConfig = dashboard.getDashboardConfig();
             if (dashboardConfig != null) {
-                if (null == currentParams) {
-                    currentParams = "";
+                if (dashboardContext.getCoreParams() == null ||
+                        dashboardContext.getCoreParams().size() == 0) {
                     if (dashboardConfig.getParameters() != null
                             && dashboardConfig.getParameters().trim().length() > 0) {
-                        currentParams = dashboardConfig.getParameters().trim();
+                        setParams(dashboardConfig.getParameters().trim());
                     }
                 }
-                getView().setParams(currentParams);
+//                getView().setParams(currentParams);
 
-                layoutData = dashboardConfig.getLayout();
+                if (dashboardContext.getTimeRange() == null) {
+                    if (dashboardConfig.getTimeRange() != null) {
+                        setTimeRange(dashboardConfig.getTimeRange());
+                    }
+                }
+
+                layoutConfig = dashboardConfig.getLayout();
+                layoutConstraints = dashboardConfig.getLayoutConstraints();
+                if (layoutConstraints == null) {
+                    layoutConstraints = new LayoutConstraints(true, true);
+                }
+                preferredSize = dashboardConfig.getPreferredSize();
+                if (preferredSize == null) {
+                    preferredSize = new Size();
+                }
                 final List<ComponentConfig> componentDataList = dashboardConfig.getComponents();
                 if (componentDataList != null) {
                     for (final ComponentConfig componentData : componentDataList) {
@@ -255,15 +282,15 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                 // * ADD TEST DATA
                 // */
                 // final SplitLayoutData down = new
-                // SplitLayoutData(Direction.DOWN.getDimension());
+                // SplitLayoutData(Dimension.Y);
                 // for (int i = 0; i < 3; i++) {
                 // final SplitLayoutData across = new
-                // SplitLayoutData(Direction.ACROSS.getDimension());
+                // SplitLayoutData(Dimension.X);
                 // down.add(across);
                 //
                 // for (int l = 0; l < 2; l++) {
                 // final SplitLayoutData down2 = new
-                // SplitLayoutData(Direction.DOWN.getDimension());
+                // SplitLayoutData(Dimension.Y);
                 // across.add(down2);
                 //
                 // for (int j = 0; j < 3; j++) {
@@ -305,78 +332,106 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             // tabVisibility.setSelectedItem(dashboardData.getTabVisibility());
             // }
 
-            layoutPresenter.setLayoutData(layoutData);
+            layoutPresenter.configure(layoutConfig, layoutConstraints, preferredSize);
 
             // Tell all queryable components whether we want them to query on open.
             for (final Component component : components) {
                 if (component instanceof Queryable) {
+                    if (resultStoreInfo != null) {
+                        final SearchRequestSource searchRequestSource = resultStoreInfo.getSearchRequestSource();
+                        if (searchRequestSource != null &&
+                                component.getId().equals(searchRequestSource.getComponentId())) {
+                            ((Queryable) component).setResultStoreInfo(resultStoreInfo);
+                        }
+                    }
+
                     ((Queryable) component).setQueryOnOpen(queryOnOpen);
                 }
             }
+            resultStoreInfo = null;
         }
     }
 
     private Component addComponent(final String type, final ComponentConfig componentData) {
         final Component component = components.add(type, componentData.getId());
         if (component != null) {
+            component.setDashboardContext(dashboardContext);
+
             if (component instanceof HasDirtyHandlers) {
                 ((HasDirtyHandlers) component).addDirtyHandler(event -> setDirty(true));
             }
 
             // Set params on the component if it needs them.
             if (component instanceof Queryable) {
-                ((Queryable) component).onQuery(currentParams, null);
+                final Queryable queryable = (Queryable) component;
+                queryable.addModeListener(this);
             }
 
             component.read(componentData);
         }
 
+        enableQueryButtons();
+
         return component;
     }
 
-    @Override
-    protected void onWrite(final DashboardDoc dashboard) {
-        String params = getView().getParams();
-        if (params != null && params.trim().length() == 0) {
-            params = null;
-        }
+    private void enableQueryButtons() {
+        getView().getQueryButtons().setEnabled(getQueryableComponents().size() > 0);
+        getView().getQueryButtons().setMode(getCombinedMode());
+    }
 
+    @Override
+    public void accept(final Boolean mode) {
+        getView().getQueryButtons().setMode(getCombinedMode());
+    }
+
+    private boolean getCombinedMode() {
+        final List<Queryable> queryableComponents = getQueryableComponents();
+        boolean combinedMode = false;
+        for (final Queryable queryable : queryableComponents) {
+            if (queryable.getMode()) {
+                combinedMode = true;
+            }
+        }
+        return combinedMode;
+    }
+
+    @Override
+    protected DashboardDoc onWrite(final DashboardDoc dashboard) {
         final List<ComponentConfig> componentDataList = new ArrayList<>(components.size());
         for (final Component component : components) {
             final ComponentConfig componentConfig = component.write();
             componentDataList.add(componentConfig);
         }
 
+        final List<Param> params = dashboardContext.getCoreParams();
+        String paramString = null;
+        if (params != null) {
+            paramString = ParamUtil.getCombinedParameterString(params);
+        }
+
         final DashboardConfig dashboardConfig = new DashboardConfig();
-        dashboardConfig.setParameters(params);
+        dashboardConfig.setParameters(paramString);
+        dashboardConfig.setTimeRange(dashboardContext.getTimeRange());
         dashboardConfig.setComponents(componentDataList);
-        dashboardConfig.setLayout(layoutPresenter.getLayoutData());
+        dashboardConfig.setLayout(layoutPresenter.getLayoutConfig());
+        dashboardConfig.setLayoutConstraints(layoutConstraints);
+        dashboardConfig.setPreferredSize(preferredSize);
         dashboardConfig.setTabVisibility(TabVisibility.SHOW_ALL);
         dashboard.setDashboardConfig(dashboardConfig);
+        return dashboard;
     }
 
     @Override
     public void onReadOnly(final boolean readOnly) {
         super.onReadOnly(readOnly || embedded);
-
-        saveButton.setEnabled(isDirty() && !embedded);
-        saveAsButton.setEnabled(true);
-
-        boolean enabled = !readOnly && !embedded;
-        addButton.setEnabled(enabled);
-        if (enabled) {
-            registerHandler(addButton.addClickHandler(event -> {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    onAdd(event);
-                }
-            }));
-        }
+        getView().setReadOnly(readOnly || embedded);
     }
 
     @Override
     public void onClose() {
         // Remove all components.
-        components.removeAll();
+        components.onClose();
         super.onClose();
     }
 
@@ -387,7 +442,9 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
     @Override
     public void onDirty() {
-        setDirty(true);
+        if (designMode) {
+            setDirty(true);
+        }
     }
 
     @Override
@@ -404,51 +461,65 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             }
         }
 
-        // If all remaining tabs are hidden the we can't allow removal.
+        // If all remaining tabs are hidden then we can't allow removal.
         if (totalCount > 0 && totalCount == hiddenCount) {
             AlertEvent.fireError(this, "You cannot remove or hide all tabs", null);
         } else {
             ConfirmEvent.fire(this, "Are you sure you want to close this tab?", ok -> {
                 if (ok) {
                     layoutPresenter.closeTab(tabConfig);
-                    components.remove(tabConfig.getId(), true);
+                    final Component component = components.get(tabConfig.getId());
+                    if (component != null) {
+                        if (component instanceof Queryable) {
+                            final Queryable queryable = (Queryable) component;
+                            queryable.removeModeListener(this);
+                        }
+                        components.remove(tabConfig.getId(), true);
+                        enableQueryButtons();
+                    }
                 }
             });
         }
     }
 
     @Override
-    public void onParamsChanged(final String params) {
-        String trimmed = "";
-        if (params != null && params.trim().length() > 0) {
-            trimmed = params.trim();
-        }
+    public void start() {
+        // Get a sub list of components that can be queried.
+        final List<Queryable> queryableComponents = getQueryableComponents();
+        final boolean combinedMode = getCombinedMode();
 
-        if (!EqualsUtil.isEquals(currentParams, trimmed)) {
-            setDirty(true);
-
-            currentParams = trimmed;
-
-            // Get a sub list of components that can be queried.
-            final List<Queryable> queryableComponents = new ArrayList<>();
-            for (final Component component : components) {
-                if (component instanceof Queryable) {
-                    queryableComponents.add((Queryable) component);
-                }
+        if (combinedMode) {
+            for (final Queryable queryable : getQueryableComponents()) {
+                queryable.stop();
             }
+        } else {
 
             // If we have some queryable components then make sure we get query info for them.
             if (queryableComponents.size() > 0) {
                 queryInfoPresenterProvider.get().show(lastUsedQueryInfo, state -> {
                     if (state.isOk()) {
                         lastUsedQueryInfo = state.getQueryInfo();
+
                         for (final Queryable queryable : queryableComponents) {
-                            queryable.onQuery(currentParams, lastUsedQueryInfo);
+                            queryable.setDashboardContext(dashboardContext);
+                            queryable.setQueryInfo(lastUsedQueryInfo);
+                            queryable.start();
                         }
                     }
                 });
             }
         }
+    }
+
+    private List<Queryable> getQueryableComponents() {
+        // Get a sub list of components that can be queried.
+        final List<Queryable> queryableComponents = new ArrayList<>();
+        for (final Component component : components) {
+            if (component instanceof Queryable) {
+                queryableComponents.add((Queryable) component);
+            }
+        }
+        return queryableComponents;
     }
 
     @Override
@@ -488,7 +559,6 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             lastLabel = getLabel();
             RefreshContentTabEvent.fire(this, this);
         }
-        saveButton.setEnabled(isDirty());
     }
 
     public void setCustomTitle(final String customTitle) {
@@ -497,213 +567,192 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
     public interface DashboardView extends View, HasUiHandlers<DashboardUiHandlers> {
 
-        void addWidgetLeft(Widget widget);
+        void setTimeRange(TimeRange timeRange);
 
-        void addWidgetRight(Widget widget);
-
-        String getParams();
-
-        void setParams(String params);
-
-        void setContent(View view);
+        void setContent(Widget view);
 
         void setEmbedded(boolean embedded);
+
+        void setReadOnly(boolean readOnly);
+
+        void setDesignMode(boolean designMode);
+
+        QueryButtons getQueryButtons();
     }
 
-    private class AddSelectionHandler implements SelectionChangeEvent.Handler {
+    private void addComponent(final ComponentType type) {
+        if (type != null) {
+            String id = type.getId() + "-" + RandomId.createId(5);
+            // Make sure we don't duplicate ids.
+            while (components.idExists(id)) {
+                id = type.getId() + "-" + RandomId.createId(5);
+            }
 
-        private final ComponentAddPresenter presenter;
-        private HandlerRegistration handlerRegistration;
+            final ComponentConfig componentData = ComponentConfig
+                    .builder()
+                    .type(type.getId())
+                    .id(id)
+                    .name(type.getName())
+                    .build();
 
-        AddSelectionHandler(final ComponentAddPresenter presenter) {
-            this.presenter = presenter;
+            final Component componentPresenter = addComponent(componentData.getType(), componentData);
+            if (componentPresenter != null) {
+                componentPresenter.link();
+            }
+
+            final TabConfig tabConfig = new TabConfig(id, true);
+            final TabLayoutConfig tabLayoutConfig = new TabLayoutConfig(tabConfig);
+
+            // Choose where to put the new component in the layout data.
+            LayoutConfig layoutConfig = layoutPresenter.getLayoutConfig();
+            if (layoutConfig == null) {
+                // There is no existing layout so add the new item as a
+                // single item layout.
+
+                layoutConfig = tabLayoutConfig;
+
+            } else if (layoutConfig instanceof TabLayoutConfig) {
+                // If the layout is a single item then replace it with a
+                // split layout.
+                layoutConfig = new SplitLayoutConfig(Dimension.Y, layoutConfig, tabLayoutConfig);
+            } else {
+                // If the layout is already a split then add a new component
+                // to the split.
+                final SplitLayoutConfig parent = (SplitLayoutConfig) layoutConfig;
+
+                // Add the new component.
+                parent.add(tabLayoutConfig);
+
+                // Fix the heights of the components to fit the new
+                // component in.
+                fixHeights(parent);
+            }
+
+            layoutPresenter.configure(layoutConfig, layoutConstraints, preferredSize);
+            setDirty(true);
         }
+    }
 
-        @Override
-        public void onSelectionChange(final SelectionChangeEvent event) {
-            final ComponentType type = presenter.getSelectedObject();
-            if (type != null) {
-                HidePopupEvent.fire(DashboardPresenter.this, presenter);
-                if (handlerRegistration != null) {
-                    handlerRegistration.removeHandler();
-                }
+    private void fixHeights(final SplitLayoutConfig parent) {
+        // Create a default size to use.
+        final Size defaultSize = new Size();
 
-                String id = type.getId() + "-" + RandomId.createId(5);
-                // Make sure we don't duplicate ids.
-                while (components.idExists(id)) {
-                    id = type.getId() + "-" + RandomId.createId(5);
-                }
+        if (parent.count() > 1) {
+            final LayoutConfig previousComponent = parent.get(parent.count() - 2);
+            final int height = previousComponent.getPreferredSize().getHeight();
 
-                final ComponentConfig componentData = ComponentConfig
-                        .builder()
-                        .type(type.getId())
-                        .id(id)
-                        .name(type.getName())
-                        .build();
-
-                final Component componentPresenter = addComponent(componentData.getType(), componentData);
-                if (componentPresenter != null) {
-                    componentPresenter.link();
-                }
-
-                final TabConfig tabConfig = new TabConfig(id, true);
-                final TabLayoutConfig tabLayoutConfig = new TabLayoutConfig(tabConfig);
-
-                // Choose where to put the new component in the layout data.
-                LayoutConfig layoutData = layoutPresenter.getLayoutData();
-                if (layoutData == null) {
-                    // There is no existing layout so add the new item as a
-                    // single item layout.
-
-                    layoutData = tabLayoutConfig;
-
-                } else if (layoutData instanceof TabLayoutConfig) {
-                    // If the layout is a single item then replace it with a
-                    // split layout.
-                    layoutData = new SplitLayoutConfig(Direction.DOWN.getDimension(),
-                            layoutData, tabLayoutConfig);
-                } else {
-                    // If the layout is already a split then add a new component
-                    // to the split.
-                    final SplitLayoutConfig parent = (SplitLayoutConfig) layoutData;
-
-                    // Add the new component.
-                    parent.add(tabLayoutConfig);
-
-                    // Fix the heights of the components to fit the new
-                    // component in.
-                    fixHeights(parent);
-                }
-
-                layoutPresenter.setLayoutData(layoutData);
-                setDirty(true);
+            // See if the previous component has enough height to be split
+            // to include the new component.
+            if (height > (defaultSize.getHeight() * 2)) {
+                previousComponent.getPreferredSize().setHeight(height - defaultSize.getHeight());
+            } else {
+                // The previous component isn't high enough so resize all
+                // components to fit.
+                lazyRedistribution(parent);
             }
         }
+    }
 
-        private void fixHeights(final SplitLayoutConfig parent) {
-            // Create a default size to use.
-            final Size defaultSize = new Size();
+    private void lazyRedistribution(final SplitLayoutConfig parent) {
+        // Create a default size to use.
+        final Size defaultSize = new Size();
 
-            if (parent.count() > 1) {
-                final LayoutConfig previousComponent = parent.get(parent.count() - 2);
-                final int height = previousComponent.getPreferredSize().getHeight();
+        // See if we can get the currently presented position and size for
+        // the parent layout.
+        final PositionAndSize positionAndSize = layoutPresenter.getPositionAndSize(parent);
+        if (positionAndSize != null) {
+            // Get the current height of the split layout.
+            final double height = positionAndSize.getHeight();
 
-                // See if the previous component has enough height to be split
-                // to include the new component.
-                if (height > (defaultSize.getHeight() * 2)) {
-                    previousComponent.getPreferredSize().setHeight(height - defaultSize.getHeight());
-                } else {
-                    // The previous component isn't high enough so resize all
-                    // components to fit.
-                    lazyRedistribution(parent);
-                }
-            }
-        }
+            final double totalHeight = getTotalHeight(parent);
+            if (height > 0 && totalHeight > height) {
+                double amountToSave = totalHeight - height;
 
-        private void lazyRedistribution(final SplitLayoutConfig parent) {
-            // Create a default size to use.
-            final Size defaultSize = new Size();
-
-            // See if we can get the currently presented position and size for
-            // the parent layout.
-            final PositionAndSize positionAndSize = layoutPresenter.getPositionAndSize(parent);
-            if (positionAndSize != null) {
-                // Get the current height of the split layout.
-                final int height = positionAndSize.getHeight();
-
-                final int totalHeight = getTotalHeight(parent);
-                if (height > 0 && totalHeight > height) {
-                    int amountToSave = totalHeight - height;
-
-                    // Try and set heights to the default height to claw back
-                    // space we want to save.
-                    for (int i = parent.count() - 1; i >= 0; i--) {
-                        final LayoutConfig ld = parent.get(i);
-                        final Size size = ld.getPreferredSize();
-                        final int diff = size.getHeight() - defaultSize.getHeight();
-                        if (diff > 0) {
-                            if (diff > amountToSave) {
-                                size.setHeight(size.getHeight() - amountToSave);
-                                amountToSave = 0;
-                                break;
-                            } else {
-                                size.setHeight(defaultSize.getHeight());
-                                amountToSave -= diff;
-                            }
+                // Try and set heights to the default height to claw back
+                // space we want to save.
+                for (int i = parent.count() - 1; i >= 0; i--) {
+                    final LayoutConfig ld = parent.get(i);
+                    final Size size = ld.getPreferredSize();
+                    final double diff = size.getHeight() - defaultSize.getHeight();
+                    if (diff > 0) {
+                        if (diff > amountToSave) {
+                            size.setHeight((int) (size.getHeight() - amountToSave));
+                            amountToSave = 0;
+                            break;
+                        } else {
+                            size.setHeight(defaultSize.getHeight());
+                            amountToSave -= diff;
                         }
                     }
-
-                    // If we have more space we need to save then try and
-                    // distribute space evenly between widgets.
-                    if (amountToSave > 0) {
-                        fairRedistribution(parent, height);
-                    }
                 }
+
+                // If we have more space we need to save then try and
+                // distribute space evenly between widgets.
+                if (amountToSave > 0) {
+                    fairRedistribution(parent, height);
+                }
+            }
+        } else {
+            // We have no idea what size the parnet container is occupying
+            // so just reset all heights.
+            resetAllHeights(parent);
+        }
+    }
+
+    private void fairRedistribution(final SplitLayoutConfig parent, final double height) {
+        // Find out how high each component could be if they were all the
+        // same height.
+        double fairHeight = (height / parent.count());
+        fairHeight = Math.max(0D, fairHeight);
+
+        double used = 0;
+        int count = 0;
+
+        // Try and find the components that are bigger than their fair size
+        // and remember the amount of space used by smaller components.
+        for (int i = parent.count() - 1; i >= 0; i--) {
+            final LayoutConfig ld = parent.get(i);
+            final Size size = ld.getPreferredSize();
+            if (size.getHeight() > fairHeight) {
+                count++;
             } else {
-                // We have no idea what size the parnet container is occupying
-                // so just reset all heights.
-                resetAllHeights(parent);
+                used += size.getHeight();
             }
         }
 
-        private void fairRedistribution(final SplitLayoutConfig parent, final int height) {
-            // Find out how high each component could be if they were all the
-            // same height.
-            int fairHeight = (height / parent.count());
-            fairHeight = Math.max(0, fairHeight);
-
-            int used = 0;
-            int count = 0;
-
-            // Try and find the components that are bigger than their fair size
-            // and remember the amount of space used by smaller components.
+        // Calculate the height to set all components that are bigger than
+        // the available height.
+        if (count > 0) {
+            final double newHeight = ((height - used) / count);
             for (int i = parent.count() - 1; i >= 0; i--) {
                 final LayoutConfig ld = parent.get(i);
                 final Size size = ld.getPreferredSize();
                 if (size.getHeight() > fairHeight) {
-                    count++;
-                } else {
-                    used += size.getHeight();
+                    size.setHeight((int) newHeight);
                 }
             }
-
-            // Calculate the height to set all components that are bigger than
-            // the available height.
-            if (count > 0) {
-                final int newHeight = ((height - used) / count);
-                for (int i = parent.count() - 1; i >= 0; i--) {
-                    final LayoutConfig ld = parent.get(i);
-                    final Size size = ld.getPreferredSize();
-                    if (size.getHeight() > fairHeight) {
-                        size.setHeight(newHeight);
-                    }
-                }
-            }
-        }
-
-        private void resetAllHeights(final SplitLayoutConfig parent) {
-            final Size defaultSize = new Size();
-            for (int i = 0; i < parent.count(); i++) {
-                final LayoutConfig ld = parent.get(i);
-                final Size size = ld.getPreferredSize();
-                if (size.getHeight() > defaultSize.getHeight()) {
-                    size.setHeight(defaultSize.getHeight());
-                }
-            }
-        }
-
-        private int getTotalHeight(final SplitLayoutConfig parent) {
-            int totalHeight = 0;
-            for (int i = parent.count() - 1; i >= 0; i--) {
-                final LayoutConfig ld = parent.get(i);
-                final Size size = ld.getPreferredSize();
-                totalHeight += size.getHeight();
-            }
-            return totalHeight;
-        }
-
-        void setHandlerRegistration(final HandlerRegistration handlerRegistration) {
-            this.handlerRegistration = handlerRegistration;
         }
     }
+
+    private void resetAllHeights(final SplitLayoutConfig parent) {
+        final Size defaultSize = new Size();
+        for (int i = 0; i < parent.count(); i++) {
+            final LayoutConfig ld = parent.get(i);
+            final Size size = ld.getPreferredSize();
+            if (size.getHeight() > defaultSize.getHeight()) {
+                size.setHeight(defaultSize.getHeight());
+            }
+        }
+    }
+
+    private double getTotalHeight(final SplitLayoutConfig parent) {
+        double totalHeight = 0;
+        for (int i = parent.count() - 1; i >= 0; i--) {
+            final LayoutConfig ld = parent.get(i);
+            final Size size = ld.getPreferredSize();
+            totalHeight += size.getHeight();
+        }
+        return totalHeight;
+    }
 }
+

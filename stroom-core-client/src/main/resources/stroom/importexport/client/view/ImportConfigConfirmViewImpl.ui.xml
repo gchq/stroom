@@ -1,41 +1,26 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:c="urn:import:stroom.widget.customdatebox.client">
-    <g:FlowPanel styleName="importConfigContainer max default-min-sizes dock-container-vertical">
-        <g:SimplePanel ui:field="dataGridView" styleName="dock-max itemCheckList"/>
-        <g:Grid ui:field="grid" styleName="dock-min stroom-control-grid">
-            <g:row>
-                <g:cell>Enable Processor Filters:</g:cell>
-                <g:customCell>
-                    <g:CheckBox ui:field="enableFilters"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Enable Processor Filters From:</g:cell>
-                <g:customCell>
-                    <c:MyDateBox ui:field="enableFrom"/>
-                </g:customCell>
-                <g:cell>from this date (or leave blank to process from first stream)</g:cell>
-            </g:row>
-            <g:row>
-                <g:cell>Use Import Names:</g:cell>
-                <g:customCell>
-                    <g:CheckBox ui:field="useImportNames"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Use Import Folders:</g:cell>
-                <g:customCell>
-                    <g:CheckBox ui:field="useImportFolders"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Import To Root Folder:</g:cell>
-                <g:customCell>
-                    <g:SimplePanel ui:field="rootFolder"/>
-                </g:customCell>
-            </g:row>
-        </g:Grid>
+             xmlns:c="urn:import:stroom.widget.customdatebox.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form">
+        <g:SimplePanel ui:field="dataGridView" styleName="dock-max stroom-control"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="enableFilters" identity="importConfigConfirmEnableProcessorFilters" label="Enable Processor Filters"/>
+        </form:FormGroup>
+        <form:FormGroup identity="importConfigConfirmFromThisdate"
+                        label="From this date (or leave blank to process from first stream)">
+            <c:MyDateBox ui:field="enableFrom"/>
+        </form:FormGroup>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="useImportNames" identity="importConfigConfirmUseImportNames" label="Use Import Names"/>
+        </form:FormGroup>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="useImportFolders" identity="importConfigConfirmUseImportFolders" label="Use Import Folders"/>
+        </form:FormGroup>
+        <form:FormGroup identity="importConfigConfirmImportToRootFolder" label="Import To Root Folder">
+            <g:SimplePanel ui:field="rootFolder"/>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

@@ -31,14 +31,10 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuListPresenter;
-import stroom.widget.popup.client.event.HidePopupEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.util.client.MouseUtil;
 
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -52,7 +48,6 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         implements HasDirtyHandlers {
 
     private final ExpressionTreePresenter expressionPresenter;
-    private final MenuListPresenter menuListPresenter;
 
     private final ButtonView addOperatorButton;
     private final ButtonView addTermButton;
@@ -60,12 +55,11 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
     private final ButtonView deleteItemButton;
 
     @Inject
-    public EditExpressionPresenter(final EventBus eventBus, final EditExpressionView view,
-                                   final ExpressionTreePresenter expressionPresenter,
-                                   final MenuListPresenter menuListPresenter) {
+    public EditExpressionPresenter(final EventBus eventBus,
+                                   final EditExpressionView view,
+                                   final ExpressionTreePresenter expressionPresenter) {
         super(eventBus, view);
         this.expressionPresenter = expressionPresenter;
-        this.menuListPresenter = menuListPresenter;
 
         view.setExpressionView(expressionPresenter.getView());
 
@@ -95,28 +89,27 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         registerHandler(expressionPresenter.addDataSelectionHandler(event -> setButtonsEnabled()));
         registerHandler(expressionPresenter.addContextMenuHandler(event -> {
             final List<Item> menuItems = addExpressionActionsToMenu();
-            if (menuItems != null && menuItems.size() > 0) {
-                final PopupPosition popupPosition = new PopupPosition(event.getX(), event.getY());
-                showMenu(popupPosition, menuItems);
+            if (menuItems.size() > 0) {
+                showMenu(menuItems, event.getPopupPosition());
             }
         }));
         registerHandler(addOperatorButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 addOperator();
             }
         }));
         registerHandler(addTermButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 addTerm();
             }
         }));
         registerHandler(disableItemButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 disable();
             }
         }));
         registerHandler(deleteItemButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 delete();
             }
         }));
@@ -176,14 +169,32 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         final boolean hasSelection = selectedItem != null;
 
         final List<Item> menuItems = new ArrayList<>();
-        menuItems.add(new IconMenuItem(1, SvgPresets.ADD, SvgPresets.ADD, "Add Term", null,
-                true, this::addTerm));
-        menuItems.add(new IconMenuItem(2, SvgPresets.OPERATOR, SvgPresets.OPERATOR, "Add Operator", null,
-                true, this::addOperator));
-        menuItems.add(new IconMenuItem(3, SvgPresets.DISABLE, SvgPresets.DISABLE, getEnableDisableText(),
-                null, hasSelection, this::disable));
-        menuItems.add(new IconMenuItem(4, SvgPresets.DELETE, SvgPresets.DELETE, "Delete", null,
-                hasSelection, this::delete));
+        menuItems.add(new IconMenuItem.Builder()
+                .priority(1)
+                .icon(SvgPresets.ADD)
+                .text("Add Term")
+                .command(this::addTerm)
+                .build());
+        menuItems.add(new IconMenuItem.Builder()
+                .priority(2)
+                .icon(SvgPresets.OPERATOR)
+                .text("Add Operator")
+                .command(this::addOperator)
+                .build());
+        menuItems.add(new IconMenuItem.Builder()
+                .priority(3)
+                .icon(SvgPresets.DISABLE)
+                .text(getEnableDisableText())
+                .enabled(hasSelection)
+                .command(this::disable)
+                .build());
+        menuItems.add(new IconMenuItem.Builder()
+                .priority(4)
+                .icon(SvgPresets.DELETE)
+                .text("Delete")
+                .enabled(hasSelection)
+                .command(this::delete)
+                .build());
 
         return menuItems;
     }
@@ -203,20 +214,13 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         return null;
     }
 
-    private void showMenu(final PopupPosition popupPosition, final List<Item> menuItems) {
-        menuListPresenter.setData(menuItems);
-
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                HidePopupEvent.fire(EditExpressionPresenter.this, menuListPresenter);
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-            }
-        };
-        ShowPopupEvent.fire(this, menuListPresenter, PopupType.POPUP, popupPosition, popupUiHandlers);
+    private void showMenu(final List<Item> menuItems,
+                          final PopupPosition popupPosition) {
+        ShowMenuEvent
+                .builder()
+                .items(menuItems)
+                .popupPosition(popupPosition)
+                .fire(this);
     }
 
     public void setDirty(final boolean dirty) {

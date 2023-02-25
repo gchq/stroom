@@ -32,6 +32,9 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class DataRetentionPlugin extends MonitoringPlugin<DataRetentionPresenter> {
 
     @Inject
@@ -50,13 +53,11 @@ public class DataRetentionPlugin extends MonitoringPlugin<DataRetentionPresenter
     }
 
     private MenuItem createDataRetentionMenuItem() {
-        return new IconMenuItem(
-                51,
-                SvgPresets.HISTORY,
-                SvgPresets.HISTORY,
-                "Data Retention",
-                null,
-                true,
-                this::open);
+        return new IconMenuItem.Builder()
+                .priority(51)
+                .icon(SvgPresets.HISTORY)
+                .text("Data Retention")
+                .command(this::open)
+                .build();
     }
 }

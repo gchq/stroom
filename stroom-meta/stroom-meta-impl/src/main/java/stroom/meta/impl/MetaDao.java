@@ -13,10 +13,13 @@ import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.SelectionSummary;
+import stroom.meta.shared.SimpleMeta;
 import stroom.meta.shared.Status;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
 
+import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -64,17 +67,20 @@ public interface MetaDao {
 
     int updateStatus(FindMetaCriteria criteria, Status currentStatus, Status newStatus, long statusTime);
 
-    int delete(List<Long> metaIdList);
+    /**
+     * Physically delete the records from the database.
+     */
+    int delete(Collection<Long> metaIds);
 
-    List<DataRetentionDeleteSummary> getRetentionDeletionSummary(final DataRetentionRules rules,
-                                                                 final FindDataRetentionImpactCriteria criteria);
+    List<DataRetentionDeleteSummary> getRetentionDeletionSummary(DataRetentionRules rules,
+                                                                 FindDataRetentionImpactCriteria criteria);
 
     /**
      * @param ruleActions Must be sorted with highest priority rule first
      * @param period
      */
-    int logicalDelete(final List<DataRetentionRuleAction> ruleActions,
-                      final TimePeriod period);
+    int logicalDelete(List<DataRetentionRuleAction> ruleActions,
+                      TimePeriod period);
 
     int getLockCount();
 
@@ -87,4 +93,14 @@ public interface MetaDao {
     List<String> getProcessorUuidList(FindMetaCriteria criteria);
 
     Set<EffectiveMeta> getEffectiveStreams(EffectiveMetaDataCriteria effectiveMetaDataCriteria);
+
+    Set<Long> findLockedMeta(Collection<Long> metaIdCollection);
+
+    /**
+     * Get a batch of logically deleted {@link SimpleMeta} records that are older than {@code deleteThreshold}.
+     * Gets a batch of the youngest ones matching that condition.
+     */
+    List<SimpleMeta> getLogicallyDeleted(Instant deleteThreshold,
+                                         int batchSize,
+                                         final Set<Long> metaIdExcludeSet);
 }

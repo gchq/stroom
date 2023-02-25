@@ -17,7 +17,7 @@
 package stroom.xmlschema.client.view;
 
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.xmlschema.client.presenter.XMLSchemaSettingsPresenter.XMLSchemaSettingsView;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -41,7 +41,7 @@ public class XMLSchemaSettingsViewImpl extends ViewImpl implements XMLSchemaSett
     @UiField
     TextBox schemaGroup;
     @UiField
-    TickBox deprecated;
+    CustomCheckBox deprecated;
 
     @Inject
     public XMLSchemaSettingsViewImpl(final Binder binder) {
@@ -74,7 +74,7 @@ public class XMLSchemaSettingsViewImpl extends ViewImpl implements XMLSchemaSett
     }
 
     @Override
-    public TickBox getDeprecated() {
+    public CustomCheckBox getDeprecated() {
         return deprecated;
     }
 

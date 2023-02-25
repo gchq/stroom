@@ -67,6 +67,11 @@ public class FieldEditViewImpl extends ViewImpl implements FieldEditView {
         this.name.setText(name);
     }
 
+    @Override
+    public void focus() {
+        type.focus();
+    }
+
     public interface Binder extends UiBinder<Widget, FieldEditViewImpl> {
 
     }

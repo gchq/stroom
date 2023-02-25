@@ -18,7 +18,6 @@ package stroom.security.client.presenter;
 
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.Rest;
@@ -26,10 +25,10 @@ import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
-import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.view.client.Range;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -41,16 +40,16 @@ public class UserDataProvider implements Refreshable {
 
     private final EventBus eventBus;
     private final RestFactory restFactory;
-    private final DataGridView<User> view;
+    private final DataGrid<User> dataGrid;
     private RestDataProvider<User, ResultPage<User>> dataProvider;
     private FindUserCriteria criteria = new FindUserCriteria();
 
-    public UserDataProvider(final EventBus eventBus, final RestFactory restFactory, final DataGridView<User> view) {
+    public UserDataProvider(final EventBus eventBus, final RestFactory restFactory, final DataGrid<User> dataGrid) {
         this.eventBus = eventBus;
         this.restFactory = restFactory;
-        this.view = view;
+        this.dataGrid = dataGrid;
 
-        view.addColumnSortHandler(event -> {
+        dataGrid.addColumnSortHandler(event -> {
             if (event.getColumn() instanceof OrderByColumn<?, ?>) {
                 final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
                 criteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
@@ -100,7 +99,7 @@ public class UserDataProvider implements Refreshable {
             // dataProvider.addChangeDataHandler(changeDataHandler);
             // }
             // pendingChangeHandlers.clear();
-            dataProvider.addDataDisplay(view.getDataDisplay());
+            dataProvider.addDataDisplay(dataGrid);
 
         } else {
             dataProvider.refresh();

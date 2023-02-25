@@ -100,7 +100,7 @@ public class TestIndexShardSearcher extends AbstractCoreIntegrationTest {
         // Get shard.
         final FindIndexShardCriteria criteria = FindIndexShardCriteria.matchAll();
         criteria.getIndexUuidSet().add(indexShardKey.getIndexUuid());
-        criteria.getPartition().setString(indexShardKey.getPartition());
+        criteria.getPartition().setString(indexShardKey.getPartition().getLabel());
         final ResultPage<IndexShard> indexShardResultPage = indexShardService.find(criteria);
         assertThat(indexShardResultPage.size()).isOne();
         final IndexShard indexShard = indexShardResultPage.getFirst();

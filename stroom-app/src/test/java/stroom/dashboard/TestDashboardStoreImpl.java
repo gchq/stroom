@@ -24,8 +24,8 @@ import stroom.dashboard.impl.visualisation.VisualisationStore;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardDoc;
+import stroom.dashboard.shared.Dimension;
 import stroom.dashboard.shared.SplitLayoutConfig;
-import stroom.dashboard.shared.SplitLayoutConfig.Direction;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.dashboard.shared.VisComponentSettings;
@@ -59,13 +59,13 @@ class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
         final List<ComponentConfig> components = new ArrayList<>();
 
         // ADD TEST DATA
-        final SplitLayoutConfig down = new SplitLayoutConfig(Direction.DOWN.getDimension());
+        final SplitLayoutConfig down = new SplitLayoutConfig(Dimension.Y);
         for (int i = 0; i < 3; i++) {
-            final SplitLayoutConfig across = new SplitLayoutConfig(Direction.ACROSS.getDimension());
+            final SplitLayoutConfig across = new SplitLayoutConfig(Dimension.X);
             down.add(across);
 
             for (int l = 0; l < 2; l++) {
-                final SplitLayoutConfig down2 = new SplitLayoutConfig(Direction.DOWN.getDimension());
+                final SplitLayoutConfig down2 = new SplitLayoutConfig(Dimension.Y);
                 across.add(down2);
 
                 for (int j = 0; j < 3; j++) {

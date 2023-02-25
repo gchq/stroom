@@ -21,7 +21,7 @@ import stroom.item.client.ItemListBox;
 import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter.SolrIndexSettingsView;
 import stroom.search.solr.client.presenter.SolrIndexSettingsUiHandlers;
 import stroom.search.solr.shared.SolrConnectionConfig.InstanceType;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -54,11 +54,15 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
     @UiField
     TextArea solrUrls;
     @UiField
-    TickBox useZk;
+    CustomCheckBox useZk;
     @UiField
     TextArea zkHosts;
     @UiField
     TextArea zkPath;
+    @UiField
+    TextBox timeField;
+    @UiField
+    SimplePanel defaultExtractionPipeline;
     @UiField
     Button testConnection;
     @UiField
@@ -78,6 +82,7 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
         useZk.addValueChangeHandler(e -> fireChange());
         zkHosts.addKeyDownHandler(e -> fireChange());
         zkPath.addKeyDownHandler(e -> fireChange());
+        timeField.addKeyDownHandler(e -> fireChange());
     }
 
     private void fireChange() {
@@ -145,12 +150,12 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
 
     @Override
     public boolean isUseZk() {
-        return useZk.getBooleanValue();
+        return useZk.getValue();
     }
 
     @Override
     public void setUseZk(final boolean useZk) {
-        this.useZk.setBooleanValue(useZk);
+        this.useZk.setValue(useZk);
     }
 
     @Override
@@ -184,6 +189,22 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
     @Override
     public void setRetentionExpressionView(final View view) {
         retentionExpressionPanel.setWidget(view.asWidget());
+    }
+
+    @Override
+    public String getTimeField() {
+        return timeField.getValue();
+    }
+
+    @Override
+    public void setTimeField(final String partitionTimeField) {
+        this.timeField.setValue(partitionTimeField);
+    }
+
+
+    @Override
+    public void setDefaultExtractionPipelineView(final View view) {
+        this.defaultExtractionPipeline.setWidget(view.asWidget());
     }
 
     @Override

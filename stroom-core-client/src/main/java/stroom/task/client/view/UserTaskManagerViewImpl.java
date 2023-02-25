@@ -29,6 +29,7 @@ import com.gwtplatform.mvp.client.ViewImpl;
 public class UserTaskManagerViewImpl extends ViewImpl implements UserTaskManagerView {
 
     private final Widget widget;
+
     @UiField
     FlowPanel taskList;
 
@@ -40,6 +41,11 @@ public class UserTaskManagerViewImpl extends ViewImpl implements UserTaskManager
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public void focus() {
+        taskList.getElement().focus();
     }
 
     @Override

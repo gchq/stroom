@@ -17,9 +17,9 @@
 package stroom.security.client.presenter;
 
 import stroom.cell.info.client.SvgCell;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.FindUserNameCriteria;
@@ -30,15 +30,15 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView;
+import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -49,29 +49,34 @@ public class SelectUserPresenter extends MyPresenterWidget<UserListView> impleme
 
     private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
-    private final DataGridView<String> dataGridView;
+    private final MyDataGrid<String> dataGrid;
+    private final MultiSelectionModelImpl<String> selectionModel;
     private final RestFactory restFactory;
     private final ButtonView newButton;
     private final ManageNewEntityPresenter newPresenter;
     private UserNameDataProvider dataProvider;
     private FindUserNameCriteria findUserCriteria;
-    private Consumer<User> userConsumer;
+    private String selected;
 
     @Inject
     public SelectUserPresenter(final EventBus eventBus,
                                final UserListView userListView,
+                               final PagerView pagerView,
                                final RestFactory restFactory,
                                final ManageNewEntityPresenter newPresenter) {
         super(eventBus, userListView);
         this.restFactory = restFactory;
         this.newPresenter = newPresenter;
 
-        dataGridView = new DataGridViewImpl<>(true);
-        userListView.setDatGridView(dataGridView);
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(false);
+        pagerView.setDataWidget(dataGrid);
+
+        userListView.setDatGridView(pagerView);
         userListView.setUiHandlers(this);
 
         // Icon
-        dataGridView.addColumn(new Column<String, Preset>(new SvgCell()) {
+        dataGrid.addColumn(new Column<String, Preset>(new SvgCell()) {
             @Override
             public Preset getValue(final String userRef) {
                 return SvgPresets.USER;
@@ -79,46 +84,45 @@ public class SelectUserPresenter extends MyPresenterWidget<UserListView> impleme
         }, "</br>", 20);
 
         // Name.
-        dataGridView.addResizableColumn(new Column<String, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<String, String>(new TextCell()) {
             @Override
             public String getValue(final String userRef) {
                 return userRef;
             }
         }, "Name", 350);
 
-        dataGridView.addEndColumn(new EndColumn<>());
-        newButton = dataGridView.addButton(SvgPresets.NEW_ITEM);
+        dataGrid.addEndColumn(new EndColumn<>());
+        newButton = pagerView.addButton(SvgPresets.NEW_ITEM);
     }
 
     @Override
     protected void onBind() {
         super.onBind();
         registerHandler(newButton.addClickHandler(event -> {
-            if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+            if (MouseUtil.isPrimary(event)) {
                 onNew();
             }
         }));
-        registerHandler(dataGridView.getSelectionModel().addSelectionHandler(event -> {
+        registerHandler(selectionModel.addSelectionHandler(event -> {
             if (event.getSelectionType().isDoubleSelect()) {
-                final String selected = dataGridView.getSelectionModel().getSelected();
-                hide(false, true, selected);
+                selected = selectionModel.getSelected();
+                if (selected != null && selected.length() > 0) {
+                    HidePopupEvent.builder(SelectUserPresenter.this).fire();
+                }
             }
         }));
     }
 
     private void onNew() {
-        final PopupUiHandlers hidePopupUiHandlers = new DefaultPopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    final String selected = newPresenter.getName();
-                    hide(false, true, selected);
+        newPresenter.show(e -> {
+            if (e.isOk()) {
+                selected = newPresenter.getName();
+                if (selected != null && selected.length() > 0) {
+                    HidePopupEvent.builder(this).fire();
                 }
-                newPresenter.hide();
             }
-        };
-
-        newPresenter.show(hidePopupUiHandlers);
+            e.hide();
+        });
     }
 
     @Override
@@ -144,53 +148,33 @@ public class SelectUserPresenter extends MyPresenterWidget<UserListView> impleme
     }
 
     public void show(final Consumer<User> userConsumer) {
-        this.userConsumer = userConsumer;
         final FindUserNameCriteria findUserCriteria = new FindUserNameCriteria();
         setup(findUserCriteria);
 
         final PopupSize popupSize = PopupSize.resizable(400, 400);
-        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
-            @Override
-            public void onHideRequest(boolean autoClose, boolean ok) {
-                final String selected = dataGridView.getSelectionModel().getSelected();
-                hide(autoClose, ok, selected);
-            }
-        };
-        ShowPopupEvent.fire(
-                SelectUserPresenter.this,
-                SelectUserPresenter.this,
-                PopupView.PopupType.OK_CANCEL_DIALOG,
-                popupSize,
-                "Choose User To Add",
-                popupUiHandlers);
-    }
-
-    private void hide(final boolean autoClose, final boolean ok, final String selected) {
-        if (ok && userConsumer != null && selected != null && selected.length() > 0) {
-            final Rest<User> rest = restFactory.create();
-            rest
-                    .onSuccess(user -> {
-                        userConsumer.accept(user);
-                        HidePopupEvent.fire(
-                                this,
-                                this,
-                                autoClose,
-                                ok);
-                    })
-                    .call(USER_RESOURCE)
-                    .create(selected, false);
-        } else {
-            HidePopupEvent.fire(
-                    this,
-                    this,
-                    autoClose,
-                    ok);
-        }
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Choose User To Add")
+                .onShow(e -> getView().focus())
+                .onHide(e -> {
+                    if (e.isOk()) {
+                        final String selected = getSelected();
+                        if (selected != null) {
+                            final Rest<User> rest = restFactory.create();
+                            rest
+                                    .onSuccess(userConsumer)
+                                    .call(USER_RESOURCE)
+                                    .create(selected, false);
+                        }
+                    }
+                })
+                .fire();
     }
 
     public void setup(final FindUserNameCriteria findUserCriteria) {
         this.findUserCriteria = findUserCriteria;
-        dataProvider = new UserNameDataProvider(getEventBus(), restFactory, getDataGridView());
+        dataProvider = new UserNameDataProvider(getEventBus(), restFactory, getDataGrid());
         dataProvider.setCriteria(findUserCriteria);
         refresh();
     }
@@ -199,7 +183,11 @@ public class SelectUserPresenter extends MyPresenterWidget<UserListView> impleme
         dataProvider.refresh();
     }
 
-    public DataGridView<String> getDataGridView() {
-        return dataGridView;
+    public String getSelected() {
+        return selected;
+    }
+
+    public DataGrid<String> getDataGrid() {
+        return dataGrid;
     }
 }

@@ -48,4 +48,9 @@ public class DoubleClickTester {
 
         return false;
     }
+
+    public void clear() {
+        doubleClickTimer.cancel();
+        this.object = null;
+    }
 }

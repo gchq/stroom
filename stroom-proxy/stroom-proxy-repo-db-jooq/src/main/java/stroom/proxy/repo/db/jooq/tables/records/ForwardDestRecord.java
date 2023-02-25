@@ -4,12 +4,12 @@
 package stroom.proxy.repo.db.jooq.tables.records;
 
 
+import stroom.proxy.repo.db.jooq.tables.ForwardDest;
+
 import org.jooq.Field;
 import org.jooq.Record2;
 import org.jooq.Row2;
 import org.jooq.impl.UpdatableRecordImpl;
-
-import stroom.proxy.repo.db.jooq.tables.ForwardDest;
 
 
 /**

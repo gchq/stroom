@@ -59,8 +59,9 @@ public class KafkaConfigSettingsPresenter extends DocumentSettingsPresenter<Kafk
     }
 
     @Override
-    protected void onWrite(final KafkaConfigDoc doc) {
+    protected KafkaConfigDoc onWrite(final KafkaConfigDoc doc) {
         doc.setDescription(getView().getDescription().getText().trim());
+        return doc;
     }
 
     public interface KafkaConfigSettingsView extends View {

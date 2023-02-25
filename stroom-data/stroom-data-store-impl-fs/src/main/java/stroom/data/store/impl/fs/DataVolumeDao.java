@@ -3,7 +3,7 @@ package stroom.data.store.impl.fs;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.util.shared.ResultPage;
 
-import java.util.List;
+import java.util.Collection;
 
 public interface DataVolumeDao {
 
@@ -13,7 +13,7 @@ public interface DataVolumeDao {
 
     DataVolume createDataVolume(long metaId, FsVolume volume);
 
-    int delete(List<Long> metaIdList);
+    int delete(Collection<Long> metaIdList);
 
     interface DataVolume {
 

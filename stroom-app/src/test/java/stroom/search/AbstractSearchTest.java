@@ -21,9 +21,9 @@ import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
 import stroom.query.api.v2.DateTimeSettings;
+import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
-import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Fetch;
@@ -32,18 +32,21 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.common.v2.SearchResponseCreatorManager;
-import stroom.query.common.v2.StoreFactory;
-import stroom.search.impl.LuceneSearchStoreFactory;
+import stroom.query.common.v2.ResultStoreManager;
 import stroom.test.AbstractCoreIntegrationTest;
 
-import java.time.ZoneOffset;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.inject.Inject;
@@ -52,21 +55,29 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSearchTest.class);
+
     @Inject
-    private SearchResponseCreatorManager searchResponseCreatorManager;
-    @Inject
-    private LuceneSearchStoreFactory storeFactory;
+    private ResultStoreManager resultStoreManager;
 
     protected static SearchResponse search(final SearchRequest searchRequest,
-                                           final StoreFactory storeFactory,
-                                           final SearchResponseCreatorManager searchResponseCreatorManager) {
-        SearchResponse response = searchResponseCreatorManager.search(storeFactory, searchRequest);
+                                           final ResultStoreManager resultStoreManager) {
+        SearchResponse response = resultStoreManager.search(searchRequest);
+        resultStoreManager.destroy(response.getKey(), DestroyReason.NO_LONGER_NEEDED);
         if (!response.complete()) {
             throw new RuntimeException("NOT COMPLETE");
         }
-        searchResponseCreatorManager.remove(searchRequest.getKey());
 
         return response;
+    }
+
+    private static ObjectMapper createMapper(final boolean indent) {
+        final ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
+        mapper.setSerializationInclusion(Include.NON_NULL);
+
+        return mapper;
     }
 
     public static void testInteractive(
@@ -77,8 +88,7 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             final boolean extractValues,
             final Consumer<Map<String, List<Row>>> resultMapConsumer,
             final IndexStore indexStore,
-            final StoreFactory storeFactory,
-            final SearchResponseCreatorManager searchResponseCreatorManager) {
+            final ResultStoreManager searchResponseCreatorManager) {
 
         final DocRef indexRef = indexStore.list().get(0);
         final IndexDoc index = indexStore.readDocument(indexRef);
@@ -98,15 +108,25 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             resultRequests.add(tableResultRequest);
         }
 
-        final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final Query query = Query.builder().dataSource(indexRef).expression(expressionIn.build()).build();
-        final SearchRequest searchRequest = new SearchRequest(queryKey,
+        final SearchRequest searchRequest = new SearchRequest(
+                null,
+                null,
                 query,
                 resultRequests,
                 DateTimeSettings.builder().build(),
                 false);
+
+        try {
+            final ObjectMapper mapper = createMapper(true);
+            final String json = mapper.writeValueAsString(searchRequest);
+            LOGGER.info(json);
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+
         final SearchResponse searchResponse = AbstractSearchTest
-                .search(searchRequest, storeFactory, searchResponseCreatorManager);
+                .search(searchRequest, searchResponseCreatorManager);
 
         assertThat(searchResponse).as("Search response is null").isNotNull();
         if (searchResponse.getErrors() != null && searchResponse.getErrors().size() > 0) {
@@ -143,7 +163,7 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
     }
 
     protected SearchResponse search(SearchRequest searchRequest) {
-        return search(searchRequest, storeFactory, searchResponseCreatorManager);
+        return search(searchRequest, resultStoreManager);
     }
 
     public void testInteractive(
@@ -155,6 +175,6 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             final Consumer<Map<String, List<Row>>> resultMapConsumer,
             final IndexStore indexStore) {
         testInteractive(expressionIn, expectResultCount, componentIds, tableSettingsCreator,
-                extractValues, resultMapConsumer, indexStore, storeFactory, searchResponseCreatorManager);
+                extractValues, resultMapConsumer, indexStore, resultStoreManager);
     }
 }

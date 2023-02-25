@@ -27,6 +27,11 @@ import javax.inject.Provider;
 
 public class UsersAndGroupsPresenter extends LinkTabsPresenter {
 
+    private final UsersAndGroupsTabPresenter usersPresenter;
+    private final UsersAndGroupsTabPresenter groupsPresenter;
+    private final TabData users;
+    private final TabData groups;
+
     @Inject
     public UsersAndGroupsPresenter(final EventBus eventBus, final LinkTabsLayoutView view,
                                    final Provider<UsersAndGroupsTabPresenter> usersAndGroupsTabPresenterProvider) {
@@ -34,15 +39,20 @@ public class UsersAndGroupsPresenter extends LinkTabsPresenter {
 
         getWidget().getElement().addClassName("default-min-sizes");
 
-        final UsersAndGroupsTabPresenter usersPresenter = usersAndGroupsTabPresenterProvider.get();
-        final UsersAndGroupsTabPresenter groupsPresenter = usersAndGroupsTabPresenterProvider.get();
+        usersPresenter = usersAndGroupsTabPresenterProvider.get();
+        groupsPresenter = usersAndGroupsTabPresenterProvider.get();
 
         usersPresenter.setGroup(false);
         groupsPresenter.setGroup(true);
 
-        final TabData users = addTab("Users", usersPresenter);
-        final TabData groups = addTab("Groups", groupsPresenter);
+        users = addTab("Users", usersPresenter);
+        groups = addTab("Groups", groupsPresenter);
 
         changeSelectedTab(users);
+    }
+
+    public void focus() {
+        changeSelectedTab(users);
+        usersPresenter.getView().focus();
     }
 }

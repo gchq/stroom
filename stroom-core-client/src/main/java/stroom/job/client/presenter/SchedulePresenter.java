@@ -23,18 +23,19 @@ import stroom.job.shared.JobNode.JobType;
 import stroom.job.shared.ScheduledTimeResource;
 import stroom.job.shared.ScheduledTimes;
 import stroom.util.shared.StringUtil;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+
+import java.util.function.Consumer;
 
 public class SchedulePresenter extends MyPresenterWidget<SchedulePresenter.ScheduleView> {
 
@@ -59,10 +60,6 @@ public class SchedulePresenter extends MyPresenterWidget<SchedulePresenter.Sched
         registerHandler(getView().getCalculateButton().addClickHandler(event -> calcTimes()));
     }
 
-    public String getScheduleString() {
-        return scheduleString;
-    }
-
     public void setSchedule(final JobType jobType, final Long scheduleReferenceTime, final Long lastExecutedTime,
                             final String scheduleString) {
         this.jobType = jobType;
@@ -73,7 +70,7 @@ public class SchedulePresenter extends MyPresenterWidget<SchedulePresenter.Sched
     }
 
     private void read() {
-        getView().getScheduledType().setText(StringUtil.toString(jobType));
+//        getView().getScheduledType().setText(StringUtil.toString(jobType));
         getView().getScheduledString().setText(StringUtil.toString(scheduleString));
         calcTimes();
     }
@@ -105,36 +102,41 @@ public class SchedulePresenter extends MyPresenterWidget<SchedulePresenter.Sched
         }
     }
 
-    public void show(final PopupUiHandlers popupUiHandlers) {
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, "Change Schedule", popupUiHandlers);
+    public void show(final Consumer<String> consumer) {
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .caption("Change Schedule")
+                .onShow(e -> getView().focus())
+                .onHideRequest(e -> {
+                    // This method is overwritten so that we can validate the schedule
+                    // before saving. Getting the scheduled times acts as validation.
+                    if (e.isOk()) {
+                        write();
+
+                        final GetScheduledTimesRequest request = new GetScheduledTimesRequest(jobType,
+                                scheduleReferenceTime,
+                                lastExecutedTime,
+                                scheduleString);
+                        final Rest<ScheduledTimes> rest = restFactory.create();
+                        rest
+                                .onSuccess(result -> e.hide())
+                                .call(SCHEDULED_TIME_RESOURCE)
+                                .get(request);
+                    } else {
+                        e.hide();
+                    }
+                })
+                .onHide(e -> {
+                    if (e.isOk()) {
+                        consumer.accept(scheduleString);
+                    }
+                })
+                .fire();
     }
 
-    public void hide(final boolean autoClose, final boolean ok) {
-        // This method is overwritten so that we can validate the schedule
-        // before saving. Getting the scheduled times acts as validation.
-        if (ok) {
-            write();
+    public interface ScheduleView extends View, Focus {
 
-            final GetScheduledTimesRequest request = new GetScheduledTimesRequest(jobType,
-                    scheduleReferenceTime,
-                    lastExecutedTime,
-                    scheduleString);
-            final Rest<ScheduledTimes> rest = restFactory.create();
-            rest
-                    .onSuccess(result -> HidePopupEvent.fire(SchedulePresenter.this,
-                            SchedulePresenter.this,
-                            autoClose,
-                            ok))
-                    .call(SCHEDULED_TIME_RESOURCE)
-                    .get(request);
-        } else {
-            HidePopupEvent.fire(SchedulePresenter.this, SchedulePresenter.this, autoClose, ok);
-        }
-    }
-
-    public interface ScheduleView extends View {
-
-        HasText getScheduledType();
+//        HasText getScheduledType();
 
         HasText getScheduledString();
 

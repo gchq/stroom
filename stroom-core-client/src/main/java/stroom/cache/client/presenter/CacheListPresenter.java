@@ -21,9 +21,9 @@ import stroom.cache.shared.CacheNamesResponse;
 import stroom.cache.shared.CacheResource;
 import stroom.cell.info.client.ActionCell;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeManager;
@@ -32,6 +32,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.PageResponse;
 import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.cell.client.TextCell;
@@ -52,7 +53,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class CacheListPresenter extends MyPresenterWidget<DataGridView<CacheIdentity>> {
+public class CacheListPresenter extends MyPresenterWidget<PagerView> {
 
     private static final CacheResource CACHE_RESOURCE = GWT.create(CacheResource.class);
     private static final int ICON_COL = 18;
@@ -61,21 +62,28 @@ public class CacheListPresenter extends MyPresenterWidget<DataGridView<CacheIden
     private final Set<CacheIdentity> allCacheIdentities = new HashSet<>();
     private final DelayedUpdate delayedUpdate;
 
+    private final MultiSelectionModelImpl<CacheIdentity> selectionModel;
+
     private Range range;
     private Consumer<CacheNamesResponse> dataConsumer;
     private Consumer<String> cacheUpdateHandler;
 
     @Inject
     public CacheListPresenter(final EventBus eventBus,
+                              final PagerView view,
                               final RestFactory restFactory,
                               final NodeManager nodeManager) {
-        super(eventBus, new DataGridViewImpl<>(true));
+        super(eventBus, view);
         this.restFactory = restFactory;
         this.delayedUpdate = new DelayedUpdate(this::update);
 
+        final MyDataGrid<CacheIdentity> dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(false);
+        view.setDataWidget(dataGrid);
 
         // Clear.
         addIconButtonColumn(
+                dataGrid,
                 SvgPresets.of(SvgPresets.DELETE, "Clear and rebuild cache", true),
                 (row, nativeEvent) -> {
                     final Rest<Long> rest = restFactory.create();
@@ -90,7 +98,7 @@ public class CacheListPresenter extends MyPresenterWidget<DataGridView<CacheIden
                 });
 
         // Name
-        getView().addResizableColumn(new Column<CacheIdentity, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<CacheIdentity, String>(new TextCell()) {
             @Override
             public String getValue(final CacheIdentity cacheIdentity) {
                 return cacheIdentity.getCacheName();
@@ -98,14 +106,14 @@ public class CacheListPresenter extends MyPresenterWidget<DataGridView<CacheIden
         }, "Name", 250);
 
         // Property Path Base
-        getView().addResizableColumn(new Column<CacheIdentity, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<CacheIdentity, String>(new TextCell()) {
             @Override
             public String getValue(final CacheIdentity cacheIdentity) {
                 return cacheIdentity.getBasePropertyPath().toString();
             }
         }, "Property Path Base", 500);
 
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
 
         final RestDataProvider<CacheIdentity, CacheNamesResponse> dataProvider =
                 new RestDataProvider<CacheIdentity, CacheNamesResponse>(getEventBus()) {
@@ -118,10 +126,11 @@ public class CacheListPresenter extends MyPresenterWidget<DataGridView<CacheIden
                         nodeManager.listAllNodes(nodeNames -> fetchNamesForNodes(nodeNames), throwableConsumer);
                     }
                 };
-        dataProvider.addDataDisplay(getView().getDataDisplay());
+        dataProvider.addDataDisplay(dataGrid);
     }
 
-    private void addIconButtonColumn(final Preset svgPreset,
+    private void addIconButtonColumn(final MyDataGrid<CacheIdentity> dataGrid,
+                                     final Preset svgPreset,
                                      final BiConsumer<String, NativeEvent> action) {
         final ActionCell<String> cell = new stroom.cell.info.client.ActionCell<String>(
                 svgPreset, action);
@@ -142,7 +151,7 @@ public class CacheListPresenter extends MyPresenterWidget<DataGridView<CacheIden
                     }
                 };
 
-        getView().addColumn(col, "", ICON_COL);
+        dataGrid.addColumn(col, "", ICON_COL);
     }
 
     private void fetchNamesForNodes(final List<String> nodeNames) {
@@ -174,7 +183,7 @@ public class CacheListPresenter extends MyPresenterWidget<DataGridView<CacheIden
     }
 
     public MultiSelectionModel<CacheIdentity> getSelectionModel() {
-        return getView().getSelectionModel();
+        return selectionModel;
     }
 
     public void setCacheUpdateHandler(final Consumer<String> cacheUpdateHandler) {

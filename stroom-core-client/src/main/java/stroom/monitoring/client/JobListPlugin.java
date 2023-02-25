@@ -30,6 +30,9 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class JobListPlugin extends MonitoringPlugin<JobPresenter> {
 
     @Inject
@@ -42,7 +45,12 @@ public class JobListPlugin extends MonitoringPlugin<JobPresenter> {
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_JOBS_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
-                    new IconMenuItem(9, SvgPresets.JOBS, SvgPresets.JOBS, "Jobs", null, true, () -> open()));
+                    new IconMenuItem.Builder()
+                            .priority(9)
+                            .icon(SvgPresets.JOBS)
+                            .text("Jobs")
+                            .command(this::open)
+                            .build());
         }
     }
 }

@@ -4,12 +4,6 @@
 package stroom.meta.impl.db.jooq;
 
 
-import org.jooq.ForeignKey;
-import org.jooq.TableField;
-import org.jooq.UniqueKey;
-import org.jooq.impl.DSL;
-import org.jooq.impl.Internal;
-
 import stroom.meta.impl.db.jooq.tables.Meta;
 import stroom.meta.impl.db.jooq.tables.MetaFeed;
 import stroom.meta.impl.db.jooq.tables.MetaKey;
@@ -24,6 +18,12 @@ import stroom.meta.impl.db.jooq.tables.records.MetaRecord;
 import stroom.meta.impl.db.jooq.tables.records.MetaRetentionTrackerRecord;
 import stroom.meta.impl.db.jooq.tables.records.MetaTypeRecord;
 import stroom.meta.impl.db.jooq.tables.records.MetaValRecord;
+
+import org.jooq.ForeignKey;
+import org.jooq.TableField;
+import org.jooq.UniqueKey;
+import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 
 
 /**

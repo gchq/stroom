@@ -18,18 +18,27 @@ package stroom.security.client.presenter;
 
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.table.client.CellTableView;
-import stroom.data.table.client.CellTableViewImpl;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.table.client.MyCellTable;
 import stroom.security.shared.Changes;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
+import stroom.widget.util.client.CheckListSelectionEventManager;
+import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.BrowserEvents;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.cellview.client.AbstractHasData;
+import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
 import java.util.HashSet;
 import java.util.List;
@@ -37,7 +46,9 @@ import java.util.Set;
 import javax.inject.Inject;
 
 public class PermissionsListPresenter
-        extends MyPresenterWidget<CellTableView<String>> {
+        extends MyPresenterWidget<PermissionsListPresenter.PermissionsListView> {
+
+    private final CellTable<String> cellTable;
 
     private DocumentPermissions documentPermissions;
     private List<String> permissions;
@@ -45,25 +56,27 @@ public class PermissionsListPresenter
     private User currentUser;
 
     @Inject
-    public PermissionsListPresenter(final EventBus eventBus) {
-        super(eventBus, new CellTableViewImpl<>(
-                false));
+    public PermissionsListPresenter(final EventBus eventBus, final PermissionsListView view) {
+        super(eventBus, view);
 
-        final boolean updateable = true;
-        final TickBoxCell.Appearance appearance = updateable
+        final boolean updatable = true;
+        final TickBoxCell.Appearance appearance = updatable
                 ? new TickBoxCell.DefaultAppearance()
                 : new TickBoxCell.NoBorderAppearance();
 
-        getView().addColumn(new Column<String, String>(new TextCell()) {
+        cellTable = new MyCellTable<>(MyDataGrid.DEFAULT_LIST_PAGE_SIZE);
+        final Column<String, String> column = new Column<String, String>(new TextCell()) {
             @Override
             public String getValue(final String row) {
                 return row;
             }
-        }, 250);
+        };
+        cellTable.addColumn(column);
+        cellTable.setColumnWidth(column, 250, Unit.PX);
 
         // Selection.
         final Column<String, TickBoxState> selectionColumn = new Column<String, TickBoxState>(
-                TickBoxCell.create(appearance, false, false, updateable)) {
+                TickBoxCell.create(appearance, false, false, updatable)) {
             @Override
             public TickBoxState getValue(final String permission) {
                 TickBoxState tickBoxState = TickBoxState.UNTICK;
@@ -94,21 +107,19 @@ public class PermissionsListPresenter
                 return tickBoxState;
             }
         };
-        if (updateable) {
-            selectionColumn.setFieldUpdater((index, permission, value) -> {
-                if (currentUser != null) {
-                    final String userUuid = currentUser.getUuid();
-                    if (value.toBoolean()) {
-                        addPermission(userUuid, permission);
-                    } else {
-                        removePermission(userUuid, permission);
-                    }
-                    refresh();
-                }
-            });
+        if (updatable) {
+            final int mouseMove = Event.getTypeInt(BrowserEvents.MOUSEMOVE);
+            cellTable.sinkEvents(mouseMove);
+            final MySingleSelectionModel<String> selectionModel = new MySingleSelectionModel<>();
+            final PermissionsListSelectionEventManager selectionEventManager =
+                    new PermissionsListSelectionEventManager(cellTable);
+            cellTable.setSelectionModel(selectionModel, selectionEventManager);
         }
-        getView().addColumn(selectionColumn, 50);
-        getView().asWidget().setWidth("auto");
+        cellTable.addColumn(selectionColumn);
+        cellTable.setColumnWidth(selectionColumn, 50, Unit.PX);
+        cellTable.setWidth("auto");
+
+        view.setTable(cellTable);
     }
 
     public void addPermission(final String userUuid, final String permission) {
@@ -127,6 +138,55 @@ public class PermissionsListPresenter
         documentPermissions.removePermission(userUuid, permission);
     }
 
+    public void toggle(final String userUuid, final String permission) {
+        // Determine if it is present in the model
+        boolean hasPermission = false;
+        final Set<String> permissions = documentPermissions.getPermissions().get(userUuid);
+        if (permissions != null) {
+            hasPermission = permissions.contains(permission);
+        }
+
+        if (hasPermission) {
+            removePermission(userUuid, permission);
+        } else {
+            addPermission(userUuid, permission);
+        }
+    }
+
+    private void toggle(final String permission) {
+        if (permission != null && currentUser != null) {
+            final String userUuid = currentUser.getUuid();
+            toggle(userUuid, permission);
+            refresh();
+        }
+    }
+
+    private void toggleSelectAll() {
+        if (currentUser != null) {
+            final String userUuid = currentUser.getUuid();
+            final Set<String> currentPermissions = documentPermissions.getPermissions().get(userUuid);
+            final boolean select = currentPermissions == null || currentPermissions.size() < permissions.size();
+
+            for (final String permission : permissions) {
+                boolean hasPermission = false;
+                if (currentPermissions != null) {
+                    hasPermission = currentPermissions.contains(permission);
+                }
+
+                if (select) {
+                    if (!hasPermission) {
+                        addPermission(userUuid, permission);
+                    }
+                } else {
+                    if (hasPermission) {
+                        removePermission(userUuid, permission);
+                    }
+                }
+            }
+            refresh();
+        }
+    }
+
     public void setDocumentPermissions(final DocumentPermissions documentPermissions,
                                        final List<String> permissions,
                                        final Changes changes) {
@@ -142,10 +202,32 @@ public class PermissionsListPresenter
 
     private void refresh() {
         if (currentUser != null) {
-            getView().setRowData(0, permissions);
-            getView().setRowCount(permissions.size());
+            cellTable.setRowData(0, permissions);
+            cellTable.setRowCount(permissions.size());
         } else {
-            getView().setRowCount(0);
+            cellTable.setRowCount(0);
+        }
+    }
+
+    public interface PermissionsListView extends View {
+
+        void setTable(Widget widget);
+    }
+
+    private class PermissionsListSelectionEventManager extends CheckListSelectionEventManager<String> {
+
+        public PermissionsListSelectionEventManager(final AbstractHasData<String> cellTable) {
+            super(cellTable);
+        }
+
+        @Override
+        protected void onToggle(final String item) {
+            toggle(item);
+        }
+
+        @Override
+        protected void onSelectAll(final CellPreviewEvent<String> e) {
+            toggleSelectAll();
         }
     }
 }

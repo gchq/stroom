@@ -67,8 +67,8 @@ public class ElasticClusterSettingsPresenter
 
     @Override
     public void onTestConnection() {
-        final ElasticClusterDoc cluster = new ElasticClusterDoc();
-        onWrite(cluster);
+        ElasticClusterDoc cluster = new ElasticClusterDoc();
+        cluster = onWrite(cluster);
 
         final Rest<ElasticClusterTestResponse> rest = restFactory.create();
         rest
@@ -105,7 +105,7 @@ public class ElasticClusterSettingsPresenter
     }
 
     @Override
-    protected void onWrite(final ElasticClusterDoc cluster) {
+    protected ElasticClusterDoc onWrite(final ElasticClusterDoc cluster) {
         final ElasticConnectionConfig connectionConfig = new ElasticConnectionConfig();
         connectionConfig.setConnectionUrls(getView().getConnectionUrls());
         connectionConfig.setCaCertificate(getView().getCaCertificate());
@@ -116,6 +116,7 @@ public class ElasticClusterSettingsPresenter
 
         cluster.setConnection(connectionConfig);
         cluster.setDescription(getView().getDescription().trim());
+        return cluster;
     }
 
     public interface ElasticClusterSettingsView

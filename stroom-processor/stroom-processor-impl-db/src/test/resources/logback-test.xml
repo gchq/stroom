@@ -5,8 +5,16 @@
         </encoder>
     </appender>
 
+
+    <logger name="org.flywaydb" level="info" />
+    <!-- Don't need to see all the mig scripts being run -->
+    <logger name="org.flywaydb.core.internal.sqlscript.DefaultSqlScriptExecutor" level="warn" />
+
     <logger name="stroom" level="debug" />
+    <logger name="stroom.db.util.AbstractFlyWayDbModule" level="debug" />
     <logger name="stroom.db.util.SlowQueryExecuteListener" level="debug" />
+    <logger name="stroom.test.common.util.db.DbTestUtil" level="debug" />
+
 <!--    <logger name="stroom.cache.impl.AbstractStroomCache" level="trace" />-->
 <!--    <logger name="stroom" level="debug" additivity="false">-->
 <!--        <appender-ref ref="STDOUT" />-->

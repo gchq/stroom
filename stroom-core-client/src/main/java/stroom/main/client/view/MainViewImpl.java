@@ -18,22 +18,29 @@ package stroom.main.client.view;
 
 import stroom.main.client.presenter.MainPresenter;
 import stroom.main.client.presenter.MainPresenter.SpinnerDisplay;
+import stroom.main.client.presenter.MainUiHandlers;
+import stroom.svg.client.SvgImages;
 import stroom.util.shared.EqualsUtil;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.MySplitLayoutPanel;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
+import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
+public class MainViewImpl extends ViewWithUiHandlers<MainUiHandlers> implements MainPresenter.MainView {
 
     private final Widget widget;
     @UiField
@@ -43,10 +50,10 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     @UiField
     Spinner spinner;
     @UiField
-    SimplePanel topPanel;
+    Button tabMenu;
     @UiField
     ResizeLayoutPanel contentPanel;
-    private View maximisedView;
+    private Widget maximisedWidget;
     private int splitPos = 300;
     private MySplitLayoutPanel splitPanel;
     private Widget westWidget;
@@ -57,6 +64,7 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     public MainViewImpl(final Binder binder) {
         this.widget = binder.createAndBindUi(this);
         banner.setVisible(false);
+        tabMenu.getElement().setInnerHTML(SvgImages.MONO_THREE_DOTS_VERTICAL);
         widget.sinkEvents(Event.KEYEVENTS);
     }
 
@@ -67,9 +75,7 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
 
     @Override
     public void setInSlot(final Object slot, final Widget content) {
-        if (slot == MainPresenter.MENUBAR) {
-            topPanel.add(content);
-        } else if (slot == MainPresenter.EXPLORER) {
+        if (slot == MainPresenter.EXPLORER) {
             westWidget = content;
             showSplit();
         } else if (slot == MainPresenter.CONTENT) {
@@ -82,24 +88,64 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
 
     @Override
     public void maximise(final View view) {
-        if (maximisedView == null || maximisedView != view) {
-            // Remember split panel.
-            if (westWidget != null) {
-                splitPos = westWidget.getOffsetWidth();
+        if (view == null) {
+
+            if (maximisedWidget == null) {
+                // Remember split panel.
+                if (westWidget != null) {
+                    splitPos = westWidget.getOffsetWidth();
+                }
+
+                // Maximise the passed view.
+                centerWidget.getElement().addClassName("maximised");
+                contentPanel.setWidget(centerWidget);
+
+                // Clear the split panel.
+                hideSplit();
+                maximisedWidget = centerWidget;
+
+                if (maximisedWidget instanceof Focus) {
+                    ((Focus) maximisedWidget).focus();
+                }
+            } else {
+                centerWidget.getElement().removeClassName("maximised");
+
+                // Restore the view.
+                showSplit();
+                maximisedWidget = null;
+
+                if (westWidget instanceof Focus) {
+                    ((Focus) westWidget).focus();
+                }
             }
 
-            // Maximise the passed view.
-            contentPanel.setWidget(view.asWidget());
+        } else {
+            final Widget widget = view.asWidget();
+            if (maximisedWidget == null || maximisedWidget != widget) {
+                // Remember split panel.
+                if (westWidget != null) {
+                    splitPos = westWidget.getOffsetWidth();
+                }
 
-            // Clear the split panel.
-            hideSplit();
+                // Maximise the passed view.
+                contentPanel.setWidget(widget);
 
-            maximisedView = view;
-        } else if (maximisedView == view) {
-            // Restore the view.
-            showSplit();
+                // Clear the split panel.
+                hideSplit();
+                maximisedWidget = widget;
 
-            maximisedView = null;
+                if (maximisedWidget instanceof Focus) {
+                    ((Focus) maximisedWidget).focus();
+                }
+            } else {
+                // Restore the view.
+                showSplit();
+                maximisedWidget = null;
+
+                if (westWidget instanceof Focus) {
+                    ((Focus) westWidget).focus();
+                }
+            }
         }
     }
 
@@ -146,6 +192,13 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
                 banner.setVisible(true);
                 banner.getElement().setInnerText(text);
             }
+        }
+    }
+
+    @UiHandler("tabMenu")
+    void onTabMenu(final ClickEvent event) {
+        if (MouseUtil.isPrimary(event)) {
+            getUiHandlers().showTabMenu(event.getNativeEvent(), tabMenu.getElement());
         }
     }
 

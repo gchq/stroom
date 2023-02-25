@@ -30,16 +30,16 @@ public interface IndexShardDao {
     ResultPage<IndexShard> find(FindIndexShardCriteria criteria);
 
     void search(final ExpressionCriteria criteria,
-                       final AbstractField[] fields,
-                       final ValuesConsumer consumer);
+                final AbstractField[] fields,
+                final ValuesConsumer consumer);
 
     /**
      * Create a new Index Shard
      *
-     * @param key             The Index Shard details
-     * @param indexVolume The {@link IndexVolume} to use
-     * @param ownerNodeName   The node that will own the shard
-     * @param indexVersion    The version of the index in use
+     * @param key           The Index Shard details
+     * @param indexVolume   The {@link IndexVolume} to use
+     * @param ownerNodeName The node that will own the shard
+     * @param indexVersion  The version of the index in use
      * @return The newly created Index Shard
      */
     IndexShard create(final IndexShardKey key,

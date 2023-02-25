@@ -17,7 +17,6 @@
 package stroom.resource.impl;
 
 import stroom.task.api.SimpleTaskContext;
-import stroom.task.api.SimpleTaskContextFactory;
 import stroom.util.shared.ResourceKey;
 
 import org.junit.jupiter.api.Test;

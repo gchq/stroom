@@ -25,10 +25,10 @@ public class TestIndexVolumeGroupServiceImpl extends AbstractCoreIntegrationTest
     void testDefaultGroups() {
 
         Assertions.assertThat(volumeConfigProvider.get().isCreateDefaultIndexVolumesOnStart())
-                        .isTrue();
+                .isTrue();
 
         setConfigValueMapper(VolumeConfig.class, volumeConfig ->
-                        volumeConfig.withVolumeSelector(RoundRobinCapacitySelector.NAME));
+                volumeConfig.withVolumeSelector(RoundRobinCapacitySelector.NAME));
 
         final String defaultIndexVolumeGroupName = volumeConfigProvider.get().getDefaultIndexVolumeGroupName();
 
@@ -43,14 +43,14 @@ public class TestIndexVolumeGroupServiceImpl extends AbstractCoreIntegrationTest
         final String newGroupname = "newGroupName";
 
         Assertions.assertThat(groupNames)
-                        .doesNotContain(newGroupname);
+                .doesNotContain(newGroupname);
 
         final IndexVolumeGroup volumeGroup = indexVolumeGroupService.getOrCreate(newGroupname);
         final IndexVolumeGroup volumeGroup2 = indexVolumeGroupService.getOrCreate(newGroupname);
         groupNames.add(newGroupname);
 
         Assertions.assertThat(volumeGroup)
-                        .isEqualTo(volumeGroup2);
+                .isEqualTo(volumeGroup2);
 
         Assertions.assertThat(indexVolumeGroupService.getNames())
                 .containsExactlyElementsOf(groupNames);

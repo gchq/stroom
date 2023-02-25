@@ -75,10 +75,10 @@ public class ScriptSettingsPresenter
     }
 
     @Override
-    protected void onWrite(final ScriptDoc script) {
+    protected ScriptDoc onWrite(ScriptDoc script) {
         script.setDescription(getView().getDescription().getText().trim());
-
-        scriptDependencyListPresenter.write(script);
+        script = scriptDependencyListPresenter.write(script);
+        return script;
     }
 
     @Override

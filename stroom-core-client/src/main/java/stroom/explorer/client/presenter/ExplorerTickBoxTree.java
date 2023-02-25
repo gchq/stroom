@@ -16,320 +16,81 @@
 
 package stroom.explorer.client.presenter;
 
-import stroom.data.table.client.CellTableViewImpl.DefaultResources;
+import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.dispatch.client.RestFactory;
-import stroom.explorer.client.event.ShowExplorerMenuEvent;
-import stroom.explorer.client.view.ExplorerTickBoxCell;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.explorer.shared.ExplorerNode.NodeState;
 import stroom.explorer.shared.FetchExplorerNodeResult;
-import stroom.widget.spinner.client.SpinnerSmall;
-import stroom.widget.util.client.MultiSelectEvent;
+import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.SelectionType;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.cellview.client.AbstractCellTable;
-import com.google.gwt.user.cellview.client.CellTable;
-import com.google.gwt.user.cellview.client.CellTable.Resources;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.view.client.CellPreviewEvent;
 
 import java.util.List;
+import java.util.Set;
 
 public class ExplorerTickBoxTree extends AbstractExplorerTree {
 
-    private final ExplorerTreeModel treeModel;
-    private final TickBoxSelectionModel selectionModel;
-    private final CellTable<ExplorerNode> cellTable;
-
-    private final String expanderClassName;
-    private final String tickBoxClassName;
+    private TickBoxSelectionModel tickBoxSelectionModel;
+    private List<ExplorerNode> rootNodes;
 
     public ExplorerTickBoxTree(final RestFactory restFactory) {
-        final SpinnerSmall spinnerSmall = new SpinnerSmall();
-        spinnerSmall.getElement().getStyle().setPosition(Style.Position.ABSOLUTE);
-        spinnerSmall.getElement().getStyle().setRight(5, Style.Unit.PX);
-        spinnerSmall.getElement().getStyle().setTop(5, Style.Unit.PX);
-
-        selectionModel = new TickBoxSelectionModel();
-
-        final ExplorerTickBoxCell explorerCell = new ExplorerTickBoxCell(selectionModel);
-        expanderClassName = explorerCell.getExpanderClassName();
-        tickBoxClassName = explorerCell.getTickBoxClassName();
-
-        final Resources resources = GWT.create(DefaultResources.class);
-        cellTable = new CellTable<>(Integer.MAX_VALUE, resources);
-        cellTable.getElement().setClassName("explorerTree");
-        cellTable.addColumn(new Column<ExplorerNode, ExplorerNode>(explorerCell) {
-            @Override
-            public ExplorerNode getValue(ExplorerNode object) {
-                return object;
-            }
-        });
-
-        cellTable.setLoadingIndicator(null);
-        cellTable.setSelectionModel(null, new MySelectionEventManager(cellTable));
-        cellTable.setKeyboardSelectionPolicy(HasKeyboardSelectionPolicy.KeyboardSelectionPolicy.DISABLED);
-
-        cellTable.getRowContainer().getStyle().setCursor(Style.Cursor.POINTER);
-
-        treeModel = new ExplorerTreeModel(this, spinnerSmall, restFactory) {
-            @Override
-            protected void onDataChanged(final FetchExplorerNodeResult result) {
-                super.onDataChanged(result);
-                selectionModel.setRoots(result.getRootNodes());
-            }
-        };
-
-        final ScrollPanel scrollPanel = new ScrollPanel();
-        scrollPanel.setWidth("100%");
-        scrollPanel.setHeight("100%");
-        scrollPanel.setWidget(cellTable);
-
-        final FlowPanel flowPanel = new FlowPanel();
-        flowPanel.getElement().getStyle().setPosition(Style.Position.RELATIVE);
-        flowPanel.setWidth("100%");
-        flowPanel.setHeight("100%");
-        flowPanel.add(scrollPanel);
-        flowPanel.add(spinnerSmall);
-
-        initWidget(flowPanel);
+        super(restFactory, false);
     }
 
     @Override
-    void setData(final List<ExplorerNode> rows) {
-        cellTable.setRowData(0, rows);
-        cellTable.setRowCount(rows.size(), true);
-    }
-
-//    protected void select(final ExplorerNode selection) {
-//        final boolean doubleClick = doubleClickTest.test(selection);
-//        select(selection, doubleClick);
-//    }
-//
-//    protected void select(final ExplorerNode selection, final boolean doubleClick) {
-//        selectedItem = selection;
-//        if (selection != null) {
-//            ExplorerTreeSelectEvent.fire(ExplorerTickBoxTree.this, selection, doubleClick, false);
-//        }
-//    }
-//
-//    public void setIncludedTypeSet(final Set<String> types) {
-//        treeModel.setIncludedTypeSet(types);
-//        refresh();
-//    }
-
-    public void changeNameFilter(final String name) {
-        treeModel.changeNameFilter(name);
-    }
-
-    public void refresh() {
-        treeModel.refresh();
-    }
-
-    private boolean hasClassName(final Element element, final String className, final int depth, final int maxDepth) {
-        if (element == null) {
-            return false;
-        }
-
-        if (element.hasClassName(className)) {
-            return true;
-        }
-
-        if (depth < maxDepth) {
-            return hasClassName(element.getParentElement(), className, depth + 1, maxDepth);
-        }
-
-        return false;
-    }
-
-    private void onKeyDown(final int keyCode) {
-        switch (keyCode) {
-            case KeyCodes.KEY_LEFT:
-                setOpenState(false);
-                break;
-            case KeyCodes.KEY_RIGHT:
-                setOpenState(true);
-                break;
-//            case KeyCodes.KEY_UP:
-//                moveSelection(-1);
-//                break;
-//            case KeyCodes.KEY_DOWN:
-//                moveSelection(+1);
-//                break;
-            case KeyCodes.KEY_ENTER:
-                selectCurrent();
-                break;
-            default:
-                // Don't care about other key codes
-        }
-    }
-
-    private void setOpenState(boolean open) {
-        final ExplorerNode selected = getKeyBoardSelected();
-        treeModel.setItemOpen(selected, open);
-    }
-
-    private void selectCurrent() {
-        final ExplorerNode selected = getKeyBoardSelected();
-        if (selected != null) {
-            toggleSelection(selected);
-        }
-    }
-
-    private ExplorerNode getKeyBoardSelected() {
-        final int row = cellTable.getKeyboardSelectedRow();
-        if (row >= 0) {
-            return cellTable.getVisibleItem(row);
-        }
-
+    MultiSelectionModelImpl<ExplorerNode> getSelectionModel() {
         return null;
     }
 
     @Override
-    void setInitialSelectedItem(final ExplorerNode selection) {
-//        doSelect(selection);
+    TickBoxSelectionModel getTickBoxSelectionModel() {
+        if (tickBoxSelectionModel == null) {
+            tickBoxSelectionModel = new TickBoxSelectionModel();
+        }
+        return tickBoxSelectionModel;
     }
 
-//    private void moveSelection(int plus) {
-//        ExplorerNode currentSelection = getKeyBoardSelected();
-//        if (currentSelection == null) {
-//            selectFirstItem();
-//        } else {
-//            final int index = getItemIndex(currentSelection);
-//            if (index == -1) {
-//                selectFirstItem();
-//            } else {
-//                final ExplorerNode newSelection = cellTable.getVisibleItem(index + plus);
-//                if (newSelection != null) {
-//                    setSelectedItem(newSelection);
-//                } else {
-//                    selectFirstItem();
-//                }
-//            }
-//        }
-//    }
-//
-//    private void selectFirstItem() {
-//        final ExplorerNode firstItem = cellTable.getVisibleItem(0);
-//        setSelectedItem(firstItem);
-//    }
-//
-//    private int getItemIndex(ExplorerNode item) {
-//        final List<ExplorerNode> items = cellTable.getVisibleItems();
-//        if (items != null) {
-//            for (int i = 0; i < items.size(); i++) {
-//                if (EqualsUtil.isEquals(items.get(i), item)) {
-//                    return i;
-//                }
-//            }
-//        }
-//
-//        return -1;
-//    }
+    @Override
+    void onData(final FetchExplorerNodeResult result) {
+        rootNodes = result.getRootNodes();
+        tickBoxSelectionModel.setRoots(result.getRootNodes());
+        super.onData(result);
+    }
+
+    @Override
+    void showMenu(final CellPreviewEvent<ExplorerNode> e) {
+        // Ignore.
+    }
+
+    @Override
+    void doSelect(final ExplorerNode row, final SelectionType selectionType) {
+        super.doSelect(row, selectionType);
+        toggleSelection(row);
+        refresh();
+    }
+
+    @Override
+    void selectAll() {
+        if (rootNodes != null && rootNodes.size() == 1) {
+            final ExplorerNode rootNode = rootNodes.get(0);
+            toggleSelection(rootNode);
+            refresh();
+        }
+    }
+
+    public void setSelected(final ExplorerNode explorerNode, final boolean selected) {
+        tickBoxSelectionModel.setSelected(explorerNode, selected);
+        refresh();
+    }
+
+    public Set<ExplorerNode> getSelectedSet() {
+        return tickBoxSelectionModel.getSelectedSet();
+    }
 
     private void toggleSelection(final ExplorerNode selection) {
         if (selection != null) {
-            selectionModel.setSelected(selection, !selectionModel.isSelected(selection));
-//        } else {
-//            selectionModel.clear();
-        }
-//        ExplorerTreeSelectEvent.fire(ExplorerTickBoxTree.this, selectionModel, false, false);
-    }
-
-    public ExplorerTreeModel getTreeModel() {
-        return treeModel;
-    }
-
-    public TickBoxSelectionModel getSelectionModel() {
-        return selectionModel;
-    }
-
-//    protected void setSelectedItem(final ExplorerNode selection) {
-//        doSelect(selection, false, false);
-//    }
-//
-//    private void setSelectedItemWithDoubleClickTest(final ExplorerNode selection) {
-//        final boolean doubleClick = doubleClickTest.test(selection);
-//        doSelect(selection, doubleClick, false);
-//    }
-//
-//    protected void doSelect(final ExplorerNode selection, final boolean doubleClick, final boolean rightClick) {
-//        if (selection != null) {
-//            selectionModel.setSelected(selection, true);
-////        } else {
-////            selectionModel.clear();
-//        }
-//        ExplorerTreeSelectEvent.fire(ExplorerTickBoxTree.this, selection, doubleClick, rightClick);
-//    }
-
-    public HandlerRegistration addSelectionHandler(final MultiSelectEvent.Handler handler) {
-        return addHandler(handler, MultiSelectEvent.getType());
-    }
-//
-//    public ExplorerNode getSelectedItem() {
-//        return selectedItem;
-//    }
-
-    public HandlerRegistration addContextMenuHandler(final ShowExplorerMenuEvent.Handler handler) {
-        return addHandler(handler, ShowExplorerMenuEvent.getType());
-    }
-
-    public void setFocus(final boolean focused) {
-        cellTable.setFocus(focused);
-    }
-
-    private class MySelectionEventManager extends AbstractCellTable.CellTableKeyboardSelectionHandler<ExplorerNode> {
-
-        MySelectionEventManager(AbstractCellTable<ExplorerNode> table) {
-            super(table);
-        }
-
-        @Override
-        public void onCellPreview(CellPreviewEvent<ExplorerNode> event) {
-            final NativeEvent nativeEvent = event.getNativeEvent();
-            final String type = nativeEvent.getType();
-
-            if ("click".equals(type)) {
-                final int button = nativeEvent.getButton();
-
-                final ExplorerNode selectedItem = event.getValue();
-
-                if (selectedItem != null) {
-                    if ((button & NativeEvent.BUTTON_LEFT) != 0) {
-                        final Element element = event.getNativeEvent().getEventTarget().cast();
-
-                        if (hasClassName(element, tickBoxClassName, 0, 5)) {
-                            toggleSelection(selectedItem);
-                            super.onCellPreview(event);
-                            refresh();
-
-                        } else if (NodeState.LEAF.equals(selectedItem.getNodeState())) {
-                            toggleSelection(selectedItem);
-                            super.onCellPreview(event);
-
-                        } else if (hasClassName(element, expanderClassName, 0, 1)) {
-                            super.onCellPreview(event);
-
-                            treeModel.toggleOpenState(selectedItem);
-                        }
-                    }
-                }
-
-            } else if ("keydown".equals(type)) {
-                final int keyCode = nativeEvent.getKeyCode();
-                onKeyDown(keyCode);
-                super.onCellPreview(event);
-            } else {
-                super.onCellPreview(event);
-            }
+            tickBoxSelectionModel.setSelected(selection,
+                    tickBoxSelectionModel.getState(selection) != TickBoxState.TICK);
         }
     }
 }

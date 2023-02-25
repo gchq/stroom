@@ -25,7 +25,7 @@ class AccessCodeCache {
     }
 
     Optional<AccessCodeRequest> getAndRemove(final String code) {
-        final Optional<AccessCodeRequest> optionalAccessCodeRequest = cache.getOptional(code);
+        final Optional<AccessCodeRequest> optionalAccessCodeRequest = cache.getIfPresent(code);
         cache.remove(code);
         return optionalAccessCodeRequest;
     }

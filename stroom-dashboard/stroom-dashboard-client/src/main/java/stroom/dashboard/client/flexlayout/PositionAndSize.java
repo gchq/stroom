@@ -17,51 +17,51 @@
 package stroom.dashboard.client.flexlayout;
 
 public class PositionAndSize {
-    private final int[] pos;
-    private final int[] size;
+    private final double[] pos;
+    private final double[] size;
 
     public PositionAndSize() {
-        pos = new int[2];
-        size = new int[2];
+        pos = new double[2];
+        size = new double[2];
     }
 
-    public int getLeft() {
+    public double getLeft() {
         return pos[0];
     }
 
-    public int getTop() {
+    public double getTop() {
         return pos[1];
     }
 
-    public int getWidth() {
+    public double getWidth() {
         return size[0];
     }
 
-    public int getHeight() {
+    public double getHeight() {
         return size[1];
     }
 
-    public int getPos(final int dimension) {
+    public double getPos(final int dimension) {
         return pos[dimension];
     }
 
-    public int[] getPos() {
+    public double[] getPos() {
         return pos;
     }
 
-    public void setPos(final int dimension, final int pos) {
+    public void setPos(final int dimension, final double pos) {
         this.pos[dimension] = pos;
     }
 
-    public int getSize(final int dimension) {
+    public double getSize(final int dimension) {
         return size[dimension];
     }
 
-    public int[] getSize() {
+    public double[] getSize() {
         return size;
     }
 
-    public void setSize(final int dimension, final int size) {
+    public void setSize(final int dimension, final double size) {
         this.size[dimension] = size;
     }
 }

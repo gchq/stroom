@@ -15,8 +15,9 @@
  */
 
 .tickList {
-	background-color: var(--input-background-color);
-    border: 1px solid var(--input-border-color);
+	background-color: var(--control__background-color);
+	color: var(--control__text-color);
+    border: 1px solid var(--control__border-color);
 }
 
 .tickList .tickBox {
@@ -24,5 +25,6 @@
 }
 
 .tickList .cellTableEvenRow, .tickList .cellTableOddRow {
-    background: var(--input-background-color);
+    background: var(--control__background-color);
+    color: var(--control__text-color);
 }

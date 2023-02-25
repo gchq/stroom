@@ -29,7 +29,7 @@ public class DebugPane {
             synchronized (DebugPane.class) {
                 if (debug == null) {
                     debug = DOM.createDiv();
-                    debug.addClassName("stroom-input");
+                    debug.addClassName("stroom-control");
                     debug.getStyle().setProperty("position", "absolute");
                     debug.getStyle().setProperty("bottom", "0px");
                     debug.getStyle().setProperty("left", "0px");

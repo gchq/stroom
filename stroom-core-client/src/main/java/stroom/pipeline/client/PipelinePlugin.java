@@ -38,7 +38,9 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
+import javax.inject.Singleton;
 
+@Singleton
 public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
 
     private static final PipelineResource PIPELINE_RESOURCE = GWT.create(PipelineResource.class);

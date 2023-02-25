@@ -16,31 +16,57 @@
 
 package stroom.widget.tab.client.view;
 
+import stroom.svg.client.SvgImages;
+import stroom.widget.tab.client.event.ShowTabMenuEvent.Handler;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
 import stroom.widget.tab.client.presenter.TabBar;
 
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.FocusFlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.LayerContainer;
-import com.gwtplatform.mvp.client.ViewImpl;
+import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class CurveTabLayoutViewImpl extends ViewImpl implements CurveTabLayoutView {
+public class CurveTabLayoutViewImpl extends ViewWithUiHandlers<CurveTabLayoutUiHandlers> implements CurveTabLayoutView {
 
+    private static final String SHOW_SIDEBAR = "Show Sidebar";
+    private static final String HIDE_SIDEBAR = "Hide Sidebar";
     private final Widget widget;
+
+    @UiField(provided = true)
+    FocusFlowPanel layout;
+    @UiField
+    Button menu;
     @UiField
     SimplePanel tabBarOuter;
     @UiField
-    TabBar tabBar;
+    CurveTabBar tabBar;
     @UiField
     LayerContainer layerContainer;
 
+    private boolean menuVisible;
+
     @Inject
     public CurveTabLayoutViewImpl(final Binder binder) {
+        layout = new FocusFlowPanel() {
+            @Override
+            public void focus() {
+                menu.setFocus(true);
+            }
+        };
         widget = binder.createAndBindUi(this);
+        menu.getElement().setInnerHTML(SvgImages.MONO_HIDE_MENU);
+        menu.getElement().setTitle(HIDE_SIDEBAR);
+        menuVisible = true;
     }
 
     @Override
@@ -61,6 +87,30 @@ public class CurveTabLayoutViewImpl extends ViewImpl implements CurveTabLayoutVi
     @Override
     public void setRightIndent(final int indent) {
         tabBarOuter.getElement().getStyle().setRight(indent, Unit.PX);
+    }
+
+    @Override
+    public HandlerRegistration addShowTabMenuHandler(final Handler handler) {
+        return tabBar.addShowTabMenuHandler(handler);
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> event) {
+        tabBar.fireEvent(event);
+    }
+
+    @UiHandler("menu")
+    void onMenu(final ClickEvent event) {
+        if (menuVisible) {
+            menuVisible = false;
+            menu.getElement().setInnerHTML(SvgImages.MONO_SHOW_MENU);
+            menu.getElement().setTitle(SHOW_SIDEBAR);
+        } else {
+            menuVisible = true;
+            menu.getElement().setInnerHTML(SvgImages.MONO_HIDE_MENU);
+            menu.getElement().setTitle(HIDE_SIDEBAR);
+        }
+        getUiHandlers().maximise();
     }
 
     public interface Binder extends UiBinder<Widget, CurveTabLayoutViewImpl> {

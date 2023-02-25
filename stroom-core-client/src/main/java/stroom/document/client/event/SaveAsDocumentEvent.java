@@ -17,7 +17,7 @@
 
 package stroom.document.client.event;
 
-import stroom.explorer.shared.ExplorerNode;
+import stroom.docref.DocRef;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -27,15 +27,15 @@ public class SaveAsDocumentEvent extends GwtEvent<SaveAsDocumentEvent.Handler> {
 
     private static Type<Handler> TYPE;
 
-    private final ExplorerNode explorerNode;
+    private final DocRef docRef;
 
-    private SaveAsDocumentEvent(final ExplorerNode explorerNode) {
-        this.explorerNode = explorerNode;
+    private SaveAsDocumentEvent(final DocRef docRef) {
+        this.docRef = docRef;
     }
 
     public static void fire(final HasHandlers handlers,
-                            final ExplorerNode explorerNode) {
-        handlers.fireEvent(new SaveAsDocumentEvent(explorerNode));
+                            final DocRef docRef) {
+        handlers.fireEvent(new SaveAsDocumentEvent(docRef));
     }
 
     public static Type<Handler> getType() {
@@ -55,8 +55,8 @@ public class SaveAsDocumentEvent extends GwtEvent<SaveAsDocumentEvent.Handler> {
         handler.onSaveAs(this);
     }
 
-    public ExplorerNode getExplorerNode() {
-        return explorerNode;
+    public DocRef getDocRef() {
+        return docRef;
     }
 
     public interface Handler extends EventHandler {

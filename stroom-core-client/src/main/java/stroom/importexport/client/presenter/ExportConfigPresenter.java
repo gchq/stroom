@@ -35,17 +35,14 @@ import stroom.util.shared.DocRefs;
 import stroom.util.shared.ResourceGeneration;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -104,7 +101,7 @@ public class ExportConfigPresenter
         if (event.getSelection() != null) {
             for (final ExplorerNode node : event.getSelection()) {
                 treePresenter.getTreeModel().setEnsureVisible(new HashSet<>(event.getSelection()));
-                treePresenter.getSelectionModel().setSelected(node, true);
+                treePresenter.setSelected(node, true);
             }
         }
 
@@ -120,31 +117,32 @@ public class ExportConfigPresenter
         treePresenter.setRequiredPermissions(DocumentPermissionNames.READ);
         treePresenter.refresh();
 
-        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    export();
-                } else {
-                    HidePopupEvent.fire(ExportConfigPresenter.this, ExportConfigPresenter.this, false, false);
-                }
-            }
-        };
-
         final PopupSize popupSize = PopupSize.resizable(500, 600);
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, "Export", popupUiHandlers);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Export")
+                .onShow(e -> getView().focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        export();
+                    } else {
+                        e.hide();
+                    }
+                })
+                .fire();
     }
 
     private void export() {
         // Disable the popup ok/cancel buttons before we attempt export.
-        DisablePopupEvent.fire(this, this);
+        DisablePopupEvent.builder(this).fire();
 
-        final Set<ExplorerNode> dataItems = treePresenter.getSelectionModel().getSelectedSet();
+        final Set<ExplorerNode> dataItems = treePresenter.getSelectedSet();
         if (dataItems == null || dataItems.size() == 0) {
             // Let the user know that they didn't select anything to export.
             AlertEvent.fireWarn(this, "No folders have been selected for export", null);
             // Re-enable buttons on this popup.
-            EnablePopupEvent.fire(this, this);
+            EnablePopupEvent.builder(this).fire();
 
         } else {
             final Set<DocRef> docRefs = new HashSet<>();
@@ -169,19 +167,10 @@ public class ExportConfigPresenter
     @Override
     public void showTypeFilter(final MouseDownEvent event) {
         final Element target = event.getNativeEvent().getEventTarget().cast();
-
-        final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft() - 1,
-                target.getAbsoluteTop() + target.getClientHeight() + 2);
-        ShowPopupEvent.fire(
-                this,
-                typeFilterPresenter,
-                PopupType.POPUP,
-                popupPosition,
-                null,
-                target);
+        typeFilterPresenter.show(target);
     }
 
-    public interface ExportConfigView extends View, HasUiHandlers<ExportConfigUiHandlers> {
+    public interface ExportConfigView extends View, Focus, HasUiHandlers<ExportConfigUiHandlers> {
 
         void setTreeView(View view);
     }

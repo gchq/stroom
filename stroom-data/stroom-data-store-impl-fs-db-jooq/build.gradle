@@ -46,12 +46,12 @@ jooq {
 
                         // Treat some tinyint columns as booleans
                         //forcedTypes {
-                            //forcedType {
-                                //name = 'BOOLEAN'
-                                //includeExpression = ''
-                                //// see https://github.com/jOOQ/jOOQ/issues/9405
-                                //includeTypes = '(?i:tinyint)(\\(1\\))?'
-                            //}
+                        //forcedType {
+                        //name = 'BOOLEAN'
+                        //includeExpression = ''
+                        //// see https://github.com/jOOQ/jOOQ/issues/9405
+                        //includeTypes = '(?i:tinyint)(\\(1\\))?'
+                        //}
                         //}
                     }
                     target {

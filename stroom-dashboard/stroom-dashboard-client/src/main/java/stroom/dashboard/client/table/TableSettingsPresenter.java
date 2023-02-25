@@ -30,6 +30,8 @@ public class TableSettingsPresenter extends SettingsPresenter {
                                   final BasicTableSettingsPresenter basicSettingsPresenter,
                                   final RulesPresenter rulesPresenter) {
         super(eventBus, view);
+        getView().asWidget().addStyleName("settingsPresenter");
+
         addTab("Basic", basicSettingsPresenter);
         addTab("Conditional Formatting", rulesPresenter);
     }

@@ -29,8 +29,6 @@ public class DestroySearchRequest {
     @JsonProperty
     private final QueryKey queryKey;
     @JsonProperty
-    private final String applicationInstanceUuid;
-    @JsonProperty
     private final String dashboardUuid;
     @JsonProperty
     private final String componentId;
@@ -38,21 +36,15 @@ public class DestroySearchRequest {
     @JsonCreator
     public DestroySearchRequest(
             @JsonProperty("queryKey") final QueryKey queryKey,
-            @JsonProperty("applicationInstanceUuid") final String applicationInstanceUuid,
             @JsonProperty("dashboardUuid") final String dashboardUuid,
             @JsonProperty("componentId") final String componentId) {
         this.queryKey = queryKey;
-        this.applicationInstanceUuid = applicationInstanceUuid;
         this.dashboardUuid = dashboardUuid;
         this.componentId = componentId;
     }
 
     public QueryKey getQueryKey() {
         return queryKey;
-    }
-
-    public String getApplicationInstanceUuid() {
-        return applicationInstanceUuid;
     }
 
     public String getDashboardUuid() {
@@ -67,7 +59,6 @@ public class DestroySearchRequest {
     public String toString() {
         return "DestroySearchRequest{" +
                 "queryKey=" + queryKey +
-                ", applicationInstanceUuid='" + applicationInstanceUuid + '\'' +
                 ", dashboardUuid='" + dashboardUuid + '\'' +
                 ", componentId='" + componentId + '\'' +
                 '}';
@@ -84,7 +75,6 @@ public class DestroySearchRequest {
     public static final class Builder {
 
         private QueryKey queryKey;
-        private String applicationInstanceUuid;
         private String dashboardUuid;
         private String componentId;
 
@@ -93,18 +83,12 @@ public class DestroySearchRequest {
 
         private Builder(final DestroySearchRequest searchRequest) {
             this.queryKey = searchRequest.queryKey;
-            this.applicationInstanceUuid = searchRequest.applicationInstanceUuid;
             this.dashboardUuid = searchRequest.dashboardUuid;
             this.componentId = searchRequest.componentId;
         }
 
         public Builder queryKey(final QueryKey queryKey) {
             this.queryKey = queryKey;
-            return this;
-        }
-
-        public Builder applicationInstanceUuid(final String applicationInstanceUuid) {
-            this.applicationInstanceUuid = applicationInstanceUuid;
             return this;
         }
 
@@ -121,7 +105,6 @@ public class DestroySearchRequest {
         public DestroySearchRequest build() {
             return new DestroySearchRequest(
                     queryKey,
-                    applicationInstanceUuid,
                     dashboardUuid,
                     componentId);
         }

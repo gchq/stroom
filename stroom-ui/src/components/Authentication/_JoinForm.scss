@@ -50,7 +50,7 @@ legend.form-label {
 .form-control:disabled, .form-control[readonly] {
   background-color: var(--control__background-color);
   border-color: var(--control__border-color);
-  color: var(--text-color-disabled);
+  color: var(--text-color--disabled);
 }
 
 .form-hint {

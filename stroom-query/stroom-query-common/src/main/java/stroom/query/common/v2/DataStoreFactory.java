@@ -22,6 +22,7 @@ public interface DataStoreFactory {
     StoreSizeSummary getTotalSizeOnDisk();
 
     class StoreSizeSummary {
+
         private final long totalSizeOnDisk;
         private final int storeCount;
 

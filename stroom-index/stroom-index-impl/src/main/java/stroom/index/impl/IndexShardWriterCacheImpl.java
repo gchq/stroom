@@ -145,7 +145,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         final FindIndexShardCriteria criteria = FindIndexShardCriteria.matchAll();
         criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
         criteria.getIndexUuidSet().add(indexShardKey.getIndexUuid());
-        criteria.getPartition().setString(indexShardKey.getPartition());
+        criteria.getPartition().setString(indexShardKey.getPartition().getLabel());
 
         // Don't allow us to try to open more than one existing shard for the same index, node and
         // partition at the same time.

@@ -29,6 +29,7 @@ import stroom.security.shared.DocumentPermissionNames;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -38,7 +39,8 @@ import com.gwtplatform.mvp.client.View;
 import java.util.List;
 
 public class NewPipelineReferencePresenter
-        extends MyPresenterWidget<NewPipelineReferencePresenter.NewPipelineReferenceView> {
+        extends MyPresenterWidget<NewPipelineReferencePresenter.NewPipelineReferenceView>
+        implements Focus {
 
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
 
@@ -74,6 +76,11 @@ public class NewPipelineReferencePresenter
         dataTypeWidget = new StringListBox();
         dataTypeWidget.getElement().getStyle().setMarginBottom(0, Unit.PX);
         getView().setTypeWidget(dataTypeWidget);
+    }
+
+    @Override
+    public void focus() {
+        pipelinePresenter.focus();
     }
 
     public void read(final PipelineReference pipelineReference) {

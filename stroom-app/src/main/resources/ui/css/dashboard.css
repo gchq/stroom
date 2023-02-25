@@ -13,22 +13,94 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+.maximised .DashboardViewImpl {
+    padding-left: var(--control__padding--horizontal);
+}
+
+.DashboardViewImpl-top {
+    gap: var(--control__padding--horizontal);
+    padding: 0 var(--control__padding--horizontal) var(--control__padding--vertical) 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.DashboardViewImpl-designButtons {
+    display: none;
+}
+
+.dashboard__designMode .DashboardViewImpl-designButtons {
+    display: flex;
+}
+
+.DashboardViewImpl-top-buttons {
+    display: flex;
+    gap: var(--control__gap--horizontal);
+    align-items: center;
+    justify-content: space-between;
+}
+
+.DashboardViewImpl-content {
+    display: flex;
+    flex-grow: 1;
+}
+
+.dashboardMainViewImpl-root {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.dashboardMainViewImpl-contentPanel {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-image: linear-gradient(rgb(244, 248, 253) 0, rgb(222, 234, 248) 36px);
+    background-color: rgb(223, 234, 248);
+}
 
 .dashboard-outerPanel {
-	width: 100%;
-	height: 100%;
-	padding: 0px 3px 3px 0px;
+    display: flex;
+    flex-grow: 1;
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+}
 
+.dashboard-scrollPanel {
+    display: flex;
+    flex-grow: 1;
+    overflow: auto;
 	user-select: none;
 	-webkit-user-select: none;
 	-moz-user-select: none;
 }
 
 .dashboard-layout {
+    display: flex;
+    flex-grow: 1;
 	position: relative;
-	width: 100%;
-	height: 100%;
-	background-color: rgba(0,0,0,.05);
+
+}
+
+.dashboard-designSurface {
+    position: absolute;
+}
+
+.dashboard__designMode .dashboard-designSurface {
+	background-image:
+	repeating-linear-gradient(to bottom, transparent, transparent 29px, var(--dashboard-panel__grid-color) 1px,var(--dashboard-panel__grid-color) 30px),
+	repeating-linear-gradient(to right, transparent, transparent 29px, var(--dashboard-panel__grid-color) 30px, var(--dashboard-panel__grid-color) 1px);
+}
+
+.dashboard-panel {
+    border: solid 1px var(--dashboard-panel__border-color);
+    background-color: var(--dashboard-panel__background-color);
+    color: var(--control__text-color);
+    border-radius: .25rem;
 }
 
 .flexLayout-glass {
@@ -55,10 +127,12 @@
 	top: 0px;
 	margin: 0px;
 	padding: 0px;
+	/*
 	border-width: 1px;
-	border-color: black;
 	border-style: solid;
-	background-color: blue;
+	border-color: var(--splitter__border-color);
+	*/
+	background-color: var(--splitter__background-color);
 	opacity: 0.3;
 	z-index: 5;
 }
@@ -67,22 +141,41 @@
 }
 
 .flexLayout-splitter {
+	display: none;
 	position: absolute;
 	margin: 0px;
 	padding: 0px;
 	opacity: 0;
+	transition: opacity 0.3s;
+    border-style: solid;
+    border-color: var(--splitter__border-color);
+    background-color: var(--splitter__background-color);
+}
+
+.dashboard__designMode .flexLayout-splitter {
+	display: block;
+}
+
+.dashboard__designMode .flexLayout-splitter:hover {
+	display: block;
+	opacity: 1;
 }
 
 .flexLayout-splitterVisible {
-	opacity: 0.3 !important;
+	display: block;
+	opacity: 1;
 }
 
 .flexLayout-splitterDown {
 	cursor: row-resize;
+	height: var(--control__padding--vertical);
+    border-width: 1px 0 1px 0;
 }
 
 .flexLayout-splitterAcross {
 	cursor: col-resize;
+	width: var(--control__padding--horizontal);
+	border-width: 0 1px 0 1px;
 }
 
 .flexLayout-selected {
@@ -91,29 +184,27 @@
 }
 
 .tabLayout {
+    display: flex;
+    padding-bottom: var(--control__padding--vertical);
+    padding-right: var(--control__padding--horizontal);
 }
 
 .tabLayout .tabLayout-contentOuter {
-	width: 100%;
-	height: 100%;
-	padding-top: 4px;
-	padding-left: 4px;
+    display: flex;
+    flex-grow: 1;
+    overflow: hidden;
 }
 
 .tabLayout .tabLayout-contentInner {
-	position: relative;
-	width: 100%;
-	height: 100%;
-	overflow: hidden;
     display: flex;
     flex-direction: column;
-	border-radius: 2px;
-	background-color: var(--main-background-color);
+    flex-grow: 1;
 }
 
 .tabLayout .tabLayout-barOuter {
     display: flex;
 	flex-grow: 0;
+	flex-shrink: 0;
 	gap: 5px;
 	cursor: default;
 	overflow: hidden;
@@ -121,50 +212,44 @@
 }
 
 .tabLayout .tabLayout-barInner {
+    display: flex;
+    flex-grow: 1;
 	position: relative;
-	padding-top: 2px;
-	width: 100%;
-	height: 100%;
+	margin: 0.25rem;
+}
+
+.tabLayout .tabLayout-content {
+    display: flex;
+    flex-grow: 1;
+	position: relative;
 }
 
 .tabLayout .tabLayout-buttons {
 	z-index: 5;
+    display: none;
 }
 
-.tabLayout .tabLayout-content {
-	position: relative;
-	width: 100%;
-	height: 100%;
+/*
+.tabLayout-buttons button {
+	transition: opacity 0.25s ease-in-out;
+    opacity: 0.5;
 }
 
-.tabLayout .tabLayout-settingsButton {
-	color: #ddd;
-    background-image: url("../images/settings-grey.svg");
-    width: 16px;
-    height: 16px;
+.tabLayout-buttons button:hover {
+    opacity: 1;
+}
+*/
+
+.dashboard__designMode .tabLayout .tabLayout-buttons {
+    display: flex;
 }
 
-.stroom-theme-dark .tabLayout .tabLayout-settingsButton {
-    background-image: url("../images/settings-grey-dark.svg");
+.tabLayout .tabLayout-button svg {
+	color: var(--vis-icon__color);
 }
 
-.tabLayout .tabLayout-settingsButton:hover {
-    color: #9E9E9E;
-}
-
-.tabLayout .tabLayout-closeButton {
-	color: #ddd;
-	background-image: url("../images/close-grey.svg");
-	width: 16px;
-	height: 16px;
-}
-
-.stroom-theme-dark .tabLayout .tabLayout-closeButton {
-	background-image: url("../images/close-grey-dark.svg");
-}
-
-.tabLayout .tabLayout-closeButton:hover {
-    color: #D32F2F;
+.tabLayout .tabLayout-button:hover {
+	color: var(--vis-icon__color--hover);
 }
 
 .queryCell-outer {
@@ -336,36 +421,127 @@
 .dashboardTable-smallSpinner {
 	position: absolute;
 	right: 2px;
-	bottom: 0px;
+	bottom: 2px;
 	z-index: 5;
+	width: 18px;
+	height: 18px;
+	visibility: hidden;
+	cursor: pointer;
+}
+
+.dashboardTable-pause {
+    position: absolute;
+    right: 6px;
+    bottom: 6px;
+    z-index: 5;
+    width: 16px;
+    height: 16px;
+    visibility: hidden;
+}
+
+.dashboardTable-pause svg {
+	width: 16px;
+	height: 16px;
+	color: #2196f3;
+}
+
+.dashboardTable-pause {
+  animation: pulse-animation 2s infinite;
+}
+
+@keyframes pulse-animation {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.refreshing .dashboardTable-smallSpinner {
+	visibility: initial;
+}
+
+.paused .dashboardTable-smallSpinner {
+	visibility: hidden;
+}
+
+.refreshing .dashboardTable-pause {
+	visibility: hidden;
+}
+
+.paused .dashboardTable-pause {
+	visibility: initial;
 }
 
 .dashboardVis-outerLayout {
-	position: absolute;
-	left: 0px;
-	right: 0px;
-	top: 0px;
-	bottom: 0px;
-	width: 100%;
-	height: 100%;
 }
 
 .dashboardVis-innerLayout {
-	position: absolute;
-	left: 0px;
-	right: 0px;
-	top: 0px;
-	bottom: 0px;
-	width: 100%;
-	height: 100%;
 }
 
 .dashboardVis-smallSpinner {
 	position: absolute;
 	right: 2px;
-	bottom: 0px;
+	bottom: 2px;
 	z-index: 5;
+	width: 18px;
+	height: 18px;
+	visibility: hidden;
+	cursor: pointer;
 }
+
+.dashboardVis-pause {
+    position: absolute;
+    right: 6px;
+    bottom: 6px;
+    z-index: 5;
+    width: 16px;
+    height: 16px;
+    visibility: hidden;
+}
+
+.dashboardVis-pause svg {
+	width: 16px;
+	height: 16px;
+	color: #2196f3;
+}
+
+.dashboardVis-pause {
+  animation: pulse-animation 2s infinite;
+}
+
+.refreshing .dashboardVis-smallSpinner {
+	visibility: initial;
+}
+
+.paused .dashboardVis-smallSpinner {
+	visibility: hidden;
+}
+
+.refreshing .dashboardVis-pause {
+	visibility: hidden;
+}
+
+.paused .dashboardVis-pause {
+	visibility: initial;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 .dashboardVis-messageOuter {
 	position: absolute;
@@ -392,4 +568,49 @@
 	background-color: #1f77b4;
 }
 
+.KeyValueInputView {
+    padding-left: 0.4rem;
+    padding-right: 0.4rem;
+    height: auto;
+}
 
+.ListInputView {
+    padding-left: 0.4rem;
+    padding-right: 0.4rem;
+    height: auto;
+}
+
+.VisFrame-container {
+    position: absolute;
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+    z-index: 2;
+    overflow: hidden;
+}
+
+.VisFrame-frame {
+    position: absolute;
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+}
+
+/** DEBUG **/
+/*
+.gwt-Frame {
+  background-color: rgba(255,255,0,0.5);
+}
+
+.tabLayout .tabLayout-contentInner {
+    background-color: blue;
+}
+
+.flexLayout-splitterAcross {
+	background: red;
+}
+
+.flexLayout-splitterDown {
+    background: green;
+}
+*/

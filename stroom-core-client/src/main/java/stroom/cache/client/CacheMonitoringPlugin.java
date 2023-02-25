@@ -30,6 +30,9 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class CacheMonitoringPlugin extends MonitoringPlugin<CachePresenter> {
 
     @Inject
@@ -43,14 +46,12 @@ public class CacheMonitoringPlugin extends MonitoringPlugin<CachePresenter> {
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_CACHE_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
-                    new IconMenuItem(
-                            12,
-                            SvgPresets.MONITORING,
-                            SvgPresets.MONITORING,
-                            "Caches",
-                            null,
-                            true,
-                            () -> open()));
+                    new IconMenuItem.Builder()
+                            .priority(12)
+                            .icon(SvgPresets.MONITORING)
+                            .text("Caches")
+                            .command(() -> open())
+                            .build());
         }
     }
 }

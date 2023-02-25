@@ -16,26 +16,26 @@
 
 package stroom.entity.client.presenter;
 
-import stroom.data.grid.client.DataGridView;
 import stroom.util.shared.Expander;
 import stroom.util.shared.TreeAction;
 import stroom.util.shared.TreeRow;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.DataGrid;
 
 import java.util.List;
 
 public class TreeRowHandler<R> {
 
     private final TreeAction<R> action;
-    private final DataGridView<R> dataGridView;
+    private final DataGrid<R> dataGrid;
     private final Column<R, Expander> expanderColumn;
 
-    public TreeRowHandler(final TreeAction<R> action, final DataGridView<R> dataGridView,
+    public TreeRowHandler(final TreeAction<R> action, final DataGrid<R> dataGrid,
                           final Column<R, Expander> expanderColumn) {
         this.action = action;
-        this.dataGridView = dataGridView;
+        this.dataGrid = dataGrid;
         this.expanderColumn = expanderColumn;
     }
 
@@ -60,9 +60,9 @@ public class TreeRowHandler<R> {
         // Set the width of the expander column so
         // that all expanders can be seen.
         if (maxDepth >= 0) {
-            dataGridView.setColumnWidth(expanderColumn, 16 + (maxDepth * 10), Unit.PX);
+            dataGrid.setColumnWidth(expanderColumn, 16 + (maxDepth * 10), Unit.PX);
         } else {
-            dataGridView.setColumnWidth(expanderColumn, 0, Unit.PX);
+            dataGrid.setColumnWidth(expanderColumn, 0, Unit.PX);
         }
     }
 }

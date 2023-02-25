@@ -19,7 +19,6 @@ package stroom.processor.impl;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
-import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorResource;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

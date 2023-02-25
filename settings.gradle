@@ -1,7 +1,7 @@
 rootProject.name = 'stroom'
 
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ include 'stroom-activity:stroom-activity-mock'
 include 'stroom-alert:stroom-alert-api'
 include 'stroom-alert:stroom-alert-impl'
 include 'stroom-alert:stroom-alert-mock'
+include 'stroom-alert:stroom-alert-rule-impl'
 
 // Annotations project.
 include 'stroom-annotation:stroom-annotation-api'
@@ -207,6 +208,7 @@ include 'stroom-proxy:stroom-proxy-remote-api'
 include 'stroom-query:stroom-expression'
 include 'stroom-query:stroom-query-api'
 include 'stroom-query:stroom-query-common'
+include 'stroom-query:stroom-query-impl'
 
 // Suggestions
 include 'stroom-suggestions:stroom-suggestions-api'
@@ -273,4 +275,8 @@ include 'stroom-ui'
 // Util
 include 'stroom-util'
 include 'stroom-util-shared'
+
+// View
+include 'stroom-view:stroom-view-impl'
+
 include 'stroom-ssl-test'

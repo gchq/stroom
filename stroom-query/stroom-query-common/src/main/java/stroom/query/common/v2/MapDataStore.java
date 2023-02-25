@@ -32,6 +32,9 @@ import stroom.query.util.LambdaLoggerFactory;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -392,6 +395,20 @@ public class MapDataStore implements DataStore, Data {
 //                output.writeBytes(item);
 //            }
 //        });
+    }
+
+    @Override
+    public long getByteSize() {
+        long size = 0;
+        try (final ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            try (final ObjectOutputStream oos = new ObjectOutputStream(baos)) {
+                oos.writeObject(childMap);
+            }
+            size = baos.size();
+        } catch (final IOException e) {
+            LOGGER.debug(e::getMessage, e);
+        }
+        return size;
     }
 
     public static class ItemsImpl implements Items {

@@ -6,6 +6,7 @@ import stroom.index.shared.ValidationResult;
 import stroom.util.shared.ResultPage;
 
 public interface IndexVolumeService {
+
     ResultPage<IndexVolume> find(ExpressionCriteria criteria);
 
     ValidationResult validate(final IndexVolume request);
@@ -23,8 +24,9 @@ public interface IndexVolumeService {
     /**
      * Uses the configured volume selector to select an index volume from group
      * groupName and belonging to node nodeName.
+     *
      * @throws stroom.index.shared.IndexException When no suitable {@link IndexVolume} can
-     * be found.
+     *                                            be found.
      */
     IndexVolume selectVolume(final String groupName, final String nodeName);
 }

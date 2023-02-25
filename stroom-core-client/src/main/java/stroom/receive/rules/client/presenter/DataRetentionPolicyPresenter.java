@@ -30,11 +30,9 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuBuilder;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.BorderStyle;
@@ -207,38 +205,38 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
 //                .withSeparator()
                 .withIconMenuItem(itemBuilder ->
                         itemBuilder
-                                .withIcon(ADD_ABOVE_SVG_PRESET)
-                                .withText("Add new rule above")
-                                .withCommand(() ->
+                                .icon(ADD_ABOVE_SVG_PRESET)
+                                .text("Add new rule above")
+                                .command(() ->
                                         addNewRule(rule.getRuleNumber() - 1)))
                 .withIconMenuItemIf(!isDefaultRule, itemBuilder ->
                         itemBuilder
-                                .withIcon(ADD_BELOW_SVG_PRESET)
-                                .withText("Add new rule below")
-                                .withCommand(() ->
+                                .icon(ADD_BELOW_SVG_PRESET)
+                                .text("Add new rule below")
+                                .command(() ->
                                         addNewRule(rule.getRuleNumber())))
                 .withIconMenuItemIf(!isDefaultRule, itemBuilder ->
                         itemBuilder
-                                .withIcon(EDIT_RULE_SVG_PRESET)
-                                .withCommand(() ->
+                                .icon(EDIT_RULE_SVG_PRESET)
+                                .command(() ->
                                         editRule(rule)))
                 .withIconMenuItem(itemBuilder ->
                         itemBuilder
-                                .withIcon(COPY_RULE_SVG_PRESET)
-                                .withCommand(() ->
+                                .icon(COPY_RULE_SVG_PRESET)
+                                .command(() ->
                                         copyRule(rule)))
                 .withIconMenuItemIf(!isDefaultRule, itemBuilder ->
                         itemBuilder
-                                .withIcon(DELETE_RULE_SVG_PRESET)
-                                .withCommand(() ->
+                                .icon(DELETE_RULE_SVG_PRESET)
+                                .command(() ->
                                         deleteRule(rule)))
                 .withIconMenuItemIf(!isDefaultRule && rule.getRuleNumber() > 0, itemBuilder ->
-                        itemBuilder.withIcon(MOVE_RULE_UP_SVG_PRESET)
-                                .withCommand(() ->
+                        itemBuilder.icon(MOVE_RULE_UP_SVG_PRESET)
+                                .command(() ->
                                         moveRuleUp(rule)))
                 .withIconMenuItemIf(rule.getRuleNumber() < visibleRules.size() - 1, itemBuilder ->
-                        itemBuilder.withIcon(MOVE_RULE_DOWN_SVG_PRESET)
-                                .withCommand(() ->
+                        itemBuilder.icon(MOVE_RULE_DOWN_SVG_PRESET)
+                                .command(() ->
                                         moveRuleDown(rule)))
                 .build();
     }
@@ -484,72 +482,55 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
         final DataRetentionRulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(newRule);
 
-        final PopupSize popupSize = PopupSize.resizable(800, 400);
-        ShowPopupEvent.fire(
-                DataRetentionPolicyPresenter.this,
-                editRulePresenter,
-                PopupType.OK_CANCEL_DIALOG,
-                popupSize,
-                "Add New Rule",
-                new PopupUiHandlers() {
-                    @Override
-                    public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        if (ok) {
-                            final DataRetentionRule rule = editRulePresenter.write();
-                            visibleRules.add(ruleNumber, rule);
+        final PopupSize popupSize = PopupSize.resizable(800, 600);
+        ShowPopupEvent.builder(editRulePresenter)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Add New Rule")
+                .onShow(e -> editRulePresenter.focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        final DataRetentionRule rule = editRulePresenter.write();
+                        visibleRules.add(ruleNumber, rule);
 
-                            update();
-                            setDirty(true);
-                            listPresenter.getSelectionModel().setSelected(visibleRules.get(0));
-                        }
-
-                        HidePopupEvent.fire(DataRetentionPolicyPresenter.this, editRulePresenter);
+                        update();
+                        setDirty(true);
+                        listPresenter.getSelectionModel().setSelected(visibleRules.get(0));
                     }
-
-                    @Override
-                    public void onHide(final boolean autoClose, final boolean ok) {
-                        // Do nothing.
-                    }
-                });
+                    e.hide();
+                })
+                .fire();
     }
 
     private void edit(final DataRetentionRule existingRule) {
         final DataRetentionRulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(existingRule);
 
-        final PopupSize popupSize = PopupSize.resizable(800, 400);
-        ShowPopupEvent.fire(
-                DataRetentionPolicyPresenter.this,
-                editRulePresenter,
-                PopupType.OK_CANCEL_DIALOG,
-                popupSize,
-                "Edit Rule",
-                new PopupUiHandlers() {
-                    @Override
-                    public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        if (ok) {
-                            final DataRetentionRule rule = editRulePresenter.write();
-                            final int index = visibleRules.indexOf(existingRule);
-                            visibleRules.remove(index);
-                            visibleRules.add(index, rule);
+        final PopupSize popupSize = PopupSize.resizable(800, 600);
+        ShowPopupEvent.builder(editRulePresenter)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Edit Rule")
+                .onShow(e -> listPresenter.focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        final DataRetentionRule rule = editRulePresenter.write();
+                        final int index = visibleRules.indexOf(existingRule);
+                        visibleRules.remove(index);
+                        visibleRules.add(index, rule);
 
-                            update();
-                            // Only mark the policies as dirty if the rule was actually changed.
-                            if (!existingRule.equals(rule)) {
-                                setDirty(true);
-                            }
-
-                            listPresenter.getSelectionModel().setSelected(visibleRules.get(index));
+                        update();
+                        // Only mark the policies as dirty if the rule was actually changed.
+                        if (!existingRule.equals(rule)) {
+                            setDirty(true);
                         }
 
-                        HidePopupEvent.fire(DataRetentionPolicyPresenter.this, editRulePresenter);
+                        listPresenter.getSelectionModel().setSelected(visibleRules.get(index));
                     }
 
-                    @Override
-                    public void onHide(final boolean autoClose, final boolean ok) {
-                        // Do nothing.
-                    }
-                });
+                    e.hide();
+                })
+                .fire();
     }
 
     private void update() {

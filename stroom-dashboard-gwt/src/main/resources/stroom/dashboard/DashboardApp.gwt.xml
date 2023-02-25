@@ -24,7 +24,7 @@
 
     <inherits name="stroom.Stroom"/>
     <inherits name="stroom.core.Core"/>
-    <inherits name="stroom.instance.Instance"/>
+    <inherits name="stroom.dictionary.Dictionary" />
     <inherits name="stroom.task.Task"/>
     <inherits name="stroom.main.Main"/>
     <inherits name="stroom.widget.popup.Popup"/>
@@ -45,6 +45,8 @@
     <inherits name="stroom.item.Item"/>
     <inherits name="stroom.widget.menu.Menu"/>
     <inherits name="stroom.widget.button.Button"/>
+    <inherits name="stroom.widget.button.Button" />
+    <inherits name="stroom.widget.form.Form" />
     <inherits name="stroom.widget.popup.Popup"/>
     <inherits name="stroom.widget.progress.Progress" />
     <inherits name="stroom.widget.tickbox.TickBox"/>
@@ -58,6 +60,7 @@
 
     <!-- Import functional areas -->
     <!-- Minimal -->
+    <inherits name="stroom.about.About" />
     <inherits name="stroom.activity.Activity" />
     <inherits name="stroom.annotation.Annotation" />
     <inherits name="stroom.config.Config" />
@@ -94,6 +97,8 @@
 <!--    <inherits name="stroom.monitoring.Monitoring" />-->
     <inherits name="stroom.job.Job" />
     <inherits name="stroom.importexport.ImportExport" />
+    <inherits name="stroom.alert.rule.AlertRule" />
+    <inherits name="stroom.view.View" />
 
     <!-- Include new data controls -->
     <inherits name="stroom.data.Data"/>

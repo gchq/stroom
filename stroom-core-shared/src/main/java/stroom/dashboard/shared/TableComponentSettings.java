@@ -53,6 +53,9 @@ public class TableComponentSettings implements ComponentSettings {
     @JsonProperty
     private final String queryId;
 
+    @JsonProperty
+    private final DocRef dataSourceRef;
+
     @Schema(required = true)
     @JsonProperty
     private final List<Field> fields;
@@ -89,16 +92,18 @@ public class TableComponentSettings implements ComponentSettings {
     @JsonCreator
     public TableComponentSettings(
             @JsonProperty("queryId") final String queryId,
+            @JsonProperty("dataSourceRef") final DocRef dataSourceRef,
             @JsonProperty("fields") final List<Field> fields,
             @JsonProperty("extractValues") final Boolean extractValues,
             @JsonProperty("extractionPipeline") final DocRef extractionPipeline,
             @JsonProperty("maxResults") final List<Integer> maxResults,
             @JsonProperty("showDetail") final Boolean showDetail,
-            @JsonProperty("conditionalFormattingRules") final
-            List<ConditionalFormattingRule> conditionalFormattingRules,
+            @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule>
+                    conditionalFormattingRules,
             @JsonProperty("modelVersion") final String modelVersion) {
 
         this.queryId = queryId;
+        this.dataSourceRef = dataSourceRef;
         this.fields = fields;
         this.extractValues = extractValues;
         this.extractionPipeline = extractionPipeline;
@@ -110,6 +115,10 @@ public class TableComponentSettings implements ComponentSettings {
 
     public String getQueryId() {
         return queryId;
+    }
+
+    public DocRef getDataSourceRef() {
+        return dataSourceRef;
     }
 
     public List<Field> getFields() {
@@ -164,6 +173,7 @@ public class TableComponentSettings implements ComponentSettings {
         }
         final TableComponentSettings that = (TableComponentSettings) o;
         return Objects.equals(queryId, that.queryId) &&
+                Objects.equals(dataSourceRef, that.dataSourceRef) &&
                 Objects.equals(fields, that.fields) &&
                 Objects.equals(extractValues, that.extractValues) &&
                 Objects.equals(extractionPipeline, that.extractionPipeline) &&
@@ -177,6 +187,7 @@ public class TableComponentSettings implements ComponentSettings {
     public int hashCode() {
         return Objects.hash(
                 queryId,
+                dataSourceRef,
                 fields,
                 extractValues,
                 extractionPipeline,
@@ -190,6 +201,7 @@ public class TableComponentSettings implements ComponentSettings {
     public String toString() {
         return "TableSettings{" +
                 "queryId='" + queryId + '\'' +
+                ", dataSourceRef=" + dataSourceRef +
                 ", fields=" + fields +
                 ", extractValues=" + extractValues +
                 ", extractionPipeline=" + extractionPipeline +
@@ -213,20 +225,22 @@ public class TableComponentSettings implements ComponentSettings {
      */
     public static final class Builder {
 
-        protected String queryId;
-        protected List<Field> fields;
-        protected Boolean extractValues;
-        protected DocRef extractionPipeline;
-        protected List<Integer> maxResults;
-        protected Boolean showDetail;
-        protected List<ConditionalFormattingRule> conditionalFormattingRules;
-        protected String modelVersion;
+        private String queryId;
+        private DocRef dataSourceRef;
+        private List<Field> fields;
+        private Boolean extractValues;
+        private DocRef extractionPipeline;
+        private List<Integer> maxResults;
+        private Boolean showDetail;
+        private List<ConditionalFormattingRule> conditionalFormattingRules;
+        private String modelVersion;
 
         private Builder() {
         }
 
         private Builder(final TableComponentSettings tableSettings) {
             this.queryId = tableSettings.getQueryId();
+            this.dataSourceRef = tableSettings.getDataSourceRef();
             this.fields = tableSettings.getFields() == null
                     ? null
                     : new ArrayList<>(tableSettings.getFields());
@@ -248,6 +262,11 @@ public class TableComponentSettings implements ComponentSettings {
          */
         public Builder queryId(final String value) {
             this.queryId = value;
+            return this;
+        }
+
+        public Builder dataSourceRef(final DocRef dataSourceRef) {
+            this.dataSourceRef = dataSourceRef;
             return this;
         }
 
@@ -321,29 +340,6 @@ public class TableComponentSettings implements ComponentSettings {
         }
 
         /**
-         * @param values The max result value
-         * @return The {@link TableSettings.Builder}, enabling method chaining
-         */
-        public Builder addMaxResults(final Integer... values) {
-            return addMaxResults(Arrays.asList(values));
-        }
-
-        /**
-         * Add a collection of max result values
-         *
-         * @param values The list of max result values
-         * @return this builder
-         */
-        public Builder addMaxResults(final Collection<Integer> values) {
-            if (this.maxResults == null) {
-                this.maxResults = new ArrayList<>(values);
-            } else {
-                this.maxResults.addAll(values);
-            }
-            return this;
-        }
-
-        /**
          * @param value When grouping is used a value of true indicates that the results will include
          *              the full detail of any results aggregated into a group as well as their aggregates.
          *              A value of false will only include the aggregated values for each group. Defaults to false.
@@ -367,6 +363,7 @@ public class TableComponentSettings implements ComponentSettings {
         public TableComponentSettings build() {
             return new TableComponentSettings(
                     queryId,
+                    dataSourceRef,
                     fields,
                     extractValues,
                     extractionPipeline,
@@ -384,8 +381,7 @@ public class TableComponentSettings implements ComponentSettings {
                     extractionPipeline,
                     maxResults,
                     showDetail,
-                    conditionalFormattingRules,
-                    modelVersion);
+                    conditionalFormattingRules);
         }
     }
 }

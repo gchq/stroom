@@ -14,12 +14,12 @@
 
 .editor .hl {
     position: absolute;
-	background-color: var(--code-editor-highlight-background-color);
+	background-color: var(--code-editor__background-color--highlight);
 }
 
 .editor .ace_tooltip {
-    background-color: var(--tooltip-background-color);
-    color: var(--tooltip-text-color);
+    background-color: var(--tooltip__background-color);
+    color: var(--tooltip__text-color);
     background-image: none;
     border: none;
     border-radius: 0;

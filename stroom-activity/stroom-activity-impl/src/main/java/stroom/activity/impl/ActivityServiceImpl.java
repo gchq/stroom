@@ -19,7 +19,6 @@ package stroom.activity.impl;
 import stroom.activity.api.ActivityService;
 import stroom.activity.api.FindActivityCriteria;
 import stroom.activity.shared.Activity;
-import stroom.activity.shared.ActivityResultPage;
 import stroom.activity.shared.ActivityValidationResult;
 import stroom.security.api.SecurityContext;
 import stroom.util.AuditUtil;

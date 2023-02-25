@@ -17,7 +17,8 @@ public interface ProcessorDao extends HasIntCrud<Processor> {
     Optional<Processor> fetchByPipelineUuid(String pipelineUuid);
 
     /**
-     * Will also deleted all associated UNPROCESSED processor tasks and processor filters
+     * Will also logically delete all associated processor filters.
+     *
      * @return True if the processor is deleted.
      */
     int logicalDeleteByProcessorId(int processorId);

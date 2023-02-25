@@ -79,7 +79,7 @@ public class ExplorerTreeViewImpl extends ViewWithUiHandlers<ExplorerTreeUiHandl
 
     @UiHandler("newItem")
     void onNewItemClick(final MouseDownEvent event) {
-        getUiHandlers().newItem(newItem.getElement());
+        getUiHandlers().newItem(event.getNativeEvent());
     }
 
     @UiHandler("deleteItem")
@@ -94,7 +94,7 @@ public class ExplorerTreeViewImpl extends ViewWithUiHandlers<ExplorerTreeUiHandl
 
     @UiHandler("typeFilter")
     void onFilterClick(final MouseDownEvent event) {
-        getUiHandlers().showTypeFilter(event);
+        getUiHandlers().showTypeFilter(event.getNativeEvent());
     }
 
     @Override

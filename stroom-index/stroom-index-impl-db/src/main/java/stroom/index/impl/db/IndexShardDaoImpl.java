@@ -28,11 +28,13 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardFields;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.Partition;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.Range;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 
@@ -108,7 +110,12 @@ class IndexShardDaoImpl implements IndexShardDao {
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.of(
             FindIndexShardCriteria.FIELD_ID, INDEX_SHARD.ID,
-            FindIndexShardCriteria.FIELD_PARTITION, INDEX_SHARD.PARTITION_NAME);
+            FindIndexShardCriteria.FIELD_NODE, INDEX_SHARD.NODE_NAME,
+            FindIndexShardCriteria.FIELD_PARTITION, INDEX_SHARD.PARTITION_NAME,
+            FindIndexShardCriteria.FIELD_STATUS, INDEX_SHARD.STATUS,
+            FindIndexShardCriteria.FIELD_DOC_COUNT, INDEX_SHARD.DOCUMENT_COUNT,
+            FindIndexShardCriteria.FIELD_LAST_COMMIT, INDEX_SHARD.COMMIT_MS,
+            FindIndexShardCriteria.FIELD_FILE_SIZE, INDEX_SHARD.FILE_SIZE);
 
     private final IndexDbConnProvider indexDbConnProvider;
     private final GenericDao<IndexShardRecord, IndexShard, Long> genericDao;
@@ -158,7 +165,13 @@ class IndexShardDaoImpl implements IndexShardDao {
                 JooqUtil.getSetCondition(INDEX_SHARD.STATUS,
                         Selection.convert(criteria.getIndexShardStatusSet(),
                                 IndexShard.IndexShardStatus::getPrimitiveValue)),
-                JooqUtil.getStringCondition(INDEX_SHARD.PARTITION_NAME, criteria.getPartition())
+                JooqUtil.getStringCondition(INDEX_SHARD.PARTITION_NAME, criteria.getPartition()),
+                Optional.ofNullable(criteria.getPartitionTimeRange())
+                        .map(Range::getFrom)
+                        .map(INDEX_SHARD.PARTITION_FROM_MS::greaterOrEqual),
+                Optional.ofNullable(criteria.getPartitionTimeRange())
+                        .map(Range::getTo)
+                        .map(INDEX_SHARD.PARTITION_TO_MS::lessOrEqual)
         );
 
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
@@ -258,13 +271,13 @@ class IndexShardDaoImpl implements IndexShardDao {
                              final IndexVolume indexVolume,
                              final String ownerNodeName,
                              final String indexVersion) {
-
+        final Partition partition = indexShardKey.getPartition();
         final IndexShard indexShard = new IndexShard();
         indexShard.setIndexUuid(indexShardKey.getIndexUuid());
         indexShard.setNodeName(ownerNodeName);
-        indexShard.setPartition(indexShardKey.getPartition());
-        indexShard.setPartitionFromTime(indexShardKey.getPartitionFromTime());
-        indexShard.setPartitionToTime(indexShardKey.getPartitionToTime());
+        indexShard.setPartition(partition.getLabel());
+        indexShard.setPartitionFromTime(partition.getPartitionFromTime());
+        indexShard.setPartitionToTime(partition.getPartitionToTime());
         indexShard.setVolume(indexVolume);
         indexShard.setIndexVersion(indexVersion);
 

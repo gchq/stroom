@@ -23,6 +23,7 @@ import stroom.util.shared.HasCapacity;
 import java.util.List;
 
 public class RoundRobinCapacitySelector extends AbstractSelector {
+
     public static final String NAME = "RoundRobin";
 
     private final AtomicLoopedItemSequence atomicLoopedIntegerSequence = AtomicLoopedItemSequence.create();

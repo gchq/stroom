@@ -25,11 +25,9 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.svg.client.Icon;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -47,6 +45,7 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
     private ComponentConfig componentConfig;
     private TabConfig tabConfig;
     private SettingsPresenter settingsPresenter;
+    private DashboardContext dashboardContext;
 
     public AbstractComponentPresenter(final EventBus eventBus,
                                       final V view,
@@ -107,40 +106,38 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
 
     @Override
     public void showSettings() {
-        if (settingsPresenter == null) {
-            settingsPresenter = (SettingsPresenter) settingsPresenterProvider.get();
-        }
+        if (settingsPresenterProvider != null) {
+            if (settingsPresenter == null) {
+                settingsPresenter = (SettingsPresenter) settingsPresenterProvider.get();
+            }
 
-        final PopupUiHandlers uiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    if (settingsPresenter.validate()) {
-                        final boolean dirty = settingsPresenter.isDirty(componentConfig);
-                        componentConfig = settingsPresenter.write(componentConfig);
+            settingsPresenter.setComponents(components);
+            settingsPresenter.read(componentConfig);
 
-                        if (dirty) {
-                            changeSettings();
+            final PopupSize popupSize = PopupSize.resizable(550, 550);
+            ShowPopupEvent.builder(settingsPresenter)
+                    .popupType(PopupType.OK_CANCEL_DIALOG)
+                    .popupSize(popupSize)
+                    .caption("Settings")
+                    .onShow(e -> settingsPresenter.focus())
+                    .onHideRequest(e -> {
+                        if (e.isOk()) {
+                            if (settingsPresenter.validate()) {
+                                final boolean dirty = settingsPresenter.isDirty(componentConfig);
+                                componentConfig = settingsPresenter.write(componentConfig);
+
+                                if (dirty) {
+                                    changeSettings();
+                                }
+
+                                e.hide();
+                            }
+                        } else {
+                            e.hide();
                         }
-
-                        HidePopupEvent.fire(AbstractComponentPresenter.this, settingsPresenter);
-                    }
-                } else {
-                    HidePopupEvent.fire(AbstractComponentPresenter.this, settingsPresenter);
-                }
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                // Do nothing.
-            }
-        };
-
-        settingsPresenter.setComponents(components);
-        settingsPresenter.read(componentConfig);
-
-        final PopupSize popupSize = PopupSize.resizable(550, 450);
-        ShowPopupEvent.fire(this, settingsPresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Settings", uiHandlers);
+                    })
+                    .fire();
+        }
     }
 
     protected void changeSettings() {
@@ -160,6 +157,11 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
         if (dirty) {
             DirtyEvent.fire(this, dirty);
         }
+    }
+
+    @Override
+    public void onClose() {
+        unbind();
     }
 
     @Override
@@ -212,4 +214,14 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
     //###############
     //# End TabData
     //###############
+
+
+    @Override
+    public void setDashboardContext(final DashboardContext dashboardContext) {
+        this.dashboardContext = dashboardContext;
+    }
+
+    protected DashboardContext getDashboardContext() {
+        return dashboardContext;
+    }
 }

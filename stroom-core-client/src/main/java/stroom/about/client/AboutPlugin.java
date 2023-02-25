@@ -16,6 +16,8 @@
 
 package stroom.about.client;
 
+import stroom.about.client.event.ShowAboutEvent;
+import stroom.about.client.event.ShowAboutEvent.ShowAboutHandler;
 import stroom.about.client.presenter.AboutPresenter;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
@@ -29,7 +31,10 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
-public class AboutPlugin extends Plugin {
+import javax.inject.Singleton;
+
+@Singleton
+public class AboutPlugin extends Plugin implements ShowAboutHandler {
 
     private final Provider<AboutPresenter> provider;
 
@@ -43,15 +48,30 @@ public class AboutPlugin extends Plugin {
     protected void onBind() {
         super.onBind();
 
-        registerHandler(getEventBus().addHandler(BeforeRevealMenubarEvent.getType(), this));
+        registerHandler(getEventBus().addHandler(ShowAboutEvent.getType(), this));
     }
 
     @Override
     public void onReveal(final BeforeRevealMenubarEvent event) {
         event.getMenuItems().addMenuItem(MenuKeys.MAIN_MENU,
-                new KeyedParentMenuItem(5, "Help", event.getMenuItems(), MenuKeys.HELP_MENU));
+                new KeyedParentMenuItem.Builder()
+                        .priority(5)
+                        .text("Help")
+                        .menuItems(event.getMenuItems())
+                        .menuKey(MenuKeys.HELP_MENU)
+                        .build());
         event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU, new Separator(2));
         event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU,
-                new IconMenuItem(3, SvgPresets.ABOUT, null, "About", null, true, () -> provider.get().forceReveal()));
+                new IconMenuItem.Builder()
+                        .priority(3)
+                        .icon(SvgPresets.ABOUT)
+                        .text("About")
+                        .command(() -> provider.get().forceReveal())
+                        .build());
+    }
+
+    @Override
+    public void onShow(final ShowAboutEvent event) {
+        provider.get().show();
     }
 }

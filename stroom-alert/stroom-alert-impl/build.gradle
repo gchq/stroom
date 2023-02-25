@@ -2,6 +2,7 @@ ext.moduleName = 'stroom.alert.impl'
 
 dependencies {
     implementation project(':stroom-alert:stroom-alert-api')
+    implementation project(':stroom-alert:stroom-alert-rule-impl')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-data:stroom-data-store-api')
     implementation project(':stroom-docref')
@@ -21,6 +22,7 @@ dependencies {
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
+    implementation project(':stroom-view:stroom-view-impl')
 
     implementation libs.guice5
     implementation libs.jackson_annotations

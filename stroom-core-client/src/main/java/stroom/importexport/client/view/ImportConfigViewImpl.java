@@ -45,6 +45,11 @@ public class ImportConfigViewImpl extends ViewImpl implements ImportConfigView {
     }
 
     @Override
+    public void focus() {
+        fileUpload.setFocus(true);
+    }
+
+    @Override
     public FormPanel getForm() {
         return form;
     }

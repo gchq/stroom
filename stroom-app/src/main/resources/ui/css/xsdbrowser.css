@@ -40,30 +40,30 @@
 
 .xsdBrowser .display {
 	border: none;
-	border-right: 1px solid var(--border-color);
-	border-top: 1px solid var(--border-color);
+	border-right: 1px solid var(--control__border-color);
+	border-top: 1px solid var(--control__border-color);
 }
 
 .xsdBrowser .documentation {
-	border-left: 1px solid var(--border-color);
-	border-top: 1px solid var(--border-color);
-	border-bottom: 1px solid var(--border-color);
+	background-color: var(--control__background-color);
+	border: 1px solid var(--control__border-color);
+	border-radius: .25rem;
 	overflow: auto;
-	background-color: var(--input-background-color);
 	padding: 5px;
 }
 
 .xsdBrowser .constraints {
-	background-color: var(--input-background-color);
-	border-left: 1px solid var(--border-color);
-	border-top: 1px solid var(--border-color);
+	background-color: var(--control__background-color);
+	border: 1px solid var(--control__border-color);
+	border-radius: .25rem;
 }
 
 .xsdBrowser .container {
+	background-color: var(--control__background-color);
+	border: 1px solid var(--control__border-color);
+	border-radius: .25rem;
 	width: 100%;
 	height: 100%;
-	background-color: var(--input-background-color);
-	border: 1px solid var(--border-color);
 }
 
 .xsdBrowser .content {
@@ -74,29 +74,30 @@
 .xsdBrowser .box {
 	width: 100%;
 	height: 100%;
-	border: 1px solid var(--main-border-color);
+	border: 1px solid var(--xsdbrowser-box__border-color);
 }
 
 .xsdBrowser .boxTitle {
 	width: 100%;
-	background: var(--xsdbrowser-title-background-color);
+	background: var(--xsdbrowser-title__background-color);
 	padding: 2px;
-	border: 1px solid var(--xsdbrowser-title-background-color);
+	border: 1px solid var(--xsdbrowser-title__background-color);
 }
 
 .xsdBrowser .boxTitle-selected {
 	width: 100%;
-	background: var(--xsdbrowser-title-background-color-selected);
+	background: var(--xsdbrowser-title__background-color--selected);
 	padding: 2px;
-	border: 1px solid var(--xsdbrowser-title-background-color-selected);
+	border: 1px solid var(--xsdbrowser-title__background-color--selected);
 }
 
 .xsdBrowser .boxTitle-noContent {
 }
 
 .xsdBrowser .outerBox {
-	border: 1px solid var(--input-background-color);
-	background-color: var(--xsdbrowser-box-background-color);
+	background-color: var(--xsdbrowser-box__background-color);
+	border: 1px solid var(--control__background-color);
+	border-radius: .25rem;
 }
 
 .xsdBrowser .restrictionType {
@@ -135,8 +136,8 @@
 }
 
 .xsdBrowser .nodeLabelSelected {
-  background: var(--selected-row-background-color) none repeat scroll 0 0 !important;
-  color: var(--selected-row-text-color) !important;
+  background: var(--row__background-color--selected) none repeat scroll 0 0 !important;
+  color: var(--row__text-color--selected) !important;
 }
 
 .xsdBrowser .occuranceLabel {
@@ -144,7 +145,7 @@
 	left: 16px;
 	top: 9px;
 	font-size: var(--font-size-8);
-	color: var(--link-text-color);
+	color: var(--link__text-color);
 }
 
 .xsdBrowser .xsdBrowser-superArrow {

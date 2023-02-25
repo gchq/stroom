@@ -36,5 +36,5 @@ public interface AlertManager {
 
     boolean isReportAllExtractedFieldsEnabled();
 
-    void initialiseCache();
+    void refreshRules();
 }

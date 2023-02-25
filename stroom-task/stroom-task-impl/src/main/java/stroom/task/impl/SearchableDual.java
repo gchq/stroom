@@ -5,6 +5,7 @@ import stroom.dashboard.expression.v1.ValString;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
@@ -25,7 +26,7 @@ public class SearchableDual implements Searchable {
 
     private static final List<AbstractField> FIELDS = Collections.singletonList(DUMMY_FIELD);
 
-    private static final DataSource DATA_SOURCE = new DataSource(FIELDS);
+    private static final DataSource DATA_SOURCE = DataSource.builder().fields(FIELDS).build();
 
     @Override
     public DocRef getDocRef() {
@@ -35,6 +36,11 @@ public class SearchableDual implements Searchable {
     @Override
     public DataSource getDataSource() {
         return DATA_SOURCE;
+    }
+
+    @Override
+    public DateField getTimeField() {
+        return null;
     }
 
     @Override

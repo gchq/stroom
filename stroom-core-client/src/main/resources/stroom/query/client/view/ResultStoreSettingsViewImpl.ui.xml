@@ -1,0 +1,33 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="searchProcessTimeToIdle" label="Search Process Time To Idle">
+            <g:TextBox ui:field="searchProcessTimeToIdle" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="searchProcessTimeToLive" label="Search Process Time To Live">
+            <g:TextBox ui:field="searchProcessTimeToLive" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="searchProcessDestroyOnTabClose" label="Search Process Destroy On Tab Close">
+            <tickbox:CustomCheckBox ui:field="searchProcessDestroyOnTabClose"/>
+        </form:FormGroup>
+        <form:FormGroup identity="searchProcessDestroyOnWindowClose" label="Search Process Destroy On Window Close">
+            <tickbox:CustomCheckBox ui:field="searchProcessDestroyOnWindowClose"/>
+        </form:FormGroup>
+
+        <form:FormGroup identity="storeTimeToIdle" label="Store Time To Idle">
+            <g:TextBox ui:field="storeTimeToIdle" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="storeTimeToLive" label="Store Time To Live">
+            <g:TextBox ui:field="storeTimeToLive" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="storeDestroyOnTabClose" label="Store Destroy On Tab Close">
+            <tickbox:CustomCheckBox ui:field="storeDestroyOnTabClose"/>
+        </form:FormGroup>
+        <form:FormGroup identity="storeDestroyOnWindowClose" label="Store Destroy On Window Close">
+            <tickbox:CustomCheckBox ui:field="storeDestroyOnWindowClose"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder> 

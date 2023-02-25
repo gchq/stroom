@@ -2,124 +2,67 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
-             xmlns:l="urn:import:stroom.item.client">
-    <g:FlowPanel styleName="dock-container-vertical stroom-control-page">
-        <g:Grid styleName="dock-max stroom-control-grid">
-            <g:row>
-                <g:cell>Field Use:</g:cell>
-                <g:customCell>
-                    <l:ItemListBox ui:field="fieldUse" addStyleNames="w-100"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Field Name:</g:cell>
-                <g:customCell>
-                    <g:TextBox ui:field="fieldName" addStyleNames="w-100"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Field Type:</g:cell>
-                <g:customCell>
-                    <l:StringListBox ui:field="fieldType" addStyleNames="w-100"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Default Value:</g:cell>
-                <g:customCell>
-                    <g:TextBox ui:field="defaultValue" addStyleNames="w-100"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Stored:</g:cell>
-                <g:customCell>
-                    <tickbox:TickBox ui:field="stored"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Indexed:</g:cell>
-                <g:customCell>
-                    <tickbox:TickBox ui:field="indexed"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Uninvertible:</g:cell>
-                <g:customCell>
-                    <tickbox:TickBox ui:field="uninvertible"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Doc Values:</g:cell>
-                <g:customCell>
-                    <tickbox:TickBox ui:field="docValues"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Multi Valued:</g:cell>
-                <g:customCell>
-                    <tickbox:TickBox ui:field="multiValued"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Required:</g:cell>
-                <g:customCell>
-                    <tickbox:TickBox ui:field="required"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Omit Norms:</g:cell>
-                <g:customCell>
-                    <tickbox:TickBox ui:field="omitNorms"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Omit Positions:</g:cell>
-                <g:customCell>
-                    <tickbox:TickBox ui:field="omitPositions"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Omit Term Freq And Positions:</g:cell>
-                <g:customCell>
-                    <tickbox:TickBox ui:field="omitTermFreqAndPositions"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Term Vectors:</g:cell>
-                <g:customCell>
-                    <tickbox:TickBox ui:field="termVectors"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Term Positions:</g:cell>
-                <g:customCell>
-                    <tickbox:TickBox ui:field="termPositions"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Term Offsets:</g:cell>
-                <g:customCell>
-                    <tickbox:TickBox ui:field="termOffsets"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Term Payloads:</g:cell>
-                <g:customCell>
-                    <tickbox:TickBox ui:field="termPayloads"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Sort Missing First:</g:cell>
-                <g:customCell>
-                    <tickbox:TickBox ui:field="sortMissingFirst"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Sort Missing Last:</g:cell>
-                <g:customCell>
-                    <tickbox:TickBox ui:field="sortMissingLast"/>
-                </g:customCell>
-            </g:row>
-        </g:Grid>
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="solrIndexFieldUse" label="Field Use">
+            <l:ItemListBox ui:field="fieldUse" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="solrIndexFieldName" label="Field Name">
+            <g:TextBox ui:field="fieldName" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="solrIndexFieldType" label="Field Type">
+            <l:StringListBox ui:field="fieldType" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="solrIndexDefaultValue" label="Default Value">
+            <g:TextBox ui:field="defaultValue" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="stored" identity="solrIndexStored" label="Stored"/>
+        </form:FormGroup>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="indexed" identity="solrIndexIndexed" label="Indexed"/>
+        </form:FormGroup>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="uninvertible" identity="solrIndexUninvertible" label="Uninvertible"/>
+        </form:FormGroup>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="docValues" identity="solrIndexDocValues" label="Doc Values"/>
+        </form:FormGroup>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="multiValued" identity="solrIndexMultiValued" label="Multi Valued"/>
+        </form:FormGroup>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="required" identity="solrIndexRequired" label="Required"/>
+        </form:FormGroup>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="omitNorms" identity="solrIndexOmitNorms" label="Omit Norms"/>
+        </form:FormGroup>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="omitPositions" identity="solrIndexOmitPositions" label="Omit Positions"/>
+        </form:FormGroup>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="omitTermFreqAndPositions" identity="solrIndexOmitTermFreqAndPositions" label="Omit Term Freq And Positions"/>
+        </form:FormGroup>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="termVectors" identity="solrIndexTermVectors" label="Term Vectors"/>
+        </form:FormGroup>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="termPositions" identity="solrIndexTermPositions" label="Term Positions"/>
+        </form:FormGroup>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="termOffsets" identity="solrIndexTermOffsets" label="Term Offsets"/>
+        </form:FormGroup>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="termPayloads" identity="solrIndexTermPayloads" label="Term Payloads"/>
+        </form:FormGroup>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="sortMissingFirst" identity="solrIndexSortMissingFirst" label="Sort Missing First"/>
+        </form:FormGroup>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="sortMissingLast" identity="solrIndexSortMissingLast" label="Sort Missing Last"/>
+        </form:FormGroup>
+
         <g:HTML ui:field="synchState" styleName="dock-min"></g:HTML>
     </g:FlowPanel>
 </ui:UiBinder>

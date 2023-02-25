@@ -16,6 +16,8 @@
 
 package stroom.data.grid.client;
 
+import stroom.widget.util.client.Rect;
+
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
@@ -43,13 +45,21 @@ public class Glass {
     public void show() {
         // Resize glassElem to take up the entire scrollable window area, which
         // is the greater of the scroll size and the client size.
-        final int width = Math.max(Window.getClientWidth(), Document.get().getScrollWidth());
-        final int height = Math.max(Window.getClientHeight(), Document.get().getScrollHeight());
+        final double width = Math.max(Window.getClientWidth(), Document.get().getScrollWidth());
+        final double height = Math.max(Window.getClientHeight(), Document.get().getScrollHeight());
 
         show(0, 0, width, height);
     }
 
-    public void show(final int left, final int top, final int width, final int height) {
+    public void show(final Rect rect) {
+        show(
+                rect.getLeft(),
+                rect.getTop(),
+                rect.getWidth(),
+                rect.getHeight());
+    }
+
+    public void show(final double left, final double top, final double width, final double height) {
         if (!glassAttached) {
             glassAttached = true;
             ensureGlass();
@@ -88,6 +98,7 @@ public class Glass {
     }
 
     public Element getElement() {
+        ensureGlass();
         return glassElem;
     }
 }

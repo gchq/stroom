@@ -14,7 +14,8 @@
  * the License.
  */
 .dataGridWidget {
-	
+	width: 100%;
+	height: 100%;
 }
 
 .dataGridWidget input,select {
@@ -45,10 +46,8 @@
 }
 
 .dataGridHeader {
-	padding: 1px;
-	padding-left: 2px;
-	padding-right: 2px;
-	vertical-align: top;
+	padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
+    vertical-align: middle;
 	text-align: left;
 	overflow: hidden;
 	white-space: nowrap;
@@ -56,7 +55,7 @@
     height : auto;
 	cursor: default;
 
-	border-bottom: solid 1px var(--header-border-color);
+	/*border-bottom: solid 1px var(--header__border-color);*/
 }
 
 .dataGridHeader * {
@@ -64,8 +63,9 @@
 }
 
 .dataGridCell {
-	padding: var(--layout-padding-data);
+	padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
 	vertical-align: middle;
+	text-align: left;
 	overflow: hidden;
 	height: 16px;
 	white-space: nowrap;
@@ -82,6 +82,7 @@
     user-select: text;
 }
 
+.dataGridHeader > div,
 .dataGridCell > div {
 	text-overflow: ellipsis;
 	overflow-x: hidden;
@@ -149,14 +150,14 @@
 }
 
 .dataGridEvenRow {
-    background-color: var(--even-row-background-color);
+    background-color: var(--row__background-color--even);
 }
 
 .dataGridEvenRowCell {
 }
 
 .dataGridOddRow {
-    background-color: var(--odd-row-background-color);
+    background-color: var(--row__background-color--odd);
 }
 
 .dataGridOddRowCell {
@@ -176,8 +177,26 @@
 }
 
 .dataGridSelectedRow {
-	background: var(--selected-row-background-color) none repeat scroll 0 0 !important;
-	color: var(--selected-row-text-color) !important;
+	background-color: var(--row__background-color--selected);
+	color: var(--row__text-color--selected);
+}
+
+.dataGridOddRow:hover,
+.dataGridEvenRow:hover {
+    background-color: var(--row__background-color--hovered);
+}
+
+.dataGridSelectedRow:hover {
+    background-color: var(--row__background-color--selected--hovered);
+}
+
+.dataGridOddRow:focus-within,
+.dataGridEvenRow:focus-within {
+    background-color: var(--row__background-color--focussed);
+}
+
+.dataGridSelectedRow:focus-within {
+    background-color: var(--row__background-color--selected--focussed);
 }
 
 .dataGridSelectedRowCell {

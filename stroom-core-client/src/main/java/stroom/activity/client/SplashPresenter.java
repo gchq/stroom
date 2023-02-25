@@ -25,11 +25,9 @@ import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.event.LogoutEvent;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SplashConfig;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -69,52 +67,39 @@ public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashVie
                 final String body = splashConfig.getBody();
                 final String version = splashConfig.getVersion();
                 setHtml(body);
-                final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-                    @Override
-                    public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        if (ok) {
-                            final Rest<Boolean> rest = restFactory.create();
-                            rest
-                                    .onSuccess(result -> hide(autoClose, ok))
-                                    .call(ACTIVITY_RESOURCE)
-                                    .acknowledgeSplash(new AcknowledgeSplashRequest(body, version));
-                        } else {
-                            AlertEvent.fireWarn(SplashPresenter.this,
-                                    "You must accept the terms to use this system",
-                                    null,
-                                    () -> hide(autoClose, ok));
-                        }
-                    }
-
-                    @Override
-                    public void onHide(final boolean autoClose, final boolean ok) {
-                        if (!ok) {
-                            LogoutEvent.fire(SplashPresenter.this);
-                        }
-                        consumer.accept(ok);
-                    }
-                };
-
-//                Scheduler.get().scheduleFixedDelay(this::testScroll, 2000);
 
                 final PopupSize popupSize = PopupSize.resizable(800, 600);
-                ShowPopupEvent.fire(SplashPresenter.this,
-                        SplashPresenter.this,
-                        PopupType.ACCEPT_REJECT_DIALOG,
-                        null,
-                        popupSize,
-                        title,
-                        popupUiHandlers,
-                        true);
+                ShowPopupEvent.builder(this)
+                        .popupType(PopupType.ACCEPT_REJECT_DIALOG)
+                        .popupSize(popupSize)
+                        .caption(title)
+                        .onHideRequest(e -> {
+                            if (e.isOk()) {
+                                final Rest<Boolean> rest = restFactory.create();
+                                rest
+                                        .onSuccess(result -> e.hide())
+                                        .call(ACTIVITY_RESOURCE)
+                                        .acknowledgeSplash(new AcknowledgeSplashRequest(body, version));
+                            } else {
+                                AlertEvent.fireWarn(SplashPresenter.this,
+                                        "You must accept the terms to use this system",
+                                        null,
+                                        e::hide);
+                            }
+                        })
+                        .onHide(e -> {
+                            if (!e.isOk()) {
+                                LogoutEvent.fire(SplashPresenter.this);
+                            }
+                            consumer.accept(e.isOk());
+                        })
+                        .modal(true)
+                        .fire();
 
             } else {
                 consumer.accept(true);
             }
         });
-    }
-
-    private void hide(final boolean autoClose, final boolean ok) {
-        HidePopupEvent.fire(SplashPresenter.this, SplashPresenter.this, autoClose, ok);
     }
 
     public void setHtml(final String html) {

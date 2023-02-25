@@ -22,7 +22,6 @@ import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.shared.TableComponentSettings;
 import stroom.index.shared.IndexConstants;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -194,9 +193,9 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
             return;
         }
 
-        if (fieldVals.length != alertDefinition.getTableComponentSettings().getFields().size()) {
+        if (fieldVals.length != alertDefinition.getTableSettings().getFields().size()) {
             log(Severity.ERROR, "Incorrect number of fields extracted for alert! " +
-                    "Need " + alertDefinition.getTableComponentSettings().getFields().size() +
+                    "Need " + alertDefinition.getTableSettings().getFields().size() +
                     " but got " + fieldVals.length, null);
             return;
         }
@@ -214,7 +213,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
         final DateTimeSettings dateTimeSettings = DateTimeSettings.builder().localZoneId(timeZoneId).build();
         final FieldFormatter fieldFormatter = new FieldFormatter(new FormatterFactory(dateTimeSettings));
         int index = 0;
-        for (Field field : alertDefinition.getTableComponentSettings().getFields()) {
+        for (Field field : alertDefinition.getTableSettings().getFields()) {
             if (field.isVisible()) {
                 String fieldName = field.getDisplayValue();
                 Val fieldVal = fieldVals[index].getVal();
@@ -255,16 +254,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
     }
 
     private CompiledFieldValue[] extractAlert(AlertDefinition rule, Val[] vals) {
-        TableComponentSettings tableComponentSettings = rule.getTableComponentSettings();
-        TableSettings tableSettings = TableSettings.builder()
-                .queryId(tableComponentSettings.getQueryId())
-                .addFields(tableComponentSettings.getFields())
-                .extractValues(tableComponentSettings.extractValues())
-                .extractionPipeline(tableComponentSettings.getExtractionPipeline())
-                .addMaxResults(tableComponentSettings.getMaxResults())
-                .showDetail(tableComponentSettings.getShowDetail())
-                .build();
-
+        final TableSettings tableSettings = rule.getTableSettings();
         final List<stroom.query.api.v2.Field> fields = tableSettings.getFields();
         final CompiledField[] compiledFields = CompiledFields.create(fields, fieldIndex,
                 paramMapForAlerting);

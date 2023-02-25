@@ -317,7 +317,7 @@ class TestStringPredicateFactory {
 
         LOGGER.info("Testing input [{}]", userInput);
         final List<String> actualMatches = Stream.concat(expectedMatches.stream(),
-                expectedNonMatches.stream())
+                        expectedNonMatches.stream())
                 .filter(StringPredicateFactory.createFuzzyMatchPredicate(userInput))
                 .collect(Collectors.toList());
 

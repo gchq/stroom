@@ -23,6 +23,7 @@ import stroom.util.pipeline.scope.PipelineScoped;
 
 @PipelineScoped
 public class MetaHolder implements Holder {
+
     private InputStreamProvider inputStreamProvider;
 
     private Meta meta;
