@@ -37,7 +37,7 @@ class TestProcessorDaoImpl extends AbstractProcessorTest {
                 .isEqualTo(2);
 
         processorFilter1 = createProcessorFilter(processor1);
-        createProcessorTask(processorFilter1, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter1, TaskStatus.CREATED, NODE1, FEED);
         createProcessorTask(processorFilter1, TaskStatus.ASSIGNED, NODE1, FEED);
         createProcessorTask(processorFilter1, TaskStatus.PROCESSING, NODE1, FEED);
 
@@ -47,7 +47,7 @@ class TestProcessorDaoImpl extends AbstractProcessorTest {
                 .isEqualTo(3);
 
         processorFilter2 = createProcessorFilter(processor2);
-        createProcessorTask(processorFilter2, TaskStatus.UNPROCESSED, NODE1, FEED);
+        createProcessorTask(processorFilter2, TaskStatus.CREATED, NODE1, FEED);
         createProcessorTask(processorFilter2, TaskStatus.ASSIGNED, NODE1, FEED);
         createProcessorTask(processorFilter2, TaskStatus.PROCESSING, NODE1, FEED);
 

@@ -1,9 +1,25 @@
 :root {
-    --layout-padding-explorer: .06rem;
-    --layout-padding-data: .24rem .12rem;
+    --row__padding--horizontal: .4rem;
+    --row__padding--vertical: .4rem;
+    --row__gap--horizontal: .4rem;
+    --row__gap--vertical: .25rem;
+    --control__padding--horizontal: .4rem;
+    --control__padding--vertical: .4rem;
+    --control__gap--vertical: 1rem;
+    --control__gap--horizontal: 1rem;
+    --dialog__padding--horizontal: 1rem;
+    --dialog__padding--vertical: 1rem;
 }
 
 .stroom-density-compact {
-    --layout-padding-explorer: 0;
-    --layout-padding-data: .12rem .06rem;
+    --row__padding--horizontal: .1rem;
+    --row__padding--vertical: .1rem;
+    --row__gap--horizontal: .4rem;
+    --row__gap--vertical: .1rem;
+    --control__padding--horizontal: .4rem;
+    --control__padding--vertical: .4rem;
+    --control__gap--vertical: .4rem;
+    --control__gap--horizontal: .4rem;
+    --dialog__padding--horizontal: .4rem;
+    --dialog__padding--vertical: .4rem;
 }

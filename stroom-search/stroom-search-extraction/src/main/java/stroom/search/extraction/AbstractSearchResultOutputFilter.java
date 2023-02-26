@@ -20,7 +20,6 @@ import stroom.alert.api.AlertDefinition;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.QueryKey;
 
 import java.util.List;
 import java.util.Map;

@@ -24,6 +24,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter.SolrIndexSettingsView;
 import stroom.search.solr.shared.SolrConnectionConfig;
@@ -32,6 +34,7 @@ import stroom.search.solr.shared.SolrConnectionTestResponse;
 import stroom.search.solr.shared.SolrIndexDataSourceFieldUtil;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexResource;
+import stroom.security.shared.DocumentPermissionNames;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -40,6 +43,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
+import java.util.Objects;
 
 public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIndexSettingsView, SolrIndexDoc>
         implements SolrIndexSettingsUiHandlers {
@@ -47,24 +51,38 @@ public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIn
     private static final SolrIndexResource SOLR_INDEX_RESOURCE = GWT.create(SolrIndexResource.class);
 
     private final EditExpressionPresenter editExpressionPresenter;
+    private final EntityDropDownPresenter pipelinePresenter;
     private final RestFactory restFactory;
+    private DocRef defaultExtractionPipeline;
 
     @Inject
     public SolrIndexSettingsPresenter(final EventBus eventBus,
                                       final SolrIndexSettingsView view,
                                       final EditExpressionPresenter editExpressionPresenter,
+                                      final EntityDropDownPresenter pipelinePresenter,
                                       final RestFactory restFactory) {
         super(eventBus, view);
         this.editExpressionPresenter = editExpressionPresenter;
+        this.pipelinePresenter = pipelinePresenter;
         this.restFactory = restFactory;
 
+        pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
+        pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.READ);
+
         view.setUiHandlers(this);
+        view.setDefaultExtractionPipelineView(pipelinePresenter.getView());
         view.setRetentionExpressionView(editExpressionPresenter.getView());
     }
 
     @Override
     protected void onBind() {
         registerHandler(editExpressionPresenter.addDirtyHandler(dirty -> setDirty(true)));
+        registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> {
+            if (!Objects.equals(pipelinePresenter.getSelectedEntityReference(), defaultExtractionPipeline)) {
+                setDirty(true);
+                defaultExtractionPipeline = pipelinePresenter.getSelectedEntityReference();
+            }
+        }));
     }
 
     @Override
@@ -74,8 +92,8 @@ public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIn
 
     @Override
     public void onTestConnection() {
-        final SolrIndexDoc index = new SolrIndexDoc();
-        onWrite(index);
+        SolrIndexDoc index = new SolrIndexDoc();
+        index = onWrite(index);
 
         final Rest<SolrConnectionTestResponse> rest = restFactory.create();
         rest
@@ -114,10 +132,13 @@ public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIn
         }
         editExpressionPresenter.init(restFactory, docRef, SolrIndexDataSourceFieldUtil.getDataSourceFields(index));
         editExpressionPresenter.read(index.getRetentionExpression());
+
+        defaultExtractionPipeline = index.getDefaultExtractionPipeline();
+        pipelinePresenter.setSelectedEntityReference(defaultExtractionPipeline);
     }
 
     @Override
-    protected void onWrite(final SolrIndexDoc index) {
+    protected SolrIndexDoc onWrite(final SolrIndexDoc index) {
         final SolrConnectionConfig connectionConfig = new SolrConnectionConfig();
         connectionConfig.setInstanceType(getView().getInstanceType());
         connectionConfig.setSolrUrls(getView().getSolrUrls());
@@ -133,6 +154,8 @@ public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIn
             index.setCollection(getView().getCollection().trim());
         }
         index.setRetentionExpression(editExpressionPresenter.write());
+        index.setDefaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference());
+        return index;
     }
 
     public interface SolrIndexSettingsView
@@ -167,5 +190,11 @@ public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIn
         void setZkPath(String zkPath);
 
         void setRetentionExpressionView(final View view);
+
+        String getTimeField();
+
+        void setTimeField(String partitionTimeField);
+
+        void setDefaultExtractionPipelineView(View view);
     }
 }

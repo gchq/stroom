@@ -19,8 +19,10 @@ package stroom.dashboard.client;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.ContentManager;
-import stroom.core.client.ContentManager.CloseHandler;
+import stroom.core.client.event.CloseContentEvent;
+import stroom.dashboard.client.event.ReopenResultStoreEvent;
 import stroom.dashboard.client.main.DashboardPresenter;
+import stroom.dashboard.client.main.DashboardSuperPresenter;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dispatch.client.Rest;
@@ -31,6 +33,9 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.hyperlink.client.ShowDashboardEvent;
+import stroom.query.api.v2.ResultStoreInfo;
+import stroom.query.api.v2.SearchRequestSource;
+import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.task.client.TaskStartEvent;
 
 import com.google.gwt.core.client.GWT;
@@ -43,27 +48,34 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
+import javax.inject.Singleton;
 
+@Singleton
 public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
 
-    private final Provider<DashboardPresenter> editorProvider;
+    private final Provider<DashboardSuperPresenter> dashboardSuperPresenterProvider;
+    private final Provider<DashboardPresenter> dashboardPresenterProvider;
     private final RestFactory restFactory;
     private String currentUuid;
 
     @Inject
     public DashboardPlugin(final EventBus eventBus,
-                           final Provider<DashboardPresenter> editorProvider,
+                           final Provider<DashboardSuperPresenter> dashboardSuperPresenterProvider,
+                           final Provider<DashboardPresenter> dashboardPresenterProvider,
                            final RestFactory restFactory,
                            final ContentManager contentManager,
                            final DocumentPluginEventManager entityPluginEventManager) {
         super(eventBus, contentManager, entityPluginEventManager);
-        this.editorProvider = editorProvider;
+        this.dashboardSuperPresenterProvider = dashboardSuperPresenterProvider;
+        this.dashboardPresenterProvider = dashboardPresenterProvider;
         this.restFactory = restFactory;
 
         registerHandler(eventBus.addHandler(ShowDashboardEvent.getType(),
                 event -> openParameterisedDashboard(event.getHref())));
+        registerHandler(eventBus.addHandler(ReopenResultStoreEvent.getType(),
+                event -> reopen(event.getResultStoreInfo())));
     }
 
     @Override
@@ -95,7 +107,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
 
             // If the item isn't already open but we are forcing it open then,
             // create a new presenter and register it as open.
-            final DashboardPresenter presenter = (DashboardPresenter) createEditor();
+            final DashboardPresenter presenter = dashboardPresenterProvider.get();
             presenter.setParams(params);
             presenter.setCustomTitle(title);
             presenter.setQueryOnOpen(queryOnOpen);
@@ -105,11 +117,11 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
             //        tabDataToDocumentMap.put(tabData, docRef);
 
             // Load the document and show the tab.
-            final CloseHandler closeHandler = callback -> {
+            final CloseContentEvent.Handler closeHandler = event -> {
                 // Tell the presenter we are closing.
                 presenter.onClose();
                 // Actually close the tab.
-                callback.closeTab(true);
+                event.getCallback().closeTab(true);
             };
             showTab(docRef, presenter, closeHandler, presenter);
         }
@@ -145,9 +157,34 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
         return out;
     }
 
+    private void reopen(final ResultStoreInfo resultStoreInfo) {
+        final SearchRequestSource source = resultStoreInfo.getSearchRequestSource();
+        if (source != null && SourceType.DASHBOARD_UI.equals(source.getSourceType())) {
+            final DocRef docRef = new DocRef(DashboardDoc.DOCUMENT_TYPE, source.getOwnerDocUuid());
+
+            // Start spinning.
+            TaskStartEvent.fire(this, "Opening document");
+
+            // If the item isn't already open but we are forcing it open then,
+            // create a new presenter and register it as open.
+            final DashboardPresenter presenter = dashboardPresenterProvider.get();
+            presenter.setResultStoreInfo(resultStoreInfo);
+
+            // Load the document and show the tab.
+            final CloseContentEvent.Handler closeHandler = event -> {
+                // Tell the presenter we are closing.
+                presenter.onClose();
+                // Actually close the tab.
+                event.getCallback().closeTab(true);
+            };
+            showTab(docRef, presenter, closeHandler, presenter);
+        }
+    }
+
+
     @Override
     protected DocumentEditPresenter<?, ?> createEditor() {
-        return editorProvider.get();
+        return dashboardSuperPresenterProvider.get();
     }
 
     @Override

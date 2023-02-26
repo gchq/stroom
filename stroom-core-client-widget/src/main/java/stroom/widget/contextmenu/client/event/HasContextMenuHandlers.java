@@ -16,10 +16,12 @@
 
 package stroom.widget.contextmenu.client.event;
 
+import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
+
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 public interface HasContextMenuHandlers extends HasHandlers {
 
-    HandlerRegistration addContextMenuHandler(ContextMenuEvent.Handler handler);
+    HandlerRegistration addContextMenuHandler(Handler handler);
 }

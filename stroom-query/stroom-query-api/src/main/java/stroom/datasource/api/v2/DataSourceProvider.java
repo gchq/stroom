@@ -17,19 +17,10 @@
 package stroom.datasource.api.v2;
 
 import stroom.docref.DocRef;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchResponse;
 
 public interface DataSourceProvider {
 
     DataSource getDataSource(DocRef docRef);
-
-    SearchResponse search(SearchRequest request);
-
-    Boolean keepAlive(QueryKey queryKey);
-
-    Boolean destroy(QueryKey queryKey);
 
     String getType();
 }

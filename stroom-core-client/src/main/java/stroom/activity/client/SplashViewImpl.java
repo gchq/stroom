@@ -25,12 +25,7 @@ import com.gwtplatform.mvp.client.ViewImpl;
 
 public class SplashViewImpl extends ViewImpl implements SplashPresenter.SplashView {
 
-    public interface Binder extends UiBinder<Widget, SplashViewImpl> {
-
-    }
-
     private final Widget widget;
-
     @UiField
     HTML html;
 
@@ -46,5 +41,9 @@ public class SplashViewImpl extends ViewImpl implements SplashPresenter.SplashVi
 
     public void setHtml(final String html) {
         this.html.setHTML(html);
+    }
+
+    public interface Binder extends UiBinder<Widget, SplashViewImpl> {
+
     }
 }

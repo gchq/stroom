@@ -24,7 +24,7 @@ import stroom.lmdb.LmdbLibraryConfig;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.ParamUtil;
+import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.TableResult;
@@ -104,14 +104,14 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .addFields(Field.builder()
                         .id("Text")
                         .name("Text")
-                        .expression(ParamUtil.makeParam("Text"))
+                        .expression(ParamSubstituteUtil.makeParam("Text"))
                         .format(Format.TEXT)
                         .group(0)
                         .build())
                 .addFields(Field.builder()
                         .id("Text2")
                         .name("Text2")
-                        .expression(ParamUtil.makeParam("Text2"))
+                        .expression(ParamSubstituteUtil.makeParam("Text2"))
                         .format(Format.TEXT)
                         .build())
                 .build();

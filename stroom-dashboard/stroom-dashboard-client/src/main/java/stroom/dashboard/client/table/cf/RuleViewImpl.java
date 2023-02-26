@@ -17,7 +17,7 @@
 
 package stroom.dashboard.client.table.cf;
 
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -35,13 +35,13 @@ public class RuleViewImpl extends ViewImpl implements RulePresenter.RuleView {
     @UiField
     SimplePanel expression;
     @UiField
-    TickBox hide;
+    CustomCheckBox hide;
     @UiField
     TextBox backgroundColor;
     @UiField
     TextBox textColor;
     @UiField
-    TickBox enabled;
+    CustomCheckBox enabled;
 
     @Inject
     public RuleViewImpl(final Binder binder) {
@@ -60,12 +60,12 @@ public class RuleViewImpl extends ViewImpl implements RulePresenter.RuleView {
 
     @Override
     public boolean isHide() {
-        return this.hide.getBooleanValue();
+        return this.hide.getValue();
     }
 
     @Override
     public void setHide(final boolean hide) {
-        this.hide.setBooleanValue(hide);
+        this.hide.setValue(hide);
     }
 
     @Override
@@ -90,12 +90,12 @@ public class RuleViewImpl extends ViewImpl implements RulePresenter.RuleView {
 
     @Override
     public boolean isEnabled() {
-        return this.enabled.getBooleanValue();
+        return this.enabled.getValue();
     }
 
     @Override
     public void setEnabled(final boolean enabled) {
-        this.enabled.setBooleanValue(enabled);
+        this.enabled.setValue(enabled);
     }
 
     public interface Binder extends UiBinder<Widget, RuleViewImpl> {

@@ -46,7 +46,7 @@ class RemoteSearchResults {
 
     public Optional<RemoteSearchResultFactory> get(final String key) {
         LOGGER.trace(() -> "get() " + key);
-        return cache.getOptional(key);
+        return cache.getIfPresent(key);
     }
 
     public void put(final String key, final RemoteSearchResultFactory factory) {

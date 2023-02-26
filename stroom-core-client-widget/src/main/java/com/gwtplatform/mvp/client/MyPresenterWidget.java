@@ -25,29 +25,36 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 
 public class MyPresenterWidget<V extends View> extends PresenterWidget<V> implements Layer {
 
-    private double opacity;
+//    private double opacity;
+
+    private boolean layerVisible;
 
     public MyPresenterWidget(final EventBus eventBus, final V view) {
         super(eventBus, view);
     }
 
-    @Override
-    public double getOpacity() {
-        return opacity;
-    }
+//    @Override
+//    public double getOpacity() {
+//        return opacity;
+//    }
+//
+//    /**************
+//     * Start Layer
+//     **************/
+//    @Override
+//    public void setOpacity(final double opacity) {
+//        this.opacity = opacity;
+//        getWidget().getElement().getStyle().setOpacity(opacity);
+//    }
 
-    /**************
-     * Start Layer
-     **************/
     @Override
-    public void setOpacity(final double opacity) {
-        this.opacity = opacity;
-        getWidget().getElement().getStyle().setOpacity(opacity);
+    public void setLayerVisible(final boolean fade, final boolean visible) {
+        Layer.setLayerVisible(getWidget().getElement(), fade, visible);
     }
 
     @Override
     public void addLayer(final LayerContainer tabContentView) {
-        setOpacity(opacity);
+//        setOpacity(opacity);
         tabContentView.add(getWidget());
     }
 

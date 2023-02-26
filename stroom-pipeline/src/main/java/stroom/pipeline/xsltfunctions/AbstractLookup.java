@@ -152,7 +152,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                         createLookupFailError(context, lookupIdentifier, e);
                     }
                 } else {
-                    outputInfo(Severity.ERROR,
+                    outputInfo(Severity.WARNING,
                             () -> "No reference loaders have been added to this XSLT step to perform a lookup",
                             lookupIdentifier,
                             traceLookup,
@@ -206,7 +206,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         final List<PipelineReference> pipelineReferences = getPipelineReferences();
         if (NullSafe.isEmptyCollection(pipelineReferences)) {
             result.logSimpleTemplate(
-                    Severity.ERROR,
+                    Severity.WARNING,
                     "No pipeline references have been added to this XSLT step to perform a lookup");
         } else {
             result = referenceData.ensureReferenceDataAvailability(pipelineReferences, lookupIdentifier, result);
@@ -343,7 +343,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
 
         if (pipelineReferences.isEmpty()) {
             outputInfo(
-                    maxSeverity.atLeast(Severity.ERROR),
+                    maxSeverity.atLeast(Severity.WARNING),
                     () -> "No reference loaders are configured so the lookup cannot be performed. ",
                     result.getCurrentLookupIdentifier(),
                     trace,

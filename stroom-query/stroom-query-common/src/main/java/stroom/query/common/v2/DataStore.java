@@ -51,4 +51,6 @@ public interface DataStore {
      * @param output The output to write to.
      */
     void writePayload(Output output);
+
+    long getByteSize();
 }

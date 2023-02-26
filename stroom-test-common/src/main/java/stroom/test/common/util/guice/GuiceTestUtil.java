@@ -42,11 +42,11 @@ public class GuiceTestUtil {
     private static final String SCOPE_PATTERN = "(?<=scope=)[^,}]+";
     // Give each bind type a colour in the console
     private static final Map<BindType, ConsoleColour> TYPE_TO_COLOUR_MAP = new EnumMap<>(Map.of(
-        BindType.MAP_BINDER, ConsoleColour.RED,
-        BindType.MULTI_BINDER, ConsoleColour.YELLOW,
-        BindType.PROVIDER, ConsoleColour.MAGENTA,
-        BindType.INSTANCE, ConsoleColour.BLUE,
-        BindType.IMPL, ConsoleColour.CYAN));
+            BindType.MAP_BINDER, ConsoleColour.RED,
+            BindType.MULTI_BINDER, ConsoleColour.YELLOW,
+            BindType.PROVIDER, ConsoleColour.MAGENTA,
+            BindType.INSTANCE, ConsoleColour.BLUE,
+            BindType.IMPL, ConsoleColour.CYAN));
 
     // Util methods only
     private GuiceTestUtil() {

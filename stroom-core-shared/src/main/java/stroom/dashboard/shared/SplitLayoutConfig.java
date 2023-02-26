@@ -16,6 +16,8 @@
 
 package stroom.dashboard.shared;
 
+import stroom.util.shared.RandomId;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -39,6 +41,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlType(name = "SplitLayoutConfig", propOrder = {"preferredSize", "dimension", "children"})
 public class SplitLayoutConfig extends LayoutConfig {
 
+    private final String id;
     /**
      * The preferred size of this layout in width, height.
      */
@@ -49,15 +52,18 @@ public class SplitLayoutConfig extends LayoutConfig {
     @JsonProperty("dimension")
     private int dimension;
     @XmlElementWrapper(name = "children")
-    @XmlElements({@XmlElement(name = "splitLayout", type = SplitLayoutConfig.class),
+    @XmlElements({
+            @XmlElement(name = "splitLayout", type = SplitLayoutConfig.class),
             @XmlElement(name = "tabLayout", type = TabLayoutConfig.class)})
     @JsonProperty("children")
     private List<LayoutConfig> children;
 
     public SplitLayoutConfig() {
+        id = "SplitLayoutConfig_" + RandomId.createId(10);
     }
 
     public SplitLayoutConfig(final int dimension, final LayoutConfig... children) {
+        id = "SplitLayoutConfig_" + RandomId.createId(10);
         this.dimension = dimension;
         if (children != null) {
             for (final LayoutConfig child : children) {
@@ -70,6 +76,7 @@ public class SplitLayoutConfig extends LayoutConfig {
     public SplitLayoutConfig(@JsonProperty("preferredSize") Size preferredSize,
                              @JsonProperty("dimension") int dimension,
                              @JsonProperty("children") List<LayoutConfig> children) {
+        id = "SplitLayoutConfig_" + RandomId.createId(10);
         this.preferredSize = preferredSize;
         this.dimension = dimension;
         this.children = children;
@@ -138,20 +145,5 @@ public class SplitLayoutConfig extends LayoutConfig {
             return 0;
         }
         return children.size();
-    }
-
-    public enum Direction {
-        ACROSS(0),
-        DOWN(1);
-
-        private final int dimension;
-
-        Direction(final int dimension) {
-            this.dimension = dimension;
-        }
-
-        public int getDimension() {
-            return dimension;
-        }
     }
 }

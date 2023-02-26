@@ -18,7 +18,7 @@
 package stroom.folder.client;
 
 import stroom.core.client.ContentManager;
-import stroom.core.client.ContentManager.CloseHandler;
+import stroom.core.client.event.CloseContentEvent;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
@@ -34,7 +34,9 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.function.Consumer;
+import javax.inject.Singleton;
 
+@Singleton
 public class FolderPlugin extends DocumentPlugin<DocRef> {
 
     private final Provider<FolderPresenter> editorProvider;
@@ -81,7 +83,7 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
     @Override
     protected void showTab(final DocRef docRef,
                            final MyPresenterWidget<?> documentEditPresenter,
-                           final CloseHandler closeHandler,
+                           final CloseContentEvent.Handler closeHandler,
                            final DocumentTabData tabData) {
         try {
             if (documentEditPresenter instanceof FolderPresenter) {

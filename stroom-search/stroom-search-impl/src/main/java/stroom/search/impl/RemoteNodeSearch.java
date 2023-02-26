@@ -4,6 +4,7 @@ import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.query.api.v2.Query;
+import stroom.query.common.v2.ResultStore;
 import stroom.task.api.TaskContext;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.jersey.WebTargetFactory;
@@ -49,7 +50,7 @@ public class RemoteNodeSearch implements NodeSearch {
         LOGGER.debug(() -> task.getSearchName() + " - start searching node: " + targetNode);
         taskContext.info(() -> task.getSearchName() + " - start searching node: " + targetNode);
         final String queryKey = task.getKey().getUuid();
-        final ClusterSearchResultCollector resultCollector = task.getResultCollector();
+        final ResultStore resultCollector = task.getResultStore();
 
         // Start remote cluster search execution.
         final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(
@@ -135,7 +136,7 @@ public class RemoteNodeSearch implements NodeSearch {
 
     private Boolean pollRemoteSearch(final String nodeName,
                                      final String queryKey,
-                                     final ClusterSearchResultCollector resultCollector) throws IOException {
+                                     final ResultStore resultCollector) throws IOException {
         boolean complete;
         final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
                 + ResourcePaths.buildAuthenticatedApiPath(

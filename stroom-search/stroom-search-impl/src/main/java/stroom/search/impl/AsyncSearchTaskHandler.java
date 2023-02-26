@@ -22,12 +22,20 @@ import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.index.impl.IndexShardService;
+import stroom.index.impl.IndexStore;
+import stroom.index.impl.TimePartitionFactory;
 import stroom.index.shared.FindIndexShardCriteria;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
+import stroom.index.shared.TimePartition;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Query;
+import stroom.query.api.v2.TimeRange;
+import stroom.query.common.v2.DateExpressionParser;
+import stroom.query.common.v2.ResultStore;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
@@ -38,6 +46,7 @@ import stroom.task.shared.TaskId;
 import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.Range;
 import stroom.util.shared.ResultPage;
 
 import java.util.ArrayList;
@@ -58,6 +67,7 @@ class AsyncSearchTaskHandler {
     public static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Search");
 
     private final TargetNodeSetFactory targetNodeSetFactory;
+    private final IndexStore indexStore;
     private final IndexShardService indexShardService;
     private final TaskManager taskManager;
     private final ClusterTaskTerminator clusterTaskTerminator;
@@ -68,8 +78,11 @@ class AsyncSearchTaskHandler {
     private final Provider<LocalNodeSearch> localNodeSearchProvider;
     private final Provider<RemoteNodeSearch> remoteNodeSearchProvider;
 
+    private final TimePartitionFactory timePartitionFactory = new TimePartitionFactory();
+
     @Inject
     AsyncSearchTaskHandler(final TargetNodeSetFactory targetNodeSetFactory,
+                           final IndexStore indexStore,
                            final IndexShardService indexShardService,
                            final TaskManager taskManager,
                            final ClusterTaskTerminator clusterTaskTerminator,
@@ -80,6 +93,7 @@ class AsyncSearchTaskHandler {
                            final Provider<LocalNodeSearch> localNodeSearchProvider,
                            final Provider<RemoteNodeSearch> remoteNodeSearchProvider) {
         this.targetNodeSetFactory = targetNodeSetFactory;
+        this.indexStore = indexStore;
         this.indexShardService = indexShardService;
         this.taskManager = taskManager;
         this.clusterTaskTerminator = clusterTaskTerminator;
@@ -93,7 +107,7 @@ class AsyncSearchTaskHandler {
 
     public void exec(final TaskContext parentContext, final AsyncSearchTask task) {
         securityContext.secure(() -> securityContext.useAsRead(() -> {
-            final ClusterSearchResultCollector resultCollector = task.getResultCollector();
+            final ResultStore resultCollector = task.getResultStore();
 
             if (!parentContext.isTerminated()) {
                 final String sourceNode = targetNodeSetFactory.getSourceNode();
@@ -119,6 +133,10 @@ class AsyncSearchTaskHandler {
                     // Order by partition name and key.
                     findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_PARTITION, true, false);
                     findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_ID, true, false);
+
+                    // Set the partition time range.
+                    setPartitionTimeRange(findIndexShardCriteria, task, query);
+
                     final ResultPage<IndexShard> indexShards = indexShardService.find(findIndexShardCriteria);
 
                     // Build a map of nodes that will deal with each set of shards.
@@ -183,7 +201,7 @@ class AsyncSearchTaskHandler {
                     LOGGER.debug(() -> task.getSearchName() + " - complete");
 
                     // Ensure search is complete even if we had errors.
-                    resultCollector.complete();
+                    resultCollector.signalComplete();
 
                     // Await final completion and terminate all tasks.
                     awaitCompletionAndTerminate(resultCollector, parentContext, task);
@@ -196,7 +214,46 @@ class AsyncSearchTaskHandler {
         }));
     }
 
-    private void awaitCompletionAndTerminate(final ClusterSearchResultCollector resultCollector,
+    private void setPartitionTimeRange(final FindIndexShardCriteria findIndexShardCriteria,
+                                       final AsyncSearchTask task,
+                                       final Query query) {
+        // Get the index doc.
+        final IndexDoc indexDoc = indexStore.readDocument(query.getDataSource());
+        if (indexDoc == null) {
+            throw new SearchException("Index not found");
+        }
+
+        final TimeRange timeRange = query.getTimeRange();
+        Long partitionFrom = null;
+        Long partitionTo = null;
+
+        if (timeRange != null) {
+            if (timeRange.getFrom() != null && !timeRange.getFrom().isBlank()) {
+                final long ms = getMs(timeRange.getFrom(), task.getDateTimeSettings(), task.getNow());
+                final TimePartition timePartition = timePartitionFactory.create(indexDoc, ms);
+                partitionFrom = timePartition.getPartitionFromTime();
+            }
+            if (timeRange.getTo() != null && !timeRange.getTo().isBlank()) {
+                final long ms = getMs(timeRange.getTo(), task.getDateTimeSettings(), task.getNow());
+                final TimePartition timePartition = timePartitionFactory.create(indexDoc, ms);
+                partitionTo = timePartition.getPartitionToTime();
+            }
+        }
+        final Range<Long> range = new Range<>(partitionFrom, partitionTo);
+        findIndexShardCriteria.setPartitionTimeRange(range);
+    }
+
+    private Long getMs(final String expression,
+                       final DateTimeSettings dateTimeSettings,
+                       final long nowEpochMilli) {
+        return DateExpressionParser.parse(
+                        expression,
+                        dateTimeSettings,
+                        nowEpochMilli)
+                .map(time -> time.toInstant().toEpochMilli()).orElse(null);
+    }
+
+    private void awaitCompletionAndTerminate(final ResultStore resultCollector,
                                              final TaskContext parentContext,
                                              final AsyncSearchTask task) {
         // Wait for the result collector to complete.

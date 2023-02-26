@@ -17,6 +17,7 @@
 package stroom.widget.tab.client.view;
 
 import stroom.svg.client.Icon;
+import stroom.svg.client.SvgImages;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Display;
@@ -29,7 +30,6 @@ public class CurveTab extends AbstractTab {
     private static final int MAX_TEXT_LENGTH = 50;
 
     private final Element element;
-    //    private final Element icon;
     private final Element label;
     private final Element close;
     private final boolean allowClose;
@@ -43,18 +43,6 @@ public class CurveTab extends AbstractTab {
         final Element background = DOM.createDiv();
         background.setClassName("curveTab-background");
         element.appendChild(background);
-
-        final Element leftBackground = DOM.createDiv();
-        leftBackground.setClassName("curveTab-leftBackground");
-        background.appendChild(leftBackground);
-
-        final Element midBackground = DOM.createDiv();
-        midBackground.setClassName("curveTab-midBackground");
-        background.appendChild(midBackground);
-
-        final Element rightBackground = DOM.createDiv();
-        rightBackground.setClassName("curveTab-rightBackground");
-        background.appendChild(rightBackground);
 
         if (icon != null) {
             final Widget iconWidget = icon.asWidget();
@@ -76,6 +64,7 @@ public class CurveTab extends AbstractTab {
 
         close = DOM.createDiv();
         close.setClassName("curveTab-close");
+        close.setInnerHTML(SvgImages.MONO_TAB_CLOSE);
         element.appendChild(close);
 
         setElement(element);
@@ -83,6 +72,15 @@ public class CurveTab extends AbstractTab {
         if (!allowClose) {
             close.getStyle().setDisplay(Display.NONE);
             label.getStyle().setPaddingRight(20, Unit.PX);
+        }
+    }
+
+    @Override
+    protected void setKeyboardSelected(final boolean selected) {
+        if (selected) {
+            element.addClassName("curveTab-keyboardSelected");
+        } else {
+            element.removeClassName("curveTab-keyboardSelected");
         }
     }
 

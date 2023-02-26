@@ -104,7 +104,7 @@ class TestAsciiTable {
                 .collect(Collectors.toList());
 
         Assertions.assertThat(lines)
-                        .hasSize(5);
+                .hasSize(5);
 
         Assertions.assertThat(lines.get(0))
                 .contains("Height Cm");

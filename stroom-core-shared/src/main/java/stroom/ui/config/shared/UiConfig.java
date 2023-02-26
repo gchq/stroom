@@ -118,13 +118,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
             "When this property is set to true that will be prevented as the user will be redirected back to the " +
             "root URL. This behaviour is configurable as development of the GWT UI still requires direct access via " +
             "`stroom/ui`")
-    private final Boolean requireReactWrapper;
-
-    @JsonProperty
-    @JsonPropertyDescription("The time interval in milliseconds that a keep alive message will be sent over the " +
-            "web socket. A value of <= 0 means a keep alive message will not be sent. Setting the value to < 60000 " +
-            "will have limited effect as some browsers will throttle timers to a max frequency of 1/min.")
-    private final int applicationInstanceKeepAliveIntervalMs;
+    private Boolean requireReactWrapper;
 
     public UiConfig() {
         welcomeHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
@@ -146,7 +140,6 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         activity = new ActivityConfig();
         source = new SourceConfig();
         requireReactWrapper = true;
-        applicationInstanceKeepAliveIntervalMs = 10_000;
     }
 
     @JsonCreator
@@ -169,8 +162,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                     @JsonProperty("splash") final SplashConfig splash,
                     @JsonProperty("activity") final ActivityConfig activity,
                     @JsonProperty("source") final SourceConfig source,
-                    @JsonProperty("requireReactWrapper") Boolean requireReactWrapper,
-                    @JsonProperty("applicationInstanceKeepAliveIntervalMs") final int applicationInstanceKeepAliveIntervalMs) {
+                    @JsonProperty("requireReactWrapper") Boolean requireReactWrapper) {
         this.welcomeHtml = welcomeHtml;
         this.aboutHtml = aboutHtml;
         this.maintenanceMessage = maintenanceMessage;
@@ -190,7 +182,6 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         this.activity = activity;
         this.source = source;
         this.requireReactWrapper = requireReactWrapper;
-        this.applicationInstanceKeepAliveIntervalMs = applicationInstanceKeepAliveIntervalMs;
     }
 
     public String getWelcomeHtml() {
@@ -313,8 +304,8 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         return requireReactWrapper;
     }
 
-    public int getApplicationInstanceKeepAliveIntervalMs() {
-        return applicationInstanceKeepAliveIntervalMs;
+    public void setRequireReactWrapper(final Boolean requireReactWrapper) {
+        this.requireReactWrapper = requireReactWrapper;
     }
 
     @Override
@@ -326,8 +317,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
             return false;
         }
         final UiConfig uiConfig = (UiConfig) o;
-        return applicationInstanceKeepAliveIntervalMs == uiConfig.applicationInstanceKeepAliveIntervalMs
-                && Objects.equals(welcomeHtml, uiConfig.welcomeHtml)
+        return Objects.equals(welcomeHtml, uiConfig.welcomeHtml)
                 && Objects.equals(aboutHtml, uiConfig.aboutHtml)
                 && Objects.equals(maintenanceMessage, uiConfig.maintenanceMessage)
                 && Objects.equals(defaultMaxResults, uiConfig.defaultMaxResults)
@@ -368,8 +358,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 splash,
                 activity,
                 source,
-                requireReactWrapper,
-                applicationInstanceKeepAliveIntervalMs);
+                requireReactWrapper);
     }
 
     @Override
@@ -394,7 +383,6 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                 ", activity=" + activity +
                 ", source=" + source +
                 ", requireReactWrapper=" + requireReactWrapper +
-                ", applicationInstanceKeepAliveIntervalMs=" + applicationInstanceKeepAliveIntervalMs +
                 '}';
     }
 }

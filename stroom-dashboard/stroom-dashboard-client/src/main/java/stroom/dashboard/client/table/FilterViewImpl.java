@@ -44,6 +44,11 @@ public class FilterViewImpl extends ViewImpl implements FilterView {
     }
 
     @Override
+    public void focus() {
+        includes.setFocus(true);
+    }
+
+    @Override
     public String getIncludes() {
         return this.includes.getText();
     }

@@ -59,8 +59,9 @@ public class XsltSettingsPresenter extends DocumentSettingsPresenter<XsltSetting
     }
 
     @Override
-    protected void onWrite(final XsltDoc xslt) {
+    protected XsltDoc onWrite(final XsltDoc xslt) {
         xslt.setDescription(getView().getDescription().getText().trim());
+        return xslt;
     }
 
     public interface XsltSettingsView extends View {

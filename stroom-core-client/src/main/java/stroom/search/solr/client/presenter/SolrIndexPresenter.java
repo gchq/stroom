@@ -17,7 +17,6 @@
 
 package stroom.search.solr.client.presenter;
 
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
@@ -42,11 +41,10 @@ public class SolrIndexPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
     @Inject
     public SolrIndexPresenter(final EventBus eventBus,
                               final LinkTabPanelView view,
-                              final RestFactory restFactory,
                               final Provider<SolrIndexSettingsPresenter> indexSettingsPresenter,
                               final Provider<SolrIndexFieldListPresenter> indexFieldListPresenter,
                               final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext, restFactory);
+        super(eventBus, view, securityContext);
 
         tabContentProvider.setDirtyHandler(event -> {
             if (event.isDirty()) {
@@ -79,8 +77,8 @@ public class SolrIndexPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
     }
 
     @Override
-    protected void onWrite(final SolrIndexDoc index) {
-        tabContentProvider.write(index);
+    protected SolrIndexDoc onWrite(final SolrIndexDoc index) {
+        return tabContentProvider.write(index);
     }
 
     @Override

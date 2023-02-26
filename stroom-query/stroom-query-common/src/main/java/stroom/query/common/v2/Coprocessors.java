@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
 import javax.validation.constraints.NotNull;
 
-public class Coprocessors implements Iterable<Coprocessor>, ValuesConsumer {
+public final class Coprocessors implements Iterable<Coprocessor>, ValuesConsumer {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Coprocessors.class);
 
@@ -155,5 +155,13 @@ public class Coprocessors implements Iterable<Coprocessor>, ValuesConsumer {
 
     public void forEachExtractionCoprocessor(final BiConsumer<DocRef, Set<Coprocessor>> consumer) {
         extractionPipelineCoprocessorMap.forEach(consumer);
+    }
+
+    public long getByteSize() {
+        return coprocessorMap
+                .values()
+                .stream()
+                .map(Coprocessor::getByteSize)
+                .reduce(0L, Long::sum);
     }
 }

@@ -30,11 +30,9 @@ import stroom.ui.config.shared.ActivityConfig;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.Node;
@@ -87,36 +85,27 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
         if (activityRecordingEnabled) {
             getView().getHtml().setHTML(activityEditorBody);
 
-            // Set the properties.
-            Scheduler.get().scheduleDeferred(this::read);
-
-            final PopupUiHandlers internalPopupUiHandlers = new PopupUiHandlers() {
-                @Override
-                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                    if (ok) {
-                        write(consumer);
-                    } else {
-                        consumer.accept(activity);
-                        hide();
-                    }
-                }
-
-                @Override
-                public void onHide(final boolean autoClose, final boolean ok) {
-                }
-            };
-
             final PopupSize popupSize = PopupSize.resizable(640, 480);
-            ShowPopupEvent.fire(this,
-                    this,
-                    PopupType.OK_CANCEL_DIALOG,
-                    popupSize, activityEditorTitle,
-                    internalPopupUiHandlers);
+            ShowPopupEvent.builder(this)
+                    .popupType(PopupType.OK_CANCEL_DIALOG)
+                    .popupSize(popupSize)
+                    .caption(activityEditorTitle)
+                    .onShow(e -> read())
+                    .onHideRequest(e -> {
+                        if (e.isOk()) {
+                            write(consumer);
+                        } else {
+                            consumer.accept(activity);
+                            e.hide();
+                        }
+                    })
+                    .fire();
         }
     }
 
     private void hide() {
-        HidePopupEvent.fire(ActivityEditPresenter.this, ActivityEditPresenter.this);
+        HidePopupEvent.builder(this)
+                .fire();
     }
 
     protected void read() {

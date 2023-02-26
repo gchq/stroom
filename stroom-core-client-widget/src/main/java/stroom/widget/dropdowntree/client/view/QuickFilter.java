@@ -18,7 +18,7 @@ package stroom.widget.dropdowntree.client.view;
 
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.SvgButton;
-import stroom.widget.tooltip.client.presenter.TooltipUtil;
+import stroom.widget.util.client.HtmlBuilder;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -45,10 +45,12 @@ public class QuickFilter extends FlowPanel
         implements HasText, HasValueChangeHandlers<String> {
 
     private static final int REFRESH_ALL_NODES_TIMER_DELAY_MS = 500;
-    private static final SafeHtml DEFAULT_POPUP_TEXT = TooltipUtil.builder()
-            .addHeading("Quick Filter")
-            .addLine("Field values containing the characters input will be included.")
-            .build();
+    private static final SafeHtml DEFAULT_POPUP_TEXT = new HtmlBuilder()
+            .bold(hb -> hb.append("Quick Filter"))
+            .br()
+            .append("Field values containing the characters input will be included.")
+            .br()
+            .toSafeHtml();
 
     private final TextBox textBox = new TextBox();
     private final SvgButton clearButton;
@@ -67,14 +69,15 @@ public class QuickFilter extends FlowPanel
 
     public QuickFilter() {
         setStyleName("quickFilter");
-        textBox.setStyleName("quickFilter-textBox");
+        textBox.addStyleName("quickFilter-textBox");
+        textBox.addStyleName("allow-focus");
         textBox.getElement().setAttribute("placeholder", "Quick Filter");
 
         clearButton = SvgButton.create(SvgPresets.CLEAR.title("Clear Filter"));
-        clearButton.addStyleName("quickFilter-clear");
+        clearButton.addStyleName("clear");
 
         helpButton = SvgButton.create(SvgPresets.HELP.title("Quick Filter Syntax Help"));
-        helpButton.addStyleName("quickFilter-infoButton");
+        helpButton.addStyleName("info");
 
         add(textBox);
         add(clearButton);
@@ -165,6 +168,10 @@ public class QuickFilter extends FlowPanel
             eventBus = new SimpleEventBus();
         }
         return eventBus;
+    }
+
+    public void focus() {
+        textBox.setFocus(true);
     }
 
     @Override

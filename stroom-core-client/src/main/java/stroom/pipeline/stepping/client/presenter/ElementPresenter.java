@@ -18,6 +18,8 @@
 package stroom.pipeline.stepping.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.data.client.presenter.ClassificationUiHandlers;
+import stroom.data.client.presenter.ClassificationWrapperView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -49,10 +51,13 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 
-public class ElementPresenter extends MyPresenterWidget<ElementView> implements HasDirtyHandlers {
+public class ElementPresenter extends MyPresenterWidget<ElementView> implements
+        HasDirtyHandlers,
+        ClassificationUiHandlers {
 
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
 
+    private final Provider<ClassificationWrapperView> classificationWrapperViewProvider;
     private final Provider<EditorPresenter> editorProvider;
     private final DocumentPluginRegistry documentPluginRegistry;
     private final RestFactory restFactory;
@@ -71,12 +76,19 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
     private EditorPresenter inputPresenter;
     private EditorPresenter outputPresenter;
 
+    private String classification;
+    private ClassificationWrapperView inputView;
+    private ClassificationWrapperView outputView;
+
     @Inject
-    public ElementPresenter(final EventBus eventBus, final ElementView view,
+    public ElementPresenter(final EventBus eventBus,
+                            final ElementView view,
+                            final Provider<ClassificationWrapperView> classificationWrapperViewProvider,
                             final Provider<EditorPresenter> editorProvider,
                             final DocumentPluginRegistry documentPluginRegistry,
                             final RestFactory restFactory) {
         super(eventBus, view);
+        this.classificationWrapperViewProvider = classificationWrapperViewProvider;
         this.editorProvider = editorProvider;
         this.documentPluginRegistry = documentPluginRegistry;
         this.restFactory = restFactory;
@@ -120,11 +132,11 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
             // We only care about seeing input if the element mutates the input
             // some how.
             if (element.getElementType().hasRole(PipelineElementType.ROLE_MUTATOR)) {
-                getView().setInputView(getInputPresenter().getView());
+                getView().setInputView(getInputView());
             }
 
             // We always want to see the output of the element.
-            getView().setOutputView(getOutputPresenter().getView());
+            getView().setOutputView(getOutputView());
 
             if (!loading) {
                 Scheduler.get().scheduleDeferred(() -> future.setResult(true));
@@ -325,16 +337,30 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
         return codePresenter;
     }
 
-    private EditorPresenter getInputPresenter() {
+    @Override
+    public void setClassification(final String classification) {
+        this.classification = classification;
+        if (inputView != null) {
+            inputView.setClassification(classification);
+        }
+        if (outputView != null) {
+            outputView.setClassification(classification);
+        }
+    }
+
+    private View getInputView() {
         if (inputPresenter == null) {
             inputPresenter = editorProvider.get();
             setCommonEditorOptions(inputPresenter);
             setReadOnlyEditorOptions(inputPresenter);
+            inputView = classificationWrapperViewProvider.get();
+            inputView.setContent(inputPresenter.getView());
+            inputView.setClassification(classification);
         }
-        return inputPresenter;
+        return inputView;
     }
 
-    private EditorPresenter getOutputPresenter() {
+    private View getOutputView() {
         if (outputPresenter == null) {
             outputPresenter = editorProvider.get();
             setCommonEditorOptions(outputPresenter);
@@ -345,8 +371,12 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
             if (element != null && element.getElementType().hasRole(PipelineElementType.ROLE_VALIDATOR)) {
                 outputPresenter.getLineNumbersOption().setOn(true);
             }
+
+            outputView = classificationWrapperViewProvider.get();
+            outputView.setContent(outputPresenter.getView());
+            outputView.setClassification(classification);
         }
-        return outputPresenter;
+        return outputView;
     }
 
     private void setReadOnlyEditorOptions(final EditorPresenter editorPresenter) {

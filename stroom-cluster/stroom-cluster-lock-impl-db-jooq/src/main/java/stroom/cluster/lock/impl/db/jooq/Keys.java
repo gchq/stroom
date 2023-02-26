@@ -4,13 +4,13 @@
 package stroom.cluster.lock.impl.db.jooq;
 
 
+import stroom.cluster.lock.impl.db.jooq.tables.ClusterLock;
+import stroom.cluster.lock.impl.db.jooq.tables.records.ClusterLockRecord;
+
 import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
-
-import stroom.cluster.lock.impl.db.jooq.tables.ClusterLock;
-import stroom.cluster.lock.impl.db.jooq.tables.records.ClusterLockRecord;
 
 
 /**

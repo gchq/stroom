@@ -17,37 +17,46 @@
 .quickFilter {
     display: flex;
 	align-items: center;
-    position: relative;
-	overflow: hidden;
-	border: 1px solid var(--border-color);
+	position: relative;
+}
+
+.quickFilter-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    flex-shrink: 1;
+    gap: var(--control__padding--vertical);
 }
 
 .quickFilter-textBox {
     width: 100%; /* To allow for info and clear btns */
 	margin: 0;
-	padding-left: 22px;
-	border: none !important;
+	padding: 0 22px 0 8px;
 	cursor: text;
 }
 
-.quickFilter-clear {
+.quickFilter button {
 	position: absolute;
-	right: 1px;
-	top: 0;
 }
 
-.quickFilter-infoButton {
-	position: absolute;
-	/*
-	left: 0;
-	top: -1px;
-	top: 0;
-	*/
+.quickFilter button.clear {
+	right: 25px;
+}
+
+.quickFilter button.info {
+	right: 4px;
+}
+
+.quickFilter .svgIcon {
+	width: 18px;
+	height: 18px;
 }
 
 .quickFilter-tooltip {
-	background-color: var(--tooltip-background-color);
-	color: var(--tooltip-text-color);
+	background-color: var(--tooltip__background-color);
+	color: var(--tooltip__text-color);
 	padding: 1px 3px;
 	-moz-user-focus: initial;
 	-moz-user-input: initial;

@@ -20,9 +20,10 @@ import stroom.data.grid.client.MouseHelper;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
+import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
@@ -93,7 +94,7 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
         if (validEvent(element)) {
             // Only allow the possibility of dragging if the mouse button is the
             // left button.
-            if ((event.getButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 box = treePanel.getTargetBox(event, true);
                 if (box != null) {
                     startX = event.getClientX();
@@ -149,7 +150,7 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
         // events.
         Event.releaseCapture(getElement());
 
-        if ((event.getButton() & NativeEvent.BUTTON_RIGHT) != 0) {
+        if (MouseUtil.isSecondary(event)) {
             onContextMenu(event);
         }
     }
@@ -218,7 +219,8 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
     }
 
     private void onContextMenu(final Event event) {
-        ContextMenuEvent.fire(this, event.getClientX(), event.getClientY());
+        final PopupPosition popupPosition = new PopupPosition(event.getClientX(), event.getClientY());
+        ContextMenuEvent.fire(this, popupPosition);
     }
 
     private void updateHotspot(final Box<E> target) {

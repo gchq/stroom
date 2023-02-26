@@ -61,7 +61,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -313,8 +313,8 @@ class TestSerialisation {
                 Collections.singletonList("tableResultError"));
         return new SearchResponse(
                 new QueryKey("test_uuid"),
-                Arrays.asList("highlight1", "highlight2"),
-                Arrays.asList(tableResult, getVisResult1()),
+                List.of("highlight1", "highlight2"),
+                List.of(tableResult, getVisResult1()),
                 Collections.singletonList("some error"),
                 false);
     }

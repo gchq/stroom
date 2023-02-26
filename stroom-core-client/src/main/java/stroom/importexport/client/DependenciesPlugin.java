@@ -31,6 +31,9 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class DependenciesPlugin extends MonitoringPlugin<DependenciesTabPresenter> {
 
     @Inject
@@ -57,14 +60,12 @@ public class DependenciesPlugin extends MonitoringPlugin<DependenciesTabPresente
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
 //        if (getSecurityContext().hasAppPermission(DBTableStatus.MANAGE_DB_PERMISSION)) {
         event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
-                new IconMenuItem(
-                        150,
-                        SvgPresets.DEPENDENCIES,
-                        SvgPresets.DEPENDENCIES,
-                        "Dependencies",
-                        null,
-                        true,
-                        this::open));
+                new IconMenuItem.Builder()
+                        .priority(150)
+                        .icon(SvgPresets.DEPENDENCIES)
+                        .text("Dependencies")
+                        .command(this::open)
+                        .build());
 //        }
     }
 }

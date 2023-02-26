@@ -72,7 +72,7 @@ class TestLookup extends AbstractXsltFunctionTest<Lookup> {
         // Should call this once with the combined messages for the lookup
         final LogArgs logArgs = verifySingleLogCall();
         Assertions.assertThat(logArgs.getSeverity())
-                                .isEqualTo(Severity.ERROR);
+                                .isEqualTo(Severity.WARNING);
         Assertions.assertThat(logArgs.getMessage())
                 .containsIgnoringCase("no reference loaders");
 

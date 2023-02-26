@@ -4,9 +4,8 @@
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:SimplePanel ui:field="content" styleName="dialog-content"/>
         <g:FlowPanel styleName="dialog-buttons">
-            <g:Button ui:field="ok" text="OK"/>
-            <g:Button ui:field="cancel" styleName="gwt-Button okCancelContent-cancel"
-                      text="Cancel"/>
+            <g:Button ui:field="ok" addStyleNames="allow-focus" text="OK"/>
+            <g:Button ui:field="cancel" addStyleNames="allow-focus" text="Cancel"/>
         </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder> 

@@ -691,6 +691,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     private static class VolGroupNode {
+
         private final String groupName;
         private final String nodeName;
         private final int hashcode;

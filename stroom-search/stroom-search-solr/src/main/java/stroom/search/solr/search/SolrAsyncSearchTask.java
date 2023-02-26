@@ -20,6 +20,7 @@ import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.CoprocessorSettings;
+import stroom.query.common.v2.ResultStore;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -33,8 +34,6 @@ public class SolrAsyncSearchTask {
     private final List<CoprocessorSettings> settings;
     private final DateTimeSettings dateTimeSettings;
     private final long now;
-
-    private transient volatile SolrSearchResultCollector resultCollector;
 
     public SolrAsyncSearchTask(final QueryKey key,
                                final String searchName,
@@ -72,13 +71,5 @@ public class SolrAsyncSearchTask {
 
     public long getNow() {
         return now;
-    }
-
-    public SolrSearchResultCollector getResultCollector() {
-        return resultCollector;
-    }
-
-    public void setResultCollector(final SolrSearchResultCollector resultCollector) {
-        this.resultCollector = resultCollector;
     }
 }

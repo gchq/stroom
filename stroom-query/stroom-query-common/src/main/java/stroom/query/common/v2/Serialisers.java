@@ -1,6 +1,7 @@
 package stroom.query.common.v2;
 
 public class Serialisers {
+
     private final InputFactory inputFactory;
     private final OutputFactory outputFactory;
 

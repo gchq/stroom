@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -66,12 +67,14 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
     private FsVolumeService volumeService;
     @Inject
     private Store streamStore;
+    // Use provider so we can set up the config before this guice create this
     @Inject
-    private FsOrphanFileFinderExecutor fsOrphanFileFinderExecutor;
+    private Provider<FsOrphanFileFinderExecutor> fsOrphanFileFinderExecutorProvider;
 
     @Test
     void testSimple() throws IOException {
-        config.setFileSystemCleanOldAge(StroomDuration.ZERO);
+        setConfigValueMapper(DataStoreServiceConfig.class, config -> config
+                .withFileSystemCleanOldAge(StroomDuration.ZERO));
 
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
@@ -279,7 +282,8 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
             fileList.add(FileUtil.getCanonicalPath(path));
             summary.addPath(path);
         };
-        fsOrphanFileFinderExecutor.scan(orphanConsumer, new SimpleTaskContext());
+        fsOrphanFileFinderExecutorProvider.get()
+                .scan(orphanConsumer, new SimpleTaskContext());
         return fileList;
     }
 }

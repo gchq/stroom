@@ -4,16 +4,16 @@
 package stroom.job.impl.db.jooq;
 
 
+import stroom.job.impl.db.jooq.tables.Job;
+import stroom.job.impl.db.jooq.tables.JobNode;
+import stroom.job.impl.db.jooq.tables.records.JobNodeRecord;
+import stroom.job.impl.db.jooq.tables.records.JobRecord;
+
 import org.jooq.ForeignKey;
 import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
-
-import stroom.job.impl.db.jooq.tables.Job;
-import stroom.job.impl.db.jooq.tables.JobNode;
-import stroom.job.impl.db.jooq.tables.records.JobNodeRecord;
-import stroom.job.impl.db.jooq.tables.records.JobRecord;
 
 
 /**

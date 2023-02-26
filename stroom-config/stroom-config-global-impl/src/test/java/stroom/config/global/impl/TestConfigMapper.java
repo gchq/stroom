@@ -19,8 +19,6 @@ import stroom.config.common.UiUriConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.OverrideValue;
 import stroom.core.receive.ReceiveDataConfig;
-import stroom.dashboard.impl.DashboardConfig;
-import stroom.dashboard.impl.datasource.DataSourceUrlConfig;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.db.DocStoreConfig;
 import stroom.event.logging.impl.LoggingConfig;
@@ -920,9 +918,7 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_COMMON_DB_DETAILS) final CommonDbConfig commonDbConfig,
                 @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT) final ContentPackImportConfig contentPackImportConfig,
                 @JsonProperty(PROP_NAME_CORE) final LegacyConfig legacyConfig,
-                @JsonProperty(PROP_NAME_DASHBOARD) final DashboardConfig dashboardConfig,
                 @JsonProperty(PROP_NAME_DATA) final DataConfig dataConfig,
-                @JsonProperty(PROP_NAME_DATA_SOURCE_URL) final DataSourceUrlConfig dataSourceUrlConfig,
                 @JsonProperty(PROP_NAME_DOCSTORE) final DocStoreConfig docStoreConfig,
                 @JsonProperty(PROP_NAME_ELASTIC) final ElasticConfig elasticConfig,
                 @JsonProperty(PROP_NAME_EXPLORER) final ExplorerConfig explorerConfig,
@@ -977,9 +973,7 @@ class TestConfigMapper {
                     commonDbConfig,
                     contentPackImportConfig,
                     legacyConfig,
-                    dashboardConfig,
                     dataConfig,
-                    dataSourceUrlConfig,
                     docStoreConfig,
                     elasticConfig,
                     explorerConfig,

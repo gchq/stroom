@@ -4,8 +4,9 @@
 package stroom.node.impl.db.jooq.tables;
 
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.node.impl.db.jooq.Keys;
+import stroom.node.impl.db.jooq.Stroom;
+import stroom.node.impl.db.jooq.tables.records.NodeRecord;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
@@ -22,9 +23,8 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import stroom.node.impl.db.jooq.Keys;
-import stroom.node.impl.db.jooq.Stroom;
-import stroom.node.impl.db.jooq.tables.records.NodeRecord;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**

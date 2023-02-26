@@ -16,11 +16,10 @@
 
 package stroom.dashboard.client.table;
 
-import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.dashboard.client.table.DownloadPresenter.DownloadView;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.item.client.ItemListBox;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -34,10 +33,11 @@ import com.gwtplatform.mvp.client.ViewImpl;
 public class DownloadViewImpl extends ViewImpl implements DownloadView {
 
     private final Widget widget;
+
     @UiField
     ItemListBox<DownloadSearchResultFileType> fileType;
     @UiField
-    TickBox sample;
+    CustomCheckBox sample;
     @UiField
     ValueSpinner percent;
 
@@ -63,23 +63,28 @@ public class DownloadViewImpl extends ViewImpl implements DownloadView {
     }
 
     @Override
+    public void focus() {
+        fileType.focus();
+    }
+
+    @Override
     public DownloadSearchResultFileType getFileType() {
         return fileType.getSelectedItem();
     }
 
     @Override
     public boolean isSample() {
-        return sample.getBooleanValue();
+        return sample.getValue();
     }
 
     @Override
     public int getPercent() {
-        return percent.getValue();
+        return percent.getIntValue();
     }
 
     @UiHandler("sample")
-    public void onChange(final ValueChangeEvent<TickBoxState> event) {
-        percent.setEnabled(sample.getBooleanValue());
+    public void onChange(final ValueChangeEvent<Boolean> event) {
+        percent.setEnabled(sample.getValue());
     }
 
     public interface Binder extends UiBinder<Widget, DownloadViewImpl> {

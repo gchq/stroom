@@ -55,6 +55,11 @@ public class IndexVolumeEditViewImpl extends ViewImpl implements IndexVolumeEdit
     }
 
     @Override
+    public void focus() {
+        nodeName.setFocus(true);
+    }
+
+    @Override
     public void setNodeNames(final List<String> nodeNames) {
         this.nodeName.clear();
         this.nodeName.addItems(nodeNames);

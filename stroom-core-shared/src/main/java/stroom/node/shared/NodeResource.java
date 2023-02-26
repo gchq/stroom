@@ -74,8 +74,10 @@ public interface NodeResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Finds nodes matching criteria and sort order",
             operationId = "findNodes")
-    FetchNodeStatusResponse find(@Parameter(description = "findNodeStatusCriteria", required = true)
-                                 final FindNodeStatusCriteria findNodeStatusCriteria);
+    FetchNodeStatusResponse find(
+            @Parameter(
+                    description = "findNodeStatusCriteria",
+                    required = true) final FindNodeStatusCriteria findNodeStatusCriteria);
 
     @GET
     @Path(PING_PATH_PART + NODE_NAME_PATH_PARAM)

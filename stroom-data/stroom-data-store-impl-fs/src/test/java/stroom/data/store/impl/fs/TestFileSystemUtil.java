@@ -43,6 +43,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class TestFileSystemUtil {
+
     private static final String NO_WRITE_DIR1 = "/usr/bin/username";
     private static final String NO_WRITE_DIR2 = "/unable/to/create/this";
 
@@ -113,7 +114,8 @@ class TestFileSystemUtil {
         when(meta.getId()).thenReturn(1001001L);
         when(meta.getTypeName()).thenReturn(StreamTypeNames.RAW_EVENTS);
         when(meta.getFeedName()).thenReturn("TEST_FEED");
-        when(meta.getCreateMs()).thenReturn(DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z"));
+        when(meta.getCreateMs())
+                .thenReturn(DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z"));
 
         final FsFeedPathDao fileSystemFeedPaths = mock(FsFeedPathDao.class);
         when(fileSystemFeedPaths.getOrCreatePath(any())).thenReturn("1");

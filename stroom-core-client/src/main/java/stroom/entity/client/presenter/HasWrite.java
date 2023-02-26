@@ -18,5 +18,5 @@ package stroom.entity.client.presenter;
 
 public interface HasWrite<E> {
 
-    void write(E entity);
+    E write(E entity);
 }

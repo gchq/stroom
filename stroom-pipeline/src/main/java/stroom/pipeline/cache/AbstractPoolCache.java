@@ -85,6 +85,7 @@ public abstract class AbstractPoolCache<K, V> implements Clearable, HasSystemInf
 
     /**
      * Forces the eviction of all pooled items associated with this key
+     *
      * @param key The key of the entry to evict.
      */
     public void invalidate(final K key) {

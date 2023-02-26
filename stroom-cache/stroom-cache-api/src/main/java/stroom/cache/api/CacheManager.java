@@ -30,10 +30,11 @@ public interface CacheManager extends AutoCloseable {
      * calls.
      * Also registers the cache with the {@link CacheManager} so {@link CacheManager#close()} can
      * be used to clear down all caches.
-     * @param name Name of the cache
-     * @param cacheConfigSupplier Supplier of config for the cache. When {@link Supplier#get()} is
-     *                            called it must supply the latest state of the config as it will
-     *                            be used to rebuild the cache from updated config.
+     *
+     * @param name                        Name of the cache
+     * @param cacheConfigSupplier         Supplier of config for the cache. When {@link Supplier#get()} is
+     *                                    called it must supply the latest state of the config as it will
+     *                                    be used to rebuild the cache from updated config.
      * @param removalNotificationConsumer A listener that is called each time an entry is removed.
      * @return The cache object.
      */
@@ -48,7 +49,8 @@ public interface CacheManager extends AutoCloseable {
      * calls.
      * Also registers the cache with the {@link CacheManager} so {@link CacheManager#close()} can
      * be used to clear down all caches.
-     * @param name Name of the cache
+     *
+     * @param name                Name of the cache
      * @param cacheConfigSupplier Supplier of config for the cache. When {@link Supplier#get()} is
      *                            called it must supply the latest state of the config as it will
      *                            be used to rebuild the cache from updated config.
@@ -68,12 +70,13 @@ public interface CacheManager extends AutoCloseable {
      * Create a loading cache that will attempt to load entries into the cache on demand.
      * Also registers the cache with the {@link CacheManager} so {@link CacheManager#close()} can
      * be used to clear down all caches.
-     * @param name Name of the cache
-     * @param cacheConfigSupplier Supplier of config for the cache. When {@link Supplier#get()} is
-     *                            called it must supply the latest state of the config as it will
-     *                            be used to rebuild the cache from updated config.
-     * @param loadFunction A function to load an entry into the cache for a given key. Function should
-     *                     return null if the key is not know to the load function.
+     *
+     * @param name                        Name of the cache
+     * @param cacheConfigSupplier         Supplier of config for the cache. When {@link Supplier#get()} is
+     *                                    called it must supply the latest state of the config as it will
+     *                                    be used to rebuild the cache from updated config.
+     * @param loadFunction                A function to load an entry into the cache for a given key. Function should
+     *                                    return null if the key is not know to the load function.
      * @param removalNotificationConsumer A listener that is called each time an entry is removed.
      * @return The cache object.
      */
@@ -87,12 +90,13 @@ public interface CacheManager extends AutoCloseable {
      * Create a loading cache that will attempt to load entries into the cache on demand.
      * Also registers the cache with the {@link CacheManager} so {@link CacheManager#close()} can
      * be used to clear down all caches.
-     * @param name Name of the cache
+     *
+     * @param name                Name of the cache
      * @param cacheConfigSupplier Supplier of config for the cache. When {@link Supplier#get()} is
      *                            called it must supply the latest state of the config as it will
      *                            be used to rebuild the cache from updated config.
-     * @param loadFunction A function to load an entry into the cache for a given key. Function should
-     *                     return null if the key is not know to the load function.
+     * @param loadFunction        A function to load an entry into the cache for a given key. Function should
+     *                            return null if the key is not know to the load function.
      * @return The cache object.
      */
     default <K, V> LoadingStroomCache<K, V> createLoadingCache(

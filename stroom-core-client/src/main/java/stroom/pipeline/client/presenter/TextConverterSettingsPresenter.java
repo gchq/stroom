@@ -69,10 +69,11 @@ public class TextConverterSettingsPresenter
     }
 
     @Override
-    protected void onWrite(final TextConverterDoc textConverter) {
+    protected TextConverterDoc onWrite(final TextConverterDoc textConverter) {
         final TextConverterType converterType = getView().getConverterType().getSelectedItem();
         textConverter.setDescription(getView().getDescription().getText().trim());
         textConverter.setConverterType(converterType);
+        return textConverter;
     }
 
     public interface TextConverterSettingsView extends View {

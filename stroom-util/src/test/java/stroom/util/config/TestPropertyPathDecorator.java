@@ -21,7 +21,7 @@ class TestPropertyPathDecorator {
         Assertions.assertThat(rootConfig.getBasePathStr())
                 .isEqualTo("root");
         Assertions.assertThat(rootConfig.getLevel())
-                        .isEqualTo("root");
+                .isEqualTo("root");
         Assertions.assertThat(rootConfig.getFullPathStr("level"))
                 .isEqualTo("root.level");
 
@@ -41,6 +41,7 @@ class TestPropertyPathDecorator {
     }
 
     private static class RootConfig extends AbstractConfig {
+
         private final String level;
         private final ChildConfig child;
 
@@ -65,6 +66,7 @@ class TestPropertyPathDecorator {
     }
 
     private static class ChildConfig extends AbstractConfig {
+
         private final String level;
         private final GrandchildConfig grandChild;
 
@@ -89,6 +91,7 @@ class TestPropertyPathDecorator {
     }
 
     private static class GrandchildConfig extends AbstractConfig {
+
         private final String level;
 
         private GrandchildConfig(@JsonProperty("level") final String level) {

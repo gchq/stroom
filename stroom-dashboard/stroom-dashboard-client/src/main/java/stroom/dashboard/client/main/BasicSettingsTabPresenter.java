@@ -20,11 +20,10 @@ import stroom.dashboard.shared.ComponentConfig;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.Objects;
 
-public class BasicSettingsTabPresenter<V extends BasicSettingsTabPresenter.SettingsView>
+public class BasicSettingsTabPresenter<V extends BasicSettingsView>
         extends AbstractSettingsTabPresenter<V> {
 
     @Inject
@@ -58,14 +57,5 @@ public class BasicSettingsTabPresenter<V extends BasicSettingsTabPresenter.Setti
         final boolean equal = Objects.equals(componentConfig.getName(), newComponentConfig.getName());
 
         return !equal;
-    }
-
-    public interface SettingsView extends View {
-
-        void setId(String id);
-
-        String getName();
-
-        void setName(String name);
     }
 }

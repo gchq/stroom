@@ -25,11 +25,10 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.core.client.GWT;
@@ -42,7 +41,8 @@ import com.gwtplatform.mvp.client.View;
 import java.util.ArrayList;
 import java.util.List;
 
-public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresenter.QueryHistoryView> {
+public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresenter.QueryHistoryView> implements
+        HidePopupRequestEvent.Handler {
 
     private static final StoredQueryResource STORED_QUERY_RESOURCE = GWT.create(StoredQueryResource.class);
 
@@ -58,6 +58,7 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
                                  final ExpressionTreePresenter expressionPresenter,
                                  final RestFactory restFactory) {
         super(eventBus, view);
+
         this.restFactory = restFactory;
         this.expressionPresenter = expressionPresenter;
 
@@ -81,7 +82,8 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
                 expressionPresenter.read(query.getQuery().getExpression());
             }
         }));
-        registerHandler(selectionModel.addDoubleSelectHandler(event -> close(true)));
+        registerHandler(selectionModel.addDoubleSelectHandler(event ->
+                HidePopupRequestEvent.builder(this).fire()));
     }
 
     public void show(final QueryPresenter queryPresenter, final String dashboardUuid) {
@@ -123,41 +125,36 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
                     getView().getCellList().setRowCount(dedupedList.size(), true);
 
                     if (showAfterRefresh) {
-                        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-                            @Override
-                            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                                close(ok);
-                            }
-
-                            @Override
-                            public void onHide(final boolean autoClose, final boolean ok) {
-                            }
-                        };
-
                         final PopupSize popupSize = PopupSize.resizable(500, 400);
 
-                        ShowPopupEvent.fire(
-                                queryPresenter,
-                                QueryHistoryPresenter.this,
-                                PopupType.OK_CANCEL_DIALOG,
-                                popupSize,
-                                "Query History",
-                                popupUiHandlers);
+                        ShowPopupEvent.builder(this)
+                                .popupType(PopupType.OK_CANCEL_DIALOG)
+                                .popupSize(popupSize)
+                                .caption("Query History")
+                                .onShow(e -> {
+                                    if (getView().getCellList().getVisibleItems().size() > 0) {
+                                        final StoredQuery firstItem = getView().getCellList().getVisibleItem(0);
+                                        selectionModel.setSelected(firstItem, true);
+                                        getView().getCellList().setKeyboardSelectedRow(0, true);
+                                    }
+                                })
+                                .onHideRequest(this)
+                                .fire();
                     }
                 })
                 .call(STORED_QUERY_RESOURCE)
                 .find(criteria);
     }
 
-    private void close(final boolean ok) {
-        if (ok) {
+    @Override
+    public void onHideRequest(final HidePopupRequestEvent e) {
+        if (e.isOk()) {
             final StoredQuery query = selectionModel.getSelectedObject();
             if (query != null && query.getQuery() != null && query.getQuery().getExpression() != null) {
                 queryPresenter.setExpression(query.getQuery().getExpression());
             }
         }
-
-        HidePopupEvent.fire(queryPresenter, QueryHistoryPresenter.this);
+        e.hide();
     }
 
     public interface QueryHistoryView extends View {

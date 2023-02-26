@@ -48,6 +48,29 @@ html,body,div,span,table,tbody,tr,th,td,table th,table td,b,p,h1,h2,h3,h4,select
 	outline: none;
 }
 
+/*
+button {
+    outline: 0;
+    border-color: transparent;
+    border-width: 2px;
+    border-style: solid;
+    border-radius: .25rem;
+}
+
+button:focus:focus-visible {
+    outline: 0;
+    border-color: var(--focus-border);
+    box-shadow: var(--focus-shadow);
+    border-width: 2px;
+    border-style: solid;
+    border-radius: .25rem;
+}
+*/
+/*
+button:focus:not(:focus-visible) {
+  outline: 0;
+}
+*/
 select,input,textarea {
   	-webkit-user-select: text;
   	-moz-user-select: text;
@@ -63,7 +86,7 @@ textarea {
 	display: block;
 	margin: 0px;
 	_margin-top: -1px;
-	border: solid 1px var(--input-border-color);
+	border: solid 1px var(--control__border-color);
 	resize: none;
 	height: 80px;
 	/* To ensure we get a pointer for the scrollbar */
@@ -116,7 +139,7 @@ td {
  * Styles for basic Stroom components
  */
 .stroom-body {
-	background-color: #d50101 !important;
+	background-color: var(--app__background-color);
 	line-height: 14px;
 	line-height: initial;
 }
@@ -136,20 +159,6 @@ td {
 	left: 0px;
 	width: 100%;
 	height: 100%;
-}
-
-.tubeEffect {
-	position: absolute;
-	top: 0px;
-	left: 0px;
-	width: 100%;
-	height: 100%;
-	opacity: 0.6;
-	visibility: visible;
-	
-	box-shadow: inset 0 0 150px rgba(0,0,0,1), inset 0 0 150px rgba(0,0,0,1);
-	
-	/*box-shadow: inset 0 150px 150px rgba(0,0,0,0.4),inset 0 -150px 150px rgba(0,0,0,0.4),inset -150px 0 150px rgba(0,0,0,0.4),inset 150px 0 150px rgba(0,0,0,0.4) */
 }
 
 /* STYLES FOR THE LOADING BANNER */
@@ -178,7 +187,7 @@ td {
 }
 
 #loadingLeft {
-    margin: 0 8px;
+    margin: 0 4px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -200,25 +209,29 @@ td {
 #loadingText {
 }
 
-.stroom-pipeline-stepping-button {
+.stepping-button-container {
+	position: relative;
+}
+
+.stepping-button {
 	position: absolute;
 	right: 16px;
 	bottom: 16px;
 	z-index: 5;
 }
 
-.stroom-pipeline-stepping-button-icon {
+.stepping-button-icon {
     background-image: url("../images/stepping.svg");
     width: 46px;
     height: 46px;
     margin-left: 2px;
 }
 
-.stroom-pipeline-stepping-button .face {
+.stepping-button .face {
 	background: #3385ff;
 }
 
-.stroom-pipeline-stepping-button .face:hover {
+.stepping-button .face:hover {
 	background: #51a5ff;
 }
 
@@ -377,7 +390,7 @@ td {
 
 .toolbarButton-hover { /*	
 	padding: 2px;
-	background-color: var(--input-border-color);
+	background-color: var(--control__border-color);
 	border: 1px solid #2291D0;
 */
 	
@@ -394,15 +407,13 @@ td {
 .stroom-main-content-container {
 	height: 100%;
 	padding: 0px;
-	border: 1px solid var(--main-border-color);
-    background-color: var(--main-background-color);
 }
 
 /* DATA GRID */
 .dataGrid-Layout {
 	width: 100%;
 	height: 100%;
-	border: solid 1px var(--input-border-color);
+	border: solid 1px var(--control__border-color);
 	/*	background-color: white;*/
 }
 
@@ -573,16 +584,18 @@ td {
 .gwt-ListBox,
 .gwt-DateBox,
 .stroom-DropDownTree,
-.stroom-input,
-select option,
+.stroom-control,
+select,
 textarea,
 input,
 input[type="text"],
 input[type="checkbox"],
 input[type="file"] {
-	border: solid 1px var(--input-border-color);
-	background-color: var(--input-background-color);
-	color: var(--text-color);
+	border: solid 1px var(--control__border-color);
+	background-color: var(--control__background-color);
+	color: var(--control__text-color);
+	border-radius: .25rem;
+	height: calc(1.5em + .75rem + 2px);
 }
 
 .gwt-TextArea:disabled,
@@ -591,20 +604,40 @@ input[type="file"] {
 .gwt-ListBox:disabled,
 .gwt-DateBox:disabled,
 .stroom-DropDownTree:disabled,
-.stroom-input:disabled,
-select option:disabled,
+.stroom-control:disabled,
+select:disabled,
 textarea:disabled,
 input:disabled,
 input[type="text"]:disabled,
 input[type="checkbox"]:disabled,
 input[type="file"]:disabled {
-	border: solid 1px var(--input-border-color-disabled);
-	background-color: var(--input-background-color-disabled);
-	color: var(--text-color-disabled);
+	border: solid 1px var(--control__border-color--disabled);
+	background-color: var(--control__background-color--disabled);
+	color: var(--control__text-color--disabled);
+}
+
+select option {
+	background-color: var(--control__background-color);
+	color: var(--control__text-color);
+	padding: 5px;
+}
+
+select option:hover {
+    background-color: var(--row__background-color--hovered);
+}
+
+select option:checked {
+	background-color: var(--row__background-color--selected);
+	color: var(--row__text-color--selected);
+}
+
+select option:disabled {
+	background-color: var(--control__background-color--disabled);
+	color: var(--control__text-color--disabled);
 }
 
 .info-page {
-	background-color: var(--main-background-color);
+	background-color: var(--page__background-color);
 	color: var(--text-color);
 	padding: 5px;
 	padding-top: 0;
@@ -612,11 +645,8 @@ input[type="file"]:disabled {
 }
 
 .gwt-SuggestBoxPopup .suggestPopupContent {
-  background: var(--input-background-color) !important;
-}
-
-.stroom-content {
-	background-color: var(--main-background-color);
+  background: var(--control__background-color) !important;
+  color: var(--control__text-color);
 }
 
 .gwt-ListBox {
@@ -628,12 +658,13 @@ input[type="file"]:disabled {
     /* Make Chrome and Firefox look the same */
     -webkit-appearance: none;
 
-    background-color: var(--input-background-color);
+    background-color: var(--control__background-color);
     background-image: url("../images/drop-down.svg");
     background-position: center right;
     background-repeat: no-repeat;
     background-size: 12px;
 	background-origin: content-box;
+	color: var(--control__text-color);
 }
 
 .stroom-theme-dark .gwt-ListBox,
@@ -647,22 +678,22 @@ input[type="file"]:disabled {
 }
 
 .gwt-TextArea-readonly {
-  color: var(--text-color-disabled);
+  color: var(--text-color--disabled);
   /* background-color: rgba(255, 255, 255, 0.5); */
 }
 
 .gwt-TextBox-readonly {
-  color: var(--text-color-disabled);
+  color: var(--text-color--disabled);
   /* background-color: rgba(255, 255, 255, 0.5); */
 }
 
 .gwt-PasswordTextBox-readonly {
-  color: var(--text-color-disabled);
+  color: var(--text-color--disabled);
   /* background-color: rgba(255, 255, 255, 0.5); */
 }
 
 .gwt-Label-disabled {
-  color: var(--text-color-disabled);
+  color: var(--text-color--disabled);
 }
 
 /* .gwt-TextBox,.gwt-PasswordTextBox,.gwt-TextArea,.gwt-DateBox,.stroom-DropDownTree { */
@@ -696,11 +727,6 @@ input[type="file"]:disabled {
 	border: 1px solid black;
 }
 
-.itemCheckList {
-	background-color: var(--main-background-color);
-	border: 1px solid var(--input-border-color);
-}
-
 .gwt-ValueSpinner .arrows {
 	width: 1px;
 	height: 1px;
@@ -716,7 +742,7 @@ input[type="file"]:disabled {
 
 .gwt-ValueSpinner .textBox {
 	text-align: right;
-	border: 1px solid var(--input-border-color);
+	border: 1px solid var(--control__border-color);
 }
 
 .gwt-Tree * {
@@ -729,15 +755,11 @@ input[type="file"]:disabled {
 }
 
 .activityOuter {
-    background-color: var(--input-background-color);
-    padding: 10px;
+    padding: var(--control__padding--vertical) var(--control__padding--horizontal);
+    color: var(--text-color);
 }
 
-.activityContainer {
-    background-color: var(--input-background-color);
-    color: var(--input-text-color);
-    border: 1px solid var(--input-border-color);
-    border-radius: 5px;
+.activityButton {
     padding: 5px;
     width: 100%;
     height: 100%;
@@ -788,10 +810,13 @@ input[type="file"]:disabled {
 	visibility: visible;
 }
 
+.control__padding-bottom {
+    padding-bottom: var(--control__padding--vertical);
+}
 
-
-
-
+.control__padding-right {
+    padding-right: var(--control__padding--vertical);
+}
 
 .dock-container-horizontal {
     display: flex;
@@ -803,16 +828,20 @@ input[type="file"]:disabled {
 }
 
 .dock-min {
+/*
     flex-grow: 0;
     flex-shrink: 0;
     position: relative;
+    */
 }
 
 .dock-max {
     flex-grow: 1;
+    /*
     flex-shrink: 1;
     overflow: hidden;
     position: relative;
+    */
 }
 
 .input-row {
@@ -823,6 +852,10 @@ input[type="file"]:disabled {
 
 .w-100 {
   width: 100% !important;
+}
+
+.scrollable {
+    overflow: auto;
 }
 
 .clickableLabel.enabled {
@@ -836,4 +869,11 @@ input[type="file"]:disabled {
 .clickableLabel.disabled {
     color: #8f8f8f;
     cursor: default;
+}
+textarea.clipboardCopy {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	opacity: 1;
+	z-index: -1;
 }

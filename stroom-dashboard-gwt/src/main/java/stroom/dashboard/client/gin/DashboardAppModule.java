@@ -30,8 +30,7 @@ import stroom.data.client.presenter.CharacterNavigatorPresenter;
 import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
 import stroom.data.client.presenter.CharacterRangeSelectionPresenter;
 import stroom.data.client.presenter.CharacterRangeSelectionPresenter.CharacterRangeSelectionView;
-import stroom.data.client.presenter.ClassificationWrapperPresenter;
-import stroom.data.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
+import stroom.data.client.presenter.ClassificationWrapperView;
 import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DataPresenter.DataView;
 import stroom.data.client.presenter.DataPreviewTabPresenter;
@@ -56,9 +55,15 @@ import stroom.data.client.view.ItemSelectionViewImpl;
 import stroom.data.client.view.SourceTabViewImpl;
 import stroom.data.client.view.SourceViewImpl;
 import stroom.data.client.view.TextViewImpl;
+import stroom.data.grid.client.PagerView;
+import stroom.data.grid.client.PagerViewImpl;
+import stroom.data.grid.client.WrapperView;
+import stroom.data.grid.client.WrapperViewImpl;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
 import stroom.editor.client.view.EditorViewImpl;
+import stroom.entity.client.presenter.LinkTabPanelView;
+import stroom.entity.client.view.LinkTabPanelViewImpl;
 import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.client.view.EntityTreeViewImpl;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
@@ -67,9 +72,9 @@ import stroom.iframe.client.presenter.IFramePresenter;
 import stroom.iframe.client.presenter.IFramePresenter.IFrameView;
 import stroom.iframe.client.view.IFrameContentViewImpl;
 import stroom.iframe.client.view.IFrameViewImpl;
-import stroom.widget.dropdowntree.client.presenter.DropDownPresenter;
-import stroom.widget.dropdowntree.client.presenter.DropDownTreePresenter;
+import stroom.widget.dropdowntree.client.view.DropDownTreeView;
 import stroom.widget.dropdowntree.client.view.DropDownTreeViewImpl;
+import stroom.widget.dropdowntree.client.view.DropDownView;
 import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
 import stroom.widget.progress.client.presenter.ProgressPresenter;
 import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
@@ -104,8 +109,8 @@ public class DashboardAppModule extends AbstractPresenterModule {
                 DashboardMainViewImpl.class,
                 DashboardMainProxy.class);
 
-        bindSharedView(DropDownPresenter.DropDrownView.class, DropDownViewImpl.class);
-        bindSharedView(DropDownTreePresenter.DropDownTreeView.class, DropDownTreeViewImpl.class);
+        bindSharedView(DropDownView.class, DropDownViewImpl.class);
+        bindSharedView(DropDownTreeView.class, DropDownTreeViewImpl.class);
 
         bindPresenterWidget(
                 EntityTreePresenter.class,
@@ -123,10 +128,6 @@ public class DashboardAppModule extends AbstractPresenterModule {
                 IFrameContentPresenter.class,
                 IFrameContentView.class,
                 IFrameContentViewImpl.class);
-        bindPresenterWidget(
-                ClassificationWrapperPresenter.class,
-                ClassificationWrapperView.class,
-                ClassificationWrapperViewImpl.class);
         bindPresenterWidget(
                 DataPreviewTabPresenter.class,
                 DataPreviewTabView.class,
@@ -167,5 +168,10 @@ public class DashboardAppModule extends AbstractPresenterModule {
                 ItemSelectionPresenter.class,
                 ItemSelectionView.class,
                 ItemSelectionViewImpl.class);
+
+        bindSharedView(PagerView.class, PagerViewImpl.class);
+        bindSharedView(WrapperView.class, WrapperViewImpl.class);
+        bindSharedView(ClassificationWrapperView.class, ClassificationWrapperViewImpl.class);
+        bindSharedView(LinkTabPanelView.class, LinkTabPanelViewImpl.class);
     }
 }

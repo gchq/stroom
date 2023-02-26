@@ -157,6 +157,7 @@ public final class ModelStringUtil {
 
     /**
      * Formats a duration in millis to human-readable form, e.g. 999ms, 1.0s, 10m, 20h
+     *
      * @param stripTrailingZeros If true, any trailing zeros in the decimal part are ommitted.
      */
     public static String formatDurationString(final Long ms, final boolean stripTrailingZeros) {
@@ -209,6 +210,7 @@ public final class ModelStringUtil {
      * e.g. '1.1k' => 1100, '1M' => 1_000_000. The case of the unit prefixes is ignored.
      * Valid unit prefixes are 'k', 'M', 'G', 'T', 'P'.
      * If there is no unit prefix then the number is converted from the string as is.
+     *
      * @return The number or null for a null/empty input.
      * @throws NumberFormatException If it can't be parsed.
      */
@@ -228,6 +230,7 @@ public final class ModelStringUtil {
      * <pre>{@code "P" "PB"}</pre>
      * If there is no unit prefix then the number is assumed to be in bytes and is
      * converted from the string as is.
+     *
      * @return The number or null for a null/empty input.
      * @throws NumberFormatException If it can't be parsed.
      */
@@ -247,6 +250,7 @@ public final class ModelStringUtil {
      * <pre>{@code "P" "PB"}</pre>
      * If there is no unit prefix then the number is assumed to be in bytes and is
      * converted from the string as is.
+     *
      * @return The number or null for a null/empty input.
      * @throws NumberFormatException If it can't be parsed.
      */
@@ -266,6 +270,7 @@ public final class ModelStringUtil {
      * <pre>{@code "d"}</pre>
      * If there is no unit prefix then the number is assumed to be in millis and is
      * converted from the string as is.
+     *
      * @return The number or null for a null/empty input.
      * @throws NumberFormatException If it can't be parsed.
      */
@@ -278,9 +283,10 @@ public final class ModelStringUtil {
      * e.g. '1.1k' => 1100, '1M' => 1_000_000. The case of the unit prefixes is ignored.
      * Valid unit prefixes are 'k', 'M', 'G', 'T', 'P'.
      * If there is no unit prefix then the number is converted from the string as is.
+     *
      * @return The number or null for a null/empty input.
      * @throws NumberFormatException If it can't be parsed or the number is too large
-     * for an {@link Integer}
+     *                               for an {@link Integer}
      */
     public static Integer parseNumberStringAsInt(final String str) throws NumberFormatException {
         final Long num = parseNumberString(str, SIZE_DIVIDER);
@@ -365,6 +371,7 @@ public final class ModelStringUtil {
 
     /**
      * Formats a number as a long with thousands delimiters, i.e. #,###,###
+     *
      * @return The formatted number or an empty string if null.
      */
     public static String formatCsv(final Number number) {
@@ -376,6 +383,7 @@ public final class ModelStringUtil {
 
     /**
      * Formats a long with thousands delimiters, i.e. #,###,###
+     *
      * @return The formatted number or an empty string if null.
      */
     public static String formatCsv(final Long number) {
@@ -389,6 +397,7 @@ public final class ModelStringUtil {
     /**
      * Formats a double with thousands delimiters and a fixed
      * number of decimal places, i.e. {@code #,###,###.##}.
+     *
      * @return The formatted number or an empty string if null.
      */
     public static String formatCsv(final Double number, final int decimalPlaces) {
@@ -400,6 +409,7 @@ public final class ModelStringUtil {
      * number of decimal places, i.e. {@code #,###,###.##}.
      * If {@code stripTrailingZeros} is true all trailing zeros in the decimal
      * part will be omitted.
+     *
      * @return The formatted number or an empty string if null.
      */
     public static String formatCsv(final Double number,

@@ -44,7 +44,7 @@ class TestSearchResponseCreator {
     private static final Duration TOLERANCE = Duration.ofMillis(500);
 
     @Mock
-    private Store mockStore;
+    private ResultStore mockStore;
     @Mock
     private SizesProvider sizesProvider;
 
@@ -90,7 +90,6 @@ class TestSearchResponseCreator {
     private SearchResponseCreator createSearchResponseCreator() {
         return new SearchResponseCreator(
                 new SerialisersFactory(),
-                "test_user_id",
                 sizesProvider,
                 mockStore);
     }
@@ -333,6 +332,11 @@ class TestSearchResponseCreator {
 
             @Override
             public void writePayload(final Output output) {
+            }
+
+            @Override
+            public long getByteSize() {
+                return 0;
             }
         };
     }

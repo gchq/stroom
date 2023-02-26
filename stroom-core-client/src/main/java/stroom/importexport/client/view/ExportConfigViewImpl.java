@@ -57,6 +57,11 @@ public class ExportConfigViewImpl
     }
 
     @Override
+    public void focus() {
+        nameFilter.focus();
+    }
+
+    @Override
     public void setTreeView(final View view) {
         view.asWidget().setWidth("100%");
         view.asWidget().setHeight("100%");

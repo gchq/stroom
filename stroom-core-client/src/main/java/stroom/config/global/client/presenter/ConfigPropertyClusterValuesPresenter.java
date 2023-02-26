@@ -2,12 +2,10 @@ package stroom.config.global.client.presenter;
 
 import stroom.config.global.shared.ConfigProperty;
 import stroom.data.table.client.Refreshable;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -44,41 +42,20 @@ public class ConfigPropertyClusterValuesPresenter
 
     void show(final ConfigProperty configProperty,
               final Map<String, Set<NodeSource>> effectiveValueToNodesMap,
-              final PopupPosition popupPosition,
-              final PopupUiHandlers popupUiHandlers) {
+              final PopupPosition popupPosition) {
 
         this.listPresenter.setData(effectiveValueToNodesMap);
 
         final String caption = getEntityDisplayType() + " - " + configProperty.getName();
-        final PopupView.PopupType popupType = PopupView.PopupType.CLOSE_DIALOG;
+        final PopupType popupType = PopupType.CLOSE_DIALOG;
 
-        final PopupUiHandlers internalPopupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                hide();
-                popupUiHandlers.onHideRequest(autoClose, ok);
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                popupUiHandlers.onHide(autoClose, ok);
-            }
-        };
-
-        ShowPopupEvent.fire(
-                ConfigPropertyClusterValuesPresenter.this,
-                ConfigPropertyClusterValuesPresenter.this,
-                popupType,
-                getPopupSize(),
-                popupPosition,
-                caption,
-                internalPopupUiHandlers);
-    }
-
-    protected void hide() {
-        HidePopupEvent.fire(
-                ConfigPropertyClusterValuesPresenter.this,
-                ConfigPropertyClusterValuesPresenter.this);
+        ShowPopupEvent.builder(this)
+                .popupType(popupType)
+                .popupSize(getPopupSize())
+                .popupPosition(popupPosition)
+                .caption(caption)
+                .onShow(e -> listPresenter.focus())
+                .fire();
     }
 
     protected PopupSize getPopupSize() {

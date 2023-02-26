@@ -26,7 +26,6 @@
 
     <inherits name='stroom.Stroom'/>
     <inherits name='stroom.core.Core'/>
-    <inherits name="stroom.instance.Instance"/>
     <inherits name='stroom.task.Task'/>
     <inherits name='stroom.main.Main'/>
     <inherits name='stroom.widget.popup.Popup'/>
@@ -48,6 +47,7 @@
     <inherits name="stroom.item.Item" />
     <inherits name="stroom.widget.menu.Menu" />
     <inherits name="stroom.widget.button.Button" />
+    <inherits name="stroom.widget.form.Form" />
     <inherits name="stroom.widget.popup.Popup" />
     <inherits name="stroom.widget.progress.Progress" />
     <inherits name="stroom.widget.tickbox.TickBox" />
@@ -120,6 +120,8 @@
     <inherits name="stroom.job.Job" />
     <inherits name="stroom.monitoring.Monitoring" />
     <inherits name="stroom.index.Index"/>
+    <inherits name="stroom.alert.rule.AlertRule" />
+    <inherits name="stroom.view.View" />
     <!--
     <inherits name="stroom.nstat.store.monitoring.StatsMonitoring" />
      -->

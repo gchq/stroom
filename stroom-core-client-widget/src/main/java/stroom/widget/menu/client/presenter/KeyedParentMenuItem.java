@@ -17,38 +17,89 @@
 package stroom.widget.menu.client.presenter;
 
 import stroom.svg.client.Icon;
+import stroom.svg.client.Preset;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import java.util.List;
+import java.util.Objects;
 
 public class KeyedParentMenuItem extends IconMenuItem implements HasChildren {
 
     private final MenuItems menuItems;
-    private final MenuKey childMenu;
+    private final MenuKey menuKey;
 
-    public KeyedParentMenuItem(final int priority, final String text, final MenuItems menuItems,
-                               final MenuKey childMenu) {
-        this(priority, null, null, text, null, true, menuItems, childMenu);
-    }
-
-    public KeyedParentMenuItem(final int priority,
-                               final Icon enabledIcon,
-                               final Icon disabledIcon,
-                               final String text,
-                               final String shortcut,
-                               final boolean enabled,
-                               final MenuItems menuItems,
-                               final MenuKey childMenu) {
-        super(priority, enabledIcon, disabledIcon, text, shortcut, enabled, null);
+    KeyedParentMenuItem(final int priority,
+                        final Icon enabledIcon,
+                        final Icon disabledIcon,
+                        final String text,
+                        final Action action,
+                        final boolean enabled,
+                        final MenuItems menuItems,
+                        final MenuKey menuKey) {
+        super(priority, enabledIcon, disabledIcon, text, action, enabled, null, false);
         this.menuItems = menuItems;
-        this.childMenu = childMenu;
+        this.menuKey = menuKey;
     }
 
     @Override
     public Future<List<Item>> getChildren() {
         final FutureImpl<List<Item>> future = new FutureImpl<>();
-        future.setResult(menuItems.getMenuItems(childMenu));
+        future.setResult(menuItems.getMenuItems(menuKey));
         return future;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final KeyedParentMenuItem that = (KeyedParentMenuItem) o;
+        return Objects.equals(menuKey, that.menuKey);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(menuKey);
+    }
+
+    public static class Builder extends AbstractBuilder<KeyedParentMenuItem, Builder> {
+
+        MenuItems menuItems;
+        MenuKey menuKey;
+
+        public Builder menuItems(final MenuItems menuItems) {
+            this.menuItems = menuItems;
+            return self();
+        }
+
+        public Builder menuKey(final MenuKey menuKey) {
+            this.menuKey = menuKey;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public KeyedParentMenuItem build() {
+            if (text == null && enabledIcon != null && enabledIcon instanceof Preset) {
+                text = ((Preset) enabledIcon).getTitle();
+            }
+            return new KeyedParentMenuItem(
+                    priority,
+                    enabledIcon,
+                    disabledIcon,
+                    text,
+                    action,
+                    enabled,
+                    menuItems,
+                    menuKey);
+        }
     }
 }

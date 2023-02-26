@@ -2,7 +2,6 @@ package stroom.processor.impl.db;
 
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
-import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.impl.ProcessorFilterDao;
@@ -13,6 +12,7 @@ import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.ProcessorFilterTracker;
+import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -63,20 +63,17 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
     private final ProcessorDbConnProvider processorDbConnProvider;
     private final ProcessorFilterMarshaller marshaller;
-    private final GenericDao<ProcessorFilterRecord, ProcessorFilter, Integer> genericDao;
     private final ExpressionMapper expressionMapper;
+    private final ProcessorFilterTrackerDaoImpl processorFilterTrackerDaoImpl;
 
     @Inject
     ProcessorFilterDaoImpl(final ProcessorDbConnProvider processorDbConnProvider,
                            final ExpressionMapperFactory expressionMapperFactory,
-                           final ProcessorFilterMarshaller marshaller) {
+                           final ProcessorFilterMarshaller marshaller,
+                           final ProcessorFilterTrackerDaoImpl processorFilterTrackerDaoImpl) {
         this.processorDbConnProvider = processorDbConnProvider;
         this.marshaller = marshaller;
-        this.genericDao = new GenericDao<>(
-                processorDbConnProvider,
-                PROCESSOR_FILTER,
-                PROCESSOR_FILTER.ID,
-                ProcessorFilter.class);
+        this.processorFilterTrackerDaoImpl = processorFilterTrackerDaoImpl;
 
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(ProcessorFilterFields.ID, PROCESSOR_FILTER.ID, Integer::valueOf);
@@ -116,8 +113,12 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                     processorFilterTrackerRecord.attach(context.configuration());
                     processorFilterTrackerRecord.store();
 
-                    final ProcessorFilterTracker persistedTracker =
-                            processorFilterTrackerRecord.into(ProcessorFilterTracker.class);
+                    // The .store() doesn't seem to bring back the default value for status so re-fetch
+                    final ProcessorFilterTracker persistedTracker = processorFilterTrackerDaoImpl.fetch(
+                                    context, processorFilterTrackerRecord.getId())
+                            .orElseThrow(() -> new RuntimeException(
+                                    "Can't find newly created tracker with id" + processorFilterTrackerRecord.getId()));
+
                     marshalled.setProcessorFilterTracker(persistedTracker);
                     processorFilterRecord.setFkProcessorFilterTrackerId(persistedTracker.getId());
 
@@ -223,7 +224,8 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                         DSL.selectZero()
                                 .from(PROCESSOR_FILTER_TRACKER)
                                 .where(PROCESSOR_FILTER_TRACKER.ID.eq(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID))
-                                .and(PROCESSOR_FILTER_TRACKER.STATUS.eq(ProcessorFilterTracker.COMPLETE))
+                                .and(PROCESSOR_FILTER_TRACKER.STATUS.eq(
+                                        ProcessorFilterTrackerStatus.COMPLETE.getPrimitiveValue()))
                                 .and(PROCESSOR_FILTER_TRACKER.LAST_POLL_MS.lessThan(deleteThreshold.toEpochMilli()))))
                 .and(DSL.notExists(
                         DSL.selectZero()

@@ -27,6 +27,7 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.shared.DataSourceResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -37,14 +38,13 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.RandomId;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.BorderStyle;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -58,7 +58,7 @@ import java.util.stream.Collectors;
 
 public class SelectionHandlersPresenter
         extends AbstractSettingsTabPresenter<SelectionHandlersView>
-        implements HasDirtyHandlers {
+        implements HasDirtyHandlers, Focus {
 
     private static final DataSourceResource DATA_SOURCE_RESOURCE = GWT.create(DataSourceResource.class);
 
@@ -111,6 +111,11 @@ public class SelectionHandlersPresenter
         listPresenter.getView().asWidget().getElement().getStyle().setBorderStyle(BorderStyle.NONE);
 
         updateButtons();
+    }
+
+    @Override
+    public void focus() {
+        addButton.focus();
     }
 
     public void setBasicQuerySettingsPresenter(final BasicQuerySettingsPresenter basicQuerySettingsPresenter) {
@@ -222,75 +227,55 @@ public class SelectionHandlersPresenter
             editSelectionHandlerPresenter.read(newRule, componentList, fields);
 
             final PopupSize popupSize = PopupSize.resizable(800, 400);
-            ShowPopupEvent.fire(SelectionHandlersPresenter.this,
-                    editSelectionHandlerPresenter,
-                    PopupType.OK_CANCEL_DIALOG,
-                    popupSize,
-                    "Add New Selection Handler",
-                    new PopupUiHandlers() {
-                        @Override
-                        public void onHideRequest(final boolean autoClose, final boolean ok) {
-                            if (ok) {
-                                final ComponentSelectionHandler rule = editSelectionHandlerPresenter.write();
-                                selectionHandlers.add(rule);
-                                update();
-                                listPresenter.getSelectionModel().setSelected(rule);
-                                setDirty(true);
-                            }
-
-                            HidePopupEvent.fire(SelectionHandlersPresenter.this, editSelectionHandlerPresenter);
+            ShowPopupEvent.builder(editSelectionHandlerPresenter)
+                    .popupType(PopupType.OK_CANCEL_DIALOG)
+                    .popupSize(popupSize)
+                    .caption("Add New Selection Handler")
+                    .onShow(e -> editSelectionHandlerPresenter.focus())
+                    .onHideRequest(e -> {
+                        if (e.isOk()) {
+                            final ComponentSelectionHandler rule = editSelectionHandlerPresenter.write();
+                            selectionHandlers.add(rule);
+                            update();
+                            listPresenter.getSelectionModel().setSelected(rule);
+                            setDirty(true);
                         }
-
-                        @Override
-                        public void onHide(final boolean autoClose, final boolean ok) {
-                            // Do nothing.
-                        }
-                    });
+                        e.hide();
+                    })
+                    .fire();
         });
     }
 
     private void edit(final ComponentSelectionHandler existingRule) {
         loadFields(fields -> {
-
             final SelectionHandlerPresenter editSelectionHandlerPresenter = editRulePresenterProvider.get();
 
             editSelectionHandlerPresenter.read(existingRule, componentList, fields);
 
             final PopupSize popupSize = PopupSize.resizable(800, 400);
-            ShowPopupEvent.fire(
-                    SelectionHandlersPresenter.this,
-                    editSelectionHandlerPresenter,
-                    PopupType.OK_CANCEL_DIALOG,
-                    popupSize,
-                    "Edit Selection Handler",
-                    new PopupUiHandlers() {
+            ShowPopupEvent.builder(editSelectionHandlerPresenter)
+                    .popupType(PopupType.OK_CANCEL_DIALOG)
+                    .popupSize(popupSize)
+                    .caption("Edit Selection Handler")
+                    .onShow(e -> editSelectionHandlerPresenter.focus())
+                    .onHideRequest(e -> {
+                        if (e.isOk()) {
+                            final ComponentSelectionHandler rule = editSelectionHandlerPresenter.write();
+                            final int index = selectionHandlers.indexOf(existingRule);
+                            selectionHandlers.remove(index);
+                            selectionHandlers.add(index, rule);
 
-                        @Override
-                        public void onHideRequest(final boolean autoClose, final boolean ok) {
-                            if (ok) {
-                                final ComponentSelectionHandler rule = editSelectionHandlerPresenter.write();
-                                final int index = selectionHandlers.indexOf(existingRule);
-                                selectionHandlers.remove(index);
-                                selectionHandlers.add(index, rule);
+                            update();
+                            listPresenter.getSelectionModel().setSelected(rule);
 
-                                update();
-                                listPresenter.getSelectionModel().setSelected(rule);
-
-                                // Only mark the policies as dirty if the rule was actually changed.
-                                if (!existingRule.equals(rule)) {
-                                    setDirty(true);
-                                }
+                            // Only mark the policies as dirty if the rule was actually changed.
+                            if (!existingRule.equals(rule)) {
+                                setDirty(true);
                             }
-
-                            HidePopupEvent.fire(SelectionHandlersPresenter.this, editSelectionHandlerPresenter);
                         }
-
-                        @Override
-                        public void onHide(final boolean autoClose, final boolean ok) {
-                            // Do nothing.
-                        }
-                    });
-
+                        e.hide();
+                    })
+                    .fire();
         });
     }
 
@@ -299,10 +284,10 @@ public class SelectionHandlersPresenter
         if (dataSource == null) {
             consumer.accept(new ArrayList<>());
         } else if (!dataSource.equals(currentDataSource)) {
-            final Rest<List<AbstractField>> rest = restFactory.create();
+            final Rest<DataSource> rest = restFactory.create();
             rest
                     .onSuccess(result -> {
-                        currentFields = result;
+                        currentFields = result.getFields();
                         currentDataSource = dataSource;
                         consumer.accept(currentFields);
                     })
@@ -314,7 +299,7 @@ public class SelectionHandlersPresenter
                                 () -> consumer.accept(currentFields));
                     })
                     .call(DATA_SOURCE_RESOURCE)
-                    .fetchFields(dataSource);
+                    .fetch(dataSource);
 
         } else {
             consumer.accept(currentFields);

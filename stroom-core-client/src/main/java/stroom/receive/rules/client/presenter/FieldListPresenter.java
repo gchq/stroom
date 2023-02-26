@@ -18,9 +18,9 @@
 package stroom.receive.rules.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
@@ -33,10 +33,10 @@ import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -48,9 +48,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class FieldListPresenter extends MyPresenterWidget<DataGridView<AbstractField>>
+public class FieldListPresenter extends MyPresenterWidget<PagerView>
         implements HasDocumentRead<ReceiveDataRules>, HasWrite<ReceiveDataRules>, HasDirtyHandlers,
         ReadOnlyChangeHandler {
+
+    private final MyDataGrid<AbstractField> dataGrid;
+    private final MultiSelectionModelImpl<AbstractField> selectionModel;
 
     private final FieldEditPresenter fieldEditPresenter;
     private final ButtonView newButton;
@@ -62,11 +65,16 @@ public class FieldListPresenter extends MyPresenterWidget<DataGridView<AbstractF
 
     private boolean readOnly = true;
 
-    @SuppressWarnings("unchecked")
     @Inject
     public FieldListPresenter(final EventBus eventBus,
+                              final PagerView view,
                               final FieldEditPresenter fieldEditPresenter) {
-        super(eventBus, new DataGridViewImpl<>(true, true));
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        view.setDataWidget(dataGrid);
+
         this.fieldEditPresenter = fieldEditPresenter;
 
         newButton = getView().addButton(SvgPresets.NEW_ITEM);
@@ -91,40 +99,40 @@ public class FieldListPresenter extends MyPresenterWidget<DataGridView<AbstractF
 
         registerHandler(newButton.addClickHandler(event -> {
             if (!readOnly) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (MouseUtil.isPrimary(event)) {
                     onAdd();
                 }
             }
         }));
         registerHandler(editButton.addClickHandler(event -> {
             if (!readOnly) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (MouseUtil.isPrimary(event)) {
                     onEdit();
                 }
             }
         }));
         registerHandler(removeButton.addClickHandler(event -> {
             if (!readOnly) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (MouseUtil.isPrimary(event)) {
                     onRemove();
                 }
             }
         }));
         registerHandler(upButton.addClickHandler(event -> {
             if (!readOnly) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (MouseUtil.isPrimary(event)) {
                     moveSelectedFieldUp();
                 }
             }
         }));
         registerHandler(downButton.addClickHandler(event -> {
             if (!readOnly) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (MouseUtil.isPrimary(event)) {
                     moveSelectedFieldDown();
                 }
             }
         }));
-        registerHandler(getView().getSelectionModel().addSelectionHandler(event -> {
+        registerHandler(selectionModel.addSelectionHandler(event -> {
             if (!readOnly) {
                 enableButtons();
                 if (event.getSelectionType().isDoubleSelect()) {
@@ -138,7 +146,7 @@ public class FieldListPresenter extends MyPresenterWidget<DataGridView<AbstractF
         newButton.setEnabled(!readOnly);
 
         if (!readOnly && fields != null) {
-            final AbstractField selectedElement = getView().getSelectionModel().getSelected();
+            final AbstractField selectedElement = selectionModel.getSelected();
             final boolean enabled = selectedElement != null;
             editButton.setEnabled(enabled);
             removeButton.setEnabled(enabled);
@@ -161,11 +169,11 @@ public class FieldListPresenter extends MyPresenterWidget<DataGridView<AbstractF
     private void addColumns() {
         addNameColumn();
         addTypeColumn();
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addNameColumn() {
-        getView().addResizableColumn(new Column<AbstractField, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<AbstractField, String>(new TextCell()) {
             @Override
             public String getValue(final AbstractField row) {
                 return row.getName();
@@ -174,7 +182,7 @@ public class FieldListPresenter extends MyPresenterWidget<DataGridView<AbstractF
     }
 
     private void addTypeColumn() {
-        getView().addResizableColumn(new Column<AbstractField, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<AbstractField, String>(new TextCell()) {
             @Override
             public String getValue(final AbstractField row) {
                 return row.getFieldType().getTypeName();
@@ -186,65 +194,49 @@ public class FieldListPresenter extends MyPresenterWidget<DataGridView<AbstractF
         final Set<String> otherNames = fields.stream().map(AbstractField::getName).collect(Collectors.toSet());
 
         fieldEditPresenter.read(new TextField(""), otherNames);
-        fieldEditPresenter.show("New Field", new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    final AbstractField newField = fieldEditPresenter.write();
-                    if (newField != null) {
-                        fields.add(newField);
-                        refresh();
-                        fieldEditPresenter.hide();
-                        DirtyEvent.fire(FieldListPresenter.this, true);
-                    }
-                } else {
-                    fieldEditPresenter.hide();
+        fieldEditPresenter.show("New Field", e -> {
+            if (e.isOk()) {
+                final AbstractField newField = fieldEditPresenter.write();
+                if (newField != null) {
+                    fields.add(newField);
+                    refresh();
+                    e.hide();
+                    DirtyEvent.fire(FieldListPresenter.this, true);
                 }
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                // Ignore.
+            } else {
+                e.hide();
             }
         });
     }
 
     private void onEdit() {
-        final AbstractField field = getView().getSelectionModel().getSelected();
+        final AbstractField field = selectionModel.getSelected();
         if (field != null) {
             final Set<String> otherNames = fields.stream().map(AbstractField::getName).collect(Collectors.toSet());
             otherNames.remove(field.getName());
 
             fieldEditPresenter.read(field, otherNames);
-            fieldEditPresenter.show("Edit Field", new PopupUiHandlers() {
-                @Override
-                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                    if (ok) {
-                        final AbstractField newField = fieldEditPresenter.write();
-                        if (newField != null) {
-                            final int index = fields.indexOf(field);
-                            fields.remove(index);
-                            fields.add(index, newField);
+            fieldEditPresenter.show("Edit Field", e -> {
+                if (e.isOk()) {
+                    final AbstractField newField = fieldEditPresenter.write();
+                    if (newField != null) {
+                        final int index = fields.indexOf(field);
+                        fields.remove(index);
+                        fields.add(index, newField);
 
-                            refresh();
-                            fieldEditPresenter.hide();
-                            DirtyEvent.fire(FieldListPresenter.this, true);
-                        }
-                    } else {
-                        fieldEditPresenter.hide();
+                        refresh();
+                        e.hide();
+                        DirtyEvent.fire(FieldListPresenter.this, true);
                     }
-                }
-
-                @Override
-                public void onHide(final boolean autoClose, final boolean ok) {
-                    // Ignore.
+                } else {
+                    e.hide();
                 }
             });
         }
     }
 
     private void onRemove() {
-        final List<AbstractField> list = getView().getSelectionModel().getSelectedItems();
+        final List<AbstractField> list = selectionModel.getSelectedItems();
         if (list != null && list.size() > 0) {
             String message = "Are you sure you want to delete the selected field?";
             if (list.size() > 1) {
@@ -254,7 +246,7 @@ public class FieldListPresenter extends MyPresenterWidget<DataGridView<AbstractF
             ConfirmEvent.fire(this, message, result -> {
                 if (result) {
                     fields.removeAll(list);
-                    getView().getSelectionModel().clear();
+                    selectionModel.clear();
                     refresh();
                     DirtyEvent.fire(FieldListPresenter.this, true);
                 }
@@ -263,7 +255,7 @@ public class FieldListPresenter extends MyPresenterWidget<DataGridView<AbstractF
     }
 
     private void moveSelectedFieldUp() {
-        final AbstractField selected = getView().getSelectionModel().getSelected();
+        final AbstractField selected = selectionModel.getSelected();
         if (selected != null) {
             final int index = fields.indexOf(selected);
             if (index > 0) {
@@ -278,7 +270,7 @@ public class FieldListPresenter extends MyPresenterWidget<DataGridView<AbstractF
     }
 
     private void moveSelectedFieldDown() {
-        final AbstractField selected = getView().getSelectionModel().getSelected();
+        final AbstractField selected = selectionModel.getSelected();
         if (selected != null) {
             final int index = fields.indexOf(selected);
             if (index >= 0 && index < fields.size() - 1) {
@@ -297,8 +289,8 @@ public class FieldListPresenter extends MyPresenterWidget<DataGridView<AbstractF
             fields = new ArrayList<>();
         }
 
-        getView().setRowData(0, fields);
-        getView().setRowCount(fields.size());
+        dataGrid.setRowData(0, fields);
+        dataGrid.setRowCount(fields.size());
     }
 
     @Override
@@ -310,8 +302,9 @@ public class FieldListPresenter extends MyPresenterWidget<DataGridView<AbstractF
     }
 
     @Override
-    public void write(final ReceiveDataRules policy) {
+    public ReceiveDataRules write(final ReceiveDataRules policy) {
         policy.setFields(fields);
+        return policy;
     }
 
     @Override

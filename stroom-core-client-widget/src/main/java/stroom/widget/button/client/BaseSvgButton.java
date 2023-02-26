@@ -17,6 +17,9 @@
 package stroom.widget.button.client;
 
 import stroom.svg.client.Preset;
+import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.KeyBinding.Action;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -44,14 +47,14 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
     private boolean allowClickPropagation;
 
     BaseSvgButton(final Preset preset) {
-        super(Document.get().createDivElement());
+        super(Document.get().createPushButtonElement());
 
         sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.FOCUSEVENTS | Event.KEYEVENTS);
         getElement().getStyle().setDisplay(Display.INLINE_BLOCK);
 
         getElement().setClassName("fa-button");
 
-        face = Document.get().createPushButtonElement();
+        face = Document.get().createDivElement();
         face.setClassName("face");
 
         getElement().appendChild(face);
@@ -102,7 +105,7 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
                 }
                 break;
             case Event.ONMOUSEDOWN:
-                if (event.getButton() == Event.BUTTON_LEFT) {
+                if (MouseUtil.isPrimary(event)) {
                     setFocus(true);
                     onClickStart();
                     DOM.setCapture(getElement());
@@ -115,7 +118,7 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
                 if (isCapturing) {
                     isCapturing = false;
                     DOM.releaseCapture(getElement());
-                    if (event.getButton() == Event.BUTTON_LEFT) {
+                    if (MouseUtil.isPrimary(event)) {
                         onClick();
                     }
                 }
@@ -165,28 +168,34 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
         // Synthesize clicks based on keyboard events AFTER the normal key
         // handling.
         if ((event.getTypeInt() & Event.KEYEVENTS) != 0) {
-            final char keyCode = (char) event.getKeyCode();
             switch (type) {
                 case Event.ONKEYDOWN:
-                    if (keyCode == ' ') {
-                        isFocusing = true;
-                        onClickStart();
-                    }
-                    break;
-                case Event.ONKEYUP:
-                    if (isFocusing && keyCode == ' ') {
-                        isFocusing = false;
+                    final Action action = KeyBinding.getAction(event);
+                    if (action == Action.SELECT || action == Action.EXECUTE) {
                         onClick();
                     }
                     break;
-                case Event.ONKEYPRESS:
-                    if (keyCode == '\n' || keyCode == '\r') {
-                        onClickStart();
-                        onClick();
-                    }
-                    break;
-                default:
-                    // Ignore events we don't care about
+
+//                case Event.ONKEYDOWN:
+//                    if (keyCode == ' ') {
+//                        isFocusing = true;
+//                        onClickStart();
+//                    }
+//                    break;
+//                case Event.ONKEYUP:
+//                    if (isFocusing && keyCode == ' ') {
+//                        isFocusing = false;
+//                        onClick();
+//                    }
+//                    break;
+//                case Event.ONKEYPRESS:
+//                    if (keyCode == '\n' || keyCode == '\r') {
+//                        onClickStart();
+//                        onClick();
+//                    }
+//                    break;
+//                default:
+//                    // Ignore events we don't care about
             }
         }
     }

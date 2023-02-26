@@ -34,6 +34,8 @@ import stroom.query.api.v2.NumberFormatSettings;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchRequestSource;
+import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeZone;
@@ -129,10 +131,15 @@ public class SearchRequestTestData {
 
         return DashboardSearchRequest
                 .builder()
+                .searchRequestSource(
+                        SearchRequestSource
+                                .builder()
+                                .sourceType(SourceType.DASHBOARD_UI)
+                                .ownerDocUuid("dashboardUuid")
+                                .componentId(componentId)
+                                .build())
                 .search(search)
                 .componentResultRequests(componentResultRequests)
-                .dashboardUuid("dashboardUuid")
-                .componentId(componentId)
                 .build();
     }
 

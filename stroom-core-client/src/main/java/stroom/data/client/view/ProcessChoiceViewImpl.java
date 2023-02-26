@@ -1,10 +1,9 @@
 package stroom.data.client.view;
 
-import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ProcessChoicePresenter;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.widget.customdatebox.client.MyDateBox;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -20,14 +19,14 @@ public class ProcessChoiceViewImpl extends ViewImpl implements ProcessChoicePres
     @UiField
     ValueSpinner priority;
     @UiField
-    TickBox autoPriority;
+    CustomCheckBox autoPriority;
     @UiField
-    TickBox reprocess;
+    CustomCheckBox reprocess;
     @UiField
-    TickBox enabled;
-    @UiField(provided = true)
+    CustomCheckBox enabled;
+    @UiField
     MyDateBox minMetaCreateTimeMs;
-    @UiField(provided = true)
+    @UiField
     MyDateBox maxMetaCreateTimeMs;
 
     private final Widget widget;
@@ -35,17 +34,17 @@ public class ProcessChoiceViewImpl extends ViewImpl implements ProcessChoicePres
     @Inject
     public ProcessChoiceViewImpl(final Binder binder,
                                  final UserPreferencesManager userPreferencesManager) {
-        minMetaCreateTimeMs = new MyDateBox(userPreferencesManager.isUtc());
-        maxMetaCreateTimeMs = new MyDateBox(userPreferencesManager.isUtc());
         widget = binder.createAndBindUi(this);
+        minMetaCreateTimeMs.setUtc(userPreferencesManager.isUtc());
+        maxMetaCreateTimeMs.setUtc(userPreferencesManager.isUtc());
 
         priority.setMax(100);
         priority.setMin(1);
         priority.setValue(10);
 
-        autoPriority.setBooleanValue(true);
+        autoPriority.setValue(true);
 
-        enabled.setBooleanValue(true);
+        enabled.setValue(true);
     }
 
     @Override
@@ -54,23 +53,28 @@ public class ProcessChoiceViewImpl extends ViewImpl implements ProcessChoicePres
     }
 
     @Override
+    public void focus() {
+        priority.focus();
+    }
+
+    @Override
     public int getPriority() {
-        return priority.getValue();
+        return priority.getIntValue();
     }
 
     @Override
     public boolean isAutoPriority() {
-        return autoPriority.getBooleanValue();
+        return autoPriority.getValue();
     }
 
     @Override
     public boolean isReprocess() {
-        return reprocess.getBooleanValue();
+        return reprocess.getValue();
     }
 
     @Override
     public boolean isEnabled() {
-        return enabled.getBooleanValue();
+        return enabled.getValue();
     }
 
     @Override
@@ -94,7 +98,7 @@ public class ProcessChoiceViewImpl extends ViewImpl implements ProcessChoicePres
     }
 
     @UiHandler("reprocess")
-    public void onChange(final ValueChangeEvent<TickBoxState> event) {
+    public void onChange(final ValueChangeEvent<Boolean> event) {
         setMaxMetaCreateTimeMs(System.currentTimeMillis());
     }
 

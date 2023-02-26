@@ -27,33 +27,35 @@ class TestProgressMonitor {
 
     @Test
     void getSummary() {
-        final String str = test(false, false);
+        final String str = test(false, false, false);
         Assertions.assertThat(str)
                 .contains("Inspected 2/2 filters for task creation"); // 10 + 20
     }
 
     @Test
     void getSummaryPlusPhaseDetail() {
-        final String str = test(false, true);
+        final String str = test(false, true, true);
         Assertions.assertThat(str)
                 .contains(Phase.SELECT_NEW_TASKS.getPhaseName() + ": " + 30); // 10 + 20
     }
 
     @Test
     void getDetail() {
-        final String str = test(true, false);
+        final String str = test(true, true, false);
         Assertions.assertThat(str)
                 .contains("Filter (id: 1, priority: 10, pipeline: Pipe 1)");
     }
 
     @Test
     void getDetailPlusPhaseDetail() {
-        final String str = test(true, true);
+        final String str = test(true, true, true);
         Assertions.assertThat(str)
                 .contains("Filter (id: 1, priority: 10, pipeline: Pipe 1)");
     }
 
-    private String test(final boolean showFilterDetail, final boolean showPhaseDetail) {
+    private String test(final boolean showFilterDetail,
+                        final boolean showSummaryPhaseDetail,
+                        final boolean showFilterPhaseDetail) {
         final ProgressMonitor progressMonitor = new ProgressMonitor(2);
 
         final FilterProgressMonitor progressMonitor1 = progressMonitor.logFilter(PROCESSOR_FILTER_1, 0);
@@ -70,7 +72,8 @@ class TestProgressMonitor {
         final String str = progressMonitor
                 .getFullReport(new CreateProcessTasksState(0, 0),
                         showFilterDetail,
-                        showPhaseDetail);
+                        showSummaryPhaseDetail,
+                        showFilterPhaseDetail);
         LOGGER.info(str);
         return str;
     }

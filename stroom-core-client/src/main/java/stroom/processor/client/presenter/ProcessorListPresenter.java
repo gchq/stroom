@@ -28,9 +28,9 @@ import stroom.cell.valuespinner.client.ValueSpinnerCell;
 import stroom.cell.valuespinner.shared.EditableInteger;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -45,6 +45,7 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterExpressionUtil;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.ProcessorFilterRow;
+import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorListRowResultPage;
 import stroom.processor.shared.ProcessorResource;
@@ -54,11 +55,9 @@ import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.TreeRow;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.NumberCell;
@@ -73,7 +72,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.function.Consumer;
 
-public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<ProcessorListRow>>
+public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         implements Refreshable, HasDocumentRead<Object> {
 
     private static final ProcessorResource PROCESSOR_RESOURCE = GWT.create(ProcessorResource.class);
@@ -87,6 +86,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
     private boolean doneDataDisplay = false;
     private Column<ProcessorListRow, Expander> expanderColumn;
     private ProcessorListRow nextSelection;
+    private final MyDataGrid<ProcessorListRow> dataGrid;
+    private final MultiSelectionModelImpl<ProcessorListRow> selectionModel;
 
     private final RestSaveQueue<Integer, Boolean> processorEnabledSaveQueue;
     private final RestSaveQueue<Integer, Boolean> processorFilterEnabledSaveQueue;
@@ -96,11 +97,17 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
 
     @Inject
     public ProcessorListPresenter(final EventBus eventBus,
+                                  final PagerView view,
                                   final TooltipPresenter tooltipPresenter,
                                   final RestFactory restFactory,
                                   final DateTimeFormatter dateTimeFormatter,
                                   final ProcessorInfoBuilder processorInfoBuilder) {
-        super(eventBus, new DataGridViewImpl<>(true));
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        view.setDataWidget(dataGrid);
+
         this.tooltipPresenter = tooltipPresenter;
         this.dateTimeFormatter = dateTimeFormatter;
         this.processorInfoBuilder = processorInfoBuilder;
@@ -158,18 +165,18 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
             addColumns();
 
             // Handle use of the expander column.
-            dataProvider.setTreeRowHandler(new TreeRowHandler<ProcessorListRow>(request, getView(), expanderColumn));
+            dataProvider.setTreeRowHandler(new TreeRowHandler<ProcessorListRow>(request, dataGrid, expanderColumn));
         }
     }
 
     private void onChangeData(final ProcessorListRowResultPage data) {
-        ProcessorListRow selected = getView().getSelectionModel().getSelected();
+        ProcessorListRow selected = selectionModel.getSelected();
 
         if (nextSelection != null) {
             for (final ProcessorListRow row : data.getValues()) {
                 if (row instanceof ProcessorFilterRow) {
                     if (nextSelection.equals(((ProcessorFilterRow) row).getProcessorFilter())) {
-                        getView().getSelectionModel().setSelected(row);
+                        selectionModel.setSelected(row);
                         break;
                     }
                 }
@@ -178,7 +185,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
 
         } else if (selected != null) {
             if (!data.getValues().contains(selected)) {
-                getView().getSelectionModel().setSelected(selected, false);
+                selectionModel.setSelected(selected, false);
             }
         }
     }
@@ -205,18 +212,10 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
             @Override
             protected void showInfo(final ProcessorListRow row, final int x, final int y) {
                 final SafeHtml safeHtml = processorInfoBuilder.get(row);
-                tooltipPresenter.setHTML(safeHtml);
-
-                final PopupPosition popupPosition = new PopupPosition(x, y);
-                ShowPopupEvent.fire(
-                        ProcessorListPresenter.this,
-                        tooltipPresenter,
-                        PopupType.POPUP,
-                        popupPosition,
-                        null);
+                tooltipPresenter.show(safeHtml, x, y);
             }
         };
-        getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
+        dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
     }
 
     private void addExpanderColumn() {
@@ -235,11 +234,11 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
             request.setRowExpanded(row, !value.isExpanded());
             refresh();
         });
-        getView().addColumn(expanderColumn, "<br/>", 0);
+        dataGrid.addColumn(expanderColumn, "<br/>", 0);
     }
 
     private void addIconColumn() {
-        getView().addColumn(new Column<ProcessorListRow, Preset>(new SvgCell()) {
+        dataGrid.addColumn(new Column<ProcessorListRow, Preset>(new SvgCell()) {
             @Override
             public Preset getValue(final ProcessorListRow row) {
                 Preset icon = null;
@@ -254,7 +253,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
     }
 
     private void addPipelineColumn() {
-        getView().addResizableColumn(new Column<ProcessorListRow, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<ProcessorListRow, String>(new TextCell()) {
             @Override
             public String getValue(final ProcessorListRow row) {
                 String name = null;
@@ -298,7 +297,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
     }
 
     private void addTrackerColumns() {
-        getView().addResizableColumn(new Column<ProcessorListRow, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<ProcessorListRow, String>(new TextCell()) {
             @Override
             public String getValue(final ProcessorListRow row) {
                 String lastStream = null;
@@ -310,7 +309,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
                 return lastStream;
             }
         }, "Tracker Ms", ColumnSizeConstants.DATE_COL);
-        getView().addResizableColumn(new Column<ProcessorListRow, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<ProcessorListRow, String>(new TextCell()) {
             @Override
             public String getValue(final ProcessorListRow row) {
                 final String lastStream = null;
@@ -325,7 +324,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
     }
 
     private void addLastPollColumns() {
-        getView().addResizableColumn(new Column<ProcessorListRow, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<ProcessorListRow, String>(new TextCell()) {
             @Override
             public String getValue(final ProcessorListRow row) {
                 String lastPoll = null;
@@ -336,7 +335,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
                 return lastPoll;
             }
         }, "Last Poll Age", ColumnSizeConstants.MEDIUM_COL);
-        getView().addResizableColumn(new Column<ProcessorListRow, Number>(new NumberCell()) {
+        dataGrid.addResizableColumn(new Column<ProcessorListRow, Number>(new NumberCell()) {
             @Override
             public Number getValue(final ProcessorListRow row) {
                 Number currentTasks = null;
@@ -380,11 +379,11 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
                 }
             });
         }
-        getView().addColumn(priorityColumn, "Priority", ColumnSizeConstants.MEDIUM_COL);
+        dataGrid.addColumn(priorityColumn, "Priority", ColumnSizeConstants.MEDIUM_COL);
     }
 
     private void addStreamsColumn() {
-        getView().addResizableColumn(new Column<ProcessorListRow, Number>(new NumberCell()) {
+        dataGrid.addResizableColumn(new Column<ProcessorListRow, Number>(new NumberCell()) {
             @Override
             public Number getValue(final ProcessorListRow row) {
                 Number value = null;
@@ -398,7 +397,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
     }
 
     private void addEventsColumn() {
-        getView().addResizableColumn(new Column<ProcessorListRow, Number>(new NumberCell()) {
+        dataGrid.addResizableColumn(new Column<ProcessorListRow, Number>(new NumberCell()) {
             @Override
             public Number getValue(final ProcessorListRow row) {
                 Number value = null;
@@ -412,13 +411,18 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
     }
 
     private void addStatusColumn() {
-        getView().addResizableColumn(new Column<ProcessorListRow, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<ProcessorListRow, String>(new TextCell()) {
             @Override
             public String getValue(final ProcessorListRow row) {
                 String status = null;
                 if (row instanceof ProcessorFilterRow) {
                     final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
-                    status = processorFilterRow.getProcessorFilter().getProcessorFilterTracker().getStatus();
+                    final ProcessorFilterTracker tracker = processorFilterRow
+                            .getProcessorFilter()
+                            .getProcessorFilterTracker();
+                    status = tracker != null
+                            ? tracker.getMessage()
+                            : "";
                 }
                 return status;
             }
@@ -466,11 +470,11 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
                 }
             });
         }
-        getView().addColumn(enabledColumn, "Enabled", ColumnSizeConstants.MEDIUM_COL);
+        dataGrid.addColumn(enabledColumn, "Enabled", ColumnSizeConstants.MEDIUM_COL);
     }
 
     private void addReprocessColumn() {
-        getView().addResizableColumn(new Column<ProcessorListRow, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<ProcessorListRow, String>(new TextCell()) {
             @Override
             public String getValue(final ProcessorListRow row) {
                 String reprocess = null;
@@ -487,11 +491,11 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
     }
 
     private void addEndColumn() {
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     public MultiSelectionModel<ProcessorListRow> getSelectionModel() {
-        return getView().getSelectionModel();
+        return selectionModel;
     }
 
     @Override
@@ -502,7 +506,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
     private void doDataDisplay() {
         if (!doneDataDisplay) {
             doneDataDisplay = true;
-            dataProvider.addDataDisplay(getView().getDataDisplay());
+            dataProvider.addDataDisplay(dataGrid);
         } else {
             dataProvider.refresh();
         }

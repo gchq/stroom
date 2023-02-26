@@ -1,9 +1,7 @@
 package stroom.data.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
 import stroom.data.client.presenter.SourcePresenter.SourceView;
-import stroom.data.client.presenter.TextPresenter.TextView;
 import stroom.data.shared.DataResource;
 import stroom.data.shared.DataType;
 import stroom.data.shared.StreamTypeNames;
@@ -18,7 +16,6 @@ import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.svg.client.Preset;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SourceConfig;
 import stroom.util.shared.Count;
@@ -32,10 +29,10 @@ import stroom.util.shared.string.HexDump;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.progress.client.presenter.Progress;
 import stroom.widget.progress.client.presenter.ProgressPresenter;
-import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -50,12 +47,16 @@ import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
-public class SourcePresenter extends MyPresenterWidget<SourceView> implements TextUiHandlers {
+public class SourcePresenter extends MyPresenterWidget<SourceView> implements
+        TextUiHandlers,
+        ClassificationUiHandlers,
+        Focus {
 
     private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
     private static final int HIGHLIGHT_CONTEXT_CHARS_BEFORE = 1_500;
     private static final int HIGHLIGHT_CONTEXT_LINES_BEFORE = 4;
 
+    private final ClassificationWrapperView classificationWrapperView;
     private final ProgressPresenter progressPresenter;
     private final TextPresenter textPresenter;
     private final CharacterNavigatorPresenter characterNavigatorPresenter;
@@ -71,13 +72,15 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     // will have different line/col start/end points depending on whether it is rendered as text
     // or a hex dump.
     private DataRange currentTextHighlight = null;
-    private ClassificationUiHandlers classificationUiHandlers;
     private boolean isSteppingSource = false;
     private Count<Long> exactCharCount = null;
+
+    private ClassificationUiHandlers classificationUiHandlers;
 
     @Inject
     public SourcePresenter(final EventBus eventBus,
                            final SourceView view,
+                           final ClassificationWrapperView classificationWrapperView,
                            final ProgressPresenter progressPresenter,
                            final TextPresenter textPresenter,
                            final CharacterNavigatorPresenter characterNavigatorPresenter,
@@ -85,6 +88,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                            final RestFactory restFactory,
                            final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
+        this.classificationWrapperView = classificationWrapperView;
         this.progressPresenter = progressPresenter;
         this.textPresenter = textPresenter;
         this.characterNavigatorPresenter = characterNavigatorPresenter;
@@ -94,7 +98,8 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
         setEditorOptions();
 
-        view.setTextView(textPresenter.getView());
+        classificationWrapperView.setContent(textPresenter.getView());
+        view.setTextView(classificationWrapperView);
         view.setNavigatorView(characterNavigatorPresenter.getView());
 
         setupProgressBar(view, progressPresenter);
@@ -138,6 +143,11 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
             dataNavigatorData = new DataNavigatorData();
             characterNavigatorPresenter.setDisplay(dataNavigatorData);
         }
+    }
+
+    @Override
+    public void focus() {
+        textPresenter.focus();
     }
 
     private void setupProgressBar(final SourceView view,
@@ -449,7 +459,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
             lastResult = fetchDataResult;
             setTitle(lastResult);
-            classificationUiHandlers.setClassification(result.getClassification());
+            setClassification(result.getClassification());
 
             updateEditor();
             updateNavigator(result);
@@ -674,6 +684,18 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     }
 
     @Override
+    public void setClassification(final String classification) {
+        classificationWrapperView.setClassification(classification);
+        if (this.classificationUiHandlers != null) {
+            this.classificationUiHandlers.setClassification(classification);
+        }
+    }
+
+    public void setClassificationUiHandlers(final ClassificationUiHandlers classificationUiHandlers) {
+        this.classificationUiHandlers = classificationUiHandlers;
+    }
+
+    @Override
     public void clear() {
 
         // TODO @AT Not sure if I need to implement this
@@ -691,10 +713,6 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                         receivedSourceLocation.getPartIndex(),
                         receivedSourceLocation.getRecordIndex()),
                 null);
-    }
-
-    public void setClassificationUiHandlers(final ClassificationUiHandlers classificationUiHandlers) {
-        this.classificationUiHandlers = classificationUiHandlers;
     }
 
 
@@ -851,13 +869,11 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
     public interface SourceView extends View {
 
-        void setProgressView(final ProgressView progressView);
+        void setProgressView(final View view);
 
-        void setTextView(final TextView textView);
+        void setTextView(final View view);
 
-        void setNavigatorView(final CharacterNavigatorView characterNavigatorView);
-
-        ButtonView addButton(final Preset preset);
+        void setNavigatorView(final View view);
 
         void setTitle(final String feedName,
                       final long id,

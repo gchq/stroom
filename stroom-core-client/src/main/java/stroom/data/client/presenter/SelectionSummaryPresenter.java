@@ -7,11 +7,9 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.SelectionSummary;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.util.client.SafeHtmlUtil;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.i18n.client.NumberFormat;
@@ -58,20 +56,19 @@ public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView
                     .getSelectionSummary(criteria);
         }
 
-        final PopupType popupType = postAction != null ? PopupType.OK_CANCEL_DIALOG : PopupType.CLOSE_DIALOG;
-        ShowPopupEvent.fire(this, this, popupType, caption, new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok && runnable != null) {
-                    runnable.run();
-                }
-                HidePopupEvent.fire(SelectionSummaryPresenter.this, SelectionSummaryPresenter.this, autoClose, ok);
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-            }
-        });
+        final PopupType popupType = postAction != null
+                ? PopupType.OK_CANCEL_DIALOG
+                : PopupType.CLOSE_DIALOG;
+        ShowPopupEvent.builder(this)
+                .popupType(popupType)
+                .caption(caption)
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        runnable.run();
+                    }
+                    e.hide();
+                })
+                .fire();
     }
 
     private void update(final String postAction, final String action, final SelectionSummary result) {

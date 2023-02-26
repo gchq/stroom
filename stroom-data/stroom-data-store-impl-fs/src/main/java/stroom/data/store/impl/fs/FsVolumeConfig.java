@@ -48,7 +48,7 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
     // stream type name => legacy extension
     // e.g. 'Transient Raw' => '.trevt'
     private final Map<String, String> metaTypeExtensions;
-//    private final Map<String, String> metaTypeExtensionsReverseMap;
+    //    private final Map<String, String> metaTypeExtensionsReverseMap;
     private final StroomDuration maxVolumeStateAge;
 
     public FsVolumeConfig() {

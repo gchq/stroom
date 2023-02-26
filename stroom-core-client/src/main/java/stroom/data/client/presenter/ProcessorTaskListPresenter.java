@@ -17,10 +17,10 @@
 package stroom.data.client.presenter;
 
 import stroom.cell.info.client.InfoColumn;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -42,11 +42,11 @@ import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskResource;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.ResultPage;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
-import stroom.widget.tooltip.client.presenter.TooltipUtil;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.TableBuilder;
+import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
@@ -61,12 +61,13 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 public class ProcessorTaskListPresenter
-        extends MyPresenterWidget<DataGridView<ProcessorTask>>
+        extends MyPresenterWidget<PagerView>
         implements HasDocumentRead<Object> {
 
     private static final ProcessorTaskResource PROCESSOR_TASK_RESOURCE = GWT.create(ProcessorTaskResource.class);
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
 
+    private final MyDataGrid<ProcessorTask> dataGrid;
     private final TooltipPresenter tooltipPresenter;
     private final DateTimeFormatter dateTimeFormatter;
     private final RestDataProvider<ProcessorTask, ResultPage<ProcessorTask>> dataProvider;
@@ -75,10 +76,15 @@ public class ProcessorTaskListPresenter
 
     @Inject
     public ProcessorTaskListPresenter(final EventBus eventBus,
+                                      final PagerView view,
                                       final RestFactory restFactory,
                                       final TooltipPresenter tooltipPresenter,
                                       final DateTimeFormatter dateTimeFormatter) {
-        super(eventBus, new DataGridViewImpl<>(false));
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>();
+        view.setDataWidget(dataGrid);
+
         this.tooltipPresenter = tooltipPresenter;
         this.dateTimeFormatter = dateTimeFormatter;
 
@@ -101,7 +107,7 @@ public class ProcessorTaskListPresenter
         };
 
         // Info column.
-        getView().addColumn(new InfoColumn<ProcessorTask>() {
+        dataGrid.addColumn(new InfoColumn<ProcessorTask>() {
             @Override
             protected void showInfo(final ProcessorTask row, final int x, final int y) {
                 FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
@@ -122,7 +128,7 @@ public class ProcessorTaskListPresenter
             }
         }, "<br/>", ColumnSizeConstants.ICON_COL);
 
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 new OrderByColumn<ProcessorTask, String>(
                         new TextCell(),
                         ProcessorTaskFields.FIELD_CREATE_TIME,
@@ -133,7 +139,7 @@ public class ProcessorTaskListPresenter
                     }
                 }, "Create", ColumnSizeConstants.DATE_COL);
 
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 new OrderByColumn<ProcessorTask, String>(
                         new TextCell(),
                         ProcessorTaskFields.FIELD_STATUS,
@@ -144,7 +150,7 @@ public class ProcessorTaskListPresenter
                     }
                 }, "Status", 80);
 
-        getView()
+        dataGrid
                 .addResizableColumn(new OrderByColumn<ProcessorTask, String>(
                         new TextCell(), ProcessorTaskFields.FIELD_NODE, true) {
                     @Override
@@ -156,7 +162,7 @@ public class ProcessorTaskListPresenter
                         }
                     }
                 }, "Node", ColumnSizeConstants.MEDIUM_COL);
-        getView()
+        dataGrid
                 .addResizableColumn(new OrderByColumn<ProcessorTask, String>(
                         new TextCell(), ProcessorTaskFields.FIELD_FEED, true) {
                     @Override
@@ -168,7 +174,7 @@ public class ProcessorTaskListPresenter
                         }
                     }
                 }, "Feed", ColumnSizeConstants.BIG_COL);
-        getView().addResizableColumn(new OrderByColumn<ProcessorTask, String>(
+        dataGrid.addResizableColumn(new OrderByColumn<ProcessorTask, String>(
                 new TextCell(), ProcessorTaskFields.FIELD_PRIORITY, false) {
             @Override
             public String getValue(final ProcessorTask row) {
@@ -179,7 +185,7 @@ public class ProcessorTaskListPresenter
                 return "";
             }
         }, "Priority", 60);
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 new Column<ProcessorTask, String>(new TextCell()) {
                     @Override
                     public String getValue(final ProcessorTask row) {
@@ -192,7 +198,7 @@ public class ProcessorTaskListPresenter
 
                     }
                 }, "Pipeline", ColumnSizeConstants.BIG_COL);
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 new OrderByColumn<ProcessorTask, String>(
                         new TextCell(), ProcessorTaskFields.FIELD_START_TIME, false) {
                     @Override
@@ -200,7 +206,7 @@ public class ProcessorTaskListPresenter
                         return dateTimeFormatter.format(row.getStartTimeMs());
                     }
                 }, "Start Time", ColumnSizeConstants.DATE_COL);
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 new OrderByColumn<ProcessorTask, String>(
                         new TextCell(), ProcessorTaskFields.FIELD_END_TIME_DATE, false) {
                     @Override
@@ -209,9 +215,9 @@ public class ProcessorTaskListPresenter
                     }
                 }, "End Time", ColumnSizeConstants.DATE_COL);
 
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
 
-        getView().addColumnSortHandler(event -> {
+        dataGrid.addColumnSortHandler(event -> {
             if (event.getColumn() instanceof OrderByColumn<?, ?>) {
                 final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
                 criteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
@@ -225,64 +231,60 @@ public class ProcessorTaskListPresenter
                              final ProcessorTask processorTask,
                              final Meta meta) {
 
-        final TooltipUtil.Builder builder = TooltipUtil.builder()
-                .addTwoColTable(tableBuilder -> {
-                    tableBuilder.addHeaderRow("Stream Task")
-                            .addRow("Stream Task Id", processorTask.getId())
-                            .addRow("Status", processorTask.getStatus().getDisplayValue());
+        final TableBuilder tb = new TableBuilder();
+        tb
+                .row(TableCell.header("Stream Task", 2))
+                .row("Stream Task Id", String.valueOf(processorTask.getId()))
+                .row("Status", processorTask.getStatus().getDisplayValue());
 
-                    if (processorTask.getProcessorFilter() != null) {
-                        tableBuilder.addRow("Priority", processorTask.getProcessorFilter().getPriority());
+        if (processorTask.getProcessorFilter() != null) {
+            tb.row("Priority", String.valueOf(processorTask.getProcessorFilter().getPriority()));
+        }
+
+        tb
+                .row("Status Time", toDateString(processorTask.getStatusTimeMs()))
+                .row("Start Time", toDateString(processorTask.getStartTimeMs()))
+                .row("End Time", toDateString(processorTask.getEndTimeMs()))
+                .row("Node", processorTask.getNodeName())
+                .row("Feed", processorTask.getFeedName())
+                .row();
+
+        if (meta != null) {
+            tb
+                    .row(TableCell.header("Stream", 2))
+                    .row("Stream Id", String.valueOf(meta.getId()))
+                    .row("Status", meta.getStatus().getDisplayValue())
+                    .row("Parent Stream Id", String.valueOf(meta.getParentMetaId()))
+                    .row("Created", toDateString(meta.getCreateMs()))
+                    .row("Effective", toDateString(meta.getEffectiveMs()))
+                    .row("Stream Type", meta.getTypeName());
+        } else {
+            tb
+                    .row(TableCell.data("[Physically deleted]", 2));
+        }
+
+        if (processorTask.getProcessorFilter() != null) {
+            if (processorTask.getProcessorFilter().getProcessor() != null) {
+                if (processorTask.getProcessorFilter().getProcessor().getPipelineUuid() != null) {
+                    tb
+                            .row()
+                            .row(TableCell.header("Stream Processor", 2))
+                            .row("Stream Processor Id",
+                                    String.valueOf(processorTask.getProcessorFilter().getProcessor().getId()))
+                            .row("Stream Processor Filter Id",
+                                    String.valueOf(processorTask.getProcessorFilter().getId()));
+                    if (processorTask.getProcessorFilter().getProcessor().getPipelineUuid() != null) {
+                        tb.row("Stream Processor Pipeline",
+                                DocRefUtil.createSimpleDocRefString(
+                                        processorTask.getProcessorFilter().getPipeline()));
                     }
+                }
+            }
+        }
 
-                    tableBuilder
-                            .addRow("Status Time", toDateString(processorTask.getStatusTimeMs()))
-                            .addRow("Start Time", toDateString(processorTask.getStartTimeMs()))
-                            .addRow("End Time", toDateString(processorTask.getEndTimeMs()))
-                            .addRow("Node", processorTask.getNodeName())
-                            .addRow("Feed", processorTask.getFeedName())
-                            .addBlankRow()
-                            .addHeaderRow("Stream");
-
-                    if (meta != null) {
-                        tableBuilder
-                                .addRow("Stream Id", meta.getId())
-                                .addRow("Status", meta.getStatus().getDisplayValue())
-                                .addRow("Parent Stream Id", meta.getParentMetaId())
-                                .addRow("Created", toDateString(meta.getCreateMs()))
-                                .addRow("Effective", toDateString(meta.getEffectiveMs()))
-                                .addRow("Stream Type", meta.getTypeName());
-                    } else {
-                        tableBuilder
-                                .addRow("[Physically deleted]", TooltipUtil.NON_BREAKING_SPACE);
-                    }
-
-                    if (processorTask.getProcessorFilter() != null) {
-                        if (processorTask.getProcessorFilter().getProcessor() != null) {
-                            if (processorTask.getProcessorFilter().getProcessor().getPipelineUuid() != null) {
-                                tableBuilder
-                                        .addBlankRow()
-                                        .addHeaderRow("Stream Processor")
-                                        .addRow("Stream Processor Id",
-                                                processorTask.getProcessorFilter().getProcessor().getId())
-                                        .addRow("Stream Processor Filter Id",
-                                                processorTask.getProcessorFilter().getId());
-                                if (processorTask.getProcessorFilter().getProcessor().getPipelineUuid() != null) {
-                                    tableBuilder.addRow("Stream Processor Pipeline",
-                                            DocRefUtil.createSimpleDocRefString(
-                                                    processorTask.getProcessorFilter().getPipeline()));
-                                }
-                            }
-                        }
-                    }
-                    return tableBuilder.build();
-                });
-
-        tooltipPresenter.setHTML(builder.build());
-
-        final PopupPosition popupPosition = new PopupPosition(x, y);
-        ShowPopupEvent.fire(ProcessorTaskListPresenter.this, tooltipPresenter, PopupType.POPUP, popupPosition,
-                null);
+        final HtmlBuilder htmlBuilder = new HtmlBuilder();
+        htmlBuilder.div(tb::write, Attribute.className("infoTable"));
+        tooltipPresenter.show(htmlBuilder.toSafeHtml(), x, y);
     }
 
     private String toDateString(final Long ms) {
@@ -312,14 +314,14 @@ public class ProcessorTaskListPresenter
     }
 
     public void clear() {
-        getView().setRowData(0, new ArrayList<>(0));
-        getView().setRowCount(0, true);
+        dataGrid.setRowData(0, new ArrayList<>(0));
+        dataGrid.setRowCount(0, true);
     }
 
     public void refresh() {
         if (!initialised) {
             initialised = true;
-            dataProvider.addDataDisplay(getView().getDataDisplay());
+            dataProvider.addDataDisplay(dataGrid);
         } else {
             dataProvider.refresh();
         }

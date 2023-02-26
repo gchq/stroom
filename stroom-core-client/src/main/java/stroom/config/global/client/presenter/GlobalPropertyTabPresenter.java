@@ -22,10 +22,8 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.util.client.MouseUtil;
 
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -73,7 +71,7 @@ public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalProper
 
     @Override
     protected void onBind() {
-        registerHandler(listPresenter.getView().getSelectionModel().addSelectionHandler(event -> {
+        registerHandler(listPresenter.getSelectionModel().addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
                 onOpen();
@@ -81,13 +79,13 @@ public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalProper
         }));
         if (openButton != null) {
             registerHandler(openButton.addClickHandler(event -> {
-                if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+                if (MouseUtil.isPrimary(event)) {
                     onOpen();
                 }
             }));
         }
         registerHandler(warningsButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 showWarnings();
             }
         }));
@@ -120,16 +118,9 @@ public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalProper
 
     public void onEdit(final ConfigProperty e) {
         if (e != null) {
-            final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
-                @Override
-                public void onHide(final boolean autoClose, final boolean ok) {
-                    listPresenter.refresh();
-                }
-            };
-
             if (editProvider != null) {
                 final ManageGlobalPropertyEditPresenter editor = editProvider.get();
-                editor.showEntity(e, popupUiHandlers);
+                editor.showEntity(e, listPresenter::refresh);
             }
         }
     }

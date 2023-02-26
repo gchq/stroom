@@ -51,15 +51,14 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItems;
-import stroom.widget.menu.client.presenter.MenuListPresenter;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -88,7 +87,6 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
     private static final DocRef NULL_SELECTION = DocRef.builder().uuid("").name("None").type("").build();
 
     private final EntityDropDownPresenter pipelinePresenter;
-    private final MenuListPresenter menuListPresenter;
     private final RestFactory restFactory;
     private final NewElementPresenter newElementPresenter;
     private final PropertyListPresenter propertyListPresenter;
@@ -114,7 +112,6 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                                       final PipelineTreePresenter pipelineTreePresenter,
                                       final EntityDropDownPresenter pipelinePresenter,
                                       final RestFactory restFactory,
-                                      final MenuListPresenter menuListPresenter,
                                       final NewElementPresenter newElementPresenter,
                                       final PropertyListPresenter propertyListPresenter,
                                       final PipelineReferenceListPresenter pipelineReferenceListPresenter,
@@ -122,7 +119,6 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
         super(eventBus, view);
         this.pipelineTreePresenter = pipelineTreePresenter;
         this.pipelinePresenter = pipelinePresenter;
-        this.menuListPresenter = menuListPresenter;
         this.restFactory = restFactory;
         this.newElementPresenter = newElementPresenter;
         this.propertyListPresenter = propertyListPresenter;
@@ -215,8 +211,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
             if (advancedMode && selectedElement != null) {
                 final List<Item> menuItems = addPipelineActionsToMenu();
                 if (menuItems != null && menuItems.size() > 0) {
-                    final PopupPosition popupPosition = new PopupPosition(event.getX(), event.getY());
-                    showMenu(popupPosition, menuItems);
+                    showMenu(menuItems, event.getPopupPosition());
                 }
             }
         }));
@@ -273,7 +268,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
     }
 
     @Override
-    public void write(final PipelineDoc pipeline) {
+    public PipelineDoc write(final PipelineDoc pipeline) {
         // Only write if we have been revealed and therefore created a pipeline
         // model.
         if (pipelineModel != null) {
@@ -288,6 +283,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                 AlertEvent.fireError(this, e.getMessage(), null);
             }
         }
+        return pipeline;
     }
 
     @Override
@@ -335,27 +331,27 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
 
         final List<Item> menuItems = new ArrayList<>();
 
-        menuItems.add(new IconParentMenuItem(0,
-                SvgPresets.ADD,
-                SvgPresets.ADD,
-                "Add",
-                null,
-                addMenuItems != null && addMenuItems.size() > 0,
-                addMenuItems));
-        menuItems.add(new IconParentMenuItem(1,
-                SvgPresets.UNDO,
-                SvgPresets.UNDO,
-                "Restore",
-                null,
-                restoreMenuItems != null && restoreMenuItems.size() > 0,
-                restoreMenuItems));
-        menuItems.add(new IconMenuItem(2,
-                SvgPresets.REMOVE,
-                SvgPresets.REMOVE,
-                "Remove",
-                null,
-                selected != null,
-                () -> onRemove(null)));
+        menuItems.add(new IconParentMenuItem.Builder()
+                .priority(0)
+                .icon(SvgPresets.ADD)
+                .text("Add")
+                .enabled(addMenuItems != null && addMenuItems.size() > 0)
+                .children(addMenuItems)
+                .build());
+        menuItems.add(new IconParentMenuItem.Builder()
+                .priority(1)
+                .icon(SvgPresets.UNDO)
+                .text("Restore")
+                .enabled(restoreMenuItems != null && restoreMenuItems.size() > 0)
+                .children(restoreMenuItems)
+                .build());
+        menuItems.add(new IconMenuItem.Builder()
+                .priority(2)
+                .icon(SvgPresets.REMOVE)
+                .text("Remove")
+                .enabled(selected != null)
+                .command(() -> onRemove(null))
+                .build());
 
         return menuItems;
     }
@@ -381,16 +377,23 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                         if (StructureValidationUtil.isValidChildType(parentType, pipelineElementType, childCount)) {
                             final String type = pipelineElementType.getType();
                             final Icon icon = Icon.create(pipelineElementType.getIcon());
-                            final Item item = new IconMenuItem(j++, icon, null, type, null, true,
-                                    new AddPipelineElementCommand(pipelineElementType));
+                            final Item item = new IconMenuItem.Builder()
+                                    .priority(j++)
+                                    .icon(icon)
+                                    .text(type)
+                                    .command(new AddPipelineElementCommand(pipelineElementType))
+                                    .build();
                             children.add(item);
                         }
                     }
 
                     if (children.size() > 0) {
                         children.sort(new MenuItems.ItemComparator());
-                        final Item parentItem = new IconParentMenuItem(category.getOrder(), null, null,
-                                category.getDisplayValue(), null, true, children);
+                        final Item parentItem = new IconParentMenuItem.Builder()
+                                .priority(category.getOrder())
+                                .text(category.getDisplayValue())
+                                .children(children)
+                                .build();
                         menuItems.add(parentItem);
                     }
                 }
@@ -404,7 +407,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
     private List<Item> getRestoreMenuItems() {
         final List<PipelineElement> existingElements = getExistingElements();
 
-        if (existingElements == null || existingElements.size() == 0) {
+        if (existingElements.size() == 0) {
             return null;
         }
 
@@ -429,8 +432,12 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                     final List<Item> items = categoryMenuItems.computeIfAbsent(category, k -> new ArrayList<>());
                     final Icon icon = Icon.create(pipelineElementType.getIcon());
 
-                    final Item item = new IconMenuItem(pos++, icon, null, element.getId(), null, true,
-                            new RestorePipelineElementCommand(element));
+                    final Item item = new IconMenuItem.Builder()
+                            .priority(pos++)
+                            .icon(icon)
+                            .text(element.getId())
+                            .command(new RestorePipelineElementCommand(element))
+                            .build();
                     items.add(item);
                 }
             }
@@ -440,8 +447,11 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                 final List<Item> children = entry.getValue();
 
                 children.sort(new MenuItems.ItemComparator());
-                final Item parentItem = new IconParentMenuItem(category.getOrder(), null, null,
-                        category.getDisplayValue(), null, true, children);
+                final Item parentItem = new IconParentMenuItem.Builder()
+                        .priority(category.getOrder())
+                        .text(category.getDisplayValue())
+                        .children(children)
+                        .build();
                 menuItems.add(parentItem);
             }
         }
@@ -454,23 +464,16 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
         final com.google.gwt.dom.client.Element target = event.getNativeEvent().getEventTarget().cast();
         final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft() - 3, target.getAbsoluteRight(),
                 target.getAbsoluteTop(), target.getAbsoluteBottom() + 3, null, VerticalLocation.BELOW);
-        showMenu(popupPosition, menuItems);
+        showMenu(menuItems, popupPosition);
     }
 
-    private void showMenu(final PopupPosition popupPosition, final List<Item> menuItems) {
-        menuListPresenter.setData(menuItems);
-
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                HidePopupEvent.fire(PipelineStructurePresenter.this, menuListPresenter);
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-            }
-        };
-        ShowPopupEvent.fire(this, menuListPresenter, PopupType.POPUP, popupPosition, popupUiHandlers);
+    private void showMenu(final List<Item> menuItems,
+                          final PopupPosition popupPosition) {
+        ShowMenuEvent
+                .builder()
+                .items(menuItems)
+                .popupPosition(popupPosition)
+                .fire(this);
     }
 
     private List<PipelineElement> getExistingElements() {
@@ -480,9 +483,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
             final List<PipelineElement> removedElements = pipelineModel.getRemovedElements();
 
             if (removedElements != null) {
-                for (final PipelineElement element : removedElements) {
-                    existingElements.add(element);
-                }
+                existingElements.addAll(removedElements);
             }
         }
 
@@ -509,21 +510,9 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
             xmlEditor.getIndicatorsOption().setAvailable(false);
             xmlEditor.getIndicatorsOption().setOn(false);
             xmlEditor.getStylesOption().setOn(true);
-            xmlEditor.getView().asWidget().getElement().addClassName("stroom-border");
             xmlEditor.getView().asWidget().getElement().addClassName("default-min-sizes");
 
             final PopupSize popupSize = PopupSize.resizable(600, 400);
-            final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
-                @Override
-                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                    if (ok) {
-                        querySave(xmlEditor);
-                    } else {
-                        HidePopupEvent.fire(PipelineStructurePresenter.this, xmlEditor, autoClose, ok);
-                    }
-                }
-            };
-
             final Rest<FetchPipelineXmlResponse> rest = restFactory.create();
             rest
                     .onSuccess(result -> {
@@ -532,13 +521,19 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                             text = result.getXml();
                         }
                         xmlEditor.setText(text, true);
-                        ShowPopupEvent.fire(
-                                PipelineStructurePresenter.this,
-                                xmlEditor,
-                                PopupType.OK_CANCEL_DIALOG,
-                                popupSize,
-                                "Pipeline Source",
-                                popupUiHandlers);
+                        ShowPopupEvent.builder(xmlEditor)
+                                .popupType(PopupType.OK_CANCEL_DIALOG)
+                                .popupSize(popupSize)
+                                .caption("Pipeline Source")
+                                .onShow(e -> xmlEditor.focus())
+                                .onHideRequest(e -> {
+                                    if (e.isOk()) {
+                                        querySave(xmlEditor);
+                                    } else {
+                                        e.hide();
+                                    }
+                                })
+                                .fire();
                     })
                     .onFailure(throwable -> {
                         xmlEditor.setErrorText(
@@ -557,7 +552,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                     if (ok) {
                         doActualSave(xmlEditor);
                     } else {
-                        HidePopupEvent.fire(PipelineStructurePresenter.this, xmlEditor, false, false);
+                        HidePopupEvent.builder(xmlEditor).ok(false).fire();
                     }
                 });
     }
@@ -567,7 +562,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
         rest
                 .onSuccess(result -> {
                     // Hide the popup.
-                    HidePopupEvent.fire(PipelineStructurePresenter.this, xmlEditor, false, true);
+                    HidePopupEvent.builder(xmlEditor).fire();
                     // Reload the entity.
                     RefreshDocumentEvent.fire(PipelineStructurePresenter.this, docRef);
                 })
@@ -677,30 +672,26 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
         public void execute() {
             final PipelineElement selectedElement = pipelineTreePresenter.getSelectionModel().getSelectedObject();
             if (selectedElement != null && elementType != null) {
-                final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
-                    @Override
-                    public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        if (ok) {
-                            final String id = newElementPresenter.getElementId();
-                            final PipelineElementType elementType = newElementPresenter.getElementInfo();
-                            try {
-                                final PipelineElement newElement = pipelineModel.addElement(selectedElement,
-                                        elementType, id);
-                                pipelineTreePresenter.getSelectionModel().setSelected(newElement, true);
-                                setDirty(true);
-                            } catch (final RuntimeException e) {
-                                AlertEvent.fireError(
-                                        PipelineStructurePresenter.this,
-                                        e.getMessage(),
-                                        null);
-                            }
+                final HidePopupRequestEvent.Handler handler = event -> {
+                    if (event.isOk()) {
+                        final String id = newElementPresenter.getElementId();
+                        final PipelineElementType elementType = newElementPresenter.getElementInfo();
+                        try {
+                            final PipelineElement newElement = pipelineModel.addElement(selectedElement,
+                                    elementType, id);
+                            pipelineTreePresenter.getSelectionModel().setSelected(newElement, true);
+                            setDirty(true);
+                        } catch (final RuntimeException e) {
+                            AlertEvent.fireError(
+                                    PipelineStructurePresenter.this,
+                                    e.getMessage(),
+                                    null);
                         }
-
-                        newElementPresenter.hide();
                     }
+                    event.hide();
                 };
 
-                newElementPresenter.show(elementType, popupUiHandlers);
+                newElementPresenter.show(elementType, handler);
             }
         }
     }

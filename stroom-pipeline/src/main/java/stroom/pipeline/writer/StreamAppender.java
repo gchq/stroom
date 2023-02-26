@@ -44,7 +44,6 @@ import stroom.pipeline.task.ProcessStatisticsFactory.ProcessStatistics;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
-import stroom.util.NullSafe;
 import stroom.util.shared.Severity;
 
 import com.google.common.base.Strings;

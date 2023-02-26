@@ -196,13 +196,13 @@ public class DBPersistence implements Persistence {
 
         try (final Connection connection = dataSource.getConnection()) {
             final String sql = LogUtil.message("""
-                SELECT DISTINCT
-                  uuid,
-                  name
-                FROM doc
-                WHERE type = ?
-                AND name {} ?
-                ORDER BY uuid""", condition);
+                    SELECT DISTINCT
+                      uuid,
+                      name
+                    FROM doc
+                    WHERE type = ?
+                    AND name {} ?
+                    ORDER BY uuid""", condition);
             try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
                 preparedStatement.setString(1, type);
                 preparedStatement.setString(2, nameFilterSqlValue);

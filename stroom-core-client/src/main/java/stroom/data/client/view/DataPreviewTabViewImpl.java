@@ -1,6 +1,5 @@
 package stroom.data.client.view;
 
-import stroom.data.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
 import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DataPreviewTabPresenter.DataPreviewTabView;
 
@@ -10,6 +9,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 public class DataPreviewTabViewImpl extends ViewImpl implements DataPreviewTabView {
@@ -50,7 +50,7 @@ public class DataPreviewTabViewImpl extends ViewImpl implements DataPreviewTabVi
     }
 
     @Override
-    public void setContentView(final ClassificationWrapperView view) {
+    public void setContentView(final View view) {
         container.setWidget(view.asWidget());
     }
 

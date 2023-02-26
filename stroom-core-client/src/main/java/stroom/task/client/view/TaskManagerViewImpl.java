@@ -22,6 +22,7 @@ import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
+import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -51,10 +52,14 @@ public class TaskManagerViewImpl extends ViewWithUiHandlers<TaskManagerUiHandler
                         nameFilter.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
                                 "Server Tasks Quick Filter",
                                 builder -> builder
-                                        .addLine("Matched tasks are displayed in black, un-matched but related " +
-                                                "tasks are displayed in grey.")
-                                        .addLine("All relations of a matched task will be included in the results.")
-                                        .addBreak(),
+                                        .row(
+                                                TableCell.data(
+                                                        "Matched tasks are displayed in black, un-matched but " +
+                                                                "related tasks are displayed in grey.", 2))
+                                        .row(
+                                                TableCell.data("All relations of a matched task will be " +
+                                                        "included in the results.", 2))
+                                        .row(),
                                 FindTaskProgressCriteria.FIELD_DEFINITIONS,
                                 uiConfig.getHelpUrlQuickFilter())));
     }

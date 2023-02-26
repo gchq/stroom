@@ -44,7 +44,12 @@ public abstract class MonitoringPlugin<P extends MyPresenterWidget<?>> extends C
     @Override
     public void onReveal(final BeforeRevealMenubarEvent event) {
         event.getMenuItems().addMenuItem(MenuKeys.MAIN_MENU,
-                new KeyedParentMenuItem(3, "Monitoring", event.getMenuItems(), MenuKeys.MONITORING_MENU));
+                new KeyedParentMenuItem.Builder()
+                        .priority(3)
+                        .text("Monitoring")
+                        .menuItems(event.getMenuItems())
+                        .menuKey(MenuKeys.MONITORING_MENU)
+                        .build());
 
         addChildItems(event);
     }

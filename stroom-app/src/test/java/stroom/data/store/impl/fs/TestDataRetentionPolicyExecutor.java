@@ -83,8 +83,10 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
 
     @Test
     void testCheckArchive() throws IOException {
-        dataStoreServiceConfig.setFileSystemCleanOldAge(StroomDuration.ZERO);
-        dataStoreServiceConfig.setDeletePurgeAge(StroomDuration.ZERO);
+        setConfigValueMapper(DataStoreServiceConfig.class, config -> config
+                .withDeletePurgeAge(StroomDuration.ZERO)
+                .withFileSystemCleanOldAge(StroomDuration.ZERO));
+
         fileSystemCleanTaskExecutor.scan();
 
         final ZonedDateTime oldDate = ZonedDateTime.now(ZoneOffset.UTC).minusDays(SIXTY);

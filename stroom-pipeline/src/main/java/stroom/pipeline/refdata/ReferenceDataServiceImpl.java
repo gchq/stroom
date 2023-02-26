@@ -10,6 +10,7 @@ import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.data.shared.StreamTypeNames;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.DateField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
@@ -77,8 +78,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReferenceDataServiceImpl.class);
 
-    private static final DataSource DATA_SOURCE = new DataSource(ReferenceDataFields.FIELDS);
-
+    private static final DataSource DATA_SOURCE = DataSource.builder().fields(ReferenceDataFields.FIELDS).build();
     private static final Map<String, AbstractField> FIELD_NAME_TO_FIELD_MAP = ReferenceDataFields.FIELDS.stream()
             .collect(Collectors.toMap(AbstractField::getName, Function.identity()));
 
@@ -265,20 +265,18 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                     final Runnable runnable = taskContextFactory.childContext(
                                             parentTaskContext,
                                             "Reference Data Purge on node " + nodeName2,
-                                            taskContext -> {
-                                                nodeService.remoteRestCall(
-                                                        nodeName2,
-                                                        () -> ResourcePaths.buildAuthenticatedApiPath(
-                                                                ReferenceDataResource.BASE_PATH,
-                                                                ReferenceDataResource.PURGE_BY_AGE_SUB_PATH,
-                                                                purgeAge.getValueAsStr()),
-                                                        () ->
-                                                                purgeLocally(purgeAge),
-                                                        SyncInvoker::delete,
-                                                        Collections.singletonMap(
-                                                                ReferenceDataResource.QUERY_PARAM_NODE_NAME,
-                                                                nodeName2));
-                                            });
+                                            taskContext -> nodeService.remoteRestCall(
+                                                    nodeName2,
+                                                    () -> ResourcePaths.buildAuthenticatedApiPath(
+                                                            ReferenceDataResource.BASE_PATH,
+                                                            ReferenceDataResource.PURGE_BY_AGE_SUB_PATH,
+                                                            purgeAge.getValueAsStr()),
+                                                    () ->
+                                                            purgeLocally(purgeAge),
+                                                    SyncInvoker::delete,
+                                                    Collections.singletonMap(
+                                                            ReferenceDataResource.QUERY_PARAM_NODE_NAME,
+                                                            nodeName2)));
 
                                     return CompletableFuture
                                             .runAsync(runnable)
@@ -596,6 +594,11 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     @Override
     public DataSource getDataSource() {
         return DATA_SOURCE;
+    }
+
+    @Override
+    public DateField getTimeField() {
+        return null;
     }
 
     @Override

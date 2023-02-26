@@ -21,8 +21,7 @@ import stroom.alert.client.event.CommonAlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -34,8 +33,9 @@ import com.gwtplatform.mvp.client.View;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CommonAlertPresenter extends MyPresenterWidget<CommonAlertPresenter.CommonAlertView>
-        implements PopupUiHandlers {
+public class CommonAlertPresenter
+        extends MyPresenterWidget<CommonAlertPresenter.CommonAlertView>
+        implements HidePopupEvent.Handler {
 
     private final List<CommonAlertEvent<?>> stack = new ArrayList<>();
 
@@ -69,19 +69,24 @@ public class CommonAlertPresenter extends MyPresenterWidget<CommonAlertPresenter
         getView().setDetail(event.getDetail());
 
         if (event instanceof ConfirmEvent) {
-            ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, "Confirm", this, true);
+            ShowPopupEvent.builder(this)
+                    .popupType(PopupType.OK_CANCEL_DIALOG)
+                    .caption("Confirm")
+                    .modal(true)
+                    .onHide(this)
+                    .fire();
         } else {
-            ShowPopupEvent.fire(this, this, PopupType.CLOSE_DIALOG, "Alert", this, true);
+            ShowPopupEvent.builder(this)
+                    .popupType(PopupType.CLOSE_DIALOG)
+                    .caption("Alert")
+                    .modal(true)
+                    .onHide(this)
+                    .fire();
         }
     }
 
     @Override
-    public void onHideRequest(final boolean autoClose, final boolean ok) {
-        HidePopupEvent.fire(this, this, autoClose, ok);
-    }
-
-    @Override
-    public void onHide(final boolean autoClose, final boolean ok) {
+    public void onHide(final HidePopupEvent e) {
         try {
             final CommonAlertEvent<?> event = stack.get(0);
 
@@ -89,7 +94,7 @@ public class CommonAlertPresenter extends MyPresenterWidget<CommonAlertPresenter
             if (event instanceof ConfirmEvent) {
                 final ConfirmEvent confirmEvent = (ConfirmEvent) event;
                 if (confirmEvent.getCallback() != null) {
-                    confirmEvent.getCallback().onResult(ok);
+                    confirmEvent.getCallback().onResult(e.isOk());
                 }
             } else if (event instanceof AlertEvent) {
                 final AlertEvent alertEvent = (AlertEvent) event;
@@ -98,8 +103,8 @@ public class CommonAlertPresenter extends MyPresenterWidget<CommonAlertPresenter
                 }
             }
 
-        } catch (final RuntimeException e) {
-            GWT.log(e.getMessage());
+        } catch (final RuntimeException exception) {
+            GWT.log(exception.getMessage());
 
         } finally {
             stack.remove(0);

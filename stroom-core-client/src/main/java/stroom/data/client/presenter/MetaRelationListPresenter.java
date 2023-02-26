@@ -17,7 +17,7 @@
 package stroom.data.client.presenter;
 
 import stroom.core.client.LocationManager;
-import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.meta.shared.DataRetentionFields;
@@ -40,20 +40,24 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import javax.inject.Provider;
 
 public class MetaRelationListPresenter extends AbstractMetaListPresenter {
 
     private final Map<Long, MetaRow> streamMap = new HashMap<>();
+    private final Set<Long> hasChildren = new HashSet<>();
     private int maxDepth = -1;
 
     private Column<MetaRow, Expander> expanderColumn;
 
     @Inject
     public MetaRelationListPresenter(final EventBus eventBus,
+                                     final PagerView view,
                                      final RestFactory restFactory,
                                      final LocationManager locationManager,
                                      final DateTimeFormatter dateTimeFormatter,
@@ -61,6 +65,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                                      final Provider<ProcessChoicePresenter> processChoicePresenterProvider,
                                      final Provider<EntityChooser> pipelineSelection) {
         super(eventBus,
+                view,
                 restFactory,
                 locationManager,
                 dateTimeFormatter,
@@ -110,9 +115,9 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
         // Set the width of the expander column so that all expanders
         // can be seen.
         if (maxDepth >= 0) {
-            getView().setColumnWidth(expanderColumn, 16 + (maxDepth * 10), Unit.PX);
+            dataGrid.setColumnWidth(expanderColumn, 16 + (maxDepth * 10), Unit.PX);
         } else {
-            getView().setColumnWidth(expanderColumn, 0, Unit.PX);
+            dataGrid.setColumnWidth(expanderColumn, 0, Unit.PX);
         }
 
         return super.onProcessData(new ResultPage<>(newData, data.getPageResponse()));
@@ -138,6 +143,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                 if (meta.getParentMetaId() != null) {
                     final MetaRow thisParent = streamMap.get(meta.getParentMetaId());
                     if (thisParent != null && thisParent.equals(parent)) {
+                        hasChildren.add(meta.getParentMetaId());
                         newData.add(row);
                         addChildren(row, data, newData, depth + 1);
 
@@ -155,7 +161,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
         addSelectedColumn(allowSelectAll);
 
         expanderColumn = DataGridUtil.expanderColumn(this::buildExpander);
-        getView().addColumn(expanderColumn, "<br/>", 0);
+        dataGrid.addColumn(expanderColumn, "<br/>", 0);
 
         addInfoColumn();
 
@@ -208,11 +214,11 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                 Function.identity(),
                 ColumnSizeConstants.SMALL_COL);
 
-        getView().addEndColumn(new EndColumn<>());
+        addEndColumn();
     }
 
     private Expander buildExpander(final MetaRow row) {
-        return new Expander(getDepth(row), true, true);
+        return new Expander(getDepth(row), true, !hasChildren.contains(row.getMeta().getId()));
     }
 
     private int getDepth(final MetaRow row) {

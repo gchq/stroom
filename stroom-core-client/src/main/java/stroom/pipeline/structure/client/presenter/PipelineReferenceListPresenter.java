@@ -18,9 +18,9 @@
 package stroom.pipeline.structure.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.data.shared.StreamTypeNames;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -38,16 +38,16 @@ import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -69,13 +69,16 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridView<PipelineReference>>
+public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
         implements HasDirtyHandlers, ReadOnlyChangeHandler {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
     private static final String ADDED = "pipelineStructureViewImpl-property-added";
     private static final String REMOVED = "pipelineStructureViewImpl-property-removed";
     private static final String INHERITED = "pipelineStructureViewImpl-property-inherited";
+
+    private final MyDataGrid<PipelineReference> dataGrid;
+    private final MultiSelectionModelImpl<PipelineReference> selectionModel;
     private final ButtonView addButton;
     private final ButtonView editButton;
     private final ButtonView removeButton;
@@ -94,15 +97,21 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
 
     @Inject
     public PipelineReferenceListPresenter(final EventBus eventBus,
+                                          final PagerView view,
                                           final Provider<NewPipelineReferencePresenter> newPipelineReferencePresenter,
                                           final RestFactory restFactory) {
-        super(eventBus, new DataGridViewImpl<>(true));
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(false);
+        view.setDataWidget(dataGrid);
+
         this.newPipelineReferencePresenter = newPipelineReferencePresenter;
         this.restFactory = restFactory;
 
-        addButton = getView().addButton(SvgPresets.NEW_ITEM);
-        editButton = getView().addButton(SvgPresets.EDIT);
-        removeButton = getView().addButton(SvgPresets.REMOVE);
+        addButton = view.addButton(SvgPresets.NEW_ITEM);
+        editButton = view.addButton(SvgPresets.EDIT);
+        removeButton = view.addButton(SvgPresets.REMOVE);
 
         addColumns();
 
@@ -111,24 +120,24 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
 
     @Override
     protected void onBind() {
-        registerHandler(getView().getSelectionModel().addSelectionHandler(event -> {
+        registerHandler(selectionModel.addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
-                onEdit(getView().getSelectionModel().getSelected());
+                onEdit(selectionModel.getSelected());
             }
         }));
         registerHandler(addButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 onAdd(event);
             }
         }));
         registerHandler(editButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                onEdit(getView().getSelectionModel().getSelected());
+            if (MouseUtil.isPrimary(event)) {
+                onEdit(selectionModel.getSelected());
             }
         }));
         registerHandler(removeButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 onRemove();
             }
         }));
@@ -145,7 +154,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
 
     private void addPipelineColumn() {
         // Pipeline.
-        getView().addResizableColumn(new Column<PipelineReference, SafeHtml>(new SafeHtmlCell()) {
+        dataGrid.addResizableColumn(new Column<PipelineReference, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final PipelineReference pipelineReference) {
                 if (pipelineReference.getPipeline() == null) {
@@ -158,7 +167,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
 
     private void addFeedColumn() {
         // Feed.
-        getView().addResizableColumn(new Column<PipelineReference, SafeHtml>(new SafeHtmlCell()) {
+        dataGrid.addResizableColumn(new Column<PipelineReference, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final PipelineReference pipelineReference) {
                 if (pipelineReference.getFeed() == null) {
@@ -171,7 +180,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
 
     private void addStreamTypeColumn() {
         // Stream type.
-        getView().addResizableColumn(new Column<PipelineReference, SafeHtml>(new SafeHtmlCell()) {
+        dataGrid.addResizableColumn(new Column<PipelineReference, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final PipelineReference pipelineReference) {
                 if (pipelineReference.getStreamType() == null) {
@@ -184,7 +193,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
 
     private void addInheritedFromColumn() {
         // Default Value.
-        getView().addResizableColumn(new Column<PipelineReference, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<PipelineReference, String>(new TextCell()) {
             @Override
             public String getValue(final PipelineReference pipelineReference) {
                 if (pipelineReference.getSourcePipeline() == null
@@ -197,7 +206,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
     }
 
     private void addEndColumn() {
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private SafeHtml getSafeHtmlWithState(final PipelineReference pipelineReference, final String string) {
@@ -285,62 +294,56 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
             final NewPipelineReferencePresenter editor = newPipelineReferencePresenter.get();
             editor.read(pipelineReference);
 
-            final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-                @Override
-                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                    if (ok) {
-                        editor.write(pipelineReference);
+            final HidePopupRequestEvent.Handler handler = e -> {
+                if (e.isOk()) {
+                    editor.write(pipelineReference);
 
-                        if (pipelineReference.getPipeline() == null) {
-                            AlertEvent.fireError(PipelineReferenceListPresenter.this,
-                                    "You must specify a pipeline to use.", null);
-                        } else if (pipelineReference.getFeed() == null) {
-                            AlertEvent.fireError(PipelineReferenceListPresenter.this, "You must specify a feed to use.",
-                                    null);
-                        } else if (pipelineReference.getStreamType() == null) {
-                            AlertEvent.fireError(PipelineReferenceListPresenter.this,
-                                    "You must specify a stream type to use.", null);
-                        } else {
-                            if (!added.contains(pipelineReference)) {
-                                added.add(pipelineReference);
-                            }
-
-                            setDirty(isNew || editor.isDirty());
-                            refresh();
-                            HidePopupEvent.fire(PipelineReferenceListPresenter.this, editor);
-                        }
+                    if (pipelineReference.getPipeline() == null) {
+                        AlertEvent.fireError(PipelineReferenceListPresenter.this,
+                                "You must specify a pipeline to use.", null);
+                    } else if (pipelineReference.getFeed() == null) {
+                        AlertEvent.fireError(PipelineReferenceListPresenter.this, "You must specify a feed to use.",
+                                null);
+                    } else if (pipelineReference.getStreamType() == null) {
+                        AlertEvent.fireError(PipelineReferenceListPresenter.this,
+                                "You must specify a stream type to use.", null);
                     } else {
-                        // User has cancelled edit so add the reference back to
-                        // the list if this was an existing reference
-                        if (!isNew) {
-                            if (!added.contains(pipelineReference)) {
-                                added.add(pipelineReference);
-                            }
+                        if (!added.contains(pipelineReference)) {
+                            added.add(pipelineReference);
                         }
 
-                        HidePopupEvent.fire(PipelineReferenceListPresenter.this, editor);
+                        setDirty(isNew || editor.isDirty());
+                        refresh();
+                        e.hide();
                     }
-                }
+                } else {
+                    // User has cancelled edit so add the reference back to
+                    // the list if this was an existing reference
+                    if (!isNew) {
+                        if (!added.contains(pipelineReference)) {
+                            added.add(pipelineReference);
+                        }
+                    }
 
-                @Override
-                public void onHide(final boolean autoClose, final boolean ok) {
-                    // Do nothing.
+                    e.hide();
                 }
             };
 
             final PopupSize popupSize = PopupSize.resizableX();
-            if (isNew) {
-                ShowPopupEvent.fire(this, editor, PopupType.OK_CANCEL_DIALOG, popupSize, "New Pipeline Reference",
-                        popupUiHandlers);
-            } else {
-                ShowPopupEvent.fire(this, editor, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit Pipeline Reference",
-                        popupUiHandlers);
-            }
+            ShowPopupEvent.builder(editor)
+                    .popupType(PopupType.OK_CANCEL_DIALOG)
+                    .popupSize(popupSize)
+                    .caption(isNew
+                            ? "New Pipeline Reference"
+                            : "Edit Pipeline Reference")
+                    .onShow(e -> editor.focus())
+                    .onHideRequest(handler)
+                    .fire();
         }
     }
 
     private void onRemove() {
-        final PipelineReference selected = getView().getSelectionModel().getSelected();
+        final PipelineReference selected = selectionModel.getSelected();
         if (selected != null) {
             if (pipelineModel.getPipelineData().getAddedPipelineReferences().contains(selected)) {
                 pipelineModel.getPipelineData().getAddedPipelineReferences().remove(selected);
@@ -362,7 +365,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
     private void refresh() {
         referenceStateMap.clear();
         references.clear();
-        getView().getSelectionModel().clear();
+        selectionModel.clear();
 
         if (currentElement != null) {
             final String id = currentElement.getId();
@@ -442,15 +445,15 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
     }
 
     private void setData(final List<PipelineReference> references) {
-        getView().setRowData(0, references);
-        getView().setRowCount(references.size());
+        dataGrid.setRowData(0, references);
+        dataGrid.setRowCount(references.size());
         enableButtons();
     }
 
     protected void enableButtons() {
         addButton.setEnabled(!readOnly && propertyType != null);
 
-        final PipelineReference selected = getView().getSelectionModel().getSelected();
+        final PipelineReference selected = selectionModel.getSelected();
         final State state = referenceStateMap.get(selected);
 
         editButton.setEnabled(!readOnly && State.ADDED.equals(state));

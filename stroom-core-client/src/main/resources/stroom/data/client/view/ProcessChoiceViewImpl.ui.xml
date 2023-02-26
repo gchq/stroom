@@ -3,45 +3,26 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:c="urn:import:stroom.widget.customdatebox.client">
-    <g:FlowPanel styleName="stroom-control-page">
-        <g:Grid styleName="stroom-control-grid">
-            <g:row>
-                <g:cell>Priority of new filters (unless auto):</g:cell>
-                <g:customCell>
-                    <v:ValueSpinner ui:field="priority"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Attempt to automatically set priority:</g:cell>
-                <g:customCell>
-                    <tickbox:TickBox ui:field="autoPriority"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Reprocess data:</g:cell>
-                <g:customCell>
-                    <tickbox:TickBox ui:field="reprocess"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Enable new filters:</g:cell>
-                <g:customCell>
-                    <tickbox:TickBox ui:field="enabled"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Min Create Time:</g:cell>
-                <g:customCell>
-                    <c:MyDateBox ui:field="minMetaCreateTimeMs"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Max Create Time:</g:cell>
-                <g:customCell>
-                    <c:MyDateBox ui:field="maxMetaCreateTimeMs"/>
-                </g:customCell>
-            </g:row>
-        </g:Grid>
+    <g:FlowPanel styleName="max form-page form">
+        <form:FormGroup identity="processChoicePriority" label="Priority of new filters (unless auto)">
+            <v:ValueSpinner ui:field="priority"/>
+        </form:FormGroup>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="autoPriority" identity="processChoiceAuto" label="Attempt to automatically set priority"/>
+        </form:FormGroup>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="reprocess" identity="processChoiceReprocess" label="Reprocess data"/>
+        </form:FormGroup>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="enabled" identity="processChoiceEnable" label="Enable new filters"/>
+        </form:FormGroup>
+        <form:FormGroup identity="processChoiceMinCreateTime" label="Min Create Time">
+            <c:MyDateBox ui:field="minMetaCreateTimeMs"/>
+        </form:FormGroup>
+        <form:FormGroup identity="processChoiceMaxCreateTime" label="Max Create Time">
+            <c:MyDateBox ui:field="maxMetaCreateTimeMs"/>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

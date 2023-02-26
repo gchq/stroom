@@ -16,39 +16,77 @@
 
 package stroom.dashboard.client.query;
 
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.alert.client.event.AlertEvent;
+import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.popup.client.view.DefaultHideRequestUiHandlers;
+import stroom.widget.popup.client.view.HideRequestUiHandlers;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-public class NamePresenter extends MyPresenterWidget<NamePresenter.NameView> {
+import java.util.function.Consumer;
+
+public class NamePresenter
+        extends MyPresenterWidget<NamePresenter.NameView>
+        implements HidePopupRequestEvent.Handler {
+
+    private Consumer<String> nameConsumer;
 
     @Inject
     public NamePresenter(final EventBus eventBus, final NameView view) {
         super(eventBus, view);
     }
 
-    public String getName() {
-        return getView().getName();
-    }
-
-    public void setName(final String name) {
+    public void show(final String name,
+                     final String caption,
+                     final Consumer<String> nameConsumer) {
+        this.nameConsumer = nameConsumer;
         getView().setName(name);
+        getView().setUiHandlers(new DefaultHideRequestUiHandlers(this));
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .caption(caption)
+                .onShow(e -> getView().focus())
+                .onHideRequest(this)
+                .fire();
     }
 
-    public void setUihandlers(final PopupUiHandlers uiHandlers) {
-        getView().setUiHandlers(uiHandlers);
+    @Override
+    public void onHideRequest(final HidePopupRequestEvent e) {
+        if (e.isOk()) {
+            String entityName = getView().getName();
+            if (entityName != null) {
+                entityName = entityName.trim();
+            }
+
+            if (entityName == null || entityName.length() == 0) {
+                AlertEvent.fireWarn(this,
+                        "You must provide a name",
+                        null);
+
+            } else {
+                nameConsumer.accept(entityName);
+            }
+        } else {
+            e.hide();
+        }
     }
 
-    public interface NameView extends View, HasUiHandlers<PopupUiHandlers> {
+    public void hide() {
+        HidePopupEvent.builder(this).fire();
+    }
+
+    public interface NameView extends View, Focus, HasUiHandlers<HideRequestUiHandlers> {
 
         String getName();
 
         void setName(String name);
-
-        void focus();
     }
 }

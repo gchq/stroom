@@ -31,6 +31,7 @@ import com.gwtplatform.mvp.client.ViewImpl;
 public class NewPropertyViewImpl extends ViewImpl implements NewPropertyView {
 
     private final Widget widget;
+
     @UiField
     Label element;
     @UiField
@@ -49,6 +50,11 @@ public class NewPropertyViewImpl extends ViewImpl implements NewPropertyView {
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public void focus() {
+        source.focus();
     }
 
     @Override

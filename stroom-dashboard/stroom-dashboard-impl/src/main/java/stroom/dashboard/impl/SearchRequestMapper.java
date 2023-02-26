@@ -74,6 +74,7 @@ public class SearchRequestMapper {
         }
 
         return SearchRequest.builder()
+                .searchRequestSource(searchRequest.getSearchRequestSource())
                 .key(searchRequest.getQueryKey())
                 .query(mapQuery(searchRequest))
                 .resultRequests(mapResultRequests(searchRequest))
@@ -115,7 +116,11 @@ public class SearchRequestMapper {
                         .addOperator(searchRequest.getSearch().getExpression())
                         .addOperator(suppliedExpression)
                         .build();
-                return new Query(searchRequest.getSearch().getDataSourceRef(), expression, params);
+                return new Query(
+                        searchRequest.getSearch().getDataSourceRef(),
+                        expression,
+                        params,
+                        searchRequest.getSearch().getTimeRange());
 
             } catch (IOException ex) {
                 throw new UncheckedIOException("Invalid JSON for expression.  Got: " + expressionJson, ex);
@@ -124,7 +129,8 @@ public class SearchRequestMapper {
         } else {
             return new Query(searchRequest.getSearch().getDataSourceRef(),
                     searchRequest.getSearch().getExpression(),
-                    params);
+                    params,
+                    searchRequest.getSearch().getTimeRange());
         }
     }
 

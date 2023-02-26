@@ -37,6 +37,7 @@ import javax.inject.Singleton;
         EntityAction.UPDATE
 })
 public class ElasticIndexCacheImpl implements ElasticIndexCache, EntityEvent.Handler, Clearable {
+
     private static final String CACHE_NAME = "Elastic Index Cache";
 
     private final ElasticIndexStore elasticIndexStore;

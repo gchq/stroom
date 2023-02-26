@@ -2,6 +2,7 @@ package stroom.processor.impl;
 
 import stroom.processor.shared.ProcessorFilter;
 import stroom.util.NullSafe;
+import stroom.util.concurrent.DurationAdder;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -18,7 +19,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Holds state relating to the progress of creation of tasks by the master node
@@ -39,16 +39,21 @@ public class ProgressMonitor {
     }
 
     public void report(final CreateProcessTasksState createProcessTasksState) {
-        LOGGER.info(() -> getFullReport(createProcessTasksState, LOGGER.isDebugEnabled(), LOGGER.isTraceEnabled()));
+        LOGGER.info(() -> getFullReport(
+                createProcessTasksState,
+                LOGGER.isDebugEnabled(),
+                LOGGER.isDebugEnabled(),
+                LOGGER.isTraceEnabled()));
     }
 
     public String getFullReport(final CreateProcessTasksState createProcessTasksState,
                                 final boolean showFilterDetail,
-                                final boolean showPhaseDetail) {
+                                final boolean showSummaryPhaseDetail,
+                                final boolean showFilterPhaseDetail) {
         final StringBuilder sb = new StringBuilder();
-        addSummary(sb, showPhaseDetail, createProcessTasksState);
+        addSummary(sb, showSummaryPhaseDetail, createProcessTasksState);
         if (showFilterDetail) {
-            addDetail(sb, showPhaseDetail);
+            addDetail(sb, showFilterPhaseDetail);
         }
         return LogUtil.inBoxOnNewLine(sb.toString());
     }
@@ -132,11 +137,11 @@ public class ProgressMonitor {
                     sb.append("\n");
                     sb.append(phaseDetails.phase.phaseName);
                     sb.append(": ");
-                    sb.append(phaseDetails.count.get());
+                    sb.append(phaseDetails.affectedItemCount.get());
                     sb.append(" (");
                     sb.append(phaseDetails.calls.get());
                     sb.append(" calls in ");
-                    sb.append(phaseDetails.durationRef.get());
+                    sb.append(phaseDetails.durationAdder.get());
                     sb.append(")");
                 });
     }
@@ -166,10 +171,10 @@ public class ProgressMonitor {
 
     public enum Phase {
         // Order is important. It governs the order the phases have in the logging
-        ADD_UNOWNED_TASKS("Add unowned tasks"),
-        ADD_UNOWNED_TASKS_FETCH_TASKS("Add unowned tasks -> Fetch tasks"),
-        ADD_UNOWNED_TASKS_FETCH_META("Add unowned tasks -> Fetch meta"),
-        ADD_UNOWNED_TASKS_QUEUE_TASKS("Add unowned tasks -> Queue tasks"),
+        QUEUE_CREATED_TASKS("Queue created tasks"),
+        QUEUE_CREATED_TASKS_FETCH_TASKS("Queue created tasks -> Fetch tasks"),
+        QUEUE_CREATED_TASKS_FETCH_META("Queue created tasks -> Fetch meta"),
+        QUEUE_CREATED_TASKS_QUEUE_TASKS("Queue created tasks -> Queue tasks"),
         CREATE_TASKS_FROM_SEARCH_QUERY("Create tasks from search query"),
         CREATE_STREAM_MAP("Create stream map"),
         FIND_META_FOR_FILTER("Find meta records matching filter"),
@@ -241,14 +246,30 @@ public class ProgressMonitor {
             queuedNewTasks.addAndGet(count);
         }
 
+        /**
+         * Log the duration of a phase with no affected items.
+         * @param phase The phase to log against.
+         * @param durationTimer The duration of the phase.
+         */
+        public void logPhase(final Phase phase,
+                             final DurationTimer durationTimer) {
+            logPhase(phase, durationTimer, 0);
+        }
+
+        /**
+         * Log the duration of a phase with {@code phase} affected items.
+         * @param phase The phase to log against.
+         * @param durationTimer The duration of the phase.
+         * @param affectedItemCount The number of items affected in the phase.
+         */
         public void logPhase(final Phase phase,
                              final DurationTimer durationTimer,
-                             final long count) {
+                             final long affectedItemCount) {
             final Duration duration = durationTimer.get();
             final PhaseDetails phaseDetails = phaseDetailsMap
                     .computeIfAbsent(phase, k -> new PhaseDetails(phase));
 
-            phaseDetails.increment(count, duration);
+            phaseDetails.increment(affectedItemCount, duration);
         }
 
         public void complete() {
@@ -260,23 +281,36 @@ public class ProgressMonitor {
 
         private final Phase phase;
         private final AtomicInteger calls = new AtomicInteger();
-        private final AtomicLong count = new AtomicLong();
-        private final AtomicReference<Duration> durationRef = new AtomicReference<>(Duration.ofMillis(0));
+        private final AtomicLong affectedItemCount = new AtomicLong();
+        private final DurationAdder durationAdder = new DurationAdder();
 
         private PhaseDetails(final Phase phase) {
             this.phase = phase;
         }
 
+        /**
+         * Increment the call count by one and add the duration.
+         */
+        public void increment(final Duration duration) {
+            increment(0, duration);
+        }
+
+        /**
+         * Increment the call count by one, increment the count of items affected by the
+         * phase by {@code count} and add the duration.
+         * @param count Number of items affected
+         * @param duration The duration to add.
+         */
         public void increment(final long count, final Duration duration) {
             this.calls.incrementAndGet();
-            this.count.addAndGet(count);
-            durationRef.accumulateAndGet(duration, Duration::plus);
+            this.affectedItemCount.addAndGet(count);
+            durationAdder.add(duration);
         }
 
         public void add(final PhaseDetails phaseDetails) {
             this.calls.addAndGet(phaseDetails.calls.get());
-            this.count.addAndGet(phaseDetails.count.get());
-            durationRef.accumulateAndGet(phaseDetails.durationRef.get(), Duration::plus);
+            this.affectedItemCount.addAndGet(phaseDetails.affectedItemCount.get());
+            durationAdder.add(phaseDetails.durationAdder);
         }
     }
 }

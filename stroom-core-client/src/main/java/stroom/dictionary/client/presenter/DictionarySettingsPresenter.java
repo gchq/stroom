@@ -72,9 +72,10 @@ public class DictionarySettingsPresenter
     }
 
     @Override
-    protected void onWrite(final DictionaryDoc doc) {
+    protected DictionaryDoc onWrite(DictionaryDoc doc) {
         doc.setDescription(getView().getDescription().getText().trim());
-        dictionaryListPresenter.write(doc);
+        doc = dictionaryListPresenter.write(doc);
+        return doc;
     }
 
     @Override

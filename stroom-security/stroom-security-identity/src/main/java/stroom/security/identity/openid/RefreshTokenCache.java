@@ -25,7 +25,7 @@ class RefreshTokenCache {
     }
 
     Optional<TokenProperties> getAndRemove(final String refreshToken) {
-        final Optional<TokenProperties> optionalAccessCodeRequest = cache.getOptional(refreshToken);
+        final Optional<TokenProperties> optionalAccessCodeRequest = cache.getIfPresent(refreshToken);
         cache.remove(refreshToken);
         return optionalAccessCodeRequest;
     }

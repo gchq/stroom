@@ -29,6 +29,11 @@
     <logger name="stroom.processor.impl.ProcessorTaskManagerImpl" level="INFO" />
     <logger name="stroom.processor.impl.db.ProcessorTaskDaoImpl" level="INFO" />
 
+<!--    <logger name="stroom.data.store.impl.fs.PhysicalDeleteExecutor" level="DEBUG" />-->
+<!--    <logger name="stroom.data.store.impl.fs.FsFileDeleter" level="DEBUG" />-->
+
+
+
 <!--    <logger name="stroom.statistics.impl.sql.SQLStatisticValueBatchSaveService" level="DEBUG" />-->
 <!--    <logger name="stroom.statistics.impl.sql.SQLStatisticAggregationManager" level="DEBUG" />-->
 <!--    <logger name="stroom.statistics.impl.sql.SQLStatisticAggregationTransactionHelper" level="DEBUG" />-->

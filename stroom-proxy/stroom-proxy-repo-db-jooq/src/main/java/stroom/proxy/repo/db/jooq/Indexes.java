@@ -4,16 +4,16 @@
 package stroom.proxy.repo.db.jooq;
 
 
-import org.jooq.Index;
-import org.jooq.OrderField;
-import org.jooq.impl.DSL;
-import org.jooq.impl.Internal;
-
 import stroom.proxy.repo.db.jooq.tables.Aggregate;
 import stroom.proxy.repo.db.jooq.tables.ForwardAggregate;
 import stroom.proxy.repo.db.jooq.tables.ForwardSource;
 import stroom.proxy.repo.db.jooq.tables.Source;
 import stroom.proxy.repo.db.jooq.tables.SourceItem;
+
+import org.jooq.Index;
+import org.jooq.OrderField;
+import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 
 
 /**

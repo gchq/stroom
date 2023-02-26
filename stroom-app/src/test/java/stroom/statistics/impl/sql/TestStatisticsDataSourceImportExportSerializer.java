@@ -26,8 +26,8 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.impl.ImportExportSerializer;
 import stroom.importexport.shared.ImportSettings;
+import stroom.query.common.v2.ResultStoreManager;
 import stroom.statistics.impl.sql.entity.StatisticStoreStore;
-import stroom.statistics.impl.sql.entity.StatisticsDataSourceProvider;
 import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticStore;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
@@ -54,7 +54,7 @@ class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegra
     @Inject
     private StatisticStoreStore statisticStoreStore;
     @Inject
-    private StatisticsDataSourceProvider statisticsDataSourceProvider;
+    private ResultStoreManager searchResponseCreatorManager;
     @Inject
     private ExplorerService explorerService;
     @Inject
@@ -139,7 +139,7 @@ class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegra
 
         DocRef statisticDataSource3DocRef = DocRefUtil.create(statisticsDataSource3);
 
-        final DataSource dataSource = statisticsDataSourceProvider.getDataSource(statisticDataSource3DocRef);
+        final DataSource dataSource = searchResponseCreatorManager.getDataSource(statisticDataSource3DocRef);
 
         assertThat(dataSource.getFields()).isNotNull();
     }

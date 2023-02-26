@@ -4,13 +4,13 @@
 package stroom.meta.impl.db.jooq.tables.records;
 
 
+import stroom.meta.impl.db.jooq.tables.Meta;
+
 import org.jooq.Field;
 import org.jooq.Record1;
 import org.jooq.Record11;
 import org.jooq.Row11;
 import org.jooq.impl.UpdatableRecordImpl;
-
-import stroom.meta.impl.db.jooq.tables.Meta;
 
 
 /**

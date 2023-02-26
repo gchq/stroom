@@ -31,26 +31,25 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuListPresenter;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.menu.client.presenter.SimpleMenuItem;
 import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
 import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletion;
@@ -70,13 +69,13 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.ExpressionView>
-        implements ExpressionUiHandlers {
+public class ExpressionPresenter
+        extends MyPresenterWidget<ExpressionPresenter.ExpressionView>
+        implements ExpressionUiHandlers, ShowPopupEvent.Handler, HidePopupRequestEvent.Handler, HidePopupEvent.Handler {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     private static final int DEFAULT_COMPLETION_SCORE = 300; // Not sure what the range of scores is
 
-    private final MenuListPresenter menuListPresenter;
     private final RestFactory restFactory;
     private final EditorPresenter editorPresenter;
     private final List<AceCompletion> functionCompletions = new ArrayList<>();
@@ -91,16 +90,13 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     @Inject
     public ExpressionPresenter(final EventBus eventBus,
                                final ExpressionView view,
-                               final MenuListPresenter menuListPresenter,
                                final RestFactory restFactory,
                                final EditorPresenter editorPresenter,
                                final UiConfigCache clientPropertyCache) {
         super(eventBus, view);
-        this.menuListPresenter = menuListPresenter;
         this.restFactory = restFactory;
         this.editorPresenter = editorPresenter;
         this.clientPropertyCache = clientPropertyCache;
-        view.setUiHandlers(this);
         view.setEditor(editorPresenter.getView());
 
         final ButtonView addFunctionButton = view.addButton(SvgPresets.FUNCTION
@@ -148,7 +144,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     }
 
     private void onShowHelp(final ClickEvent clickEvent) {
-        if ((clickEvent.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+        if (MouseUtil.isPrimary(clickEvent)) {
             withHelpUrl(helpUrl -> {
                 Window.open(helpUrl, "_blank", "");
             });
@@ -237,41 +233,48 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
             editorPresenter.setText("");
         }
 
-        final PopupSize popupSize = PopupSize.resizable(700, 300);
-        ShowPopupEvent.fire(
-                tablePresenter,
-                this,
-                PopupType.OK_CANCEL_DIALOG,
-                popupSize,
-                "Set Expression For '" + field.getName() + "'",
-                this);
+        final PopupSize popupSize = PopupSize.resizable(700, 400);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Set Expression For '" + field.getName() + "'")
+                .onShow(this)
+                .onHideRequest(this)
+                .onHide(this)
+                .fire();
+    }
 
-        Scheduler.get().scheduleDeferred(editorPresenter::focus);
+    @Override
+    public void onShow(final ShowPopupEvent e) {
+        editorPresenter.focus();
 
-        // If this is done without the scheduler then we get weired behaviour when you click
+        // If this is done without the scheduler then we get weird behaviour when you click
         // in the text area if line wrap is set to on.  If it is initially set to off and the user
         // manually sets it to on all is fine. Confused.
         Scheduler.get().scheduleDeferred(this::setupEditor);
     }
 
     @Override
-    public void onHideRequest(final boolean autoClose, final boolean ok) {
-        if (ok) {
+    public void onHideRequest(final HidePopupRequestEvent e) {
+        if (e.isOk()) {
             final String expression = editorPresenter.getText();
             if (EqualsUtil.isEquals(expression, field.getExpression())) {
-                HidePopupEvent.fire(tablePresenter, this);
+                e.hide();
             } else {
                 if (expression == null) {
                     fieldChangeConsumer.accept(field, field.copy().expression(null).build());
-                    HidePopupEvent.fire(tablePresenter, this);
+                    e.hide();
                 } else {
                     // Check the validity of the expression.
                     final Rest<ValidateExpressionResult> rest = restFactory.create();
                     rest
                             .onSuccess(result -> {
                                 if (result.isOk()) {
-                                    fieldChangeConsumer.accept(field, field.copy().expression(expression).build());
-                                    HidePopupEvent.fire(tablePresenter, ExpressionPresenter.this);
+                                    fieldChangeConsumer.accept(field, field
+                                            .copy()
+                                            .expression(expression)
+                                            .build());
+                                    e.hide();
                                 } else {
                                     AlertEvent.fireError(tablePresenter, result.getString(), null);
                                 }
@@ -281,12 +284,12 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                 }
             }
         } else {
-            HidePopupEvent.fire(tablePresenter, this);
+            e.hide();
         }
     }
 
     @Override
-    public void onHide(final boolean autoClose, final boolean ok) {
+    public void onHide(final HidePopupEvent e) {
         editorPresenter.deRegisterCompletionProviders();
     }
 
@@ -296,31 +299,16 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     }
 
     public void showMenu(final ClickEvent event, final List<Item> menuItems) {
-        if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-            final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-                @Override
-                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                    HidePopupEvent.fire(ExpressionPresenter.this, menuListPresenter);
-                }
-
-                @Override
-                public void onHide(final boolean autoClose, final boolean ok) {
-                }
-            };
-
+        if (MouseUtil.isPrimary(event)) {
             final com.google.gwt.dom.client.Element target = event.getNativeEvent().getEventTarget().cast();
             final PopupPosition popupPosition = new PopupPosition(
                     target.getAbsoluteLeft() - 3,
                     target.getAbsoluteTop() + target.getClientHeight() + 1);
-
-            menuListPresenter.setData(menuItems);
-
-            ShowPopupEvent.fire(
-                    this,
-                    menuListPresenter,
-                    PopupType.POPUP,
-                    popupPosition,
-                    popupUiHandlers);
+            ShowMenuEvent
+                    .builder()
+                    .items(menuItems)
+                    .popupPosition(popupPosition)
+                    .fire(this);
         }
     }
 
@@ -341,12 +329,11 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                     .map(fieldName ->
                             "${" + fieldName + "}")
                     .map(fieldName ->
-                            new SimpleMenuItem(
-                                    position.getAndIncrement(),
-                                    fieldName,
-                                    null,
-                                    true,
-                                    () -> addField(fieldName)))
+                            new SimpleMenuItem.Builder()
+                                    .priority(position.getAndIncrement())
+                                    .text(fieldName)
+                                    .command(() -> addField(fieldName))
+                                    .build())
                     .collect(Collectors.toList());
         } else {
             menuItems = Collections.emptyList();
@@ -368,7 +355,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    public interface ExpressionView extends View, HasUiHandlers<ExpressionUiHandlers> {
+    public interface ExpressionView extends View {
 
         void setEditor(final EditorView editor);
 
@@ -510,7 +497,11 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                                    final BiFunction<FunctionDef, Ancestors, Command> commandBuilder) {
 
             final Command command = commandBuilder.apply(functionDef, ancestors);
-            items.add(new SimpleMenuItem(items.size(), functionDef.toString(), null, true, command));
+            items.add(new SimpleMenuItem.Builder()
+                    .priority(items.size())
+                    .text(functionDef.toString())
+                    .command(command)
+                    .build());
             return this;
         }
 

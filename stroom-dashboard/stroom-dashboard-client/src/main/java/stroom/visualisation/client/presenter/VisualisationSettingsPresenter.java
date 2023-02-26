@@ -96,11 +96,12 @@ public class VisualisationSettingsPresenter
     }
 
     @Override
-    protected void onWrite(final VisualisationDoc visualisation) {
+    protected VisualisationDoc onWrite(final VisualisationDoc visualisation) {
         visualisation.setDescription(getView().getDescription().getText().trim());
         visualisation.setFunctionName(getView().getFunctionName().getText().trim());
         visualisation.setScriptRef(scriptPresenter.getSelectedEntityReference());
         visualisation.setSettings(editorPresenter.getText().trim());
+        return visualisation;
     }
 
     @Override
