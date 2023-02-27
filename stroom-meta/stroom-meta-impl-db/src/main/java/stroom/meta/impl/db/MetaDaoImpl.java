@@ -111,6 +111,7 @@ import static stroom.meta.impl.db.jooq.tables.MetaProcessor.META_PROCESSOR;
 import static stroom.meta.impl.db.jooq.tables.MetaType.META_TYPE;
 import static stroom.meta.impl.db.jooq.tables.MetaVal.META_VAL;
 
+@SuppressWarnings("checkstyle:FileLength")
 @Singleton
 public class MetaDaoImpl implements MetaDao, Clearable {
 
@@ -547,6 +548,10 @@ public class MetaDaoImpl implements MetaDao, Clearable {
                                    final Status currentStatus,
                                    final Status newStatus,
                                    final long statusTime) {
+        LOGGER.debug(() ->
+                LogUtil.message("updateStatusWithId, expression: {}, currentStatus: {}, " +
+                                "newStatus: {}, statusTime: {}",
+                        expression, currentStatus, newStatus, LogUtil.instant(statusTime)));
 
         final byte newStatusId = MetaStatusId.getPrimitiveValue(newStatus);
         final Table<?> metaWithJoins = buildMeteWithOptionalJoins(expression);
@@ -577,6 +582,10 @@ public class MetaDaoImpl implements MetaDao, Clearable {
                                           final Status currentStatus,
                                           final Status newStatus,
                                           final long statusTime) {
+        LOGGER.debug(() ->
+                LogUtil.message("updateStatusWithTempTable, expression: {}, currentStatus: {}, " +
+                                "newStatus: {}, statusTime: {}",
+                        expression, currentStatus, newStatus, LogUtil.instant(statusTime)));
 
         final byte newStatusId = MetaStatusId.getPrimitiveValue(newStatus);
         final int batchSize = metaServiceConfigProvider.get().getMetaStatusUpdateBatchSize();
@@ -586,6 +595,8 @@ public class MetaDaoImpl implements MetaDao, Clearable {
         final Condition statusCondition = getStatusCondition(currentStatus, newStatus);
 
         final Select<Record1<Long>> select;
+        // One big batch should be more efficient as long as it only locks the rows being changed
+        // and no others. If it does lock other rows then smaller batches may be needed.
         if (batchSize <= 0) {
             // 0 == one big batch
             select = DSL.selectDistinct(meta.ID)
@@ -611,7 +622,7 @@ public class MetaDaoImpl implements MetaDao, Clearable {
         // other meta rows and stopping processing. This approach means we update using ID to uniquely
         // access rows.
         do {
-            JooqUtil.transaction(metaDbConnProvider, context -> {
+            JooqUtil.context(metaDbConnProvider, context -> {
                 try {
                     // Temp table of all the IDs we want to update
                     // Need to do it as a create then insert so we get the count
@@ -623,8 +634,9 @@ public class MetaDaoImpl implements MetaDao, Clearable {
                             .select(select);
                     LOGGER.trace("Insert SQL:\n{}", insert);
 
-                    insertCount.set(insert.execute());
-                    LOGGER.debug("Inserted {} meta ids into temporary table", insertCount);
+                    LOGGER.logDurationIfDebugEnabled(
+                            () -> insertCount.set(insert.execute()),
+                            () -> LogUtil.message("Inserted {} meta ids into temporary table", insertCount));
 
                     if (insertCount.get() > 0) {
                         final var update = context
@@ -635,21 +647,31 @@ public class MetaDaoImpl implements MetaDao, Clearable {
                                 .where(statusCondition); // Re-use the status condition in case anything changed
                         LOGGER.trace("Update SQL:\n{}", update);
 
-                        final int updateCount = update.execute();
-                        //                    final int updateCount = 0;
+                        final int updateCount = LOGGER.logDurationIfDebugEnabled(
+                                update::execute,
+                                cnt -> LogUtil.message("Updated {} meta rows to status: {}", cnt, newStatus));
                         totalUpdateCount.addAndGet(updateCount);
 
-                        LOGGER.debug("Updated {} meta rows", updateCount);
-
                         // Remove all the temp rows
-                        context.deleteFrom(metaIdsTempTbl)
-                                .execute();
+                        LOGGER.logDurationIfDebugEnabled(
+                                () -> context.deleteFrom(metaIdsTempTbl)
+                                        .execute(),
+                                cnt -> LogUtil.message("Deleted {} rows from temp table", cnt));
+                    } else {
+                        LOGGER.debug("No more records to update, dropping out");
                     }
+                } catch (Exception e) {
+                    LOGGER.error(LogUtil.message(
+                            "Error updating the meta status from {} to {} with expression: {}. {}",
+                            currentStatus, newStatus, expression, e.getMessage()), e);
+                    throw e;
                 } finally {
                     // Temp table lives for the life of the session so if we go round again
                     // or if the session is returned to the pool, make sure it is gone.
-                    context.dropTableIfExists(metaIdsTempTblName)
-                            .execute();
+                    LOGGER.logDurationIfDebugEnabled(
+                            () -> context.dropTableIfExists(metaIdsTempTblName)
+                                    .execute(),
+                            cnt -> LogUtil.message("Dropped temp table", cnt));
                 }
             });
         } while (batchSize > 0 && insertCount.get() >= batchSize);
@@ -1045,6 +1067,9 @@ public class MetaDaoImpl implements MetaDao, Clearable {
                                     ? meta.leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
                                     : meta;
 
+                            // We might want to do this delete using a temp table like we do for
+                            // MetaDaoImpl#updateStatusWithTempTable. Only if locking other rows is
+                            // an issue.
                             final var query = context
                                     .update(tableClause)
                                     .set(meta.STATUS, statusIdDeleted)
@@ -1483,33 +1508,40 @@ public class MetaDaoImpl implements MetaDao, Clearable {
                             final int numberOfRows,
                             final Set<Integer> usedValKeys) {
 
-        return JooqUtil.contextResult(metaDbConnProvider, context ->
-                        metaExpressionMapper.addJoins(context
-                                                .selectDistinct(
-                                                        meta.ID,
-                                                        metaFeed.NAME,
-                                                        metaType.NAME,
-                                                        metaProcessor.PROCESSOR_UUID,
-                                                        metaProcessor.PIPELINE_UUID,
-                                                        meta.PARENT_ID,
-                                                        meta.STATUS,
-                                                        meta.STATUS_TIME,
-                                                        meta.CREATE_TIME,
-                                                        meta.EFFECTIVE_TIME,
-                                                        meta.PROCESSOR_FILTER_ID,
-                                                        meta.PROCESSOR_TASK_ID
-                                                )
-                                                .from(meta)
-                                                .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                                                .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
-                                                .leftOuterJoin(metaProcessor)
-                                                .on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
-                                        meta.ID,
-                                        usedValKeys)
-                                .where(conditions)
-                                .orderBy(orderFields)
-                                .limit(offset, numberOfRows)
-                                .fetch())
+        return JooqUtil.contextResult(
+                        metaDbConnProvider,
+                        context -> {
+                            final var select = metaExpressionMapper.addJoins(
+                                            context
+                                                    .selectDistinct(
+                                                            meta.ID,
+                                                            metaFeed.NAME,
+                                                            metaType.NAME,
+                                                            metaProcessor.PROCESSOR_UUID,
+                                                            metaProcessor.PIPELINE_UUID,
+                                                            meta.PARENT_ID,
+                                                            meta.STATUS,
+                                                            meta.STATUS_TIME,
+                                                            meta.CREATE_TIME,
+                                                            meta.EFFECTIVE_TIME,
+                                                            meta.PROCESSOR_FILTER_ID,
+                                                            meta.PROCESSOR_TASK_ID
+                                                    )
+                                                    .from(meta)
+                                                    .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                                    .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                                    .leftOuterJoin(metaProcessor)
+                                                    .on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
+                                            meta.ID,
+                                            usedValKeys)
+                                    .where(conditions)
+                                    .orderBy(orderFields)
+                                    .limit(offset, numberOfRows);
+
+                            LOGGER.debug("Find SQL:\n{}", select);
+
+                            return select.fetch();
+                        })
                 .map(RECORD_TO_META_MAPPER::apply);
     }
 

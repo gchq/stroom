@@ -204,8 +204,6 @@ class TestMetaServiceImpl {
         int deleted = metaService.updateStatus(
                 criteria, null, Status.DELETED);
 
-//        TestMetaDaoImpl.dumpMetaTable(metaDbConnProvider);
-
         assertThat(deleted)
                 .isEqualTo(4);
 
