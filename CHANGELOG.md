@@ -12,34 +12,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
-## [v7.0.23-beta.6] - 2023-02-22
-
-* Issue **#3276** : Fix comod ex.
-
-
-## [v7.0.23-beta.5] - 2023-02-22
-
 * Issue **#3276** : Remove ASSIGNED task status and guard for task creation deadlocks.
-
-
-## [v7.0.23-beta.4] - 2023-02-21
-
+ 
 * Issue **#3274** : Improve progress monitoring.
 
-
-## [v7.0.23-beta.3] - 2023-02-21
-
 * Issue **#3274** : Improve config descriptions.
-
-* Issue **#3274** : Improve config descriptions.
-
-
-## [v7.0.23-beta.2] - 2023-02-21
-
-* Issue **#3274** : Fix NPE thrown during task queueing.
-
-
-## [v7.0.23-beta.1] - 2023-02-20
 
 * Issue **#3259** : Make task creation and queueing multi threaded.
 
