@@ -96,12 +96,13 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                 .build(this::fetchAwsPublicKey);
 
         final Timer timer = new Timer("AWS public key cache eviction timer", true);
-        timer.schedule(new TimerTask() {
-                           @Override
-                           public void run() {
-                               awsPublicKeyCache.cleanUp();
-                           }
-                       },
+        timer.schedule(
+                new TimerTask() {
+                    @Override
+                    public void run() {
+                        awsPublicKeyCache.cleanUp();
+                    }
+                },
                 Duration.ofMinutes(1).toMillis(),
                 Duration.ofMinutes(1).toMillis());
         return awsPublicKeyCache;
