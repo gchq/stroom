@@ -60,7 +60,7 @@ public final class JwtUtil {
                         jws = str;
                     }
                     LOGGER.debug(() ->
-                            "Found auth header in request: {" + headerName + "=" + jws + "}");
+                            "Found auth header in request:\n" + headerName + ": " + jws);
                     return jws;
                 });
     }

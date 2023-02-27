@@ -41,6 +41,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
@@ -59,11 +60,13 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StandardJwtContextFactory.class);
 
     // TODO: 24/02/2023 These header keys ought to be in config
-    private static final String AMZN_OIDC_ACCESS_TOKEN_HEADER = "x-amzn-oidc-accesstoken";
-    private static final String AMZN_OIDC_IDENTITY_HEADER = "x-amzn-oidc-identity";
-    private static final String AMZN_OIDC_DATA_HEADER = "x-amzn-oidc-data";
-    private static final String AMZN_OIDC_SIGNER_HEADER_KEY = "signer";
-    private static final String AMZN_OIDC_SIGNER_HEADER_PREFIX = "arn:";
+    static final String AMZN_OIDC_ACCESS_TOKEN_HEADER = "x-amzn-oidc-accesstoken";
+    static final String AMZN_OIDC_IDENTITY_HEADER = "x-amzn-oidc-identity";
+    static final String AMZN_OIDC_DATA_HEADER = "x-amzn-oidc-data";
+    static final String AMZN_OIDC_SIGNER_HEADER_KEY = "signer";
+    static final Pattern AMZN_OIDC_SIGNER_SPLIT_PATTERN = Pattern.compile(":");
+//    static final String AMZN_OIDC_SIGNER_HEADER_PREFIX = "arn:aws:";
+
     private static final String AUTHORIZATION_HEADER = HttpHeaders.AUTHORIZATION;
     private static final String CACHE_NAME = "AWS Public Key Cache";
 
@@ -147,9 +150,9 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                             AMZN_OIDC_DATA_HEADER)
                     .map(key -> new SimpleEntry<>(key, request.getHeader(key)))
                     .filter(entry -> entry.getValue() != null)
-                    .map(keyValue -> "  " + keyValue.getKey() + ": '" + keyValue.getValue() + "'")
+                    .map(keyValue -> "\n  " + keyValue.getKey() + ": '" + keyValue.getValue() + "'")
                     .collect(Collectors.joining(" "));
-            LOGGER.debug("getJwtContext called for request with uri: {}, headers:\n{}",
+            LOGGER.debug("getJwtContext called for request with uri: {}, headers:{}",
                     request.getRequestURI(), headers);
         }
 
@@ -368,31 +371,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     }
 
     private PublicKey getAwsPublicKey(final JwsParts jwsParts) {
-        final String signer = jwsParts.getHeaderValue(AMZN_OIDC_SIGNER_HEADER_KEY)
-                .orElseThrow(() -> new RuntimeException(LogUtil.message("Missing '{}' key in jws header {}",
-                        AMZN_OIDC_SIGNER_HEADER_KEY, jwsParts.header)));
-
-        if (NullSafe.isBlankString(signer)) {
-            throw new RuntimeException(LogUtil.message("Blank value for '{}' key in jws header {}",
-                    AMZN_OIDC_SIGNER_HEADER_KEY, jwsParts.header));
-        }
-        // Signer is an Amazon Resource Name of the form:
-        // arn:partition:service:region:account-id:resource-id
-
-        final String[] signerParts = signer.split(signer);
-        if (signerParts.length < 4) {
-            throw new RuntimeException(LogUtil.message("Unable to parse value for '{}' key in jws header {}",
-                    AMZN_OIDC_SIGNER_HEADER_KEY, signer));
-        }
-        final String awsRegion = signerParts[3];
-
-        final String keyId = jwsParts.getHeaderValue(OpenId.KEY_ID)
-                .orElseThrow(() -> new RuntimeException(LogUtil.message("Missing '{}' key in jws header {}",
-                        OpenId.KEY_ID, jwsParts.header)));
-
-        // TODO: 24/02/2023 Ought to come from config
-        final String uri = LogUtil.message("https://public-keys.auth.elb.{}.amazonaws.com/{}",
-                awsRegion, keyId);
+        final String uri = getAwsPublicKeyUri(jwsParts);
 
         // Lazy initialise the cache and its timer in case we never deal with aws keys
         if (awsPublicKeyCache == null) {
@@ -406,9 +385,39 @@ public class StandardJwtContextFactory implements JwtContextFactory {
         return awsPublicKeyCache.get(uri);
     }
 
+    // pkg private for testing
+    static String getAwsPublicKeyUri(final JwsParts jwsParts) {
+        final String signer = jwsParts.getHeaderValue(AMZN_OIDC_SIGNER_HEADER_KEY)
+                .orElseThrow(() -> new RuntimeException(LogUtil.message("Missing '{}' key in jws header {}",
+                        AMZN_OIDC_SIGNER_HEADER_KEY, jwsParts.header)));
+        final String keyId = jwsParts.getHeaderValue(OpenId.KEY_ID)
+                .orElseThrow(() -> new RuntimeException(LogUtil.message("Missing '{}' key in jws header {}",
+                        OpenId.KEY_ID, jwsParts.header)));
+
+        if (NullSafe.isBlankString(signer)) {
+            throw new RuntimeException(LogUtil.message("Blank value for '{}' key in jws header {}",
+                    AMZN_OIDC_SIGNER_HEADER_KEY, jwsParts.header));
+        }
+
+        // Signer is an Amazon Resource Name of the form:
+        // arn:partition:service:region:account-id:resource-id
+        final String[] signerParts = AMZN_OIDC_SIGNER_SPLIT_PATTERN.split(signer);
+        if (signerParts.length < 4) {
+            throw new RuntimeException(LogUtil.message("Unable to parse value for '{}' key in jws header {}",
+                    AMZN_OIDC_SIGNER_HEADER_KEY, signer));
+        }
+        final String awsRegion = signerParts[3];
+
+        // TODO: 24/02/2023 Ought to come from config
+        final String uri = LogUtil.message("https://public-keys.auth.elb.{}.amazonaws.com/{}",
+                awsRegion, keyId);
+        return uri;
+    }
+
     private PublicKey fetchAwsPublicKey(final String uri) {
 
-        LOGGER.debug(() -> "Fetching AWS public key from \"" + uri + "\"");
+        LOGGER.debug(() -> LogUtil.message("Fetching AWS public key from uri: {}, current cache size: {}",
+                uri, awsPublicKeyCache.estimatedSize()));
         final Client client = ClientBuilder.newClient();
         // Don't use injected WebTargetFactory as that slaps a token on which we don't want in
         // this case as it is an unauthenticated endpoint
@@ -469,7 +478,8 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     // --------------------------------------------------------------------------------
 
 
-    private record JwsParts(
+    // Pkg private for testing
+    record JwsParts(
             String jws,
             String header,
             String payload,
