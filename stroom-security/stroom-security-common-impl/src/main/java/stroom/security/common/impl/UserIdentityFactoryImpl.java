@@ -97,10 +97,6 @@ public class UserIdentityFactoryImpl implements UserIdentityFactory, Managed {
             throw new IllegalStateException(
                     "Attempting to get user identity from tokens in request when " +
                             "identityProviderType set to NONE.");
-//        } else if (IdpType.TEST.equals(idpType)) {
-//
-//            return
-//
         } else {
             // See if we can log in with a token if one is supplied. It is valid for it to not be present.
             // e.g. the front end calling API methods, as the user is held in session.

@@ -146,9 +146,10 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                             AMZN_OIDC_DATA_HEADER)
                     .map(key -> new SimpleEntry<>(key, request.getHeader(key)))
                     .filter(entry -> entry.getValue() != null)
-                    .map(keyValue -> keyValue.getKey() + "=" + keyValue.getValue())
+                    .map(keyValue -> "  " + keyValue.getKey() + ": '" + keyValue.getValue() + "'")
                     .collect(Collectors.joining(" "));
-            LOGGER.debug("uri: {}, headers: {}", request.getRequestURI(), headers);
+            LOGGER.debug("getJwtContext called for request with uri: {}, headers:\n{}",
+                    request.getRequestURI(), headers);
         }
 
         final Optional<HeaderToken> optionalJwt = getTokenFromHeader(request);
@@ -156,6 +157,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
         return optionalJwt
                 .flatMap(headerToken -> {
                     if (AMZN_OIDC_DATA_HEADER.equals(headerToken.header)) {
+                        // Could move parseJws into getAwsJwtContext
                         final JwsParts jwsParts = parseJws(headerToken.jwt);
                         return getAwsJwtContext(jwsParts);
                     } else {
@@ -205,7 +207,8 @@ public class StandardJwtContextFactory implements JwtContextFactory {
         try {
             final Map<String, String> headerMap = objectMapper.readValue(
                     decodedHeader,
-                    new TypeReference<HashMap<String, String>>() {});
+                    new TypeReference<HashMap<String, String>>() {
+                    });
             LOGGER.debug("headerMap: {}", headerMap);
 
             return new JwsParts(
@@ -222,6 +225,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     }
 
     private Optional<JwtContext> getAwsJwtContext(final JwsParts jwsParts) {
+        LOGGER.debug("getAwsJwtContext called for jwsParts: {}", jwsParts);
         final PublicKey publicKey = getAwsPublicKey(jwsParts);
         Objects.requireNonNull(publicKey, "Couldn't get public key");
 
@@ -244,8 +248,8 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     }
 
     private Optional<JwtContext> getStandardJwtContext(final String jwt) {
+        LOGGER.debug("getStandardJwtContext called for jwt: {}", jwt);
         Objects.requireNonNull(jwt, "Null JWS");
-        LOGGER.debug(() -> "Found auth header in request. It looks like this: " + jwt);
 
         try {
             LOGGER.debug(() -> "Verifying token...");
@@ -281,21 +285,25 @@ public class StandardJwtContextFactory implements JwtContextFactory {
      */
     @Override
     public Optional<JwtContext> getJwtContext(final String jwt) {
+        LOGGER.debug("getJwtContext called for jwt: {}", jwt);
         // We don't know if this is signed by the IDP or aws so crack it open
-        final JwsParts jwsParts = parseJws(jwt);
-        if (jwsParts.getHeaderValue(AMZN_OIDC_SIGNER_HEADER_KEY)
-                .filter(val -> !val.isBlank())
-                .filter(val -> val.startsWith(AMZN_OIDC_SIGNER_HEADER_PREFIX))
-                .isPresent()) {
-            // This jwt was signed by AWS
-            return getAwsJwtContext(jwsParts);
-        } else {
-            return getStandardJwtContext(jwt);
-        }
+//        final JwsParts jwsParts = parseJws(jwt);
+//        if (jwsParts.getHeaderValue(AMZN_OIDC_SIGNER_HEADER_KEY)
+//                .filter(val -> !val.isBlank())
+//                .filter(val -> val.startsWith(AMZN_OIDC_SIGNER_HEADER_PREFIX))
+//                .isPresent()) {
+//            // This jwt was signed by AWS
+//            return getAwsJwtContext(jwsParts);
+//        } else {
+
+        // There is no request with this so this is not an AWS signed token.
+        return getStandardJwtContext(jwt);
+//        }
     }
 
     @Override
     public Optional<JwtContext> getJwtContext(final String jwt, final boolean doVerification) {
+        LOGGER.debug("getJwtContext called for doVerification: {}, jwt: {}", doVerification, jwt);
         Optional<JwtContext> optJwtContext = Optional.empty();
         if (doVerification) {
             optJwtContext = getJwtContext(jwt);

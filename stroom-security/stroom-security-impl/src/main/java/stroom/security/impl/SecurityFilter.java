@@ -154,7 +154,8 @@ class SecurityFilter implements Filter {
                 // Try and get the token from the session if we have one
                 Optional<UserIdentity> optUserIdentity = UserIdentitySessionUtil.get(request);
                 if (optUserIdentity.isEmpty()) {
-                    // Api requests that are not from the front-end should have a token
+                    // Api requests that are not from the front-end should have a token.
+                    // Also request from an AWS ALB will have an ALB signed token containing the claims
                     optUserIdentity = openIdManager.loginWithRequestToken(request);
                 }
 
