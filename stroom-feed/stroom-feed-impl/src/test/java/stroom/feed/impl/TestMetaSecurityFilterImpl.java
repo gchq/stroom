@@ -3,6 +3,8 @@ package stroom.feed.impl;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 
@@ -87,8 +89,52 @@ class TestMetaSecurityFilterImpl {
         final Optional<ExpressionOperator> optExpr = metaSecurityFilter.getExpression(
                 PERMISSION, List.of(FIELD_1));
 
-        // no perms so no conditions applied
+        // no perms so an empty in list
+        final ExpressionOperator expected = ExpressionOperator.builder()
+                .addTerm(ExpressionTerm.builder()
+                        .field(FIELD_1)
+                        .condition(Condition.IN)
+                        .value("")
+                        .build())
+                .build();
         assertThat(optExpr)
-                .isEmpty();
+                .hasValue(expected);
+    }
+
+    @Test
+    void getExpression_permsOnTwoFeeds() {
+        setupFeedStoreMock();
+        Mockito.when(securityContextSpy.isAdmin())
+                .thenReturn(false);
+
+        Mockito.when(securityContextSpy.hasDocumentPermission(
+                Mockito.eq(FEED_1 + UUID_SUFFIX), Mockito.eq(PERMISSION)))
+                .thenReturn(true);
+        Mockito.when(securityContextSpy.hasDocumentPermission(
+                        Mockito.eq(FEED_2 + UUID_SUFFIX), Mockito.eq(PERMISSION)))
+                .thenReturn(false);
+        Mockito.when(securityContextSpy.hasDocumentPermission(
+                        Mockito.eq(FEED_3 + UUID_SUFFIX), Mockito.eq(PERMISSION)))
+                .thenReturn(true);
+        Mockito.when(securityContextSpy.hasDocumentPermission(
+                        Mockito.eq(FEED_4 + UUID_SUFFIX), Mockito.eq(PERMISSION)))
+                .thenReturn(false);
+        Mockito.when(securityContextSpy.hasDocumentPermission(
+                        Mockito.eq(FEED_5 + UUID_SUFFIX), Mockito.eq(PERMISSION)))
+                .thenReturn(false);
+
+        final Optional<ExpressionOperator> optExpr = metaSecurityFilter.getExpression(
+                PERMISSION, List.of(FIELD_1));
+
+        // no perms so an empty in list
+        final ExpressionOperator expected = ExpressionOperator.builder()
+                .addTerm(ExpressionTerm.builder()
+                        .field(FIELD_1)
+                        .condition(Condition.IN)
+                        .value(FEED_1 + "," + FEED_3)
+                        .build())
+                .build();
+        assertThat(optExpr)
+                .hasValue(expected);
     }
 }
