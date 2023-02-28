@@ -110,7 +110,7 @@ import static stroom.meta.impl.db.jooq.tables.MetaType.META_TYPE;
 import static stroom.meta.impl.db.jooq.tables.MetaVal.META_VAL;
 
 @Singleton
-public class MetaDaoImpl implements MetaDao, Clearable {
+public class MetaDaoImpl implements MetaDao {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MetaDaoImpl.class);
 
@@ -170,11 +170,6 @@ public class MetaDaoImpl implements MetaDao, Clearable {
     private final ExpressionMapper expressionMapper;
     private final MetaExpressionMapper metaExpressionMapper;
     private final ValueMapper valueMapper;
-
-    // TODO: 20/01/2023 This ought to be replaced by calls out to MetaFeedDao and MetaTypeDao
-    //  see https://github.com/gchq/stroom/issues/3201
-    private final Map<String, List<Integer>> feedNameToIdsMap = new ConcurrentHashMap<>();
-    private final Map<String, List<Integer>> typeNameToIdsMap = new ConcurrentHashMap<>();
 
     @Inject
     MetaDaoImpl(final MetaDbConnProvider metaDbConnProvider,
@@ -282,43 +277,25 @@ public class MetaDaoImpl implements MetaDao, Clearable {
     }
 
     /**
-     * Supports wild-carded feed names
+     * Supports wild-carded feed names. Each wild-carded feed name results in 0-* IDs
      */
-    private List<Integer> getFeedIds(final List<String> feedNames) {
-        // Feeds cannot be renamed so is ok to cache them
-        return getIds(feedNames, feedNameToIdsMap, feedDao::find);
-    }
-
-    /**
-     * Does NOT support wild-carded feed names
-     */
-    private Optional<Integer> getFeedId(final String feedName) {
-        // Feeds cannot be renamed so is ok to cache them
-        return getIds(List.of(feedName), feedNameToIdsMap, feedDao::find)
-                .stream()
-                .findFirst();
+    private List<Integer> getFeedIds(final List<String> wildCardedFeedNames) {
+        if (NullSafe.isEmptyCollection(wildCardedFeedNames)) {
+            return Collections.emptyList();
+        } else {
+            return new ArrayList<>(feedDao.find(wildCardedFeedNames).values());
+        }
     }
 
     /**
      * Supports wild-carded type names
      */
-    private List<Integer> getTypeIds(final List<String> typeNames) {
-        // In theory types could be renamed, e.g. changing the name of a custom meta type
-        // in config. This just means old names may linger in the cache until next reboot. An unlikely and low volume
-        // case so not worth worrying about.
-        return getIds(typeNames, typeNameToIdsMap, metaTypeDao::find);
-    }
-
-    /**
-     * Does NOT support wild-carded type names
-     */
-    private Optional<Integer> getTypeId(final String typeName) {
-        // In theory types could be renamed, e.g. changing the name of a custom meta type
-        // in config. This just means old names may linger in the cache until next reboot. An unlikely and low volume
-        // case so not worth worrying about.
-        return getIds(List.of(typeName), typeNameToIdsMap, metaTypeDao::find)
-                .stream()
-                .findFirst();
+    private List<Integer> getTypeIds(final List<String> wildCardedTypeNames) {
+        if (NullSafe.isEmptyCollection(wildCardedTypeNames)) {
+            return Collections.emptyList();
+        } else {
+            return new ArrayList<>(metaTypeDao.find(wildCardedTypeNames).values());
+        }
     }
 
     private List<String> getPipelineUuidsByName(final List<String> pipelineNames) {
@@ -328,56 +305,6 @@ public class MetaDaoImpl implements MetaDao, Clearable {
                 .stream()
                 .map(DocRef::getUuid)
                 .collect(Collectors.toList());
-    }
-
-    /**
-     * This method tries to get a list of ids from the supplied map and if not found it tries to fetch them from the
-     * supplied function.
-     * <p>
-     * NOTE THAT THE CHOICE TO NOT USE COMPUTE ON THE MAP IS DELIBERATE TO PREVENT LOCKING.
-     * THIS MIGHT LEAD TO A FEW DUPLICATE ATTEMPTS TO FIND THE SAME ID LIST BUT THAT IS PREFERRED TO SYNCHRONIZING ON
-     * THE MAP KEY DURING DB QUERY.
-     */
-    // TODO: 20/01/2023 This ought to be replaced by calls out to MetaFeedDao and MetaTypeDao
-    //  see https://github.com/gchq/stroom/issues/3201
-    private <T> List<T> getIds(final List<String> names,
-                               final Map<String, List<T>> map,
-                               final Function<List<String>, Map<String, List<T>>> function) {
-        final List<T> list = new ArrayList<>();
-
-        if (NullSafe.isEmptyCollection(names)) {
-            return Collections.emptyList();
-        } else {
-            final List<String> namesNotInCache = new ArrayList<>();
-            for (final String name : names) {
-
-                // We can't cache wildcard names as we don't know what they will match in the DB.
-                if (PatternUtil.containsWildCards(name)) {
-                    namesNotInCache.add(name);
-                } else {
-                    final List<T> mapResult = map.get(name);
-                    if (NullSafe.hasItems(mapResult)) {
-                        list.addAll(mapResult);
-                    } else {
-                        namesNotInCache.add(name);
-                    }
-                }
-            }
-
-            if (!namesNotInCache.isEmpty()) {
-                // Use the function to get all the items that were not cached.
-                final Map<String, List<T>> functionResult = function.apply(namesNotInCache);
-                functionResult.forEach((name, items) -> {
-                    if (!PatternUtil.containsWildCards(name) && NullSafe.hasItems(items)) {
-                        map.put(name, items);
-                    }
-                    list.addAll(items);
-                });
-            }
-            LOGGER.trace(() -> LogUtil.message("Mapped names {} to {} IDs {}",
-                    names, list.size(), list));
-            return list;
-        }
     }
 
     @Override
@@ -1513,12 +1440,6 @@ public class MetaDaoImpl implements MetaDao, Clearable {
                 .orElse(0);
     }
 
-    @Override
-    public void clear() {
-        feedNameToIdsMap.clear();
-        typeNameToIdsMap.clear();
-    }
-
     private Collection<Condition> createCondition(final FindMetaCriteria criteria) {
         return createCondition(criteria.getExpression());
     }
@@ -1619,18 +1540,20 @@ public class MetaDaoImpl implements MetaDao, Clearable {
         final long toMs = Objects.requireNonNull(period.getToMs());
 
         // Debatable whether we should throw an exception if the feed/type don't exist
-        final Optional<Integer> optFeedId = getFeedId(effectiveMetaDataCriteria.getFeed());
+        final Optional<Integer> optFeedId = feedDao.get(effectiveMetaDataCriteria.getFeed());
         if (optFeedId.isEmpty()) {
-            LOGGER.debug("Feed {} not found in the {} table. Likely ",
+            LOGGER.debug("Feed {} not found in the {} table.",
                     effectiveMetaDataCriteria.getFeed(), META_FEED.NAME);
             return Collections.emptySet();
         }
+        final int feedId = optFeedId.get();
 
-        final Optional<Integer> optTypeId = getTypeId(effectiveMetaDataCriteria.getType());
+        final Optional<Integer> optTypeId = metaTypeDao.get(effectiveMetaDataCriteria.getType());
         if (optTypeId.isEmpty()) {
             LOGGER.warn("Meta Type {} not found in the database", effectiveMetaDataCriteria.getType());
             return Collections.emptySet();
         }
+        final int typeId = optTypeId.get();
 
         final Function<Record2<Long, Long>, EffectiveMeta> mapper = rec ->
                 new EffectiveMeta(
@@ -1638,9 +1561,6 @@ public class MetaDaoImpl implements MetaDao, Clearable {
                         effectiveMetaDataCriteria.getFeed(),
                         effectiveMetaDataCriteria.getType(),
                         rec.get(meta.EFFECTIVE_TIME));
-
-        final int feedId = optFeedId.get();
-        final int typeId = optTypeId.get();
 
         final List<EffectiveMeta> streamsInOrBelowRange = JooqUtil.contextResult(metaDbConnProvider,
                 context -> {

@@ -24,9 +24,12 @@ import stroom.db.util.JooqUtil.BooleanOperator;
 import stroom.meta.impl.MetaServiceConfig;
 import stroom.meta.impl.MetaTypeDao;
 import stroom.meta.impl.db.jooq.tables.records.MetaTypeRecord;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.string.PatternUtil;
 
 import org.jooq.Condition;
 
@@ -35,6 +38,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -78,7 +82,7 @@ class MetaTypeDaoImpl implements MetaTypeDao, Clearable {
 
     private int load(final String name) {
         // Try and get the existing id from the DB.
-        return get(name)
+        return fetchFromDb(name)
                 .or(() -> {
                     // The id isn't in the DB so create it.
                     return create(name)
@@ -87,7 +91,7 @@ class MetaTypeDaoImpl implements MetaTypeDao, Clearable {
                                 // due to the name having been inserted into the DB by another thread prior
                                 // to us calling create and the DB preventing duplicate names.
                                 // Assuming this is the case, try and get the id from the DB one last time.
-                                return get(name);
+                                return fetchFromDb(name);
                             });
                 })
                 .orElseThrow();
@@ -98,7 +102,21 @@ class MetaTypeDaoImpl implements MetaTypeDao, Clearable {
         return cache.get(name);
     }
 
-    private Optional<Integer> get(final String name) {
+    @Override
+    public Optional<Integer> get(final String name) {
+        if (NullSafe.isBlankString(name)) {
+            return Optional.empty();
+        } else {
+            final Optional<Integer> optId = cache.getIfPresent(name);
+            if (optId.isPresent()) {
+                return optId;
+            } else {
+                return fetchFromDb(name);
+            }
+        }
+    }
+
+    private Optional<Integer> fetchFromDb(final String name) {
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .select(META_TYPE.ID)
                 .from(META_TYPE)
@@ -106,24 +124,53 @@ class MetaTypeDaoImpl implements MetaTypeDao, Clearable {
                 .fetchOptional(META_TYPE.ID));
     }
 
-    Map<String, List<Integer>> find(final List<String> names) {
-        final Condition condition = JooqUtil.createWildCardedStringsCondition(
-                META_TYPE.NAME, names, true, BooleanOperator.OR);
+    /**
+     * For a list of wild-carded names, return 0-* IDs for each one.
+     * If no wildCardedFeedNames are provided, returns an empty map.
+     *
+     * @param wildCardedTypeNames e.g. 'TEST_*' or 'TEST_FEED'
+     */
+    Map<String, Integer> find(final List<String> wildCardedTypeNames) {
+        return WildCardHelper.find(
+                wildCardedTypeNames,
+                cache,
+                this::fetchWithWildCards);
+    }
 
-        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+    private Map<String, Integer> fetchWithWildCards(final List<String> wildCardedTypeNames) {
+        final Condition condition = JooqUtil.createWildCardedStringsCondition(
+                META_TYPE.NAME, wildCardedTypeNames, true, BooleanOperator.OR);
+
+        final Map<String, Integer> typeToIdMap = JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .select(META_TYPE.NAME, META_TYPE.ID)
                 .from(META_TYPE)
                 .where(condition)
-                .fetchGroups(META_TYPE.NAME, META_TYPE.ID));
+                .fetchMap(META_TYPE.NAME, META_TYPE.ID));
+
+        // Manually put any non wild-carded ones in the cache
+        typeToIdMap.entrySet()
+                .stream()
+                .filter(entry ->
+                        !PatternUtil.containsWildCards(entry.getKey()))
+                .forEach(entry ->
+                        cache.put(entry.getKey(), entry.getValue()));
+
+        LOGGER.debug(() -> LogUtil.message("fetchWithWildCards called for wildCardedTypeNames: '{}', returning: '{}'",
+                wildCardedTypeNames, typeToIdMap.entrySet()
+                        .stream()
+                        .map(entry -> entry.getKey() + ":" + entry.getValue())
+                        .collect(Collectors.joining(", "))));
+
+        return typeToIdMap;
     }
 
     private Optional<Integer> create(final String name) {
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                .insertInto(META_TYPE, META_TYPE.NAME)
-                .values(name)
-                .onDuplicateKeyIgnore()
-                .returning(META_TYPE.ID)
-                .fetchOptional())
+                        .insertInto(META_TYPE, META_TYPE.NAME)
+                        .values(name)
+                        .onDuplicateKeyIgnore()
+                        .returning(META_TYPE.ID)
+                        .fetchOptional())
                 .map(MetaTypeRecord::getId);
     }
 

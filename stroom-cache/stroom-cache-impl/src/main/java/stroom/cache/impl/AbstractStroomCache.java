@@ -45,7 +45,8 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
 
     // These two must be changed under the protection of stampedLock. Exclusive access,
     // i.e. a write-lock is only needed for operations that change the reference attached
-    // to these variables.
+    // to these variables. Reads/Writes on the cache itself, e.g. gets or invalidating elements only needs an
+    // (optimistic) read lock to make the cache rebuild wait till the read has finished.
     protected volatile Cache<K, V> cache = null;
     protected volatile Caffeine<K, V> cacheBuilder = null;
 
