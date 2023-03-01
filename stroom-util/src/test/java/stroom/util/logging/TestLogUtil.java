@@ -104,4 +104,59 @@ class TestLogUtil {
         assertThat(LogUtil.withPercentage(null, (int) 100))
                 .isNull();
     }
+
+    @Test
+    void toStringWithoutName() {
+        assertThat(LogUtil.toStringWithoutName(new MyPojo("abc", 123)))
+                .isEqualTo("aString='abc', anInt=123");
+
+    }
+
+    @Test
+    void toStringWithoutName_null() {
+        assertThat(LogUtil.toStringWithoutName(null))
+                .isNull();
+
+    }
+
+    @Test
+    void toStringWithoutName_empty() {
+        assertThat(LogUtil.toStringWithoutName(new Object() {
+            @Override
+            public String toString() {
+                return "";
+            }
+        }))
+                .isEqualTo("");
+
+    }
+
+    @Test
+    void toStringWithoutName_noName() {
+        assertThat(LogUtil.toStringWithoutName(new Object() {
+            @Override
+            public String toString() {
+                return "abc";
+            }
+        }))
+                .isEqualTo("abc");
+    }
+
+    private static class MyPojo {
+        private final String aString;
+        private final int anInt;
+
+        private MyPojo(final String aString, final int anInt) {
+            this.aString = aString;
+            this.anInt = anInt;
+        }
+
+        @Override
+        public String toString() {
+            return "MyPojo{" +
+                    "aString='" + aString + '\'' +
+                    ", anInt=" + anInt +
+                    '}';
+        }
+    }
 }

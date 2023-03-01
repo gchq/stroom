@@ -51,11 +51,9 @@ import stroom.util.logging.DurationTimer.TimedResult;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.Clearable;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
 import stroom.util.shared.ResultPage;
-import stroom.util.string.PatternUtil;
 import stroom.util.time.TimePeriod;
 
 import io.vavr.Tuple;
@@ -93,7 +91,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -1528,7 +1525,7 @@ public class MetaDaoImpl implements MetaDao {
     }
 
     @Override
-    public Set<EffectiveMeta> getEffectiveStreams(final EffectiveMetaDataCriteria effectiveMetaDataCriteria) {
+    public List<EffectiveMeta> getEffectiveStreams(final EffectiveMetaDataCriteria effectiveMetaDataCriteria) {
 
         LOGGER.debug("getEffectiveStreams({})", effectiveMetaDataCriteria);
 
@@ -1544,14 +1541,14 @@ public class MetaDaoImpl implements MetaDao {
         if (optFeedId.isEmpty()) {
             LOGGER.debug("Feed {} not found in the {} table.",
                     effectiveMetaDataCriteria.getFeed(), META_FEED.NAME);
-            return Collections.emptySet();
+            return Collections.emptyList();
         }
         final int feedId = optFeedId.get();
 
         final Optional<Integer> optTypeId = metaTypeDao.get(effectiveMetaDataCriteria.getType());
         if (optTypeId.isEmpty()) {
             LOGGER.warn("Meta Type {} not found in the database", effectiveMetaDataCriteria.getType());
-            return Collections.emptySet();
+            return Collections.emptyList();
         }
         final int typeId = optTypeId.get();
 
@@ -1579,8 +1576,8 @@ public class MetaDaoImpl implements MetaDao {
                             .and(meta.EFFECTIVE_TIME.greaterThan(fromMs))
                             .and(meta.EFFECTIVE_TIME.lessThan(toMs));
 
-                    // Combine the two together, dropping dups if there are any
-                    final var select = selectUpToRange.union(selectInRange);
+                    // We want to include dups so that we can log and remove them later
+                    final var select = selectUpToRange.unionAll(selectInRange);
 
                     LOGGER.debug("select:\n{}", select);
 
@@ -1591,7 +1588,7 @@ public class MetaDaoImpl implements MetaDao {
         LOGGER.debug(() -> LogUtil.message("returning {} streams for criteria: {}",
                 streamsInOrBelowRange.size(), effectiveMetaDataCriteria));
 
-        return new HashSet<>(streamsInOrBelowRange);
+        return streamsInOrBelowRange;
     }
 
     @Override

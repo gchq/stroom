@@ -286,8 +286,8 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
-    public Set<EffectiveMeta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
-        Set<EffectiveMeta> results = new HashSet<>();
+    public List<EffectiveMeta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
+        List<EffectiveMeta> results = new ArrayList<>();
 
         try {
             results = metaMap.values()
@@ -297,7 +297,7 @@ public class MockMetaService implements MetaService, Clearable {
                     .filter(meta ->
                             NullSafe.test(criteria.getFeed(), feed -> feed.equals(meta.getFeedName())))
                     .map(EffectiveMeta::new)
-                    .collect(Collectors.toSet());
+                    .collect(Collectors.toList());
 
         } catch (final RuntimeException e) {
             System.out.println(e.getMessage());

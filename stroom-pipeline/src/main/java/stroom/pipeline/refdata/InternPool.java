@@ -17,8 +17,11 @@
 package stroom.pipeline.refdata;
 
 public class InternPool<T> {
+    // WeakPool is not thread safe
     private final WeakPool<T> pool = new WeakPool<>();
 
+    // This is only called when loading an item into the eff strm cache so the sync
+    // is not a massive hit
     public synchronized T intern(final T object) {
         T res = pool.get(object);
         if (res == null) {

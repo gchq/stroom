@@ -93,7 +93,7 @@ public class SimpleMetaImpl implements SimpleMeta {
 
     @Override
     public String toString() {
-        return id + " - " + feedName + " - " + typeName;
+        return String.join(":", feedName, typeName, Long.toString(id));
     }
 
     public static Builder builder() {

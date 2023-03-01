@@ -49,6 +49,7 @@ class EffectiveStreamKey {
 
     /**
      * Create an {@link EffectiveStreamKey} for a point t
+     *
      * @param feed
      * @param streamType
      * @param timeMs
@@ -121,27 +122,21 @@ class EffectiveStreamKey {
         return hashCode;
     }
 
-    public void append(final StringBuilder sb) {
-        if (feed != null) {
-            sb.append("feed = ");
-            sb.append(feed);
-            sb.append(", ");
-        }
-        if (streamType != null) {
-            sb.append("streamType = ");
-            sb.append(streamType);
-            sb.append(", ");
-        }
-        sb.append("effectiveTimeWindow >= ");
-        sb.append(DateUtil.createNormalDateTimeString(fromMs));
-        sb.append(" < ");
-        sb.append(DateUtil.createNormalDateTimeString(toMs));
-    }
-
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder();
-        append(sb);
-        return sb.toString();
+        return "EffectiveStreamKey{" +
+                feed +
+                ":" +
+                streamType +
+                " >= " +
+                DateUtil.createNormalDateTimeString(fromMs) +
+                " < " +
+                DateUtil.createNormalDateTimeString(toMs) +
+                "}";
+    }
+
+    boolean isTimeInKeyWindow(final long timeMs) {
+        return timeMs >= fromMs
+                && timeMs < toMs;
     }
 }

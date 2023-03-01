@@ -20,6 +20,7 @@ import stroom.pipeline.factory.PipelineElementModule;
 import stroom.pipeline.refdata.store.RefDataStoreModule;
 import stroom.searchable.api.Searchable;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.HasSystemInfoBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
 
@@ -34,6 +35,9 @@ public class ReferenceDataModule extends PipelineElementModule {
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(EffectiveStreamCache.class);
+
+        HasSystemInfoBinder.create(binder())
+                .bind(EffectiveStreamCache.class);
 
         RestResourcesBinder.create(binder())
                 .bind(ReferenceDataResourceImpl.class);
