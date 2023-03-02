@@ -16,7 +16,6 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.RemovalListener;
 
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -26,8 +25,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
@@ -117,14 +114,6 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
             final CacheHolder<K, V> newCacheHolder = new CacheHolder<>(newCache, newCacheBuilder, newCacheConfig);
             LOGGER.debug("Assigning new cacheHolder instance");
             this.cacheHolder = newCacheHolder;
-
-            final Timer timer = new Timer("Old cache clear timer", true);
-            timer.schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    NullSafe.consume(existingCacheHolder, CacheHolder::getCache, CacheUtil::clear);
-                }
-            }, Duration.ofMinutes(1).toMillis());
         }
     }
 
