@@ -31,7 +31,7 @@ import java.util.function.Supplier;
                 returnType = ValLong.class,
                 returnDescription = "Number of records",
                 args = {}))
-class Count extends AbstractFunction {
+class Count extends AbstractFunction implements AggregateFunction {
 
     static final String NAME = "count";
 
@@ -59,7 +59,7 @@ class Count extends AbstractFunction {
         private long count;
 
         @Override
-        public void set(final Val[] values) {
+        public void set(final Values values) {
             count++;
         }
 

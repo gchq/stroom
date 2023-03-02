@@ -55,6 +55,9 @@ public final class TableSettings {
     @JsonProperty
     private final List<Field> fields;
 
+    @JsonProperty
+    private final Window window;
+
     /**
      * A filter to apply to raw values.
      */
@@ -99,6 +102,7 @@ public final class TableSettings {
     public TableSettings(
             @JsonProperty("queryId") final String queryId,
             @JsonProperty("fields") final List<Field> fields,
+            @JsonProperty("window") final Window window,
             @JsonProperty("valueFilter") final ExpressionOperator valueFilter,
             @JsonProperty("aggregateFilter") final ExpressionOperator aggregateFilter,
             @JsonProperty("extractValues") final Boolean extractValues,
@@ -109,6 +113,7 @@ public final class TableSettings {
                     conditionalFormattingRules) {
         this.queryId = queryId;
         this.fields = fields;
+        this.window = window;
         this.valueFilter = valueFilter;
         this.aggregateFilter = aggregateFilter;
         this.extractValues = extractValues;
@@ -124,6 +129,10 @@ public final class TableSettings {
 
     public List<Field> getFields() {
         return fields;
+    }
+
+    public Window getWindow() {
+        return window;
     }
 
     public ExpressionOperator getValueFilter() {
@@ -179,6 +188,7 @@ public final class TableSettings {
         final TableSettings that = (TableSettings) o;
         return Objects.equals(queryId, that.queryId) &&
                 Objects.equals(fields, that.fields) &&
+                Objects.equals(window, that.window) &&
                 Objects.equals(aggregateFilter, that.aggregateFilter) &&
                 Objects.equals(extractValues, that.extractValues) &&
                 Objects.equals(extractionPipeline, that.extractionPipeline) &&
@@ -191,6 +201,7 @@ public final class TableSettings {
     public int hashCode() {
         return Objects.hash(queryId,
                 fields,
+                window,
                 aggregateFilter,
                 extractValues,
                 extractionPipeline,
@@ -204,6 +215,7 @@ public final class TableSettings {
         return "TableSettings{" +
                 "queryId='" + queryId + '\'' +
                 ", fields=" + fields +
+                ", window=" + window +
                 ", filter=" + aggregateFilter +
                 ", extractValues=" + extractValues +
                 ", extractionPipeline=" + extractionPipeline +
@@ -226,15 +238,16 @@ public final class TableSettings {
      */
     public static final class Builder {
 
-        protected String queryId;
-        protected List<Field> fields;
-        protected ExpressionOperator valueFilter;
-        protected ExpressionOperator aggregateFilter;
-        protected Boolean extractValues;
-        protected DocRef extractionPipeline;
-        protected List<Integer> maxResults;
-        protected Boolean showDetail;
-        protected List<ConditionalFormattingRule> conditionalFormattingRules;
+        private String queryId;
+        private List<Field> fields;
+        private Window window;
+        private ExpressionOperator valueFilter;
+        private ExpressionOperator aggregateFilter;
+        private Boolean extractValues;
+        private DocRef extractionPipeline;
+        private List<Integer> maxResults;
+        private Boolean showDetail;
+        private List<ConditionalFormattingRule> conditionalFormattingRules;
 
         private Builder() {
         }
@@ -244,6 +257,7 @@ public final class TableSettings {
             this.fields = tableSettings.getFields() == null
                     ? null
                     : new ArrayList<>(tableSettings.getFields());
+            this.window = tableSettings.window;
             this.valueFilter = tableSettings.valueFilter;
             this.aggregateFilter = tableSettings.aggregateFilter;
             this.extractValues = tableSettings.getExtractValues();
@@ -263,6 +277,11 @@ public final class TableSettings {
          */
         public Builder queryId(final String value) {
             this.queryId = value;
+            return this;
+        }
+
+        public Builder window(final Window window) {
+            this.window = window;
             return this;
         }
 
@@ -388,6 +407,7 @@ public final class TableSettings {
             return new TableSettings(
                     queryId,
                     fields,
+                    window,
                     valueFilter,
                     aggregateFilter,
                     extractValues,

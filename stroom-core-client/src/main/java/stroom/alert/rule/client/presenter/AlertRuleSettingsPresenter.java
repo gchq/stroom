@@ -112,7 +112,7 @@ public class AlertRuleSettingsPresenter
     @Override
     protected AlertRuleDoc onWrite(final AlertRuleDoc alertRule) {
         AbstractAlertRule rule = null;
-        if (AlertRuleType.THRESHOLD.equals(getView().getAlertRuleType())) {
+        if (AlertRuleType.AGGREGATE.equals(getView().getAlertRuleType())) {
             rule = ThresholdAlertRule.builder()
                     .timeField(getView().getTimeField())
                     .executionDelay(getView().getExecutionDelay())

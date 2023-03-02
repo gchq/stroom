@@ -43,6 +43,10 @@ public class AlertRuleDoc extends Doc {
     @JsonProperty
     private final boolean enabled;
     @JsonProperty
+    private final Long minMetaCreateTimeMs;
+    @JsonProperty
+    private final Long maxMetaCreateTimeMs;
+    @JsonProperty
     private final AlertRuleType alertRuleType;
     @JsonProperty
     private final AbstractAlertRule alertRule;
@@ -52,6 +56,8 @@ public class AlertRuleDoc extends Doc {
         languageVersion = null;
         query = null;
         enabled = false;
+        minMetaCreateTimeMs = null;
+        maxMetaCreateTimeMs = null;
         alertRuleType = null;
         alertRule = null;
     }
@@ -69,6 +75,8 @@ public class AlertRuleDoc extends Doc {
                         @JsonProperty("languageVersion") final QueryLanguageVersion languageVersion,
                         @JsonProperty("query") final String query,
                         @JsonProperty("enabled") final boolean enabled,
+                        @JsonProperty("minMetaCreateTimeMs") Long minMetaCreateTimeMs,
+                        @JsonProperty("maxMetaCreateTimeMs") Long maxMetaCreateTimeMs,
                         @JsonProperty("alertRuleType") AlertRuleType alertRuleType,
                         @JsonProperty("alertRule") AbstractAlertRule alertRule) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
@@ -76,6 +84,8 @@ public class AlertRuleDoc extends Doc {
         this.languageVersion = languageVersion;
         this.query = query;
         this.enabled = enabled;
+        this.minMetaCreateTimeMs = minMetaCreateTimeMs;
+        this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
         this.alertRuleType = alertRuleType;
         this.alertRule = alertRule;
     }
@@ -94,6 +104,14 @@ public class AlertRuleDoc extends Doc {
 
     public boolean isEnabled() {
         return enabled;
+    }
+
+    public Long getMinMetaCreateTimeMs() {
+        return minMetaCreateTimeMs;
+    }
+
+    public Long getMaxMetaCreateTimeMs() {
+        return maxMetaCreateTimeMs;
     }
 
     public AlertRuleType getAlertRuleType() {
@@ -145,6 +163,8 @@ public class AlertRuleDoc extends Doc {
         private QueryLanguageVersion languageVersion;
         private String query;
         private boolean enabled;
+        private Long minMetaCreateTimeMs;
+        private Long maxMetaCreateTimeMs;
         private AlertRuleType alertRuleType;
         private AbstractAlertRule alertRule;
 
@@ -157,6 +177,8 @@ public class AlertRuleDoc extends Doc {
             this.languageVersion = doc.languageVersion;
             this.query = doc.query;
             this.enabled = doc.enabled;
+            this.minMetaCreateTimeMs = doc.minMetaCreateTimeMs;
+            this.maxMetaCreateTimeMs = doc.maxMetaCreateTimeMs;
             this.alertRuleType = doc.alertRuleType;
             this.alertRule = doc.alertRule;
         }
@@ -178,6 +200,16 @@ public class AlertRuleDoc extends Doc {
 
         public Builder enabled(final boolean enabled) {
             this.enabled = enabled;
+            return self();
+        }
+
+        public Builder minMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
+            this.minMetaCreateTimeMs = minMetaCreateTimeMs;
+            return self();
+        }
+
+        public Builder maxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
+            this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
             return self();
         }
 
@@ -211,6 +243,8 @@ public class AlertRuleDoc extends Doc {
                     languageVersion,
                     query,
                     enabled,
+                    minMetaCreateTimeMs,
+                    maxMetaCreateTimeMs,
                     alertRuleType,
                     alertRule);
         }

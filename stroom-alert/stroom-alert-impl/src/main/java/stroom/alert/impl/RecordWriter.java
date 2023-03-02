@@ -12,7 +12,7 @@ import org.xml.sax.helpers.AttributesImpl;
 
 import javax.inject.Inject;
 
-public class RecordWriter implements RecordConsumer {
+public class RecordWriter implements RecordConsumer, ProcessLifecycleAware {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RecordWriter.class);
 
@@ -39,9 +39,11 @@ public class RecordWriter implements RecordConsumer {
         this.handler = handler;
     }
 
+    @Override
     public synchronized void start() {
     }
 
+    @Override
     public synchronized void end() {
         try {
             if (written) {

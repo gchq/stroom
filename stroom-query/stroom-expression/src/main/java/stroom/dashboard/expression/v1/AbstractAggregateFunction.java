@@ -64,7 +64,7 @@ abstract class AbstractAggregateFunction extends AbstractManyChildFunction imple
         }
 
         @Override
-        public void set(final Val[] values) {
+        public void set(final Values values) {
             childGenerator.set(values);
             current = calculator.calc(current, childGenerator.eval(null));
         }
@@ -104,7 +104,7 @@ abstract class AbstractAggregateFunction extends AbstractManyChildFunction imple
         }
 
         @Override
-        public void set(final Val[] values) {
+        public void set(final Values values) {
             for (final Generator gen : childGenerators) {
                 gen.set(values);
             }

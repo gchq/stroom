@@ -25,6 +25,7 @@ import stroom.dashboard.expression.v1.ValInteger;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.dashboard.expression.v1.Values;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.query.common.v2.ErrorConsumer;
 import stroom.search.solr.CachedSolrIndex;
@@ -282,7 +283,7 @@ public class SolrSearchTaskHandler {
                 }
 
                 if (values != null) {
-                    valuesConsumer.add(values);
+                    valuesConsumer.add(Values.of(values));
                 }
             } catch (final RuntimeException e) {
                 error(e);
@@ -452,7 +453,7 @@ public class SolrSearchTaskHandler {
                 }
 
                 if (values != null) {
-                    valuesConsumer.add(values);
+                    valuesConsumer.add(Values.of(values));
                 }
             } catch (final RuntimeException e) {
                 error(e);

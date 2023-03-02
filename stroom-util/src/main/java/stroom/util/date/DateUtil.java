@@ -16,10 +16,17 @@
 
 package stroom.util.date;
 
+import org.assertj.core.internal.bytebuddy.asm.Advice.Local;
+
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.Period;
+import java.time.Year;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoField;
+import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 
 public final class DateUtil {
@@ -168,5 +175,62 @@ public final class DateUtil {
 
     public static boolean looksLikeDate(final String date) {
         return date != null && date.length() == DATE_LENGTH && date.charAt(date.length() - 1) == 'Z';
+    }
+
+    public static Instant roundDown(final Instant instant, final Duration duration) {
+        Instant result;
+        if (duration.toMillis() < 1000) {
+            result = instant.truncatedTo(ChronoUnit.SECONDS);
+        } else if (duration.toSeconds() < 60) {
+            result = instant.truncatedTo(ChronoUnit.MINUTES);
+        } else if (duration.toMinutes() < 60) {
+            result = instant.truncatedTo(ChronoUnit.HOURS);
+        } else if (duration.toHours() < 24) {
+            result = instant.truncatedTo(ChronoUnit.DAYS);
+        } else {
+            result = instant.truncatedTo(ChronoUnit.YEARS);
+        }
+
+        // Add duration until we surpass time.
+        Instant adjusted = result;
+        while (adjusted.isBefore(instant)) {
+            result = adjusted;
+            adjusted = adjusted.plus(duration);
+        }
+
+        return result;
+    }
+
+    public static LocalDateTime roundDown(LocalDateTime dateTime, Period period) {
+        int year = dateTime.getYear();
+        int month = dateTime.getMonthValue();
+        int day = dateTime.getDayOfMonth();
+
+        if (period.getYears() != 0) {
+            if (period.getYears() > 1) {
+                final int multiple = (year - 1970) / period.getYears();
+                year = multiple * period.getYears();
+            }
+            month = 1;
+            day = 1;
+
+        } else if (period.getMonths() != 0) {
+            if (period.getMonths() >= 12) {
+                month = 1;
+            } else if (period.getMonths() > 1) {
+                final int multiple = 12 / period.getMonths();
+                month = multiple * period.getMonths();
+            }
+            day = 1;
+
+        } else if (period.getDays() != 0) {
+            if (period.getDays() >= 365) {
+                day = 1;
+            } else if (period.getDays() > 1) {
+                final int multiple = 365 / period.getDays();
+                day = multiple * period.getDays();
+            }
+        }
+        return LocalDateTime.of(year, month, day, 0, 0, 0);
     }
 }

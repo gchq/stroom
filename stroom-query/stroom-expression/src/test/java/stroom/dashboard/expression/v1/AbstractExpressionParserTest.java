@@ -117,20 +117,20 @@ public class AbstractExpressionParserTest {
         return val.getClass().getSimpleName() + "(" + val + ")";
     }
 
-    protected static Val[] getVals(final String... str) {
+    protected static Values getVals(final String... str) {
         final Val[] result = new Val[str.length];
         for (int i = 0; i < result.length; i++) {
             result[i] = ValString.create(str[i]);
         }
-        return result;
+        return Values.of(result);
     }
 
-    protected static Val[] getVals(final double... d) {
+    protected static Values getVals(final double... d) {
         final Val[] result = new Val[d.length];
         for (int i = 0; i < d.length; i++) {
             result[i] = ValDouble.create(d[i]);
         }
-        return result;
+        return Values.of(result);
     }
 
     protected void test(final String expression) {
@@ -187,7 +187,7 @@ public class AbstractExpressionParserTest {
 
     protected void assertThatItEvaluatesToValErr(final String expression, final Val... values) {
         createGenerator(expression, gen -> {
-            gen.set(values);
+            gen.set(Values.of(values));
             Val out = gen.eval(null);
             System.out.println(expression + " - " +
                     out.getClass().getSimpleName() + ": " +
@@ -201,9 +201,9 @@ public class AbstractExpressionParserTest {
 
     protected void assertThatItEvaluatesTo(final String expression,
                                            final Val expectedOutput,
-                                           final Val... inputValues) {
+                                           final Values inputValues) {
         createGenerator(expression, gen -> {
-            if (inputValues != null && inputValues.length > 0) {
+            if (inputValues != null && inputValues.size() > 0) {
                 gen.set(inputValues);
             }
             final Val out = gen.eval(null);
@@ -224,7 +224,7 @@ public class AbstractExpressionParserTest {
                                            final Val expectedOutput) {
         final String expression = String.format("(${val1}%s${val2})", operator);
         createGenerator(expression, 2, gen -> {
-            gen.set(new Val[]{val1, val2});
+            gen.set(Values.of(val1, val2));
             Val out = gen.eval(null);
 
             System.out.printf("[%s: %s] %s [%s: %s] => [%s: %s%s]%n",
@@ -265,7 +265,7 @@ public class AbstractExpressionParserTest {
     protected void assertTypeOf(final Val val1, final String expectedType) {
         final String expression = "typeOf(${val1})";
         createGenerator(expression, gen -> {
-            gen.set(new Val[]{val1});
+            gen.set(Values.of(val1));
             Val out = gen.eval(null);
 
             System.out.printf("%s - [%s:%s] => [%s:%s%s]%n",
@@ -287,7 +287,7 @@ public class AbstractExpressionParserTest {
     protected void assertIsExpression(final Val val1, final String function, final Val expectedOutput) {
         final String expression = String.format("%s(${val1})", function);
         createGenerator(expression, 2, gen -> {
-            gen.set(new Val[]{val1});
+            gen.set(Values.of(val1));
             Val out = gen.eval(null);
 
             System.out.printf("%s([%s: %s]) => [%s: %s%s]%n",
@@ -309,23 +309,27 @@ public class AbstractExpressionParserTest {
 
         protected final String expression;
         protected final Val expectedResult;
-        protected final Val[] inputValues;
+        protected final Values inputValues;
 
-        TestCase(final String expression, final Val expectedResult, final Val... inputValues) {
+        TestCase(final String expression, final Val expectedResult, final Values inputValues) {
             this.expression = expression;
             this.expectedResult = expectedResult;
             this.inputValues = inputValues;
         }
 
         static TestCase of(final String expression, final Val expectedResult, final Val... inputValues) {
+            return new TestCase(expression, expectedResult, Values.of(inputValues));
+        }
+
+        static TestCase of(final String expression, final Val expectedResult, final Values inputValues) {
             return new TestCase(expression, expectedResult, inputValues);
         }
 
         @Override
         public String toString() {
-            final String inputValuesStr = inputValues == null || inputValues.length == 0
+            final String inputValuesStr = inputValues == null || inputValues.size() == 0
                     ? ""
-                    : Arrays.stream(inputValues)
+                    : Arrays.stream(inputValues.toUnsafeArray())
                             .map(TestExpressionParser::valToString)
                             .collect(Collectors.joining(", "));
             return

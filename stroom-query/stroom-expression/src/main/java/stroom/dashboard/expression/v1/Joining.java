@@ -74,7 +74,7 @@ import java.util.function.Supplier;
                                         argType = ValInteger.class),
                         })
         })
-class Joining extends AbstractFunction {
+class Joining extends AbstractFunction implements AggregateFunction {
 
     static final String NAME = "joining";
     static final int DEFAULT_LIMIT = 10;
@@ -138,7 +138,7 @@ class Joining extends AbstractFunction {
         }
 
         @Override
-        public void set(final Val[] values) {
+        public void set(final Values values) {
             childGenerator.set(values);
 
             if (list.size() < limit) {

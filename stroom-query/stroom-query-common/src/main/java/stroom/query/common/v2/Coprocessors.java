@@ -1,7 +1,7 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.Values;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.docref.DocRef;
 import stroom.util.logging.LambdaLogger;
@@ -11,7 +11,6 @@ import stroom.util.logging.LogUtil;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -66,9 +65,9 @@ public final class Coprocessors implements Iterable<Coprocessor>, ValuesConsumer
     }
 
     @Override
-    public void add(final Val[] values) {
+    public void add(final Values values) {
         counter.increment();
-        LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(values)));
+        LOGGER.trace(() -> String.format("data: [%s]", values));
         // Give the data array to each of our coprocessors
         coprocessorMap.values().forEach(coprocessor -> coprocessor.add(values));
     }

@@ -19,6 +19,7 @@ package stroom.search.extraction;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.dashboard.expression.v1.Values;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -323,7 +324,7 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
 
                         values[field] = ValString.create(thisVal.toString());
                     }
-                    extractionStateHolder.getReceiver().add(values);
+                    extractionStateHolder.getReceiver().add(Values.of(values));
 
                 } catch (SaxonApiException ex) {
                     log(Severity.ERROR, "Unable to evaluate XPaths", ex);

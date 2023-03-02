@@ -2,6 +2,7 @@ package stroom.task.impl;
 
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.dashboard.expression.v1.Values;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
@@ -51,6 +52,6 @@ public class SearchableDual implements Searchable {
         for (int i = 0; i < fields.length; i++) {
             valArr[i] = ValString.create("X");
         }
-        consumer.add(valArr);
+        consumer.add(Values.of(valArr));
     }
 }

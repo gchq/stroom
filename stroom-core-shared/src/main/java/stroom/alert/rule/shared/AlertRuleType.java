@@ -4,7 +4,7 @@ import stroom.docref.HasDisplayValue;
 
 public enum AlertRuleType implements HasDisplayValue {
     EVENT("Event"),
-    THRESHOLD("Threshold");
+    AGGREGATE("Aggregate");
 
     private final String displayValue;
 

@@ -18,6 +18,7 @@ package stroom.search.extraction;
 
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.Values;
 import stroom.index.shared.IndexConstants;
 
 class EventFactory {
@@ -48,7 +49,7 @@ class EventFactory {
         return index;
     }
 
-    Event create(final Val[] storedData) {
+    Event create(final Values storedData) {
         if (error != null) {
             throw error;
         }
@@ -65,10 +66,10 @@ class EventFactory {
         return new Event(longStreamId, longEventId, storedData);
     }
 
-    private long getLong(final Val[] storedData, final int index) {
+    private long getLong(final Values storedData, final int index) {
         try {
-            if (index >= 0 && storedData.length > index) {
-                final Val value = storedData[index];
+            if (index >= 0 && storedData.size() > index) {
+                final Val value = storedData.get(index);
                 return value.toLong();
             }
         } catch (final Exception e) {

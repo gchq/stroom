@@ -99,6 +99,8 @@ public class TableResultCreator implements ResultCreator {
             //that maxResults threshold
 
             TableSettings tableSettings = resultRequest.getMappings().get(0);
+            WindowSupport windowSupport = new WindowSupport(tableSettings);
+            tableSettings = windowSupport.getTableSettings();
             latestFields = tableSettings != null
                     ? tableSettings.getFields()
                     : Collections.emptyList();

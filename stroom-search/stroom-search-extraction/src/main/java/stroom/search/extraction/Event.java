@@ -16,7 +16,7 @@
 
 package stroom.search.extraction;
 
-import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.Values;
 
 import java.util.Objects;
 
@@ -24,9 +24,9 @@ public class Event implements Comparable<Event> {
 
     private final long streamId;
     private final long eventId;
-    private final Val[] values;
+    private final Values values;
 
-    public Event(final long streamId, final long eventId, final Val[] values) {
+    public Event(final long streamId, final long eventId, final Values values) {
         this.streamId = streamId;
         this.eventId = eventId;
         this.values = values;
@@ -40,7 +40,7 @@ public class Event implements Comparable<Event> {
         return eventId;
     }
 
-    public Val[] getValues() {
+    public Values getValues() {
         return values;
     }
 

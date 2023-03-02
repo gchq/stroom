@@ -2,6 +2,7 @@ package stroom.alert.impl;
 
 import stroom.alert.rule.shared.AlertRuleDoc;
 import stroom.query.api.v2.Query;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
@@ -24,7 +25,7 @@ public class AlertRuleSearchRequestHelper {
         Query sampleQuery = Query.builder().build();
         SearchRequest sampleRequest = new SearchRequest(
                 SearchRequestSource.builder().sourceType(SourceType.ALERT_RULE).build(),
-                null,
+                alertRule.getQueryKey(),
                 sampleQuery,
                 null,
                 null,

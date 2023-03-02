@@ -47,19 +47,21 @@ public class MultiValuesReceiverFactory {
                     eventAlertDefinitions.add(alertDefinition);
                 }
             }
-        } else if (ruleConfig instanceof AlertRuleConfig) {
-            final AlertRuleConfig alertRuleConfig = (AlertRuleConfig) ruleConfig;
-            if (AlertRuleType.EVENT.equals(alertRuleConfig.getAlertRuleDoc().getAlertRuleType())) {
-                for (AlertDefinition alertDefinition : ruleConfig.getAlertDefinitions()) {
-                    if (!alertDefinition.isDisabled()) {
-                        eventAlertDefinitions.add(alertDefinition);
-                    }
-                }
-            } else {
-                // Add a receiver that will put data into a result store.
-                subConsumers.add(aggregateRuleValuesConsumerFactory.create(alertRuleConfig));
-            }
         }
+
+//        else if (ruleConfig instanceof AlertRuleConfig) {
+//            final AlertRuleConfig alertRuleConfig = (AlertRuleConfig) ruleConfig;
+//            if (AlertRuleType.EVENT.equals(alertRuleConfig.getAlertRuleDoc().getAlertRuleType())) {
+//                for (AlertDefinition alertDefinition : ruleConfig.getAlertDefinitions()) {
+//                    if (!alertDefinition.isDisabled()) {
+//                        eventAlertDefinitions.add(alertDefinition);
+//                    }
+//                }
+//            } else {
+//                // Add a receiver that will put data into a result store.
+//                subConsumers.add(aggregateRuleValuesConsumerFactory.create(alertRuleConfig));
+//            }
+//        }
 
         // If we have some alerts that only care about single events then create a handler for these.
         if (eventAlertDefinitions.size() > 0) {

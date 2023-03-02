@@ -47,7 +47,7 @@ import java.util.function.Supplier;
                                 argType = Val.class,
                                 isVarargs = true,
                                 minVarargsCount = 2))})
-class CountUnique extends AbstractFunction {
+class CountUnique extends AbstractFunction implements AggregateFunction {
 
     static final String NAME = "countUnique";
 
@@ -108,7 +108,7 @@ class CountUnique extends AbstractFunction {
         }
 
         @Override
-        public void set(final Val[] values) {
+        public void set(final Values values) {
             childGenerator.set(values);
             final Val value = childGenerator.eval(null);
             if (value.type().isValue()) {

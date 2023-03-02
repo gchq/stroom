@@ -70,7 +70,7 @@ public class AlertRuleSettingsViewImpl
         description.addDomHandler(e -> getUiHandlers().onDirty(), InputEvent.getType());
 
         alertRuleType.addItem(AlertRuleType.EVENT);
-        alertRuleType.addItem(AlertRuleType.THRESHOLD);
+        alertRuleType.addItem(AlertRuleType.AGGREGATE);
     }
 
     @Override

@@ -1,6 +1,6 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.Values;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -14,7 +14,7 @@ public interface DataStore {
      *
      * @param values The values to add to the store.
      */
-    void add(Val[] values);
+    void add(Values values);
 
     /**
      * Get data from the store

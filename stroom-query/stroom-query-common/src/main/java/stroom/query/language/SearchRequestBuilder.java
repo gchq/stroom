@@ -7,6 +7,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Filter;
+import stroom.query.api.v2.HoppingWindow;
 import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.ResultRequest;
@@ -329,6 +330,12 @@ public class SearchRequestBuilder {
                                 functions);
                         remaining.remove(0);
                     }
+                    case WINDOW -> {
+                        processWindowPipeOperation(
+                                pipeGroup,
+                                tableSettingsBuilder);
+                        remaining.remove(0);
+                    }
                     case SORT -> {
                         processSortPipeOperation(
                                 pipeGroup,
@@ -428,6 +435,71 @@ public class SearchRequestBuilder {
 //            }
 //        }
 //    }
+
+    private void processWindowPipeOperation(final PipeGroup pipeGroup,
+                                            final TableSettings.Builder builder) {
+        final List<AbstractToken> children = pipeGroup.getChildren();
+
+        String field = null;
+        String durationString = null;
+        String advanceString = null;
+        if (children.size() > 0) {
+            AbstractToken token = children.get(0);
+            if (!TokenType.isString(token)) {
+                throw new TokenException(token, "Syntax exception");
+            }
+            field = token.getUnescapedText();
+        } else {
+            throw new TokenException(pipeGroup, "Expected field");
+        }
+
+        if (children.size() > 1) {
+            AbstractToken token = children.get(1);
+            if (!TokenType.BY.equals(token.getTokenType())) {
+                throw new TokenException(token, "Syntax exception, expected by");
+            }
+        } else {
+            throw new TokenException(pipeGroup, "Syntax exception, expected by");
+        }
+
+        if (children.size() > 2) {
+            AbstractToken token = children.get(2);
+            if (!TokenType.isString(token)) {
+                throw new TokenException(token, "Syntax exception, expected by");
+            }
+            durationString = token.getUnescapedText();
+        } else {
+            throw new TokenException(pipeGroup, "Syntax exception, expected window duration");
+        }
+
+        if (children.size() > 3) {
+            AbstractToken token = children.get(3);
+            if (!TokenType.isString(token)) {
+                throw new TokenException(token, "Syntax exception, expected advance");
+            }
+            if (!token.getUnescapedText().equals("advance")) {
+                throw new TokenException(token, "Syntax exception, expected advance");
+            }
+
+            if (children.size() > 4) {
+                token = children.get(4);
+                if (!TokenType.isString(token)) {
+                    throw new TokenException(token, "Syntax exception, expected advance duration");
+                }
+                advanceString = token.getUnescapedText();
+            } else {
+                throw new TokenException(pipeGroup, "Syntax exception, expected advance duration");
+            }
+        }
+
+        builder.window(HoppingWindow.builder()
+                .timeField(field)
+                .windowSize(durationString)
+                .advanceSize(advanceString == null
+                        ? durationString
+                        : advanceString)
+                .build());
+    }
 
     private void processEvalPipeOperation(final PipeGroup pipeGroup,
                                           final Map<String, String> functions) {

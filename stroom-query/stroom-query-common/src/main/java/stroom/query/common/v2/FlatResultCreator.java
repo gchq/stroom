@@ -18,6 +18,7 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.Values;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.FlatResultBuilder;
@@ -433,7 +434,7 @@ public class FlatResultCreator implements ResultCreator {
                                 values[i] = val;
                             }
                         }
-                        this.dataStore.add(values);
+                        this.dataStore.add(Values.of(values));
 
                         // Trim the data to the parent first level result size.
                         itemCount++;

@@ -5,6 +5,7 @@ import stroom.dashboard.expression.v1.ValInteger;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.dashboard.expression.v1.Values;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.data.retention.api.DataRetentionConfig;
 import stroom.data.retention.api.DataRetentionCreationTimeUtil;
@@ -1191,7 +1192,7 @@ public class MetaDaoImpl implements MetaDao, Clearable {
                             }
                             arr[i] = val;
                         }
-                        consumer.add(arr);
+                        consumer.add(Values.of(arr));
                     });
                 }
             }

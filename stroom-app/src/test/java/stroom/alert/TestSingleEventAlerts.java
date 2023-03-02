@@ -18,6 +18,7 @@ package stroom.alert;
 
 
 import stroom.alert.impl.AlertManagerImpl;
+import stroom.alert.impl.ResultStoreAlertSearchExecutor;
 import stroom.alert.rule.impl.AlertRuleStore;
 import stroom.alert.rule.shared.AlertRuleDoc;
 import stroom.alert.rule.shared.AlertRuleType;
@@ -34,6 +35,7 @@ import stroom.index.impl.IndexShardManager;
 import stroom.index.impl.IndexShardManager.IndexShardAction;
 import stroom.index.mock.MockIndexShardWriterExecutorModule;
 import stroom.index.shared.FindIndexShardCriteria;
+import stroom.index.shared.IndexDoc;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -43,6 +45,7 @@ import stroom.resource.impl.ResourceModule;
 import stroom.search.CommonIndexingTestHelper;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.BootstrapTestModule;
+import stroom.test.CommonTestScenarioCreator;
 import stroom.test.CommonTranslationTestHelper;
 import stroom.test.ContentImportService;
 import stroom.test.StoreCreationTool;
@@ -86,21 +89,8 @@ class TestSingleEventAlerts extends StroomIntegrationTest {
 
     @Inject
     private ContentImportService contentImportService;
-
-
-    private static final int N1 = 1;
-
-    private static final String DIR = "CommonIndexingTest/";
-
-    private static final Path INDEX_XSLT = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "index.xsl");
-
-    private static final Path SEARCH_RESULT_XSLT = StroomPipelineTestFileUtil
-            .getTestResourcesFile(DIR + "search_result.xsl");
-
     @Inject
     private CommonTranslationTestHelper commonTranslationTestHelper;
-    @Inject
-    private CommonIndexingTestHelper commonIndexingTestHelper;
     @Inject
     private IndexShardManager indexShardManager;
     @Inject
@@ -112,9 +102,11 @@ class TestSingleEventAlerts extends StroomIntegrationTest {
     @Inject
     private Store streamStore;
     @Inject
-    private AlertManagerImpl alertManager;
-    @Inject
     private AlertRuleStore alertRuleStore;
+    @Inject
+    private ResultStoreAlertSearchExecutor resultStoreAlertSearchExecutor;
+    @Inject
+    private CommonTestScenarioCreator commonTestScenarioCreator;
 
     @BeforeEach
     final void importSchemas() {
@@ -123,6 +115,12 @@ class TestSingleEventAlerts extends StroomIntegrationTest {
 
     @Test
     void testSimple() {
+        final Path resourcePath = ProjectPathUtil.resolveDir("stroom-app")
+                .resolve("src")
+                .resolve("test")
+                .resolve("resources")
+                .resolve("TestSingleEventAlerts");
+
         // Add some data.
         commonTranslationTestHelper.setup();
         // Translate data.
@@ -139,20 +137,16 @@ class TestSingleEventAlerts extends StroomIntegrationTest {
         assertThat(metaService.find(new FindMetaCriteria()).size()).isEqualTo(8);
 
         // Add index.
-        final DocRef indexDocRef = storeCreationTool.addIndex("Test index", INDEX_XSLT, OptionalInt.empty());
+        final DocRef indexDocRef = commonTestScenarioCreator.createIndex(
+                "Test index",
+                List.of(),
+                IndexDoc.DEFAULT_MAX_DOCS_PER_SHARD);
 
         // Add extraction pipeline.
-        final Path pipelinePath = ProjectPathUtil.resolveDir("stroom-app")
-                .resolve("src")
-                .resolve("test")
-                .resolve("resources")
-                .resolve("TestSingleEventAlerts")
-                .resolve("result-pipeline.xml");
-
         final DocRef searchResultPipeline = storeCreationTool.getSearchResultPipeline(
                 "Search result",
-                pipelinePath,
-                INDEX_XSLT);
+                resourcePath.resolve("dynamic-result-pipeline.xml"),
+                resourcePath.resolve("dynamic-index.xsl"));
 
         // Add view.
         final DocRef viewDocRef = viewStore.createDocument("index_view");
@@ -176,16 +170,21 @@ class TestSingleEventAlerts extends StroomIntegrationTest {
                 .alertRuleType(AlertRuleType.EVENT)
                 .build();
         alertRuleStore.writeDocument(alertRuleDoc);
-        alertManager.refreshRules();
-
-        // Process data.
-        results = commonTranslationTestHelper.processAll();
-        assertThat(results.size()).isEqualTo(N1);
-
-        results.forEach(this::assertProcessorResult);
+//        alertManager.refreshRules();
+//
+//        // Process data.
+//        results = commonTranslationTestHelper.processAll();
+//        assertThat(results.size()).isEqualTo(N1);
+//
+//        results.forEach(this::assertProcessorResult);
 
 //        // Flush all newly created index shards.
 //        indexShardManager.performAction(FindIndexShardCriteria.matchAll(), IndexShardAction.FLUSH);
+
+
+        // Now run the aggregate search process.
+        resultStoreAlertSearchExecutor.exec();
+
 
         // As we have created alerts ensure we now have more streams.
         final ResultPage<Meta> resultPage = metaService.find(new FindMetaCriteria());

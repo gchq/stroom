@@ -30,14 +30,13 @@ public class AggregateRuleValuesConsumerFactory {
         this.resultStoreManager = resultStoreManager;
     }
 
-    public ValuesConsumer create(final AlertRuleConfig alertRuleConfig) {
-        final QueryKey queryKey = alertRuleConfig.getQueryKey();
+    public Coprocessors create(final SearchRequest searchRequest) {
+        final QueryKey queryKey = searchRequest.getKey();
         final Optional<ResultStore> existingResultStore = resultStoreManager.getIfPresent(queryKey);
         ResultStore resultStore;
         if (existingResultStore.isPresent()) {
             resultStore = existingResultStore.get();
         } else {
-            final SearchRequest searchRequest = alertRuleConfig.getSearchRequest();
             final Coprocessors coprocessors = coprocessorsFactory.create(searchRequest);
             resultStore = resultStoreFactory.create(
                     searchRequest.getSearchRequestSource(),
