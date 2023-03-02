@@ -18,26 +18,36 @@ package stroom.pipeline.refdata;
 
 import stroom.util.date.DateUtil;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Objects;
 
 /**
  * Represents a time range of approx 11.5 days. The range size and bounds are
  */
+@JsonInclude(Include.NON_NULL)
 class EffectiveStreamKey {
 
     // Actually 11.5 days but this is fine for the purposes of reference data.
     private static final long APPROX_TEN_DAYS = 1_000_000_000;
 
+    @JsonProperty
     private final String feed;
+    @JsonProperty
     private final String streamType;
+    @JsonProperty
     private final long fromMs;
+    @JsonProperty
     private final long toMs;
     private final int hashCode;
 
-    EffectiveStreamKey(final String feed,
-                       final String streamType,
-                       final long fromMs,
-                       final long toMs) {
+    EffectiveStreamKey(@JsonProperty("feed") final String feed,
+                       @JsonProperty("streamType") final String streamType,
+                       @JsonProperty("fromMs") final long fromMs,
+                       @JsonProperty("toMs") final long toMs) {
+
         Objects.requireNonNull(feed);
         Objects.requireNonNull(streamType);
         this.feed = feed;

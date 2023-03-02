@@ -25,12 +25,15 @@ import stroom.pipeline.errorhandler.ProcessException;
 import stroom.security.api.SecurityContext;
 import stroom.util.NullSafe;
 import stroom.util.Period;
+import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
 import java.util.Collection;
@@ -43,6 +46,7 @@ import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
@@ -58,6 +62,9 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EffectiveStreamCache.class);
 
     private static final String CACHE_NAME = "Reference Data - Effective Stream Cache";
+    private static final String PARAM_NAME_STREAM_LIMIT = "streamLimit";
+    private static final String PARAM_NAME_ENTRY_LIMIT = "entryLimit";
+    private static final String PARAM_NAME_FEED = "feed";
 
     private final LoadingStroomCache<EffectiveStreamKey, NavigableSet<EffectiveMeta>> cache;
     private final MetaService metaService;
@@ -279,7 +286,8 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
 
                     if (countPerEffectiveMs > 1) {
                         LOGGER.warn("Multiple reference streams [{}] from feed '{}' found with the same " +
-                                        "effective time {}. Only the latest stream, {}, will be used.",
+                                        "effective time {}. Stroom cannot know which is the preferred stream so the " +
+                                        "one with the highest stream ID ({}) will be used and the rest ignored.",
                                 effectiveMetaList.stream()
                                         .map(EffectiveMeta::getId)
                                         .map(val -> Long.toString(val))
@@ -311,7 +319,7 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
     }
 
     @Override
-    public SystemInfoResult getSystemInfo() {
+    public SystemInfoResult getSystemInfo(final Map<String, String> params) {
         final Comparator<Entry<EffectiveStreamKey, NavigableSet<EffectiveMeta>>> entryComparator =
                 Comparator
                         .comparing((Entry<EffectiveStreamKey, NavigableSet<EffectiveMeta>> entry) ->
@@ -319,18 +327,23 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
                         .thenComparing(entry -> entry.getKey().getStreamType())
                         .thenComparing(entry -> entry.getKey().getFromMs());
 
+        final long entryLimit = HasSystemInfo.getLongParam(params, PARAM_NAME_ENTRY_LIMIT)
+                .orElse(Long.MAX_VALUE);
+        final long streamLimit = HasSystemInfo.getLongParam(params, PARAM_NAME_STREAM_LIMIT)
+                .orElse(Long.MAX_VALUE);
+        final Predicate<Entry<EffectiveStreamKey, NavigableSet<EffectiveMeta>>> feedPredicate = HasSystemInfo.getParam(
+                        params, PARAM_NAME_FEED)
+                .map(this::buildContainsFeedPredicate)
+                .orElse(entry -> true);
+
         final List<Map<String, Object>> entries = cache.asMap()
                 .entrySet()
                 .stream()
+                .filter(feedPredicate)
+                .limit(entryLimit)
                 .sorted(entryComparator)
-                .map(entry -> Map.of(
-                        "effectiveStreamKey", LogUtil.toStringWithoutName(entry.getKey()),
-                        "effectiveStreamSet", entry.getValue()
-                                .stream()
-                                .sorted()
-                                .map(LogUtil::toStringWithoutName)
-                                .collect(Collectors.toList()),
-                        "effectiveStreamSetSize", entry.getValue().size()))
+                .map(entry ->
+                        mapCacheEntry(streamLimit, entry))
                 .collect(Collectors.toList());
 
         return SystemInfoResult.builder(this)
@@ -339,5 +352,61 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
                 .addDetail("keyCount", cache.size())
                 .addDetail("entries", entries)
                 .build();
+    }
+
+    private Predicate<Entry<EffectiveStreamKey, NavigableSet<EffectiveMeta>>> buildContainsFeedPredicate(
+            final String feed) {
+        return entry ->
+                entry.getValue()
+                        .stream()
+                        .anyMatch(effectiveMeta -> feed.equals(effectiveMeta.getFeedName()));
+    }
+
+    private Map<String, Object> mapEffectiveStream(final EffectiveMeta effectiveMeta) {
+        if (effectiveMeta == null) {
+            return Collections.emptyMap();
+        } else {
+            return Map.of(
+                    "id", effectiveMeta.getId(),
+                    "feed", effectiveMeta.getFeedName(),
+                    "streamType", effectiveMeta.getTypeName(),
+                    "effectiveTime", DateUtil.createNormalDateTimeString(effectiveMeta.getEffectiveMs()));
+        }
+    }
+
+    @NotNull
+    private Map<String, Object> mapCacheEntry(final long streamLimit,
+                                              final Entry<EffectiveStreamKey, NavigableSet<EffectiveMeta>> entry) {
+        final EffectiveStreamKey key = entry.getKey();
+        final NavigableSet<EffectiveMeta> effectiveStreams = entry.getValue();
+        return Map.of(
+                "effectiveStreamKey", Map.of(
+                        "feed", key.getFeed(),
+                        "streamType", key.getStreamType(),
+                        "fromTimeInc", DateUtil.createNormalDateTimeString(key.getFromMs()),
+                        "toTimeExc", DateUtil.createNormalDateTimeString(key.getToMs())),
+                "effectiveStreams", effectiveStreams
+                        .stream()
+                        .limit(streamLimit)
+                        .sorted()
+                        .map(this::mapEffectiveStream)
+                        .collect(Collectors.toList()),
+                "effectiveStreamCount", effectiveStreams.size());
+    }
+
+    @Override
+    public SystemInfoResult getSystemInfo() {
+        return getSystemInfo(Collections.emptyMap());
+    }
+
+    @Override
+    public List<ParamInfo> getParamInfo() {
+        return List.of(
+                ParamInfo.optionalParam(PARAM_NAME_ENTRY_LIMIT,
+                        "A limit on the number of cache entries to return. Default is unlimited."),
+                ParamInfo.optionalParam(PARAM_NAME_STREAM_LIMIT,
+                        "A limit on the number of streams to return per cache entry. Default is unlimited."),
+                ParamInfo.optionalParam(PARAM_NAME_FEED,
+                        "Filters the cache entries to only show entries that contain the named feed."));
     }
 }
