@@ -6455,7 +6455,7 @@ components:
           type: string
           enum:
           - EVENT
-          - THRESHOLD
+          - AGGREGATE
         createTimeMs:
           type: integer
           format: int64
@@ -6470,6 +6470,12 @@ components:
           enum:
           - STROOM_QL_VERSION_0_1
           - SIGMA
+        maxMetaCreateTimeMs:
+          type: integer
+          format: int64
+        minMetaCreateTimeMs:
+          type: integer
+          format: int64
         name:
           type: string
         query:
@@ -8779,6 +8785,18 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
+    HoppingWindow:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/Window'
+      - type: object
+        properties:
+          advanceSize:
+            type: string
+          timeField:
+            type: string
+          windowSize:
+            type: string
     IdField:
       type: object
       allOf:
@@ -11849,6 +11867,8 @@ components:
             values for each group. Defaults to false.
         valueFilter:
           $ref: '#/components/schemas/ExpressionOperator'
+        window:
+          $ref: '#/components/schemas/Window'
       required:
       - fields
       - queryId
@@ -12352,6 +12372,15 @@ components:
       properties:
         html:
           type: string
+    Window:
+      type: object
+      discriminator:
+        propertyName: type
+      properties:
+        type:
+          type: string
+      required:
+      - type
     XPathFilter:
       type: object
       properties:

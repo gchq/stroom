@@ -9359,7 +9359,7 @@
           },
           "alertRuleType" : {
             "type" : "string",
-            "enum" : [ "EVENT", "THRESHOLD" ]
+            "enum" : [ "EVENT", "AGGREGATE" ]
           },
           "createTimeMs" : {
             "type" : "integer",
@@ -9377,6 +9377,14 @@
           "languageVersion" : {
             "type" : "string",
             "enum" : [ "STROOM_QL_VERSION_0_1", "SIGMA" ]
+          },
+          "maxMetaCreateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "minMetaCreateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
           },
           "name" : {
             "type" : "string"
@@ -12538,6 +12546,25 @@
             }
           }
         }
+      },
+      "HoppingWindow" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Window"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "advanceSize" : {
+              "type" : "string"
+            },
+            "timeField" : {
+              "type" : "string"
+            },
+            "windowSize" : {
+              "type" : "string"
+            }
+          }
+        } ]
       },
       "IdField" : {
         "type" : "object",
@@ -16632,6 +16659,9 @@
           },
           "valueFilter" : {
             "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "window" : {
+            "$ref" : "#/components/schemas/Window"
           }
         },
         "required" : [ "fields", "queryId" ]
@@ -17323,6 +17353,18 @@
             "type" : "string"
           }
         }
+      },
+      "Window" : {
+        "type" : "object",
+        "discriminator" : {
+          "propertyName" : "type"
+        },
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "type" ]
       },
       "XPathFilter" : {
         "type" : "object",
