@@ -46,6 +46,7 @@ import stroom.search.impl.SearchExpressionQueryBuilderFactory;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -409,7 +410,7 @@ public class ResultStoreAlertSearchExecutor {
                 optionalResultStore.get().signalComplete();
                 optionalResultStore.get().awaitCompletion();
             } catch (final InterruptedException e) {
-
+                throw UncheckedInterruptedException.create(e);
             }
 
             // Create a search request.

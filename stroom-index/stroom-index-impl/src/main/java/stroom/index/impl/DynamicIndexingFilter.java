@@ -160,7 +160,10 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
                 if (indexDoc.getFields() != null) {
                     foundFields.addAll(indexDoc.getFields());
                 }
-                indexDoc.setFields(foundFields.stream().sorted(Comparator.comparing(IndexField::getFieldName)).toList());
+                indexDoc.setFields(foundFields
+                        .stream()
+                        .sorted(Comparator.comparing(IndexField::getFieldName))
+                        .toList());
                 indexStore.writeDocument(indexDoc);
                 indexStructureCache.remove(indexRef);
             }
