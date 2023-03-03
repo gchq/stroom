@@ -38,7 +38,7 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
     }
 
     @Override
-    public Optional<UserIdentity> mapApiIdentity(final JwtContext jwtContext,
+    protected Optional<UserIdentity> mapApiIdentity(final JwtContext jwtContext,
                                                  final HttpServletRequest request) {
         Objects.requireNonNull(jwtContext);
         // No notion of a local user identity so just wrap the claims in the jwt context
@@ -46,7 +46,7 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
     }
 
     @Override
-    public Optional<UserIdentity> mapAuthFlowIdentity(final JwtContext jwtContext,
+    protected Optional<UserIdentity> mapAuthFlowIdentity(final JwtContext jwtContext,
                                                       final HttpServletRequest request,
                                                       final TokenResponse tokenResponse) {
         throw new UnsupportedOperationException("UI Auth flow not applicable to stroom-proxy");

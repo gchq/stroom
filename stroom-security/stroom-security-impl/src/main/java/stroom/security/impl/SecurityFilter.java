@@ -222,8 +222,15 @@ class SecurityFilter implements Filter {
                                         final String msg) {
         LOGGER.debug("User identity ({}): {} path: {}",
                 msg,
-                optUserIdentity.map(identity ->
-                        identity.getClass().getSimpleName() + " " + identity),
+                optUserIdentity.map(identity -> {
+                    final String id = identity.getPreferredUsername() != null
+                            ? identity.getId() + " (" + identity.getPreferredUsername() + ")"
+                            : identity.getId();
+                            return LogUtil.message("'{}' {}",
+                                    id,
+                                    identity.getClass().getSimpleName());
+                        })
+                        .orElse("empty"),
                 fullPath);
     }
 

@@ -63,8 +63,8 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
     }
 
     @Override
-    public Optional<UserIdentity> mapApiIdentity(final JwtContext jwtContext,
-                                                 final HttpServletRequest request) {
+    protected Optional<UserIdentity> mapApiIdentity(final JwtContext jwtContext,
+                                                    final HttpServletRequest request) {
 
         // Always try to get the proc user identity as it is a bit of a special case
         return getProcessingUser(jwtContext)
@@ -72,7 +72,7 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
     }
 
     @Override
-    public Optional<UserIdentity> mapAuthFlowIdentity(final JwtContext jwtContext,
+    protected Optional<UserIdentity> mapAuthFlowIdentity(final JwtContext jwtContext,
                                                       final HttpServletRequest request,
                                                       final TokenResponse tokenResponse) {
         final JwtClaims jwtClaims = jwtContext.getJwtClaims();

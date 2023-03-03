@@ -108,9 +108,8 @@ class AuthenticationService {
         user.setGroup(isGroup);
 
         return userDao.tryCreate(user, createdUser -> {
-            LOGGER.info("Created stroom_user '{}' record, id: {}, name: {}, uuid: {}",
+            LOGGER.info("Created new stroom_user record, type: {}, name: {}, uuid: {}",
                     (isGroup ? "group" : "user"),
-                    createdUser.getId(),
                     createdUser.getName(),
                     createdUser.getUuid());
         });

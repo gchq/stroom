@@ -183,13 +183,20 @@ public class StandardJwtContextFactory implements JwtContextFactory {
 
         return optionalJwt
                 .flatMap(headerToken -> {
+                    final Optional<JwtContext> optJwtContext;
                     if (AMZN_OIDC_DATA_HEADER.equals(headerToken.header)) {
                         // Could move parseJws into getAwsJwtContext
                         final JwsParts jwsParts = parseJws(headerToken.jwt);
-                        return getAwsJwtContext(jwsParts);
+                        optJwtContext = getAwsJwtContext(jwsParts);
                     } else {
-                        return getStandardJwtContext(headerToken.jwt);
+                        optJwtContext = getStandardJwtContext(headerToken.jwt);
                     }
+
+                    LOGGER.debug(() -> LogUtil.message("jwtClaims:\n{}", optJwtContext.map(JwtContext::getJwtClaims)
+                            .map(jwtClaims -> jwtClaims.toString())
+                            .orElse("empty")));
+
+                    return optJwtContext;
                 })
                 .or(() -> {
                     LOGGER.debug(() -> "No JWS found in headers in request to " + request.getRequestURI());
