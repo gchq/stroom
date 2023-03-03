@@ -124,6 +124,7 @@ proxyConfig:
         - "openid"
         - "email"
         tokenEndpoint: null
+        uniqueIdentityClaim: "sub"
         validateAudience: true
   sqsConnectors: []
   threads:

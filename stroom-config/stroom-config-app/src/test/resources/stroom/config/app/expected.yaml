@@ -626,6 +626,7 @@ appConfig:
         - "openid"
         - "email"
         tokenEndpoint: null
+        uniqueIdentityClaim: "sub"
         validateAudience: true
       preventLogin: false
     authorisation:
