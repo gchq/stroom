@@ -21,17 +21,17 @@ import stroom.security.api.UserIdentity;
 
 import java.util.Objects;
 
-public class ProcessingUserIdentity implements UserIdentity, HasJwt {
+public class InternalIdpProcessingUserIdentity implements UserIdentity, HasJwt {
 
     // The subject of the processing user identity
     public static final String INTERNAL_PROCESSING_USER = "INTERNAL_PROCESSING_USER";
 
     private String jws;
 
-    public ProcessingUserIdentity() {
+    public InternalIdpProcessingUserIdentity() {
     }
 
-    public ProcessingUserIdentity(final String jws) {
+    public InternalIdpProcessingUserIdentity(final String jws) {
         this.jws = jws;
     }
 
@@ -53,7 +53,7 @@ public class ProcessingUserIdentity implements UserIdentity, HasJwt {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final ProcessingUserIdentity that = (ProcessingUserIdentity) o;
+        final InternalIdpProcessingUserIdentity that = (InternalIdpProcessingUserIdentity) o;
         return Objects.equals(getId(), that.getId());
     }
 

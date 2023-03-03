@@ -5,13 +5,16 @@ import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.exception.AuthenticationException;
-import stroom.security.common.impl.UserIdentityImpl;
 import stroom.security.shared.AppPermissionResource;
 import stroom.security.shared.ChangeSet;
 import stroom.security.shared.ChangeUserRequest;
+import stroom.security.shared.HasStroomUserIdentity;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.security.shared.UserAndPermissions;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.util.List;
 import javax.inject.Inject;
@@ -19,6 +22,8 @@ import javax.inject.Provider;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class AppPermissionResourceImpl implements AppPermissionResource {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AppPermissionResourceImpl.class);
 
     private final Provider<SecurityContext> securityContextProvider;
     private final Provider<UserService> userServiceProvider;
@@ -54,25 +59,31 @@ class AppPermissionResourceImpl implements AppPermissionResource {
         final SecurityContext securityContext = securityContextProvider.get();
         final UserIdentity userIdentity = securityContext.getUserIdentity();
         if (userIdentity == null) {
+            LOGGER.debug("Null userIdentity");
             return null;
-        }
-        UserIdentityImpl identity = null;
-        if (userIdentity instanceof UserIdentityImpl) {
-            identity = (UserIdentityImpl) userIdentity;
-        }
-        if (identity == null) {
-            return null;
-        }
+        } else {
+            if (userIdentity instanceof final HasStroomUserIdentity hasStroomUserIdentity) {
+                final boolean preventLogin = authenticationConfigProvider.get().isPreventLogin();
+                if (preventLogin) {
+                    final boolean isAdmin = securityContext.isAdmin();
+                    LOGGER.debug("Preventing login for all but admin, isAdmin: {}", isAdmin);
+                    if (!securityContext.isAdmin()) {
+                        throw new AuthenticationException("Stroom is down for maintenance. Please try again later.");
+                    }
+                }
+                final UserAndPermissions userAndPermissions = new UserAndPermissions(
+                        userIdentity.getId(),
+                        userAndPermissionsHelperProvider.get().get(hasStroomUserIdentity.getUuid()));
 
-        final boolean preventLogin = authenticationConfigProvider.get().isPreventLogin();
-        if (preventLogin) {
-            if (!securityContext.isAdmin()) {
-                throw new AuthenticationException("Stroom is down for maintenance. Please try again later.");
+                LOGGER.debug("Returning {}", userAndPermissions);
+                return userAndPermissions;
+            } else {
+                LOGGER.debug(LogUtil.message("Wrong type of user, expecting: {}, got: {}",
+                        HasStroomUserIdentity.class.getSimpleName(),
+                        userIdentity.getClass().getSimpleName()));
+                return null;
             }
         }
-
-        return new UserAndPermissions(identity.getId(),
-                userAndPermissionsHelperProvider.get().get(identity.getUuid()));
     }
 
     @Override

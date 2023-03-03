@@ -115,6 +115,10 @@ public interface ResourcePaths {
         return new Builder();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     final class Builder {
 
         private final List<String> pathParts = new ArrayList<>();

@@ -111,6 +111,7 @@ public abstract class AbstractOpenIdConfig
      */
     private final boolean validateAudience;
 
+    private final String uniqueIdentityClaim;
 
     public AbstractOpenIdConfig() {
         identityProviderType = getDefaultIdpType();
@@ -127,6 +128,7 @@ public abstract class AbstractOpenIdConfig
         requestScopes = OpenId.DEFAULT_REQUEST_SCOPES;
         clientCredentialsScopes = OpenId.DEFAULT_CLIENT_CREDENTIALS_SCOPES;
         validateAudience = true;
+        uniqueIdentityClaim = OpenId.CLAIM__SUBJECT;
     }
 
     @JsonIgnore
@@ -147,7 +149,8 @@ public abstract class AbstractOpenIdConfig
             @JsonProperty("clientSecret") final String clientSecret,
             @JsonProperty("requestScopes") final List<String> requestScopes,
             @JsonProperty("clientCredentialsScopes") final List<String> clientCredentialsScopes,
-            @JsonProperty("validateAudience") final boolean validateAudience) {
+            @JsonProperty("validateAudience") final boolean validateAudience,
+            @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim) {
 
         this.identityProviderType = identityProviderType;
         this.openIdConfigurationEndpoint = openIdConfigurationEndpoint;
@@ -163,6 +166,7 @@ public abstract class AbstractOpenIdConfig
         this.requestScopes = requestScopes;
         this.clientCredentialsScopes = clientCredentialsScopes;
         this.validateAudience = validateAudience;
+        this.uniqueIdentityClaim = uniqueIdentityClaim;
     }
 
     /**
@@ -175,7 +179,8 @@ public abstract class AbstractOpenIdConfig
             "INTERNAL_IDP - Stroom's own built in IDP (not valid for stroom-proxy)," +
             "EXTERNAL_IDP - An external IDP such as KeyCloak/Cognito (stroom's internal IDP can be used as " +
             "stroom-proxy's external IDP) and" +
-            "TEST_CREDENTIALS - Use hard-coded authentication credentials for test/demo only.")
+            "TEST_CREDENTIALS - Use hard-coded authentication credentials for test/demo only. " +
+            "Changing this property will require a restart of the application.")
     public IdpType getIdentityProviderType() {
         return identityProviderType;
     }
@@ -285,6 +290,15 @@ public abstract class AbstractOpenIdConfig
         return validateAudience;
     }
 
+    @Override
+    @NotNull
+    @JsonProperty
+    @JsonPropertyDescription("The Open ID Connect claim used to link an identity on the IDP to a stroom user. " +
+            "Must uniquely identify the user on the IDP and not be subject to change. Uses 'sub' by default.")
+    public String getUniqueIdentityClaim() {
+        return uniqueIdentityClaim;
+    }
+
     @JsonIgnore
     @SuppressWarnings("unused")
     @ValidationMethod(message = "If " + PROP_NAME_IDP_TYPE + " is set to 'EXTERNAL', property "
@@ -310,6 +324,7 @@ public abstract class AbstractOpenIdConfig
                 ", clientSecret='" + clientSecret + '\'' +
                 ", requestScopes='" + requestScopes + '\'' +
                 ", validateAudience=" + validateAudience +
+                ", uniqueIdentityClaim=" + uniqueIdentityClaim +
                 '}';
     }
 
@@ -334,7 +349,8 @@ public abstract class AbstractOpenIdConfig
                 && Objects.equals(logoutRedirectParamName, that.logoutRedirectParamName)
                 && Objects.equals(clientId, that.clientId)
                 && Objects.equals(clientSecret, that.clientSecret)
-                && Objects.equals(requestScopes, that.requestScopes);
+                && Objects.equals(requestScopes, that.requestScopes)
+                && Objects.equals(uniqueIdentityClaim, that.uniqueIdentityClaim);
     }
 
     @Override
@@ -351,7 +367,8 @@ public abstract class AbstractOpenIdConfig
                 clientId,
                 clientSecret,
                 requestScopes,
-                validateAudience);
+                validateAudience,
+                uniqueIdentityClaim);
     }
 
     // --------------------------------------------------------------------------------

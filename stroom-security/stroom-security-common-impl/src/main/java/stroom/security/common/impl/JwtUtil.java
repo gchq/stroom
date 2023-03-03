@@ -25,7 +25,7 @@ public final class JwtUtil {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JwtUtil.class);
 
-    static final String BEARER = "Bearer ";
+    public static final String BEARER_PREFIX = "Bearer ";
     private static final String CORP_PREFIX = "corp_";
     private static final String IDENTITIES = "identities";
     private static final String USER_ID = "userId";
@@ -53,9 +53,9 @@ public final class JwtUtil {
                 .filter(str -> !str.isBlank())
                 .map(str -> {
                     final String jws;
-                    if (str.startsWith(BEARER)) {
+                    if (str.startsWith(BEARER_PREFIX)) {
                         // This chops out 'Bearer' so we get just the token.
-                        jws = str.substring(BEARER.length());
+                        jws = str.substring(BEARER_PREFIX.length());
                     } else {
                         jws = str;
                     }

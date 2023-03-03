@@ -38,8 +38,8 @@ public class ExternalProcessingUserIdentityProvider implements ProcessingUserIde
     @Override
     public boolean isProcessingUser(final String subject, final String issuer) {
         final UserIdentity processingUserIdentity = get();
-        if (processingUserIdentity instanceof AbstractTokenUserIdentity tokenUserIdentity) {
-            return Optional.ofNullable(tokenUserIdentity.getJwtClaims())
+        if (processingUserIdentity instanceof final HasJwtClaims hasJwtClaims) {
+            return Optional.ofNullable(hasJwtClaims.getJwtClaims())
                     .map(ThrowingFunction.unchecked(jwtClaims -> {
                         final boolean isProcessingUser = Objects.equals(subject, jwtClaims.getSubject())
                                 && Objects.equals(issuer, jwtClaims.getIssuer());

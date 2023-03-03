@@ -60,7 +60,7 @@ public class TestJwtUtil {
                 .addCase("", Optional.empty())
                 .addCase("   ", Optional.empty())
                 .addCase("foo", Optional.of("foo"))
-                .addCase(JwtUtil.BEARER + "foo", Optional.of("foo"))
+                .addCase(JwtUtil.BEARER_PREFIX + "foo", Optional.of("foo"))
                 .build();
     }
 }

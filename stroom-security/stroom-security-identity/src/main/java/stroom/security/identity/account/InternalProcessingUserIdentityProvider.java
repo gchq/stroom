@@ -31,7 +31,7 @@ class InternalProcessingUserIdentityProvider implements ProcessingUserIdentityPr
     private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
 
     private final AtomicLong lastFetchTime = new AtomicLong(0);
-    private volatile UserIdentity userIdentity;
+    private volatile InternalIdpProcessingUserIdentity userIdentity;
 
     @Inject
     InternalProcessingUserIdentityProvider(final TokenBuilderFactory tokenBuilderFactory,
@@ -50,7 +50,7 @@ class InternalProcessingUserIdentityProvider implements ProcessingUserIdentityPr
             synchronized (this) {
                 if (userIdentity == null || lastFetchTime.get() < now - ONE_DAY) {
                     final String token = createToken();
-                    userIdentity = new ProcessingUserIdentity(token);
+                    userIdentity = new InternalIdpProcessingUserIdentity(token);
                     LOGGER.info("Created internal processing user identity {}", userIdentity);
                     lastFetchTime.set(now);
                 }
@@ -81,12 +81,14 @@ class InternalProcessingUserIdentityProvider implements ProcessingUserIdentityPr
         final String requiredIssuer = openIdConfiguration.getIssuer();
 
         // Compare both sub and issuer in case the id exists on the external IDP
-        final boolean isProcessingUser = Objects.equals(subject, ProcessingUserIdentity.INTERNAL_PROCESSING_USER)
+        final boolean isProcessingUser = Objects.equals(
+                subject,
+                InternalIdpProcessingUserIdentity.INTERNAL_PROCESSING_USER)
                 && Objects.equals(issuer, requiredIssuer);
 
         LOGGER.debug(() -> LogUtil.message("Comparing subject: [{}|{}], issuer[{}|{}], result: {}",
                 subject,
-                ProcessingUserIdentity.INTERNAL_PROCESSING_USER,
+                InternalIdpProcessingUserIdentity.INTERNAL_PROCESSING_USER,
                 issuer,
                 requiredIssuer,
                 isProcessingUser));
@@ -102,7 +104,7 @@ class InternalProcessingUserIdentityProvider implements ProcessingUserIdentityPr
                 .builder()
                 .expirationTime(timeToExpiryInSeconds)
                 .clientId(openIdClientDetailsFactory.getClient().getClientId())
-                .subject(ProcessingUserIdentity.INTERNAL_PROCESSING_USER);
+                .subject(InternalIdpProcessingUserIdentity.INTERNAL_PROCESSING_USER);
         return tokenBuilder.build();
     }
 }

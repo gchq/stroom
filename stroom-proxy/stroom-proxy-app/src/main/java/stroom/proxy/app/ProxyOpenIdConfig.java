@@ -35,7 +35,8 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
                              @JsonProperty("clientSecret") final String clientSecret,
                              @JsonProperty("requestScopes") final List<String> requestScopes,
                              @JsonProperty("clientCredentialsScopes") final List<String> clientCredentialsScopes,
-                             @JsonProperty("validateAudience") final boolean validateAudience) {
+                             @JsonProperty("validateAudience") final boolean validateAudience,
+                             @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim) {
         super(identityProviderType,
                 openIdConfigurationEndpoint,
                 issuer,
@@ -49,7 +50,8 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
                 clientSecret,
                 requestScopes,
                 clientCredentialsScopes,
-                validateAudience);
+                validateAudience,
+                uniqueIdentityClaim);
     }
 
     @JsonIgnore
@@ -66,7 +68,8 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
             "will use for authentication. Valid values are: " +
             "EXTERNAL_IDP - An external IDP such as KeyCloak/Cognito, " +
             "TEST_CREDENTIALS - Use hard-coded authentication credentials for test/demo only and " +
-            "NO_IDP - No IDP is used. API keys are set in config for feed status checks.")
+            "NO_IDP - No IDP is used. API keys are set in config for feed status checks. " +
+            "Changing this property will require a restart of the application.")
     @Override
     public IdpType getIdentityProviderType() {
         return super.getIdentityProviderType();
@@ -94,6 +97,7 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
                 getClientId(),
                 getRequestScopes(),
                 getClientCredentialsScopes(),
-                isValidateAudience());
+                isValidateAudience(),
+                getUniqueIdentityClaim());
     }
 }

@@ -54,27 +54,48 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
+/**
+ * Class for getting the JWT context when Stroom is integrated with an external Open ID connect
+ * identity provider, e.g. keycloak.
+ * <p>
+ * Also handles the special case of AWS deployments that use a
+ * load balancer which is configured to do the authentication and interaction with the IDP.
+ * This case uses AWS specific headers, so requires different behaviour for user code flow.
+ * </p>
+ * <p>
+ * See <a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-authenticate-users.html">AWS Docs</a>
+ * for det
+ * </p>
+ */
 @Singleton // for ObjectMapper and cache
 public class StandardJwtContextFactory implements JwtContextFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StandardJwtContextFactory.class);
 
     // TODO: 24/02/2023 These header keys ought to be in config
+    /**
+     * The access token from the token endpoint, in plain text.
+     */
     static final String AMZN_OIDC_ACCESS_TOKEN_HEADER = "x-amzn-oidc-accesstoken";
+    /**
+     * The subject field (sub) from the user info endpoint, in plain text.
+     */
     static final String AMZN_OIDC_IDENTITY_HEADER = "x-amzn-oidc-identity";
+    /**
+     * The user claims, in JSON web tokens (JWT) format.
+     */
     static final String AMZN_OIDC_DATA_HEADER = "x-amzn-oidc-data";
     static final String AMZN_OIDC_SIGNER_HEADER_KEY = "signer";
     static final Pattern AMZN_OIDC_SIGNER_SPLIT_PATTERN = Pattern.compile(":");
-//    static final String AMZN_OIDC_SIGNER_HEADER_PREFIX = "arn:aws:";
 
     private static final String AUTHORIZATION_HEADER = HttpHeaders.AUTHORIZATION;
-    private static final String CACHE_NAME = "AWS Public Key Cache";
 
     private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
     private final OpenIdPublicKeysSupplier openIdPublicKeysSupplier;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
 
     // Stateful things
+    // Not clear whether AWS re-uses public keys or not so this may not be needed
     private volatile LoadingCache<String, PublicKey> awsPublicKeyCache = null; // uri => publicKey
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -103,6 +124,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                 new TimerTask() {
                     @Override
                     public void run() {
+                        LOGGER.debug("Evicting expired AWS public keys from the cache");
                         awsPublicKeyCache.cleanUp();
                     }
                 },
@@ -133,16 +155,17 @@ public class StandardJwtContextFactory implements JwtContextFactory {
         if (NullSafe.isBlankString(accessToken)) {
             return Collections.emptyMap();
         } else {
-            // TODO: 07/12/2022 Do we need to set the amzn headers?
-            return Map.of(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
+            return Map.of(
+                    HttpHeaders.AUTHORIZATION,
+                    JwtUtil.BEARER_PREFIX + accessToken);
         }
     }
 
     @Override
     public Optional<JwtContext> getJwtContext(final HttpServletRequest request) {
 
-        if (LOGGER.isDebugEnabled()) {
-            // Only output non-null ones
+        if (LOGGER.isTraceEnabled()) {
+            // Only output non-null ones. Probably the only useful one is the ID one as the rest are base64 encoded
             final String headers = Stream.of(
                             AUTHORIZATION_HEADER,
                             AMZN_OIDC_ACCESS_TOKEN_HEADER,
@@ -152,7 +175,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                     .filter(entry -> entry.getValue() != null)
                     .map(keyValue -> "\n  " + keyValue.getKey() + ": '" + keyValue.getValue() + "'")
                     .collect(Collectors.joining(" "));
-            LOGGER.debug("getJwtContext called for request with uri: {}, headers:{}",
+            LOGGER.trace("getJwtContext called for request with uri: {}, headers:{}",
                     request.getRequestURI(), headers);
         }
 
@@ -180,6 +203,10 @@ public class StandardJwtContextFactory implements JwtContextFactory {
         // from the IDP. See
         // https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-authenticate-users.html
         // We may be dealing with requests of either form
+        if (LOGGER.isDebugEnabled()) {
+            // This will log the AWS identity if there is one
+            JwtUtil.getJwsFromHeader(request, AMZN_OIDC_IDENTITY_HEADER);
+        }
         return JwtUtil.getJwsFromHeader(request, AMZN_OIDC_DATA_HEADER)
                 .map(jws -> new HeaderToken(AMZN_OIDC_DATA_HEADER, jws))
                 .or(() ->

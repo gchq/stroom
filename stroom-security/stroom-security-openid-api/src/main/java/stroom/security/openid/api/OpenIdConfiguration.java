@@ -73,6 +73,11 @@ public interface OpenIdConfiguration {
     boolean isValidateAudience();
 
     /**
+     * @see AbstractOpenIdConfig#getUniqueIdentityClaim()
+     */
+    String getUniqueIdentityClaim();
+
+    /**
      * @see AbstractOpenIdConfig#getLogoutRedirectParamName()
      */
     String getLogoutRedirectParamName();

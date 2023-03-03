@@ -47,7 +47,9 @@ public class ExternalIdpConfigurationProvider
     private static final long MAX_SLEEP_TIME_MS = 30_000;
 
     private final Provider<CloseableHttpClient> httpClientProvider;
-    private final Provider<AbstractOpenIdConfig> openIdConfigProvider;
+    // Important to use AbstractOpenIdConfig here and not OpenIdConfiguration as the former
+    // is bound to the yaml config, the latter is what we are presenting this as.
+    private final Provider<AbstractOpenIdConfig> localOpenIdConfigProvider;
 
     private volatile String lastConfigurationEndpoint;
     private volatile OpenIdConfigurationResponse openIdConfigurationResp;
@@ -55,14 +57,14 @@ public class ExternalIdpConfigurationProvider
     @Inject
     public ExternalIdpConfigurationProvider(
             final Provider<CloseableHttpClient> httpClientProvider,
-            final Provider<AbstractOpenIdConfig> openIdConfigProvider) {
+            final Provider<AbstractOpenIdConfig> localOpenIdConfigProvider) {
         this.httpClientProvider = httpClientProvider;
-        this.openIdConfigProvider = openIdConfigProvider;
+        this.localOpenIdConfigProvider = localOpenIdConfigProvider;
     }
 
     @Override
     public OpenIdConfigurationResponse getConfigurationResponse() {
-        final AbstractOpenIdConfig abstractOpenIdConfig = openIdConfigProvider.get();
+        final AbstractOpenIdConfig abstractOpenIdConfig = localOpenIdConfigProvider.get();
         final String configurationEndpoint = abstractOpenIdConfig.getOpenIdConfigurationEndpoint();
 
         if (isFetchRequired(configurationEndpoint)) {
@@ -75,7 +77,7 @@ public class ExternalIdpConfigurationProvider
     @Override
     public HealthCheck.Result getHealth() {
         final HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
-        final AbstractOpenIdConfig abstractOpenIdConfig = openIdConfigProvider.get();
+        final AbstractOpenIdConfig abstractOpenIdConfig = localOpenIdConfigProvider.get();
         final String configurationEndpoint = abstractOpenIdConfig.getOpenIdConfigurationEndpoint();
         final IdpType idpType = abstractOpenIdConfig.getIdentityProviderType();
         LOGGER.debug("Checking health, idpType: {}, configurationEndpoint: {}", idpType, configurationEndpoint);
@@ -273,46 +275,51 @@ public class ExternalIdpConfigurationProvider
 
     @Override
     public IdpType getIdentityProviderType() {
-        return openIdConfigProvider.get().getIdentityProviderType();
+        return localOpenIdConfigProvider.get().getIdentityProviderType();
     }
 
     @Override
     public String getOpenIdConfigurationEndpoint() {
-        return openIdConfigProvider.get().getOpenIdConfigurationEndpoint();
+        return localOpenIdConfigProvider.get().getOpenIdConfigurationEndpoint();
     }
 
     @Override
     public String getClientId() {
-        return openIdConfigProvider.get().getClientId();
+        return localOpenIdConfigProvider.get().getClientId();
     }
 
     @Override
     public String getClientSecret() {
-        return openIdConfigProvider.get().getClientSecret();
+        return localOpenIdConfigProvider.get().getClientSecret();
     }
 
     @Override
     public boolean isFormTokenRequest() {
-        return openIdConfigProvider.get().isFormTokenRequest();
+        return localOpenIdConfigProvider.get().isFormTokenRequest();
     }
 
     @Override
     public List<String> getRequestScopes() {
-        return openIdConfigProvider.get().getRequestScopes();
+        return localOpenIdConfigProvider.get().getRequestScopes();
     }
 
     @Override
     public List<String> getClientCredentialsScopes() {
-        return openIdConfigProvider.get().getClientCredentialsScopes();
+        return localOpenIdConfigProvider.get().getClientCredentialsScopes();
     }
 
     @Override
     public boolean isValidateAudience() {
-        return openIdConfigProvider.get().isValidateAudience();
+        return localOpenIdConfigProvider.get().isValidateAudience();
+    }
+
+    @Override
+    public String getUniqueIdentityClaim() {
+        return localOpenIdConfigProvider.get().getUniqueIdentityClaim();
     }
 
     @Override
     public String getLogoutRedirectParamName() {
-        return openIdConfigProvider.get().getLogoutRedirectParamName();
+        return localOpenIdConfigProvider.get().getLogoutRedirectParamName();
     }
 }

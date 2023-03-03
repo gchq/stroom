@@ -85,6 +85,7 @@ class AuthenticationService {
             }
 
             if (attempts++ > GET_USER_ATTEMPTS) {
+                LOGGER.error("Failed to create user {} after {} attempts", userId, attempts);
                 break;
             }
         }
@@ -93,13 +94,26 @@ class AuthenticationService {
     }
 
     private User create(final String name, final boolean isGroup) {
-        User user = new User();
+        final User user = new User();
         AuditUtil.stamp("AuthenticationServiceImpl", user);
+
+        // This is the identifier for the stroom user, for authorisation, not authentication
         user.setUuid(UUID.randomUUID().toString());
+
+        // This is the unique identifier that links the stroom User to the stroom account or an IDP account.
+        // The id field/column is the surrogate primary key in the DB, unrelated to the IDP user ID, stroom account
+        // or stroom user UUID.
         user.setName(name);
+
         user.setGroup(isGroup);
 
-        return userDao.tryCreate(user);
+        return userDao.tryCreate(user, createdUser -> {
+            LOGGER.info("Created stroom_user '{}' record, id: {}, name: {}, uuid: {}",
+                    (isGroup ? "group" : "user"),
+                    createdUser.getId(),
+                    createdUser.getName(),
+                    createdUser.getUuid());
+        });
     }
 
     public Optional<User> getUser(final String username) {

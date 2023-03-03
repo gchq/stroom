@@ -23,9 +23,7 @@ import stroom.security.common.impl.ExternalIdpConfigurationProvider;
 import stroom.security.common.impl.ExternalProcessingUserIdentityProvider;
 import stroom.security.common.impl.HttpClientProvider;
 import stroom.security.common.impl.IdpConfigurationProvider;
-import stroom.security.common.impl.IdpIdentityMapper;
 import stroom.security.common.impl.JwtContextFactory;
-import stroom.security.common.impl.UserIdentityFactoryImpl;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventLifecycleModule;
 import stroom.security.impl.event.PermissionChangeEventModule;
@@ -56,10 +54,9 @@ public class SecurityModule extends AbstractModule {
         bind(UserAppPermissionService.class).to(UserAppPermissionServiceImpl.class);
         bind(DocumentPermissionService.class).to(DocumentPermissionServiceImpl.class);
         bind(UserService.class).to(UserServiceImpl.class);
-        bind(UserIdentityFactory.class).to(UserIdentityFactoryImpl.class);
+        bind(UserIdentityFactory.class).to(StroomUserIdentityFactory.class);
         bind(CloseableHttpClient.class).toProvider(HttpClientProvider.class);
         bind(JwtContextFactory.class).to(DelegatingJwtContextFactory.class);
-        bind(IdpIdentityMapper.class).to(IdpIdentityToStroomUserMapper.class);
         bind(IdpConfigurationProvider.class).to(DelegatingIdpConfigurationProvider.class);
         // Now bind OpenIdConfiguration to the iface from prev bind
         bind(OpenIdConfiguration.class).to(IdpConfigurationProvider.class);
@@ -81,7 +78,7 @@ public class SecurityModule extends AbstractModule {
                 .addBinding(UserServiceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
-                .addBinding(UserIdentityFactoryImpl.class);
+                .addBinding(StroomUserIdentityFactory.class);
 
         // Provide object info to the logging service.
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)

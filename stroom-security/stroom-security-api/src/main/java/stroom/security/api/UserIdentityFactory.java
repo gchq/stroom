@@ -45,4 +45,6 @@ public interface UserIdentityFactory {
      * @return The authentication/authorisation headers to enable authentication with this token
      */
     Map<String, String> getAuthHeaders(final String jwt);
+
+    void refresh(final UserIdentity userIdentity);
 }

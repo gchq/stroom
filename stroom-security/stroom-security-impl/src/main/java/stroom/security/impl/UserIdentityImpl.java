@@ -1,38 +1,72 @@
-package stroom.security.common.impl;
+package stroom.security.impl;
 
-import stroom.docref.HasUuid;
-import stroom.security.api.HasSessionId;
+import stroom.security.api.HasSession;
 import stroom.security.api.UserIdentity;
-import stroom.security.openid.api.TokenResponse;
+import stroom.security.common.impl.HasUpdatableToken;
+import stroom.security.common.impl.UpdatableToken;
+import stroom.security.common.impl.UserIdentitySessionUtil;
+import stroom.security.shared.HasStroomUserIdentity;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import org.jose4j.jwt.JwtClaims;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 import javax.servlet.http.HttpSession;
 
 public class UserIdentityImpl
-        extends AbstractTokenUserIdentity
-        implements HasSessionId, HasUuid {
+        implements UserIdentity, HasSession, HasStroomUserIdentity, HasUpdatableToken {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UserIdentityImpl.class);
 
+    private final UpdatableToken updatableToken;
+    private final String id;
     private final String userUuid;
+    private final String preferredUsername;
+    private final String fullName;
     private final HttpSession httpSession;
 
     public UserIdentityImpl(final String userUuid,
                             final String id,
                             final HttpSession httpSession,
-                            final TokenResponse tokenResponse,
-                            final JwtClaims jwtClaims) {
-        super(id, tokenResponse, jwtClaims);
-        this.userUuid = userUuid;
+                            final UpdatableToken updatableToken) {
+        this(userUuid, id, null, null, httpSession, updatableToken);
+    }
+
+    public UserIdentityImpl(final String userUuid,
+                            final String id,
+                            final String preferredUsername,
+                            final String fullName,
+                            final HttpSession httpSession,
+                            final UpdatableToken updatableToken) {
+        this.id = Objects.requireNonNull(id);
+        this.updatableToken = Objects.requireNonNull(updatableToken);
+        this.userUuid = Objects.requireNonNull(userUuid);
+        this.preferredUsername = preferredUsername;
+        this.fullName = fullName;
         this.httpSession = httpSession;
+    }
+
+    @Override
+    public String getId() {
+        return id;
+    }
+
+    @Override
+    public String getPreferredUsername() {
+        return Objects.requireNonNullElse(preferredUsername, id);
+    }
+
+    @Override
+    public Optional<String> getFullName() {
+        throw new UnsupportedOperationException("TODO");
+    }
+
+    @Override
+    public JwtClaims getJwtClaims() {
+        return updatableToken.getJwtClaims();
     }
 
     @Override
@@ -56,6 +90,19 @@ public class UserIdentityImpl
     public void removeUserFromSession() {
         UserIdentitySessionUtil.set(httpSession, null);
     }
+
+//    /**
+//     * Allows for a small buffer before the actual expiry time.
+//     * Either means we need to use the refresh token to get new tokens or if there is no
+//     * refresh token then we need to request new tokens without using a refresh token.
+//     */
+//    boolean isTokenRefreshRequired() {
+//        final boolean inSession = isInSession();
+//        final boolean isTokenRefreshRequired = super.isTokenRefreshRequired();
+//        LOGGER.trace("isTokenRefreshRequired called, super.isTokenRefreshRequired:{} , isInSession: {}",
+//                isTokenRefreshRequired, inSession);
+//        return isTokenRefreshRequired && inSession;
+//    }
 
     /**
      * @return True if this {@link UserIdentity} has a session and is an attribute value in that session
@@ -92,6 +139,11 @@ public class UserIdentityImpl
     }
 
     @Override
+    public UpdatableToken getUpdatableToken() {
+        return updatableToken;
+    }
+
+    @Override
     public boolean equals(final Object o) {
         if (this == o) {
             return true;
@@ -114,11 +166,12 @@ public class UserIdentityImpl
     @Override
     public String toString() {
         return "UserIdentityImpl{" +
-                "userUuid='" + userUuid + '\'' +
-                ", id='" + getId() + '\'' +
-                ", fullName='" + getFullName().orElse("") + '\'' +
-                ", preferredUsername='" + getPreferredUsername() + '\'' +
-                ", timeTilExpire='" + Duration.between(Instant.now(), getExpireTime()) + '\'' +
+                "updatableToken=" + updatableToken +
+                ", id='" + id + '\'' +
+                ", userUuid='" + userUuid + '\'' +
+                ", preferredUsername='" + preferredUsername + '\'' +
+                ", fullName='" + fullName + '\'' +
+                ", isInSession='" + isInSession() + '\'' +
                 '}';
     }
 }

@@ -38,11 +38,22 @@ public class UserAndPermissions {
         this.permissions = permissions;
     }
 
+    /**
+     * @return
+     */
     public String getUserId() {
         return userId;
     }
 
     public Set<String> getPermissions() {
         return permissions;
+    }
+
+    @Override
+    public String toString() {
+        return "UserAndPermissions{" +
+                "userId='" + userId + '\'' +
+                ", permissions=" + permissions +
+                '}';
     }
 }

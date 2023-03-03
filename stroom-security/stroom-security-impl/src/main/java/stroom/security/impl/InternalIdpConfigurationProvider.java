@@ -41,7 +41,7 @@ public class InternalIdpConfigurationProvider implements IdpConfigurationProvide
 
 
     private final UriFactory uriFactory;
-    private final Provider<AbstractOpenIdConfig> openIdConfigProvider;
+    private final Provider<AbstractOpenIdConfig> localOpenIdConfigProvider;
     private final OpenIdClientFactory openIdClientDetailsFactory;
 
     private volatile String lastConfigurationEndpoint;
@@ -49,16 +49,16 @@ public class InternalIdpConfigurationProvider implements IdpConfigurationProvide
 
     @Inject
     public InternalIdpConfigurationProvider(final UriFactory uriFactory,
-                                            final Provider<AbstractOpenIdConfig> openIdConfigProvider,
+                                            final Provider<AbstractOpenIdConfig> localOpenIdConfigProvider,
                                             final OpenIdClientFactory openIdClientDetailsFactory) {
         this.uriFactory = uriFactory;
-        this.openIdConfigProvider = openIdConfigProvider;
+        this.localOpenIdConfigProvider = localOpenIdConfigProvider;
         this.openIdClientDetailsFactory = openIdClientDetailsFactory;
     }
 
     @Override
     public OpenIdConfigurationResponse getConfigurationResponse() {
-        final AbstractOpenIdConfig abstractOpenIdConfig = openIdConfigProvider.get();
+        final AbstractOpenIdConfig abstractOpenIdConfig = localOpenIdConfigProvider.get();
         final String configurationEndpoint = abstractOpenIdConfig.getOpenIdConfigurationEndpoint();
         if (isNewResponseRequired(configurationEndpoint)) {
             synchronized (this) {
@@ -85,12 +85,12 @@ public class InternalIdpConfigurationProvider implements IdpConfigurationProvide
 
     @Override
     public IdpType getIdentityProviderType() {
-        return openIdConfigProvider.get().getIdentityProviderType();
+        return localOpenIdConfigProvider.get().getIdentityProviderType();
     }
 
     @Override
     public String getOpenIdConfigurationEndpoint() {
-        return openIdConfigProvider.get().getOpenIdConfigurationEndpoint();
+        return localOpenIdConfigProvider.get().getOpenIdConfigurationEndpoint();
     }
 
     @Override
@@ -111,7 +111,7 @@ public class InternalIdpConfigurationProvider implements IdpConfigurationProvide
 
     @Override
     public List<String> getRequestScopes() {
-        return openIdConfigProvider.get().getRequestScopes();
+        return localOpenIdConfigProvider.get().getRequestScopes();
 //        final AbstractOpenIdConfig abstractOpenIdConfig = openIdConfigProvider.get();
 //        return NullSafe.isEmptyCollection(abstractOpenIdConfig.getRequestScopes())
 //                ? OpenId.DEFAULT_REQUEST_SCOPES
@@ -120,16 +120,21 @@ public class InternalIdpConfigurationProvider implements IdpConfigurationProvide
 
     @Override
     public List<String> getClientCredentialsScopes() {
-        return openIdConfigProvider.get().getClientCredentialsScopes();
+        return localOpenIdConfigProvider.get().getClientCredentialsScopes();
     }
 
     @Override
     public boolean isValidateAudience() {
-        return openIdConfigProvider.get().isValidateAudience();
+        return localOpenIdConfigProvider.get().isValidateAudience();
+    }
+
+    @Override
+    public String getUniqueIdentityClaim() {
+        return localOpenIdConfigProvider.get().getUniqueIdentityClaim();
     }
 
     @Override
     public String getLogoutRedirectParamName() {
-        return openIdConfigProvider.get().getLogoutRedirectParamName();
+        return localOpenIdConfigProvider.get().getLogoutRedirectParamName();
     }
 }

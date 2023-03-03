@@ -7,6 +7,7 @@ import stroom.security.openid.api.TokenResponse;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
@@ -17,10 +18,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
+import java.util.function.Supplier;
 
-public abstract class AbstractTokenUserIdentity implements UserIdentity, HasJwt, Delayed {
+public abstract class AbstractTokenUserIdentity
+        implements UserIdentity, HasJwtClaims, HasJwt, Delayed {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractTokenUserIdentity.class);
 
@@ -107,6 +108,8 @@ public abstract class AbstractTokenUserIdentity implements UserIdentity, HasJwt,
      * refresh token then we need to request new tokens without using a refresh token.
      */
     boolean isTokenRefreshRequired() {
+        LOGGER.trace(() -> LogUtil.message("expireTimeWithBufferEpochMs",
+                Instant.ofEpochMilli(expireTimeWithBufferEpochMs)));
         return System.currentTimeMillis() >= expireTimeWithBufferEpochMs;
     }
 
@@ -140,16 +143,16 @@ public abstract class AbstractTokenUserIdentity implements UserIdentity, HasJwt,
      * If isWorkRequiredPredicate returns true when tested against this, work will be
      * performed on this under synchronisation.
      */
-    public boolean mutateUnderLock(
-            final Predicate<AbstractTokenUserIdentity> isWorkRequiredPredicate,
-            final Consumer<AbstractTokenUserIdentity> work) {
+    public boolean refresh(final Supplier<UpdatableToken> newTokenSupplier) {
 
-        Objects.requireNonNull(isWorkRequiredPredicate, "Null isWorkRequiredPredicate");
         final boolean didWork;
-        if (work != null && isWorkRequiredPredicate.test(this)) {
+        if (newTokenSupplier != null && isTokenRefreshRequired()) {
             synchronized (this) {
-                if (isWorkRequiredPredicate.test(this)) {
-                    work.accept(this);
+                if (isTokenRefreshRequired()) {
+                    final UpdatableToken newToken = newTokenSupplier.get();
+                    updateTokens(
+                            newToken.getTokenResponse(),
+                            newToken.getJwtClaims());
                     didWork = true;
                 } else {
                     LOGGER.trace("Work not required");
