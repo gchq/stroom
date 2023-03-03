@@ -1,11 +1,11 @@
 package stroom.security.impl;
 
-import stroom.docref.HasUuid;
 import stroom.security.api.UserIdentity;
+import stroom.security.shared.HasStroomUserIdentity;
 
 import java.util.Objects;
 
-public class BasicUserIdentity implements UserIdentity, HasUuid {
+public class BasicUserIdentity implements UserIdentity, HasStroomUserIdentity {
 
     private final String userUuid;
     private final String id;
