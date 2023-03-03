@@ -201,13 +201,13 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                 LOGGER.debug("Using default token");
                 return jwtContextFactory.createAuthorisationEntries(defaultOpenIdCredentials.getApiKey());
 
-            } else if (userIdentity instanceof final AbstractTokenUserIdentity tokenUserIdentity) {
+            } else if (userIdentity instanceof final HasUpdatableToken hasUpdatableToken) {
                 // Ensure the token hasn't gone off, just in case the refresh queue (which refreshes ahead of the
                 // expiry time) is busy, so the call to refresh is unlikely.
-                if (tokenUserIdentity.hasTokenExpired()) {
-                    refresh(userIdentity);
-                }
-                final String accessToken = Objects.requireNonNull(tokenUserIdentity.getAccessToken(),
+                final UpdatableToken updatableToken = hasUpdatableToken.getUpdatableToken();
+
+                updatableToken.refreshIfRequired();
+                final String accessToken = Objects.requireNonNull(updatableToken.getAccessToken(),
                         () -> "Null access token for userIdentity " + userIdentity);
                 return jwtContextFactory.createAuthorisationEntries(accessToken);
 
