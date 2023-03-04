@@ -24,6 +24,8 @@ public class TimeRangeSelector extends Composite implements HasValue<TimeRange>,
 
         label = new Label(value.getName(), false);
         label.setStyleName("timeRange-selector");
+        label.setTitle("Time range to apply to all queries in this dashboard.\n" +
+                "The selected time range applies to the time field applicable to each query's data source.");
 
         this.popup = new PopupPanel(true);
 
