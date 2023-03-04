@@ -26,7 +26,6 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.search.elastic.client.presenter.ElasticIndexFieldListPresenter.ElasticIndexFieldListView;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
-import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
@@ -45,7 +44,6 @@ public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticInd
         implements HasDocumentRead<ElasticIndexDoc> {
 
     private final MyDataGrid<ElasticIndexField> dataGrid;
-    private final MultiSelectionModelImpl<ElasticIndexField> selectionModel;
     private final DateTimeFormatter dateTimeFormatter;
     private List<ElasticIndexField> fields;
     private ElasticIndexFieldDataProvider<ElasticIndexField> dataProvider;
@@ -59,7 +57,7 @@ public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticInd
         this.dateTimeFormatter = dateTimeFormatter;
 
         dataGrid = new MyDataGrid<>();
-        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);
 
         view.setDataGridView(pagerView);
@@ -73,15 +71,11 @@ public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticInd
     }
 
     private void addColumns() {
-        addStringColumn("Name", 200, ElasticIndexField::getFieldName);
-        addStringColumn("Use", row -> row.getFieldUse().getDisplayValue());
-        addStringColumn("Type", ElasticIndexField::getFieldType);
-        addBooleanColumn("Indexed", ElasticIndexField::isIndexed);
+        addStringColumn("Name", 300, ElasticIndexField::getFieldName);
+        addStringColumn("Field Type", 150, row -> row.getFieldUse().getDisplayValue());
+        addStringColumn("Native Type", 150, ElasticIndexField::getFieldType);
+        addBooleanColumn("Indexed", 100, ElasticIndexField::isIndexed);
         dataGrid.addEndColumn(new EndColumn<>());
-    }
-
-    private void addStringColumn(final String name, final Function<ElasticIndexField, String> function) {
-        addStringColumn(name, 100, function);
     }
 
     private void addStringColumn(final String name,
@@ -95,13 +89,13 @@ public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticInd
         }, name, width);
     }
 
-    private void addBooleanColumn(final String name, final Function<ElasticIndexField, Boolean> function) {
+    private void addBooleanColumn(final String name, final int width, final Function<ElasticIndexField, Boolean> function) {
         dataGrid.addResizableColumn(new Column<ElasticIndexField, String>(new TextCell()) {
             @Override
             public String getValue(final ElasticIndexField row) {
                 return getYesNoString(function.apply(row));
             }
-        }, name, 100);
+        }, name, width);
     }
 
     private String getYesNoString(final boolean bool) {
@@ -136,8 +130,7 @@ public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticInd
             final StringBuilder sb = new StringBuilder();
             sb
                     .append("Field list updated at: ")
-                    .append(dateTimeFormatter.format(System.currentTimeMillis()))
-                    .append("<br />Field count: ").append(fields.size());
+                    .append(dateTimeFormatter.format(System.currentTimeMillis()));
 
             getView().setStatusMessage(sb.toString());
         }
