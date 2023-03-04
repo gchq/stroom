@@ -468,7 +468,6 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
                     if (tab.getCloseElement() != null && tab.getCloseElement().isOrHasChild(target)) {
                         tab.setCloseActive(true);
                     }
-                    tab.setHover(true);
                 }
             }
         } else if (Event.ONMOUSEOUT == event.getTypeInt()) {
@@ -481,8 +480,6 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
                 if (tab != null) {
                     if (tab.getCloseElement() != null && tab.getCloseElement().isOrHasChild(target)) {
                         tab.setCloseActive(false);
-                    } else {
-                        tab.setHover(false);
                     }
                 }
             }

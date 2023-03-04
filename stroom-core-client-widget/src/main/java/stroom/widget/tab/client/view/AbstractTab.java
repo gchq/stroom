@@ -45,7 +45,4 @@ public abstract class AbstractTab extends Widget {
 
     protected void setCloseActive(final boolean active) {
     }
-
-    protected void setHover(final boolean hover) {
-    }
 }

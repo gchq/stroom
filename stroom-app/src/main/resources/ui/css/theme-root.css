@@ -106,6 +106,8 @@
     --splitter__border-color: #fff;
 
     /* Explorer */
+    --curve-tab__background-color: rgba(0, 0, 0, 0.1);
+    --curve-tab__background-color--hover: rgba(0, 0, 0, 0.2);
     --curve-tab__svg-color: #555;
 
     /* Controls */

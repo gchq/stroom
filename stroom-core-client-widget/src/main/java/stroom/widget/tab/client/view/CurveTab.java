@@ -40,10 +40,6 @@ public class CurveTab extends AbstractTab {
         element = DOM.createDiv();
         element.setClassName("curveTab");
 
-        final Element background = DOM.createDiv();
-        background.setClassName("curveTab-background");
-        element.appendChild(background);
-
         if (icon != null) {
             final Widget iconWidget = icon.asWidget();
             iconWidget.getElement().addClassName("curveTab-icon");
@@ -78,18 +74,18 @@ public class CurveTab extends AbstractTab {
     @Override
     protected void setKeyboardSelected(final boolean selected) {
         if (selected) {
-            element.addClassName("curveTab-keyboardSelected");
+            element.addClassName("keyboardSelected");
         } else {
-            element.removeClassName("curveTab-keyboardSelected");
+            element.removeClassName("keyboardSelected");
         }
     }
 
     @Override
     public void setSelected(final boolean selected) {
         if (selected) {
-            element.addClassName("curveTab-selected");
+            element.addClassName("selected");
         } else {
-            element.removeClassName("curveTab-selected");
+            element.removeClassName("selected");
         }
     }
 
@@ -97,9 +93,9 @@ public class CurveTab extends AbstractTab {
     public void setCloseActive(final boolean active) {
         if (allowClose) {
             if (active) {
-                close.addClassName("curveTab-closeActive");
+                close.addClassName("active");
             } else {
-                close.removeClassName("curveTab-closeActive");
+                close.removeClassName("active");
             }
         }
     }
@@ -111,15 +107,6 @@ public class CurveTab extends AbstractTab {
     @Override
     public void setText(final String text) {
         label.setInnerText(text);
-    }
-
-    @Override
-    protected void setHover(final boolean hover) {
-        if (hover) {
-            element.addClassName("curveTab-hover");
-        } else {
-            element.removeClassName("curveTab-hover");
-        }
     }
 
     @Override

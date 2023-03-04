@@ -97,76 +97,31 @@
     display: flex;
     align-items: center;
     height: 34px;
-    padding: 0 2px;
-    border: none;
-    border-radius: .5rem;
-    border: 1px solid transparent;
-    background-color: transparent;
+    padding: 2px 3px 0 3px;
     color: var(--control__text-color);
+    background-color: var(--curve-tab__background-color);
+    background-clip: padding-box;
+    border-radius: 0.5rem 0.5rem 0 0;
+    border: 1px solid transparent;
+    border-bottom: 3px solid var(--curve-tab__background-color);
+    transition: border-bottom .2s;
 }
 
 .curveTab:hover {
-    border-color: rgba(0,0,0,.2);
+    border-bottom-color: var(--curve-tab__background-color--hover);
+    background-color: var(--curve-tab__background-color--hover);
 }
 
-.curveTab-selected {
-    border-color: rgba(0,0,0,.4);
+.curveTab.selected {
+    border-bottom-color: var(--focus-border);
 }
 
-.curveTab-selected:hover {
-    border-color: rgba(0,0,0,.6);
+.curveTab.selected:hover {
+    background-color: var(--row__background-color--hovered);
 }
 
-.curveTab .curveTab-background {
-	background-color: rgba(0,0,0,.1);
-}
-
-.stroom-theme-dark .curveTab:hover {
-    border-color: rgba(255,255,255,.5);
-}
-
-.stroom-theme-dark .curveTab-selected {
-    border-color: rgba(255,255,255,.8);
-}
-
-.stroom-theme-dark .curveTab-selected:hover {
-    border-color: rgba(255,255,255,1);
-}
-
-.stroom-theme-dark .curveTab .curveTab-background {
-	background-color: rgba(255,255,255,.2);
-}
-
-/*
-.curveTabBar:focus .curveTab-keyboardSelected {
-    border-color: rgba(255,255,255,1);
-}
-*/
-.curveTab-keyboardSelected:focus {
-    border-color: var(--focus-border);
+.curveTab.keyboardSelected:focus {
     box-shadow: var(--focus-shadow);
-}
-
-.curveTab .curveTab-background {
-	position: absolute;
-	left: 0;
-	top: 0;
-	opacity: 0;
-	height: 100%;
-	width: 100%;
-	overflow: hidden;
-}
-
-.curveTab-selected .curveTab-background {
-	opacity: .8;
-}
-
-.curveTab:hover .curveTab-background {
-	opacity: .9;
-}
-
-.curveTab-selected:hover .curveTab-background {
-	opacity: 1;
 }
 
 /* Tab content */
@@ -556,7 +511,7 @@
 
 .tabBarContainer {
     display: flex;
-    margin-top: 3px;
+    align-items: center;
 }
 
 .curveTabLayoutViewImpl-layout {
@@ -569,7 +524,7 @@
 }
 
 .curveTabLayoutViewImpl-tabBarOuter {
-    height: 42px;
+    height: 38px;
     margin-right: 42px;
     flex-grow: 1;
 }
@@ -1504,8 +1459,9 @@ button.main-menu svg {
 
     display: flex;
     align-items: center;
-    height: 42px;
+    height: 30px;
     justify-content: center;
+    margin-top: 0.5rem;
 }
 
 .stroom-theme-dark .navigation-menu-button,
