@@ -1644,6 +1644,7 @@ button.main-menu svg {
 .timeRange-selector {
     color: var(--link__text-color);
     cursor: pointer;
+    font-size: 1.1em;
 }
 
 .timeRange-selector:hover {
