@@ -22,6 +22,7 @@ import stroom.search.elastic.client.presenter.ElasticClusterSettingsUiHandlers;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -67,10 +68,11 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
         description.addKeyDownHandler(e -> fireChange());
         connectionUrls.addKeyDownHandler(e -> fireChange());
         caCertificate.addKeyDownHandler(e -> fireChange());
-        useAuthentication.addValueChangeHandler(e -> fireChange());
         apiKeyId.addKeyDownHandler(e -> fireChange());
         apiKeySecret.addKeyDownHandler(e -> fireChange());
         socketTimeoutMillis.addKeyDownHandler(e -> fireChange());
+
+        updateAuthenticationControlEnabledState(useAuthentication.getValue());
     }
 
     private void fireChange() {
@@ -124,6 +126,7 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     @Override
     public void setUseAuthentication(final boolean useAuthentication) {
         this.useAuthentication.setValue(useAuthentication);
+        updateAuthenticationControlEnabledState(useAuthentication);
     }
 
     @Override
@@ -162,8 +165,10 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
         connectionUrls.setEnabled(!readOnly);
         caCertificate.setEnabled(!readOnly);
         useAuthentication.setEnabled(!readOnly);
-        apiKeyId.setEnabled(!readOnly);
-        apiKeySecret.setEnabled(!readOnly);
+        if (readOnly) {
+            apiKeyId.setEnabled(false);
+            apiKeySecret.setEnabled(false);
+        }
         socketTimeoutMillis.setEnabled(!readOnly);
     }
 
@@ -172,6 +177,17 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
         if (getUiHandlers() != null) {
             getUiHandlers().onTestConnection();
         }
+    }
+
+    @UiHandler("useAuthentication")
+    public void onUseAuthenticationChange(final ValueChangeEvent<Boolean> event) {
+        updateAuthenticationControlEnabledState(event.getValue());
+        fireChange();
+    }
+
+    private void updateAuthenticationControlEnabledState(final boolean useAuthentication) {
+        apiKeyId.setEnabled(useAuthentication);
+        apiKeySecret.setEnabled(useAuthentication);
     }
 
     public interface Binder extends UiBinder<Widget, ElasticClusterSettingsViewImpl> {
