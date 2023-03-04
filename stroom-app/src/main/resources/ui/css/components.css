@@ -1715,9 +1715,8 @@ button.main-menu svg {
 
 .timeRange-popup {
     width: 33rem;
-    height: 21.6rem;
     z-index: 10;
-    padding: 0.4rem;
+    padding: 0.6rem 0.6rem 0.4rem 0.6rem;
 }
 
 .timeRange-quickSettings {
