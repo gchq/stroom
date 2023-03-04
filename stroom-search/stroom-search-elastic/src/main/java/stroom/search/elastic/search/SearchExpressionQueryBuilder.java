@@ -30,7 +30,6 @@ import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.search.elastic.shared.ElasticIndexFieldType;
 import stroom.util.functions.TriFunction;
 
-import org.elasticsearch.ResourceNotFoundException;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -65,8 +64,7 @@ public class SearchExpressionQueryBuilder {
     public SearchExpressionQueryBuilder(final WordListProvider wordListProvider,
                                         final Map<String, ElasticIndexField> indexFieldsMap,
                                         final DateTimeSettings dateTimeSettings,
-                                        final long nowEpochMilli
-    ) {
+                                        final long nowEpochMilli) {
         this.wordListProvider = wordListProvider;
         this.indexFieldsMap = indexFieldsMap;
         this.dateTimeSettings = dateTimeSettings;
@@ -135,7 +133,7 @@ public class SearchExpressionQueryBuilder {
         }
         final ElasticIndexField indexField = indexFieldsMap.get(field);
         if (indexField == null) {
-            throw new ResourceNotFoundException("Field not found in index: " + field);
+            throw new SearchException("Field not found in index: " + field);
         }
         final String fieldName = indexField.getFieldName();
 
@@ -220,8 +218,8 @@ public class SearchExpressionQueryBuilder {
                 case IN_DICTIONARY:
                     return buildDictionaryQuery(condition, fieldName, docRef, indexField);
                 default:
-                    throw new RuntimeException("Unsupported condition '" + condition.getDisplayValue() + "' for "
-                            + indexField.getFieldUse().getDisplayValue() + " field type");
+                    throw new UnsupportedOperationException("Unsupported condition '" + condition.getDisplayValue() +
+                            "' for " + indexField.getFieldUse().getDisplayValue() + " field type");
             }
         }
     }
@@ -306,7 +304,7 @@ public class SearchExpressionQueryBuilder {
             case IN_DICTIONARY:
                 return buildDictionaryQuery(condition, fieldName, docRef, indexField);
             default:
-                throw new RuntimeException("Unexpected condition '" + condition.getDisplayValue() + "' for " +
+                throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for " +
                         indexField.getFieldUse().getDisplayValue() + " field type");
         }
     }
