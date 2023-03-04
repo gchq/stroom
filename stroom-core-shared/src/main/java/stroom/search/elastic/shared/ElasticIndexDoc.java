@@ -56,7 +56,7 @@ public class ElasticIndexDoc extends Doc {
     public static final int DEFAULT_SEARCH_SLICES = 1;
     public static final int DEFAULT_SEARCH_SCROLL_SIZE = 1000;
     public static final String DOCUMENT_TYPE = "ElasticIndex";
-    private static final String DEFAULT_TIME_FIELD = "EventTime";
+    private static final String DEFAULT_TIME_FIELD = "@timestamp";
 
     /**
      * Reference to the `ElasticCluster` containing common Elasticsearch cluster connection properties
@@ -144,6 +144,9 @@ public class ElasticIndexDoc extends Doc {
         }
         if (this.searchScrollSize == null) {
             this.searchScrollSize = DEFAULT_SEARCH_SCROLL_SIZE;
+        }
+        if (this.timeField == null || this.timeField.isEmpty()) {
+            this.timeField = DEFAULT_TIME_FIELD;
         }
     }
 
