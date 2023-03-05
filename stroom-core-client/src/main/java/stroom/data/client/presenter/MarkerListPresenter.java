@@ -100,7 +100,7 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
 
             dataPresenter.update(true);
         });
-        dataGrid.addColumn(expanderColumn, "<br/>", ColumnSizeConstants.CHECKBOX_COL);
+        dataGrid.addColumn(expanderColumn, "<br/>", ExpanderCell.getColumnWidth(1));
     }
 
     private void addSeverityColumn() {
