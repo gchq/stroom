@@ -104,6 +104,8 @@
     /* Explorer */
     --curve-tab__background-color: rgba(255, 255, 255, 0.1);
     --curve-tab__background-color--hover: rgba(255, 255, 255, 0.2);
+    --curve-tab-close__background-color--hover: rgba(255, 255, 255, 0.2);
+    --curve-tab-close__background-color--active: rgba(0, 0, 0, 0.5);
     --curve-tab__svg-color: #fff;
 
     /* Splitter */

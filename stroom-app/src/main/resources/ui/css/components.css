@@ -86,7 +86,7 @@
     position: relative;
     width: 100%;
     height: 100%;
-    margin: 4px;
+    margin: 2px;
 }
 
 .curveTab {
@@ -104,7 +104,6 @@
     border-radius: 0.5rem 0.5rem 0 0;
     border: 2px solid transparent;
     border-bottom: 3px solid var(--curve-tab__background-color);
-    transition: border-bottom .2s;
 }
 
 .curveTab:hover {
@@ -117,7 +116,7 @@
 }
 
 .curveTab.selected:hover {
-    background-color: var(--row__background-color--hovered);
+    background-color: var(--curve-tab__background-color--hover);
 }
 
 .curveTab.keyboardSelected:focus {
@@ -164,39 +163,40 @@
 }
 
 /* Close button */
-/*
-.curveTab .curveTab-close {
-    background-image: url("../images/tabs/close.png");
-    width: 12px;
-    height: 12px;
-    -moz-user-select: none;
-    cursor: pointer;
-    margin: 2px 6px 0 4px;
-    z-index: 0;
-    background-repeat: no-repeat;
-}
-*/
-.curveTab .curveTab-close {
-    display: flex;
-    opacity: 0;
+
+.curveTab .curveTab-close-container {
+    padding: 0 6px 0 8px;
+    visibility: hidden;
 }
 
-.curveTab:hover .curveTab-close {
-	opacity: 1;
+.curveTab:hover .curveTab-close-container {
+    visibility: visible;
+}
+
+.curveTab .curveTab-close {
+    display: flex;
+    border-radius: 10px;
+}
+
+.curveTab .curveTab-close:hover {
+    background-color: var(--curve-tab-close__background-color--hover);
+}
+
+.curveTab .curveTab-close:active {
+    background-color: var(--curve-tab-close__background-color--active);
+}
+
+.curveTab .curveTab-close:active svg {
+    color: white;
 }
 
 .curveTab .curveTab-close svg {
     width: 17px;
     height: 17px;
     cursor: pointer;
-    margin: 0px 6px 0 4px;
     z-index: 0;
     color: var(--curve-tab__svg-color);
     opacity: 0.8;
-}
-
-.curveTab .curveTab-closeActive svg {
-    opacity: 1;
 }
 
 .curveTabSelector {
@@ -1404,11 +1404,12 @@
 .navigation-title-bar {
     display: flex;
     justify-content: space-between;
+    padding: 3px 0;
 }
 
 .navigation-logo {
     flex-grow: 1;
-    padding: 6px 0 2px 0;
+    padding: 2px 0 2px 0;
     background-color: transparent;
     color: white;
     border: 0;
@@ -1416,9 +1417,14 @@
     width: auto;
 }
 
+.navigation-logo-image {
+    position: relative;
+    top: 2px;
+}
+
 .navigation-logo-image svg {
-    width: 146px;
-    height: 35px;
+    width: 120px;
+    height: 28px;
 }
 
 .navigation-arrow-image svg {
@@ -1436,7 +1442,7 @@ button.main-menu svg {
     width: 18px;
     height: 18px;
     margin-top: 6px;
-    margin-right: 12px;
+    margin-right: 10px;
 }
 
 /*
@@ -1457,12 +1463,12 @@ button.main-menu svg {
 .navigation-menu-button {
     background-color: transparent;
     opacity: 0.6;
-
     display: flex;
     align-items: center;
     height: 30px;
     justify-content: center;
-    margin-top: 0.5rem;
+    margin-top: 0.4rem;
+    padding: 0 8px;
 }
 
 .stroom-theme-dark .navigation-menu-button,

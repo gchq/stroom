@@ -31,7 +31,7 @@ public class CurveTab extends AbstractTab {
 
     private final Element element;
     private final Element label;
-    private final Element close;
+    private final Element closeContainer;
     private final boolean allowClose;
 
     public CurveTab(final Icon icon, final String text, final boolean allowClose) {
@@ -58,16 +58,19 @@ public class CurveTab extends AbstractTab {
         label.setTitle(text);
         element.appendChild(label);
 
-        close = DOM.createDiv();
+        closeContainer = DOM.createDiv();
+        closeContainer.addClassName("curveTab-close-container");
+        element.appendChild(closeContainer);
+        final Element close = DOM.createDiv();
         close.setClassName("curveTab-close");
         close.setInnerHTML(SvgImages.MONO_TAB_CLOSE);
-        element.appendChild(close);
+        closeContainer.appendChild(close);
 
         setElement(element);
 
         if (!allowClose) {
-            close.getStyle().setDisplay(Display.NONE);
-            label.getStyle().setPaddingRight(20, Unit.PX);
+            closeContainer.getStyle().setDisplay(Display.NONE);
+            label.getStyle().setPaddingRight(28, Unit.PX);
         }
     }
 
@@ -93,9 +96,9 @@ public class CurveTab extends AbstractTab {
     public void setCloseActive(final boolean active) {
         if (allowClose) {
             if (active) {
-                close.addClassName("active");
+                closeContainer.addClassName("active");
             } else {
-                close.removeClassName("active");
+                closeContainer.removeClassName("active");
             }
         }
     }
@@ -111,6 +114,6 @@ public class CurveTab extends AbstractTab {
 
     @Override
     protected Element getCloseElement() {
-        return close;
+        return closeContainer;
     }
 }
