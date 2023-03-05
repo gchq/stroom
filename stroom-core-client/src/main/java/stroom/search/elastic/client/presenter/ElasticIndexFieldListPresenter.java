@@ -89,7 +89,9 @@ public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticInd
         }, name, width);
     }
 
-    private void addBooleanColumn(final String name, final int width, final Function<ElasticIndexField, Boolean> function) {
+    private void addBooleanColumn(final String name,
+                                  final int width,
+                                  final Function<ElasticIndexField, Boolean> function) {
         dataGrid.addResizableColumn(new Column<ElasticIndexField, String>(new TextCell()) {
             @Override
             public String getValue(final ElasticIndexField row) {
