@@ -1139,7 +1139,7 @@
 
 .mainViewImpl-spinner {
     position: absolute;
-    top: 7px;
+    top: 2px;
     right: 2px;
     width: 32px;
     height: 32px;
@@ -1467,7 +1467,7 @@ button.main-menu svg {
     align-items: center;
     height: 30px;
     justify-content: center;
-    margin-top: 0.4rem;
+    margin-top: 0.1rem;
     padding: 0 8px;
 }
 
