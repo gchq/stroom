@@ -122,6 +122,7 @@
 
 .curveTab.keyboardSelected:focus {
     box-shadow: var(--focus-shadow);
+    border-bottom-color: var(--row__background-color--selected--focussed);
 }
 
 /* Tab content */
