@@ -102,7 +102,7 @@
     background-color: var(--curve-tab__background-color);
     background-clip: padding-box;
     border-radius: 0.5rem 0.5rem 0 0;
-    border: 1px solid transparent;
+    border: 2px solid transparent;
     border-bottom: 3px solid var(--curve-tab__background-color);
     transition: border-bottom .2s;
 }
