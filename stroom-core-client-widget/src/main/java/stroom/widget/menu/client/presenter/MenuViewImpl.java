@@ -12,6 +12,7 @@ import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.CellPreviewEvent;
@@ -21,11 +22,14 @@ import java.util.List;
 
 public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements MenuView {
 
+    private static final int SUBMENU_SHOW_DELAY_MILLIS = 500;
+
     private final CellTable<Item> cellTable;
     private final Widget widget;
 
     private final MySingleSelectionModel<Item> selectionModel = new MySingleSelectionModel<>();
     private int mouseOverRow = -1;
+    private Timer subMenuShowTimer;
 
     public MenuViewImpl() {
         cellTable = new MyCellTable<>(MyDataGrid.DEFAULT_LIST_PAGE_SIZE);
@@ -65,6 +69,21 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
         if (getUiHandlers() != null && item instanceof MenuItem) {
             getUiHandlers().showSubMenu((MenuItem) item, getRowElement(item));
         }
+    }
+
+    private void showSubMenuAfterDelay(final Item item, final int delayMillis) {
+        if (subMenuShowTimer != null) {
+            subMenuShowTimer.cancel();
+        }
+
+        subMenuShowTimer = new Timer() {
+            @Override
+            public void run() {
+                showSubMenu(item);
+            }
+        };
+
+        subMenuShowTimer.schedule(delayMillis);
     }
 
     public void toggleSubMenu(final Item item) {
@@ -226,9 +245,10 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
             final Item item = e.getValue();
             if (isSelectable(item)) {
                 final int row = cellTable.getVisibleItems().indexOf(item);
-                if (row != mouseOverRow && !getUiHandlers().subMenuVisible()) {
+                if (row != mouseOverRow) {
                     selectRow(row, false);
                     mouseOverRow = row;
+                    showSubMenuAfterDelay(item, SUBMENU_SHOW_DELAY_MILLIS);
                 }
             }
         }
