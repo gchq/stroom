@@ -466,8 +466,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                                 .componentId(tableSettings.getKey())
                                                 .requestedRange(new OffsetRange(0, Integer.MAX_VALUE))
                                                 .tableName(getTableName(tableSettings.getKey()))
-                                                .tableSettings(((TableComponentSettings) tableSettings.getValue()).copy()
-                                                        .buildTableSettings())
+                                                .tableSettings(((TableComponentSettings) tableSettings.getValue())
+                                                        .copy().buildTableSettings())
                                                 .fetch(Fetch.ALL)
                                                 .build()));
 
