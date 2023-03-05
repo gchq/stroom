@@ -17,6 +17,7 @@
 package stroom.receive.rules.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.cell.expander.client.ExpanderCell;
 import stroom.config.global.client.presenter.ListDataProvider;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.EditExpressionPresenter;
@@ -348,7 +349,7 @@ public class DataRetentionImpactPresenter
                 DataRetentionImpactRow::getExpander,
                 treeAction,
                 this::refreshVisibleData,
-                36); // Need space for three expander levels
+                ExpanderCell.getColumnWidth(3)); // Need space for three expander levels
 
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getRuleNumber, Object::toString)

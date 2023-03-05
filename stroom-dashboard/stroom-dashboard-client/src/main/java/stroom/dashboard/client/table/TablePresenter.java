@@ -132,7 +132,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     public static final ComponentType TYPE = new ComponentType(1, "table", "Table", ComponentUse.PANEL);
-    private static final int MIN_EXPANDER_COL_WIDTH = 0;
     private static final Version CURRENT_MODEL_VERSION = new Version(6, 1, 26);
 
     private final LocationManager locationManager;
@@ -235,7 +234,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
 
         // Expander column.
-        expanderColumn = new Column<TableRow, Expander>(new ExpanderCell()) {
+        expanderColumn = new Column<TableRow, Expander>(new ExpanderCell(ExpanderCell.DEFAULT_INITIAL_OFFSET_PX)) {
             @Override
             public Expander getValue(final TableRow row) {
                 if (row == null) {
@@ -690,11 +689,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
 
         // Set the expander column width.
-        if (maxDepth > 0) {
-            expanderColumnWidth = 16 + (maxDepth * 10);
-        } else {
-            expanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
-        }
+        expanderColumnWidth = ExpanderCell.getColumnWidth(maxDepth) + ExpanderCell.DEFAULT_INITIAL_OFFSET_PX;
         dataGrid.setColumnWidth(expanderColumn, expanderColumnWidth, Unit.PX);
 
         return processed;

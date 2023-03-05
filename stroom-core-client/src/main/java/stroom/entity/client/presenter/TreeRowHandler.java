@@ -16,6 +16,7 @@
 
 package stroom.entity.client.presenter;
 
+import stroom.cell.expander.client.ExpanderCell;
 import stroom.util.shared.Expander;
 import stroom.util.shared.TreeAction;
 import stroom.util.shared.TreeRow;
@@ -59,10 +60,6 @@ public class TreeRowHandler<R> {
 
         // Set the width of the expander column so
         // that all expanders can be seen.
-        if (maxDepth >= 0) {
-            dataGrid.setColumnWidth(expanderColumn, 16 + (maxDepth * 10), Unit.PX);
-        } else {
-            dataGrid.setColumnWidth(expanderColumn, 0, Unit.PX);
-        }
+        dataGrid.setColumnWidth(expanderColumn, ExpanderCell.getColumnWidth(maxDepth), Unit.PX);
     }
 }
