@@ -199,7 +199,7 @@ class SecurityFilter implements Filter {
                         final String redirectUri = openIdManager.redirect(request, code, stateId, postAuthRedirectUri);
 
                         LOGGER.debug("Code flow UI request so redirecting to IDP, " +
-                                "redirectUri: {}, postAuthRedirectUri: {}, path: {}",
+                                        "redirectUri: {}, postAuthRedirectUri: {}, path: {}",
                                 redirectUri, postAuthRedirectUri, fullPath);
                         response.sendRedirect(redirectUri);
 
@@ -222,14 +222,15 @@ class SecurityFilter implements Filter {
                                         final String msg) {
         LOGGER.debug("User identity ({}): {} path: {}",
                 msg,
-                optUserIdentity.map(identity -> {
-                    final String id = identity.getPreferredUsername() != null
-                            ? identity.getId() + " (" + identity.getPreferredUsername() + ")"
-                            : identity.getId();
-                            return LogUtil.message("'{}' {}",
-                                    id,
-                                    identity.getClass().getSimpleName());
-                        })
+                optUserIdentity.map(
+                                identity -> {
+                                    final String id = identity.getPreferredUsername() != null
+                                            ? identity.getId() + " (" + identity.getPreferredUsername() + ")"
+                                            : identity.getId();
+                                    return LogUtil.message("'{}' {}",
+                                            id,
+                                            identity.getClass().getSimpleName());
+                                })
                         .orElse("empty"),
                 fullPath);
     }
