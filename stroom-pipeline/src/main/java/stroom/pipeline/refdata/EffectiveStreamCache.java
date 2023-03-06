@@ -110,7 +110,7 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
             NavigableSet<EffectiveMeta> effectiveStreamSet = Collections.emptyNavigableSet();
 
             try {
-                LOGGER.debug(() -> "Creating effective stream set, key: " + LogUtil.toStringWithoutName(key));
+                LOGGER.debug(() -> "Creating effective stream set, key: " + LogUtil.toStringWithoutClassName(key));
 
                 // Limit the stream set to the requested effective time window.
                 final Period window = new Period(key.getFromMs(), key.getToMs());
@@ -121,7 +121,7 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
                         key.getFeed(),
                         key.getStreamType());
 
-                LOGGER.debug(() -> "Using criteria: " + LogUtil.toStringWithoutName(criteria));
+                LOGGER.debug(() -> "Using criteria: " + LogUtil.toStringWithoutClassName(criteria));
 
                 // Hit the DB to find all the streams matching our criteria
                 final List<EffectiveMeta> effectiveMetasFromDb = metaService.findEffectiveData(criteria);
@@ -184,7 +184,7 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
         } else {
             final List<String> sortedStringMetas = effectiveStreams.stream()
                     .sorted(Comparator.comparing(EffectiveMeta::getEffectiveMs))
-                    .map(LogUtil::toStringWithoutName)
+                    .map(LogUtil::toStringWithoutClassName)
                     .collect(Collectors.toList());
 
             Stream<String> stream = sortedStringMetas.stream();

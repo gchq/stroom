@@ -103,7 +103,7 @@ public interface HasSystemInfo {
     }
 
     static OptionalLong getLongParam(final Map<String, String> params,
-                                            final String paramKey) {
+                                     final String paramKey) {
         if (NullSafe.isEmptyMap(params) || NullSafe.isBlankString(paramKey)) {
             return OptionalLong.empty();
         } else {
@@ -117,7 +117,7 @@ public interface HasSystemInfo {
     }
 
     static OptionalInt getIntParam(final Map<String, String> params,
-                                          final String paramKey) {
+                                   final String paramKey) {
         if (NullSafe.isEmptyMap(params) || NullSafe.isBlankString(paramKey)) {
             return OptionalInt.empty();
         } else {
@@ -131,7 +131,7 @@ public interface HasSystemInfo {
     }
 
     static Optional<String> getParam(final Map<String, String> params,
-                                            final String paramKey) {
+                                     final String paramKey) {
         if (NullSafe.isEmptyMap(params) || NullSafe.isBlankString(paramKey)) {
             return Optional.empty();
         } else {

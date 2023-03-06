@@ -107,21 +107,21 @@ class TestLogUtil {
 
     @Test
     void toStringWithoutName() {
-        assertThat(LogUtil.toStringWithoutName(new MyPojo("abc", 123)))
+        assertThat(LogUtil.toStringWithoutClassName(new MyPojo("abc", 123)))
                 .isEqualTo("aString='abc', anInt=123");
 
     }
 
     @Test
     void toStringWithoutName_null() {
-        assertThat(LogUtil.toStringWithoutName(null))
+        assertThat(LogUtil.toStringWithoutClassName(null))
                 .isNull();
 
     }
 
     @Test
     void toStringWithoutName_empty() {
-        assertThat(LogUtil.toStringWithoutName(new Object() {
+        assertThat(LogUtil.toStringWithoutClassName(new Object() {
             @Override
             public String toString() {
                 return "";
@@ -133,7 +133,7 @@ class TestLogUtil {
 
     @Test
     void toStringWithoutName_noName() {
-        assertThat(LogUtil.toStringWithoutName(new Object() {
+        assertThat(LogUtil.toStringWithoutClassName(new Object() {
             @Override
             public String toString() {
                 return "abc";
