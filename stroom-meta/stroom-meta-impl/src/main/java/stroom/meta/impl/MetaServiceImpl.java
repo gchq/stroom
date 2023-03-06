@@ -407,7 +407,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     @Override
-    public Set<EffectiveMeta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
+    public List<EffectiveMeta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
         LOGGER.debug("findEffectiveData({})", criteria);
 
         return securityContext.asProcessingUserResult(() ->

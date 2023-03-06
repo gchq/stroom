@@ -23,6 +23,7 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
+import stroom.meta.api.EffectiveMeta;
 import stroom.pipeline.PipelineSerialiser;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.cache.DocumentPermissionCache;
@@ -170,19 +171,16 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
             pipelineReferences.add(new PipelineReference(pipeline2Ref, feed2Ref, StreamTypeNames.REFERENCE));
 
             // Set up the effective streams to be used for each
-            final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
-            streamSet.add(new EffectiveStream(
-                    1, DateUtil.parseNormalDateTimeString("2008-01-01T09:47:00.000Z")));
-            streamSet.add(new EffectiveStream(
-                    2, DateUtil.parseNormalDateTimeString("2009-01-01T09:47:00.000Z")));
-            streamSet.add(new EffectiveStream(
-                    3, DateUtil.parseNormalDateTimeString("2010-01-01T09:47:00.000Z")));
+            final TreeSet<EffectiveMeta> streamSet = new TreeSet<>();
+            streamSet.add(buildEffectiveMeta(1, "2008-01-01T09:47:00.000Z"));
+            streamSet.add(buildEffectiveMeta(2, "2009-01-01T09:47:00.000Z"));
+            streamSet.add(buildEffectiveMeta(3, "2010-01-01T09:47:00.000Z"));
 
             try (CacheManager cacheManager = new CacheManagerImpl()) {
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(
                         cacheManager, null, null, null, ReferenceDataConfig::new) {
                     @Override
-                    protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
+                    protected TreeSet<EffectiveMeta> create(final EffectiveStreamKey key) {
                         return streamSet;
                     }
                 };
@@ -248,19 +246,16 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
             pipelineReferences.add(new PipelineReference(pipeline1Ref, feed1Ref, StreamTypeNames.REFERENCE));
 
             // Set up the effective streams to be used for each
-            final EffectiveStream stream1 = new EffectiveStream(
-                    1, DateUtil.parseNormalDateTimeString("2008-01-01T09:47:00.000Z"));
-            final EffectiveStream stream2 = new EffectiveStream(
-                    2, DateUtil.parseNormalDateTimeString("2009-01-01T09:47:00.000Z"));
-            final EffectiveStream stream3 = new EffectiveStream(
-                    3, DateUtil.parseNormalDateTimeString("2010-01-01T09:47:00.000Z"));
+            final EffectiveMeta stream1 = buildEffectiveMeta(1, "2008-01-01T09:47:00.000Z");
+            final EffectiveMeta stream2 = buildEffectiveMeta(2, "2009-01-01T09:47:00.000Z");
+            final EffectiveMeta stream3 = buildEffectiveMeta(3, "2010-01-01T09:47:00.000Z");
 
-            final TreeSet<EffectiveStream> streamSet1 = new TreeSet<>();
+            final TreeSet<EffectiveMeta> streamSet1 = new TreeSet<>();
             streamSet1.add(stream1);
-            final TreeSet<EffectiveStream> streamSet2and3 = new TreeSet<>();
+            final TreeSet<EffectiveMeta> streamSet2and3 = new TreeSet<>();
             streamSet2and3.add(stream2);
             streamSet2and3.add(stream3);
-            final TreeSet<EffectiveStream> streamSetAll = new TreeSet<>();
+            final TreeSet<EffectiveMeta> streamSetAll = new TreeSet<>();
             streamSetAll.addAll(streamSet1);
             streamSetAll.addAll(streamSet2and3);
 
@@ -268,7 +263,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(
                         cacheManager, null, null, null, ReferenceDataConfig::new) {
                     @Override
-                    protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
+                    protected TreeSet<EffectiveMeta> create(final EffectiveStreamKey key) {
                         return streamSetAll;
                     }
                 };
@@ -337,14 +332,14 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
     }
 
     private void addUserDataToMockReferenceDataLoader(final DocRef pipelineRef,
-                                                      final TreeSet<EffectiveStream> effectiveStreams,
+                                                      final TreeSet<EffectiveMeta> effectiveStreams,
                                                       final List<String> mapNames,
                                                       final Map<RefStreamDefinition, Runnable> mockLoaderActions) {
 
-        for (EffectiveStream effectiveStream : effectiveStreams) {
+        for (EffectiveMeta effectiveStream : effectiveStreams) {
 
             RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
-                    pipelineRef, pipelineStore.readDocument(pipelineRef).getVersion(), effectiveStream.getStreamId());
+                    pipelineRef, pipelineStore.readDocument(pipelineRef).getVersion(), effectiveStream.getId());
 
 
             mockLoaderActions.put(refStreamDefinition, () -> {
@@ -370,14 +365,14 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
     }
 
     private void addKeyValueDataToMockReferenceDataLoader(final DocRef pipelineRef,
-                                                          final TreeSet<EffectiveStream> effectiveStreams,
+                                                          final TreeSet<EffectiveMeta> effectiveStreams,
                                                           final List<Tuple3<String, String, String>> mapKeyValueTuples,
                                                           final Map<RefStreamDefinition, Runnable> mockLoaderActions) {
 
-        for (EffectiveStream effectiveStream : effectiveStreams) {
+        for (EffectiveMeta effectiveStream : effectiveStreams) {
 
             RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
-                    pipelineRef, pipelineStore.readDocument(pipelineRef).getVersion(), effectiveStream.getStreamId());
+                    pipelineRef, pipelineStore.readDocument(pipelineRef).getVersion(), effectiveStream.getId());
 
 
             mockLoaderActions.put(refStreamDefinition, () -> {
@@ -400,14 +395,14 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
 
     private void addRangeValueDataToMockReferenceDataLoader(
             final DocRef pipelineRef,
-            final TreeSet<EffectiveStream> effectiveStreams,
+            final TreeSet<EffectiveMeta> effectiveStreams,
             final List<Tuple3<String, Range<Long>, String>> mapRangeValueTuples,
             final Map<RefStreamDefinition, Runnable> mockLoaderActions) {
 
-        for (EffectiveStream effectiveStream : effectiveStreams) {
+        for (EffectiveMeta effectiveStream : effectiveStreams) {
 
             RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
-                    pipelineRef, pipelineStore.readDocument(pipelineRef).getVersion(), effectiveStream.getStreamId());
+                    pipelineRef, pipelineStore.readDocument(pipelineRef).getVersion(), effectiveStream.getId());
 
 
             mockLoaderActions.put(refStreamDefinition, () -> {
@@ -495,8 +490,8 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                     StreamTypeNames.REFERENCE);
             final List<PipelineReference> pipelineReferences = Collections.singletonList(pipelineReference);
 
-            final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
-            streamSet.add(new EffectiveStream(0, 0L));
+            final TreeSet<EffectiveMeta> streamSet = new TreeSet<>();
+            streamSet.add(buildEffectiveMeta(0, 0L));
             try (CacheManager cacheManager = new CacheManagerImpl()) {
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager,
                         null,
@@ -504,7 +499,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         null,
                         ReferenceDataConfig::new) {
                     @Override
-                    protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
+                    protected TreeSet<EffectiveMeta> create(final EffectiveStreamKey key) {
                         return streamSet;
                     }
                 };
@@ -574,8 +569,8 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                     StreamTypeNames.REFERENCE);
             final List<PipelineReference> pipelineReferences = Collections.singletonList(pipelineReference);
 
-            final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
-            streamSet.add(new EffectiveStream(0, 0L));
+            final TreeSet<EffectiveMeta> streamSet = new TreeSet<>();
+            streamSet.add(buildEffectiveMeta(0, 0L));
             try (CacheManager cacheManager = new CacheManagerImpl()) {
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager,
                         null,
@@ -583,7 +578,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         null,
                         ReferenceDataConfig::new) {
                     @Override
-                    protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
+                    protected TreeSet<EffectiveMeta> create(final EffectiveStreamKey key) {
                         return streamSet;
                     }
                 };
@@ -697,5 +692,16 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
 
     private ByteSize getMaxSizeBytes() {
         return DB_MAX_SIZE;
+    }
+
+    private EffectiveMeta buildEffectiveMeta(final long id, final String effectiveTimeStr) {
+        return new EffectiveMeta(id,
+                "DUMMY_FEED",
+                "DummyType",
+                DateUtil.parseNormalDateTimeString(effectiveTimeStr));
+    }
+
+    private EffectiveMeta buildEffectiveMeta(final long id, final long effectiveMs) {
+        return new EffectiveMeta(id, "DUMMY_FEED", "DummyType", effectiveMs);
     }
 }

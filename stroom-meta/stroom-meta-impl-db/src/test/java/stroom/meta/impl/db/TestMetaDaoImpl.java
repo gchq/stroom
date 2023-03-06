@@ -672,6 +672,8 @@ class TestMetaDaoImpl {
         assertThat(selectionSummary.getItemCount())
                 .isEqualTo(0);
 
+        dumpMetaTableToDebug();
+
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
                 .addTerm(MetaFields.TYPE, Condition.EQUALS, RAW_STREAM_TYPE_NAME)

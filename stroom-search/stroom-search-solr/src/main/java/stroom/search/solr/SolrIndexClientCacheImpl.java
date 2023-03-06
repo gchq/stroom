@@ -63,10 +63,12 @@ public class SolrIndexClientCacheImpl implements SolrIndexClientCache, Clearable
     private void destroy(final SolrConnectionConfig key, final SolrClient value) {
         synchronized (this) {
             final State state = useMap.get(value);
-            state.stale = true;
-            if (state.useCount == 0) {
-                close(value);
-                useMap.remove(value);
+            if (state != null) {
+                state.stale = true;
+                if (state.useCount == 0) {
+                    close(value);
+                    useMap.remove(value);
+                }
             }
         }
     }

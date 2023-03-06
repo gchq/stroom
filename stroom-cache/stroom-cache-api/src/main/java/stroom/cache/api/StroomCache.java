@@ -3,7 +3,8 @@ package stroom.cache.api;
 import stroom.cache.shared.CacheInfo;
 import stroom.util.shared.PropertyPath;
 
-import java.util.List;
+import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -54,18 +55,22 @@ public interface StroomCache<K, V> {
     boolean containsKey(K key);
 
     /**
-     * @return A shallow copy of the keys in the cache.
-     * Changes to this set have no effect on the cache. Changes to the items in the set
-     * will change the values in the cache.
+     * @return A read-only view of the keys in the cache.
+     * Changes to the items in the set will change the values in the cache.
      */
     Set<K> keySet();
 
     /**
-     * @return A shallow copy of the values in the cache.
-     * Changes to this list have no effect on the cache. Changes to the items in the list
-     * will change the values in the cache.
+     * @return A read-only view of the values in the cache.
+     * Changes to the items in the collection will change the values in the cache.
      */
-    List<V> values();
+    Collection<V> values();
+
+    /**
+     * @return A read-only view of the entries in the cache.
+     * Changes to the items in the map will change the values in the cache.
+     */
+    Map<K, V> asMap();
 
     /**
      * Perform work on each item in the cache. The order in which entries are consumed is not

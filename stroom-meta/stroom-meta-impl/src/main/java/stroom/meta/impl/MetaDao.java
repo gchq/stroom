@@ -92,7 +92,7 @@ public interface MetaDao {
      */
     List<String> getProcessorUuidList(FindMetaCriteria criteria);
 
-    Set<EffectiveMeta> getEffectiveStreams(EffectiveMetaDataCriteria effectiveMetaDataCriteria);
+    List<EffectiveMeta> getEffectiveStreams(EffectiveMetaDataCriteria effectiveMetaDataCriteria);
 
     Set<Long> findLockedMeta(Collection<Long> metaIdCollection);
 
