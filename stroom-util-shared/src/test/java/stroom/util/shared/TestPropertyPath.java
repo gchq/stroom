@@ -5,7 +5,6 @@ import stroom.test.common.TestUtil;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
@@ -21,13 +20,13 @@ class TestPropertyPath {
     void blank() {
         PropertyPath propertyPath = PropertyPath.blank();
 
-        Assertions.assertThat(propertyPath.toString())
+        assertThat(propertyPath.toString())
                 .isEqualTo("");
 
-        Assertions.assertThat(propertyPath.getParts())
+        assertThat(propertyPath.getParts())
                 .isEmpty();
 
-        Assertions.assertThat(propertyPath.isBlank())
+        assertThat(propertyPath.isBlank())
                 .isTrue();
     }
 
@@ -35,10 +34,10 @@ class TestPropertyPath {
     void getPropertyPath() {
         PropertyPath propertyPath = PropertyPath.fromParts("stroom", "node", "name");
 
-        Assertions.assertThat(propertyPath.toString())
+        assertThat(propertyPath.toString())
                 .isEqualTo("stroom.node.name");
 
-        Assertions.assertThat(propertyPath.getParts())
+        assertThat(propertyPath.getParts())
                 .containsExactly("stroom", "node", "name");
     }
 
@@ -46,7 +45,7 @@ class TestPropertyPath {
     void merge() {
         PropertyPath propertyPath1 = PropertyPath.fromParts("stroom", "node");
         PropertyPath propertyPath2 = PropertyPath.fromParts("name");
-        Assertions.assertThat(propertyPath1.merge(propertyPath2).toString())
+        assertThat(propertyPath1.merge(propertyPath2).toString())
                 .isEqualTo("stroom.node.name");
     }
 
@@ -54,7 +53,7 @@ class TestPropertyPath {
     void merge2() {
         PropertyPath propertyPath1 = PropertyPath.fromParts("stroom", "node");
         String part2 = "name";
-        Assertions.assertThat(propertyPath1.merge(part2).toString()).isEqualTo("stroom.node.name");
+        assertThat(propertyPath1.merge(part2).toString()).isEqualTo("stroom.node.name");
     }
 
     @Test
@@ -62,7 +61,7 @@ class TestPropertyPath {
         PropertyPath propertyPath = PropertyPath.fromParts("stroom", "node", "name");
         propertyPath.getParts()
                 .forEach(part -> {
-                    Assertions.assertThat(propertyPath.containsPart(part))
+                    assertThat(propertyPath.containsPart(part))
                             .isTrue();
                 });
     }
@@ -70,7 +69,7 @@ class TestPropertyPath {
     @Test
     void containsPart2() {
         PropertyPath propertyPath = PropertyPath.fromParts("stroom", "node", "name");
-        Assertions.assertThat(propertyPath.containsPart("not_found"))
+        assertThat(propertyPath.containsPart("not_found"))
                 .isFalse();
     }
 
@@ -82,7 +81,7 @@ class TestPropertyPath {
                 .add("name")
                 .build();
 
-        Assertions.assertThat(propertyPath.toString())
+        assertThat(propertyPath.toString())
                 .isEqualTo("stroom.node.name");
     }
 
@@ -119,7 +118,7 @@ class TestPropertyPath {
 
         boolean result = path1.equalsIgnoreCase(path2);
 
-        Assertions.assertThat(result)
+        assertThat(result)
                 .isEqualTo(expectedResult);
     }
 
@@ -132,7 +131,7 @@ class TestPropertyPath {
                         testCase.getInput().getParentPropertyName()
                                 .orElse(null))
                 .withSimpleEqualityAssertion()
-                .addThrowsCase(PropertyPath.blank(), RuntimeException.class)
+                .addCase(PropertyPath.blank(), null)
                 .addCase(PropertyPath.fromParts("root"), null)
                 .addCase(PropertyPath.fromParts("root", "child"), "root")
                 .addCase(PropertyPath.fromParts("root", "child", "grandchild"), "child")
@@ -167,6 +166,42 @@ class TestPropertyPath {
     @Test
     void testSerde_empty() throws IOException {
         doSerdeTest(PropertyPath.blank(), PropertyPath.class);
+    }
+
+    @SuppressWarnings("StringOperationCanBeSimplified")
+    @Test
+    void testInterning1() {
+        final PropertyPath propertyPath1 = PropertyPath.fromParts(
+                new String("root"),
+                new String("child"));
+        final PropertyPath propertyPath2 = PropertyPath.fromParts(
+                new String("root"),
+                new String("child"));
+
+        // Interning means they should be the same instance
+        assertThat(propertyPath1.getParts().get(0))
+                .isSameAs(propertyPath2.getParts().get(0));
+
+        assertThat(propertyPath2.getParts().get(1))
+                .isSameAs(propertyPath2.getParts().get(1));
+    }
+
+    @SuppressWarnings("StringOperationCanBeSimplified")
+    @Test
+    void testInterning2() {
+        final PropertyPath propertyPath1 = PropertyPath.fromParts(
+                new String("root"),
+                new String("child"));
+        final PropertyPath propertyPath2 = PropertyPath.fromParts(
+                new String("root"),
+                new String("child"));
+
+        // Interning means they should be the same instance
+        assertThat(propertyPath1.getLeafPart())
+                .isSameAs(propertyPath2.getLeafPart());
+
+        assertThat(propertyPath2.getParentParts())
+                .isSameAs(propertyPath2.getParentParts());
     }
 
     private <T> void doSerdeTest(final T entity,
