@@ -120,7 +120,8 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
      */
     private String getUserId(final JwtClaims jwtClaims) {
         Objects.requireNonNull(jwtClaims);
-        // TODO: 29/11/2022 Think we should use the sub first ???
+        // TODO: 06/03/2023 We need to figure out how we deal with existing data that uses this mix of claims.
+        //  Also, what is the identities claim all about?
         String userId = JwtUtil.getEmail(jwtClaims);
         if (userId == null) {
             userId = JwtUtil.getUserIdFromIdentities(jwtClaims);
@@ -140,7 +141,7 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
         LOGGER.debug(() -> "Getting API user identity for uri: " + request.getRequestURI());
 
         try {
-            final String userId = getUserId(jwtContext.getJwtClaims());
+            final String userId = getUniqueIdentity(jwtContext.getJwtClaims());
             LOGGER.debug(() -> LogUtil.message("Getting API user identity for user id: {} uri: {}",
                     userId, request.getRequestURI()));
 

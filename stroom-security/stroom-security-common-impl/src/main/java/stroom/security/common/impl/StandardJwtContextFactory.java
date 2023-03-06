@@ -37,6 +37,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Timer;
@@ -192,9 +193,16 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                         optJwtContext = getStandardJwtContext(headerToken.jwt);
                     }
 
-                    LOGGER.debug(() -> LogUtil.message("jwtClaims:\n{}", optJwtContext.map(JwtContext::getJwtClaims)
-                            .map(jwtClaims -> jwtClaims.toString())
-                            .orElse("empty")));
+                    LOGGER.debug(() -> LogUtil.message("jwtClaims:\n{}",
+                            optJwtContext.map(JwtContext::getJwtClaims)
+                                    .map(jwtClaims -> jwtClaims.getClaimsMap()
+                                            .entrySet()
+                                            .stream()
+                                            .sorted(Entry.comparingByKey())
+                                            .map(entry ->
+                                                    "  " + entry.getKey() + ": '" + entry.getValue().toString() + "'")
+                                            .collect(Collectors.joining("\n")))
+                                    .orElse("  <empty>")));
 
                     return optJwtContext;
                 })

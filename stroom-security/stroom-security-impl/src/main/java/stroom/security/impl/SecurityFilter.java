@@ -231,7 +231,7 @@ class SecurityFilter implements Filter {
                                             id,
                                             identity.getClass().getSimpleName());
                                 })
-                        .orElse("empty"),
+                        .orElse("<empty>"),
                 fullPath);
     }
 
