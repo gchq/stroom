@@ -150,9 +150,9 @@ class TestJsonSerialisation {
                         Object o2 = objectMapper.readValue(json1, clazz);
                         json2 = objectMapper.writeValueAsString(o2);
                     } catch (InstantiationException
-                            | IllegalAccessException
-                            | InvocationTargetException
-                            | IOException e) {
+                             | IllegalAccessException
+                             | InvocationTargetException
+                             | IOException e) {
                         throw new RuntimeException(e);
                     }
 
@@ -178,7 +178,9 @@ class TestJsonSerialisation {
             if (!Modifier.isInterface(clazz.getModifiers())) {
                 final Field[] fields = clazz.getDeclaredFields();
                 for (final Field field : fields) {
-                    if (Map.class.isAssignableFrom(field.getType())) {
+                    // Don't care about static as they are not serialised.
+                    if (Map.class.isAssignableFrom(field.getType())
+                            && !Modifier.isStatic(field.getModifiers())) {
                         final ParameterizedType parameterizedType = (ParameterizedType) field.getGenericType();
                         final Type keyType = parameterizedType.getActualTypeArguments()[0];
                         if (!(keyType instanceof Class && ((Class<?>) keyType).isEnum())) {

@@ -94,6 +94,10 @@ public class CacheConfig extends AbstractConfig {
         return new Builder(this);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static final class Builder {
 
         private Long maximumSize;
