@@ -238,10 +238,18 @@ class DynamicTestBuilder {
          * expected.
          */
         public CasesBuilder<I, O> withSimpleEqualityAssertion() {
-            final Consumer<TestOutcome<I, O>> wrappedConsumer = wrapTestOutcomeConsumer(testOutcome ->
+            final Consumer<TestOutcome<I, O>> wrappedConsumer = wrapTestOutcomeConsumer(testOutcome -> {
+                if (testOutcome.getExpectedOutput() instanceof Collection
+                    && testOutcome.getActualOutput() instanceof Collection) {
+                    // Using contains will give a better error message
+                    Assertions.assertThat((Collection<O>) testOutcome.getActualOutput())
+                            .containsExactlyElementsOf((Collection<O>) testOutcome.getExpectedOutput());
+                } else {
                     Assertions.assertThat(testOutcome.getActualOutput())
                             .withFailMessage(testOutcome::buildFailMessage)
-                            .isEqualTo(testOutcome.getExpectedOutput()));
+                            .isEqualTo(testOutcome.getExpectedOutput());
+                }
+            });
             return new CasesBuilder<>(testAction, wrappedConsumer);
         }
 

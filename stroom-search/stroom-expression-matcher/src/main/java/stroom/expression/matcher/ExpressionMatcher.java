@@ -326,6 +326,8 @@ public class ExpressionMatcher {
     }
 
     private boolean isIn(final String fieldName, final Object termValue, final Object attribute) {
+        // TODO: 07/03/2023 Should we be splitting lines when this is used for IN_DICTIONARY?
+        //  I think it shouldn't.
         final String[] termValues = termValue.toString().split(" ");
         for (final String tv : termValues) {
             if (isStringMatch(tv, attribute)) {
