@@ -12,7 +12,7 @@ dependencies {
     compile project(':stroom-util-shared')
 //
 //    compile project(':stroom-docref')
-//    
+//
 //    compile libs.commons_codec
 //    compile libs.dropwizard_metrics_healthchecks
     compile libs.dropwizard_metrics_core
@@ -31,9 +31,13 @@ dependencies {
     compile libs.jooq
 //    compile libs.saxon_he
     compile libs.slf4j_api
-//
+
+    testCompile project(':stroom-test-common')
+
     testCompile libs.assertj_core
     testCompile libs.commons_lang
+    testCompile libs.mockito_core
+    testCompile libs.mockito_junit_jupiter
     testCompile libs.junit_jupiter_api
 //
 //    // The following logging libs are needed when running junits outside dropwizard

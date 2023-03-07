@@ -8,11 +8,7 @@
         </encoder>
     </appender>
 
-    <logger name="stroom" level="info" />
-
-    <logger name="stroom.meta.impl.db" level="debug" />
-    <logger name="stroom.meta.impl.db.MetaDaoImpl" level="trace" />
-<!--    <logger name="org.jooq.tools.LoggerListener" level="debug" />-->
+    <logger name="stroom" level="debug" />
 
     <root level="error">
         <appender-ref ref="STDOUT" />

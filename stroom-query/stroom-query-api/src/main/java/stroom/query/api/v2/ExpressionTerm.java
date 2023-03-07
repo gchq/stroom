@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
+import java.util.function.Predicate;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -73,9 +74,31 @@ public final class ExpressionTerm extends ExpressionItem {
 
     @Override
     public boolean containsField(final String... fields) {
-        for (final String field : fields) {
-            if (Objects.equals(field, this.field)) {
-                return true;
+        if (fields != null) {
+            for (final String field : fields) {
+                if (Objects.equals(field, this.field)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean containsTerm(final Predicate<ExpressionTerm> predicate) {
+        Objects.requireNonNull(predicate);
+        return predicate.test(this);
+    }
+
+    /**
+     * @return True if this term has one of the supplied conditions
+     */
+    public boolean hasCondition(final Condition... conditions) {
+        if (conditions != null && this.condition != null) {
+            for (final Condition condition : conditions) {
+                if (Objects.equals(this.condition, condition)) {
+                    return true;
+                }
             }
         }
         return false;

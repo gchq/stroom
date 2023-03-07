@@ -27,6 +27,7 @@ import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -54,6 +55,7 @@ import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -179,19 +181,32 @@ public class MetaServiceImpl implements MetaService, Searchable {
         final ExpressionOperator secureExpression = addPermissionConstraints(expression, permission, FEED_FIELDS);
         final FindMetaCriteria criteria = new FindMetaCriteria(secureExpression);
 
-        return metaDao.updateStatus(criteria, currentStatus, newStatus, statusTime);
+        return metaDao.updateStatus(criteria, currentStatus, newStatus, statusTime, true);
     }
 
     @Override
     public int updateStatus(final FindMetaCriteria criteria, final Status currentStatus, final Status newStatus) {
         return securityContext.secureResult(() -> {
             // Decide which permission is needed for this update as logical deletes require delete permissions.
-            String permission = DocumentPermissionNames.UPDATE;
-            if (Status.DELETED.equals(newStatus)) {
-                permission = DocumentPermissionNames.DELETE;
-            }
+            final String permission = Status.DELETED.equals(newStatus)
+                    ? DocumentPermissionNames.DELETE
+                    : DocumentPermissionNames.UPDATE;
+            ExpressionOperator expression = criteria.getExpression();
 
-            final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(),
+            final Predicate<ExpressionTerm> termPredicate = term ->
+                    MetaFields.ID.getName().equals(term.getField())
+                            && term.hasCondition(Condition.EQUALS, Condition.IN);
+
+            // The UI may give us one of:
+            // * EQUALS on one unique id (user checked one stream)
+            // * IN for N unique IDs (user checked >1 stream)
+            // * A complex user provided filter expression containing who knows what
+            // For the latter we need to use a batch wise approach that is less likely to lock other rows.
+            final boolean usesUniqueIds = expression != null
+                    && expression.getChildren().size() == 1
+                    && expression.containsTerm(termPredicate);
+
+            expression = addPermissionConstraints(expression,
                     permission,
                     FEED_FIELDS);
             criteria.setExpression(expression);
@@ -200,7 +215,8 @@ public class MetaServiceImpl implements MetaService, Searchable {
                     criteria,
                     currentStatus,
                     newStatus,
-                    System.currentTimeMillis());
+                    System.currentTimeMillis(),
+                    usesUniqueIds);
         });
     }
 

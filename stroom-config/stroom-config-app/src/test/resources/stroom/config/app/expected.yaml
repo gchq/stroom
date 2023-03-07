@@ -167,6 +167,7 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 1000
+      metaStatusUpdateBatchSize: 0
       metaTypeCache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
