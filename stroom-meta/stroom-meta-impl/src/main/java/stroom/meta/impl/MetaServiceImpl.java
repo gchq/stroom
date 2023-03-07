@@ -202,10 +202,11 @@ public class MetaServiceImpl implements MetaService, Searchable {
             // * IN for N unique IDs (user checked >1 stream)
             // * A complex user provided filter expression containing who knows what
             // For the latter we need to use a batch wise approach that is less likely to lock other rows.
-            final boolean usesUniqueIds = expression.getChildren().size() == 1
+            final boolean usesUniqueIds = expression != null
+                    && expression.getChildren().size() == 1
                     && expression.containsTerm(termPredicate);
 
-            expression = addPermissionConstraints(criteria.getExpression(),
+            expression = addPermissionConstraints(expression,
                     permission,
                     FEED_FIELDS);
             criteria.setExpression(expression);

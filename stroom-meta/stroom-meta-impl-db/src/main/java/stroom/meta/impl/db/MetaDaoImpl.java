@@ -535,7 +535,7 @@ public class MetaDaoImpl implements MetaDao, Clearable {
         }
 
         Objects.requireNonNull(criteria);
-        final ExpressionOperator expression = Objects.requireNonNull(criteria.getExpression());
+        final ExpressionOperator expression = criteria.getExpression();
 
         if (usesUniqueIds) {
             return updateStatusWithId(expression, currentStatus, newStatus, statusTime);
