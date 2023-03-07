@@ -62,12 +62,9 @@ class TestFormatDate extends AbstractXsltFunctionTest<FormatDate> {
                 })
                 .withOutputType(String.class)
                 .withTestFunction(testCase -> {
-                    final List<String> argsList = testCase.getInput();
                     final Object[] args = testCase.getInput().toArray(new Object[0]);
                     final Sequence sequence = callFunctionWithSimpleArgs(args);
-
                     final Optional<String> optVal = getAsStringValue(sequence);
-
                     return optVal.orElseThrow();
                 })
                 .withSimpleEqualityAssertion()
@@ -102,6 +99,18 @@ class TestFormatDate extends AbstractXsltFunctionTest<FormatDate> {
                                 "E dd MMM yyyy HH:mm",
                                 "+02:00"),
                         "Wed 01 Aug 2001 15:30")
+                .addNamedCase(
+                        "Single digit day and month",
+                        List.of("2001 8 1", "yyyy M d"),
+                        "2001-08-01T00:00:00.000Z")
+                .addNamedCase(
+                        "Single digit day and month, plus padding",
+                        List.of("2001  8  1", "yyyy ppM ppd"),
+                        "2001-08-01T00:00:00.000Z")
+                .addNamedCase(
+                        "Single digit day and month, plus padding",
+                        List.of("2001 12 31", "yyyy ppM ppd"),
+                        "2001-12-31T00:00:00.000Z")
                 .build();
     }
 
