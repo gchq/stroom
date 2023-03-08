@@ -25,7 +25,6 @@ import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.meta.api.MetaService;
-import stroom.util.concurrent.ThreadUtil;
 
 import event.logging.AdvancedQuery;
 import event.logging.Criteria;
@@ -67,8 +66,6 @@ class DataRetentionRulesResourceImpl implements DataRetentionRulesResource {
     @Override
     public DataRetentionDeleteSummaryResponse getRetentionDeletionSummary(
             @Parameter(description = "request", required = true) DataRetentionDeleteSummaryRequest request) {
-        ThreadUtil.sleepIgnoringInterrupts(3_000);
-
         return new DataRetentionDeleteSummaryResponse(
                 metaServiceProvider.get()
                         .getRetentionDeleteSummary(
