@@ -1699,57 +1699,6 @@ paths:
       summary: Update a dictionary doc
       tags:
       - Dictionaries (v1)
-  /docFav/v1/create:
-    post:
-      operationId: createDocFav
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
-        description: docRef
-        required: true
-      responses:
-        default:
-          content:
-            application/json: {}
-          description: default response
-      summary: Set a document as a favourite for the current user
-      tags:
-      - Document Favourites
-  /docFav/v1/delete:
-    delete:
-      operationId: deleteDocFav
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
-        description: docRef
-        required: true
-      responses:
-        default:
-          content:
-            application/json: {}
-          description: default response
-      summary: Unset a document as favourite for the current user
-      tags:
-      - Document Favourites
-  /docFav/v1/fetchDocFavs:
-    get:
-      operationId: fetchDocFavs
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DocRef'
-          description: default response
-      summary: Retrieve all DocRefs the current user has marked as favourite
-      tags:
-      - Document Favourites
   /elasticCluster/v1/testCluster:
     post:
       operationId: testElasticCluster
@@ -2129,6 +2078,57 @@ paths:
       summary: Rename explorer items
       tags:
       - Explorer (v2)
+  /explorerFavourite/v1/createUserFavourite:
+    post:
+      operationId: createUserFavourite
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocRef'
+        description: docRef
+        required: true
+      responses:
+        default:
+          content:
+            application/json: {}
+          description: default response
+      summary: Set a document as a favourite for the current user
+      tags:
+      - Explorer Favourites
+  /explorerFavourite/v1/deleteUserFavourite:
+    delete:
+      operationId: deleteUserFavourite
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocRef'
+        description: docRef
+        required: true
+      responses:
+        default:
+          content:
+            application/json: {}
+          description: default response
+      summary: Unset a document as favourite for the current user
+      tags:
+      - Explorer Favourites
+  /explorerFavourite/v1/getUserFavourites:
+    get:
+      operationId: getUserFavourites
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DocRef'
+          description: default response
+      summary: Retrieve all DocRefs the current user has marked as favourite
+      tags:
+      - Explorer Favourites
   /export/v1:
     get:
       operationId: exportAllContent

@@ -27,7 +27,8 @@ public class MockProcessorModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(ProcessorTaskManager.class).to(MockProcessorTaskManager.class);
+        bind(ProcessorTaskCreator.class).to(MockProcessorTaskCreator.class);
+        bind(ProcessorTaskQueueManager.class).to(MockProcessorTaskQueueManager.class);
         bind(ProcessorFilterService.class).to(MockProcessorFilterService.class);
         bind(ProcessorDao.class).to(MockProcessorDao.class);
         bind(ProcessorService.class).to(ProcessorServiceImpl.class);

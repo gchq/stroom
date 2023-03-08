@@ -27,7 +27,7 @@ import stroom.statistics.impl.sql.shared.CustomRollUpMask;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 import stroom.statistics.impl.sql.shared.StatisticStore;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.time.TimeUtils;
@@ -69,7 +69,7 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
     private final SQLStatisticCache statisticCache;
     private final Provider<SQLStatisticsConfig> configProvider;
     private final SecurityContext securityContext;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
 
     /**
      * SQL for testing querying the stat/tag names
@@ -97,13 +97,13 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
                            final SQLStatisticCache statisticCache,
                            final Provider<SQLStatisticsConfig> configProvider,
                            final SecurityContext securityContext,
-                           final TaskContext taskContext) {
+                           final TaskContextFactory taskContextFactory) {
         this.statisticsDataSourceValidator = statisticsDataSourceValidator;
         this.configProvider = configProvider;
         this.statisticsDataSourceCache = statisticsDataSourceCache;
         this.statisticCache = statisticCache;
         this.securityContext = securityContext;
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
 
         initPool(getObjectPoolConfig(configProvider.get()));
     }
@@ -194,7 +194,7 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
     }
 
     public void evict() {
-        taskContext.info(() -> "Evicting expired objects");
+        taskContextFactory.current().info(() -> "Evicting expired objects");
         LOGGER.debug("evict");
         try {
             objectPool.evict();

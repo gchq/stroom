@@ -53,7 +53,7 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
     @Inject
     private MetaService metaService;
     @Inject
-    private ProcessorTaskManager processorTaskManager;
+    private ProcessorTaskTestHelper processorTaskTestHelper;
 
     @Test
     void testSaveAndGetAll() {
@@ -83,8 +83,6 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
                 .addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
                 .build();
         ExpressionCriteria criteria = new ExpressionCriteria(expressionOperator1);
-//        criteria.obtainTaskStatusSet().add(TaskStatus.COMPLETE);
-
         assertThat(processorTaskService.find(criteria).size()).isEqualTo(1);
 
         // Check the date filter works
@@ -272,6 +270,6 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
 
     private void createTasks() {
         // Make sure there are no tasks yet.
-        processorTaskManager.createTasks();
+        processorTaskTestHelper.createAndQueueTasks();
     }
 }

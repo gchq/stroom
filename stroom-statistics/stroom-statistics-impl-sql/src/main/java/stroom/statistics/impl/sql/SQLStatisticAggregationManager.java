@@ -18,6 +18,7 @@ package stroom.statistics.impl.sql;
 
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 
@@ -44,20 +45,20 @@ class SQLStatisticAggregationManager {
     private static final ReentrantLock guard = new ReentrantLock();
     private final ClusterLockService clusterLockService;
     private final SQLStatisticAggregationTransactionHelper helper;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
     private int stage1BatchSize;
     private int stage2BatchSize;
 
     @Inject
     SQLStatisticAggregationManager(final ClusterLockService clusterLockService,
                                    final SQLStatisticAggregationTransactionHelper helper,
-                                   final TaskContext taskContext,
+                                   final TaskContextFactory taskContextFactory,
                                    final SQLStatisticsConfig sqlStatisticsConfig) {
         this.clusterLockService = clusterLockService;
         this.helper = helper;
         this.stage1BatchSize = sqlStatisticsConfig.getStatisticAggregationBatchSize();
         this.stage2BatchSize = sqlStatisticsConfig.getStatisticAggregationStageTwoBatchSize();
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
     }
 
     void aggregate() {
@@ -80,10 +81,11 @@ class SQLStatisticAggregationManager {
      * Step 3 - Remove duplicates using temporary table<br/>
      */
     void aggregate(final Instant timeNow) {
+        final TaskContext taskContext = taskContextFactory.current();
         guard.lock();
         try {
             LOGGER.info("Starting statistics aggregation " +
-                    "(stage1BatchSize: {}, stage2BatchSize: {}, timeNow: {})",
+                            "(stage1BatchSize: {}, stage2BatchSize: {}, timeNow: {})",
                     ModelStringUtil.formatCsv(stage1BatchSize),
                     ModelStringUtil.formatCsv(stage2BatchSize),
                     timeNow);

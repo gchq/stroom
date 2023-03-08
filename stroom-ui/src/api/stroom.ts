@@ -5373,62 +5373,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         ...params,
       }),
   };
-  docFav = {
-    /**
-     * No description
-     *
-     * @tags Document Favourites
-     * @name CreateDocFav
-     * @summary Set a document as a favourite for the current user
-     * @request POST:/docFav/v1/create
-     * @secure
-     */
-    createDocFav: (data: DocRef, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/docFav/v1/create`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Document Favourites
-     * @name DeleteDocFav
-     * @summary Unset a document as favourite for the current user
-     * @request DELETE:/docFav/v1/delete
-     * @secure
-     */
-    deleteDocFav: (data: DocRef, params: RequestParams = {}) =>
-      this.request<any, void>({
-        path: `/docFav/v1/delete`,
-        method: "DELETE",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Document Favourites
-     * @name FetchDocFavs
-     * @summary Retrieve all DocRefs the current user has marked as favourite
-     * @request GET:/docFav/v1/fetchDocFavs
-     * @secure
-     */
-    fetchDocFavs: (params: RequestParams = {}) =>
-      this.request<any, DocRef[]>({
-        path: `/docFav/v1/fetchDocFavs`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-  };
   elasticCluster = {
     /**
      * No description
@@ -5766,6 +5710,62 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         body: data,
         secure: true,
         type: ContentType.Json,
+        ...params,
+      }),
+  };
+  explorerFavourite = {
+    /**
+     * No description
+     *
+     * @tags Explorer Favourites
+     * @name CreateUserFavourite
+     * @summary Set a document as a favourite for the current user
+     * @request POST:/explorerFavourite/v1/createUserFavourite
+     * @secure
+     */
+    createUserFavourite: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/explorerFavourite/v1/createUserFavourite`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Explorer Favourites
+     * @name DeleteUserFavourite
+     * @summary Unset a document as favourite for the current user
+     * @request DELETE:/explorerFavourite/v1/deleteUserFavourite
+     * @secure
+     */
+    deleteUserFavourite: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/explorerFavourite/v1/deleteUserFavourite`,
+        method: "DELETE",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Explorer Favourites
+     * @name GetUserFavourites
+     * @summary Retrieve all DocRefs the current user has marked as favourite
+     * @request GET:/explorerFavourite/v1/getUserFavourites
+     * @secure
+     */
+    getUserFavourites: (params: RequestParams = {}) =>
+      this.request<any, DocRef[]>({
+        path: `/explorerFavourite/v1/getUserFavourites`,
+        method: "GET",
+        secure: true,
         ...params,
       }),
   };

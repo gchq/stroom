@@ -29,15 +29,12 @@ import javax.inject.Provider;
 public class ReferenceDataLoaderImpl implements ReferenceDataLoader {
 
     private final TaskContextFactory taskContextFactory;
-    private final TaskContext taskContext;
     private final Provider<ReferenceDataLoadTaskHandler> taskHandlerProvider;
 
     @Inject
     ReferenceDataLoaderImpl(final TaskContextFactory taskContextFactory,
-                            final TaskContext taskContext,
                             final Provider<ReferenceDataLoadTaskHandler> taskHandlerProvider) {
         this.taskContextFactory = taskContextFactory;
-        this.taskContext = taskContext;
         this.taskHandlerProvider = taskHandlerProvider;
     }
 
@@ -49,7 +46,7 @@ public class ReferenceDataLoaderImpl implements ReferenceDataLoader {
                         .exec(taskContext, refStreamDefinition);
 
         final Supplier<StoredErrorReceiver> supplier = taskContextFactory.childContextResult(
-                taskContext,
+                taskContextFactory.current(),
                 "Load Reference Data",
                 consumer);
         return supplier.get();
