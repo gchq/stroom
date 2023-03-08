@@ -2,6 +2,8 @@ package stroom.pipeline.refdata;
 
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
+import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.mock.MockStroomEventLoggingService;
 import stroom.pipeline.refdata.RefDataLookupRequest.ReferenceLoader;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.test.common.util.test.AbstractResourceTest;
@@ -23,10 +25,13 @@ class TestReferenceDataResourceImpl extends AbstractResourceTest<ReferenceDataRe
 
     @Mock
     private ReferenceDataService referenceDataService;
+    private final StroomEventLoggingService mockStroomEventLoggingService = new MockStroomEventLoggingService();
 
     @Override
     public ReferenceDataResource getRestResource() {
-        return new ReferenceDataResourceImpl(() -> referenceDataService);
+        return new ReferenceDataResourceImpl(
+                () -> referenceDataService,
+                () -> mockStroomEventLoggingService);
     }
 
     @Override
@@ -95,13 +100,14 @@ class TestReferenceDataResourceImpl extends AbstractResourceTest<ReferenceDataRe
                 )
         );
 
-        Assertions.assertThatThrownBy(() -> {
-            doPostTest(
-                    ReferenceDataResource.LOOKUP_SUB_PATH,
-                    request,
-                    String.class,
-                    "GBR");
-        })
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            doPostTest(
+                                    ReferenceDataResource.LOOKUP_SUB_PATH,
+                                    request,
+                                    String.class,
+                                    "GBR");
+                        })
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("mapName may not be null");
     }
@@ -131,13 +137,14 @@ class TestReferenceDataResourceImpl extends AbstractResourceTest<ReferenceDataRe
                 )
         );
 
-        Assertions.assertThatThrownBy(() -> {
-            doPostTest(
-                    ReferenceDataResource.LOOKUP_SUB_PATH,
-                    request,
-                    String.class,
-                    "GBR");
-        })
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            doPostTest(
+                                    ReferenceDataResource.LOOKUP_SUB_PATH,
+                                    request,
+                                    String.class,
+                                    "GBR");
+                        })
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("key may not be null");
     }
@@ -153,13 +160,14 @@ class TestReferenceDataResourceImpl extends AbstractResourceTest<ReferenceDataRe
                 null,
                 Collections.emptyList());
 
-        Assertions.assertThatThrownBy(() -> {
-            doPostTest(
-                    ReferenceDataResource.LOOKUP_SUB_PATH,
-                    request,
-                    String.class,
-                    "GBR");
-        })
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            doPostTest(
+                                    ReferenceDataResource.LOOKUP_SUB_PATH,
+                                    request,
+                                    String.class,
+                                    "GBR");
+                        })
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("referenceLoaders may not be empty");
     }

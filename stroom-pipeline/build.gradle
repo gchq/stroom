@@ -70,6 +70,7 @@ dependencies {
     testCompile project(':stroom-feed:stroom-feed-impl')
     testCompile project(':stroom-security:stroom-security-mock')
     testCompile project(':stroom-task:stroom-task-mock')
+    testCompile project(':stroom-event-logging:stroom-event-logging-mock')
     testCompile project(':stroom-test-common')
 
     testCompile libs.assertj_core

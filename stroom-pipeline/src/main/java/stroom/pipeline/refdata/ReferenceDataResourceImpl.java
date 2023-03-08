@@ -1,5 +1,7 @@
 package stroom.pipeline.refdata;
 
+import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.pipeline.refdata.store.ProcessingInfoResponse;
@@ -7,6 +9,13 @@ import stroom.pipeline.refdata.store.RefStoreEntry;
 import stroom.util.logging.LogUtil;
 import stroom.util.time.StroomDuration;
 
+import event.logging.AdvancedQuery;
+import event.logging.And;
+import event.logging.Criteria;
+import event.logging.DeleteEventAction;
+import event.logging.Query;
+import event.logging.Term;
+import event.logging.TermCondition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,10 +29,13 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceDataResourceImpl.class);
 
     private final Provider<ReferenceDataService> referenceDataServiceProvider;
+    private final Provider<StroomEventLoggingService> eventLoggingServiceProvider;
 
     @Inject
-    public ReferenceDataResourceImpl(final Provider<ReferenceDataService> referenceDataServiceProvider) {
+    public ReferenceDataResourceImpl(final Provider<ReferenceDataService> referenceDataServiceProvider,
+                                     final Provider<StroomEventLoggingService> eventLoggingServiceProvider) {
         this.referenceDataServiceProvider = referenceDataServiceProvider;
+        this.eventLoggingServiceProvider = eventLoggingServiceProvider;
     }
 
     @AutoLogged(OperationType.VIEW)
@@ -58,9 +70,9 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
                 .lookup(refDataLookupRequest);
     }
 
-    @AutoLogged(OperationType.DELETE)
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
-    public boolean purge(final String purgeAge, final String nodeName) {
+    public boolean purgeByAge(final String purgeAge, final String nodeName) {
         StroomDuration purgeAgeDuration;
         try {
             purgeAgeDuration = StroomDuration.parse(purgeAge);
@@ -68,28 +80,91 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
             throw new IllegalArgumentException(LogUtil.message(
                     "Can't parse purgeAge [{}]", purgeAge), e);
         }
-        try {
-            referenceDataServiceProvider.get()
-                    .purge(purgeAgeDuration, nodeName);
-            return true;
-        } catch (Exception e) {
-            LOGGER.error("Failed to purgeAge " + purgeAge, e);
-            throw e;
-        }
+
+        final Boolean result = eventLoggingServiceProvider.get()
+                .loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "purgeByAge"))
+                .withDescription(LogUtil.message(
+                        "Purging reference data older than {} on node {}",
+                        purgeAge, nodeName))
+                .withDefaultEventAction(DeleteEventAction.builder()
+                        .addCriteria(Criteria.builder()
+                                .withQuery(Query.builder()
+                                        .withAdvanced(AdvancedQuery.builder()
+                                                .addAnd(And.builder()
+                                                        .addTerm(Term.builder()
+                                                                .withName("purgeAge")
+                                                                .withCondition(TermCondition.EQUALS)
+                                                                .withValue(purgeAge)
+                                                                .build())
+                                                        .addTerm(Term.builder()
+                                                                .withName("nodeName")
+                                                                .withCondition(TermCondition.EQUALS)
+                                                                .withValue(nodeName)
+                                                                .build())
+                                                        .build())
+                                                .build())
+                                        .build())
+                                .build())
+                        .build())
+                .withSimpleLoggedResult(() -> {
+                    try {
+                        referenceDataServiceProvider.get()
+                                .purge(purgeAgeDuration, nodeName);
+                        return true;
+                    } catch (Exception e) {
+                        LOGGER.error("Failed to purgeAge " + purgeAge, e);
+                        throw e;
+                    }
+                })
+                .getResultAndLog();
+
+        return result;
     }
 
-    @AutoLogged(OperationType.DELETE)
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
-    public boolean purge(final long refStreamId, final String nodeName) {
-        try {
-            // partNo is one based, partIndex is zero based
-            referenceDataServiceProvider.get()
-                    .purge(refStreamId, nodeName);
-            return true;
-        } catch (Exception e) {
-            LOGGER.error("Failed to purge stream " + refStreamId, e);
-            throw e;
-        }
+    public boolean purgeByStreamId(final long refStreamId, final String nodeName) {
+        final Boolean result = eventLoggingServiceProvider.get()
+                .loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "purgeByStreamId"))
+                .withDescription(LogUtil.message(
+                        "Purging reference data stream {} on node {}",
+                        refStreamId, nodeName))
+                .withDefaultEventAction(DeleteEventAction.builder()
+                        .addCriteria(Criteria.builder()
+                                .withQuery(Query.builder()
+                                        .withAdvanced(AdvancedQuery.builder()
+                                                .addAnd(And.builder()
+                                                        .addTerm(Term.builder()
+                                                                .withName("refStreamId")
+                                                                .withCondition(TermCondition.EQUALS)
+                                                                .withValue(Long.toString(refStreamId))
+                                                                .build())
+                                                        .addTerm(Term.builder()
+                                                                .withName("nodeName")
+                                                                .withCondition(TermCondition.EQUALS)
+                                                                .withValue(nodeName)
+                                                                .build())
+                                                        .build())
+                                                .build())
+                                        .build())
+                                .build())
+                        .build())
+                .withSimpleLoggedResult(() -> {
+                    try {
+                        // partNo is one based, partIndex is zero based
+                        referenceDataServiceProvider.get()
+                                .purge(refStreamId, nodeName);
+                        return true;
+                    } catch (Exception e) {
+                        LOGGER.error("Failed to purge stream " + refStreamId, e);
+                        throw e;
+                    }
+                })
+                .getResultAndLog();
+
+        return result;
     }
 
     @AutoLogged(OperationType.UNLOGGED)
