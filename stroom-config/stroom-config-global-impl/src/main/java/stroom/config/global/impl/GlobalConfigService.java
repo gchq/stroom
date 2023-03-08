@@ -26,7 +26,7 @@ import stroom.config.global.shared.ListConfigResponse;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.AuditUtil;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator.Result;
@@ -87,7 +87,7 @@ public class GlobalConfigService {
     private final SecurityContext securityContext;
     private final ConfigMapper configMapper;
     private final AppConfigValidator appConfigValidator;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
     private final NodeInfo nodeInfo;
 
     @Inject
@@ -96,14 +96,14 @@ public class GlobalConfigService {
                         final SecurityContext securityContext,
                         final ConfigMapper configMapper,
                         final AppConfigValidator appConfigValidator,
-                        final TaskContext taskContext,
+                        final TaskContextFactory taskContextFactory,
                         final NodeInfo nodeInfo) {
         this.globalConfigBootstrapService = globalConfigBootstrapService;
         this.dao = dao;
         this.securityContext = securityContext;
         this.configMapper = configMapper;
         this.appConfigValidator = appConfigValidator;
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
         this.nodeInfo = nodeInfo;
     }
 
@@ -120,7 +120,7 @@ public class GlobalConfigService {
      * Refresh in background
      */
     void updateConfigObjects() {
-        taskContext.info(() -> "Updating config from DB");
+        taskContextFactory.current().info(() -> "Updating config from DB");
         globalConfigBootstrapService.updateConfigFromDb(false);
     }
 

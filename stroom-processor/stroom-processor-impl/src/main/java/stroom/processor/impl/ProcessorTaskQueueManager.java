@@ -18,27 +18,19 @@ package stroom.processor.impl;
 
 import stroom.processor.shared.ProcessorTaskList;
 
-import java.util.concurrent.atomic.AtomicLong;
-
-public interface ProcessorTaskManager {
+public interface ProcessorTaskQueueManager {
 
     ProcessorTaskList assignTasks(String nodeName, int count);
 
     Boolean abandonTasks(ProcessorTaskList processorTaskList);
 
-    void createTasks();
-
     int getTaskQueueSize();
 
     void writeQueueStatistics();
-
-    AtomicLong getNextDeleteMs();
 
     void startup();
 
     void shutdown();
 
-    void setAllowAsyncTaskCreation(boolean allowAsyncFillTaskStore);
-
-    void setAllowTaskCreation(boolean allowCreateTasks);
+    void exec();
 }

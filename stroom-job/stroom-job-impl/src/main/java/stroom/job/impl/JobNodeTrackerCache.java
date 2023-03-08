@@ -28,11 +28,11 @@ import stroom.util.scheduler.SimpleCron;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -42,8 +42,6 @@ class JobNodeTrackerCache {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeTrackerCache.class);
     // Default refresh interval is 10 seconds.
     private static final long DEFAULT_REFRESH_INTERVAL = 10000;
-    private final long refreshInterval = DEFAULT_REFRESH_INTERVAL;
-    private final ReentrantLock refreshLock = new ReentrantLock();
 
     private final NodeInfo nodeInfo;
     private final JobNodeDao jobNodeDao;
@@ -51,6 +49,7 @@ class JobNodeTrackerCache {
     private volatile String nodeName;
     private volatile Trackers trackers;
     private volatile long lastRefreshMs;
+    private final AtomicBoolean refreshingTrackers = new AtomicBoolean();
 
     @Inject
     JobNodeTrackerCache(final NodeInfo nodeInfo,
@@ -64,45 +63,38 @@ class JobNodeTrackerCache {
             // If trackers are currently null then we will lock so that all
             // threads requiring trackers are blocked until the first one in
             // creates them.
-            refreshLock.lock();
-            try {
-                // If trackers have already been created by a thread that got
-                // the lock before then don't bother creating them again.
+            synchronized (this) {
                 if (trackers == null) {
-                    // Create the initial trackers.
-                    trackers = new Trackers(trackers, jobNodeDao, getNodeName());
+                    updateTrackers();
                 }
-            } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
-            } finally {
-                refreshLock.unlock();
             }
         } else {
-            // If we have trackers then let one lucky thread see if they need to be refreshed, others will get the old
-            // copy in the meantime.
-            if (refreshLock.tryLock()) {
-                try {
-                    // Check to see if trackers need to be refreshed.
-                    final long delta = System.currentTimeMillis() - lastRefreshMs;
-                    if (delta > refreshInterval) {
-                        try {
-                            // Refresh the trackers.
-                            trackers = new Trackers(trackers, jobNodeDao, getNodeName());
-                        } catch (final RuntimeException e) {
-                            LOGGER.error(e.getMessage(), e);
-                        }
-
-                        lastRefreshMs = System.currentTimeMillis();
+            // Check to see if trackers need to be refreshed.
+            final long delta = System.currentTimeMillis() - lastRefreshMs;
+            if (delta > DEFAULT_REFRESH_INTERVAL) {
+                if (refreshingTrackers.compareAndSet(false, true)) {
+                    try {
+                        updateTrackers();
+                    } finally {
+                        refreshingTrackers.set(false);
                     }
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
-                } finally {
-                    refreshLock.unlock();
                 }
             }
         }
 
         return trackers;
+    }
+
+    private synchronized void updateTrackers() {
+        try {
+            // Refresh the trackers.
+            trackers = new Trackers(trackers, jobNodeDao, getNodeName());
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+        } finally {
+            lastRefreshMs = System.currentTimeMillis();
+
+        }
     }
 
     String getNodeName() {
@@ -118,6 +110,7 @@ class JobNodeTrackerCache {
         private final Map<String, JobNodeTracker> trackersForJobName = new HashMap<>();
         private final Map<JobNode, String> scheduleValueMap = new HashMap<>();
         private final Map<JobNode, Scheduler> schedulerMap = new HashMap<>();
+        private final List<JobNodeTracker> distributedJobNodeTrackers = new ArrayList<>();
 
         Trackers(final Trackers previousState, final JobNodeDao jobNodeDao, final String nodeName) {
             try {
@@ -138,12 +131,19 @@ class JobNodeTrackerCache {
                     if (jobNodeTracker == null) {
                         jobNodeTracker = new JobNodeTracker(jobNode);
                     } else {
-                        // Update tracker so it has new settings and priorities
+                        // Update tracker, so it has new settings and priorities
                         // etc.
                         jobNodeTracker.setJobNode(jobNode);
                     }
                     trackersForJobNode.put(jobNode, jobNodeTracker);
                     trackersForJobName.put(jobName, jobNodeTracker);
+
+                    // Remember trackers for enabled and distributed jobs.
+                    if (JobType.DISTRIBUTED.equals(jobNode.getJobType())) {
+                        if (jobNode.getJob().isEnabled() && jobNode.isEnabled()) {
+                            distributedJobNodeTrackers.add(jobNodeTracker);
+                        }
+                    }
 
                     try {
                         // Update schedule and frequency times if this job node
@@ -186,8 +186,8 @@ class JobNodeTrackerCache {
             return trackersForJobName.get(jobName);
         }
 
-        Collection<JobNodeTracker> getTrackerList() {
-            return trackersForJobNode.values();
+        public List<JobNodeTracker> getDistributedJobNodeTrackers() {
+            return distributedJobNodeTrackers;
         }
 
         Scheduler getScheduler(final JobNode jobNode) {

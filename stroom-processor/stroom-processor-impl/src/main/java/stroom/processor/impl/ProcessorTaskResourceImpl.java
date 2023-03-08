@@ -32,8 +32,6 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 
 import event.logging.Query;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -44,18 +42,16 @@ import javax.ws.rs.client.Entity;
 @AutoLogged
 class ProcessorTaskResourceImpl implements ProcessorTaskResource {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorTaskResourceImpl.class);
-
     private final Provider<ProcessorTaskService> processorTaskServiceProvider;
     private final Provider<DocumentEventLog> documentEventLogProvider;
     private final Provider<NodeService> nodeServiceProvider;
-    private final Provider<ProcessorTaskManager> processorTaskManagerProvider;
+    private final Provider<ProcessorTaskQueueManager> processorTaskManagerProvider;
 
     @Inject
     ProcessorTaskResourceImpl(final Provider<ProcessorTaskService> processorTaskServiceProvider,
                               final Provider<DocumentEventLog> documentEventLogProvider,
                               final Provider<NodeService> nodeServiceProvider,
-                              final Provider<ProcessorTaskManager> processorTaskManagerProvider) {
+                              final Provider<ProcessorTaskQueueManager> processorTaskManagerProvider) {
         this.processorTaskServiceProvider = processorTaskServiceProvider;
         this.documentEventLogProvider = documentEventLogProvider;
         this.nodeServiceProvider = nodeServiceProvider;

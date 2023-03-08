@@ -32,19 +32,18 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class MockProcessorTaskManager implements ProcessorTaskManager {
+public class MockProcessorTaskQueueManager implements ProcessorTaskQueueManager {
 
     private final MetaService metaService;
     private final ProcessorFilterService processorFilterService;
 
     @Inject
-    MockProcessorTaskManager(final MetaService metaService,
-                             final ProcessorFilterService processorFilterService) {
+    MockProcessorTaskQueueManager(final MetaService metaService,
+                                  final ProcessorFilterService processorFilterService) {
         this.metaService = metaService;
         this.processorFilterService = processorFilterService;
     }
@@ -81,7 +80,7 @@ public class MockProcessorTaskManager implements ProcessorTaskManager {
                             streamTask.setMetaId(meta.getId());
                             streamTask.setProcessorFilter(filter);
                             streamTask.setNodeName(nodeName);
-                            streamTask.setStatus(TaskStatus.ASSIGNED);
+                            streamTask.setStatus(TaskStatus.PROCESSING);
 
                             taskList.add(streamTask);
                         }
@@ -94,10 +93,6 @@ public class MockProcessorTaskManager implements ProcessorTaskManager {
     }
 
     @Override
-    public void createTasks() {
-    }
-
-    @Override
     public void startup() {
     }
 
@@ -106,13 +101,12 @@ public class MockProcessorTaskManager implements ProcessorTaskManager {
     }
 
     @Override
-    public void writeQueueStatistics() {
-
+    public void exec() {
     }
 
     @Override
-    public AtomicLong getNextDeleteMs() {
-        return null;
+    public void writeQueueStatistics() {
+
     }
 
     @Override
@@ -123,13 +117,5 @@ public class MockProcessorTaskManager implements ProcessorTaskManager {
     @Override
     public Boolean abandonTasks(final ProcessorTaskList processorTaskList) {
         return true;
-    }
-
-    @Override
-    public void setAllowAsyncTaskCreation(final boolean allowAsyncFillTaskStore) {
-    }
-
-    @Override
-    public void setAllowTaskCreation(final boolean allowCreateTasks) {
     }
 }
