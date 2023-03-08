@@ -152,7 +152,7 @@ export type AddPermissionEvent = PermissionChangeEvent & {
 
 export interface AlertRuleDoc {
   alertRule?: AbstractAlertRule;
-  alertRuleType?: "EVENT" | "THRESHOLD";
+  alertRuleType?: "EVENT" | "AGGREGATE";
 
   /** @format int64 */
   createTimeMs?: number;
@@ -160,6 +160,12 @@ export interface AlertRuleDoc {
   description?: string;
   enabled?: boolean;
   languageVersion?: "STROOM_QL_VERSION_0_1" | "SIGMA";
+
+  /** @format int64 */
+  maxMetaCreateTimeMs?: number;
+
+  /** @format int64 */
+  minMetaCreateTimeMs?: number;
   name?: string;
   query?: string;
   type?: string;
@@ -1546,6 +1552,8 @@ export interface GlobalConfigCriteria {
   sort?: string;
   sortList?: CriteriaFieldSort[];
 }
+
+export type HoppingWindow = Window & { advanceSize?: string; timeField?: string; windowSize?: string };
 
 export type IdField = AbstractField;
 
@@ -3455,6 +3463,7 @@ export interface TableSettings {
 
   /** A logical addOperator term in a query expression tree */
   valueFilter?: ExpressionOperator;
+  window?: Window;
 }
 
 export interface TaskId {
@@ -3773,6 +3782,10 @@ export interface VisualisationDoc {
 
 export interface Welcome {
   html?: string;
+}
+
+export interface Window {
+  type: string;
 }
 
 export interface XPathFilter {
