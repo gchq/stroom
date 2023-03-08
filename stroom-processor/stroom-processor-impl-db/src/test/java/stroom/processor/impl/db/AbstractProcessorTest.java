@@ -15,7 +15,7 @@ import stroom.processor.impl.ProcessorDao;
 import stroom.processor.impl.ProcessorFilterDao;
 import stroom.processor.impl.ProcessorFilterTrackerDao;
 import stroom.processor.impl.ProcessorTaskDao;
-import stroom.processor.impl.ProcessorTaskManager;
+import stroom.processor.impl.ProcessorTaskQueueManager;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorTaskRecord;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
@@ -103,8 +103,8 @@ class AbstractProcessorTest {
                                 .toInstance(Mockito.mock(DocRefInfoService.class));
                         bind(NodeInfo.class)
                                 .toInstance(Mockito.mock(NodeInfo.class));
-                        bind(ProcessorTaskManager.class)
-                                .toInstance(Mockito.mock(ProcessorTaskManager.class));
+                        bind(ProcessorTaskQueueManager.class)
+                                .toInstance(Mockito.mock(ProcessorTaskQueueManager.class));
                         bind(DocumentEventLog.class)
                                 .toInstance(Mockito.mock(DocumentEventLog.class));
                         // Not using all the DB modules so just bind to an empty anonymous class

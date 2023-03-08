@@ -13,7 +13,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.AuditUtil;
 import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
@@ -90,7 +90,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     private final AtomicReference<VolumeList> currentVolumeList = new AtomicReference<>();
     private final AtomicReference<HasCapacitySelector> volumeSelector = new AtomicReference<>();
     private final NodeInfo nodeInfo;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
     private final HasCapacitySelectorFactory hasCapacitySelectorFactory;
 
     private volatile boolean createdDefaultVolumes = false;
@@ -105,7 +105,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                            final Provider<EntityEventBus> entityEventBusProvider,
                            final PathCreator pathCreator,
                            final NodeInfo nodeInfo,
-                           final TaskContext taskContext,
+                           final TaskContextFactory taskContextFactory,
                            final HasCapacitySelectorFactory hasCapacitySelectorFactory) {
         this.fsVolumeDao = fsVolumeDao;
         this.fileSystemVolumeStateDao = fileSystemVolumeStateDao;
@@ -116,7 +116,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         this.entityEventBusProvider = entityEventBusProvider;
         this.pathCreator = pathCreator;
         this.nodeInfo = nodeInfo;
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
         this.hasCapacitySelectorFactory = hasCapacitySelectorFactory;
 
         // Can't call this in the ctor as it causes a circular dep problem with EntityEventBus
@@ -430,7 +430,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     }
 
     private synchronized VolumeList refresh(final boolean isForcedRefresh) {
-        taskContext.info(() -> "Refreshing volumes");
+        taskContextFactory.current().info(() -> "Refreshing volumes");
 
         // Can't call this in the ctor as it causes a circular dep problem with EntityEventBus
         ensureDefaultVolumes();
@@ -455,7 +455,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                 || isForcedRefresh
                 || optMinUpdateTimeEpochMs.get() < updateTimeCutOffEpochMs) {
             for (final FsVolume volume : dbVolumes) {
-                taskContext.info(() -> "Refreshing volume '" + getAbsVolumePath(volume) + "'");
+                taskContextFactory.current().info(() -> "Refreshing volume '" + getAbsVolumePath(volume) + "'");
                 // Update the volume state and save in the DB.
                 updateVolumeState(volume);
 

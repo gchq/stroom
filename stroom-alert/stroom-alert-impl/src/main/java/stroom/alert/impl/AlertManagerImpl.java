@@ -42,7 +42,7 @@ import stroom.query.api.v2.TableSettings;
 import stroom.query.shared.QueryContext;
 import stroom.search.extraction.ExtractionTaskHandler;
 import stroom.search.impl.SearchConfig;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.view.impl.ViewStore;
@@ -66,7 +66,7 @@ public class AlertManagerImpl implements AlertManager {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AlertManagerImpl.class);
 
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
     private final ExplorerNodeService explorerNodeService;
     private final DashboardStore dashboardStore;
     private final WordListProvider wordListProvider;
@@ -86,7 +86,7 @@ public class AlertManagerImpl implements AlertManager {
     private volatile Instant lastCacheUpdateTimeMs;
 
     @Inject
-    AlertManagerImpl(final TaskContext taskContext,
+    AlertManagerImpl(final TaskContextFactory taskContextFactory,
                      final Provider<AlertConfig> alertConfigProvider,
                      final ExplorerNodeService explorerNodeService,
                      final DashboardStore dashboardStore,
@@ -101,7 +101,7 @@ public class AlertManagerImpl implements AlertManager {
                      final Provider<AlertRuleStore> alertRuleStoreProvider,
                      final AlertRuleSearchRequestHelper alertRuleSearchRequestHelper,
                      final Provider<ViewStore> viewStoreProvider) {
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
         this.alertConfigProvider = alertConfigProvider;
         this.explorerNodeService = explorerNodeService;
         this.dashboardStore = dashboardStore;
@@ -130,7 +130,7 @@ public class AlertManagerImpl implements AlertManager {
             } else {
 
                 final AlertProcessorImpl processor = new AlertProcessorImpl(
-                        taskContext,
+                        taskContextFactory.current(),
                         handlerProvider,
                         detectionsWriterProvider,
                         multiValuesReceiverFactory,

@@ -23,7 +23,6 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TimeRange;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
@@ -58,7 +57,6 @@ public final class ResultStoreManager implements Clearable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ResultStoreManager.class);
 
-    private final TaskContext taskContext;
     private final TaskContextFactory taskContextFactory;
     private final SecurityContext securityContext;
     private final ExecutorProvider executorProvider;
@@ -66,12 +64,10 @@ public final class ResultStoreManager implements Clearable {
     private final StoreFactoryRegistry storeFactoryRegistry;
 
     @Inject
-    ResultStoreManager(final TaskContext taskContext,
-                       final TaskContextFactory taskContextFactory,
+    ResultStoreManager(final TaskContextFactory taskContextFactory,
                        final SecurityContext securityContext,
                        final ExecutorProvider executorProvider,
                        final StoreFactoryRegistry storeFactoryRegistry) {
-        this.taskContext = taskContext;
         this.taskContextFactory = taskContextFactory;
         this.securityContext = securityContext;
         this.executorProvider = executorProvider;
@@ -567,7 +563,7 @@ public final class ResultStoreManager implements Clearable {
      * Evicts any expired result stores.
      */
     public void evictExpiredElements() {
-        taskContext.info(() -> "Evicting expired search responses");
+        taskContextFactory.current().info(() -> "Evicting expired search responses");
         final Instant now = Instant.now();
         resultStoreMap.forEach((queryKey, resultStore) -> {
             try {

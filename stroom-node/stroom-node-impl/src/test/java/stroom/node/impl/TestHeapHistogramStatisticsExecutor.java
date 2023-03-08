@@ -3,7 +3,7 @@ package stroom.node.impl;
 import stroom.node.api.NodeInfo;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticsReceiver;
-import stroom.task.api.SimpleTaskContext;
+import stroom.task.api.SimpleTaskContextFactory;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,7 +45,7 @@ class TestHeapHistogramStatisticsExecutor {
             final HeapHistogramService heapHistogramService = new HeapHistogramService(this::getHeapHistogramConfig);
             executor = new HeapHistogramStatisticsExecutor(heapHistogramService,
                     mockInternalStatisticsReceiver,
-                    nodeInfo, new SimpleTaskContext());
+                    nodeInfo, new SimpleTaskContextFactory());
         } catch (final RuntimeException e) {
             throw new RuntimeException("Error during test setup", e);
         }

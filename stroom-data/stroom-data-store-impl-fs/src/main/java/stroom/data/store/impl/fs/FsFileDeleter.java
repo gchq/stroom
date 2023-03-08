@@ -1,6 +1,6 @@
 package stroom.data.store.impl.fs;
 
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -26,11 +26,11 @@ class FsFileDeleter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsFileDeleter.class);
 
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
 
     @Inject
-    FsFileDeleter(final TaskContext taskContext) {
-        this.taskContext = taskContext;
+    FsFileDeleter(final TaskContextFactory taskContextFactory) {
+        this.taskContextFactory = taskContextFactory;
     }
 
     /**
@@ -218,7 +218,7 @@ class FsFileDeleter {
 
     private void info(final Supplier<String> message) {
         try {
-            taskContext.info(message);
+            taskContextFactory.current().info(message);
             LOGGER.debug(message);
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);

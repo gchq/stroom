@@ -36,8 +36,6 @@ public class SimpleTaskContextFactory implements TaskContextFactory {
     }
 
 
-
-
     @Override
     public Runnable context(final String taskName,
                             final TerminateHandlerFactory terminateHandlerFactory,
@@ -68,5 +66,10 @@ public class SimpleTaskContextFactory implements TaskContextFactory {
                                               final Function<TaskContext, R> function) {
         Objects.requireNonNull(parentContext, "Expecting a parent context when creating a child context");
         return () -> function.apply(new SimpleTaskContext());
+    }
+
+    @Override
+    public TaskContext current() {
+        return new SimpleTaskContext();
     }
 }

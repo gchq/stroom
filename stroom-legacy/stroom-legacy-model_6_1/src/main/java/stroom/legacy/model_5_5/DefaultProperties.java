@@ -141,12 +141,6 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
         list.add(new GlobalProperty.Builder()
-                .name("stroom.streamTask.createTasks")
-                .value("true")
-                .description("Should the master node create new tasks for stream processor filters?")
-                .editable(true)
-                .build());
-        list.add(new GlobalProperty.Builder()
                 .name("stroom.streamTask.assignTasks")
                 .value("true")
                 .description("Should the master node assign tasks to workers when tasks are requested?")

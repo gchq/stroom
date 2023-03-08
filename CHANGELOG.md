@@ -13,6 +13,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#3259** : Make task creation and queueing multi threaded.
+
+* Issue **#3276** : Remove ASSIGNED task status and guard for task creation deadlocks.
+
+* Issue **#3274** : Improve progress monitoring.
+
+* Issue **#3274** : Improve config descriptions.
+
+* Issue **#3259** : Make task creation and queueing multi threaded.
+
+* Issue **#3259** : Make task creation a separate managed job.
+
+
 ## [v7.2-alpha.12] - 2023-02-24
 
 * Issue **#3039** : Display search suggestions and type hints in dashboards.

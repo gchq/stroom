@@ -35,6 +35,7 @@ public enum TaskStatus implements HasDisplayValue, HasPrimitiveValue {
     /**
      * It has been assigned to a node for processing.
      */
+    @Deprecated
     ASSIGNED("Assigned", 2),
     /**
      * A node is processing.
