@@ -22,20 +22,25 @@ import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.security.api.SecurityContext;
+import stroom.util.logging.LogUtil;
 
 import event.logging.Criteria;
 import event.logging.Data;
 import event.logging.ExportEventAction;
+import event.logging.File;
 import event.logging.ImportEventAction;
 import event.logging.MultiObject;
 import event.logging.OtherObject;
 import event.logging.Query;
 import event.logging.Query.Builder;
+import event.logging.Resource;
 import event.logging.ViewEventAction;
 import event.logging.util.EventLoggingUtil;
+import org.apache.commons.fileupload.FileItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigInteger;
 import javax.inject.Inject;
 
 public class StreamEventLog {
@@ -52,18 +57,32 @@ public class StreamEventLog {
         this.securityContext = securityContext;
     }
 
-    public void importStream(final String feedName, final String path, final Throwable th) {
+    public void importStream(final FileItem sourceFileItem,
+                             final String destPath,
+                             final Throwable th) {
+
         securityContext.insecure(() -> {
             try {
                 eventLoggingService.log(
-                        "Data Upload",
-                        "Data uploaded to \"" + feedName + "\"",
+                        "Browser Data Stream Upload",
+                        LogUtil.message("Data stream with name '{}' uploaded to temporary file on the server '{}'",
+                                sourceFileItem, destPath),
                         ImportEventAction.builder()
                                 .withSource(MultiObject.builder()
-                                        .addObject(OtherObject.builder()
-                                                .withType("Stream")
-                                                .addData(EventLoggingUtil.createData("Path", path))
-                                                .addData(EventLoggingUtil.createData("Feed", feedName))
+                                        .addResource(Resource.builder()
+                                                .withHTTPMethod("POST")
+                                                .withInboundContentSize(BigInteger.valueOf(sourceFileItem.getSize()))
+                                                .withMimeType(sourceFileItem.getContentType())
+                                                .withName(sourceFileItem.getName())
+                                                .build())
+//                                        .addObject(OtherObject.builder()
+//                                                .withType("File upload stream")
+//                                                .withName(sourceFileItem.getName())
+//                                                .build())
+                                        .build())
+                                .withDestination(MultiObject.builder()
+                                        .addFile(File.builder()
+                                                .withPath(destPath)
                                                 .build())
                                         .build())
                                 .withOutcome(EventLoggingUtil.createOutcome(th))

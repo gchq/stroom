@@ -49,6 +49,11 @@ public class ImportConfigViewImpl extends ViewImpl implements ImportConfigView {
         return form;
     }
 
+    @Override
+    public String getFilename() {
+        return fileUpload.getFilename();
+    }
+
     public interface Binder extends UiBinder<Widget, ImportConfigViewImpl> {
 
     }
