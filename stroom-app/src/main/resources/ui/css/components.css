@@ -98,75 +98,32 @@
     align-items: center;
     height: 34px;
     padding: 0 2px;
-    border: none;
-    border-radius: .5rem;
-    border: 1px solid transparent;
-    background-color: transparent;
+    border: var(--curve-tab__border);
+    border-radius: var(--curve-tab__border-radius);
+    background-color: var(--curve-tab__background-color);
     color: var(--control__text-color);
 }
 
 .curveTab:hover {
-    border-color: rgba(0,0,0,.2);
+    background: var(--curve-tab__background-color--hover);
+    border: var(--curve-tab__border--hover);
 }
 
 .curveTab-selected {
-    border-color: rgba(0,0,0,.4);
+    background: var(--curve-tab__background-color--selected);
+    border: var(--curve-tab__border--hover);
+    box-shadow: var(--curve-tab__box-shadow--selected);
 }
 
 .curveTab-selected:hover {
-    border-color: rgba(0,0,0,.6);
+    background: var(--curve-tab__background-color--selected);
+    border: var(--curve-tab__border--hover);
+    box-shadow: var(--curve-tab__box-shadow--selected);
 }
 
-.curveTab .curveTab-background {
-	background-color: rgba(0,0,0,.1);
-}
-
-.stroom-theme-dark .curveTab:hover {
-    border-color: rgba(255,255,255,.5);
-}
-
-.stroom-theme-dark .curveTab-selected {
-    border-color: rgba(255,255,255,.8);
-}
-
-.stroom-theme-dark .curveTab-selected:hover {
-    border-color: rgba(255,255,255,1);
-}
-
-.stroom-theme-dark .curveTab .curveTab-background {
-	background-color: rgba(255,255,255,.2);
-}
-
-/*
-.curveTabBar:focus .curveTab-keyboardSelected {
-    border-color: rgba(255,255,255,1);
-}
-*/
 .curveTab-keyboardSelected:focus {
     border-color: var(--focus-border);
     box-shadow: var(--focus-shadow);
-}
-
-.curveTab .curveTab-background {
-	position: absolute;
-	left: 0;
-	top: 0;
-	opacity: 0;
-	height: 100%;
-	width: 100%;
-	overflow: hidden;
-}
-
-.curveTab-selected .curveTab-background {
-	opacity: .8;
-}
-
-.curveTab:hover .curveTab-background {
-	opacity: .9;
-}
-
-.curveTab-selected:hover .curveTab-background {
-	opacity: 1;
 }
 
 /* Tab content */
@@ -250,39 +207,19 @@
     cursor: pointer;
     display: flex;
     height: 34px;
-    border: none;
-    border-radius: .25rem;
-    border: 1px solid transparent;
-    background-color: transparent;
+    border: var(--curve-tab__border);
+    border-radius: var(--curve-tab__border-radius);
+    background-color: var(--curve-tab__background-color);
     color: var(--control__text-color);
     padding: 10px;
     align-items: center;
 }
 
-.curveTabSelector .curveTabSelector-background {
-    position: absolute;
-    left: 0;
-    top: 0;
-    opacity: 0;
-    height: 100%;
-    width: 100%;
-    overflow: hidden;
-    background-color: rgba(255,255,255,.2);
-}
-
 .curveTabSelector:hover {
-    border-color: rgba(255,255,255,.5);
+    background: var(--curve-tab__background-color--selected);
+    border: var(--curve-tab__border--hover);
 }
 
-.curveTabSelector:hover .curveTabSelector-background {
-	opacity: .9;
-}
-
-/*
-.curveTabBar:focus .curveTabSelector-keyboardSelected {
-    border-color: rgba(255,255,255,1);
-}
-*/
 .curveTabSelector-keyboardSelected:focus {
     border-color: var(--focus-border);
     box-shadow: var(--focus-shadow);

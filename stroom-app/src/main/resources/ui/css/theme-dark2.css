@@ -105,6 +105,16 @@
     --splitter__background-color: #1d9bd1;
     --splitter__border-color: #22252c;
 
+    /* Main curve tabs */
+    --curve-tab__svg-color: #fff;
+    --curve-tab__background-color: transparent;
+    --curve-tab__border: thin solid transparent;
+    --curve-tab__border--hover: thin solid transparent;
+    --curve-tab__background-color--selected: #484d52;
+    --curve-tab__background-color--hover: #484d52;
+    --curve-tab__box-shadow--selected: 0 0 1px 1px rgb(0 0 0 / 100%);
+    --curve-tab__border-radius: .2rem;
+
     /* Controls */
     --control__background-color: #131417;
     --control__background-color--disabled: transparent;
@@ -112,6 +122,9 @@
     --control__border-color--disabled: transparent;
     --control__text-color: #cacbcb;
     --control__text-color--disabled: #666;
+
+    /* Form Group */
+    --form-group__label-color: #eee;
 
     /* Dashboard */
     --dashboard-panel__background-color: #131417;

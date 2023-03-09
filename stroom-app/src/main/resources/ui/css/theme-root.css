@@ -105,8 +105,15 @@
     --splitter__background-color: #1d9bd1;
     --splitter__border-color: #fff;
 
-    /* Explorer */
+    /* Main curve tabs */
     --curve-tab__svg-color: #555;
+    --curve-tab__background-color: transparent;
+    --curve-tab__border: thin solid transparent;
+    --curve-tab__border--hover: thin solid rgb(200 200 200);
+    --curve-tab__background-color--selected: #fff;
+    --curve-tab__background-color--hover: #fff;
+    --curve-tab__box-shadow--selected: 0 0 1px 1px rgb(200 200 200 / 100%);
+    --curve-tab__border-radius: .2rem;
 
     /* Controls */
     --control__background-color: #fff;
