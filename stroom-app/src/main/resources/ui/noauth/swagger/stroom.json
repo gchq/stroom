@@ -9051,30 +9051,6 @@
   },
   "components" : {
     "schemas" : {
-      "AbstractAlertRule" : {
-        "type" : "object",
-        "discriminator" : {
-          "propertyName" : "type"
-        },
-        "properties" : {
-          "destinationFeed" : {
-            "$ref" : "#/components/schemas/DocRef"
-          },
-          "executionDelay" : {
-            "type" : "string"
-          },
-          "executionFrequency" : {
-            "type" : "string"
-          },
-          "timeField" : {
-            "type" : "string"
-          },
-          "type" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "type" ]
-      },
       "AbstractFetchDataResult" : {
         "type" : "object",
         "discriminator" : {
@@ -9354,9 +9330,6 @@
       "AlertRuleDoc" : {
         "type" : "object",
         "properties" : {
-          "alertRule" : {
-            "$ref" : "#/components/schemas/AbstractAlertRule"
-          },
           "alertRuleType" : {
             "type" : "string",
             "enum" : [ "EVENT", "AGGREGATE" ]
@@ -9371,25 +9344,23 @@
           "description" : {
             "type" : "string"
           },
-          "enabled" : {
-            "type" : "boolean"
+          "destinationFeed" : {
+            "$ref" : "#/components/schemas/DocRef"
           },
           "languageVersion" : {
             "type" : "string",
             "enum" : [ "STROOM_QL_VERSION_0_1", "SIGMA" ]
           },
-          "maxMetaCreateTimeMs" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "minMetaCreateTimeMs" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "name" : {
             "type" : "string"
           },
+          "processSettings" : {
+            "$ref" : "#/components/schemas/AlertRuleProcessSettings"
+          },
           "query" : {
+            "type" : "string"
+          },
+          "timeField" : {
             "type" : "string"
           },
           "type" : {
@@ -9407,6 +9378,28 @@
           },
           "version" : {
             "type" : "string"
+          }
+        }
+      },
+      "AlertRuleProcessSettings" : {
+        "type" : "object",
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "executionWindow" : {
+            "$ref" : "#/components/schemas/SimpleDuration"
+          },
+          "maxMetaCreateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "minMetaCreateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "timeToWaitForData" : {
+            "$ref" : "#/components/schemas/SimpleDuration"
           }
         }
       },
@@ -10611,7 +10604,7 @@
           },
           "timeUnit" : {
             "type" : "string",
-            "enum" : [ "MINUTES", "HOURS", "DAYS", "WEEKS", "MONTHS", "YEARS" ]
+            "enum" : [ "NANOSECONDS", "MILLISECONDS", "SECONDS", "MINUTES", "HOURS", "DAYS", "WEEKS", "MONTHS", "YEARS" ]
           }
         },
         "xml" : {
@@ -15746,6 +15739,19 @@
           }
         }
       },
+      "SimpleDuration" : {
+        "type" : "object",
+        "properties" : {
+          "time" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "timeUnit" : {
+            "type" : "string",
+            "enum" : [ "NANOSECONDS", "MILLISECONDS", "SECONDS", "MINUTES", "HOURS", "DAYS", "WEEKS", "MONTHS", "YEARS" ]
+          }
+        }
+      },
       "SimpleUser" : {
         "type" : "object",
         "properties" : {
@@ -16870,12 +16876,6 @@
             "type" : "string"
           }
         }
-      },
-      "ThresholdAlertRule" : {
-        "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/AbstractAlertRule"
-        } ]
       },
       "TimeRange" : {
         "type" : "object",

@@ -19,7 +19,6 @@ package stroom.receive.rules.client.presenter;
 
 import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.data.retention.shared.DataRetentionRule;
-import stroom.util.shared.time.TimeUnit;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.shared.DataSourceResource;
 import stroom.dispatch.client.Rest;
@@ -27,6 +26,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.receive.rules.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
+import stroom.util.shared.time.TimeUnit;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Focus;

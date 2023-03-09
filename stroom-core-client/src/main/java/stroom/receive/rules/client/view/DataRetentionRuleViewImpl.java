@@ -17,9 +17,9 @@
 
 package stroom.receive.rules.client.view;
 
-import stroom.util.shared.time.TimeUnit;
 import stroom.item.client.ItemListBox;
 import stroom.receive.rules.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
+import stroom.util.shared.time.TimeUnit;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;

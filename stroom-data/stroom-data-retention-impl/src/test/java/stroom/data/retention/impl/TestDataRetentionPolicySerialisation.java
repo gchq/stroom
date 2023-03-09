@@ -20,7 +20,6 @@ package stroom.data.retention.impl;
 
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
-import stroom.util.shared.time.TimeUnit;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
@@ -28,6 +27,7 @@ import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.time.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 
