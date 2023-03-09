@@ -228,36 +228,47 @@ public class OffHeapRefDataLoader implements RefDataLoader {
             // Need to commit the state change
             commit();
 
-            final Duration loadDuration = Duration.between(startTime, Instant.now());
-
-            final String mapNames = mapDefinitionToUIDMap.keySet()
-                    .stream()
-                    .map(MapDefinition::getMapName)
-                    .collect(Collectors.joining(", "));
-
-            final String pipeline = refStreamDefinition.getPipelineDocRef().getName() != null
-                    ? refStreamDefinition.getPipelineDocRef().getName()
-                    : refStreamDefinition.getPipelineDocRef().getUuid();
-
-            LOGGER.info("Processed {} entries with outcome {} (" +
-                            "new: {}, null values ignored: {}, dup-key value updated: {}, dup-key value identical: {}, " +
-                            "dup-key entry removed: {}, dup-key ignored: {}) " +
-                            "with map name(s): [{}], stream: {}, pipeline: {} in {}",
-                    inputCount,
-                    processingState,
-                    newEntriesCount,
-                    ignoredNullsCount,
-                    replacedEntriesCount,
-                    unchangedEntriesCount,
-                    removedEntriesCount,
-                    ignoredCount,
-                    mapNames,
-                    refStreamDefinition.getStreamId(),
-                    pipeline,
-                    loadDuration);
+            logLoadInfo(processingState);
 
             currentLoaderState = LoaderState.COMPLETED;
         }
+    }
+
+    private void logLoadInfo(final ProcessingState processingState) {
+
+        final Duration loadDuration = Duration.between(startTime, Instant.now());
+
+        final String mapNames = mapDefinitionToUIDMap.keySet()
+                .stream()
+                .map(MapDefinition::getMapName)
+                .collect(Collectors.joining(", "));
+
+        final String pipeline = refStreamDefinition.getPipelineDocRef().getName() != null
+                ? refStreamDefinition.getPipelineDocRef().getName()
+                : refStreamDefinition.getPipelineDocRef().getUuid();
+
+        LOGGER.info("Processed {} entries with outcome {} (" +
+                        "new: {}, " +
+                        "null values ignored: {}, " +
+                        "dup-key value updated: {}, " +
+                        "dup-key value identical: {}, " +
+                        "dup-key entry removed: {}, " +
+                        "dup-key ignored: {}) " +
+                        "with map name(s): [{}], " +
+                        "stream: {}, " +
+                        "pipeline: {} in {}",
+                inputCount,
+                processingState,
+                newEntriesCount,
+                ignoredNullsCount,
+                replacedEntriesCount,
+                unchangedEntriesCount,
+                removedEntriesCount,
+                ignoredCount,
+                mapNames,
+                refStreamDefinition.getStreamId(),
+                pipeline,
+                loadDuration);
     }
 
     @Override
