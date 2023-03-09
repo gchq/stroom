@@ -143,7 +143,7 @@ public class ResultStoreAlertSearchExecutor {
                     final AlertRuleDoc alertRuleDoc = alertRuleStore.readDocument(docRef);
                     final SearchRequest searchRequest = alertRuleSearchRequestHelper.create(alertRuleDoc);
                     final DocRef dataSource = searchRequest.getQuery().getDataSource();
-                    if (ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
+                    if (dataSource != null && ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
                         process(alertRuleDoc, searchRequest, dataSource);
                     } else {
                         LOGGER.error("Rule needs to reference a view");
@@ -158,12 +158,29 @@ public class ResultStoreAlertSearchExecutor {
     private void process(final AlertRuleDoc alertRuleDoc,
                          final SearchRequest searchRequest,
                          final DocRef dataSource) {
-        final ViewDoc viewDoc = viewStore.readDocument(dataSource);
-        final ExpressionOperator expressionOperator = viewDoc.getFilter();
         final AlertRuleProcessSettings processSettings = alertRuleDoc.getProcessSettings();
-        if (processSettings != null &&
-                processSettings.isEnabled() &&
-                ExpressionUtil.termCount(expressionOperator) > 0) {
+
+        if (processSettings != null && processSettings.isEnabled()) {
+            final ViewDoc viewDoc = viewStore.readDocument(dataSource);
+            if (viewDoc == null) {
+                throw new RuntimeException("Unable to process alert '" +
+                        alertRuleDoc.getName() +
+                        "' (" +
+                        alertRuleDoc.getUuid()
+                        +
+                        ") because selected view cannot be found");
+            }
+
+            final ExpressionOperator expressionOperator = viewDoc.getFilter();
+            if (ExpressionUtil.termCount(viewDoc.getFilter()) == 0) {
+                throw new RuntimeException("Unable to process alert '" +
+                        alertRuleDoc.getName() +
+                        "' (" +
+                        alertRuleDoc.getUuid()
+                        +
+                        ") because selected view has no meta selected expression");
+            }
+
             final Meta lastMeta = lastProcessedMeta.get(alertRuleDoc);
             final Long lastMetaId = lastMeta == null
                     ? null

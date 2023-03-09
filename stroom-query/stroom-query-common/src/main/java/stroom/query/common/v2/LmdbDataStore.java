@@ -39,6 +39,7 @@ import stroom.util.concurrent.CompleteException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.Metrics;
+import stroom.util.shared.time.SimpleDuration;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -56,7 +57,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.temporal.TemporalAmount;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -229,7 +229,7 @@ public class LmdbDataStore implements DataStore {
         // Now add the rows if we aren't filtering.
         if (windowSupport.getOffsets() != null) {
             int iteration = 0;
-            for (TemporalAmount offset : windowSupport.getOffsets()) {
+            for (SimpleDuration offset : windowSupport.getOffsets()) {
                 final Values modifiedValues = windowSupport.addWindow(values, offset);
                 addInternal(modifiedValues, iteration);
                 iteration++;

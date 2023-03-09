@@ -8,6 +8,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 public class SimpleDuration {
+    public static SimpleDuration ZERO = new SimpleDuration(0, TimeUnit.NANOSECONDS);
 
     @JsonProperty
     private final long time;

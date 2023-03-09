@@ -1,10 +1,70 @@
 package stroom.util.time;
 
 import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
 
+import java.text.ParseException;
 import java.time.LocalDateTime;
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SimpleDurationUtil {
+
+    private static final Pattern SIMPLE_FORMAT_PATTERN = Pattern.compile("^(\\d+)(\\w+)$");
+
+    public static SimpleDuration parse(final String string) throws ParseException {
+        Objects.requireNonNull(string, "String is null");
+
+        final String trimmed = string.trim();
+        final Matcher matcher = SIMPLE_FORMAT_PATTERN.matcher(trimmed);
+        if (matcher.find()) {
+            try {
+                final String number = matcher.group(1);
+                final String unit = matcher.group(2);
+                final long time = Long.parseLong(number);
+                final TimeUnit timeUnit;
+
+                switch (unit) {
+                    case "ns":
+                        timeUnit = TimeUnit.NANOSECONDS;
+                        break;
+                    case "ms":
+                        timeUnit = TimeUnit.MILLISECONDS;
+                        break;
+                    case "s":
+                        timeUnit = TimeUnit.SECONDS;
+                        break;
+                    case "m":
+                        timeUnit = TimeUnit.MINUTES;
+                        break;
+                    case "h":
+                        timeUnit = TimeUnit.HOURS;
+                        break;
+                    case "d", "D":
+                        timeUnit = TimeUnit.DAYS;
+                        break;
+                    case "w", "W":
+                        timeUnit = TimeUnit.WEEKS;
+                        break;
+                    case "M":
+                        timeUnit = TimeUnit.MONTHS;
+                        break;
+                    case "y", "Y":
+                        timeUnit = TimeUnit.YEARS;
+                        break;
+                    default:
+                        throw new ParseException("Time unit is invalid: " + trimmed, 0);
+                }
+
+                return new SimpleDuration(time, timeUnit);
+            } catch (final RuntimeException e) {
+                throw new ParseException("Format of duration string is invalid: " + trimmed, 0);
+            }
+        } else {
+            throw new ParseException("Format of duration string is invalid: " + trimmed, 0);
+        }
+    }
 
     public static LocalDateTime plus(final LocalDateTime dateTime,
                                      final SimpleDuration simpleDuration) {

@@ -8,17 +8,15 @@ import stroom.query.api.v2.HoppingWindow;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
-import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.time.StroomDuration;
+import stroom.util.shared.time.SimpleDuration;
+import stroom.util.time.SimpleDurationUtil;
 
-import java.time.Duration;
+import java.text.ParseException;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.Period;
 import java.time.ZoneOffset;
-import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,9 +24,9 @@ public class WindowSupport {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(WindowSupport.class);
 
-    private TemporalAmount windowSize;
-    private List<TemporalAmount> offsets;
-    //    private int timeFieldIndex = -1;
+    private SimpleDuration window;
+    private SimpleDuration advance;
+    private List<SimpleDuration> offsets;
     private int windowTimeFieldPos;
     private TableSettings tableSettings;
 
@@ -38,28 +36,27 @@ public class WindowSupport {
             if (tableSettings.getWindow() instanceof HoppingWindow) {
                 final HoppingWindow hoppingWindow = (HoppingWindow) tableSettings.getWindow();
                 try {
-                    Period window = Period.parse(hoppingWindow.getWindowSize());
-                    Period advance = Period.parse(hoppingWindow.getAdvanceSize());
-                    windowSize = window;
+                    window = SimpleDurationUtil.parse(hoppingWindow.getWindowSize());
+                    advance = SimpleDurationUtil.parse(hoppingWindow.getAdvanceSize());
 
                     offsets = new ArrayList<>();
-                    Period offset = Period.ZERO;
-                    while (offset.getYears() <= window.getYears() &&
-                            offset.getMonths() <= window.getMonths() &&
-                            offset.getDays() <= window.getDays()) {
-                        offsets.add(offset);
-                        offset = offset.plus(advance);
-                    }
-                } catch (final RuntimeException e) {
-                    Duration window = StroomDuration.parse(hoppingWindow.getWindowSize()).getDuration();
-                    Duration advance = StroomDuration.parse(hoppingWindow.getAdvanceSize()).getDuration();
-                    windowSize = window;
+                    SimpleDuration offset = SimpleDuration.ZERO;
 
-                    Duration offset = Duration.ZERO;
-                    while (offset.compareTo(window) < 0) {
+                    LocalDateTime reference = LocalDateTime.of(1970, 1, 1, 0, 0, 0);
+                    LocalDateTime maximum = SimpleDurationUtil.plus(reference, window);
+                    LocalDateTime added = reference;
+
+                    while (added.isBefore(maximum) || added.equals(maximum)) {
                         offsets.add(offset);
-                        offset = offset.plus(advance);
+                        if (offset.getTime() == 0) {
+                            offset = advance;
+                        } else {
+                            offset = offset.copy().time(offset.getTime() + advance.getTime()).build();
+                        }
+                        added = SimpleDurationUtil.plus(reference, offset);
                     }
+                } catch (final RuntimeException | ParseException e) {
+                    throw new RuntimeException(e.getMessage(), e);
                 }
                 // Add all the additional fields we want for time windows.
                 final List<Field> newFields = new ArrayList<>();
@@ -90,7 +87,7 @@ public class WindowSupport {
 
 
     public Values addWindow(final Values values,
-                            final TemporalAmount offset) {
+                            final SimpleDuration offset) {
         final Val val = values.get(windowTimeFieldPos);
         final Val adjusted = adjustWithOffset(val, offset);
         Val[] orig = values.toUnsafeArray();
@@ -100,21 +97,23 @@ public class WindowSupport {
         return Values.of(arr);
     }
 
-    private Val adjustWithOffset(final Val val, final TemporalAmount offset) {
+    private Val adjustWithOffset(final Val val, final SimpleDuration offset) {
         try {
             final Instant instant = Instant.ofEpochMilli(val.toLong());
-            if (windowSize instanceof Period) {
-                final LocalDateTime dateTime =
-                        LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
-                final LocalDateTime rounded =
-                        DateUtil.roundDown(dateTime, (Period) windowSize);
-                final LocalDateTime adjusted = rounded.plus(offset);
-                return ValDate.create(adjusted.toInstant(ZoneOffset.UTC).toEpochMilli());
-            } else {
-                final Instant rounded = DateUtil.roundDown(instant, (Duration) windowSize);
-                final Instant adjusted = rounded.plus(offset);
-                return ValDate.create(adjusted.toEpochMilli());
+            final LocalDateTime dateTime =
+                    LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
+            final LocalDateTime baseline =
+                    SimpleDurationUtil.roundDown(dateTime, window);
+            // Add advance until we exceed baseline.
+            LocalDateTime adjusted = baseline;
+            LocalDateTime rounded = baseline;
+            while (adjusted.isBefore(dateTime)) {
+                rounded = adjusted;
+                adjusted = SimpleDurationUtil.plus(adjusted, window);
             }
+
+            final LocalDateTime advanced = SimpleDurationUtil.plus(rounded, offset);
+            return ValDate.create(advanced.toInstant(ZoneOffset.UTC).toEpochMilli());
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         }
@@ -125,7 +124,7 @@ public class WindowSupport {
         return tableSettings;
     }
 
-    public List<TemporalAmount> getOffsets() {
+    public List<SimpleDuration> getOffsets() {
         return offsets;
     }
 }

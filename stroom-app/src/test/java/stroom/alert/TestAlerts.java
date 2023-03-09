@@ -274,7 +274,7 @@ class TestAlerts extends StroomIntegrationTest {
         final String query = """
                 "index_view"
                 | where UserId = user5
-                | window EventTime by P12M advance P12M
+                | window EventTime by 1y advance 1y
                 | group by UserId
                 //| having count > countPrevious
                 | table UserId""";
@@ -322,7 +322,7 @@ class TestAlerts extends StroomIntegrationTest {
         final String query = """
                 "index_view"
                 | where UserId = user5
-                | window EventTime by P12M advance P12M
+                | window EventTime by 1y advance 1y
                 | group by UserId
                 | having "period-0" = 0
                 | table UserId""";

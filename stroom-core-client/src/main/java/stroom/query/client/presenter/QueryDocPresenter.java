@@ -188,6 +188,7 @@ public class QueryDocPresenter
             codePresenter.setText(entity.getQuery());
         }
         getView().getQueryButtons().setEnabled(true);
+        getView().getQueryButtons().setMode(false);
         getView().setTimeRange(currentTimeRange);
     }
 
