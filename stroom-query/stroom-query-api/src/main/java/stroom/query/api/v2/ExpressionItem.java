@@ -26,6 +26,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.function.Predicate;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -79,6 +80,12 @@ public abstract class ExpressionItem implements Serializable {
      * at least one of the supplied fields.
      */
     public abstract boolean containsField(final String... fields);
+
+    /**
+     * @param predicate Test to run on each term in the expression
+     * @return True if any term matches predicate
+     */
+    public abstract boolean containsTerm(final Predicate<ExpressionTerm> predicate);
 
     @Override
     public boolean equals(final Object o) {

@@ -12,6 +12,24 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#2759** : Normalise Windows line endings () to Unix-style () when pasting into the ACE text editor.
+
+* Issue **#3272** : Change handling for reference loads in unexpected states. It now logs an app log error but carries on and loads over the top.
+
+* Issue **#3260** : Change the select-all filter based delete/restore to delete by IDs with a temporary table to avoid locking other rows. This is configurable using the property `data.meta.metaStatusUpdateBatchSize`, with 0 meaning all in one batch.
+
+* Issue **#3201** : Change the way the mapping of feed and stream types to IDs is cached. Now uses the existing `Meta Type Cache` and `Meta Feed Cache` caches rather than simple hash maps that duplicated the caching.
+
+* Issue **#3136** : Improve the debug logging for reference data effective streams and add validation of the effective stream sets when debug is enabled for `stroom.pipeline.refdata.EffectiveStreamCache`.
+
+* Remove the read/write locking used on the caches. Change cache rebuild to do a full rebuild if config has changed, else just clear the existing cache.
+
+* Issue **#3286** : Fix error when changing property values for cache properties.
+
+* Issue **#2759** : Change `in dictionary` for filters and searchables to ignore blank lines.
+
+* Issue **#3271** : Fix warnings in logs about auto logging not being configured for reference data purge.
+
 * Issue **#3259** : Make task creation and queueing multi threaded.
 
 * Issue **#3276** : Remove ASSIGNED task status and guard for task creation deadlocks.

@@ -16,21 +16,21 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.RemovalListener;
 
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.locks.StampedLock;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
 
@@ -40,14 +40,7 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
     private final Supplier<CacheConfig> cacheConfigSupplier;
     private final BiConsumer<K, V> removalNotificationConsumer;
 
-    // This is not re-entrant so need to be careful we don't try to lock twice
-    private final StampedLock stampedLock = new StampedLock();
-
-    // These two must be changed under the protection of stampedLock. Exclusive access,
-    // i.e. a write-lock is only needed for operations that change the reference attached
-    // to these variables.
-    protected volatile Cache<K, V> cache = null;
-    protected volatile Caffeine<K, V> cacheBuilder = null;
+    protected volatile CacheHolder<K, V> cacheHolder = null;
 
     public AbstractStroomCache(final String name,
                                final Supplier<CacheConfig> cacheConfigSupplier,
@@ -66,6 +59,8 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
                 cacheConfigSupplier.get(),
                 removalNotificationConsumer != null));
 
+        // Note: when a rebuild happens, both the old and new cache instances will have the
+        // same removalNotificationConsumer so it may get called more than expected
         this.removalNotificationConsumer = removalNotificationConsumer;
         this.name = name;
         this.cacheConfigSupplier = cacheConfigSupplier;
@@ -79,30 +74,33 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
     abstract Cache<K, V> createCacheFromBuilder(final Caffeine<K, V> cacheBuilder);
 
     @Override
-    public void rebuild() {
+    public synchronized void rebuild() {
         LOGGER.trace(() -> buildMessage("rebuild"));
 
-        // Now swap out the existing cache/builder under an exclusive lock
-        doUnderWriteLock(() -> {
-            final CacheConfig cacheConfig = cacheConfigSupplier.get();
+        final CacheHolder<K, V> existingCacheHolder = this.cacheHolder;
+        final CacheConfig newCacheConfig = cacheConfigSupplier.get();
 
-            if (cache != null) {
+        if (existingCacheHolder != null
+                && Objects.equals(existingCacheHolder.getCacheConfig(), newCacheConfig)) {
+            LOGGER.info("Clearing cache '{}' (Property path: '{}'). No config changed.",
+                    name, getBasePropertyPath());
+            CacheUtil.clear(getCache());
+        } else {
+            if (existingCacheHolder != null) {
                 // Don't log initial cache creation, only explicit rebuilds
-                LOGGER.info("Clearing and rebuilding cache '{}' (Property path: '{}') with config: {}",
-                        name, getBasePropertyPath(), cacheConfig);
-                CacheUtil.clear(cache);
+                LOGGER.info("Rebuilding cache '{}' from config (Property path: '{}'). newCacheConfig: {}.",
+                        name, getBasePropertyPath(), newCacheConfig);
             }
-
             final Caffeine newCacheBuilder = Caffeine.newBuilder();
             newCacheBuilder.recordStats();
 
-            NullSafe.consume(cacheConfig.getMaximumSize(), newCacheBuilder::maximumSize);
+            NullSafe.consume(newCacheConfig.getMaximumSize(), newCacheBuilder::maximumSize);
             NullSafe.consume(
-                    cacheConfig.getExpireAfterAccess(),
+                    newCacheConfig.getExpireAfterAccess(),
                     StroomDuration::getDuration,
                     newCacheBuilder::expireAfterAccess);
             NullSafe.consume(
-                    cacheConfig.getExpireAfterWrite(),
+                    newCacheConfig.getExpireAfterWrite(),
                     StroomDuration::getDuration,
                     newCacheBuilder::expireAfterWrite);
 
@@ -113,12 +111,18 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
 
             final Cache<K, V> newCache = createCacheFromBuilder(newCacheBuilder);
 
-            LOGGER.debug("Assigning new cache and builder instances");
-            this.cacheBuilder = newCacheBuilder;
+            final CacheHolder<K, V> newCacheHolder = new CacheHolder<>(newCache, newCacheBuilder, newCacheConfig);
+            LOGGER.debug("Assigning new cacheHolder instance");
+            this.cacheHolder = newCacheHolder;
+        }
+    }
 
-            // Now create and set the cache
-            this.cache =  newCache;
-        });
+    protected Cache<K, V> getCache() {
+        return cacheHolder.getCache();
+    }
+
+    private Caffeine<K, V> getCacheBuilder() {
+        return cacheHolder.getCacheBuilder();
     }
 
     private RemovalListener<K, V> createRemovalListener() {
@@ -152,15 +156,13 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
     @Override
     public V get(final K key) {
         LOGGER.trace(() -> buildMessage("get", key));
-        return getWithCacheUnderOptimisticReadLock(cache ->
-                cache.getIfPresent(key));
+        return getCache().getIfPresent(key);
     }
 
     @Override
     public V get(final K key, final Function<K, V> valueProvider) {
         LOGGER.trace(() -> buildMessage("get", key));
-        return getWithCacheUnderOptimisticReadLock(cache ->
-                cache.get(key, valueProvider));
+        return getCache().get(key, valueProvider);
     }
 
     @Override
@@ -169,15 +171,13 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
 
         // A read lock as we are not modifying the cache reference, just the innards
         // of the cache
-        doWithCacheUnderOptimisticReadLock(cache ->
-                cache.put(key, value));
+        getCache().put(key, value);
     }
 
     @Override
     public Optional<V> getOptional(final K key) {
         LOGGER.trace(() -> buildMessage("getOptional", key));
-        return getWithCacheUnderOptimisticReadLock(cache ->
-                Optional.ofNullable(cache.getIfPresent(key)));
+        return Optional.ofNullable(getCache().getIfPresent(key));
     }
 
 
@@ -185,20 +185,24 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
     public boolean containsKey(final K key) {
         LOGGER.trace(() -> buildMessage("containsKey", key));
         // Can't use asMap().containsKey() as that will call the loadfunc
-        return getWithCacheUnderOptimisticReadLock(cache ->
-                cache.asMap().containsKey(key));
+        return getCache().asMap().containsKey(key);
     }
 
     @Override
     public Set<K> keySet() {
-        return getWithCacheUnderOptimisticReadLock(cache ->
-                new HashSet<>(cache.asMap().keySet()));
+        // Defensive copy
+        return Collections.unmodifiableSet(getCache().asMap().keySet());
     }
 
     @Override
-    public List<V> values() {
-        return getWithCacheUnderOptimisticReadLock(cache ->
-                new ArrayList<>(cache.asMap().values()));
+    public Collection<V> values() {
+        // Defensive copy
+        return Collections.unmodifiableCollection(getCache().asMap().values());
+    }
+
+    @Override
+    public Map<K, V> asMap() {
+        return Collections.unmodifiableMap(getCache().asMap());
     }
 
     @Override
@@ -207,15 +211,13 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
         Objects.requireNonNull(entryConsumer);
         // Use a full read lock as we don't really know what consumer will do,
         // so we don't really want it running twice.
-        doWithCacheUnderReadLock(cache ->
-                cache.asMap().forEach(entryConsumer));
+        getCache().asMap().forEach(entryConsumer);
     }
 
     @Override
     public void invalidate(final K key) {
         LOGGER.trace(() -> buildMessage("invalidate", key));
-        doWithCacheUnderOptimisticReadLock(cache ->
-                cache.invalidate(key));
+        getCache().invalidate(key);
     }
 
     @Override
@@ -223,36 +225,44 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
         LOGGER.trace(() -> buildMessage("invalidateEntries"));
         Objects.requireNonNull(entryPredicate);
 
-        doWithCacheUnderOptimisticReadLock(cache -> {
-            cache.asMap()
-                    .entrySet()
-                    .stream()
-                    .filter(entry -> entryPredicate.test(entry.getKey(), entry.getValue()))
-                    .forEach(entry -> {
-                        LOGGER.trace(() -> buildMessage("invalidateEntries", entry.getKey()));
-                        cache.invalidate(entry.getKey());
-                    });
-        });
+        final Cache<K, V> cache = getCache();
+        final ConcurrentMap<K, V> cacheAsMap = cache.asMap();
+
+        final List<K> keysToRemove = cacheAsMap.entrySet()
+                .stream()
+                .filter(entry -> {
+                    LOGGER.info("invalidateEntries ID {}", System.identityHashCode(getCache()));
+                    return entryPredicate.test(entry.getKey(), entry.getValue());
+                })
+                .map(entry -> {
+                    LOGGER.trace(() -> buildMessage("invalidateEntries", entry.getKey()));
+                    return entry.getKey();
+                })
+                .collect(Collectors.toList());
+
+        // Doing the remove on the cacheAsMap means if rebuild was called we are still operating on
+        // the old cache
+        keysToRemove.forEach(cacheAsMap::remove);
     }
 
     @Override
     public void remove(final K key) {
         LOGGER.trace(() -> buildMessage("remove", key));
-        doWithCacheUnderOptimisticReadLock(cache -> {
-            cache.invalidate(key);
-            cache.cleanUp();
-        });
+        // Get local copy in case rebuild is called
+        final Cache<K, V> cache = getCache();
+        cache.invalidate(key);
+        cache.cleanUp();
     }
 
     @Override
     public void evictExpiredElements() {
         LOGGER.trace(() -> buildMessage("evictExpiredElements"));
-        doWithCacheUnderOptimisticReadLock(Cache::cleanUp);
+        getCache().cleanUp();
     }
 
     @Override
     public long size() {
-        return getWithCacheUnderOptimisticReadLock(Cache::estimatedSize);
+        return getCache().estimatedSize();
     }
 
     @Override
@@ -261,178 +271,32 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
 
         // Read lock as we are not changing the reference to the cache.
         // The cache has its own concurrency protection at the entry level.
-        doWithCacheUnderOptimisticReadLock(CacheUtil::clear);
+        CacheUtil.clear(getCache());
     }
 
     @Override
     public CacheInfo getCacheInfo() {
         final PropertyPath basePropertyPath = getBasePropertyPath();
 
-        return getWithCacheUnderOptimisticReadLock(cache -> {
-            final Map<String, String> map = new HashMap<>();
-            map.put("Entries", String.valueOf(cache.estimatedSize()));
-            // The lock covers cacheBuilder too
-            addEntries(map, cacheBuilder.toString());
-            addEntries(map, cache.stats().toString());
+        final Map<String, String> map = new HashMap<>();
+        // Local copy in case rebuild is called
+        final CacheHolder<K, V> localCacheHolder = this.cacheHolder;
+        final Cache<K, V> cache = localCacheHolder.getCache();
+        map.put("Entries", String.valueOf(cache.estimatedSize()));
+        // The lock covers cacheBuilder too
+        addEntries(map, getCacheBuilder().toString());
+        addEntries(map, cache.stats().toString());
 
-            map.forEach((k, v) -> {
-                if (k.startsWith("Expire") || k.equals("TotalLoadTime")) {
-                    convertNanosToDuration(map, k, v);
-                }
-            });
-
-            // We don't make use of Weighers in the cache so the weight stats are meaningless
-            map.remove("EvictionWeight");
-
-            return new CacheInfo(name, basePropertyPath, map);
+        map.forEach((k, v) -> {
+            if (k.startsWith("Expire") || k.equals("TotalLoadTime")) {
+                convertNanosToDuration(map, k, v);
+            }
         });
-    }
 
-    void doWithCacheUnderWriteLock(final Consumer<Cache<K, V>> work) {
-        Objects.requireNonNull(work);
+        // We don't make use of Weighers in the cache so the weight stats are meaningless
+        map.remove("EvictionWeight");
 
-        final long stamp;
-        try {
-            LOGGER.trace("Getting write lock");
-            stamp = stampedLock.writeLockInterruptibly();
-            LOGGER.trace("Got write lock with stamp {}", stamp);
-            try {
-                work.accept(cache);
-            } finally {
-                LOGGER.trace("Releasing write lock with stamp {}", stamp);
-                stampedLock.unlockWrite(stamp);
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Thread interrupted waiting for write lock on cache " + name);
-        }
-    }
-
-    private void doWithCacheUnderReadLock(final Consumer<Cache<K, V>> work) {
-        Objects.requireNonNull(work);
-        final long stamp;
-        try {
-            LOGGER.trace("Getting read lock");
-            stamp = stampedLock.readLockInterruptibly();
-            LOGGER.trace("Got read lock with stamp {}", stamp);
-            try {
-                work.accept(cache);
-            } finally {
-                LOGGER.trace("Releasing read lock with stamp {}", stamp);
-                stampedLock.unlockRead(stamp);
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Thread interrupted waiting for read lock on cache " + name);
-        }
-    }
-
-    private <T> T getWithCacheUnderReadLock(final Function<Cache<K, V>, T> work) {
-        Objects.requireNonNull(work);
-        final long stamp;
-        try {
-            LOGGER.trace("Getting read lock");
-            stamp = stampedLock.readLockInterruptibly();
-            LOGGER.trace("Got read lock with stamp {}", stamp);
-            try {
-                return work.apply(cache);
-            } finally {
-                LOGGER.trace("Releasing read lock with stamp {}", stamp);
-                stampedLock.unlockRead(stamp);
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Thread interrupted waiting for read lock on cache " + name);
-        }
-    }
-
-    /**
-     * Use the cache to get something. work may be called multiple times so must be
-     * idempotent. Initially attempts to perform work without any locking.
-     * If anything else has obtained an exclusive lock in that time it will retry
-     * under a full read lock.
-     *
-     * @param work MUST be idempotent
-     */
-    <T> T getWithCacheUnderOptimisticReadLock(final Function<Cache<K, V>, T> work) {
-        Objects.requireNonNull(work);
-        T result = null;
-        final long stamp = stampedLock.tryOptimisticRead();
-        LOGGER.trace("Got optimistic stamp {}", stamp);
-
-        if (stamp == 0) {
-            // Another thread holds an exclusive lock, so block and wait for a read lock
-            result = getWithCacheUnderReadLock(work);
-        } else {
-            try {
-                result = work.apply(cache);
-            } catch (Exception e) {
-                // e.g. cache may have been cleared while we used it
-                LOGGER.debug("Error performing work under optimistic lock on cache "
-                        + name + ": " + e.getMessage(), e);
-            }
-
-            if (!stampedLock.validate(stamp)) {
-                LOGGER.trace("Stamp {} is invalid, use read lock instead", stamp);
-                // Another thread got an exclusive lock since we got the stamp so retry under
-                // a read lock, blocking if anything holds an exclusive lock.
-                result = getWithCacheUnderReadLock(work);
-            } else {
-                LOGGER.trace("Optimistic action succeeded");
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Use the cache to do something. work may be called multiple times so must be
-     * idempotent. Initially attempts to perform work without any locking.
-     * If anything else has obtained an exclusive lock in that time it will retry
-     * under a full read lock.
-     *
-     * @param work MUST be idempotent
-     */
-    private void doWithCacheUnderOptimisticReadLock(final Consumer<Cache<K, V>> work) {
-        Objects.requireNonNull(work);
-        final long stamp = stampedLock.tryOptimisticRead();
-        LOGGER.trace("Got optimistic stamp {}", stamp);
-
-        if (stamp == 0) {
-            LOGGER.trace("Another thread holds an exclusive lock, so block and wait for a read lock");
-            doWithCacheUnderReadLock(work);
-        } else {
-            try {
-                work.accept(cache);
-            } catch (Exception e) {
-                // e.g. cache may have been cleared while we used it
-                LOGGER.debug("Error performing work under optimistic lock on cache "
-                        + name + ": " + e.getMessage(), e);
-            }
-
-            if (!stampedLock.validate(stamp)) {
-                LOGGER.trace("Stamp {} is invalid, use read lock instead", stamp);
-                // Another thread got an exclusive lock since we got the stamp so retry under
-                // a read lock, blocking if anything holds an exclusive lock.
-                doWithCacheUnderReadLock(work);
-            } else {
-                LOGGER.trace("Optimistic action succeeded");
-            }
-        }
-    }
-
-    private void doUnderWriteLock(final Runnable work) {
-        final long stamp;
-        try {
-            stamp = stampedLock.writeLockInterruptibly();
-            try {
-                work.run();
-            } finally {
-                stampedLock.unlockWrite(stamp);
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Thread interrupted waiting for write lock on cache " + name);
-        }
+        return new CacheInfo(name, basePropertyPath, map);
     }
 
     private void convertNanosToDuration(final Map<String, String> map,

@@ -11,6 +11,7 @@
     <logger name="stroom" level="info" />
 
     <logger name="stroom.meta.impl.db" level="debug" />
+    <logger name="stroom.meta.impl.db.MetaDaoImpl" level="trace" />
 <!--    <logger name="org.jooq.tools.LoggerListener" level="debug" />-->
 
     <root level="error">

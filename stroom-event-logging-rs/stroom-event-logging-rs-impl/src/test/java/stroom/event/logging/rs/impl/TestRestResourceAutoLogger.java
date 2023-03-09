@@ -52,6 +52,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -74,7 +75,9 @@ public class TestRestResourceAutoLogger {
 
     private final MockContainerRequestContext requestContext = new MockContainerRequestContext();
 
-    private final SecurityContext securityContext = new MockSecurityContext();
+    //    private final SecurityContext securityContext = new MockSecurityContext();
+    @Spy
+    private SecurityContext mockSecurityContextSpy = new MockSecurityContext();
 
     @Mock
     private DocumentEventLog documentEventLog;
@@ -507,11 +510,21 @@ public class TestRestResourceAutoLogger {
         requestEventLog = new RequestEventLogImpl(injector,
                 config,
                 documentEventLog,
-                securityContext,
+                mockSecurityContextSpy,
                 eventLoggingService);
+
         Mockito.when(resourceContext.getResource(Mockito.any())).thenReturn(testResource);
-        filter = new RestResourceAutoLoggerImpl(() -> securityContext, () -> requestEventLog,
-                () -> config, resourceInfo, request, () -> delegatingExceptionMapper);
+
+        Mockito.when(mockSecurityContextSpy.isProcessingUser())
+                .thenReturn(false);
+
+        filter = new RestResourceAutoLoggerImpl(
+                () -> mockSecurityContextSpy,
+                () -> requestEventLog,
+                () -> config,
+                resourceInfo,
+                request,
+                () -> delegatingExceptionMapper);
         filter.setResourceContext(resourceContext);
     }
 

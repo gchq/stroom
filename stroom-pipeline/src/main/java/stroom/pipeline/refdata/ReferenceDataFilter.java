@@ -555,13 +555,14 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         } catch (final BufferOverflowException boe) {
             final String msg = LogUtil.message("Value for key {} in map {} is too big for the buffer",
                     key,
-                    mapName,
-                    boe);
+                    mapName);
             errorReceiverProxy.log(Severity.ERROR, null, getElementId(), msg, boe);
             LOGGER.error(msg, boe);
         } catch (final RuntimeException e) {
             errorReceiverProxy.log(Severity.ERROR, null, getElementId(), e.getMessage(), e);
-            LOGGER.error("Error putting key {} into map {}: {}", key, mapName, e.getMessage());
+            LOGGER.error("Error putting key {} into map {}: {} {}",
+                    key, mapName, e.getClass().getSimpleName(), e.getMessage());
+            LOGGER.debug("Error putting key {} into map {}: {}", key, mapName, e);
         }
 
         // Set keys to null.
