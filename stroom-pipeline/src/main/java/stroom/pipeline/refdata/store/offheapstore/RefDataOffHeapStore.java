@@ -269,14 +269,20 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                                         .map(processingInfoDb::deserializeKeyVal)
                                         .collect(Collectors.toList()));
 
-        final Map<ProcessingState, Long> countsByState = invalidStreams.stream()
+        final String countsByState = invalidStreams.stream()
                 .collect(Collectors.groupingBy(entry ->
-                        entry.getValue().getProcessingState(), Collectors.counting()));
+                        entry.getValue().getProcessingState(), Collectors.counting()))
+                .entrySet()
+                .stream()
+                .map(entry -> entry.getKey() + ":" + entry.getValue())
+                .collect(Collectors.joining(", "));
 
-        LOGGER.info("Found partially loaded/purged ref streams (counts: {}) (total {}). " +
-                        "They will now all be purged.",
-                countsByState,
-                invalidStreams.size());
+        if (invalidStreams.size() > 0) {
+            LOGGER.info("Found partially loaded/purged ref streams (counts: {}) (total {}). " +
+                            "They will now all be purged.",
+                    countsByState,
+                    invalidStreams.size());
+        }
 
         return invalidStreams;
     }
@@ -639,7 +645,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     }
 
     @Override
-    public long getKeyRangeValueEntryCount() {
+    public long getRangeValueEntryCount() {
         return rangeStoreDb.getEntryCount();
     }
 

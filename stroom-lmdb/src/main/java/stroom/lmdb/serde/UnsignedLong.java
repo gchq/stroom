@@ -32,7 +32,7 @@ public class UnsignedLong {
     }
 
     public UnsignedBytes getUnsignedBytes() {
-        return UnsignedBytesInstances.of(length);
+        return UnsignedBytesInstances.ofLength(length);
     }
 
     @Override
