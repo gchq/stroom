@@ -3,7 +3,7 @@ package stroom.receive.rules.client.presenter;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
-import stroom.data.retention.shared.TimeUnit;
+import stroom.util.shared.time.TimeUnit;
 import stroom.util.shared.Expander;
 
 import java.util.ArrayList;

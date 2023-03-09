@@ -18,11 +18,9 @@
 package stroom.alert.rule.client.presenter;
 
 import stroom.alert.rule.client.presenter.AlertRuleSettingsPresenter.AlertRuleSettingsView;
-import stroom.alert.rule.shared.AbstractAlertRule;
 import stroom.alert.rule.shared.AlertRuleDoc;
 import stroom.alert.rule.shared.AlertRuleType;
 import stroom.alert.rule.shared.QueryLanguageVersion;
-import stroom.alert.rule.shared.ThresholdAlertRule;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
@@ -47,9 +45,8 @@ public class AlertRuleSettingsPresenter
 
     private final EditorPresenter codePresenter;
     private final EntityDropDownPresenter feedPresenter;
-    private boolean readOnly = true;
 
-    private DocRef destinationFeed;
+    private DocRef currentFeed;
 
     @Inject
     public AlertRuleSettingsPresenter(final EventBus eventBus,
@@ -58,32 +55,31 @@ public class AlertRuleSettingsPresenter
                                       final EntityDropDownPresenter feedPresenter) {
         super(eventBus, view);
         this.feedPresenter = feedPresenter;
-
-        feedPresenter.setIncludedTypes(FeedDoc.DOCUMENT_TYPE);
-        feedPresenter.setRequiredPermissions(DocumentPermissionNames.READ);
-
         codePresenter = editorPresenterProvider.get();
         codePresenter.setMode(AceEditorMode.STROOM_QUERY);
         registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
         registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
 //            codePresenter.setReadOnly(readOnly);
-        codePresenter.getFormatAction().setAvailable(!readOnly);
+//        codePresenter.getFormatAction().setAvailable(!readOnly);
         if (getEntity() != null && getEntity().getQuery() != null) {
             codePresenter.setText(getEntity().getQuery());
         }
 
         view.setUiHandlers(this);
         view.setQueryWidget(codePresenter.getWidget());
+
+        feedPresenter.setIncludedTypes(FeedDoc.DOCUMENT_TYPE);
+        feedPresenter.setRequiredPermissions(DocumentPermissionNames.READ);
         view.setDestinationFeedView(feedPresenter.getView());
     }
 
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(feedPresenter.addDataSelectionHandler(selection -> {
-            if (!Objects.equals(feedPresenter.getSelectedEntityReference(), destinationFeed)) {
+        registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
+        registerHandler(feedPresenter.addDataSelectionHandler(event -> {
+            if (!Objects.equals(feedPresenter.getSelectedEntityReference(), currentFeed)) {
                 setDirty(true);
-                destinationFeed = feedPresenter.getSelectedEntityReference();
             }
         }));
     }
@@ -92,42 +88,22 @@ public class AlertRuleSettingsPresenter
     protected void onRead(final DocRef docRef, final AlertRuleDoc alertRule) {
         getView().setDescription(alertRule.getDescription());
         getView().setLanguageVersion(alertRule.getLanguageVersion());
-        if (alertRule.getQuery() != null) {
-            codePresenter.setText(alertRule.getQuery());
-        }
-        getView().setEnabled(alertRule.isEnabled());
+        codePresenter.setText(alertRule.getQuery());
         getView().setAlertRuleType(alertRule.getAlertRuleType());
-
-        final AbstractAlertRule abstractAlertRule = alertRule.getAlertRule();
-        if (abstractAlertRule instanceof ThresholdAlertRule) {
-            final ThresholdAlertRule thresholdAlertRule = (ThresholdAlertRule) abstractAlertRule;
-            getView().setTimeField(thresholdAlertRule.getTimeField());
-            getView().setExecutionDelay(thresholdAlertRule.getExecutionDelay());
-            getView().setExecutionFrequency(thresholdAlertRule.getExecutionFrequency());
-            destinationFeed = thresholdAlertRule.getDestinationFeed();
-            feedPresenter.setSelectedEntityReference(destinationFeed);
-        }
+        getView().setTimeField(alertRule.getTimeField());
+        currentFeed = alertRule.getDestinationFeed();
+        feedPresenter.setSelectedEntityReference(currentFeed);
     }
 
     @Override
     protected AlertRuleDoc onWrite(final AlertRuleDoc alertRule) {
-        AbstractAlertRule rule = null;
-        if (AlertRuleType.AGGREGATE.equals(getView().getAlertRuleType())) {
-            rule = ThresholdAlertRule.builder()
-                    .timeField(getView().getTimeField())
-                    .executionDelay(getView().getExecutionDelay())
-                    .executionFrequency(getView().getExecutionFrequency())
-                    .destinationFeed(feedPresenter.getSelectedEntityReference())
-                    .build();
-        }
-
         return alertRule.copy()
                 .description(getView().getDescription())
                 .languageVersion(getView().getLanguageVersion())
                 .query(codePresenter.getText())
-                .enabled(getView().isEnabled())
                 .alertRuleType(getView().getAlertRuleType())
-                .alertRule(rule)
+                .timeField(getView().getTimeField())
+                .destinationFeed(feedPresenter.getSelectedEntityReference())
                 .build();
     }
 
@@ -153,10 +129,6 @@ public class AlertRuleSettingsPresenter
 
         void setQueryWidget(Widget widget);
 
-        boolean isEnabled();
-
-        void setEnabled(final boolean enabled);
-
         AlertRuleType getAlertRuleType();
 
         void setAlertRuleType(AlertRuleType alertRuleType);
@@ -164,14 +136,6 @@ public class AlertRuleSettingsPresenter
         String getTimeField();
 
         void setTimeField(String timeField);
-
-        String getExecutionDelay();
-
-        void setExecutionDelay(String executionDelay);
-
-        String getExecutionFrequency();
-
-        void setExecutionFrequency(String executionFrequency);
 
         void setDestinationFeedView(View view);
     }

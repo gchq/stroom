@@ -2,7 +2,6 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:item="urn:import:stroom.item.client"
-             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client"
 >
@@ -16,23 +15,16 @@
         <form:FormGroup identity="alertRuleSettingsQuery" label="Query">
             <g:SimplePanel ui:field="query" width="800px" height="600px" addStyleNames="stroom-control"/>
         </form:FormGroup>
-        <form:FormGroup identity="alertRuleSettingsEnabled" label="Enabled">
-            <tickbox:CustomCheckBox ui:field="enabled"/>
-        </form:FormGroup>
         <form:FormGroup identity="alertRuleSettingsAlertRuleType" label="Alert Rule Type">
             <l:ItemListBox ui:field="alertRuleType"/>
         </form:FormGroup>
-        <form:FormGroup identity="alertRuleSettingsTimeField" label="Time Field">
-            <g:TextBox ui:field="timeField"/>
-        </form:FormGroup>
-        <form:FormGroup identity="alertRuleSettingsExecutionDelay" label="Execution Delay">
-            <g:TextBox ui:field="executionDelay"/>
-        </form:FormGroup>
-        <form:FormGroup identity="alertRuleSettingsExecutionFrequency" label="Execution Frequency">
-            <g:TextBox ui:field="executionFrequency"/>
-        </form:FormGroup>
-        <form:FormGroup identity="alertRuleSettingsDestinationFeed" label="Destination Feed For Alerts">
-            <g:SimplePanel ui:field="destinationFeed"/>
-        </form:FormGroup>
+        <g:FlowPanel ui:field="aggregateSettings" styleName="form">
+            <form:FormGroup identity="alertRuleSettingsTimeField" label="Time Field">
+                <g:TextBox ui:field="timeField"/>
+            </form:FormGroup>
+            <form:FormGroup identity="alertRuleSettingsDestinationFeed" label="Destination Feed For Alerts">
+                <g:SimplePanel ui:field="destinationFeed"/>
+            </form:FormGroup>
+        </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder> 

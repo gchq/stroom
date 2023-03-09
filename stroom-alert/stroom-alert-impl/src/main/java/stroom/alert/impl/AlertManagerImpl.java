@@ -21,6 +21,7 @@ import stroom.alert.api.AlertManager;
 import stroom.alert.api.AlertProcessor;
 import stroom.alert.rule.impl.AlertRuleStore;
 import stroom.alert.rule.shared.AlertRuleDoc;
+import stroom.alert.rule.shared.AlertRuleProcessSettings;
 import stroom.dashboard.impl.DashboardStore;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.DashboardDoc;
@@ -330,7 +331,8 @@ public class AlertManagerImpl implements AlertManager {
 
     private void addAlertRule(final AlertRuleDoc alertRule,
                               final Map<DocRef, List<RuleConfig>> indexToRules) {
-        if (alertRule.isEnabled()) {
+        final AlertRuleProcessSettings processSettings = alertRule.getProcessSettings();
+        if (processSettings != null && processSettings.isEnabled()) {
             final SearchRequest searchRequest = alertRuleSearchRequestHelper.create(alertRule);
 
             // If the datasource is a view then resolve underlying data source and extraction.

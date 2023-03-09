@@ -20,7 +20,7 @@ package stroom.data.retention.impl;
 
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
-import stroom.data.retention.shared.TimeUnit;
+import stroom.util.shared.time.TimeUnit;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;

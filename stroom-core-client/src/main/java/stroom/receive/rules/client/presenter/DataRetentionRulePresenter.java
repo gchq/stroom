@@ -19,8 +19,7 @@ package stroom.receive.rules.client.presenter;
 
 import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.data.retention.shared.DataRetentionRule;
-import stroom.data.retention.shared.TimeUnit;
-import stroom.datasource.api.v2.AbstractField;
+import stroom.util.shared.time.TimeUnit;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.shared.DataSourceResource;
 import stroom.dispatch.client.Rest;
@@ -35,8 +34,6 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
-import java.util.List;
 
 public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionRuleView> implements Focus {
 

@@ -4,6 +4,7 @@ import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldType;
 import stroom.query.api.v2.ConditionalFormattingRule;
+import stroom.util.shared.time.TimeUnit;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -716,11 +717,11 @@ public final class MappingUtil {
                 value.isForever());
     }
 
-    public static stroom.data.retention.shared.TimeUnit map(stroom.legacy.model_6_1.TimeUnit value) {
+    public static TimeUnit map(stroom.legacy.model_6_1.TimeUnit value) {
         if (value == null) {
             return null;
         }
 
-        return stroom.data.retention.shared.TimeUnit.valueOf(value.name());
+        return TimeUnit.valueOf(value.name());
     }
 }

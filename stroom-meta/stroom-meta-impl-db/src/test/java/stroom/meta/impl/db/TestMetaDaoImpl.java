@@ -23,7 +23,7 @@ import stroom.collection.mock.MockCollectionModule;
 import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.api.RetentionRuleOutcome;
 import stroom.data.retention.shared.DataRetentionRule;
-import stroom.data.retention.shared.TimeUnit;
+import stroom.util.shared.time.TimeUnit;
 import stroom.data.shared.StreamTypeNames;
 import stroom.db.util.JooqUtil;
 import stroom.dictionary.mock.MockWordListProviderModule;

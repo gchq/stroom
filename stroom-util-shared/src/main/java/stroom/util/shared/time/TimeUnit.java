@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.data.retention.shared;
+package stroom.util.shared.time;
 
 import stroom.docref.HasDisplayValue;
 
 public enum TimeUnit implements HasDisplayValue {
+    NANOSECONDS("Nanoseconds"),
+    MILLISECONDS("Milliseconds"),
+    SECONDS("Seconds"),
     MINUTES("Minutes"),
     HOURS("Hours"),
     DAYS("Days"),

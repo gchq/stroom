@@ -17,7 +17,7 @@
 
 package stroom.receive.rules.client.view;
 
-import stroom.data.retention.shared.TimeUnit;
+import stroom.util.shared.time.TimeUnit;
 import stroom.item.client.ItemListBox;
 import stroom.receive.rules.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
 import stroom.widget.form.client.FormGroup;

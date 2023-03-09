@@ -9,7 +9,7 @@ import stroom.data.retention.api.DataRetentionTracker;
 import stroom.data.retention.api.RetentionRuleOutcome;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
-import stroom.data.retention.shared.TimeUnit;
+import stroom.util.shared.time.TimeUnit;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionOperator;

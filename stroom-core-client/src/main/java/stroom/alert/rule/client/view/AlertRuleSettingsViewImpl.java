@@ -22,11 +22,11 @@ import stroom.alert.rule.shared.QueryLanguageVersion;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.item.client.ItemListBox;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.dom.client.InputEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
@@ -48,15 +48,11 @@ public class AlertRuleSettingsViewImpl
     @UiField
     SimplePanel query;
     @UiField
-    CustomCheckBox enabled;
-    @UiField
     ItemListBox<AlertRuleType> alertRuleType;
     @UiField
+    FlowPanel aggregateSettings;
+    @UiField
     TextBox timeField;
-    @UiField
-    TextBox executionDelay;
-    @UiField
-    TextBox executionFrequency;
     @UiField
     SimplePanel destinationFeed;
 
@@ -68,9 +64,17 @@ public class AlertRuleSettingsViewImpl
         languageVersion.addItem(QueryLanguageVersion.SIGMA);
 
         description.addDomHandler(e -> getUiHandlers().onDirty(), InputEvent.getType());
+        languageVersion.addSelectionHandler(e -> getUiHandlers().onDirty());
+        alertRuleType.addSelectionHandler(e -> {
+            getUiHandlers().onDirty();
+            aggregateSettings.setVisible(AlertRuleType.AGGREGATE.equals(alertRuleType.getSelectedItem()));
+        });
+        timeField.addValueChangeHandler(e -> getUiHandlers().onDirty());
 
         alertRuleType.addItem(AlertRuleType.EVENT);
         alertRuleType.addItem(AlertRuleType.AGGREGATE);
+
+        aggregateSettings.setVisible(false);
     }
 
     @Override
@@ -106,16 +110,6 @@ public class AlertRuleSettingsViewImpl
         this.query.setWidget(widget);
     }
 
-    @Override
-    public boolean isEnabled() {
-        return this.enabled.getValue();
-    }
-
-    @Override
-    public void setEnabled(final boolean enabled) {
-        this.enabled.setValue(enabled);
-    }
-
 
     @Override
     public AlertRuleType getAlertRuleType() {
@@ -125,6 +119,7 @@ public class AlertRuleSettingsViewImpl
     @Override
     public void setAlertRuleType(final AlertRuleType alertRuleType) {
         this.alertRuleType.setSelectedItem(alertRuleType);
+        aggregateSettings.setVisible(AlertRuleType.AGGREGATE.equals(alertRuleType));
     }
 
     @Override
@@ -135,26 +130,6 @@ public class AlertRuleSettingsViewImpl
     @Override
     public void setTimeField(final String timeField) {
         this.timeField.setValue(timeField);
-    }
-
-    @Override
-    public String getExecutionDelay() {
-        return this.executionDelay.getValue();
-    }
-
-    @Override
-    public void setExecutionDelay(final String executionDelay) {
-        this.executionDelay.setValue(executionDelay);
-    }
-
-    @Override
-    public String getExecutionFrequency() {
-        return this.executionFrequency.getValue();
-    }
-
-    @Override
-    public void setExecutionFrequency(final String executionFrequency) {
-        this.executionFrequency.setValue(executionFrequency);
     }
 
     @Override

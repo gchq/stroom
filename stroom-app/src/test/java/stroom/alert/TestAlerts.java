@@ -21,9 +21,9 @@ import stroom.alert.impl.AlertManagerImpl;
 import stroom.alert.impl.ResultStoreAlertSearchExecutor;
 import stroom.alert.rule.impl.AlertRuleStore;
 import stroom.alert.rule.shared.AlertRuleDoc;
+import stroom.alert.rule.shared.AlertRuleProcessSettings;
 import stroom.alert.rule.shared.AlertRuleType;
 import stroom.alert.rule.shared.QueryLanguageVersion;
-import stroom.alert.rule.shared.ThresholdAlertRule;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
@@ -55,6 +55,8 @@ import stroom.test.StroomIntegrationTest;
 import stroom.test.common.ProjectPathUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
+import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
 import stroom.view.impl.ViewStore;
 import stroom.view.shared.ViewDoc;
 
@@ -198,8 +200,8 @@ class TestAlerts extends StroomIntegrationTest {
         alertRuleDoc = alertRuleDoc.copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
-                .enabled(true)
                 .alertRuleType(AlertRuleType.EVENT)
+                .processSettings(AlertRuleProcessSettings.builder().enabled(true).build())
                 .build();
         alertRuleStore.writeDocument(alertRuleDoc);
 
@@ -233,11 +235,10 @@ class TestAlerts extends StroomIntegrationTest {
                 | table EventTime, UserId, count""";
 
         // Create the rule.
-        final ThresholdAlertRule thresholdAlertRule = ThresholdAlertRule.builder()
-                .timeField("EventTime")
-                .executionDelay("PT1S")
-                .executionFrequency("PT1S")
-                .destinationFeed(detections)
+        final AlertRuleProcessSettings processSettings = AlertRuleProcessSettings.builder()
+                .enabled(true)
+                .timeToWaitForData(SimpleDuration.builder().time(1).timeUnit(TimeUnit.SECONDS).build())
+                .executionWindow(SimpleDuration.builder().time(1).timeUnit(TimeUnit.SECONDS).build())
                 .build();
 
         final DocRef alertRuleDocRef = alertRuleStore.createDocument("Threshold Event Rule");
@@ -245,9 +246,10 @@ class TestAlerts extends StroomIntegrationTest {
         alertRuleDoc = alertRuleDoc.copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
-                .enabled(true)
                 .alertRuleType(AlertRuleType.AGGREGATE)
-                .alertRule(thresholdAlertRule)
+                .processSettings(processSettings)
+                .timeField("EventTime")
+                .destinationFeed(detections)
                 .build();
         alertRuleStore.writeDocument(alertRuleDoc);
 
@@ -278,11 +280,10 @@ class TestAlerts extends StroomIntegrationTest {
                 | table UserId""";
 
         // Create the rule.
-        final ThresholdAlertRule thresholdAlertRule = ThresholdAlertRule.builder()
-                .timeField("EventTime")
-                .executionDelay("PT1S")
-                .executionFrequency("PT1S")
-                .destinationFeed(detections)
+        final AlertRuleProcessSettings processSettings = AlertRuleProcessSettings.builder()
+                .enabled(true)
+                .timeToWaitForData(SimpleDuration.builder().time(1).timeUnit(TimeUnit.SECONDS).build())
+                .executionWindow(SimpleDuration.builder().time(1).timeUnit(TimeUnit.SECONDS).build())
                 .build();
 
         final DocRef alertRuleDocRef = alertRuleStore.createDocument("Threshold Event Rule");
@@ -290,10 +291,12 @@ class TestAlerts extends StroomIntegrationTest {
         alertRuleDoc = alertRuleDoc.copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
-                .enabled(true)
                 .alertRuleType(AlertRuleType.AGGREGATE)
-                .alertRule(thresholdAlertRule)
+                .processSettings(processSettings)
+                .timeField("EventTime")
+                .destinationFeed(detections)
                 .build();
+
         alertRuleStore.writeDocument(alertRuleDoc);
 
         // Now run the search process.
@@ -325,11 +328,10 @@ class TestAlerts extends StroomIntegrationTest {
                 | table UserId""";
 
         // Create the rule.
-        final ThresholdAlertRule thresholdAlertRule = ThresholdAlertRule.builder()
-                .timeField("EventTime")
-                .executionDelay("PT1S")
-                .executionFrequency("PT1S")
-                .destinationFeed(detections)
+        final AlertRuleProcessSettings processSettings = AlertRuleProcessSettings.builder()
+                .enabled(true)
+                .timeToWaitForData(SimpleDuration.builder().time(1).timeUnit(TimeUnit.SECONDS).build())
+                .executionWindow(SimpleDuration.builder().time(1).timeUnit(TimeUnit.SECONDS).build())
                 .build();
 
         final DocRef alertRuleDocRef = alertRuleStore.createDocument("Threshold Event Rule");
@@ -337,10 +339,12 @@ class TestAlerts extends StroomIntegrationTest {
         alertRuleDoc = alertRuleDoc.copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
-                .enabled(true)
                 .alertRuleType(AlertRuleType.AGGREGATE)
-                .alertRule(thresholdAlertRule)
+                .processSettings(processSettings)
+                .timeField("EventTime")
+                .destinationFeed(detections)
                 .build();
+
         alertRuleStore.writeDocument(alertRuleDoc);
 
         // Now run the search process.
