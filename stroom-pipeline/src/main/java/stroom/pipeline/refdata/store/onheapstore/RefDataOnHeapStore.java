@@ -235,7 +235,7 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
     }
 
     @Override
-    public long getKeyRangeValueEntryCount() {
+    public long getRangeValueEntryCount() {
         return rangeValueNestedMap.entrySet()
                 .stream()
                 .mapToLong(entry -> entry.getValue().size())

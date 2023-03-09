@@ -203,7 +203,7 @@ class NodeStatusServiceUtil {
         // No point in holding a load of zeros, e.g. nodes not running processing
         final long sizeOnDisk = refDataStore.getSizeOnDisk();
         final long combinedEntryCount = refDataStore.getKeyValueEntryCount()
-                + refDataStore.getKeyRangeValueEntryCount();
+                + refDataStore.getRangeValueEntryCount();
         final long processingInfoEntryCount = refDataStore.getProcessingInfoEntryCount();
 
         if (sizeOnDisk > 0) {

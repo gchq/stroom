@@ -9,7 +9,7 @@ public class UnsignedLongSerde implements Serde<UnsignedLong> {
 
     public UnsignedLongSerde(final int len) {
         this.len = len;
-        this.unsignedBytes = UnsignedBytesInstances.of(len);
+        this.unsignedBytes = UnsignedBytesInstances.ofLength(len);
     }
 
     public UnsignedLongSerde(final int len, final UnsignedBytes unsignedBytes) {

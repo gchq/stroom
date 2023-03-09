@@ -48,7 +48,7 @@ class TestUnsignedLongSerde extends AbstractSerdeTest<UnsignedLong, UnsignedLong
                 .map(len ->
                         DynamicTest.dynamicTest("length " + len, () -> {
                             length.set(len);
-                            long val = UnsignedBytesInstances.of(len).getMaxVal();
+                            long val = UnsignedBytesInstances.ofLength(len).getMaxVal();
                             final UnsignedLong unsignedLong = UnsignedLong.of(val, len);
 
                             doSerialisationDeserialisationTest(unsignedLong);
