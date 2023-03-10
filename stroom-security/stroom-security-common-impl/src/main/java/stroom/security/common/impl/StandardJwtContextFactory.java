@@ -468,11 +468,16 @@ public class StandardJwtContextFactory implements JwtContextFactory {
 
     // pkg private for testing
     static String getAwsPublicKeyUri(final JwsParts jwsParts) {
-        final String signer = jwsParts.getHeaderValue(SIGNER_HEADER_KEY)
+
+        final Map<String, String> headerValues = jwsParts.getHeaderValues(
+                SIGNER_HEADER_KEY,
+                OpenId.KEY_ID);
+
+        final String signer = Optional.ofNullable(headerValues.get(SIGNER_HEADER_KEY))
                 .orElseThrow(() -> new RuntimeException(LogUtil.message("Missing '{}' key in jws header {}",
                         SIGNER_HEADER_KEY, jwsParts.header)));
 
-        final String keyId = jwsParts.getHeaderValue(OpenId.KEY_ID)
+        final String keyId = Optional.ofNullable(headerValues.get(OpenId.KEY_ID))
                 .orElseThrow(() -> new RuntimeException(LogUtil.message("Missing '{}' key in jws header {}",
                         OpenId.KEY_ID, jwsParts.header)));
 
@@ -587,12 +592,12 @@ public class StandardJwtContextFactory implements JwtContextFactory {
 
         Map<String, String> getHeaderValues(final String... keys) {
             final String decodedHeader = base64Decode(header);
-            return JsonUtil.getEntries(header, keys);
+            return JsonUtil.getEntries(decodedHeader, keys);
         }
 
         Optional<String> getHeaderValue(final String key) {
             final String decodedHeader = base64Decode(header);
-            return JsonUtil.getValue(header, key);
+            return JsonUtil.getValue(decodedHeader, key);
         }
     }
 }
