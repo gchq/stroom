@@ -202,6 +202,9 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                 return jwtContextFactory.createAuthorisationEntries(defaultOpenIdCredentials.getApiKey());
 
             } else if (userIdentity instanceof final HasUpdatableToken hasUpdatableToken) {
+                LOGGER.debug(() -> LogUtil.message("Getting auth headers as {}, {}",
+                        HasUpdatableToken.class.getSimpleName(),
+                        userIdentity.getClass().getSimpleName()));
                 // Ensure the token hasn't gone off, just in case the refresh queue (which refreshes ahead of the
                 // expiry time) is busy, so the call to refresh is unlikely.
                 final UpdatableToken updatableToken = hasUpdatableToken.getUpdatableToken();
@@ -212,8 +215,12 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                 return jwtContextFactory.createAuthorisationEntries(accessToken);
 
             } else if (userIdentity instanceof final HasJwt hasJwt) {
-                // This is for stroom's internal IDP processing user identity which we don't need to refresh as
-                // ProcessingUserIdentityProviderImpl handles that
+                LOGGER.debug(() -> LogUtil.message("Getting auth headers as {}, {}",
+                        HasJwt.class.getSimpleName(),
+                        userIdentity.getClass().getSimpleName()));
+                // This is for stroom's internal IDP processing user identity (which we don't need to refresh as
+                // ProcessingUserIdentityProviderImpl handles that) or for users that have come from
+                // an AWS ALB with an access token that we don't update.
                 final String accessToken = Objects.requireNonNull(hasJwt.getJwt());
                 return jwtContextFactory.createAuthorisationEntries(accessToken);
 

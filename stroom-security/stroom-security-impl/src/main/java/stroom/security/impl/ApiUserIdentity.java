@@ -1,9 +1,11 @@
 package stroom.security.impl;
 
+import stroom.security.api.HasJwt;
 import stroom.security.api.HasSessionId;
 import stroom.security.api.UserIdentity;
 import stroom.security.common.impl.HasJwtClaims;
 import stroom.security.shared.HasStroomUserIdentity;
+import stroom.util.NullSafe;
 
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.consumer.JwtContext;
@@ -11,7 +13,7 @@ import org.jose4j.jwt.consumer.JwtContext;
 import java.util.Objects;
 import java.util.Optional;
 
-class ApiUserIdentity implements UserIdentity, HasSessionId, HasStroomUserIdentity, HasJwtClaims {
+class ApiUserIdentity implements UserIdentity, HasSessionId, HasStroomUserIdentity, HasJwtClaims, HasJwt {
 
     private final String userUuid;
     private final String id;
@@ -56,6 +58,11 @@ class ApiUserIdentity implements UserIdentity, HasSessionId, HasStroomUserIdenti
     @Override
     public String getSessionId() {
         return sessionId;
+    }
+
+    @Override
+    public String getJwt() {
+        return NullSafe.get(jwtContext, JwtContext::getJwt);
     }
 
     @Override

@@ -6,9 +6,13 @@ import stroom.dropwizard.common.TokenExceptionMapper;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
+import stroom.util.NullSafe;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.jersey.WebTargetProxy;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.BuildInfo;
 
 import com.google.inject.AbstractModule;
@@ -27,7 +31,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.ext.ExceptionMapper;
 
 public class JerseyModule extends AbstractModule {
-//    private static final Logger LOGGER = LoggerFactory.getLogger(JerseyModule.class);
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JerseyModule.class);
 //
 //    // This name is used by dropwizard metrics
 //    private static final String JERSEY_CLIENT_NAME = "stroom_jersey_client";
@@ -106,6 +111,9 @@ public class JerseyModule extends AbstractModule {
                 private void addAuthHeader(final Builder builder) {
                     final UserIdentity userIdentity = securityContext.getUserIdentity();
                     final Map<String, String> authHeaders = userIdentityFactory.getAuthHeaders(userIdentity);
+                    LOGGER.debug(() -> LogUtil.message("Adding auth headers to request, keys: '{}', userType: {}",
+                            String.join(", ", NullSafe.map(authHeaders).keySet()),
+                            NullSafe.get(userIdentity, Object::getClass, Class::getSimpleName)));
                     authHeaders.forEach(builder::header);
                 }
             };

@@ -1,5 +1,6 @@
 package stroom.security.common.impl;
 
+import stroom.security.api.HasJwt;
 import stroom.security.api.UserIdentity;
 import stroom.security.common.impl.AbstractUserIdentityFactory.FetchTokenResult;
 import stroom.security.openid.api.TokenResponse;
@@ -19,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 
-public class UpdatableToken implements HasJwtClaims, Delayed {
+public class UpdatableToken implements HasJwtClaims, Delayed, HasJwt {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UpdatableToken.class);
 
@@ -94,7 +95,12 @@ public class UpdatableToken implements HasJwtClaims, Delayed {
         return !NullSafe.isBlankString(tokenResponse, TokenResponse::getRefreshToken);
     }
 
-//    /**
+    @Override
+    public String getJwt() {
+        return NullSafe.get(tokenResponse, TokenResponse::getAccessToken);
+    }
+
+    //    /**
 //     * @return True if the token has actually expired without any buffer period.
 //     */
 //    public boolean hasTokenExpired() {
