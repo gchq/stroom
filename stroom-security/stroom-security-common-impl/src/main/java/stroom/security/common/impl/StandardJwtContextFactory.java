@@ -6,18 +6,18 @@ import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import org.eclipse.jetty.http.HttpStatus;
 import org.jose4j.base64url.SimplePEMEncoder;
 import org.jose4j.jwk.JsonWebKeySet;
+import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
@@ -35,14 +35,12 @@ import java.time.Duration;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Base64;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
@@ -86,8 +84,9 @@ public class StandardJwtContextFactory implements JwtContextFactory {
      * The user claims, in JSON web tokens (JWT) format.
      */
     static final String AMZN_OIDC_DATA_HEADER = "x-amzn-oidc-data";
-    static final String AMZN_OIDC_SIGNER_HEADER_KEY = "signer";
-    static final Pattern AMZN_OIDC_SIGNER_SPLIT_PATTERN = Pattern.compile(":");
+    static final String AMZN_OIDC_SIGNER_PREFIX = "arn:aws:";
+    static final String SIGNER_HEADER_KEY = "signer";
+    static final String AMZN_OIDC_SIGNER_SPLIT_CHAR = ":";
 
     private static final String AUTHORIZATION_HEADER = HttpHeaders.AUTHORIZATION;
 
@@ -162,6 +161,22 @@ public class StandardJwtContextFactory implements JwtContextFactory {
         }
     }
 
+    public Map<String, String> createAuthorisationEntries(final String accessToken, final JwtClaims jwtClaims) {
+        // Should be common to both internal and external IDPs
+        if (NullSafe.isBlankString(accessToken)) {
+            return Collections.emptyMap();
+        } else if (jwtClaims == null) {
+            return Map.of(
+                    HttpHeaders.AUTHORIZATION,
+                    JwtUtil.BEARER_PREFIX + accessToken);
+        } else {
+
+            return Map.of(
+                    HttpHeaders.AUTHORIZATION,
+                    JwtUtil.BEARER_PREFIX + accessToken);
+        }
+    }
+
     @Override
     public Optional<JwtContext> getJwtContext(final HttpServletRequest request) {
 
@@ -180,36 +195,59 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                     request.getRequestURI(), headers);
         }
 
-        final Optional<HeaderToken> optionalJwt = getTokenFromHeader(request);
-
-        return optionalJwt
-                .flatMap(headerToken -> {
-                    final Optional<JwtContext> optJwtContext;
-                    if (AMZN_OIDC_DATA_HEADER.equals(headerToken.header)) {
-                        // Could move parseJws into getAwsJwtContext
-                        final JwsParts jwsParts = parseJws(headerToken.jwt);
-                        optJwtContext = getAwsJwtContext(jwsParts);
-                    } else {
-                        optJwtContext = getStandardJwtContext(headerToken.jwt);
-                    }
-
-                    LOGGER.debug(() -> LogUtil.message("jwtClaims:\n{}",
-                            optJwtContext.map(JwtContext::getJwtClaims)
-                                    .map(jwtClaims -> jwtClaims.getClaimsMap()
-                                            .entrySet()
-                                            .stream()
-                                            .sorted(Entry.comparingByKey())
-                                            .map(entry ->
-                                                    "  " + entry.getKey() + ": '" + entry.getValue().toString() + "'")
-                                            .collect(Collectors.joining("\n")))
-                                    .orElse("  <empty>")));
-
-                    return optJwtContext;
-                })
+        return getTokenFromHeader(request)
+                .flatMap(this::getJwtContextFromHeaderToken)
                 .or(() -> {
                     LOGGER.debug(() -> "No JWS found in headers in request to " + request.getRequestURI());
                     return Optional.empty();
                 });
+    }
+
+    private boolean isAwsSignedToken(final HeaderToken headerToken, final JwsParts jwsParts) {
+        if (AMZN_OIDC_DATA_HEADER.equals(headerToken.header)) {
+            LOGGER.debug("Found header {}", AMZN_OIDC_DATA_HEADER);
+            // Request came from an AWS load balancer that did the auth flow
+            return true;
+        } else {
+            // Request may have come from another stroom node that has passed on an AWS signed
+            // token, but not in the special AWS header
+            return isAwsSignedToken(jwsParts);
+        }
+    }
+
+    private boolean isAwsSignedToken(final JwsParts jwsParts) {
+        // Request may have come from another stroom node that has passed on an AWS signed
+        // token, but not in the special AWS header
+        return jwsParts.getHeaderValue(SIGNER_HEADER_KEY)
+                .filter(val -> {
+                    LOGGER.debug("{} is {}", SIGNER_HEADER_KEY, val);
+                    return val.startsWith(AMZN_OIDC_SIGNER_PREFIX);
+                })
+                .isPresent();
+    }
+
+    private Optional<JwtContext> getJwtContextFromHeaderToken(final HeaderToken headerToken) {
+        final Optional<JwtContext> optJwtContext;
+        final JwsParts jwsParts = parseJws(headerToken.jwt);
+
+        if (isAwsSignedToken(headerToken, jwsParts)) {
+            optJwtContext = getAwsJwtContext(jwsParts);
+        } else {
+            optJwtContext = getStandardJwtContext(headerToken.jwt);
+        }
+
+        LOGGER.debug(() -> LogUtil.message("jwtClaims:\n{}",
+                optJwtContext.map(JwtContext::getJwtClaims)
+                        .map(jwtClaims -> jwtClaims.getClaimsMap()
+                                .entrySet()
+                                .stream()
+                                .sorted(Entry.comparingByKey())
+                                .map(entry ->
+                                        "  " + entry.getKey() + ": '" + entry.getValue().toString() + "'")
+                                .collect(Collectors.joining("\n")))
+                        .orElse("  <empty>")));
+
+        return optJwtContext;
     }
 
     private Optional<HeaderToken> getTokenFromHeader(final HttpServletRequest request) {
@@ -229,10 +267,12 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                                 .map(jws -> new HeaderToken(AUTHORIZATION_HEADER, jws)));
     }
 
+
     private JwsParts parseJws(final String jws) {
         LOGGER.debug(() -> "jws=" + jws);
 
         // Step 1: Get the key id from JWT headers (the kid field)
+        // Regex split on single char will not use regex so no need to pre-compile
         final String[] parts = jws.split("\\.");
         final String header = parts[0];
         final String payload = parts[1];
@@ -240,34 +280,40 @@ public class StandardJwtContextFactory implements JwtContextFactory {
 
         LOGGER.debug(() -> "header=" + header + ", payload=" + payload + ", signature=" + signature);
 
-        final String decodedHeader;
-        try {
-            decodedHeader = new String(Base64.getDecoder().decode(header), StandardCharsets.UTF_8);
-        } catch (Exception e) {
-            throw new RuntimeException(LogUtil.message("jws is not in BASE64 format: {}",
-                    LogUtil.exceptionMessage(e)), e);
-        }
+        return new JwsParts(
+                jws,
+                header,
+                payload,
+                signature);
 
-        LOGGER.debug("decodedHeader: {}", decodedHeader);
+//        final String decodedHeader;
+//        try {
+//            decodedHeader = new String(Base64.getDecoder().decode(header), StandardCharsets.UTF_8);
+//        } catch (Exception e) {
+//            throw new RuntimeException(LogUtil.message("jws is not in BASE64 format: {}",
+//                    LogUtil.exceptionMessage(e)), e);
+//        }
+//
+//        LOGGER.debug("decodedHeader: {}", decodedHeader);
 
-        try {
-            final Map<String, String> headerMap = objectMapper.readValue(
-                    decodedHeader,
-                    new TypeReference<HashMap<String, String>>() {
-                    });
-            LOGGER.debug("headerMap: {}", headerMap);
-
-            return new JwsParts(
-                    jws,
-                    header,
-                    payload,
-                    signature,
-                    headerMap);
-
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(LogUtil.message("Error parsing header as json: {}. decodedHeader:\n{}",
-                    LogUtil.exceptionMessage(e), decodedHeader), e);
-        }
+//        try {
+//            final Map<String, String> headerMap = objectMapper.readValue(
+//                    decodedHeader,
+//                    new TypeReference<HashMap<String, String>>() {
+//                    });
+//            LOGGER.debug("headerMap: {}", headerMap);
+//
+//            return new JwsParts(
+//                    jws,
+//                    header,
+//                    payload,
+//                    signature,
+//                    headerMap);
+//
+//        } catch (JsonProcessingException e) {
+//            throw new RuntimeException(LogUtil.message("Error parsing header as json: {}. decodedHeader:\n{}",
+//                    LogUtil.exceptionMessage(e), decodedHeader), e);
+//        }
     }
 
     private Optional<JwtContext> getAwsJwtContext(final JwsParts jwsParts) {
@@ -332,19 +378,12 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     @Override
     public Optional<JwtContext> getJwtContext(final String jwt) {
         LOGGER.debug("getJwtContext called for jwt: {}", jwt);
-        // We don't know if this is signed by the IDP or aws so crack it open
-//        final JwsParts jwsParts = parseJws(jwt);
-//        if (jwsParts.getHeaderValue(AMZN_OIDC_SIGNER_HEADER_KEY)
-//                .filter(val -> !val.isBlank())
-//                .filter(val -> val.startsWith(AMZN_OIDC_SIGNER_HEADER_PREFIX))
-//                .isPresent()) {
-//            // This jwt was signed by AWS
-//            return getAwsJwtContext(jwsParts);
-//        } else {
-
-        // There is no request with this so this is not an AWS signed token.
-        return getStandardJwtContext(jwt);
-//        }
+        final JwsParts jwsParts = parseJws(jwt);
+        if (isAwsSignedToken(jwsParts)) {
+            return getAwsJwtContext(jwsParts);
+        } else {
+            return getStandardJwtContext(jwt);
+        }
     }
 
     @Override
@@ -429,24 +468,26 @@ public class StandardJwtContextFactory implements JwtContextFactory {
 
     // pkg private for testing
     static String getAwsPublicKeyUri(final JwsParts jwsParts) {
-        final String signer = jwsParts.getHeaderValue(AMZN_OIDC_SIGNER_HEADER_KEY)
+        final String signer = jwsParts.getHeaderValue(SIGNER_HEADER_KEY)
                 .orElseThrow(() -> new RuntimeException(LogUtil.message("Missing '{}' key in jws header {}",
-                        AMZN_OIDC_SIGNER_HEADER_KEY, jwsParts.header)));
+                        SIGNER_HEADER_KEY, jwsParts.header)));
+
         final String keyId = jwsParts.getHeaderValue(OpenId.KEY_ID)
                 .orElseThrow(() -> new RuntimeException(LogUtil.message("Missing '{}' key in jws header {}",
                         OpenId.KEY_ID, jwsParts.header)));
 
         if (NullSafe.isBlankString(signer)) {
             throw new RuntimeException(LogUtil.message("Blank value for '{}' key in jws header {}",
-                    AMZN_OIDC_SIGNER_HEADER_KEY, jwsParts.header));
+                    SIGNER_HEADER_KEY, jwsParts.header));
         }
 
         // Signer is an Amazon Resource Name of the form:
         // arn:partition:service:region:account-id:resource-id
-        final String[] signerParts = AMZN_OIDC_SIGNER_SPLIT_PATTERN.split(signer);
+        // No need to pre-compile the regex as split will not use regex for single chars
+        final String[] signerParts = signer.split(AMZN_OIDC_SIGNER_SPLIT_CHAR);
         if (signerParts.length < 4) {
             throw new RuntimeException(LogUtil.message("Unable to parse value for '{}' key in jws header {}",
-                    AMZN_OIDC_SIGNER_HEADER_KEY, signer));
+                    SIGNER_HEADER_KEY, signer));
         }
         final String awsRegion = signerParts[3];
 
@@ -525,11 +566,33 @@ public class StandardJwtContextFactory implements JwtContextFactory {
             String jws,
             String header,
             String payload,
-            String signature,
-            Map<String, String> headerMap) {
+            String signature) {
+
+//        Optional<String> getHeaderValue(final String key) {
+//            return Optional.ofNullable(headerMap.get(key));
+//        }
+
+        private String base64Decode(final String input) {
+            final String decoded;
+            try {
+                decoded = new String(Base64.getDecoder().decode(input), StandardCharsets.UTF_8);
+            } catch (Exception e) {
+                throw new RuntimeException(LogUtil.message("input is not in BASE64 format, input: '{}': {}",
+                        input, LogUtil.exceptionMessage(e)), e);
+            }
+
+            LOGGER.debug("decodedHeader: {}", decoded);
+            return decoded;
+        }
+
+        Map<String, String> getHeaderValues(final String... keys) {
+            final String decodedHeader = base64Decode(header);
+            return JsonUtil.getEntries(header, keys);
+        }
 
         Optional<String> getHeaderValue(final String key) {
-            return Optional.ofNullable(headerMap.get(key));
+            final String decodedHeader = base64Decode(header);
+            return JsonUtil.getValue(header, key);
         }
     }
 }
