@@ -12,6 +12,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.1-beta.23-test-open-id-13] - 2023-03-10
+
+* Issue **#3112** : Fix adding auth headers for api users and add more debug.
+
+
 ## [v7.1-beta.23-test-open-id-12] - 2023-03-06
 
 * Issue **#3112** : Fix linking of claims to user.
@@ -4617,7 +4622,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id-12...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id-13...HEAD
+[v7.1-beta.23-test-open-id-13]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id-12...v7.1-beta.23-test-open-id-13
 [v7.1-beta.23-test-open-id-12]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id-11...v7.1-beta.23-test-open-id-12
 [v7.1-beta.23-test-open-id-11]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id-10...v7.1-beta.23-test-open-id-11
 [v7.1-beta.23-test-open-id-10]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id-9...v7.1-beta.23-test-open-id-10
