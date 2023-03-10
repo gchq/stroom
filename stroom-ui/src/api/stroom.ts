@@ -9,15 +9,6 @@
  * ---------------------------------------------------------------
  */
 
-export interface AbstractAlertRule {
-  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  destinationFeed?: DocRef;
-  executionDelay?: string;
-  executionFrequency?: string;
-  timeField?: string;
-  type: string;
-}
-
 export interface AbstractFetchDataResult {
   availableChildStreamTypes?: string[];
   classification?: string;
@@ -151,23 +142,20 @@ export type AddPermissionEvent = PermissionChangeEvent & {
 };
 
 export interface AlertRuleDoc {
-  alertRule?: AbstractAlertRule;
   alertRuleType?: "EVENT" | "AGGREGATE";
 
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   description?: string;
-  enabled?: boolean;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  destinationFeed?: DocRef;
   languageVersion?: "STROOM_QL_VERSION_0_1" | "SIGMA";
-
-  /** @format int64 */
-  maxMetaCreateTimeMs?: number;
-
-  /** @format int64 */
-  minMetaCreateTimeMs?: number;
   name?: string;
+  processSettings?: AlertRuleProcessSettings;
   query?: string;
+  timeField?: string;
   type?: string;
 
   /** @format int64 */
@@ -175,6 +163,18 @@ export interface AlertRuleDoc {
   updateUser?: string;
   uuid?: string;
   version?: string;
+}
+
+export interface AlertRuleProcessSettings {
+  enabled?: boolean;
+  executionWindow?: SimpleDuration;
+
+  /** @format int64 */
+  maxMetaCreateTimeMs?: number;
+
+  /** @format int64 */
+  minMetaCreateTimeMs?: number;
+  timeToWaitForData?: SimpleDuration;
 }
 
 export interface Annotation {
@@ -707,7 +707,7 @@ export interface DataRetentionRule {
 
   /** @format int32 */
   ruleNumber?: number;
-  timeUnit?: "MINUTES" | "HOURS" | "DAYS" | "WEEKS" | "MONTHS" | "YEARS";
+  timeUnit?: "NANOSECONDS" | "MILLISECONDS" | "SECONDS" | "MINUTES" | "HOURS" | "DAYS" | "WEEKS" | "MONTHS" | "YEARS";
 }
 
 export interface DataRetentionRules {
@@ -3070,6 +3070,12 @@ export interface SharedStepData {
   sourceLocation?: SourceLocation;
 }
 
+export interface SimpleDuration {
+  /** @format int64 */
+  time?: number;
+  timeUnit?: "NANOSECONDS" | "MILLISECONDS" | "SECONDS" | "MINUTES" | "HOURS" | "DAYS" | "WEEKS" | "MONTHS" | "YEARS";
+}
+
 export interface SimpleUser {
   name?: string;
   uuid?: string;
@@ -3547,8 +3553,6 @@ export interface ThemeConfig {
   tubeOpacity?: string;
   tubeVisible?: string;
 }
-
-export type ThresholdAlertRule = AbstractAlertRule;
 
 export interface TimeRange {
   condition?:
