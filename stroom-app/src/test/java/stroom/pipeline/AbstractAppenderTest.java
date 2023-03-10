@@ -41,6 +41,7 @@ import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.textconverter.TextConverterStore;
 import stroom.pipeline.xslt.XsltStore;
+import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskContext;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.common.StroomPipelineTestFileUtil;
@@ -86,8 +87,6 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     private RollingDestinations destinations;
     @Inject
     private PipelineScopeRunnable pipelineScopeRunnable;
-    @Inject
-    private TaskContext taskContext;
     @Inject
     private MetaService metaService;
     @Inject
@@ -167,7 +166,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
             // Create the parser.
             final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
             final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
-            final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData, taskContext);
+            final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData, new SimpleTaskContext());
 
             // Get the input streams.
             final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(dir);

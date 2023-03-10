@@ -50,6 +50,7 @@ import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreMetaDb;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataProcessingInfoSerde;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
@@ -120,7 +121,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     private static final String LMDB_NATIVE_LIB_PROP = "lmdbjava.native.lib";
 
     private final LmdbEnvFactory lmdbEnvFactory;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
 
     private final LmdbEnv lmdbEnvironment;
 
@@ -157,12 +158,12 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             final MapUidReverseDb.Factory mapUidReverseDbFactory,
             final RefDataValueConverter refDataValueConverter,
             final ProcessingInfoDb.Factory processingInfoDbFactory,
-            final TaskContext taskContext) {
+            final TaskContextFactory taskContextFactory) {
 
         this.lmdbEnvFactory = lmdbEnvFactory;
         this.referenceDataConfigProvider = referenceDataConfigProvider;
         this.refDataValueConverter = refDataValueConverter;
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
 
         this.lmdbEnvironment = createEnvironment(referenceDataConfigProvider.get().getLmdbConfig());
 
@@ -222,7 +223,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 try (final PooledByteBuffer refStreamDefPooledBuf = processingInfoDb.getPooledKeyBuffer()) {
                     final RefStreamDefinition refStreamDefinition = entry.getKey();
                     final RefDataProcessingInfo refDataProcessingInfo = entry.getValue();
-                    this.taskContext.info(() -> LogUtil.message(
+                    taskContextFactory.current().info(() -> LogUtil.message(
                             "Purging partially loaded/purged reference stream {}:{} with state {}",
                             refStreamDefinition.getStreamId(),
                             refStreamDefinition.getPartNumber(),
@@ -520,9 +521,9 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     @Override
     public void purge(final long refStreamId, final long partIndex) {
-
+        final TaskContext taskContext = taskContextFactory.current();
         final Instant startTime = Instant.now();
-        this.taskContext.info(() -> LogUtil.message("Purging data for reference stream {}:{}",
+        taskContext.info(() -> LogUtil.message("Purging data for reference stream {}:{}",
                 refStreamId, partIndex));
 
         final AtomicReference<PurgeCounts> countsRef = new AtomicReference<>(PurgeCounts.zero());
@@ -653,6 +654,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
      * @param now Allows the setting of the current time for testing purposes
      */
     synchronized void purgeOldData(final Instant now, final StroomDuration purgeAge) {
+        final TaskContext taskContext = taskContextFactory.current();
         taskContext.info(() -> "Purging old data");
         final Instant startTime = Instant.now();
         final AtomicReference<PurgeCounts> countsRef = new AtomicReference<>(PurgeCounts.zero());
@@ -805,6 +807,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             final Predicate<ByteBuffer> processingInfoBufferPredicate,
             final ByteBuffer refStreamDefinitionBuf,
             final RefStreamDefinition refStreamDefinition) {
+        final TaskContext taskContext = taskContextFactory.current();
 
         LOGGER.debug("Attempting to purge ref stream {} if eligible", refStreamDefinition);
         final AtomicReference<RefStreamPurgeCounts> refStreamPurgeCountsRef = new AtomicReference<>();
@@ -883,6 +886,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                                                    final RefDataProcessingInfo refDataProcessingInfo,
                                                    final ByteBuffer refStreamDefinitionBuf,
                                                    final BatchingWriteTxn batchingWriteTxn) {
+        final TaskContext taskContext = taskContextFactory.current();
 
         taskContext.info(() -> "Purging reference stream " +
                 refStreamDefinition.getStreamId() + ":" +

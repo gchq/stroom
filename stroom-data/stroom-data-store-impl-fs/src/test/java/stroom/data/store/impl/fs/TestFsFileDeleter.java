@@ -1,6 +1,6 @@
 package stroom.data.store.impl.fs;
 
-import stroom.task.api.SimpleTaskContext;
+import stroom.task.api.SimpleTaskContextFactory;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -54,7 +54,7 @@ class TestFsFileDeleter {
         assertThat(FileUtil.count(tempDir))
                 .isEqualTo(9);
 
-        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContext());
+        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContextFactory());
         final boolean success = fsFileDeleter.deleteFilesByBaseName(
                 123, tempDir, baseName1, fileDeleteCounter::addAndGet);
 
@@ -89,7 +89,7 @@ class TestFsFileDeleter {
         assertThat(FileUtil.count(tempDir))
                 .isEqualTo(9);
 
-        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContext());
+        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContextFactory());
         boolean success = fsFileDeleter.deleteFilesByBaseName(
                 123, tempDir, baseName1, fileDeleteCounter::addAndGet);
 
@@ -131,7 +131,7 @@ class TestFsFileDeleter {
         assertThat(FileUtil.count(tempDir))
                 .isEqualTo(fileCount);
 
-        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContext());
+        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContextFactory());
         final CountDownLatch countDownLatch = new CountDownLatch(1);
         final CountDownLatch countDownLatch2 = new CountDownLatch(1);
         final AtomicBoolean success = new AtomicBoolean();
@@ -177,7 +177,7 @@ class TestFsFileDeleter {
         assertThat(FileUtil.count(tempDir))
                 .isEqualTo(0);
 
-        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContext());
+        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContextFactory());
         final boolean success = fsFileDeleter.deleteFilesByBaseName(
                 123, tempDir, "001", fileDeleteCounter::addAndGet);
 
@@ -200,7 +200,7 @@ class TestFsFileDeleter {
         assertThat(Files.exists(notExistsDir))
                 .isFalse();
 
-        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContext());
+        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContextFactory());
         final boolean success = fsFileDeleter.deleteFilesByBaseName(
                 123, notExistsDir, "001", fileDeleteCounter::addAndGet);
 
@@ -219,7 +219,7 @@ class TestFsFileDeleter {
         assertThat(Files.exists(notExistsDir))
                 .isFalse();
 
-        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContext());
+        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContextFactory());
         // Make sure oldFileTime is in the future so all modified dates are considered old
         final boolean success = fsFileDeleter.tryDeleteDir(
                 tempDir,
@@ -241,7 +241,7 @@ class TestFsFileDeleter {
                 .exists()
                 .isDirectory();
 
-        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContext());
+        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContextFactory());
         // Make sure oldFileTime is in the future so all modified dates are considered old
         final boolean success = fsFileDeleter.tryDeleteDir(
                 tempDir,
@@ -271,7 +271,7 @@ class TestFsFileDeleter {
                 .exists()
                 .isDirectory();
 
-        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContext());
+        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContextFactory());
         // Make sure oldFileTime is in the future so all modified dates are considered old
         final boolean success = fsFileDeleter.tryDeleteDir(
                 tempDir,
@@ -304,7 +304,7 @@ class TestFsFileDeleter {
                 .exists()
                 .isDirectory();
 
-        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContext());
+        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContextFactory());
         // Make sure oldFileTime is in the future so all modified dates are considered old
         final boolean success = fsFileDeleter.tryDeleteDir(
                 tempDir,
@@ -340,7 +340,7 @@ class TestFsFileDeleter {
                 .exists()
                 .isDirectory();
 
-        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContext());
+        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContextFactory());
         // Make sure oldFileTime is in the future so all modified dates are considered old
         boolean success = fsFileDeleter.tryDeleteDir(
                 tempDir,
@@ -401,7 +401,7 @@ class TestFsFileDeleter {
                 .exists()
                 .isDirectory();
 
-        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContext());
+        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContextFactory());
         // Make sure oldFileTime is in the future so all modified dates are considered old
         final boolean success = fsFileDeleter.tryDeleteDir(
                 tempDir,
@@ -452,7 +452,7 @@ class TestFsFileDeleter {
                 .exists()
                 .isRegularFile();
 
-        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContext());
+        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContextFactory());
         // Make sure oldFileTime is in the future so all modified dates are considered old
         Assertions.assertThatThrownBy(
                         () -> {
@@ -493,7 +493,7 @@ class TestFsFileDeleter {
                 .exists()
                 .isDirectory();
 
-        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContext());
+        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContextFactory());
         final boolean success = fsFileDeleter.tryDeleteDir(
                 tempDir,
                 level2Dir,
@@ -537,7 +537,7 @@ class TestFsFileDeleter {
         assertThat(level2Dir)
                 .doesNotExist();
 
-        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContext());
+        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContextFactory());
         // Make sure oldFileTime is in the future so all modified dates are considered old
         final boolean success = fsFileDeleter.tryDeleteDir(
                 tempDir,
@@ -572,7 +572,7 @@ class TestFsFileDeleter {
                 .exists()
                 .isDirectory();
 
-        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContext());
+        final FsFileDeleter fsFileDeleter = new FsFileDeleter(new SimpleTaskContextFactory());
         Assertions.assertThatThrownBy(
                         () ->
                                 // Make sure oldFileTime is in the future so all modified dates are considered old

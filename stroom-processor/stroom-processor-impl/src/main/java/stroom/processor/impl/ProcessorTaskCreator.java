@@ -16,28 +16,7 @@
 
 package stroom.processor.impl;
 
-import stroom.processor.shared.ProcessorTask;
+public interface ProcessorTaskCreator {
 
-import java.util.Collection;
-import java.util.concurrent.LinkedBlockingQueue;
-
-public class ProcessorTaskQueue {
-
-    private final LinkedBlockingQueue<ProcessorTask> queue = new LinkedBlockingQueue<>();
-
-    public ProcessorTask poll() {
-        return queue.poll();
-    }
-
-    public boolean addAll(final Collection<? extends ProcessorTask> streamTasks) {
-        return queue.addAll(streamTasks);
-    }
-
-    public int size() {
-        return queue.size();
-    }
-
-    public boolean hasItems() {
-        return !queue.isEmpty();
-    }
+    void exec();
 }

@@ -5,6 +5,7 @@ import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LogUtil;
 
 import com.google.common.base.Preconditions;
@@ -41,21 +42,23 @@ class HeapHistogramStatisticsExecutor {
     private final HeapHistogramService heapHistogramService;
     private final InternalStatisticsReceiver internalStatisticsReceiver;
     private final NodeInfo nodeInfo;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
 
     @Inject
     HeapHistogramStatisticsExecutor(final HeapHistogramService heapHistogramService,
                                     final InternalStatisticsReceiver internalStatisticsReceiver,
                                     final NodeInfo nodeInfo,
-                                    final TaskContext taskContext) {
+                                    final TaskContextFactory taskContextFactory) {
         this.heapHistogramService = heapHistogramService;
         this.internalStatisticsReceiver = internalStatisticsReceiver;
         this.nodeInfo = nodeInfo;
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
     }
 
     public void exec() {
         try {
+            final TaskContext taskContext = taskContextFactory.current();
+
             LOGGER.info("Java Heap Histogram Statistics job started");
             taskContext.info(() -> "Java Heap Histogram Statistics job started");
             Instant startTme = Instant.now();

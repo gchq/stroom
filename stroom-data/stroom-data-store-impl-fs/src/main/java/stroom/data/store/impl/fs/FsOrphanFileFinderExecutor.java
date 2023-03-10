@@ -21,6 +21,7 @@ import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
@@ -51,7 +52,7 @@ class FsOrphanFileFinderExecutor {
     private final Duration oldAge;
     private final Provider<FsOrphanFileFinder> orphanFileFinderProvider;
     //    private final ExecutorProvider executorProvider;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
     private final PathCreator pathCreator;
 //    private final DataStoreServiceConfig config;
 
@@ -60,13 +61,13 @@ class FsOrphanFileFinderExecutor {
     FsOrphanFileFinderExecutor(final FsVolumeService volumeService,
                                final Provider<FsOrphanFileFinder> orphanFileFinderProvider,
 //                               final ExecutorProvider executorProvider,
-                               final TaskContext taskContext,
+                               final TaskContextFactory taskContextFactory,
                                final Provider<DataStoreServiceConfig> config,
                                final PathCreator pathCreator) {
         this.volumeService = volumeService;
         this.orphanFileFinderProvider = orphanFileFinderProvider;
 //        this.executorProvider = executorProvider;
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
         this.pathCreator = pathCreator;
 //        this.config = config;
 
@@ -79,6 +80,7 @@ class FsOrphanFileFinderExecutor {
     }
 
     public void scan() {
+        final TaskContext taskContext = taskContextFactory.current();
         taskContext.info(() -> "Starting orphan file finder");
 
         final FsOrphanFileFinderSummary summary = new FsOrphanFileFinderSummary();

@@ -24,9 +24,8 @@ import stroom.processor.impl.ProcessorFilterDao;
 import stroom.processor.impl.ProcessorModule;
 import stroom.processor.impl.ProcessorTaskDao;
 import stroom.processor.impl.ProcessorTaskDeleteExecutor;
-import stroom.processor.impl.ProcessorTaskManager;
 import stroom.task.api.TaskContext;
-import stroom.util.date.DateUtil;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -36,10 +35,11 @@ import stroom.util.time.TimeUtils;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorTaskDeleteExecutorImpl.class);
@@ -52,8 +52,7 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
     private final ProcessorDao processorDao;
     private final ProcessorFilterDao processorFilterDao;
     private final ProcessorTaskDao processorTaskDao;
-    private final ProcessorTaskManager processorTaskManager;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
 
     @Inject
     ProcessorTaskDeleteExecutorImpl(final ClusterLockService clusterLockService,
@@ -61,31 +60,23 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
                                     final ProcessorDao processorDao,
                                     final ProcessorFilterDao processorFilterDao,
                                     final ProcessorTaskDao processorTaskDao,
-                                    final ProcessorTaskManager processorTaskManager,
-                                    final TaskContext taskContext) {
+                                    final TaskContextFactory taskContextFactory) {
         this.clusterLockService = clusterLockService;
         this.processorConfig = processorConfig;
         this.processorDao = processorDao;
         this.processorFilterDao = processorFilterDao;
         this.processorTaskDao = processorTaskDao;
-        this.processorTaskManager = processorTaskManager;
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
     }
 
-    public void exec() {
-        final AtomicLong nextDeleteMs = processorTaskManager.getNextDeleteMs();
+    /**
+     * Synchronised as we don't want to run more than once concurrently.
+     */
+    public synchronized void exec() {
         try {
-            if (nextDeleteMs.get() == 0) {
-                LOGGER.debug("deleteSchedule() - no schedule set .... maybe we aren't in charge of creating tasks");
-            } else {
-                LOGGER.debug("deleteSchedule() - nextDeleteMs={}",
-                        DateUtil.createNormalDateTimeString(nextDeleteMs.get()));
-                // Have we gone past our next delete schedule?
-                if (nextDeleteMs.get() < System.currentTimeMillis()) {
-                    taskContext.info(() -> "Deleting old processor tasks");
-                    lockAndDelete();
-                }
-            }
+            final TaskContext taskContext = taskContextFactory.current();
+            taskContext.info(() -> "Deleting old processor tasks");
+            lockAndDelete();
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -119,12 +110,13 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
     // Only public for testing by stroom-app it seems
     @Override
     public void delete(final Instant deleteThreshold) {
+        final TaskContext taskContext = taskContextFactory.current();
+
         // Logically delete tasks that are associated with filters that have been logically deleted for longer than the
         // threshold.
         final AtomicInteger totalCount = new AtomicInteger();
         taskContext.info(() -> "Logically deleting processor tasks for deleted processor filters");
-        runWithCountAndTimeLogging(
-                () -> processorTaskDao.logicalDeleteForDeletedProcessorFilters(deleteThreshold),
+        runWithCountAndTimeLogging(() -> processorTaskDao.logicalDeleteForDeletedProcessorFilters(deleteThreshold),
                 totalCount,
                 "Logically deleted {} processor tasks for deleted processor filters");
 
@@ -133,31 +125,25 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
         // can't delete the filter until all associated tasks have been processed otherwise they will never be picked
         // up.
         taskContext.info(() -> "Logically deleting old processor filters with a state of COMPLETED and no tasks");
-        runWithCountAndTimeLogging(
-                () -> processorFilterDao.logicallyDeleteOldProcessorFilters(deleteThreshold),
+        runWithCountAndTimeLogging(() -> processorFilterDao.logicallyDeleteOldProcessorFilters(deleteThreshold),
                 totalCount,
-                "Logically deleted {} old processor filters with a state of " +
-                        "COMPLETED and no tasks");
+                "Logically deleted {} old processor filters with a state of " + "COMPLETED and no tasks");
 
         // Physically delete tasks that are logically deleted or complete for longer than the threshold.
         taskContext.info(() -> "Physically deleting old processor tasks with a state of (COMPLETED|DELETED)");
-        runWithCountAndTimeLogging(
-                () -> processorTaskDao.physicallyDeleteOldTasks(deleteThreshold),
+        runWithCountAndTimeLogging(() -> processorTaskDao.physicallyDeleteOldTasks(deleteThreshold),
                 totalCount,
-                "Physically deleted {} old processor tasks with a state of " +
-                        "(COMPLETED|DELETED)");
+                "Physically deleted {} old processor tasks with a state of " + "(COMPLETED|DELETED)");
 
         // Physically delete old filters.
         taskContext.info(() -> "Physically deleting old processor filters with state of DELETED");
-        runWithCountAndTimeLogging(
-                () -> processorFilterDao.physicalDeleteOldProcessorFilters(deleteThreshold),
+        runWithCountAndTimeLogging(() -> processorFilterDao.physicalDeleteOldProcessorFilters(deleteThreshold),
                 totalCount,
                 "Physically deleted {} old processor filters with state of DELETED");
 
         // Physically delete old processors.
         taskContext.info(() -> "Physically deleting old processors with state of DELETED");
-        runWithCountAndTimeLogging(
-                () -> processorDao.physicalDeleteOldProcessors(deleteThreshold),
+        runWithCountAndTimeLogging(() -> processorDao.physicalDeleteOldProcessors(deleteThreshold),
                 totalCount,
                 "Physically deleted {} old processors with state of DELETED");
 
@@ -182,19 +168,14 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
                             Duration.between(startTime, Instant.now()));
                 } catch (final RuntimeException e) {
                     LOGGER.error("Error logging message - messageTemplate: '{}', error: {}",
-                            messageTemplate, e.getMessage(), e);
+                            messageTemplate,
+                            e.getMessage(),
+                            e);
                 }
             }
         } else {
             count = action.get();
         }
         totalCount.addAndGet(count);
-    }
-
-    private void logCount(final int count, final AtomicInteger totalCount, final String message) {
-        totalCount.addAndGet(count);
-        if (count > 0) {
-            LOGGER.info(TASK_NAME + " - " + message, count);
-        }
     }
 }
