@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-alpha.13] - 2023-03-13
+
 * Issue **#3259** : Make task creation and queueing multi threaded.
 
 * Issue **#3276** : Remove ASSIGNED task status and guard for task creation deadlocks.
@@ -5079,7 +5081,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-alpha.12...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-alpha.13...HEAD
+[v7.2-alpha.13]: https://github.com/gchq/stroom/compare/v7.2-alpha.12...v7.2-alpha.13
 [v7.2-alpha.12]: https://github.com/gchq/stroom/compare/v7.2-alpha.11...v7.2-alpha.12
 [v7.2-alpha.11]: https://github.com/gchq/stroom/compare/v7.2-alpha.10...v7.2-alpha.11
 [v7.2-alpha.10]: https://github.com/gchq/stroom/compare/v7.2-alpha.9...v7.2-alpha.10
