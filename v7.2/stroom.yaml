@@ -6224,23 +6224,6 @@ paths:
       - XSLTs
 components:
   schemas:
-    AbstractAlertRule:
-      type: object
-      discriminator:
-        propertyName: type
-      properties:
-        destinationFeed:
-          $ref: '#/components/schemas/DocRef'
-        executionDelay:
-          type: string
-        executionFrequency:
-          type: string
-        timeField:
-          type: string
-        type:
-          type: string
-      required:
-      - type
     AbstractFetchDataResult:
       type: object
       discriminator:
@@ -6449,13 +6432,11 @@ components:
     AlertRuleDoc:
       type: object
       properties:
-        alertRule:
-          $ref: '#/components/schemas/AbstractAlertRule'
         alertRuleType:
           type: string
           enum:
           - EVENT
-          - THRESHOLD
+          - AGGREGATE
         createTimeMs:
           type: integer
           format: int64
@@ -6463,8 +6444,8 @@ components:
           type: string
         description:
           type: string
-        enabled:
-          type: boolean
+        destinationFeed:
+          $ref: '#/components/schemas/DocRef'
         languageVersion:
           type: string
           enum:
@@ -6472,7 +6453,11 @@ components:
           - SIGMA
         name:
           type: string
+        processSettings:
+          $ref: '#/components/schemas/AlertRuleProcessSettings'
         query:
+          type: string
+        timeField:
           type: string
         type:
           type: string
@@ -6485,6 +6470,21 @@ components:
           type: string
         version:
           type: string
+    AlertRuleProcessSettings:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        executionWindow:
+          $ref: '#/components/schemas/SimpleDuration'
+        maxMetaCreateTimeMs:
+          type: integer
+          format: int64
+        minMetaCreateTimeMs:
+          type: integer
+          format: int64
+        timeToWaitForData:
+          $ref: '#/components/schemas/SimpleDuration'
     Annotation:
       type: object
       properties:
@@ -7328,6 +7328,9 @@ components:
         timeUnit:
           type: string
           enum:
+          - NANOSECONDS
+          - MILLISECONDS
+          - SECONDS
           - MINUTES
           - HOURS
           - DAYS
@@ -8779,6 +8782,18 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
+    HoppingWindow:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/Window'
+      - type: object
+        properties:
+          advanceSize:
+            type: string
+          timeField:
+            type: string
+          windowSize:
+            type: string
     IdField:
       type: object
       allOf:
@@ -11142,6 +11157,24 @@ components:
             $ref: '#/components/schemas/SharedElementData'
         sourceLocation:
           $ref: '#/components/schemas/SourceLocation'
+    SimpleDuration:
+      type: object
+      properties:
+        time:
+          type: integer
+          format: int64
+        timeUnit:
+          type: string
+          enum:
+          - NANOSECONDS
+          - MILLISECONDS
+          - SECONDS
+          - MINUTES
+          - HOURS
+          - DAYS
+          - WEEKS
+          - MONTHS
+          - YEARS
     SimpleUser:
       type: object
       properties:
@@ -11849,6 +11882,8 @@ components:
             values for each group. Defaults to false.
         valueFilter:
           $ref: '#/components/schemas/ExpressionOperator'
+        window:
+          $ref: '#/components/schemas/Window'
       required:
       - fields
       - queryId
@@ -11993,10 +12028,6 @@ components:
           type: string
         tubeVisible:
           type: string
-    ThresholdAlertRule:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/AbstractAlertRule'
     TimeRange:
       type: object
       properties:
@@ -12352,6 +12383,15 @@ components:
       properties:
         html:
           type: string
+    Window:
+      type: object
+      discriminator:
+        propertyName: type
+      properties:
+        type:
+          type: string
+      required:
+      - type
     XPathFilter:
       type: object
       properties:
