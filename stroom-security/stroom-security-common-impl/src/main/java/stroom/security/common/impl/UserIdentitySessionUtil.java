@@ -1,6 +1,10 @@
 package stroom.security.common.impl;
 
 import stroom.security.api.UserIdentity;
+import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -8,6 +12,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 public final class UserIdentitySessionUtil {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UserIdentitySessionUtil.class);
 
     private static final String SESSION_USER_IDENTITY = "SESSION_USER_IDENTITY";
     private static final String STROOM_SESSION_ID = "STROOM_SESSION_ID";
@@ -20,6 +26,11 @@ public final class UserIdentitySessionUtil {
      * Set the {@link UserIdentity} on the session
      */
     public static void set(final HttpSession session, final UserIdentity userIdentity) {
+        LOGGER.debug(() -> LogUtil.message("Setting userIdentity {} of type {} in session {}",
+                userIdentity,
+                NullSafe.get(userIdentity, UserIdentity::getClass, Class::getSimpleName),
+                NullSafe.get(session, HttpSession::getId)));
+
         session.setAttribute(SESSION_USER_IDENTITY, userIdentity);
     }
 

@@ -147,20 +147,22 @@ class SecurityFilter implements Filter {
                 });
 
             } else {
-                // Try and get the token from the session if we have one
-                Optional<UserIdentity> optUserIdentity = UserIdentitySessionUtil.get(request);
+                Optional<UserIdentity> optUserIdentity;
+
+                // Api requests that are not from the front-end should have a token.
+                // Also request from an AWS ALB will have an ALB signed token containing the claims
+                // Need to do this first, so we get a fresh token from AWS ALB rather than using a stale
+                // one from session.
+                optUserIdentity = openIdManager.loginWithRequestToken(request);
                 if (LOGGER.isDebugEnabled()) {
-                    logUserIdentityToDebug(optUserIdentity, fullPath, "from session");
+                    logUserIdentityToDebug(
+                            optUserIdentity, fullPath, "after trying to login with request token");
                 }
 
-                if (optUserIdentity.isEmpty()) {
-                    // Api requests that are not from the front-end should have a token.
-                    // Also request from an AWS ALB will have an ALB signed token containing the claims
-                    optUserIdentity = openIdManager.loginWithRequestToken(request);
-                    if (LOGGER.isDebugEnabled()) {
-                        logUserIdentityToDebug(
-                                optUserIdentity, fullPath, "after trying to login with request token");
-                    }
+                // If no user from header token, see if we have one in session already.
+                optUserIdentity = openIdManager.getOrSetSessionUser(request, optUserIdentity);
+                if (LOGGER.isDebugEnabled()) {
+                    logUserIdentityToDebug(optUserIdentity, fullPath, "from session");
                 }
 
                 if (optUserIdentity.isPresent()) {
