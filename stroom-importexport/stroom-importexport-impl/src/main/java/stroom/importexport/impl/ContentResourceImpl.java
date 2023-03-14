@@ -12,12 +12,20 @@ import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportConfigResponse;
+import stroom.importexport.shared.ImportSettings;
+import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
+import stroom.importexport.shared.ImportState.State;
 import stroom.security.api.SecurityContext;
+import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.rest.RestUtil;
 import stroom.util.shared.DocRefs;
 import stroom.util.shared.QuickFilterResultPage;
 import stroom.util.shared.ResourceGeneration;
+import stroom.util.shared.ResourceKey;
 
 import com.google.common.base.Strings;
 import event.logging.AdvancedQuery;
@@ -38,12 +46,15 @@ import event.logging.util.EventLoggingUtil;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 @AutoLogged
 public class ContentResourceImpl implements ContentResource {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContentResourceImpl.class);
 
     final Provider<StroomEventLoggingService> eventLoggingServiceProvider;
     final Provider<ContentService> contentServiceProvider;
@@ -68,34 +79,66 @@ public class ContentResourceImpl implements ContentResource {
             throw RestUtil.badRequest("Missing confirm list");
         }
 
-        return eventLoggingServiceProvider.get().loggedWorkBuilder()
-                .withTypeId("ImportConfig")
-                .withDescription("Importing Configuration")
-                .withDefaultEventAction(buildImportEventAction(request))
-                .withSimpleLoggedResult(() ->
-                        contentServiceProvider.get()
-                                .importContent(request))
-                .getResultAndLog();
+        final ImportMode importMode = NullSafe.get(
+                request,
+                ImportConfigRequest::getImportSettings,
+                ImportSettings::getImportMode);
+
+        LOGGER.debug("Import mode: {}", importMode);
+
+        final Supplier<ImportConfigResponse> responseSupplier = () ->
+                contentServiceProvider.get()
+                        .importContent(request);
+
+        try {
+            if (ImportMode.ACTION_CONFIRMATION.equals(importMode)
+                    && NullSafe.hasItems(request.getConfirmList())) {
+                // Only want to log when the user has actually confirmed to import something
+                return eventLoggingServiceProvider.get().loggedWorkBuilder()
+                        .withTypeId("ImportConfig")
+                        .withDescription("Importing Configuration")
+                        .withDefaultEventAction(buildImportEventAction(request))
+                        .withSimpleLoggedResult(responseSupplier)
+                        .getResultAndLog();
+            } else {
+                return responseSupplier.get();
+            }
+        } catch (Exception e) {
+            LOGGER.error(LogUtil.message("Error importing content with key: {}, name: {}, error: {}",
+                    NullSafe.get(request.getResourceKey(), ResourceKey::getKey),
+                    NullSafe.get(request.getResourceKey(), ResourceKey::getName),
+                    e.getMessage()), e);
+            throw new RuntimeException(e);
+        }
     }
 
     private ImportEventAction buildImportEventAction(final ImportConfigRequest importConfigRequest) {
         final List<ImportState> confirmList = importConfigRequest.getConfirmList();
 
+        final String importFileName = NullSafe.get(importConfigRequest,
+                ImportConfigRequest::getResourceKey,
+                ResourceKey::getName);
+
+        final List<OtherObject> objects = confirmList.stream()
+                .map(importState ->
+                        OtherObject.builder()
+                                .withId(importState.getDocRef().getUuid())
+                                .withType(importState.getDocRef().getType())
+                                .withName(importState.getDocRef().getName())
+                                .addData(EventLoggingUtil.createData(
+                                        "ImportAction",
+                                        NullSafe.toStringOrElse(
+                                                importState.getState(),
+                                                State::getDisplayValue,
+                                                "Error")))
+                                .build())
+                .collect(Collectors.toList());
+
         return ImportEventAction.builder()
                 .withSource(MultiObject.builder()
-                        .addObject(confirmList.stream()
-                                .map(importState -> OtherObject.builder()
-                                        .withId(importState.getDocRef().getUuid())
-                                        .withType(importState.getDocRef().getType())
-                                        .withName(importState.getDocRef().getName())
-                                        .addData(EventLoggingUtil.createData(
-                                                "ImportAction",
-                                                importState.getState() != null
-                                                        ? importState.getState().getDisplayValue()
-                                                        : "Error"))
-                                        .build())
-                                .collect(Collectors.toList()))
+                        .addObject(objects)
                         .build())
+                .addData(EventLoggingUtil.createData("FileName", importFileName))
                 .build();
     }
 

@@ -171,6 +171,7 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 1000
+      metaStatusUpdateBatchSize: 0
       metaTypeCache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
@@ -474,7 +475,6 @@ appConfig:
       maxElements: 1000000
   processor:
     assignTasks: true
-    createTasks: true
     databaseMultiInsertMaxBatchSize: 500
     db:
       connection:
@@ -512,6 +512,10 @@ appConfig:
       expireAfterWrite: null
       maximumSize: 1000
     queueSize: 1000
+    skipNonProducingFiltersDuration: "PT10S"
+    taskCreationThreadCount: 5
+    tasksToCreate: 1000
+    waitToQueueTasksDuration: "PT10S"
   properties:
     db:
       connection:

@@ -11,7 +11,6 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -41,7 +40,6 @@ public final class SearchResponseCreatorManager implements Clearable {
     private static final String CACHE_NAME = "Search Results";
 
     private final SearchResponseCreatorFactory searchResponseCreatorFactory;
-    private final TaskContext taskContext;
     private final TaskContextFactory taskContextFactory;
     private final SecurityContext securityContext;
     private final ExecutorProvider executorProvider;
@@ -51,12 +49,10 @@ public final class SearchResponseCreatorManager implements Clearable {
     SearchResponseCreatorManager(final CacheManager cacheManager,
                                  final Provider<ResultStoreConfig> resultStoreConfigProvider,
                                  final SearchResponseCreatorFactory searchResponseCreatorFactory,
-                                 final TaskContext taskContext,
                                  final TaskContextFactory taskContextFactory,
                                  final SecurityContext securityContext,
                                  final ExecutorProvider executorProvider) {
         this.searchResponseCreatorFactory = searchResponseCreatorFactory;
-        this.taskContext = taskContext;
         this.taskContextFactory = taskContextFactory;
         this.securityContext = securityContext;
         this.executorProvider = executorProvider;
@@ -257,7 +253,8 @@ public final class SearchResponseCreatorManager implements Clearable {
      * Evicts any expired entries from the underlying cache
      */
     public void evictExpiredElements() {
-        taskContext.info(() -> "Evicting expired search responses");
+        taskContextFactory.current().info(() ->
+                "Evicting expired search responses");
         cache.evictExpiredElements();
     }
 

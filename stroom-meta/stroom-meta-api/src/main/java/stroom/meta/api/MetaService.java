@@ -211,7 +211,7 @@ public interface MetaService {
      * @param criteria the search criteria
      * @return the list of matches
      */
-    Set<EffectiveMeta> findEffectiveData(EffectiveMetaDataCriteria criteria);
+    List<EffectiveMeta> findEffectiveData(EffectiveMetaDataCriteria criteria);
 
     /**
      * Get a distinct list of processor UUIds for meta data matching the supplied criteria.

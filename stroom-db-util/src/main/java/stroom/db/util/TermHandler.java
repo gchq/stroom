@@ -7,12 +7,14 @@ import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import org.jooq.Condition;
 import org.jooq.Field;
+import org.jooq.impl.DSL;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -98,17 +100,19 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
                 }
             }
             case IN -> {
-                List<T> values = Collections.emptyList();
-                final String value = term.getValue().trim();
-                if (value.length() > 0) {
+                final String value = NullSafe.get(term.getValue(), String::trim);
+                if (value != null && value.length() > 0) {
                     final String[] parts = value.split(LIST_DELIMITER);
                     final List<String> partsList = Arrays.stream(parts)
                             .map(String::trim)
                             .filter(part -> part.length() > 0)
                             .collect(Collectors.toList());
-                    values = getValues(partsList);
+                    final List<T> values = getValues(partsList);
+                    return field.in(values);
+                } else {
+                    // Empty in list so same as 1==0
+                    return DSL.falseCondition();
                 }
-                return field.in(values);
             }
             case IN_DICTIONARY -> {
                 return isInDictionary(term.getDocRef());
@@ -122,6 +126,8 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
                 } else {
                     final String docValue = getDocValue(term, term.getDocRef());
                     final List<T> value = getValues(docValue);
+                    // IS_DOC_REF does not support wild carding so should only get one thing back
+                    // else fall through and match nothing
                     if (value.size() == 1) {
                         return field.equal(value.get(0));
                     }
@@ -142,7 +148,7 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
                     term);
         }
 
-        return field.in(Collections.emptyList());
+        return DSL.falseCondition();
     }
 
     /**

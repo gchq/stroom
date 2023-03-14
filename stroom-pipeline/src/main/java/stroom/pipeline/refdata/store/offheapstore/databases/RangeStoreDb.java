@@ -48,7 +48,9 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 
-public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
+public class RangeStoreDb
+        extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey>
+        implements EntryStoreDb<RangeStoreKey> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RangeStoreDb.class);
 

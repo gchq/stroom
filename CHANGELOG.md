@@ -11,6 +11,36 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+* Issue **#2759** : Normalise Windows line endings () to Unix-style () when pasting into the ACE text editor.
+
+* Issue **#3272** : Change handling for reference loads in unexpected states. It now logs an app log error but carries on and loads over the top.
+
+* Issue **#3260** : Change the select-all filter based delete/restore to delete by IDs with a temporary table to avoid locking other rows. This is configurable using the property `data.meta.metaStatusUpdateBatchSize`, with 0 meaning all in one batch.
+
+* Issue **#3201** : Change the way the mapping of feed and stream types to IDs is cached. Now uses the existing `Meta Type Cache` and `Meta Feed Cache` caches rather than simple hash maps that duplicated the caching.
+
+* Issue **#3136** : Improve the debug logging for reference data effective streams and add validation of the effective stream sets when debug is enabled for `stroom.pipeline.refdata.EffectiveStreamCache`.
+
+* Remove the read/write locking used on the caches. Change cache rebuild to do a full rebuild if config has changed, else just clear the existing cache.
+
+* Issue **#3286** : Fix error when changing property values for cache properties.
+
+* Issue **#2759** : Change `in dictionary` for filters and searchables to ignore blank lines.
+
+* Issue **#3271** : Fix warnings in logs about auto logging not being configured for reference data purge.
+
+* Issue **#3259** : Make task creation and queueing multi threaded.
+
+* Issue **#3276** : Remove ASSIGNED task status and guard for task creation deadlocks.
+
+* Issue **#3274** : Improve progress monitoring.
+
+* Issue **#3274** : Improve config descriptions.
+
+* Issue **#3259** : Make task creation and queueing multi threaded.
+
+* Issue **#3259** : Make task creation a separate managed job.
+
 
 ## [v7.1-beta.23-test-open-id-14] - 2023-03-10
 
@@ -4627,27 +4657,12 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id-14...HEAD
-[v7.1-beta.23-test-open-id-14]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id-13...v7.1-beta.23-test-open-id-14
-[v7.1-beta.23-test-open-id-13]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id-12...v7.1-beta.23-test-open-id-13
-[v7.1-beta.23-test-open-id-12]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id-11...v7.1-beta.23-test-open-id-12
-[v7.1-beta.23-test-open-id-11]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id-10...v7.1-beta.23-test-open-id-11
-[v7.1-beta.23-test-open-id-10]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id-9...v7.1-beta.23-test-open-id-10
-[v7.1-beta.23-test-open-id-9]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id-8...v7.1-beta.23-test-open-id-9
-[v7.1-beta.23-test-open-id-8]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id-7...v7.1-beta.23-test-open-id-8
-[v7.1-beta.23-test-open-id-7]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id-6...v7.1-beta.23-test-open-id-7
-[v7.1-beta.23-test-open-id-6]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id-5...v7.1-beta.23-test-open-id-6
-[v7.1-beta.23-test-open-id-5]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id-4...v7.1-beta.23-test-open-id-5
-[v7.1-beta.23-test-open-id-4]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id-3...v7.1-beta.23-test-open-id-4
-[v7.1-beta.23-test-open-id-3]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id-2...v7.1-beta.23-test-open-id-3
-[v7.1-beta.23-test-open-id-2]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id...v7.1-beta.23-test-open-id-2
-[v7.1-beta.23-test-open-id]: https://github.com/gchq/stroom/compare/v7.1-beta.23...v7.1-beta.23-test-open-id
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.23...HEAD
 [v7.1-beta.23]: https://github.com/gchq/stroom/compare/v7.1-beta.22...v7.1-beta.23
 [v7.1-beta.22]: https://github.com/gchq/stroom/compare/v7.1-beta.21...v7.1-beta.22
 [v7.1-beta.21]: https://github.com/gchq/stroom/compare/v7.1-beta.20...v7.1-beta.21
 [v7.1-beta.20]: https://github.com/gchq/stroom/compare/v7.1-beta.19...v7.1-beta.20
 [v7.1-beta.19]: https://github.com/gchq/stroom/compare/v7.1-beta.18...v7.1-beta.19
-[v7.1-beta.18-test-open-id]: https://github.com/gchq/stroom/compare/v7.1-beta.18...v7.1-beta.18-test-open-id
 [v7.1-beta.18]: https://github.com/gchq/stroom/compare/v7.1-beta.17...v7.1-beta.18
 [v7.1-beta.17]: https://github.com/gchq/stroom/compare/v7.1-beta.16...v7.1-beta.17
 [v7.1-beta.16]: https://github.com/gchq/stroom/compare/v7.1-beta.15...v7.1-beta.16

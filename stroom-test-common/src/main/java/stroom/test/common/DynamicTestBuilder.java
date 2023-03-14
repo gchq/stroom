@@ -258,10 +258,18 @@ class DynamicTestBuilder {
          * expected.
          */
         public CasesBuilder<I, O> withSimpleEqualityAssertion() {
-            final Consumer<TestOutcome<I, O>> wrappedConsumer = wrapTestOutcomeConsumer(testOutcome ->
+            final Consumer<TestOutcome<I, O>> wrappedConsumer = wrapTestOutcomeConsumer(testOutcome -> {
+                if (testOutcome.getExpectedOutput() instanceof Collection
+                    && testOutcome.getActualOutput() instanceof Collection) {
+                    // Using contains will give a better error message
+                    Assertions.assertThat((Collection<O>) testOutcome.getActualOutput())
+                            .containsExactlyElementsOf((Collection<O>) testOutcome.getExpectedOutput());
+                } else {
                     Assertions.assertThat(testOutcome.getActualOutput())
                             .withFailMessage(testOutcome::buildFailMessage)
-                            .isEqualTo(testOutcome.getExpectedOutput()));
+                            .isEqualTo(testOutcome.getExpectedOutput());
+                }
+            });
             return new CasesBuilder<>(testAction, wrappedConsumer);
         }
 
@@ -491,7 +499,12 @@ class DynamicTestBuilder {
                 // Not sure if there is anything useful we can show for the lambda so just do this
                 stringBuilder.append("lambda");
             } else {
-                final String valStr = value.toString();
+                String valStr = value.toString();
+                // No point outputting the lambda reference as it doesn't help
+                if (valStr.contains("$$Lambda")) {
+                    valStr = "lambda";
+                }
+
                 stringBuilder.append("'")
                         .append(valStr)
                         .append("'");

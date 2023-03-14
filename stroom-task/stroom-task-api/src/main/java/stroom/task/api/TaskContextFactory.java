@@ -77,9 +77,6 @@ public interface TaskContextFactory {
                                        Function<TaskContext, R> function);
 
 
-
-
-
     /**
      * Creates a new root task context that will appear at the top level of the server tasks tree.
      * <p>
@@ -153,4 +150,11 @@ public interface TaskContextFactory {
                                        String taskName,
                                        TerminateHandlerFactory terminateHandlerFactory,
                                        Function<TaskContext, R> function);
+
+    /**
+     * Get the current task context if there is one or at least provide an empty one.
+     *
+     * @return The current task context.
+     */
+    TaskContext current();
 }

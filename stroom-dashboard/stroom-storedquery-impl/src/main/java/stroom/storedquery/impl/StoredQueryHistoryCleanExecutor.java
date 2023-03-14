@@ -17,7 +17,7 @@
 
 package stroom.storedquery.impl;
 
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -36,15 +36,15 @@ public class StoredQueryHistoryCleanExecutor {
 
     private final StoredQueryDao storedQueryDao;
     private final StoredQueryConfig storedQueryConfig;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
 
     @Inject
     public StoredQueryHistoryCleanExecutor(final StoredQueryDao storedQueryDao,
                                            final StoredQueryConfig storedQueryConfig,
-                                           final TaskContext taskContext) {
+                                           final TaskContextFactory taskContextFactory) {
         this.storedQueryDao = storedQueryDao;
         this.storedQueryConfig = storedQueryConfig;
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
     }
 
     public void exec() {
@@ -74,6 +74,6 @@ public class StoredQueryHistoryCleanExecutor {
 
     private void info(final Supplier<String> message) {
         LOGGER.debug(message);
-        taskContext.info(message);
+        taskContextFactory.current().info(message);
     }
 }

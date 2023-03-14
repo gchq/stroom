@@ -36,7 +36,6 @@ public class MetaDaoModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(MetaValueDaoImpl.class)
                 .addBinding(MetaKeyDaoImpl.class)
-                .addBinding(MetaDaoImpl.class)
                 .addBinding(MetaProcessorDaoImpl.class)
                 .addBinding(MetaTypeDaoImpl.class)
                 .addBinding(MetaFeedDaoImpl.class);

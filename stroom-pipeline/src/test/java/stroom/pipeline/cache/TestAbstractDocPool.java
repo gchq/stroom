@@ -7,7 +7,7 @@ import stroom.cache.impl.CacheManagerServiceImpl;
 import stroom.cache.impl.FindCacheInfoCriteria;
 import stroom.docstore.shared.Doc;
 import stroom.security.mock.MockSecurityContext;
-import stroom.task.api.SimpleTaskContext;
+import stroom.task.api.SimpleTaskContextFactory;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.StringCriteria;
@@ -36,7 +36,7 @@ class TestAbstractDocPool {
     final CacheManagerService cacheManagerService = new CacheManagerServiceImpl(
             cacheManager,
             new MockSecurityContext(),
-            new SimpleTaskContext());
+            new SimpleTaskContextFactory());
 
     final AtomicInteger valueCreationCounter = new AtomicInteger();
 

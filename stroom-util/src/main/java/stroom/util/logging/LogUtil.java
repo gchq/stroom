@@ -15,6 +15,8 @@ import java.util.stream.Collectors;
 
 public final class LogUtil {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LogUtil.class);
+
     // These are 3 byte unicode chars so a bit of a waste of bytes
 //    private static final char BOX_HORIZONTAL_LINE = '━';
 //    private static final char BOX_VERTICAL_LINE = '┃';
@@ -244,6 +246,33 @@ public final class LogUtil {
                         + value.getClass().getSimpleName()
                         + " not supported");
             }
+        }
+    }
+
+    /**
+     * toString() methods often are of the form 'MyClass{xxx}', so this method
+     * converts that to just 'xxx'
+     */
+    public static <T> String toStringWithoutClassName(final T obj) {
+        if (obj == null) {
+            return null;
+        } else {
+            String str = obj.toString();
+            if (!str.isBlank()) {
+                try {
+                    final String className = obj.getClass().getSimpleName();
+                    if (str.startsWith(obj.getClass().getSimpleName())) {
+                        str = str.replace(className, "");
+                    }
+                    if (str.startsWith("{") && str.endsWith("}")) {
+                        str = str.substring(1, str.length() - 1);
+                    }
+                } catch (Exception e) {
+                    LOGGER.error("Error stripping class name from {}", obj, e);
+                    return str;
+                }
+            }
+            return str;
         }
     }
 }

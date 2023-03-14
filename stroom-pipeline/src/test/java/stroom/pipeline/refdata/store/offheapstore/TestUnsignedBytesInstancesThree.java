@@ -3,29 +3,26 @@ package stroom.pipeline.refdata.store.offheapstore;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.lmdb.serde.UnsignedBytes;
 import stroom.lmdb.serde.UnsignedBytesInstances;
+import stroom.test.common.TestUtil;
 
+import io.vavr.Tuple;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.util.stream.Stream;
 
-class TestUnsignedBytesInstances {
+import static org.assertj.core.api.Assertions.assertThat;
 
-    private static final UnsignedBytes FOUR_UNSIGNED_BYTES = UnsignedBytesInstances.FOUR;
+class TestUnsignedBytesInstancesThree {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestUnsignedBytesInstances.class);
+    private static final UnsignedBytes THREE_UNSIGNED_BYTES = UnsignedBytesInstances.THREE;
 
-    @Test
-    void testPutGet() {
-        doValTest(1);
-        doValTest(Integer.MAX_VALUE);
-        // Ensure we can go over integer's max value into 4 bytes.
-        doValTest(Integer.MAX_VALUE + 1L);
-
-        doValTest(FOUR_UNSIGNED_BYTES.getMaxVal());
-    }
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestUnsignedBytesInstancesThree.class);
 
     @Test
     void testPutGet2() {
@@ -46,9 +43,9 @@ class TestUnsignedBytesInstances {
 
             LOGGER.info("Buffer {}", ByteBufferUtils.byteBufferInfo(byteBuffer));
 
-            Assertions.assertThat(byteBuffer.position())
+            assertThat(byteBuffer.position())
                     .isEqualTo(unsignedBytes.length());
-            Assertions.assertThat(byteBuffer.position())
+            assertThat(byteBuffer.position())
                     .isEqualTo(unsignedBytes.length());
 
             byteBuffer.clear();
@@ -62,46 +59,46 @@ class TestUnsignedBytesInstances {
         LOGGER.info("val {}", val);
         final ByteBuffer byteBuffer = ByteBuffer.allocate(4);
 
-        FOUR_UNSIGNED_BYTES.put(byteBuffer, val);
+        THREE_UNSIGNED_BYTES.put(byteBuffer, val);
         byteBuffer.flip();
 
         LOGGER.info("Buffer {}", ByteBufferUtils.byteBufferInfo(byteBuffer));
 
-        final long val2 = FOUR_UNSIGNED_BYTES.get(byteBuffer);
+        final long val2 = THREE_UNSIGNED_BYTES.get(byteBuffer);
 
         LOGGER.info("Buffer {}", ByteBufferUtils.byteBufferInfo(byteBuffer));
 
-        Assertions.assertThat(val2)
+        assertThat(val2)
                 .isEqualTo(val);
-        Assertions.assertThat(byteBuffer.position())
+        assertThat(byteBuffer.position())
                 .isEqualTo(4);
-        Assertions.assertThat(byteBuffer.remaining())
+        assertThat(byteBuffer.remaining())
                 .isEqualTo(0);
 
         byteBuffer.flip();
 
-        final long val3 = FOUR_UNSIGNED_BYTES.get(byteBuffer);
+        final long val3 = THREE_UNSIGNED_BYTES.get(byteBuffer);
 
-        Assertions.assertThat(val3)
+        assertThat(val3)
                 .isEqualTo(val);
 
-        Assertions.assertThat(byteBuffer.position())
+        assertThat(byteBuffer.position())
                 .isEqualTo(4);
-        Assertions.assertThat(byteBuffer.remaining())
+        assertThat(byteBuffer.remaining())
                 .isEqualTo(0);
 
         byteBuffer.flip();
 
         byteBuffer.position(2);
         LOGGER.info("Buffer {}", ByteBufferUtils.byteBufferInfo(byteBuffer));
-        final long val4 = FOUR_UNSIGNED_BYTES.get(byteBuffer, 0);
+        final long val4 = THREE_UNSIGNED_BYTES.get(byteBuffer, 0);
 
-        Assertions.assertThat(val4)
+        assertThat(val4)
                 .isEqualTo(val);
 
-        Assertions.assertThat(byteBuffer.position())
+        assertThat(byteBuffer.position())
                 .isEqualTo(2);
-        Assertions.assertThat(byteBuffer.remaining())
+        assertThat(byteBuffer.remaining())
                 .isEqualTo(2);
     }
 
@@ -115,24 +112,46 @@ class TestUnsignedBytesInstances {
         LOGGER.info("Len {}, maxValue {}", 8, Long.MAX_VALUE);
     }
 
-    @Test
-    void testIncrement() {
-        final int len = 4;
+    @TestFactory
+    Stream<DynamicTest> testIncrement() {
+        final int len = 3;
         final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(len);
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(long.class, ByteBuffer.class)
+                .withOutputType(long.class)
+                .withTestFunction(testCase -> doIncrementTest(
+                        testCase.getInput()._1,
+                        testCase.getInput()._2))
+                .withSimpleEqualityAssertion()
+                .addCase(
+                        Tuple.of(UnsignedBytesInstances.ONE.getMaxVal(), byteBuffer),
+                        UnsignedBytesInstances.ONE.getMaxVal() + 1)
+                .addCase(
+                        Tuple.of(UnsignedBytesInstances.TWO.getMaxVal(), byteBuffer),
+                        UnsignedBytesInstances.TWO.getMaxVal() + 1)
+                .addCase(
+                        Tuple.of(UnsignedBytesInstances.THREE.getMaxVal() - 1, byteBuffer),
+                        UnsignedBytesInstances.THREE.getMaxVal())
+                .addThrowsCase(
+                        Tuple.of(UnsignedBytesInstances.THREE.getMaxVal(), byteBuffer),
+                        IllegalArgumentException.class)
+                .build();
+    }
 
-        // the following will test all values but takes a few minutes
-//        long max = FOUR_UNSIGNED_BYTES.getMaxVal();
-//
-//        for (long i = 0; i < max; i++) {
-//            doAdditionTest(i, byteBuffer);
-//        }
-
-        doIncrementTest(0, byteBuffer);
-        // Test the byte boundaries
-        doIncrementTest(UnsignedBytesInstances.ONE.getMaxVal(), byteBuffer);
-        doIncrementTest(UnsignedBytesInstances.TWO.getMaxVal(), byteBuffer);
-        doIncrementTest(UnsignedBytesInstances.THREE.getMaxVal(), byteBuffer);
-        doIncrementTest(UnsignedBytesInstances.FOUR.getMaxVal() - 1, byteBuffer);
+    @Test
+    void incrementAll() {
+        long max = THREE_UNSIGNED_BYTES.getMaxVal();
+        final int len = 3;
+        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(len);
+        // Try increment for all 16.2mil values
+        for (long i = 0; i < max; i++) {
+            if (i % 1_000_000 == 0) {
+                LOGGER.debug("Done {}", i);
+            }
+            final long output = doIncrementTest(i, byteBuffer);
+            assertThat(output)
+                    .isEqualTo(i + 1);
+        }
     }
 
     @Test
@@ -150,35 +169,35 @@ class TestUnsignedBytesInstances {
 
             LOGGER.info("Buffer {}", ByteBufferUtils.byteBufferInfo(byteBuffer));
 
-            Assertions.assertThat(val)
+            assertThat(val)
                     .isEqualTo(unsignedBytes.getMaxVal() - 1);
 
             unsignedBytes.increment(byteBuffer);
 
             long val2 = unsignedBytes.get(byteBuffer);
 
-            Assertions.assertThat(val2)
+            assertThat(val2)
                     .isEqualTo(val + 1);
         }
     }
 
     @Test
     void testIncrement_bad() {
-        final int len = FOUR_UNSIGNED_BYTES.length();
+        final int len = THREE_UNSIGNED_BYTES.length();
         final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(len);
 
         Assertions.assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> {
-                    doIncrementTest(FOUR_UNSIGNED_BYTES.getMaxVal(), byteBuffer);
+                    doIncrementTest(THREE_UNSIGNED_BYTES.getMaxVal(), byteBuffer);
                 })
                 .withMessageContaining("Can't increment without overflowing");
     }
 
-    private void doIncrementTest(final long val, final ByteBuffer byteBuffer) {
+    private long doIncrementTest(final long val, final ByteBuffer byteBuffer) {
 
         byteBuffer.clear();
 
-        FOUR_UNSIGNED_BYTES.put(byteBuffer, val);
+        THREE_UNSIGNED_BYTES.put(byteBuffer, val);
         byteBuffer.flip();
 
 //        LOGGER.info("val {}, Buffer {}",
@@ -190,22 +209,22 @@ class TestUnsignedBytesInstances {
         final int cap = byteBuffer.capacity();
         final int limit = byteBuffer.limit();
 
-        FOUR_UNSIGNED_BYTES.increment(byteBuffer);
+        THREE_UNSIGNED_BYTES.increment(byteBuffer);
 
 //        LOGGER.info("Buffer {}", ByteBufferUtils.byteBufferToHexAll(byteBuffer));
 
-        long val2 = FOUR_UNSIGNED_BYTES.get(byteBuffer, 0);
+        final long output = THREE_UNSIGNED_BYTES.get(byteBuffer, 0);
 
-        Assertions.assertThat(byteBuffer.capacity()).isEqualTo(cap);
-        Assertions.assertThat(byteBuffer.position()).isEqualTo(pos);
-        Assertions.assertThat(byteBuffer.limit()).isEqualTo(limit);
+        assertThat(byteBuffer.capacity()).isEqualTo(cap);
+        assertThat(byteBuffer.position()).isEqualTo(pos);
+        assertThat(byteBuffer.limit()).isEqualTo(limit);
 
-        Assertions.assertThat(val2).isEqualTo(val + 1);
+        return output;
     }
 
     @Test
     void testDecrement() {
-        int len = FOUR_UNSIGNED_BYTES.length();
+        int len = THREE_UNSIGNED_BYTES.length();
         final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(len);
 
         // the following will test all values but takes a good few minutes
@@ -221,8 +240,7 @@ class TestUnsignedBytesInstances {
         // Test the byte boundaries
         doDecrementTest(UnsignedBytesInstances.ONE.getMaxVal() + 1, byteBuffer);
         doDecrementTest(UnsignedBytesInstances.TWO.getMaxVal() + 1, byteBuffer);
-        doDecrementTest(UnsignedBytesInstances.THREE.getMaxVal() + 1, byteBuffer);
-        doDecrementTest(UnsignedBytesInstances.FOUR.getMaxVal(), byteBuffer);
+        doDecrementTest(UnsignedBytesInstances.THREE.getMaxVal(), byteBuffer);
     }
 
     @Test
@@ -240,21 +258,21 @@ class TestUnsignedBytesInstances {
 
             LOGGER.info("Buffer {}", ByteBufferUtils.byteBufferInfo(byteBuffer));
 
-            Assertions.assertThat(val)
+            assertThat(val)
                     .isEqualTo(unsignedBytes.getMaxVal());
 
             unsignedBytes.decrement(byteBuffer);
 
             long val2 = unsignedBytes.get(byteBuffer);
 
-            Assertions.assertThat(val2)
+            assertThat(val2)
                     .isEqualTo(val - 1);
         }
     }
 
     @Test
     void testDecrement_bad() {
-        final int len = FOUR_UNSIGNED_BYTES.length();
+        final int len = THREE_UNSIGNED_BYTES.length();
         final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(len);
 
         Assertions.assertThatExceptionOfType(IllegalArgumentException.class)
@@ -268,7 +286,7 @@ class TestUnsignedBytesInstances {
 
         byteBuffer.clear();
 
-        FOUR_UNSIGNED_BYTES.put(byteBuffer, val);
+        THREE_UNSIGNED_BYTES.put(byteBuffer, val);
         byteBuffer.flip();
 
 //        LOGGER.info("val {}, Buffer {}",
@@ -280,17 +298,17 @@ class TestUnsignedBytesInstances {
         final int cap = byteBuffer.capacity();
         final int limit = byteBuffer.limit();
 
-        FOUR_UNSIGNED_BYTES.decrement(byteBuffer);
+        THREE_UNSIGNED_BYTES.decrement(byteBuffer);
 
 //        LOGGER.info("Buffer {}", ByteBufferUtils.byteBufferToHexAll(byteBuffer));
 
-        long val2 = FOUR_UNSIGNED_BYTES.get(byteBuffer, 0);
+        long val2 = THREE_UNSIGNED_BYTES.get(byteBuffer, 0);
 
-        Assertions.assertThat(byteBuffer.capacity()).isEqualTo(cap);
-        Assertions.assertThat(byteBuffer.position()).isEqualTo(pos);
-        Assertions.assertThat(byteBuffer.limit()).isEqualTo(limit);
+        assertThat(byteBuffer.capacity()).isEqualTo(cap);
+        assertThat(byteBuffer.position()).isEqualTo(pos);
+        assertThat(byteBuffer.limit()).isEqualTo(limit);
 
-        Assertions.assertThat(val2).isEqualTo(val - 1);
+        assertThat(val2).isEqualTo(val - 1);
     }
 
 }

@@ -25,7 +25,6 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.concurrent.StripedLock;
@@ -73,7 +72,6 @@ public class IndexShardManager {
     private final NodeInfo nodeInfo;
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
-    private final TaskContext taskContext;
     private final SecurityContext securityContext;
     private final PathCreator pathCreator;
 
@@ -89,7 +87,6 @@ public class IndexShardManager {
                       final NodeInfo nodeInfo,
                       final Executor executor,
                       final TaskContextFactory taskContextFactory,
-                      final TaskContext taskContext,
                       final SecurityContext securityContext,
                       final PathCreator pathCreator) {
         this.indexStore = indexStore;
@@ -98,7 +95,6 @@ public class IndexShardManager {
         this.nodeInfo = nodeInfo;
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
-        this.taskContext = taskContext;
         this.securityContext = securityContext;
         this.pathCreator = pathCreator;
 
@@ -288,7 +284,7 @@ public class IndexShardManager {
     }
 
     public void checkRetention() {
-        taskContext.info(() -> "Checking index shard retention");
+        taskContextFactory.current().info(() -> "Checking index shard retention");
         securityContext.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             final FindIndexShardCriteria criteria = FindIndexShardCriteria.matchAll();
             criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
