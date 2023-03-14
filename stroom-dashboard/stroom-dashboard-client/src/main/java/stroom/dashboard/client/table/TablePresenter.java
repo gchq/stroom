@@ -323,24 +323,17 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         if (currentSearchModel != null && fieldAddPresenter == null) {
             fieldAddPresenter = fieldAddPresenterProvider.get();
 
-            final List<Field> addFields = new ArrayList<>();
+            final List<Field> annotationFields = new ArrayList<>();
+            final List<Field> dataFields = new ArrayList<>();
+            final List<Field> otherFields = new ArrayList<>();
+
             final IndexLoader indexLoader = currentSearchModel.getIndexLoader();
             if (indexLoader.getIndexFieldNames() != null) {
                 final DataSourceFieldsMap indexFieldsMap = indexLoader.getDataSourceFieldsMap();
+
                 for (final String indexFieldName : indexLoader.getIndexFieldNames()) {
                     final Builder fieldBuilder = Field.builder();
                     fieldBuilder.name(indexFieldName);
-
-                    final String expression;
-                    if (indexFieldName.startsWith("annotation:") && indexFieldsMap != null) {
-                        // Turn 'annotation:.*' fields into annotation links that make use of either the special
-                        // eventId/streamId fields (so event results can link back to annotations) OR
-                        // the annotation:Id field so Annotations datasource results can link back.
-                        expression = buildAnnotationFieldExpression(indexFieldsMap, indexFieldName);
-                    } else {
-                        expression = ParamSubstituteUtil.makeParam(indexFieldName);
-                    }
-                    fieldBuilder.expression(expression);
 
                     if (indexFieldsMap != null) {
                         final AbstractField indexField = indexFieldsMap.get(indexFieldName);
@@ -363,38 +356,52 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         }
                     }
 
-                    addFields.add(fieldBuilder.build());
+                    final String expression;
+                    if (indexFieldName.startsWith("annotation:") && indexFieldsMap != null) {
+                        // Turn 'annotation:.*' fields into annotation links that make use of either the special
+                        // eventId/streamId fields (so event results can link back to annotations) OR
+                        // the annotation:Id field so Annotations datasource results can link back.
+                        expression = buildAnnotationFieldExpression(indexFieldsMap, indexFieldName);
+                        fieldBuilder.expression(expression);
+                        annotationFields.add(fieldBuilder.build());
+                    } else {
+                        expression = ParamSubstituteUtil.makeParam(indexFieldName);
+                        fieldBuilder.expression(expression);
+                        dataFields.add(fieldBuilder.build());
+                    }
                 }
             }
-            addFields.sort(Comparator.comparing(Field::getName, String.CASE_INSENSITIVE_ORDER));
 
             final Field count = Field.builder()
                     .name("Count")
                     .format(Format.NUMBER)
                     .expression("count()")
                     .build();
-            addFields.add(count);
+            otherFields.add(count);
 
             final Field countGroups = Field.builder()
                     .name("Count Groups")
                     .format(Format.NUMBER)
                     .expression("countGroups()")
                     .build();
-            addFields.add(countGroups);
+            otherFields.add(countGroups);
 
             final Field custom = Field.builder()
                     .name("Custom")
                     .build();
-            addFields.add(custom);
+            otherFields.add(custom);
+
+            final AutocompletePopupView<Field> popupView = fieldAddPresenter.getView();
+            popupView.clearItems();
+            addFieldGroup(popupView, otherFields, "Counts");
+            addFieldGroup(popupView, dataFields, "Data Source");
+            addFieldGroup(popupView, annotationFields, "Annotations");
 
             final Element target = event.getNativeEvent().getEventTarget().cast();
             final PopupPosition popupPosition = new PopupPosition(
                     target.getAbsoluteLeft() - 3,
                     target.getAbsoluteTop() + target.getClientHeight() + 1);
 
-            final AutocompletePopupView<Field> popupView = fieldAddPresenter.getView();
-            popupView.clearItems();
-            popupView.addItems(addFields);
             popupView.showPopup(popupPosition);
 
             final AddSelectionHandler selectionHandler = new AddSelectionHandler(fieldAddPresenter);
@@ -405,6 +412,16 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 selectionHandlerRegistration.removeHandler();
                 fieldAddPresenter = null;
             });
+        }
+    }
+
+    private void addFieldGroup(final AutocompletePopupView<Field> popupView,
+                               final List<Field> fields,
+                               final String groupName) {
+        if (fields.size() > 0) {
+            fields.sort(Comparator.comparing(Field::getName, String.CASE_INSENSITIVE_ORDER));
+//            items.add(new GroupHeading(items.size(), groupName));
+            popupView.addItems(fields);
         }
     }
 
