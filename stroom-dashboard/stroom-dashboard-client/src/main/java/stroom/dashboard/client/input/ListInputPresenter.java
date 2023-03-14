@@ -68,6 +68,7 @@ public class ListInputPresenter
     public void onValueChanged(final String value) {
         setSettings(getListInputSettings().copy().value(value).build());
         ComponentChangeEvent.fire(this, this);
+        setDirty(true);
     }
 
     @Override
@@ -80,11 +81,6 @@ public class ListInputPresenter
             list.add(param);
         }
         return list;
-    }
-
-    @Override
-    public void onDirty() {
-        setDirty(true);
     }
 
     @Override

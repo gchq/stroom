@@ -58,29 +58,33 @@ public class KeyValueInputViewImpl extends ViewWithUiHandlers<KeyValueInputUiHan
 
     @UiHandler("params")
     public void onParamsKeyDown(final KeyDownEvent event) {
-        switch (event.getNativeKeyCode()) {
-            case KeyCodes.KEY_ENTER:
-            case KeyCodes.KEY_TAB:
-            case KeyCodes.KEY_ESCAPE:
-                onParamsChanged();
-                break;
-            default:
-                if (getUiHandlers() != null) {
-                    getUiHandlers().onDirty();
-                }
-        }
-    }
+//        switch (event.getNativeKeyCode()) {
+//            case KeyCodes.KEY_ENTER:
+//            case KeyCodes.KEY_TAB:
+//            case KeyCodes.KEY_ESCAPE:
+//                onParamsChanged();
+//                break;
+//            default:
+//                if (getUiHandlers() != null) {
+//                    getUiHandlers().onDirty();
+//                }
+//        }
 
-    @UiHandler("params")
-    public void onParamsBlur(final BlurEvent event) {
-        onParamsChanged();
-    }
-
-    private void onParamsChanged() {
         if (getUiHandlers() != null) {
             getUiHandlers().onValueChanged(params.getText());
         }
     }
+
+//    @UiHandler("params")
+//    public void onParamsBlur(final BlurEvent event) {
+//        onParamsChanged();
+//    }
+//
+//    private void onParamsChanged() {
+//        if (getUiHandlers() != null) {
+//            getUiHandlers().onValueChanged(params.getText());
+//        }
+//    }
 
     public interface Binder extends UiBinder<Widget, KeyValueInputViewImpl> {
 
