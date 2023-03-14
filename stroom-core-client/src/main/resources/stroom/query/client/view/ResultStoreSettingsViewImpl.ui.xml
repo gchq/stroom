@@ -10,11 +10,11 @@
         <form:FormGroup identity="searchProcessTimeToLive" label="Search Process Time To Live">
             <g:TextBox ui:field="searchProcessTimeToLive" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="searchProcessDestroyOnTabClose" label="Search Process Destroy On Tab Close">
-            <tickbox:CustomCheckBox ui:field="searchProcessDestroyOnTabClose"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="searchProcessDestroyOnTabClose" identity="searchProcessDestroyOnTabClose" label="Search Process Destroy On Tab Close"/>
         </form:FormGroup>
-        <form:FormGroup identity="searchProcessDestroyOnWindowClose" label="Search Process Destroy On Window Close">
-            <tickbox:CustomCheckBox ui:field="searchProcessDestroyOnWindowClose"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="searchProcessDestroyOnWindowClose" identity="searchProcessDestroyOnWindowClose" label="Search Process Destroy On Window Close"/>
         </form:FormGroup>
 
         <form:FormGroup identity="storeTimeToIdle" label="Store Time To Idle">
@@ -23,11 +23,11 @@
         <form:FormGroup identity="storeTimeToLive" label="Store Time To Live">
             <g:TextBox ui:field="storeTimeToLive" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="storeDestroyOnTabClose" label="Store Destroy On Tab Close">
-            <tickbox:CustomCheckBox ui:field="storeDestroyOnTabClose"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="storeDestroyOnTabClose" identity="storeDestroyOnTabClose" label="Store Destroy On Tab Close"/>
         </form:FormGroup>
-        <form:FormGroup identity="storeDestroyOnWindowClose" label="Store Destroy On Window Close">
-            <tickbox:CustomCheckBox ui:field="storeDestroyOnWindowClose"/>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="storeDestroyOnWindowClose" identity="storeDestroyOnWindowClose" label="Store Destroy On Window Close"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

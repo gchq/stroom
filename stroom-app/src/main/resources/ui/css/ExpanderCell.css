@@ -14,16 +14,27 @@
  * limitations under the License.
  */
 
-.expanderCell-expanderIcon {
-	display: flex;
+.expanderCell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
 }
 
-.expanderCell-expanderIcon svg {
+.expanderCell > .expanderIcon {
+    padding: 0.1rem 0.4rem;
+    border-radius: 10px;
+}
+
+.expanderCell > .expanderIcon.active:active {
+    background-color: var(--expander-cell-icon__background-color--active);
+}
+
+.expanderCell > .expanderIcon.active:hover {
+    cursor: pointer;
+    background-color: var(--expander-cell-icon__background-color--hover);
+}
+
+.expanderCell > .expanderIcon svg {
     width: .7rem;
     height: .7rem;
-}
-
-.expanderCell-active {
-	cursor:pointer;
-	cursor:hand;
 }
