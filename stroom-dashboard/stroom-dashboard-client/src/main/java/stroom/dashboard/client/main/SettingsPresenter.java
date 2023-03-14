@@ -105,9 +105,9 @@ public class SettingsPresenter extends MyPresenterWidget<LinkTabsLayoutView> imp
         }
     }
 
-    public void read(final ComponentConfig componentData) {
+    public void read(final ComponentConfig componentConfig) {
         for (final ComponentDataModifier modifier : modifiers.values()) {
-            modifier.read(componentData);
+            modifier.read(componentConfig);
         }
     }
 
@@ -125,10 +125,10 @@ public class SettingsPresenter extends MyPresenterWidget<LinkTabsLayoutView> imp
         return !modifiers.values().stream().anyMatch(v -> !v.validate());
     }
 
-    public boolean isDirty(final ComponentConfig componentData) {
+    public boolean isDirty(final ComponentConfig componentConfig) {
         for (final Entry<TabData, ComponentDataModifier> entry : modifiers.entrySet()) {
             if (!getView().getTabBar().isTabHidden(entry.getKey())) {
-                if (entry.getValue().isDirty(componentData)) {
+                if (entry.getValue().isDirty(componentConfig)) {
                     return true;
                 }
             }

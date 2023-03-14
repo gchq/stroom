@@ -111,13 +111,13 @@ public class BasicTextSettingsPresenter
     }
 
     @Override
-    public void read(final ComponentConfig componentData) {
-        super.read(componentData);
+    public void read(final ComponentConfig componentConfig) {
+        super.read(componentConfig);
 
         final List<Component> list = getComponents().getSortedComponentsByType(TablePresenter.TYPE.getId());
         setTableList(list);
 
-        TextComponentSettings settings = (TextComponentSettings) componentData.getSettings();
+        TextComponentSettings settings = (TextComponentSettings) componentConfig.getSettings();
         final TextComponentSettings.Builder builder = settings.copy();
         setTableId(settings.getTableId());
 

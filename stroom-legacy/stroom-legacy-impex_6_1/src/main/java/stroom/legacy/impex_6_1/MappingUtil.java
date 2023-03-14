@@ -134,6 +134,7 @@ public final class MappingUtil {
                 map(value.getLayout()),
                 null,
                 map(value.getTabVisibility()),
+                null,
                 null);
     }
 

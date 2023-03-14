@@ -108,7 +108,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
             // If the item isn't already open but we are forcing it open then,
             // create a new presenter and register it as open.
             final DashboardPresenter presenter = dashboardPresenterProvider.get();
-            presenter.setParams(params);
+            presenter.setParamsFromLink(params);
             presenter.setCustomTitle(title);
             presenter.setQueryOnOpen(queryOnOpen);
 

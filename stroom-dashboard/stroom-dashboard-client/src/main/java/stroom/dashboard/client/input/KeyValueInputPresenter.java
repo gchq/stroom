@@ -18,13 +18,13 @@ package stroom.dashboard.client.input;
 
 import stroom.dashboard.client.input.KeyValueInputPresenter.KeyValueInputView;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
+import stroom.dashboard.client.main.ComponentChangeEvent;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
-import stroom.dashboard.client.main.Components;
+import stroom.dashboard.client.main.HasParams;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.KeyValueInputComponentSettings;
-import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.ParamUtil;
 
@@ -36,8 +36,9 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 
-public class KeyValueInputPresenter extends AbstractComponentPresenter<KeyValueInputView> implements
-        KeyValueInputUiHandlers {
+public class KeyValueInputPresenter
+        extends AbstractComponentPresenter<KeyValueInputView>
+        implements KeyValueInputUiHandlers, HasParams {
 
     public static final ComponentType TYPE = new ComponentType(1,
             "key-value-input",
@@ -47,32 +48,20 @@ public class KeyValueInputPresenter extends AbstractComponentPresenter<KeyValueI
     @Inject
     public KeyValueInputPresenter(final EventBus eventBus,
                                   final KeyValueInputView view,
-                                  final Provider<KeyValueInputSettingsPresenter> settingsPresenterProvider,
-                                  final RestFactory restFactory) {
+                                  final Provider<KeyValueInputSettingsPresenter> settingsPresenterProvider) {
         super(eventBus, view, settingsPresenterProvider);
         view.setUiHandlers(this);
     }
 
     @Override
     public void onValueChanged(final String value) {
-        updateParams(value);
-
-//        if (!EqualsUtil.isEquals(currentParams, trimmed)) {
-//            setDirty(true);
-//
-//            currentParams = trimmed;
-//            start();
-//        }
+        setSettings(getKeyValueInputSettings().copy().text(value).build());
+        ComponentChangeEvent.fire(this, this);
     }
 
-    private void updateParams(final String value) {
-        final String componentId = getComponentConfig().getId();
-        getDashboardContext().removeParams(componentId);
-
-        final List<Param> params = ParamUtil.parse(value);
-        if (params.size() > 0) {
-            getDashboardContext().addParams(componentId, params);
-        }
+    @Override
+    public List<Param> getParams() {
+        return ParamUtil.parse(getView().getValue());
     }
 
     @Override
@@ -81,40 +70,16 @@ public class KeyValueInputPresenter extends AbstractComponentPresenter<KeyValueI
     }
 
     @Override
-    public void setComponents(final Components components) {
-        super.setComponents(components);
-//        registerHandler(components.addComponentChangeHandler(event -> {
-//            if (getTextSettings() != null) {
-//                final Component component = event.getComponent();
-//                if (getTextSettings().getTableId() == null) {
-//                    if (component instanceof TablePresenter) {
-//                        currentTablePresenter = (TablePresenter) component;
-//                        update(currentTablePresenter);
-//                    }
-//                } else if (EqualsUtil.isEquals(getTextSettings().getTableId(), event.getComponentId())) {
-//                    if (component instanceof TablePresenter) {
-//                        currentTablePresenter = (TablePresenter) component;
-//                        update(currentTablePresenter);
-//                    }
-//                }
-//            }
-//        }));
-    }
-
-    @Override
     public void read(final ComponentConfig componentConfig) {
         super.read(componentConfig);
-
         ComponentSettings settings = componentConfig.getSettings();
         if (!(settings instanceof KeyValueInputComponentSettings)) {
             setSettings(createSettings());
         }
-
         getView().setValue(getKeyValueInputSettings().getText());
-        updateParams(getKeyValueInputSettings().getText());
     }
 
-    public KeyValueInputComponentSettings getKeyValueInputSettings() {
+    private KeyValueInputComponentSettings getKeyValueInputSettings() {
         return (KeyValueInputComponentSettings) getSettings();
     }
 
@@ -128,13 +93,15 @@ public class KeyValueInputPresenter extends AbstractComponentPresenter<KeyValueI
 
     @Override
     public void changeSettings() {
-//        super.changeSettings();
-//        update(currentTablePresenter);
     }
 
     @Override
     public ComponentType getType() {
         return TYPE;
+    }
+
+    public void setValue(final String value) {
+        getView().setValue(value);
     }
 
     public interface KeyValueInputView extends View, HasUiHandlers<KeyValueInputUiHandlers> {

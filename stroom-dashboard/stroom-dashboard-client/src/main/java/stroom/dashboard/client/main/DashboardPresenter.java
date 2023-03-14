@@ -22,6 +22,7 @@ import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.dashboard.client.flexlayout.FlexLayout;
 import stroom.dashboard.client.flexlayout.FlexLayoutChangeHandler;
 import stroom.dashboard.client.flexlayout.PositionAndSize;
+import stroom.dashboard.client.input.KeyValueInputPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.DashboardPresenter.DashboardView;
@@ -31,6 +32,7 @@ import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardConfig.TabVisibility;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.Dimension;
+import stroom.dashboard.shared.KeyValueInputComponentSettings;
 import stroom.dashboard.shared.LayoutConfig;
 import stroom.dashboard.shared.LayoutConstraints;
 import stroom.dashboard.shared.Size;
@@ -52,6 +54,7 @@ import stroom.query.client.view.QueryButtons;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Icon;
 import stroom.util.shared.RandomId;
+import stroom.util.shared.Version;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.menu.client.presenter.SimpleMenuItem;
@@ -75,9 +78,13 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class DashboardPresenter extends DocumentEditPresenter<DashboardView, DashboardDoc>
+public class DashboardPresenter
+        extends DocumentEditPresenter<DashboardView, DashboardDoc>
         implements FlexLayoutChangeHandler, DocumentTabData, DashboardUiHandlers, QueryUiHandlers,
-        Consumer<Boolean> {
+        DashboardContext, Consumer<Boolean> {
+
+    private static final String VERSION_7_2_0 = Version.of(7, 2, 0).toString();
+    private static final String DEFAULT_PARAMS_INPUT = "Params";
 
     private static final Logger logger = Logger.getLogger(DashboardPresenter.class.getName());
     private final FlexLayout layoutPresenter;
@@ -89,7 +96,6 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     private String customTitle;
     private DocRef docRef;
 
-    private final DashboardContext dashboardContext = new DashboardContext();
     private String lastUsedQueryInfo;
     private boolean embedded;
     private boolean queryOnOpen;
@@ -99,6 +105,8 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     private boolean designMode;
 
     private ResultStoreInfo resultStoreInfo;
+    private String externalLinkParameters;
+    private TimeRange timeRange;
 
     @Inject
     public DashboardPresenter(final EventBus eventBus,
@@ -199,21 +207,48 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
     @Override
     public void onTimeRange(final TimeRange timeRange) {
-        if (!Objects.equals(dashboardContext.getTimeRange(), timeRange)) {
-            setTimeRange(timeRange);
+        if (!Objects.equals(this.timeRange, timeRange)) {
+            this.timeRange = timeRange;
+            setDirty(true);
             start();
         }
     }
 
-    private void setTimeRange(final TimeRange timeRange) {
-        dashboardContext.setTimeRange(timeRange);
-        getView().setTimeRange(timeRange);
+    @Override
+    public TimeRange getTimeRange() {
+        return timeRange;
     }
 
-    public void setParams(final String params) {
-        logger.log(Level.INFO, "Dashboard Presenter setParams " + params);
-        final List<Param> coreParams = ParamUtil.parse(params);
-        dashboardContext.setCoreParams(coreParams);
+    @Override
+    public List<Param> getParams() {
+        final List<Param> combinedParams = new ArrayList<>();
+        for (final Component component : components) {
+            if (component instanceof HasParams) {
+                combinedParams.addAll(((HasParams) component).getParams());
+            }
+        }
+        if (externalLinkParameters != null) {
+            combinedParams.addAll(ParamUtil.parse(externalLinkParameters));
+        }
+        return combinedParams;
+    }
+
+    public void setParamsFromLink(final String params) {
+        logger.log(Level.INFO, "Dashboard Presenter setParamsFromLink " + params);
+        this.externalLinkParameters = params;
+
+        // Try to find a Key/Value component to put the params in called "Params".
+        for (final Component component : components.getComponents()) {
+            if (component instanceof KeyValueInputPresenter) {
+                final KeyValueInputPresenter keyValueInputPresenter = (KeyValueInputPresenter) component;
+                if (keyValueInputPresenter.getLabel().equals(DEFAULT_PARAMS_INPUT)) {
+                    keyValueInputPresenter.setValue(params);
+                    // If we found one then we don't need to treat external parameters as a special case.
+                    this.externalLinkParameters = null;
+                    break;
+                }
+            }
+        }
     }
 
     void setEmbedded(final boolean embedded) {
@@ -241,19 +276,9 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
             final DashboardConfig dashboardConfig = dashboard.getDashboardConfig();
             if (dashboardConfig != null) {
-                if (dashboardContext.getCoreParams() == null ||
-                        dashboardContext.getCoreParams().size() == 0) {
-                    if (dashboardConfig.getParameters() != null
-                            && dashboardConfig.getParameters().trim().length() > 0) {
-                        setParams(dashboardConfig.getParameters().trim());
-                    }
-                }
-//                getView().setParams(currentParams);
-
-                if (dashboardContext.getTimeRange() == null) {
-                    if (dashboardConfig.getTimeRange() != null) {
-                        setTimeRange(dashboardConfig.getTimeRange());
-                    }
+                this.timeRange = dashboardConfig.getTimeRange();
+                if (this.timeRange != null) {
+                    getView().setTimeRange(this.timeRange);
                 }
 
                 layoutConfig = dashboardConfig.getLayout();
@@ -265,18 +290,55 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                 if (preferredSize == null) {
                     preferredSize = new Size();
                 }
-                final List<ComponentConfig> componentDataList = dashboardConfig.getComponents();
-                if (componentDataList != null) {
-                    for (final ComponentConfig componentData : componentDataList) {
-                        addComponent(componentData.getType(), componentData);
+
+                List<ComponentConfig> componentConfigList = dashboardConfig.getComponents();
+
+                /**
+                 * ADD A KEY/VALUE PARAMETER INPUT BOX FOR BACKWARD COMPATIBILITY.
+                 */
+                if (dashboardConfig.getModelVersion() == null) {
+                    if (componentConfigList == null) {
+                        componentConfigList = new ArrayList<>();
+                        dashboardConfig.setComponents(componentConfigList);
                     }
-                    for (final ComponentConfig componentData : componentDataList) {
-                        final Component component = components.get(componentData.getId());
+
+                    final String params = dashboardConfig.getParameters() == null
+                            ?
+                            ""
+                            : dashboardConfig.getParameters();
+
+                    componentConfigList
+                            .add(new ComponentConfig(
+                                    KeyValueInputPresenter.TYPE.getId(),
+                                    DEFAULT_PARAMS_INPUT,
+                                    DEFAULT_PARAMS_INPUT,
+                                    new KeyValueInputComponentSettings(params)));
+                    final TabConfig tabConfig = new TabConfig(DEFAULT_PARAMS_INPUT, true);
+                    final List<TabConfig> tabs = new ArrayList<>();
+                    tabs.add(tabConfig);
+                    final TabLayoutConfig tabLayoutConfig =
+                            new TabLayoutConfig(new Size(200, 76), tabs, null);
+                    final List<LayoutConfig> children = new ArrayList<>();
+                    children.add(tabLayoutConfig);
+                    children.add(layoutConfig);
+                    SplitLayoutConfig splitLayoutConfig =
+                            new SplitLayoutConfig(new Size(200, 76), Dimension.Y, children);
+                    layoutConfig = splitLayoutConfig;
+                    dashboardConfig.setLayout(layoutConfig);
+                }
+
+                if (componentConfigList != null) {
+                    for (final ComponentConfig componentConfig : componentConfigList) {
+                        addComponent(componentConfig.getType(), componentConfig);
+                    }
+                    for (final ComponentConfig componentConfig : componentConfigList) {
+                        final Component component = components.get(componentConfig.getId());
                         if (component != null) {
                             component.link();
                         }
                     }
                 }
+
             } else {
                 // /**
                 // * ADD TEST DATA
@@ -352,10 +414,10 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         }
     }
 
-    private Component addComponent(final String type, final ComponentConfig componentData) {
-        final Component component = components.add(type, componentData.getId());
+    private Component addComponent(final String type, final ComponentConfig componentConfig) {
+        final Component component = components.add(type, componentConfig.getId());
         if (component != null) {
-            component.setDashboardContext(dashboardContext);
+            component.setDashboardContext(this);
 
             if (component instanceof HasDirtyHandlers) {
                 ((HasDirtyHandlers) component).addDirtyHandler(event -> setDirty(true));
@@ -367,7 +429,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                 queryable.addModeListener(this);
             }
 
-            component.read(componentData);
+            component.read(componentConfig);
         }
 
         enableQueryButtons();
@@ -404,20 +466,14 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             componentDataList.add(componentConfig);
         }
 
-        final List<Param> params = dashboardContext.getCoreParams();
-        String paramString = null;
-        if (params != null) {
-            paramString = ParamUtil.getCombinedParameterString(params);
-        }
-
         final DashboardConfig dashboardConfig = new DashboardConfig();
-        dashboardConfig.setParameters(paramString);
-        dashboardConfig.setTimeRange(dashboardContext.getTimeRange());
+        dashboardConfig.setTimeRange(timeRange);
         dashboardConfig.setComponents(componentDataList);
         dashboardConfig.setLayout(layoutPresenter.getLayoutConfig());
         dashboardConfig.setLayoutConstraints(layoutConstraints);
         dashboardConfig.setPreferredSize(preferredSize);
         dashboardConfig.setTabVisibility(TabVisibility.SHOW_ALL);
+        dashboardConfig.setModelVersion(VERSION_7_2_0);
         dashboard.setDashboardConfig(dashboardConfig);
         return dashboard;
     }
@@ -501,7 +557,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                         lastUsedQueryInfo = state.getQueryInfo();
 
                         for (final Queryable queryable : queryableComponents) {
-                            queryable.setDashboardContext(dashboardContext);
+                            queryable.setDashboardContext(this);
                             queryable.setQueryInfo(lastUsedQueryInfo);
                             queryable.start();
                         }
@@ -588,14 +644,14 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                 id = type.getId() + "-" + RandomId.createId(5);
             }
 
-            final ComponentConfig componentData = ComponentConfig
+            final ComponentConfig componentConfig = ComponentConfig
                     .builder()
                     .type(type.getId())
                     .id(id)
                     .name(type.getName())
                     .build();
 
-            final Component componentPresenter = addComponent(componentData.getType(), componentData);
+            final Component componentPresenter = addComponent(componentConfig.getType(), componentConfig);
             if (componentPresenter != null) {
                 componentPresenter.link();
             }
