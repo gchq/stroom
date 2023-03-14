@@ -11,6 +11,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+## [v7.1-beta.23-test-open-id-15] - 2023-03-14
+
+* Issue **#3270** : Change the auto logging of audit events to ignore any initiated by the processing user account as this is not human initiated.
+
+* Issue **#3278** : Fix warning about the data retention rule summary query cancellation action not been correctly configured for auto logging.
+
+* Remove thread sleep accidentally added for testing purposes in data retention summary query execution.
+
+* Issue **#3292** : Change the reference data load to not load entries with null values. If `overrideExistingValues` is set and an entry with a null value overrides an existing one with a non-null value, the existing one will be removed.
+
+* Issue **#3299** : Fix schema non-compliant events when importing config. Also fix error handling when user tries to import with no file selected. Improved the audit events for file upload.
+
+* Remove audit logging for `MetaResourceImpl.getTypes` which just lists the stream types and is not an explicit user action.
+
+* Issue **#3112** : Ensure users from header tokens are always places in session if we have one.
+
 * Issue **#2759** : Normalise Windows line endings () to Unix-style () when pasting into the ACE text editor.
 
 * Issue **#3272** : Change handling for reference loads in unexpected states. It now logs an app log error but carries on and loads over the top.
@@ -4657,7 +4674,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.23...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id-15...HEAD
+[v7.1-beta.23-test-open-id-15]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id-14...v7.1-beta.23-test-open-id-15
 [v7.1-beta.23]: https://github.com/gchq/stroom/compare/v7.1-beta.22...v7.1-beta.23
 [v7.1-beta.22]: https://github.com/gchq/stroom/compare/v7.1-beta.21...v7.1-beta.22
 [v7.1-beta.21]: https://github.com/gchq/stroom/compare/v7.1-beta.20...v7.1-beta.21
