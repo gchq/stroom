@@ -10358,6 +10358,9 @@
           "layoutConstraints" : {
             "$ref" : "#/components/schemas/LayoutConstraints"
           },
+          "modelVersion" : {
+            "type" : "string"
+          },
           "parameters" : {
             "type" : "string"
           },
