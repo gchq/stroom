@@ -592,6 +592,7 @@ export interface DashboardConfig {
   components?: ComponentConfig[];
   layout?: LayoutConfig;
   layoutConstraints?: LayoutConstraints;
+  modelVersion?: string;
   parameters?: string;
   preferredSize?: Size;
   tabVisibility?: "SHOW_ALL" | "HIDE_SINGLE" | "HIDE_ALL";
