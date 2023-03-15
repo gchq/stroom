@@ -84,7 +84,6 @@ import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.Expander;
-import stroom.util.shared.RandomId;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.Version;
 import stroom.view.client.presenter.DataSourceFieldsMap;
@@ -125,7 +124,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 public class TablePresenter extends AbstractComponentPresenter<TableView>
         implements HasDirtyHandlers, ResultComponent, HasSelection, TableUiHandlers {
@@ -159,7 +157,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private FieldAddPresenter fieldAddPresenter;
     private boolean ignoreRangeChange;
     private int[] maxResults = TableComponentSettings.DEFAULT_MAX_RESULTS;
-    private final Set<String> usedFieldIds = new HashSet<>();
     private boolean pause;
     private int currentRequestCount;
 
@@ -450,16 +447,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         if (allFields.contains(fieldName)) {
             params.add(ParamSubstituteUtil.makeParam(fieldName));
         }
-    }
-
-    private String createRandomFieldId() {
-        String id = getComponentConfig().getId() + "|" + RandomId.createId(5);
-        // Make sure we don't duplicate ids.
-        while (usedFieldIds.contains(id)) {
-            id = getComponentConfig().getId() + "|" + RandomId.createId(5);
-        }
-        usedFieldIds.add(id);
-        return id;
     }
 
     private void download() {
@@ -965,6 +952,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
 
         // Ensure all fields have ids.
+        final Set<String> usedFieldIds = new HashSet<>();
         if (getTableSettings().getFields() != null) {
             final String obfuscatedStreamId = IndexConstants.generateObfuscatedColumnName(IndexConstants.STREAM_ID);
             final String obfuscatedEventId = IndexConstants.generateObfuscatedColumnName(IndexConstants.EVENT_ID);
@@ -977,7 +965,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 } else if (obfuscatedEventId.equals(f.getName())) {
                     f = buildSpecialField(IndexConstants.EVENT_ID);
                 } else if (field.getId() == null) {
-                    f = field.copy().id(createRandomFieldId()).build();
+                    f = field.copy().id(fieldsManager.createRandomFieldId(usedFieldIds)).build();
                 }
                 usedFieldIds.add(field.getId());
                 fields.add(f);
@@ -1138,21 +1126,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 HidePopupEvent
                         .builder(presenter)
                         .fire();
-
-                final String fieldName = field.getName();
-                String suffix = "";
-                int count = 1;
-                final Set<String> currentFields = getTableSettings().getFields().stream().map(Field::getName).collect(
-                        Collectors.toSet());
-                while (currentFields.contains(fieldName + suffix)) {
-                    count++;
-                    suffix = " " + count;
-                }
-
-                field = field.copy()
-                        .name(fieldName + suffix)
-                        .id(createRandomFieldId())
-                        .build();
                 fieldsManager.addField(field);
             }
         }

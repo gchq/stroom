@@ -24,6 +24,7 @@ import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
+import stroom.util.shared.RandomId;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
@@ -43,6 +44,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class FieldsManager implements HeadingListener {
 
@@ -256,13 +259,72 @@ public class FieldsManager implements HeadingListener {
         });
     }
 
-    public void addField(final Field field) {
+    public void addField(final Field templateField) {
+        addField(getFields().size(), templateField);
+    }
+
+    public void addField(final int index, final Field templateField) {
+        final String fieldName = makeUniqueFieldName(templateField.getName());
+        final Field newField = templateField.copy()
+                .name(fieldName)
+                .id(createRandomFieldId())
+                .build();
+
         final List<Field> fields = getFields();
-        fields.add(field);
+        fields.add(index, newField);
         updateFields(fields);
 
         tablePresenter.setDirty(true);
         tablePresenter.updateColumns();
+    }
+
+    private void duplicateField(final Field field) {
+        final List<Field> fields = getFields();
+        final int index = fields.indexOf(field);
+        addField(index + 1, field);
+    }
+
+    public String makeUniqueFieldName(final String fieldName) {
+        String name = fieldName;
+        String suffix = "";
+        int count = 1;
+
+        // See if we can get a numeric part off the end of the field name.
+        int index = fieldName.lastIndexOf(" ");
+        if (index != -1) {
+            final String part1 = fieldName.substring(0, index);
+            final String part2 = fieldName.substring(index + 1);
+            try {
+                count = Integer.parseInt(part2);
+                name = part1;
+            } catch (final RuntimeException e) {
+                // Ignore.
+            }
+        }
+
+        final Set<String> currentFields = getFields().stream().map(Field::getName).collect(
+                Collectors.toSet());
+        while (currentFields.contains(name + suffix)) {
+            count++;
+            suffix = " " + count;
+        }
+        return name + suffix;
+    }
+
+    private String createRandomFieldId() {
+        final Set<String> usedFieldIds = getFields().stream().map(Field::getId).collect(Collectors.toSet());
+        return createRandomFieldId(usedFieldIds);
+    }
+
+    public String createRandomFieldId(final Set<String> usedFieldIds) {
+        final String componentId = tablePresenter.getComponentConfig().getId();
+        String id = componentId + "|" + RandomId.createId(5);
+        // Make sure we don't duplicate ids.
+        while (usedFieldIds.contains(id)) {
+            id = componentId + "|" + RandomId.createId(5);
+        }
+        usedFieldIds.add(id);
+        return id;
     }
 
     private void deleteField(final Field field) {
@@ -370,6 +432,9 @@ public class FieldsManager implements HeadingListener {
         if (showMenu != null) {
             menuItems.add(showMenu);
         }
+
+        // Create duplicate menu.
+        menuItems.add(createDuplicateMenu(field));
 
         // Create remove menu.
         menuItems.add(createRemoveMenu(field));
@@ -606,6 +671,15 @@ public class FieldsManager implements HeadingListener {
                 .icon(SvgPresets.SHOW)
                 .text("Show")
                 .children(menuItems)
+                .build();
+    }
+
+    private Item createDuplicateMenu(final Field field) {
+        return new IconMenuItem.Builder()
+                .priority(6)
+                .icon(SvgPresets.COPY)
+                .text("Duplicate")
+                .command(() -> duplicateField(field))
                 .build();
     }
 
