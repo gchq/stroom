@@ -440,13 +440,12 @@ public abstract class AbstractMetaListPresenter
                 metaRow.getAttributeValue(attribute.getName());
 
         final Column<MetaRow, String> column = DataGridUtil.columnBuilder(extractor, formatter, TextCell::new)
-//                .rightAligned()
+                .rightAligned()
                 .build();
 
         dataGrid.addResizableColumn(
                 column,
-//                DataGridUtil.createRightAlignedHeader(name),
-                name,
+                DataGridUtil.createRightAlignedHeader(name),
                 size);
     }
 
