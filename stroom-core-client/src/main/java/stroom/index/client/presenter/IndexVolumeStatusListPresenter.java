@@ -113,7 +113,10 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
                 if (volume.getBytesLimit() == null) {
                     return "";
                 }
-                return getSizeString(volume.getCapacityInfo().getCapacityLimitBytes());
+                // Special case for limit as it is user input data so need more precision
+                return ModelStringUtil.formatIECByteSizeString(volume.getBytesLimit(),
+                        true,
+                        ModelStringUtil.DEFAULT_SIGNIFICANT_FIGURES);
             }
         };
         getView().addResizableColumn(limitColumn, "Limit", ColumnSizeConstants.SMALL_COL);
@@ -169,6 +172,15 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
         getView().addResizableColumn(usageDateColumn, "Usage Date", ColumnSizeConstants.DATE_COL);
 
         getView().addEndColumn(new EndColumn<>());
+    }
+
+    private String getLimitSizeString(final OptionalLong optSizeBytes) {
+        return optSizeBytes != null && optSizeBytes.isPresent()
+                ? ModelStringUtil.formatIECByteSizeString(
+                optSizeBytes.getAsLong(),
+                true,
+                ModelStringUtil.DEFAULT_SIGNIFICANT_FIGURES)
+                : "?";
     }
 
     private String getSizeString(final OptionalLong optSizeBytes) {

@@ -111,13 +111,18 @@ public class FSVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<
         getView().addResizableColumn(totalColumn, "Total", ColumnSizeConstants.SMALL_COL);
 
         // Limit.
-        final Column<FsVolume, String> limitColumn = new Column<FsVolume, String>(new TextCell()) {
+        final Column<FsVolume, String> limitColumn = new Column<FsVolume, String>(
+                new TextCell()) {
+
             @Override
             public String getValue(final FsVolume volume) {
                 if (volume.getByteLimit() == null) {
                     return "";
                 }
-                return getSizeString(volume.getCapacityInfo().getCapacityLimitBytes());
+                // Special case for limit as it is user input data so need more precision
+                return ModelStringUtil.formatIECByteSizeString(volume.getByteLimit(),
+                        true,
+                        ModelStringUtil.DEFAULT_SIGNIFICANT_FIGURES);
             }
         };
         getView().addResizableColumn(limitColumn, "Limit", ColumnSizeConstants.SMALL_COL);

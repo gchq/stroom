@@ -205,6 +205,62 @@ class TestModelStringUtil {
                 .addCase(1_127L, "1.1K")
                 .addCase(1_946L, "1.9K")
                 .addCase(10_240L, "10K")
+                .addCase(20_508_468_838L, "19G")
+                .addCase(9_878_424_780L, "9.2G")
+
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testParseThenFormatIECByteSizeString() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(int.class, String.class)
+                .withOutputType(String.class)
+                .withTestFunction(testCase -> {
+                    final long sizeInBytes = ModelStringUtil.parseIECByteSizeString(testCase.getInput()._2);
+                    final String output = ModelStringUtil.formatIECByteSizeString(
+                            sizeInBytes, true, testCase.getInput()._1);
+                    LOGGER.debug("sigFig: {}, input: {}, bytes: {}, output: {}",
+                            testCase.getInput()._1,
+                            testCase.getInput()._2,
+                            ModelStringUtil.formatCsv(sizeInBytes),
+                            output);
+                    return output;
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(3, "1B"), "1B")
+                .addCase(Tuple.of(3, "1.0B"), "1B")
+                .addCase(Tuple.of(3, "999B"), "999B")
+                .addCase(Tuple.of(3, "1023B"), "1023B")
+                .addCase(Tuple.of(3, "1024B"), "1K")
+                .addCase(Tuple.of(3, "0.001K"), "1B")
+                .addCase(Tuple.of(3, "0.01K"), "10B")
+                .addCase(Tuple.of(3, "0.1K"), "102B")
+                .addCase(Tuple.of(3, "1K"), "1K")
+                .addCase(Tuple.of(3, "1.0K"), "1K")
+                .addCase(Tuple.of(3, "1.1K"), "1.1K")
+                .addCase(Tuple.of(3, "1.11K"), "1.11K")
+                .addCase(Tuple.of(3, "1.111K"), "1.11K")
+                .addCase(Tuple.of(3, "1.2K"), "1.2K")
+                .addCase(Tuple.of(3, "1.3K"), "1.3K")
+                .addCase(Tuple.of(3, "1.4K"), "1.4K")
+                .addCase(Tuple.of(3, "1.5K"), "1.5K")
+                .addCase(Tuple.of(3, "1.6K"), "1.6K")
+                .addCase(Tuple.of(3, "1.9K"), "1.9K")
+                .addCase(Tuple.of(3, "1.91K"), "1.91K")
+                .addCase(Tuple.of(3, "1.912K"), "1.91K")
+                .addCase(Tuple.of(3, "10.0K"), "10K")
+                .addCase(Tuple.of(3, "19.1G"), "19.1G")
+                .addCase(Tuple.of(3, "119.1G"), "119G")
+                .addCase(Tuple.of(3, "1009.1G"), "1009G")
+                .addCase(Tuple.of(3, "9.2G"), "9.2G")
+
+                .addCase(Tuple.of(2, "1023B"), "1023B")
+                .addCase(Tuple.of(1, "1023B"), "1023B")
+                .addCase(Tuple.of(2, "1.22222K"), "1.2K")
+                .addCase(Tuple.of(3, "1.22222K"), "1.22K")
+                .addCase(Tuple.of(4, "1.22222K"), "1.222K")
+                .addCase(Tuple.of(5, "1.22222K"), "1.2217K")
                 .build();
     }
 
@@ -417,5 +473,28 @@ class TestModelStringUtil {
         t2.add("zz");
 
         assertThat(t1).isEqualTo(t2);
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testFormatIECByteSizeStringWithSizeIndicator() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withOutputType(String.class)
+                .withTestFunction(testCase -> {
+                    final long sizeInBytes = ModelStringUtil.parseIECByteSizeString(testCase.getInput());
+                    final String output = ModelStringUtil.formatIECByteSizeStringWithSizeIndicator(sizeInBytes);
+                    LOGGER.debug("input: {}, bytes: {}, output: {}",
+                            testCase.getInput(),
+                            ModelStringUtil.formatCsv(sizeInBytes),
+                            output);
+                    return output;
+                })
+                .withSimpleEqualityAssertion()
+                .addCase("1B", "1.0B ▎")
+                .addCase("1K", "1.0K ▌")
+                .addCase("1M", "1.0M ▊")
+                .addCase("1G", "1.0G █")
+                .addCase("1T", "1.0T █")
+                .build();
     }
 }
