@@ -293,9 +293,7 @@ public class DashboardPresenter
 
                 List<ComponentConfig> componentConfigList = dashboardConfig.getComponents();
 
-                /**
-                 * ADD A KEY/VALUE PARAMETER INPUT BOX FOR BACKWARD COMPATIBILITY.
-                 */
+                // ADD A KEY/VALUE PARAMETER INPUT BOX FOR BACKWARD COMPATIBILITY.
                 if (dashboardConfig.getModelVersion() == null) {
                     if (componentConfigList == null) {
                         componentConfigList = new ArrayList<>();
