@@ -204,8 +204,8 @@ class TestModelStringUtil {
                 .addCase(1_126L, "1.1K") // 1.099K
                 .addCase(1_127L, "1.1K")
                 .addCase(1_946L, "1.9K")
-                .addCase(10_240L, "10.0K")
-                .addCase(20_508_468_838L, "19.1G")
+                .addCase(10_240L, "10K")
+                .addCase(20_508_468_838L, "19G")
                 .addCase(9_878_424_780L, "9.2G")
 
                 .build();
@@ -490,11 +490,11 @@ class TestModelStringUtil {
                     return output;
                 })
                 .withSimpleEqualityAssertion()
-                .addCase("1B", "1B ▎")
-                .addCase("1K", "1K ▌")
-                .addCase("1M", "1M ▊")
-                .addCase("1G", "1G █")
-                .addCase("1T", "1T █")
+                .addCase("1B", "1.0B ▎")
+                .addCase("1K", "1.0K ▌")
+                .addCase("1M", "1.0M ▊")
+                .addCase("1G", "1.0G █")
+                .addCase("1T", "1.0T █")
                 .build();
     }
 }
