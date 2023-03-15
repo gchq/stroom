@@ -20,8 +20,6 @@ import stroom.widget.xsdbrowser.client.view.XSDNode.XSDType;
 
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.MaxScrollPanel;
-import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
@@ -29,10 +27,10 @@ import java.util.List;
 
 public class XSDConstraintDisplay extends Composite {
 
-    private final ScrollPanel layout;
+    private final SimplePanel layout;
 
     public XSDConstraintDisplay() {
-        layout = new MaxScrollPanel();
+        layout = new SimplePanel();
         initWidget(layout);
     }
 
