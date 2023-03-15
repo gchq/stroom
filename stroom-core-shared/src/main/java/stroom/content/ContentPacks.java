@@ -53,7 +53,7 @@ public class ContentPacks {
 
     public static final ContentPack VISUALISATIONS = createSVisualisationContentPack(VISUALISATION_RELEASES_URL,
             "visualisations-production",
-            "3.3.2");
+            "3.12-alpha.1");
 
     public static final ContentPackCollection SAMPLE_DATA_CONTENT_PACKS = new ContentPackCollection(
             List.of(
