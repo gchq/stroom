@@ -28,6 +28,7 @@ import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.DashboardPresenter.DashboardView;
 import stroom.dashboard.client.query.QueryInfoPresenter;
 import stroom.dashboard.shared.ComponentConfig;
+import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardConfig.TabVisibility;
 import stroom.dashboard.shared.DashboardDoc;
@@ -39,6 +40,9 @@ import stroom.dashboard.shared.Size;
 import stroom.dashboard.shared.SplitLayoutConfig;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
+import stroom.dashboard.shared.TableComponentSettings;
+import stroom.dashboard.shared.TextComponentSettings;
+import stroom.dashboard.shared.VisComponentSettings;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -53,7 +57,6 @@ import stroom.query.client.presenter.QueryUiHandlers;
 import stroom.query.client.view.QueryButtons;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Icon;
-import stroom.util.shared.RandomId;
 import stroom.util.shared.Version;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -72,8 +75,12 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -193,7 +200,7 @@ public class DashboardPresenter
             if (componentUse.equals(type.getUse())) {
                 menuItems.add(new SimpleMenuItem.Builder()
                         .text(type.getName())
-                        .command(() -> addComponent(type))
+                        .command(() -> addNewComponent(type))
                         .build());
             }
         }
@@ -501,6 +508,138 @@ public class DashboardPresenter
         }
     }
 
+    public void duplicateTab(final TabLayoutConfig tabLayoutConfig, final TabConfig originalTabConfig) {
+        // Duplicate the referenced component.
+        final Component originalComponent = components.get(originalTabConfig.getId());
+        final ComponentType type = originalComponent.getType();
+
+        // Get sets of unique component ids and names.
+        final Set<String> currentIdSet = new HashSet<>();
+        final Set<String> currentNameSet = new HashSet<>();
+        for (final Component component : components.getComponents()) {
+            currentIdSet.add(component.getId());
+            currentNameSet.add(component.getLabel());
+        }
+
+        final String id = UniqueUtil.createUniqueComponentId(type, currentIdSet);
+        final String newName = UniqueUtil.makeUniqueName(originalComponent.getLabel(), currentNameSet);
+        final ComponentConfig componentConfig = originalComponent.getComponentConfig().copy()
+                .id(id)
+                .name(newName)
+                .build();
+
+        // Try and add the component.
+        final Component component = addComponent(componentConfig.getType(), componentConfig);
+        if (component != null) {
+            final TabConfig newTabConfig = originalTabConfig.copy().id(component.getId()).build();
+            tabLayoutConfig.add(newTabConfig);
+            tabLayoutConfig.setSelected(tabLayoutConfig.getTabs().size() - 1);
+
+            // Link new component.
+            components.get(newTabConfig.getId()).link();
+
+            layoutPresenter.clear();
+            layoutPresenter.refresh();
+
+            setDirty(true);
+        }
+    }
+
+    public void duplicateTabPanel(final TabLayoutConfig tabLayoutConfig) {
+        Size preferredSize = null;
+        if (tabLayoutConfig.getPreferredSize() != null) {
+            preferredSize = tabLayoutConfig.getPreferredSize().copy().build();
+        }
+
+        // Get a set of unique component ids.
+        final Set<String> currentIdSet = new HashSet<>();
+        for (final Component component : components.getComponents()) {
+            currentIdSet.add(component.getId());
+        }
+
+        final Map<String, String> idMapping = new HashMap<>();
+        final List<ComponentConfig> newComponents = new ArrayList<>();
+        final Map<String, TabConfig> newTabConfigMap = new HashMap<>();
+        if (tabLayoutConfig.getTabs() != null) {
+            for (final TabConfig tabConfig : tabLayoutConfig.getTabs()) {
+                // Duplicate the referenced component.
+                final Component originalComponent = components.get(tabConfig.getId());
+                final ComponentType type = originalComponent.getType();
+
+                final String id = UniqueUtil.createUniqueComponentId(type, currentIdSet);
+                currentIdSet.add(id);
+
+                final ComponentConfig componentConfig = originalComponent.getComponentConfig().copy()
+                        .id(id)
+                        .build();
+
+                idMapping.put(tabConfig.getId(), id);
+                newComponents.add(componentConfig);
+
+                final TabConfig newTabConfig = tabConfig.copy().id(id).build();
+                newTabConfigMap.put(id, newTabConfig);
+            }
+        }
+
+        // Now try and repoint the id references so that all new copied items reference each other rather than their
+        // originals.
+        final List<ComponentConfig> modifiedComponents = new ArrayList<>();
+        for (final ComponentConfig componentConfig : newComponents) {
+            ComponentSettings settings = componentConfig.getSettings();
+            if (settings instanceof TableComponentSettings) {
+                TableComponentSettings tableComponentSettings = (TableComponentSettings) settings;
+                if (tableComponentSettings.getQueryId() != null &&
+                        idMapping.containsKey(tableComponentSettings.getQueryId())) {
+                    settings = tableComponentSettings
+                            .copy().queryId(idMapping.get(tableComponentSettings.getQueryId())).build();
+                }
+            } else if (settings instanceof VisComponentSettings) {
+                VisComponentSettings visComponentSettings = (VisComponentSettings) settings;
+                if (visComponentSettings.getTableId() != null &&
+                        idMapping.containsKey(visComponentSettings.getTableId())) {
+                    settings = visComponentSettings
+                            .copy().tableId(idMapping.get(visComponentSettings.getTableId())).build();
+                }
+            } else if (settings instanceof TextComponentSettings) {
+                TextComponentSettings textComponentSettings = (TextComponentSettings) settings;
+                if (textComponentSettings.getTableId() != null &&
+                        idMapping.containsKey(textComponentSettings.getTableId())) {
+                    settings = textComponentSettings
+                            .copy().tableId(idMapping.get(textComponentSettings.getTableId())).build();
+                }
+            }
+            modifiedComponents.add(componentConfig.copy().settings(settings).build());
+        }
+
+        final List<TabConfig> tabs = new ArrayList<>();
+        // Now try and add all the duplicated components.
+        for (final ComponentConfig componentConfig : modifiedComponents) {
+            final Component component = addComponent(componentConfig.getType(), componentConfig);
+            if (component != null) {
+                final TabConfig newTabConfig = newTabConfigMap.get(component.getId());
+                tabs.add(newTabConfig);
+            }
+        }
+
+        // Now link all the components.
+        for (final ComponentConfig componentConfig : modifiedComponents) {
+            final Component component = components.get(componentConfig.getId());
+            if (component != null) {
+                component.link();
+            }
+        }
+
+        final TabLayoutConfig newTabLayoutConfig = TabLayoutConfig
+                .builder()
+                .preferredSize(preferredSize)
+                .tabs(tabs)
+                .selected(tabLayoutConfig.getSelected())
+                .build();
+
+        // Add the new tab layout panel.
+        addTabPanel(newTabLayoutConfig);
+    }
+
     @Override
     public void requestTabClose(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
         // Figure out what tabs would remain after removal.
@@ -634,14 +773,16 @@ public class DashboardPresenter
         QueryButtons getQueryButtons();
     }
 
-    private void addComponent(final ComponentType type) {
+    private void addNewComponent(final ComponentType type) {
         if (type != null) {
-            String id = type.getId() + "-" + RandomId.createId(5);
-            // Make sure we don't duplicate ids.
-            while (components.idExists(id)) {
-                id = type.getId() + "-" + RandomId.createId(5);
+
+            // Get sets of unique component ids and names.
+            final Set<String> currentIdSet = new HashSet<>();
+            for (final Component component : components.getComponents()) {
+                currentIdSet.add(component.getId());
             }
 
+            final String id = UniqueUtil.createUniqueComponentId(type, currentIdSet);
             final ComponentConfig componentConfig = ComponentConfig
                     .builder()
                     .type(type.getId())
@@ -657,34 +798,39 @@ public class DashboardPresenter
             final TabConfig tabConfig = new TabConfig(id, true);
             final TabLayoutConfig tabLayoutConfig = new TabLayoutConfig(tabConfig);
 
-            // Choose where to put the new component in the layout data.
-            LayoutConfig layoutConfig = layoutPresenter.getLayoutConfig();
-            if (layoutConfig == null) {
-                // There is no existing layout so add the new item as a
-                // single item layout.
-
-                layoutConfig = tabLayoutConfig;
-
-            } else if (layoutConfig instanceof TabLayoutConfig) {
-                // If the layout is a single item then replace it with a
-                // split layout.
-                layoutConfig = new SplitLayoutConfig(Dimension.Y, layoutConfig, tabLayoutConfig);
-            } else {
-                // If the layout is already a split then add a new component
-                // to the split.
-                final SplitLayoutConfig parent = (SplitLayoutConfig) layoutConfig;
-
-                // Add the new component.
-                parent.add(tabLayoutConfig);
-
-                // Fix the heights of the components to fit the new
-                // component in.
-                fixHeights(parent);
-            }
-
-            layoutPresenter.configure(layoutConfig, layoutConstraints, preferredSize);
-            setDirty(true);
+            // Add the new tab layout.
+            addTabPanel(tabLayoutConfig);
         }
+    }
+
+    private void addTabPanel(final TabLayoutConfig tabLayoutConfig) {
+        // Choose where to put the new component in the layout data.
+        LayoutConfig layoutConfig = layoutPresenter.getLayoutConfig();
+        if (layoutConfig == null) {
+            // There is no existing layout so add the new item as a
+            // single item layout.
+
+            layoutConfig = tabLayoutConfig;
+
+        } else if (layoutConfig instanceof TabLayoutConfig) {
+            // If the layout is a single item then replace it with a
+            // split layout.
+            layoutConfig = new SplitLayoutConfig(Dimension.Y, layoutConfig, tabLayoutConfig);
+        } else {
+            // If the layout is already a split then add a new component
+            // to the split.
+            final SplitLayoutConfig parent = (SplitLayoutConfig) layoutConfig;
+
+            // Add the new component.
+            parent.add(tabLayoutConfig);
+
+            // Fix the heights of the components to fit the new
+            // component in.
+            fixHeights(parent);
+        }
+
+        layoutPresenter.configure(layoutConfig, layoutConstraints, preferredSize);
+        setDirty(true);
     }
 
     private void fixHeights(final SplitLayoutConfig parent) {

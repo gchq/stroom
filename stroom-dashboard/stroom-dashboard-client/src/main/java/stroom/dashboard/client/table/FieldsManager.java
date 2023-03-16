@@ -17,6 +17,7 @@
 package stroom.dashboard.client.table;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.dashboard.client.main.UniqueUtil;
 import stroom.data.grid.client.Heading;
 import stroom.data.grid.client.HeadingListener;
 import stroom.query.api.v2.Field;
@@ -24,7 +25,6 @@ import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
-import stroom.util.shared.RandomId;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
@@ -284,31 +284,10 @@ public class FieldsManager implements HeadingListener {
         addField(index + 1, field);
     }
 
-    public String makeUniqueFieldName(final String fieldName) {
-        String name = fieldName;
-        String suffix = "";
-        int count = 1;
-
-        // See if we can get a numeric part off the end of the field name.
-        int index = fieldName.lastIndexOf(" ");
-        if (index != -1) {
-            final String part1 = fieldName.substring(0, index);
-            final String part2 = fieldName.substring(index + 1);
-            try {
-                count = Integer.parseInt(part2);
-                name = part1;
-            } catch (final RuntimeException e) {
-                // Ignore.
-            }
-        }
-
+    private String makeUniqueFieldName(final String fieldName) {
         final Set<String> currentFields = getFields().stream().map(Field::getName).collect(
                 Collectors.toSet());
-        while (currentFields.contains(name + suffix)) {
-            count++;
-            suffix = " " + count;
-        }
-        return name + suffix;
+        return UniqueUtil.makeUniqueName(fieldName, currentFields);
     }
 
     private String createRandomFieldId() {
@@ -318,13 +297,7 @@ public class FieldsManager implements HeadingListener {
 
     public String createRandomFieldId(final Set<String> usedFieldIds) {
         final String componentId = tablePresenter.getComponentConfig().getId();
-        String id = componentId + "|" + RandomId.createId(5);
-        // Make sure we don't duplicate ids.
-        while (usedFieldIds.contains(id)) {
-            id = componentId + "|" + RandomId.createId(5);
-        }
-        usedFieldIds.add(id);
-        return id;
+        return UniqueUtil.createUniqueFieldId(componentId, usedFieldIds);
     }
 
     private void deleteField(final Field field) {
@@ -424,6 +397,9 @@ public class FieldsManager implements HeadingListener {
         // Add filter menu item.
         menuItems.add(createFilterMenu(field));
 
+        // Create duplicate menu.
+        menuItems.add(createDuplicateMenu(field));
+
         // Create hide menu.
         menuItems.add(createHideMenu(field));
 
@@ -432,9 +408,6 @@ public class FieldsManager implements HeadingListener {
         if (showMenu != null) {
             menuItems.add(showMenu);
         }
-
-        // Create duplicate menu.
-        menuItems.add(createDuplicateMenu(field));
 
         // Create remove menu.
         menuItems.add(createRemoveMenu(field));
@@ -637,9 +610,18 @@ public class FieldsManager implements HeadingListener {
                 .build();
     }
 
-    private Item createHideMenu(final Field field) {
+    private Item createDuplicateMenu(final Field field) {
         return new IconMenuItem.Builder()
                 .priority(6)
+                .icon(SvgPresets.COPY)
+                .text("Duplicate")
+                .command(() -> duplicateField(field))
+                .build();
+    }
+
+    private Item createHideMenu(final Field field) {
+        return new IconMenuItem.Builder()
+                .priority(7)
                 .icon(SvgPresets.HIDE)
                 .text("Hide")
                 .command(() -> hideField(field))
@@ -667,25 +649,16 @@ public class FieldsManager implements HeadingListener {
         }
 
         return new IconParentMenuItem.Builder()
-                .priority(7)
+                .priority(8)
                 .icon(SvgPresets.SHOW)
                 .text("Show")
                 .children(menuItems)
                 .build();
     }
 
-    private Item createDuplicateMenu(final Field field) {
-        return new IconMenuItem.Builder()
-                .priority(6)
-                .icon(SvgPresets.COPY)
-                .text("Duplicate")
-                .command(() -> duplicateField(field))
-                .build();
-    }
-
     private Item createRemoveMenu(final Field field) {
         return new IconMenuItem.Builder()
-                .priority(8)
+                .priority(9)
                 .icon(SvgPresets.DELETE)
                 .text("Remove")
                 .command(() -> deleteField(field))

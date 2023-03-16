@@ -146,4 +146,37 @@ public class SplitLayoutConfig extends LayoutConfig {
         }
         return children.size();
     }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private Size preferredSize;
+        private int dimension;
+        private List<LayoutConfig> children;
+
+        private Builder() {
+        }
+
+        public Builder preferredSize(final Size preferredSize) {
+            this.preferredSize = preferredSize;
+            return this;
+        }
+
+        public Builder dimension(final int dimension) {
+            this.dimension = dimension;
+            return this;
+        }
+
+        public Builder children(final List<LayoutConfig> children) {
+            this.children = children;
+            return this;
+        }
+
+        public SplitLayoutConfig build() {
+            return new SplitLayoutConfig(preferredSize, dimension, children);
+        }
+    }
 }
