@@ -664,6 +664,10 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
         return tabs;
     }
 
+    public List<TabData> getVisibleTabs() {
+        return visibleTabs;
+    }
+
     private AbstractTabSelector getTabSelector() {
         if (tabSelector == null) {
             tabSelector = createTabSelector();

@@ -58,25 +58,30 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         this.tabLayoutConfig = tabLayoutConfig;
         this.changeHandler = changeHandler;
 
-        final FlowPanel panel = new FlowPanel();
-        panel.addStyleName("tabLayout");
-        initWidget(panel);
+        tabBar = new LinkTabBar();
+        tabBar.addStyleName("dock-max tabLayout-tabBar");
 
-        final FlowPanel contentOuter = new FlowPanel();
-        contentOuter.setStyleName("tabLayout-contentOuter dashboard-panel");
-        panel.add(contentOuter);
-
-        final FlowPanel contentInner = new FlowPanel();
-        contentInner.setStyleName("tabLayout-contentInner");
-        contentOuter.add(contentInner);
+        final FlowPanel tabContainer = new FlowPanel();
+        tabContainer.setStyleName("tabLayout-tabContainer");
+        tabContainer.add(tabBar);
 
         final FlowPanel barOuter = new FlowPanel();
         barOuter.setStyleName("tabLayout-barOuter");
+        barOuter.add(tabContainer);
+
+        final FlowPanel contentInner = new FlowPanel();
+        contentInner.setStyleName("tabLayout-contentInner");
         contentInner.add(barOuter);
 
-        tabBar = new LinkTabBar();
-        tabBar.addStyleName("dock-max tabLayout-barInner");
-        barOuter.add(tabBar);
+        final FlowPanel contentOuter = new FlowPanel();
+        contentOuter.setStyleName("tabLayout-contentOuter dashboard-panel");
+        contentOuter.add(contentInner);
+
+        final FlowPanel panel = new FlowPanel();
+        panel.addStyleName("tabLayout");
+        panel.add(contentOuter);
+        initWidget(panel);
+
 
         final FlowPanel buttons = new FlowPanel();
         buttons.setStyleName("dock-min button-container svg-image-button-group tabLayout-buttons");
