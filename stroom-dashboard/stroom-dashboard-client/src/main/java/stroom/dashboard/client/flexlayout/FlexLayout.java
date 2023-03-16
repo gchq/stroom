@@ -992,8 +992,8 @@ public class FlexLayout extends Composite {
                                     if (mouseTarget == null ||
                                             (x >= ElementUtil.getClientLeft(tabElement) &&
                                                     x <= ElementUtil.getClientRight(tabElement))) {
-                                        // If the mouse position is over the tab then we might want to insert before this
-                                        // tab.
+                                        // If the mouse position is over the tab then we might want to insert before
+                                        // this tab.
                                         mouseTarget = new MouseTarget(layoutConfig,
                                                 positionAndSize,
                                                 Pos.TAB,
@@ -1002,8 +1002,8 @@ public class FlexLayout extends Composite {
                                                 i,
                                                 linkTab);
                                     } else if (x > ElementUtil.getClientRight(tabElement)) {
-                                        // If the mouse position is right of the right-hand side of the tab then we might
-                                        // want to insert the tab we are dragging after the current tab.
+                                        // If the mouse position is right of the right-hand side of the tab then we
+                                        // might want to insert the tab we are dragging after the current tab.
                                         mouseTarget = new MouseTarget(layoutConfig,
                                                 positionAndSize,
                                                 Pos.AFTER_TAB,
