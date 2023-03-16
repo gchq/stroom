@@ -16,7 +16,12 @@
 
 package stroom.data.store.impl.fs;
 
+import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
 import java.nio.file.Path;
+import java.util.regex.Pattern;
 
 /**
  * <p>
@@ -24,6 +29,10 @@ import java.nio.file.Path;
  * </p>
  */
 final class FsPrefixUtil {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsPrefixUtil.class);
+
+    private static final Pattern LEADING_ZEROS = Pattern.compile("^0*");
 
     private static final String START_PREFIX = "000";
     private static final int PAD_SIZE = 3;
@@ -48,6 +57,29 @@ final class FsPrefixUtil {
         }
 
         return sb.toString();
+    }
+
+    /**
+     * Remove padding from the string, e.g. '000099' => 99
+     * @return The de-padded value, 0 if blank/null or -1 if not a number.
+     */
+    static long dePadId(final String paddedId) {
+        if (NullSafe.isBlankString(paddedId)) {
+            return -1L;
+        } else {
+            final String dePaddedId = LEADING_ZEROS.matcher(paddedId)
+                    .replaceFirst("");
+            if (dePaddedId.isBlank()) {
+                return 0;
+            } else {
+                try {
+                    return Long.parseLong(dePaddedId);
+                } catch (NumberFormatException e) {
+                    LOGGER.debug("Unable to convert '{}' to a long", dePaddedId, e);
+                    return -1;
+                }
+            }
+        }
     }
 
 //    /**

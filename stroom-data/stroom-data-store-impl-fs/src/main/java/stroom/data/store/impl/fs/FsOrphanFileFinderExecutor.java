@@ -22,8 +22,10 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
+import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -36,6 +38,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -83,7 +86,12 @@ class FsOrphanFileFinderExecutor {
     public void scan() {
         final TaskContext taskContext = taskContextFactory.current();
         taskContext.info(() -> "Starting orphan file finder");
+        LOGGER.info("{} - Starting, using logger name: '{}'", TASK_NAME, ORPHAN_FILE_LOGGER.getName());
+        ORPHAN_FILE_LOGGER.info("Starting {} - {}", TASK_NAME, DateUtil.createNormalDateTimeString());
+        ORPHAN_FILE_LOGGER.info("Orphaned files/directories:");
+        final DurationTimer durationTimer = DurationTimer.start();
 
+        final AtomicLong counter = new AtomicLong();
         final FsOrphanFileFinderSummary summary = new FsOrphanFileFinderSummary();
         final Consumer<Path> orphanConsumer = path -> {
             LOGGER.debug(() -> "Unexpected file in store: " +
@@ -92,11 +100,28 @@ class FsOrphanFileFinderExecutor {
             ORPHAN_FILE_LOGGER.info(FileUtil.getCanonicalPath(path));
 
             summary.addPath(path);
+            counter.incrementAndGet();
         };
 
-        scan(orphanConsumer, taskContext);
+        try {
+            scan(orphanConsumer, taskContext);
 
-        ORPHAN_FILE_LOGGER.info(summary.toString());
+            if (Thread.currentThread().isInterrupted() || taskContext.isTerminated()) {
+                ORPHAN_FILE_LOGGER.info("--- {} task {} ---",
+                        TASK_NAME, Thread.currentThread().isInterrupted()
+                                ? "interrupted"
+                                : "terminated");
+            } else {
+                ORPHAN_FILE_LOGGER.info(summary.toString());
+                ORPHAN_FILE_LOGGER.info("Completed {} in {}, found {} orphaned files/directories",
+                        TASK_NAME, durationTimer, counter.get());
+            }
+        } catch (Exception e) {
+            ORPHAN_FILE_LOGGER.info("--- {} task failed due to: {} ---",
+                    TASK_NAME, e.getMessage());
+            throw e;
+        }
+        LOGGER.info("{} - Finished, in {}", TASK_NAME, durationTimer);
     }
 
     public void scan(final Consumer<Path> orphanConsumer, final TaskContext parentContext) {
@@ -107,32 +132,16 @@ class FsOrphanFileFinderExecutor {
 
         final List<FsVolume> volumeList = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
         if (volumeList != null && volumeList.size() > 0) {
-//            // Add to the task steps remaining.
-//            final ThreadPool threadPool = new ThreadPoolImpl(TASK_NAME + "#",
-//                    1,
-//                    1,
-//                    config.getFileSystemCleanBatchSize(),
-//                    Integer.MAX_VALUE);
-//            final Executor executor = executorProvider.get(threadPool);
-//
-//            final CompletableFuture<?>[] completableFutures = new CompletableFuture<?>[volumeList.size()];
-            int i = 0;
             for (final FsVolume volume : volumeList) {
+                if (Thread.currentThread().isInterrupted() || parentContext.isTerminated()) {
+                    LOGGER.info("{} - Task terminated", TASK_NAME);
+                    break;
+                }
                 if (VolumeUseStatus.ACTIVE.equals(volume.getStatus())) {
                     scanVolume(volume, orphanConsumer, oldestDirTime, parentContext);
-
-//                    final Runnable runnable = taskContextFactory.childContext(parentContext,
-//                            "Checking: " + volume.getPath(),
-//                            taskContext ->
-//                                    scanVolume(volume, orphanConsumer, oldestDirTime, taskContext));
-//                    final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable,
-//                            executor);
-//                    completableFutures[i++] = completableFuture;
                 }
             }
-//            CompletableFuture.allOf(completableFutures).join();
         }
-
         parentContext.info(() -> "start() - Completed orphan file finder in " + logExecutionTime);
     }
 

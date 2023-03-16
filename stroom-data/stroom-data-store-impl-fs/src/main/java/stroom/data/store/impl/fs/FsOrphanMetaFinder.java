@@ -19,16 +19,11 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.meta.api.MetaService;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFields;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.meta.shared.SimpleMeta;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 
@@ -68,7 +63,7 @@ class FsOrphanMetaFinder {
         this.fsVolumeConfigProvider = fsVolumeConfigProvider;
     }
 
-    public void scan(final Consumer<Meta> orphanConsumer,
+    public void scan(final Consumer<SimpleMeta> orphanConsumer,
                      final TaskContext taskContext) {
         final long maxId = metaService.getMaxId();
 
@@ -78,47 +73,39 @@ class FsOrphanMetaFinder {
                 maxId,
                 batchSize);
 
-        long minId = dataVolumeService.getLastMinMetaId();
+        long minId = dataVolumeService.getOrphanedMetaTrackerValue();
         LOGGER.info("Starting orphaned meta finder scan with min ID {}, max ID {}, batch size {}",
                 minId, maxId, batchSize);
         // Log initial position
         progress.log();
 
-        while (minId != -1 && !Thread.currentThread().isInterrupted()) {
-            minId = scanBatch(minId, maxId, orphanConsumer, progress);
+        while (minId != -1
+                && !Thread.currentThread().isInterrupted()
+                && !taskContext.isTerminated()) {
+            minId = scanBatch(minId, maxId, orphanConsumer, progress, taskContext);
         }
-        if (Thread.currentThread().isInterrupted()) {
-            LOGGER.info("Aborted orphaned meta finder scan at meta ID {}", progress.getId());
+        if (Thread.currentThread().isInterrupted() || taskContext.isTerminated()) {
+            LOGGER.info("Aborted orphaned meta finder scan at meta ID {}, max ID {}, batch size {}",
+                    progress.getId(), maxId, batchSize);
         }
     }
 
     private long scanBatch(final long minId,
                            final long maxId,
-                           final Consumer<Meta> orphanConsumer,
-                           final FsOrphanMetaFinderProgress progress) {
+                           final Consumer<SimpleMeta> orphanConsumer,
+                           final FsOrphanMetaFinderProgress progress,
+                           final TaskContext taskContext) {
         progress.setMinId(minId);
         progress.log();
 
-        final PageRequest pageRequest = new PageRequest(0, progress.getBatchSize());
-        final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.ID, Condition.GREATER_THAN, minId)
-                .addTerm(MetaFields.ID, Condition.LESS_THAN_OR_EQUAL_TO, maxId)
-                .build();
-
-        final FindMetaCriteria metaCriteria = new FindMetaCriteria(
-                pageRequest,
-                null,
-                expression,
-                false);
-        final ResultPage<Meta> metaResultPage = metaService.find(metaCriteria);
-        final List<Meta> metaList = metaResultPage.getValues();
+        final List<SimpleMeta> metaList = metaService.findBatch(minId, maxId, progress.getBatchSize());
         LOGGER.debug(() -> LogUtil.message("Found {} meta records", metaList.size()));
 
-        long result = -1;
+        final long result;
         if (metaList.size() > 0) {
 
-            final Map<Long, Meta> metaIdToMetaMap = metaList.stream()
-                    .collect(Collectors.toMap(Meta::getId, Function.identity()));
+            final Map<Long, SimpleMeta> metaIdToMetaMap = metaList.stream()
+                    .collect(Collectors.toMap(SimpleMeta::getId, Function.identity()));
 
             // No PageRequest as we are limiting the results by the meta IDs.
             final FindDataVolumeCriteria volumeCriteria = new FindDataVolumeCriteria(
@@ -136,15 +123,17 @@ class FsOrphanMetaFinder {
             LOGGER.debug(() -> LogUtil.message("Found {} dataVolume records", dataVolumes.size()));
 
             final Iterator<DataVolume> iterator = dataVolumes.iterator();
-            while (iterator.hasNext() && !Thread.currentThread().isInterrupted()) {
+            while (iterator.hasNext()
+                    && !Thread.currentThread().isInterrupted()
+                    && !taskContext.isTerminated()) {
                 final DataVolume dataVolume = iterator.next();
                 final long metaId = dataVolume.getMetaId();
+                LOGGER.trace("metaId: {}", metaId);
                 // Should never be null as we used the metaMap keys to find the data vols
-                final Meta meta = metaIdToMetaMap.get(metaId);
+                final SimpleMeta meta = metaIdToMetaMap.get(metaId);
                 progress.setId(metaId);
 
-                result = Math.max(result, metaId);
-                final Optional<Path> optional = fileFinder.findRootStreamFile(meta);
+                final Optional<Path> optional = fileFinder.findRootStreamFile(meta, dataVolume.getVolumePath());
                 if (optional.isEmpty()) {
                     progress.foundOrphan();
                     progress.log();
@@ -153,11 +142,24 @@ class FsOrphanMetaFinder {
             }
             // Only log at the end of each batch (or when orphan found) to reduce overhead
             progress.log();
-            // Update the tracker so if the job is cancelled or
-            dataVolumeService.updateLastMinMetaId(progress.getId());
+
+            // See if we have reached the end
+            if (progress.getId() < maxId) {
+                // Update the tracker so if the job is cancelled or stroom is shutdown we can resume
+                // from where we got to on next run
+                dataVolumeService.updateOrphanedMetaTracker(progress.getId() + 1);
+                result = progress.getId();
+            } else {
+                // Next run we start from the beginning
+                dataVolumeService.updateOrphanedMetaTracker(0);
+                // Indicate completion to the caller
+                result = -1;
+            }
         } else {
             // No rows means we have reached the end so reset the tracker for the next run.
-            dataVolumeService.updateLastMinMetaId(0);
+            dataVolumeService.updateOrphanedMetaTracker(0);
+            // Indicate completion
+            result = -1;
             LOGGER.info("Completed orphaned meta finder scan at ID {}", progress.getId());
         }
         return result;

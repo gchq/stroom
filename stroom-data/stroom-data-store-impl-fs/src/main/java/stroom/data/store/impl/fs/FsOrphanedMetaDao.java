@@ -2,7 +2,7 @@ package stroom.data.store.impl.fs;
 
 public interface FsOrphanedMetaDao {
 
-    long getLastMinMetaId();
+    long getMetaIdTrackerValue();
 
-    void updateLastMinMetaId(final long lastMinMetaId);
+    void updateMetaIdTracker(final long lastMinMetaId);
 }

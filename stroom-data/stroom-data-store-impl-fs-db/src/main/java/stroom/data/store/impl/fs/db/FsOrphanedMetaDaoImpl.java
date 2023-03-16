@@ -13,7 +13,7 @@ import javax.inject.Singleton;
 
 import static stroom.data.store.impl.fs.db.jooq.tables.FsOrphanedMetaTracker.FS_ORPHANED_META_TRACKER;
 
-@Singleton
+@Singleton // So ensureTrackerRow is run once
 public class FsOrphanedMetaDaoImpl implements FsOrphanedMetaDao {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FsOrphanedMetaDaoImpl.class);
@@ -29,7 +29,7 @@ public class FsOrphanedMetaDaoImpl implements FsOrphanedMetaDao {
     }
 
     @Override
-    public long getLastMinMetaId() {
+    public long getMetaIdTrackerValue() {
         return JooqUtil.contextResult(fsDataStoreDbConnProvider, context ->
                 context
                         .select(FS_ORPHANED_META_TRACKER.MIN_META_ID)
@@ -43,7 +43,7 @@ public class FsOrphanedMetaDaoImpl implements FsOrphanedMetaDao {
     }
 
     @Override
-    public void updateLastMinMetaId(final long lastMinMetaId) {
+    public void updateMetaIdTracker(final long lastMinMetaId) {
         final int result = JooqUtil.contextResult(fsDataStoreDbConnProvider, context ->
                 context
                         .update(FS_ORPHANED_META_TRACKER)
