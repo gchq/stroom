@@ -1,30 +1,28 @@
 package stroom.explorer.client.presenter;
 
-import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.cell.list.client.CustomCellList;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+import stroom.document.client.event.OpenDocumentEvent;
 import stroom.explorer.client.event.ShowFindEvent;
 import stroom.explorer.client.presenter.FindPresenter.FindProxy;
 import stroom.explorer.client.presenter.FindPresenter.FindView;
 import stroom.explorer.shared.ExplorerDocContentMatch;
-import stroom.explorer.shared.ExplorerFields;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.FindExplorerNodeQuery;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.MySingleSelectionModel;
 
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.CellList;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.view.client.Range;
@@ -45,8 +43,9 @@ public class FindPresenter extends MyPresenter<FindView, FindProxy> implements F
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
     private static final int TIMER_DELAY_MS = 500;
 
-    private final MyDataGrid<ExplorerDocContentMatch> dataGrid;
+    private final CellList<ExplorerDocContentMatch> cellList;
     private final RestDataProvider<ExplorerDocContentMatch, ResultPage<ExplorerDocContentMatch>> dataProvider;
+    private final MySingleSelectionModel<ExplorerDocContentMatch> selectionModel;
 
     private String currentPattern = "";
     private boolean initialised;
@@ -66,9 +65,10 @@ public class FindPresenter extends MyPresenter<FindView, FindProxy> implements F
                          final RestFactory restFactory) {
         super(eventBus, view, proxy);
 
-        dataGrid = new MyDataGrid<>();
-        dataGrid.addDefaultSelectionModel(true);
-        pagerView.setDataWidget(dataGrid);
+        selectionModel = new MySingleSelectionModel<>();
+        cellList = new CustomCellList<>(new ExplorerDocContentMatchCell());
+        pagerView.setDataWidget(cellList);
+        cellList.setSelectionModel(selectionModel);
 
         view.setResultView(pagerView);
         view.setUiHandlers(this);
@@ -78,10 +78,6 @@ public class FindPresenter extends MyPresenter<FindView, FindProxy> implements F
             protected void exec(final Range range,
                                 final Consumer<ResultPage<ExplorerDocContentMatch>> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
-                final ExpressionOperator expression = ExpressionOperator
-                        .builder()
-                        .addTerm(ExplorerFields.CONTENT, Condition.MATCHES_REGEX, currentPattern)
-                        .build();
                 final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
                 final FindExplorerNodeQuery findExplorerNodeQuery =
                         new FindExplorerNodeQuery(pageRequest, null, currentPattern, false, false);
@@ -94,32 +90,29 @@ public class FindPresenter extends MyPresenter<FindView, FindProxy> implements F
                         .findContent(findExplorerNodeQuery);
             }
         };
+    }
 
-        dataGrid.addResizableColumn(new Column<ExplorerDocContentMatch, String>(new TextCell()) {
-            @Override
-            public String getValue(final ExplorerDocContentMatch row) {
-                return row.getDocContentMatch().getDocRef().getType();
+    @Override
+    protected void onBind() {
+        registerHandler(selectionModel.addSelectionChangeHandler(event -> {
+            final ExplorerDocContentMatch match = selectionModel.getSelectedObject();
+//            if (match != null) {
+//                OpenDocumentEvent.fire(this, match.getDocContentMatch().getDocRef(), true);
+//                hide();
+//            }
+        }));
+        registerHandler(selectionModel.addDoubleSelectHandler(event -> {
+            final ExplorerDocContentMatch match = selectionModel.getSelectedObject();
+            if (match != null) {
+                OpenDocumentEvent.fire(this, match.getDocContentMatch().getDocRef(), true);
+                hide();
             }
-        }, "Type", ColumnSizeConstants.MEDIUM_COL);
-
-        dataGrid.addResizableColumn(new Column<ExplorerDocContentMatch, String>(new TextCell()) {
-            @Override
-            public String getValue(final ExplorerDocContentMatch row) {
-                return row.getDocContentMatch().getDocRef().getName();
-            }
-        }, "Name", ColumnSizeConstants.BIG_COL);
-
-        dataGrid.addResizableColumn(new Column<ExplorerDocContentMatch, String>(new TextCell()) {
-            @Override
-            public String getValue(final ExplorerDocContentMatch row) {
-                return row.getPath();
-            }
-        }, "Path", ColumnSizeConstants.BIG_COL);
+        }));
     }
 
     @ProxyEvent
     public void onShow(final ShowFindEvent event) {
-        revealInParent();
+        show();
     }
 
     @Override
@@ -144,7 +137,7 @@ public class FindPresenter extends MyPresenter<FindView, FindProxy> implements F
     public void refresh() {
         if (!initialised) {
             initialised = true;
-            dataProvider.addDataDisplay(dataGrid);
+            dataProvider.addDataDisplay(cellList);
         } else {
             dataProvider.refresh();
         }
@@ -152,6 +145,10 @@ public class FindPresenter extends MyPresenter<FindView, FindProxy> implements F
 
     @Override
     protected void revealInParent() {
+        show();
+    }
+
+    private void show() {
         final PopupSize popupSize = PopupSize.resizable(800, 600);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.CLOSE_DIALOG)
@@ -160,6 +157,10 @@ public class FindPresenter extends MyPresenter<FindView, FindProxy> implements F
                 .onShow(e -> getView().focus())
                 .onHideRequest(HidePopupRequestEvent::hide)
                 .fire();
+    }
+
+    private void hide() {
+        HidePopupEvent.builder(this).fire();
     }
 
     @ProxyCodeSplit

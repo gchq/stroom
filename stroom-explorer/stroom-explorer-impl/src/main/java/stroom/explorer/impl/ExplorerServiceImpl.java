@@ -1033,9 +1033,33 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     .findByContent(request.getPattern(), request.isRegex(), request.isMatchCase());
 
             for (final DocContentMatch docContentMatch : matches) {
+
+                final List<String> parents = new ArrayList<>();
+                parents.add(docContentMatch.getDocRef().getName());
+                final TreeModel masterTreeModel = explorerTreeModel.getModel();
+                if (masterTreeModel != null) {
+                    ExplorerNode parent = masterTreeModel.getParent(ExplorerNode
+                            .builder()
+                            .docRef(docContentMatch.getDocRef())
+                            .build());
+                    while (parent != null) {
+                        parents.add(parent.getName());
+                        parent = masterTreeModel.getParent(parent);
+                    }
+                }
+                final StringBuilder parentPath = new StringBuilder();
+                for (int i = parents.size() - 1; i >= 0; i--) {
+                    String parent = parents.get(i);
+                    parentPath.append(parent);
+                    if (i > 0) {
+                        parentPath.append(" / ");
+                    }
+                }
+
                 final ExplorerDocContentMatch explorerDocContentMatch = ExplorerDocContentMatch.builder()
                         .docContentMatch(docContentMatch)
-                        .path(docContentMatch.getDocRef().getName())
+                        .path(parentPath.toString())
+                        .iconClassName(explorerActionHandler.getDocumentType().getIconClassName())
                         .build();
                 list.add(explorerDocContentMatch);
             }

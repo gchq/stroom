@@ -700,7 +700,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                         final Matcher matcher = regexPattern.matcher(string);
                         if (matcher.find()) {
                             String sample = string.substring(
-                                    Math.max(0, matcher.start() - 100),
+                                    Math.max(0, matcher.start()),
                                     Math.min(string.length() - 1, matcher.end()));
                             if (sample.length() > 100) {
                                 sample = sample.substring(0, 100);
