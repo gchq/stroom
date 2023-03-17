@@ -61,7 +61,7 @@ public abstract class AbstractUserListPresenter
             refresh();
         });
     }
-    
+
     public void refresh() {
         final boolean includeUserInfoCols = includeAdditionalUserInfo();
 
@@ -77,7 +77,7 @@ public abstract class AbstractUserListPresenter
             dataGridView.removeColumn(column);
         }
         columns.clear();
-        
+
         // Icon
         final Column<User, Preset> iconCol = new Column<User, Preset>(new SvgCell()) {
             @Override

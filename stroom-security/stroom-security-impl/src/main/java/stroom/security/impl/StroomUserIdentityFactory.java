@@ -10,7 +10,6 @@ import stroom.security.common.impl.JwtUtil;
 import stroom.security.common.impl.UpdatableToken;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenId;
-import stroom.security.openid.api.OpenIdConfig;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenResponse;
 import stroom.security.shared.User;

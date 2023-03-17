@@ -5,10 +5,10 @@ import stroom.security.identity.authenticate.PasswordValidator;
 import stroom.security.identity.config.IdentityConfig;
 import stroom.security.shared.FindUserNameCriteria;
 import stroom.security.shared.PermissionNames;
-import stroom.util.shared.UserName;
 import stroom.security.shared.UserNameProvider;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserName;
 
 import com.google.common.base.Strings;
 

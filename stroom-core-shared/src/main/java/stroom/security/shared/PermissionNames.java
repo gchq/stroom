@@ -79,6 +79,7 @@ public final class PermissionNames {
 
     // TODO: 11/01/2023 This whole class ought to be refactored to an enum
     private static final Map<String, String> PERMISSION_TO_DESCRIPTION_MAP = new HashMap<>();
+
     static {
         PERMISSION_TO_DESCRIPTION_MAP.put(
                 ADMINISTRATOR,

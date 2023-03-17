@@ -22,13 +22,13 @@ import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.FindUserNameCriteria;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
-import stroom.util.shared.UserName;
 import stroom.security.shared.UserNameProvider;
 import stroom.util.AuditUtil;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserName;
 
 import java.util.HashSet;
 import java.util.List;

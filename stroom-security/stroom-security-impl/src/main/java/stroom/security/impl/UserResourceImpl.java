@@ -6,9 +6,9 @@ import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
-import stroom.util.shared.UserName;
 import stroom.security.shared.UserResource;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserName;
 
 import event.logging.CreateEventAction;
 import event.logging.Outcome;

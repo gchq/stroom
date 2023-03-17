@@ -1,9 +1,9 @@
 package stroom.security.impl;
 
 import stroom.security.shared.FindUserNameCriteria;
-import stroom.util.shared.UserName;
 import stroom.security.shared.UserNameProvider;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserName;
 
 import java.util.HashSet;
 import java.util.List;

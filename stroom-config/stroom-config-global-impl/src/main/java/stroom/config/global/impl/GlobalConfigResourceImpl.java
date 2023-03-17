@@ -14,7 +14,7 @@ import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.security.openid.api.IdpType;
-import stroom.security.openid.api.OpenIdConfig;
+import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LambdaLogger;
@@ -54,7 +54,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     private final Provider<UiConfig> uiConfig;
     private final Provider<UriFactory> uriFactory;
     private final Provider<NodeInfo> nodeInfoProvider;
-    private final Provider<OpenIdConfig> openIdConfigProvider;
+    private final Provider<OpenIdConfiguration> openIdConfigProvider;
 
     @Inject
     GlobalConfigResourceImpl(final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
@@ -63,7 +63,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                              final Provider<UiConfig> uiConfig,
                              final Provider<UriFactory> uriFactory,
                              final Provider<NodeInfo> nodeInfoProvider,
-                             final Provider<OpenIdConfig> openIdConfigProvider) {
+                             final Provider<OpenIdConfiguration> openIdConfigProvider) {
 
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
         this.globalConfigServiceProvider = Objects.requireNonNull(globalConfigServiceProvider);

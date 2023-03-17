@@ -24,9 +24,9 @@ import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.FindUserNameCriteria;
-import stroom.util.shared.UserName;
 import stroom.security.shared.UserNameResource;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserName;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.view.client.Range;
