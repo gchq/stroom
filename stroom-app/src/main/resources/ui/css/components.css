@@ -1765,6 +1765,17 @@ button.main-menu svg {
     overflow: auto;
 }
 
+.find-topBar {
+    position: relative;
+}
+
+.find-buttons {
+    display: flex;
+    position: absolute;
+    right: 5px;
+    top: 6px;
+}
+
 .findCell {
 }
 

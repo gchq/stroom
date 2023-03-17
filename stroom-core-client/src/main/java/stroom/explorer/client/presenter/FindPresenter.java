@@ -47,7 +47,12 @@ public class FindPresenter extends MyPresenter<FindView, FindProxy> implements F
     private final RestDataProvider<ExplorerDocContentMatch, ResultPage<ExplorerDocContentMatch>> dataProvider;
     private final MySingleSelectionModel<ExplorerDocContentMatch> selectionModel;
 
-    private String currentPattern = "";
+    private FindExplorerNodeQuery currentQuery = new FindExplorerNodeQuery(
+            new PageRequest(0, 100),
+            null,
+            "",
+            false,
+            false);
     private boolean initialised;
 
     private final Timer filterRefreshTimer = new Timer() {
@@ -79,15 +84,18 @@ public class FindPresenter extends MyPresenter<FindView, FindProxy> implements F
                                 final Consumer<ResultPage<ExplorerDocContentMatch>> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
                 final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
-                final FindExplorerNodeQuery findExplorerNodeQuery =
-                        new FindExplorerNodeQuery(pageRequest, null, currentPattern, false, false);
+                currentQuery = new FindExplorerNodeQuery(pageRequest,
+                        currentQuery.getSortList(),
+                        currentQuery.getPattern(),
+                        currentQuery.isMatchCase(),
+                        currentQuery.isRegex());
 
                 final Rest<ResultPage<ExplorerDocContentMatch>> rest = restFactory.create();
                 rest
                         .onSuccess(dataConsumer)
                         .onFailure(throwableConsumer)
                         .call(EXPLORER_RESOURCE)
-                        .findContent(findExplorerNodeQuery);
+                        .findContent(currentQuery);
             }
         };
     }
@@ -116,7 +124,7 @@ public class FindPresenter extends MyPresenter<FindView, FindProxy> implements F
     }
 
     @Override
-    public void changePattern(final String pattern) {
+    public void changePattern(final String pattern, final boolean matchCase, final boolean regex) {
         String trimmed;
         if (pattern == null) {
             trimmed = "";
@@ -124,8 +132,15 @@ public class FindPresenter extends MyPresenter<FindView, FindProxy> implements F
             trimmed = pattern.trim();
         }
 
-        if (!Objects.equals(trimmed, currentPattern)) {
-            this.currentPattern = trimmed;
+        final FindExplorerNodeQuery query = new FindExplorerNodeQuery(
+                currentQuery.getPageRequest(),
+                currentQuery.getSortList(),
+                trimmed,
+                matchCase,
+                regex);
+
+        if (!Objects.equals(currentQuery, query)) {
+            this.currentQuery = query;
             // Add in a slight delay to give the user a chance to type a few chars before we fire off
             // a rest call. This helps to reduce the logging too
             if (!filterRefreshTimer.isRunning()) {

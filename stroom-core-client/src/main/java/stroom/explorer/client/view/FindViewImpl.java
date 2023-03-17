@@ -18,7 +18,10 @@ package stroom.explorer.client.view;
 
 import stroom.explorer.client.presenter.FindPresenter;
 import stroom.explorer.client.presenter.FindUiHandlers;
+import stroom.svg.client.SvgImages;
+import stroom.widget.button.client.InlineSvgToggleButton;
 
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -39,11 +42,22 @@ public class FindViewImpl extends ViewWithUiHandlers<FindUiHandlers>
     TextBox pattern;
     @UiField
     SimplePanel resultContainer;
-
+    @UiField
+    InlineSvgToggleButton toggleMatchCase;
+    @UiField
+    InlineSvgToggleButton toggleRegex;
 
     @Inject
     public FindViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+
+        toggleMatchCase.setSvg(SvgImages.MONO_CASE_SENSITIVE);
+        toggleMatchCase.setTitle("Match case");
+        toggleMatchCase.setEnabled(true);
+
+        toggleRegex.setSvg(SvgImages.MONO_REGEX);
+        toggleRegex.setTitle("Regex");
+        toggleRegex.setEnabled(true);
     }
 
     @Override
@@ -68,7 +82,17 @@ public class FindViewImpl extends ViewWithUiHandlers<FindUiHandlers>
 
     @UiHandler("pattern")
     void onPatternChange(final KeyUpEvent e) {
-        getUiHandlers().changePattern(pattern.getText());
+        getUiHandlers().changePattern(pattern.getText(), toggleMatchCase.isOn(), toggleRegex.isOn());
+    }
+
+    @UiHandler("toggleMatchCase")
+    void onToggleMatchCase(final ClickEvent e) {
+        getUiHandlers().changePattern(pattern.getText(), toggleMatchCase.isOn(), toggleRegex.isOn());
+    }
+
+    @UiHandler("toggleRegex")
+    void onToggleRegex(final ClickEvent e) {
+        getUiHandlers().changePattern(pattern.getText(), toggleMatchCase.isOn(), toggleRegex.isOn());
     }
 
     public interface Binder extends UiBinder<Widget, FindViewImpl> {

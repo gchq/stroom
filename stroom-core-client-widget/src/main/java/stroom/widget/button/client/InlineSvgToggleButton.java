@@ -14,11 +14,28 @@
  * limitations under the License.
  */
 
-package stroom.explorer.client.presenter;
+package stroom.widget.button.client;
 
-import com.gwtplatform.mvp.client.UiHandlers;
+public class InlineSvgToggleButton extends InlineSvgButton implements ButtonView {
 
-public interface FindUiHandlers extends UiHandlers {
+    private boolean on;
 
-    void changePattern(String pattern, boolean matchCase, boolean regex);
+    public void setOn(final boolean on) {
+        this.on = on;
+        if (on) {
+            getElement().addClassName("on");
+        } else {
+            getElement().removeClassName("on");
+        }
+    }
+
+    public boolean isOn() {
+        return on;
+    }
+
+    @Override
+    void onClick() {
+        setOn(!this.on);
+        super.onClick();
+    }
 }
