@@ -61,7 +61,7 @@ public class UserIdentityImpl
 
     @Override
     public Optional<String> getFullName() {
-        throw new UnsupportedOperationException("TODO");
+        return Optional.ofNullable(fullName);
     }
 
     @Override

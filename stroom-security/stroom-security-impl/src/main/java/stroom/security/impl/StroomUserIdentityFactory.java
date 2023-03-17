@@ -152,6 +152,8 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
         final UserIdentity userIdentity = new UserIdentityImpl(
                 user.getUuid(),
                 user.getName(),
+                user.getPreferredUsername(),
+                user.getFullName(),
                 session,
                 updatableToken);
 
