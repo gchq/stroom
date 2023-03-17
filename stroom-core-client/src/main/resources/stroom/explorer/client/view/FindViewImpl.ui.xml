@@ -1,0 +1,8 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <g:FlowPanel styleName="max form">
+        <g:TextBox ui:field="pattern" addStyleNames="dock-min w-100"/>
+        <g:SimplePanel ui:field="resultContainer" styleName="stroom-control dock-max" />
+    </g:FlowPanel>
+</ui:UiBinder> 

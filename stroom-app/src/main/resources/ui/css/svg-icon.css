@@ -243,6 +243,9 @@
 .svgIcon-users {
   background-image: url("../images/users.svg");
 }
+.svgIcon-find {
+  background-image: url("../images/find.svg");
+}
 .svgIcon-users-disabled {
   background-image: url("../images/users-disabled.svg");
 }

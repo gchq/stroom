@@ -14,64 +14,48 @@
  * limitations under the License.
  */
 
-package stroom.about.client;
+package stroom.explorer.client;
 
-import stroom.about.client.event.ShowAboutEvent;
-import stroom.about.client.event.ShowAboutEvent.ShowAboutHandler;
-import stroom.about.client.presenter.AboutPresenter;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
+import stroom.explorer.client.event.ShowFindEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
-import stroom.widget.menu.client.presenter.Separator;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class AboutPlugin extends Plugin implements ShowAboutHandler {
-
-    private final Provider<AboutPresenter> provider;
+public class NavigationPlugin extends Plugin {
 
     @Inject
-    public AboutPlugin(final EventBus eventBus, final Provider<AboutPresenter> provider) {
+    public NavigationPlugin(final EventBus eventBus) {
         super(eventBus);
-        this.provider = provider;
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(getEventBus().addHandler(ShowAboutEvent.getType(), this));
     }
 
     @Override
     public void onReveal(final BeforeRevealMenubarEvent event) {
-        event.getMenuItems().addMenuItem(MenuKeys.MAIN_MENU,
+        event.getMenuItems().addMenuItem(
+                MenuKeys.MAIN_MENU,
                 new KeyedParentMenuItem.Builder()
-                        .priority(100)
-                        .text("Help")
+                        .priority(6)
+                        .text("Navigation")
                         .menuItems(event.getMenuItems())
-                        .menuKey(MenuKeys.HELP_MENU)
+                        .menuKey(MenuKeys.NAVIGATION_MENU)
                         .build());
-        event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU, new Separator(2));
-        event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU,
-                new IconMenuItem.Builder()
-                        .priority(3)
-                        .icon(SvgPresets.ABOUT)
-                        .text("About")
-                        .command(() -> provider.get().forceReveal())
-                        .build());
-    }
 
-    @Override
-    public void onShow(final ShowAboutEvent event) {
-        provider.get().show();
+        event.getMenuItems().addMenuItem(MenuKeys.NAVIGATION_MENU,
+                new IconMenuItem.Builder()
+                        .priority(201)
+                        .icon(SvgPresets.FIND)
+                        .text("Find Content")
+                        .action(Action.FIND)
+                        .command(() -> ShowFindEvent.fire(NavigationPlugin.this))
+                        .build());
     }
 }

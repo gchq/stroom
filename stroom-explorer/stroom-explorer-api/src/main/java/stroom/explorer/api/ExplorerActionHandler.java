@@ -19,7 +19,8 @@ package stroom.explorer.api;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docref.HasFindDocRefsByName;
+import stroom.docref.HasFindDocsByName;
+import stroom.docref.HasFindDocsByContent;
 import stroom.util.shared.HasDependencies;
 
 import java.util.Set;
@@ -29,7 +30,7 @@ import java.util.Set;
  * documents that are stored just how to create, copy, move and delete them.
  */
 public interface ExplorerActionHandler
-        extends HasDocumentType, HasDependencies, HasFindDocRefsByName {
+        extends HasDocumentType, HasDependencies, HasFindDocsByName, HasFindDocsByContent {
 
     /**
      * Called to create a new item in this document store.

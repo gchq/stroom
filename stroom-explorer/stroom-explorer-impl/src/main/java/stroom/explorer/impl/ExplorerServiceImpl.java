@@ -18,6 +18,7 @@
 package stroom.explorer.impl;
 
 import stroom.collection.api.CollectionService;
+import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.api.ExplorerDecorator;
@@ -27,12 +28,14 @@ import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
+import stroom.explorer.shared.ExplorerDocContentMatch;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.NodeState;
 import stroom.explorer.shared.ExplorerNodeKey;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
+import stroom.explorer.shared.FindExplorerNodeQuery;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.explorer.shared.StandardTagNames;
 import stroom.security.api.SecurityContext;
@@ -42,6 +45,7 @@ import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.ResultPage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -390,8 +394,14 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                         .build();
                 forcedOpen.add(childWithRootNode.getUniqueKey());
                 if (minDepth > depth) {
-                    forceMinDepthOpen(masterTreeModel, forcedOpen, rootNode == null ? child : rootNode,
-                            child, minDepth, depth + 1);
+                    forceMinDepthOpen(masterTreeModel,
+                            forcedOpen,
+                            rootNode == null
+                                    ? child
+                                    : rootNode,
+                            child,
+                            minDepth,
+                            depth + 1);
                 }
             }
         }
@@ -603,12 +613,15 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
         return ExplorerNode.builder()
                 .docRef(result)
-                .rootNodeUuid(destinationFolder != null ? destinationFolder.getRootNodeUuid() : null)
+                .rootNodeUuid(destinationFolder != null
+                        ? destinationFolder.getRootNodeUuid()
+                        : null)
                 .build();
     }
 
     /**
      * Returns the DocRef of a destination folder
+     *
      * @param destinationFolder If null, looks up the default root node
      */
     private DocRef getDestinationFolderRef(final ExplorerNode destinationFolder) {
@@ -617,7 +630,9 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         }
 
         final ExplorerNode rootNode = explorerNodeService.getNodeWithRoot().orElse(null);
-        return rootNode != null ? rootNode.getDocRef() : null;
+        return rootNode != null
+                ? rootNode.getDocRef()
+                : null;
     }
 
     @Override
@@ -718,7 +733,9 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                     // Record where the document got copied from -> to.
                     remappings.put(sourceNode, ExplorerNode.builder()
                             .docRef(destinationDocRef)
-                            .rootNodeUuid(destinationFolder != null ? destinationFolder.getRootNodeUuid() : null)
+                            .rootNodeUuid(destinationFolder != null
+                                    ? destinationFolder.getRootNodeUuid()
+                                    : null)
                             .build());
                 }
             }
@@ -1004,5 +1021,25 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                         "You do not have permission to create (" + type + ") in folder " + folderUUID);
             }
         }
+    }
+
+    @Override
+    public ResultPage<ExplorerDocContentMatch> findContent(final FindExplorerNodeQuery request) {
+        final List<ExplorerDocContentMatch> list = new ArrayList<>();
+        for (final DocumentType documentType : explorerActionHandlers.getNonSystemTypes()) {
+            final ExplorerActionHandler explorerActionHandler =
+                    explorerActionHandlers.getHandler(documentType.getType());
+            final List<DocContentMatch> matches = explorerActionHandler
+                    .findByContent(request.getPattern(), request.isRegex(), request.isMatchCase());
+
+            for (final DocContentMatch docContentMatch : matches) {
+                final ExplorerDocContentMatch explorerDocContentMatch = ExplorerDocContentMatch.builder()
+                        .docContentMatch(docContentMatch)
+                        .path(docContentMatch.getDocRef().getName())
+                        .build();
+                list.add(explorerDocContentMatch);
+            }
+        }
+        return ResultPage.createPageLimitedList(list, request.getPageRequest());
     }
 }

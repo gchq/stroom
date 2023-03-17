@@ -14,16 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.core.client;
+package stroom.explorer.client.presenter;
 
-import stroom.widget.menu.client.presenter.MenuKey;
+import com.gwtplatform.mvp.client.UiHandlers;
 
-public class MenuKeys {
+public interface FindUiHandlers extends UiHandlers {
 
-    public static final MenuKey MAIN_MENU = new MenuKey("Main Menu");
-    public static final MenuKey NAVIGATION_MENU = new MenuKey("Navigation Menu");
-    public static final MenuKey TOOLS_MENU = new MenuKey("Tools Menu");
-    public static final MenuKey MONITORING_MENU = new MenuKey("Monitoring Menu");
-    public static final MenuKey USER_MENU = new MenuKey("User Menu");
-    public static final MenuKey HELP_MENU = new MenuKey("Help Menu");
+    void changePattern(String pattern);
 }

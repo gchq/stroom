@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public interface HasFindDocRefsByName {
+public interface HasFindDocsByName {
 
     /**
      * @return A list of all known and readable docRefs.
@@ -15,7 +15,7 @@ public interface HasFindDocRefsByName {
     /**
      * Find by exact case-sensitive match on the name
      */
-    default List<DocRef> findByName(String name) {
+    default List<DocRef> findByName(final String name) {
         // GWT so no List.of()
         return name != null
                 ? findByNames(Arrays.asList(name), false)
@@ -38,5 +38,5 @@ public interface HasFindDocRefsByName {
      * If allowWildCards is true '*' can be used to denote a 0-many char wild card.
      * Finds all docRefs associated with any of the names, i.e. an OR.
      */
-    List<DocRef> findByNames(final List<String> names, final boolean allowWildCards);
+    List<DocRef> findByNames(List<String> names, boolean allowWildCards);
 }

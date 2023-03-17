@@ -38,6 +38,9 @@ import stroom.explorer.client.presenter.EntityTreePresenter.EntityTreeView;
 import stroom.explorer.client.presenter.ExplorerTreePresenter;
 import stroom.explorer.client.presenter.ExplorerTreePresenter.ExplorerTreeProxy;
 import stroom.explorer.client.presenter.ExplorerTreePresenter.ExplorerTreeView;
+import stroom.explorer.client.presenter.FindPresenter;
+import stroom.explorer.client.presenter.FindPresenter.FindProxy;
+import stroom.explorer.client.presenter.FindPresenter.FindView;
 import stroom.explorer.client.presenter.NavigationPresenter;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationProxy;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
@@ -47,6 +50,7 @@ import stroom.explorer.client.presenter.TypeFilterViewImpl;
 import stroom.explorer.client.view.EntityCheckTreeViewImpl;
 import stroom.explorer.client.view.EntityTreeViewImpl;
 import stroom.explorer.client.view.ExplorerTreeViewImpl;
+import stroom.explorer.client.view.FindViewImpl;
 import stroom.explorer.client.view.NavigationViewImpl;
 import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
@@ -55,6 +59,7 @@ import stroom.iframe.client.presenter.IFramePresenter;
 import stroom.iframe.client.presenter.IFramePresenter.IFrameView;
 import stroom.iframe.client.view.IFrameContentViewImpl;
 import stroom.iframe.client.view.IFrameViewImpl;
+import stroom.importexport.client.ImportConfigPlugin;
 import stroom.item.client.presenter.ListPresenter.ListView;
 import stroom.item.client.view.ListViewImpl;
 import stroom.main.client.presenter.MainPresenter;
@@ -126,6 +131,8 @@ public class AppModule extends AbstractPresenterModule {
 
         bindPresenterWidget(EntityTreePresenter.class, EntityTreeView.class, EntityTreeViewImpl.class);
         bindPresenterWidget(EntityCheckTreePresenter.class, EntityCheckTreeView.class, EntityCheckTreeViewImpl.class);
+
+        bindPresenter(FindPresenter.class, FindView.class, FindViewImpl.class, FindProxy.class);
 
         // Menu
         bind(Menu.class).asEagerSingleton();

@@ -96,6 +96,7 @@ public final class SvgPresets {
     public static final Preset USER_DISABLED = enabled("svgIcon-user-disabled", "User");
     public static final Preset USER_GROUP = enabled("svgIcon-users", "User Group");
     public static final Preset USER_GROUP_DISABLED = enabled("svgIcon-users-disabled", "User Group");
+    public static final Preset FIND = enabled("svgIcon-find", "Find");
     public static final Preset VOLUMES = enabled("svgIcon-volumes", "Volumes");
 
     public static final Preset COLLAPSE_UP = enabled("svgIcon-collapse-up", "Collapse");

@@ -19,6 +19,7 @@ package stroom.dictionary.impl;
 
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
+import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
@@ -197,6 +198,11 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     @Override
     public List<DocRef> findByNames(final List<String> names, final boolean allowWildCards) {
         return store.findByNames(names, allowWildCards);
+    }
+
+    @Override
+    public List<DocContentMatch> findByContent(final String pattern, final boolean regex, final boolean matchCase) {
+        return store.findByContent(pattern, regex, matchCase);
     }
 
     @Override

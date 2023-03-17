@@ -44,7 +44,6 @@ import stroom.pipeline.xml.converter.ParserFactory;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.Severity;
 
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
@@ -72,7 +71,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
     private final TextConverterStore textConverterStore;
     private final Provider<FeedHolder> feedHolder;
     private final Provider<PipelineHolder> pipelineHolder;
-    private final DocFinder<TextConverterDoc> docHelper;
+    private final DocFinder<TextConverterDoc> docFinder;
     private final Provider<LocationHolder> locationHolderProvider;
 
     private String injectedCode;
@@ -98,7 +97,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
         this.pipelineHolder = pipelineHolder;
         this.locationHolderProvider = locationHolderProvider;
 
-        this.docHelper = new DocFinder<>(TextConverterDoc.DOCUMENT_TYPE, pathCreator, textConverterStore);
+        this.docFinder = new DocFinder<>(TextConverterDoc.DOCUMENT_TYPE, pathCreator, textConverterStore);
     }
 
     @Override
@@ -232,7 +231,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
 
     @Override
     public DocRef findDoc(final String feedName, final String pipelineName, final Consumer<String> errorConsumer) {
-        return docHelper.findDoc(
+        return docFinder.findDoc(
                 textConverterRef,
                 namePattern,
                 feedName,
