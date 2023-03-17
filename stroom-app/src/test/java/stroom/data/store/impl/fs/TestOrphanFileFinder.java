@@ -29,6 +29,7 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.FileUtil;
+import stroom.util.logging.LogUtil;
 import stroom.util.time.StroomDuration;
 
 import org.junit.jupiter.api.Test;
@@ -101,11 +102,17 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
 
         final FsOrphanFileFinderSummary summary = new FsOrphanFileFinderSummary();
         final List<String> fileList = scan(summary);
-        assertThat(summary.toString()).isEqualTo("Summary:\n" +
-                "RAW_EVENTS\n" +
-                " - " +
-                date +
-                " - 1\n");
+
+        final String expected = LogUtil.message("""
+                Summary:
+
+                | Type       | File/Directory | Feed (if present) | Date       | Orphan Count |
+                |------------|----------------|-------------------|------------|--------------|
+                | RAW_EVENTS | Dir            |                   | {} |            1 |""", date);
+
+        assertThat(summary.toString().trim())
+                .isEqualTo(expected);
+
         final List<FsVolume> volumeList = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
         assertThat(volumeList.size()).isEqualTo(1);
         assertThat(fileList).contains(FileUtil.getCanonicalPath(test1));
@@ -185,11 +192,16 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
             // Run the clean
             final FsOrphanFileFinderSummary summary2 = new FsOrphanFileFinderSummary();
             final List<String> fileList = scan(summary2);
-            assertThat(summary2.toString()).isEqualTo("Summary:\n" +
-                    "RAW_EVENTS\n" +
-                    " - " +
-                    date +
-                    " - 3\n");
+
+            final String expected = LogUtil.message("""
+                    Summary:
+
+                    | Type       | File/Directory | Feed (if present) | Date       | Orphan Count |
+                    |------------|----------------|-------------------|------------|--------------|
+                    | RAW_EVENTS | Dir            |                   | {} |            3 |""", date);
+
+            assertThat(summary2.toString().trim())
+                    .isEqualTo(expected);
 
             final List<FsVolume> volumeList = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
             assertThat(volumeList.size()).isEqualTo(1);

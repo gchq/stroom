@@ -3,7 +3,6 @@ package stroom.task.api;
 import stroom.task.shared.TaskId;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 public class SimpleTaskContext implements TaskContext {

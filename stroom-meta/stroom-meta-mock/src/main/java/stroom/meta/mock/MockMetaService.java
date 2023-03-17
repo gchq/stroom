@@ -373,4 +373,14 @@ public class MockMetaService implements MetaService, Clearable {
                                                 final Set<Long> metaIdExcludeSet) {
         return Collections.emptyList();
     }
+
+    @Override
+    public List<SimpleMeta> findBatch(final long minId, final Long maxId, final int batchSize) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public Set<Long> exists(final Set<Long> ids) {
+        return Collections.emptySet();
+    }
 }

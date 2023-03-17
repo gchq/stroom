@@ -91,6 +91,10 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
         return new DataVolumeImpl(metaId, absoluteVolPath);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class DataVolumeImpl implements DataVolume {
 
         private final long metaId;
