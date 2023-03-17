@@ -1,31 +1,49 @@
 package stroom.security.common.impl;
 
-import stroom.security.openid.api.TokenResponse;
-import stroom.util.logging.LogUtil;
+import stroom.security.api.UserIdentity;
+import stroom.security.openid.api.OpenId;
 
-import org.jose4j.jwt.JwtClaims;
-import org.jose4j.jwt.MalformedClaimException;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * User identity for a service user for this application to authenticate with other
- * applications on the same IDP realm.
+ * applications on the same IDP realm. I.e. Stroom's processing user.
+ * This user uses the client credentials flow.
  */
-public class ServiceUserIdentity extends AbstractTokenUserIdentity {
+public class ServiceUserIdentity implements UserIdentity, HasJwtClaims, HasUpdatableToken {
 
-    public ServiceUserIdentity(final TokenResponse tokenResponse,
-                               final JwtClaims jwtClaims) {
-        super(
-                getSubject(jwtClaims),
-                tokenResponse,
-                jwtClaims);
+    private final String id;
+    private final UpdatableToken updatableToken;
+
+    public ServiceUserIdentity(final String id,
+                               final UpdatableToken updatableToken) {
+        this.id = Objects.requireNonNull(id);
+        this.updatableToken = Objects.requireNonNull(updatableToken);
     }
 
-    private static String getSubject(final JwtClaims jwtClaims) {
-        try {
-            return jwtClaims.getSubject();
-        } catch (MalformedClaimException e) {
-            throw new RuntimeException(
-                    LogUtil.message("Unable to extract subject from service user claims " + jwtClaims), e);
-        }
+    @Override
+    public String getId() {
+        return id;
+    }
+
+    @Override
+    public String getPreferredUsername() {
+        return Optional.ofNullable(getJwtClaims())
+                .flatMap(claims -> JwtUtil.getClaimValue(claims, OpenId.CLAIM__PREFERRED_USERNAME))
+                .orElse(id);
+    }
+
+    @Override
+    public UpdatableToken getUpdatableToken() {
+        return updatableToken;
+    }
+
+    @Override
+    public String toString() {
+        return "ServiceUserIdentity{" +
+                "id='" + id + '\'' +
+                ", updatableToken=" + updatableToken +
+                '}';
     }
 }

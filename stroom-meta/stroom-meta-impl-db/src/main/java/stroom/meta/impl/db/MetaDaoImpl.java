@@ -28,6 +28,7 @@ import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.impl.MetaDao;
+import stroom.meta.impl.MetaServiceConfig;
 import stroom.meta.impl.db.jooq.tables.MetaFeed;
 import stroom.meta.impl.db.jooq.tables.MetaProcessor;
 import stroom.meta.impl.db.jooq.tables.MetaType;
@@ -35,6 +36,8 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.SelectionSummary;
+import stroom.meta.shared.SimpleMeta;
+import stroom.meta.shared.SimpleMetaImpl;
 import stroom.meta.shared.Status;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionItem;
@@ -45,14 +48,14 @@ import stroom.query.common.v2.DateExpressionParser;
 import stroom.util.NullSafe;
 import stroom.util.Period;
 import stroom.util.collections.BatchingIterator;
+import stroom.util.logging.DurationTimer;
+import stroom.util.logging.DurationTimer.TimedResult;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.Clearable;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
 import stroom.util.shared.ResultPage;
-import stroom.util.string.PatternUtil;
 import stroom.util.time.TimePeriod;
 
 import io.vavr.Tuple;
@@ -62,10 +65,13 @@ import org.jooq.Condition;
 import org.jooq.Cursor;
 import org.jooq.DSLContext;
 import org.jooq.Field;
+import org.jooq.Name;
 import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Record1;
+import org.jooq.Record2;
 import org.jooq.Record4;
+import org.jooq.Record5;
 import org.jooq.Result;
 import org.jooq.Select;
 import org.jooq.SelectConditionStep;
@@ -87,12 +93,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -103,8 +107,9 @@ import static stroom.meta.impl.db.jooq.tables.MetaProcessor.META_PROCESSOR;
 import static stroom.meta.impl.db.jooq.tables.MetaType.META_TYPE;
 import static stroom.meta.impl.db.jooq.tables.MetaVal.META_VAL;
 
+@SuppressWarnings("checkstyle:FileLength")
 @Singleton
-class MetaDaoImpl implements MetaDao, Clearable {
+public class MetaDaoImpl implements MetaDao {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MetaDaoImpl.class);
 
@@ -160,13 +165,11 @@ class MetaDaoImpl implements MetaDao, Clearable {
     private final MetaProcessorDaoImpl metaProcessorDao;
     private final MetaKeyDaoImpl metaKeyDao;
     private final Provider<DataRetentionConfig> dataRetentionConfigProvider;
+    private final Provider<MetaServiceConfig> metaServiceConfigProvider;
     private final DocRefInfoService docRefInfoService;
     private final ExpressionMapper expressionMapper;
     private final MetaExpressionMapper metaExpressionMapper;
     private final ValueMapper valueMapper;
-
-    private final Map<String, List<Integer>> feedNameToIdsMap = new ConcurrentHashMap<>();
-    private final Map<String, List<Integer>> typeNameToIdsMap = new ConcurrentHashMap<>();
 
     @Inject
     MetaDaoImpl(final MetaDbConnProvider metaDbConnProvider,
@@ -175,6 +178,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 final MetaProcessorDaoImpl metaProcessorDao,
                 final MetaKeyDaoImpl metaKeyDao,
                 final Provider<DataRetentionConfig> dataRetentionConfigProvider,
+                final Provider<MetaServiceConfig> metaServiceConfigProvider,
                 final ExpressionMapperFactory expressionMapperFactory,
                 final DocRefInfoService docRefInfoService,
                 final TermHandlerFactory termHandlerFactory) {
@@ -184,6 +188,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
         this.metaProcessorDao = metaProcessorDao;
         this.metaKeyDao = metaKeyDao;
         this.dataRetentionConfigProvider = dataRetentionConfigProvider;
+        this.metaServiceConfigProvider = metaServiceConfigProvider;
         this.docRefInfoService = docRefInfoService;
 
         // Extended meta fields.
@@ -271,16 +276,26 @@ class MetaDaoImpl implements MetaDao, Clearable {
         return ValString.create(val);
     }
 
-    private List<Integer> getFeedIds(final List<String> feedNames) {
-        // Feeds cannot be renamed so is ok to cache them
-        return getIds(feedNames, feedNameToIdsMap, feedDao::find);
+    /**
+     * Supports wild-carded feed names. Each wild-carded feed name results in 0-* IDs
+     */
+    private List<Integer> getFeedIds(final List<String> wildCardedFeedNames) {
+        if (NullSafe.isEmptyCollection(wildCardedFeedNames)) {
+            return Collections.emptyList();
+        } else {
+            return new ArrayList<>(feedDao.find(wildCardedFeedNames).values());
+        }
     }
 
-    private List<Integer> getTypeIds(final List<String> typeNames) {
-        // In theory types could be renamed, e.g. changing the name of a custom meta type
-        // in config. This just means old names may linger in the cache until next reboot. An unlikely and low volume
-        // case so not worth worrying about.
-        return getIds(typeNames, typeNameToIdsMap, metaTypeDao::find);
+    /**
+     * Supports wild-carded type names
+     */
+    private List<Integer> getTypeIds(final List<String> wildCardedTypeNames) {
+        if (NullSafe.isEmptyCollection(wildCardedTypeNames)) {
+            return Collections.emptyList();
+        } else {
+            return new ArrayList<>(metaTypeDao.find(wildCardedTypeNames).values());
+        }
     }
 
     private List<String> getPipelineUuidsByName(final List<String> pipelineNames) {
@@ -290,54 +305,6 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 .stream()
                 .map(DocRef::getUuid)
                 .collect(Collectors.toList());
-    }
-
-    /**
-     * This method tries to get a list of ids from the supplied map and if not found it tries to fetch them from the
-     * supplied function.
-     * <p>
-     * NOTE THAT THE CHOICE TO NOT USE COMPUTE ON THE MAP IS DELIBERATE TO PREVENT LOCKING.
-     * THIS MIGHT LEAD TO A FEW DUPLICATE ATTEMPTS TO FIND THE SAME ID LIST BUT THAT IS PREFERRED TO SYNCHRONIZING ON
-     * THE MAP KEY DURING DB QUERY.
-     */
-    private <T> List<T> getIds(final List<String> names,
-                               final Map<String, List<T>> map,
-                               final Function<List<String>, Map<String, List<T>>> function) {
-        final List<T> list = new ArrayList<>();
-
-        if (NullSafe.isEmptyCollection(names)) {
-            return Collections.emptyList();
-        } else {
-            final List<String> namesNotInCache = new ArrayList<>();
-            for (final String name : names) {
-
-                // We can't cache wildcard names as we don't know what they will match in the DB.
-                if (PatternUtil.containsWildCards(name)) {
-                    namesNotInCache.add(name);
-                } else {
-                    final List<T> mapResult = map.get(name);
-                    if (NullSafe.hasItems(mapResult)) {
-                        list.addAll(mapResult);
-                    } else {
-                        namesNotInCache.add(name);
-                    }
-                }
-            }
-
-            if (!namesNotInCache.isEmpty()) {
-                // Use the function to get all the items that were not cached.
-                final Map<String, List<T>> functionResult = function.apply(namesNotInCache);
-                functionResult.forEach((name, items) -> {
-                    if (!PatternUtil.containsWildCards(name) && NullSafe.hasItems(items)) {
-                        map.put(name, items);
-                    }
-                    list.addAll(items);
-                });
-            }
-            LOGGER.trace(() -> LogUtil.message("Mapped names {} to {} IDs {}",
-                    names, list.size(), list));
-            return list;
-        }
     }
 
     @Override
@@ -404,21 +371,26 @@ class MetaDaoImpl implements MetaDao, Clearable {
     /**
      * Method currently only here for test purposes as a means of bulk loading data.
      */
-    public void create(final List<MetaProperties> metaPropertiesList, final Status status) {
+    public void bulkCreate(final List<MetaProperties> metaPropertiesList, final Status status) {
         // ensure we have all the parent records and capture all their ids
         final Map<String, Integer> feedIds = metaPropertiesList.stream()
                 .map(MetaProperties::getFeedName)
+                .filter(Objects::nonNull)
                 .distinct()
                 .map(feedName -> Tuple.of(feedName, feedDao.getOrCreate(feedName)))
                 .collect(Collectors.toMap(Tuple2::_1, Tuple2::_2));
 
         final Map<String, Integer> typeIds = metaPropertiesList.stream()
                 .map(MetaProperties::getTypeName)
+                .filter(Objects::nonNull)
                 .distinct()
                 .map(typeName -> Tuple.of(typeName, metaTypeDao.getOrCreate(typeName)))
                 .collect(Collectors.toMap(Tuple2::_1, Tuple2::_2));
 
         final Map<String, Integer> processorIds = metaPropertiesList.stream()
+                .filter(metaProperties ->
+                        metaProperties.getProcessorUuid() != null &&
+                                metaProperties.getPipelineUuid() != null)
                 .map(metaProperties -> Tuple.of(metaProperties.getProcessorUuid(), metaProperties.getPipelineUuid()))
                 .distinct()
                 .map(tuple -> Tuple.of(
@@ -453,9 +425,15 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                                     metaProperties.getParentId(),
                                                     statusId,
                                                     metaProperties.getStatusMs(),
-                                                    feedIds.get(metaProperties.getFeedName()),
-                                                    typeIds.get(metaProperties.getTypeName()),
-                                                    processorIds.get(metaProperties.getProcessorUuid()),
+                                                    metaProperties.getFeedName() == null
+                                                            ? null
+                                                            : feedIds.get(metaProperties.getFeedName()),
+                                                    metaProperties.getTypeName() == null
+                                                            ? null
+                                                            : typeIds.get(metaProperties.getTypeName()),
+                                                    metaProperties.getProcessorUuid() == null
+                                                            ? null
+                                                            : processorIds.get(metaProperties.getProcessorUuid()),
                                                     metaProperties.getProcessorFilterId(),
                                                     metaProperties.getProcessorTaskId()));
                                     return insertStep;
@@ -468,71 +446,272 @@ class MetaDaoImpl implements MetaDao, Clearable {
     public int updateStatus(final FindMetaCriteria criteria,
                             final Status currentStatus,
                             final Status newStatus,
-                            final long statusTime) {
+                            final long statusTime,
+                            final boolean usesUniqueIds) {
+
         Objects.requireNonNull(newStatus, "New status is null");
         if (Objects.equals(newStatus, currentStatus)) {
             // The status is not being updated.
             throw new RuntimeException("New and current status are equal");
         }
 
-        final byte newStatusId = MetaStatusId.getPrimitiveValue(newStatus);
+        Objects.requireNonNull(criteria);
+        final ExpressionOperator expression = criteria.getExpression();
 
-        final Condition criteriaCondition = expressionMapper.apply(criteria.getExpression());
-
-        // Add a condition if we should check current status.
-        final List<Condition> conditions;
-        if (currentStatus != null) {
-            final byte currentStatusId = MetaStatusId.getPrimitiveValue(currentStatus);
-            conditions = Stream.of(criteriaCondition, meta.STATUS.eq(currentStatusId))
-                    .collect(Collectors.toList());
+        if (usesUniqueIds) {
+            return updateStatusWithId(expression, currentStatus, newStatus, statusTime);
         } else {
-            conditions = Stream.of(criteriaCondition, meta.STATUS.ne(newStatusId))
-                    .collect(Collectors.toList());
+            return updateStatusWithTempTable(expression, currentStatus, newStatus, statusTime);
         }
+    }
 
-        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(),
-                new HashSet<>());
+    private int updateStatusWithId(final ExpressionOperator expression,
+                                   final Status currentStatus,
+                                   final Status newStatus,
+                                   final long statusTime) {
+        LOGGER.debug(() ->
+                LogUtil.message("updateStatusWithId, expression: {}, currentStatus: {}, " +
+                                "newStatus: {}, statusTime: {}",
+                        expression, currentStatus, newStatus, LogUtil.instant(statusTime)));
 
-        final int updateCount;
-        final boolean containsPipelineCondition = NullSafe.test(
-                criteria.getExpression(),
-                expr ->
-                        expr.containsField(MetaFields.PIPELINE.getName(), MetaFields.PIPELINE_NAME.getName()));
+        final byte newStatusId = MetaStatusId.getPrimitiveValue(newStatus);
+        final Table<?> metaWithJoins = buildMeteWithOptionalJoins(expression);
 
-        // TODO: 20/10/2022 You can do joins in the update to avoid the sub-select.
-        //  See logicalDelete() above.
-        if (usedValKeys.isEmpty() && !containsPipelineCondition) {
-            updateCount = JooqUtil.contextResult(metaDbConnProvider, context ->
-                    context
-                            .update(meta)
-                            .set(meta.STATUS, newStatusId)
-                            .set(meta.STATUS_TIME, statusTime)
-                            .where(conditions)
-                            .execute());
-        } else {
-            final Select ids = metaExpressionMapper.addJoins(
-                            DSL
-                                    .selectDistinct(meta.ID)
-                                    .from(meta)
-                                    .leftOuterJoin(metaProcessor)
-                                    .on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
-                            meta.ID,
-                            usedValKeys)
+        final Condition conditions = createUpdateStatusCondition(expression, currentStatus, newStatus);
+
+        final DurationTimer durationTimer = DurationTimer.start();
+        final Integer updateCount = JooqUtil.contextResult(metaDbConnProvider, context -> {
+            // If expression is not targeting rows by ID then this is likely to create gap or next key locks
+            // which will block ingest/processing.
+            final var update = context.update(metaWithJoins)
+                    .set(meta.STATUS, newStatusId)
+                    .set(meta.STATUS_TIME, statusTime)
                     .where(conditions);
 
-            Condition extendedAttrCond = meta.ID.in(ids);
-            updateCount = JooqUtil.contextResult(metaDbConnProvider, context ->
-                    context
-                            .update(meta)
-                            .set(meta.STATUS, newStatusId)
-                            .set(meta.STATUS_TIME, statusTime)
-                            .where(extendedAttrCond)
-                            .execute());
-        }
+            LOGGER.trace("Update SQL:\n{}", update);
+
+            return update.execute();
+        });
+
+        LOGGER.debug("Set the status of {} meta rows to {} in {}. Expression: {}",
+                updateCount, newStatus, durationTimer, expression);
+
         return updateCount;
     }
 
-    private Condition getFilterCriteriaCondition(final FindDataRetentionImpactCriteria criteria) {
+    private int updateStatusWithTempTable(final ExpressionOperator expression,
+                                          final Status currentStatus,
+                                          final Status newStatus,
+                                          final long statusTime) {
+        LOGGER.debug(() ->
+                LogUtil.message("updateStatusWithTempTable, expression: {}, currentStatus: {}, " +
+                                "newStatus: {}, statusTime: {}",
+                        expression, currentStatus, newStatus, LogUtil.instant(statusTime)));
+
+        final byte newStatusId = MetaStatusId.getPrimitiveValue(newStatus);
+        final int batchSize = metaServiceConfigProvider.get().getMetaStatusUpdateBatchSize();
+
+        final Table<?> metaWithJoins = buildMeteWithOptionalJoins(expression);
+        final Condition conditions = createUpdateStatusCondition(expression, currentStatus, newStatus);
+        final Condition statusCondition = getStatusCondition(currentStatus, newStatus);
+
+        final Select<Record1<Long>> select;
+        // One big batch should be more efficient as long as it only locks the rows being changed
+        // and no others. If it does lock other rows then smaller batches may be needed.
+        if (batchSize <= 0) {
+            // 0 == one big batch
+            select = DSL.selectDistinct(meta.ID)
+                    .from(metaWithJoins)
+                    .where(conditions);
+        } else {
+            select = DSL.selectDistinct(meta.ID)
+                    .from(metaWithJoins)
+                    .where(conditions)
+                    .limit(batchSize);
+        }
+
+        final Name metaIdsTempTblName = DSL.name("meta_ids_temp");
+        final Table<Record> metaIdsTempTbl = DSL.table(metaIdsTempTblName);
+        final Name metaIdColName = DSL.name("meta_ids_temp", "id");
+        final Field<Long> metaIdColField = DSL.field(metaIdColName, Long.class);
+
+        final AtomicInteger insertCount = new AtomicInteger();
+        final AtomicInteger totalUpdateCount = new AtomicInteger();
+        final DurationTimer durationTimer = DurationTimer.start();
+
+        // We do this multi-stage deletion to try and avoid next-key or gap locks that end up locking
+        // other meta rows and stopping processing. This approach means we update using ID to uniquely
+        // access rows.
+        do {
+            JooqUtil.context(metaDbConnProvider, context -> {
+                try {
+                    // Temp table of all the IDs we want to update
+                    // Need to do it as a create then insert so we get the count
+                    context.createTemporaryTable(metaIdsTempTblName)
+                            .column(metaIdColField)
+                            .execute();
+
+                    final var insert = context.insertInto(metaIdsTempTbl)
+                            .select(select);
+                    LOGGER.trace("Insert SQL:\n{}", insert);
+
+                    LOGGER.logDurationIfDebugEnabled(
+                            () -> insertCount.set(insert.execute()),
+                            () -> LogUtil.message("Inserted {} meta ids into temporary table", insertCount));
+
+                    if (insertCount.get() > 0) {
+                        final var update = context
+                                .update(meta.innerJoin(metaIdsTempTbl)
+                                        .on(meta.ID.eq(metaIdColField)))
+                                .set(meta.STATUS, newStatusId)
+                                .set(meta.STATUS_TIME, statusTime)
+                                .where(statusCondition); // Re-use the status condition in case anything changed
+                        LOGGER.trace("Update SQL:\n{}", update);
+
+                        final int updateCount = LOGGER.logDurationIfDebugEnabled(
+                                update::execute,
+                                cnt -> LogUtil.message("Updated {} meta rows to status: {}", cnt, newStatus));
+                        totalUpdateCount.addAndGet(updateCount);
+
+                        // Remove all the temp rows
+                        LOGGER.logDurationIfDebugEnabled(
+                                () -> context.deleteFrom(metaIdsTempTbl)
+                                        .execute(),
+                                cnt -> LogUtil.message("Deleted {} rows from temp table", cnt));
+                    } else {
+                        LOGGER.debug("No more records to update, dropping out");
+                    }
+                } catch (Exception e) {
+                    LOGGER.error(LogUtil.message(
+                            "Error updating the meta status from {} to {} with expression: {}. {}",
+                            currentStatus, newStatus, expression, e.getMessage()), e);
+                    throw e;
+                } finally {
+                    // Temp table lives for the life of the session so if we go round again
+                    // or if the session is returned to the pool, make sure it is gone.
+                    LOGGER.logDurationIfDebugEnabled(
+                            () -> context.dropTableIfExists(metaIdsTempTblName)
+                                    .execute(),
+                            cnt -> LogUtil.message("Dropped temp table", cnt));
+                }
+            });
+        } while (batchSize > 0 && insertCount.get() >= batchSize);
+
+        LOGGER.debug("Set the status of {} meta rows to {} using batchSize {} in {}. Expression: {}",
+                totalUpdateCount, newStatus, batchSize, durationTimer, expression);
+
+        return totalUpdateCount.get();
+    }
+
+    private Condition getStatusCondition(
+            final Status currentStatus,
+            final Status newStatus) {
+
+        if (currentStatus != null) {
+            final byte currentStatusId = MetaStatusId.getPrimitiveValue(currentStatus);
+            return meta.STATUS.eq(currentStatusId);
+        } else {
+            final byte newStatusId = MetaStatusId.getPrimitiveValue(newStatus);
+            return meta.STATUS.ne(newStatusId);
+        }
+    }
+
+    private Table<?> buildMeteWithOptionalJoins(final ExpressionOperator expression) {
+        Table<?> table = meta;
+
+        // Add a condition if we should check current status.
+        final boolean containsPipelineCondition = NullSafe.test(
+                expression,
+                expr ->
+                        expr.containsField(MetaFields.PIPELINE.getName(), MetaFields.PIPELINE_NAME.getName()));
+
+        if (containsPipelineCondition) {
+            // Only add in the join to meta_processor if we need it
+            table = table.leftOuterJoin(metaProcessor)
+                    .on(meta.PROCESSOR_ID.eq(metaProcessor.ID));
+        }
+
+        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(expression, new HashSet<>());
+        if (NullSafe.hasItems(usedValKeys)) {
+            // Add 1-* joins to meta_val if we need them.
+            table = metaExpressionMapper.addJoins(table, meta.ID, usedValKeys);
+        }
+
+        return table;
+    }
+
+    private Condition createUpdateStatusCondition(final ExpressionOperator expression,
+                                                  final Status currentStatus,
+                                                  final Status newStatus) {
+
+        Objects.requireNonNull(newStatus, "New status is null");
+        if (Objects.equals(newStatus, currentStatus)) {
+            // The status is not being updated.
+            throw new RuntimeException("New and current status are equal");
+        }
+
+        final Condition criteriaCondition = expressionMapper.apply(expression);
+        final Condition statusCondition = getStatusCondition(currentStatus, newStatus);
+        return JooqUtil.andConditions(criteriaCondition, statusCondition);
+    }
+
+//    private Select<Record1<Long>> buildUpdateStatusSelect(final ExpressionOperator expression,
+//                                                          final Status currentStatus,
+//                                                          final Status newStatus,
+//                                                          final int batchSize) {
+//
+//        Objects.requireNonNull(newStatus, "New status is null");
+//        if (Objects.equals(newStatus, currentStatus)) {
+//            // The status is not being updated.
+//            throw new RuntimeException("New and current status are equal");
+//        }
+//
+//        final Condition criteriaCondition = expressionMapper.apply(expression);
+//        final Condition statusCondition = getStatusCondition(currentStatus, newStatus);
+//        final Condition combinedConditions = JooqUtil.andConditions(criteriaCondition, statusCondition);
+//
+//        // Add a condition if we should check current status.
+//        final boolean containsPipelineCondition = NullSafe.test(
+//                expression,
+//                expr ->
+//                        expr.containsField(MetaFields.PIPELINE.getName(), MetaFields.PIPELINE_NAME.getName()));
+//
+//        Table<?> fromPart = meta;
+//
+//        if (containsPipelineCondition) {
+//            // Only add in the join to meta_processor if we need it
+//            fromPart = fromPart.leftOuterJoin(metaProcessor)
+//                    .on(meta.PROCESSOR_ID.eq(metaProcessor.ID));
+//        }
+//
+//        // TODO: 21/02/2023 See https://github.com/gchq/stroom/issues/3253 for changing meta_val
+//        //  to be a single row to avoid all these horrible joins
+//        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(expression, new HashSet<>());
+//        if (NullSafe.hasItems(usedValKeys)) {
+//            // Add 1-* joins to meta_val if we need them.
+//            fromPart = metaExpressionMapper.addJoins(fromPart, meta.ID, usedValKeys);
+//        }
+//
+//        // As we are limiting, it is key that the conditions ensure we don't pick up
+//        // rows we have updated, i.e. the condition on status being == or !=
+//        final Select<Record1<Long>> select;
+//        if (batchSize <= 0) {
+//            // 0 == one big batch
+//            select = DSL.selectDistinct(meta.ID)
+//                    .from(fromPart)
+//                    .where(combinedConditions);
+//        } else {
+//            select = DSL.selectDistinct(meta.ID)
+//                    .from(fromPart)
+//                    .where(combinedConditions)
+//                    .limit(batchSize);
+//        }
+//
+//        LOGGER.trace("SQL:\n{}", select);
+//        return select;
+//    }
+
+    private Condition getFilterCriteriaCondition(final ExpressionCriteria criteria) {
         final Condition filterCondition;
         if (criteria != null
                 && criteria.getExpression() != null
@@ -564,7 +743,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
             CaseConditionStep<Integer> ruleNoCaseConditionStep = null;
             final Map<Integer, DataRetentionRule> numberToRuleMap = new HashMap<>();
             // Order is critical here as we are building a case statement
-            // Highest priority rules first, i.e. largest rule number
+            // The highest priority rules first, i.e. the largest rule number
             final Map<Integer, Condition> ruleNoToConditionMap = activeRules.stream()
                     .collect(Collectors.toMap(
                             DataRetentionRule::getRuleNumber,
@@ -755,7 +934,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
             final byte statusIdDeleted = MetaStatusId.getPrimitiveValue(Status.DELETED);
 
             final List<Condition> baseConditions = createRetentionDeleteConditions(ruleActions);
-            final boolean rulesUsePipelineField = ruleActionsContainField(MetaFields.PIPELINE.getName(), ruleActions)
+            final boolean rulesUsePipelineField = ruleActionsContainField(MetaFields.PIPELINE.getName(),
+                    ruleActions)
                     || ruleActionsContainField(MetaFields.PIPELINE_NAME.getName(), ruleActions);
 
             final List<Condition> conditions = new ArrayList<>(baseConditions);
@@ -808,6 +988,9 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                     ? meta.leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
                                     : meta;
 
+                            // We might want to do this delete using a temp table like we do for
+                            // MetaDaoImpl#updateStatusWithTempTable. Only if locking other rows is
+                            // an issue.
                             final var query = context
                                     .update(tableClause)
                                     .set(meta.STATUS, statusIdDeleted)
@@ -1012,7 +1195,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
     public int count(final FindMetaCriteria criteria) {
 
         final Collection<Condition> conditions = createCondition(criteria);
-        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(), new HashSet<>());
+        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(),
+                new HashSet<>());
 
         final Object result = JooqUtil.contextResult(metaDbConnProvider, context ->
                         metaExpressionMapper.addJoins(
@@ -1245,33 +1429,40 @@ class MetaDaoImpl implements MetaDao, Clearable {
                             final int numberOfRows,
                             final Set<Integer> usedValKeys) {
 
-        return JooqUtil.contextResult(metaDbConnProvider, context ->
-                        metaExpressionMapper.addJoins(context
-                                                .selectDistinct(
-                                                        meta.ID,
-                                                        metaFeed.NAME,
-                                                        metaType.NAME,
-                                                        metaProcessor.PROCESSOR_UUID,
-                                                        metaProcessor.PIPELINE_UUID,
-                                                        meta.PARENT_ID,
-                                                        meta.STATUS,
-                                                        meta.STATUS_TIME,
-                                                        meta.CREATE_TIME,
-                                                        meta.EFFECTIVE_TIME,
-                                                        meta.PROCESSOR_FILTER_ID,
-                                                        meta.PROCESSOR_TASK_ID
-                                                )
-                                                .from(meta)
-                                                .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                                                .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
-                                                .leftOuterJoin(metaProcessor)
-                                                .on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
-                                        meta.ID,
-                                        usedValKeys)
-                                .where(conditions)
-                                .orderBy(orderFields)
-                                .limit(offset, numberOfRows)
-                                .fetch())
+        return JooqUtil.contextResult(
+                        metaDbConnProvider,
+                        context -> {
+                            final var select = metaExpressionMapper.addJoins(
+                                            context
+                                                    .selectDistinct(
+                                                            meta.ID,
+                                                            metaFeed.NAME,
+                                                            metaType.NAME,
+                                                            metaProcessor.PROCESSOR_UUID,
+                                                            metaProcessor.PIPELINE_UUID,
+                                                            meta.PARENT_ID,
+                                                            meta.STATUS,
+                                                            meta.STATUS_TIME,
+                                                            meta.CREATE_TIME,
+                                                            meta.EFFECTIVE_TIME,
+                                                            meta.PROCESSOR_FILTER_ID,
+                                                            meta.PROCESSOR_TASK_ID
+                                                    )
+                                                    .from(meta)
+                                                    .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                                    .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                                    .leftOuterJoin(metaProcessor)
+                                                    .on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
+                                            meta.ID,
+                                            usedValKeys)
+                                    .where(conditions)
+                                    .orderBy(orderFields)
+                                    .limit(offset, numberOfRows);
+
+                            LOGGER.debug("Find SQL:\n{}", select);
+
+                            return select.fetch();
+                        })
                 .map(RECORD_TO_META_MAPPER::apply);
     }
 
@@ -1340,7 +1531,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
     public SelectionSummary getSelectionSummary(final FindMetaCriteria criteria) {
         final PageRequest pageRequest = criteria.getPageRequest();
         final Collection<Condition> conditions = createCondition(criteria);
-        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(), new HashSet<>());
+        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(),
+                new HashSet<>());
 
         int offset = JooqUtil.getOffset(pageRequest);
         int numberOfRows = JooqUtil.getLimit(pageRequest, false);
@@ -1391,7 +1583,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
         final PageRequest pageRequest = criteria.getPageRequest();
         final Collection<Condition> conditions = createCondition(criteria);
 
-        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(), new HashSet<>());
+        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(),
+                new HashSet<>());
 
         int offset = JooqUtil.getOffset(pageRequest);
         int numberOfRows = JooqUtil.getLimit(pageRequest, false);
@@ -1440,11 +1633,15 @@ class MetaDaoImpl implements MetaDao, Clearable {
 
 
     @Override
-    public int delete(final List<Long> metaIdList) {
-        return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                .deleteFrom(meta)
-                .where(meta.ID.in(metaIdList))
-                .execute());
+    public int delete(final Collection<Long> metaIds) {
+        if (NullSafe.hasItems(metaIds)) {
+            return JooqUtil.contextResult(metaDbConnProvider, context -> context
+                    .deleteFrom(meta)
+                    .where(meta.ID.in(metaIds))
+                    .execute());
+        } else {
+            return 0;
+        }
     }
 
     @Override
@@ -1456,12 +1653,6 @@ class MetaDaoImpl implements MetaDao, Clearable {
                         .fetchOptional()
                         .map(Record1::value1))
                 .orElse(0);
-    }
-
-    @Override
-    public void clear() {
-        feedNameToIdsMap.clear();
-        typeNameToIdsMap.clear();
     }
 
     private Collection<Condition> createCondition(final FindMetaCriteria criteria) {
@@ -1509,7 +1700,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
     @Override
     public List<String> getProcessorUuidList(final FindMetaCriteria criteria) {
         final Collection<Condition> conditions = createCondition(criteria);
-        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(), new HashSet<>());
+        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(),
+                new HashSet<>());
 
         return JooqUtil.contextResult(metaDbConnProvider,
                         context -> {
@@ -1534,82 +1726,153 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 .map(Record1::value1);
     }
 
-    private SelectConditionStep<Record4<Long, String, String, Long>> createBaseEffectiveStreamsQuery(
+    private SelectConditionStep<Record2<Long, Long>> createBaseEffectiveStreamsQuery(
             final DSLContext context,
-            final EffectiveMetaDataCriteria criteria) {
+            final int feedId,
+            final int metaTypeId) {
 
         final byte unlockedId = MetaStatusId.getPrimitiveValue(Status.UNLOCKED);
+
+        // Force the idx to ensure mysql uses the idx with feed_id|effective_time rather than
         return context.select(
                         meta.ID,
-                        metaFeed.NAME,
-                        metaType.NAME,
                         meta.EFFECTIVE_TIME)
                 .from(meta)
-                .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
-                .where(metaFeed.NAME.eq(criteria.getFeed()))
-                .and(metaType.NAME.eq(criteria.getType()))
+                .where(meta.FEED_ID.eq(feedId))
+                .and(meta.TYPE_ID.eq(metaTypeId))
                 .and(meta.STATUS.eq(unlockedId));
     }
 
     @Override
-    public Set<EffectiveMeta> getEffectiveStreams(final EffectiveMetaDataCriteria effectiveMetaDataCriteria) {
+    public List<EffectiveMeta> getEffectiveStreams(final EffectiveMetaDataCriteria effectiveMetaDataCriteria) {
 
         LOGGER.debug("getEffectiveStreams({})", effectiveMetaDataCriteria);
 
         Objects.requireNonNull(effectiveMetaDataCriteria);
         final Period period = Objects.requireNonNull(effectiveMetaDataCriteria.getEffectivePeriod());
+        // Inclusive
         final long fromMs = Objects.requireNonNull(period.getFromMs());
+        // Exclusive
         final long toMs = Objects.requireNonNull(period.getToMs());
 
-        final Function<Record4<Long, String, String, Long>, EffectiveMeta> mapper = rec ->
+        // Debatable whether we should throw an exception if the feed/type don't exist
+        final Optional<Integer> optFeedId = feedDao.get(effectiveMetaDataCriteria.getFeed());
+        if (optFeedId.isEmpty()) {
+            LOGGER.debug("Feed {} not found in the {} table.",
+                    effectiveMetaDataCriteria.getFeed(), META_FEED.NAME);
+            return Collections.emptyList();
+        }
+        final int feedId = optFeedId.get();
+
+        final Optional<Integer> optTypeId = metaTypeDao.get(effectiveMetaDataCriteria.getType());
+        if (optTypeId.isEmpty()) {
+            LOGGER.warn("Meta Type {} not found in the database", effectiveMetaDataCriteria.getType());
+            return Collections.emptyList();
+        }
+        final int typeId = optTypeId.get();
+
+        final Function<Record2<Long, Long>, EffectiveMeta> mapper = rec ->
                 new EffectiveMeta(
                         rec.get(meta.ID),
-                        rec.get(metaFeed.NAME),
-                        rec.get(metaType.NAME),
+                        effectiveMetaDataCriteria.getFeed(),
+                        effectiveMetaDataCriteria.getType(),
                         rec.get(meta.EFFECTIVE_TIME));
 
-        // Try to get a single stream that is just before our range.  This is so that we always
-        // have a stream (unless there are no streams at all) that was effective at the start
-        // of our range.
-        final Optional<EffectiveMeta> optStreamPriorToRange = JooqUtil.contextResult(metaDbConnProvider,
+        final List<EffectiveMeta> streamsInOrBelowRange = JooqUtil.contextResult(metaDbConnProvider,
                 context -> {
-                    final var select = createBaseEffectiveStreamsQuery(
-                            context,
-                            effectiveMetaDataCriteria)
+                    // Try to get a single stream that is just before our range.  This is so that we always
+                    // have a stream (unless there are no streams at all) that was effective at the start
+                    // of our range.
+                    final var selectUpToRange = createBaseEffectiveStreamsQuery(
+                            context, feedId, typeId)
                             .and(meta.EFFECTIVE_TIME.lessOrEqual(fromMs))
                             .orderBy(meta.EFFECTIVE_TIME.desc())
                             .limit(1);
 
-                    LOGGER.debug("select: {}", select);
-
-                    return select.fetchOptional()
-                            .map(mapper);
-                });
-
-        LOGGER.debug("optStreamPriorToRange {}", optStreamPriorToRange);
-
-        final Set<EffectiveMeta> effectiveMetaSet = new HashSet<>();
-        optStreamPriorToRange.ifPresent(effectiveMetaSet::add);
-
-        final List<EffectiveMeta> streamsInRange = JooqUtil.contextResult(metaDbConnProvider,
-                context -> {
-                    final var select = createBaseEffectiveStreamsQuery(
-                            context, effectiveMetaDataCriteria)
+                    // Get the streams in our range
+                    final var selectInRange = createBaseEffectiveStreamsQuery(
+                            context, feedId, typeId)
                             .and(meta.EFFECTIVE_TIME.greaterThan(fromMs))
                             .and(meta.EFFECTIVE_TIME.lessThan(toMs));
 
-                    LOGGER.debug("select: {}", select);
+                    // We want to include dups so that we can log and remove them later
+                    final var select = selectUpToRange.unionAll(selectInRange);
+
+                    LOGGER.debug("select:\n{}", select);
 
                     return select.fetch()
                             .map(mapper::apply);
                 });
 
         LOGGER.debug(() -> LogUtil.message("returning {} streams for criteria: {}",
-                streamsInRange.size(), effectiveMetaDataCriteria));
-        effectiveMetaSet.addAll(streamsInRange);
+                streamsInOrBelowRange.size(), effectiveMetaDataCriteria));
 
-        return effectiveMetaSet;
+        return streamsInOrBelowRange;
+    }
+
+    @Override
+    public List<SimpleMeta> getLogicallyDeleted(final Instant deleteThreshold,
+                                                final int batchSize,
+                                                final Set<Long> metaIdExcludeSet) {
+        LOGGER.debug(() -> LogUtil.message("getLogicallyDeleted() - deleteThreshold: {}, batchSize: {}, " +
+                        "metaIdExcludeSet size: {}",
+                deleteThreshold, batchSize, metaIdExcludeSet.size()));
+
+        Objects.requireNonNull(deleteThreshold);
+        final List<SimpleMeta> simpleMetas;
+        if (batchSize > 0) {
+            final byte statusIdDeleted = MetaStatusId.getPrimitiveValue(Status.DELETED);
+            // Get a batch starting from the cut off threshold and working backwards in time.
+            // This is so next time we can work from the previous min status time.
+            final TimedResult<List<SimpleMeta>> timedResult = JooqUtil.timedContextResult(
+                    metaDbConnProvider,
+                    LOGGER.isDebugEnabled(),
+                    context -> {
+                        var select = context
+                                .select(
+                                        meta.ID,
+                                        metaType.NAME,
+                                        metaFeed.NAME,
+                                        meta.CREATE_TIME,
+                                        meta.STATUS_TIME)
+                                .from(meta)
+                                .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                .where(meta.STATUS.eq(statusIdDeleted))
+                                .and(meta.STATUS_TIME.lessOrEqual(deleteThreshold.toEpochMilli()));
+
+                        // Here to stop us trying to pick up any failed ones from the previous batch.
+                        // This is because this may be called repeatedly with the same deleteThreshold
+                        // if there are many metas with the same statusTime. In healthy operation this will be
+                        // empty so won't impact the query performance.
+                        if (NullSafe.hasItems(metaIdExcludeSet)) {
+                            select.and(meta.ID.notIn(metaIdExcludeSet));
+                        }
+
+                        // Should be able to scan down the status_status_time_idx
+                        return select.orderBy(meta.STATUS_TIME.desc())
+                                .limit(batchSize)
+                                .fetch(this::mapToSimpleMeta);
+                    });
+
+            simpleMetas = timedResult.getResult();
+
+            LOGGER.debug(() -> LogUtil.message("getLogicallyDeleted() - Selected {} meta records in {}",
+                    simpleMetas.size(), timedResult.getDuration()));
+        } else {
+            simpleMetas = Collections.emptyList();
+        }
+        LOGGER.debug(() -> LogUtil.message("Found {} meta records", simpleMetas.size()));
+        return simpleMetas;
+    }
+
+    private SimpleMeta mapToSimpleMeta(final Record5<Long, String, String, Long, Long> record) {
+        return new SimpleMetaImpl(
+                record.get(meta.ID, long.class),
+                record.get(metaType.NAME, String.class),
+                record.get(metaFeed.NAME, String.class),
+                record.get(meta.CREATE_TIME, long.class),
+                record.get(meta.STATUS_TIME, Long.class));
     }
 
     public boolean validateExpressionTerms(final ExpressionItem expressionItem) {
@@ -1634,12 +1897,22 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                         "of type {}. Term: {}",
                                 term.getCondition(),
                                 term.getField(),
-                                field.getType(), term));
+                                field.getFieldType().getTypeName(), term));
                     } else {
                         return true;
                     }
                 }
             });
         }
+    }
+
+    @Override
+    public Set<Long> findLockedMeta(final Collection<Long> metaIdCollection) {
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+                .select(META.ID)
+                .from(META)
+                .where(META.ID.in(metaIdCollection))
+                .and(META.STATUS.eq(MetaStatusId.LOCKED))
+                .fetchSet(META.ID));
     }
 }

@@ -5,6 +5,7 @@ package stroom.util.shared;
  */
 public class StringUtil {
 
+
     private StringUtil() {
     }
 
@@ -31,6 +32,7 @@ public class StringUtil {
 
     /**
      * GWT doesn't support {@link String#isBlank()}
+     *
      * @return True if str is null, empty or contains only whitespace.
      */
     public static boolean isBlank(final String str) {
@@ -110,4 +112,22 @@ public class StringUtil {
                 ? "s"
                 : "";
     }
+
+    public static String pluralSuffix(final long count) {
+        return count > 1
+                ? "s"
+                : "";
+    }
+
+    /**
+     * Null safe trimming of leading/trailing whitespace.
+     */
+    public static String trimWhitespace(final String userText) {
+        if (userText == null || userText.isEmpty()) {
+            return userText;
+        } else {
+            return userText.trim();
+        }
+    }
+
 }

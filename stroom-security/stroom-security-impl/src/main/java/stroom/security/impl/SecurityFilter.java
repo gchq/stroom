@@ -28,9 +28,6 @@ import stroom.util.logging.LogUtil;
 import stroom.util.net.UrlUtils;
 import stroom.util.shared.ResourcePaths;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
@@ -56,8 +53,7 @@ import javax.ws.rs.core.Response.Status;
 @Singleton
 class SecurityFilter implements Filter {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SecurityFilter.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SecurityFilter.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SecurityFilter.class);
 
     private static final Set<String> STATIC_RESOURCE_EXTENSIONS = Set.of(
             ".js", ".css", ".htm", ".html", ".json", ".png", ".jpg", ".gif", ".ico", ".svg", ".ttf", ".woff", ".woff2");
@@ -114,7 +110,7 @@ class SecurityFilter implements Filter {
                         final HttpServletResponse response,
                         final FilterChain chain)
             throws IOException, ServletException {
-        LAMBDA_LOGGER.debug(() ->
+        LOGGER.debug(() ->
                 LogUtil.message("Filtering request uri: {},  servletPath: {}",
                         request.getRequestURI(), request.getServletPath()));
 
@@ -131,7 +127,7 @@ class SecurityFilter implements Filter {
             chain.doFilter(request, response);
 
         } else {
-            LAMBDA_LOGGER.debug(() -> LogUtil.message("Session ID {}, request URI {}",
+            LOGGER.debug(() -> LogUtil.message("Session ID {}, request URI {}",
                     Optional.ofNullable(request.getSession(false))
                             .map(HttpSession::getId)
                             .orElse("-"),
@@ -151,15 +147,30 @@ class SecurityFilter implements Filter {
                 });
 
             } else {
-                // Try and get the token from the session if we have one
-                Optional<UserIdentity> optUserIdentity = UserIdentitySessionUtil.get(request);
-                if (optUserIdentity.isEmpty()) {
-                    // Api requests that are not from the front-end should have a token
-                    optUserIdentity = openIdManager.loginWithRequestToken(request);
+                Optional<UserIdentity> optUserIdentity;
+
+                // Api requests that are not from the front-end should have a token.
+                // Also request from an AWS ALB will have an ALB signed token containing the claims
+                // Need to do this first, so we get a fresh token from AWS ALB rather than using a stale
+                // one from session.
+                optUserIdentity = openIdManager.loginWithRequestToken(request);
+                if (LOGGER.isDebugEnabled()) {
+                    logUserIdentityToDebug(
+                            optUserIdentity, fullPath, "after trying to login with request token");
+                }
+
+                // If no user from header token, see if we have one in session already.
+                optUserIdentity = openIdManager.getOrSetSessionUser(request, optUserIdentity);
+                if (LOGGER.isDebugEnabled()) {
+                    logUserIdentityToDebug(optUserIdentity, fullPath, "from session");
                 }
 
                 if (optUserIdentity.isPresent()) {
                     final UserIdentity userIdentity = optUserIdentity.get();
+                    LOGGER.debug(() -> LogUtil.message("Setting user in session, user: {} {}, path: {}",
+                            userIdentity.getClass().getSimpleName(),
+                            userIdentity,
+                            fullPath));
                     // Set the identity in session if we have a session and cookie
                     UserIdentitySessionUtil.set(request, userIdentity);
 
@@ -168,6 +179,7 @@ class SecurityFilter implements Filter {
                             process(request, response, chain));
 
                 } else if (shouldBypassAuthentication(fullPath)) {
+                    LOGGER.debug("Running as proc user for unauthenticated path: {}", fullPath);
                     // Some paths don't need authentication (they contain `/noauth/`.
                     // If that is the case then proceed as proc user.
                     securityContext.asProcessingUser(() -> process(request, response, chain));
@@ -175,7 +187,7 @@ class SecurityFilter implements Filter {
                 } else if (isApiRequest(servletPath)) {
                     // If we couldn't login with a token or couldn't get a token then error as this is an API call
                     // or no login flow is possible/expected.
-                    LOGGER.debug("API request is unauthorised.");
+                    LOGGER.debug("No user identity so responding with UNAUTHORIZED for API path: {}", fullPath);
                     response.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
 
                 } else if (request.getRequestURI().equals("/")) {
@@ -184,11 +196,13 @@ class SecurityFilter implements Filter {
                     try {
                         final String postAuthRedirectUri = getPostAuthRedirectUri(request);
 
-                        LOGGER.debug("Using postAuthRedirectUri: {}", postAuthRedirectUri);
-
                         final String code = UrlUtils.getLastParam(request, OpenId.CODE);
                         final String stateId = UrlUtils.getLastParam(request, OpenId.STATE);
                         final String redirectUri = openIdManager.redirect(request, code, stateId, postAuthRedirectUri);
+
+                        LOGGER.debug("Code flow UI request so redirecting to IDP, " +
+                                        "redirectUri: {}, postAuthRedirectUri: {}, path: {}",
+                                redirectUri, postAuthRedirectUri, fullPath);
                         response.sendRedirect(redirectUri);
 
                     } catch (final RuntimeException e) {
@@ -197,11 +211,30 @@ class SecurityFilter implements Filter {
                     }
                 } else {
                     final int statusCode = Status.NOT_FOUND.getStatusCode();
-                    LOGGER.debug("Unexpected URI {}, returning {}", request.getRequestURI(), statusCode);
+                    LOGGER.debug("Unexpected URI {}, returning {}", fullPath, statusCode);
                     response.setStatus(statusCode);
                 }
             }
         }
+    }
+
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private void logUserIdentityToDebug(final Optional<UserIdentity> optUserIdentity,
+                                        final String fullPath,
+                                        final String msg) {
+        LOGGER.debug("User identity ({}): {} path: {}",
+                msg,
+                optUserIdentity.map(
+                                identity -> {
+                                    final String id = identity.getPreferredUsername() != null
+                                            ? identity.getId() + " (" + identity.getPreferredUsername() + ")"
+                                            : identity.getId();
+                                    return LogUtil.message("'{}' {}",
+                                            id,
+                                            identity.getClass().getSimpleName());
+                                })
+                        .orElse("<empty>"),
+                fullPath);
     }
 
     private String getPostAuthRedirectUri(final HttpServletRequest request) {

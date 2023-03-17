@@ -9,36 +9,42 @@ import stroom.processor.impl.ProcessorDao;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorRecord;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFields;
-import stroom.processor.shared.TaskStatus;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
 
 import org.jooq.Condition;
-import org.jooq.impl.DSL;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jooq.DSLContext;
+import org.jooq.exception.DataAccessException;
 
+import java.sql.SQLIntegrityConstraintViolationException;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 
-import static stroom.processor.impl.db.jooq.Tables.PROCESSOR_TASK;
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
 
 class ProcessorDaoImpl implements ProcessorDao {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorDaoImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorDaoImpl.class);
 
     private final ProcessorDbConnProvider processorDbConnProvider;
     private final GenericDao<ProcessorRecord, Processor, Integer> genericDao;
     private final ExpressionMapper expressionMapper;
+    private final ProcessorFilterDaoImpl processorFilterDao;
 
     @Inject
     public ProcessorDaoImpl(final ProcessorDbConnProvider processorDbConnProvider,
-                            final ExpressionMapperFactory expressionMapperFactory) {
+                            final ExpressionMapperFactory expressionMapperFactory,
+                            final ProcessorFilterDaoImpl processorFilterDao) {
         this.processorDbConnProvider = processorDbConnProvider;
         this.genericDao = new GenericDao<>(processorDbConnProvider, PROCESSOR, PROCESSOR.ID, Processor.class);
+        this.processorFilterDao = processorFilterDao;
 
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(ProcessorFields.ID, PROCESSOR.ID, Integer::valueOf);
@@ -104,61 +110,73 @@ class ProcessorDaoImpl implements ProcessorDao {
 
     @Override
     public boolean delete(final int id) {
-        return genericDao.delete(id);
+        // We don't want to allow direct physical delete, only logical delete.
+        return logicalDeleteByProcessorId(id) > 0;
+        //genericDao.delete(id);
     }
 
     @Override
-    public boolean logicalDelete(final int id) {
+    public int logicalDeleteByProcessorId(final int processorId) {
         try {
             return JooqUtil.transactionResult(processorDbConnProvider, context -> {
-
-                // Logically delete any associated unprocessed tasks.
-                // Once the filter is logically deleted no new tasks will be created for it
-                // but we may still have active tasks for 'deleted' filters.
-                final int processor_task_update_count = context
-                        .update(PROCESSOR_TASK)
-                        .set(PROCESSOR_TASK.STATUS, TaskStatus.DELETED.getPrimitiveValue())
-                        .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
-                        .where(DSL.exists(
-                                DSL.selectZero()
-                                        .from(PROCESSOR_FILTER)
-                                        .innerJoin(PROCESSOR)
-                                        .on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
-                                        .where(PROCESSOR.ID.eq(id))))
-                        .and(PROCESSOR_TASK.STATUS.in(
-                                TaskStatus.UNPROCESSED.getPrimitiveValue(),
-                                TaskStatus.ASSIGNED.getPrimitiveValue()))
-                        .execute();
-
-                LOGGER.debug("Logically deleted {} tasks for processor Id {}",
-                        processor_task_update_count, id);
-
                 // Logically delete all the child filters first
-                final int processor_filter_update_count = context
-                        .update(PROCESSOR_FILTER)
-                        .set(PROCESSOR_FILTER.DELETED, true)
-                        .set(PROCESSOR_FILTER.VERSION, PROCESSOR_FILTER.VERSION.plus(1))
-                        .where(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(id))
-                        .execute();
-                LOGGER.debug("Logically deleted {} filters for processor Id {}",
-                        processor_filter_update_count, id);
-
-                final int processor_update_count = context
-                        .update(PROCESSOR)
-                        .set(PROCESSOR.DELETED, true)
-                        .set(PROCESSOR.VERSION, PROCESSOR.VERSION.plus(1))
-                        .where(PROCESSOR.ID.eq(id))
-                        .execute();
-
-                LOGGER.debug("Logically deleted {} processor with Id {}",
-                        processor_update_count, id);
-
-                return processor_update_count > 0;
+                processorFilterDao.logicalDeleteByProcessorId(processorId, context);
+                final int count = logicalDeleteByProcessorId(processorId, context);
+                return count;
             });
-        } catch (Exception e) {
-            throw new RuntimeException(
-                    "Error deleting filters, tasks and processor for processor id " + id, e);
+        } catch (final Exception e) {
+            throw new RuntimeException("Error deleting filters and processor for processor id " + processorId, e);
         }
+    }
+
+    public int logicalDeleteByProcessorId(final int processorId, final DSLContext context) {
+        final int count = context
+                .update(PROCESSOR)
+                .set(PROCESSOR.DELETED, true)
+                .set(PROCESSOR.VERSION, PROCESSOR.VERSION.plus(1))
+                .set(PROCESSOR.UPDATE_TIME_MS, Instant.now().toEpochMilli())
+                .where(PROCESSOR.ID.eq(processorId))
+                .and(PROCESSOR.DELETED.eq(false))
+                .execute();
+        LOGGER.debug("Logically deleted {} processors for processor Id {}",
+                count,
+                processorId);
+        return count;
+    }
+
+    @Override
+    public int physicalDeleteOldProcessors(final Instant deleteThreshold) {
+        final List<Integer> result =
+                JooqUtil.contextResult(processorDbConnProvider, context -> context
+                        .select(PROCESSOR.ID)
+                        .from(PROCESSOR)
+                        .where(PROCESSOR.DELETED.eq(true))
+                        .and(PROCESSOR.UPDATE_TIME_MS.lessThan(deleteThreshold.toEpochMilli()))
+                        .fetch(PROCESSOR.ID));
+        LOGGER.debug(() -> LogUtil.message("Found {} logically deleted processors with an update time older than {}",
+                result.size(), deleteThreshold));
+
+        final AtomicInteger totalCount = new AtomicInteger();
+        // Delete one by one as we expect some constraint errors.
+        result.forEach(processorId -> {
+            try {
+                LOGGER.debug("Deleting processor with id {}", processorId);
+                final Integer count = JooqUtil.contextResult(processorDbConnProvider, context -> context
+                        .deleteFrom(PROCESSOR)
+                        .where(PROCESSOR.ID.eq(processorId))
+                        .execute());
+                totalCount.addAndGet(count);
+            } catch (final DataAccessException e) {
+                if (e.getCause() != null && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
+                    final var sqlEx = (SQLIntegrityConstraintViolationException) e.getCause();
+                    LOGGER.debug("Expected constraint violation exception: " + sqlEx.getMessage(), e);
+                } else {
+                    throw e;
+                }
+            }
+        });
+        LOGGER.debug(() -> "physicalDeleteOldProcessors returning: " + totalCount.get());
+        return totalCount.get();
     }
 
     @Override

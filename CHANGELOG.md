@@ -12,6 +12,214 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.1-beta.23-test-open-id-15] - 2023-03-14
+
+* Issue **#3270** : Change the auto logging of audit events to ignore any initiated by the processing user account as this is not human initiated.
+
+* Issue **#3278** : Fix warning about the data retention rule summary query cancellation action not been correctly configured for auto logging.
+
+* Remove thread sleep accidentally added for testing purposes in data retention summary query execution.
+
+* Issue **#3292** : Change the reference data load to not load entries with null values. If `overrideExistingValues` is set and an entry with a null value overrides an existing one with a non-null value, the existing one will be removed.
+
+* Issue **#3299** : Fix schema non-compliant events when importing config. Also fix error handling when user tries to import with no file selected. Improved the audit events for file upload.
+
+* Remove audit logging for `MetaResourceImpl.getTypes` which just lists the stream types and is not an explicit user action.
+
+* Issue **#3112** : Ensure users from header tokens are always places in session if we have one.
+
+* Issue **#2759** : Normalise Windows line endings () to Unix-style () when pasting into the ACE text editor.
+
+* Issue **#3272** : Change handling for reference loads in unexpected states. It now logs an app log error but carries on and loads over the top.
+
+* Issue **#3260** : Change the select-all filter based delete/restore to delete by IDs with a temporary table to avoid locking other rows. This is configurable using the property `data.meta.metaStatusUpdateBatchSize`, with 0 meaning all in one batch.
+
+* Issue **#3201** : Change the way the mapping of feed and stream types to IDs is cached. Now uses the existing `Meta Type Cache` and `Meta Feed Cache` caches rather than simple hash maps that duplicated the caching.
+
+* Issue **#3136** : Improve the debug logging for reference data effective streams and add validation of the effective stream sets when debug is enabled for `stroom.pipeline.refdata.EffectiveStreamCache`.
+
+* Remove the read/write locking used on the caches. Change cache rebuild to do a full rebuild if config has changed, else just clear the existing cache.
+
+* Issue **#3286** : Fix error when changing property values for cache properties.
+
+* Issue **#2759** : Change `in dictionary` for filters and searchables to ignore blank lines.
+
+* Issue **#3271** : Fix warnings in logs about auto logging not being configured for reference data purge.
+
+* Issue **#3259** : Make task creation and queueing multi threaded.
+
+* Issue **#3276** : Remove ASSIGNED task status and guard for task creation deadlocks.
+
+* Issue **#3274** : Improve progress monitoring.
+
+* Issue **#3274** : Improve config descriptions.
+
+* Issue **#3259** : Make task creation and queueing multi threaded.
+
+* Issue **#3259** : Make task creation a separate managed job.
+
+
+## [v7.1-beta.23-test-open-id-14] - 2023-03-10
+
+* Issue **#3112** : Fix verification of AWS signed token when standard auth header is used.
+
+
+## [v7.1-beta.23-test-open-id-13] - 2023-03-10
+
+* Issue **#3112** : Fix adding auth headers for api users and add more debug.
+
+
+## [v7.1-beta.23-test-open-id-12] - 2023-03-06
+
+* Issue **#3112** : Fix linking of claims to user.
+
+
+## [v7.1-beta.23-test-open-id-11] - 2023-03-06
+
+* Issue **#3112** : Fix incorrect user type error on login.
+
+
+## [v7.1-beta.23-test-open-id-10] - 2023-03-06
+
+* Issue **#3112** : Fix failing build.
+
+
+## [v7.1-beta.23-test-open-id-9] - 2023-03-03
+
+* Issue **#3112** : Fix stroom logging out due to no permissions. Add config prop `uniqueIdentityClaim` to allow configuration of claim used to link IDP and stroom user.
+
+
+## [v7.1-beta.23-test-open-id-8] - 2023-02-27
+
+* Issue **#3112** : Fix bug in parsing of AWS signer.
+
+
+## [v7.1-beta.23-test-open-id-7] - 2023-02-27
+
+* Issue **#3112** : Fix code format.
+
+
+## [v7.1-beta.23-test-open-id-6] - 2023-02-27
+
+* Issue **#3112** : Add support for AWS specific token headers.
+
+
+## [v7.1-beta.23-test-open-id-5] - 2023-02-23
+
+* Issue **#3112** : Remove requirement for ID token in client credentials flow.
+
+
+## [v7.1-beta.23-test-open-id-4] - 2023-02-23
+
+* Issue **#3112** : Fix prop `clientCredentialsScopes` using value from `requestScopes`.
+
+
+## [v7.1-beta.23-test-open-id-3] - 2023-02-22
+
+* Issue **#3112** : Fix code format to pass build.
+
+
+## [v7.1-beta.23-test-open-id-2] - 2023-02-22
+
+* Issue **#3112** : Add property `clientCredentialsScopes` and rename `requestScope` to `requestScopes`, changing it to a list of strings.
+
+
+## [v7.1-beta.23-test-open-id] - 2023-02-21
+
+* Issue **#3039** : Display search suggestions and type hints in dashboards.
+
+* Issue **#3045** : Add stream selection info action button to meta view.
+
+* Issue **#3128** : Allow enumeration of meta keys in XSLT.
+
+* Issue **#3195** : Add Elasticsearch hit highlighting.
+
+* Issue **#3214** : Use auto-complete list for adding dashboard table fields.
+
+* Issue **#3216** : Add 'Dependencies' to explorer item context menu, to display dependencies for that item.
+
+* Issue **#3206** : Add ability for users to set Explorer items as favourites.
+
+* Issue **#3244** : Add 'Copy link to clipboard' Explorer menu item.
+
+* Issue **#3255** : Fix error when creating a new processor filter.
+
+* Issue **#3204** : More changes to improve task creation performance.
+
+* Issue **#3204** : Split UNPROCESSED(1) task state into CREATED(0) and QUEUED(1) to improve task creation performance and management.
+
+* Issue **#3204** : Change processor_filter_tracker to have a status enum and an optional message.
+
+* Issue **#3225** : Improve performance of the database query used to find logically deleted streams for the `Data Delete` job. Add the index `meta_status_status_time_idx` on table `meta`. Add a summary log for the job.
+
+* Issue **#3231** : Change severity from ERROR to WARN when a reference lookup is performed with no reference loaders configured.
+
+
+## [v7.1-beta.23] - 2023-02-02
+
+* Issue **#3136** : Improve ref data lookup trace logging. Refactor effective streams query.
+
+* De-dup error message text produced by XSLT functions.
+
+* Issue **#3218** : Fix XSLT and dashboard `hash()` functions stripping leading zeros from the hash result.
+
+* Issue **#3221** : Queue all unowned tasks unless associated meta is locked. Tasks for deleted meta will be processed and complete as expected where meta is deleted.
+
+* Issue **#3220** : Fix Info tooltip on Active Tasks sub-tab not showing when stream is not unlocked or is physically deleted.
+
+
+## [v7.1-beta.22] - 2023-01-27
+
+* Issue **#3204** : Improve task creation logging to list considered filters in order and provide queue information.
+
+* Issue **#3195** : Fix editor highlight positions being incorrectly calculated.
+
+* Issue **#3204** : Fix slow physical deletion of completed/deleted tasks.
+
+* Issue **#3204** : Improve task creation performance. Add system info for inspecting task queues.
+
+* Improve performance of power of ten method in ref data byte buffer pool.
+
+* Issue **#3209** : Fix logging of slow batch SQL.
+
+* Issue **#3192** : Fix duplicate user events for exported processor filters.
+
+* Issue **#3197** : Fix NPE when modifying a property value, (back-porting #3143).
+
+
+## [v7.1-beta.21] - 2023-01-19
+
+* Add logging of queries that take >2s to execute. Enabled by setting `stroom.db.util.SlowQueryExecuteListener: DEBUG`.
+
+* Add info logging to the export all api resource. Outputs the number of docs export along with counts by type.
+
+* Issue **#3194** : Fix for JDK XML 1.1 parser bug.
+
+
+## [v7.1-beta.20] - 2023-01-16
+
+* Issue **#3189** : Change effective stream query to use inner joins.
+
+
+## [v7.1-beta.19] - 2023-01-13
+
+* Issue **#3163** : Add filter to expression field picker.
+
+* Issue **#3171** : Fix stroom booting successfully when there have been failed migrations.
+
+* Issue **#3177** : Stop logical deletes changing the update time if already logically deleted. Add more info logging. Change task name used in logs from `Processor Task Delete Executor` to match job name `Processor Task Retention`.
+
+* Fix property name mentioned in _Processor Task Retention_ job description.
+
+* Issue **#3177** : Fix bad SQL in _Processor Task Retention_ that results in tasks not being deleted. Fix logical deletion of processor filters and processors that result in processor tasks being incorrectly deleted.
+
+* Issue **#3111** : Revert previous change that added double quote handling. Now we only trim leading/trailing whitespace from expression terms.
+
+* Issue **#3180** : Enable "in dictionary" condition for "Id" fields.
+
+* Issue **#1876** : Add `distinct` dashboard expression function for returning a list of unique values.
+
+
 ## [v7.1-beta.18-test-open-id] - 2023-01-06
 
 * Issue **#3112** : Change meta key `UploadUser` to `UploadUserId`. Add meta key `UploadUserUsername` to hold the `preferred_username` from the IDP. **NOTE**: the stroom property `receive.requireTokenAuthentication` and proxy property `receivedDataConfig.requireTokenAuthentication` have both been replaced by `tokenAuthenticationEnabled`, `certificateAuthenticationEnabled` and `authenticationRequired`, allowing authentication to be disabled and the mechanism to be controlled on data receipt. Remove properties `receive.unknownClassification` and `receive.feedNamePattern` as they are unused and duplicates of other properties. Replace property `security.authentication.useInternal` (boolean) with `security.authentication.identityProviderType` (`INTERNAL`|`EXTERNAL`|`TEST`). Add property `addOpenIdAccessToken` to the HTTP forward config. Remove property `useDefaultOpenIdCredentials` as this is now covered by `security.authentication.identityProviderType`. In proxy YAML config, replaced `forwardDestinations` with `forwardFileDestinations` and `forwardHttpDestinations`; replaced `receiveDataConfig` with `receive`.
@@ -4466,8 +4674,13 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.18-test-open-id...HEAD
-[v7.1-beta.18-test-open-id]: https://github.com/gchq/stroom/compare/v7.1-beta.18...v7.1-beta.18-test-open-id
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id-15...HEAD
+[v7.1-beta.23-test-open-id-15]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id-14...v7.1-beta.23-test-open-id-15
+[v7.1-beta.23]: https://github.com/gchq/stroom/compare/v7.1-beta.22...v7.1-beta.23
+[v7.1-beta.22]: https://github.com/gchq/stroom/compare/v7.1-beta.21...v7.1-beta.22
+[v7.1-beta.21]: https://github.com/gchq/stroom/compare/v7.1-beta.20...v7.1-beta.21
+[v7.1-beta.20]: https://github.com/gchq/stroom/compare/v7.1-beta.19...v7.1-beta.20
+[v7.1-beta.19]: https://github.com/gchq/stroom/compare/v7.1-beta.18...v7.1-beta.19
 [v7.1-beta.18]: https://github.com/gchq/stroom/compare/v7.1-beta.17...v7.1-beta.18
 [v7.1-beta.17]: https://github.com/gchq/stroom/compare/v7.1-beta.16...v7.1-beta.17
 [v7.1-beta.16]: https://github.com/gchq/stroom/compare/v7.1-beta.15...v7.1-beta.16

@@ -45,7 +45,9 @@ import java.nio.ByteBuffer;
 import java.util.Iterator;
 import javax.inject.Inject;
 
-public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStoreKey> {
+public class KeyValueStoreDb
+        extends AbstractLmdbDb<KeyValueStoreKey, ValueStoreKey>
+        implements EntryStoreDb<KeyValueStoreKey> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KeyValueStoreDb.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(KeyValueStoreDb.class);

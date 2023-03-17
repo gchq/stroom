@@ -1,9 +1,9 @@
 package stroom.security.impl;
 
 import stroom.config.common.UriFactory;
+import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdClientFactory;
-import stroom.security.openid.api.OpenIdConfig;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -28,7 +28,7 @@ public class StroomTestIdpConfigurationProvider extends InternalIdpConfiguration
     @Inject
     public StroomTestIdpConfigurationProvider(final DefaultOpenIdCredentials defaultOpenIdCredentials,
                                               final UriFactory uriFactory,
-                                              final Provider<OpenIdConfig> openIdConfigProvider,
+                                              final Provider<AbstractOpenIdConfig> openIdConfigProvider,
                                               final OpenIdClientFactory openIdClientDetailsFactory) {
         super(uriFactory, openIdConfigProvider, openIdClientDetailsFactory);
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
@@ -71,7 +71,7 @@ public class StroomTestIdpConfigurationProvider extends InternalIdpConfiguration
             synchronized (this) {
                 if (now.isAfter(nextWarningTime)) {
                     LOGGER.warn("Using default and publicly available Open ID authentication credentials. " +
-                            "This is totally insecure! Set property " + OpenIdConfig.PROP_NAME_IDP_TYPE +
+                            "This is totally insecure! Set property " + AbstractOpenIdConfig.PROP_NAME_IDP_TYPE +
                             " to " + IdpType.EXTERNAL_IDP + "/" + IdpType.INTERNAL_IDP + ".");
                     nextWarningTime = Instant.now().plus(TIME_BETWEEN_WARNINGS);
                 }

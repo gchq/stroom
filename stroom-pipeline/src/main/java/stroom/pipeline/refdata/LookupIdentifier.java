@@ -80,7 +80,7 @@ public class LookupIdentifier {
         return new LookupIdentifier(map, key, eventTimeMs);
     }
 
-    public void append(final StringBuilder sb) {
+    public void appendTo(final StringBuilder sb) {
         sb.append("(map: '");
         sb.append(primaryMapName);
         sb.append("', key: '");

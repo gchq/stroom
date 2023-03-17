@@ -518,6 +518,11 @@ class TestReferenceDataFilter extends StroomUnitTest {
             }
 
             @Override
+            public Optional<MapDefinition> getSuccessfulMapDefinition() {
+                return Optional.empty();
+            }
+
+            @Override
             public Optional<RefDataValue> supplyValue() {
                 return Optional.of(fastInfosetValue);
             }

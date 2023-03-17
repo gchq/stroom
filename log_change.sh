@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 ##########################################################################
-# Version: v0.4.0
-# Date: 2022-09-27T16:06:12+00:00
+# Version: v0.4.1
+# Date: 2023-01-16T14:59:06+00:00
 #
 # Script to record changelog entries in individual files to get around
 # the issue of merge conflicts on the CHANGELOG file when doing PRs.

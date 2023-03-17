@@ -4,10 +4,13 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.test.common.TestUtil;
 
+import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 class TestExpressionOperator {
@@ -99,6 +102,63 @@ class TestExpressionOperator {
                         .addTerm(ExpressionTerm.builder().field("apple").build())
                         .addTerm(ExpressionTerm.builder().field("pear").build())
                         .build()), true)
+
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testContainsTerm() {
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple2<Predicate<ExpressionTerm>, ExpressionOperator>>() {
+                })
+                .withOutputType(Boolean.class)
+                .withTestFunction(testCase -> {
+                    final var predicate = testCase.getInput()._1;
+                    final var expressionItem = testCase.getInput()._2;
+                    return expressionItem.containsTerm(predicate);
+                })
+                .withSimpleEqualityAssertion()
+
+                .addCase(Tuple.of(
+                                term -> term.getField().equals("foo"),
+                                ExpressionOperator.builder()
+                                        .op(Op.NOT)
+                                        .build()),
+                        false)
+
+                .addCase(Tuple.of(
+                                        term -> term.getField().equals("foo"),
+                        ExpressionOperator.builder()
+                        .addTerm(ExpressionTerm.builder()
+                                .field("bar")
+                                .condition(Condition.EQUALS)
+                                .value("123")
+                                .build())
+                        .build()),
+                        false)
+
+                .addCase(Tuple.of(
+                                term -> term.getField().equals("foo") && term.getCondition().equals(Condition.EQUALS),
+                                ExpressionOperator.builder()
+                                        .addTerm(ExpressionTerm.builder()
+                                                .field("foo")
+                                                .condition(Condition.EQUALS)
+                                                .value("123")
+                                                .build())
+                                        .build()),
+                        true)
+
+                .addCase(Tuple.of(
+                                term -> term.getField().equals("foo"),
+                        ExpressionOperator.builder()
+                        .addOperator(ExpressionOperator.builder()
+                                .addOperator(ExpressionOperator.builder()
+                                        .addTerm(ExpressionTerm.builder().field("foo").build())
+                                        .build())
+                                .build())
+                        .build()),
+                        true)
 
                 .build();
     }

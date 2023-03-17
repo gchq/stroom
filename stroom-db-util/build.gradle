@@ -21,10 +21,15 @@ dependencies {
     implementation libs.jackson_annotations
     implementation libs.jooq
     implementation libs.slf4j_api
+    implementation libs.vavr
+
+    testImplementation project(':stroom-test-common')
 
     testImplementation libs.assertj_core
     testImplementation libs.commons_lang
     testImplementation libs.junit_jupiter_api
+    testImplementation libs.mockito_core
+    testImplementation libs.mockito_junit_jupiter
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jakarta_activation

@@ -37,7 +37,7 @@ import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.search.extraction.ExtractionTaskHandler;
 import stroom.search.impl.SearchConfig;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -56,7 +56,7 @@ public class AlertManagerImpl implements AlertManager {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AlertManagerImpl.class);
 
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
     private final ExplorerNodeService explorerNodeService;
     private final DashboardStore dashboardStore;
     private final WordListProvider wordListProvider;
@@ -71,7 +71,7 @@ public class AlertManagerImpl implements AlertManager {
     private boolean initialised = false;
 
     @Inject
-    AlertManagerImpl(final TaskContext taskContext,
+    AlertManagerImpl(final TaskContextFactory taskContextFactory,
                      final Provider<AlertConfig> alertConfigProvider,
                      final ExplorerNodeService explorerNodeService,
                      final DashboardStore dashboardStore,
@@ -81,7 +81,7 @@ public class AlertManagerImpl implements AlertManager {
                      final PipelineStore pipelineStore,
                      final PipelineDataCache pipelineDataCache,
                      final Provider<ExtractionTaskHandler> handlerProvider) {
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
         this.alertConfigProvider = alertConfigProvider;
         this.explorerNodeService = explorerNodeService;
         this.dashboardStore = dashboardStore;
@@ -112,7 +112,7 @@ public class AlertManagerImpl implements AlertManager {
             } else {
 
                 final AlertProcessorImpl processor = new AlertProcessorImpl(
-                        taskContext,
+                        taskContextFactory.current(),
                         handlerProvider,
                         rules,
                         indexStructure,
@@ -145,7 +145,7 @@ public class AlertManagerImpl implements AlertManager {
 
         final String[] path = folderPath.trim().split("/");
 
-        final Optional<ExplorerNode> folder = explorerNodeService.getRoot();
+        final Optional<ExplorerNode> folder = explorerNodeService.getNodeWithRoot();
 
         if (folder.isEmpty()) {
             throw new IllegalStateException("Unable to find root folder explorer node.");
@@ -155,7 +155,7 @@ public class AlertManagerImpl implements AlertManager {
         for (String name : path) {
             List<ExplorerNode> matchingChildren =
                     explorerNodeService.getNodesByName(currentNode, name).stream().filter(explorerNode ->
-                            ExplorerConstants.FOLDER.equals(explorerNode.getDocRef().getType()))
+                                    ExplorerConstants.FOLDER.equals(explorerNode.getDocRef().getType()))
                             .collect(Collectors.toList());
 
             if (matchingChildren.size() == 0) {

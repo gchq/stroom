@@ -92,13 +92,13 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
                     if (!abstractField.supportsCondition(term.getCondition())) {
                         LOGGER.debug(() -> LogUtil.message(
                                 "Condition '{}' is not supported by field '{}' of type {}. Term: {}",
-                                term.getCondition(), fieldName, abstractField.getType(), term));
+                                term.getCondition(), fieldName, abstractField.getFieldType().getTypeName(), term));
                         if (abstractField instanceof DocRefField) {
                             // https://github.com/gchq/stroom/issues/3074 removed some conditions from DocRefField
                             // instances so log an error
                             final DocRefField docRefField = (DocRefField) abstractField;
                             LOGGER.error("Condition '{}' is not supported by field '{}' of type {}. Term: {}",
-                                    term.getCondition(), fieldName, docRefField.getType(), term);
+                                    term.getCondition(), fieldName, docRefField.getFieldType().getTypeName(), term);
                         }
                     }
 

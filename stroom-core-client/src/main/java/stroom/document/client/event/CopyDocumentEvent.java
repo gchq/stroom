@@ -17,7 +17,7 @@
 
 package stroom.document.client.event;
 
-import stroom.docref.DocRef;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 
 import com.google.gwt.event.shared.EventHandler;
@@ -31,26 +31,26 @@ public class CopyDocumentEvent extends GwtEvent<CopyDocumentEvent.Handler> {
 
     private static Type<CopyDocumentEvent.Handler> TYPE;
     private final PresenterWidget<?> presenter;
-    private final List<DocRef> docRefs;
-    private final DocRef destinationFolderRef;
+    private final List<ExplorerNode> explorerNodes;
+    private final ExplorerNode destinationFolder;
     private final PermissionInheritance permissionInheritance;
 
     private CopyDocumentEvent(final PresenterWidget<?> presenter,
-                              final List<DocRef> docRefs,
-                              final DocRef destinationFolderRef,
+                              final List<ExplorerNode> explorerNodes,
+                              final ExplorerNode destinationFolder,
                               final PermissionInheritance permissionInheritance) {
         this.presenter = presenter;
-        this.docRefs = docRefs;
-        this.destinationFolderRef = destinationFolderRef;
+        this.explorerNodes = explorerNodes;
+        this.destinationFolder = destinationFolder;
         this.permissionInheritance = permissionInheritance;
     }
 
     public static void fire(final HasHandlers handlers,
                             final PresenterWidget<?> presenter,
-                            final List<DocRef> docRefs,
-                            final DocRef destinationFolderRef,
+                            final List<ExplorerNode> explorerNodes,
+                            final ExplorerNode destinationFolder,
                             final PermissionInheritance permissionInheritance) {
-        handlers.fireEvent(new CopyDocumentEvent(presenter, docRefs, destinationFolderRef, permissionInheritance));
+        handlers.fireEvent(new CopyDocumentEvent(presenter, explorerNodes, destinationFolder, permissionInheritance));
     }
 
     public static Type<CopyDocumentEvent.Handler> getType() {
@@ -74,12 +74,12 @@ public class CopyDocumentEvent extends GwtEvent<CopyDocumentEvent.Handler> {
         return presenter;
     }
 
-    public List<DocRef> getDocRefs() {
-        return docRefs;
+    public List<ExplorerNode> getExplorerNodes() {
+        return explorerNodes;
     }
 
-    public DocRef getDestinationFolderRef() {
-        return destinationFolderRef;
+    public ExplorerNode getDestinationFolder() {
+        return destinationFolder;
     }
 
     public PermissionInheritance getPermissionInheritance() {

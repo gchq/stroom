@@ -87,8 +87,6 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
     private PipelineDataCache pipelineDataCache;
     @Inject
     private PipelineScopeRunnable pipelineScopeRunnable;
-    @Inject
-    private TaskContext taskContext;
 
     @BeforeEach
     @AfterEach
@@ -143,7 +141,7 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
 
             // Create the parser.
             final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
-            final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData, taskContext);
+            final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData, new SimpleTaskContext());
 
             final InputStream inputStream = StroomPipelineTestFileUtil.getInputStream(SAMPLE_INDEX_INPUT);
             pipeline.process(inputStream);

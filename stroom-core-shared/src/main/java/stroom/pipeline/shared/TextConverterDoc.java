@@ -16,6 +16,7 @@
 
 package stroom.pipeline.shared;
 
+import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.docstore.shared.Doc;
 import stroom.util.shared.HasData;
@@ -76,6 +77,13 @@ public class TextConverterDoc extends Doc implements HasData {
         if (converterType == null) {
             this.converterType = TextConverterType.NONE;
         }
+    }
+
+    /**
+     * @return A new builder for creating a {@link DocRef} for this document's type.
+     */
+    public static DocRef.TypedBuilder buildDocRef() {
+        return DocRef.builder(DOCUMENT_TYPE);
     }
 
     public String getDescription() {

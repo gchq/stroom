@@ -23,7 +23,7 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public class FastInfosetValue extends RefDataValue {
+public class FastInfosetValue implements RefDataValue {
 
     public static final int TYPE_ID = 1;
 

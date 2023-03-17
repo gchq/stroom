@@ -1,7 +1,7 @@
 package stroom.proxy.app;
 
+import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
-import stroom.security.openid.api.OpenIdConfig;
 import stroom.util.shared.IsProxyConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -11,10 +11,11 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.dropwizard.validation.ValidationMethod;
 
+import java.util.List;
 import javax.validation.constraints.NotNull;
 
 @JsonPropertyOrder(alphabetic = true)
-public class ProxyOpenIdConfig extends OpenIdConfig implements IsProxyConfig {
+public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyConfig {
 
     public ProxyOpenIdConfig() {
         super();
@@ -32,8 +33,10 @@ public class ProxyOpenIdConfig extends OpenIdConfig implements IsProxyConfig {
                              @JsonProperty("formTokenRequest") final boolean formTokenRequest,
                              @JsonProperty("clientId") final String clientId,
                              @JsonProperty("clientSecret") final String clientSecret,
-                             @JsonProperty("requestScope") final String requestScope,
-                             @JsonProperty("validateAudience") final boolean validateAudience) {
+                             @JsonProperty("requestScopes") final List<String> requestScopes,
+                             @JsonProperty("clientCredentialsScopes") final List<String> clientCredentialsScopes,
+                             @JsonProperty("validateAudience") final boolean validateAudience,
+                             @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim) {
         super(identityProviderType,
                 openIdConfigurationEndpoint,
                 issuer,
@@ -45,8 +48,10 @@ public class ProxyOpenIdConfig extends OpenIdConfig implements IsProxyConfig {
                 formTokenRequest,
                 clientId,
                 clientSecret,
-                requestScope,
-                validateAudience);
+                requestScopes,
+                clientCredentialsScopes,
+                validateAudience,
+                uniqueIdentityClaim);
     }
 
     @JsonIgnore
@@ -63,7 +68,8 @@ public class ProxyOpenIdConfig extends OpenIdConfig implements IsProxyConfig {
             "will use for authentication. Valid values are: " +
             "EXTERNAL_IDP - An external IDP such as KeyCloak/Cognito, " +
             "TEST_CREDENTIALS - Use hard-coded authentication credentials for test/demo only and " +
-            "NO_IDP - No IDP is used. API keys are set in config for feed status checks.")
+            "NO_IDP - No IDP is used. API keys are set in config for feed status checks. " +
+            "Changing this property will require a restart of the application.")
     @Override
     public IdpType getIdentityProviderType() {
         return super.getIdentityProviderType();
@@ -89,7 +95,9 @@ public class ProxyOpenIdConfig extends OpenIdConfig implements IsProxyConfig {
                 isFormTokenRequest(),
                 getClientSecret(),
                 getClientId(),
-                getRequestScope(),
-                isValidateAudience());
+                getRequestScopes(),
+                getClientCredentialsScopes(),
+                isValidateAudience(),
+                getUniqueIdentityClaim());
     }
 }

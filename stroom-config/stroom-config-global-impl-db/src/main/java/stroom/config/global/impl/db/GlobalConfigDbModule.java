@@ -4,6 +4,7 @@ import stroom.config.app.PropertyServiceConfig.PropertyServiceDbConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 
+import java.util.List;
 import javax.sql.DataSource;
 
 public class GlobalConfigDbModule extends AbstractFlyWayDbModule<PropertyServiceDbConfig, GlobalConfigDbConnProvider> {
@@ -23,8 +24,8 @@ public class GlobalConfigDbModule extends AbstractFlyWayDbModule<PropertyService
     }
 
     @Override
-    protected String getFlyWayLocation() {
-        return FLYWAY_LOCATIONS;
+    protected List<String> getFlyWayLocations() {
+        return List.of(FLYWAY_LOCATIONS);
     }
 
     @Override

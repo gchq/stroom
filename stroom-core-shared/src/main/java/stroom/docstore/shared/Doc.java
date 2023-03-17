@@ -17,6 +17,7 @@
 
 package stroom.docstore.shared;
 
+import stroom.docref.DocRef;
 import stroom.docref.HasType;
 import stroom.docref.HasUuid;
 import stroom.util.shared.HasAuditInfo;
@@ -84,6 +85,14 @@ public abstract class Doc implements HasAuditInfo, HasUuid, HasType {
         this.updateTimeMs = updateTimeMs;
         this.createUser = createUser;
         this.updateUser = updateUser;
+    }
+
+    public DocRef asDocRef() {
+        return DocRef.builder()
+                .type(type)
+                .name(name)
+                .uuid(uuid)
+                .build();
     }
 
     public String getType() {

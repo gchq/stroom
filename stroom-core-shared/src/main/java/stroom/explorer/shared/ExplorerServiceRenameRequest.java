@@ -28,19 +28,19 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class ExplorerServiceRenameRequest {
 
     @JsonProperty
-    private final DocRef docRef;
+    private final ExplorerNode explorerNode;
     @JsonProperty
     private final String docName;
 
     @JsonCreator
-    public ExplorerServiceRenameRequest(@JsonProperty("docRef") final DocRef docRef,
+    public ExplorerServiceRenameRequest(@JsonProperty("explorerNode") final ExplorerNode explorerNode,
                                         @JsonProperty("docName") final String docName) {
-        this.docRef = docRef;
+        this.explorerNode = explorerNode;
         this.docName = docName;
     }
 
-    public DocRef getDocRef() {
-        return docRef;
+    public ExplorerNode getExplorerNode() {
+        return explorerNode;
     }
 
     public String getDocName() {

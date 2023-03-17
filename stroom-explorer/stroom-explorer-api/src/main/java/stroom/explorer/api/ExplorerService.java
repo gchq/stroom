@@ -17,9 +17,9 @@
 
 package stroom.explorer.api;
 
-import stroom.docref.DocRef;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.explorer.shared.PermissionInheritance;
@@ -31,22 +31,22 @@ public interface ExplorerService extends Clearable {
 
     FetchExplorerNodeResult getData(FindExplorerNodeCriteria criteria);
 
-    DocRef create(String docType,
-                  String docName,
-                  DocRef destinationFolderRef,
-                  PermissionInheritance permissionInheritance);
+    ExplorerNode create(String docType,
+                        String docName,
+                        ExplorerNode destinationFolder,
+                        PermissionInheritance permissionInheritance);
 
-    BulkActionResult copy(List<DocRef> docRefs,
-                          DocRef destinationFolderRef,
+    BulkActionResult copy(List<ExplorerNode> explorerNodes,
+                          ExplorerNode destinationFolder,
                           PermissionInheritance permissionInheritance);
 
-    BulkActionResult move(List<DocRef> docRefs,
-                          DocRef destinationFolderRef,
+    BulkActionResult move(List<ExplorerNode> explorerNodes,
+                          ExplorerNode destinationFolder,
                           PermissionInheritance permissionInheritance);
 
-    DocRef rename(DocRef docRef, String docName);
+    ExplorerNode rename(ExplorerNode explorerNode, String docName);
 
-    BulkActionResult delete(List<DocRef> docRefs);
+    BulkActionResult delete(List<ExplorerNode> explorerNodes);
 
     void rebuildTree();
 

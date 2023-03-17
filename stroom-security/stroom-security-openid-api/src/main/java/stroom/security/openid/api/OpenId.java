@@ -16,6 +16,7 @@
 
 package stroom.security.openid.api;
 
+import java.util.List;
 import java.util.Set;
 import javax.ws.rs.core.UriBuilder;
 
@@ -25,6 +26,7 @@ public class OpenId {
     public static final String CLIENT_ID = "client_id";
     public static final String CLIENT_SECRET = "client_secret";
     public static final String CODE = "code";
+    public static final String KEY_ID = "kid";
     public static final String GRANT_TYPE = "grant_type";
     public static final String NONCE = "nonce";
     public static final String PROMPT = "prompt";
@@ -41,6 +43,13 @@ public class OpenId {
     public static final String RESPONSE_TYPE__CODE = "code";
     public static final String SCOPE__OPENID = "openid";
     public static final String SCOPE__EMAIL = "email";
+
+    public static final List<String> DEFAULT_REQUEST_SCOPES = List.of(
+            OpenId.SCOPE__OPENID,
+            OpenId.SCOPE__EMAIL);
+
+    public static final List<String> DEFAULT_CLIENT_CREDENTIALS_SCOPES = List.of(
+            OpenId.SCOPE__OPENID);
 
     /**
      * Subject - Identifier for the End-User at the Issuer.
@@ -78,6 +87,8 @@ public class OpenId {
             SCOPE,
             STATE
     );
+
+
 
     public static String removeReservedParams(final String url) {
         final UriBuilder uriBuilder = UriBuilder.fromUri(url);

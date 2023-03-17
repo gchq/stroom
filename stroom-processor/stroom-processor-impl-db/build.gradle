@@ -30,6 +30,7 @@ dependencies {
     implementation libs.jaxb_api
     implementation libs.jooq
     implementation libs.slf4j_api
+    implementation libs.vavr
 
     testImplementation project(':stroom-cache:stroom-cache-impl')
     testImplementation project(':stroom-cluster:stroom-cluster-lock-mock')

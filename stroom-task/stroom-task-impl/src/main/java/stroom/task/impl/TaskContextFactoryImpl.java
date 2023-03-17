@@ -2,6 +2,7 @@ package stroom.task.impl;
 
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
+import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
@@ -22,7 +23,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
+class TaskContextFactoryImpl implements TaskContextFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TaskContextFactoryImpl.class);
 
@@ -62,7 +63,7 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
         final TaskContext parent = resolveParent(parentContext);
         return createFromConsumer(
                 getTaskId(parent),
-                getUserIdentity(parent),
+                getUserIdentity(parentContext),
                 isUseAsRead(parent),
                 taskName,
                 DEFAULT_TERMINATE_HANDLER_FACTORY,
@@ -87,7 +88,7 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
         final TaskContext parent = resolveParent(parentContext);
         return createFromFunction(
                 getTaskId(parent),
-                getUserIdentity(parent),
+                getUserIdentity(parentContext),
                 isUseAsRead(parent),
                 taskName,
                 DEFAULT_TERMINATE_HANDLER_FACTORY,
@@ -115,7 +116,7 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
         final TaskContext parent = resolveParent(parentContext);
         return createFromConsumer(
                 getTaskId(parent),
-                getUserIdentity(parent),
+                getUserIdentity(parentContext),
                 isUseAsRead(parent),
                 taskName,
                 terminateHandlerFactory,
@@ -143,7 +144,7 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
         final TaskContext parent = resolveParent(parentContext);
         return createFromFunction(
                 getTaskId(parent),
-                getUserIdentity(parent),
+                getUserIdentity(parentContext),
                 isUseAsRead(parent),
                 taskName,
                 terminateHandlerFactory,
@@ -312,7 +313,11 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
                         LOGGER.debug("Clearing interrupted state");
                         if (Thread.interrupted()) {
                             if (currentThread.isInterrupted()) {
-                                LOGGER.error("Unable to clear interrupted state");
+                                try {
+                                    throw new RuntimeException("Unable to clear interrupted state");
+                                } catch (final RuntimeException e) {
+                                    LOGGER.error(e::getMessage, e);
+                                }
                             } else {
                                 LOGGER.debug("Cleared interrupted state");
                             }
@@ -339,27 +344,11 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
     }
 
     @Override
-    public void info(final Supplier<String> messageSupplier) {
-        final TaskContextImpl taskContext = CurrentTaskContext.currentContext();
-        if (taskContext != null) {
-            taskContext.info(messageSupplier);
+    public TaskContext current() {
+        TaskContext taskContext = CurrentTaskContext.currentContext();
+        if (taskContext == null) {
+            taskContext = new SimpleTaskContext();
         }
-    }
-
-    @Override
-    public TaskId getTaskId() {
-        final TaskContextImpl taskContext = CurrentTaskContext.currentContext();
-        if (taskContext != null) {
-            return taskContext.getTaskId();
-        }
-        return null;
-    }
-
-    @Override
-    public void reset() {
-        final TaskContextImpl taskContext = CurrentTaskContext.currentContext();
-        if (taskContext != null) {
-            taskContext.reset();
-        }
+        return taskContext;
     }
 }

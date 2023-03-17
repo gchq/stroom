@@ -2,11 +2,13 @@ package stroom.db.util;
 
 
 import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.FieldType;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
 import org.junit.jupiter.api.DynamicTest;
@@ -286,18 +288,21 @@ class TestCommonExpressionMapper {
         private final String name;
 
         public MyDbField(String name) {
-            super(null, null, null);
+            super(name, true, List.of(
+                    ExpressionTerm.Condition.EQUALS,
+                    ExpressionTerm.Condition.IN));
             this.name = name;
-        }
-
-        @Override
-        public String getType() {
-            return null;
         }
 
         @Override
         public String getName() {
             return name;
+        }
+
+        @JsonIgnore
+        @Override
+        public FieldType getFieldType() {
+            return null;
         }
     }
 }

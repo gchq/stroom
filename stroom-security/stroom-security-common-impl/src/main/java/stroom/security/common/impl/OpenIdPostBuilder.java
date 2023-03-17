@@ -6,11 +6,14 @@ import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenRequest;
 import stroom.security.openid.api.TokenRequest.Builder;
 import stroom.util.NullSafe;
+import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
@@ -18,9 +21,11 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicNameValuePair;
 
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -179,6 +184,44 @@ final class OpenIdPostBuilder {
             buildJsonPost(httpPost);
         }
         addBasicAuth(httpPost);
+
+        LOGGER.debug(() ->
+                LogUtil.message("httpPost: {}", httpPostToString(httpPost)));
+
         return httpPost;
+    }
+
+    public static String httpPostToString(final HttpPost httpPost) {
+
+        final String padding = "  ";
+        final String headers = LogUtil.toPaddedMultiLine(padding, Arrays.asList(httpPost.getAllHeaders()));
+
+        String content = getContent(httpPost.getEntity());
+        if (content.contains("&")) {
+            content = LogUtil.toPaddedMultiLine(padding, Arrays.asList(content.split("&")));
+        } else {
+            content = padding + content;
+        }
+
+        return LogUtil.message("""
+                {}
+                Headers:
+                {}
+                Content:
+                {}""", httpPost.toString(), headers, content);
+    }
+
+    private static String getContent(final HttpEntity httpEntity) {
+        String msg = "";
+        if (httpEntity != null) {
+            try {
+                try (final InputStream is = httpEntity.getContent()) {
+                    msg = StreamUtil.streamToString(is);
+                }
+            } catch (final Exception e) {
+                // Just swallow it in case there is no content
+            }
+        }
+        return msg;
     }
 }

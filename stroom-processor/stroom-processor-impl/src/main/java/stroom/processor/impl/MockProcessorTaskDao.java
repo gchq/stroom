@@ -4,8 +4,8 @@ import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.Status;
 import stroom.processor.api.InclusiveRanges;
+import stroom.processor.impl.ProgressMonitor.FilterProgressMonitor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorTask;
@@ -17,10 +17,10 @@ import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.inject.Singleton;
 
@@ -30,23 +30,22 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     private final MockIntCrud<ProcessorTask> dao = new MockIntCrud<>();
 
     @Override
-    public void releaseOwnedTasks(final String nodeName) {
-        releaseTasks(Set.of(nodeName), null, null);
+    public long releaseOwnedTasks(final String nodeName) {
+        return releaseTasks(Set.of(nodeName), null, null);
     }
 
     @Override
-    public void retainOwnedTasks(final Set<String> retainForNodes,
+    public long retainOwnedTasks(final Set<String> retainForNodes,
                                  final Instant statusOlderThan) {
-        releaseTasks(null, retainForNodes, statusOlderThan);
+        return releaseTasks(null, retainForNodes, statusOlderThan);
     }
 
-    private void releaseTasks(final Set<String> releaseForNodes,
+    private long releaseTasks(final Set<String> releaseForNodes,
                               final Set<String> retainForNodes,
                               final Instant statusOlderThan) {
         final long now = System.currentTimeMillis();
         dao.getMap().values().forEach(task -> {
-            if (TaskStatus.UNPROCESSED.equals(task.getStatus()) ||
-                    TaskStatus.ASSIGNED.equals(task.getStatus()) ||
+            if (TaskStatus.CREATED.equals(task.getStatus()) ||
                     TaskStatus.PROCESSING.equals(task.getStatus())) {
 
                 boolean release = false;
@@ -73,39 +72,32 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
                 }
 
                 if (release) {
-                    task.setStatus(TaskStatus.UNPROCESSED);
+                    task.setStatus(TaskStatus.CREATED);
                     task.setStatusTimeMs(now);
                     task.setNodeName(null);
                     dao.update(task);
                 }
             }
         });
+        return 0L;
     }
 
     @Override
-    public void createNewTasks(final ProcessorFilter filter,
-                               final ProcessorFilterTracker tracker,
-                               final long metaQueryTime,
-                               final Map<Meta, InclusiveRanges> metaMap,
-                               final String thisNodeName,
-                               final Long maxMetaId,
-                               final boolean reachedLimit,
-                               final boolean assignNewTasks,
-                               final Consumer<CreatedTasks> consumer) {
+    public int createNewTasks(final ProcessorFilter filter,
+                              final ProcessorFilterTracker tracker,
+                              final FilterProgressMonitor filterProgressMonitor,
+                              final long metaQueryTime,
+                              final Map<Meta, InclusiveRanges> metaMap,
+                              final Long maxMetaId,
+                              final boolean reachedLimit) {
         final long now = System.currentTimeMillis();
 
         metaMap.forEach((meta, eventRanges) -> {
             final ProcessorTask task = new ProcessorTask();
             task.setVersion(1);
             task.setCreateTimeMs(now);
-            task.setStatus(TaskStatus.UNPROCESSED);
+            task.setStatus(TaskStatus.CREATED);
             task.setStartTimeMs(now);
-
-            if (assignNewTasks && Status.UNLOCKED.equals(meta.getStatus())) {
-                task.setNodeName(thisNodeName);
-//                availableTasksCreated++;
-            }
-
             task.setMetaId(meta.getId());
 
             String eventRangeData = null;
@@ -122,6 +114,24 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
 
             dao.create(task);
         });
+
+        return metaMap.size();
+    }
+
+    @Override
+    public int countCreatedTasksForFilter(final int filterId) {
+        return 0;
+    }
+
+    @Override
+    public List<ProcessorTask> queueExistingTasks(final Set<Long> idSet,
+                                                  final String thisNodeName) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public int releaseTasks(final Set<Long> idSet, final TaskStatus currentStatus) {
+        return 0;
     }
 
     @Override
@@ -189,5 +199,32 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     @Override
     public void clear() {
         dao.clear();
+    }
+
+    @Override
+    public int logicalDeleteByProcessorId(final int processorId) {
+        return 0;
+    }
+
+    @Override
+    public int logicalDeleteByProcessorFilterId(final int processorFilterId) {
+        return 0;
+    }
+
+    @Override
+    public int logicalDeleteForDeletedProcessorFilters(final Instant deleteThreshold) {
+        return 0;
+    }
+
+    @Override
+    public int physicallyDeleteOldTasks(final Instant deleteThreshold) {
+        return 0;
+    }
+
+    @Override
+    public List<ExistingCreatedTask> findExistingCreatedTasks(final long minTaskId,
+                                                              final int filterId,
+                                                              final int limit) {
+        return null;
     }
 }

@@ -20,6 +20,7 @@ package stroom.statistics.impl.hbase;
 
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerService;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.impl.ImportExportSerializer;
 import stroom.importexport.shared.ImportSettings;
 import stroom.statistics.impl.hbase.entity.StroomStatsStoreStore;
@@ -27,6 +28,7 @@ import stroom.statistics.impl.hbase.shared.StatisticField;
 import stroom.statistics.impl.hbase.shared.StatisticType;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreEntityData;
+import stroom.statistics.impl.sql.shared.StatisticStore;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.util.io.FileUtil;
@@ -58,8 +60,11 @@ class TestStroomStatsStoreImportExportSerializer extends AbstractCoreIntegration
      */
     @Test
     void testStatisticsDataSource() {
-        final DocRef docRef = explorerService.create(StroomStatsStoreDoc.DOCUMENT_TYPE, "StatName1", null, null);
-        final StroomStatsStoreDoc entity = stroomStatsStoreStore.readDocument(docRef);
+        final ExplorerNode statNode = explorerService.create(StroomStatsStoreDoc.DOCUMENT_TYPE,
+                "StatName1",
+                null,
+                null);
+        final StroomStatsStoreDoc entity = stroomStatsStoreStore.readDocument(statNode.getDocRef());
         entity.setDescription("My Description");
         entity.setStatisticType(StatisticType.COUNT);
         entity.setConfig(new StroomStatsStoreEntityData());
@@ -74,7 +79,7 @@ class TestStroomStatsStoreImportExportSerializer extends AbstractCoreIntegration
         FileUtil.deleteDir(testDataDir);
         FileUtil.mkdirs(testDataDir);
 
-        importExportSerializer.write(testDataDir, Set.of(docRef), true, null);
+        importExportSerializer.write(testDataDir, Set.of(statNode.getDocRef()), true);
 
         assertThat(FileUtil.count(testDataDir)).isEqualTo(2);
 

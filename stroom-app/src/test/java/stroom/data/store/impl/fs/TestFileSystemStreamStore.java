@@ -112,7 +112,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         // Make sure stream attributes get flushed straight away.
         setConfigValueMapper(MetaValueConfig.class, metaValueConfig -> metaValueConfig.withAddAsync(false));
 
-        final Optional<ExplorerNode> system = explorerNodeService.getRoot();
+        final Optional<ExplorerNode> system = explorerNodeService.getNodeWithRoot();
         final DocRef root = system.get().getDocRef();
         final DocRef folder1 = new DocRef("Folder", UUID.randomUUID().toString(), "Folder 1");
         folder2 = new DocRef("Folder", UUID.randomUUID().toString(), "Folder 2");
@@ -615,49 +615,48 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         buildRefData(feed3, 2010, 2, StreamTypeNames.REFERENCE, false);
         buildRefData(feed3, 2011, 2, StreamTypeNames.REFERENCE, false);
 
-        final EffectiveMetaDataCriteria criteria = new EffectiveMetaDataCriteria();
-        criteria.setType(StreamTypeNames.REFERENCE);
-
-        // feed2 or feed1
-        criteria.setFeed(feed2);
-//        criteria.getFeedIdSet().add(feedService.loadByName(feed1));
-
         // 2009 to 2010
-        criteria.setEffectivePeriod(new Period(DateUtil.parseNormalDateTimeString("2009-01-01T00:00:00.000Z"),
-                DateUtil.parseNormalDateTimeString("2010-01-01T00:00:00.000Z")));
+        EffectiveMetaDataCriteria criteria = new EffectiveMetaDataCriteria(
+                new Period(DateUtil.parseNormalDateTimeString("2009-01-01T00:00:00.000Z"),
+                        DateUtil.parseNormalDateTimeString("2010-01-01T00:00:00.000Z")),
+                feed2,
+                StreamTypeNames.REFERENCE);
 
-        Set<EffectiveMeta> set = metaService.findEffectiveData(criteria);
+        List<EffectiveMeta> list = metaService.findEffectiveData(criteria);
 
         // Make sure the list contains what it should.
-        verifySet(set, refData1, refData2);
+        verifySet(list, refData1, refData2);
 
         // Try another test that picks up no tom within period but it should get
         // the last one as it would be the most effective.
-        criteria.setEffectivePeriod(new Period(DateUtil.parseNormalDateTimeString("2013-01-01T00:00:00.000Z"),
-                DateUtil.parseNormalDateTimeString("2014-01-01T00:00:00.000Z")));
+        criteria = new EffectiveMetaDataCriteria(
+                new Period(DateUtil.parseNormalDateTimeString("2013-01-01T00:00:00.000Z"),
+                DateUtil.parseNormalDateTimeString("2014-01-01T00:00:00.000Z")),
+                feed2,
+                StreamTypeNames.REFERENCE);
 
-        set = metaService.findEffectiveData(criteria);
+        list = metaService.findEffectiveData(criteria);
 
         // Make sure the list contains what it should.
-        verifySet(set, refData3);
+        verifySet(list, refData3);
 
-        assertThat(invalidFeeds.contains(set.iterator().next().getId())).isFalse();
+        assertThat(invalidFeeds.contains(list.iterator().next().getId())).isFalse();
     }
 
     /**
      * Check that the list of stream contains the items we expect.
      *
-     * @param set
+     * @param list
      * @param expected
      */
-    private void verifySet(final Set<EffectiveMeta> set, final Meta... expected) {
-        assertThat(set).isNotNull();
-        assertThat(set.size()).isEqualTo(expected.length);
+    private void verifySet(final List<EffectiveMeta> list, final Meta... expected) {
+        assertThat(list).isNotNull();
+        assertThat(list.size()).isEqualTo(expected.length);
         final Set<EffectiveMeta> expectedSet = Arrays.stream(expected)
                 .map(EffectiveMeta::new)
                 .collect(Collectors.toSet());
 
-        assertThat(set).containsAll(expectedSet);
+        assertThat(list).containsAll(expectedSet);
     }
 
     private Meta buildRefData(final String feed,

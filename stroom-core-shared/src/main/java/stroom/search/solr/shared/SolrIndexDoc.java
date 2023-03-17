@@ -16,6 +16,7 @@
 
 package stroom.search.solr.shared;
 
+import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
 import stroom.query.api.v2.ExpressionOperator;
 
@@ -111,6 +112,13 @@ public class SolrIndexDoc extends Doc {
             this.fields.add(SolrIndexField.createIdField(SolrIndexConstants.STREAM_ID));
             this.fields.add(SolrIndexField.createIdField(SolrIndexConstants.EVENT_ID));
         }
+    }
+
+    /**
+     * @return A new builder for creating a {@link DocRef} for this document's type.
+     */
+    public static DocRef.TypedBuilder buildDocRef() {
+        return DocRef.builder(DOCUMENT_TYPE);
     }
 
     public String getDescription() {

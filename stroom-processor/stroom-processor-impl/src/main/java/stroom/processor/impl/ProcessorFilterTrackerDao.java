@@ -1,7 +1,12 @@
 package stroom.processor.impl;
 
 import stroom.processor.shared.ProcessorFilterTracker;
-import stroom.util.shared.HasIntCrud;
 
-public interface ProcessorFilterTrackerDao extends HasIntCrud<ProcessorFilterTracker> {
+import java.util.Optional;
+
+public interface ProcessorFilterTrackerDao {
+
+    Optional<ProcessorFilterTracker> fetch(int id);
+
+    int update(ProcessorFilterTracker processorFilterTracker);
 }

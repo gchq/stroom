@@ -144,32 +144,50 @@ public class Period extends Range<Long> {
         return null;
     }
 
+    /**
+     * Inclusive
+     */
     // Here for XML serialisation.
     public Long getFromMs() {
         return super.getFrom();
     }
 
+    /**
+     * Inclusive
+     */
     public Optional<Instant> getFromTime() {
         return Optional.ofNullable(super.getFrom())
                 .map(Instant::ofEpochMilli);
     }
 
     // Here for XML serialisation.
+    /**
+     * Inclusive
+     */
     public void setFromMs(Long from) {
         super.setFrom(from);
     }
 
     // Here for XML serialisation.
+    /**
+     * Exclusive
+     */
     public Long getToMs() {
         return super.getTo();
     }
 
+    /**
+     * Exclusive
+     */
     public Optional<Instant> getToTime() {
         return Optional.ofNullable(super.getTo())
                 .map(Instant::ofEpochMilli);
     }
 
     // Here for XML serialisation.
+    /**
+     * Exclusive
+     */
     public void setToMs(Long to) {
         super.setTo(to);
     }

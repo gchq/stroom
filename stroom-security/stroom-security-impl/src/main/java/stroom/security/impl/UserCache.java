@@ -60,6 +60,11 @@ class UserCache implements Clearable, EntityEvent.Handler {
         return Optional.ofNullable(authenticationService.getOrCreateUser(name));
     }
 
+    /**
+     * Gets a user from the cache and if it doesn't exist creates it in the database.
+     * @param name This is the unique identifier for the user that links the stroom user
+     *             to an IDP user, e.g. may be the 'sub' on the IDP depending on stroom config.
+     */
     Optional<User> get(final String name) {
         return cache.get(name);
     }

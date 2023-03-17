@@ -26,7 +26,7 @@ import stroom.config.global.shared.ListConfigResponse;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.AuditUtil;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator.Result;
@@ -40,6 +40,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.CompareUtil;
+import stroom.util.shared.NotInjectableConfig;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PropertyPath;
 
@@ -87,7 +88,7 @@ public class GlobalConfigService {
     private final SecurityContext securityContext;
     private final ConfigMapper configMapper;
     private final AppConfigValidator appConfigValidator;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
     private final NodeInfo nodeInfo;
 
     @Inject
@@ -96,14 +97,14 @@ public class GlobalConfigService {
                         final SecurityContext securityContext,
                         final ConfigMapper configMapper,
                         final AppConfigValidator appConfigValidator,
-                        final TaskContext taskContext,
+                        final TaskContextFactory taskContextFactory,
                         final NodeInfo nodeInfo) {
         this.globalConfigBootstrapService = globalConfigBootstrapService;
         this.dao = dao;
         this.securityContext = securityContext;
         this.configMapper = configMapper;
         this.appConfigValidator = appConfigValidator;
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
         this.nodeInfo = nodeInfo;
     }
 
@@ -120,7 +121,7 @@ public class GlobalConfigService {
      * Refresh in background
      */
     void updateConfigObjects() {
-        taskContext.info(() -> "Updating config from DB");
+        taskContextFactory.current().info(() -> "Updating config from DB");
         globalConfigBootstrapService.updateConfigFromDb(false);
     }
 
@@ -313,11 +314,29 @@ public class GlobalConfigService {
                                 configProperty.getName())));
 
         final AbstractConfig parentConfigObject = (AbstractConfig) prop.getParentObject();
+        Objects.requireNonNull(parentConfigObject);
 
-        final Result<AbstractConfig> validationResult = validateClassLevelConstraints(
-                propertyPath,
-                effectiveValueStr,
-                parentConfigObject);
+        final Result<AbstractConfig> validationResult;
+        try {
+            if (parentConfigObject.getClass().isAnnotationPresent(NotInjectableConfig.class)) {
+                // Classes that are not injectable, like the many CacheConfig ones, we cannot inject an instance
+                // for them so we can't do whole class validation. In theory, we could walk back up the tree
+                // of objects to perform class level validation on an ancestor that is injectable but it all
+                // get very messy and fiddly.
+                final Object newValue = configMapper.convertValue(propertyPath, effectiveValueStr);
+                validationResult = appConfigValidator.validateValue(
+                        parentConfigObject.getClass(), propertyPath.getPropertyName(), newValue);
+            } else {
+                validationResult = validateClassLevelConstraints(
+                        propertyPath,
+                        effectiveValueStr,
+                        parentConfigObject);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error validating prop {} with value '{}': {}",
+                    propertyPath, effectiveValueStr, e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
 
         // TODO ideally we would handle warnings in some way, but that is probably a job for a new UI
         if (validationResult.hasErrors()) {
@@ -335,6 +354,39 @@ public class GlobalConfigService {
             });
             throw new ConfigPropertyValidationException(stringBuilder.toString());
         }
+    }
+
+    private AbstractConfig getInjectableAncestor(final PropertyPath propertyPath) {
+
+        PropertyPath curPropertyPath = propertyPath;
+        AbstractConfig ancestorConfig = null;
+
+        while (true) {
+
+            PropertyPath parentPath = curPropertyPath.getParent()
+                    .orElseThrow(() -> new RuntimeException(LogUtil.message(
+                            "Path {} has no parent", propertyPath)));
+
+            final PropertyPath finalCurPropertyPath = curPropertyPath;
+            final PropertyUtil.Prop prop = configMapper.getProp(curPropertyPath)
+                    .orElseThrow(() ->
+                            new RuntimeException(LogUtil.message("No prop object exists for {}",
+                                    finalCurPropertyPath)));
+            ancestorConfig = (AbstractConfig) prop.getParentObject();
+
+            if (!ancestorConfig.getClass().isAnnotationPresent(NotInjectableConfig.class)) {
+                break;
+            }
+
+            curPropertyPath = parentPath;
+        }
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("returning injectable ancestor {} for path {}",
+                    ancestorConfig.getClass().getSimpleName(), propertyPath);
+        }
+
+        return ancestorConfig;
     }
 
     private Result<AbstractConfig> validateClassLevelConstraints(final PropertyPath propertyPath,

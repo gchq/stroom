@@ -1,14 +1,16 @@
 package stroom.security.impl;
 
-import stroom.docref.HasUuid;
 import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
+import stroom.security.api.UserIdentityFactory;
 import stroom.security.api.exception.AuthenticationException;
-import stroom.security.common.impl.UserIdentityFactoryImpl;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.HasStroomUserIdentity;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
+import stroom.util.NullSafe;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.PermissionException;
 
 import org.slf4j.Logger;
@@ -33,7 +35,7 @@ class SecurityContextImpl implements SecurityContext {
     private final UserAppPermissionsCache userAppPermissionsCache;
     private final UserCache userCache;
     private final ProcessingUserIdentityProvider processingUserIdentityProvider;
-    private final UserIdentityFactoryImpl userIdentityFactory;
+    private final UserIdentityFactory userIdentityFactory;
 
     @Inject
     SecurityContextImpl(
@@ -42,7 +44,7 @@ class SecurityContextImpl implements SecurityContext {
             final UserAppPermissionsCache userAppPermissionsCache,
             final UserCache userCache,
             final ProcessingUserIdentityProvider processingUserIdentityProvider,
-            final UserIdentityFactoryImpl userIdentityFactory) {
+            final UserIdentityFactory userIdentityFactory) {
         this.userDocumentPermissionsCache = userDocumentPermissionsCache;
         this.userGroupsCache = userGroupsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
@@ -58,6 +60,15 @@ class SecurityContextImpl implements SecurityContext {
             return null;
         }
         return userIdentity.getId();
+    }
+
+    @Override
+    public String getUserUuid() {
+        final UserIdentity userIdentity = getUserIdentity();
+        if (userIdentity == null) {
+            return null;
+        }
+        return getUserUuid(userIdentity);
     }
 
     @Override
@@ -105,10 +116,20 @@ class SecurityContextImpl implements SecurityContext {
     }
 
     private String getUserUuid(final UserIdentity userIdentity) {
-        if (!(userIdentity instanceof HasUuid)) {
-            throw new AuthenticationException("Expecting a real user identity");
+        if (userIdentity instanceof final HasStroomUserIdentity hasStroomUserIdentity) {
+            final String userUuid = hasStroomUserIdentity.getUuid();
+
+            if (NullSafe.isBlankString(userUuid)) {
+                throw new AuthenticationException("Missing user UUID value");
+            }
+
+            return userUuid;
+        } else {
+            throw new AuthenticationException(LogUtil.message(
+                    "Expecting a stroom user identity (i.e. {}), but got {}",
+                    HasStroomUserIdentity.class.getSimpleName(),
+                    userIdentity.getClass().getSimpleName()));
         }
-        return ((HasUuid) userIdentity).getUuid();
     }
 
     private void pushUser(final UserIdentity userIdentity) {

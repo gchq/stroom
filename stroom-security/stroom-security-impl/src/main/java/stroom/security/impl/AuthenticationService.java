@@ -16,8 +16,8 @@
 
 package stroom.security.impl;
 
+import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
-import stroom.security.openid.api.OpenIdConfig;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.util.AuditUtil;
@@ -41,13 +41,13 @@ class AuthenticationService {
 
     private final UserDao userDao;
     private final AppPermissionDao appPermissionDao;
-    private final Provider<OpenIdConfig> openIdConfigProvider;
+    private final Provider<AbstractOpenIdConfig> openIdConfigProvider;
 
     @Inject
     AuthenticationService(
             final UserDao userDao,
             final AppPermissionDao appPermissionDao,
-            final Provider<OpenIdConfig> openIdConfigProvider) {
+            final Provider<AbstractOpenIdConfig> openIdConfigProvider) {
         this.userDao = userDao;
         this.appPermissionDao = appPermissionDao;
         this.openIdConfigProvider = openIdConfigProvider;
@@ -85,6 +85,7 @@ class AuthenticationService {
             }
 
             if (attempts++ > GET_USER_ATTEMPTS) {
+                LOGGER.error("Failed to create user {} after {} attempts", userId, attempts);
                 break;
             }
         }
@@ -93,13 +94,25 @@ class AuthenticationService {
     }
 
     private User create(final String name, final boolean isGroup) {
-        User user = new User();
+        final User user = new User();
         AuditUtil.stamp("AuthenticationServiceImpl", user);
+
+        // This is the identifier for the stroom user, for authorisation, not authentication
         user.setUuid(UUID.randomUUID().toString());
+
+        // This is the unique identifier that links the stroom User to the stroom account or an IDP account.
+        // The id field/column is the surrogate primary key in the DB, unrelated to the IDP user ID, stroom account
+        // or stroom user UUID.
         user.setName(name);
+
         user.setGroup(isGroup);
 
-        return userDao.tryCreate(user);
+        return userDao.tryCreate(user, createdUser -> {
+            LOGGER.info("Created new stroom_user record, type: {}, name: {}, uuid: {}",
+                    (isGroup ? "group" : "user"),
+                    createdUser.getName(),
+                    createdUser.getUuid());
+        });
     }
 
     public Optional<User> getUser(final String username) {

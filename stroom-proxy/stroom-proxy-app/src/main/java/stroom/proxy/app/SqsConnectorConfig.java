@@ -5,14 +5,8 @@ import stroom.util.shared.IsProxyConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.dropwizard.validation.ValidationMethod;
-import org.checkerframework.checker.nullness.qual.Nullable;
-
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
 
 @JsonPropertyOrder(alphabetic = true)
 public class SqsConnectorConfig extends AbstractConfig implements IsProxyConfig {

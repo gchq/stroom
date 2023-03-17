@@ -30,19 +30,19 @@ import java.util.List;
 public class BulkActionResult {
 
     @JsonProperty
-    private final List<DocRef> docRefs;
+    private final List<ExplorerNode> explorerNodes;
     @JsonProperty
     private final String message;
 
     @JsonCreator
-    public BulkActionResult(@JsonProperty("docRefs") final List<DocRef> docRefs,
+    public BulkActionResult(@JsonProperty("explorerNodes") final List<ExplorerNode> explorerNodes,
                             @JsonProperty("message") final String message) {
-        this.docRefs = docRefs;
+        this.explorerNodes = explorerNodes;
         this.message = message;
     }
 
-    public List<DocRef> getDocRefs() {
-        return docRefs;
+    public List<ExplorerNode> getExplorerNodes() {
+        return explorerNodes;
     }
 
     public String getMessage() {

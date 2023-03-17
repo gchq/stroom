@@ -14,7 +14,7 @@
 
     <logger name="stroom.pipeline.reader" level="debug" />
 
-    <logger name="stroom.pipeline.refdata" level="info" />
+    <logger name="stroom.pipeline.refdata" level="debug" />
 
 <!--    <logger name="stroom.pipeline.refdata.store.offheapstore.RefDataOffHeapStore" level="debug" />-->
 

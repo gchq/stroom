@@ -611,8 +611,7 @@ input[type="file"]:disabled {
 	white-space: nowrap;
 }
 
-.gwt-SuggestBoxPopup .suggestPopupContent,
-.com-google-gwt-user-client-ui-CustomScrollPanel-Style-customScrollPanelCorner {
+.gwt-SuggestBoxPopup .suggestPopupContent {
   background: var(--input-background-color) !important;
 }
 
@@ -837,4 +836,11 @@ input[type="file"]:disabled {
 .clickableLabel.disabled {
     color: #8f8f8f;
     cursor: default;
+}
+textarea.clipboardCopy {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	opacity: 1;
+	z-index: -1;
 }

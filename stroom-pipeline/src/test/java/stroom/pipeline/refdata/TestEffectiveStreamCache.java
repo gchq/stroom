@@ -31,16 +31,19 @@ import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.NullSafe;
 import stroom.util.cache.CacheConfig;
 import stroom.util.date.DateUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.time.StroomDuration;
 
-import org.assertj.core.api.Assertions;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.NavigableSet;
 import java.util.Set;
@@ -49,6 +52,8 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestEffectiveStreamCache extends StroomUnitTest {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestEffectiveStreamCache.class);
 
     private static final String FEED_NAME = "MY_FEED";
     private static final String TYPE_NAME = StreamTypeNames.REFERENCE;
@@ -65,9 +70,9 @@ class TestEffectiveStreamCache extends StroomUnitTest {
         final InnerStreamMetaService metaService = new InnerStreamMetaService() {
 
             @Override
-            public Set<EffectiveMeta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
+            public List<EffectiveMeta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
                 findEffectiveStreamSourceCount++;
-                final Set<EffectiveMeta> results = new HashSet<>();
+                final List<EffectiveMeta> results = new ArrayList<>();
                 long workingDate = criteria.getEffectivePeriod().getFrom();
                 while (workingDate < criteria.getEffectivePeriod().getTo()) {
                     final Meta meta = create(
@@ -101,34 +106,26 @@ class TestEffectiveStreamCache extends StroomUnitTest {
             assertThat(findEffectiveStreamSourceCount).as("No calls to the database yet").isEqualTo(0);
 
             long time = DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z");
-            long fromMs = getFromMs(time);
-            long toMs = getToMs(fromMs);
             effectiveStreamCache
-                    .get(new EffectiveStreamKey(refFeedName, StreamTypeNames.REFERENCE, fromMs, toMs));
+                    .get(EffectiveStreamKey.forLookupTime(refFeedName, StreamTypeNames.REFERENCE, time));
             assertThat(findEffectiveStreamSourceCount).as("Database call").isEqualTo(1);
 
             // Still in window
             time = DateUtil.parseNormalDateTimeString("2010-01-01T13:00:00.000Z");
-            fromMs = getFromMs(time);
-            toMs = getToMs(fromMs);
             effectiveStreamCache
-                    .get(new EffectiveStreamKey(refFeedName, StreamTypeNames.REFERENCE, fromMs, toMs));
+                    .get(EffectiveStreamKey.forLookupTime(refFeedName, StreamTypeNames.REFERENCE, time));
             assertThat(findEffectiveStreamSourceCount).as("Database call").isEqualTo(1);
 
             // After window ...
             time = DateUtil.parseNormalDateTimeString("2010-01-15T13:00:00.000Z");
-            fromMs = getFromMs(time);
-            toMs = getToMs(fromMs);
             effectiveStreamCache
-                    .get(new EffectiveStreamKey(refFeedName, StreamTypeNames.REFERENCE, fromMs, toMs));
+                    .get(EffectiveStreamKey.forLookupTime(refFeedName, StreamTypeNames.REFERENCE, time));
             assertThat(findEffectiveStreamSourceCount).as("Database call").isEqualTo(2);
 
             // Before window ...
             time = DateUtil.parseNormalDateTimeString("2009-12-15T13:00:00.000Z");
-            fromMs = getFromMs(time);
-            toMs = getToMs(fromMs);
             effectiveStreamCache
-                    .get(new EffectiveStreamKey(refFeedName, StreamTypeNames.REFERENCE, fromMs, toMs));
+                    .get(EffectiveStreamKey.forLookupTime(refFeedName, StreamTypeNames.REFERENCE, time));
             assertThat(findEffectiveStreamSourceCount).as("Database call").isEqualTo(3);
         } catch (final RuntimeException e) {
             throw new RuntimeException(e.getMessage(), e);
@@ -161,7 +158,7 @@ class TestEffectiveStreamCache extends StroomUnitTest {
             long time = DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z");
             long fromMs = getFromMs(time);
             long toMs = getToMs(fromMs);
-            Set<EffectiveStream> streams;
+            Set<EffectiveMeta> streams;
 
             // Make sure we've got no effective streams.
             streams = effectiveStreamCache.get(
@@ -225,7 +222,7 @@ class TestEffectiveStreamCache extends StroomUnitTest {
 
         final MetaService mockMetaService = Mockito.mock(MetaService.class);
         Mockito.when(mockMetaService.findEffectiveData(Mockito.any()))
-                .thenReturn(new HashSet<>(effectiveMetaList));
+                .thenReturn(effectiveMetaList);
 
         try (CacheManager cacheManager = new CacheManagerImpl()) {
             final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(
@@ -235,22 +232,60 @@ class TestEffectiveStreamCache extends StroomUnitTest {
                     new MockSecurityContext(),
                     ReferenceDataConfig::new);
 
-            final NavigableSet<EffectiveStream> effectiveStreams = effectiveStreamCache.get(new EffectiveStreamKey(
+            final NavigableSet<EffectiveMeta> effectiveStreams = effectiveStreamCache.get(new EffectiveStreamKey(
                     FEED_NAME,
                     TYPE_NAME,
                     0,
                     1_000_000));
 
-            Assertions.assertThat(effectiveStreams)
+            assertThat(effectiveStreams)
                     .hasSize(5); // 5 non-dups
 
             final List<Long> streamIds = effectiveStreams.stream()
-                    .map(EffectiveStream::getStreamId)
+                    .map(EffectiveMeta::getId)
                     .collect(Collectors.toList());
 
             // The latest stream Id from each dup set is used
-            Assertions.assertThat(streamIds)
+            assertThat(streamIds)
                     .containsExactly(11L, 222L, 3L, 4L, 5L);
+        }
+    }
+
+    @Test
+    void testSystemInfo() throws JsonProcessingException {
+
+        final MetaService mockMetaService = Mockito.mock(MetaService.class);
+
+        try (CacheManager cacheManager = new CacheManagerImpl()) {
+            final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager,
+                    mockMetaService,
+                    new EffectiveStreamInternPool(),
+                    new MockSecurityContext(),
+                    ReferenceDataConfig::new);
+
+            for (int i = 1; i <= 3; i++) {
+                final String feedName = FEED_NAME + i;
+                int id = i * 10;
+                Mockito.when(mockMetaService.findEffectiveData(Mockito.any()))
+                        .thenReturn(List.of(
+                                createEffectiveMeta(id++, feedName, i * 1000 + 1L),
+                                createEffectiveMeta(id++, feedName, i * 1000 + 2L),
+                                createEffectiveMeta(id++, feedName, i * 1000 + 3L),
+                                createEffectiveMeta(id++, feedName, i * 1000 + 4L),
+                                createEffectiveMeta(id++, feedName, i * 1000 + 5L),
+                                createEffectiveMeta(id++, feedName, i * 1000 + 5L), // 3 with same time
+                                createEffectiveMeta(id++, feedName, i * 1000 + 5L)));
+                effectiveStreamCache.get(
+                        new EffectiveStreamKey(feedName, TYPE_NAME, 0, 10_000));
+            }
+
+            assertThat(effectiveStreamCache.size())
+                    .isEqualTo(3);
+
+            final SystemInfoResult systemInfo = effectiveStreamCache.getSystemInfo();
+            ObjectMapper objectMapper = new ObjectMapper();
+            final String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(systemInfo);
+            LOGGER.debug("systemInfo:\n{}", json);
         }
     }
 
@@ -267,6 +302,12 @@ class TestEffectiveStreamCache extends StroomUnitTest {
         return new EffectiveMeta(streamId, FEED_NAME, TYPE_NAME, effectiveTimeMs);
     }
 
+    private EffectiveMeta createEffectiveMeta(final long streamId,
+                                              final String feedName,
+                                              final long effectiveTimeMs) {
+        return new EffectiveMeta(streamId, feedName, TYPE_NAME, effectiveTimeMs);
+    }
+
     private static class InnerStreamMetaService extends MockMetaService {
 
         private final List<Meta> streams = new ArrayList<>();
@@ -277,18 +318,18 @@ class TestEffectiveStreamCache extends StroomUnitTest {
         }
 
         @Override
-        public Set<EffectiveMeta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
+        public List<EffectiveMeta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
             callCount++;
 
             return streams.stream()
                     .filter(stream ->
-                                    NullSafe.test(
-                                            stream.getEffectiveMs(),
-                                            effMs ->
-                                                    effMs >= criteria.getEffectivePeriod().getFromMs()
-                                            && effMs <= criteria.getEffectivePeriod().getToMs()))
+                            NullSafe.test(
+                                    stream.getEffectiveMs(),
+                                    effMs ->
+                                            effMs >= criteria.getEffectivePeriod().getFromMs()
+                                                    && effMs <= criteria.getEffectivePeriod().getToMs()))
                     .map(EffectiveMeta::new)
-                    .collect(Collectors.toSet());
+                    .collect(Collectors.toList());
         }
 
         void addEffectiveStream(final String feedName, long effectiveTimeMs) {

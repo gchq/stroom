@@ -47,6 +47,7 @@ class TestJWTService {
     private OpenIdPublicKeysSupplier openIdPublicKeysSupplier;
     @Mock
     private OpenIdConfiguration openIdConfiguration;
+
     private DefaultOpenIdCredentials defaultOpenIdCredentials = new DefaultOpenIdCredentials();
 
     /**

@@ -16,8 +16,8 @@
 # limitations under the License.
 # **********************************************************************
 
-# Version: v0.4.0
-# Date: 2022-09-27T16:06:12+00:00
+# Version: v0.4.1
+# Date: 2023-01-16T14:59:06+00:00
 
 # This script is for tagging a git repository for the purpose of driving a
 # separate release process from that tagged commit. It also updates the 
@@ -498,8 +498,13 @@ commit_changelog() {
 
   info "Adding ${BLUE}${CHANGELOG_FILENAME}${GREEN} to the git index."
   git add "${changelog_file}"
-  info "Adding deleted change entry files to the git index."
-  git add "./${UNRELEASED_CHANGES_REL_DIR}/*.md"
+
+  if [[ "${are_unreleased_issues_in_files}" = true ]]; then
+    info "Adding deleted change entry files to the git index."
+    git add "./${UNRELEASED_CHANGES_REL_DIR}/*.md"
+  else
+    info "No deleted change entry files to add to the git index."
+  fi
 
   info "Committing the staged changes"
   git commit -m "Update change log for release ${next_release_version}"

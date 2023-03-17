@@ -20,6 +20,7 @@ import stroom.event.logging.api.EventActionDecorator;
 import stroom.event.logging.impl.LoggingConfig;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -36,6 +37,7 @@ public class ContainerResourceInfo {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContainerResourceInfo.class);
 
     private final ResourceContext resourceContext;
+    private final SecurityContext securityContext;
     private final ContainerRequestContext requestContext;
     private final ResourceInfo resourceInfo;
     private final OperationType operationType;
@@ -43,10 +45,12 @@ public class ContainerResourceInfo {
     private final boolean autologgerAnnotationPresent;
 
     public ContainerResourceInfo(final ResourceContext resourceContext,
+                                 final SecurityContext securityContext,
                                  final ResourceInfo resourceInfo,
                                  final ContainerRequestContext requestContext,
                                  final boolean logAllRestCalls) {
         this.resourceContext = resourceContext;
+        this.securityContext = securityContext;
         this.resourceInfo = resourceInfo;
         this.requestContext = requestContext;
         final Optional<OperationType> operationType =
@@ -98,13 +102,13 @@ public class ContainerResourceInfo {
     public String getTypeId() {
         //If method annotation provided use that on its own
         if ((getMethod().getAnnotation(AutoLogged.class) != null) &&
-                (!getMethod().getAnnotation(AutoLogged.class).typeId().equals(AutoLogged.ALLOCATE_AUTOMATICALLY))) {
+            (!getMethod().getAnnotation(AutoLogged.class).typeId().equals(AutoLogged.ALLOCATE_AUTOMATICALLY))) {
             return getMethod().getAnnotation(AutoLogged.class).typeId();
         }
         String resourcePrefix = getResourceClass().getSimpleName();
         if ((getResourceClass().getAnnotation(AutoLogged.class) != null) &&
-                (!getResourceClass().getAnnotation(AutoLogged.class).typeId()
-                        .equals(AutoLogged.ALLOCATE_AUTOMATICALLY))) {
+            (!getResourceClass().getAnnotation(AutoLogged.class).typeId()
+                    .equals(AutoLogged.ALLOCATE_AUTOMATICALLY))) {
             resourcePrefix = getResourceClass().getAnnotation(AutoLogged.class).typeId();
         }
 
@@ -113,7 +117,7 @@ public class ContainerResourceInfo {
 
     public String getVerbFromAnnotations() {
         if ((getMethod().getAnnotation(AutoLogged.class) != null) &&
-                (!getMethod().getAnnotation(AutoLogged.class).verb().equals(AutoLogged.ALLOCATE_AUTOMATICALLY))) {
+            (!getMethod().getAnnotation(AutoLogged.class).verb().equals(AutoLogged.ALLOCATE_AUTOMATICALLY))) {
             return getMethod().getAnnotation(AutoLogged.class).verb();
         }
         return null;
@@ -187,27 +191,27 @@ public class ContainerResourceInfo {
                     methodName, firstCamelCasePart));
 
             if ("get".equals(firstCamelCasePart)
-                    || "fetch".equals(firstCamelCasePart)
-                    || "read".equals(firstCamelCasePart)
-                    || "view".equals(firstCamelCasePart)) {
+                || "fetch".equals(firstCamelCasePart)
+                || "read".equals(firstCamelCasePart)
+                || "view".equals(firstCamelCasePart)) {
                 return OperationType.VIEW;
             } else if ("create".equals(firstCamelCasePart)) {
                 return OperationType.CREATE;
             } else if ("delete".equals(firstCamelCasePart)) {
                 return OperationType.DELETE;
             } else if ("update".equals(firstCamelCasePart)
-                    || "save".equals(firstCamelCasePart)
-                    || "set".equals(firstCamelCasePart)) {
+                       || "save".equals(firstCamelCasePart)
+                       || "set".equals(firstCamelCasePart)) {
                 return OperationType.UPDATE;
             } else if ("find".equals(firstCamelCasePart)
-                    || "search".equals(firstCamelCasePart)
-                    || "list".equals(firstCamelCasePart)) {
+                       || "search".equals(firstCamelCasePart)
+                       || "list".equals(firstCamelCasePart)) {
                 return OperationType.SEARCH;
             } else if ("import".equals(firstCamelCasePart)
-                    || "upload".equals(firstCamelCasePart)) {
+                       || "upload".equals(firstCamelCasePart)) {
                 return OperationType.IMPORT;
             } else if ("export".equals(firstCamelCasePart)
-                    || "download".equals(firstCamelCasePart)) {
+                       || "download".equals(firstCamelCasePart)) {
                 return OperationType.EXPORT;
             } else if ("copy".equals(firstCamelCasePart)) {
                 return OperationType.COPY;
@@ -220,14 +224,22 @@ public class ContainerResourceInfo {
     public boolean shouldLog(LoggingConfig config) {
         OperationType op = getOperationType();
         if (OperationType.MANUALLY_LOGGED.equals(op)) {
+            LOGGER.debug("{}, not logging request", OperationType.MANUALLY_LOGGED);
             return false;
         } else if (config.isLogEveryRestCallEnabled()) {
+            LOGGER.debug("logEveryRestCallEnabled set to true, logging request");
             return true;
         } else if (OperationType.UNLOGGED.equals(op)) {
+            LOGGER.debug("{}, not logging request", OperationType.UNLOGGED);
+            return false;
+        } else if (securityContext.isProcessingUser()) {
+            LOGGER.debug("Processing user, not logging request");
             return false;
         } else if (isAutologgerAnnotationPresent()) {
+            LOGGER.debug("Auto logger annotation present, logging request");
             return true;
         } else {
+            LOGGER.debug("No matches, not logging request");
             return false;
         }
     }

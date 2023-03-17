@@ -41,6 +41,10 @@ public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends Plug
         this.presenterProvider = presenterProvider;
     }
 
+    protected P getPresenter() {
+        return presenter;
+    }
+
     public void open() {
         if (presenter == null) {
             // If the presenter is null then we haven't got this tab open.

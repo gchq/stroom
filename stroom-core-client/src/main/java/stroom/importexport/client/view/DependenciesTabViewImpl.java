@@ -64,9 +64,15 @@ public class DependenciesTabViewImpl
         quickFilter.registerPopupTextProvider(() -> helpTooltipText);
     }
 
+    @Override
+    public void setQuickFilterText(final String text) {
+        quickFilter.setText(text);
+        getUiHandlers().changeQuickFilter(text);
+    }
+
     @UiHandler("quickFilter")
     void onFilterChange(final ValueChangeEvent<String> event) {
-        getUiHandlers().changeQuickFilter(quickFilter.getText());
+        getUiHandlers().changeQuickFilter(event.getValue());
     }
 
     public interface Binder extends UiBinder<Widget, DependenciesTabViewImpl> {

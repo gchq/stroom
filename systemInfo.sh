@@ -359,7 +359,7 @@ main() {
     # Get the first host in the list
     host="${host_list%%,*}"
   else
-    host="${default_host}"
+    host="${default_host_port}"
   fi
   local host_port="${host}"
   if [[ ! "${host}" =~ :[0-9]+ ]]; then

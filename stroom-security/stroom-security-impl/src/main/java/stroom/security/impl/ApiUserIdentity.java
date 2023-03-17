@@ -1,24 +1,29 @@
 package stroom.security.impl;
 
-import stroom.docref.HasUuid;
 import stroom.security.api.HasJwt;
 import stroom.security.api.HasSessionId;
 import stroom.security.api.UserIdentity;
+import stroom.security.common.impl.HasJwtClaims;
+import stroom.security.shared.HasStroomUserIdentity;
 import stroom.util.NullSafe;
-import stroom.util.exception.ThrowingFunction;
 
+import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.consumer.JwtContext;
 
 import java.util.Objects;
 import java.util.Optional;
 
-class ApiUserIdentity implements UserIdentity, HasSessionId, HasUuid, HasJwt {
+class ApiUserIdentity implements UserIdentity, HasSessionId, HasStroomUserIdentity, HasJwtClaims, HasJwt {
 
     private final String userUuid;
     private final String id;
     private final String sessionId;
     private final JwtContext jwtContext;
 
+    /**
+     * @param userUuid The stroom_user UUID
+     * @param id The unique ID on the IDP, i.e. the 'sub' claim
+     */
     ApiUserIdentity(final String userUuid,
                     final String id,
                     final String sessionId,
@@ -27,10 +32,6 @@ class ApiUserIdentity implements UserIdentity, HasSessionId, HasUuid, HasJwt {
         this.id = id;
         this.sessionId = sessionId;
         this.jwtContext = jwtContext;
-    }
-
-    public String getUserUuid() {
-        return userUuid;
     }
 
     @Override
@@ -55,13 +56,13 @@ class ApiUserIdentity implements UserIdentity, HasSessionId, HasUuid, HasJwt {
     }
 
     @Override
-    public String getJwt() {
-        return jwtContext.getJwt();
+    public String getSessionId() {
+        return sessionId;
     }
 
     @Override
-    public String getSessionId() {
-        return sessionId;
+    public String getJwt() {
+        return NullSafe.get(jwtContext, JwtContext::getJwt);
     }
 
     @Override
@@ -87,11 +88,8 @@ class ApiUserIdentity implements UserIdentity, HasSessionId, HasUuid, HasJwt {
         return getId();
     }
 
-    Optional<String> getClaimValue(final String claim) {
-        return NullSafe.getAsOptional(
-                jwtContext,
-                JwtContext::getJwtClaims,
-                ThrowingFunction.unchecked(jwtClaims ->
-                        jwtClaims.getClaimValue(claim, String.class)));
+    @Override
+    public JwtClaims getJwtClaims() {
+        return jwtContext.getJwtClaims();
     }
 }

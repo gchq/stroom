@@ -342,6 +342,45 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
     }
 
     @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final ProcessorFilter that = (ProcessorFilter) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @JsonIgnore
+    public String getFilterInfo() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("filter id=");
+        sb.append(id);
+
+        if (uuid != null) {
+            sb.append(", filter uuid=");
+            sb.append(uuid);
+        }
+        if (processor != null && processor.getPipelineUuid() != null) {
+            sb.append(", pipeline uuid=");
+            sb.append(processor.getPipelineUuid());
+        }
+        if (pipelineName != null) {
+            sb.append(", pipeline name=");
+            sb.append(pipelineName);
+        }
+        return sb.toString();
+    }
+
+
+    @Override
     public String toString() {
         return "ProcessorFilter{" +
                 "id=" + id +
@@ -362,22 +401,5 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
                 ", minMetaCreateTimeMs=" + minMetaCreateTimeMs +
                 ", maxMetaCreateTimeMs=" + maxMetaCreateTimeMs +
                 '}';
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        final ProcessorFilter that = (ProcessorFilter) o;
-        return Objects.equals(id, that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
     }
 }

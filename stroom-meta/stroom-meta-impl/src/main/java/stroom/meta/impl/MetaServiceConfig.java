@@ -27,6 +27,7 @@ import io.dropwizard.validation.ValidationMethod;
 import java.util.HashSet;
 import java.util.Set;
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
@@ -43,6 +44,7 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
     private final CacheConfig metaTypeCache;
     private final Set<String> metaTypes;
     private final Set<String> rawMetaTypes;
+    private final int metaStatusUpdateBatchSize;
 
     public MetaServiceConfig() {
         dbConfig = new MetaServiceDbConfig();
@@ -61,6 +63,7 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
                 .build();
         metaTypes = new HashSet<>(StreamTypeNames.ALL_HARD_CODED_STREAM_TYPE_NAMES);
         rawMetaTypes = new HashSet<>(StreamTypeNames.ALL_HARD_CODED_RAW_STREAM_TYPE_NAMES);
+        metaStatusUpdateBatchSize = 0;
     }
 
     @SuppressWarnings("unused")
@@ -71,7 +74,8 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
                              @JsonProperty("metaProcessorCache") final CacheConfig metaProcessorCache,
                              @JsonProperty("metaTypeCache") final CacheConfig metaTypeCache,
                              @JsonProperty("metaTypes") final Set<String> metaTypes,
-                             @JsonProperty("rawMetaTypes") final Set<String> rawMetaTypes) {
+                             @JsonProperty("rawMetaTypes") final Set<String> rawMetaTypes,
+                             @JsonProperty("metaStatusUpdateBatchSize") final int metaStatusUpdateBatchSize) {
         this.dbConfig = dbConfig;
         this.metaValueConfig = metaValueConfig;
         this.metaFeedCache = metaFeedCache;
@@ -79,6 +83,7 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
         this.metaTypeCache = metaTypeCache;
         this.metaTypes = metaTypes;
         this.rawMetaTypes = rawMetaTypes;
+        this.metaStatusUpdateBatchSize = metaStatusUpdateBatchSize;
     }
 
     @Override
@@ -141,6 +146,14 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
         return rawMetaTypes;
     }
 
+    @Min(0)
+    @JsonPropertyDescription("The number of streams to delete/restore using a filter in a single " +
+            "batch. Each batch will run in a separate transaction. A value of zero means a single " +
+            "batch will be used.")
+    public int getMetaStatusUpdateBatchSize() {
+        return metaStatusUpdateBatchSize;
+    }
+
     public MetaServiceConfig withMetaValueConfig(final MetaValueConfig metaValueConfig) {
         return new MetaServiceConfig(
                 dbConfig,
@@ -149,7 +162,22 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
                 metaProcessorCache,
                 metaTypeCache,
                 metaTypes,
-                rawMetaTypes);
+                rawMetaTypes,
+                metaStatusUpdateBatchSize);
+    }
+
+    public MetaServiceConfig withMetaStatusUpdateBatchSize(
+            final int metaStatusUpdateBatchSize) {
+
+        return new MetaServiceConfig(
+                dbConfig,
+                metaValueConfig,
+                metaFeedCache,
+                metaProcessorCache,
+                metaTypeCache,
+                metaTypes,
+                rawMetaTypes,
+                metaStatusUpdateBatchSize);
     }
 
     @Override
@@ -162,6 +190,7 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
                 ", metaTypeCache=" + metaTypeCache +
                 ", metaTypes=" + metaTypes +
                 ", rawMetaTypes=" + rawMetaTypes +
+                ", metaStatusUpdateBatchSize=" + metaStatusUpdateBatchSize +
                 '}';
     }
 

@@ -32,7 +32,7 @@ public class ExplorerServiceCreateRequest {
     @JsonProperty
     private String docName;
     @JsonProperty
-    private DocRef destinationFolderRef;
+    private ExplorerNode destinationFolder;
     @JsonProperty
     private PermissionInheritance permissionInheritance;
 
@@ -43,12 +43,12 @@ public class ExplorerServiceCreateRequest {
     public ExplorerServiceCreateRequest(
             @JsonProperty("docType") final String docType,
             @JsonProperty("docName") final String docName,
-            @JsonProperty("destinationFolderRef") final DocRef destinationFolderRef,
+            @JsonProperty("destinationFolder") final ExplorerNode destinationFolder,
             @JsonProperty("permissionInheritance") final PermissionInheritance permissionInheritance) {
 
         this.docType = docType;
         this.docName = docName;
-        this.destinationFolderRef = destinationFolderRef;
+        this.destinationFolder = destinationFolder;
         this.permissionInheritance = permissionInheritance;
     }
 
@@ -68,12 +68,12 @@ public class ExplorerServiceCreateRequest {
         this.docName = docName;
     }
 
-    public DocRef getDestinationFolderRef() {
-        return destinationFolderRef;
+    public ExplorerNode getDestinationFolder() {
+        return destinationFolder;
     }
 
-    public void setDestinationFolderRef(final DocRef destinationFolderRef) {
-        this.destinationFolderRef = destinationFolderRef;
+    public void setDestinationFolder(final ExplorerNode destinationFolder) {
+        this.destinationFolder = destinationFolder;
     }
 
     public PermissionInheritance getPermissionInheritance() {

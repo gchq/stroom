@@ -28,7 +28,6 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
 
@@ -37,21 +36,20 @@ import java.util.Objects;
         use = JsonTypeInfo.Id.NAME,
         property = "type")
 @JsonSubTypes({
-        @Type(value = IdField.class, name = FieldTypes.ID),
-        @Type(value = BooleanField.class, name = FieldTypes.BOOLEAN),
-        @Type(value = IntegerField.class, name = FieldTypes.INTEGER),
-        @Type(value = LongField.class, name = FieldTypes.LONG),
-        @Type(value = FloatField.class, name = FieldTypes.FLOAT),
-        @Type(value = DoubleField.class, name = FieldTypes.DOUBLE),
-        @Type(value = DateField.class, name = FieldTypes.DATE),
-        @Type(value = TextField.class, name = FieldTypes.TEXT),
-        @Type(value = IpV4AddressField.class, name = FieldTypes.IPV4_ADDRESS),
-        @Type(value = DocRefField.class, name = FieldTypes.DOC_REF)
+        @Type(value = IdField.class, name = "Id"),
+        @Type(value = BooleanField.class, name = "Boolean"),
+        @Type(value = IntegerField.class, name = "Integer"),
+        @Type(value = LongField.class, name = "Long"),
+        @Type(value = FloatField.class, name = "Float"),
+        @Type(value = DoubleField.class, name = "Double"),
+        @Type(value = DateField.class, name = "Date"),
+        @Type(value = TextField.class, name = "Text"),
+        @Type(value = KeywordField.class, name = "Keyword"),
+        @Type(value = IpV4AddressField.class, name = "IpV4Address"),
+        @Type(value = DocRefField.class, name = "DocRef")
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public abstract class AbstractField implements Serializable, HasDisplayValue {
-
-    private static final long serialVersionUID = 1272545271946712570L;
+public abstract class AbstractField implements HasDisplayValue {
 
     @JsonProperty
     private final String name;
@@ -69,7 +67,8 @@ public abstract class AbstractField implements Serializable, HasDisplayValue {
         this.conditions = conditions;
     }
 
-    public abstract String getType();
+    @JsonIgnore
+    public abstract FieldType getFieldType();
 
     public String getName() {
         return name;

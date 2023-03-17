@@ -44,6 +44,7 @@ public final class DateUtil {
 
     /**
      * Create a 'normal' type date.
+     * @param ms The date to create the string for.
      */
     public static String createNormalDateTimeString(final Long ms) {
         if (ms == null) {
@@ -53,7 +54,19 @@ public final class DateUtil {
     }
 
     /**
-     * Create a 'file' format date string witht he current system time.
+     * Create a 'normal' type date.
+     * @param instant The date to create the string for.
+     */
+    public static String createNormalDateTimeString(final Instant instant) {
+        if (instant == null) {
+            return "";
+        } else {
+            return NORMAL_STROOM_TIME_FORMATTER.format(instant.atZone(ZoneOffset.UTC));
+        }
+    }
+
+    /**
+     * Create a 'file' format date string with the current system time.
      *
      * @return string The date as a 'file' format date string.
      */
@@ -72,6 +85,16 @@ public final class DateUtil {
     }
 
     /**
+     * Create a 'file' format date string.
+     *
+     * @param instant The date to create the string for.
+     * @return string The date as a 'file' format date string.
+     */
+    public static String createFileDateTimeString(final Instant instant) {
+        return FILE_TIME_STROOM_TIME_FORMATTER.format(instant.atZone(ZoneOffset.UTC));
+    }
+
+    /**
      * Parse a 'normal' type date.
      *
      * @param date string date
@@ -79,6 +102,17 @@ public final class DateUtil {
      * @throws IllegalArgumentException if date does not parse
      */
     public static long parseNormalDateTimeString(final String date) {
+        return parseNormalDateTimeStringToInstant(date).toEpochMilli();
+    }
+
+    /**
+     * Parse a 'normal' type date.
+     *
+     * @param date string date
+     * @return A UTC {@link Instant}
+     * @throws IllegalArgumentException if date does not parse
+     */
+    public static Instant parseNormalDateTimeStringToInstant(final String date) {
         if (date == null) {
             throw new IllegalArgumentException("Unable to parse null date");
         }
@@ -88,7 +122,7 @@ public final class DateUtil {
         }
 
         final LocalDateTime dateTime = LocalDateTime.parse(date, NORMAL_STROOM_TIME_FORMATTER);
-        return dateTime.toInstant(ZoneOffset.UTC).toEpochMilli();
+        return dateTime.toInstant(ZoneOffset.UTC);
     }
 
     /**

@@ -18,17 +18,19 @@ package stroom.pipeline.xsltfunctions;
 
 import stroom.util.shared.Severity;
 
+import com.google.common.io.BaseEncoding;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
 
-import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 class Hash extends StroomExtensionFunctionCall {
+
+    public static final String FUNCTION_NAME = "hash";
 
     private static final String DEFAULT_ALGORITHM = "SHA-256";
 
@@ -74,8 +76,13 @@ class Hash extends StroomExtensionFunctionCall {
             digest.update(salt.getBytes());
         }
 
-        final byte[] arr = digest.digest(value.getBytes());
-        // Converts message digest value in base 16 (hex)
-        return new BigInteger(1, arr).toString(16);
+        digest.update(value.getBytes());
+
+        final byte[] arr = digest.digest();
+
+        // TODO: 30/01/2023 In Java17+ use HexFormat class
+        return BaseEncoding.base16()
+                .lowerCase()
+                .encode(arr);
     }
 }

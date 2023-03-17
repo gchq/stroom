@@ -27,7 +27,10 @@ import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
@@ -45,6 +48,7 @@ public class ElasticSearchResultCollector implements Store {
     private final ElasticAsyncSearchTask task;
     private final Coprocessors coprocessors;
     private final Sizes maxResultSizes;
+    private final Set<String> highlights;
 
     private volatile ElasticAsyncSearchTaskHandler asyncSearchTaskHandler;
     private volatile TaskContext taskContext;
@@ -63,6 +67,7 @@ public class ElasticSearchResultCollector implements Store {
         this.task = task;
         this.coprocessors = coprocessors;
         this.maxResultSizes = maxResultSizes;
+        this.highlights = new HashSet<>();
     }
 
     public static ElasticSearchResultCollector create(
@@ -155,7 +160,11 @@ public class ElasticSearchResultCollector implements Store {
 
     @Override
     public List<String> getHighlights() {
-        return null;
+        return new ArrayList<>(highlights);
+    }
+
+    public void addHighlights(final List<String> highlights) {
+        this.highlights.addAll(highlights);
     }
 
     public Sizes getMaxResultSizes() {

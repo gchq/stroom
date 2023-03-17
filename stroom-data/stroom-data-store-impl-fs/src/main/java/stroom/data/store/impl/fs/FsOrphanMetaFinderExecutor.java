@@ -19,6 +19,7 @@ package stroom.data.store.impl.fs;
 
 import stroom.meta.shared.Meta;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -36,16 +37,17 @@ class FsOrphanMetaFinderExecutor {
     public static final String TASK_NAME = "Orphan Meta Finder";
 
     private final Provider<FsOrphanMetaFinder> orphanFileFinderProvider;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
 
     @Inject
     FsOrphanMetaFinderExecutor(final Provider<FsOrphanMetaFinder> orphanFileFinderProvider,
-                               final TaskContext taskContext) {
+                               final TaskContextFactory taskContextFactory) {
         this.orphanFileFinderProvider = orphanFileFinderProvider;
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
     }
 
     public void scan() {
+        final TaskContext taskContext = taskContextFactory.current();
         taskContext.info(() -> "Starting orphan meta finder");
         final Consumer<Meta> orphanConsumer = meta -> {
             LOGGER.debug(() -> "Orphan meta: " + meta.toString());

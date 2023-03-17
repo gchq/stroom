@@ -26,6 +26,7 @@ dependencies {
     implementation libs.saxon_he
     implementation libs.slf4j_api
     implementation libs.ws_rs_api
+    implementation libs.xerces
 
     testImplementation project(':stroom-test-common')
     testImplementation libs.assertj_core

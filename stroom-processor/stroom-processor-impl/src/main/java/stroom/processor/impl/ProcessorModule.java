@@ -28,6 +28,7 @@ import stroom.processor.shared.ProcessorTaskResource;
 import stroom.searchable.api.Searchable;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.HasSystemInfoBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
 
@@ -39,9 +40,12 @@ import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class ProcessorModule extends AbstractModule {
 
+    public static final String PROCESSOR_TASK_RETENTION_JOB_NAME = "Processor Task Retention";
+
     @Override
     protected void configure() {
-        bind(ProcessorTaskManager.class).to(ProcessorTaskManagerImpl.class);
+        bind(ProcessorTaskQueueManager.class).to(ProcessorTaskQueueManagerImpl.class);
+        bind(ProcessorTaskCreator.class).to(ProcessorTaskCreatorImpl.class);
         bind(ProcessorFilterService.class).to(ProcessorFilterServiceImpl.class);
         bind(ProcessorService.class).to(ProcessorServiceImpl.class);
         bind(ProcessorResource.class).to(ProcessorResourceImpl.class);
@@ -66,16 +70,19 @@ public class ProcessorModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(ProcessorFilterImportExportHandlerImpl.class);
 
+        HasSystemInfoBinder.create(binder())
+                .bind(ProcessorTaskQueueManagerImpl.class);
+
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(ProcessorTaskQueueStatistics.class, builder -> builder
                         .name("Processor Task Queue Statistics")
                         .description("Write statistics about the size of the task queue")
                         .schedule(PERIODIC, "1m"))
                 .bindJobTo(ProcessorTaskRetention.class, builder -> builder
-                        .name("Processor Task Retention")
+                        .name(PROCESSOR_TASK_RETENTION_JOB_NAME)
                         .description("Physically delete processor tasks that have been logically " +
-                                "deleted or complete based on age (stroom.processor.deletePurgeAge)")
-                        .schedule(PERIODIC, "1m"))
+                                "deleted or complete based on age (stroom.processor.deleteAge)")
+                        .schedule(PERIODIC, "10m"))
                 .bindJobTo(ProcessorTaskManagerDisownDeadTasks.class, builder -> builder
                         .name("Processor Task Manager Disown Dead Tasks")
                         .description("Tasks that seem to be stuck processing due to the death of a processing node " +
@@ -85,7 +92,13 @@ public class ProcessorModule extends AbstractModule {
                 .bindJobTo(ProcessorTaskManagerReleaseOldQueuedTasks.class, builder -> builder
                         .name("Processor Task Manager Release Old Queued Tasks")
                         .description("Release queued tasks from old master nodes")
-                        .schedule(PERIODIC, "1m"));
+                        .schedule(PERIODIC, "1m"))
+                .bindJobTo(ProcessorTaskCreatorJob.class, builder -> builder
+                        .name("Processor Task Creator")
+                        .description("Create Processor Tasks From Processor Filters")
+                        .schedule(PERIODIC, "10s")
+                        .enabled(false)
+                        .advanced(false));
 
         LifecycleBinder.create(binder())
                 .bindStartupTaskTo(ProcessorTaskManagerStartup.class)
@@ -95,8 +108,8 @@ public class ProcessorModule extends AbstractModule {
     private static class ProcessorTaskQueueStatistics extends RunnableWrapper {
 
         @Inject
-        ProcessorTaskQueueStatistics(final ProcessorTaskManager processorTaskManager) {
-            super(processorTaskManager::writeQueueStatistics);
+        ProcessorTaskQueueStatistics(final ProcessorTaskQueueManager processorTaskQueueManager) {
+            super(processorTaskQueueManager::writeQueueStatistics);
         }
     }
 
@@ -111,7 +124,7 @@ public class ProcessorModule extends AbstractModule {
     private static class ProcessorTaskManagerStartup extends RunnableWrapper {
 
         @Inject
-        ProcessorTaskManagerStartup(final ProcessorTaskManagerImpl processorTaskManager) {
+        ProcessorTaskManagerStartup(final ProcessorTaskQueueManagerImpl processorTaskManager) {
             super(processorTaskManager::startup);
         }
     }
@@ -119,7 +132,7 @@ public class ProcessorModule extends AbstractModule {
     private static class ProcessorTaskManagerShutdown extends RunnableWrapper {
 
         @Inject
-        ProcessorTaskManagerShutdown(final ProcessorTaskManagerImpl processorTaskManager) {
+        ProcessorTaskManagerShutdown(final ProcessorTaskQueueManagerImpl processorTaskManager) {
             super(processorTaskManager::shutdown);
         }
     }
@@ -127,7 +140,7 @@ public class ProcessorModule extends AbstractModule {
     private static class ProcessorTaskManagerDisownDeadTasks extends RunnableWrapper {
 
         @Inject
-        ProcessorTaskManagerDisownDeadTasks(final ProcessorTaskManagerImpl processorTaskManager) {
+        ProcessorTaskManagerDisownDeadTasks(final ProcessorTaskQueueManagerImpl processorTaskManager) {
             super(processorTaskManager::disownDeadTasks);
         }
     }
@@ -135,8 +148,16 @@ public class ProcessorModule extends AbstractModule {
     private static class ProcessorTaskManagerReleaseOldQueuedTasks extends RunnableWrapper {
 
         @Inject
-        ProcessorTaskManagerReleaseOldQueuedTasks(final ProcessorTaskManagerImpl processorTaskManager) {
-            super(processorTaskManager::releaseOldQueuedTasks);
+        ProcessorTaskManagerReleaseOldQueuedTasks(final ProcessorTaskQueueManagerImpl processorTaskQueueManager) {
+            super(processorTaskQueueManager::releaseOldQueuedTasks);
+        }
+    }
+
+    private static class ProcessorTaskCreatorJob extends RunnableWrapper {
+
+        @Inject
+        ProcessorTaskCreatorJob(final ProcessorTaskCreator processorTaskCreator) {
+            super(processorTaskCreator::exec);
         }
     }
 }

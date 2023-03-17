@@ -16,54 +16,30 @@
 
 package stroom.dashboard.client.table;
 
-import stroom.data.table.client.CellTableView;
-import stroom.data.table.client.ScrollableCellTableViewImpl;
+import stroom.item.client.presenter.AutocompletePopupView;
+import stroom.item.client.view.AutocompletePopupViewImpl;
 import stroom.query.api.v2.Field;
-import stroom.widget.util.client.MySingleSelectionModel;
 
-import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.event.logical.shared.HasSelectionHandlers;
+import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.view.client.SelectionChangeEvent.Handler;
-import com.google.gwt.view.client.SelectionChangeEvent.HasSelectionChangedHandlers;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
-import java.util.List;
-
-public class FieldAddPresenter extends MyPresenterWidget<CellTableView<Field>> implements HasSelectionChangedHandlers {
-
-    private final MySingleSelectionModel<Field> selectionModel = new MySingleSelectionModel<>();
+public class FieldAddPresenter extends MyPresenterWidget<AutocompletePopupView<Field>> implements
+        HasSelectionHandlers<Field> {
 
     @Inject
     public FieldAddPresenter(final EventBus eventBus) {
-        super(eventBus, new ScrollableCellTableViewImpl<>(true, "hoverCellTable"));
-        final Column<Field, String> textColumn = new Column<Field, String>(new TextCell()) {
-            @Override
-            public String getValue(final Field field) {
-                return field.getName();
-            }
-        };
-        getView().addColumn(textColumn, 200);
-        getView().setSelectionModel(selectionModel);
-    }
+        super(eventBus, new AutocompletePopupViewImpl<>());
 
-    public void setFields(final List<Field> fields) {
-        getView().setRowData(0, fields);
-        getView().setRowCount(fields.size());
-    }
-
-    public Field getSelectedObject() {
-        return selectionModel.getSelectedObject();
-    }
-
-    public void clearSelection() {
-        selectionModel.clear();
+        // Set the height of the autocomplete list
+        getView().setVisibleItemCount(15);
     }
 
     @Override
-    public HandlerRegistration addSelectionChangeHandler(final Handler handler) {
-        return selectionModel.addSelectionChangeHandler(handler);
+    public HandlerRegistration addSelectionHandler(final SelectionHandler<Field> handler) {
+        return getView().addSelectionHandler(handler);
     }
 }

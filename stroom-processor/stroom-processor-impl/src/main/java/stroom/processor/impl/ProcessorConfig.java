@@ -22,12 +22,13 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
 
     private final ProcessorDbConfig dbConfig;
     private final boolean assignTasks;
-    private final boolean createTasks;
     private final StroomDuration deleteAge;
-    // TODO 29/11/2021 AT: Make final
-    private boolean fillTaskQueue;
-    // TODO 29/11/2021 AT: Make final
-    private int queueSize;
+    private final boolean fillTaskQueue;
+    private final int queueSize;
+
+
+    private final int tasksToCreate;
+    private final int taskCreationThreadCount;
     private final int databaseMultiInsertMaxBatchSize;
 
     private final CacheConfig processorCache;
@@ -37,13 +38,17 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
 
     private final StroomDuration disownDeadTasksAfter;
 
+    private final StroomDuration waitToQueueTasksDuration;
+    private final StroomDuration skipNonProducingFiltersDuration;
+
     public ProcessorConfig() {
         dbConfig = new ProcessorDbConfig();
         assignTasks = true;
-        createTasks = true;
         deleteAge = StroomDuration.ofDays(1);
         fillTaskQueue = true;
         queueSize = 1000;
+        tasksToCreate = 1000;
+        taskCreationThreadCount = 5;
         databaseMultiInsertMaxBatchSize = 500;
 
         processorCache = CacheConfig.builder()
@@ -63,34 +68,43 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
         disownDeadTasksAfter = StroomDuration.ofMinutes(10);
+        waitToQueueTasksDuration = StroomDuration.ofSeconds(10);
+        skipNonProducingFiltersDuration = StroomDuration.ofSeconds(10);
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
     public ProcessorConfig(@JsonProperty("db") final ProcessorDbConfig dbConfig,
                            @JsonProperty("assignTasks") final boolean assignTasks,
-                           @JsonProperty("createTasks") final boolean createTasks,
                            @JsonProperty("deleteAge") final StroomDuration deleteAge,
                            @JsonProperty("fillTaskQueue") final boolean fillTaskQueue,
                            @JsonProperty("queueSize") final int queueSize,
+                           @JsonProperty("tasksToCreate") final int tasksToCreate,
+                           @JsonProperty("taskCreationThreadCount") final int taskCreationThreadCount,
                            @JsonProperty("databaseMultiInsertMaxBatchSize") final int databaseMultiInsertMaxBatchSize,
                            @JsonProperty("processorCache") final CacheConfig processorCache,
                            @JsonProperty("processorFilterCache") final CacheConfig processorFilterCache,
                            @JsonProperty("processorNodeCache") final CacheConfig processorNodeCache,
                            @JsonProperty("processorFeedCache") final CacheConfig processorFeedCache,
-                           @JsonProperty("disownDeadTasksAfter") final StroomDuration disownDeadTasksAfter) {
+                           @JsonProperty("disownDeadTasksAfter") final StroomDuration disownDeadTasksAfter,
+                           @JsonProperty("waitToQueueTasksDuration") final StroomDuration waitToQueueTasksDuration,
+                           @JsonProperty("skipNonProducingFiltersDuration") final StroomDuration
+                                   skipNonProducingFiltersDuration) {
         this.dbConfig = dbConfig;
         this.assignTasks = assignTasks;
-        this.createTasks = createTasks;
         this.deleteAge = deleteAge;
         this.fillTaskQueue = fillTaskQueue;
         this.queueSize = queueSize;
+        this.tasksToCreate = tasksToCreate;
+        this.taskCreationThreadCount = taskCreationThreadCount;
         this.databaseMultiInsertMaxBatchSize = databaseMultiInsertMaxBatchSize;
         this.processorCache = processorCache;
         this.processorFilterCache = processorFilterCache;
         this.processorNodeCache = processorNodeCache;
         this.processorFeedCache = processorFeedCache;
         this.disownDeadTasksAfter = disownDeadTasksAfter;
+        this.waitToQueueTasksDuration = waitToQueueTasksDuration;
+        this.skipNonProducingFiltersDuration = skipNonProducingFiltersDuration;
     }
 
     @Override
@@ -104,13 +118,10 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         return assignTasks;
     }
 
-    @JsonPropertyDescription("Should the master node create new tasks for stream processor filters?")
-    public boolean isCreateTasks() {
-        return createTasks;
-    }
-
-    @JsonPropertyDescription("How long to keep tasks on the database for before deleting them " +
-            "(if they are complete). In ISO-8601 duration format, e.g. 'P1DT12H'")
+    @JsonPropertyDescription("How long to keep tasks and filters on the database for before deleting them " +
+            "(if they are complete). After a duration of 'deleteAge', they will be logically deleted and unavailable " +
+            "in the user interface. After a subsequent duration of 'deleteAge' they will be physically deleted. " +
+            "In ISO-8601 duration format, e.g. 'P1DT12H'")
     public StroomDuration getDeleteAge() {
         return deleteAge;
     }
@@ -120,19 +131,23 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         return fillTaskQueue;
     }
 
-    @Deprecated(forRemoval = true) // Awaiting refactor to handle immutable config
-    public void setFillTaskQueue(final boolean fillTaskQueue) {
-        this.fillTaskQueue = fillTaskQueue;
-    }
-
-    @JsonPropertyDescription("Maximum number of tasks to cache ready for processing, in total and per filter.")
+    @JsonPropertyDescription("The number of tasks to attempt to queue from filters considered in priority order. " +
+            "Note that this number will be exceeded if we have currently queued tasks from lower priority filters.")
     public int getQueueSize() {
         return queueSize;
     }
 
-    @Deprecated(forRemoval = true) // Awaiting refactor to handle immutable config
-    public void setQueueSize(final int queueSize) {
-        this.queueSize = queueSize;
+    @JsonPropertyDescription("How many tasks should we try to create in the DB. If the queue size is " +
+            "larger then that figure will be used instead as we want to be able to fill the queue. " +
+            "Note that the number of tasks created may be greater than this number as each task creation thread will " +
+            "try and create the same number of tasks.")
+    public int getTasksToCreate() {
+        return tasksToCreate;
+    }
+
+    @JsonPropertyDescription("The number of concurrent threads to use for task creation.")
+    public int getTaskCreationThreadCount() {
+        return taskCreationThreadCount;
     }
 
     @JsonPropertyDescription("The maximum number of rows to insert in a single multi insert statement, " +
@@ -162,20 +177,36 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         return disownDeadTasksAfter;
     }
 
+    @JsonPropertyDescription("How long should we wait to queue new tasks if we previously managed to queue 0 new " +
+            "tasks.")
+    public StroomDuration getWaitToQueueTasksDuration() {
+        return waitToQueueTasksDuration;
+    }
+
+    @JsonPropertyDescription("How long should we wait before retrying task creation for previously non producing " +
+            "filters.")
+    public StroomDuration getSkipNonProducingFiltersDuration() {
+        return skipNonProducingFiltersDuration;
+    }
+
     @Override
     public String toString() {
         return "ProcessorConfig{" +
                 "dbConfig=" + dbConfig +
                 ", assignTasks=" + assignTasks +
-                ", createTasks=" + createTasks +
-                ", deleteAge='" + deleteAge + '\'' +
+                ", deleteAge=" + deleteAge +
                 ", fillTaskQueue=" + fillTaskQueue +
                 ", queueSize=" + queueSize +
+                ", tasksToCreate=" + tasksToCreate +
+                ", taskCreationThreadCount=" + taskCreationThreadCount +
                 ", databaseMultiInsertMaxBatchSize=" + databaseMultiInsertMaxBatchSize +
                 ", processorCache=" + processorCache +
                 ", processorFilterCache=" + processorFilterCache +
                 ", processorNodeCache=" + processorNodeCache +
                 ", processorFeedCache=" + processorFeedCache +
+                ", disownDeadTasksAfter=" + disownDeadTasksAfter +
+                ", waitToQueueTasksDuration=" + waitToQueueTasksDuration +
+                ", skipNonProducingFiltersDuration=" + skipNonProducingFiltersDuration +
                 '}';
     }
 

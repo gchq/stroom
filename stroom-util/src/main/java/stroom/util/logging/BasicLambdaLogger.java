@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.Marker;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -159,12 +158,11 @@ public final class BasicLambdaLogger implements LambdaLogger {
     public <T> T logDurationIfTraceEnabled(final Supplier<T> timedWork,
                                            final Supplier<String> workDescriptionSupplier) {
         if (logger.isTraceEnabled()) {
-            final Instant startTime = Instant.now();
-            T result = timedWork.get();
+            final DurationTimer durationTimer = DurationTimer.start();
+            final T result = timedWork.get();
+            final Duration duration = durationTimer.get();
             try {
-                logger.trace("Completed [{}] in {}",
-                        workDescriptionSupplier.get(),
-                        Duration.between(startTime, Instant.now()));
+                logger.trace(LogUtil.getDurationMessage(workDescriptionSupplier.get(), duration));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -178,12 +176,11 @@ public final class BasicLambdaLogger implements LambdaLogger {
     public <T> T logDurationIfTraceEnabled(final Supplier<T> timedWork,
                                            final Function<T, String> workDescriptionFunction) {
         if (logger.isTraceEnabled()) {
-            final Instant startTime = Instant.now();
-            T result = timedWork.get();
+            final DurationTimer durationTimer = DurationTimer.start();
+            final T result = timedWork.get();
+            final Duration duration = durationTimer.get();
             try {
-                logger.trace("Completed [{}] in {}",
-                        workDescriptionFunction.apply(result),
-                        Duration.between(startTime, Instant.now()));
+                logger.trace(LogUtil.getDurationMessage(workDescriptionFunction.apply(result), duration));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -197,12 +194,11 @@ public final class BasicLambdaLogger implements LambdaLogger {
     public <T> T logDurationIfDebugEnabled(final Supplier<T> timedWork,
                                            final Supplier<String> workDescriptionSupplier) {
         if (logger.isDebugEnabled()) {
-            final Instant startTime = Instant.now();
-            T result = timedWork.get();
+            final DurationTimer durationTimer = DurationTimer.start();
+            final T result = timedWork.get();
+            final Duration duration = durationTimer.get();
             try {
-                logger.debug("Completed [{}] in {}",
-                        workDescriptionSupplier.get(),
-                        Duration.between(startTime, Instant.now()));
+                logger.debug(LogUtil.getDurationMessage(workDescriptionSupplier.get(), duration));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -216,12 +212,11 @@ public final class BasicLambdaLogger implements LambdaLogger {
     public <T> T logDurationIfDebugEnabled(final Supplier<T> timedWork,
                                            final Function<T, String> workDescriptionFunction) {
         if (logger.isDebugEnabled()) {
-            final Instant startTime = Instant.now();
-            T result = timedWork.get();
+            final DurationTimer durationTimer = DurationTimer.start();
+            final T result = timedWork.get();
+            final Duration duration = durationTimer.get();
             try {
-                logger.debug("Completed [{}] in {}",
-                        workDescriptionFunction.apply(result),
-                        Duration.between(startTime, Instant.now()));
+                logger.debug(LogUtil.getDurationMessage(workDescriptionFunction.apply(result), duration));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -235,12 +230,11 @@ public final class BasicLambdaLogger implements LambdaLogger {
     public <T> T logDurationIfInfoEnabled(final Supplier<T> timedWork,
                                           final Supplier<String> workDescriptionSupplier) {
         if (logger.isInfoEnabled()) {
-            final Instant startTime = Instant.now();
-            T result = timedWork.get();
+            final DurationTimer durationTimer = DurationTimer.start();
+            final T result = timedWork.get();
+            final Duration duration = durationTimer.get();
             try {
-                logger.info("Completed [{}] in {}",
-                        workDescriptionSupplier.get(),
-                        Duration.between(startTime, Instant.now()));
+                logger.info(LogUtil.getDurationMessage(workDescriptionSupplier.get(), duration));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -254,12 +248,11 @@ public final class BasicLambdaLogger implements LambdaLogger {
     public <T> T logDurationIfInfoEnabled(final Supplier<T> timedWork,
                                           final Function<T, String> workDescriptionFunction) {
         if (logger.isInfoEnabled()) {
-            final Instant startTime = Instant.now();
-            T result = timedWork.get();
+            final DurationTimer durationTimer = DurationTimer.start();
+            final T result = timedWork.get();
+            final Duration duration = durationTimer.get();
             try {
-                logger.info("Completed [{}] in {}",
-                        workDescriptionFunction.apply(result),
-                        Duration.between(startTime, Instant.now()));
+                logger.info(LogUtil.getDurationMessage(workDescriptionFunction.apply(result), duration));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -273,12 +266,9 @@ public final class BasicLambdaLogger implements LambdaLogger {
     public void logDurationIfTraceEnabled(final Runnable timedWork,
                                           final Supplier<String> workDescriptionSupplier) {
         if (logger.isTraceEnabled()) {
-            final Instant startTime = Instant.now();
-            timedWork.run();
+            final Duration duration = DurationTimer.measure(timedWork);
             try {
-                logger.trace("Completed [{}] in {}",
-                        workDescriptionSupplier.get(),
-                        Duration.between(startTime, Instant.now()));
+                logger.trace(LogUtil.getDurationMessage(workDescriptionSupplier.get(), duration));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -291,12 +281,9 @@ public final class BasicLambdaLogger implements LambdaLogger {
     public void logDurationIfDebugEnabled(final Runnable timedWork,
                                           final Supplier<String> workDescriptionSupplier) {
         if (logger.isDebugEnabled()) {
-            final Instant startTime = Instant.now();
-            timedWork.run();
+            final Duration duration = DurationTimer.measure(timedWork);
             try {
-                logger.debug("Completed [{}] in {}",
-                        workDescriptionSupplier.get(),
-                        Duration.between(startTime, Instant.now()));
+                logger.debug(LogUtil.getDurationMessage(workDescriptionSupplier.get(), duration));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -309,12 +296,9 @@ public final class BasicLambdaLogger implements LambdaLogger {
     public void logDurationIfInfoEnabled(final Runnable timedWork,
                                          final Supplier<String> workDescriptionSupplier) {
         if (logger.isInfoEnabled()) {
-            final Instant startTime = Instant.now();
-            timedWork.run();
+            final Duration duration = DurationTimer.measure(timedWork);
             try {
-                logger.info("Completed [{}] in {}",
-                        workDescriptionSupplier.get(),
-                        Duration.between(startTime, Instant.now()));
+                logger.info(LogUtil.getDurationMessage(workDescriptionSupplier.get(), duration));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }

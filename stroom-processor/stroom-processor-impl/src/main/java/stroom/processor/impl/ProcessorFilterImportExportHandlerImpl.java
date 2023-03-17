@@ -239,9 +239,6 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
             importExportDocumentEventLog.exportDocument(docRef, ioex);
             throw new RuntimeException("Unable to create meta file for processor filter", ioex);
         }
-
-        importExportDocumentEventLog.exportDocument(docRef, null);
-
         return data;
     }
 
@@ -365,12 +362,20 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
                 if (processorFilter.getQueryData() != null && processorFilter.getQueryData().getExpression() != null) {
                     dependencyRemapper.remapExpression(processorFilter.getQueryData().getExpression());
                 }
-                final DocRef docRef = new DocRef(ProcessorFilter.ENTITY_TYPE, processorFilter.getUuid());
+                final DocRef docRef = new DocRef(
+                        ProcessorFilter.ENTITY_TYPE,
+                        processorFilter.getPipelineUuid(),
+                        getPipelineName(processorFilter.getPipeline()));
+
                 dependencies.put(docRef, dependencyRemapper.getDependencies());
             });
         }
 
         return dependencies;
+    }
+
+    private String getPipelineName(final DocRef pipeline) {
+        return docRefInfoService.name(pipeline).orElse("Unknown");
     }
 
     @Override

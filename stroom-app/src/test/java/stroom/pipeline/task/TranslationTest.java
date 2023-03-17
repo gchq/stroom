@@ -37,7 +37,6 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaFields;
-import stroom.node.api.NodeInfo;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
@@ -46,7 +45,7 @@ import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.stepping.SteppingService;
 import stroom.processor.api.ProcessorFilterService;
-import stroom.processor.impl.ProcessorTaskManager;
+import stroom.processor.impl.ProcessorTaskTestHelper;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;
@@ -61,9 +60,9 @@ import stroom.receive.common.StroomStreamProcessor;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTranslationTestHelper;
 import stroom.test.ContentImportService;
-import stroom.test.common.ComparisonHelper;
 import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.util.date.DateUtil;
+import stroom.util.io.DiffUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogUtil;
@@ -100,9 +99,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TranslationTest.class);
 
     @Inject
-    private NodeInfo nodeInfo;
-    @Inject
-    private ProcessorTaskManager processorTaskManager;
+    private ProcessorTaskTestHelper processorTaskTestHelper;
     @Inject
     private SteppingService steppingService;
     @Inject
@@ -143,8 +140,21 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         // Process event data.
         processData(inputDir, outputDir, false, compareOutput, exceptions);
 
+        assertNoExceptions(exceptions);
+    }
+
+    private void assertNoExceptions(final List<Exception> exceptions) {
         if (exceptions.size() > 0) {
-            fail(exceptions.get(0).getMessage());
+            final StringBuilder sb = new StringBuilder("Test failed with ")
+                    .append(exceptions.size())
+                    .append(" exceptions:");
+            exceptions.forEach(e -> {
+                sb.append("\n")
+                        .append(e.getMessage());
+            });
+            sb.append("\nLook further up in the logs for any file diffs.");
+
+            fail(sb.toString());
         }
     }
 
@@ -162,9 +172,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         LOGGER.info("Processing data for {} in {}", name, inputDir.toAbsolutePath().normalize());
         processData(name, inputDir, outputDir, isReference, compareOutput, exceptions);
 
-        if (exceptions.size() > 0) {
-            fail(exceptions.get(0).getMessage());
-        }
+        assertNoExceptions(exceptions);
     }
 
     protected void loadAllRefData() {
@@ -177,9 +185,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         // Process reference data.
         final List<Exception> exceptions = new ArrayList<>();
         processData(inputDir, outputDir, true, false, exceptions);
-        if (exceptions.size() > 0) {
-            fail(exceptions.get(0).getMessage());
-        }
+        assertNoExceptions(exceptions);
     }
 
     protected void importConfig() {
@@ -372,7 +378,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
         addStream(inputFile, feed);
 
-        processorTaskManager.createTasks();
+        processorTaskTestHelper.createAndQueueTasks();
 
         final List<ProcessorTask> tasks = getTasks();
         assertThat(tasks.size())
@@ -530,12 +536,12 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
      * @return The next task or null if there are currently no more tasks.
      */
     private List<ProcessorTask> getTasks() {
-        ProcessorTaskList processorTasks = processorTaskManager.assignTasks(nodeInfo.getThisNodeName(), 100);
+        ProcessorTaskList processorTasks = processorTaskTestHelper.assignTasks(100);
         List<ProcessorTask> list = processorTasks.getList();
         final List<ProcessorTask> dataProcessorTasks = new ArrayList<>(list.size());
         while (list.size() > 0) {
             dataProcessorTasks.addAll(list);
-            processorTasks = processorTaskManager.assignTasks(nodeInfo.getThisNodeName(), 100);
+            processorTasks = processorTaskTestHelper.assignTasks(100);
             list = processorTasks.getList();
         }
 
@@ -627,9 +633,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             }
         }
 
-        if (exceptions.size() > 0) {
-            fail(exceptions.get(0).getMessage());
-        }
+        assertNoExceptions(exceptions);
     }
 
     private SteppingResult step(final StepType direction,
@@ -747,10 +751,15 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
     private void compareFiles(final Path expectedFile, final Path actualFile, final List<Exception> exceptions) {
         try {
-            boolean areFilesTheSame = ComparisonHelper.unifiedDiff(expectedFile, actualFile, 0);
+            boolean areFilesTheSame = !DiffUtil.unifiedDiff(
+                    expectedFile, actualFile, true, 3);
             if (areFilesTheSame) {
                 Files.deleteIfExists(actualFile);
             } else {
+                LOGGER.error("Differences exist between the expected and actual output");
+                LOGGER.info("\nvimdiff {} {}", expectedFile, actualFile);
+                LOGGER.info("If you are satisfied the actual output is correct then copy " +
+                        "the actual over the expected and re-run.");
                 throw new RuntimeException(LogUtil.message("Files are not the same:\n{}\n{}",
                         FileUtil.getCanonicalPath(actualFile),
                         FileUtil.getCanonicalPath(expectedFile)));

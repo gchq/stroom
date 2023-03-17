@@ -52,9 +52,6 @@ import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Builder;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.ExpressionValidationException;
 import stroom.query.api.v2.ExpressionValidator;
@@ -62,13 +59,11 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 import stroom.util.shared.Severity;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.cell.client.TextCell;
@@ -480,6 +475,20 @@ public abstract class AbstractMetaListPresenter
         });
     }
 
+    public void info() {
+        final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
+        validateExpression(expression, exp -> {
+            final FindMetaCriteria criteria = expressionToNonPagedCriteria(exp);
+            showSummary(
+                    criteria,
+                    null,
+                    null,
+                    "Selection Summary",
+                    false,
+                    null);
+        });
+    }
+
     public void download() {
         validateSelection("download", () -> {
             final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
@@ -582,14 +591,7 @@ public abstract class AbstractMetaListPresenter
         validateSelection("delete", () -> {
             final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
             validateExpression(expression, exp -> {
-                final Builder not = ExpressionOperator.builder().op(Op.NOT);
-                not.addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.DELETED.getDisplayValue());
-
-                final Builder builder = ExpressionOperator.builder();
-                builder.addOperator(exp);
-                builder.addOperator(not.build());
-
-                final FindMetaCriteria criteria = expressionToNonPagedCriteria(builder.build());
+                final FindMetaCriteria criteria = expressionToNonPagedCriteria(exp);
                 showSummary(
                         criteria,
                         "deleted",
@@ -605,11 +607,7 @@ public abstract class AbstractMetaListPresenter
         validateSelection("restore", () -> {
             final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
             validateExpression(expression, exp -> {
-                final Builder builder = ExpressionOperator.builder();
-                builder.addOperator(exp);
-                builder.addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.DELETED.getDisplayValue());
-
-                final FindMetaCriteria criteria = expressionToNonPagedCriteria(builder.build());
+                final FindMetaCriteria criteria = expressionToNonPagedCriteria(exp);
                 showSummary(
                         criteria,
                         "restored",

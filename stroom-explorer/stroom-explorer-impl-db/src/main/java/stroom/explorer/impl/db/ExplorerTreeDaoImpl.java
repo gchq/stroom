@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -133,6 +134,25 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                 .where(p.DESCENDANT.eq(n.ID).and(p.DEPTH.gt(0))))
                         .fetch())
                 .map(r -> new ExplorerTreeNode(r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()));
+    }
+
+    /**
+     * Get the root node containing a particular node, or the node itself if it is a root node.
+     */
+    @Override
+    public ExplorerTreeNode getRoot(final ExplorerTreeNode node) {
+        return JooqUtil.contextResult(explorerDbConnProvider, context -> Optional.ofNullable(context
+                .select(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS, p.DEPTH)
+                .from(n.innerJoin(p).on(n.ID.eq(p.ANCESTOR)))
+                .where(p.DESCENDANT.eq(node.getId()).and(p.ANCESTOR.ne(node.getId())))
+                .orderBy(p.DEPTH.desc())
+                .fetchAny()).map(r ->
+                new ExplorerTreeNode(r.get(n.ID),
+                        r.get(n.TYPE),
+                        r.get(n.UUID),
+                        r.get(n.NAME),
+                        r.get(n.TAGS)))
+                .orElse(node));
     }
 
     @Override

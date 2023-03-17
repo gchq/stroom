@@ -16,7 +16,7 @@
 
 package stroom.task.impl;
 
-import stroom.security.api.HasSessionId;
+import stroom.security.api.HasSession;
 import stroom.security.api.UserIdentity;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskTerminatedException;
@@ -149,8 +149,8 @@ public class TaskContextImpl implements TaskContext {
     }
 
     String getSessionId() {
-        if (userIdentity instanceof HasSessionId) {
-            return ((HasSessionId) userIdentity).getSessionId();
+        if (userIdentity instanceof HasSession) {
+            return ((HasSession) userIdentity).getSessionId();
         }
         return null;
     }
