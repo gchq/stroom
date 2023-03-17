@@ -75,8 +75,11 @@ import org.jooq.Record5;
 import org.jooq.Result;
 import org.jooq.Select;
 import org.jooq.SelectConditionStep;
+import org.jooq.SelectField;
 import org.jooq.SelectJoinStep;
+import org.jooq.SelectSelectStep;
 import org.jooq.Table;
+import org.jooq.exception.DataTypeException;
 import org.jooq.impl.DSL;
 
 import java.time.Duration;
@@ -128,6 +131,13 @@ public class MetaDaoImpl implements MetaDao {
     private static final MetaFeed parentFeed = META_FEED.as("parentFeed");
     private static final MetaType parentType = META_TYPE.as("parentType");
     private static final MetaProcessor parentProcessor = META_PROCESSOR.as("parentProcessor");
+
+    private static final List<SelectField<?>> SIMPLE_META_SELECT_FIELDS = List.of(
+            meta.ID,
+            metaType.NAME,
+            metaFeed.NAME,
+            meta.CREATE_TIME,
+            meta.STATUS_TIME);
 
     private static final Function<Record, Meta> RECORD_TO_META_MAPPER = record -> Meta.builder()
             .id(record.get(meta.ID))
@@ -1829,12 +1839,7 @@ public class MetaDaoImpl implements MetaDao {
                     LOGGER.isDebugEnabled(),
                     context -> {
                         var select = context
-                                .select(
-                                        meta.ID,
-                                        metaType.NAME,
-                                        metaFeed.NAME,
-                                        meta.CREATE_TIME,
-                                        meta.STATUS_TIME)
+                                .select(SIMPLE_META_SELECT_FIELDS)
                                 .from(meta)
                                 .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
                                 .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
@@ -1866,13 +1871,18 @@ public class MetaDaoImpl implements MetaDao {
         return simpleMetas;
     }
 
-    private SimpleMeta mapToSimpleMeta(final Record5<Long, String, String, Long, Long> record) {
-        return new SimpleMetaImpl(
-                record.get(meta.ID, long.class),
-                record.get(metaType.NAME, String.class),
-                record.get(metaFeed.NAME, String.class),
-                record.get(meta.CREATE_TIME, long.class),
-                record.get(meta.STATUS_TIME, Long.class));
+    private SimpleMeta mapToSimpleMeta(final Record record) {
+        try {
+            return new SimpleMetaImpl(
+                    record.get(meta.ID, long.class),
+                    record.get(metaType.NAME, String.class),
+                    record.get(metaFeed.NAME, String.class),
+                    record.get(meta.CREATE_TIME, long.class),
+                    record.get(meta.STATUS_TIME, Long.class));
+        } catch (IllegalArgumentException | DataTypeException e) {
+            throw new RuntimeException(LogUtil.message("Error mapping record {} to {}: {}",
+                    record, SimpleMetaImpl.class.getSimpleName(), e.getMessage()), e);
+        }
     }
 
     public boolean validateExpressionTerms(final ExpressionItem expressionItem) {
@@ -1914,5 +1924,57 @@ public class MetaDaoImpl implements MetaDao {
                 .where(META.ID.in(metaIdCollection))
                 .and(META.STATUS.eq(MetaStatusId.LOCKED))
                 .fetchSet(META.ID));
+    }
+
+    @Override
+    public List<SimpleMeta> findBatch(final long minId,
+                                      final Long maxId,
+                                      final int batchSize) {
+
+        LOGGER.debug("findBatch() - minId: {}, maxId: {}, batchSize: {}",
+                minId, maxId, batchSize);
+
+        if ((maxId != null && maxId < minId)
+                || batchSize <= 0) {
+            return Collections.emptyList();
+        } else {
+            final Collection<Condition> conditions = JooqUtil.conditions(
+                    Optional.of(meta.ID.greaterOrEqual(minId)),
+                    Optional.ofNullable(maxId)
+                            .map(meta.ID::lessOrEqual));
+
+            return JooqUtil.contextResult(metaDbConnProvider, context -> {
+                var select = context
+                        .select(SIMPLE_META_SELECT_FIELDS)
+                        .from(meta)
+                        .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                        .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                        .where(conditions)
+                        .orderBy(meta.ID)
+                        .limit(batchSize);
+
+                LOGGER.debug("Find SQL:\n{}", select);
+
+                return select.fetch(this::mapToSimpleMeta);
+            });
+        }
+    }
+
+    @Override
+    public Set<Long> exists(final Set<Long> ids) {
+        if (NullSafe.isEmptyCollection(ids)) {
+            return Collections.emptySet();
+        } else {
+            return JooqUtil.contextResult(metaDbConnProvider, context -> {
+                var select = context
+                        .select(meta.ID)
+                        .from(meta)
+                        .where(meta.ID.in(ids));
+
+                LOGGER.debug("Find SQL:\n{}", select);
+
+                return new HashSet<>(select.fetch(meta.ID));
+            });
+        }
     }
 }

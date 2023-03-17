@@ -2,6 +2,7 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.SimpleMeta;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,7 +25,7 @@ public class FsFileFinder {
         this.dataVolumeService = dataVolumeService;
     }
 
-    Optional<Path> findRootStreamFile(final Meta meta) {
+    Optional<Path> findRootStreamFile(final SimpleMeta meta) {
         final DataVolume dataVolume = dataVolumeService.findDataVolume(meta.getId());
         if (dataVolume != null) {
             return findRootStreamFile(meta, dataVolume.getVolumePath());
@@ -33,7 +34,8 @@ public class FsFileFinder {
         }
     }
 
-    Optional<Path> findRootStreamFile(final Meta meta, final String volumePath) {
+
+    Optional<Path> findRootStreamFile(final SimpleMeta meta, final String volumePath) {
         if (volumePath != null) {
             final Path rootFile = fileSystemStreamPathHelper.getRootPath(
                     Paths.get(volumePath),

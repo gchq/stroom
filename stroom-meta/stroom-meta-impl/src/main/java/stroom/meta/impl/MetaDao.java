@@ -110,4 +110,15 @@ public interface MetaDao {
     List<SimpleMeta> getLogicallyDeleted(Instant deleteThreshold,
                                          int batchSize,
                                          final Set<Long> metaIdExcludeSet);
+
+    List<SimpleMeta> findBatch(final long minId,
+                               final Long maxId,
+                               final int batchSize);
+
+    /**
+     * Check if ids exist.
+     * @param ids A list of IDs to check the presence of
+     * @return The sub-set of ids that exist in the database
+     */
+    Set<Long> exists(Set<Long> ids);
 }
