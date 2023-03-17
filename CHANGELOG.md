@@ -12,6 +12,25 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0.25] - 2023-03-17
+
+* Issue **#3270** : Change the auto logging of audit events to ignore any initiated by the processing user account as this is not human initiated.
+
+* Issue **#3278** : Fix warning about the data retention rule summary query cancellation action not been correctly configured for auto logging.
+
+* Remove thread sleep accidentally added for testing purposes in data retention summary query execution.
+
+* Issue **#3292** : Change the reference data load to not load entries with null values. If `overrideExistingValues` is set and an entry with a null value overrides an existing one with a non-null value, the existing one will be removed.
+
+* Issue **#3299** : Fix schema non-compliant events when importing config. Also fix error handling when user tries to import with no file selected. Improved the audit events for file upload.
+
+* Remove audit logging for `MetaResourceImpl.getTypes` which just lists the stream types and is not an explicit user action.
+
+* Issue **#3305** : Change the formatting of index/data volume limit to show 3 significant figures.
+
+* Issue **#3280** : Make orphan file/meta finder jobs drop out if stroom is shutdown. Change orphan meta finder job to user more efficient SQL. Improve logging output from both finders to include start time, duration and any error/interruption. Fix missing feed names in orphan file finder log.
+
+
 ## [v7.0.24] - 2023-03-08
 
 * Issue **#2759** : Normalise Windows line endings () to Unix-style () when pasting into the ACE text editor.
@@ -4818,7 +4837,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.24...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0.25...HEAD
+[v7.0.25]: https://github.com/gchq/stroom/compare/v7.0.24...v7.0.25
 [v7.0.24]: https://github.com/gchq/stroom/compare/v7.0.23...v7.0.24
 [v7.0.23]: https://github.com/gchq/stroom/compare/v7.0.22...v7.0.23
 [v7.0.23-beta.6]: https://github.com/gchq/stroom/compare/v7.0.23-beta.5...v7.0.23-beta.6
