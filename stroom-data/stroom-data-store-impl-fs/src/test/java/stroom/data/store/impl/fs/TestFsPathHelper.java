@@ -1,20 +1,37 @@
 package stroom.data.store.impl.fs;
 
+import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.impl.fs.FsPathHelper.DecodedPath;
+import stroom.meta.shared.SimpleMeta;
+import stroom.meta.shared.SimpleMetaImpl;
 import stroom.test.common.TestUtil;
 import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+@ExtendWith(MockitoExtension.class)
 class TestFsPathHelper {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestFsPathHelper.class);
 
     @Mock
     private FsFeedPathDao mockFsFeedPathDao;
@@ -22,6 +39,8 @@ class TestFsPathHelper {
     private FsTypePathDao mockFsTypePathDao;
     @Mock
     private StreamTypeExtensions mockStreamTypeExtensions;
+    @InjectMocks
+    private FsPathHelper fsPathHelper;
 
     @SuppressWarnings("checkstyle:LineLength")
     @TestFactory
@@ -51,15 +70,15 @@ class TestFsPathHelper {
         Path path = Path.of("/some/path/default_stream_volume/store/RAW_EVENTS/2022/12/14/TEST_REFERENCE_DATA-EVENTS=414.revt.meta.bgz");
         final DecodedPath decodedPath = FsPathHelper.decodedPath(path);
 
-        Assertions.assertThat(decodedPath.getTypeName())
+        assertThat(decodedPath.getTypeName())
                 .isEqualTo("RAW_EVENTS");
-        Assertions.assertThat(decodedPath.getDate())
+        assertThat(decodedPath.getDate())
                 .isEqualTo(LocalDate.of(2022, 12, 14));
-        Assertions.assertThat(decodedPath.getFeedName())
+        assertThat(decodedPath.getFeedName())
                 .isEqualTo("TEST_REFERENCE_DATA-EVENTS");
-        Assertions.assertThat(decodedPath.getMetaId())
+        assertThat(decodedPath.getMetaId())
                 .isEqualTo(414L);
-        Assertions.assertThat(decodedPath.isDirectory())
+        assertThat(decodedPath.isDirectory())
                 .isFalse();
     }
 
@@ -69,15 +88,15 @@ class TestFsPathHelper {
         Path path = Path.of("/some/path/default_stream_volume/store/RAW_EVENTS/2023/03/15/005/TEST_FEED=999999.revt.meta.bgz.yml");
         final DecodedPath decodedPath = FsPathHelper.decodedPath(path);
 
-        Assertions.assertThat(decodedPath.getTypeName())
+        assertThat(decodedPath.getTypeName())
                 .isEqualTo("RAW_EVENTS");
-        Assertions.assertThat(decodedPath.getDate())
+        assertThat(decodedPath.getDate())
                 .isEqualTo(LocalDate.of(2023, 3, 15));
-        Assertions.assertThat(decodedPath.getFeedName())
+        assertThat(decodedPath.getFeedName())
                 .isEqualTo("TEST_FEED");
-        Assertions.assertThat(decodedPath.getMetaId())
+        assertThat(decodedPath.getMetaId())
                 .isEqualTo(999_999L);
-        Assertions.assertThat(decodedPath.isDirectory())
+        assertThat(decodedPath.isDirectory())
                 .isFalse();
     }
 
@@ -87,15 +106,66 @@ class TestFsPathHelper {
         Path path = Path.of("/some/path/default_stream_volume/store/EVENTS/2023/01/16/002");
         final DecodedPath decodedPath = FsPathHelper.decodedPath(path);
 
-        Assertions.assertThat(decodedPath.getTypeName())
+        assertThat(decodedPath.getTypeName())
                 .isEqualTo("EVENTS");
-        Assertions.assertThat(decodedPath.getDate())
+        assertThat(decodedPath.getDate())
                 .isEqualTo(LocalDate.of(2023, 1, 16));
-        Assertions.assertThat(decodedPath.getFeedName())
+        assertThat(decodedPath.getFeedName())
                 .isNull();
-        Assertions.assertThat(decodedPath.getMetaId())
+        assertThat(decodedPath.getMetaId())
                 .isNull();
-        Assertions.assertThat(decodedPath.isDirectory())
+        assertThat(decodedPath.isDirectory())
                 .isTrue();
+    }
+
+    @Test
+    void testGetRootPath() {
+
+
+        final Path volPath = Path.of("/some/path");
+        final long createMs = LocalDate.of(2023, 3, 17)
+                .atTime(LocalTime.MIDNIGHT)
+                .toInstant(ZoneOffset.UTC)
+                .toEpochMilli();
+        final String streamType = StreamTypeNames.RAW_EVENTS;
+        final String streamTypeAsPath = StreamTypeNames.RAW_EVENTS.toUpperCase().replace(" ", "_");
+        final String feed = "FEED_ME";
+        final long metaId = 123_456_789L;
+        final SimpleMeta simpleMeta = new SimpleMetaImpl(
+                metaId,
+                streamType,
+                feed,
+                createMs,
+                createMs);
+        final FsVolumeConfig fsVolumeConfig = new FsVolumeConfig();
+        final String metaTypeExt = fsVolumeConfig.getMetaTypeExtension(streamType).orElseThrow();
+
+        Mockito.when(mockFsFeedPathDao.getOrCreatePath(Mockito.anyString()))
+                .thenReturn(feed);
+        Mockito.when(mockFsTypePathDao.getOrCreatePath(Mockito.anyString()))
+                .thenReturn(streamTypeAsPath);
+        Mockito.when(mockStreamTypeExtensions.getExtension(Mockito.anyString()))
+                .thenReturn(metaTypeExt);
+
+        final Path rootPath = fsPathHelper.getRootPath(volPath, simpleMeta);
+
+        LOGGER.debug("rootPath: {}", rootPath);
+        final List<String> pathParts = new ArrayList<>(rootPath.getNameCount());
+        for (final Path path : rootPath) {
+            pathParts.add(path.getFileName().toString());
+        }
+
+        assertThat(pathParts)
+                .containsExactly(
+                        "some",
+                        "path",
+                        "store",
+                        streamTypeAsPath,
+                        "2023",
+                        "03",
+                        "17",
+                        "123", // 1st 3 digits of metaId
+                        "456", // 2st 3 digits of metaId
+                        feed + FsPathHelper.FILE_SEPARATOR_CHAR + metaId + "." + metaTypeExt + ".bgz");
     }
 }

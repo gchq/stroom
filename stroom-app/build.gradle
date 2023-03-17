@@ -31,9 +31,9 @@ configurations {
                 //// for some reason the DEBUG logging in the swagger plugin is being
                 //// output as part of the gradle build. This is a very crude hack to stop it
                 //// accepting that you will get no logging at all, even errors.
-                //substitute 
-                    //module("ch.qos.logback:logback-classic") 
-                    //using module("org.slf4j:slf4j-nop:1.7.30") 
+                //substitute
+                    //module("ch.qos.logback:logback-classic")
+                    //using module("org.slf4j:slf4j-nop:1.7.30")
                     //because "We don't want all the debug"
             //}
         }
@@ -124,6 +124,7 @@ dependencies {
     compile project(':stroom-statistics:stroom-statistics-impl-hbase')
     compile project(':stroom-statistics:stroom-statistics-impl-sql')
     compile project(':stroom-task:stroom-task-impl')
+    compile project(':stroom-task:stroom-task-mock')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 

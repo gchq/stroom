@@ -21,6 +21,9 @@ import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.SimpleMeta;
 import stroom.task.api.TaskContext;
+import stroom.util.logging.DurationTimer;
+import stroom.util.logging.DurationTimer.IterationTimer;
+import stroom.util.logging.DurationTimer.TimedResult;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -28,10 +31,11 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 
 import java.nio.file.Path;
-import java.util.Iterator;
+import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -47,24 +51,24 @@ class FsOrphanMetaFinder {
 
     private static final int BATCH_SIZE = 1000;
 
-    private final FsFileFinder fileFinder;
+    private final FsPathHelper fsPathHelper;
     private final MetaService metaService;
     private final DataVolumeService dataVolumeService;
     private final Provider<FsVolumeConfig> fsVolumeConfigProvider;
 
     @Inject
-    public FsOrphanMetaFinder(final FsFileFinder fileFinder,
+    public FsOrphanMetaFinder(final FsPathHelper fsPathHelper,
                               final MetaService metaService,
                               final DataVolumeService dataVolumeService,
                               final Provider<FsVolumeConfig> fsVolumeConfigProvider) {
-        this.fileFinder = fileFinder;
+        this.fsPathHelper = fsPathHelper;
         this.metaService = metaService;
         this.dataVolumeService = dataVolumeService;
         this.fsVolumeConfigProvider = fsVolumeConfigProvider;
     }
 
-    public void scan(final Consumer<SimpleMeta> orphanConsumer,
-                     final TaskContext taskContext) {
+    public FsOrphanMetaFinderProgress scan(final Consumer<SimpleMeta> orphanConsumer,
+                                           final TaskContext taskContext) {
         final long maxId = metaService.getMaxId();
 
         final int batchSize = fsVolumeConfigProvider.get().getFindOrphanedMetaBatchSize();
@@ -88,6 +92,12 @@ class FsOrphanMetaFinder {
             LOGGER.info("Aborted orphaned meta finder scan at meta ID {}, max ID {}, batch size {}",
                     progress.getId(), maxId, batchSize);
         }
+
+        LOGGER.debug(LogUtil.message("Total file list duration: {}, avg: {}",
+                progress.getTotalFileListDuration(),
+                progress.getAverageFileListDuration()));
+
+        return progress;
     }
 
     private long scanBatch(final long minId,
@@ -98,8 +108,13 @@ class FsOrphanMetaFinder {
         progress.setMinId(minId);
         progress.log();
 
-        final List<SimpleMeta> metaList = metaService.findBatch(minId, maxId, progress.getBatchSize());
-        LOGGER.debug(() -> LogUtil.message("Found {} meta records", metaList.size()));
+        final List<SimpleMeta> metaList = LOGGER.logDurationIfDebugEnabled(
+                () -> metaService.findBatch(minId, maxId, progress.getBatchSize()),
+                list -> LogUtil.message("Found {} meta records, minId: {}, maxId: {}", list.size(), minId, maxId));
+
+        if (LOGGER.isDebugEnabled()) {
+            logBatchToDebug(metaList);
+        }
 
         final long result;
         if (metaList.size() > 0) {
@@ -117,29 +132,90 @@ class FsOrphanMetaFinder {
             // Now get all the volume paths for our batch of meta IDs to save hitting the
             // DB for each one. Can't do all this in one sql with a join a meta is in a logically
             // different db to meta_volume.
-            final ResultPage<DataVolume> volumeResultPage = dataVolumeService.find(volumeCriteria);
+            final ResultPage<DataVolume> volumeResultPage = LOGGER.logDurationIfDebugEnabled(
+                    () -> dataVolumeService.find(volumeCriteria),
+                    resultPage -> LogUtil.message("Found {} dataVolumes", resultPage.size()));
+
             final List<DataVolume> dataVolumes = volumeResultPage.getValues();
+            final Map<String, Map<Path, Set<Path>>> localDirListingMap = new HashMap<>();
+            final IterationTimer getRootPathIterationTimer = DurationTimer.newIterationTimer();
 
-            LOGGER.debug(() -> LogUtil.message("Found {} dataVolume records", dataVolumes.size()));
+            // DataVolume is 1:1 with SimpleMeta
+            // First pass to build a picture of the file contents of all the parent dirs as we are
+            // expecting/hoping for lots of the metas to share common parent dirs.
+            // The hope is that it is cheaper to list the root files in N parent dirs, where N < batch size,
+            // then see if that list contains each meta root file, rather than hitting the FS for each meta
+            // root file to check existence.
+            for (final DataVolume dataVol : dataVolumes) {
+                if (!isTerminated(taskContext)) {
 
-            final Iterator<DataVolume> iterator = dataVolumes.iterator();
-            while (iterator.hasNext()
-                    && !Thread.currentThread().isInterrupted()
-                    && !taskContext.isTerminated()) {
-                final DataVolume dataVolume = iterator.next();
-                final long metaId = dataVolume.getMetaId();
-                LOGGER.trace("metaId: {}", metaId);
-                // Should never be null as we used the metaMap keys to find the data vols
-                final SimpleMeta meta = metaIdToMetaMap.get(metaId);
-                progress.setId(metaId);
+                    final long metaId = dataVol.getMetaId();
+                    // Should never be null as we used the metaMap keys to find the data vols
+                    final SimpleMeta meta = metaIdToMetaMap.get(metaId);
+                    final String streamTypeName = meta.getTypeName();
 
-                final Optional<Path> optional = fileFinder.findRootStreamFile(meta, dataVolume.getVolumePath());
-                if (optional.isEmpty()) {
-                    progress.foundOrphan();
-                    progress.log();
-                    orphanConsumer.accept(meta);
+                    // Each meta can have 1-* files, so get only the root ones, e.g. ...042.evt.bgz in
+                    // ...042.evt.bgz
+                    // ...042.evt.bgz.seg.dat
+                    // ...042.evt.bgz.mf.dat
+
+                    final TimedResult<Path> rootFileResult = getRootPathIterationTimer.measureIf(
+                            LOGGER.isDebugEnabled(),
+                            () -> fsPathHelper.getRootPath(
+                                    Paths.get(dataVol.getVolumePath()),
+                                    meta,
+                                    streamTypeName));
+                    final Path rootFile = rootFileResult.getResult();
+
+                    // Never more than 1000 root files per dir, so set capacity to that
+                    final Map<Path, Set<Path>> parentPathToRootFilesMap = localDirListingMap.computeIfAbsent(
+                            streamTypeName, streamTypeName2 -> new HashMap<>(1_000));
+
+                    final Path parent = rootFile.getParent();
+                    if (parent != null) {
+                        // If not already found then find the root files under this parent
+                        // and cache them. First check the local cache and if not in there try
+                        // loading from the progress cache
+                        final Set<Path> rootFilePaths = parentPathToRootFilesMap.computeIfAbsent(parent, parent2 -> {
+                            // See if we already have it from the last batch, else hit the FS
+                            return progress.getCachedRootFiles(streamTypeName, parent2)
+                                    .orElseGet(() -> {
+                                        progress.recordCacheMiss();
+                                        final TimedResult<Set<Path>> rootFilesResult = DurationTimer.measureIf(
+                                                LOGGER.isDebugEnabled(),
+                                                () -> fsPathHelper.findRootStreamFiles(
+                                                        meta.getTypeName(), parent));
+
+                                        if (LOGGER.isDebugEnabled()) {
+                                            progress.recordFileListDuration(rootFilesResult.getDuration());
+                                        }
+                                        return rootFilesResult.getResult();
+                                    });
+                        });
+
+                        if (!rootFilePaths.contains(rootFile)) {
+                            // Can't find the root file for this meta, so record it
+                            LOGGER.trace("rootFilePath '{}' not found in parent '{}'", rootFile, parent);
+                            progress.foundOrphan();
+                            progress.log();
+                            orphanConsumer.accept(meta);
+                        }
+                    } else {
+                        // Should never be missing parent
+                        LOGGER.error("Root stream file '{}' for meta ID {} has no parent", rootFile, metaId);
+                    }
+                    progress.setId(metaId);
                 }
             }
+
+            LOGGER.debug("getRootPath timings: {}", getRootPathIterationTimer);
+
+            // Finished our batch so update the passed in map to match what we found on this run.
+            // Can't hold for every batch as the number of paths involved is vast.
+            // At most, we are holding two batches worth in the hope that parent paths from the prev
+            // batch are useful in the next.
+            progress.updateCachedRootFiles(localDirListingMap);
+
             // Only log at the end of each batch (or when orphan found) to reduce overhead
             progress.log();
 
@@ -147,8 +223,9 @@ class FsOrphanMetaFinder {
             if (progress.getId() < maxId) {
                 // Update the tracker so if the job is cancelled or stroom is shutdown we can resume
                 // from where we got to on next run
-                dataVolumeService.updateOrphanedMetaTracker(progress.getId() + 1);
-                result = progress.getId();
+                final long nextMinId = progress.getId() + 1;
+                dataVolumeService.updateOrphanedMetaTracker(nextMinId);
+                result = nextMinId;
             } else {
                 // Next run we start from the beginning
                 dataVolumeService.updateOrphanedMetaTracker(0);
@@ -163,5 +240,22 @@ class FsOrphanMetaFinder {
             LOGGER.info("Completed orphaned meta finder scan at ID {}", progress.getId());
         }
         return result;
+    }
+
+    private static void logBatchToDebug(final List<SimpleMeta> metaList) {
+        LOGGER.debug("Metas in batch: {}, IDs: {} => {}",
+                metaList.size(),
+                metaList.stream()
+                        .mapToLong(SimpleMeta::getId)
+                        .min()
+                        .orElse(-1),
+                metaList.stream()
+                        .mapToLong(SimpleMeta::getId)
+                        .max()
+                        .orElse(-1));
+    }
+
+    private boolean isTerminated(final TaskContext taskContext) {
+        return Thread.currentThread().isInterrupted() || taskContext.isTerminated();
     }
 }

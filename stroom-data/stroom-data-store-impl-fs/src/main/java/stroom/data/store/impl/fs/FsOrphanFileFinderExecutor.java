@@ -29,6 +29,7 @@ import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.LogUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,25 +56,20 @@ class FsOrphanFileFinderExecutor {
     private final FsVolumeService volumeService;
     private final Duration oldAge;
     private final Provider<FsOrphanFileFinder> orphanFileFinderProvider;
-    //    private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
     private final PathCreator pathCreator;
-//    private final DataStoreServiceConfig config;
 
 
     @Inject
     FsOrphanFileFinderExecutor(final FsVolumeService volumeService,
                                final Provider<FsOrphanFileFinder> orphanFileFinderProvider,
-//                               final ExecutorProvider executorProvider,
                                final TaskContextFactory taskContextFactory,
                                final Provider<DataStoreServiceConfig> config,
                                final PathCreator pathCreator) {
         this.volumeService = volumeService;
         this.orphanFileFinderProvider = orphanFileFinderProvider;
-//        this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
         this.pathCreator = pathCreator;
-//        this.config = config;
 
         Duration age;
         age = config.get().getFileSystemCleanOldAge().getDuration();
@@ -87,7 +83,7 @@ class FsOrphanFileFinderExecutor {
         final TaskContext taskContext = taskContextFactory.current();
         taskContext.info(() -> "Starting orphan file finder");
         LOGGER.info("{} - Starting, using logger name: '{}'", TASK_NAME, ORPHAN_FILE_LOGGER.getName());
-        ORPHAN_FILE_LOGGER.info("Starting {} - {}", TASK_NAME, DateUtil.createNormalDateTimeString());
+        ORPHAN_FILE_LOGGER.info("Starting {} at {}", TASK_NAME, DateUtil.createNormalDateTimeString());
         ORPHAN_FILE_LOGGER.info("Orphaned files/directories:");
         final DurationTimer durationTimer = DurationTimer.start();
 
@@ -107,21 +103,31 @@ class FsOrphanFileFinderExecutor {
             scan(orphanConsumer, taskContext);
 
             if (Thread.currentThread().isInterrupted() || taskContext.isTerminated()) {
-                ORPHAN_FILE_LOGGER.info("--- {} task {} ---",
-                        TASK_NAME, Thread.currentThread().isInterrupted()
-                                ? "interrupted"
-                                : "terminated");
+                final String state = Thread.currentThread().isInterrupted()
+                        ? "interrupted"
+                        : "terminated";
+                ORPHAN_FILE_LOGGER.info("--- {} task {} at {} ---",
+                        TASK_NAME,
+                        state,
+                        DateUtil.createNormalDateTimeString());
+                LOGGER.info(LogUtil.message("{} - {} in {}",
+                        TASK_NAME, state, durationTimer));
             } else {
                 ORPHAN_FILE_LOGGER.info(summary.toString());
-                ORPHAN_FILE_LOGGER.info("Completed {} in {}, found {} orphaned files/directories",
-                        TASK_NAME, durationTimer, counter.get());
+                ORPHAN_FILE_LOGGER.info("Completed {} at {} in {}, found {} orphaned files/directories",
+                        TASK_NAME,
+                        DateUtil.createNormalDateTimeString(),
+                        durationTimer,
+                        counter.get());
+                LOGGER.info(LogUtil.message("{} - Finished, in {}.", TASK_NAME, durationTimer));
             }
         } catch (Exception e) {
-            ORPHAN_FILE_LOGGER.info("--- {} task failed due to: {} ---",
-                    TASK_NAME, e.getMessage());
+            ORPHAN_FILE_LOGGER.info("--- {} task failed at {} due to: {} ---",
+                    TASK_NAME,
+                    DateUtil.createNormalDateTimeString(),
+                    e.getMessage());
             throw e;
         }
-        LOGGER.info("{} - Finished, in {}", TASK_NAME, durationTimer);
     }
 
     public void scan(final Consumer<Path> orphanConsumer, final TaskContext parentContext) {

@@ -19,10 +19,12 @@ package stroom.data.store.impl.fs;
 import stroom.data.shared.StreamTypeNames;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.SimpleMeta;
+import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import com.google.inject.Inject;
 
@@ -40,17 +42,23 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 class FsPathHelper {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsPathHelper.class);
 
     /**
      * We use this rather than the File.separator as we need to be standard
      * across Windows and UNIX.
      */
-    private static final String FILE_SEPARATOR_CHAR = "=";
+    static final String FILE_SEPARATOR_CHAR = "=";
     private static final String STORE_NAME = "store";
 
     private static final String[] CHILD_STREAM_TYPES = new String[]{
@@ -71,6 +79,12 @@ class FsPathHelper {
         this.fileSystemFeedPaths = fileSystemFeedPaths;
         this.fileSystemTypePaths = fileSystemTypePaths;
         this.streamTypeExtensions = streamTypeExtensions;
+    }
+
+    static boolean isStreamFile(final Path path) {
+        // A simple test to avoid hitting the fs to distinguish between a file and a directory
+        return NullSafe.test(path, path2 ->
+                path2.getFileName().toString().contains(FILE_SEPARATOR_CHAR));
     }
 
     static long getId(final Path path) {
@@ -181,6 +195,11 @@ class FsPathHelper {
         return rtn;
     }
 
+    Path getRootPath(final Path volumePath,
+                     final SimpleMeta meta) {
+        return getRootPath(volumePath, meta, meta.getTypeName());
+    }
+
     /**
      * Return a File IO object.
      */
@@ -197,9 +216,7 @@ class FsPathHelper {
                 FILE_SEPARATOR_CHAR +
                 paddedId +
                 "." +
-                streamTypeExtensions.getExtension(streamTypeName) +
-                "." +
-                getFileStoreType(streamTypeName);
+                buildRootExtension(streamTypeName);
 
         Path result = volumePath;
         result = result
@@ -212,6 +229,34 @@ class FsPathHelper {
         result = FsPrefixUtil.appendIdPath(result, paddedId);
 
         return result.resolve(fileName);
+    }
+
+    private String buildRootExtension(final String streamTypeName) {
+        return streamTypeExtensions.getExtension(streamTypeName) +
+                "." +
+                getFileStoreType(streamTypeName);
+    }
+
+    Set<Path> findRootStreamFiles(final String streamTypeName, final Path parentPath) {
+        if (parentPath == null) {
+            return Collections.emptySet();
+        } else {
+            final String rootExtension = buildRootExtension(streamTypeName);
+            try (Stream<Path> stream = Files.list(parentPath)) {
+
+                // Get all the files
+                final Set<Path> rootFilePaths = stream
+                        .filter(childPath ->
+                                childPath.toString().endsWith(rootExtension))
+                        .collect(Collectors.toSet());
+                LOGGER.trace(() -> LogUtil.message("found {} rootFilePaths for {}",
+                        rootFilePaths.size(), parentPath));
+                return rootFilePaths;
+            } catch (IOException e) {
+                throw new RuntimeException(LogUtil.message(
+                        "Error getting directory listing for '{}': {}", parentPath, e.getMessage()), e);
+            }
+        }
     }
 
     /**
@@ -282,16 +327,12 @@ class FsPathHelper {
     }
 
     private FileStoreType getFileStoreType(final String streamTypeName) {
-        if (InternalStreamTypeNames.SEGMENT_INDEX.equals(streamTypeName)) {
-            return FileStoreType.dat;
-        }
-        if (InternalStreamTypeNames.BOUNDARY_INDEX.equals(streamTypeName)) {
-            return FileStoreType.dat;
-        }
-        if (InternalStreamTypeNames.MANIFEST.equals(streamTypeName)) {
-            return FileStoreType.dat;
-        }
-        return FileStoreType.bgz;
+        return switch (streamTypeName) {
+            case InternalStreamTypeNames.SEGMENT_INDEX,
+                    InternalStreamTypeNames.BOUNDARY_INDEX,
+                    InternalStreamTypeNames.MANIFEST -> FileStoreType.dat;
+            default -> FileStoreType.bgz;
+        };
     }
 
     boolean isStreamTypeLazy(final String streamTypeName) {

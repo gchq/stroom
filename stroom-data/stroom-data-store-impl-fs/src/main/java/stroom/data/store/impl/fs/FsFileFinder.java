@@ -34,6 +34,7 @@ public class FsFileFinder {
         }
     }
 
+
     Optional<Path> findRootStreamFile(final SimpleMeta meta, final String volumePath) {
         if (volumePath != null) {
             final Path rootFile = fileSystemStreamPathHelper.getRootPath(
