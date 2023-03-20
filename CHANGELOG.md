@@ -13,6 +13,28 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.1] - 2023-03-20
+
+* Issue **#3309** : Add param input to pre 7.2 dashboards.
+
+* Issue **#3308** : Save state of quick time filter.
+
+* Issue **#3310** : Fix right alignment of numeric columns.
+
+* Issue **#3285** : Persist key/value and list input selections in dashboards.
+
+* Issue **#3333** : Fix Xerces UTF-8 handling by always using a reader.
+
+* Issue **#3105** : Add duplicate column menu item to dashboard tables.
+
+* Issue **#3105** : Add feature to duplicate dashboard tabs and whole tab panels.
+
+* Issue **#3297** : Fix tab selector popup in dashboards.
+
+* Issue **#3313** : Add feature to move dashboard table columns first/last via menu.
+
+* Issue **#1631** : Add content search feature.
+
 * Issue **#3270** : Change the auto logging of audit events to ignore any initiated by the processing user account as this is not human initiated.
 
 * Issue **#3278** : Fix warning about the data retention rule summary query cancellation action not been correctly configured for auto logging.
@@ -5116,7 +5138,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-alpha.13...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.1...HEAD
+[v7.2-beta.1]: https://github.com/gchq/stroom/compare/v7.2-alpha.13...v7.2-beta.1
 [v7.2-alpha.13]: https://github.com/gchq/stroom/compare/v7.2-alpha.12...v7.2-alpha.13
 [v7.2-alpha.12]: https://github.com/gchq/stroom/compare/v7.2-alpha.11...v7.2-alpha.12
 [v7.2-alpha.11]: https://github.com/gchq/stroom/compare/v7.2-alpha.10...v7.2-alpha.11
