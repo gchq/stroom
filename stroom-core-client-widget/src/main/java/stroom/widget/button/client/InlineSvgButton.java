@@ -52,7 +52,7 @@ public class InlineSvgButton extends ButtonBase implements ButtonView {
         sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.FOCUSEVENTS | Event.KEYEVENTS);
         getElement().getStyle().setDisplay(Display.INLINE_BLOCK);
 
-        getElement().setClassName("inline-svg-button fa-button");
+        getElement().setClassName("inline-svg-button icon-button");
 
         background = Document.get().createDivElement();
         background.setClassName("background");
@@ -66,15 +66,7 @@ public class InlineSvgButton extends ButtonBase implements ButtonView {
     }
 
     public void setSvg(final String svg) {
-//        face.addClassName("inline-svg-button-face");
         face.setInnerHTML(svg);
-
-//        // Add the button tool-tip
-//        if (svgPreset.hasTitle()) {
-//            setTitle(svgPreset.getTitle());
-//        } else {
-//            setTitle("");
-//        }
     }
 
     @Override

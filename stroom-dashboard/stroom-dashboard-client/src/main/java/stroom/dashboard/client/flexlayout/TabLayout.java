@@ -21,6 +21,7 @@ import stroom.dashboard.shared.DashboardConfig.TabVisibility;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.svg.client.SvgImages;
+import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.view.LayerContainerImpl;
 import stroom.widget.tab.client.view.LinkTabBar;
@@ -41,8 +42,8 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
     private final EventBus eventBus;
     private final TabLayoutConfig tabLayoutConfig;
     private final FlexLayoutChangeHandler changeHandler;
-    private final Button settings;
-    private final Button close;
+    private final InlineSvgButton settings;
+    private final InlineSvgButton close;
     private final LinkTabBar tabBar;
     private final LayerContainer layerContainer;
     private final HandlerRegistrations handlerRegistrations = new HandlerRegistrations();
@@ -82,20 +83,19 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         panel.add(contentOuter);
         initWidget(panel);
 
-
         final FlowPanel buttons = new FlowPanel();
-        buttons.setStyleName("dock-min button-container svg-image-button-group tabLayout-buttons");
+        buttons.setStyleName("dock-min button-container icon-button-group tabLayout-buttons");
         barOuter.add(buttons);
 
-        settings = new Button();
-        settings.setStyleName("svg-image-button tabLayout-settingsButton");
-        settings.getElement().setInnerHTML(SvgImages.MONO_SETTINGS);
+        settings = new InlineSvgButton();
+        settings.addStyleName("tabLayout-settingsButton");
+        settings.setSvg(SvgImages.MONO_SETTINGS);
         settings.setTitle("Settings");
         buttons.add(settings);
 
-        close = new Button();
-        close.setStyleName("svg-image-button tabLayout-closeButton");
-        close.getElement().setInnerHTML(SvgImages.MONO_CLOSE);
+        close = new InlineSvgButton();
+        close.addStyleName("tabLayout-closeButton");
+        close.setSvg(SvgImages.MONO_CLOSE);
         close.setTitle("Close");
         buttons.add(close);
 

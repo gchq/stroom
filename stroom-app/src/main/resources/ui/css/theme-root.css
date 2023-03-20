@@ -49,6 +49,15 @@
     --button__text-color--disabled: #888;
     --button__border-color--disabled--hover: #aaa;
 
+    --icon-button__background-color--on: rgba(0,0,0,.05);
+    --icon-button__border-color--on: rgba(0,0,0,.1);
+    --icon-button__background-color--hover: rgba(0,0,0,.05);
+    --icon-button__border-color--hover: transparent;
+    --navigation-icon-button__background-color--on: rgba(10,36,65,.4);
+    --navigation-icon-button__border-color--on: var(--blue-500-rgb);
+    --navigation-icon-button__background-color--hover: rgba(10,36,65,.4);
+    --navigation-icon-button__border-color--hover: transparent;
+
     --expression-item-box__background-color--selected: #bbdefb;
     --expression-item-box__background-color--hover: #f7fbff;
     --expression-item-box__background-color--disabled: #ccc;
@@ -112,7 +121,7 @@
     --curve-tab__border--hover: thin solid rgb(200 200 200);
     --curve-tab__background-color--selected: #fff;
     --curve-tab__background-color--hover: #fff;
-    --curve-tab__box-shadow--selected: 0 0 1px 1px rgb(200 200 200 / 100%);
+    --curve-tab__box-shadow--selected: 0 0 4px 0px rgb(200 200 200 / 100%);
     --curve-tab__border-radius: .2rem;
 
     /* Controls */

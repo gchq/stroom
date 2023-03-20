@@ -1,8 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
->
-
+             xmlns:b="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="annotationContainer">
         <g:FlowPanel styleName="annotationTop">
             <g:FlowPanel addStyleNames="annotationTitleContainer">
@@ -19,7 +18,7 @@
                     <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
                         <g:Label ui:field="statusLabel" styleName="annotationClickLabel clickable" text="Status:"/>
                         <g:Label ui:field="status" styleName="annotationLabel"/>
-                        <g:Button ui:field="statusIcon" title="Change Status" styleName="iconButton allow-focus"/>
+                        <b:InlineSvgButton ui:field="statusIcon" title="Change Status"/>
                     </g:FlowPanel>
                 </g:FlowPanel>
                 <g:FlowPanel addStyleNames="annotationSetting">
@@ -29,15 +28,14 @@
                         <g:Label ui:field="assignedTo" styleName="annotationLabel"/>
                         <g:Label ui:field="assignYourself" styleName="annotationAssignYourself">Assign Yourself
                         </g:Label>
-                        <g:Button ui:field="assignedToIcon" title="Change Assigned To"
-                                  styleName="iconButton allow-focus"/>
+                        <b:InlineSvgButton ui:field="assignedToIcon" title="Change Assigned To"/>
                     </g:FlowPanel>
                 </g:FlowPanel>
                 <g:FlowPanel addStyleNames="annotationSetting">
                     <g:FlowPanel ui:field="commentFlowPanel" addStyleNames="annotationSettingHeading clickable">
                         <g:Label ui:field="commentLabel" styleName="annotationClickLabel clickable w-100"
                                  text="Comment:"/>
-                        <g:Button ui:field="commentIcon" title="Choose Comment" styleName="iconButton allow-focus"/>
+                        <b:InlineSvgButton ui:field="commentIcon" title="Choose Comment"/>
                     </g:FlowPanel>
                 </g:FlowPanel>
                 <g:FlowPanel styleName="annotationCommentContainer">
@@ -48,7 +46,8 @@
                 </g:FlowPanel>
             </g:FlowPanel>
             <g:FlowPanel styleName="dock-min dock-container-vertical annotationRight">
-                <g:Label ui:field="showLinkedEvents" styleName="dock-min showLinkedEvents allow-focus" text="Show Linked Events"/>
+                <g:Label ui:field="showLinkedEvents" styleName="dock-min showLinkedEvents allow-focus"
+                         text="Show Linked Events"/>
                 <g:SimplePanel ui:field="history" styleName="dock-max annotationHistory"/>
             </g:FlowPanel>
         </g:FlowPanel>

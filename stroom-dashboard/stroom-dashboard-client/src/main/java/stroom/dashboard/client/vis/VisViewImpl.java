@@ -18,6 +18,7 @@ package stroom.dashboard.client.vis;
 
 import stroom.dashboard.client.vis.VisPresenter.VisView;
 import stroom.svg.client.SvgImages;
+import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.util.client.ElementUtil;
@@ -60,9 +61,9 @@ public class VisViewImpl extends ViewWithUiHandlers<VisUiHandlers>
         spinnerSmall.setStyleName("dashboardVis-smallSpinner");
         spinnerSmall.setTitle("Pause Update");
 
-        final Button pause = new Button();
-        pause.setStyleName("dashboardVis-pause svg-image-button");
-        pause.getElement().setInnerHTML(SvgImages.MONO_PAUSE);
+        final InlineSvgButton pause = new InlineSvgButton();
+        pause.addStyleName("dashboardVis-pause");
+        pause.setSvg(SvgImages.MONO_PAUSE);
         pause.setTitle("Resume Update");
 
         widget = new FlowPanel() {

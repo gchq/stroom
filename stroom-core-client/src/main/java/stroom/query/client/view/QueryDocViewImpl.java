@@ -21,6 +21,7 @@ import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.QueryDocPresenter.QueryDocView;
 import stroom.query.client.presenter.QueryDocUiHandlers;
 import stroom.svg.client.SvgImages;
+import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -44,7 +45,7 @@ public class QueryDocViewImpl
     @UiField
     NavButtons navButtons;
     @UiField
-    Button warnings;
+    InlineSvgButton warnings;
     @UiField
     QueryButtons queryButtons;
     @UiField
@@ -59,7 +60,7 @@ public class QueryDocViewImpl
                             final UserPreferencesManager userPreferencesManager) {
         widget = binder.createAndBindUi(this);
         timeRangeSelector.setUtc(userPreferencesManager.isUtc());
-        warnings.getElement().setInnerHTML(SvgImages.WARNING);
+        warnings.setSvg(SvgImages.WARNING);
     }
 
     @Override
