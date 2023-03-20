@@ -1,5 +1,7 @@
 package stroom.util.sysinfo;
 
+import stroom.util.NullSafe;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -11,6 +13,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.OptionalLong;
 
 public interface HasSystemInfo {
 
@@ -95,5 +100,47 @@ public interface HasSystemInfo {
     enum ParamType {
         OPTIONAL,
         MANDATORY
+    }
+
+    static OptionalLong getLongParam(final Map<String, String> params,
+                                     final String paramKey) {
+        if (NullSafe.isEmptyMap(params) || NullSafe.isBlankString(paramKey)) {
+            return OptionalLong.empty();
+        } else {
+            final String valStr = params.get(paramKey);
+            if (NullSafe.isBlankString(valStr)) {
+                return OptionalLong.empty();
+            } else {
+                return OptionalLong.of(Long.parseLong(valStr));
+            }
+        }
+    }
+
+    static OptionalInt getIntParam(final Map<String, String> params,
+                                   final String paramKey) {
+        if (NullSafe.isEmptyMap(params) || NullSafe.isBlankString(paramKey)) {
+            return OptionalInt.empty();
+        } else {
+            final String valStr = params.get(paramKey);
+            if (NullSafe.isBlankString(valStr)) {
+                return OptionalInt.empty();
+            } else {
+                return OptionalInt.of(Integer.parseInt(valStr));
+            }
+        }
+    }
+
+    static Optional<String> getParam(final Map<String, String> params,
+                                     final String paramKey) {
+        if (NullSafe.isEmptyMap(params) || NullSafe.isBlankString(paramKey)) {
+            return Optional.empty();
+        } else {
+            final String valStr = params.get(paramKey);
+            if (NullSafe.isBlankString(valStr)) {
+                return Optional.empty();
+            } else {
+                return Optional.of(valStr);
+            }
+        }
     }
 }

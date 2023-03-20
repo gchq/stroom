@@ -105,7 +105,7 @@ class MetaResourceImpl implements MetaResource {
     }
 
     @Override
-    @AutoLogged(OperationType.VIEW)
+    @AutoLogged(OperationType.UNLOGGED) // See no point in logging this as it is not really an explicit user action
     public List<String> getTypes() {
         return metaServiceProvider
                 .get()

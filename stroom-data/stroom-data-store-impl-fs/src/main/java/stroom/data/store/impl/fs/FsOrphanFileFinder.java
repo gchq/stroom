@@ -20,12 +20,6 @@ package stroom.data.store.impl.fs;
 import stroom.data.store.impl.ScanVolumePathResult;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.meta.api.MetaService;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFields;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskContext;
@@ -34,7 +28,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.ResultPage;
+import stroom.util.logging.LogUtil;
 
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
@@ -45,7 +39,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -58,7 +51,7 @@ class FsOrphanFileFinder {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsOrphanFileFinder.class);
 
-    private static final int BATCH_SIZE = 1000;
+    private static final int BATCH_SIZE = 1_000;
 
     private final FsPathHelper fileSystemStreamPathHelper;
     private final MetaService metaService;
@@ -95,6 +88,7 @@ class FsOrphanFileFinder {
                         " - Skipping as root is not a directory !!");
                 return result;
             }
+            LOGGER.debug("{} - Scanning directory {}", FsOrphanFileFinderExecutor.TASK_NAME, directory);
 
             final Map<Long, Set<Path>> fileMap = new HashMap<>();
             final Map<Path, Long> dirAges = new HashMap<>();
@@ -138,7 +132,7 @@ class FsOrphanFileFinder {
                                 taskContext.info(() -> FileUtil.getCanonicalPath(file));
                                 cleanProgress.addFile();
 
-                                if (Thread.currentThread().isInterrupted()) {
+                                if (Thread.currentThread().isInterrupted() || taskContext.isTerminated()) {
                                     return FileVisitResult.TERMINATE;
                                 }
 
@@ -160,7 +154,7 @@ class FsOrphanFileFinder {
 
                                 if (fileMap.size() >= BATCH_SIZE) {
                                     // Validate the batch of files against the DB.
-                                    validateFiles(fileMap, cleanProgress, orphanConsumer);
+                                    validateFiles(fileMap, cleanProgress, orphanConsumer, taskContext);
                                     fileMap.clear();
                                 }
 
@@ -171,8 +165,10 @@ class FsOrphanFileFinder {
                 LOGGER.error(e.getMessage(), e);
             }
 
-            // Validate any remaining files against the DB.
-            validateFiles(fileMap, cleanProgress, orphanConsumer);
+            if (!Thread.currentThread().isInterrupted() && !taskContext.isTerminated()) {
+                // Validate any remaining files against the DB.
+                validateFiles(fileMap, cleanProgress, orphanConsumer, taskContext);
+            }
             fileMap.clear();
 
             return result;
@@ -181,39 +177,34 @@ class FsOrphanFileFinder {
 
     private void validateFiles(final Map<Long, Set<Path>> fileMap,
                                final FsOrphanFileFinderProgress cleanProgress,
-                               final Consumer<Path> orphanConsumer) {
-        final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.OR);
-        fileMap.keySet().forEach(id -> builder.addTerm(MetaFields.ID, Condition.EQUALS, id));
-        final ExpressionOperator expression = builder.build();
+                               final Consumer<Path> orphanConsumer,
+                               final TaskContext taskContext) {
+        // See if all the meta ids from the files exist in the db
+        final Set<Long> metaIdSet = metaService.exists(fileMap.keySet());
 
-        final FindMetaCriteria criteria = new FindMetaCriteria(expression);
-        final ResultPage<Meta> resultPage = metaService.find(criteria);
-
-        // If we have had the same number of results from the DB that we asked for then all is good.
-        final List<Meta> metaList = resultPage.getValues();
-        if (metaList.size() != fileMap.size()) {
-            LOGGER.debug(() -> "Meta list is different size to file map: " +
-                    "metaList.size() = " +
-                    metaList.size() +
-                    ", fileMap.size() = " +
-                    fileMap.size());
-            LOGGER.debug(() -> "Expression = " +
-                    expression);
-            LOGGER.debug(() -> "Batch size = " +
-                    BATCH_SIZE);
+//        // If we have had the same number of results from the DB that we asked for then all is good.
+//        final Se<Meta> metaList = resultPage.getValues();
+        if (metaIdSet.size() != fileMap.size()) {
+            LOGGER.debug(() -> LogUtil.message(
+                    "metaIdSet is is different size to file map: " +
+                            "metaIdSet.size(): {}, fileMap.size(): {}, batch size {}",
+                    metaIdSet.size(), fileMap.size(), BATCH_SIZE));
 
             // Determine which files are orphans.
-            for (final Meta meta : metaList) {
-                fileMap.remove(meta.getId());
-            }
-            fileMap.values().forEach(list ->
-                    list.forEach(file -> {
-                        LOGGER.trace(() -> "Orphan file: " + FileUtil.getCanonicalPath(file));
-                        if (Files.isRegularFile(file)) {
-                            cleanProgress.addOrphanCount();
-                            orphanConsumer.accept(file);
-                        }
-                    }));
+            metaIdSet.forEach(fileMap::remove);
+
+            fileMap.values()
+                    .forEach(list -> list
+                            .stream()
+                            .takeWhile(item ->
+                                    !Thread.currentThread().isInterrupted() && !taskContext.isTerminated())
+                            .forEach(file -> {
+                                LOGGER.trace(() -> "Orphan file: " + FileUtil.getCanonicalPath(file));
+                                if (Files.isRegularFile(file)) {
+                                    cleanProgress.addOrphanCount();
+                                    orphanConsumer.accept(file);
+                                }
+                            }));
         }
     }
 }

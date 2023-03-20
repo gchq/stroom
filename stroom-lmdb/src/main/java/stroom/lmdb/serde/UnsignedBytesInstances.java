@@ -63,7 +63,7 @@ public enum UnsignedBytesInstances implements UnsignedBytes {
         serde = new UnsignedLongSerde(len, this);
     }
 
-    public static UnsignedBytes of(final int len) {
+    public static UnsignedBytes ofLength(final int len) {
         if (len == 0) {
             throw new IllegalArgumentException("Length of zero not allowed");
         }

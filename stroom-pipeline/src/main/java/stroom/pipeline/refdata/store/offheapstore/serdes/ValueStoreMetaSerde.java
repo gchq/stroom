@@ -5,6 +5,7 @@ import stroom.lmdb.serde.Serde;
 import stroom.lmdb.serde.UnsignedBytes;
 import stroom.lmdb.serde.UnsignedBytesInstances;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreMeta;
+import stroom.util.logging.LogUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,12 +72,24 @@ public class ValueStoreMetaSerde implements Serde<ValueStoreMeta> {
 
     public void cloneAndDecrementRefCount(final ByteBuffer sourceBuffer, final ByteBuffer destBuffer) {
         ByteBufferUtils.copy(sourceBuffer, destBuffer);
-        REF_COUNT_UNSIGNED_BYTES.decrement(destBuffer, REFERENCE_COUNT_OFFSET);
+        try {
+            REF_COUNT_UNSIGNED_BYTES.decrement(destBuffer, REFERENCE_COUNT_OFFSET);
+        } catch (Exception e) {
+            throw new RuntimeException(LogUtil.message("Error decrementing reference count. Current value {}. {}",
+                    REF_COUNT_UNSIGNED_BYTES.get(sourceBuffer, sourceBuffer.position()),
+                    e.getMessage()), e);
+        }
     }
 
     public void cloneAndIncrementRefCount(final ByteBuffer sourceBuffer, final ByteBuffer destBuffer) {
         ByteBufferUtils.copy(sourceBuffer, destBuffer);
-        REF_COUNT_UNSIGNED_BYTES.increment(destBuffer, REFERENCE_COUNT_OFFSET);
+        try {
+            REF_COUNT_UNSIGNED_BYTES.increment(destBuffer, REFERENCE_COUNT_OFFSET);
+        } catch (Exception e) {
+            throw new RuntimeException(LogUtil.message("Error incrementing reference count. Current value {}. {}",
+                    REF_COUNT_UNSIGNED_BYTES.get(sourceBuffer, sourceBuffer.position()),
+                    e.getMessage()), e);
+        }
     }
 
 }

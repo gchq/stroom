@@ -44,18 +44,17 @@ class LoadingStroomCacheImpl<K, V> extends AbstractStroomCache<K, V> implements 
 
     @Override
     public V get(final K key) {
-        return ((LoadingCache<K, V>) super.cache).get(key);
+        return ((LoadingCache<K, V>) super.getCache()).get(key);
     }
 
     @Override
     public Optional<V> getOptional(final K key) {
-        return Optional.ofNullable(((LoadingCache<K, V>) super.cache).get(key));
+        return Optional.ofNullable(((LoadingCache<K, V>) super.getCache()).get(key));
     }
 
     @Override
     public Optional<V> getIfPresent(final K key) {
         LOGGER.trace(() -> buildMessage("getIfPresent", key));
-        return Optional.ofNullable(getWithCacheUnderOptimisticReadLock(cache ->
-                cache.getIfPresent(key)));
+        return Optional.ofNullable(super.getCache().getIfPresent(key));
     }
 }

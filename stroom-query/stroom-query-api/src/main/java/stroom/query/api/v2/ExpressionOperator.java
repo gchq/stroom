@@ -42,6 +42,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -83,6 +84,19 @@ public final class ExpressionOperator extends ExpressionItem {
         if (children != null) {
             for (final ExpressionItem child : children) {
                 if (child.containsField(fields)) {
+                    // Found a match so break out
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean containsTerm(final Predicate<ExpressionTerm> predicate) {
+        if (children != null) {
+            for (final ExpressionItem child : children) {
+                if (child.containsTerm(predicate)) {
                     // Found a match so break out
                     return true;
                 }

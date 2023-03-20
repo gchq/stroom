@@ -20,6 +20,7 @@ package stroom.pipeline.refdata.store.onheapstore;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.MapDefinition;
+import stroom.pipeline.refdata.store.NullValue;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
@@ -272,7 +273,7 @@ class TestRefDataOnHeapStore {
         Range<Long> range = new Range<>(1L, 100L);
         final String key = "50";
 
-        assertThat(refDataStore.getKeyRangeValueEntryCount())
+        assertThat(refDataStore.getRangeValueEntryCount())
                 .isEqualTo(0);
 
 
@@ -302,8 +303,130 @@ class TestRefDataOnHeapStore {
         assertThat((StringValue) refDataStore.getValue(mapDefinition, key).get())
                 .isEqualTo(expectedFinalValue);
 
-        assertThat(refDataStore.getKeyRangeValueEntryCount())
+        assertThat(refDataStore.getRangeValueEntryCount())
                 .isEqualTo(1);
+    }
+
+    @Test
+    void loader_nullValue_keyValue_overwrite() {
+        final Optional<RefDataValue> optValue = doKeyValueNullValueTest(true, 0);
+
+        assertThat(optValue)
+                .isEmpty();
+    }
+
+    @Test
+    void loader_nullValue_keyValue_noOverwrite() {
+        final Optional<RefDataValue> optValue = doKeyValueNullValueTest(false, 1);
+
+        assertThat(optValue)
+                .isPresent()
+                .hasValue(StringValue.of("foo"));
+    }
+
+    Optional<RefDataValue> doKeyValueNullValueTest(final boolean overwriteExisting,
+                                                   final int expectedEntryCount) {
+
+        final StringValue nonNullValue = StringValue.of("foo");
+        final NullValue nullValue = NullValue.getInstance();
+
+        final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
+        long effectiveTimeMs = System.currentTimeMillis();
+        final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "map1");
+        final String key = "myKey";
+
+        assertThat(refDataStore.getKeyValueEntryCount())
+                .isEqualTo(0);
+
+        refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
+            loader.initialise(overwriteExisting);
+
+            PutOutcome putOutcome;
+
+            putOutcome = loader.put(mapDefinition, key, nonNullValue);
+            assertThat(putOutcome.isSuccess())
+                    .isTrue();
+            assertThat(putOutcome.isDuplicate())
+                    .hasValue(false);
+
+            // second put for same key, if overwrite should remove prev entry, else leaves it
+            putOutcome = loader.put(mapDefinition, key, nullValue);
+
+            assertThat(putOutcome.isSuccess())
+                    .isEqualTo(overwriteExisting);
+            assertThat(putOutcome.isDuplicate())
+                    .hasValue(true);
+
+            loader.completeProcessing();
+        });
+        refDataStore.logAllContents();
+
+        final Optional<RefDataValue> optValue = refDataStore.getValue(mapDefinition, key);
+
+        assertThat(refDataStore.getKeyValueEntryCount())
+                .isEqualTo(expectedEntryCount);
+        return optValue;
+    }
+
+    @Test
+    void loader_nullValue_rangeValue_overwrite() {
+        final Optional<RefDataValue> optValue = doRangeValueNullValueTest(true, 0);
+
+        assertThat(optValue)
+                .isEmpty();
+    }
+
+    @Test
+    void loader_nullValue_rangeValue_noOverwrite() {
+        final Optional<RefDataValue> optValue = doRangeValueNullValueTest(false, 1);
+
+        assertThat(optValue)
+                .isPresent()
+                .hasValue(StringValue.of("foo"));
+    }
+
+    Optional<RefDataValue> doRangeValueNullValueTest(final boolean overwriteExisting,
+                                                     final int expectedEntryCount) {
+
+        final StringValue nonNullValue = StringValue.of("foo");
+        final NullValue nullValue = NullValue.getInstance();
+
+        final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
+        long effectiveTimeMs = System.currentTimeMillis();
+        final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "map1");
+        final Range<Long> range = new Range<>(1L, 100L);
+
+        assertThat(refDataStore.getRangeValueEntryCount())
+                .isEqualTo(0);
+
+        refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
+            loader.initialise(overwriteExisting);
+
+            PutOutcome putOutcome;
+
+            putOutcome = loader.put(mapDefinition, range, nonNullValue);
+            assertThat(putOutcome.isSuccess())
+                    .isTrue();
+            assertThat(putOutcome.isDuplicate())
+                    .hasValue(false);
+
+            // second put for same key, if overwrite should remove prev entry, else leaves it
+            putOutcome = loader.put(mapDefinition, range, nullValue);
+
+            assertThat(putOutcome.isSuccess())
+                    .isEqualTo(overwriteExisting);
+            assertThat(putOutcome.isDuplicate())
+                    .hasValue(true);
+
+            loader.completeProcessing();
+        });
+        refDataStore.logAllContents();
+
+        final Optional<RefDataValue> optValue = refDataStore.getValue(mapDefinition, "50");
+
+        assertThat(refDataStore.getRangeValueEntryCount())
+                .isEqualTo(expectedEntryCount);
+        return optValue;
     }
 
     @Test
@@ -605,7 +728,7 @@ class TestRefDataOnHeapStore {
                 .isEqualTo(refStreamDefCount);
         assertThat(refDataStore.getKeyValueEntryCount())
                 .isEqualTo(totalKeyValueEntryCount);
-        assertThat(refDataStore.getKeyRangeValueEntryCount())
+        assertThat(refDataStore.getRangeValueEntryCount())
                 .isEqualTo(totalRangeValueEntryCount);
     }
 
@@ -820,7 +943,7 @@ class TestRefDataOnHeapStore {
             try {
                 final Tuple2<Long, Long> startEntryCounts = Tuple.of(
                         refDataStore.getKeyValueEntryCount(),
-                        refDataStore.getKeyRangeValueEntryCount());
+                        refDataStore.getRangeValueEntryCount());
 
                 boolean isLoadExpectedToHappen = true;
                 //Same stream def as last time so
@@ -843,7 +966,7 @@ class TestRefDataOnHeapStore {
 
                 final Tuple2<Long, Long> endEntryCounts = Tuple.of(
                         refDataStore.getKeyValueEntryCount(),
-                        refDataStore.getKeyRangeValueEntryCount());
+                        refDataStore.getRangeValueEntryCount());
 
                 int expectedNewEntries;
                 if (refStreamDefinition.equals(lastRefStreamDefinition.get())) {

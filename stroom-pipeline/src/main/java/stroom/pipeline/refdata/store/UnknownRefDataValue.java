@@ -21,7 +21,7 @@ import stroom.bytebuffer.ByteBufferUtils;
 
 import java.nio.ByteBuffer;
 
-public class UnknownRefDataValue extends RefDataValue {
+public class UnknownRefDataValue implements RefDataValue {
 
     public static final int TYPE_ID = -1;
 

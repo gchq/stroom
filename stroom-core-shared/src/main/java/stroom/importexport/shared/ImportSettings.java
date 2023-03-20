@@ -131,6 +131,8 @@ public class ImportSettings {
         IGNORE_CONFIRMATION
     }
 
+    // --------------------------------------------------------------------------------
+
     public static class Builder {
 
         private ImportMode importMode;

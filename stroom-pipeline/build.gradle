@@ -72,6 +72,7 @@ dependencies {
     testImplementation project(':stroom-data:stroom-data-store-mock')
     testImplementation project(':stroom-docstore:stroom-docstore-impl')
     testImplementation project(':stroom-docstore:stroom-docstore-impl-memory')
+    testImplementation project(':stroom-event-logging:stroom-event-logging-mock')
     testImplementation project(':stroom-feed:stroom-feed-impl')
     testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-task:stroom-task-mock')

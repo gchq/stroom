@@ -2,6 +2,7 @@ package stroom.pipeline.refdata.store.onheapstore;
 
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.MapDefinition;
+import stroom.pipeline.refdata.store.NullValue;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
@@ -170,23 +171,12 @@ class OnHeapRefDataLoader implements RefDataLoader {
         LAMBDA_LOGGER.trace(() ->
                 LogUtil.message("containsKey == {}", keyValueMap.containsKey(mapKey)));
 
-        final PutOutcome putOutcome = putWithOutcome(
+        final PutOutcome putOutcome = putRefEntryWithOutcome(
                 keyValueMap,
                 mapKey,
                 refDataValue,
                 overwriteExisting);
 
-//        if (overwriteExisting) {
-//            RefDataValue prevValue = keyValueMap.put(mapKey, refDataValue);
-//            putOutcome = prevValue == null
-//                    ? PutOutcome.newEntry()
-//                    : PutOutcome.replacedEntry();
-//        } else {
-//            RefDataValue prevValue = keyValueMap.putIfAbsent(mapKey, refDataValue);
-//            putOutcome = prevValue == null
-//                    ? PutOutcome.newEntry()
-//                    : PutOutcome.failed();
-//        }
         recordPut(mapDefinition, putOutcome.isSuccess());
 
         LAMBDA_LOGGER.trace(() -> LogUtil.message("put completed for {} {} {}, size now {}",
@@ -205,22 +195,12 @@ class OnHeapRefDataLoader implements RefDataLoader {
                 mapDefinition,
                 k -> new TreeMap<>(RANGE_COMPARATOR.reversed()));
 
-        final PutOutcome putOutcome = putWithOutcome(
+        final PutOutcome putOutcome = putRefEntryWithOutcome(
                 subMap,
                 keyRange,
                 refDataValue,
                 overwriteExisting);
-//        if (overwriteExisting) {
-//            final RefDataValue prevValue = subMap.put(keyRange, refDataValue);
-//            putOutcome = prevValue == null
-//                    ? PutOutcome.newEntry()
-//                    : PutOutcome.replacedEntry();
-//        } else {
-//            final RefDataValue prevValue = subMap.putIfAbsent(keyRange, refDataValue);
-//            putOutcome = prevValue == null
-//                    ? PutOutcome.newEntry()
-//                    : PutOutcome.failed();
-//        }
+
         recordPut(mapDefinition, putOutcome.isSuccess());
         LAMBDA_LOGGER.trace(() -> LogUtil.message("put completed for {} {} {}, size now {}",
                 mapDefinition, keyRange, refDataValue,
@@ -300,6 +280,34 @@ class OnHeapRefDataLoader implements RefDataLoader {
         }
     }
 
+    private <K> PutOutcome putRefEntryWithOutcome(final Map<K, RefDataValue> map,
+                                                  final K key,
+                                                  final RefDataValue refDataValue,
+                                                  final boolean overwriteExisting) {
+        final boolean keyExists = map.containsKey(key);
+        final PutOutcome putOutcome;
+        if (keyExists) {
+            if (!overwriteExisting) {
+                putOutcome = PutOutcome.failed();
+            } else {
+                if (refDataValue instanceof NullValue) {
+                    map.remove(key);
+                    putOutcome = PutOutcome.replacedEntry();
+                } else {
+                    putOutcome = putWithOutcome(map, key, refDataValue, true);
+                }
+            }
+        } else {
+            if (refDataValue instanceof NullValue) {
+                putOutcome = PutOutcome.success();
+            } else {
+                putOutcome = putWithOutcome(map, key, refDataValue, overwriteExisting);
+            }
+
+        }
+        return putOutcome;
+    }
+
     private <K, V> PutOutcome putWithOutcome(final Map<K, V> map,
                                              final K key,
                                              final V value,
@@ -322,5 +330,4 @@ class OnHeapRefDataLoader implements RefDataLoader {
 
         return putOutcome;
     }
-
 }

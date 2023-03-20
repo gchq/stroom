@@ -10,6 +10,7 @@ import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
+import stroom.db.util.JooqUtil;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
 import stroom.event.logging.mock.MockStroomEventLoggingModule;
@@ -18,6 +19,7 @@ import stroom.meta.api.MetaService;
 import stroom.meta.impl.MetaModule;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
@@ -40,7 +42,6 @@ import stroom.util.time.TimePeriod;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Module;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -51,6 +52,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -58,6 +60,7 @@ import java.util.stream.IntStream;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static stroom.meta.impl.db.MetaDaoImpl.meta;
 
 class TestMetaServiceImpl {
 
@@ -76,6 +79,8 @@ class TestMetaServiceImpl {
     private MetaService metaService;
     @Inject
     private MetaDaoImpl metaDao;
+    @Inject
+    private MetaDbConnProvider metaDbConnProvider;
 
     private DataRetentionConfig dataRetentionConfig;
 
@@ -114,6 +119,109 @@ class TestMetaServiceImpl {
 
     public DataRetentionConfig getDataRetentionConfig() {
         return dataRetentionConfig;
+    }
+
+    @Test
+    void testUpdateStatus_byOneID() {
+        final Meta meta1 = metaService.create(createProperties(FEED_1, Instant.now()));
+        final Meta meta2 = metaService.create(createRawProperties(FEED_2));
+
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .addTerm(MetaFields.ID, Condition.EQUALS, meta2.getId())
+                .build();
+        final FindMetaCriteria criteria = new FindMetaCriteria(expression);
+
+        int deleted = metaService.updateStatus(
+                criteria, null, Status.DELETED);
+        assertThat(deleted)
+                .isEqualTo(1);
+
+        assertThat(metaService.getMeta(meta1.getId(), true))
+                .extracting(Meta::getStatus)
+                .isNotEqualTo(Status.DELETED);
+        assertThat(metaService.getMeta(meta2.getId(), true))
+                .extracting(Meta::getStatus)
+                .isEqualTo(Status.DELETED);
+    }
+
+    @Test
+    void testUpdateStatus_byManyIDs() {
+        final Meta meta1 = metaService.create(createProperties(FEED_1, Instant.now()));
+        final Meta meta2 = metaService.create(createProperties(FEED_1, Instant.now()));
+        final Meta meta3 = metaService.create(createProperties(FEED_1, Instant.now()));
+        final Meta meta4 = metaService.create(createProperties(FEED_1, Instant.now()));
+
+//        TestMetaDaoImpl.dumpMetaTable(metaDbConnProvider);
+
+        final ExpressionOperator expression = MetaExpressionUtil.createDataIdSetExpression(Set.of(
+                meta1.getId(),
+                meta3.getId(),
+                meta4.getId()));
+        final FindMetaCriteria criteria = new FindMetaCriteria(expression);
+
+        int deleted = metaService.updateStatus(
+                criteria, null, Status.DELETED);
+
+//        TestMetaDaoImpl.dumpMetaTable(metaDbConnProvider);
+
+        assertThat(deleted)
+                .isEqualTo(3);
+
+        assertThat(metaService.getMeta(meta1.getId(), true))
+                .extracting(Meta::getStatus)
+                .isEqualTo(Status.DELETED);
+        assertThat(metaService.getMeta(meta2.getId(), true))
+                .extracting(Meta::getStatus)
+                .isNotEqualTo(Status.DELETED);
+        assertThat(metaService.getMeta(meta3.getId(), true))
+                .extracting(Meta::getStatus)
+                .isEqualTo(Status.DELETED);
+        assertThat(metaService.getMeta(meta4.getId(), true))
+                .extracting(Meta::getStatus)
+                .isEqualTo(Status.DELETED);
+    }
+
+    @Test
+    void testUpdateStatus_byFilter() {
+        final Meta meta1 = metaService.create(createProperties(FEED_1, Instant.now()));
+        final Meta meta2 = metaService.create(createProperties(FEED_2, Instant.now()));
+        final Meta meta3 = metaService.create(createProperties(FEED_3, Instant.now()));
+        final Meta meta4 = metaService.create(createProperties(FEED_4, Instant.now()));
+        final Meta meta5 = metaService.create(createProperties(FEED_5, Instant.now()));
+
+//        TestMetaDaoImpl.dumpMetaTable(metaDbConnProvider);
+
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .op(Op.OR)
+                .addTerm(MetaFields.ID.getName(), Condition.EQUALS, Long.toString(meta1.getId()))
+                .addTerm(
+                        MetaFields.FIELD_FEED,
+                        Condition.IN,
+                        String.join(",", FEED_3, FEED_4, FEED_5))
+                .build();
+        final FindMetaCriteria criteria = new FindMetaCriteria(expression);
+
+        int deleted = metaService.updateStatus(
+                criteria, null, Status.DELETED);
+
+        assertThat(deleted)
+                .isEqualTo(4);
+
+        assertThat(metaService.getMeta(meta1.getId(), true))
+                .extracting(Meta::getStatus)
+                .isEqualTo(Status.DELETED);
+        assertThat(metaService.getMeta(meta2.getId(), true))
+                .extracting(Meta::getStatus)
+                .isNotEqualTo(Status.DELETED);
+        assertThat(metaService.getMeta(meta3.getId(), true))
+                .extracting(Meta::getStatus)
+                .isEqualTo(Status.DELETED);
+        assertThat(metaService.getMeta(meta4.getId(), true))
+                .extracting(Meta::getStatus)
+                .isEqualTo(Status.DELETED);
+        assertThat(metaService.getMeta(meta5.getId(), true))
+                .extracting(Meta::getStatus)
+                .isEqualTo(Status.DELETED);
     }
 
     @Test
@@ -595,13 +703,13 @@ class TestMetaServiceImpl {
 
         // Rule 1 has age 1 day so all other days' records should be in line for deletion and thus
         // in the summary count.
-        Assertions.assertThat(getCount(FEED_1, TEST_STREAM_TYPE, 1, summaries))
+        assertThat(getCount(FEED_1, TEST_STREAM_TYPE, 1, summaries))
                 .isEqualTo((totalDays - 1) * rowsPerFeedPerDay);
         // Rule 2 has age 2 days
-        Assertions.assertThat(getCount(FEED_2, TEST_STREAM_TYPE, 2, summaries))
+        assertThat(getCount(FEED_2, TEST_STREAM_TYPE, 2, summaries))
                 .isEqualTo((totalDays - 2) * rowsPerFeedPerDay);
         // Rule 2 has age 1 week
-        Assertions.assertThat(getCount(FEED_3, TEST_STREAM_TYPE, 3, summaries))
+        assertThat(getCount(FEED_3, TEST_STREAM_TYPE, 3, summaries))
                 .isEqualTo((totalDays - 7) * rowsPerFeedPerDay);
 
         LOGGER.info("Done");
@@ -689,8 +797,23 @@ class TestMetaServiceImpl {
 
         // Ensure all records have the desired status
         if (!Status.LOCKED.equals(status)) {
-            metaService.updateStatus(new FindMetaCriteria(), Status.LOCKED, status);
+//            metaService.updateStatus(new FindMetaCriteria(), Status.LOCKED, status);
+            unlockAllLockedStreams();
         }
+    }
+
+    private void unlockAllLockedStreams() {
+
+        JooqUtil.context(metaDbConnProvider, context -> {
+            final byte unlockedId = MetaStatusId.getPrimitiveValue(Status.UNLOCKED);
+            final byte lockedId = MetaStatusId.getPrimitiveValue(Status.LOCKED);
+            final int count = context.update(meta)
+                    .set(meta.STATUS, unlockedId)
+                    .set(meta.STATUS_TIME, Instant.now().toEpochMilli())
+                    .where(meta.STATUS.eq(lockedId))
+                    .execute();
+            LOGGER.debug("Unlocked {} meta records", count);
+        });
     }
 
     private MetaProperties createProperties(final String feedName, final Instant createTime) {

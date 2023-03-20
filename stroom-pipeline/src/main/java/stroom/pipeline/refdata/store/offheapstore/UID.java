@@ -38,11 +38,12 @@ public class UID {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UID.class);
 
-    public static final UnsignedBytes UNSIGNED_BYTES = UnsignedBytesInstances.FOUR;
-
     // Changing this value would require any data stored using UIDs to be
     // migrated to the new byte array length
     public static final int UID_ARRAY_LENGTH = 4;
+
+    public static final UnsignedBytes UNSIGNED_BYTES = UnsignedBytesInstances.ofLength(UID_ARRAY_LENGTH);
+
     private final ByteBuffer byteBuffer;
 
     private UID(final ByteBuffer byteBuffer) {
@@ -139,7 +140,13 @@ public class UID {
      * The position/limit of byteBuffer are unchanged.
      */
     public static void incrementUid(final ByteBuffer byteBuffer) {
-        UNSIGNED_BYTES.increment(byteBuffer, 0);
+        try {
+            UNSIGNED_BYTES.increment(byteBuffer, 0);
+        } catch (Exception e) {
+            throw new RuntimeException(LogUtil.message("Error incrementing UID. Current value {}. {}",
+                    UNSIGNED_BYTES.get(byteBuffer, byteBuffer.position()),
+                    e.getMessage()), e);
+        }
     }
 
     /**
@@ -151,12 +158,18 @@ public class UID {
     }
 
     /**
-     * Writes the next uid value after this to the passed bytebuffer and wraps it with
-     * a new UID instance.
+     * Writes the next uid value after 'this' to the passed bytebuffer
      */
-    public void writeNextUid(final ByteBuffer byteBuffer) {
-        ByteBufferUtils.copy(this.byteBuffer, byteBuffer);
-        UNSIGNED_BYTES.increment(byteBuffer);
+    public void writeNextUid(final ByteBuffer otherBuffer) {
+        ByteBufferUtils.copy(this.byteBuffer, otherBuffer);
+        try {
+            // Increment the uid in place in the copy
+            UNSIGNED_BYTES.increment(otherBuffer);
+        } catch (Exception e) {
+            throw new RuntimeException(LogUtil.message("Error writing next UID. Current value {}. {}",
+                    UNSIGNED_BYTES.get(this.byteBuffer, this.byteBuffer.position()),
+                    e.getMessage()), e);
+        }
     }
 
     /**

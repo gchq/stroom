@@ -30,7 +30,9 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
+import stroom.util.NullSafe;
 import stroom.util.shared.Message;
+import stroom.util.string.StringUtil;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -38,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -46,11 +49,16 @@ import javax.inject.Singleton;
 class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
     private final Store<DictionaryDoc> store;
+    // Split on unix or windows line ends
+    private static final Pattern WORD_SPLIT_PATTERN = Pattern.compile("(\r?\n)+");
 
     @Inject
     DictionaryStoreImpl(final StoreFactory storeFactory,
                         final DictionarySerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, DictionaryDoc.DOCUMENT_TYPE, DictionaryDoc.class);
+        this.store = storeFactory.createStore(
+                serialiser,
+                DictionaryDoc.DOCUMENT_TYPE,
+                DictionaryDoc.class);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -212,10 +220,10 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     @Override
     public String[] getWords(final DocRef dictionaryRef) {
         final String words = getCombinedData(dictionaryRef);
-        if (words != null) {
+
+        if (!NullSafe.isBlankString(words)) {
             // Split by line break (`LF` or `CRLF`) and trim whitespace from each resulting line
-            return Arrays.stream(words.split("\r?\n"))
-                    .map(String::trim)
+            return StringUtil.splitToLines(words, true)
                     .toArray(String[]::new);
         }
 

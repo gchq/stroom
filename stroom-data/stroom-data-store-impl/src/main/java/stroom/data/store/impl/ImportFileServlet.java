@@ -39,6 +39,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServlet;
@@ -50,6 +51,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 public final class ImportFileServlet extends HttpServlet implements IsServlet {
 
+    protected static final String FILE_UPLOAD_PROP_NAME = "fileUpload";
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportFileServlet.class);
 
     private static final long serialVersionUID = 487567988479000995L;
@@ -82,21 +84,26 @@ public final class ImportFileServlet extends HttpServlet implements IsServlet {
                 return;
             }
 
-            final FileItem fileItem = items.get("fileUpload");
-            final ResourceKey uuid = resourceStore.createTempFile(fileItem.getName());
-            final Path file = resourceStore.getTempFile(uuid);
-            streamEventLog.importStream("Import", FileUtil.getCanonicalPath(file), null);
+            final FileItem fileItem = items.get(FILE_UPLOAD_PROP_NAME);
+            Objects.requireNonNull(fileItem, "Property '" + FILE_UPLOAD_PROP_NAME + "' not found in request");
+            final String fileName = fileItem.getName();
+            final ResourceKey resourceKey = resourceStore.createTempFile(fileName);
+            final Path file = resourceStore.getTempFile(resourceKey);
+            streamEventLog.importStream(
+                    fileItem,
+                    FileUtil.getCanonicalPath(file),
+                    null);
             try (final InputStream inputStream = fileItem.getInputStream();
                     final OutputStream outputStream = Files.newOutputStream(file)) {
                 StreamUtil.streamToStream(inputStream, outputStream);
             }
 
             propertyMap.setSuccess(true);
-            uuid.write(propertyMap);
+            resourceKey.write(propertyMap);
             fileItem.delete();
 
         } catch (final RuntimeException e) {
-            streamEventLog.importStream("Import", null, e);
+            streamEventLog.importStream(null, null, e);
             LOGGER.error(e.getMessage(), e);
             propertyMap.put("exception", e.getMessage());
         }

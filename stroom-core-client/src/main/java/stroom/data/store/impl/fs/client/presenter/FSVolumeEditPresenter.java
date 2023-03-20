@@ -159,7 +159,10 @@ public class FSVolumeEditPresenter extends MyPresenterWidget<FSVolumeEditPresent
         getView().getStatus().setSelectedItem(volume.getStatus());
 
         if (volume.getByteLimit() != null) {
-            getView().getByteLimit().setText(ModelStringUtil.formatIECByteSizeString(volume.getByteLimit()));
+            getView().getByteLimit().setText(ModelStringUtil.formatIECByteSizeString(
+                    volume.getByteLimit(),
+                    true,
+                    ModelStringUtil.DEFAULT_SIGNIFICANT_FIGURES));
         } else {
             getView().getByteLimit().setText("");
         }

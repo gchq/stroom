@@ -24,18 +24,18 @@ package stroom.pipeline.refdata.store;
  * Each impl will have its own serde that can be used once the type is determined
  * by inspecting the serialised typeId.
  */
-public abstract class RefDataValue {
+public interface RefDataValue {
 
     /**
      * @return The hashcode of just the underlying value that this object wraps
      * rather than hashcode of the whole object.
      */
-    public abstract long getValueHashCode(final ValueStoreHashAlgorithm valueStoreHashAlgorithm);
+    long getValueHashCode(final ValueStoreHashAlgorithm valueStoreHashAlgorithm);
 
     /**
      * @return A code to represent the class of the implementation,
      * unique within all sub-classes of {@link RefDataValue}. Stored in the DB as a single
      * byte so values must be in the range -128 to 127.
      */
-    public abstract int getTypeId();
+    int getTypeId();
 }

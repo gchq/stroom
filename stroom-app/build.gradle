@@ -195,6 +195,7 @@ dependencies {
     implementation project(':stroom-statistics:stroom-statistics-impl-sql')
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-task:stroom-task-impl')
+    implementation project(':stroom-task:stroom-task-mock')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-view:stroom-view-impl')

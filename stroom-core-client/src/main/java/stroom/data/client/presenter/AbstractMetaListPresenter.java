@@ -54,9 +54,6 @@ import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Builder;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.ExpressionValidationException;
 import stroom.query.api.v2.ExpressionValidator;
@@ -619,14 +616,7 @@ public abstract class AbstractMetaListPresenter
         validateSelection("delete", () -> {
             final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
             validateExpression(expression, exp -> {
-                final Builder not = ExpressionOperator.builder().op(Op.NOT);
-                not.addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.DELETED.getDisplayValue());
-
-                final Builder builder = ExpressionOperator.builder();
-                builder.addOperator(exp);
-                builder.addOperator(not.build());
-
-                final FindMetaCriteria criteria = expressionToNonPagedCriteria(builder.build());
+                final FindMetaCriteria criteria = expressionToNonPagedCriteria(exp);
                 showSummary(
                         criteria,
                         "deleted",
@@ -642,11 +632,7 @@ public abstract class AbstractMetaListPresenter
         validateSelection("restore", () -> {
             final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
             validateExpression(expression, exp -> {
-                final Builder builder = ExpressionOperator.builder();
-                builder.addOperator(exp);
-                builder.addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.DELETED.getDisplayValue());
-
-                final FindMetaCriteria criteria = expressionToNonPagedCriteria(builder.build());
+                final FindMetaCriteria criteria = expressionToNonPagedCriteria(exp);
                 showSummary(
                         criteria,
                         "restored",
