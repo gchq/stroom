@@ -14461,7 +14461,10 @@
       "PropertyPath" : {
         "type" : "object",
         "properties" : {
-          "parts" : {
+          "leafPart" : {
+            "type" : "string"
+          },
+          "parentParts" : {
             "type" : "array",
             "items" : {
               "type" : "string"
