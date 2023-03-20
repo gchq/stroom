@@ -19,8 +19,8 @@ package stroom.explorer.api;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docref.HasFindDocsByName;
 import stroom.docref.HasFindDocsByContent;
+import stroom.docref.HasFindDocsByName;
 import stroom.util.shared.HasDependencies;
 
 import java.util.Set;

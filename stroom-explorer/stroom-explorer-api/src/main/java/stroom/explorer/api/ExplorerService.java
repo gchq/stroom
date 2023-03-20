@@ -19,8 +19,8 @@ package stroom.explorer.api;
 
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerDocContentMatch;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.explorer.shared.FindExplorerNodeQuery;
