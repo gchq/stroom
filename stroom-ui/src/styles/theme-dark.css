@@ -49,6 +49,15 @@
     --button__text-color--disabled: #888;
     --button__border-color--disabled--hover: #000;
 
+    --icon-button__background-color--on: #262a32;
+    --icon-button__border-color--on: #444;
+    --icon-button__background-color--hover: rgb(45, 47, 53);
+    --icon-button__border-color--hover: rgb(45, 47, 53);
+    --navigation-icon-button__background-color--on: #262a32;
+    --navigation-icon-button__border-color--on: #444;
+    --navigation-icon-button__background-color--hover: rgb(45, 47, 53);
+    --navigation-icon-button__border-color--hover: rgb(45, 47, 53);
+
     --expression-item-box__background-color--selected: #454545;
     --expression-item-box__background-color--hover: #555;
     --expression-item-box__background-color--disabled: #333;
@@ -130,6 +139,10 @@
     --dashboard-panel__background-color: #22252c;
     --dashboard-panel__border-color: #2f333c;
     --dashboard-panel__grid-color: rgba(255, 255, 255, 0.04);
+
+    /* ExpanderCell */
+    --expander-cell-icon__background-color--hover: rgba(255, 255, 255, 0.2);
+    --expander-cell-icon__background-color--active: rgba(0, 0, 0, 0.5);
 
     /* Items, e.g. rows for tables, drop downs lists etc. */
     --item__background-color--focus--highlighted: rgba(24, 94, 144, 0.3);
@@ -218,7 +231,7 @@
     --vis-axis__color: rgba(255,255,255,0.54);
     --vis-text__color: rgba(255,255,255,0.87);
     --vis-text__color--faint: rgba(255,255,255,0.12);
-    --vis-icon__color: rgba(255,255,255,0.38);
+    --vis-icon__color: rgba(255,255,255,0.6);
     --vis-icon__color--hover: rgba(255,255,255,0.87);
     --vis-barchart-element__stroke: #000;
     --vis-marker__stroke: #fff;

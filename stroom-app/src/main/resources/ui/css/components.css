@@ -1761,4 +1761,75 @@ button.main-menu svg {
     padding-left: .25em;
 }
 
+.listContainer {
+    overflow: auto;
+}
+
+.find-topBar {
+    position: relative;
+}
+
+.find-buttons {
+    display: flex;
+    position: absolute;
+    right: 5px;
+    top: 6px;
+}
+
+.findCell {
+}
+
+.findCell-row {
+	display: flex;
+	flex-direction: column;
+}
+
+.findCell-main {
+    display: flex;
+    gap: .7rem;
+    padding: .2rem;
+}
+
+.findCell-icon {
+    display: flex;
+    flex-grow: 0;
+    min-width: 18px;
+    min-height: 18px;
+}
+
+.findCell-sample {
+    display: flex;
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.findCell-name {
+    display: flex;
+    flex-grow: 0;
+    align-items: end;
+    white-space: nowrap;
+    opacity: .7;
+}
+
+.findCell-sub {
+    display: flex;
+    gap: .7rem;
+    padding: .2rem;
+}
+
+.findCell-path {
+    display: flex;
+    font-size: 0.7rem;
+    flex-grow: 1;
+    opacity: .5;
+}
+
+.findCell-uuid {
+    display: flex;
+    font-size: .7rem;
+    flex-grow: 0;
+    opacity: .5;
+}
+
 

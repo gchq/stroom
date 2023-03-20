@@ -55,7 +55,7 @@ public class AboutPlugin extends Plugin implements ShowAboutHandler {
     public void onReveal(final BeforeRevealMenubarEvent event) {
         event.getMenuItems().addMenuItem(MenuKeys.MAIN_MENU,
                 new KeyedParentMenuItem.Builder()
-                        .priority(5)
+                        .priority(100)
                         .text("Help")
                         .menuItems(event.getMenuItems())
                         .menuKey(MenuKeys.HELP_MENU)

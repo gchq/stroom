@@ -18,6 +18,7 @@ package stroom.annotation.client;
 
 import stroom.annotation.client.ChangeStatusPresenter.ChangeStatusView;
 import stroom.svg.client.SvgImages;
+import stroom.widget.button.client.InlineSvgButton;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -36,14 +37,14 @@ public class ChangeStatusViewImpl extends ViewWithUiHandlers<ChangeStatusUiHandl
     @UiField
     Label statusLabel;
     @UiField
-    Button statusIcon;
+    InlineSvgButton statusIcon;
     @UiField
     Label status;
 
     @Inject
     public ChangeStatusViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        statusIcon.getElement().setInnerHTML(SvgImages.MONO_ARROW_DOWN);
+        statusIcon.setSvg(SvgImages.MONO_ARROW_DOWN);
     }
 
     @Override

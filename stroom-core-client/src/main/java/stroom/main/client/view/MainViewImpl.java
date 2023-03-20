@@ -21,6 +21,7 @@ import stroom.main.client.presenter.MainPresenter.SpinnerDisplay;
 import stroom.main.client.presenter.MainUiHandlers;
 import stroom.svg.client.SvgImages;
 import stroom.util.shared.EqualsUtil;
+import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.Style.Unit;
@@ -50,7 +51,7 @@ public class MainViewImpl extends ViewWithUiHandlers<MainUiHandlers> implements 
     @UiField
     Spinner spinner;
     @UiField
-    Button menu;
+    InlineSvgButton menu;
     @UiField
     ResizeLayoutPanel contentPanel;
     private Widget maximisedWidget;
@@ -64,7 +65,7 @@ public class MainViewImpl extends ViewWithUiHandlers<MainUiHandlers> implements 
     public MainViewImpl(final Binder binder) {
         this.widget = binder.createAndBindUi(this);
         banner.setVisible(false);
-        menu.getElement().setInnerHTML(SvgImages.MONO_THREE_DOTS_VERTICAL);
+        menu.setSvg(SvgImages.MONO_THREE_DOTS_VERTICAL);
         widget.sinkEvents(Event.KEYEVENTS);
     }
 

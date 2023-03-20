@@ -799,6 +799,18 @@ export interface DictionaryDoc {
   version?: string;
 }
 
+export interface DocContentMatch {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  docRef?: DocRef;
+
+  /** @format int64 */
+  matchLength?: number;
+
+  /** @format int64 */
+  matchOffset?: number;
+  sample?: string;
+}
+
 /**
  * A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline.
  */
@@ -1019,6 +1031,13 @@ export interface Expander {
   depth?: number;
   expanded?: boolean;
   leaf?: boolean;
+}
+
+export interface ExplorerDocContentMatch {
+  docContentMatch?: DocContentMatch;
+  iconClassName?: string;
+  isFavourite?: boolean;
+  path?: string;
 }
 
 export interface ExplorerNode {
@@ -1326,6 +1345,15 @@ export interface FindExplorerNodeCriteria {
   minDepth?: number;
   openItems?: ExplorerNodeKey[];
   temporaryOpenedItems?: ExplorerNodeKey[];
+}
+
+export interface FindExplorerNodeQuery {
+  matchCase?: boolean;
+  pageRequest?: PageRequest;
+  pattern?: string;
+  regex?: boolean;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
 }
 
 export interface FindFsVolumeCriteria {
@@ -2684,6 +2712,15 @@ export interface ResultPageDependency {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: Dependency[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageExplorerDocContentMatch {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: ExplorerDocContentMatch[];
 }
 
 /**
@@ -5860,6 +5897,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     fetchExplorerPermissions: (data: ExplorerNode[], params: RequestParams = {}) =>
       this.request<any, ExplorerNodePermissions[]>({
         path: `/explorer/v2/fetchExplorerPermissions`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Explorer (v2)
+     * @name FindExplorerNodes
+     * @summary Find explorer nodes using a query
+     * @request POST:/explorer/v2/findExplorerNodes
+     * @secure
+     */
+    findExplorerNodes: (data: FindExplorerNodeQuery, params: RequestParams = {}) =>
+      this.request<any, ResultPageExplorerDocContentMatch>({
+        path: `/explorer/v2/findExplorerNodes`,
         method: "POST",
         body: data,
         secure: true,
