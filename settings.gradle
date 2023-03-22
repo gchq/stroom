@@ -247,6 +247,7 @@ include 'stroom-security:stroom-security-impl-db'
 include 'stroom-security:stroom-security-impl-db-jooq'
 include 'stroom-security:stroom-security-mock'
 include 'stroom-security:stroom-security-openid-api'
+include 'stroom-security:stroom-security-user-api'
 
 // Service discovery
 include 'stroom-servicediscovery:stroom-servicediscovery-api'

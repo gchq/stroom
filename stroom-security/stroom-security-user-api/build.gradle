@@ -1,0 +1,6 @@
+ext.moduleName = 'stroom.security.user.api'
+
+dependencies {
+
+    implementation project(':stroom-util-shared')
+}

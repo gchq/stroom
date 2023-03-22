@@ -11,6 +11,7 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.security.impl.StroomOpenIdConfig;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
+import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
@@ -287,11 +288,11 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
         initNodes();
 
         String subPath = GlobalConfigResource.FETCH_UI_CONFIG_SUB_PATH;
-        UiConfig expectedResponse = new UiConfig();
+        ExtendedUiConfig expectedResponse = new ExtendedUiConfig();
 
-        final UiConfig listConfigResponse = doGetTest(
+        final ExtendedUiConfig listConfigResponse = doGetTest(
                 subPath,
-                UiConfig.class,
+                ExtendedUiConfig.class,
                 expectedResponse);
 
     }

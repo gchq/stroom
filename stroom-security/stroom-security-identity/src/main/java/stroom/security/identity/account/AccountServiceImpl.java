@@ -62,8 +62,7 @@ public class AccountServiceImpl implements AccountService, UserNameProvider {
 
             return new ResultPage<>(list, result.getPageResponse());
         } else {
-            final List<UserName> list = Collections.emptyList();
-            return ResultPage.createUnboundedList(list);
+            return new ResultPage<>(Collections.emptyList());
         }
     }
 
