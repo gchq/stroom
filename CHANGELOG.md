@@ -4679,8 +4679,7 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id-15...HEAD
-[v7.1-beta.23-test-open-id-15]: https://github.com/gchq/stroom/compare/v7.1-beta.23-test-open-id-14...v7.1-beta.23-test-open-id-15
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.23...HEAD
 [v7.1-beta.23]: https://github.com/gchq/stroom/compare/v7.1-beta.22...v7.1-beta.23
 [v7.1-beta.22]: https://github.com/gchq/stroom/compare/v7.1-beta.21...v7.1-beta.22
 [v7.1-beta.21]: https://github.com/gchq/stroom/compare/v7.1-beta.20...v7.1-beta.21
