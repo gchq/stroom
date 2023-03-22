@@ -65,6 +65,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;
+import org.jooq.Record1;
+import org.jooq.impl.DSL;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -86,6 +88,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 
@@ -977,6 +980,112 @@ class TestMetaDaoImpl {
         dumpMetaTable();
     }
 
+    @Test
+    void testFindBatch_maxInsideBatch() {
+        // meta contains ids 1 => 40
+        final Long metaMinId = getMinMetaId();
+        final long minId = metaMinId + 10;
+        final Long maxId = minId + 4;
+        final int batchSize = 10;
+
+        final List<SimpleMeta> metaList = metaDao.findBatch(minId, maxId, batchSize);
+
+        assertThat(metaList)
+                .extracting(SimpleMeta::getId)
+                .containsExactlyElementsOf(LongStream.rangeClosed(minId, maxId)
+                        .boxed()
+                        .collect(Collectors.toList()));
+    }
+
+    @Test
+    void testFindBatch_maxOutsideBatch() {
+        // meta contains ids 1 => 40
+        final Long metaMinId = getMinMetaId();
+        final long minId = metaMinId + 10;
+        final Long maxId = minId + 40;
+        final int batchSize = 5;
+
+        final List<SimpleMeta> metaList = metaDao.findBatch(minId, maxId, batchSize);
+
+        assertThat(metaList)
+                .extracting(SimpleMeta::getId)
+                .containsExactlyElementsOf(LongStream.range(minId, minId + 5)
+                        .boxed()
+                        .collect(Collectors.toList()));
+    }
+
+    @Test
+    void testFindBatch_noMax() {
+
+        // meta contains ids 1 => 40
+        final Long metaMinId = getMinMetaId();
+        final long minId = metaMinId + 10;
+        final Long maxId = null;
+        final int batchSize = 5;
+
+        final List<SimpleMeta> metaList = metaDao.findBatch(minId, maxId, batchSize);
+
+        assertThat(metaList)
+                .extracting(SimpleMeta::getId)
+                .containsExactlyElementsOf(LongStream.range(minId, minId + 5)
+                        .boxed()
+                        .collect(Collectors.toList()));
+    }
+
+    @Test
+    void testExists_none() {
+
+        // meta contains 40 sequential ids
+        final Long metaMinId = getMinMetaId();
+        final long minId = metaMinId + 100; // outside valid ids
+
+        final Set<Long> ids = metaDao.exists(LongStream.range(minId, minId + 5)
+                .boxed()
+                .collect(Collectors.toSet()));
+
+        assertThat(ids)
+                .isEmpty();
+    }
+
+    @Test
+    void testExists_all() {
+
+        // meta contains 40 sequential ids
+        final Long metaMinId = getMinMetaId();
+        final long minId = metaMinId; // outside valid ids
+
+        final Set<Long> inputIds = LongStream.range(minId, minId + 5)
+                .boxed()
+                .collect(Collectors.toSet());
+
+        final Set<Long> ids = metaDao.exists(inputIds);
+
+        assertThat(ids)
+                .containsExactlyInAnyOrderElementsOf(inputIds);
+    }
+
+    @Test
+    void testExists_some() {
+
+        // meta contains 40 sequential ids
+        final Long metaMinId = getMinMetaId();
+        final long minId = metaMinId; // outside valid ids
+
+        final Set<Long> inputIds = LongStream.range(minId, minId + 50)
+                .boxed()
+                .collect(Collectors.toSet());
+
+        final Set<Long> ids = metaDao.exists(inputIds);
+
+        assertThat(ids)
+                .containsExactlyInAnyOrderElementsOf(LongStream.range(metaMinId, metaMinId + 40)
+                .boxed()
+                .collect(Collectors.toList()));
+
+        assertThat(inputIds.containsAll(ids))
+                .isTrue();
+    }
+
     private Instant addDeletedData(final List<Meta> metaList) {
         assertThat(JooqUtil.getTableCount(metaDbConnProvider, meta))
                 .isEqualTo(40);
@@ -1008,6 +1117,18 @@ class TestMetaDaoImpl {
                 .isEqualTo(40 + 10);
 
         return baseTime;
+    }
+
+    /**
+     * Mostly to aid in testing
+     */
+    Long getMinMetaId() {
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+                        .select(DSL.min(meta.ID))
+                        .from(meta)
+                        .fetchOptional())
+                .map(Record1::value1)
+                .orElse(null);
     }
 
     static void dumpMetaTable(MetaDbConnProvider metaDbConnProvider) {

@@ -17,15 +17,19 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.meta.shared.Meta;
+import stroom.meta.shared.SimpleMeta;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.date.DateUtil;
+import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -49,11 +53,52 @@ class FsOrphanMetaFinderExecutor {
     public void scan() {
         final TaskContext taskContext = taskContextFactory.current();
         taskContext.info(() -> "Starting orphan meta finder");
-        final Consumer<Meta> orphanConsumer = meta -> {
+        LOGGER.info("{} - Starting, using logger name: '{}'", TASK_NAME, ORPHAN_META_LOGGER.getName());
+        ORPHAN_META_LOGGER.info("Starting {} at {}", TASK_NAME, DateUtil.createNormalDateTimeString());
+        final DurationTimer durationTimer = DurationTimer.start();
+
+        final AtomicLong counter = new AtomicLong();
+        final Consumer<SimpleMeta> orphanConsumer = meta -> {
             LOGGER.debug(() -> "Orphan meta: " + meta.toString());
             ORPHAN_META_LOGGER.info(String.valueOf(meta.getId()));
+            counter.incrementAndGet();
         };
-        orphanFileFinderProvider.get()
-                .scan(orphanConsumer, taskContext);
+
+        try {
+            // Do the scan
+            final FsOrphanMetaFinderProgress progress = orphanFileFinderProvider.get()
+                    .scan(orphanConsumer, taskContext);
+
+            if (Thread.currentThread().isInterrupted() || taskContext.isTerminated()) {
+                final String state = Thread.currentThread().isInterrupted()
+                        ? "interrupted"
+                        : "terminated";
+                ORPHAN_META_LOGGER.info("--- {} task {} at {} ---",
+                        TASK_NAME, state, DateUtil.createNormalDateTimeString());
+                LOGGER.info(LogUtil.message("{} - {} in {}, metas checked: {}",
+                        TASK_NAME, state, durationTimer, progress.getMetaCount()));
+            } else {
+                ORPHAN_META_LOGGER.info("Completed {} at {} in {}, found {} orphaned meta records out of {} checked",
+                        TASK_NAME,
+                        DateUtil.createNormalDateTimeString(),
+                        durationTimer,
+                        counter.get(),
+                        progress.getMetaCount());
+
+                LOGGER.info(LogUtil.message("{} - Finished, in {}. " +
+                                "Orphan count: {}, metas checked: {}, cacheMissCount: {}",
+                        TASK_NAME,
+                        durationTimer,
+                        progress.getOrphanCount(),
+                        progress.getMetaCount(),
+                        progress.getCacheMissCount()));
+            }
+        } catch (Exception e) {
+            ORPHAN_META_LOGGER.info("--- {} task failed at {} due to: {} ---",
+                    TASK_NAME,
+                    DateUtil.createNormalDateTimeString(),
+                    e.getMessage());
+            throw e;
+        }
     }
 }
