@@ -134,6 +134,11 @@ public class InternalIdpConfigurationProvider implements IdpConfigurationProvide
     }
 
     @Override
+    public String getUserDisplayNameClaim() {
+        return localOpenIdConfigProvider.get().getUserDisplayNameClaim();
+    }
+
+    @Override
     public String getLogoutRedirectParamName() {
         return localOpenIdConfigProvider.get().getLogoutRedirectParamName();
     }

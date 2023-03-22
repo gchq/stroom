@@ -16,6 +16,7 @@
 
 package stroom.security.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -37,6 +38,7 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.List;
 import javax.inject.Inject;
 
 /**
@@ -56,12 +58,15 @@ public class UsersAndGroupsTabPresenter
     private final Provider<SelectUserPresenter> selectUserPresenterProvider;
     private final ManageNewEntityPresenter newGroupPresenter;
     private final CreateNewUserPresenter newUserPresenter;
+    private final CreateMultipleUsersPresenter createMultipleUsersPresenter;
     private final RestFactory restFactory;
     private final ButtonView newButton;
+    private final ButtonView addMultipleButton;
     private final ButtonView openButton;
     private final ButtonView deleteButton;
     private final FindUserCriteria criteria = new FindUserCriteria();
     private final UiConfigCache uiConfigCache;
+    private final ClientSecurityContext securityContext;
 
     @Inject
     public UsersAndGroupsTabPresenter(final EventBus eventBus,
@@ -71,6 +76,7 @@ public class UsersAndGroupsTabPresenter
                                       final Provider<SelectUserPresenter> selectUserPresenterProvider,
                                       final ManageNewEntityPresenter newGroupPresenter,
                                       final CreateNewUserPresenter newUserPresenter,
+                                      final CreateMultipleUsersPresenter createMultipleUsersPresenter,
                                       final RestFactory restFactory,
                                       final ClientSecurityContext securityContext,
                                       final UiConfigCache uiConfigCache) {
@@ -82,23 +88,18 @@ public class UsersAndGroupsTabPresenter
         this.restFactory = restFactory;
         this.newGroupPresenter = newGroupPresenter;
         this.newUserPresenter = newUserPresenter;
+        this.createMultipleUsersPresenter = createMultipleUsersPresenter;
         this.uiConfigCache = uiConfigCache;
+        this.securityContext = securityContext;
 
         setInSlot(LIST, listPresenter);
 
-        newButton = listPresenter.addButton(SvgPresets.NEW_ITEM);
+        newButton = listPresenter.addButton(SvgPresets.ADD);
+        addMultipleButton = listPresenter.addButton(SvgPresets.ADD_MULTIPLE.title("Add Multiple Users"));
         openButton = listPresenter.addButton(SvgPresets.OPEN);
         deleteButton = listPresenter.addButton(SvgPresets.DELETE);
 
-        final boolean updatePerm = securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION);
-
-        if (!updatePerm) {
-            deleteButton.setVisible(false);
-        }
-        if (!updatePerm) {
-            newButton.setVisible(false);
-        }
-
+        refreshButtons(false);
     }
 
     @Override
@@ -112,6 +113,11 @@ public class UsersAndGroupsTabPresenter
         registerHandler(newButton.addClickHandler(event -> {
             if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
                 onNew();
+            }
+        }));
+        registerHandler(addMultipleButton.addClickHandler(event -> {
+            if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+                onAddMultiple();
             }
         }));
         registerHandler(openButton.addClickHandler(event -> {
@@ -128,12 +134,43 @@ public class UsersAndGroupsTabPresenter
         super.onBind();
     }
 
+    private void refreshButtons(final boolean isGroup) {
+
+        uiConfigCache.get()
+                .onSuccess(extendedUiConfig -> {
+                    final boolean updatePerm = securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION);
+
+                    if (updatePerm) {
+                        addMultipleButton.setVisible(!isGroup
+                                && extendedUiConfig.isExternalIdentityProvider());
+                        newButton.setTitle(isGroup
+                                ? "New Group"
+                                : "Add User");
+                        openButton.setTitle(isGroup
+                                ? "Edit Group"
+                                : "Edit User");
+                        deleteButton.setTitle(isGroup
+                                ? "Delete Group"
+                                : "Delete User");
+                    } else {
+                        newButton.setVisible(false);
+                        addMultipleButton.setVisible(false);
+                        deleteButton.setVisible(false);
+                        openButton.setTitle(isGroup
+                                ? "Open Group"
+                                : "Open User");
+                    }
+
+                });
+    }
+
     /**
      * Sets whether this presenter is showing users or groups
      */
     public void setGroup(final boolean group) {
         criteria.setGroup(group);
         listPresenter.setup(criteria);
+        refreshButtons(group);
     }
 
     private void enableButtons() {
@@ -182,6 +219,21 @@ public class UsersAndGroupsTabPresenter
                     .onSuccess(extendedUiConfig -> {
                         if (extendedUiConfig.isExternalIdentityProvider()) {
                             showNewUserDialog();
+                        } else {
+                            selectUserPresenterProvider.get().show(this::edit);
+                        }
+                    });
+        }
+    }
+
+    private void onAddMultiple() {
+        if (criteria.isGroup()) {
+            showNewGroupDialog();
+        } else {
+            uiConfigCache.get()
+                    .onSuccess(extendedUiConfig -> {
+                        if (extendedUiConfig.isExternalIdentityProvider()) {
+                            showAddMultipleUsersDialog();
                         } else {
                             selectUserPresenterProvider.get().show(this::edit);
                         }
@@ -239,6 +291,42 @@ public class UsersAndGroupsTabPresenter
             }
         };
         newUserPresenter.show(hidePopupUiHandlers);
+    }
+
+    private void showAddMultipleUsersDialog() {
+        final PopupUiHandlers hidePopupUiHandlers = new PopupUiHandlers() {
+            @Override
+            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                if (ok) {
+                    final String usersCsvData = createMultipleUsersPresenter.getUsersCsvData();
+                    if (usersCsvData != null && !usersCsvData.isEmpty()) {
+                        final Rest<List<User>> rest = restFactory.create();
+                        rest
+                                .onSuccess(result -> {
+                                    createMultipleUsersPresenter.hide();
+                                    listPresenter.refresh();
+//                                    edit(result);
+                                })
+                                .onFailure(caught -> AlertEvent.fireError(
+                                        UsersAndGroupsTabPresenter.this,
+                                        caught.getMessage(),
+                                        null))
+                                .call(USER_RESOURCE)
+                                .createUsersFromCsv(createMultipleUsersPresenter.getUsersCsvData());
+                    } else {
+                        createMultipleUsersPresenter.hide();
+                    }
+                } else {
+                    createMultipleUsersPresenter.hide();
+                }
+            }
+
+            @Override
+            public void onHide(final boolean autoClose, final boolean ok) {
+                // Ignore hide.
+            }
+        };
+        createMultipleUsersPresenter.show(hidePopupUiHandlers);
     }
 
     private void edit(final User userRef) {

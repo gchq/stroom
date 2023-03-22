@@ -128,7 +128,7 @@ public class ExtractionTaskHandler {
                 meta = source.getMeta();
 
                 // Set the current user.
-                currentUserHolder.setCurrentUser(securityContext.getUserId());
+                currentUserHolder.setCurrentUser(securityContext.getUserIdentityForAudit());
 
                 // Create the parser.
                 final Pipeline pipeline = pipelineFactory.create(pipelineData, taskContext);

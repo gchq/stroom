@@ -40,7 +40,7 @@ class UserNameResourceImpl implements UserNameResource {
 
     @Override
     public ResultPage<UserName> find(final FindUserNameCriteria criteria) {
-        return userNameServiceProvider.get().find(criteria);
+            return userNameServiceProvider.get().find(criteria);
     }
 }
 

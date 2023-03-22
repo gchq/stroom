@@ -96,7 +96,10 @@ public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedT
         assignedToPresenter.setDataSupplier((filter, consumer) -> {
             final UserResource userResource = GWT.create(UserResource.class);
             final Rest<List<String>> rest = restFactory.create();
-            rest.onSuccess(consumer).call(userResource).getAssociates(filter);
+            rest
+                    .onSuccess(consumer)
+                    .call(userResource)
+                    .getAssociates(filter);
         });
         assignedToPresenter.clearFilter();
         assignedToPresenter.setSelected(currentAssignedTo);

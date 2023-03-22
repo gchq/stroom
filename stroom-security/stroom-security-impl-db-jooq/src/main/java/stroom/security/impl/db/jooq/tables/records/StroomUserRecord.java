@@ -162,16 +162,16 @@ public class StroomUserRecord extends UpdatableRecordImpl<StroomUserRecord> impl
     }
 
     /**
-     * Setter for <code>stroom.stroom_user.preferred_username</code>.
+     * Setter for <code>stroom.stroom_user.display_name</code>.
      */
-    public void setPreferredUsername(String value) {
+    public void setDisplayName(String value) {
         set(10, value);
     }
 
     /**
-     * Getter for <code>stroom.stroom_user.preferred_username</code>.
+     * Getter for <code>stroom.stroom_user.display_name</code>.
      */
-    public String getPreferredUsername() {
+    public String getDisplayName() {
         return (String) get(10);
     }
 
@@ -264,7 +264,7 @@ public class StroomUserRecord extends UpdatableRecordImpl<StroomUserRecord> impl
 
     @Override
     public Field<String> field11() {
-        return StroomUser.STROOM_USER.PREFERRED_USERNAME;
+        return StroomUser.STROOM_USER.DISPLAY_NAME;
     }
 
     @Override
@@ -324,7 +324,7 @@ public class StroomUserRecord extends UpdatableRecordImpl<StroomUserRecord> impl
 
     @Override
     public String component11() {
-        return getPreferredUsername();
+        return getDisplayName();
     }
 
     @Override
@@ -384,7 +384,7 @@ public class StroomUserRecord extends UpdatableRecordImpl<StroomUserRecord> impl
 
     @Override
     public String value11() {
-        return getPreferredUsername();
+        return getDisplayName();
     }
 
     @Override
@@ -454,7 +454,7 @@ public class StroomUserRecord extends UpdatableRecordImpl<StroomUserRecord> impl
 
     @Override
     public StroomUserRecord value11(String value) {
-        setPreferredUsername(value);
+        setDisplayName(value);
         return this;
     }
 
@@ -495,7 +495,7 @@ public class StroomUserRecord extends UpdatableRecordImpl<StroomUserRecord> impl
     /**
      * Create a detached, initialised StroomUserRecord
      */
-    public StroomUserRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String name, String uuid, Boolean isGroup, Boolean enabled, String preferredUsername, String fullName) {
+    public StroomUserRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String name, String uuid, Boolean isGroup, Boolean enabled, String displayName, String fullName) {
         super(StroomUser.STROOM_USER);
 
         setId(id);
@@ -508,7 +508,7 @@ public class StroomUserRecord extends UpdatableRecordImpl<StroomUserRecord> impl
         setUuid(uuid);
         setIsGroup(isGroup);
         setEnabled(enabled);
-        setPreferredUsername(preferredUsername);
+        setDisplayName(displayName);
         setFullName(fullName);
     }
 }

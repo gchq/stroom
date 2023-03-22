@@ -151,7 +151,7 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
 
     private boolean permissionFilter(final StatisticStoreDoc entity) {
         if (!securityContext.hasDocumentPermission(entity.getUuid(), DocumentPermissionNames.READ)) {
-            throw new PermissionException(securityContext.getUserId(), "Not permitted to read " + entity.getName());
+            throw new PermissionException(securityContext.getUserIdentityForAudit(), "Not permitted to read " + entity.getName());
         }
         return true;
     }

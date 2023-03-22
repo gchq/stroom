@@ -39,7 +39,7 @@ public class CreateNewUserViewImpl
     @UiField
     TextBox userIdentity;
     @UiField
-    TextBox preferredUsername;
+    TextBox displayName;
     @UiField
     TextBox fullName;
 
@@ -65,8 +65,8 @@ public class CreateNewUserViewImpl
     }
 
     @Override
-    public String getPreferredUsername() {
-        return preferredUsername.getText();
+    public String getDisplayName() {
+        return displayName.getText();
     }
 
     @Override
@@ -79,8 +79,8 @@ public class CreateNewUserViewImpl
         handleKeyDown(event);
     }
 
-    @UiHandler("preferredUsername")
-    void onPreferredUsernameKeyDown(final KeyDownEvent event) {
+    @UiHandler("displayName")
+    void onDisplayNameKeyDown(final KeyDownEvent event) {
         handleKeyDown(event);
     }
 

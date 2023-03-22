@@ -21,15 +21,15 @@ public class UserNameService {
     }
 
     public ResultPage<UserName> find(final FindUserNameCriteria criteria) {
-        final Set<UserName> names = new HashSet<>();
-        for (final UserNameProvider userNameProvider : userNameProviders) {
-            final ResultPage<UserName> resultPage = userNameProvider.findUserNames(criteria);
-            names.addAll(resultPage.getValues());
-        }
-        final List<UserName> list = names.stream()
-                .sorted()
-                .collect(Collectors.toList());
+            final Set<UserName> names = new HashSet<>();
+            for (final UserNameProvider userNameProvider : userNameProviders) {
+                final ResultPage<UserName> resultPage = userNameProvider.findUserNames(criteria);
+                names.addAll(resultPage.getValues());
+            }
+            final List<UserName> list = names.stream()
+                    .sorted()
+                    .collect(Collectors.toList());
 
-        return new ResultPage<>(list);
+            return new ResultPage<>(list);
     }
 }

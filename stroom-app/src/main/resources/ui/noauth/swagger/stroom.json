@@ -1563,7 +1563,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/UiConfig"
+                  "$ref" : "#/components/schemas/ExtendedUiConfig"
                 }
               }
             },
@@ -8227,7 +8227,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ResultPageString"
+                  "$ref" : "#/components/schemas/ResultPageUserName"
                 }
               }
             },
@@ -8308,24 +8308,20 @@
         "tags" : [ "Authorisation" ]
       }
     },
-    "/users/v1/create/{name}/{isGroup}" : {
+    "/users/v1/createGroup/{name}" : {
       "post" : {
-        "operationId" : "createUser",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "name",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "in" : "path",
-          "name" : "isGroup",
-          "required" : true,
-          "schema" : {
-            "type" : "boolean"
-          }
-        } ],
+        "operationId" : "createGroup",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          },
+          "description" : "name",
+          "required" : true
+        },
         "responses" : {
           "default" : {
             "content" : {
@@ -8338,7 +8334,37 @@
             "description" : "default response"
           }
         },
-        "summary" : "Creates a user or group with the supplied name",
+        "summary" : "Creates a group with the supplied name",
+        "tags" : [ "Authorisation" ]
+      }
+    },
+    "/users/v1/createUser/{name}" : {
+      "post" : {
+        "operationId" : "createUser",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UserName"
+              }
+            }
+          },
+          "description" : "name",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/User"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Creates a user with the supplied name",
         "tags" : [ "Authorisation" ]
       }
     },
@@ -11142,6 +11168,76 @@
         "description" : "A predicate term in a query expression tree",
         "required" : [ "condition", "field" ]
       },
+      "ExtendedUiConfig" : {
+        "type" : "object",
+        "properties" : {
+          "aboutHtml" : {
+            "type" : "string"
+          },
+          "activity" : {
+            "$ref" : "#/components/schemas/ActivityConfig"
+          },
+          "applicationInstanceKeepAliveIntervalMs" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "defaultMaxResults" : {
+            "type" : "string"
+          },
+          "externalIdentityProvider" : {
+            "type" : "boolean"
+          },
+          "helpSubPathExpressions" : {
+            "type" : "string"
+          },
+          "helpSubPathJobs" : {
+            "type" : "string"
+          },
+          "helpSubPathProperties" : {
+            "type" : "string"
+          },
+          "helpSubPathQuickFilter" : {
+            "type" : "string"
+          },
+          "helpUrl" : {
+            "type" : "string"
+          },
+          "htmlTitle" : {
+            "type" : "string"
+          },
+          "maintenanceMessage" : {
+            "type" : "string"
+          },
+          "namePattern" : {
+            "type" : "string"
+          },
+          "oncontextmenu" : {
+            "type" : "string",
+            "pattern" : "^return (true|false);$"
+          },
+          "process" : {
+            "$ref" : "#/components/schemas/ProcessConfig"
+          },
+          "query" : {
+            "$ref" : "#/components/schemas/QueryConfig"
+          },
+          "requireReactWrapper" : {
+            "type" : "boolean"
+          },
+          "source" : {
+            "$ref" : "#/components/schemas/SourceConfig"
+          },
+          "splash" : {
+            "$ref" : "#/components/schemas/SplashConfig"
+          },
+          "theme" : {
+            "$ref" : "#/components/schemas/ThemeConfig"
+          },
+          "welcomeHtml" : {
+            "type" : "string"
+          }
+        }
+      },
       "FeedDoc" : {
         "type" : "object",
         "properties" : {
@@ -12025,7 +12121,7 @@
           },
           "stroomStatusCode" : {
             "type" : "string",
-            "enum" : [ "200 - 0 - OK", "406 - 100 - Feed must be specified", "406 - 101 - Feed is not defined", "406 - 102 - Data type is invalid", "406 - 110 - Feed is not set to receive data", "406 - 120 - Unexpected data type", "406 - 200 - Unknown compression", "401 - 300 - Client Certificate Required", "401 - 301 - Client Token Required", "403 - 310 - Client Certificate not authorised", "403 - 311 - Client Token not authorised", "500 - 400 - Compressed stream invalid", "500 - 999 - Unknown error" ]
+            "enum" : [ "200 - 0 - OK", "406 - 100 - Feed must be specified", "406 - 101 - Feed is not defined", "406 - 102 - Data type is invalid", "406 - 110 - Feed is not set to receive data", "406 - 120 - Unexpected data type", "406 - 200 - Unknown compression", "401 - 300 - Client Certificate Required", "401 - 301 - Client Token Required", "401 - 302 - Client Token or Certificate Required", "403 - 310 - Client Certificate not authorised", "403 - 311 - Client Token not authorised", "403 - 312 - Client Token or Certificate not authorised", "500 - 400 - Compressed stream invalid", "500 - 999 - Unknown error" ]
           }
         }
       },
@@ -12162,9 +12258,6 @@
             "items" : {
               "$ref" : "#/components/schemas/Message"
             }
-          },
-          "rootDocRef" : {
-            "$ref" : "#/components/schemas/DocRef"
           },
           "sourcePath" : {
             "type" : "string"
@@ -13817,7 +13910,10 @@
       "PropertyPath" : {
         "type" : "object",
         "properties" : {
-          "parts" : {
+          "leafPart" : {
+            "type" : "string"
+          },
+          "parentParts" : {
             "type" : "array",
             "items" : {
               "type" : "string"
@@ -14443,21 +14539,6 @@
           }
         }
       },
-      "ResultPageString" : {
-        "type" : "object",
-        "description" : "A page of results.",
-        "properties" : {
-          "pageResponse" : {
-            "$ref" : "#/components/schemas/PageResponse"
-          },
-          "values" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          }
-        }
-      },
       "ResultPageUser" : {
         "type" : "object",
         "description" : "A page of results.",
@@ -14469,6 +14550,21 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/User"
+            }
+          }
+        }
+      },
+      "ResultPageUserName" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/UserName"
             }
           }
         }
@@ -14891,7 +14987,7 @@
             "type" : "string"
           },
           "userName" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/UserName"
           }
         }
       },
@@ -14979,6 +15075,12 @@
       "SimpleUser" : {
         "type" : "object",
         "properties" : {
+          "displayName" : {
+            "type" : "string"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
           "name" : {
             "type" : "string"
           },
@@ -16137,73 +16239,6 @@
           }
         }
       },
-      "UiConfig" : {
-        "type" : "object",
-        "properties" : {
-          "aboutHtml" : {
-            "type" : "string"
-          },
-          "activity" : {
-            "$ref" : "#/components/schemas/ActivityConfig"
-          },
-          "applicationInstanceKeepAliveIntervalMs" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "defaultMaxResults" : {
-            "type" : "string"
-          },
-          "helpSubPathExpressions" : {
-            "type" : "string"
-          },
-          "helpSubPathJobs" : {
-            "type" : "string"
-          },
-          "helpSubPathProperties" : {
-            "type" : "string"
-          },
-          "helpSubPathQuickFilter" : {
-            "type" : "string"
-          },
-          "helpUrl" : {
-            "type" : "string"
-          },
-          "htmlTitle" : {
-            "type" : "string"
-          },
-          "maintenanceMessage" : {
-            "type" : "string"
-          },
-          "namePattern" : {
-            "type" : "string"
-          },
-          "oncontextmenu" : {
-            "type" : "string",
-            "pattern" : "^return (true|false);$"
-          },
-          "process" : {
-            "$ref" : "#/components/schemas/ProcessConfig"
-          },
-          "query" : {
-            "$ref" : "#/components/schemas/QueryConfig"
-          },
-          "requireReactWrapper" : {
-            "type" : "boolean"
-          },
-          "source" : {
-            "$ref" : "#/components/schemas/SourceConfig"
-          },
-          "splash" : {
-            "$ref" : "#/components/schemas/SplashConfig"
-          },
-          "theme" : {
-            "$ref" : "#/components/schemas/ThemeConfig"
-          },
-          "welcomeHtml" : {
-            "type" : "string"
-          }
-        }
-      },
       "UpdateAccountRequest" : {
         "type" : "object",
         "properties" : {
@@ -16276,6 +16311,12 @@
           "createUser" : {
             "type" : "string"
           },
+          "displayName" : {
+            "type" : "string"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
           "group" : {
             "type" : "boolean"
           },
@@ -16313,6 +16354,20 @@
             "uniqueItems" : true
           },
           "userId" : {
+            "type" : "string"
+          }
+        }
+      },
+      "UserName" : {
+        "type" : "object",
+        "properties" : {
+          "displayName" : {
+            "type" : "string"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "name" : {
             "type" : "string"
           }
         }

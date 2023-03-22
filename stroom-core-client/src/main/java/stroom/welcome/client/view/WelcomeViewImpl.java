@@ -35,7 +35,7 @@ public class WelcomeViewImpl extends ViewImpl implements WelcomeView {
     @UiField
     Label userIdentity;
     @UiField
-    Label preferredUsername;
+    Label displayName;
     @UiField
     Label fullName;
     @UiField
@@ -90,8 +90,8 @@ public class WelcomeViewImpl extends ViewImpl implements WelcomeView {
     }
 
     @Override
-    public Label getPreferredUsername() {
-        return preferredUsername;
+    public Label getDisplayName() {
+        return displayName;
     }
 
     @Override

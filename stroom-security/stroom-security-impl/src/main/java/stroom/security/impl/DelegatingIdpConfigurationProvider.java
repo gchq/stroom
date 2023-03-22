@@ -20,7 +20,7 @@ public class DelegatingIdpConfigurationProvider implements IdpConfigurationProvi
 
     private final IdpConfigurationProvider delegate;
     // We must inject AbstractOpenIdConfig rather than OpenIdConfiguration as the latter is guice
-    // bond to this interface (IdpConfigurationProvider) to provide a derived config based on yaml
+    // bound to this interface (IdpConfigurationProvider) to provide a derived config based on yaml
     // config + config from the IDP. AbstractOpenIdConfig is bound to the local yaml config only, which is
     // what we need here.
     private final Provider<AbstractOpenIdConfig> localOpenIdConfigProvider;
@@ -127,6 +127,11 @@ public class DelegatingIdpConfigurationProvider implements IdpConfigurationProvi
     @Override
     public String getUniqueIdentityClaim() {
         return delegate.getUniqueIdentityClaim();
+    }
+
+    @Override
+    public String getUserDisplayNameClaim() {
+        return delegate.getUserDisplayNameClaim();
     }
 
     @Override

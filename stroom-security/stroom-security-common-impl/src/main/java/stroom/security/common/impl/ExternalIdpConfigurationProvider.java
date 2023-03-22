@@ -319,6 +319,11 @@ public class ExternalIdpConfigurationProvider
     }
 
     @Override
+    public String getUserDisplayNameClaim() {
+        return localOpenIdConfigProvider.get().getUserDisplayNameClaim();
+    }
+
+    @Override
     public String getLogoutRedirectParamName() {
         return localOpenIdConfigProvider.get().getLogoutRedirectParamName();
     }

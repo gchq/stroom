@@ -23,6 +23,7 @@ public final class SvgPresets {
     public static final Preset ADD = enabled("svgIcon-add", "Add");
     public static final Preset ADD_ABOVE = enabled("svgIcon-add-above", "Add above");
     public static final Preset ADD_BELOW = enabled("svgIcon-add-below", "Add below");
+    public static final Preset ADD_MULTIPLE = enabled("svgIcon-add-multiple", "Add Multiple");
     public static final Preset ALERT = enabled("svgIcon-alert", "Alert");
     public static final Preset ANNOTATE = disabled("svgIcon-edit", "Annotate");
     public static final Preset CLEAR = disabled("svgIcon-clear", "Clear");

@@ -85,7 +85,7 @@ public class UserEditPresenter extends MyPresenterWidget<UserEditView>
                         .resizable(true)
                         .build())
                 .build();
-        final String caption = "User - " + userRef.getUsername().asDisplayValue();
+        final String caption = "User - " + userRef.getUsername().getCombinedName();
         ShowPopupEvent.fire(
                 UserEditPresenter.this,
                 UserEditPresenter.this,

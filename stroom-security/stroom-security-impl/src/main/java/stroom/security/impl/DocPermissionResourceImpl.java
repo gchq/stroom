@@ -63,7 +63,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 
     private static final FilterFieldMappers<SimpleUser> SIMPLE_USERS_FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
             FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_NAME, SimpleUser::getName),
-            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_PREFERRED_USERNAME, SimpleUser::getPreferredUsername),
+            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_PREFERRED_USERNAME, SimpleUser::getDisplayName),
             FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_FULL_NAME, SimpleUser::getFullName));
 
     private final Provider<UserService> userServiceProvider;
@@ -127,7 +127,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 
         logPermissionChangeError("DocPermissionResourceImpl.changeDocumentPermissions",
                 request.getDocRef(), errorMessage);
-        throw new PermissionException(getCurrentUserId(), errorMessage);
+        throw new PermissionException(getCurrentUserIdForDisplay(), errorMessage);
 
     }
 
@@ -143,7 +143,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 
             logPermissionChangeError("DocPermissionResourceImpl.copyPermissionFromParent",
                     request.getDocRef(), errorMessage);
-            throw new PermissionException(getCurrentUserId(), errorMessage);
+            throw new PermissionException(getCurrentUserIdForDisplay(), errorMessage);
         }
 
         Optional<ExplorerNode> parent = explorerNodeServiceProvider.get().getParent(docRef);
@@ -162,8 +162,9 @@ class DocPermissionResourceImpl implements DocPermissionResource {
             return documentPermissionServiceProvider.get().getPermissionsForDocument(request.getDocRef().getUuid());
         }
 
-        throw new PermissionException(getCurrentUserId(), "Insufficient privileges to fetch " +
-                "permissions for this document");
+        throw new PermissionException(
+                getCurrentUserIdForDisplay(),
+                "Insufficient privileges to fetch permissions for this document");
     }
 
     @Override
@@ -556,8 +557,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
         }
     }
 
-    private String getCurrentUserId() {
-        return securityContextProvider.get().getUserId();
+    private String getCurrentUserIdForDisplay() {
+        return securityContextProvider.get().getUserIdentityForAudit();
     }
 
     private void logPermissionChangeError(final String typeId,

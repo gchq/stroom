@@ -28,6 +28,7 @@ import stroom.event.logging.api.PurposeUtil;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
 import stroom.util.io.ByteSize;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -323,8 +324,10 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
     private User getUser() {
         try {
+            final UserIdentity userIdentity = securityContext.getUserIdentity();
             return User.builder()
-                    .withId(securityContext.getUserIdentity().getId())
+                    .withId(userIdentity.getId())
+                    .withName(userIdentity.getDisplayName())
                     .build();
         } catch (final RuntimeException e) {
             LOGGER.warn("Problem getting current user", e);

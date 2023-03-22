@@ -91,7 +91,7 @@ class TestStoredQueryDao {
                 .dataSource(indexRef)
                 .expression(ExpressionOperator.builder().build())
                 .build());
-        AuditUtil.stamp(securityContext.getUserId(), refQuery);
+        AuditUtil.stamp(securityContext, refQuery);
         storedQueryDao.create(refQuery);
 
         final ExpressionOperator.Builder root = ExpressionOperator.builder().op(Op.OR);
@@ -107,7 +107,7 @@ class TestStoredQueryDao {
                 .dataSource(indexRef)
                 .expression(root.build())
                 .build());
-        AuditUtil.stamp(securityContext.getUserId(), testQuery);
+        AuditUtil.stamp(securityContext, testQuery);
         testQuery = storedQueryDao.create(testQuery);
 
         LOGGER.info(testQuery.getQuery().toString());
@@ -177,7 +177,7 @@ class TestStoredQueryDao {
             newQuery.setFavourite(false);
             newQuery.setQuery(query.getQuery());
             newQuery.setData(query.getData());
-            AuditUtil.stamp(securityContext.getUserId(), newQuery);
+            AuditUtil.stamp(securityContext, newQuery);
             storedQueryDao.create(newQuery);
         }
 

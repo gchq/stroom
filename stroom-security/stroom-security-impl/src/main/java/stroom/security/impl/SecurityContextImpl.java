@@ -520,7 +520,8 @@ class SecurityContextImpl implements SecurityContext {
             // Don't check any further permissions.
             checkTypeThreadLocal.set(Boolean.FALSE);
             if (!hasAppPermission(permission)) {
-                throw new PermissionException(getUserId(),
+                throw new PermissionException(
+                        getUserIdentityForAudit(),
                         "User does not have the required permission (" + permission + ")");
             }
         } finally {
@@ -535,7 +536,7 @@ class SecurityContextImpl implements SecurityContext {
             checkTypeThreadLocal.set(Boolean.FALSE);
             if (!isLoggedIn()) {
                 throw new PermissionException(
-                        getUserId(),
+                        getUserIdentityForAudit(),
                         "A user must be logged in to call service");
             }
         } finally {

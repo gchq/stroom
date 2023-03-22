@@ -16,12 +16,16 @@
 
 package stroom.security.api;
 
+import stroom.util.shared.HasAuditableUserIdentity;
+
 import java.util.function.Supplier;
 
-public interface SecurityContext {
+public interface SecurityContext extends HasAuditableUserIdentity {
 
     /**
      * Get the id of the user associated with this security context.
+     * If using an external IDP this may not be a very user-friendly value so for anything
+     * where the user identity is going to be shown in the UI, use {@link SecurityContext#getUserIdentityForAudit()}
      *
      * @return The id of the user associated with this security context.
      */
@@ -29,14 +33,38 @@ public interface SecurityContext {
 
     /**
      * Retrieve the user's UUID if supported by the type of user.
+     * This is the Stroom User UUID.
      */
     String getUserUuid();
 
+    /**
+     * @return The user identity in a form suitable for use in audit events, for display
+     * in the UI, or in exception messages. Returns {@link UserIdentity#getDisplayName()} or
+     * if that is not set {@link UserIdentity#getId()}.
+     */
+    default String getUserIdentityForAudit() {
+        final UserIdentity userIdentity = getUserIdentity();
+        if (userIdentity == null) {
+            return null;
+        }
+        return userIdentity.getUserIdentityForAudit();
+    }
+
+    /**
+     * See {@link UserIdentity#getCombinedName()}
+     */
+    default String getCombinedUserIdentity() {
+        final UserIdentity userIdentity = getUserIdentity();
+        if (userIdentity == null) {
+            return null;
+        }
+        return userIdentity.getCombinedName();
+    }
 
     UserIdentity createIdentity(String userId);
 
     /**
-     * Gets teh identity of the current user.
+     * Gets the identity of the current user.
      *
      * @return The identity of the current user.
      */

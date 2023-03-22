@@ -1081,7 +1081,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UiConfig'
+                $ref: '#/components/schemas/ExtendedUiConfig'
           description: default response
       summary: Fetch the UI configuration
       tags:
@@ -5649,7 +5649,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResultPageString'
+                $ref: '#/components/schemas/ResultPageUserName'
           description: default response
       summary: Find the user names matching the supplied criteria
       tags:
@@ -5702,20 +5702,16 @@ paths:
       summary: Gets a list of associated users
       tags:
       - Authorisation
-  /users/v1/create/{name}/{isGroup}:
+  /users/v1/createGroup/{name}:
     post:
-      operationId: createUser
-      parameters:
-      - in: path
-        name: name
+      operationId: createGroup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+        description: name
         required: true
-        schema:
-          type: string
-      - in: path
-        name: isGroup
-        required: true
-        schema:
-          type: boolean
       responses:
         default:
           content:
@@ -5723,7 +5719,27 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
           description: default response
-      summary: Creates a user or group with the supplied name
+      summary: Creates a group with the supplied name
+      tags:
+      - Authorisation
+  /users/v1/createUser/{name}:
+    post:
+      operationId: createUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserName'
+        description: name
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: default response
+      summary: Creates a user with the supplied name
       tags:
       - Authorisation
   /users/v1/find:
@@ -7754,6 +7770,53 @@ components:
       required:
       - condition
       - field
+    ExtendedUiConfig:
+      type: object
+      properties:
+        aboutHtml:
+          type: string
+        activity:
+          $ref: '#/components/schemas/ActivityConfig'
+        applicationInstanceKeepAliveIntervalMs:
+          type: integer
+          format: int32
+        defaultMaxResults:
+          type: string
+        externalIdentityProvider:
+          type: boolean
+        helpSubPathExpressions:
+          type: string
+        helpSubPathJobs:
+          type: string
+        helpSubPathProperties:
+          type: string
+        helpSubPathQuickFilter:
+          type: string
+        helpUrl:
+          type: string
+        htmlTitle:
+          type: string
+        maintenanceMessage:
+          type: string
+        namePattern:
+          type: string
+        oncontextmenu:
+          type: string
+          pattern: ^return (true|false);$
+        process:
+          $ref: '#/components/schemas/ProcessConfig'
+        query:
+          $ref: '#/components/schemas/QueryConfig'
+        requireReactWrapper:
+          type: boolean
+        source:
+          $ref: '#/components/schemas/SourceConfig'
+        splash:
+          $ref: '#/components/schemas/SplashConfig'
+        theme:
+          $ref: '#/components/schemas/ThemeConfig'
+        welcomeHtml:
+          type: string
     FeedDoc:
       type: object
       properties:
@@ -8402,8 +8465,10 @@ components:
           - 406 - 200 - Unknown compression
           - 401 - 300 - Client Certificate Required
           - 401 - 301 - Client Token Required
+          - 401 - 302 - Client Token or Certificate Required
           - 403 - 310 - Client Certificate not authorised
           - 403 - 311 - Client Token not authorised
+          - 403 - 312 - Client Token or Certificate not authorised
           - 500 - 400 - Compressed stream invalid
           - 500 - 999 - Unknown error
     GetPipelineForMetaRequest:
@@ -8504,8 +8569,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Message'
-        rootDocRef:
-          $ref: '#/components/schemas/DocRef'
         sourcePath:
           type: string
         state:
@@ -9752,7 +9815,9 @@ components:
     PropertyPath:
       type: object
       properties:
-        parts:
+        leafPart:
+          type: string
+        parentParts:
           type: array
           items:
             type: string
@@ -10199,16 +10264,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/StoredQuery'
-    ResultPageString:
-      type: object
-      description: A page of results.
-      properties:
-        pageResponse:
-          $ref: '#/components/schemas/PageResponse'
-        values:
-          type: array
-          items:
-            type: string
     ResultPageUser:
       type: object
       description: A page of results.
@@ -10219,6 +10274,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/User'
+    ResultPageUserName:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserName'
     ResultRequest:
       type: object
       description: A definition for how to return the raw results of the query in
@@ -10562,7 +10627,7 @@ components:
         nodeName:
           type: string
         userName:
-          type: string
+          $ref: '#/components/schemas/UserName'
     SessionListResponse:
       type: object
       properties:
@@ -10619,6 +10684,10 @@ components:
     SimpleUser:
       type: object
       properties:
+        displayName:
+          type: string
+        fullName:
+          type: string
         name:
           type: string
         uuid:
@@ -11504,51 +11573,6 @@ components:
           format: int64
         token_type:
           type: string
-    UiConfig:
-      type: object
-      properties:
-        aboutHtml:
-          type: string
-        activity:
-          $ref: '#/components/schemas/ActivityConfig'
-        applicationInstanceKeepAliveIntervalMs:
-          type: integer
-          format: int32
-        defaultMaxResults:
-          type: string
-        helpSubPathExpressions:
-          type: string
-        helpSubPathJobs:
-          type: string
-        helpSubPathProperties:
-          type: string
-        helpSubPathQuickFilter:
-          type: string
-        helpUrl:
-          type: string
-        htmlTitle:
-          type: string
-        maintenanceMessage:
-          type: string
-        namePattern:
-          type: string
-        oncontextmenu:
-          type: string
-          pattern: ^return (true|false);$
-        process:
-          $ref: '#/components/schemas/ProcessConfig'
-        query:
-          $ref: '#/components/schemas/QueryConfig'
-        requireReactWrapper:
-          type: boolean
-        source:
-          $ref: '#/components/schemas/SourceConfig'
-        splash:
-          $ref: '#/components/schemas/SplashConfig'
-        theme:
-          $ref: '#/components/schemas/ThemeConfig'
-        welcomeHtml:
-          type: string
     UpdateAccountRequest:
       type: object
       properties:
@@ -11604,6 +11628,10 @@ components:
           format: int64
         createUser:
           type: string
+        displayName:
+          type: string
+        fullName:
+          type: string
         group:
           type: boolean
         id:
@@ -11630,6 +11658,15 @@ components:
             type: string
           uniqueItems: true
         userId:
+          type: string
+    UserName:
+      type: object
+      properties:
+        displayName:
+          type: string
+        fullName:
+          type: string
+        name:
           type: string
     UserPreferences:
       type: object

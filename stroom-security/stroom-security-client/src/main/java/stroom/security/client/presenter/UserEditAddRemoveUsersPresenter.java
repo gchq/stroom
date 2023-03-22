@@ -123,26 +123,15 @@ public class UserEditAddRemoveUsersPresenter
         final FindUserCriteria findUserCriteria = new FindUserCriteria();
         findUserCriteria.setRelatedUser(relatedUser);
 
-//        final String type = getRelatedType();
         if (relatedUser.isGroup()) {
-// TODO Add Group Membership vs Add User To Group
-            addButton.setTitle("Add Group Membership");
-            removeButton.setTitle("Remove Group Membership");
-        } else {
-// TODO
             addButton.setTitle("Add User to Group");
             removeButton.setTitle("Remove User from Group");
+        } else {
+            addButton.setTitle("Add Group Membership");
+            removeButton.setTitle("Remove Group Membership");
         }
 
         setup(findUserCriteria);
-    }
-
-    private String getRelatedType() {
-        String type = "Group";
-        if (relatedUser.isGroup()) {
-            type = "User";
-        }
-        return type;
     }
 
     @Override

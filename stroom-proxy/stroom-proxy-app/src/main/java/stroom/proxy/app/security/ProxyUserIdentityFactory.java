@@ -4,12 +4,15 @@ import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.UserIdentity;
 import stroom.security.common.impl.AbstractUserIdentityFactory;
 import stroom.security.common.impl.JwtContextFactory;
+import stroom.security.common.impl.JwtUtil;
+import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenResponse;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.cert.CertificateExtractor;
 
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.consumer.JwtContext;
 
 import java.util.Objects;
@@ -42,7 +45,17 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
                                                  final HttpServletRequest request) {
         Objects.requireNonNull(jwtContext);
         // No notion of a local user identity so just wrap the claims in the jwt context
-        return Optional.of(new ProxyClientUserIdentity(jwtContext));
+
+        final JwtClaims jwtClaims = jwtContext.getJwtClaims();
+
+        final String uniqueIdentity = getUniqueIdentity(jwtClaims);
+        final String displayName = JwtUtil.getClaimValue(jwtClaims, OpenId.CLAIM__PREFERRED_USERNAME)
+                .orElse(uniqueIdentity);
+        final String fullName = JwtUtil.getClaimValue(jwtClaims, OpenId.CLAIM__NAME)
+                .orElse(null);
+
+        return Optional.of(new ProxyClientUserIdentity(
+                uniqueIdentity, displayName, fullName, jwtContext));
     }
 
     @Override

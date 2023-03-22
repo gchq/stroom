@@ -111,7 +111,17 @@ public abstract class AbstractOpenIdConfig
      */
     private final boolean validateAudience;
 
+    /**
+     * The OIDC claim to use to uniquely identify the user on the IDP. This id will be used to link an IDP
+     * user to the stroom user. It must be unique on the IDP and not subject to change. Be default is 'sub'.
+     */
     private final String uniqueIdentityClaim;
+
+    /**
+     * This is a more human friendly username for the user. It is not used for linking IDP to stroom users so
+     * may not be unique on the IDP, and may change. By default, it is 'preferred_username'.
+     */
+    private final String userDisplayNameClaim;
 
     public AbstractOpenIdConfig() {
         identityProviderType = getDefaultIdpType();
@@ -129,6 +139,7 @@ public abstract class AbstractOpenIdConfig
         clientCredentialsScopes = OpenId.DEFAULT_CLIENT_CREDENTIALS_SCOPES;
         validateAudience = true;
         uniqueIdentityClaim = OpenId.CLAIM__SUBJECT;
+        userDisplayNameClaim = OpenId.CLAIM__PREFERRED_USERNAME;
     }
 
     @JsonIgnore
@@ -150,7 +161,8 @@ public abstract class AbstractOpenIdConfig
             @JsonProperty("requestScopes") final List<String> requestScopes,
             @JsonProperty("clientCredentialsScopes") final List<String> clientCredentialsScopes,
             @JsonProperty("validateAudience") final boolean validateAudience,
-            @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim) {
+            @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim,
+            @JsonProperty("userDisplayNameClaim") final String userDisplayNameClaim) {
 
         this.identityProviderType = identityProviderType;
         this.openIdConfigurationEndpoint = openIdConfigurationEndpoint;
@@ -167,6 +179,7 @@ public abstract class AbstractOpenIdConfig
         this.clientCredentialsScopes = clientCredentialsScopes;
         this.validateAudience = validateAudience;
         this.uniqueIdentityClaim = uniqueIdentityClaim;
+        this.userDisplayNameClaim = userDisplayNameClaim;
     }
 
     /**
@@ -297,6 +310,15 @@ public abstract class AbstractOpenIdConfig
             "Must uniquely identify the user on the IDP and not be subject to change. Uses 'sub' by default.")
     public String getUniqueIdentityClaim() {
         return uniqueIdentityClaim;
+    }
+
+    @Override
+    @NotNull
+    @JsonProperty
+    @JsonPropertyDescription("The Open ID Connect claim used to provide a more human friendly username for a user " +
+            "than that provided by uniqueIdentityClaim. It is not guaranteed to be unique and may change.")
+    public String getUserDisplayNameClaim() {
+        return userDisplayNameClaim;
     }
 
     @JsonIgnore

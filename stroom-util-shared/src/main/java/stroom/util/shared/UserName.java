@@ -14,34 +14,38 @@ import java.util.Objects;
  * Pojo for representing enough info to identify a user
  */
 @JsonInclude(Include.NON_NULL)
-public class UserName implements Comparable<UserName> {
+public class UserName implements Comparable<UserName>, HasAuditableUserIdentity {
     private static final Comparator<UserName> COMPARATOR = Comparator.comparing(UserName::getName);
 
     @JsonProperty
     private String name;
     @JsonProperty
-    private String preferredUsername;
+    private String displayName;
     @JsonProperty
     private String fullName;
 
     @JsonIgnore
-    private final boolean showBoth;
-
-
-//    public UserName(final User user) {
-//        this.name = Objects.requireNonNull(user.getName());
-//        this.preferredUsername = user.getPreferredUsername();
-//        this.fullName = user.getFullName();
-//    }
+    private final String combinedName;
 
     @JsonCreator
     public UserName(@JsonProperty("name") final String name,
-                    @JsonProperty("preferredUsername") final String preferredUsername,
+                    @JsonProperty("displayName") final String displayName,
                     @JsonProperty("fullName") final String fullName) {
+        if (name == null || name.trim().length() == 0) {
+            throw new RuntimeException("User unique identity must have a value");
+        }
         this.name = Objects.requireNonNull(name);
-        this.preferredUsername = preferredUsername;
+        this.displayName = displayName;
         this.fullName = fullName;
-        this.showBoth = preferredUsername == null || !Objects.equals(name, preferredUsername);
+
+        // This logic is replicated in UserIdentity
+        if (displayName == null) {
+            this.combinedName = name;
+        } else if (Objects.equals(name, displayName)) {
+            this.combinedName = displayName;
+        } else {
+            this.combinedName = displayName + " (" + name + ")";
+        }
     }
 
     public UserName(final String name) {
@@ -49,8 +53,8 @@ public class UserName implements Comparable<UserName> {
     }
 
     /**
-     * <p>If this is a user then {@code name} is also the unique identifier for the user on the
-     * OpenIdConnect IDP, i.e. the subject. The value may be a UUID or a more human friendly form
+     * <p>If this is a user then {@code id} is the unique identifier for the user on the
+     * OpenIdConnect IDP, e.g. the subject. The value may be a UUID or a more human friendly form
      * depending on the IDP in use (internal/external).</p>
      *
      * <p>If {@code isGroup} is {@code true} then this is the unique name of the group.
@@ -69,8 +73,8 @@ public class UserName implements Comparable<UserName> {
      * Intended for display purposes only or to aid in identifying the user where {@code name}
      * is an unfriendly UUID.
      */
-    public String getPreferredUsername() {
-        return preferredUsername;
+    public String getDisplayName() {
+        return displayName;
     }
 
     /**
@@ -86,15 +90,26 @@ public class UserName implements Comparable<UserName> {
         return fullName;
     }
 
-    public String asDisplayValue() {
-        return showBoth
-                ? preferredUsername + " (" + name + ")"
-                : name;
+    /**
+     * A value for use in the UI.
+     * If there is no {@code displayName}, this will return {@code name}.
+     * If {@code displayName} is the same as {@code name}, this will return {@code name}.
+     * Else it will return 'displayName (name)'.
+     */
+    @JsonIgnore
+    public String getCombinedName() {
+        return combinedName;
+    }
+
+    @Override
+    @JsonIgnore
+    public String getUserIdentityForAudit() {
+        return HasAuditableUserIdentity.fromUserNames(name, displayName);
     }
 
     @Override
     public String toString() {
-        return asDisplayValue();
+        return combinedName;
     }
 
     @Override
@@ -134,7 +149,7 @@ public class UserName implements Comparable<UserName> {
     public static final class Builder {
 
         private String name;
-        private String preferredUsername;
+        private String displayName;
         private String fullName;
 
         private Builder() {
@@ -142,7 +157,7 @@ public class UserName implements Comparable<UserName> {
 
         private Builder(final UserName username) {
             this.name = username.name;
-            this.preferredUsername = username.getPreferredUsername();
+            this.displayName = username.getDisplayName();
             this.fullName = username.getFullName();
         }
 
@@ -151,8 +166,8 @@ public class UserName implements Comparable<UserName> {
             return this;
         }
 
-        public Builder preferredUsername(final String value) {
-            preferredUsername = value;
+        public Builder displayName(final String value) {
+            displayName = value;
             return this;
         }
 
@@ -162,7 +177,7 @@ public class UserName implements Comparable<UserName> {
         }
 
         public UserName build() {
-            return new UserName(name, preferredUsername, fullName);
+            return new UserName(name, displayName, fullName);
         }
     }
 }

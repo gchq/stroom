@@ -99,9 +99,9 @@ public class StroomUser extends TableImpl<StroomUserRecord> {
     public final TableField<StroomUserRecord, Boolean> ENABLED = createField(DSL.name("enabled"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BOOLEAN)), this, "");
 
     /**
-     * The column <code>stroom.stroom_user.preferred_username</code>.
+     * The column <code>stroom.stroom_user.display_name</code>.
      */
-    public final TableField<StroomUserRecord, String> PREFERRED_USERNAME = createField(DSL.name("preferred_username"), SQLDataType.VARCHAR(255), this, "");
+    public final TableField<StroomUserRecord, String> DISPLAY_NAME = createField(DSL.name("display_name"), SQLDataType.VARCHAR(255), this, "");
 
     /**
      * The column <code>stroom.stroom_user.full_name</code>.

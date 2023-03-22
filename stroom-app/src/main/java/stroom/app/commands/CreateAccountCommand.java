@@ -114,32 +114,30 @@ public class CreateAccountCommand extends AbstractStroomAccountConfiguredCommand
 
         final String username = namespace.getString(USERNAME_ARG_NAME);
 
-        securityContext.asProcessingUser(() -> {
-            try {
-                accountService.read(username)
-                        .ifPresentOrElse(
-                                account -> {
-                                    final String msg = LogUtil.message("An account for user '{}' already exists",
-                                            username);
-                                    LOGGER.error(msg);
-                                    logEvent(username, false, msg);
-                                    System.exit(1);
-                                },
-                                () -> {
-                                    createAccount(namespace, username);
-                                    final String msg = LogUtil.message("Account creation complete for user '{}'",
-                                            username);
-                                    LOGGER.info(msg);
-                                    logEvent(username, true, msg);
-                                    System.exit(0);
-                                });
-                System.exit(0);
-            } catch (Exception e) {
-                LOGGER.error(e.getMessage());
-                logEvent(username, false, e.getMessage());
-                System.exit(1);
-            }
-        });
+        try {
+            accountService.read(username)
+                    .ifPresentOrElse(
+                            account -> {
+                                final String msg = LogUtil.message("An account for user '{}' already exists",
+                                        username);
+                                LOGGER.error(msg);
+                                logEvent(username, false, msg);
+                                System.exit(1);
+                            },
+                            () -> {
+                                createAccount(namespace, username);
+                                final String msg = LogUtil.message("Account creation complete for user '{}'",
+                                        username);
+                                LOGGER.info(msg);
+                                logEvent(username, true, msg);
+                                System.exit(0);
+                            });
+            System.exit(0);
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage());
+            logEvent(username, false, e.getMessage());
+            System.exit(1);
+        }
     }
 
     private void createAccount(final Namespace namespace, final String username) {

@@ -24,13 +24,13 @@ public class StoredQueryServiceImpl implements StoredQueryService {
 
     @Override
     public StoredQuery create(@NotNull final StoredQuery storedQuery) {
-        AuditUtil.stamp(securityContext.getUserId(), storedQuery);
+        AuditUtil.stamp(securityContext, storedQuery);
         return securityContext.secureResult(() -> dao.create(storedQuery));
     }
 
     @Override
     public StoredQuery update(@NotNull final StoredQuery storedQuery) {
-        AuditUtil.stamp(securityContext.getUserId(), storedQuery);
+        AuditUtil.stamp(securityContext, storedQuery);
         return securityContext.secureResult(() -> dao.update(storedQuery));
     }
 
@@ -46,7 +46,7 @@ public class StoredQueryServiceImpl implements StoredQueryService {
 
         if (storedQuery != null
                 && !storedQuery.getUpdateUser().equals(securityContext.getUserId())) {
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "This retrieved stored query belongs to another user");
         }
         return storedQuery;

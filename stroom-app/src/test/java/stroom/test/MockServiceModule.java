@@ -95,7 +95,7 @@ public class MockServiceModule extends AbstractModule {
             }
             return null;
         });
-        when(mockUserService.getOrCreateUser(any())).then((Answer<User>) invocation -> {
+        when(mockUserService.getOrCreateUser(any(String.class))).then((Answer<User>) invocation -> {
             final String name = invocation.getArgument(0);
             final User user = User.builder()
                     .uuid(UUID.randomUUID().toString())

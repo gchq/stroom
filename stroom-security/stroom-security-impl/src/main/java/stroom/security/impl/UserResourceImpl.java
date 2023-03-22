@@ -1,26 +1,43 @@
 package stroom.security.impl;
 
 import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
+import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserName;
 
 import event.logging.CreateEventAction;
 import event.logging.Outcome;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.NotFoundException;
 
 @AutoLogged
 public class UserResourceImpl implements UserResource {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UserResourceImpl.class);
+    private static final int USER_ID_CSV_COL_IDX = 0;
+    private static final int DISPLAY_NAME_CSV_COL_IDX = 1;
+    private static final int FULL_NAME_CSV_COL_IDX = 2;
 
     private final Provider<UserService> userServiceProvider;
     private final Provider<SecurityContext> securityContextProvider;
@@ -118,6 +135,69 @@ public class UserResourceImpl implements UserResource {
                     "Creating new Stroom user " + name, builder.build());
 
             throw ex;
+        }
+    }
+
+    @Override
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    public List<User> createUsersFromCsv(final String usersCsvData) {
+
+        final List<UserName> names = parseUsersCsvData(usersCsvData);
+
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "createUsers"))
+                .withDescription(LogUtil.message("Creating batch of {} users", NullSafe.size(names)))
+                .withDefaultEventAction(CreateEventAction.builder()
+                        .withObjects(NullSafe.stream(names)
+                                .map(userName -> event.logging.User.builder()
+                                        .withId(userName.getName())
+                                        .withName(userName.getDisplayName())
+                                        .build())
+                                .collect(Collectors.toList()))
+                        .build())
+                .withSimpleLoggedResult(() -> {
+                    final UserService userService = userServiceProvider.get();
+                    return NullSafe.stream(names)
+                            .map(userService::getOrCreateUser)
+                            .collect(Collectors.toList());
+                })
+                .getResultAndLog();
+    }
+
+    private List<UserName> parseUsersCsvData(final String usersCsvData) {
+        if (NullSafe.isBlankString(usersCsvData)) {
+            return Collections.emptyList();
+        } else {
+            final StringReader stringReader = new StringReader(usersCsvData);
+            try {
+                final CSVParser parse = CSVFormat.DEFAULT
+                        .parse(stringReader);
+
+                // Expecting something like
+                // <user id>,[display name],[full name]
+                return StreamSupport.stream(parse.spliterator(), false)
+                        .filter(csvRec -> csvRec.isSet(USER_ID_CSV_COL_IDX))
+                        .map(csvRec -> {
+                            final String userId = csvRec.get(USER_ID_CSV_COL_IDX);
+                            // These two may be null
+                            final String displayName = csvRec.isSet(DISPLAY_NAME_CSV_COL_IDX)
+                                    ? csvRec.get(DISPLAY_NAME_CSV_COL_IDX)
+                                    : null;
+                            final String fullName = csvRec.isSet(FULL_NAME_CSV_COL_IDX)
+                                    ? csvRec.get(FULL_NAME_CSV_COL_IDX)
+                                    : null;
+
+                            return new UserName(
+                                    userId,
+                                    displayName,
+                                    fullName);
+                        })
+                        .collect(Collectors.toList());
+            } catch (IOException e) {
+                LOGGER.error("Unable to parse users CSV data\n{}", usersCsvData);
+                throw new RuntimeException(LogUtil.message("Error parsing user CSV data: {}",
+                        e.getMessage()), e);
+            }
         }
     }
 

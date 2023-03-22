@@ -11,9 +11,9 @@
     </g:row>
 
     <g:row>
-      <g:cell>Preferred Username (optional):</g:cell>
+      <g:cell>Display Name (optional):</g:cell>
       <g:customCell>
-        <g:TextBox ui:field="preferredUsername" addStyleNames="w-100" />
+        <g:TextBox ui:field="displayName" addStyleNames="w-100" />
       </g:customCell>
     </g:row>
 

@@ -6,6 +6,7 @@ import stroom.index.shared.IndexVolumeGroup;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
 import stroom.util.NextNameGenerator;
@@ -88,7 +89,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
         ensureDefaultVolumes();
         final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
         indexVolumeGroup.setName(name);
-        AuditUtil.stamp(securityContext.getUserId(), indexVolumeGroup);
+        AuditUtil.stamp(securityContext, indexVolumeGroup);
         final IndexVolumeGroup result = securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeGroupDao.getOrCreate(indexVolumeGroup));
         fireChange(EntityAction.CREATE);
@@ -101,7 +102,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
         final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
         var newName = NextNameGenerator.getNextName(indexVolumeGroupDao.getNames(), "New group");
         indexVolumeGroup.setName(newName);
-        AuditUtil.stamp(securityContext.getUserId(), indexVolumeGroup);
+        AuditUtil.stamp(securityContext, indexVolumeGroup);
         final IndexVolumeGroup result = securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeGroupDao.getOrCreate(indexVolumeGroup));
         fireChange(EntityAction.CREATE);
@@ -111,7 +112,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
     @Override
     public IndexVolumeGroup update(final IndexVolumeGroup indexVolumeGroup) {
         ensureDefaultVolumes();
-        AuditUtil.stamp(securityContext.getUserId(), indexVolumeGroup);
+        AuditUtil.stamp(securityContext, indexVolumeGroup);
         final IndexVolumeGroup result = securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeGroupDao.update(indexVolumeGroup));
         fireChange(EntityAction.UPDATE);
@@ -163,10 +164,10 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                     if (isEnabled) {
                         if (volumeConfig.getDefaultIndexVolumeGroupName() != null) {
                             final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
-                            final String processingUserId = processingUserIdentityProvider.get().getId();
+                            final UserIdentity processingUserIdentity = processingUserIdentityProvider.get();
                             final String groupName = volumeConfig.getDefaultIndexVolumeGroupName();
                             indexVolumeGroup.setName(groupName);
-                            AuditUtil.stamp(processingUserId, indexVolumeGroup);
+                            AuditUtil.stamp(processingUserIdentity, indexVolumeGroup);
 
                             LOGGER.info("Creating default index volume group [{}]", groupName);
                             final IndexVolumeGroup newGroup = indexVolumeGroupDao.getOrCreate(indexVolumeGroup);
@@ -198,10 +199,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                                         indexVolume.setBytesLimit(byteLimitOption.orElse(0L));
                                         indexVolume.setNodeName(nodeName);
                                         indexVolume.setPath(resolvedPath.toString());
-                                        indexVolume.setCreateTimeMs(System.currentTimeMillis());
-                                        indexVolume.setUpdateTimeMs(System.currentTimeMillis());
-                                        indexVolume.setCreateUser(processingUserId);
-                                        indexVolume.setUpdateUser(processingUserId);
+                                        AuditUtil.stamp(processingUserIdentity, indexVolume);
 
                                         indexVolumeDao.create(indexVolume);
                                     }

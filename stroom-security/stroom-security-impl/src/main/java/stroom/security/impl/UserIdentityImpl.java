@@ -24,7 +24,7 @@ public class UserIdentityImpl
     private final UpdatableToken updatableToken;
     private final String id;
     private final String userUuid;
-    private final String preferredUsername;
+    private final String displayName;
     private final String fullName;
     private final HttpSession httpSession;
 
@@ -37,14 +37,14 @@ public class UserIdentityImpl
 
     public UserIdentityImpl(final String userUuid,
                             final String id,
-                            final String preferredUsername,
+                            final String displayName,
                             final String fullName,
                             final HttpSession httpSession,
                             final UpdatableToken updatableToken) {
         this.id = Objects.requireNonNull(id);
         this.updatableToken = Objects.requireNonNull(updatableToken);
         this.userUuid = Objects.requireNonNull(userUuid);
-        this.preferredUsername = preferredUsername;
+        this.displayName = displayName;
         this.fullName = fullName;
         this.httpSession = httpSession;
     }
@@ -55,8 +55,8 @@ public class UserIdentityImpl
     }
 
     @Override
-    public String getPreferredUsername() {
-        return Objects.requireNonNullElse(preferredUsername, id);
+    public String getDisplayName() {
+        return Objects.requireNonNullElse(displayName, id);
     }
 
     @Override
@@ -169,7 +169,7 @@ public class UserIdentityImpl
                 "updatableToken=" + updatableToken +
                 ", id='" + id + '\'' +
                 ", userUuid='" + userUuid + '\'' +
-                ", preferredUsername='" + preferredUsername + '\'' +
+                ", displayName='" + displayName + '\'' +
                 ", fullName='" + fullName + '\'' +
                 ", isInSession='" + isInSession() + '\'' +
                 '}';

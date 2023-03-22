@@ -78,6 +78,11 @@ public interface OpenIdConfiguration {
     String getUniqueIdentityClaim();
 
     /**
+     * @see AbstractOpenIdConfig#getUserDisplayNameClaim()
+     */
+    String getUserDisplayNameClaim();
+
+    /**
      * @see AbstractOpenIdConfig#getLogoutRedirectParamName()
      */
     String getLogoutRedirectParamName();

@@ -148,16 +148,14 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
         injector.injectMembers(this);
 
         try {
-            securityContext.asProcessingUser(() -> {
-                // Order is important here
-                createUsers(namespace);
-                createGroups(namespace);
-                addToGroups(namespace);
-                removeFromGroups(namespace);
-                grantPermissions(namespace);
-                revokePermissions(namespace);
-                listPermissions(namespace);
-            });
+            // Order is important here
+            createUsers(namespace);
+            createGroups(namespace);
+            addToGroups(namespace);
+            removeFromGroups(namespace);
+            grantPermissions(namespace);
+            revokePermissions(namespace);
+            listPermissions(namespace);
         } catch (Exception e) {
             LOGGER.error(e.getMessage());
             System.exit(1);
@@ -240,7 +238,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                         .ifPresentOrElse(
                                 userOrGroup -> {
                                     stroom.security.shared.User targetGroup = userService.getUserByName(
-                                            groupArgs.targetGroupId)
+                                                    groupArgs.targetGroupId)
                                             .orElseThrow(() ->
                                                     new RuntimeException("Target group " +
                                                             groupArgs.targetGroupId +
@@ -306,11 +304,11 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
     private void removeUserOrGroupFromGroup(final GroupArgs groupArgs,
                                             final stroom.security.shared.User userOrGroup) {
         final stroom.security.shared.User targetGroup = userService.getUserByName(
-                 groupArgs.targetGroupId)
-                 .orElseThrow(() ->
-                         new RuntimeException("Target group '" +
-                                 groupArgs.targetGroupId +
-                                 "' doesn't exist"));
+                        groupArgs.targetGroupId)
+                .orElseThrow(() ->
+                        new RuntimeException("Target group '" +
+                                groupArgs.targetGroupId +
+                                "' doesn't exist"));
         userService.removeUserFromGroup(userOrGroup.getUuid(), targetGroup.getUuid());
         logAddOrRemoveFromGroupEvent(
                 groupArgs.userOrGroupId,
@@ -480,10 +478,10 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
         }
 
         final CreateEventAction createEventAction = createEventActionBuilder.withOutcome(
-                Outcome.builder()
-                        .withSuccess(wasSuccessful)
-                        .withDescription(description)
-                        .build())
+                        Outcome.builder()
+                                .withSuccess(wasSuccessful)
+                                .withDescription(description)
+                                .build())
                 .build();
 
         stroomEventLoggingService.log(

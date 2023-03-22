@@ -71,10 +71,10 @@ class UserServiceImpl implements UserService, UserNameProvider {
         final Optional<User> optional = userDao.getByName(name.getName(), isGroup);
         return optional.orElseGet(() -> {
             User user = new User();
-            AuditUtil.stamp(securityContext.getUserId(), user);
+            AuditUtil.stamp(securityContext, user);
             user.setUuid(UUID.randomUUID().toString());
             user.setName(name.getName());
-            user.setPreferredUsername(name.getPreferredUsername());
+            user.setDisplayName(name.getDisplayName());
             user.setFullName(name.getFullName());
             user.setGroup(isGroup);
 
@@ -113,7 +113,7 @@ class UserServiceImpl implements UserService, UserNameProvider {
 
     @Override
     public User update(User user) {
-        AuditUtil.stamp(securityContext.getUserId(), user);
+        AuditUtil.stamp(securityContext, user);
         return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
             final User updatedUser = userDao.update(user);
             fireEntityChangeEvent(updatedUser, EntityAction.UPDATE);

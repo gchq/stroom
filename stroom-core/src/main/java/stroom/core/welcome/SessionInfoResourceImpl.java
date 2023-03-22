@@ -33,7 +33,7 @@ public class SessionInfoResourceImpl implements SessionInfoResource {
         final UserIdentity userIdentity = securityContextProvider.get().getUserIdentity();
         final UserName userName = new UserName(
                 userIdentity.getId(),
-                userIdentity.getPreferredUsername(),
+                userIdentity.getDisplayName(),
                 userIdentity.getFullName().orElse(null));
         return new SessionInfo(
                 userName,

@@ -161,7 +161,7 @@ class UserDaoImplTest {
                 .uuid(UUID.randomUUID().toString())
                 .group(group)
                 .build();
-        AuditUtil.stamp("test", user);
+        AuditUtil.stamp(() -> "test", user);
         return userDao.create(user);
     }
 }

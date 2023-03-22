@@ -572,7 +572,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         if (securityContext.isAdmin()) {
             return supplier.get();
         } else {
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "You do not have permission to view reference data");
         }
     }
@@ -583,7 +583,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         if (securityContext.isAdmin()) {
             runnable.run();
         } else {
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "You do not have permission to view reference data");
         }
     }

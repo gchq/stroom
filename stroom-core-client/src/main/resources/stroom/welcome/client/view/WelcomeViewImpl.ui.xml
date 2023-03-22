@@ -12,7 +12,7 @@
                 <g:row>
                     <g:cell>User Display Name:</g:cell>
                     <g:customCell>
-                        <g:Label ui:field="preferredUsername"/>
+                        <g:Label ui:field="displayName"/>
                     </g:customCell>
                 </g:row>
                 <g:row>

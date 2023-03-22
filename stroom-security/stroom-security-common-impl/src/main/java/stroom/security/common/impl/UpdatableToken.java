@@ -143,10 +143,16 @@ public class UpdatableToken implements HasJwtClaims, Delayed, HasJwt {
                 if (isTokenRefreshRequired()) {
                     final FetchTokenResult fetchTokenResult = updateFunction.apply(this);
                     if (fetchTokenResult != null) {
-                        this.tokenResponse = Objects.requireNonNull(fetchTokenResult.tokenResponse());
-                        this.jwtClaims = Objects.requireNonNull(fetchTokenResult.jwtClaims());
-                        updateRefreshTime();
-                        didWork = true;
+                        try {
+                            this.tokenResponse = Objects.requireNonNull(fetchTokenResult.tokenResponse());
+                            this.jwtClaims = Objects.requireNonNull(fetchTokenResult.jwtClaims());
+                            updateRefreshTime();
+                            didWork = true;
+                        } catch (Exception e) {
+                            LOGGER.error("Error updating token for userIdentity: {}",
+                                    LogUtil.typedValue(userIdentity), e);
+                            throw e;
+                        }
                     } else {
                         LOGGER.trace("Function returned null, can't update state");
                         didWork = false;

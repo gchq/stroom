@@ -113,7 +113,7 @@ class ApplicationInstanceManager implements Clearable, HasSystemInfo {
                     LOGGER.warn(() -> LogUtil.message(
                             "Missing application instance for user: {}. Their session may have timed out. " +
                                     "Enable debug logging for more info.",
-                            securityContext.getUserId()));
+                            securityContext.getCombinedUserIdentity()));
 
                     if (LOGGER.isDebugEnabled()) {
                         final AppInstanceDebugInfo debugInfo = appInstanceDebugMap.get(uuid);

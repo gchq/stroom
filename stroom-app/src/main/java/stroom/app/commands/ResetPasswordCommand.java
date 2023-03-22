@@ -80,21 +80,19 @@ public class ResetPasswordCommand extends AbstractStroomAccountConfiguredCommand
         injector.injectMembers(this);
 
 
-        securityContext.asProcessingUser(() -> {
-            try {
-                accountDao.resetPassword(username, newPassword);
+        try {
+            accountDao.resetPassword(username, newPassword);
 
-                String msg = LogUtil.message("Password reset complete for user {}", username);
-                LOGGER.info(msg);
-                logEvent(username, true, msg);
-                System.exit(0);
+            String msg = LogUtil.message("Password reset complete for user {}", username);
+            LOGGER.info(msg);
+            logEvent(username, true, msg);
+            System.exit(0);
 
-            } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage());
-                logEvent(username, false, e.getMessage());
-                System.exit(1);
-            }
-        });
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage());
+            logEvent(username, false, e.getMessage());
+            System.exit(1);
+        }
     }
 
     private void logEvent(final String username,

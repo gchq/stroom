@@ -95,7 +95,7 @@ class AuthenticationService {
 
     private User create(final String name, final boolean isGroup) {
         final User user = new User();
-        AuditUtil.stamp("AuthenticationServiceImpl", user);
+        AuditUtil.stamp(() -> "AuthenticationServiceImpl", user);
 
         // This is the identifier for the stroom user, for authorisation, not authentication
         user.setUuid(UUID.randomUUID().toString());

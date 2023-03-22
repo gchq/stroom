@@ -28,7 +28,7 @@ public class ServiceUserIdentity implements UserIdentity, HasJwtClaims, HasUpdat
     }
 
     @Override
-    public String getPreferredUsername() {
+    public String getDisplayName() {
         return Optional.ofNullable(getJwtClaims())
                 .flatMap(claims -> JwtUtil.getClaimValue(claims, OpenId.CLAIM__PREFERRED_USERNAME))
                 .orElse(id);

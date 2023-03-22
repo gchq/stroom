@@ -751,6 +751,20 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
         return id;
     }
 
+    /**
+     * Gets the unique ID that links the identity on the IDP to the stroom_user.
+     * Maps to the 'name' column in stroom_user table.
+     */
+    protected Optional<String> getUserDisplayName(final JwtClaims jwtClaims) {
+        Objects.requireNonNull(jwtClaims);
+        final String userDisplayNameClaim = openIdConfigProvider.get().getUserDisplayNameClaim();
+        final Optional<String> userDisplayName = JwtUtil.getClaimValue(jwtClaims, userDisplayNameClaim);
+
+        LOGGER.debug("userDisplayNameClaim: {}, userDisplayName: {}", userDisplayNameClaim, userDisplayName);
+
+        return userDisplayName;
+    }
+
     @Override
     public void start() throws Exception {
         if (refreshExecutorService == null) {

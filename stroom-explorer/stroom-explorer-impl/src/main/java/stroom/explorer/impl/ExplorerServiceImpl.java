@@ -994,13 +994,13 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         // Only allow administrators to create documents with no folder.
         if (folderUUID == null) {
             if (!securityContext.isAdmin()) {
-                throw new PermissionException(securityContext.getUserId(),
+                throw new PermissionException(securityContext.getUserIdentityForAudit(),
                         "Only administrators can create root level entries");
             }
         } else {
             if (!securityContext.hasDocumentPermission(folderUUID,
                     DocumentPermissionNames.getDocumentCreatePermission(type))) {
-                throw new PermissionException(securityContext.getUserId(),
+                throw new PermissionException(securityContext.getUserIdentityForAudit(),
                         "You do not have permission to create (" + type + ") in folder " + folderUUID);
             }
         }

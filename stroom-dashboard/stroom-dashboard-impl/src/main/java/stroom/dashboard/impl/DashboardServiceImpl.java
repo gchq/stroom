@@ -468,7 +468,7 @@ class DashboardServiceImpl implements DashboardService {
                 } else {
                     params = new ArrayList<>();
                 }
-                params.add(new Param("currentUser()", securityContext.getUserId()));
+                params.add(new Param("currentUser()", securityContext.getUserIdentityForAudit()));
                 search = search.copy().params(params).build();
                 updatedSearchRequest = updatedSearchRequest.copy().search(search).build();
                 SearchRequest mappedRequest = searchRequestMapper.mapRequest(updatedSearchRequest);

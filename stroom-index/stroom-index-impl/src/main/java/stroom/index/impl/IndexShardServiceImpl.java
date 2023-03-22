@@ -99,7 +99,7 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
         return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             if (!securityContext.hasDocumentPermission(indexShard.getIndexUuid(), DocumentPermissionNames.DELETE)) {
                 throw new PermissionException(
-                        securityContext.getUserId(),
+                        securityContext.getUserIdentityForAudit(),
                         "You do not have permission to delete index shard");
             }
 

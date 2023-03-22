@@ -16,6 +16,9 @@
 .svgIcon-add-below {
   background-image: url("../images/add-below.svg");
 }
+.svgIcon-add-multiple {
+  background-image: url("../images/add-multiple.svg");
+}
 .svgIcon-alert {
   background-image: url("../images/alert.svg");
 }

@@ -166,7 +166,9 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
     private Function<Annotation, Boolean> createFilter(final ExpressionOperator expression) {
         final ExpressionFilter expressionFilter = ExpressionFilter.builder()
                 .addPrefixIncludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
-                .addReplacementFilter(AnnotationFields.CURRENT_USER_FUNCTION, securityContext.getUserId())
+                .addReplacementFilter(
+                        AnnotationFields.CURRENT_USER_FUNCTION,
+                        securityContext.getUserIdentityForAudit())
                 .build();
 
         final ExpressionOperator filteredExpression = expressionFilter.copy(expression);

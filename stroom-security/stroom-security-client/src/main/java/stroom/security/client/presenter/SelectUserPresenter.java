@@ -62,7 +62,9 @@ public class SelectUserPresenter
     private final DataGridView<UserName> dataGridView;
     private final RestFactory restFactory;
     private ButtonView newButton = null;
+    private ButtonView addMultipleButton = null;
     private final CreateNewUserPresenter newPresenter;
+    private final CreateMultipleUsersPresenter createMultipleUsersPresenter;
     private final UiConfigCache uiConfigCache;
     private UserNameDataProvider dataProvider;
     private FindUserNameCriteria findUserCriteria;
@@ -73,10 +75,12 @@ public class SelectUserPresenter
                                final UserListView userListView,
                                final RestFactory restFactory,
                                final CreateNewUserPresenter newPresenter,
+                               final CreateMultipleUsersPresenter createMultipleUsersPresenter,
                                final UiConfigCache uiConfigCache) {
         super(eventBus, userListView);
         this.restFactory = restFactory;
         this.newPresenter = newPresenter;
+        this.createMultipleUsersPresenter = createMultipleUsersPresenter;
         this.uiConfigCache = uiConfigCache;
 
         dataGridView = new DataGridViewImpl<>(true);
@@ -91,7 +95,7 @@ public class SelectUserPresenter
             }
         }, "</br>", 20);
 
-        // Name.
+        // Name (aka the unique ID for the user)
         dataGridView.addResizableColumn(new Column<UserName, String>(new TextCell()) {
             @Override
             public String getValue(final UserName userRef) {
@@ -99,14 +103,14 @@ public class SelectUserPresenter
             }
         }, "User ID", 350);
 
-        // Preferred User Name
-        final Column<UserName, String> preferredUsernameCol = new Column<UserName, String>(new TextCell()) {
+        // Display Name
+        final Column<UserName, String> displayNameCol = new Column<UserName, String>(new TextCell()) {
             @Override
             public String getValue(final UserName userRef) {
-                return userRef.getPreferredUsername();
+                return userRef.getDisplayName();
             }
         };
-        dataGridView.addResizableColumn(preferredUsernameCol, "Display Name", 250);
+        dataGridView.addResizableColumn(displayNameCol, "Display Name", 250);
 
         // Full name
         final Column<UserName, String> fullNameCol = new Column<UserName, String>(new TextCell()) {
@@ -123,7 +127,10 @@ public class SelectUserPresenter
         uiConfigCache.get()
                 .onSuccess(config -> {
                     if (config.isExternalIdentityProvider()) {
-                        newButton = dataGridView.addButton(SvgPresets.NEW_ITEM);
+                        newButton = dataGridView.addButton(
+                                SvgPresets.ADD.title("Add Identity Provider User"));
+                        addMultipleButton = dataGridView.addButton(
+                                SvgPresets.ADD_MULTIPLE.title("Add Multiple Identity Provider Users"));
                     }
                 });
     }
@@ -134,6 +141,11 @@ public class SelectUserPresenter
         registerHandler(newButton.addClickHandler(event -> {
             if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
                 onNew();
+            }
+        }));
+        registerHandler(addMultipleButton.addClickHandler(event -> {
+            if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+                onAddMultiple();
             }
         }));
         registerHandler(dataGridView.getSelectionModel().addSelectionHandler(event -> {
@@ -157,6 +169,21 @@ public class SelectUserPresenter
         };
 
         newPresenter.show(hidePopupUiHandlers);
+    }
+
+    private void onAddMultiple() {
+        final PopupUiHandlers hidePopupUiHandlers = new DefaultPopupUiHandlers() {
+            @Override
+            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                if (ok) {
+                    // Added multiple so don't select anything
+                    hide(false, true, null);
+                }
+                createMultipleUsersPresenter.hide();
+            }
+        };
+
+        createMultipleUsersPresenter.show(hidePopupUiHandlers);
     }
 
     @Override

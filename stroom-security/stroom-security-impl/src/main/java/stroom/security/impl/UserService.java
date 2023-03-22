@@ -32,6 +32,10 @@ public interface UserService {
         return getOrCreateUser(name, null);
     }
 
+    default User getOrCreateUser(UserName name) {
+        return getOrCreateUser(name, null);
+    }
+
     default User getOrCreateUser(String name, final Consumer<User> onCreateAction) {
         return getOrCreateUser(new UserName(name), onCreateAction);
     }

@@ -60,7 +60,7 @@ public class AnnotationService implements Searchable, AnnotationCreator {
         checkPermission();
 
         final ExpressionFilter expressionFilter = ExpressionFilter.builder()
-                .addReplacementFilter(AnnotationFields.CURRENT_USER_FUNCTION, securityContext.getUserId())
+                .addReplacementFilter(AnnotationFields.CURRENT_USER_FUNCTION, getCurrentUserForAudit())
                 .build();
 
         ExpressionOperator expression = criteria.getExpression();
@@ -70,6 +70,10 @@ public class AnnotationService implements Searchable, AnnotationCreator {
         annotationDao.search(criteria, fields, consumer);
     }
 
+    private String getCurrentUserForAudit() {
+        return securityContext.getUserIdentityForAudit();
+    }
+
     AnnotationDetail getDetail(Long annotationId) {
         checkPermission();
         return annotationDao.getDetail(annotationId);
@@ -77,7 +81,7 @@ public class AnnotationService implements Searchable, AnnotationCreator {
 
     public AnnotationDetail createEntry(final CreateEntryRequest request) {
         checkPermission();
-        return annotationDao.createEntry(request, securityContext.getUserId());
+        return annotationDao.createEntry(request, getCurrentUserForAudit());
     }
 
     List<EventId> getLinkedEvents(final Long annotationId) {
@@ -87,27 +91,29 @@ public class AnnotationService implements Searchable, AnnotationCreator {
 
     List<EventId> link(final EventLink eventLink) {
         checkPermission();
-        return annotationDao.link(eventLink, securityContext.getUserId());
+        return annotationDao.link(eventLink, getCurrentUserForAudit());
     }
 
     List<EventId> unlink(final EventLink eventLink) {
         checkPermission();
-        return annotationDao.unlink(eventLink, securityContext.getUserId());
+        return annotationDao.unlink(eventLink, getCurrentUserForAudit());
     }
 
     Integer setStatus(SetStatusRequest request) {
         checkPermission();
-        return annotationDao.setStatus(request, securityContext.getUserId());
+        return annotationDao.setStatus(request, getCurrentUserForAudit());
     }
 
     Integer setAssignedTo(SetAssignedToRequest request) {
         checkPermission();
-        return annotationDao.setAssignedTo(request, securityContext.getUserId());
+        return annotationDao.setAssignedTo(request, getCurrentUserForAudit());
     }
 
     private void checkPermission() {
         if (!securityContext.hasAppPermission(PermissionNames.ANNOTATIONS)) {
-            throw new PermissionException(securityContext.getUserId(), "You do not have permission to use annotations");
+            throw new PermissionException(
+                    securityContext.getUserIdentityForAudit(),
+                    "You do not have permission to use annotations");
         }
     }
 }

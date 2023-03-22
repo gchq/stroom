@@ -11,5 +11,5 @@ public interface HasStroomUserIdentity {
      */
     String getUuid();
 
-    // Maybe we ought to have things like the id (aka name), preferredUsername and fullName
+    // Maybe we ought to have things like the id (aka name), displayName and fullName
 }

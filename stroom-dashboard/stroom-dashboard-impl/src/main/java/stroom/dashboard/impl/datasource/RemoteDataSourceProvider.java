@@ -122,7 +122,7 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
                         msg.append(", ");
                         msg.append(docRef);
                     }
-                    throw new PermissionException(securityContext.getUserId(), msg.toString());
+                    throw new PermissionException(securityContext.getUserIdentityForAudit(), msg.toString());
                 default:
                     ErrorMessage errorMsg;
                     try {

@@ -337,8 +337,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
             // This is a pre-existing item so make sure we are allowed to update it.
             if (!securityContext.hasDocumentPermission(docRef.getUuid(),
                     DocumentPermissionNames.UPDATE)) {
-                throw new PermissionException(
-                        securityContext.getUserId(),
+                throw new PermissionException(securityContext.getUserIdentityForAudit(),
                         "You do not have permission to update '" + docRef + "'");
             }
 
@@ -374,7 +373,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
             folderRef = new DocRef(parentNode.getType(), parentNode.getUuid(), parentNode.getName());
             if (!securityContext.hasDocumentPermission(folderRef.getUuid(),
                     DocumentPermissionNames.getDocumentCreatePermission(docRef.getType()))) {
-                throw new PermissionException(securityContext.getUserId(),
+                throw new PermissionException(securityContext.getUserIdentityForAudit(),
                         "You do not have permission to create '" + docRef + "' in '" + folderRef);
             }
         }
@@ -517,7 +516,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                     final DocRef folderRef = new DocRef(parent.getType(), parent.getUuid(), parent.getName());
                     if (!securityContext.hasDocumentPermission(folderRef.getUuid(),
                             DocumentPermissionNames.getDocumentCreatePermission(FOLDER))) {
-                        throw new PermissionException(securityContext.getUserId(),
+                        throw new PermissionException(securityContext.getUserIdentityForAudit(),
                                 "You do not have permission to create a folder in '" + folderRef);
                     }
 

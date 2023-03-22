@@ -107,14 +107,14 @@ public abstract class AbstractUserListPresenter
 
         if (includeAdditionalUserInfo()) {
             // Preferred User Name
-            final Column<User, String> preferredUsernameCol = new Column<User, String>(new TextCell()) {
+            final Column<User, String> displayNameCol = new Column<User, String>(new TextCell()) {
                 @Override
                 public String getValue(final User userRef) {
-                    return userRef.getPreferredUsername();
+                    return userRef.getDisplayName();
                 }
             };
-            dataGridView.addResizableColumn(preferredUsernameCol, "Display Name", 250);
-            columns.add(preferredUsernameCol);
+            dataGridView.addResizableColumn(displayNameCol, "Display Name", 250);
+            columns.add(displayNameCol);
 
             // Full name
             final Column<User, String> fullNameCol = new Column<User, String>(new TextCell()) {

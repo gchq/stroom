@@ -275,4 +275,12 @@ public final class LogUtil {
             return str;
         }
     }
+
+    public static String typedValue(final Object value) {
+        if (value == null) {
+            return null;
+        } else {
+            return value.getClass().getSimpleName() + " " + value;
+        }
+    }
 }

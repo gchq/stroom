@@ -19,6 +19,7 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.caffeine
+    implementation libs.commons_csv
     implementation libs.dropwizard_metrics_healthchecks
     implementation libs.dropwizard_lifecycle
     implementation libs.dropwizard_validation

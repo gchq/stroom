@@ -34,7 +34,8 @@ public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroom
                               @JsonProperty("requestScopes") final List<String> requestScopes,
                               @JsonProperty("clientCredentialsScopes") final List<String> clientCredentialsScopes,
                               @JsonProperty("validateAudience") final boolean validateAudience,
-                              @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim) {
+                              @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim,
+                              @JsonProperty("userDisplayNameClaim") final String userDisplayNameClaim) {
         super(identityProviderType,
                 openIdConfigurationEndpoint,
                 issuer,
@@ -49,7 +50,8 @@ public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroom
                 requestScopes,
                 clientCredentialsScopes,
                 validateAudience,
-                uniqueIdentityClaim);
+                uniqueIdentityClaim,
+                userDisplayNameClaim);
     }
 
     @JsonIgnore
@@ -84,6 +86,7 @@ public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroom
                 getRequestScopes(),
                 getClientCredentialsScopes(),
                 isValidateAudience(),
-                getUniqueIdentityClaim());
+                getUniqueIdentityClaim(),
+                getUserDisplayNameClaim());
     }
 }

@@ -125,7 +125,7 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
             optUserIdentity.ifPresent(userIdentity -> {
                 NullSafe.consume(userIdentity.getId(), id ->
                         attributeMap.put(StandardHeaderArguments.UPLOAD_USER_ID, id));
-                NullSafe.consume(userIdentity.getPreferredUsername(), username ->
+                NullSafe.consume(userIdentity.getDisplayName(), username ->
                         attributeMap.put(StandardHeaderArguments.UPLOAD_USERNAME, username));
             });
 

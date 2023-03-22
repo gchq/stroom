@@ -1,12 +1,16 @@
 package stroom.security.api;
 
+import stroom.util.shared.HasAuditableUserIdentity;
+
+import java.util.Objects;
 import java.util.Optional;
 
-public interface UserIdentity {
+public interface UserIdentity extends HasAuditableUserIdentity {
 
     /**
      * @return The unique identifier for the user. In the case of an Open ID Connect user
-     * this would be the subject (sub) from the token which is normally in the form of a UUID.
+     * this would be the claim value that uniquely identifies the user on the IDP (often 'sub' or 'oid').
+     * These values are often UUIDs and thus not pretty to look at for an admin.
      * For the internal IDP this would likely be a more human friendly username.
      */
     String getId();
@@ -15,7 +19,7 @@ public interface UserIdentity {
      * @return The non-unique username for the user, e.g. 'jbloggs'. In the absence of a specific
      * value this should just return the id.
      */
-    default String getPreferredUsername() {
+    default String getDisplayName() {
         return getId();
     }
 
@@ -24,6 +28,30 @@ public interface UserIdentity {
      */
     default Optional<String> getFullName() {
         return Optional.empty();
+    }
+
+    /**
+     * A value for use in the UI.
+     * If there is no {@code displayName}, this will return {@code name}.
+     * If {@code displayName} is the same as {@code name}, this will return {@code name}.
+     * Else it will return 'displayName (name)'.
+     */
+    default String getCombinedName() {
+        // This logic is replicated in UserName
+        final String id = getId();
+        final String displayName = getDisplayName();
+        if (displayName == null) {
+            return id;
+        } else if (Objects.equals(id, displayName)) {
+            return displayName;
+        } else {
+            return displayName + " (" + id + ")";
+        }
+    }
+
+    @Override
+    default String getUserIdentityForAudit() {
+        return HasAuditableUserIdentity.fromUserNames(getId(), getDisplayName());
     }
 
     // TODO: 28/11/2022 Potentially worth introducing scopes, e.g. a datafeed scope so only tokens

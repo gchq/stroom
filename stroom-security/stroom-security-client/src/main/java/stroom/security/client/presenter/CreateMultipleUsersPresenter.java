@@ -17,8 +17,7 @@
 
 package stroom.security.client.presenter;
 
-import stroom.security.client.presenter.CreateNewUserPresenter.CreateNewUserView;
-import stroom.util.shared.UserName;
+import stroom.security.client.presenter.CreateMultipleUsersPresenter.CreateMultipleUsersView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -31,24 +30,25 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-public class CreateNewUserPresenter extends MyPresenterWidget<CreateNewUserView> {
+public class CreateMultipleUsersPresenter extends MyPresenterWidget<CreateMultipleUsersView> {
 
     @Inject
-    public CreateNewUserPresenter(final EventBus eventBus,
-                                  final CreateNewUserView view) {
+    public CreateMultipleUsersPresenter(final EventBus eventBus,
+                                        final CreateMultipleUsersView view) {
         super(eventBus, view);
     }
 
     public void show(final PopupUiHandlers popupUiHandlers) {
         getView().setUiHandlers(popupUiHandlers);
 
-        final PopupSize popupSize = PopupSize.resizableX(600);
+        final PopupSize popupSize = PopupSize.resizable(600, 600);
         ShowPopupEvent.fire(this,
                 this,
                 PopupType.OK_CANCEL_DIALOG,
                 popupSize,
-                "Add External Identity Provider User Identity",
+                "Add Multiple External Identity Provider Users",
                 popupUiHandlers);
+        getView().clear();
         getView().focus();
     }
 
@@ -56,21 +56,16 @@ public class CreateNewUserPresenter extends MyPresenterWidget<CreateNewUserView>
         HidePopupEvent.fire(this, this);
     }
 
-    public UserName getUserName() {
-        return new UserName(
-                getView().getUserIdentity(),
-                getView().getDisplayName(),
-                getView().getFullName());
+    public String getUsersCsvData() {
+        return getView().getUsersCsvData();
     }
 
-    public interface CreateNewUserView extends View, HasUiHandlers<PopupUiHandlers> {
+    public interface CreateMultipleUsersView extends View, HasUiHandlers<PopupUiHandlers> {
 
-        String getUserIdentity();
-
-        String getDisplayName();
-
-        String getFullName();
+        String getUsersCsvData();
 
         void focus();
+
+        void clear();
     }
 }

@@ -53,7 +53,7 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
                 .onSuccess(sessionInfo -> {
                     final UserName userName = sessionInfo.getUserName();
                     view.getUserIdentity().setText(userName.getName());
-                    view.getPreferredUsername().setText(userName.getPreferredUsername());
+                    view.getDisplayName().setText(userName.getDisplayName());
                     view.getFullName().setText(userName.getFullName());
 
                     final BuildInfo buildInfo = sessionInfo.getBuildInfo();
@@ -98,7 +98,7 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
 
         HasText getUserIdentity();
 
-        HasText getPreferredUsername();
+        HasText getDisplayName();
 
         HasText getFullName();
 

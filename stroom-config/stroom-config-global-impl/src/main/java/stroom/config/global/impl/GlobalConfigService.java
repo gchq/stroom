@@ -252,7 +252,7 @@ public class GlobalConfigService {
                 // passes javax validation
                 validateConfigProperty(configProperty);
 
-                AuditUtil.stamp(securityContext.getUserId(), configProperty);
+                AuditUtil.stamp(securityContext, configProperty);
 
                 if (configProperty.getId() == null) {
                     try {

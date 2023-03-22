@@ -46,7 +46,7 @@ public class AccountServiceImpl implements AccountService, UserNameProvider {
                 .stream()
                 .map(account -> new UserName(
                         account.getUserId(),
-                        account.getUserId(), // use user id for both name and preferredUsername
+                        account.getUserId(), // use user id for both name and displayName
                         account.getFullName()))
                 .collect(Collectors.toList());
 
@@ -201,7 +201,7 @@ public class AccountServiceImpl implements AccountService, UserNameProvider {
 
     private void checkPermission() {
         if (!securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
-            throw new PermissionException(securityContext.getUserId(), "You do not have permission to manage users");
+            throw new PermissionException(securityContext.getUserIdentityForAudit(), "You do not have permission to manage users");
         }
     }
 }

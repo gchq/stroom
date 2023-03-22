@@ -31,6 +31,7 @@ import org.jooq.TableField;
 import org.jooq.UpdatableRecord;
 import org.jooq.conf.Settings;
 import org.jooq.exception.DataAccessException;
+import org.jooq.exception.DataChangedException;
 import org.jooq.impl.DSL;
 import org.jooq.impl.DefaultConfiguration;
 import org.jooq.impl.SQLDataType;
@@ -255,6 +256,13 @@ public final class JooqUtil {
 //        }
 //    }
 
+    /**
+     * @param dataSource
+     * @param function
+     * @param <R>
+     * @return
+     * @throws stroom.util.exception.DataChangedException If another thread/node has already changed the data
+     */
     public static <R> R contextResultWithOptimisticLocking(final DataSource dataSource,
                                                            final Function<DSLContext, R> function) {
         R result;
@@ -266,6 +274,8 @@ public final class JooqUtil {
             } finally {
                 releaseDataSource();
             }
+        } catch (DataChangedException e) {
+            throw new stroom.util.exception.DataChangedException(e.getMessage(), e);
         } catch (final Exception e) {
             throw convertException(e);
         }
@@ -416,6 +426,8 @@ public final class JooqUtil {
             } finally {
                 releaseDataSource();
             }
+        } catch (DataChangedException e) {
+            throw new stroom.util.exception.DataChangedException(e.getMessage(), e);
         } catch (final Exception e) {
             throw convertException(e);
         }

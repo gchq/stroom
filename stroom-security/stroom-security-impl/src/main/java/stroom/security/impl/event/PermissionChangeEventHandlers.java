@@ -48,7 +48,7 @@ class PermissionChangeEventHandlers {
 
     public void fireLocally(final PermissionChangeEvent event) {
         if (!securityContext.isProcessingUser()) {
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "Only the processing user can fire permission change events");
         }
 

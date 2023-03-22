@@ -36,7 +36,8 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
                              @JsonProperty("requestScopes") final List<String> requestScopes,
                              @JsonProperty("clientCredentialsScopes") final List<String> clientCredentialsScopes,
                              @JsonProperty("validateAudience") final boolean validateAudience,
-                             @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim) {
+                             @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim,
+        @JsonProperty("userDisplayNameClaim") final String userDisplayNameClaim) {
         super(identityProviderType,
                 openIdConfigurationEndpoint,
                 issuer,
@@ -51,7 +52,8 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
                 requestScopes,
                 clientCredentialsScopes,
                 validateAudience,
-                uniqueIdentityClaim);
+                uniqueIdentityClaim,
+                userDisplayNameClaim);
     }
 
     @JsonIgnore
@@ -98,6 +100,7 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
                 getRequestScopes(),
                 getClientCredentialsScopes(),
                 isValidateAudience(),
-                getUniqueIdentityClaim());
+                getUniqueIdentityClaim(),
+                getUserDisplayNameClaim());
     }
 }

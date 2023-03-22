@@ -3,7 +3,7 @@
     <g:MySplitLayoutPanel styleName="max default-min-sizes">
         <g:north size="200">
             <g:FlowPanel styleName="dock-container-vertical">
-                <g:Label text="Group Membership:" styleName="dock-min"/>
+                <g:Label text="Group Memberships:" styleName="dock-min"/>
                 <g:SimplePanel ui:field="userGroups" styleName="dock-max"/>
             </g:FlowPanel>
         </g:north>
@@ -14,4 +14,4 @@
             </g:FlowPanel>
         </g:center>
     </g:MySplitLayoutPanel>
-</ui:UiBinder> 
+</ui:UiBinder>

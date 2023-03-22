@@ -16,6 +16,7 @@ import stroom.security.shared.User;
 import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.cert.CertificateExtractor;
+import stroom.util.exception.DataChangedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -28,6 +29,7 @@ import org.jose4j.jwt.consumer.JwtContext;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Predicate;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -84,8 +86,8 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
 
     @Override
     protected Optional<UserIdentity> mapAuthFlowIdentity(final JwtContext jwtContext,
-                                                      final HttpServletRequest request,
-                                                      final TokenResponse tokenResponse) {
+                                                         final HttpServletRequest request,
+                                                         final TokenResponse tokenResponse) {
         final JwtClaims jwtClaims = jwtContext.getJwtClaims();
         final String uniqueId = getUniqueIdentity(jwtClaims);
         final Optional<User> optUser = userCache.get(uniqueId);
@@ -111,29 +113,60 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
      * Each time we map their identity we check the cached info is up-to-date and if so update it.
      */
     private void updateUserInfo(final User user, final JwtClaims jwtClaims) {
-        final String preferredUsername = JwtUtil.getClaimValue(
-                        jwtClaims, OpenId.CLAIM__PREFERRED_USERNAME)
+
+        final String displayName = getUserDisplayName(jwtClaims)
                 .orElse(null);
+
+        // Hopefully this one is enough of a standard to always be there.
         final String fullName = JwtUtil.getClaimValue(jwtClaims, OpenId.CLAIM__NAME)
                 .orElse(null);
 
-        if (!Objects.equals(preferredUsername, user.getPreferredUsername())
-                || !Objects.equals(fullName, user.getFullName())) {
+        final Predicate<User> hasUserInfoChangedPredicate = aUser ->
+                !Objects.equals(displayName, aUser.getDisplayName())
+                        || !Objects.equals(fullName, aUser.getFullName());
 
-            securityContext.asProcessingUser(() -> {
-                final User persistedUser = userService.loadByUuid(user.getUuid())
-                        .orElseThrow(() -> new RuntimeException(
-                                "Expecting to find user with uuid " + user.getUuid()));
+        if (hasUserInfoChangedPredicate.test(user)) {
+            synchronized (this) {
+                securityContext.asProcessingUser(() -> {
 
-                persistedUser.setPreferredUsername(preferredUsername);
-                persistedUser.setFullName(fullName);
-                LOGGER.info("Updating IDP user info for user with name/subject: {}" +
-                                " - preferredUsername '{}' and fullName: '{}'",
-                        persistedUser.getName(),
-                        preferredUsername,
-                        fullName);
-                userService.update(persistedUser);
-            });
+                    int iterationCount = 0;
+                    boolean success = false;
+
+                    while (!success && iterationCount < 10) {
+                        final User persistedUser = userService.loadByUuid(user.getUuid())
+                                .orElseThrow(() -> new RuntimeException(
+                                        "Expecting to find user with uuid " + user.getUuid()));
+
+                        if (hasUserInfoChangedPredicate.test(user)) {
+                            persistedUser.setDisplayName(displayName);
+                            persistedUser.setFullName(fullName);
+                            LOGGER.info("Updating IDP user info for user with name/subject: {}" +
+                                            " - displayName '{}' and fullName: '{}'",
+                                    persistedUser.getName(),
+                                    displayName,
+                                    fullName);
+                            try {
+                                // It is possible for another node to do this, so OCC would throw
+                                // an exception
+                                userService.update(persistedUser);
+                                success = true;
+                            } catch (DataChangedException e) {
+                                LOGGER.debug(LogUtil.message(
+                                        "Another node has updated user {}, going round again. iterationCount: {}",
+                                        user, iterationCount));
+                            }
+                        } else {
+                            LOGGER.debug("Another node has updated it to how we want it");
+                            success = true;
+                        }
+                        iterationCount++;
+                    }
+                    if (!success) {
+                        throw new RuntimeException(LogUtil.message(
+                                "Unable to update user {} after {} attempts", user, iterationCount));
+                    }
+                });
+            }
         }
     }
 
@@ -152,10 +185,12 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
         final UserIdentity userIdentity = new UserIdentityImpl(
                 user.getUuid(),
                 user.getName(),
-                user.getPreferredUsername(),
+                user.getDisplayName(),
                 user.getFullName(),
                 session,
                 updatableToken);
+
+        updatableToken.setUserIdentity(userIdentity);
 
         addTokenToRefreshQueue(updatableToken);
 

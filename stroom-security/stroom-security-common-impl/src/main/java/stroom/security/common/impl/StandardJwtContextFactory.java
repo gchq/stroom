@@ -285,35 +285,6 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                 header,
                 payload,
                 signature);
-
-//        final String decodedHeader;
-//        try {
-//            decodedHeader = new String(Base64.getDecoder().decode(header), StandardCharsets.UTF_8);
-//        } catch (Exception e) {
-//            throw new RuntimeException(LogUtil.message("jws is not in BASE64 format: {}",
-//                    LogUtil.exceptionMessage(e)), e);
-//        }
-//
-//        LOGGER.debug("decodedHeader: {}", decodedHeader);
-
-//        try {
-//            final Map<String, String> headerMap = objectMapper.readValue(
-//                    decodedHeader,
-//                    new TypeReference<HashMap<String, String>>() {
-//                    });
-//            LOGGER.debug("headerMap: {}", headerMap);
-//
-//            return new JwsParts(
-//                    jws,
-//                    header,
-//                    payload,
-//                    signature,
-//                    headerMap);
-//
-//        } catch (JsonProcessingException e) {
-//            throw new RuntimeException(LogUtil.message("Error parsing header as json: {}. decodedHeader:\n{}",
-//                    LogUtil.exceptionMessage(e), decodedHeader), e);
-//        }
     }
 
     private Optional<JwtContext> getAwsJwtContext(final JwsParts jwsParts) {

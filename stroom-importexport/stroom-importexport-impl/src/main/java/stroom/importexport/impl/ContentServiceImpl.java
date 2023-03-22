@@ -150,7 +150,7 @@ class ContentServiceImpl implements ContentService {
     @Override
     public ResourceKey exportAll() {
         if (!securityContext.hasAppPermission(PermissionNames.EXPORT_CONFIGURATION)) {
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "You do not have permission to export all config");
         }
         final ExportConfig exportConfig = exportConfigProvider.get();
@@ -158,7 +158,7 @@ class ContentServiceImpl implements ContentService {
             LOGGER.warn("Attempt by user '{}' to export all data when {} is not enabled.",
                     securityContext.getUserId(),
                     exportConfig.getFullPathStr(ExportConfig.ENABLED_PROP_NAME));
-            throw new PermissionException(securityContext.getUserId(), "Export is not enabled");
+            throw new PermissionException(securityContext.getUserIdentityForAudit(), "Export is not enabled");
         }
 
         final ResourceKey tempResourceKey = resourceStore.createTempFile("StroomConfig.zip");

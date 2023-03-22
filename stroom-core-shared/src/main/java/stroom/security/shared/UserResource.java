@@ -52,18 +52,26 @@ public interface UserResource extends RestResource, DirectRestService, FetchWith
     User fetch(@PathParam("userUuid") String userUuid);
 
     @POST
-    @Path("/createGroup/{name}")
+    @Path("/createGroup")
     @Operation(
             summary = "Creates a group with the supplied name",
             operationId = "createGroup")
     User createGroup(@Parameter(description = "name", required = true) String name);
 
     @POST
-    @Path("/createUser/{name}")
+    @Path("/createUser")
     @Operation(
             summary = "Creates a user with the supplied name",
             operationId = "createUser")
     User createUser(@Parameter(description = "name", required = true) UserName name);
+
+    @POST
+    @Path("/createUsers")
+    @Operation(
+            summary = "Creates a batch of users from a list of CSV entries. Each line is of the form " +
+                    "'id,displayName,fullName', where displayName and fullName are optional",
+            operationId = "createUsers")
+    List<User> createUsersFromCsv(@Parameter(description = "users", required = true) String usersCsvData);
 
     @DELETE
     @Path("/{uuid}")

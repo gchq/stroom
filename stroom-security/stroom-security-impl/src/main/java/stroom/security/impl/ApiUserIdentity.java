@@ -45,7 +45,7 @@ class ApiUserIdentity implements UserIdentity, HasSessionId, HasStroomUserIdenti
     }
 
     @Override
-    public String getPreferredUsername() {
+    public String getDisplayName() {
         return getClaimValue("preferred_username")
                 .orElseGet(this::getId);
     }

@@ -149,7 +149,7 @@ class SteppingRequestHandler {
             // on can be read.
             return securityContext.useAsReadResult(() -> {
                 // Set the current user so they are visible during translation.
-                currentUserHolder.setCurrentUser(securityContext.getUserId());
+                currentUserHolder.setCurrentUser(securityContext.getUserIdentityForAudit());
 
                 StepData stepData;
                 generalErrors = new HashSet<>();

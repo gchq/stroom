@@ -38,7 +38,7 @@ public class User implements HasAuditInfo, HasIntegerId {
     @JsonProperty
     private String uuid;
     @JsonProperty
-    private String preferredUsername;
+    private String displayName;
     @JsonProperty
     private String fullName;
 
@@ -61,7 +61,7 @@ public class User implements HasAuditInfo, HasIntegerId {
                 @JsonProperty("name") final String name,
                 @JsonProperty("uuid") final String uuid,
                 @JsonProperty("group") final boolean group,
-                @JsonProperty("preferredUsername") final String preferredUsername,
+                @JsonProperty("displayName") final String displayName,
                 @JsonProperty("fullName") final String fullName) {
         this.id = id;
         this.version = version;
@@ -72,12 +72,13 @@ public class User implements HasAuditInfo, HasIntegerId {
         this.name = name;
         this.uuid = uuid;
         this.group = group;
-        this.preferredUsername = preferredUsername;
+        this.displayName = displayName;
         this.fullName = fullName;
     }
 
     /**
-     * @return The unique identifier for the user in the database. Un-related to any IDP value.
+     * @return The primary key for the user in the database. Un-related to any IDP value.
+     * Not used in the UI.
      */
     @Override
     public Integer getId() {
@@ -155,20 +156,20 @@ public class User implements HasAuditInfo, HasIntegerId {
 
     /**
      * @return An optional, non-unique, more human friendly username for the user.
-     * Will be null if this is a group or the IDP does not provide a preferred username
+     * Will be null if this is a group or the IDP does not provide one
      * or one has not been set for the user.
      * Intended for display purposes only or to aid in identifying the user where {@code name}
      * is an unfriendly UUID.
      */
-    public String getPreferredUsername() {
-        return preferredUsername;
+    public String getDisplayName() {
+        return displayName;
     }
 
     /**
-     * See {@link User#getPreferredUsername()}
+     * See {@link User#getDisplayName()}
      */
-    public void setPreferredUsername(final String preferredUsername) {
-        this.preferredUsername = preferredUsername;
+    public void setDisplayName(final String displayName) {
+        this.displayName = displayName;
     }
 
     /**
@@ -222,7 +223,7 @@ public class User implements HasAuditInfo, HasIntegerId {
     public UserName getUsername() {
         return new UserName(
                 name,
-                preferredUsername,
+                displayName,
                 fullName);
     }
 
@@ -237,7 +238,7 @@ public class User implements HasAuditInfo, HasIntegerId {
                 ", updateUser='" + updateUser + '\'' +
                 ", name='" + name + '\'' +
                 ", uuid='" + uuid + '\'' +
-                ", preferredUsername='" + preferredUsername + '\'' +
+                ", displayName='" + displayName + '\'' +
                 ", fullName='" + fullName + '\'' +
                 ", group=" + group +
                 '}';
@@ -283,7 +284,7 @@ public class User implements HasAuditInfo, HasIntegerId {
         private String name;
         private String uuid;
         private boolean group;
-        private String preferredUsername;
+        private String displayName;
         private String fullName;
 
         private Builder() {
@@ -299,7 +300,7 @@ public class User implements HasAuditInfo, HasIntegerId {
             this.name = user.name;
             this.uuid = user.uuid;
             this.group = user.group;
-            this.preferredUsername = user.preferredUsername;
+            this.displayName = user.displayName;
             this.fullName = user.fullName;
         }
 
@@ -344,7 +345,7 @@ public class User implements HasAuditInfo, HasIntegerId {
                     name,
                     uuid,
                     group,
-                    preferredUsername,
+                    displayName,
                     fullName);
         }
     }

@@ -96,7 +96,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     public ProcessorFilter create(final CreateProcessFilterRequest request) {
         // Check the user has read permissions on the pipeline.
         if (!securityContext.hasDocumentPermission(request.getPipeline().getUuid(), DocumentPermissionNames.READ)) {
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "You do not have permission to create this processor filter");
         }
 
@@ -109,7 +109,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                                   final CreateProcessFilterRequest request) {
         // Check the user has read permissions on the pipeline.
         if (!securityContext.hasDocumentPermission(processor.getPipelineUuid(), DocumentPermissionNames.READ)) {
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "You do not have permission to create this processor filter");
         }
 
@@ -135,7 +135,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                                         final CreateProcessFilterRequest request) {
         // Check the user has read permissions on the pipeline.
         if (!securityContext.hasDocumentPermission(processor.getPipelineUuid(), DocumentPermissionNames.READ)) {
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "You do not have permission to create this processor filter");
         }
 
@@ -148,7 +148,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
         // now create the filter and tracker
         final ProcessorFilter processorFilter = new ProcessorFilter();
-        AuditUtil.stamp(securityContext.getUserId(), processorFilter);
+        AuditUtil.stamp(securityContext, processorFilter);
         // Blank tracker
         processorFilter.setReprocess(request.isReprocess());
         processorFilter.setEnabled(request.isEnabled());
@@ -187,7 +187,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                 processorFilter.getProcessor().getPipelineUuid(),
                 DocumentPermissionNames.UPDATE)) {
 
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "You do not have permission to update this processor filter");
         }
 
@@ -195,7 +195,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
             processorFilter.setUuid(UUID.randomUUID().toString());
         }
 
-        AuditUtil.stamp(securityContext.getUserId(), processorFilter);
+        AuditUtil.stamp(securityContext, processorFilter);
         return securityContext.secureResult(PERMISSION, () ->
                 processorFilterDao.update(processorFilter));
     }
@@ -248,9 +248,14 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
             // If the user is not an admin then only show them filters that were created by them.
             if (!securityContext.isAdmin()) {
+
+                // Filtering by getUserIdentityForAudit is not ideal as
                 final ExpressionOperator.Builder builder = ExpressionOperator.builder()
-                        .addTerm(ProcessorFields.CREATE_USER, Condition.EQUALS, securityContext.getUserId())
+                        .addTerm(ProcessorFields.CREATE_USER,
+                                Condition.EQUALS,
+                                securityContext.getUserIdentityForAudit())
                         .addOperator(criteria.getExpression());
+
                 criteria.setExpression(builder.build());
             }
 
@@ -517,7 +522,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
             processorFilter.getQueryData().setDataSource(MetaFields.STREAM_STORE_DOC_REF);
         }
 
-        AuditUtil.stamp(securityContext.getUserId(), processorFilter);
+        AuditUtil.stamp(securityContext, processorFilter);
 
         return processorFilter;
     }

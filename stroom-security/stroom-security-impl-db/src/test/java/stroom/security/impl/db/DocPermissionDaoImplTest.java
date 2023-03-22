@@ -56,7 +56,7 @@ class DocPermissionDaoImplTest {
                 .name(name)
                 .uuid(UUID.randomUUID().toString())
                 .build();
-        AuditUtil.stamp("test", user);
+        AuditUtil.stamp(() -> "test", user);
         return userDao.create(user);
     }
 

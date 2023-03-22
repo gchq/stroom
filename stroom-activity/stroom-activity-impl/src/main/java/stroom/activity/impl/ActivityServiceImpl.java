@@ -19,7 +19,6 @@ package stroom.activity.impl;
 import stroom.activity.api.ActivityService;
 import stroom.activity.api.FindActivityCriteria;
 import stroom.activity.shared.Activity;
-import stroom.activity.shared.ActivityResultPage;
 import stroom.activity.shared.ActivityValidationResult;
 import stroom.security.api.SecurityContext;
 import stroom.util.AuditUtil;
@@ -66,7 +65,7 @@ public class ActivityServiceImpl implements ActivityService {
             final Activity activity = Activity.create();
             activity.setUserId(userId);
 
-            AuditUtil.stamp(userId, activity);
+            AuditUtil.stamp(securityContext, activity);
 
             return dao.create(activity);
         });
@@ -93,7 +92,7 @@ public class ActivityServiceImpl implements ActivityService {
                 throw new EntityServiceException("Attempt to update another persons activity");
             }
 
-            AuditUtil.stamp(securityContext.getUserId(), activity);
+            AuditUtil.stamp(securityContext, activity);
             return dao.update(activity);
         });
     }
