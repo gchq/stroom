@@ -74,6 +74,8 @@ public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers,
 
     void setTheme(final AceEditorTheme theme);
 
+    void setUserKeyBindingsPreference(final boolean useVimBindings);
+
     Action getFormatAction();
 
     Option getStylesOption();

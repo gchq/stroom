@@ -97,6 +97,7 @@ public class UserPreferencesManager {
 
         currentTheme.setTheme(userPreferences.getTheme());
         currentTheme.setEditorTheme(userPreferences.getEditorTheme());
+        currentTheme.setEditorKeyBindings(userPreferences.getEditorKeyBindings().name());
 
         final com.google.gwt.dom.client.Element element = RootPanel.getBodyElement().getParentElement();
         String className = "stroom";

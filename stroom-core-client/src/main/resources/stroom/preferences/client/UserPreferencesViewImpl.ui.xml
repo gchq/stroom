@@ -23,6 +23,14 @@
                     </g:customCell>
                 </g:row>
 
+                <!-- Ace editor key bindings -->
+                <g:row>
+                    <g:cell>Editor Key Bindings:</g:cell>
+                    <g:customCell>
+                        <item:StringListBox ui:field="editorKeyBindings" addStyleNames="w-100"/>
+                    </g:customCell>
+                </g:row>
+
                 <!-- Layout Density -->
                 <g:row>
                     <g:cell>Layout Density:</g:cell>

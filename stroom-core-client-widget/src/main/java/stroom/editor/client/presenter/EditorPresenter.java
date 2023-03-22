@@ -58,6 +58,7 @@ public class EditorPresenter
         this.contextMenu = contextMenu;
         this.delegatingAceCompleter = delegatingAceCompleter;
         view.setTheme(getTheme(currentTheme.getTheme(), currentTheme.getEditorTheme()));
+        view.setUserKeyBindingsPreference("VIM".equalsIgnoreCase(currentTheme.getEditorKeyBindings()));
 
         registerHandler(view.addMouseDownHandler(event -> contextMenu.hide()));
         registerHandler(view.addContextMenuHandler(event ->
@@ -67,8 +68,12 @@ public class EditorPresenter
                 eventBus.fireEvent(event);
             }
         }));
-        registerHandler(eventBus.addHandler(ChangeThemeEvent.getType(), event ->
-                view.setTheme(getTheme(event.getTheme(), event.getEditorTheme()))));
+        registerHandler(eventBus.addHandler(ChangeThemeEvent.getType(), event -> {
+            view.setTheme(getTheme(event.getTheme(), event.getEditorTheme()));
+            // For the moment only standard and vim bindings are supported given the boolean
+            // nature of the context menu
+            view.setUserKeyBindingsPreference("VIM".equalsIgnoreCase(event.getEditorKeyBindings()));
+        }));
     }
 
     private AceEditorTheme getTheme(final String theme, final String editorTheme) {

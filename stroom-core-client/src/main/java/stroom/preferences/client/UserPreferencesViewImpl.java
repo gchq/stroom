@@ -22,6 +22,7 @@ import stroom.item.client.StringListBox;
 import stroom.preferences.client.UserPreferencesPresenter.UserPreferencesView;
 import stroom.query.api.v2.TimeZone;
 import stroom.query.api.v2.TimeZone.Use;
+import stroom.ui.config.shared.UserPreferences.EditorKeyBindings;
 import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -41,6 +42,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 public final class UserPreferencesViewImpl
@@ -71,6 +73,8 @@ public final class UserPreferencesViewImpl
     StringListBox theme;
     @UiField
     StringListBox editorTheme;
+    @UiField
+    StringListBox editorKeyBindings;
     @UiField
     StringListBox density;
     @UiField
@@ -106,6 +110,12 @@ public final class UserPreferencesViewImpl
             }
         });
         editorTheme.addChangeHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onChange();
+            }
+        });
+        setEditorKeyBindingsValues();
+        editorKeyBindings.addChangeHandler(event -> {
             if (getUiHandlers() != null) {
                 getUiHandlers().onChange();
             }
@@ -194,6 +204,25 @@ public final class UserPreferencesViewImpl
         this.editorTheme.clear();
         this.editorTheme.addItem("");
         this.editorTheme.addItems(editorThemes);
+    }
+
+    @Override
+    public EditorKeyBindings getEditorKeyBindings() {
+        return EditorKeyBindings.fromDisplayValue(editorKeyBindings.getSelectedValue());
+
+    }
+
+    @Override
+    public void setEditorKeyBindings(EditorKeyBindings editorKeyBindings) {
+        this.editorKeyBindings.setSelected(editorKeyBindings.getDisplayValue());
+    }
+
+    public void setEditorKeyBindingsValues() {
+        this.editorKeyBindings.clear();
+        Arrays.stream(EditorKeyBindings.values())
+                .sorted(Comparator.comparing(EditorKeyBindings::getDisplayValue))
+                .map(EditorKeyBindings::getDisplayValue)
+                .forEach(displayName -> this.editorKeyBindings.addItem(displayName));
     }
 
     @Override

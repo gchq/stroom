@@ -25,6 +25,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.ui.config.shared.UserPreferences.Builder;
+import stroom.ui.config.shared.UserPreferences.EditorKeyBindings;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -76,7 +77,7 @@ public final class UserPreferencesPresenter
             // Editor theme was reset due to UI theme change, so show the new value in the dialog
             getView().setEditorTheme(editorTheme);
         }
-        triggerThemeChange(after.getTheme(), editorTheme);
+        triggerThemeChange(after.getTheme(), editorTheme, after.getEditorKeyBindings());
     }
 
     /**
@@ -100,9 +101,11 @@ public final class UserPreferencesPresenter
         }
     }
 
-    private void triggerThemeChange(final String theme, final String editorTheme) {
+    private void triggerThemeChange(final String theme,
+                                    final String editorTheme,
+                                    final EditorKeyBindings editorKeyBindings) {
         final HasHandlers handlers = event -> getEventBus().fireEvent(event);
-        ChangeThemeEvent.fire(handlers, theme, editorTheme);
+        ChangeThemeEvent.fire(handlers, theme, editorTheme, editorKeyBindings.name());
     }
 
     @Override
@@ -127,7 +130,7 @@ public final class UserPreferencesPresenter
         read(userPreferences);
         userPreferencesManager.setCurrentPreferences(userPreferences);
         final String editorTheme = selectEditorTheme(originalPreferences, userPreferences);
-        triggerThemeChange(userPreferences.getTheme(), editorTheme);
+        triggerThemeChange(userPreferences.getTheme(), editorTheme, userPreferences.getEditorKeyBindings());
     }
 
     public void show() {
@@ -183,6 +186,7 @@ public final class UserPreferencesPresenter
         getView().setThemes(userPreferencesManager.getThemes());
         getView().setTheme(userPreferences.getTheme());
         getView().setEditorThemes(userPreferencesManager.getEditorThemes());
+        getView().setEditorKeyBindings(userPreferences.getEditorKeyBindings());
         getView().setDensity(userPreferences.getDensity());
         getView().setFonts(userPreferencesManager.getFonts());
         getView().setFont(userPreferences.getFont());
@@ -213,6 +217,7 @@ public final class UserPreferencesPresenter
         return UserPreferences.builder()
                 .theme(getView().getTheme())
                 .editorTheme(getView().getEditorTheme())
+                .editorKeyBindings(getView().getEditorKeyBindings())
                 .density(getView().getDensity())
                 .font(getView().getFont())
                 .fontSize(getView().getFontSize())
@@ -234,6 +239,10 @@ public final class UserPreferencesPresenter
         void setEditorTheme(String editorTheme);
 
         void setEditorThemes(List<String> editorThemes);
+
+        EditorKeyBindings getEditorKeyBindings();
+
+        void setEditorKeyBindings(EditorKeyBindings editorKeyBindings);
 
         String getDensity();
 
