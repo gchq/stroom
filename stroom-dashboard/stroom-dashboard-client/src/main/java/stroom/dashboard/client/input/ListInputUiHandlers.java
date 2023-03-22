@@ -21,6 +21,4 @@ import com.gwtplatform.mvp.client.UiHandlers;
 public interface ListInputUiHandlers extends UiHandlers {
 
     void onValueChanged(String value);
-
-    void onDirty();
 }

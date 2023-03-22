@@ -19,12 +19,14 @@ package stroom.query.common.v2;
 import stroom.dashboard.expression.v1.ChildData;
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.FieldIndex;
+import stroom.dashboard.expression.v1.FieldOffset;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValSerialiser;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.dashboard.expression.v1.Values;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.util.LambdaLogger;
 import stroom.query.util.LambdaLoggerFactory;
@@ -35,6 +37,7 @@ import com.esotericsoftware.kryo.io.Output;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -110,7 +113,7 @@ public class MapDataStore implements DataStore, Data {
      * @param values The values to add to the store.
      */
     @Override
-    public void add(final Val[] values) {
+    public void add(final Values values) {
         final int[] groupSizeByDepth = compiledDepths.getGroupSizeByDepth();
         final boolean[][] groupIndicesByDepth = compiledDepths.getGroupIndicesByDepth();
         final boolean[][] valueIndicesByDepth = compiledDepths.getValueIndicesByDepth();

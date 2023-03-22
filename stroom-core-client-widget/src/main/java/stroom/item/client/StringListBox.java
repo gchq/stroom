@@ -16,11 +16,19 @@
 
 package stroom.item.client;
 
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.ListBox;
 
 import java.util.List;
 
-public class StringListBox extends ListBox {
+public class StringListBox
+        extends ListBox
+        implements HasValue<String> {
+
+    private boolean valueChangeHandlerInitialized;
 
     public String getSelected() {
         if (getSelectedIndex() < 0) {
@@ -44,6 +52,34 @@ public class StringListBox extends ListBox {
     public void addItems(final List<String> items) {
         for (final String item : items) {
             addItem(item);
+        }
+    }
+
+    @Override
+    public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<String> handler) {
+        // Initialization code
+        if (!valueChangeHandlerInitialized) {
+            valueChangeHandlerInitialized = true;
+            addChangeHandler(event -> ValueChangeEvent.fire(StringListBox.this, getValue()));
+        }
+        return addHandler(handler, ValueChangeEvent.getType());
+    }
+
+    @Override
+    public String getValue() {
+        return getSelected();
+    }
+
+    @Override
+    public void setValue(final String value) {
+        setValue(value, false);
+    }
+
+    @Override
+    public void setValue(final String value, final boolean fireEvents) {
+        setSelected(value);
+        if (fireEvents) {
+            ValueChangeEvent.fire(this, value);
         }
     }
 }

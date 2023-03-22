@@ -12,17 +12,17 @@ public class TimeRanges {
     public static final TimeRange ALL_TIME =
             new TimeRange("All time", null, null);
 
-    // Recent
-    public static final TimeRange LAST_MINUTE =
-            new TimeRange("Last minute", "now()-1m", "now()");
-    public static final TimeRange LAST_10_MINUTES =
-            new TimeRange("Last 10 minutes", "now()-10m", "now()");
-    public static final TimeRange LAST_30_MINUTES =
-            new TimeRange("Last 30 minutes", "now()-30m", "now()");
-    public static final TimeRange LAST_60_MINUTES =
-            new TimeRange("Last 60 minutes", "now()-1h", "now()");
-    public static final TimeRange LAST_24_HOURS =
-            new TimeRange("Last 24 hours", "now()-24h", "now()");
+    // Relative
+    public static final TimeRange RELATIVE_MINUTE =
+            new TimeRange("1 Minute", "now()-1m", "now()");
+    public static final TimeRange RELATIVE_10_MINUTES =
+            new TimeRange("10 minutes", "now()-10m", "now()");
+    public static final TimeRange RELATIVE_30_MINUTES =
+            new TimeRange("30 minutes", "now()-30m", "now()");
+    public static final TimeRange RELATIVE_60_MINUTES =
+            new TimeRange("60 minutes", "now()-1h", "now()");
+    public static final TimeRange RELATIVE_24_HOURS =
+            new TimeRange("24 hours", "now()-24h", "now()");
 
     // Present
     public static final TimeRange THIS_HOUR =
@@ -48,12 +48,12 @@ public class TimeRanges {
     public static final TimeRange LAST_YEAR =
             new TimeRange("Last year", "year()-1y", "year()");
 
-    public static final TimeRange[] RECENT_RANGES = new TimeRange[]{
-            LAST_MINUTE,
-            LAST_10_MINUTES,
-            LAST_30_MINUTES,
-            LAST_60_MINUTES,
-            LAST_24_HOURS
+    public static final TimeRange[] RELATIVE_RANGES = new TimeRange[]{
+            RELATIVE_MINUTE,
+            RELATIVE_10_MINUTES,
+            RELATIVE_30_MINUTES,
+            RELATIVE_60_MINUTES,
+            RELATIVE_24_HOURS
     };
 
     public static final TimeRange[] PRESENT_RANGES = new TimeRange[]{
@@ -74,11 +74,11 @@ public class TimeRanges {
 
     public static final TimeRange[] ALL_RANGES = new TimeRange[]{
             ALL_TIME,
-            LAST_MINUTE,
-            LAST_10_MINUTES,
-            LAST_30_MINUTES,
-            LAST_60_MINUTES,
-            LAST_24_HOURS,
+            RELATIVE_MINUTE,
+            RELATIVE_10_MINUTES,
+            RELATIVE_30_MINUTES,
+            RELATIVE_60_MINUTES,
+            RELATIVE_24_HOURS,
             THIS_HOUR,
             TODAY,
             THIS_WEEK,

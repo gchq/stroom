@@ -16,7 +16,7 @@
 
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.Values;
 import stroom.query.api.v2.TableSettings;
 
 import com.esotericsoftware.kryo.io.Input;
@@ -42,7 +42,7 @@ public class TableCoprocessor implements Coprocessor {
     }
 
     @Override
-    public void add(final Val[] values) {
+    public void add(final Values values) {
         dataStore.add(values);
     }
 

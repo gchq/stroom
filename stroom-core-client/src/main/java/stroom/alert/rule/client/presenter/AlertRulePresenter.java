@@ -32,23 +32,33 @@ import com.google.web.bindery.event.shared.EventBus;
 public class AlertRulePresenter extends DocumentEditTabPresenter<LinkTabPanelView, AlertRuleDoc> {
 
     private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
+    private static final TabData PROCESSING_TAB = new TabDataImpl("Processing");
     private final AlertRuleSettingsPresenter settingsPresenter;
+    private final AlertRuleProcessingPresenter processPresenter;
 
     @Inject
     public AlertRulePresenter(final EventBus eventBus,
                               final LinkTabPanelView view,
                               final AlertRuleSettingsPresenter settingsPresenter,
+                              final AlertRuleProcessingPresenter processPresenter,
                               final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
         this.settingsPresenter = settingsPresenter;
+        this.processPresenter = processPresenter;
 
         settingsPresenter.addDirtyHandler(event -> {
             if (event.isDirty()) {
                 setDirty(true);
             }
         });
+        processPresenter.addDirtyHandler(event -> {
+            if (event.isDirty()) {
+                setDirty(true);
+            }
+        });
 
         addTab(SETTINGS_TAB);
+        addTab(PROCESSING_TAB);
         selectTab(SETTINGS_TAB);
     }
 
@@ -56,6 +66,8 @@ public class AlertRulePresenter extends DocumentEditTabPresenter<LinkTabPanelVie
     protected void getContent(final TabData tab, final ContentCallback callback) {
         if (SETTINGS_TAB.equals(tab)) {
             callback.onReady(settingsPresenter);
+        } else if (PROCESSING_TAB.equals(tab)) {
+            callback.onReady(processPresenter);
         } else {
             callback.onReady(null);
         }
@@ -65,17 +77,22 @@ public class AlertRulePresenter extends DocumentEditTabPresenter<LinkTabPanelVie
     public void onRead(final DocRef docRef, final AlertRuleDoc entity) {
         super.onRead(docRef, entity);
         settingsPresenter.read(docRef, entity);
+        processPresenter.read(docRef, entity);
     }
 
     @Override
     protected AlertRuleDoc onWrite(final AlertRuleDoc entity) {
-        return settingsPresenter.write(entity);
+        AlertRuleDoc modified = entity;
+        modified = settingsPresenter.write(modified);
+        modified = processPresenter.write(modified);
+        return modified;
     }
 
     @Override
     public void onReadOnly(final boolean readOnly) {
         super.onReadOnly(readOnly);
         settingsPresenter.onReadOnly(readOnly);
+        processPresenter.onReadOnly(readOnly);
     }
 
     @Override

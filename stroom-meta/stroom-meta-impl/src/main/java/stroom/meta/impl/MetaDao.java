@@ -65,7 +65,14 @@ public interface MetaDao {
      */
     SelectionSummary getReprocessSelectionSummary(FindMetaCriteria criteria);
 
-    int updateStatus(FindMetaCriteria criteria, Status currentStatus, Status newStatus, long statusTime);
+    /**
+     * A bulk update of status that uses a temporary table to avoid locks.
+     */
+    int updateStatus(FindMetaCriteria criteria,
+                     Status currentStatus,
+                     Status newStatus,
+                     long statusTime,
+                     boolean usesUniqueIds);
 
     /**
      * Physically delete the records from the database.
@@ -92,7 +99,7 @@ public interface MetaDao {
      */
     List<String> getProcessorUuidList(FindMetaCriteria criteria);
 
-    Set<EffectiveMeta> getEffectiveStreams(EffectiveMetaDataCriteria effectiveMetaDataCriteria);
+    List<EffectiveMeta> getEffectiveStreams(EffectiveMetaDataCriteria effectiveMetaDataCriteria);
 
     Set<Long> findLockedMeta(Collection<Long> metaIdCollection);
 
@@ -103,4 +110,15 @@ public interface MetaDao {
     List<SimpleMeta> getLogicallyDeleted(Instant deleteThreshold,
                                          int batchSize,
                                          final Set<Long> metaIdExcludeSet);
+
+    List<SimpleMeta> findBatch(final long minId,
+                               final Long maxId,
+                               final int batchSize);
+
+    /**
+     * Check if ids exist.
+     * @param ids A list of IDs to check the presence of
+     * @return The sub-set of ids that exist in the database
+     */
+    Set<Long> exists(Set<Long> ids);
 }

@@ -149,6 +149,40 @@ class TestMetaService extends StroomIntegrationTest {
     }
 
     @Test
+    void testFindWithMetaSecurityFilter_noPerms() {
+        securityContext.asProcessingUser(() -> {
+            final User user = userService.getOrCreateUser(TEST_USER);
+
+            final DocRef docref1 = feedStore.createDocument(FEED_NO_PERMISSION);
+
+//            documentPermissionService.addPermission(docref2.getUuid(), user.getUuid(), DocumentPermissionNames.USE);
+//            documentPermissionService.addPermission(docref3.getUuid(), user.getUuid(), DocumentPermissionNames.READ);
+
+            securityContext.asUser(securityContext.createIdentity(user.getName()), () -> {
+                final Optional<ExpressionOperator> useExpression = metaSecurityFilter.getExpression(
+                        DocumentPermissionNames.USE,
+                        FEED_FIELDS);
+                final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(
+                        DocumentPermissionNames.READ,
+                        FEED_FIELDS);
+
+                assertThat(useExpression).isNotEmpty();
+                assertThat(useExpression.get().getChildren().size() == 1);
+                assertThat(readExpression).isNotEmpty();
+                assertThat(readExpression.get().getChildren().size() == 1);
+
+                createMeta(FEED_NO_PERMISSION);
+                createMeta(FEED_USE_PERMISSION);
+                createMeta(FEED_READ_PERMISSION);
+
+                final List<Meta> readList = metaService.find(new FindMetaCriteria()).getValues();
+                assertThat(readList.size())
+                        .isEqualTo(0);
+            });
+        });
+    }
+
+    @Test
     void testGetSelectionSummaryWithMetaSecurityFilter() {
         securityContext.asProcessingUser(() -> {
             final User user = userService.getOrCreateUser(TEST_USER);

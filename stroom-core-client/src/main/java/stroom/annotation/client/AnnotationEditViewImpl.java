@@ -18,6 +18,7 @@ package stroom.annotation.client;
 
 import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
 import stroom.svg.client.SvgImages;
+import stroom.widget.button.client.InlineSvgButton;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.BlurEvent;
@@ -47,13 +48,13 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     @UiField
     Label statusLabel;
     @UiField
-    Button statusIcon;
+    InlineSvgButton statusIcon;
     @UiField
     Label status;
     @UiField
     Label assignedToLabel;
     @UiField
-    Button assignedToIcon;
+    InlineSvgButton assignedToIcon;
     @UiField
     Label assignedTo;
     @UiField
@@ -63,7 +64,7 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     @UiField
     Label commentLabel;
     @UiField
-    Button commentIcon;
+    InlineSvgButton commentIcon;
     @UiField
     Button create;
     @UiField
@@ -79,9 +80,9 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         titleTextBox.getElement().setAttribute("placeholder", "Title");
         subjectTextBox.getElement().setAttribute("placeholder", "Subject");
 
-        statusIcon.getElement().setInnerHTML(SvgImages.MONO_ARROW_DOWN);
-        assignedToIcon.getElement().setInnerHTML(SvgImages.MONO_ARROW_DOWN);
-        commentIcon.getElement().setInnerHTML(SvgImages.MONO_ARROW_DOWN);
+        statusIcon.setSvg(SvgImages.MONO_ARROW_DOWN);
+        assignedToIcon.setSvg(SvgImages.MONO_ARROW_DOWN);
+        commentIcon.setSvg(SvgImages.MONO_ARROW_DOWN);
 
         setTitle(null);
         setSubject(null);

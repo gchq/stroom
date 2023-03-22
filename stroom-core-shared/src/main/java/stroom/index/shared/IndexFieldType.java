@@ -18,6 +18,10 @@ package stroom.index.shared;
 
 import stroom.docref.HasDisplayValue;
 
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+
 public enum IndexFieldType implements HasDisplayValue {
     ID("Id", true),
     BOOLEAN_FIELD("Boolean", false),
@@ -28,6 +32,20 @@ public enum IndexFieldType implements HasDisplayValue {
     DATE_FIELD("Date", false),
     FIELD("Text", false),
     NUMERIC_FIELD("Number", true); // Alias for LONG_FIELD.
+
+    public static final Map<String, IndexFieldType> TYPE_MAP = new HashMap<>();
+
+    static {
+        TYPE_MAP.put(ID.displayValue.toLowerCase(Locale.ROOT), ID);
+        TYPE_MAP.put(BOOLEAN_FIELD.displayValue.toLowerCase(Locale.ROOT), BOOLEAN_FIELD);
+        TYPE_MAP.put(INTEGER_FIELD.displayValue.toLowerCase(Locale.ROOT), INTEGER_FIELD);
+        TYPE_MAP.put(LONG_FIELD.displayValue.toLowerCase(Locale.ROOT), LONG_FIELD);
+        TYPE_MAP.put(FLOAT_FIELD.displayValue.toLowerCase(Locale.ROOT), FLOAT_FIELD);
+        TYPE_MAP.put(DOUBLE_FIELD.displayValue.toLowerCase(Locale.ROOT), DOUBLE_FIELD);
+        TYPE_MAP.put(DATE_FIELD.displayValue.toLowerCase(Locale.ROOT), DATE_FIELD);
+        TYPE_MAP.put(FIELD.displayValue.toLowerCase(Locale.ROOT), FIELD);
+        TYPE_MAP.put(NUMERIC_FIELD.displayValue.toLowerCase(Locale.ROOT), NUMERIC_FIELD);
+    }
 
     private final String displayValue;
     private final boolean numeric;

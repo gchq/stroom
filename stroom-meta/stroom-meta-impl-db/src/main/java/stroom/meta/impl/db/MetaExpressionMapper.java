@@ -12,6 +12,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.SelectJoinStep;
+import org.jooq.Table;
 
 import java.util.Optional;
 import java.util.Set;
@@ -85,6 +86,28 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
                     .on(metaIdField.eq(createMetaIdField(id))); //Join on meta_val
         }
         return query;
+    }
+
+    /**
+     * If the criteria contains many terms that come from meta_val then we need to join to meta_val
+     * multiple times, each time with a new table alias.
+     *
+     * @param usedValKeys The list of meta_key IDs that feature in the criteria. One join will be
+     *                    added for each.
+     * @return The query with joins added
+     */
+    public Table<?> addJoins(
+            Table<?> fromPart,
+            final Field<Long> metaIdField,
+            final Set<Integer> usedValKeys) {
+
+        for (Integer id : usedValKeys) {
+            final MetaVal metaVal = getAliasedMetaValTable(id);
+
+            fromPart = fromPart.leftOuterJoin(metaVal)
+                    .on(metaIdField.eq(createMetaIdField(id))); //Join on meta_val
+        }
+        return fromPart;
     }
 
     private MetaVal getAliasedMetaValTable(final int valKeyId) {

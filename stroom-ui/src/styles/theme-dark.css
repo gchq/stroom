@@ -37,8 +37,8 @@
     --tooltip__text-color: #fff;
 
     --button__background-image: none;
-    --button__background-color: #262a32;
-    --button__border-color: #14161b;
+    --button__background-color: #333436;
+    --button__border-color: #000;
     --button__text-color: #f1f8f8;
     --button__background-image--active: none;
     --button__background-color--active: #262a32;
@@ -48,6 +48,15 @@
     --button__border-color--hover: #14161b;
     --button__text-color--disabled: #888;
     --button__border-color--disabled--hover: #000;
+
+    --icon-button__background-color--on: #262a32;
+    --icon-button__border-color--on: #444;
+    --icon-button__background-color--hover: rgb(45, 47, 53);
+    --icon-button__border-color--hover: rgb(45, 47, 53);
+    --navigation-icon-button__background-color--on: #262a32;
+    --navigation-icon-button__border-color--on: #444;
+    --navigation-icon-button__background-color--hover: rgb(45, 47, 53);
+    --navigation-icon-button__border-color--hover: rgb(45, 47, 53);
 
     --expression-item-box__background-color--selected: #454545;
     --expression-item-box__background-color--hover: #555;
@@ -105,18 +114,35 @@
     --splitter__background-color: #1d9bd1;
     --splitter__border-color: #22252c;
 
+    /* Main curve tabs */
+    --curve-tab__svg-color: #fff;
+    --curve-tab__background-color: transparent;
+    --curve-tab__border: thin solid transparent;
+    --curve-tab__border--hover: thin solid transparent;
+    --curve-tab__background-color--selected: #484d52;
+    --curve-tab__background-color--hover: #484d52;
+    --curve-tab__box-shadow--selected: 0 0 1px 1px rgb(0 0 0 / 100%);
+    --curve-tab__border-radius: .2rem;
+
     /* Controls */
-    --control__background-color: #1c1f25;
-    --control__background-color--disabled: transparent;
-    --control__border-color: #4d5250;
+    --control__background-color: #151618;
+    --control__background-color--disabled: rgba(255, 255, 255, 0.1);
+    --control__border-color: #505050;
     --control__border-color--disabled: transparent;
     --control__text-color: #cacbcb;
     --control__text-color--disabled: #666;
+
+    /* Form Group */
+    --form-group__label-color: #eee;
 
     /* Dashboard */
     --dashboard-panel__background-color: #22252c;
     --dashboard-panel__border-color: #2f333c;
     --dashboard-panel__grid-color: rgba(255, 255, 255, 0.04);
+
+    /* ExpanderCell */
+    --expander-cell-icon__background-color--hover: rgba(255, 255, 255, 0.2);
+    --expander-cell-icon__background-color--active: rgba(0, 0, 0, 0.5);
 
     /* Items, e.g. rows for tables, drop downs lists etc. */
     --item__background-color--focus--highlighted: rgba(24, 94, 144, 0.3);
@@ -179,9 +205,9 @@
 
     /* Dialog */
     --dialog__background-color: #1a1d21;
-    --dialog__border-color: #15161b;
-    --dialog__shadow: 0 0 5px 2px rgb(0 0 0 / 100%);
-    --popup__shadow: 0 0 5px 2px rgb(0 0 0 / 100%);
+    --dialog__border-color: #2c2f35;
+    --dialog__shadow: 0 0 50px 10px rgb(0 0 0 / 100%);
+    --popup__shadow: 0 0 20px 5px rgb(0 0 0 / 80%);
 
     /* Status */
     --ok: var(--blue-500);
@@ -205,7 +231,7 @@
     --vis-axis__color: rgba(255,255,255,0.54);
     --vis-text__color: rgba(255,255,255,0.87);
     --vis-text__color--faint: rgba(255,255,255,0.12);
-    --vis-icon__color: rgba(255,255,255,0.38);
+    --vis-icon__color: rgba(255,255,255,0.6);
     --vis-icon__color--hover: rgba(255,255,255,0.87);
     --vis-barchart-element__stroke: #000;
     --vis-marker__stroke: #fff;

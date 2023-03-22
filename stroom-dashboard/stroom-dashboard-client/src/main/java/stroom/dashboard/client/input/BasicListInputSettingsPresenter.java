@@ -58,10 +58,10 @@ public class BasicListInputSettingsPresenter
     }
 
     @Override
-    public void read(final ComponentConfig componentData) {
-        super.read(componentData);
+    public void read(final ComponentConfig componentConfig) {
+        super.read(componentConfig);
 
-        final ListInputComponentSettings settings = (ListInputComponentSettings) componentData.getSettings();
+        final ListInputComponentSettings settings = (ListInputComponentSettings) componentConfig.getSettings();
         if (settings != null) {
             getView().setKey(settings.getKey());
             getView().setValues(settings.getValues());

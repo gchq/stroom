@@ -72,9 +72,9 @@
 
   <!-- Checks for Size Violations.                    -->
   <!-- See https://checkstyle.org/config_sizes.html -->
-  <module name="FileLength"/>
-    <!--<property name="severity" value="error"/>-->
-  <!--</module>-->
+  <module name="FileLength">
+    <property name="severity" value="warning"/>
+  </module>
 
   <module name="LineLength">
     <property name="max" value="120"/>

@@ -49,6 +49,15 @@
     --button__text-color--disabled: #888;
     --button__border-color--disabled--hover: #aaa;
 
+    --icon-button__background-color--on: rgba(0,0,0,.05);
+    --icon-button__border-color--on: rgba(0,0,0,.1);
+    --icon-button__background-color--hover: rgba(0,0,0,.05);
+    --icon-button__border-color--hover: transparent;
+    --navigation-icon-button__background-color--on: rgba(10,36,65,.4);
+    --navigation-icon-button__border-color--on: var(--blue-500-rgb);
+    --navigation-icon-button__background-color--hover: rgba(10,36,65,.4);
+    --navigation-icon-button__border-color--hover: transparent;
+
     --expression-item-box__background-color--selected: #bbdefb;
     --expression-item-box__background-color--hover: #f7fbff;
     --expression-item-box__background-color--disabled: #ccc;
@@ -105,8 +114,15 @@
     --splitter__background-color: #1d9bd1;
     --splitter__border-color: #fff;
 
-    /* Explorer */
+    /* Main curve tabs */
     --curve-tab__svg-color: #555;
+    --curve-tab__background-color: transparent;
+    --curve-tab__border: thin solid transparent;
+    --curve-tab__border--hover: thin solid rgb(200 200 200);
+    --curve-tab__background-color--selected: #fff;
+    --curve-tab__background-color--hover: #fff;
+    --curve-tab__box-shadow--selected: 0 0 4px 0px rgb(200 200 200 / 100%);
+    --curve-tab__border-radius: .2rem;
 
     /* Controls */
     --control__background-color: #fff;
@@ -123,6 +139,10 @@
     --dashboard-panel__background-color: #fff;
     --dashboard-panel__border-color: rgba(0, 0, 0, 0.06);
     --dashboard-panel__grid-color: rgba(0, 0, 0, 0.03);
+
+    /* ExpanderCell */
+    --expander-cell-icon__background-color--hover: rgba(0, 0, 0, 0.2);
+    --expander-cell-icon__background-color--active: rgba(0, 0, 0, 0.6);
 
     /* Items, e.g. rows for tables, drop downs lists etc. */
     --item__background-color--focus--highlighted: rgba(144, 202, 249, 0.4);
@@ -211,7 +231,7 @@
     --vis-axis__color: rgba(0,0,0,0.54);
     --vis-text__color: rgba(0,0,0,0.87);
     --vis-text__color--faint: rgba(0,0,0,0.12);
-    --vis-icon__color: rgba(0,0,0,0.38);
+    --vis-icon__color: rgba(0,0,0,0.6);
     --vis-icon__color--hover: rgba(0,0,0,0.87);
     --vis-barchart-element__stroke: #fff;
     --vis-marker__stroke: #000;

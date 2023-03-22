@@ -44,12 +44,12 @@ public class DataVolumeService {
                 dataVolumeDao.createDataVolume(metaId, volume));
     }
 
-    public long getLastMinMetaId() {
-        return securityContext.secureResult(fsOrphanedMetaDao::getLastMinMetaId);
+    public long getOrphanedMetaTrackerValue() {
+        return securityContext.secureResult(fsOrphanedMetaDao::getMetaIdTrackerValue);
     }
 
-    void updateLastMinMetaId(final long lastMinMetaId) {
+    void updateOrphanedMetaTracker(final long metaId) {
         securityContext.secure(() ->
-                fsOrphanedMetaDao.updateLastMinMetaId(lastMinMetaId));
+                fsOrphanedMetaDao.updateMetaIdTracker(metaId));
     }
 }

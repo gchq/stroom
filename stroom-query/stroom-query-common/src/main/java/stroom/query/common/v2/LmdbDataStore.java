@@ -18,6 +18,7 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.ChildData;
+import stroom.dashboard.expression.v1.CountPrevious;
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Generator;
@@ -26,9 +27,11 @@ import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValSerialiser;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.dashboard.expression.v1.Values;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.lmdb.LmdbEnvFactory;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
@@ -36,6 +39,7 @@ import stroom.util.concurrent.CompleteException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.Metrics;
+import stroom.util.shared.time.SimpleDuration;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -54,6 +58,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
@@ -79,6 +84,8 @@ public class LmdbDataStore implements DataStore {
     private final ResultStoreConfig resultStoreConfig;
     private final Dbi<ByteBuffer> dbi;
 
+    private final FieldExpressionMatcher fieldExpressionMatcher;
+    private final ExpressionOperator valueFilter;
     private final CompiledField[] compiledFields;
     private final CompiledSorter<Item>[] compiledSorters;
     private final CompiledDepths compiledDepths;
@@ -105,6 +112,8 @@ public class LmdbDataStore implements DataStore {
 
     private final Serialisers serialisers;
 
+    private final WindowSupport windowSupport;
+
     LmdbDataStore(final Serialisers serialisers,
                   final LmdbEnvFactory lmdbEnvFactory,
                   final ResultStoreConfig resultStoreConfig,
@@ -125,12 +134,27 @@ public class LmdbDataStore implements DataStore {
         this.producePayloads = producePayloads;
         this.errorConsumer = errorConsumer;
 
+        this.windowSupport = new WindowSupport(tableSettings);
+        final TableSettings modifiedTableSettings = windowSupport.getTableSettings();
         queue = new LmdbKVQueue(resultStoreConfig.getValueQueueSize());
-        compiledFields = CompiledFields.create(tableSettings.getFields(), fieldIndex, paramMap);
-        compiledDepths = new CompiledDepths(compiledFields, tableSettings.showDetail());
+        valueFilter = modifiedTableSettings.getValueFilter();
+        fieldExpressionMatcher = new FieldExpressionMatcher(modifiedTableSettings.getFields());
+        compiledFields = CompiledFields.create(modifiedTableSettings.getFields(), fieldIndex, paramMap);
+        compiledDepths = new CompiledDepths(compiledFields, modifiedTableSettings.showDetail());
         compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), compiledFields);
-
         payloadCreator = new LmdbPayloadCreator(serialisers, queryKey, this, compiledFields, resultStoreConfig);
+
+
+//        if (modifiedTableSettings.getWindow() != null) {
+//            if (modifiedTableSettings.getWindow() instanceof HoppingWindow) {
+//                final HoppingWindow hoppingWindow = (HoppingWindow) modifiedTableSettings.getWindow();
+//                for (int i = 0; i < compiledFields.length && timeFieldIndex == -1; i++) {
+//                    if (compiledFields[i].getField().getName().equals(hoppingWindow.getTimeField())) {
+//                        timeFieldIndex = i;
+//                    }
+//                }
+//            }
+//        }
 
         rootKey = Key.createRoot(serialisers);
         rootParentRowKey = new LmdbKey.Builder()
@@ -169,9 +193,56 @@ public class LmdbDataStore implements DataStore {
      * @param values The values to add to the store.
      */
     @Override
-    public void add(final Val[] values) {
+    public void add(final Values values) {
+        // Filter incoming data.
+        Map<String, Object> fieldIdToValueMap = null;
+        for (int fieldIndex = 0; fieldIndex < compiledFields.length; fieldIndex++) {
+            final CompiledField compiledField = compiledFields[fieldIndex];
+            final Expression expression = compiledField.getExpression();
+            if (expression != null) {
+                final ValCache valCache = new ValCache(expression::createGenerator);
+                if (valueFilter != null) {
+                    if (fieldIdToValueMap == null) {
+                        fieldIdToValueMap = new HashMap<>();
+                    }
+                    fieldIdToValueMap.put(compiledField.getField().getName(),
+                            valCache.getVal(values).toString());
+                }
+
+                final CompiledFilter compiledFilter = compiledField.getCompiledFilter();
+                if (compiledFilter != null) {
+                    if (!compiledFilter.match(valCache.getVal(values).toString())) {
+                        // We want to exclude this item so get out of this method ASAP.
+                        return;
+                    }
+                }
+            }
+        }
+
+        if (fieldIdToValueMap != null) {
+            // If the value filter doesn't match then get out of here now.
+            if (!fieldExpressionMatcher.match(fieldIdToValueMap, valueFilter)) {
+                return;
+            }
+        }
+
+        // Now add the rows if we aren't filtering.
+        if (windowSupport.getOffsets() != null) {
+            int iteration = 0;
+            for (SimpleDuration offset : windowSupport.getOffsets()) {
+                final Values modifiedValues = windowSupport.addWindow(values, offset);
+                addInternal(modifiedValues, iteration);
+                iteration++;
+            }
+        } else {
+            addInternal(values, -1);
+        }
+    }
+
+    private void addInternal(final Values values,
+                             final int iteration) {
         SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_ADD);
-        LOGGER.trace(() -> "add() called for " + values.length + " values");
+        LOGGER.trace(() -> "add() called for " + values.size() + " values");
         final int[] groupSizeByDepth = compiledDepths.getGroupSizeByDepth();
         final boolean[][] groupIndicesByDepth = compiledDepths.getGroupIndicesByDepth();
         final boolean[][] valueIndicesByDepth = compiledDepths.getValueIndicesByDepth();
@@ -195,46 +266,29 @@ public class LmdbDataStore implements DataStore {
             int groupIndex = 0;
             for (int fieldIndex = 0; fieldIndex < compiledFields.length; fieldIndex++) {
                 final CompiledField compiledField = compiledFields[fieldIndex];
-
                 final Expression expression = compiledField.getExpression();
-                if (expression != null) {
-                    Generator generator = null;
-                    Val value = null;
-
-                    // If this is the first level then check if we should filter out this data.
-                    if (depth == 0) {
-                        final CompiledFilter compiledFilter = compiledField.getCompiledFilter();
-                        if (compiledFilter != null) {
-                            generator = expression.createGenerator();
-                            generator.set(values);
-
-                            // If we are filtering then we need to evaluate this field
-                            // now so that we can filter the resultant value.
-                            value = generator.eval(null);
-
-                            if (!compiledFilter.match(value.toString())) {
-                                // We want to exclude this item so get out of this method ASAP.
-                                return;
-                            }
-                        }
-                    }
-
+                final ValCache valCache = new ValCache(expression::createGenerator);
+                if (valCache != null) {
                     // If we are grouping at this level then evaluate the expression and add to the group values.
                     if (groupIndices[fieldIndex]) {
                         // If we haven't already created the generator then do so now.
-                        if (value == null) {
-                            generator = expression.createGenerator();
-                            generator.set(values);
-                            value = generator.eval(null);
-                        }
-                        groupValues[groupIndex++] = value;
+                        final Val val = valCache.getVal(values);
+                        groupValues[groupIndex++] = val;
                     }
 
                     // If we need a value at this level then evaluate the expression and add the value.
                     if (valueIndices[fieldIndex]) {
-                        // If we haven't already created the generator then do so now.
-                        if (generator == null) {
-                            generator = expression.createGenerator();
+                        final Generator generator = valCache.getGenerator();
+                        if (iteration != -1) {
+                            if (generator instanceof CountPrevious.Gen) {
+                                CountPrevious.Gen gen = (CountPrevious.Gen) generator;
+                                if (gen.getIteration() == iteration) {
+                                    gen.set(values);
+                                }
+                            } else {
+                                generator.set(values);
+                            }
+                        } else {
                             generator.set(values);
                         }
                         generators[fieldIndex] = generator;
@@ -701,6 +755,36 @@ public class LmdbDataStore implements DataStore {
             LOGGER.debug(e::getMessage, e);
         }
         return total.get();
+    }
+
+    private static class ValCache {
+
+        private final Provider<Generator> generatorProvider;
+        private Generator generator;
+        private Val val;
+
+        public ValCache(final Provider<Generator> generatorProvider) {
+            this.generatorProvider = generatorProvider;
+        }
+
+        Generator getGenerator() {
+            if (generator == null) {
+                generator = generatorProvider.get();
+            }
+            return generator;
+        }
+
+        Val getVal(final Values values) {
+            if (val == null) {
+                final Generator generator = getGenerator();
+                generator.set(values);
+
+                // If we are filtering then we need to evaluate this field
+                // now so that we can filter the resultant value.
+                val = generator.eval(null);
+            }
+            return val;
+        }
     }
 
     private static class LmdbData implements Data {

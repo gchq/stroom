@@ -19,6 +19,7 @@ package stroom.query.common.v2;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
+import stroom.query.api.v2.ResultBuilder;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.ResultRequest.ResultStyle;
@@ -205,6 +206,54 @@ public class SearchResponseCreator {
         }
     }
 
+    public boolean create(final SearchRequest searchRequest,
+                          final Map<String, ResultBuilder<?>> resultBuilderMap) {
+        final boolean didSearchComplete;
+        final boolean complete = store.isComplete();
+        if (!complete) {
+            LOGGER.debug(() -> "Store not complete so will wait for completion or timeout");
+            try {
+                final Duration effectiveTimeout = getEffectiveTimeout(searchRequest);
+
+                // Block and wait for the store to notify us of its completion/termination, or if the wait is too long
+                // we will timeout
+                LOGGER.debug(() -> "Waiting: effectiveTimeout=" + effectiveTimeout);
+                didSearchComplete = store.awaitCompletion(effectiveTimeout.toMillis(), TimeUnit.MILLISECONDS);
+                LOGGER.debug(() -> "Finished waiting: effectiveTimeout=" +
+                        effectiveTimeout +
+                        ", didSearchComplete=" +
+                        didSearchComplete);
+
+                if (!didSearchComplete && !searchRequest.incremental()) {
+                    // Search didn't complete non-incremental search in time so return a timed out error response
+                    throw new RuntimeException(SearchResponse.TIMEOUT_MESSAGE + effectiveTimeout);
+                }
+
+            } catch (InterruptedException e) {
+                LOGGER.trace(e::getMessage, e);
+                // Keep interrupting this thread.
+                Thread.currentThread().interrupt();
+
+                throw new RuntimeException("Thread was interrupted before the search could complete");
+            }
+        }
+
+        // We will only get here if the search is complete or it is an incremental search in which case we don't care
+        // about completion state. Therefore, assemble whatever results we currently have
+        try {
+            LOGGER.logDurationIfTraceEnabled(() ->
+                    getResults(searchRequest, resultBuilderMap), "Getting results");
+
+        } catch (final RuntimeException e) {
+            LOGGER.error(() -> "Error getting search results for query " + searchRequest.getKey().toString(), e);
+            throw new RuntimeException("Error getting search results: [" +
+                    e.getMessage() +
+                    "], see service's logs for details", e);
+        }
+
+        return complete;
+    }
+
     private List<String> buildCompoundErrorList(final ResultStore store, final List<Result> results) {
         final List<String> errors = new ArrayList<>();
 
@@ -238,6 +287,20 @@ public class SearchResponseCreator {
 
         // This is synchronous so just use the service's default.
         return FALL_BACK_DEFAULT_TIMEOUT;
+    }
+
+    private void getResults(final SearchRequest searchRequest,
+                            final Map<String, ResultBuilder<?>> resultBuilderMap) {
+        // Copy the requested portion of the result cache into the result.
+        for (final ResultRequest resultRequest : searchRequest.getResultRequests()) {
+            final String componentId = resultRequest.getComponentId();
+
+            // Only deliver data to components that actually want it.
+            final Fetch fetch = resultRequest.getFetch();
+            if (!Fetch.NONE.equals(fetch)) {
+                getResult(searchRequest, resultRequest, resultBuilderMap.get(componentId));
+            }
+        }
     }
 
     private List<Result> getResults(final SearchRequest searchRequest) {
@@ -323,6 +386,27 @@ public class SearchResponseCreator {
         }
 
         return result;
+    }
+
+    private void getResult(final SearchRequest searchRequest,
+                           final ResultRequest resultRequest,
+                           final ResultBuilder<?> resultBuilder) {
+        final String componentId = resultRequest.getComponentId();
+        final DataStore dataStore = store.getData(componentId);
+        if (dataStore != null) {
+            try {
+                final ResultCreator resultCreator = getResultCreator(
+                        searchRequest.getKey(),
+                        componentId,
+                        resultRequest,
+                        searchRequest.getDateTimeSettings());
+                if (resultCreator != null) {
+                    resultCreator.create(dataStore, resultRequest, resultBuilder);
+                }
+            } catch (final RuntimeException e) {
+                resultBuilder.errors(Collections.singletonList(ExceptionStringUtil.getMessage(e)));
+            }
+        }
     }
 
     private ResultCreator getResultCreator(final QueryKey queryKey,

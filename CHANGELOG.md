@@ -13,6 +13,65 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.1] - 2023-03-20
+
+* Issue **#3309** : Add param input to pre 7.2 dashboards.
+
+* Issue **#3308** : Save state of quick time filter.
+
+* Issue **#3310** : Fix right alignment of numeric columns.
+
+* Issue **#3285** : Persist key/value and list input selections in dashboards.
+
+* Issue **#3333** : Fix Xerces UTF-8 handling by always using a reader.
+
+* Issue **#3105** : Add duplicate column menu item to dashboard tables.
+
+* Issue **#3105** : Add feature to duplicate dashboard tabs and whole tab panels.
+
+* Issue **#3297** : Fix tab selector popup in dashboards.
+
+* Issue **#3313** : Add feature to move dashboard table columns first/last via menu.
+
+* Issue **#1631** : Add content search feature.
+
+* Issue **#3270** : Change the auto logging of audit events to ignore any initiated by the processing user account as this is not human initiated.
+
+* Issue **#3278** : Fix warning about the data retention rule summary query cancellation action not been correctly configured for auto logging.
+
+* Remove thread sleep accidentally added for testing purposes in data retention summary query execution.
+
+* Issue **#3292** : Change the reference data load to not load entries with null values. If `overrideExistingValues` is set and an entry with a null value overrides an existing one with a non-null value, the existing one will be removed.
+
+* Issue **#3299** : Fix schema non-compliant events when importing config. Also fix error handling when user tries to import with no file selected. Improved the audit events for file upload.
+
+* Remove audit logging for `MetaResourceImpl.getTypes` which just lists the stream types and is not an explicit user action.
+
+* Issue **#3305** : Change the formatting of index/data volume limit to show 3 significant figures.
+
+* Issue **#3280** : Make orphan file/meta finder jobs drop out if stroom is shutdown. Change orphan meta finder job to user more efficient SQL. Improve logging output from both finders to include start time, duration and any error/interruption. Fix missing feed names in orphan file finder log.
+
+* Issue **#2759** : Normalise Windows line endings () to Unix-style () when pasting into the ACE text editor.
+
+* Issue **#3272** : Change handling for reference loads in unexpected states. It now logs an app log error but carries on and loads over the top.
+
+* Issue **#3260** : Change the select-all filter based delete/restore to delete by IDs with a temporary table to avoid locking other rows. This is configurable using the property `data.meta.metaStatusUpdateBatchSize`, with 0 meaning all in one batch.
+
+* Issue **#3201** : Change the way the mapping of feed and stream types to IDs is cached. Now uses the existing `Meta Type Cache` and `Meta Feed Cache` caches rather than simple hash maps that duplicated the caching.
+
+* Issue **#3136** : Improve the debug logging for reference data effective streams and add validation of the effective stream sets when debug is enabled for `stroom.pipeline.refdata.EffectiveStreamCache`.
+
+* Remove the read/write locking used on the caches. Change cache rebuild to do a full rebuild if config has changed, else just clear the existing cache.
+
+* Issue **#3286** : Fix error when changing property values for cache properties.
+
+* Issue **#2759** : Change `in dictionary` for filters and searchables to ignore blank lines.
+
+* Issue **#3271** : Fix warnings in logs about auto logging not being configured for reference data purge.
+
+
+## [v7.2-alpha.13] - 2023-03-13
+
 * Issue **#3259** : Make task creation and queueing multi threaded.
 
 * Issue **#3276** : Remove ASSIGNED task status and guard for task creation deadlocks.
@@ -24,6 +83,27 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3259** : Make task creation and queueing multi threaded.
 
 * Issue **#3259** : Make task creation a separate managed job.
+
+
+## [v7.2-alpha.12] - 2023-02-24
+
+* Issue **#3039** : Display search suggestions and type hints in dashboards.
+
+* Issue **#3045** : Add stream selection info action button to meta view.
+
+* Issue **#3128** : Allow enumeration of meta keys in XSLT.
+
+* Issue **#3174** : Add search management.
+
+* Issue **#3195** : Add Elasticsearch hit highlighting.
+
+* Issue **#3214** : Use auto-complete list for adding dashboard table fields.
+
+* Issue **#3216** : Add 'Dependencies' to explorer item context menu, to display dependencies for that item.
+
+* Issue **#3206** : Add ability for users to set Explorer items as favourites.
+
+* Issue **#3244** : Add 'Copy link to clipboard' Explorer menu item.
 
 * Issue **#3255** : Fix error when creating a new processor filter.
 
@@ -5058,7 +5138,10 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-alpha.11...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.1...HEAD
+[v7.2-beta.1]: https://github.com/gchq/stroom/compare/v7.2-alpha.13...v7.2-beta.1
+[v7.2-alpha.13]: https://github.com/gchq/stroom/compare/v7.2-alpha.12...v7.2-alpha.13
+[v7.2-alpha.12]: https://github.com/gchq/stroom/compare/v7.2-alpha.11...v7.2-alpha.12
 [v7.2-alpha.11]: https://github.com/gchq/stroom/compare/v7.2-alpha.10...v7.2-alpha.11
 [v7.2-alpha.10]: https://github.com/gchq/stroom/compare/v7.2-alpha.9...v7.2-alpha.10
 [v7.2-alpha.9]: https://github.com/gchq/stroom/compare/v7.2-alpha.8...v7.2-alpha.9

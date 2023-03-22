@@ -29,8 +29,6 @@ import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.MaxScrollPanel;
-import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -47,12 +45,7 @@ public class XSDDisplay extends Composite {
     SelectionMap selectionMap;
 
     public XSDDisplay() {
-        contentPanel.setStyleName("content");
-
-        final ScrollPanel scrollPanel = new MaxScrollPanel(contentPanel);
-        scrollPanel.setStyleName("container");
-
-        initWidget(scrollPanel);
+        initWidget(contentPanel);
     }
 
     public void setModel(final XSDModel model) {

@@ -22,7 +22,7 @@ class FlatResultBuilderTest {
         final int numberResultSets = 10;
 
         // When
-        final FlatResult.Builder flatResultBuilder = FlatResult
+        final FlatResultBuilder flatResultBuilder = FlatResult
                 .builder()
                 .componentId(componentId)
                 .errors(errors);

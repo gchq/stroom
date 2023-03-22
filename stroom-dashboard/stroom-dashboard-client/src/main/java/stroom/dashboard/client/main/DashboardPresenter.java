@@ -22,21 +22,27 @@ import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.dashboard.client.flexlayout.FlexLayout;
 import stroom.dashboard.client.flexlayout.FlexLayoutChangeHandler;
 import stroom.dashboard.client.flexlayout.PositionAndSize;
+import stroom.dashboard.client.input.KeyValueInputPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.DashboardPresenter.DashboardView;
 import stroom.dashboard.client.query.QueryInfoPresenter;
 import stroom.dashboard.shared.ComponentConfig;
+import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardConfig.TabVisibility;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.Dimension;
+import stroom.dashboard.shared.KeyValueInputComponentSettings;
 import stroom.dashboard.shared.LayoutConfig;
 import stroom.dashboard.shared.LayoutConstraints;
 import stroom.dashboard.shared.Size;
 import stroom.dashboard.shared.SplitLayoutConfig;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
+import stroom.dashboard.shared.TableComponentSettings;
+import stroom.dashboard.shared.TextComponentSettings;
+import stroom.dashboard.shared.VisComponentSettings;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -51,7 +57,7 @@ import stroom.query.client.presenter.QueryUiHandlers;
 import stroom.query.client.view.QueryButtons;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Icon;
-import stroom.util.shared.RandomId;
+import stroom.util.shared.Version;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.menu.client.presenter.SimpleMenuItem;
@@ -69,15 +75,23 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class DashboardPresenter extends DocumentEditPresenter<DashboardView, DashboardDoc>
+public class DashboardPresenter
+        extends DocumentEditPresenter<DashboardView, DashboardDoc>
         implements FlexLayoutChangeHandler, DocumentTabData, DashboardUiHandlers, QueryUiHandlers,
-        Consumer<Boolean> {
+        DashboardContext, Consumer<Boolean> {
+
+    private static final String VERSION_7_2_0 = Version.of(7, 2, 0).toString();
+    private static final String DEFAULT_PARAMS_INPUT = "Params";
 
     private static final Logger logger = Logger.getLogger(DashboardPresenter.class.getName());
     private final FlexLayout layoutPresenter;
@@ -89,7 +103,6 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     private String customTitle;
     private DocRef docRef;
 
-    private final DashboardContext dashboardContext = new DashboardContext();
     private String lastUsedQueryInfo;
     private boolean embedded;
     private boolean queryOnOpen;
@@ -99,6 +112,8 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     private boolean designMode;
 
     private ResultStoreInfo resultStoreInfo;
+    private String externalLinkParameters;
+    private TimeRange timeRange;
 
     @Inject
     public DashboardPresenter(final EventBus eventBus,
@@ -185,7 +200,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             if (componentUse.equals(type.getUse())) {
                 menuItems.add(new SimpleMenuItem.Builder()
                         .text(type.getName())
-                        .command(() -> addComponent(type))
+                        .command(() -> addNewComponent(type))
                         .build());
             }
         }
@@ -199,21 +214,48 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
     @Override
     public void onTimeRange(final TimeRange timeRange) {
-        if (!Objects.equals(dashboardContext.getTimeRange(), timeRange)) {
-            setTimeRange(timeRange);
+        if (!Objects.equals(this.timeRange, timeRange)) {
+            this.timeRange = timeRange;
+            setDirty(true);
             start();
         }
     }
 
-    private void setTimeRange(final TimeRange timeRange) {
-        dashboardContext.setTimeRange(timeRange);
-        getView().setTimeRange(timeRange);
+    @Override
+    public TimeRange getTimeRange() {
+        return timeRange;
     }
 
-    public void setParams(final String params) {
-        logger.log(Level.INFO, "Dashboard Presenter setParams " + params);
-        final List<Param> coreParams = ParamUtil.parse(params);
-        dashboardContext.setCoreParams(coreParams);
+    @Override
+    public List<Param> getParams() {
+        final List<Param> combinedParams = new ArrayList<>();
+        for (final Component component : components) {
+            if (component instanceof HasParams) {
+                combinedParams.addAll(((HasParams) component).getParams());
+            }
+        }
+        if (externalLinkParameters != null) {
+            combinedParams.addAll(ParamUtil.parse(externalLinkParameters));
+        }
+        return combinedParams;
+    }
+
+    public void setParamsFromLink(final String params) {
+        logger.log(Level.INFO, "Dashboard Presenter setParamsFromLink " + params);
+        this.externalLinkParameters = params;
+
+        // Try to find a Key/Value component to put the params in called "Params".
+        for (final Component component : components.getComponents()) {
+            if (component instanceof KeyValueInputPresenter) {
+                final KeyValueInputPresenter keyValueInputPresenter = (KeyValueInputPresenter) component;
+                if (keyValueInputPresenter.getLabel().equals(DEFAULT_PARAMS_INPUT)) {
+                    keyValueInputPresenter.setValue(params);
+                    // If we found one then we don't need to treat external parameters as a special case.
+                    this.externalLinkParameters = null;
+                    break;
+                }
+            }
+        }
     }
 
     void setEmbedded(final boolean embedded) {
@@ -241,19 +283,9 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
             final DashboardConfig dashboardConfig = dashboard.getDashboardConfig();
             if (dashboardConfig != null) {
-                if (dashboardContext.getCoreParams() == null ||
-                        dashboardContext.getCoreParams().size() == 0) {
-                    if (dashboardConfig.getParameters() != null
-                            && dashboardConfig.getParameters().trim().length() > 0) {
-                        setParams(dashboardConfig.getParameters().trim());
-                    }
-                }
-//                getView().setParams(currentParams);
-
-                if (dashboardContext.getTimeRange() == null) {
-                    if (dashboardConfig.getTimeRange() != null) {
-                        setTimeRange(dashboardConfig.getTimeRange());
-                    }
+                this.timeRange = dashboardConfig.getTimeRange();
+                if (this.timeRange != null) {
+                    getView().setTimeRange(this.timeRange);
                 }
 
                 layoutConfig = dashboardConfig.getLayout();
@@ -265,18 +297,53 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                 if (preferredSize == null) {
                     preferredSize = new Size();
                 }
-                final List<ComponentConfig> componentDataList = dashboardConfig.getComponents();
-                if (componentDataList != null) {
-                    for (final ComponentConfig componentData : componentDataList) {
-                        addComponent(componentData.getType(), componentData);
+
+                List<ComponentConfig> componentConfigList = dashboardConfig.getComponents();
+
+                // ADD A KEY/VALUE PARAMETER INPUT BOX FOR BACKWARD COMPATIBILITY.
+                if (dashboardConfig.getModelVersion() == null) {
+                    if (componentConfigList == null) {
+                        componentConfigList = new ArrayList<>();
+                        dashboardConfig.setComponents(componentConfigList);
                     }
-                    for (final ComponentConfig componentData : componentDataList) {
-                        final Component component = components.get(componentData.getId());
+
+                    final String params = dashboardConfig.getParameters() == null
+                            ?
+                            ""
+                            : dashboardConfig.getParameters();
+
+                    componentConfigList
+                            .add(new ComponentConfig(
+                                    KeyValueInputPresenter.TYPE.getId(),
+                                    DEFAULT_PARAMS_INPUT,
+                                    DEFAULT_PARAMS_INPUT,
+                                    new KeyValueInputComponentSettings(params)));
+                    final TabConfig tabConfig = new TabConfig(DEFAULT_PARAMS_INPUT, true);
+                    final List<TabConfig> tabs = new ArrayList<>();
+                    tabs.add(tabConfig);
+                    final TabLayoutConfig tabLayoutConfig =
+                            new TabLayoutConfig(new Size(200, 76), tabs, null);
+                    final List<LayoutConfig> children = new ArrayList<>();
+                    children.add(tabLayoutConfig);
+                    children.add(layoutConfig);
+                    SplitLayoutConfig splitLayoutConfig =
+                            new SplitLayoutConfig(new Size(200, 76), Dimension.Y, children);
+                    layoutConfig = splitLayoutConfig;
+                    dashboardConfig.setLayout(layoutConfig);
+                }
+
+                if (componentConfigList != null) {
+                    for (final ComponentConfig componentConfig : componentConfigList) {
+                        addComponent(componentConfig.getType(), componentConfig);
+                    }
+                    for (final ComponentConfig componentConfig : componentConfigList) {
+                        final Component component = components.get(componentConfig.getId());
                         if (component != null) {
                             component.link();
                         }
                     }
                 }
+
             } else {
                 // /**
                 // * ADD TEST DATA
@@ -352,10 +419,10 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         }
     }
 
-    private Component addComponent(final String type, final ComponentConfig componentData) {
-        final Component component = components.add(type, componentData.getId());
+    private Component addComponent(final String type, final ComponentConfig componentConfig) {
+        final Component component = components.add(type, componentConfig.getId());
         if (component != null) {
-            component.setDashboardContext(dashboardContext);
+            component.setDashboardContext(this);
 
             if (component instanceof HasDirtyHandlers) {
                 ((HasDirtyHandlers) component).addDirtyHandler(event -> setDirty(true));
@@ -367,7 +434,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                 queryable.addModeListener(this);
             }
 
-            component.read(componentData);
+            component.read(componentConfig);
         }
 
         enableQueryButtons();
@@ -404,20 +471,14 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             componentDataList.add(componentConfig);
         }
 
-        final List<Param> params = dashboardContext.getCoreParams();
-        String paramString = null;
-        if (params != null) {
-            paramString = ParamUtil.getCombinedParameterString(params);
-        }
-
         final DashboardConfig dashboardConfig = new DashboardConfig();
-        dashboardConfig.setParameters(paramString);
-        dashboardConfig.setTimeRange(dashboardContext.getTimeRange());
+        dashboardConfig.setTimeRange(timeRange);
         dashboardConfig.setComponents(componentDataList);
         dashboardConfig.setLayout(layoutPresenter.getLayoutConfig());
         dashboardConfig.setLayoutConstraints(layoutConstraints);
         dashboardConfig.setPreferredSize(preferredSize);
         dashboardConfig.setTabVisibility(TabVisibility.SHOW_ALL);
+        dashboardConfig.setModelVersion(VERSION_7_2_0);
         dashboard.setDashboardConfig(dashboardConfig);
         return dashboard;
     }
@@ -445,6 +506,138 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         if (designMode) {
             setDirty(true);
         }
+    }
+
+    public void duplicateTab(final TabLayoutConfig tabLayoutConfig, final TabConfig originalTabConfig) {
+        // Duplicate the referenced component.
+        final Component originalComponent = components.get(originalTabConfig.getId());
+        final ComponentType type = originalComponent.getType();
+
+        // Get sets of unique component ids and names.
+        final Set<String> currentIdSet = new HashSet<>();
+        final Set<String> currentNameSet = new HashSet<>();
+        for (final Component component : components.getComponents()) {
+            currentIdSet.add(component.getId());
+            currentNameSet.add(component.getLabel());
+        }
+
+        final String id = UniqueUtil.createUniqueComponentId(type, currentIdSet);
+        final String newName = UniqueUtil.makeUniqueName(originalComponent.getLabel(), currentNameSet);
+        final ComponentConfig componentConfig = originalComponent.getComponentConfig().copy()
+                .id(id)
+                .name(newName)
+                .build();
+
+        // Try and add the component.
+        final Component component = addComponent(componentConfig.getType(), componentConfig);
+        if (component != null) {
+            final TabConfig newTabConfig = originalTabConfig.copy().id(component.getId()).build();
+            tabLayoutConfig.add(newTabConfig);
+            tabLayoutConfig.setSelected(tabLayoutConfig.getTabs().size() - 1);
+
+            // Link new component.
+            components.get(newTabConfig.getId()).link();
+
+            layoutPresenter.clear();
+            layoutPresenter.refresh();
+
+            setDirty(true);
+        }
+    }
+
+    public void duplicateTabPanel(final TabLayoutConfig tabLayoutConfig) {
+        Size preferredSize = null;
+        if (tabLayoutConfig.getPreferredSize() != null) {
+            preferredSize = tabLayoutConfig.getPreferredSize().copy().build();
+        }
+
+        // Get a set of unique component ids.
+        final Set<String> currentIdSet = new HashSet<>();
+        for (final Component component : components.getComponents()) {
+            currentIdSet.add(component.getId());
+        }
+
+        final Map<String, String> idMapping = new HashMap<>();
+        final List<ComponentConfig> newComponents = new ArrayList<>();
+        final Map<String, TabConfig> newTabConfigMap = new HashMap<>();
+        if (tabLayoutConfig.getTabs() != null) {
+            for (final TabConfig tabConfig : tabLayoutConfig.getTabs()) {
+                // Duplicate the referenced component.
+                final Component originalComponent = components.get(tabConfig.getId());
+                final ComponentType type = originalComponent.getType();
+
+                final String id = UniqueUtil.createUniqueComponentId(type, currentIdSet);
+                currentIdSet.add(id);
+
+                final ComponentConfig componentConfig = originalComponent.getComponentConfig().copy()
+                        .id(id)
+                        .build();
+
+                idMapping.put(tabConfig.getId(), id);
+                newComponents.add(componentConfig);
+
+                final TabConfig newTabConfig = tabConfig.copy().id(id).build();
+                newTabConfigMap.put(id, newTabConfig);
+            }
+        }
+
+        // Now try and repoint the id references so that all new copied items reference each other rather than their
+        // originals.
+        final List<ComponentConfig> modifiedComponents = new ArrayList<>();
+        for (final ComponentConfig componentConfig : newComponents) {
+            ComponentSettings settings = componentConfig.getSettings();
+            if (settings instanceof TableComponentSettings) {
+                TableComponentSettings tableComponentSettings = (TableComponentSettings) settings;
+                if (tableComponentSettings.getQueryId() != null &&
+                        idMapping.containsKey(tableComponentSettings.getQueryId())) {
+                    settings = tableComponentSettings
+                            .copy().queryId(idMapping.get(tableComponentSettings.getQueryId())).build();
+                }
+            } else if (settings instanceof VisComponentSettings) {
+                VisComponentSettings visComponentSettings = (VisComponentSettings) settings;
+                if (visComponentSettings.getTableId() != null &&
+                        idMapping.containsKey(visComponentSettings.getTableId())) {
+                    settings = visComponentSettings
+                            .copy().tableId(idMapping.get(visComponentSettings.getTableId())).build();
+                }
+            } else if (settings instanceof TextComponentSettings) {
+                TextComponentSettings textComponentSettings = (TextComponentSettings) settings;
+                if (textComponentSettings.getTableId() != null &&
+                        idMapping.containsKey(textComponentSettings.getTableId())) {
+                    settings = textComponentSettings
+                            .copy().tableId(idMapping.get(textComponentSettings.getTableId())).build();
+                }
+            }
+            modifiedComponents.add(componentConfig.copy().settings(settings).build());
+        }
+
+        final List<TabConfig> tabs = new ArrayList<>();
+        // Now try and add all the duplicated components.
+        for (final ComponentConfig componentConfig : modifiedComponents) {
+            final Component component = addComponent(componentConfig.getType(), componentConfig);
+            if (component != null) {
+                final TabConfig newTabConfig = newTabConfigMap.get(component.getId());
+                tabs.add(newTabConfig);
+            }
+        }
+
+        // Now link all the components.
+        for (final ComponentConfig componentConfig : modifiedComponents) {
+            final Component component = components.get(componentConfig.getId());
+            if (component != null) {
+                component.link();
+            }
+        }
+
+        final TabLayoutConfig newTabLayoutConfig = TabLayoutConfig
+                .builder()
+                .preferredSize(preferredSize)
+                .tabs(tabs)
+                .selected(tabLayoutConfig.getSelected())
+                .build();
+
+        // Add the new tab layout panel.
+        addTabPanel(newTabLayoutConfig);
     }
 
     @Override
@@ -501,7 +694,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                         lastUsedQueryInfo = state.getQueryInfo();
 
                         for (final Queryable queryable : queryableComponents) {
-                            queryable.setDashboardContext(dashboardContext);
+                            queryable.setDashboardContext(this);
                             queryable.setQueryInfo(lastUsedQueryInfo);
                             queryable.start();
                         }
@@ -580,22 +773,24 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         QueryButtons getQueryButtons();
     }
 
-    private void addComponent(final ComponentType type) {
+    private void addNewComponent(final ComponentType type) {
         if (type != null) {
-            String id = type.getId() + "-" + RandomId.createId(5);
-            // Make sure we don't duplicate ids.
-            while (components.idExists(id)) {
-                id = type.getId() + "-" + RandomId.createId(5);
+
+            // Get sets of unique component ids and names.
+            final Set<String> currentIdSet = new HashSet<>();
+            for (final Component component : components.getComponents()) {
+                currentIdSet.add(component.getId());
             }
 
-            final ComponentConfig componentData = ComponentConfig
+            final String id = UniqueUtil.createUniqueComponentId(type, currentIdSet);
+            final ComponentConfig componentConfig = ComponentConfig
                     .builder()
                     .type(type.getId())
                     .id(id)
                     .name(type.getName())
                     .build();
 
-            final Component componentPresenter = addComponent(componentData.getType(), componentData);
+            final Component componentPresenter = addComponent(componentConfig.getType(), componentConfig);
             if (componentPresenter != null) {
                 componentPresenter.link();
             }
@@ -603,34 +798,39 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             final TabConfig tabConfig = new TabConfig(id, true);
             final TabLayoutConfig tabLayoutConfig = new TabLayoutConfig(tabConfig);
 
-            // Choose where to put the new component in the layout data.
-            LayoutConfig layoutConfig = layoutPresenter.getLayoutConfig();
-            if (layoutConfig == null) {
-                // There is no existing layout so add the new item as a
-                // single item layout.
-
-                layoutConfig = tabLayoutConfig;
-
-            } else if (layoutConfig instanceof TabLayoutConfig) {
-                // If the layout is a single item then replace it with a
-                // split layout.
-                layoutConfig = new SplitLayoutConfig(Dimension.Y, layoutConfig, tabLayoutConfig);
-            } else {
-                // If the layout is already a split then add a new component
-                // to the split.
-                final SplitLayoutConfig parent = (SplitLayoutConfig) layoutConfig;
-
-                // Add the new component.
-                parent.add(tabLayoutConfig);
-
-                // Fix the heights of the components to fit the new
-                // component in.
-                fixHeights(parent);
-            }
-
-            layoutPresenter.configure(layoutConfig, layoutConstraints, preferredSize);
-            setDirty(true);
+            // Add the new tab layout.
+            addTabPanel(tabLayoutConfig);
         }
+    }
+
+    private void addTabPanel(final TabLayoutConfig tabLayoutConfig) {
+        // Choose where to put the new component in the layout data.
+        LayoutConfig layoutConfig = layoutPresenter.getLayoutConfig();
+        if (layoutConfig == null) {
+            // There is no existing layout so add the new item as a
+            // single item layout.
+
+            layoutConfig = tabLayoutConfig;
+
+        } else if (layoutConfig instanceof TabLayoutConfig) {
+            // If the layout is a single item then replace it with a
+            // split layout.
+            layoutConfig = new SplitLayoutConfig(Dimension.Y, layoutConfig, tabLayoutConfig);
+        } else {
+            // If the layout is already a split then add a new component
+            // to the split.
+            final SplitLayoutConfig parent = (SplitLayoutConfig) layoutConfig;
+
+            // Add the new component.
+            parent.add(tabLayoutConfig);
+
+            // Fix the heights of the components to fit the new
+            // component in.
+            fixHeights(parent);
+        }
+
+        layoutPresenter.configure(layoutConfig, layoutConstraints, preferredSize);
+        setDirty(true);
     }
 
     private void fixHeights(final SplitLayoutConfig parent) {

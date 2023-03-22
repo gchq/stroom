@@ -19,14 +19,17 @@ package stroom.util.shared;
 import stroom.docref.HasDisplayValue;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.Arrays;
 import java.util.Comparator;
 
 public final class ModelStringUtil {
 
-    private static final int METRIC_DIV = 1000;
-    private static final int IEC_BYTE_DIV = 1024;
+    public static final int DEFAULT_SIGNIFICANT_FIGURES = 3;
+
+    private static final int METRIC_DIV = 1_000;
+    private static final int IEC_BYTE_DIV = 1_024;
 
     private static final Divider[] SIZE_DIVIDER = new Divider[]{
             new Divider(1, ""),
@@ -105,7 +108,8 @@ public final class ModelStringUtil {
     /**
      * Return nice string like "25 B", "4 kB", "45 MB", etc.
      */
-    public static String formatMetricByteSizeString(final Long streamSize, final boolean stripTrailingZeros) {
+    public static String formatMetricByteSizeString(final Long streamSize,
+                                                    final boolean stripTrailingZeros) {
         if (streamSize == null) {
             return "";
         }
@@ -117,6 +121,34 @@ public final class ModelStringUtil {
      */
     public static String formatIECByteSizeString(final Long streamSize) {
         return formatIECByteSizeString(streamSize, false);
+    }
+
+    /**
+     * Return nice string like "25 B", "4 K", "45 M", etc.
+     */
+    public static String formatIECByteSizeString(final Long streamSize,
+                                                 final boolean stripTrailingZeros) {
+        if (streamSize == null) {
+            return "";
+        }
+        return formatNumberString(streamSize, IEC_BYTE_SIZE_DIVIDER, stripTrailingZeros);
+    }
+
+    /**
+     * Return nice string like "25 B", "4 K", "45 M", rounded to the desired significantFigures.
+     *
+     * @param significantFigures The number of significant digits required, however if the number of
+     *                           integer digits is greater that will be used. This is to ensure we always
+     *                           show full precision for the integer part, e.g. output '1023B' when
+     *                           significantFigures is 3.
+     */
+    public static String formatIECByteSizeString(final Long streamSize,
+                                                 final boolean stripTrailingZeros,
+                                                 final int significantFigures) {
+        if (streamSize == null) {
+            return "";
+        }
+        return formatNumberString(streamSize, IEC_BYTE_SIZE_DIVIDER, stripTrailingZeros, significantFigures);
     }
 
     /**
@@ -136,16 +168,6 @@ public final class ModelStringUtil {
         } else {
             return val + " █";
         }
-    }
-
-    /**
-     * Return nice string like "25 B", "4 K", "45 M", etc.
-     */
-    public static String formatIECByteSizeString(final Long streamSize, final boolean stripTrailingZeros) {
-        if (streamSize == null) {
-            return "";
-        }
-        return formatNumberString(streamSize, IEC_BYTE_SIZE_DIVIDER, stripTrailingZeros);
     }
 
     /**
@@ -171,6 +193,13 @@ public final class ModelStringUtil {
     private static String formatNumberString(final double number,
                                              final Divider[] dividers,
                                              final boolean stripTrailingZeros) {
+        return formatNumberString(number, dividers, stripTrailingZeros, null);
+    }
+
+    private static String formatNumberString(final double number,
+                                             final Divider[] dividers,
+                                             final boolean stripTrailingZeros,
+                                             final Integer significantFigures) {
         double nextNumber = number;
         Divider lastDivider = dividers[0];
 
@@ -187,12 +216,29 @@ public final class ModelStringUtil {
         final String suffix;
         if (lastDivider != null) {
             // Show the first dec place if the number is smaller than 10
-            final int scale = nextNumber < 10
-                    ? 1
-                    : 0;
+            if (significantFigures == null) {
+                final int scale = nextNumber < 10
+                        ? 1
+                        : 0;
+                bigDecimal = bigDecimal.setScale(scale, RoundingMode.HALF_UP);
+            } else {
+                if (significantFigures <= 0) {
+                    throw new IllegalArgumentException("significantFigures should be > 0.");
+                }
+                // Because we are always dealing in numbers between 0 and 1024 we need to add
+                // the additional sig fig if we go over 1000, so we don't lost the last digit,
+                // but for fractional stuff, 3 sig fig is fine.
+                final long valAsLong = bigDecimal.longValue();
+                final int precision;
+                if (significantFigures >= 4) {
+                    precision = significantFigures;
+                } else {
+                    final int integerDigitCount = Long.toString(valAsLong).length();
+                    precision = Math.max(significantFigures, integerDigitCount);
+                }
+                bigDecimal = bigDecimal.round(new MathContext(precision, RoundingMode.HALF_UP));
+            }
 
-            bigDecimal = bigDecimal
-                    .setScale(scale, RoundingMode.HALF_UP);
             suffix = lastDivider.unit[0];
         } else {
             // No dividers so leave do nothing to the bigDecimal

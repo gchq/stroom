@@ -211,7 +211,7 @@ public interface MetaService {
      * @param criteria the search criteria
      * @return the list of matches
      */
-    Set<EffectiveMeta> findEffectiveData(EffectiveMetaDataCriteria criteria);
+    List<EffectiveMeta> findEffectiveData(EffectiveMetaDataCriteria criteria);
 
     /**
      * Get a distinct list of processor UUIds for meta data matching the supplied criteria.
@@ -240,4 +240,21 @@ public interface MetaService {
                                          final int batchSize,
                                          final Set<Long> metaIdExcludeSet);
 
+    /**
+     * Gets a batch of {@link SimpleMeta} in ID order. Does not do any permission checking.
+     * @param minId Minimum meta ID, inclusive
+     * @param maxId Optional maximum meta ID, inclusive
+     * @param batchSize Number of {@link SimpleMeta}s to return
+     * @return
+     */
+    List<SimpleMeta> findBatch(final long minId,
+                               final Long maxId,
+                               final int batchSize);
+
+    /**
+     * Check if ids exist.
+     * @param ids A list of IDs to check the presence of
+     * @return The sub-set of ids that exist in the database
+     */
+    Set<Long> exists(final Set<Long> ids);
 }

@@ -29,7 +29,7 @@ public interface Generator extends Comparable<Generator> {
      *
      * @param values The current data values to pick data from.
      */
-    void set(Val[] values);
+    void set(Values values);
 
     /**
      * Evaluate this generator by applying the function that this generator

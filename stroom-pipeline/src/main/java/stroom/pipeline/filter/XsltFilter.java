@@ -94,7 +94,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     private final PipelineContext pipelineContext;
     private final Provider<FeedHolder> feedHolder;
     private final Provider<PipelineHolder> pipelineHolder;
-    private final DocFinder<XsltDoc> docHelper;
+    private final DocFinder<XsltDoc> docFinder;
 
     private ErrorListener errorListener;
 
@@ -138,7 +138,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         this.feedHolder = feedHolder;
         this.pipelineHolder = pipelineHolder;
 
-        this.docHelper = new DocFinder<>(XsltDoc.DOCUMENT_TYPE, pathCreator, xsltStore);
+        this.docFinder = new DocFinder<>(XsltDoc.DOCUMENT_TYPE, pathCreator, xsltStore);
     }
 
     @Override
@@ -621,7 +621,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
 
     @Override
     public DocRef findDoc(final String feedName, final String pipelineName, final Consumer<String> errorConsumer) {
-        return docHelper.findDoc(
+        return docFinder.findDoc(
                 xsltRef,
                 xsltNamePattern,
                 feedName,

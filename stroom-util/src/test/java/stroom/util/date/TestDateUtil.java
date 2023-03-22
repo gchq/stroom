@@ -21,6 +21,7 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.stream.Stream;
 
@@ -67,5 +68,16 @@ class TestDateUtil {
         assertThat(DateUtil.createFileDateTimeString(timeMs))
                 .isEqualTo("2010-01-01T23#59#59,000Z")
                 .isEqualTo(DateUtil.createFileDateTimeString(Instant.ofEpochMilli(timeMs)));
+    }
+
+    @Test
+    void testRoundDown() {
+        Instant time = DateUtil.parseNormalDateTimeStringToInstant("2010-01-01T23:59:59.000Z");
+        Instant rounded = DateUtil.roundDown(time, Duration.parse("PT30M"));
+        assertThat(rounded).isEqualTo(DateUtil.parseNormalDateTimeStringToInstant("2010-01-01T23:30:00.000Z"));
+
+        time = DateUtil.parseNormalDateTimeStringToInstant("2010-01-01T23:29:59.000Z");
+        rounded = DateUtil.roundDown(time, Duration.parse("PT30M"));
+        assertThat(rounded).isEqualTo(DateUtil.parseNormalDateTimeStringToInstant("2010-01-01T23:00:00.000Z"));
     }
 }

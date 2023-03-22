@@ -51,6 +51,7 @@ import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
+import stroom.explorer.client.event.ShowFindEvent;
 import stroom.explorer.client.event.ShowNewMenuEvent;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.BulkActionResult;
@@ -122,14 +123,6 @@ public class DocumentPluginEventManager extends Plugin {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
     private static final ExplorerFavouriteResource EXPLORER_FAV_RESOURCE = GWT.create(ExplorerFavouriteResource.class);
-//    private static final KeyTest CTRL_S = event ->
-//            event.getCtrlKey() && !event.getShiftKey() && event.getKeyCode() == 'S';
-//    private static final KeyTest CTRL_SHIFT_S = event ->
-//            event.getCtrlKey() && event.getShiftKey() && event.getKeyCode() == 'S';
-//    private static final KeyTest ALT_W = event ->
-//            event.getAltKey() && !event.getShiftKey() && event.getKeyCode() == 'W';
-//    private static final KeyTest ALT_SHIFT_W = event ->
-//            event.getAltKey() && event.getShiftKey() && event.getKeyCode() == 'W';
 
     private final HasSaveRegistry hasSaveRegistry;
     private final RestFactory restFactory;
@@ -138,9 +131,6 @@ public class DocumentPluginEventManager extends Plugin {
     private final ClientSecurityContext securityContext;
     private TabData selectedTab;
     private MultiSelectionModel<ExplorerNode> selectionModel;
-
-    private final Command itemCloseCommand;
-    private final Command itemSaveCommand;
 
     @Inject
     public DocumentPluginEventManager(final EventBus eventBus,
@@ -156,20 +146,22 @@ public class DocumentPluginEventManager extends Plugin {
         this.documentPluginRegistry = documentPluginRegistry;
         this.securityContext = securityContext;
 
-        itemCloseCommand = () -> {
+        KeyBinding.addCommand(Action.ITEM_CLOSE, () -> {
             if (isTabItemSelected(selectedTab)) {
                 RequestCloseTabEvent.fire(DocumentPluginEventManager.this, selectedTab);
             }
-        };
-        KeyBinding.addCommand(Action.ITEM_CLOSE, itemCloseCommand);
+        });
+        KeyBinding.addCommand(Action.ITEM_CLOSE_ALL, () -> RequestCloseAllTabsEvent.fire(this));
 
-        itemSaveCommand = () -> {
+        KeyBinding.addCommand(Action.ITEM_SAVE, () -> {
             if (isDirty(selectedTab)) {
                 final HasSave hasSave = (HasSave) selectedTab;
                 hasSave.save();
             }
-        };
-        KeyBinding.addCommand(Action.ITEM_SAVE, itemSaveCommand);
+        });
+        KeyBinding.addCommand(Action.ITEM_SAVE_ALL, hasSaveRegistry::save);
+
+        KeyBinding.addCommand(Action.FIND, () -> ShowFindEvent.fire(this));
     }
 
     @Override

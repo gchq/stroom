@@ -5,6 +5,7 @@ import stroom.feed.api.FeedStore;
 import stroom.meta.api.MetaSecurityFilter;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.Clearable;
@@ -34,6 +35,25 @@ class MetaSecurityFilterImpl implements MetaSecurityFilter, Clearable {
         this.securityContext = securityContext;
     }
 
+    private static ExpressionTerm buildFeedTerm(final String field, final String filteredFeeds) {
+        return ExpressionTerm.builder()
+                .field(field)
+                .condition(Condition.IN)
+                .value(filteredFeeds)
+                .build();
+    }
+
+    private String getFilteredFeeds(final String permission) {
+        // Get all feeds as seen by the processing user.
+        List<DocRef> feeds = getCachedFeeds();
+        // Filter feeds that the current user has the requested permission on.
+        return feeds
+                .stream()
+                .filter(docRef -> securityContext.hasDocumentPermission(docRef.getUuid(), permission))
+                .map(DocRef::getName)
+                .collect(Collectors.joining(","));
+    }
+
     @Override
     public Optional<ExpressionOperator> getExpression(final String permission,
                                                       final List<String> fields) {
@@ -44,33 +64,31 @@ class MetaSecurityFilterImpl implements MetaSecurityFilter, Clearable {
             throw new IllegalArgumentException("No fields provided");
         }
 
-        ExpressionOperator expressionOperator = null;
         if (!securityContext.isAdmin()) {
-
-            // Get all feeds as seen by the processing user.
-            List<DocRef> feeds = feedCache;
-            final long now = System.currentTimeMillis();
-            if (feeds == null || lastUpdate < now - THIRTY_SECONDS) {
-                securityContext.asProcessingUser(() -> feedCache = feedStore.list());
-                feeds = feedCache;
-                lastUpdate = now;
-            }
-
-            // Filter feeds that the current user has the requested permission on.
-            final String filteredFeeds = feeds
-                    .stream()
-                    .filter(docRef -> securityContext.hasDocumentPermission(docRef.getUuid(), permission))
-                    .map(DocRef::getName)
-                    .collect(Collectors.joining(","));
+            final String filteredFeeds = getFilteredFeeds(permission);
 
             final Builder builder = ExpressionOperator.builder();
             for (final String field : fields) {
-                builder.addTerm(field, Condition.IN, filteredFeeds);
+                final ExpressionTerm expressionTerm = buildFeedTerm(field, filteredFeeds);
+                builder.addTerm(expressionTerm);
             }
-            expressionOperator = builder.build();
+            return Optional.of(builder.build());
+        } else {
+            return Optional.empty();
         }
+    }
 
-        return Optional.ofNullable(expressionOperator);
+    private List<DocRef> getCachedFeeds() {
+        // Don't need to synchronise as it doesn't really matter if two threads both update at
+        // the same time
+        List<DocRef> feeds = feedCache;
+        final long now = System.currentTimeMillis();
+        if (feeds == null || lastUpdate < now - THIRTY_SECONDS) {
+            securityContext.asProcessingUser(() -> feedCache = feedStore.list());
+            feeds = feedCache;
+            lastUpdate = now;
+        }
+        return feeds;
     }
 
     @Override

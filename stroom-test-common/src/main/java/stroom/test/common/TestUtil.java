@@ -145,7 +145,7 @@ public class TestUtil {
                 valueSupplier,
                 requiredValue,
                 messageSupplier,
-                Duration.ofSeconds(5),
+                Duration.ofMinutes(1),
                 Duration.ofMillis(1),
                 Duration.ofSeconds(1));
     }

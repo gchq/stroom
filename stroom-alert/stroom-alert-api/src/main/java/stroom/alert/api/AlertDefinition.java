@@ -27,7 +27,8 @@ public class AlertDefinition {
     private final TableSettings tableSettings;
     private boolean disabled = false;
 
-    public AlertDefinition(final TableSettings tableSettings, final Map<String, String> attributes) {
+    public AlertDefinition(final TableSettings tableSettings,
+                           final Map<String, String> attributes) {
         this.tableSettings = tableSettings;
         if (attributes != null) {
             this.attributes = attributes;

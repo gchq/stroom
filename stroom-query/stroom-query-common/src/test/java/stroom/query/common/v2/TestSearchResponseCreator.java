@@ -4,6 +4,7 @@ import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.StaticValueFunction;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.dashboard.expression.v1.Values;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
@@ -299,7 +300,7 @@ class TestSearchResponseCreator {
 
         return new DataStore() {
             @Override
-            public void add(final Val[] queueItem) {
+            public void add(final Values values) {
             }
 
             @Override

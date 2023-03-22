@@ -23,6 +23,7 @@ import stroom.dashboard.expression.v1.ValDouble;
 import stroom.dashboard.expression.v1.ValInteger;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.dashboard.expression.v1.Values;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.ErrorConsumer;
@@ -310,7 +311,7 @@ public class ElasticSearchTaskHandler {
                 }
 
                 if (values != null) {
-                    valuesConsumer.add(values);
+                    valuesConsumer.add(Values.of(values));
                 }
             }
         } catch (final RuntimeException e) {

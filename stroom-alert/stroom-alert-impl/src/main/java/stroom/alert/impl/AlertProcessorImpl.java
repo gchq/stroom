@@ -16,11 +16,7 @@
 
 package stroom.alert.impl;
 
-import stroom.alert.api.AlertDefinition;
-import stroom.alert.api.AlertManager;
 import stroom.alert.api.AlertProcessor;
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.Val;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStructure;
@@ -34,12 +30,10 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.Field;
 import stroom.query.api.v2.QueryKey;
-import stroom.query.common.v2.CompiledFields;
 import stroom.query.common.v2.ErrorConsumer;
+import stroom.query.common.v2.ErrorConsumerImpl;
 import stroom.search.extraction.ExtractionException;
-import stroom.search.extraction.ExtractionReceiver;
 import stroom.search.extraction.ExtractionTaskHandler;
 import stroom.search.impl.SearchException;
 import stroom.search.impl.SearchExpressionQueryBuilder;
@@ -57,20 +51,19 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.TopDocs;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 import javax.inject.Provider;
 
 public class AlertProcessorImpl implements AlertProcessor {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AlertProcessorImpl.class);
 
-    private static final DocRef NULL_SELECTION = DocRef.builder().uuid("").name("None").type("").build();
+    private static final DocRef NULL_SELECTION =
+            DocRef.builder().uuid("").name("None").type("").build();
 
     private final AlertQueryHits alertQueryHits;
 
@@ -86,6 +79,8 @@ public class AlertProcessorImpl implements AlertProcessor {
 
     private final TaskContext taskContext;
     private final Provider<ExtractionTaskHandler> handlerProvider;
+    private final Provider<DetectionsWriter> detectionsWriterProvider;
+    private final MultiValuesReceiverFactory multiValuesReceiverFactory;
 
     private Long currentStreamId = null;
 
@@ -95,6 +90,8 @@ public class AlertProcessorImpl implements AlertProcessor {
 
     public AlertProcessorImpl(final TaskContext taskContext,
                               final Provider<ExtractionTaskHandler> handlerProvider,
+                              final Provider<DetectionsWriter> detectionsWriterProvider,
+                              final MultiValuesReceiverFactory multiValuesReceiverFactory,
                               final List<RuleConfig> rules,
                               final IndexStructure indexStructure,
                               final PipelineStore pipelineStore,
@@ -120,6 +117,8 @@ public class AlertProcessorImpl implements AlertProcessor {
         alertQueryHits = new AlertQueryHits();
         this.taskContext = taskContext;
         this.handlerProvider = handlerProvider;
+        this.detectionsWriterProvider = detectionsWriterProvider;
+        this.multiValuesReceiverFactory = multiValuesReceiverFactory;
         this.dateTimeSettings = dateTimeSettings;
     }
 
@@ -185,16 +184,14 @@ public class AlertProcessorImpl implements AlertProcessor {
 
                     alertQueryHits.addQueryHitForRule(rule, eventId);
                     LOGGER.debug(() -> LogUtil.message(
-                            "Adding {}:{} to rule {} from dashboards {}",
+                            "Adding {}:{} to rule {}",
                             currentStreamId,
-                            eventId, rule.getQueryId(),
-                            rule.getDashboardNames()));
+                            eventId, rule.getName()));
                 } else {
                     LOGGER.trace(() -> LogUtil.message(
-                            "Not adding {}:{} to rule {} from dashboards {}",
+                            "Not adding {}:{} to rule {}",
                             currentStreamId,
-                            eventId, rule.getQueryId(),
-                            rule.getDashboardNames()));
+                            eventId, rule.getName()));
                 }
             }
         } catch (IOException ex) {
@@ -211,53 +208,34 @@ public class AlertProcessorImpl implements AlertProcessor {
             LOGGER.trace("Iterating pipeline {}", pipeline.getName());
             Collection<RuleConfig> rulesForPipeline = alertQueryHits.getRulesForPipeline(pipeline);
             for (RuleConfig ruleConfig : rulesForPipeline) {
-                LOGGER.trace("--Iterating ruleConfig {}", ruleConfig.getQueryId());
+                LOGGER.trace("--Iterating ruleConfig {}", ruleConfig.getName());
                 long[] eventIds = alertQueryHits.getSortedQueryHitsForRule(ruleConfig);
                 if (eventIds != null && eventIds.length > 0) {
-                    final ExtractionReceiver receiver = new AlertProcessorReceiver(ruleConfig.getAlertDefinitions(),
-                            ruleConfig.getParams());
-                    final ErrorConsumer errorConsumer = new ErrorConsumer() {
-                        @Override
-                        public void add(final Throwable exception) {
-                            LOGGER.error(exception.getMessage(), exception.getCause());
-                        }
+                    final DetectionsWriter detectionsWriter = detectionsWriterProvider.get();
+                    multiValuesReceiverFactory.create(ruleConfig, detectionsWriter);
 
-                        @Override
-                        public List<String> getErrors() {
-                            return null;
-                        }
-
-                        @Override
-                        public List<String> drain() {
-                            return null;
-                        }
-
-                        @Override
-                        public boolean hasErrors() {
-                            return false;
-                        }
-                    };
-
-                    final PipelineData pipelineData = getPipelineData(pipeline);
-                    handlerProvider.get().extract(
-                            taskContext,
-                            new QueryKey("alert"),
-                            currentStreamId,
-                            eventIds,
-                            pipeline,
-                            receiver,
-                            errorConsumer,
-                            pipelineData,
-                            ruleConfig.getAlertDefinitions(),
-                            ruleConfig.getParams());
-                    numTasks++;
+                    final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
+                    try {
+                        detectionsWriter.start();
+                        final PipelineData pipelineData = getPipelineData(pipeline);
+                        handlerProvider.get().extract(
+                                taskContext,
+                                new QueryKey("alert"),
+                                currentStreamId,
+                                eventIds,
+                                pipeline,
+                                errorConsumer,
+                                pipelineData);
+                        numTasks++;
+                    } finally {
+                        detectionsWriter.end();
+                    }
                 }
             }
 
         }
         LOGGER.debug("Created {} search extraction tasks for stream id {}", numTasks, currentStreamId);
         alertQueryHits.clearHits();
-
     }
 
     private PipelineData getPipelineData(final DocRef pipelineRef) {
@@ -278,7 +256,8 @@ public class AlertProcessorImpl implements AlertProcessor {
         });
     }
 
-    private boolean matchQuery(final IndexSearcher indexSearcher, final IndexFieldsMap indexFieldsMap,
+    private boolean matchQuery(final IndexSearcher indexSearcher,
+                               final IndexFieldsMap indexFieldsMap,
                                final ExpressionOperator query) throws IOException {
 
         try {
@@ -321,32 +300,6 @@ public class AlertProcessorImpl implements AlertProcessor {
             return document.getField("StreamId").numericValue().longValue();
         } catch (RuntimeException ex) {
             return null;
-        }
-    }
-
-    private static class AlertProcessorReceiver implements ExtractionReceiver {
-
-        private final FieldIndex fieldIndexMap = FieldIndex.forFields();
-
-        AlertProcessorReceiver(final List<AlertDefinition> alertDefinitions,
-                               final Map<String, String> paramMap) {
-
-            final List<Field> fields = alertDefinitions.stream().map(a -> a.getTableSettings().getFields())
-                    .reduce(new ArrayList<>(), (a, b) -> {
-                        a.addAll(b);
-                        return a;
-                    });
-
-            CompiledFields.create(fields, fieldIndexMap, paramMap);
-        }
-
-        @Override
-        public void add(final Val[] values) {
-        }
-
-        @Override
-        public FieldIndex getFieldIndex() {
-            return fieldIndexMap;
         }
     }
 }

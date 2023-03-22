@@ -108,8 +108,12 @@ public class TabManager {
         }
     }
 
-    private void closeTab(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
-        dashboardPresenter.requestTabClose(tabLayoutConfig, tabConfig);
+    private void duplicateTab(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
+        dashboardPresenter.duplicateTab(tabLayoutConfig, tabConfig);
+    }
+
+    private void duplicateTabPanel(final TabLayoutConfig tabLayoutConfig) {
+        dashboardPresenter.duplicateTabPanel(tabLayoutConfig);
     }
 
     private void showTab(final TabConfig tabConfig) {
@@ -130,6 +134,10 @@ public class TabManager {
         }
     }
 
+    private void removeTab(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
+        dashboardPresenter.requestTabClose(tabLayoutConfig, tabConfig);
+    }
+
     private List<Item> updateMenuItems(final TabLayoutConfig tabLayoutConfig,
                                        final TabConfig tabConfig,
                                        final ComponentConfig componentConfig,
@@ -141,6 +149,10 @@ public class TabManager {
 
         // Create settings menu.
         menuItems.add(createSettingsMenu(tabConfig));
+
+        // Create duplicate menus.
+        menuItems.add(createDuplicateMenu(tabLayoutConfig, tabConfig));
+        menuItems.add(createDuplicateTabPanelMenu(tabLayoutConfig));
 
         // Create hide menu.
         menuItems.add(createHideMenu(tabLayoutConfig, tabConfig));
@@ -176,9 +188,27 @@ public class TabManager {
                 .build();
     }
 
-    private Item createHideMenu(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
+    private Item createDuplicateMenu(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
         return new IconMenuItem.Builder()
                 .priority(6)
+                .icon(SvgPresets.COPY)
+                .text("Duplicate")
+                .command(() -> duplicateTab(tabLayoutConfig, tabConfig))
+                .build();
+    }
+
+    private Item createDuplicateTabPanelMenu(final TabLayoutConfig tabLayoutConfig) {
+        return new IconMenuItem.Builder()
+                .priority(7)
+                .icon(SvgPresets.COPY)
+                .text("Duplicate Panel")
+                .command(() -> duplicateTabPanel(tabLayoutConfig))
+                .build();
+    }
+
+    private Item createHideMenu(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
+        return new IconMenuItem.Builder()
+                .priority(8)
                 .icon(SvgPresets.HIDE)
                 .text("Hide")
                 .command(() -> hideTab(tabLayoutConfig, tabConfig))
@@ -209,7 +239,7 @@ public class TabManager {
         }
 
         return new IconParentMenuItem.Builder()
-                .priority(7)
+                .priority(9)
                 .icon(SvgPresets.SHOW)
                 .text("Show")
                 .children(menuItems)
@@ -218,10 +248,10 @@ public class TabManager {
 
     private Item createRemoveMenu(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
         return new IconMenuItem.Builder()
-                .priority(8)
+                .priority(10)
                 .icon(SvgPresets.DELETE)
-                .text("Close")
-                .command(() -> closeTab(tabLayoutConfig, tabConfig))
+                .text("Remove")
+                .command(() -> removeTab(tabLayoutConfig, tabConfig))
                 .build();
     }
 }

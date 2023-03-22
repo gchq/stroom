@@ -29,12 +29,23 @@ import com.google.inject.Guice;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestMetaFeedDaoImpl {
+
+    private static final String BANANA = "BANANA";
+    private static final String MANGO = "MANGO";
+    private static final String CUSTARD_APPLE = "CUSTARD_APPLE";
+    private static final String KUMQUAT = "KUMQUAT";
+
+    private Map<String, Integer> testFeedToIdMap = new HashMap<>();
 
     @Inject
     private Cleanup cleanup;
@@ -44,17 +55,17 @@ class TestMetaFeedDaoImpl {
     @BeforeEach
     void setup() {
         Guice.createInjector(
-                new MetaTestModule(),
-                new MetaDbModule(),
-                new MetaDaoModule(),
-                new MockClusterLockModule(),
-                new MockSecurityContextModule(),
-                new MockTaskModule(),
-                new MockCollectionModule(),
-                new MockDocRefInfoModule(),
-                new MockWordListProviderModule(),
-                new CacheModule(),
-                new DbTestModule())
+                        new MetaTestModule(),
+                        new MetaDbModule(),
+                        new MetaDaoModule(),
+                        new MockClusterLockModule(),
+                        new MockSecurityContextModule(),
+                        new MockTaskModule(),
+                        new MockCollectionModule(),
+                        new MockDocRefInfoModule(),
+                        new MockWordListProviderModule(),
+                        new CacheModule(),
+                        new DbTestModule())
                 .injectMembers(this);
         // Delete everything
         cleanup.cleanup();
@@ -88,5 +99,104 @@ class TestMetaFeedDaoImpl {
 
         id2 = Optional.ofNullable(feedDao.getOrCreate(feedName));
         assertThat(id1).isEqualTo(id2);
+    }
+
+    @Test
+    void testGet() {
+        String feedName = "FOO";
+        Optional<Integer> optId = feedDao.get(feedName);
+
+        assertThat(optId)
+                .isEmpty();
+
+        Integer id = feedDao.getOrCreate(feedName);
+
+        assertThat(id)
+                .isNotNull();
+
+        optId = feedDao.get(feedName);
+
+        assertThat(optId)
+                .hasValue(id);
+    }
+
+    @Test
+    void testFind_empty() {
+
+        setupFruitFeeds();
+
+        // No conditions so returns everything
+        final Map<String, Integer> feedToIdsMap = feedDao.find(Collections.emptyList());
+
+        assertThat(feedToIdsMap)
+                .hasSize(0);
+    }
+
+    @Test
+    void testFind_single() {
+        setupFruitFeeds();
+
+        final Map<String, Integer> feedToIdsMap = feedDao.find(List.of(BANANA));
+        assertThat(feedToIdsMap)
+                .hasSize(1)
+                .containsEntry(BANANA, testFeedToIdMap.get(BANANA));
+    }
+
+    @Test
+    void testFind_single_wildCarded() {
+        setupFruitFeeds();
+
+        final Map<String, Integer> feedToIdsMap = feedDao.find(List.of("BANA*"));
+        assertThat(feedToIdsMap)
+                .hasSize(1)
+                .containsEntry(BANANA, testFeedToIdMap.get(BANANA));
+    }
+
+    @Test
+    void testFind_multiple() {
+        setupFruitFeeds();
+
+        final Map<String, Integer> feedToIdsMap = feedDao.find(List.of(
+                        BANANA,
+                        MANGO,
+                        CUSTARD_APPLE));
+
+        assertThat(feedToIdsMap)
+                .hasSize(3)
+                .containsEntry(BANANA, testFeedToIdMap.get(BANANA))
+                .containsEntry(MANGO, testFeedToIdMap.get(MANGO))
+                .containsEntry(CUSTARD_APPLE, testFeedToIdMap.get(CUSTARD_APPLE));
+    }
+
+    @Test
+    void testFind_multiple_wildCarded() {
+        setupFruitFeeds();
+
+        final Map<String, Integer> feedToIdsMap = feedDao.find(List.of(
+                "BANA*",
+                "*GO",
+                "*TARD_APP*"));
+
+        assertThat(feedToIdsMap)
+                .hasSize(3)
+                .containsEntry(BANANA, testFeedToIdMap.get(BANANA))
+                .containsEntry(MANGO, testFeedToIdMap.get(MANGO))
+                .containsEntry(CUSTARD_APPLE, testFeedToIdMap.get(CUSTARD_APPLE));
+    }
+
+    private void setupFruitFeeds() {
+        testFeedToIdMap.clear();
+        List.of(
+                        BANANA,
+                        CUSTARD_APPLE,
+                        KUMQUAT,
+                        MANGO)
+                .forEach(feed -> {
+                    feedDao.getOrCreate(feed);
+                    final Optional<Integer> optId = feedDao.get(feed);
+                    assertThat(optId)
+                            .isPresent();
+                    testFeedToIdMap.put(feed, optId.orElseThrow());
+                });
     }
 }

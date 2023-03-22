@@ -12,7 +12,7 @@
         <form:FormGroup identity="viewSettingsPipeline" label="Pipeline">
             <g:SimplePanel ui:field="pipeline" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="viewSettingsFilterExpression" label="Filter" addStyleNames="dock-max">
+        <form:FormGroup identity="viewSettingsFilterExpression" label="Meta Filter" addStyleNames="dock-max">
             <g:SimplePanel ui:field="expression" styleName="max default-min-sizes"/>
         </form:FormGroup>
     </g:FlowPanel>

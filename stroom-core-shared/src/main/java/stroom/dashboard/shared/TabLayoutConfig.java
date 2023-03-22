@@ -178,4 +178,37 @@ public class TabLayoutConfig extends LayoutConfig {
     public void setSelected(final Integer selected) {
         this.selected = selected;
     }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private Size preferredSize;
+        private List<TabConfig> tabs;
+        private Integer selected;
+
+        private Builder() {
+        }
+
+        public Builder preferredSize(final Size preferredSize) {
+            this.preferredSize = preferredSize;
+            return this;
+        }
+
+        public Builder tabs(final List<TabConfig> tabs) {
+            this.tabs = tabs;
+            return this;
+        }
+
+        public Builder selected(final Integer selected) {
+            this.selected = selected;
+            return this;
+        }
+
+        public TabLayoutConfig build() {
+            return new TabLayoutConfig(preferredSize, tabs, selected);
+        }
+    }
 }

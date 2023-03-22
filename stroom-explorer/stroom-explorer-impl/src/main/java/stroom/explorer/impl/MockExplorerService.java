@@ -20,10 +20,13 @@ package stroom.explorer.impl;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.ExplorerDocContentMatch;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
+import stroom.explorer.shared.FindExplorerNodeQuery;
 import stroom.explorer.shared.PermissionInheritance;
+import stroom.util.shared.ResultPage;
 
 import java.util.List;
 
@@ -36,9 +39,9 @@ class MockExplorerService implements ExplorerService {
 
     @Override
     public ExplorerNode create(final String docType,
-                         final String docName,
-                         final ExplorerNode destinationFolder,
-                         final PermissionInheritance permissionInheritance) {
+                               final String docName,
+                               final ExplorerNode destinationFolder,
+                               final PermissionInheritance permissionInheritance) {
         return null;
     }
 
@@ -81,6 +84,11 @@ class MockExplorerService implements ExplorerService {
 
     @Override
     public List<DocumentType> getVisibleTypes() {
+        return null;
+    }
+
+    @Override
+    public ResultPage<ExplorerDocContentMatch> findContent(final FindExplorerNodeQuery request) {
         return null;
     }
 }

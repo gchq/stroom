@@ -89,8 +89,7 @@
         "width" : 200,
         "visible" : true,
         "special" : false
-      } ],
-      "showDetail" : true
+      } ]
     } ],
     "resultStyle" : "TABLE",
     "fetch" : "ALL"
@@ -196,8 +195,7 @@
         "width" : 200,
         "visible" : true,
         "special" : false
-      } ],
-      "showDetail" : true
+      } ]
     } ],
     "resultStyle" : "TABLE",
     "fetch" : "ALL"
@@ -311,8 +309,7 @@
         "width" : 200,
         "visible" : true,
         "special" : false
-      } ],
-      "showDetail" : true
+      } ]
     } ],
     "resultStyle" : "TABLE",
     "fetch" : "ALL"

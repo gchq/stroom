@@ -2,6 +2,7 @@ package stroom.index;
 
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.dashboard.expression.v1.Values;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
@@ -193,7 +194,7 @@ public class TestIndexShardSearcher extends AbstractCoreIntegrationTest {
                 new String[]{"test"},
                 new LongAdder(),
                 indexShardSearcher,
-                values -> LOGGER.debug(Arrays.toString(values)));
+                values -> LOGGER.debug(values.toString()));
         indexShardSearcher.destroy();
     }
 
@@ -321,7 +322,7 @@ public class TestIndexShardSearcher extends AbstractCoreIntegrationTest {
                 }
             }
 
-            valuesConsumer.add(values);
+            valuesConsumer.add(Values.of(values));
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
             throw new UncheckedIOException(e);

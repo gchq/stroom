@@ -2,9 +2,12 @@ package stroom.docstore.api;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docref.HasFindDocsByContent;
+import stroom.docref.HasFindDocsByName;
 import stroom.docstore.shared.Doc;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.Message;
 
 import java.util.Collections;
@@ -14,7 +17,8 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-public interface Store<D extends Doc> extends DocumentActionHandler<D> {
+public interface Store<D extends Doc>
+        extends DocumentActionHandler<D>, HasFindDocsByName, HasFindDocsByContent {
     ////////////////////////////////////////////////////////////////////////
     // START OF ExplorerActionHandler
     ////////////////////////////////////////////////////////////////////////
@@ -59,7 +63,7 @@ public interface Store<D extends Doc> extends DocumentActionHandler<D> {
 
     boolean exists(DocRef docRef);
 
-    Set<DocRef> listDocuments();
+//    Set<DocRef> listDocuments();
 
     DocRef importDocument(
             DocRef docRef,
@@ -76,25 +80,25 @@ public interface Store<D extends Doc> extends DocumentActionHandler<D> {
     /**
      * Find by exact case-sensitive match on the name
      */
-    default List<DocRef> findByName(String name) {
-        return name != null
-                ? findByNames(List.of(name), false)
-                : Collections.emptyList();
-    }
-
-    /**
-     * Find by case-sensitive match on the name.
-     * If allowWildCards is true '*' can be used to denote a 0-many char wild card.
-     */
-    default List<DocRef> findByName(final String name,
-                                    final boolean allowWildCards) {
-        return name != null
-                ? findByNames(List.of(name), allowWildCards)
-                : Collections.emptyList();
-    }
-
-    List<DocRef> findByNames(final List<String> name,
-                             final boolean allowWildCards);
+//    default List<DocRef> findByName(String name) {
+//        return name != null
+//                ? findByNames(List.of(name), false)
+//                : Collections.emptyList();
+//    }
+//
+//    /**
+//     * Find by case-sensitive match on the name.
+//     * If allowWildCards is true '*' can be used to denote a 0-many char wild card.
+//     */
+//    default List<DocRef> findByName(final String name,
+//                                    final boolean allowWildCards) {
+//        return name != null
+//                ? findByNames(List.of(name), allowWildCards)
+//                : Collections.emptyList();
+//    }
+//
+//    List<DocRef> findByNames(final List<String> name,
+//                             final boolean allowWildCards);
 
     interface DocumentCreator<D extends Doc> {
 

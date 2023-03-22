@@ -16,6 +16,7 @@
 
 package stroom.data.client.presenter;
 
+import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
@@ -114,11 +115,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
 
         // Set the width of the expander column so that all expanders
         // can be seen.
-        if (maxDepth >= 0) {
-            dataGrid.setColumnWidth(expanderColumn, 16 + (maxDepth * 10), Unit.PX);
-        } else {
-            dataGrid.setColumnWidth(expanderColumn, 0, Unit.PX);
-        }
+        dataGrid.setColumnWidth(expanderColumn, ExpanderCell.getColumnWidth(maxDepth), Unit.PX);
 
         return super.onProcessData(new ResultPage<>(newData, data.getPageResponse()));
     }

@@ -7,6 +7,8 @@ import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.dashboard.expression.v1.Values;
+import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.ExpressionMatcherFactory;
 import stroom.index.shared.IndexConstants;
@@ -15,7 +17,6 @@ import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.search.extraction.AnnotationsDecoratorFactory;
 import stroom.search.extraction.ExpressionFilter;
-import stroom.search.extraction.ExtractionReceiver;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -78,14 +79,15 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
     }
 
     @Override
-    public ExtractionReceiver create(final ExtractionReceiver receiver, final Query query) {
-        final FieldIndex fieldIndex = receiver.getFieldIndex();
+    public ValuesConsumer create(final ValuesConsumer valuesConsumer,
+                                 final FieldIndex fieldIndex,
+                                 final Query query) {
         final Integer annotationIdIndex = fieldIndex.getPos(AnnotationFields.ID);
         final Integer streamIdIndex = fieldIndex.getPos(IndexConstants.STREAM_ID);
         final Integer eventIdIndex = fieldIndex.getPos(IndexConstants.EVENT_ID);
 
         if (annotationIdIndex == null && (streamIdIndex == null || eventIdIndex == null)) {
-            return receiver;
+            return valuesConsumer;
         }
 
         // Do we need to filter based on annotation attributes?
@@ -95,63 +97,55 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
         usedFields.retainAll(AnnotationFields.FIELD_MAP.keySet());
 
         if (filter == null && usedFields.size() == 0) {
-            return receiver;
+            return valuesConsumer;
         }
 
         final Annotation defaultAnnotation = createDefaultAnnotation();
 
-        return new ExtractionReceiver() {
-            @Override
-            public FieldIndex getFieldIndex() {
-                return receiver.getFieldIndex();
+        return values -> {
+            // TODO : At present we are just going to do this synchronously but in future we may do asynchronously
+            //  in which case we would increment the completion count after providing values.
+
+            // Filter based on annotation.
+            final List<Annotation> annotations = new ArrayList<>();
+            if (annotationIdIndex != null) {
+                final Long annotationId = getLong(values, annotationIdIndex);
+                if (annotationId != null) {
+                    annotations.add(annotationDao.get(annotationId));
+                }
             }
 
-            @Override
-            public void add(final Val[] values) {
-                // TODO : At present we are just going to do this synchronously but in future we may do asynchronously
-                //  in which case we would increment the completion count after providing values.
-
-                // Filter based on annotation.
-                final List<Annotation> annotations = new ArrayList<>();
-                if (annotationIdIndex != null) {
-                    final Long annotationId = getLong(values, annotationIdIndex);
-                    if (annotationId != null) {
-                        annotations.add(annotationDao.get(annotationId));
-                    }
+            if (annotations.size() == 0) {
+                final Long streamId = getLong(values, streamIdIndex);
+                final Long eventId = getLong(values, eventIdIndex);
+                if (streamId != null && eventId != null) {
+                    final List<Annotation> list = annotationDao.getAnnotationsForEvents(streamId, eventId);
+                    annotations.addAll(list);
                 }
+            }
 
-                if (annotations.size() == 0) {
-                    final Long streamId = getLong(values, streamIdIndex);
-                    final Long eventId = getLong(values, eventIdIndex);
-                    if (streamId != null && eventId != null) {
-                        final List<Annotation> list = annotationDao.getAnnotationsForEvents(streamId, eventId);
-                        annotations.addAll(list);
-                    }
-                }
+            if (annotations.size() == 0) {
+                annotations.add(defaultAnnotation);
+            }
 
-                if (annotations.size() == 0) {
-                    annotations.add(defaultAnnotation);
-                }
-
-                Val[] copy = values;
-                for (final Annotation annotation : annotations) {
-                    try {
-                        if (filter == null || filter.apply(annotation)) {
-                            // If we have more than one annotation then copy the original values into a new
-                            // values object for each new row.
-                            if (annotations.size() > 1 || copy.length < fieldIndex.size()) {
-                                copy = Arrays.copyOf(values, fieldIndex.size());
-                            }
-
-                            for (final String field : usedFields) {
-                                setValue(copy, fieldIndex, field, annotation);
-                            }
-
-                            receiver.add(copy);
+            Val[] copy = values.toUnsafeArray();
+            for (final Annotation annotation : annotations) {
+                try {
+                    if (filter == null || filter.apply(annotation)) {
+                        // If we have more than one annotation then copy the original values into a new
+                        // values object for each new row.
+                        if (annotations.size() > 1 || copy.length < fieldIndex.size()) {
+                            copy = Arrays.copyOf(values.toUnsafeArray(), fieldIndex.size());
                         }
-                    } catch (final RuntimeException e) {
-                        LOGGER.debug(e::getMessage, e);
+
+                        for (final String field : usedFields) {
+                            setValue(copy, fieldIndex, field, annotation);
+                        }
+
+                        valuesConsumer.add(Values.of(copy));
                     }
+                } catch (final RuntimeException e) {
+                    LOGGER.debug(e::getMessage, e);
                 }
             }
         };
@@ -191,10 +185,10 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
         };
     }
 
-    private Long getLong(final Val[] values, final int index) {
+    private Long getLong(final Values values, final int index) {
         Long result = null;
-        if (values.length > index) {
-            Val val = values[index];
+        if (values.size() > index) {
+            Val val = values.get(index);
             if (val != null) {
                 result = val.toLong();
             }

@@ -18,15 +18,16 @@
 package stroom.alert.rule.client.presenter;
 
 import stroom.alert.rule.client.presenter.AlertRuleSettingsPresenter.AlertRuleSettingsView;
-import stroom.alert.rule.shared.AbstractAlertRule;
 import stroom.alert.rule.shared.AlertRuleDoc;
 import stroom.alert.rule.shared.AlertRuleType;
 import stroom.alert.rule.shared.QueryLanguageVersion;
-import stroom.alert.rule.shared.ThresholdAlertRule;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
+import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.feed.shared.FeedDoc;
+import stroom.security.shared.DocumentPermissionNames;
 
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -35,6 +36,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
+import java.util.Objects;
 import javax.inject.Provider;
 
 public class AlertRuleSettingsPresenter
@@ -42,67 +44,66 @@ public class AlertRuleSettingsPresenter
         implements DirtyUiHandlers {
 
     private final EditorPresenter codePresenter;
-    private boolean readOnly = true;
+    private final EntityDropDownPresenter feedPresenter;
+
+    private DocRef currentFeed;
 
     @Inject
     public AlertRuleSettingsPresenter(final EventBus eventBus,
                                       final AlertRuleSettingsView view,
-                                      final Provider<EditorPresenter> editorPresenterProvider) {
+                                      final Provider<EditorPresenter> editorPresenterProvider,
+                                      final EntityDropDownPresenter feedPresenter) {
         super(eventBus, view);
-
+        this.feedPresenter = feedPresenter;
         codePresenter = editorPresenterProvider.get();
         codePresenter.setMode(AceEditorMode.STROOM_QUERY);
         registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
         registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
 //            codePresenter.setReadOnly(readOnly);
-        codePresenter.getFormatAction().setAvailable(!readOnly);
+//        codePresenter.getFormatAction().setAvailable(!readOnly);
         if (getEntity() != null && getEntity().getQuery() != null) {
             codePresenter.setText(getEntity().getQuery());
         }
 
         view.setUiHandlers(this);
         view.setQueryWidget(codePresenter.getWidget());
+
+        feedPresenter.setIncludedTypes(FeedDoc.DOCUMENT_TYPE);
+        feedPresenter.setRequiredPermissions(DocumentPermissionNames.READ);
+        view.setDestinationFeedView(feedPresenter.getView());
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
+        registerHandler(feedPresenter.addDataSelectionHandler(event -> {
+            if (!Objects.equals(feedPresenter.getSelectedEntityReference(), currentFeed)) {
+                setDirty(true);
+            }
+        }));
     }
 
     @Override
     protected void onRead(final DocRef docRef, final AlertRuleDoc alertRule) {
         getView().setDescription(alertRule.getDescription());
         getView().setLanguageVersion(alertRule.getLanguageVersion());
-        if (alertRule.getQuery() != null) {
-            codePresenter.setText(alertRule.getQuery());
-        }
-        getView().setEnabled(alertRule.isEnabled());
+        codePresenter.setText(alertRule.getQuery());
         getView().setAlertRuleType(alertRule.getAlertRuleType());
-
-        final AbstractAlertRule abstractAlertRule = alertRule.getAlertRule();
-        if (abstractAlertRule instanceof ThresholdAlertRule) {
-            final ThresholdAlertRule thresholdAlertRule = (ThresholdAlertRule) abstractAlertRule;
-            getView().setExecutionDelay(thresholdAlertRule.getExecutionDelay());
-            getView().setExecutionFrequency(thresholdAlertRule.getExecutionFrequency());
-            getView().setThresholdField(thresholdAlertRule.getThresholdField());
-            getView().setThreshold(thresholdAlertRule.getThreshold());
-        }
+        getView().setTimeField(alertRule.getTimeField());
+        currentFeed = alertRule.getDestinationFeed();
+        feedPresenter.setSelectedEntityReference(currentFeed);
     }
 
     @Override
     protected AlertRuleDoc onWrite(final AlertRuleDoc alertRule) {
-        AbstractAlertRule rule = null;
-        if (AlertRuleType.THRESHOLD.equals(getView().getAlertRuleType())) {
-            rule = ThresholdAlertRule.builder()
-                    .executionDelay(getView().getExecutionDelay())
-                    .executionFrequency(getView().getExecutionFrequency())
-                    .thresholdField(getView().getThresholdField())
-                    .threshold(getView().getThreshold())
-                    .build();
-        }
-
         return alertRule.copy()
                 .description(getView().getDescription())
                 .languageVersion(getView().getLanguageVersion())
                 .query(codePresenter.getText())
-                .enabled(getView().isEnabled())
                 .alertRuleType(getView().getAlertRuleType())
-                .alertRule(rule)
+                .timeField(getView().getTimeField())
+                .destinationFeed(feedPresenter.getSelectedEntityReference())
                 .build();
     }
 
@@ -128,28 +129,14 @@ public class AlertRuleSettingsPresenter
 
         void setQueryWidget(Widget widget);
 
-        boolean isEnabled();
-
-        void setEnabled(final boolean enabled);
-
         AlertRuleType getAlertRuleType();
 
         void setAlertRuleType(AlertRuleType alertRuleType);
 
-        String getExecutionDelay();
+        String getTimeField();
 
-        void setExecutionDelay(String executionDelay);
+        void setTimeField(String timeField);
 
-        String getExecutionFrequency();
-
-        void setExecutionFrequency(String executionFrequency);
-
-        String getThresholdField();
-
-        void setThresholdField(String thresholdField);
-
-        long getThreshold();
-
-        void setThreshold(long threshold);
+        void setDestinationFeedView(View view);
     }
 }

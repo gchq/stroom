@@ -582,6 +582,27 @@ public final class JooqUtil {
     }
 
     /**
+     * Combine multiple conditions in a null safe way
+     * @param conditions
+     * @return A non-null condition
+     */
+    public static Condition andConditions(final Condition... conditions) {
+        if (conditions == null || conditions.length == 0) {
+            return DSL.noCondition();
+        } else if (conditions.length == 1 && conditions[0] != null) {
+            return conditions[0];
+        } else {
+            Condition condition = DSL.noCondition();
+            for (final Condition condition2 : conditions) {
+                if (condition2 != null) {
+                    condition = condition.and(condition2);
+                }
+            }
+            return condition;
+        }
+    }
+
+    /**
      * Used to build jOOQ conditions from criteria sets
      *
      * @param field    The jOOQ field being set queried

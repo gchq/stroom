@@ -77,8 +77,8 @@ public interface ReferenceDataResource extends RestResource {
             summary = "Explicitly delete all entries that are older than purgeAge. Performed on the named node, " +
                     "or all nodes if null.",
             operationId = "purgeReferenceDataByAge")
-    boolean purge(@NotNull @PathParam("purgeAge") final String purgeAge,
-                  @Nullable @QueryParam(QUERY_PARAM_NODE_NAME) final String nodeName);
+    boolean purgeByAge(@NotNull @PathParam("purgeAge") final String purgeAge,
+                       @Nullable @QueryParam(QUERY_PARAM_NODE_NAME) final String nodeName);
 
     @DELETE
     @Path(PURGE_BY_STREAM_SUB_PATH + "/{refStreamId}")
@@ -86,8 +86,8 @@ public interface ReferenceDataResource extends RestResource {
             summary = "Delete all entries for a reference stream. " +
                     "Performed on the named node or all nodes if null.",
             operationId = "purgeReferenceDataByStream")
-    boolean purge(@Min(1) @PathParam("refStreamId") final long refStreamId,
-                  @Nullable @QueryParam(QUERY_PARAM_NODE_NAME) final String nodeName);
+    boolean purgeByStreamId(@Min(1) @PathParam("refStreamId") final long refStreamId,
+                            @Nullable @QueryParam(QUERY_PARAM_NODE_NAME) final String nodeName);
 
     @DELETE
     @Path(CLEAR_BUFFER_POOL_PATH)

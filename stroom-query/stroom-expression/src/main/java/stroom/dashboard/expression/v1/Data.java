@@ -118,7 +118,7 @@ class Data extends AbstractLink {
         }
 
         @Override
-        public void set(final Val[] values) {
+        public void set(final Values values) {
             for (final Generator generator : childGenerators) {
                 generator.set(values);
             }

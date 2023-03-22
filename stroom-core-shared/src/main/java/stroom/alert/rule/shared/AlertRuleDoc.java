@@ -16,9 +16,12 @@
 
 package stroom.alert.rule.shared;
 
+import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
+import stroom.query.api.v2.QueryKey;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -39,19 +42,22 @@ public class AlertRuleDoc extends Doc {
     @JsonProperty
     private final String query;
     @JsonProperty
-    private final boolean enabled;
-    @JsonProperty
     private final AlertRuleType alertRuleType;
     @JsonProperty
-    private final AbstractAlertRule alertRule;
+    private final String timeField;
+    @JsonProperty
+    private final DocRef destinationFeed;
+    @JsonProperty
+    private final AlertRuleProcessSettings processSettings;
 
     public AlertRuleDoc() {
         description = null;
         languageVersion = null;
         query = null;
-        enabled = false;
         alertRuleType = null;
-        alertRule = null;
+        timeField = null;
+        destinationFeed = null;
+        processSettings = null;
     }
 
     @JsonCreator
@@ -66,65 +72,52 @@ public class AlertRuleDoc extends Doc {
                         @JsonProperty("description") final String description,
                         @JsonProperty("languageVersion") final QueryLanguageVersion languageVersion,
                         @JsonProperty("query") final String query,
-                        @JsonProperty("enabled") final boolean enabled,
                         @JsonProperty("alertRuleType") AlertRuleType alertRuleType,
-                        @JsonProperty("alertRule") AbstractAlertRule alertRule) {
+                        @JsonProperty("timeField") final String timeField,
+                        @JsonProperty("destinationFeed") final DocRef destinationFeed,
+                        @JsonProperty("processSettings") AlertRuleProcessSettings processSettings) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.languageVersion = languageVersion;
         this.query = query;
-        this.enabled = enabled;
         this.alertRuleType = alertRuleType;
-        this.alertRule = alertRule;
+        this.timeField = timeField;
+        this.destinationFeed = destinationFeed;
+        this.processSettings = processSettings;
     }
 
     public String getDescription() {
         return description;
     }
 
-//    public void setDescription(final String description) {
-//        this.description = description;
-//    }
-
     public QueryLanguageVersion getLanguageVersion() {
         return languageVersion;
     }
-
-//    public void setLanguageVersion(final QueryLanguageVersion languageVersion) {
-//        this.languageVersion = languageVersion;
-//    }
 
     public String getQuery() {
         return query;
     }
 
-//    public void setQuery(final String query) {
-//        this.query = query;
-//    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-//    public void setEnabled(final boolean enabled) {
-//        this.enabled = enabled;
-//    }
-
     public AlertRuleType getAlertRuleType() {
         return alertRuleType;
     }
 
-//    public void setAlertRuleType(final AlertRuleType alertRuleType) {
-//        this.alertRuleType = alertRuleType;
-//    }
-
-    public AbstractAlertRule getAlertRule() {
-        return alertRule;
+    public String getTimeField() {
+        return timeField;
     }
 
-//    public void setAlertRule(final AbstractAlertRule alertRule) {
-//        this.alertRule = alertRule;
-//    }
+    public DocRef getDestinationFeed() {
+        return destinationFeed;
+    }
+
+    public AlertRuleProcessSettings getProcessSettings() {
+        return processSettings;
+    }
+
+    @JsonIgnore
+    public QueryKey getQueryKey() {
+        return new QueryKey(getUuid() + " - " + getName());
+    }
 
     @Override
     public boolean equals(final Object o) {
@@ -138,14 +131,36 @@ public class AlertRuleDoc extends Doc {
             return false;
         }
         final AlertRuleDoc that = (AlertRuleDoc) o;
-        return enabled == that.enabled && Objects.equals(description,
+        return Objects.equals(description,
                 that.description) && languageVersion == that.languageVersion && Objects.equals(query,
-                that.query) && alertRuleType == that.alertRuleType && Objects.equals(alertRule, that.alertRule);
+                that.query) && alertRuleType == that.alertRuleType && Objects.equals(timeField,
+                that.timeField) && Objects.equals(destinationFeed,
+                that.destinationFeed) && Objects.equals(processSettings, that.processSettings);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), description, languageVersion, query, enabled, alertRuleType, alertRule);
+        return Objects.hash(super.hashCode(),
+                description,
+                languageVersion,
+                query,
+                alertRuleType,
+                timeField,
+                destinationFeed,
+                processSettings);
+    }
+
+    @Override
+    public String toString() {
+        return "AlertRuleDoc{" +
+                "description='" + description + '\'' +
+                ", languageVersion=" + languageVersion +
+                ", query='" + query + '\'' +
+                ", alertRuleType=" + alertRuleType +
+                ", timeField='" + timeField + '\'' +
+                ", destinationFeed=" + destinationFeed +
+                ", processSettings=" + processSettings +
+                '}';
     }
 
     public static Builder builder() {
@@ -161,9 +176,10 @@ public class AlertRuleDoc extends Doc {
         private String description;
         private QueryLanguageVersion languageVersion;
         private String query;
-        private boolean enabled;
         private AlertRuleType alertRuleType;
-        private AbstractAlertRule alertRule;
+        private String timeField;
+        private DocRef destinationFeed;
+        private AlertRuleProcessSettings processSettings;
 
         public Builder() {
         }
@@ -173,9 +189,10 @@ public class AlertRuleDoc extends Doc {
             this.description = doc.description;
             this.languageVersion = doc.languageVersion;
             this.query = doc.query;
-            this.enabled = doc.enabled;
             this.alertRuleType = doc.alertRuleType;
-            this.alertRule = doc.alertRule;
+            this.timeField = doc.timeField;
+            this.destinationFeed = doc.destinationFeed;
+            this.processSettings = doc.processSettings;
         }
 
         public Builder description(final String description) {
@@ -193,18 +210,23 @@ public class AlertRuleDoc extends Doc {
             return self();
         }
 
-        public Builder enabled(final boolean enabled) {
-            this.enabled = enabled;
-            return self();
-        }
-
         public Builder alertRuleType(final AlertRuleType alertRuleType) {
             this.alertRuleType = alertRuleType;
             return self();
         }
 
-        public Builder alertRule(final AbstractAlertRule alertRule) {
-            this.alertRule = alertRule;
+        public Builder timeField(final String timeField) {
+            this.timeField = timeField;
+            return self();
+        }
+
+        public Builder destinationFeed(final DocRef destinationFeed) {
+            this.destinationFeed = destinationFeed;
+            return self();
+        }
+
+        public Builder processSettings(final AlertRuleProcessSettings processSettings) {
+            this.processSettings = processSettings;
             return self();
         }
 
@@ -227,9 +249,10 @@ public class AlertRuleDoc extends Doc {
                     description,
                     languageVersion,
                     query,
-                    enabled,
                     alertRuleType,
-                    alertRule);
+                    timeField,
+                    destinationFeed,
+                    processSettings);
         }
     }
 }

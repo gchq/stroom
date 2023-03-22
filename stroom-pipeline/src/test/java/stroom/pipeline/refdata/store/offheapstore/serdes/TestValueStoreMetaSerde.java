@@ -22,12 +22,20 @@ import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreMeta;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 class TestValueStoreMetaSerde extends AbstractSerdeTest<ValueStoreMeta, ValueStoreMetaSerde> {
+
+    @Test
+    void testInitialRefCount() {
+        final ValueStoreMeta valueStoreMeta = new ValueStoreMeta(FastInfosetValue.TYPE_ID);
+        assertThat(valueStoreMeta.getReferenceCount())
+                .isEqualTo(1);
+    }
 
     @Test
     void testSerializeDeserialize() {
@@ -53,35 +61,66 @@ class TestValueStoreMetaSerde extends AbstractSerdeTest<ValueStoreMeta, ValueSto
     @Test
     void testIncrementRefCount() {
         final ValueStoreMeta valueStoreMeta = new ValueStoreMeta(StringValue.TYPE_ID, 123);
-        final ByteBuffer byteBuffer = ByteBuffer.allocate(20);
+        final ByteBuffer byteBuffer1 = ByteBuffer.allocate(20);
 
-        getSerde().serialize(byteBuffer, valueStoreMeta);
+        assertThat(valueStoreMeta.getReferenceCount())
+                .isEqualTo(123);
 
-        final ByteBuffer newBuffer = ByteBuffer.allocate(20);
+        getSerde().serialize(byteBuffer1, valueStoreMeta);
 
-        getSerde().cloneAndIncrementRefCount(byteBuffer, newBuffer);
 
-        final ValueStoreMeta valueStoreMeta2 = getSerde().deserialize(newBuffer);
+        final ByteBuffer byteBuffer2 = ByteBuffer.allocate(20);
 
-        Assertions.assertThat(valueStoreMeta2.getReferenceCount())
+        getSerde().cloneAndIncrementRefCount(byteBuffer1, byteBuffer2);
+
+        final ValueStoreMeta valueStoreMeta2 = getSerde().deserialize(byteBuffer2);
+
+        assertThat(valueStoreMeta2.getReferenceCount())
                 .isEqualTo(valueStoreMeta.getReferenceCount() + 1);
+
+
+        final ByteBuffer byteBuffer3 = ByteBuffer.allocate(20);
+
+        getSerde().cloneAndIncrementRefCount(byteBuffer2, byteBuffer3);
+
+        final ValueStoreMeta valueStoreMeta3 = getSerde().deserialize(byteBuffer3);
+
+        assertThat(valueStoreMeta3.getReferenceCount())
+                .isEqualTo(valueStoreMeta.getReferenceCount() + 2)
+                .isEqualTo(valueStoreMeta2.getReferenceCount() + 1);
+
     }
 
     @Test
     void testDecrementRefCount() {
         final ValueStoreMeta valueStoreMeta = new ValueStoreMeta(StringValue.TYPE_ID, 123);
-        final ByteBuffer byteBuffer = ByteBuffer.allocate(20);
+        final ByteBuffer byteBuffer1 = ByteBuffer.allocate(20);
 
-        getSerde().serialize(byteBuffer, valueStoreMeta);
+        assertThat(valueStoreMeta.getReferenceCount())
+                .isEqualTo(123);
 
-        final ByteBuffer newBuffer = ByteBuffer.allocate(20);
+        getSerde().serialize(byteBuffer1, valueStoreMeta);
 
-        getSerde().cloneAndDecrementRefCount(byteBuffer, newBuffer);
 
-        final ValueStoreMeta valueStoreMeta2 = getSerde().deserialize(newBuffer);
+        final ByteBuffer byteBuffer2 = ByteBuffer.allocate(20);
 
-        Assertions.assertThat(valueStoreMeta2.getReferenceCount())
+        getSerde().cloneAndDecrementRefCount(byteBuffer1, byteBuffer2);
+
+        final ValueStoreMeta valueStoreMeta2 = getSerde().deserialize(byteBuffer2);
+
+        assertThat(valueStoreMeta2.getReferenceCount())
                 .isEqualTo(valueStoreMeta.getReferenceCount() - 1);
+
+
+        final ByteBuffer byteBuffer3 = ByteBuffer.allocate(20);
+
+        getSerde().cloneAndDecrementRefCount(byteBuffer2, byteBuffer3);
+
+        final ValueStoreMeta valueStoreMeta3 = getSerde().deserialize(byteBuffer3);
+
+        assertThat(valueStoreMeta3.getReferenceCount())
+                .isEqualTo(valueStoreMeta.getReferenceCount() - 2)
+                .isEqualTo(valueStoreMeta2.getReferenceCount() - 1);
     }
 
     @Override

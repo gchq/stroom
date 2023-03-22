@@ -2910,6 +2910,36 @@
         "tags" : [ "Explorer (v2)" ]
       }
     },
+    "/explorer/v2/findExplorerNodes" : {
+      "post" : {
+        "operationId" : "findExplorerNodes",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FindExplorerNodeQuery"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageExplorerDocContentMatch"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find explorer nodes using a query",
+        "tags" : [ "Explorer (v2)" ]
+      }
+    },
     "/explorer/v2/getFromDocRef" : {
       "post" : {
         "operationId" : "getRootNodeRef",
@@ -9051,24 +9081,6 @@
   },
   "components" : {
     "schemas" : {
-      "AbstractAlertRule" : {
-        "type" : "object",
-        "discriminator" : {
-          "propertyName" : "type"
-        },
-        "properties" : {
-          "executionDelay" : {
-            "type" : "string"
-          },
-          "executionFrequency" : {
-            "type" : "string"
-          },
-          "type" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "type" ]
-      },
       "AbstractFetchDataResult" : {
         "type" : "object",
         "discriminator" : {
@@ -9348,12 +9360,9 @@
       "AlertRuleDoc" : {
         "type" : "object",
         "properties" : {
-          "alertRule" : {
-            "$ref" : "#/components/schemas/AbstractAlertRule"
-          },
           "alertRuleType" : {
             "type" : "string",
-            "enum" : [ "EVENT", "THRESHOLD" ]
+            "enum" : [ "EVENT", "AGGREGATE" ]
           },
           "createTimeMs" : {
             "type" : "integer",
@@ -9365,8 +9374,8 @@
           "description" : {
             "type" : "string"
           },
-          "enabled" : {
-            "type" : "boolean"
+          "destinationFeed" : {
+            "$ref" : "#/components/schemas/DocRef"
           },
           "languageVersion" : {
             "type" : "string",
@@ -9375,7 +9384,13 @@
           "name" : {
             "type" : "string"
           },
+          "processSettings" : {
+            "$ref" : "#/components/schemas/AlertRuleProcessSettings"
+          },
           "query" : {
+            "type" : "string"
+          },
+          "timeField" : {
             "type" : "string"
           },
           "type" : {
@@ -9393,6 +9408,28 @@
           },
           "version" : {
             "type" : "string"
+          }
+        }
+      },
+      "AlertRuleProcessSettings" : {
+        "type" : "object",
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "executionWindow" : {
+            "$ref" : "#/components/schemas/SimpleDuration"
+          },
+          "maxMetaCreateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "minMetaCreateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "timeToWaitForData" : {
+            "$ref" : "#/components/schemas/SimpleDuration"
           }
         }
       },
@@ -10351,6 +10388,9 @@
           "layoutConstraints" : {
             "$ref" : "#/components/schemas/LayoutConstraints"
           },
+          "modelVersion" : {
+            "type" : "string"
+          },
           "parameters" : {
             "type" : "string"
           },
@@ -10597,7 +10637,7 @@
           },
           "timeUnit" : {
             "type" : "string",
-            "enum" : [ "MINUTES", "HOURS", "DAYS", "WEEKS", "MONTHS", "YEARS" ]
+            "enum" : [ "NANOSECONDS", "MILLISECONDS", "SECONDS", "MINUTES", "HOURS", "DAYS", "WEEKS", "MONTHS", "YEARS" ]
           }
         },
         "xml" : {
@@ -10797,6 +10837,25 @@
             "type" : "string"
           },
           "version" : {
+            "type" : "string"
+          }
+        }
+      },
+      "DocContentMatch" : {
+        "type" : "object",
+        "properties" : {
+          "docRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "matchLength" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "matchOffset" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "sample" : {
             "type" : "string"
           }
         }
@@ -11275,6 +11334,23 @@
           },
           "leaf" : {
             "type" : "boolean"
+          }
+        }
+      },
+      "ExplorerDocContentMatch" : {
+        "type" : "object",
+        "properties" : {
+          "docContentMatch" : {
+            "$ref" : "#/components/schemas/DocContentMatch"
+          },
+          "iconClassName" : {
+            "type" : "string"
+          },
+          "isFavourite" : {
+            "type" : "boolean"
+          },
+          "path" : {
+            "type" : "string"
           }
         }
       },
@@ -11980,6 +12056,33 @@
           }
         }
       },
+      "FindExplorerNodeQuery" : {
+        "type" : "object",
+        "properties" : {
+          "matchCase" : {
+            "type" : "boolean"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "pattern" : {
+            "type" : "string"
+          },
+          "regex" : {
+            "type" : "boolean"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          }
+        }
+      },
       "FindFsVolumeCriteria" : {
         "type" : "object",
         "properties" : {
@@ -12532,6 +12635,25 @@
             }
           }
         }
+      },
+      "HoppingWindow" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Window"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "advanceSize" : {
+              "type" : "string"
+            },
+            "timeField" : {
+              "type" : "string"
+            },
+            "windowSize" : {
+              "type" : "string"
+            }
+          }
+        } ]
       },
       "IdField" : {
         "type" : "object",
@@ -14339,7 +14461,10 @@
       "PropertyPath" : {
         "type" : "object",
         "properties" : {
-          "parts" : {
+          "leafPart" : {
+            "type" : "string"
+          },
+          "parentParts" : {
             "type" : "array",
             "items" : {
               "type" : "string"
@@ -14920,6 +15045,21 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/Dependency"
+            }
+          }
+        }
+      },
+      "ResultPageExplorerDocContentMatch" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ExplorerDocContentMatch"
             }
           }
         }
@@ -15710,6 +15850,19 @@
           },
           "sourceLocation" : {
             "$ref" : "#/components/schemas/SourceLocation"
+          }
+        }
+      },
+      "SimpleDuration" : {
+        "type" : "object",
+        "properties" : {
+          "time" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "timeUnit" : {
+            "type" : "string",
+            "enum" : [ "NANOSECONDS", "MILLISECONDS", "SECONDS", "MINUTES", "HOURS", "DAYS", "WEEKS", "MONTHS", "YEARS" ]
           }
         }
       },
@@ -16591,6 +16744,9 @@
         "type" : "object",
         "description" : "An object to describe how the query results should be returned, including which fields should be included and what sorting, grouping, filtering, limiting, etc. should be applied",
         "properties" : {
+          "aggregateFilter" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
           "extractValues" : {
             "type" : "boolean"
           },
@@ -16620,6 +16776,12 @@
           "showDetail" : {
             "type" : "boolean",
             "description" : "When grouping is used a value of true indicates that the results will include the full detail of any results aggregated into a group as well as their aggregates. A value of false will only include the aggregated values for each group. Defaults to false."
+          },
+          "valueFilter" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "window" : {
+            "$ref" : "#/components/schemas/Window"
           }
         },
         "required" : [ "fields", "queryId" ]
@@ -16828,23 +16990,6 @@
             "type" : "string"
           }
         }
-      },
-      "ThresholdAlertRule" : {
-        "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/AbstractAlertRule"
-        }, {
-          "type" : "object",
-          "properties" : {
-            "threshold" : {
-              "type" : "integer",
-              "format" : "int64"
-            },
-            "thresholdField" : {
-              "type" : "string"
-            }
-          }
-        } ]
       },
       "TimeRange" : {
         "type" : "object",
@@ -17322,6 +17467,18 @@
             "type" : "string"
           }
         }
+      },
+      "Window" : {
+        "type" : "object",
+        "discriminator" : {
+          "propertyName" : "type"
+        },
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "type" ]
       },
       "XPathFilter" : {
         "type" : "object",

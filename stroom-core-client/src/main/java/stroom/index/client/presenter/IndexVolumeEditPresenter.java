@@ -166,7 +166,10 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
         getView().getState().setSelectedItem(volume.getState());
 
         if (volume.getBytesLimit() != null) {
-            getView().getByteLimit().setText(ModelStringUtil.formatIECByteSizeString(volume.getBytesLimit()));
+            getView().getByteLimit().setText(ModelStringUtil.formatIECByteSizeString(
+                    volume.getBytesLimit(),
+                    true,
+                    ModelStringUtil.DEFAULT_SIGNIFICANT_FIGURES));
         } else {
             getView().getByteLimit().setText("");
         }

@@ -41,17 +41,17 @@ public class AlertQueryHits {
     }
 
     public long[] getSortedQueryHitsForRule(final RuleConfig ruleConfig) {
-        Set<Long> hitSet = queryHitsMap.get(ruleConfig.getQueryId());
+        Set<Long> hitSet = queryHitsMap.get(ruleConfig.getUuid());
         return hitSet.stream().mapToLong(i -> i).toArray();
     }
 
     public synchronized void addQueryHitForRule(final RuleConfig rule, final Long eventId) {
-        addRuleForPipeline(rule.getPipeline(), rule);
-        final String queryId = rule.getQueryId();
-        if (!queryHitsMap.containsKey(queryId)) {
-            queryHitsMap.put(queryId, new HashSet<>());
+        addRuleForPipeline(rule.getExtractionPipeline(), rule);
+        final String ruleUuid = rule.getUuid();
+        if (!queryHitsMap.containsKey(ruleUuid)) {
+            queryHitsMap.put(ruleUuid, new HashSet<>());
         }
-        queryHitsMap.get(queryId).add(eventId);
+        queryHitsMap.get(ruleUuid).add(eventId);
     }
 
     public synchronized void clearHits() {

@@ -24,7 +24,7 @@ abstract class AbstractNoChildGenerator extends AbstractGenerator {
     }
 
     @Override
-    public void set(final Val[] values) {
+    public void set(final Values values) {
     }
 
     @Override

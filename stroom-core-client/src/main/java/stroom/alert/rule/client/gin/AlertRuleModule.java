@@ -18,8 +18,11 @@ package stroom.alert.rule.client.gin;
 
 import stroom.alert.rule.client.AlertRulePlugin;
 import stroom.alert.rule.client.presenter.AlertRulePresenter;
+import stroom.alert.rule.client.presenter.AlertRuleProcessingPresenter;
+import stroom.alert.rule.client.presenter.AlertRuleProcessingPresenter.AlertRuleProcessingView;
 import stroom.alert.rule.client.presenter.AlertRuleSettingsPresenter;
 import stroom.alert.rule.client.presenter.AlertRuleSettingsPresenter.AlertRuleSettingsView;
+import stroom.alert.rule.client.view.AlertRuleProcessingViewImpl;
 import stroom.alert.rule.client.view.AlertRuleSettingsViewImpl;
 import stroom.core.client.gin.PluginModule;
 
@@ -31,7 +34,11 @@ public class AlertRuleModule extends PluginModule {
 
         bind(AlertRulePresenter.class);
 
-        bindSharedView(AlertRuleSettingsView.class, AlertRuleSettingsViewImpl.class);
-        bind(AlertRuleSettingsPresenter.class);
+        bindPresenterWidget(AlertRuleSettingsPresenter.class,
+                AlertRuleSettingsView.class,
+                AlertRuleSettingsViewImpl.class);
+        bindPresenterWidget(AlertRuleProcessingPresenter.class,
+                AlertRuleProcessingView.class,
+                AlertRuleProcessingViewImpl.class);
     }
 }

@@ -5,6 +5,7 @@ import stroom.dashboard.expression.v1.ValInteger;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.dashboard.expression.v1.Values;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DateField;
@@ -880,7 +881,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                             }
                             arr[i] = val;
                         }
-                        consumer.add(arr);
+                        consumer.add(Values.of(arr));
                     });
                 }
             }

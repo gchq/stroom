@@ -52,6 +52,10 @@ public class FindMetaCriteria extends ExpressionCriteria implements Copyable<Fin
         this.fetchRelationships = fetchRelationships;
     }
 
+    public static FindMetaCriteria unlocked() {
+        return new FindMetaCriteria(MetaExpressionUtil.createStatusExpression(Status.UNLOCKED));
+    }
+
     public static FindMetaCriteria createFromId(final long id) {
         return new FindMetaCriteria(MetaExpressionUtil.createDataIdExpression(id, Status.UNLOCKED));
     }

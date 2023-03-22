@@ -169,10 +169,6 @@ public class Components implements HasHandlers, HasChangeDataHandlers<Components
         return componentRegistry.getTypes();
     }
 
-    public boolean idExists(final String id) {
-        return idMap.containsKey(id);
-    }
-
     public void clear() {
         idMap.clear();
         typeMap.clear();

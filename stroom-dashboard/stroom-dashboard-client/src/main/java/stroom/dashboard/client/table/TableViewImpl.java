@@ -18,6 +18,7 @@ package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.table.TablePresenter.TableView;
 import stroom.svg.client.SvgImages;
+import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.spinner.client.SpinnerSmall;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -35,7 +36,7 @@ public class TableViewImpl extends ViewWithUiHandlers<TableUiHandlers>
 
     private final Widget widget;
     private final SpinnerSmall spinnerSmall;
-    private final Button pause;
+    private final InlineSvgButton pause;
 
     @UiField
     FlowPanel layout;
@@ -48,9 +49,9 @@ public class TableViewImpl extends ViewWithUiHandlers<TableUiHandlers>
         spinnerSmall.setStyleName("dashboardTable-smallSpinner");
         spinnerSmall.setTitle("Pause Update");
 
-        pause = new Button();
-        pause.setStyleName("dashboardTable-pause svg-image-button");
-        pause.getElement().setInnerHTML(SvgImages.MONO_PAUSE);
+        pause = new InlineSvgButton();
+        pause.addStyleName("dashboardTable-pause");
+        pause.setSvg(SvgImages.MONO_PAUSE);
         pause.setTitle("Resume Update");
 
         layout.add(spinnerSmall);

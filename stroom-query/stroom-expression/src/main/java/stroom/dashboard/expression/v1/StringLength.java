@@ -83,7 +83,7 @@ class StringLength extends AbstractFunction {
         }
 
         @Override
-        public void set(final Val[] values) {
+        public void set(final Values values) {
             childGenerator.set(values);
         }
 

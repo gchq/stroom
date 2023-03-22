@@ -76,13 +76,13 @@ class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
                         final String type = "table";
                         final String id = type + "_" + System.currentTimeMillis();
 
-                        final ComponentConfig componentData = ComponentConfig.builder()
+                        final ComponentConfig componentConfig = ComponentConfig.builder()
                                 .type(type)
                                 .id(id)
                                 .name("table" + " " + i + ":" + j + ":" + k)
                                 .settings(visSettings)
                                 .build();
-                        components.add(componentData);
+                        components.add(componentConfig);
 
                         final TabConfig tabConfig = new TabConfig(id, true);
                         tablayout.add(tabConfig);

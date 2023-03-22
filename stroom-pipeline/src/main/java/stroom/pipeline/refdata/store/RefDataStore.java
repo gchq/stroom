@@ -117,7 +117,7 @@ public interface RefDataStore {
 
     long getKeyValueEntryCount();
 
-    long getKeyRangeValueEntryCount();
+    long getRangeValueEntryCount();
 
     long getProcessingInfoEntryCount();
 
