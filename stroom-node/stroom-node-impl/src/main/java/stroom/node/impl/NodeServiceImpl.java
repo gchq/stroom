@@ -88,7 +88,8 @@ public class NodeServiceImpl implements NodeService {
 
     Node update(final Node node) {
         if (!securityContext.hasAppPermission(PermissionNames.MANAGE_NODES_PERMISSION)) {
-            throw new PermissionException(securityContext.getUserIdentityForAudit(), "You are not authorised to update nodes");
+            throw new PermissionException(
+                    securityContext.getUserIdentityForAudit(), "You are not authorised to update nodes");
         }
         AuditUtil.stamp(securityContext, node);
         final Node updated = nodeDao.update(node);

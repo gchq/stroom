@@ -70,7 +70,9 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
 
     @Override
     public DocRefInfo info(final String uuid) {
-        throw new PermissionException(securityContext.getUserIdentityForAudit(), "You cannot get info about the System node");
+        throw new PermissionException(
+                securityContext.getUserIdentityForAudit(),
+                "You cannot get info about the System node");
     }
 
     @Override

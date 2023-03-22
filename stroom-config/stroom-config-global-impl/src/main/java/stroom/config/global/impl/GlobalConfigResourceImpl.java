@@ -268,14 +268,14 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     @Timed
     @Override
     public ExtendedUiConfig fetchUiConfig() {
-            final IdpType idpType = openIdConfigProvider.get().getIdentityProviderType();
-            final boolean isExternalIdp = idpType != null && idpType.isExternal();
+        final IdpType idpType = openIdConfigProvider.get().getIdentityProviderType();
+        final boolean isExternalIdp = idpType != null && idpType.isExternal();
 
-            // Add additional back-end config that is also need in the UI without having to expose
-            // the back-end config classes.
-            return new ExtendedUiConfig(
-                    uiConfig.get(),
-                    isExternalIdp);
+        // Add additional back-end config that is also need in the UI without having to expose
+        // the back-end config classes.
+        return new ExtendedUiConfig(
+                uiConfig.get(),
+                isExternalIdp);
     }
 
     private Query buildRawQuery(final String userInput) {

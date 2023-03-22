@@ -453,7 +453,8 @@ public class StoreImpl<D extends Doc> implements Store<D> {
             // Check that the user has permission to read this item.
             if (!canRead(docRef)) {
                 throw new PermissionException(
-                        securityContext.getUserIdentityForAudit(), "You are not authorised to read this document " + docRef);
+                        securityContext.getUserIdentityForAudit(),
+                        "You are not authorised to read this document " + docRef);
             } else {
                 D document = read(uuid);
                 if (document == null) {

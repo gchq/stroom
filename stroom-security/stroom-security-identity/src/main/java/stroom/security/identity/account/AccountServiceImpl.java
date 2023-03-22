@@ -201,7 +201,8 @@ public class AccountServiceImpl implements AccountService, UserNameProvider {
 
     private void checkPermission() {
         if (!securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
-            throw new PermissionException(securityContext.getUserIdentityForAudit(), "You do not have permission to manage users");
+            throw new PermissionException(
+                    securityContext.getUserIdentityForAudit(), "You do not have permission to manage users");
         }
     }
 }

@@ -54,7 +54,8 @@ public abstract class AbstractDocPool<K extends Doc, V>
     @Override
     public PoolItem<V> borrowObject(final K key, final boolean usePool) {
         if (!documentPermissionCache.canUseDocument(key.getUuid())) {
-            throw new PermissionException(securityContext.getUserIdentityForAudit(), "You do not have permission to use " + key);
+            throw new PermissionException(
+                    securityContext.getUserIdentityForAudit(), "You do not have permission to use " + key);
         }
 
         // Get the item from the pool.

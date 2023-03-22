@@ -138,7 +138,8 @@ public class UsersAndGroupsTabPresenter
 
         uiConfigCache.get()
                 .onSuccess(extendedUiConfig -> {
-                    final boolean updatePerm = securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION);
+                    final boolean updatePerm = securityContext.hasAppPermission(
+                            PermissionNames.MANAGE_USERS_PERMISSION);
 
                     if (updatePerm) {
                         addMultipleButton.setVisible(!isGroup
