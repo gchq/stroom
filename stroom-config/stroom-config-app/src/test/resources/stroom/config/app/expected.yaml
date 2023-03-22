@@ -631,6 +631,7 @@ appConfig:
         - "email"
         tokenEndpoint: null
         uniqueIdentityClaim: "sub"
+        userDisplayNameClaim: "preferred_username"
         validateAudience: true
       preventLogin: false
     authorisation:

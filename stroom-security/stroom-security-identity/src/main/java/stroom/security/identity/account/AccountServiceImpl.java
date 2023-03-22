@@ -3,6 +3,8 @@ package stroom.security.identity.account;
 import stroom.security.api.SecurityContext;
 import stroom.security.identity.authenticate.PasswordValidator;
 import stroom.security.identity.config.IdentityConfig;
+import stroom.security.openid.api.IdpType;
+import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.shared.FindUserNameCriteria;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserNameProvider;
@@ -12,45 +14,57 @@ import stroom.util.shared.UserName;
 
 import com.google.common.base.Strings;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class AccountServiceImpl implements AccountService, UserNameProvider {
 
     private final AccountDao accountDao;
     private final SecurityContext securityContext;
     private final IdentityConfig config;
+    private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
+
 
     @Inject
     AccountServiceImpl(final AccountDao accountDao,
                        final SecurityContext securityContext,
-                       final IdentityConfig config) {
+                       final IdentityConfig config,
+                       final Provider<OpenIdConfiguration> openIdConfigurationProvider) {
         this.accountDao = accountDao;
         this.securityContext = securityContext;
         this.config = config;
+        this.openIdConfigurationProvider = openIdConfigurationProvider;
     }
 
     @Override
     public ResultPage<UserName> findUserNames(final FindUserNameCriteria criteria) {
 
-        final SearchAccountRequest request = new SearchAccountRequest(
-                criteria.getPageRequest(),
-                criteria.getSortList(),
-                criteria.getQuickFilterInput());
+        // Only the internal IDP uses Accounts, so no point hitting it for other IDPs
+        if (IdpType.INTERNAL_IDP.equals(openIdConfigurationProvider.get().getIdentityProviderType())) {
+            final SearchAccountRequest request = new SearchAccountRequest(
+                    criteria.getPageRequest(),
+                    criteria.getSortList(),
+                    criteria.getQuickFilterInput());
 
-        final AccountResultPage result = search(request);
+            final AccountResultPage result = search(request);
 
-        final List<UserName> list = result.getValues()
-                .stream()
-                .map(account -> new UserName(
-                        account.getUserId(),
-                        account.getUserId(), // use user id for both name and displayName
-                        account.getFullName()))
-                .collect(Collectors.toList());
+            final List<UserName> list = result.getValues()
+                    .stream()
+                    .map(account -> new UserName(
+                            account.getUserId(),
+                            account.getUserId(), // use user id for both name and displayName
+                            account.getFullName()))
+                    .collect(Collectors.toList());
 
-        return new ResultPage<>(list, result.getPageResponse());
+            return new ResultPage<>(list, result.getPageResponse());
+        } else {
+            final List<UserName> list = Collections.emptyList();
+            return ResultPage.createUnboundedList(list);
+        }
     }
 
     @Override
