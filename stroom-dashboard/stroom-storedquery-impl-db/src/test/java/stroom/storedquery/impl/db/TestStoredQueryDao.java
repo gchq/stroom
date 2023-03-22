@@ -65,7 +65,8 @@ class TestStoredQueryDao {
 
     @BeforeEach
     void beforeEach() {
-        Mockito.when(securityContext.getUserId()).thenReturn("testuser");
+        Mockito.when(securityContext.getUserIdentityForAudit())
+                .thenReturn("testuser");
 
         // need an explicit teardown and setup of the DB before each test method
         final StoredQueryDbConnProvider storedQueryDbConnProvider = DbTestUtil.getTestDbDatasource(
