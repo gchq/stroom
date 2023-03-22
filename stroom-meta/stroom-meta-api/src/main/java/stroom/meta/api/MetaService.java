@@ -240,4 +240,21 @@ public interface MetaService {
                                          final int batchSize,
                                          final Set<Long> metaIdExcludeSet);
 
+    /**
+     * Gets a batch of {@link SimpleMeta} in ID order. Does not do any permission checking.
+     * @param minId Minimum meta ID, inclusive
+     * @param maxId Optional maximum meta ID, inclusive
+     * @param batchSize Number of {@link SimpleMeta}s to return
+     * @return
+     */
+    List<SimpleMeta> findBatch(final long minId,
+                               final Long maxId,
+                               final int batchSize);
+
+    /**
+     * Check if ids exist.
+     * @param ids A list of IDs to check the presence of
+     * @return The sub-set of ids that exist in the database
+     */
+    Set<Long> exists(final Set<Long> ids);
 }

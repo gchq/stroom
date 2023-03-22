@@ -19,14 +19,17 @@ package stroom.util.shared;
 import stroom.docref.HasDisplayValue;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.Arrays;
 import java.util.Comparator;
 
 public final class ModelStringUtil {
 
-    private static final int METRIC_DIV = 1000;
-    private static final int IEC_BYTE_DIV = 1024;
+    public static final int DEFAULT_SIGNIFICANT_FIGURES = 3;
+
+    private static final int METRIC_DIV = 1_000;
+    private static final int IEC_BYTE_DIV = 1_024;
 
     private static final Divider[] SIZE_DIVIDER = new Divider[]{
             new Divider(1, ""),
@@ -105,7 +108,8 @@ public final class ModelStringUtil {
     /**
      * Return nice string like "25 B", "4 kB", "45 MB", etc.
      */
-    public static String formatMetricByteSizeString(final Long streamSize, final boolean stripTrailingZeros) {
+    public static String formatMetricByteSizeString(final Long streamSize,
+                                                    final boolean stripTrailingZeros) {
         if (streamSize == null) {
             return "";
         }
@@ -117,6 +121,34 @@ public final class ModelStringUtil {
      */
     public static String formatIECByteSizeString(final Long streamSize) {
         return formatIECByteSizeString(streamSize, false);
+    }
+
+    /**
+     * Return nice string like "25 B", "4 K", "45 M", etc.
+     */
+    public static String formatIECByteSizeString(final Long streamSize,
+                                                 final boolean stripTrailingZeros) {
+        if (streamSize == null) {
+            return "";
+        }
+        return formatNumberString(streamSize, IEC_BYTE_SIZE_DIVIDER, stripTrailingZeros);
+    }
+
+    /**
+     * Return nice string like "25 B", "4 K", "45 M", rounded to the desired significantFigures.
+     *
+     * @param significantFigures The number of significant digits required, however if the number of
+     *                           integer digits is greater that will be used. This is to ensure we always
+     *                           show full precision for the integer part, e.g. output '1023B' when
+     *                           significantFigures is 3.
+     */
+    public static String formatIECByteSizeString(final Long streamSize,
+                                                 final boolean stripTrailingZeros,
+                                                 final int significantFigures) {
+        if (streamSize == null) {
+            return "";
+        }
+        return formatNumberString(streamSize, IEC_BYTE_SIZE_DIVIDER, stripTrailingZeros, significantFigures);
     }
 
     /**
@@ -139,16 +171,6 @@ public final class ModelStringUtil {
     }
 
     /**
-     * Return nice string like "25 B", "4 K", "45 M", etc.
-     */
-    public static String formatIECByteSizeString(final Long streamSize, final boolean stripTrailingZeros) {
-        if (streamSize == null) {
-            return "";
-        }
-        return formatNumberString(streamSize, IEC_BYTE_SIZE_DIVIDER, stripTrailingZeros);
-    }
-
-    /**
      * Formats a duration in millis to human-readable form, e.g. 999ms, 1.0s, 10m, 20h
      */
     public static String formatDurationString(final Long ms) {
@@ -157,6 +179,7 @@ public final class ModelStringUtil {
 
     /**
      * Formats a duration in millis to human-readable form, e.g. 999ms, 1.0s, 10m, 20h
+     *
      * @param stripTrailingZeros If true, any trailing zeros in the decimal part are ommitted.
      */
     public static String formatDurationString(final Long ms, final boolean stripTrailingZeros) {
@@ -170,6 +193,13 @@ public final class ModelStringUtil {
     private static String formatNumberString(final double number,
                                              final Divider[] dividers,
                                              final boolean stripTrailingZeros) {
+        return formatNumberString(number, dividers, stripTrailingZeros, null);
+    }
+
+    private static String formatNumberString(final double number,
+                                             final Divider[] dividers,
+                                             final boolean stripTrailingZeros,
+                                             final Integer significantFigures) {
         double nextNumber = number;
         Divider lastDivider = dividers[0];
 
@@ -186,12 +216,29 @@ public final class ModelStringUtil {
         final String suffix;
         if (lastDivider != null) {
             // Show the first dec place if the number is smaller than 10
-            final int scale = nextNumber < 10
-                    ? 1
-                    : 0;
+            if (significantFigures == null) {
+                final int scale = nextNumber < 10
+                        ? 1
+                        : 0;
+                bigDecimal = bigDecimal.setScale(scale, RoundingMode.HALF_UP);
+            } else {
+                if (significantFigures <= 0) {
+                    throw new IllegalArgumentException("significantFigures should be > 0.");
+                }
+                // Because we are always dealing in numbers between 0 and 1024 we need to add
+                // the additional sig fig if we go over 1000, so we don't lost the last digit,
+                // but for fractional stuff, 3 sig fig is fine.
+                final long valAsLong = bigDecimal.longValue();
+                final int precision;
+                if (significantFigures >= 4) {
+                    precision = significantFigures;
+                } else {
+                    final int integerDigitCount = Long.toString(valAsLong).length();
+                    precision = Math.max(significantFigures, integerDigitCount);
+                }
+                bigDecimal = bigDecimal.round(new MathContext(precision, RoundingMode.HALF_UP));
+            }
 
-            bigDecimal = bigDecimal
-                    .setScale(scale, RoundingMode.HALF_UP);
             suffix = lastDivider.unit[0];
         } else {
             // No dividers so leave do nothing to the bigDecimal
@@ -209,6 +256,7 @@ public final class ModelStringUtil {
      * e.g. '1.1k' => 1100, '1M' => 1_000_000. The case of the unit prefixes is ignored.
      * Valid unit prefixes are 'k', 'M', 'G', 'T', 'P'.
      * If there is no unit prefix then the number is converted from the string as is.
+     *
      * @return The number or null for a null/empty input.
      * @throws NumberFormatException If it can't be parsed.
      */
@@ -228,6 +276,7 @@ public final class ModelStringUtil {
      * <pre>{@code "P" "PB"}</pre>
      * If there is no unit prefix then the number is assumed to be in bytes and is
      * converted from the string as is.
+     *
      * @return The number or null for a null/empty input.
      * @throws NumberFormatException If it can't be parsed.
      */
@@ -247,6 +296,7 @@ public final class ModelStringUtil {
      * <pre>{@code "P" "PB"}</pre>
      * If there is no unit prefix then the number is assumed to be in bytes and is
      * converted from the string as is.
+     *
      * @return The number or null for a null/empty input.
      * @throws NumberFormatException If it can't be parsed.
      */
@@ -266,6 +316,7 @@ public final class ModelStringUtil {
      * <pre>{@code "d"}</pre>
      * If there is no unit prefix then the number is assumed to be in millis and is
      * converted from the string as is.
+     *
      * @return The number or null for a null/empty input.
      * @throws NumberFormatException If it can't be parsed.
      */
@@ -278,9 +329,10 @@ public final class ModelStringUtil {
      * e.g. '1.1k' => 1100, '1M' => 1_000_000. The case of the unit prefixes is ignored.
      * Valid unit prefixes are 'k', 'M', 'G', 'T', 'P'.
      * If there is no unit prefix then the number is converted from the string as is.
+     *
      * @return The number or null for a null/empty input.
      * @throws NumberFormatException If it can't be parsed or the number is too large
-     * for an {@link Integer}
+     *                               for an {@link Integer}
      */
     public static Integer parseNumberStringAsInt(final String str) throws NumberFormatException {
         final Long num = parseNumberString(str, SIZE_DIVIDER);
@@ -365,6 +417,7 @@ public final class ModelStringUtil {
 
     /**
      * Formats a number as a long with thousands delimiters, i.e. #,###,###
+     *
      * @return The formatted number or an empty string if null.
      */
     public static String formatCsv(final Number number) {
@@ -376,6 +429,7 @@ public final class ModelStringUtil {
 
     /**
      * Formats a long with thousands delimiters, i.e. #,###,###
+     *
      * @return The formatted number or an empty string if null.
      */
     public static String formatCsv(final Long number) {
@@ -389,6 +443,7 @@ public final class ModelStringUtil {
     /**
      * Formats a double with thousands delimiters and a fixed
      * number of decimal places, i.e. {@code #,###,###.##}.
+     *
      * @return The formatted number or an empty string if null.
      */
     public static String formatCsv(final Double number, final int decimalPlaces) {
@@ -400,6 +455,7 @@ public final class ModelStringUtil {
      * number of decimal places, i.e. {@code #,###,###.##}.
      * If {@code stripTrailingZeros} is true all trailing zeros in the decimal
      * part will be omitted.
+     *
      * @return The formatted number or an empty string if null.
      */
     public static String formatCsv(final Double number,

@@ -720,6 +720,16 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     @Override
+    public List<SimpleMeta> findBatch(final long minId, final Long maxId, final int batchSize) {
+        return metaDao.findBatch(minId, maxId, batchSize);
+    }
+
+    @Override
+    public Set<Long> exists(final Set<Long> ids) {
+        return metaDao.exists(ids);
+    }
+
+    @Override
     public List<String> getProcessorUuidList(final FindMetaCriteria criteria) {
         return metaDao.getProcessorUuidList(criteria);
     }

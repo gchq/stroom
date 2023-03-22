@@ -286,6 +286,10 @@ public class GuiceTestUtil {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class ModuleInfo {
 
         private final String moduleClass;
@@ -345,6 +349,10 @@ public class GuiceTestUtil {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static enum BindType {
         PROVIDER,
         MULTI_BINDER,
@@ -352,6 +360,10 @@ public class GuiceTestUtil {
         INSTANCE,
         IMPL
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class BindInfo {
 

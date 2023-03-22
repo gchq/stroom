@@ -12,6 +12,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#3305** : Change the formatting of index/data volume limit to show 3 significant figures.
+
+* Issue **#3280** : Make orphan file/meta finder jobs drop out if stroom is shutdown. Change orphan meta finder job to user more efficient SQL. Improve logging output from both finders to include start time, duration and any error/interruption. Fix missing feed names in orphan file finder log.
+
+
 ## [v7.1-beta.23-test-open-id-15] - 2023-03-14
 
 * Issue **#3270** : Change the auto logging of audit events to ignore any initiated by the processing user account as this is not human initiated.
