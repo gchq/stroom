@@ -90,7 +90,7 @@ class Average extends AbstractManyChildFunction implements AggregateFunction {
         }
 
         @Override
-        public void set(final Values values) {
+        public void set(final Val[] values) {
             childGenerator.set(values);
             current = calculator.calc(current, childGenerator.eval(null));
             count++;
@@ -142,7 +142,7 @@ class Average extends AbstractManyChildFunction implements AggregateFunction {
         }
 
         @Override
-        public void set(final Values values) {
+        public void set(final Val[] values) {
             for (final Generator gen : childGenerators) {
                 gen.set(values);
             }

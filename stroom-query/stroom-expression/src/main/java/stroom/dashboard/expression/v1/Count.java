@@ -59,7 +59,7 @@ class Count extends AbstractFunction implements AggregateFunction {
         private long count;
 
         @Override
-        public void set(final Values values) {
+        public void set(final Val[] values) {
             count++;
         }
 

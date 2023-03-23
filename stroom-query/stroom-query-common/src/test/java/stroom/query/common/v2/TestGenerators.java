@@ -5,7 +5,6 @@ import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.Values;
 import stroom.query.api.v2.Field;
 
 import org.junit.jupiter.api.Test;
@@ -45,7 +44,7 @@ class TestGenerators {
 
         for (int count = 0; count < 295; count++) {
             for (final Generator generator : generators) {
-                generator.set(Values.of(values));
+                generator.set(Val.of(values));
             }
         }
 
@@ -115,7 +114,7 @@ class TestGenerators {
 
         for (int count = 0; count < 295; count++) {
             for (final Generator generator : generators) {
-                generator.set(Values.of(values));
+                generator.set(Val.of(values));
             }
         }
 

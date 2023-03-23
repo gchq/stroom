@@ -16,8 +16,8 @@
 
 package stroom.query.common.v2;
 
+import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.Values;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
@@ -65,7 +65,7 @@ abstract class AbstractDataStoreTest {
 
         for (int i = 0; i < 3000; i++) {
             final String text = "Text " + i;
-            dataStore.add(Values.of(ValString.create(text)));
+            dataStore.add(Val.of(ValString.create(text)));
         }
 
         // Wait for all items to be added.
@@ -128,7 +128,7 @@ abstract class AbstractDataStoreTest {
                 final String key = UUID.randomUUID().toString();
                 for (int j = 0; j < 100000; j++) {
                     final String value = UUID.randomUUID().toString();
-                    dataStore.add(Values.of(ValString.create(key), ValString.create(value)));
+                    dataStore.add(Val.of(ValString.create(key), ValString.create(value)));
                 }
             }
         });
@@ -194,7 +194,7 @@ abstract class AbstractDataStoreTest {
 
         for (int i = 0; i < 3000; i++) {
             final String text = "Text " + (int) (Math.random() * 100);
-            dataStore.add(Values.of(ValString.create(text)));
+            dataStore.add(Val.of(ValString.create(text)));
         }
 
         // Wait for all items to be added.
@@ -229,7 +229,7 @@ abstract class AbstractDataStoreTest {
 
         for (int i = 0; i < 3000; i++) {
             final String text = String.valueOf((int) (Math.random() * 100));
-            dataStore.add(Values.of(ValString.create(text)));
+            dataStore.add(Val.of(ValString.create(text)));
         }
 
         // Wait for all items to be added.
@@ -271,7 +271,7 @@ abstract class AbstractDataStoreTest {
 
         for (int i = 0; i < 3000; i++) {
             final String text = "Text " + (int) (Math.random() * 100);
-            dataStore.add(Values.of(ValString.create(text)));
+            dataStore.add(Val.of(ValString.create(text)));
         }
 
         // Wait for all items to be added.
@@ -313,7 +313,7 @@ abstract class AbstractDataStoreTest {
 
         for (int i = 0; i < 3000; i++) {
             final String text = "Text " + (int) (Math.random() * 100);
-            dataStore.add(Values.of(ValString.create(text)));
+            dataStore.add(Val.of(ValString.create(text)));
         }
 
         // Wait for all items to be added.
@@ -355,7 +355,7 @@ abstract class AbstractDataStoreTest {
 
         for (int i = 0; i < 3000; i++) {
             final String text = "Text " + (int) (Math.random() * 100);
-            dataStore.add(Values.of(ValString.create(text)));
+            dataStore.add(Val.of(ValString.create(text)));
         }
 
         // Wait for all items to be added.

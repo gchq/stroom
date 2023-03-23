@@ -6,7 +6,6 @@ import stroom.dashboard.expression.v1.ValDouble;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.Values;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.query.common.v2.ErrorConsumer;
 import stroom.statistics.impl.sql.PreparedStatementUtil;
@@ -120,7 +119,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
             // build a mapper function to convert a resultSet row into a String[] based on the fields
             // required by all coprocessors
-            Function<ResultSet, Values> resultSetMapper = buildResultSetMapper(fieldIndex, statisticStoreEntity);
+            Function<ResultSet, Val[]> resultSetMapper = buildResultSetMapper(fieldIndex, statisticStoreEntity);
 
             // the query will not be executed until somebody subscribes to the flowable
             getFlowableQueryResults(taskContext, sql, resultSetMapper, valuesConsumer);
@@ -239,7 +238,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
      * Build a mapper function that will only extract the columns of interest from the resultSet row.
      * Assumes something external to the returned function will advance the resultSet
      */
-    private Function<ResultSet, Values> buildResultSetMapper(
+    private Function<ResultSet, Val[]> buildResultSetMapper(
             final FieldIndex fieldIndex,
             final StatisticStoreDoc statisticStoreEntity) {
 
@@ -312,7 +311,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                             e);
                 }
             });
-            return Values.of(data);
+            return Val.of(data);
         };
     }
 
@@ -393,7 +392,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
     private void getFlowableQueryResults(final TaskContext taskContext,
                                          final SqlBuilder sql,
-                                         final Function<ResultSet, Values> resultSetMapper,
+                                         final Function<ResultSet, Val[]> resultSetMapper,
                                          final ValuesConsumer valuesConsumer) {
         long count = 0;
 
@@ -424,7 +423,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                     while (resultSet.next() &&
                             !Thread.currentThread().isInterrupted()) {
                         LOGGER.trace("Adding result");
-                        final Values values = resultSetMapper.apply(resultSet);
+                        final Val[] values = resultSetMapper.apply(resultSet);
                         valuesConsumer.add(values);
                         count++;
                     }

@@ -108,7 +108,7 @@ class CountUnique extends AbstractFunction implements AggregateFunction {
         }
 
         @Override
-        public void set(final Values values) {
+        public void set(final Val[] values) {
             childGenerator.set(values);
             final Val value = childGenerator.eval(null);
             if (value.type().isValue()) {

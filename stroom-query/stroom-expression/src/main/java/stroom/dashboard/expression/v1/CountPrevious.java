@@ -72,7 +72,7 @@ public class CountPrevious extends AbstractFunction implements AggregateFunction
         }
 
         @Override
-        public void set(final Values values) {
+        public void set(final Val[] values) {
             count++;
         }
 

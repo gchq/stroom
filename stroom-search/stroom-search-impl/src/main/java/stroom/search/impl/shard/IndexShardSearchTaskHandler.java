@@ -18,7 +18,6 @@ package stroom.search.impl.shard;
 
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.Values;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexShardWriter;
@@ -279,7 +278,7 @@ public class IndexShardSearchTaskHandler {
                 }
             }
 
-            valuesConsumer.add(Values.of(values));
+            valuesConsumer.add(Val.of(values));
         } catch (final IOException | RuntimeException e) {
             error(errorConsumer, e);
         }

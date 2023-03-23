@@ -27,7 +27,6 @@ import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValSerialiser;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.Values;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.lmdb.LmdbEnvFactory;
@@ -187,7 +186,7 @@ public class LmdbDataStore implements DataStore {
      * @param values The values to add to the store.
      */
     @Override
-    public void add(final Values values) {
+    public void add(final Val[] values) {
         // Filter incoming data.
         Map<String, Object> fieldIdToValueMap = null;
         for (final CompiledField compiledField : compiledFields) {
@@ -223,7 +222,7 @@ public class LmdbDataStore implements DataStore {
         if (windowSupport.getOffsets() != null) {
             int iteration = 0;
             for (SimpleDuration offset : windowSupport.getOffsets()) {
-                final Values modifiedValues = windowSupport.addWindow(values, offset);
+                final Val[] modifiedValues = windowSupport.addWindow(values, offset);
                 addInternal(modifiedValues, iteration);
                 iteration++;
             }
@@ -232,10 +231,10 @@ public class LmdbDataStore implements DataStore {
         }
     }
 
-    private void addInternal(final Values values,
+    private void addInternal(final Val[] values,
                              final int iteration) {
         SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_ADD);
-        LOGGER.trace(() -> "add() called for " + values.size() + " values");
+        LOGGER.trace(() -> "add() called for " + values.length + " values");
         final int[] groupSizeByDepth = compiledDepths.getGroupSizeByDepth();
         final boolean[][] groupIndicesByDepth = compiledDepths.getGroupIndicesByDepth();
         final boolean[][] valueIndicesByDepth = compiledDepths.getValueIndicesByDepth();
@@ -785,7 +784,7 @@ public class LmdbDataStore implements DataStore {
             return generator;
         }
 
-        Val getVal(final Values values) {
+        Val getVal(final Val[] values) {
             if (val == null) {
                 final Generator generator = getGenerator();
                 generator.set(values);

@@ -19,7 +19,6 @@ package stroom.search.extraction;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.Values;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
@@ -94,7 +93,7 @@ public class SearchResultOutputFilter extends AbstractXMLFilter {
             SearchProgressLog.increment(queryKey,
                     SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_END_RECORD);
             SearchDebugUtil.writeExtractionData(values);
-            extractionStateHolder.getReceiver().add(Values.of(values));
+            extractionStateHolder.getReceiver().add(Val.of(values));
             extractionStateHolder.incrementCount();
             values = null;
         }

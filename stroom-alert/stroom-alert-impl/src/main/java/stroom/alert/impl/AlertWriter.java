@@ -8,7 +8,6 @@ import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.Values;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.index.shared.IndexConstants;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -80,9 +79,9 @@ public class AlertWriter implements ValuesConsumer {
     }
 
     @Override
-    public void add(final Values values) {
+    public void add(final Val[] values) {
         // Alert generation search extraction - create records when filters match
-        if (values == null || values.size() == 0) {
+        if (values == null || values.length == 0) {
             log(Severity.WARNING, "No values to extract from ", null);
             return;
         }
@@ -94,7 +93,7 @@ public class AlertWriter implements ValuesConsumer {
         }
     }
 
-    private CompiledFieldValue[] extractAlert(final AlertDefinition rule, final Values vals) {
+    private CompiledFieldValue[] extractAlert(final AlertDefinition rule, final Val[] vals) {
         final TableSettings tableSettings = rule.getTableSettings();
         final List<Field> fields = tableSettings.getFields();
         final CompiledField[] compiledFields = CompiledFields.create(fields, fieldIndex,

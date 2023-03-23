@@ -55,7 +55,7 @@ public abstract class AbstractFunctionTest<T extends Function> {
                                     .map(this::argToString)
                                     .collect(Collectors.joining(" ")));
                             testCase.getAggregateValues().forEach(val ->
-                                    generator.set(Values.of(val)));
+                                    generator.set(Val.of(val)));
                         }
 
                         // Run the function

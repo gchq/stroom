@@ -19,7 +19,6 @@ package stroom.query.common.v2;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.Values;
 import stroom.lmdb.LmdbEnvFactory;
 import stroom.lmdb.LmdbLibraryConfig;
 import stroom.query.api.v2.Field;
@@ -121,7 +120,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
 
         for (int i = 0; i < 3000; i++) {
             final Val val = ValString.create("Text " + i + "test".repeat(1000));
-            dataStore.add(Values.of(val, val));
+            dataStore.add(Val.of(val, val));
         }
 
         // Wait for all items to be added.
