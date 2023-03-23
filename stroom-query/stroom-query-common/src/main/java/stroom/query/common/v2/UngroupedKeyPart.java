@@ -14,10 +14,6 @@ class UngroupedKeyPart implements KeyPart {
         this.sequenceNumber = sequenceNumber;
     }
 
-    public void setSequenceNumber(final long sequenceNumber) {
-        this.sequenceNumber = sequenceNumber;
-    }
-
     @Override
     public void write(final Output output) {
         output.writeLong(sequenceNumber);

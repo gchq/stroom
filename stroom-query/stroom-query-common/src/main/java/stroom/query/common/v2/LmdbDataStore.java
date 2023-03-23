@@ -145,7 +145,7 @@ public class LmdbDataStore implements DataStore {
         compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), compiledFields);
         keyFactoryConfig = new KeyFactoryConfigImpl(compiledFields, compiledDepths, dataStoreSettings);
         keyFactory = new KeyFactory(keyFactoryConfig, serialisers);
-        lmdbRowKeyFactory = new LmdbRowKeyFactory(keyFactoryConfig, compiledDepths);
+        lmdbRowKeyFactory = new LmdbRowKeyFactory(keyFactory, keyFactoryConfig, compiledDepths);
         payloadCreator = new LmdbPayloadCreator(
                 serialisers,
                 queryKey,
@@ -243,7 +243,7 @@ public class LmdbDataStore implements DataStore {
         Key parentKey = Key.ROOT_KEY;
         long parentGroupHash = 0;
 
-        for (byte depth = 0; depth < groupIndicesByDepth.length; depth++) {
+        for (int depth = 0; depth < groupIndicesByDepth.length; depth++) {
             final Generator[] generators = new Generator[compiledFields.length];
 
             final int groupSize = groupSizeByDepth[depth];
@@ -317,7 +317,7 @@ public class LmdbDataStore implements DataStore {
 
             } else {
                 // This item will not be grouped.
-                final long uniqueId = lmdbRowKeyFactory.getUniqueId();
+                final long uniqueId = keyFactory.getUniqueId();
                 key = parentKey.resolve(timeMs, uniqueId);
             }
 
@@ -488,8 +488,8 @@ public class LmdbDataStore implements DataStore {
                             serialisers.getOutputFactory().createByteBufferOutput(minValSize, errorConsumer)) {
                         boolean merged = false;
 
-                        try (final UnsafeByteBufferInput input = serialisers.getInputFactory().createByteBufferInput(
-                                existingValueBuffer)) {
+                        try (final UnsafeByteBufferInput input =
+                                serialisers.getInputFactory().createByteBufferInput(existingValueBuffer)) {
                             while (!input.end()) {
                                 final LmdbValue existingRowValue =
                                         LmdbValue.read(serialisers, keyFactory, compiledFields, input);

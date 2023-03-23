@@ -58,7 +58,6 @@ public class MapDataStore implements DataStore, Data {
 
     private final Serialisers serialisers;
     private final Map<Key, ItemsImpl> childMap = new ConcurrentHashMap<>();
-    private final AtomicLong ungroupedItemSequenceNumber = new AtomicLong();
 
     private final CompiledField[] compiledFields;
     private final CompiledSorter<ItemImpl>[] compiledSorters;
@@ -194,7 +193,7 @@ public class MapDataStore implements DataStore, Data {
 
             } else {
                 // This item will not be grouped.
-                key = key.resolve(0, ungroupedItemSequenceNumber.incrementAndGet());
+                key = key.resolve(0, keyFactory.getUniqueId());
             }
 
             addToChildMap(depth, parentKey, key, generators);

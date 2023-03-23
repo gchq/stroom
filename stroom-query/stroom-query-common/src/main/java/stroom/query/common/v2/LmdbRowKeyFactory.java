@@ -3,25 +3,22 @@ package stroom.query.common.v2;
 import org.lmdbjava.KeyRange;
 
 import java.nio.ByteBuffer;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class LmdbRowKeyFactory {
 
+    private final KeyFactory keyFactory;
     private final KeyFactoryConfig keyFactoryConfig;
     private final CompiledDepths compiledDepths;
-    private final AtomicLong uniqueKey = new AtomicLong();
 
-    public LmdbRowKeyFactory(final KeyFactoryConfig keyFactoryConfig,
+    public LmdbRowKeyFactory(final KeyFactory keyFactory,
+                             final KeyFactoryConfig keyFactoryConfig,
                              final CompiledDepths compiledDepths) {
+        this.keyFactory = keyFactory;
         this.keyFactoryConfig = keyFactoryConfig;
         this.compiledDepths = compiledDepths;
     }
 
-    public long getUniqueId() {
-        return uniqueKey.incrementAndGet();
-    }
-
-    public LmdbRowKey create(final byte depth,
+    public LmdbRowKey create(final int depth,
                              final long parentGroupHash,
                              final long groupHash,
                              final long timeMs) {
@@ -33,11 +30,11 @@ public class LmdbRowKeyFactory {
                 // Create a time based unique key. <TIME_MS><UNIQUE_ID>
                 byteBuffer = ByteBuffer.allocateDirect(Long.BYTES + Long.BYTES);
                 byteBuffer.putLong(timeMs);
-                byteBuffer.putLong(getUniqueId());
+                byteBuffer.putLong(keyFactory.getUniqueId());
             } else {
                 // Just create a unique key. <UNIQUE_ID>
                 byteBuffer = ByteBuffer.allocateDirect(Long.BYTES);
-                byteBuffer.putLong(getUniqueId());
+                byteBuffer.putLong(keyFactory.getUniqueId());
             }
         } else {
             // If this is a grouping key then we need to add the depth first.
@@ -45,13 +42,13 @@ public class LmdbRowKeyFactory {
                 if (keyFactoryConfig.addTimeToKey()) {
                     // Create a time based top level group key. <DEPTH><TIME_MS><GROUP_HASH>
                     byteBuffer = ByteBuffer.allocateDirect(Byte.BYTES + Long.BYTES + Long.BYTES);
-                    byteBuffer.put(depth);
+                    byteBuffer.put((byte) depth);
                     byteBuffer.putLong(timeMs);
                     byteBuffer.putLong(groupHash);
                 } else {
                     // Create a top level group key. <DEPTH><GROUP_HASH>
                     byteBuffer = ByteBuffer.allocateDirect(Byte.BYTES + Long.BYTES);
-                    byteBuffer.put(depth);
+                    byteBuffer.put((byte) depth);
                     byteBuffer.putLong(groupHash);
                 }
             } else if (compiledDepths.isDetailLevel(depth)) {
@@ -59,29 +56,29 @@ public class LmdbRowKeyFactory {
                 if (keyFactoryConfig.addTimeToKey()) {
                     // Create a time based child unique key. <DEPTH><TIME_MS><PARENT_GROUP_HASH><UNIQUE_ID>
                     byteBuffer = ByteBuffer.allocateDirect(Byte.BYTES + Long.BYTES + Long.BYTES + Long.BYTES);
-                    byteBuffer.put(depth);
+                    byteBuffer.put((byte) depth);
                     byteBuffer.putLong(timeMs);
                     byteBuffer.putLong(parentGroupHash);
-                    byteBuffer.putLong(getUniqueId());
+                    byteBuffer.putLong(keyFactory.getUniqueId());
                 } else {
                     // Create a child unique key. <DEPTH><PARENT_GROUP_HASH><UNIQUE_ID>
                     byteBuffer = ByteBuffer.allocateDirect(Byte.BYTES + Long.BYTES + Long.BYTES);
-                    byteBuffer.put(depth);
+                    byteBuffer.put((byte) depth);
                     byteBuffer.putLong(parentGroupHash);
-                    byteBuffer.putLong(getUniqueId());
+                    byteBuffer.putLong(keyFactory.getUniqueId());
                 }
             } else {
                 if (keyFactoryConfig.addTimeToKey()) {
                     // Create a time based child group key. <DEPTH><TIME_MS><PARENT_GROUP_HASH><GROUP_HASH>
                     byteBuffer = ByteBuffer.allocateDirect(Byte.BYTES + Long.BYTES + Long.BYTES + Long.BYTES);
-                    byteBuffer.put(depth);
+                    byteBuffer.put((byte) depth);
                     byteBuffer.putLong(timeMs);
                     byteBuffer.putLong(parentGroupHash);
                     byteBuffer.putLong(groupHash);
                 } else {
                     // Create a child group key. <DEPTH><PARENT_GROUP_HASH><GROUP_HASH>
                     byteBuffer = ByteBuffer.allocateDirect(Byte.BYTES + Long.BYTES + Long.BYTES);
-                    byteBuffer.put(depth);
+                    byteBuffer.put((byte) depth);
                     byteBuffer.putLong(parentGroupHash);
                     byteBuffer.putLong(groupHash);
                 }
@@ -92,16 +89,16 @@ public class LmdbRowKeyFactory {
     }
 
     public LmdbRowKey makeUnique(final LmdbRowKey rowKey) {
-        ByteBuffer byteBuffer = rowKey.getByteBuffer();
+        final ByteBuffer byteBuffer = rowKey.getByteBuffer();
 
         // If we have no grouping then create a unique key.
         if (!compiledDepths.hasGroup()) {
             if (keyFactoryConfig.addTimeToKey()) {
                 // Create a time based unique key. <TIME_MS><UNIQUE_ID>
-                byteBuffer.putLong(Long.BYTES, getUniqueId());
+                byteBuffer.putLong(Long.BYTES, keyFactory.getUniqueId());
             } else {
                 // Just create a unique key. <UNIQUE_ID>
-                byteBuffer.putLong(0, getUniqueId());
+                byteBuffer.putLong(0, keyFactory.getUniqueId());
             }
         } else {
             // If this is a grouping key then we need to add the depth first.
@@ -110,10 +107,10 @@ public class LmdbRowKeyFactory {
                 // This is a detail level - non-grouped row.
                 if (keyFactoryConfig.addTimeToKey()) {
                     // Create a time based child unique key. <DEPTH><TIME_MS><PARENT_GROUP_HASH><UNIQUE_ID>
-                    byteBuffer.putLong(Byte.BYTES + Long.BYTES + Long.BYTES, getUniqueId());
+                    byteBuffer.putLong(Byte.BYTES + Long.BYTES + Long.BYTES, keyFactory.getUniqueId());
                 } else {
                     // Create a child unique key. <DEPTH><PARENT_GROUP_HASH><UNIQUE_ID>
-                    byteBuffer.putLong(Byte.BYTES + Long.BYTES, getUniqueId());
+                    byteBuffer.putLong(Byte.BYTES + Long.BYTES, keyFactory.getUniqueId());
                 }
             }
         }
@@ -127,7 +124,7 @@ public class LmdbRowKeyFactory {
             return false;
         } else {
             // Get the depth.
-            final byte depth = rowKey.getByteBuffer().get(0);
+            final int depth = Byte.toUnsignedInt(rowKey.getByteBuffer().get(0));
             return !compiledDepths.isDetailLevel(depth);
         }
     }
