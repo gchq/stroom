@@ -53,4 +53,8 @@ public interface DataStore {
     void writePayload(Output output);
 
     long getByteSize();
+
+    Serialisers getSerialisers();
+
+    KeyFactory getKeyFactory();
 }

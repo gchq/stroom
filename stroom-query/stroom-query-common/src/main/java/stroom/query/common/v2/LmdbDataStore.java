@@ -58,6 +58,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -78,7 +79,7 @@ public class LmdbDataStore implements DataStore {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbDataStore.class);
 
     private static final long COMMIT_FREQUENCY_MS = 1000;
-    private final Key rootKey;
+    private static final Comparator<ByteBuffer> KEY_COMPARATOR = new ByteBufferPrefixComparator();
 
     private final LmdbEnv lmdbEnv;
     private final ResultStoreConfig resultStoreConfig;
@@ -100,14 +101,14 @@ public class LmdbDataStore implements DataStore {
     private final LmdbKVQueue queue;
     private final CountDownLatch complete = new CountDownLatch(1);
     private final CompletionState completionState = new CompletionStateImpl(this, complete);
-    private final AtomicLong uniqueKey = new AtomicLong();
     private final QueryKey queryKey;
     private final String componentId;
     private final boolean producePayloads;
     private final ErrorConsumer errorConsumer;
+    private final LmdbRowKeyFactory lmdbRowKeyFactory;
+    private final KeyFactoryConfig keyFactoryConfig;
+    private final KeyFactory keyFactory;
     private final LmdbPayloadCreator payloadCreator;
-
-    private final LmdbKey rootParentRowKey;
     private final TransferState transferState = new TransferState();
 
     private final Serialisers serialisers;
@@ -123,7 +124,7 @@ public class LmdbDataStore implements DataStore {
                   final FieldIndex fieldIndex,
                   final Map<String, String> paramMap,
                   final Sizes maxResults,
-                  final boolean producePayloads,
+                  final DataStoreSettings dataStoreSettings,
                   final Provider<Executor> executorProvider,
                   final ErrorConsumer errorConsumer) {
         this.serialisers = serialisers;
@@ -131,7 +132,7 @@ public class LmdbDataStore implements DataStore {
         this.maxResults = maxResults;
         this.queryKey = queryKey;
         this.componentId = componentId;
-        this.producePayloads = producePayloads;
+        this.producePayloads = dataStoreSettings.isProducePayloads();
         this.errorConsumer = errorConsumer;
 
         this.windowSupport = new WindowSupport(tableSettings);
@@ -142,24 +143,17 @@ public class LmdbDataStore implements DataStore {
         compiledFields = CompiledFields.create(modifiedTableSettings.getFields(), fieldIndex, paramMap);
         compiledDepths = new CompiledDepths(compiledFields, modifiedTableSettings.showDetail());
         compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), compiledFields);
-        payloadCreator = new LmdbPayloadCreator(serialisers, queryKey, this, compiledFields, resultStoreConfig);
-
-
-//        if (modifiedTableSettings.getWindow() != null) {
-//            if (modifiedTableSettings.getWindow() instanceof HoppingWindow) {
-//                final HoppingWindow hoppingWindow = (HoppingWindow) modifiedTableSettings.getWindow();
-//                for (int i = 0; i < compiledFields.length && timeFieldIndex == -1; i++) {
-//                    if (compiledFields[i].getField().getName().equals(hoppingWindow.getTimeField())) {
-//                        timeFieldIndex = i;
-//                    }
-//                }
-//            }
-//        }
-
-        rootKey = Key.createRoot(serialisers);
-        rootParentRowKey = new LmdbKey.Builder()
-                .keyBytes(rootKey.getBytes())
-                .build();
+        keyFactoryConfig = new KeyFactoryConfigImpl(compiledFields, compiledDepths, dataStoreSettings);
+        keyFactory = new KeyFactory(keyFactoryConfig, serialisers);
+        lmdbRowKeyFactory = new LmdbRowKeyFactory(keyFactoryConfig, compiledDepths);
+        payloadCreator = new LmdbPayloadCreator(
+                serialisers,
+                queryKey,
+                this,
+                compiledFields,
+                resultStoreConfig,
+                lmdbRowKeyFactory,
+                keyFactory);
 
         final String uuid = (queryKey + "_" + componentId + "_" + UUID.randomUUID());
         // Make safe for the file system.
@@ -196,8 +190,7 @@ public class LmdbDataStore implements DataStore {
     public void add(final Values values) {
         // Filter incoming data.
         Map<String, Object> fieldIdToValueMap = null;
-        for (int fieldIndex = 0; fieldIndex < compiledFields.length; fieldIndex++) {
-            final CompiledField compiledField = compiledFields[fieldIndex];
+        for (final CompiledField compiledField : compiledFields) {
             final Expression expression = compiledField.getExpression();
             if (expression != null) {
                 final ValCache valCache = new ValCache(expression::createGenerator);
@@ -247,98 +240,98 @@ public class LmdbDataStore implements DataStore {
         final boolean[][] groupIndicesByDepth = compiledDepths.getGroupIndicesByDepth();
         final boolean[][] valueIndicesByDepth = compiledDepths.getValueIndicesByDepth();
 
-        Key key = rootKey;
-        LmdbKey parentRowKey = rootParentRowKey;
+        Key parentKey = Key.ROOT_KEY;
+        long parentGroupHash = 0;
 
-        for (int depth = 0; depth < groupIndicesByDepth.length; depth++) {
-            final LmdbKey.Builder rowKeyBuilder = new LmdbKey.Builder();
+        for (byte depth = 0; depth < groupIndicesByDepth.length; depth++) {
             final Generator[] generators = new Generator[compiledFields.length];
 
             final int groupSize = groupSizeByDepth[depth];
             final boolean[] groupIndices = groupIndicesByDepth[depth];
             final boolean[] valueIndices = valueIndicesByDepth[depth];
 
-            Val[] groupValues = ValSerialiser.EMPTY_VALUES;
+            final Val[] groupValues;
             if (groupSize > 0) {
                 groupValues = new Val[groupSize];
+            } else {
+                groupValues = ValSerialiser.EMPTY_VALUES;
             }
+
+            long timeMs = 0;
+            long streamId = 0;
+            long eventId = 0;
 
             int groupIndex = 0;
             for (int fieldIndex = 0; fieldIndex < compiledFields.length; fieldIndex++) {
                 final CompiledField compiledField = compiledFields[fieldIndex];
                 final Expression expression = compiledField.getExpression();
                 final ValCache valCache = new ValCache(expression::createGenerator);
-                if (valCache != null) {
-                    // If we are grouping at this level then evaluate the expression and add to the group values.
-                    if (groupIndices[fieldIndex]) {
-                        // If we haven't already created the generator then do so now.
-                        final Val val = valCache.getVal(values);
-                        groupValues[groupIndex++] = val;
-                    }
+                // If we are grouping at this level then evaluate the expression and add to the group values.
+                if (groupIndices[fieldIndex]) {
+                    // If we haven't already created the generator then do so now.
+                    final Val val = valCache.getVal(values);
+                    groupValues[groupIndex++] = val;
+                }
 
-                    // If we need a value at this level then evaluate the expression and add the value.
-                    if (valueIndices[fieldIndex]) {
-                        final Generator generator = valCache.getGenerator();
-                        if (iteration != -1) {
-                            if (generator instanceof CountPrevious.Gen) {
-                                CountPrevious.Gen gen = (CountPrevious.Gen) generator;
-                                if (gen.getIteration() == iteration) {
-                                    gen.set(values);
-                                }
-                            } else {
-                                generator.set(values);
+                // If we need a value at this level then evaluate the expression and add the value.
+                if (valueIndices[fieldIndex]) {
+                    final Generator generator = valCache.getGenerator();
+                    if (iteration != -1) {
+                        if (generator instanceof CountPrevious.Gen gen) {
+                            if (gen.getIteration() == iteration) {
+                                gen.set(values);
                             }
                         } else {
                             generator.set(values);
                         }
-                        generators[fieldIndex] = generator;
+                    } else {
+                        generator.set(values);
+                    }
+                    generators[fieldIndex] = generator;
+                }
+
+                // Get the value if this is a special field.
+                if (timeMs == 0 && fieldIndex == keyFactoryConfig.getTimeFieldIndex()) {
+                    final Val val = valCache.getVal(values);
+                    if (val != null) {
+                        timeMs = val.toLong();
+                    }
+                } else if (streamId == 0 && fieldIndex == keyFactoryConfig.getStreamIdFieldIndex()) {
+                    final Val val = valCache.getVal(values);
+                    if (val != null) {
+                        streamId = val.toLong();
+                    }
+                } else if (eventId == 0 && fieldIndex == keyFactoryConfig.getEventIdFieldIndex()) {
+                    final Val val = valCache.getVal(values);
+                    if (val != null) {
+                        eventId = val.toLong();
                     }
                 }
             }
 
             final boolean grouped = depth <= compiledDepths.getMaxGroupDepth();
-            final byte[] keyBytes;
+            final Key key;
             if (grouped) {
                 // This is a grouped item.
-                key = key.resolve(groupValues);
-                keyBytes = key.getBytes();
-
-                final LmdbKey rowKey = rowKeyBuilder
-                        .depth(depth)
-                        .parentRowKey(parentRowKey)
-                        .keyBytes(keyBytes)
-                        .group(true)
-                        .build();
-                final LmdbValue rowValue = new LmdbValue(
-                        serialisers,
-                        keyBytes,
-                        new Generators(serialisers, compiledFields, generators));
-                parentRowKey = rowKey;
-                put(new LmdbKV(rowKey, rowValue));
+                key = parentKey.resolve(timeMs, groupValues);
 
             } else {
                 // This item will not be grouped.
-                final long uniqueId = getUniqueId();
-                key = key.resolve(uniqueId);
-                keyBytes = key.getBytes();
-
-                final LmdbKey rowKey = rowKeyBuilder
-                        .depth(depth)
-                        .parentRowKey(parentRowKey)
-                        .uniqueId(uniqueId)
-                        .group(false)
-                        .build();
-                final LmdbValue rowValue = new LmdbValue(
-                        serialisers,
-                        keyBytes,
-                        new Generators(serialisers, compiledFields, generators));
-                put(new LmdbKV(rowKey, rowValue));
+                final long uniqueId = lmdbRowKeyFactory.getUniqueId();
+                key = parentKey.resolve(timeMs, uniqueId);
             }
-        }
-    }
 
-    long getUniqueId() {
-        return uniqueKey.incrementAndGet();
+            final long groupHash = ValHasher.hash(groupValues);
+            final LmdbRowKey rowKey = lmdbRowKeyFactory.create(depth, parentGroupHash, groupHash, timeMs);
+            final LmdbValue rowValue = new LmdbValue(
+                    serialisers,
+                    keyFactory,
+                    key,
+                    new Generators(serialisers, compiledFields, generators));
+            put(new LmdbKV(rowKey, rowValue));
+            parentGroupHash = groupHash;
+            parentKey = key;
+        }
     }
 
     void put(final LmdbKV queueItem) {
@@ -473,7 +466,7 @@ public class LmdbDataStore implements DataStore {
             try {
                 LOGGER.trace(() -> "insert");
 
-                final LmdbKey rowKey = queueItem.getRowKey();
+                final LmdbRowKey rowKey = queueItem.getRowKey();
                 final LmdbValue rowValue = queueItem.getRowValue();
 
                 // Just try to put first.
@@ -481,36 +474,41 @@ public class LmdbDataStore implements DataStore {
                         batchingWriteTxn,
                         dbi,
                         rowKey.getByteBuffer(),
-                        rowValue.getByteBuffer(),
+                        rowValue.getByteBuffer(errorConsumer),
                         PutFlags.MDB_NOOVERWRITE);
                 if (success) {
                     resultCount.incrementAndGet();
 
-                } else if (rowKey.isGroup()) {
+                } else if (lmdbRowKeyFactory.isGroup(rowKey)) {
                     // Get the existing entry for this key.
                     final ByteBuffer existingValueBuffer = dbi.get(batchingWriteTxn.getTxn(), rowKey.getByteBuffer());
 
                     final int minValSize = Math.max(1024, existingValueBuffer.remaining());
                     try (final UnsafeByteBufferOutput output =
-                            serialisers.getOutputFactory().createByteBufferOutput(minValSize)) {
+                            serialisers.getOutputFactory().createByteBufferOutput(minValSize, errorConsumer)) {
                         boolean merged = false;
 
                         try (final UnsafeByteBufferInput input = serialisers.getInputFactory().createByteBufferInput(
                                 existingValueBuffer)) {
                             while (!input.end()) {
-                                final LmdbValue existingRowValue = LmdbValue.read(serialisers, compiledFields, input);
+                                final LmdbValue existingRowValue =
+                                        LmdbValue.read(serialisers, keyFactory, compiledFields, input);
 
                                 // If this is the same value then update it and reinsert.
-                                if (existingRowValue.getKey().equals(rowValue.getKey())) {
+                                if (Arrays.equals(
+                                        existingRowValue.getFullKeyBytes(errorConsumer),
+                                        rowValue.getFullKeyBytes(errorConsumer))) {
                                     final Generator[] generators = existingRowValue.getGenerators().getGenerators();
                                     final Generator[] newValue = rowValue.getGenerators().getGenerators();
                                     final Generator[] combined = combine(generators, newValue);
 
                                     LOGGER.trace(() -> "Merging combined value to output");
-                                    final LmdbValue combinedValue = new LmdbValue(serialisers,
-                                            existingRowValue.getKey().getBytes(),
+                                    final LmdbValue combinedValue = new LmdbValue(
+                                            serialisers,
+                                            keyFactory,
+                                            existingRowValue.getKey(),
                                             new Generators(serialisers, compiledFields, combined));
-                                    combinedValue.write(output);
+                                    combinedValue.write(output, errorConsumer);
 
                                     // Copy any remaining values.
                                     if (!input.end()) {
@@ -522,7 +520,7 @@ public class LmdbDataStore implements DataStore {
 
                                 } else {
                                     LOGGER.debug(() -> "Copying value to output");
-                                    existingRowValue.write(output);
+                                    existingRowValue.write(output, errorConsumer);
                                 }
                             }
                         }
@@ -530,10 +528,11 @@ public class LmdbDataStore implements DataStore {
                         // Append if we didn't merge.
                         if (!merged) {
                             LOGGER.debug(() -> "Appending value to output");
-                            rowValue.write(output);
+                            rowValue.write(output, errorConsumer);
                             resultCount.incrementAndGet();
                         }
 
+                        output.flush();
                         final ByteBuffer newValue = output.getByteBuffer().flip();
                         final boolean ok = put(batchingWriteTxn, dbi, rowKey.getByteBuffer(), newValue);
                         if (!ok) {
@@ -630,8 +629,10 @@ public class LmdbDataStore implements DataStore {
             lmdbEnv.doWithReadTxn(readTxn ->
                     Metrics.measure("getData", () ->
                             consumer.accept(new LmdbData(
+                                    lmdbRowKeyFactory,
+                                    keyFactory,
                                     serialisers,
-                                    rootKey,
+                                    Key.ROOT_KEY,
                                     dbi,
                                     readTxn,
                                     compiledFields,
@@ -757,6 +758,16 @@ public class LmdbDataStore implements DataStore {
         return total.get();
     }
 
+    @Override
+    public Serialisers getSerialisers() {
+        return serialisers;
+    }
+
+    @Override
+    public KeyFactory getKeyFactory() {
+        return keyFactory;
+    }
+
     private static class ValCache {
 
         private final Provider<Generator> generatorProvider;
@@ -791,6 +802,8 @@ public class LmdbDataStore implements DataStore {
 
         private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbData.class);
 
+        private final LmdbRowKeyFactory lmdbRowKeyFactory;
+        private final KeyFactory keyFactory;
         private final Serialisers serialisers;
         private final Key rootKey;
         private final Dbi<ByteBuffer> dbi;
@@ -800,7 +813,9 @@ public class LmdbDataStore implements DataStore {
         private final Sizes maxResults;
         private final QueryKey queryKey;
 
-        public LmdbData(final Serialisers serialisers,
+        public LmdbData(final LmdbRowKeyFactory lmdbRowKeyFactory,
+                        final KeyFactory keyFactory,
+                        final Serialisers serialisers,
                         final Key rootKey,
                         final Dbi<ByteBuffer> dbi,
                         final Txn<ByteBuffer> readTxn,
@@ -808,6 +823,8 @@ public class LmdbDataStore implements DataStore {
                         final CompiledSorter<Item>[] compiledSorters,
                         final Sizes maxResults,
                         final QueryKey queryKey) {
+            this.lmdbRowKeyFactory = lmdbRowKeyFactory;
+            this.keyFactory = keyFactory;
             this.serialisers = serialisers;
             this.rootKey = rootKey;
             this.dbi = dbi;
@@ -842,81 +859,69 @@ public class LmdbDataStore implements DataStore {
             LOGGER.trace(() -> "get() called for parentKey: " + parentKey);
 
             return Metrics.measure("get", () -> {
-                final int depth = parentKey.size();
-                final int trimmedSize = maxResults.size(depth);
-                return getChildren(parentKey, depth, trimmedSize, false);
+                final int childDepth = parentKey.getDepth() + 1;
+                final int trimmedSize = maxResults.size(childDepth);
+                return getChildren(parentKey, childDepth, trimmedSize, false);
             });
         }
 
         private ItemsImpl getChildren(final Key parentKey,
-                                      final int depth,
+                                      final int childDepth,
                                       final int trimmedSize,
                                       final boolean trimTop) {
             SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_GET_CHILDREN);
             // If we don't have any children at the requested depth then return an empty list.
-            if (compiledSorters.length <= depth) {
+            if (compiledSorters.length <= childDepth) {
                 return ItemsImpl.EMPTY;
             }
 
             final ItemsImpl list = new ItemsImpl(10);
 
-            final ByteBuffer start = LmdbKey.createKeyStem(depth, parentKey);
-            final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(start);
-
+            final KeyRange<ByteBuffer> keyRange = lmdbRowKeyFactory.createChildKeyRange(parentKey);
             final int maxSize;
             if (trimmedSize < Integer.MAX_VALUE / 2) {
                 maxSize = Math.max(1000, trimmedSize * 2);
             } else {
                 maxSize = Integer.MAX_VALUE;
             }
-            final CompiledSorter<Item> sorter = compiledSorters[depth];
+            final CompiledSorter<Item> sorter = compiledSorters[childDepth];
 
             boolean trimmed = true;
-            boolean inRange = true;
+            boolean addMore = true;
 
-            try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(readTxn, keyRange)) {
+            try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(
+                    readTxn,
+                    keyRange,
+                    KEY_COMPARATOR)) {
                 final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
 
                 while (iterator.hasNext()
-                        && inRange
+                        && addMore
                         && !Thread.currentThread().isInterrupted()) {
 
                     final KeyVal<ByteBuffer> keyVal = iterator.next();
+                    final ByteBuffer valueBuffer = keyVal.val();
+                    try (final UnsafeByteBufferInput input =
+                            serialisers.getInputFactory().createByteBufferInput(valueBuffer)) {
+                        while (!input.end() && addMore) {
+                            final LmdbValue rowValue = LmdbValue.read(serialisers, keyFactory, compiledFields, input);
+                            final Key key = rowValue.getKey();
+//                            if (key.getParent().equals(parentKey)) {
+                            final Generator[] generators = rowValue.getGenerators().getGenerators();
+                            list.add(new ItemImpl(this, key, generators));
+                            if (list.size >= trimmedSize && sorter == null) {
+                                // Stop without sorting etc.
+                                addMore = false;
 
-                    // Make sure the first part of the row key matches the start key we are looking for.
-                    boolean match = true;
-                    for (int i = 0; i < start.remaining() && match; i++) {
-                        if (start.get(i) != keyVal.key().get(i)) {
-                            match = false;
-                        }
-                    }
-
-                    if (match) {
-                        final ByteBuffer valueBuffer = keyVal.val();
-                        try (final UnsafeByteBufferInput input =
-                                serialisers.getInputFactory().createByteBufferInput(valueBuffer)) {
-                            while (!input.end() && inRange) {
-                                final LmdbValue rowValue = LmdbValue.read(serialisers, compiledFields, input);
-                                final Key key = rowValue.getKey();
-                                if (key.getParent().equals(parentKey)) {
-                                    final Generator[] generators = rowValue.getGenerators().getGenerators();
-                                    list.add(new ItemImpl(this, key, generators));
-                                    if (list.size >= trimmedSize && sorter == null) {
-                                        // Stop without sorting etc.
-                                        inRange = false;
-
-                                    } else {
-                                        trimmed = false;
-                                        if (list.size() > maxSize) {
-                                            list.sortAndTrim(sorter, trimmedSize, trimTop);
-                                            trimmed = true;
-                                        }
-                                    }
+                            } else {
+                                trimmed = false;
+                                if (list.size() > maxSize) {
+                                    list.sortAndTrim(sorter, trimmedSize, trimTop);
+                                    trimmed = true;
                                 }
                             }
+//                            }
                         }
-                    } else {
-                        inRange = false;
                     }
                 }
             }
@@ -937,32 +942,14 @@ public class LmdbDataStore implements DataStore {
                 return 0;
             }
 
-            final ByteBuffer start = LmdbKey.createKeyStem(depth, parentKey);
-            final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(start);
+            final KeyRange<ByteBuffer> keyRange = lmdbRowKeyFactory.createChildKeyRange(parentKey);
 
-            boolean inRange = true;
             try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(readTxn, keyRange)) {
                 final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
 
                 while (iterator.hasNext()
-                        && inRange
                         && !Thread.currentThread().isInterrupted()) {
-
-                    final KeyVal<ByteBuffer> keyVal = iterator.next();
-
-                    // Make sure the first part of the row key matches the start key we are looking for.
-                    boolean match = true;
-                    for (int i = 0; i < start.remaining() && match; i++) {
-                        if (start.get(i) != keyVal.key().get(i)) {
-                            match = false;
-                        }
-                    }
-
-                    if (match) {
-                        count++;
-                    } else {
-                        inRange = false;
-                    }
+                    count++;
                 }
             }
 
@@ -1038,7 +1025,6 @@ public class LmdbDataStore implements DataStore {
                 }
             };
         }
-
     }
 
     public static class ItemImpl implements Item {
@@ -1069,7 +1055,7 @@ public class LmdbDataStore implements DataStore {
                 if (evaluateChildren) {
                     final Supplier<ChildData> childDataSupplier = () -> {
                         // If we don't have any children at the requested depth then return null.
-                        if (data.compiledSorters.length <= key.size()) {
+                        if (data.compiledSorters.length <= key.getDepth()) {
                             return null;
                         }
 
@@ -1103,7 +1089,7 @@ public class LmdbDataStore implements DataStore {
                             public Val count() {
                                 final long count = data.countChildren(
                                         key,
-                                        key.size());
+                                        key.getDepth());
                                 if (count <= 0) {
                                     return ValNull.INSTANCE;
                                 }
@@ -1113,7 +1099,7 @@ public class LmdbDataStore implements DataStore {
                             private Val singleValue(final int trimmedSize, final boolean trimTop) {
                                 final Items items = data.getChildren(
                                         key,
-                                        key.size(),
+                                        key.getDepth(),
                                         trimmedSize,
                                         trimTop);
                                 if (items != null && items.size() == trimmedSize) {
@@ -1125,7 +1111,7 @@ public class LmdbDataStore implements DataStore {
                             private Val join(final String delimiter, final int limit, final boolean trimTop) {
                                 final Items items = data.getChildren(
                                         key,
-                                        key.size(),
+                                        key.getDepth(),
                                         limit,
                                         trimTop);
                                 if (items != null && items.size() > 0) {

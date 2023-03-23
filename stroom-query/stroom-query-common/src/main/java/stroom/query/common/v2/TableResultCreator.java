@@ -48,17 +48,14 @@ public class TableResultCreator implements ResultCreator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TableResultCreator.class);
 
-    private final SerialisersFactory serialisersFactory;
     private final FieldFormatter fieldFormatter;
     private final Sizes defaultMaxResultsSizes;
     private volatile List<Field> latestFields;
 
     private final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
 
-    public TableResultCreator(final SerialisersFactory serialisersFactory,
-                              final FieldFormatter fieldFormatter,
+    public TableResultCreator(final FieldFormatter fieldFormatter,
                               final Sizes defaultMaxResultsSizes) {
-        this.serialisersFactory = serialisersFactory;
         this.fieldFormatter = fieldFormatter;
         this.defaultMaxResultsSizes = defaultMaxResultsSizes;
     }
@@ -78,7 +75,7 @@ public class TableResultCreator implements ResultCreator {
                        final ResultBuilder<?> resultBuilder) {
         final TableResultBuilder tableResultBuilder = (TableResultBuilder) resultBuilder;
 
-        final Serialisers serialisers = serialisersFactory.create(errorConsumer);
+        final KeyFactory keyFactory = dataStore.getKeyFactory();
         final AtomicInteger totalResults = new AtomicInteger();
         final AtomicInteger currentLength = new AtomicInteger();
 
@@ -116,16 +113,16 @@ public class TableResultCreator implements ResultCreator {
 
             // Create the row creator.
             Optional<RowCreator> optionalRowCreator =
-                    ConditionalFormattingRowCreator.create(fieldFormatter, tableSettings);
+                    ConditionalFormattingRowCreator.create(fieldFormatter, keyFactory, tableSettings);
             if (optionalRowCreator.isEmpty()) {
-                optionalRowCreator = FilteredRowCreator.create(fieldFormatter, tableSettings);
+                optionalRowCreator = FilteredRowCreator.create(fieldFormatter, keyFactory, tableSettings);
                 if (optionalRowCreator.isEmpty()) {
-                    optionalRowCreator = SimpleRowCreator.create(fieldFormatter);
+                    optionalRowCreator = SimpleRowCreator.create(fieldFormatter, keyFactory);
                 }
             }
             final RowCreator rowCreator = optionalRowCreator.orElse(null);
 
-            final Set<Key> openGroups = OpenGroupsConverter.convertSet(serialisers, resultRequest.getOpenGroups());
+            final Set<Key> openGroups = keyFactory.convertSet(resultRequest.getOpenGroups());
             dataStore.getData(data ->
                     addTableResults(data,
                             latestFields.toArray(new Field[0]),
@@ -230,13 +227,17 @@ public class TableResultCreator implements ResultCreator {
     private static class SimpleRowCreator implements RowCreator {
 
         private final FieldFormatter fieldFormatter;
+        private final KeyFactory keyFactory;
 
-        private SimpleRowCreator(final FieldFormatter fieldFormatter) {
+        private SimpleRowCreator(final FieldFormatter fieldFormatter,
+                                 final KeyFactory keyFactory) {
             this.fieldFormatter = fieldFormatter;
+            this.keyFactory = keyFactory;
         }
 
-        public static Optional<RowCreator> create(final FieldFormatter fieldFormatter) {
-            return Optional.of(new SimpleRowCreator(fieldFormatter));
+        public static Optional<RowCreator> create(final FieldFormatter fieldFormatter,
+                                                  final KeyFactory keyFactory) {
+            return Optional.of(new SimpleRowCreator(fieldFormatter, keyFactory));
         }
 
         @Override
@@ -253,7 +254,7 @@ public class TableResultCreator implements ResultCreator {
             }
 
             return Row.builder()
-                    .groupKey(OpenGroupsConverter.encode(item.getKey()))
+                    .groupKey(keyFactory.encode(item.getKey(), errorConsumer))
                     .values(stringValues)
                     .depth(depth)
                     .build();
@@ -268,23 +269,29 @@ public class TableResultCreator implements ResultCreator {
     private static class FilteredRowCreator implements RowCreator {
 
         private final FieldFormatter fieldFormatter;
+        private final KeyFactory keyFactory;
         private final ExpressionOperator rowFilter;
         private final FieldExpressionMatcher expressionMatcher;
 
         private FilteredRowCreator(final FieldFormatter fieldFormatter,
+                                   final KeyFactory keyFactory,
                                    final ExpressionOperator rowFilter,
                                    final FieldExpressionMatcher expressionMatcher) {
             this.fieldFormatter = fieldFormatter;
+            this.keyFactory = keyFactory;
             this.rowFilter = rowFilter;
             this.expressionMatcher = expressionMatcher;
         }
 
         public static Optional<RowCreator> create(final FieldFormatter fieldFormatter,
+                                                  final KeyFactory keyFactory,
                                                   final TableSettings tableSettings) {
             if (tableSettings != null && tableSettings.getAggregateFilter() != null) {
                 final FieldExpressionMatcher expressionMatcher =
                         new FieldExpressionMatcher(tableSettings.getFields());
-                return Optional.of(new FilteredRowCreator(fieldFormatter,
+                return Optional.of(new FilteredRowCreator(
+                        fieldFormatter,
+                        keyFactory,
                         tableSettings.getAggregateFilter(),
                         expressionMatcher));
             }
@@ -315,7 +322,7 @@ public class TableResultCreator implements ResultCreator {
                 }
 
                 row = Row.builder()
-                        .groupKey(OpenGroupsConverter.encode(item.getKey()))
+                        .groupKey(keyFactory.encode(item.getKey(), errorConsumer))
                         .values(stringValues)
                         .depth(depth)
                         .build();
@@ -336,21 +343,25 @@ public class TableResultCreator implements ResultCreator {
     private static class ConditionalFormattingRowCreator implements RowCreator {
 
         private final FieldFormatter fieldFormatter;
+        private final KeyFactory keyFactory;
         private final ExpressionOperator rowFilter;
         private final List<ConditionalFormattingRule> rules;
         private final FieldExpressionMatcher expressionMatcher;
 
         private ConditionalFormattingRowCreator(final FieldFormatter fieldFormatter,
+                                                final KeyFactory keyFactory,
                                                 final ExpressionOperator rowFilter,
                                                 final List<ConditionalFormattingRule> rules,
                                                 final FieldExpressionMatcher expressionMatcher) {
             this.fieldFormatter = fieldFormatter;
+            this.keyFactory = keyFactory;
             this.rowFilter = rowFilter;
             this.rules = rules;
             this.expressionMatcher = expressionMatcher;
         }
 
         public static Optional<RowCreator> create(final FieldFormatter fieldFormatter,
+                                                  final KeyFactory keyFactory,
                                                   final TableSettings tableSettings) {
             // Create conditional formatting expression matcher.
             if (tableSettings != null) {
@@ -363,7 +374,9 @@ public class TableResultCreator implements ResultCreator {
                     if (rules.size() > 0) {
                         final FieldExpressionMatcher expressionMatcher =
                                 new FieldExpressionMatcher(tableSettings.getFields());
-                        return Optional.of(new ConditionalFormattingRowCreator(fieldFormatter,
+                        return Optional.of(new ConditionalFormattingRowCreator(
+                                fieldFormatter,
+                                keyFactory,
                                 tableSettings.getAggregateFilter(),
                                 rules,
                                 expressionMatcher));
@@ -428,7 +441,7 @@ public class TableResultCreator implements ResultCreator {
             if (matchingRule != null) {
                 if (!matchingRule.isHide()) {
                     final Row.Builder builder = Row.builder()
-                            .groupKey(OpenGroupsConverter.encode(item.getKey()))
+                            .groupKey(keyFactory.encode(item.getKey(), errorConsumer))
                             .values(stringValues)
                             .depth(depth);
 
@@ -445,7 +458,7 @@ public class TableResultCreator implements ResultCreator {
                 }
             } else {
                 row = Row.builder()
-                        .groupKey(OpenGroupsConverter.encode(item.getKey()))
+                        .groupKey(keyFactory.encode(item.getKey(), errorConsumer))
                         .values(stringValues)
                         .depth(depth)
                         .build();

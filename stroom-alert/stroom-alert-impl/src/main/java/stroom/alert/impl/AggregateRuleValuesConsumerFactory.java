@@ -1,10 +1,10 @@
 package stroom.alert.impl;
 
-import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
+import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.Lifespan;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
@@ -37,7 +37,13 @@ public class AggregateRuleValuesConsumerFactory {
         if (existingResultStore.isPresent()) {
             resultStore = existingResultStore.get();
         } else {
-            final Coprocessors coprocessors = coprocessorsFactory.create(searchRequest);
+            final DataStoreSettings dataStoreSettings = DataStoreSettings
+                    .builder()
+                    .requireStreamIdValue(false)
+                    .requireEventIdValue(false)
+                    .requireTimeValue(true)
+                    .build();
+            final Coprocessors coprocessors = coprocessorsFactory.create(searchRequest, dataStoreSettings);
             resultStore = resultStoreFactory.create(
                     searchRequest.getSearchRequestSource(),
                     coprocessors);

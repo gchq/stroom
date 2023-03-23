@@ -80,7 +80,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 () -> lmdbLibraryConfig);
 
         final ErrorConsumerImpl errorConsumer = new ErrorConsumerImpl();
-        final Serialisers serialisers = new SerialisersFactory().create(errorConsumer);
+        final Serialisers serialisers = new Serialisers(resultStoreConfig);
         return new LmdbDataStore(
                 serialisers,
                 lmdbEnvFactory,
@@ -91,7 +91,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 fieldIndex,
                 Collections.emptyMap(),
                 maxResults,
-                false,
+                DataStoreSettings.BASIC_SETTINGS,
                 () -> executorService,
                 errorConsumer);
     }
@@ -139,12 +139,41 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .requestedRange(new OffsetRange(0, 3000))
                 .build();
         final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                new SerialisersFactory(),
                 fieldFormatter,
                 defaultMaxResultsSizes);
         final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                 dataStore,
                 tableResultRequest);
         assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
+    }
+
+    @Test
+    void basicTest() {
+        super.basicTest();
+    }
+
+    @Test
+    void sortedTextTest() {
+        super.sortedTextTest();
+    }
+
+    @Test
+    void sortedNumberTest() {
+        super.sortedNumberTest();
+    }
+
+    @Test
+    void sortedCountedTextTest1() {
+        super.sortedCountedTextTest1();
+    }
+
+    @Test
+    void sortedCountedTextTest2() {
+        super.sortedCountedTextTest2();
+    }
+
+    @Test
+    void sortedCountedTextTest3() {
+        super.sortedCountedTextTest3();
     }
 }

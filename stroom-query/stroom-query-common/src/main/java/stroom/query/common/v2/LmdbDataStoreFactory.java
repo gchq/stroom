@@ -35,16 +35,19 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
     private final LmdbEnvFactory lmdbEnvFactory;
     private final Provider<ResultStoreConfig> resultStoreConfigProvider;
     private final Provider<Executor> executorProvider;
+    private final Provider<Serialisers> serialisersProvider;
     private final Path localDir;
 
     @Inject
     public LmdbDataStoreFactory(final LmdbEnvFactory lmdbEnvFactory,
                                 final Provider<ResultStoreConfig> resultStoreConfigProvider,
                                 final PathCreator pathCreator,
-                                final Provider<Executor> executorProvider) {
+                                final Provider<Executor> executorProvider,
+                                final Provider<Serialisers> serialisersProvider) {
         this.lmdbEnvFactory = lmdbEnvFactory;
         this.resultStoreConfigProvider = resultStoreConfigProvider;
         this.executorProvider = executorProvider;
+        this.serialisersProvider = serialisersProvider;
 
         // This config prop requires restart, so we can hold on to it
         this.localDir = getLocalDir(resultStoreConfigProvider, pathCreator);
@@ -55,34 +58,32 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
     }
 
     @Override
-    public DataStore create(final Serialisers serialisers,
-                            final QueryKey queryKey,
+    public DataStore create(final QueryKey queryKey,
                             final String componentId,
                             final TableSettings tableSettings,
                             final FieldIndex fieldIndex,
                             final Map<String, String> paramMap,
                             final Sizes maxResults,
                             final Sizes storeSize,
-                            final boolean producePayloads,
+                            final DataStoreSettings dataStoreSettings,
                             final ErrorConsumer errorConsumer) {
 
         final ResultStoreConfig resultStoreConfig = resultStoreConfigProvider.get();
         if (!resultStoreConfig.isOffHeapResults()) {
-            if (producePayloads) {
+            if (dataStoreSettings.isProducePayloads()) {
                 throw new RuntimeException("MapDataStore cannot produce payloads");
             }
 
             return new MapDataStore(
-                    serialisers,
+                    serialisersProvider.get(),
                     tableSettings,
                     fieldIndex,
                     paramMap,
                     maxResults,
-                    storeSize,
-                    errorConsumer);
+                    storeSize);
         } else {
             return new LmdbDataStore(
-                    serialisers,
+                    serialisersProvider.get(),
                     lmdbEnvFactory,
                     resultStoreConfig,
                     queryKey,
@@ -91,7 +92,7 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                     fieldIndex,
                     paramMap,
                     maxResults,
-                    producePayloads,
+                    dataStoreSettings,
                     executorProvider,
                     errorConsumer);
         }

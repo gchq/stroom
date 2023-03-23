@@ -19,7 +19,6 @@ package stroom.query.common.v2;
 import stroom.dashboard.expression.v1.ChildData;
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.FieldOffset;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValLong;
@@ -37,7 +36,6 @@ import com.esotericsoftware.kryo.io.Output;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -58,7 +56,7 @@ public class MapDataStore implements DataStore, Data {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MapDataStore.class);
 
-    private final Key rootKey;
+    private final Serialisers serialisers;
     private final Map<Key, ItemsImpl> childMap = new ConcurrentHashMap<>();
     private final AtomicLong ungroupedItemSequenceNumber = new AtomicLong();
 
@@ -73,6 +71,8 @@ public class MapDataStore implements DataStore, Data {
     private final GroupingFunction[] groupingFunctions;
     private final boolean hasSort;
     private final CompletionState completionState = new CompletionStateImpl();
+    private final KeyFactoryConfig keyFactoryConfig;
+    private final KeyFactory keyFactory;
 
     private volatile boolean hasEnoughData;
 
@@ -81,16 +81,17 @@ public class MapDataStore implements DataStore, Data {
                         final FieldIndex fieldIndex,
                         final Map<String, String> paramMap,
                         final Sizes maxResults,
-                        final Sizes storeSize,
-                        final ErrorConsumer errorConsumer) {
+                        final Sizes storeSize) {
+        this.serialisers = serialisers;
         compiledFields = CompiledFields.create(tableSettings.getFields(), fieldIndex, paramMap);
         final CompiledDepths compiledDepths = new CompiledDepths(compiledFields, tableSettings.showDetail());
         this.compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), compiledFields);
         this.compiledDepths = compiledDepths;
+        keyFactoryConfig = new BasicKeyFactoryConfig();
+        keyFactory = new KeyFactory(keyFactoryConfig, serialisers);
         this.maxResults = maxResults;
         this.storeSize = storeSize;
 
-        rootKey = Key.createRoot(serialisers);
         groupingFunctions = new GroupingFunction[compiledDepths.getMaxDepth() + 1];
         for (int depth = 0; depth <= compiledDepths.getMaxGroupDepth(); depth++) {
             groupingFunctions[depth] = new GroupingFunction();
@@ -118,7 +119,7 @@ public class MapDataStore implements DataStore, Data {
         final boolean[][] groupIndicesByDepth = compiledDepths.getGroupIndicesByDepth();
         final boolean[][] valueIndicesByDepth = compiledDepths.getValueIndicesByDepth();
 
-        Key key = rootKey;
+        Key key = Key.ROOT_KEY;
         Key parentKey = key;
         for (int depth = 0; depth < groupIndicesByDepth.length; depth++) {
             final Generator[] generators = new Generator[compiledFields.length];
@@ -189,11 +190,11 @@ public class MapDataStore implements DataStore, Data {
 
             if (depth <= compiledDepths.getMaxGroupDepth()) {
                 // This is a grouped item.
-                key = key.resolve(groupValues);
+                key = key.resolve(0, groupValues);
 
             } else {
                 // This item will not be grouped.
-                key = key.resolve(ungroupedItemSequenceNumber.incrementAndGet());
+                key = key.resolve(0, ungroupedItemSequenceNumber.incrementAndGet());
             }
 
             addToChildMap(depth, parentKey, key, generators);
@@ -273,7 +274,7 @@ public class MapDataStore implements DataStore, Data {
      */
     @Override
     public Items get() {
-        return get(rootKey);
+        return get(Key.ROOT_KEY);
     }
 
     /**
@@ -287,7 +288,7 @@ public class MapDataStore implements DataStore, Data {
         Items result;
 
         if (parentKey == null) {
-            result = childMap.get(rootKey);
+            result = childMap.get(Key.ROOT_KEY);
         } else {
             result = childMap.get(parentKey);
         }
@@ -412,6 +413,16 @@ public class MapDataStore implements DataStore, Data {
             LOGGER.debug(e::getMessage, e);
         }
         return size;
+    }
+
+    @Override
+    public Serialisers getSerialisers() {
+        return serialisers;
+    }
+
+    @Override
+    public KeyFactory getKeyFactory() {
+        return keyFactory;
     }
 
     public static class ItemsImpl implements Items {

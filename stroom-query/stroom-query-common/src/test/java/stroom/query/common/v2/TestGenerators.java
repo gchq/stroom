@@ -18,7 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestGenerators {
 
-    private final Serialisers serialisers = new SerialisersFactory().create(new ErrorConsumerImpl());
+    private final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
+    private final Serialisers serialisers = new Serialisers(new ResultStoreConfig());
 
     @Test
     void test() {
@@ -48,7 +49,7 @@ class TestGenerators {
             }
         }
 
-        byte[] generatorBytes = new Generators(serialisers, compiledFields, generators).getBytes();
+        byte[] generatorBytes = new Generators(serialisers, compiledFields, generators).getBytes(errorConsumer);
         final String expected = toString(generators);
 
         final Generator[] generators1 = new Generators(serialisers, compiledFields, generatorBytes).getGenerators();
@@ -59,7 +60,7 @@ class TestGenerators {
         // Try with some null values.
         generators[3] = null;
         generators[4] = null;
-        generatorBytes = new Generators(serialisers, compiledFields, generators).getBytes();
+        generatorBytes = new Generators(serialisers, compiledFields, generators).getBytes(errorConsumer);
         final String expected2 = toString(generators);
 
         final Generator[] generators2 = new Generators(serialisers, compiledFields, generatorBytes).getGenerators();
@@ -118,7 +119,7 @@ class TestGenerators {
             }
         }
 
-        byte[] generatorBytes = new Generators(serialisers, compiledFields, generators).getBytes();
+        byte[] generatorBytes = new Generators(serialisers, compiledFields, generators).getBytes(errorConsumer);
         final String expected = toString(generators);
 
         final Generator[] generators1 = new Generators(serialisers, compiledFields, generatorBytes).getGenerators();
@@ -129,7 +130,7 @@ class TestGenerators {
         // Try with some null values.
         generators[3] = null;
         generators[4] = null;
-        generatorBytes = new Generators(serialisers, compiledFields, generators).getBytes();
+        generatorBytes = new Generators(serialisers, compiledFields, generators).getBytes(errorConsumer);
         final String expected2 = toString(generators);
 
         final Generator[] generators2 = new Generators(serialisers, compiledFields, generatorBytes).getGenerators();
@@ -151,7 +152,7 @@ class TestGenerators {
 
         final Generator[] generators = new Generator[fields.size()];
 
-        byte[] generatorBytes = new Generators(serialisers, compiledFields, generators).getBytes();
+        byte[] generatorBytes = new Generators(serialisers, compiledFields, generators).getBytes(errorConsumer);
         final String expected = toString(generators);
 
         final Generator[] generators1 = new Generators(serialisers, compiledFields, generatorBytes).getGenerators();
@@ -162,7 +163,7 @@ class TestGenerators {
         // Try with some null values.
         generators[3] = null;
         generators[4] = null;
-        generatorBytes = new Generators(serialisers, compiledFields, generators).getBytes();
+        generatorBytes = new Generators(serialisers, compiledFields, generators).getBytes(errorConsumer);
         final String expected2 = toString(generators);
 
         final Generator[] generators2 = new Generators(serialisers, compiledFields, generatorBytes).getGenerators();

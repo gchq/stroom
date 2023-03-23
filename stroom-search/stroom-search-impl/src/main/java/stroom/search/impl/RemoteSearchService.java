@@ -3,6 +3,7 @@ package stroom.search.impl;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
+import stroom.query.common.v2.DataStoreSettings;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
@@ -76,7 +77,7 @@ public class RemoteSearchService {
                         clusterSearchTask.getKey(),
                         clusterSearchTask.getSettings(),
                         query.getParams(),
-                        true);
+                        DataStoreSettings.PAYLOAD_PRODUCER_SETTINGS);
                 remoteSearchResultFactory.setCoprocessors(coprocessors);
 
                 if (coprocessors != null && coprocessors.size() > 0) {
