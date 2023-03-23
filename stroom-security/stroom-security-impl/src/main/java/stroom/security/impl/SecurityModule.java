@@ -30,6 +30,7 @@ import stroom.security.impl.event.PermissionChangeEventModule;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.shared.UserNameProvider;
+import stroom.security.user.api.UserNameService;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
@@ -60,6 +61,7 @@ public class SecurityModule extends AbstractModule {
         bind(IdpConfigurationProvider.class).to(DelegatingIdpConfigurationProvider.class);
         // Now bind OpenIdConfiguration to the iface from prev bind
         bind(OpenIdConfiguration.class).to(IdpConfigurationProvider.class);
+        bind(UserNameService.class).to(UserNameServiceImpl.class);
 
         HasHealthCheckBinder.create(binder())
                 .bind(ExternalIdpConfigurationProvider.class);

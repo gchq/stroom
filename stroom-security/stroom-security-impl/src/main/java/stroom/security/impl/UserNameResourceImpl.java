@@ -22,6 +22,7 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.shared.FindUserNameCriteria;
 import stroom.security.shared.UserNameResource;
+import stroom.security.user.api.UserNameService;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserName;
 

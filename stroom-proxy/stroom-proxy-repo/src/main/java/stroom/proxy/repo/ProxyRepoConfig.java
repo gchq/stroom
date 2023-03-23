@@ -44,11 +44,8 @@ public class ProxyRepoConfig extends AbstractConfig implements IsProxyConfig {
         return storingEnabled;
     }
 
-    /**
-     * Optional Repository DIR. If set any incoming request will be written to the file system.
-     */
     @RequiresProxyRestart
-    @ValidDirectoryPath
+    @ValidDirectoryPath(ensureExistence = true)
     @JsonProperty
     public String getRepoDir() {
         return repoDir;

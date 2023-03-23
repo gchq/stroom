@@ -10,6 +10,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserNameProvider;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.SimpleUserName;
 import stroom.util.shared.UserName;
 
 import com.google.common.base.Strings;
@@ -44,7 +45,7 @@ public class AccountServiceImpl implements AccountService, UserNameProvider {
     public ResultPage<UserName> findUserNames(final FindUserNameCriteria criteria) {
 
         // Only the internal IDP uses Accounts, so no point hitting it for other IDPs
-        if (IdpType.INTERNAL_IDP.equals(openIdConfigurationProvider.get().getIdentityProviderType())) {
+        if (shouldProvideNames()) {
             final SearchAccountRequest request = new SearchAccountRequest(
                     criteria.getPageRequest(),
                     criteria.getSortList(),
@@ -54,16 +55,34 @@ public class AccountServiceImpl implements AccountService, UserNameProvider {
 
             final List<UserName> list = result.getValues()
                     .stream()
-                    .map(account -> new UserName(
-                            account.getUserId(),
-                            account.getUserId(), // use user id for both name and displayName
-                            account.getFullName()))
+                    .map(this::mapAccountToUserName)
                     .collect(Collectors.toList());
 
             return new ResultPage<>(list, result.getPageResponse());
         } else {
             return new ResultPage<>(Collections.emptyList());
         }
+    }
+
+    @Override
+    public Optional<UserName> getUserName(final String userId) {
+        if (shouldProvideNames()) {
+            return accountDao.get(userId)
+                    .map(this::mapAccountToUserName);
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    private UserName mapAccountToUserName(final Account account) {
+        return new SimpleUserName(
+                account.getUserId(),
+                account.getUserId(), // use user id for both name and displayName
+                account.getFullName());
+    }
+
+    private boolean shouldProvideNames() {
+        return IdpType.INTERNAL_IDP.equals(openIdConfigurationProvider.get().getIdentityProviderType());
     }
 
     @Override

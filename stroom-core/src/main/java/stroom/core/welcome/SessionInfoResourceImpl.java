@@ -7,6 +7,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.SessionInfo;
+import stroom.util.shared.SimpleUserName;
 import stroom.util.shared.UserName;
 
 import javax.inject.Inject;
@@ -31,7 +32,7 @@ public class SessionInfoResourceImpl implements SessionInfoResource {
     @Override
     public SessionInfo get() {
         final UserIdentity userIdentity = securityContextProvider.get().getUserIdentity();
-        final UserName userName = new UserName(
+        final UserName userName = new SimpleUserName(
                 userIdentity.getId(),
                 userIdentity.getDisplayName(),
                 userIdentity.getFullName().orElse(null));

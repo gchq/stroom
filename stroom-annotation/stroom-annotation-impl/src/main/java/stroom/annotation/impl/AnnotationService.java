@@ -18,6 +18,7 @@ import stroom.search.extraction.ExpressionFilter;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.security.user.api.UserNameService;
 import stroom.util.shared.PermissionException;
 
 import java.util.List;
@@ -29,12 +30,15 @@ public class AnnotationService implements Searchable, AnnotationCreator {
 
     private final AnnotationDao annotationDao;
     private final SecurityContext securityContext;
+    private final UserNameService userNameService;
 
     @Inject
     AnnotationService(final AnnotationDao annotationDao,
-                      final SecurityContext securityContext) {
+                      final SecurityContext securityContext,
+                      final UserNameService userNameService) {
         this.annotationDao = annotationDao;
         this.securityContext = securityContext;
+        this.userNameService = userNameService;
     }
 
     @Override

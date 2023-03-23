@@ -20,6 +20,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * and the directory exists. Symbolic links will be followed.
  * Null values will not fail validation.
  * {@link NotNull} can be used in addition to ensure a path is supplied.
+ * If {@code ensureExistence} is true, it will attempt to create the directory if
+ * the value is non-null.
  */
 @Target({FIELD, METHOD, PARAMETER, ANNOTATION_TYPE, TYPE_USE})
 @Retention(RUNTIME)
@@ -28,6 +30,11 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface ValidDirectoryPath {
 
     String message() default "path does not exist or is not a directory";
+
+    /**
+     * If true it will first ensure the existence of the directory.
+     */
+    boolean ensureExistence() default false;
 
     Class<?>[] groups() default {};
 

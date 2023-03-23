@@ -28,6 +28,7 @@ import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.SimpleUserName;
 import stroom.util.shared.UserName;
 
 import java.util.HashSet;
@@ -62,7 +63,7 @@ class UserServiceImpl implements UserService, UserNameProvider {
 
     @Override
     public User getOrCreateUserGroup(final String name, final Consumer<User> onCreateAction) {
-        return getOrCreate(new UserName(name), true, onCreateAction);
+        return getOrCreate(new SimpleUserName(name), true, onCreateAction);
     }
 
     private User getOrCreate(final UserName name,
@@ -139,12 +140,18 @@ class UserServiceImpl implements UserService, UserNameProvider {
                 criteria.getQuickFilterInput(),
                 false,
                 null);
-        final List<User> users = find(findUserCriteria);
-        final List<UserName> list = users.stream()
-                .map(User::getUsername)
-                .collect(Collectors.toList());
+        final List<UserName> userNames = find(findUserCriteria)
+                .stream()
+                .map(usr -> (UserName) usr)
+                .toList();
 
-        return new ResultPage<>(list);
+        return new ResultPage<>(userNames);
+    }
+
+    @Override
+    public Optional<UserName> getUserName(final String userId) {
+        return getUserByName(userId)
+                .map(usr -> usr);
     }
 
     @Override

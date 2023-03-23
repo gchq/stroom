@@ -194,14 +194,14 @@ public class ExternalIdpConfigurationProvider
                 } catch (Exception e) {
                     // The app is pretty dead without a connection to the IDP so keep retrying
                     LOGGER.warn(LogUtil.message(
-                            "Unable to establish connection to {} to fetch Open ID configuration. " +
-                                    "Will try again in {}. Enable debug to see stack trace. Error: {}",
+                            "Unable to establish connection to the identity provider at {} to fetch Open ID " +
+                                    "configuration. Will try again in {}. Enable debug to see stack trace. Error: {}",
                             configurationEndpoint, Duration.ofMillis(sleepMs), e.getMessage()));
 
                     if (LOGGER.isDebugEnabled()) {
                         if (lastThrowable == null || !e.getMessage().equals(lastThrowable.getMessage())) {
                             // Only log the stack when it changes, else it fills up the log pretty quickly
-                            LOGGER.debug("Unable to establish connection to {} to fetch Open ID configuration.",
+                            LOGGER.debug("Unable to establish connection to IDP at {} to fetch Open ID configuration.",
                                     configurationEndpoint, e);
                         }
                         lastThrowable = e;

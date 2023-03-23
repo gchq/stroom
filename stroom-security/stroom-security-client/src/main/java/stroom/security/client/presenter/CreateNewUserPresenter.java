@@ -18,6 +18,7 @@
 package stroom.security.client.presenter;
 
 import stroom.security.client.presenter.CreateNewUserPresenter.CreateNewUserView;
+import stroom.util.shared.SimpleUserName;
 import stroom.util.shared.UserName;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -57,7 +58,7 @@ public class CreateNewUserPresenter extends MyPresenterWidget<CreateNewUserView>
     }
 
     public UserName getUserName() {
-        return new UserName(
+        return new SimpleUserName(
                 getView().getUserIdentity(),
                 getView().getDisplayName(),
                 getView().getFullName());

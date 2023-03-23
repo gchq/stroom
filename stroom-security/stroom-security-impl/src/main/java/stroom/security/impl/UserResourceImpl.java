@@ -13,6 +13,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.SimpleUserName;
 import stroom.util.shared.UserName;
 
 import event.logging.CreateEventAction;
@@ -187,7 +188,7 @@ public class UserResourceImpl implements UserResource {
                                     ? csvRec.get(FULL_NAME_CSV_COL_IDX)
                                     : null;
 
-                            return new UserName(
+                            return new SimpleUserName(
                                     userId,
                                     displayName,
                                     fullName);

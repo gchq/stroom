@@ -6,7 +6,6 @@ import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.UserName;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -17,7 +16,7 @@ import java.util.Objects;
  * Represents a user or a named group of users.
  */
 @JsonInclude(Include.NON_NULL)
-public class User implements HasAuditInfo, HasIntegerId {
+public class User implements HasAuditInfo, HasIntegerId, UserName {
 
     public static final String ADMIN_USER_NAME = "admin";
 
@@ -217,14 +216,6 @@ public class User implements HasAuditInfo, HasIntegerId {
 
     public void setGroup(boolean group) {
         this.group = group;
-    }
-
-    @JsonIgnore
-    public UserName getUsername() {
-        return new UserName(
-                name,
-                displayName,
-                fullName);
     }
 
     @Override

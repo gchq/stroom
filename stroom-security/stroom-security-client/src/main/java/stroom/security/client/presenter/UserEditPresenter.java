@@ -18,6 +18,7 @@ package stroom.security.client.presenter;
 
 import stroom.security.client.presenter.UserEditPresenter.UserEditView;
 import stroom.security.shared.User;
+import stroom.util.shared.UserName;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -30,6 +31,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+
+import java.util.Objects;
 
 public class UserEditPresenter extends MyPresenterWidget<UserEditView>
         implements UserEditUiHandlers {
@@ -85,7 +88,7 @@ public class UserEditPresenter extends MyPresenterWidget<UserEditView>
                         .resizable(true)
                         .build())
                 .build();
-        final String caption = "User - " + userRef.getUsername().getCombinedName();
+        final String caption = "User - " + UserName.buildCombinedName(userRef);
         ShowPopupEvent.fire(
                 UserEditPresenter.this,
                 UserEditPresenter.this,
