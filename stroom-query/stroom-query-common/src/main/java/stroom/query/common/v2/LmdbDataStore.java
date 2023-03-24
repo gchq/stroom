@@ -33,6 +33,7 @@ import stroom.lmdb.LmdbEnvFactory;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.api.v2.TimeFilter;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.util.concurrent.CompleteException;
 import stroom.util.logging.LambdaLogger;
@@ -102,6 +103,7 @@ public class LmdbDataStore implements DataStore {
     private final CompletionState completionState = new CompletionStateImpl(this, complete);
     private final QueryKey queryKey;
     private final String componentId;
+    private final FieldIndex fieldIndex;
     private final boolean producePayloads;
     private final ErrorConsumer errorConsumer;
     private final LmdbRowKeyFactory lmdbRowKeyFactory;
@@ -131,6 +133,7 @@ public class LmdbDataStore implements DataStore {
         this.maxResults = maxResults;
         this.queryKey = queryKey;
         this.componentId = componentId;
+        this.fieldIndex = fieldIndex;
         this.producePayloads = dataStoreSettings.isProducePayloads();
         this.errorConsumer = errorConsumer;
 
@@ -143,8 +146,8 @@ public class LmdbDataStore implements DataStore {
         compiledDepths = new CompiledDepths(compiledFields, modifiedTableSettings.showDetail());
         compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), compiledFields);
         keyFactoryConfig = new KeyFactoryConfigImpl(compiledFields, compiledDepths, dataStoreSettings);
-        keyFactory = new KeyFactory(keyFactoryConfig, serialisers);
-        lmdbRowKeyFactory = new LmdbRowKeyFactory(keyFactory, keyFactoryConfig, compiledDepths);
+        keyFactory = KeyFactoryFactory.create(serialisers, keyFactoryConfig, compiledDepths);
+        lmdbRowKeyFactory = LmdbRowKeyFactoryFactory.create(keyFactory, keyFactoryConfig, compiledDepths);
         payloadCreator = new LmdbPayloadCreator(
                 serialisers,
                 queryKey,
@@ -631,7 +634,6 @@ public class LmdbDataStore implements DataStore {
                                     lmdbRowKeyFactory,
                                     keyFactory,
                                     serialisers,
-                                    Key.ROOT_KEY,
                                     dbi,
                                     readTxn,
                                     compiledFields,
@@ -767,6 +769,10 @@ public class LmdbDataStore implements DataStore {
         return keyFactory;
     }
 
+    public FieldIndex getFieldIndex() {
+        return fieldIndex;
+    }
+
     private static class ValCache {
 
         private final Provider<Generator> generatorProvider;
@@ -804,7 +810,6 @@ public class LmdbDataStore implements DataStore {
         private final LmdbRowKeyFactory lmdbRowKeyFactory;
         private final KeyFactory keyFactory;
         private final Serialisers serialisers;
-        private final Key rootKey;
         private final Dbi<ByteBuffer> dbi;
         private final Txn<ByteBuffer> readTxn;
         private final CompiledField[] compiledFields;
@@ -815,7 +820,6 @@ public class LmdbDataStore implements DataStore {
         public LmdbData(final LmdbRowKeyFactory lmdbRowKeyFactory,
                         final KeyFactory keyFactory,
                         final Serialisers serialisers,
-                        final Key rootKey,
                         final Dbi<ByteBuffer> dbi,
                         final Txn<ByteBuffer> readTxn,
                         final CompiledField[] compiledFields,
@@ -825,24 +829,12 @@ public class LmdbDataStore implements DataStore {
             this.lmdbRowKeyFactory = lmdbRowKeyFactory;
             this.keyFactory = keyFactory;
             this.serialisers = serialisers;
-            this.rootKey = rootKey;
             this.dbi = dbi;
             this.readTxn = readTxn;
             this.compiledFields = compiledFields;
             this.compiledSorters = compiledSorters;
             this.maxResults = maxResults;
             this.queryKey = queryKey;
-        }
-
-        /**
-         * Get root items from the data store.
-         *
-         * @return Root items.
-         */
-        @Override
-        public Items get() {
-            LOGGER.trace(() -> "get() called");
-            return get(rootKey);
         }
 
         /**
@@ -853,18 +845,19 @@ public class LmdbDataStore implements DataStore {
          * @return The child items for the parent key.
          */
         @Override
-        public Items get(final Key parentKey) {
+        public Items get(final Key parentKey, final TimeFilter timeFilter) {
             SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_GET);
             LOGGER.trace(() -> "get() called for parentKey: " + parentKey);
 
             return Metrics.measure("get", () -> {
                 final int childDepth = parentKey.getDepth() + 1;
                 final int trimmedSize = maxResults.size(childDepth);
-                return getChildren(parentKey, childDepth, trimmedSize, false);
+                return getChildren(parentKey, timeFilter, childDepth, trimmedSize, false);
             });
         }
 
         private ItemsImpl getChildren(final Key parentKey,
+                                      final TimeFilter timeFilter,
                                       final int childDepth,
                                       final int trimmedSize,
                                       final boolean trimTop) {
@@ -876,7 +869,7 @@ public class LmdbDataStore implements DataStore {
 
             final ItemsImpl list = new ItemsImpl(10);
 
-            final KeyRange<ByteBuffer> keyRange = lmdbRowKeyFactory.createChildKeyRange(parentKey);
+            final KeyRange<ByteBuffer> keyRange = lmdbRowKeyFactory.createChildKeyRange(parentKey, timeFilter);
             final int maxSize;
             if (trimmedSize < Integer.MAX_VALUE / 2) {
                 maxSize = Math.max(1000, trimmedSize * 2);
@@ -891,7 +884,7 @@ public class LmdbDataStore implements DataStore {
             try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(
                     readTxn,
                     keyRange,
-                    KEY_COMPARATOR)) {
+                    lmdbRowKeyFactory.getKeyComparator())) {
                 final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
 
                 while (iterator.hasNext()
@@ -907,7 +900,7 @@ public class LmdbDataStore implements DataStore {
                             final Key key = rowValue.getKey();
 //                            if (key.getParent().equals(parentKey)) {
                             final Generator[] generators = rowValue.getGenerators().getGenerators();
-                            list.add(new ItemImpl(this, key, generators));
+                            list.add(new ItemImpl(this, key, timeFilter, generators));
                             if (list.size >= trimmedSize && sorter == null) {
                                 // Stop without sorting etc.
                                 addMore = false;
@@ -1030,13 +1023,16 @@ public class LmdbDataStore implements DataStore {
 
         private final LmdbData data;
         private final Key key;
+        private final TimeFilter timeFilter;
         private final Generator[] generators;
 
         public ItemImpl(final LmdbData data,
                         final Key key,
+                        final TimeFilter timeFilter,
                         final Generator[] generators) {
             this.data = data;
             this.key = key;
+            this.timeFilter = timeFilter;
             this.generators = generators;
         }
 
@@ -1098,6 +1094,7 @@ public class LmdbDataStore implements DataStore {
                             private Val singleValue(final int trimmedSize, final boolean trimTop) {
                                 final Items items = data.getChildren(
                                         key,
+                                        timeFilter,
                                         key.getDepth(),
                                         trimmedSize,
                                         trimTop);
@@ -1110,6 +1107,7 @@ public class LmdbDataStore implements DataStore {
                             private Val join(final String delimiter, final int limit, final boolean trimTop) {
                                 final Items items = data.getChildren(
                                         key,
+                                        timeFilter,
                                         key.getDepth(),
                                         limit,
                                         trimTop);

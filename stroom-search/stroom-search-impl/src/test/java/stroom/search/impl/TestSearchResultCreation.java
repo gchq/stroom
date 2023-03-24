@@ -31,6 +31,7 @@ import stroom.query.common.v2.DataStoreFactory;
 import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.Item;
 import stroom.query.common.v2.Items;
+import stroom.query.common.v2.Key;
 import stroom.query.common.v2.LmdbDataStoreFactory;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreConfig;
@@ -461,7 +462,7 @@ class TestSearchResultCreation {
 
         final DataStore dataStore = resultStore.getData("table-78LF4");
         dataStore.getData(data -> {
-            final Items dataItems = data.get();
+            final Items dataItems = data.get(Key.ROOT_KEY, null);
             final Item dataItem = dataItems.iterator().next();
             final Val val = dataItem.getValue(2, true);
             assertThat(val.toLong())

@@ -26,20 +26,22 @@ import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.ResultBuilder;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableResultBuilder;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.api.v2.TimeFilter;
 import stroom.query.common.v2.CompiledField;
 import stroom.query.common.v2.CompiledFields;
-import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.ErrorConsumer;
 import stroom.query.common.v2.ErrorConsumerImpl;
-import stroom.query.common.v2.ResultStore;
-import stroom.query.common.v2.ResultStoreManager;
+import stroom.query.common.v2.LmdbDataStore;
+import stroom.query.common.v2.Sizes;
+import stroom.query.common.v2.TableResultCreator;
+import stroom.query.common.v2.format.FieldFormatter;
+import stroom.query.common.v2.format.FormatterFactory;
 import stroom.search.extraction.ExtractionException;
 import stroom.search.extraction.ExtractionStateHolder;
 import stroom.search.impl.SearchExpressionQueryBuilderFactory;
@@ -61,7 +63,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -75,7 +76,6 @@ public class ResultStoreAlertSearchExecutor {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ResultStoreAlertSearchExecutor.class);
 
-    private final ResultStoreManager resultStoreManager;
     private final AlertRuleSearchRequestHelper alertRuleSearchRequestHelper;
     private final ExecutorProvider executorProvider;
     private final Provider<DetectionsWriter> detectionsWriterProvider;
@@ -98,8 +98,7 @@ public class ResultStoreAlertSearchExecutor {
     private final Map<AlertRuleDoc, Meta> lastProcessedMeta = new ConcurrentHashMap<>();
 
     @Inject
-    public ResultStoreAlertSearchExecutor(final ResultStoreManager resultStoreManager,
-                                          final AlertRuleSearchRequestHelper alertRuleSearchRequestHelper,
+    public ResultStoreAlertSearchExecutor(final AlertRuleSearchRequestHelper alertRuleSearchRequestHelper,
                                           final ExecutorProvider executorProvider,
                                           final AlertRuleStore alertRuleStore,
                                           final SecurityContext securityContext,
@@ -115,7 +114,6 @@ public class ResultStoreAlertSearchExecutor {
                                           final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory,
                                           final AggregateRuleValuesConsumerFactory aggregateRuleValuesConsumerFactory,
                                           final Provider<AlertWriter2> alertWriterProvider) {
-        this.resultStoreManager = resultStoreManager;
         this.alertRuleSearchRequestHelper = alertRuleSearchRequestHelper;
         this.executorProvider = executorProvider;
         this.detectionsWriterProvider = detectionsWriterProvider;
@@ -293,9 +291,9 @@ public class ResultStoreAlertSearchExecutor {
             final PipelineData pipelineData = getPipelineData(extractionPipeline);
 
             // Create coprocessors.
-            final Coprocessors coprocessors = aggregateRuleValuesConsumerFactory.create(searchRequest);
+            final LmdbDataStore lmdbDataStore = aggregateRuleValuesConsumerFactory.create(searchRequest);
             // Get the field index.
-            final FieldIndex fieldIndex = coprocessors.getFieldIndex();
+            final FieldIndex fieldIndex = lmdbDataStore.getFieldIndex();
 
             // Cache the query for use across multiple streams.
             final SearchExpressionQueryCache searchExpressionQueryCache =
@@ -313,7 +311,7 @@ public class ResultStoreAlertSearchExecutor {
                                     final AlertFieldListConsumer alertFieldListConsumer = new AlertFieldListConsumer(
                                             searchRequest,
                                             fieldIndex,
-                                            coprocessors,
+                                            lmdbDataStore,
                                             searchExpressionQueryCache);
 
                                     final ExtractionStateHolder extractionStateHolder =
@@ -427,14 +425,15 @@ public class ResultStoreAlertSearchExecutor {
                                         final LocalDateTime to,
                                         final RecordConsumer recordConsumer) {
         final QueryKey queryKey = alertRuleDoc.getQueryKey();
-        final Optional<ResultStore> optionalResultStore = resultStoreManager.getIfPresent(queryKey);
+        final Optional<LmdbDataStore> optionalResultStore = aggregateRuleValuesConsumerFactory.getIfPresent(queryKey);
         if (optionalResultStore.isPresent()) {
+            final LmdbDataStore lmdbDataStore = optionalResultStore.get();
 
 
             // TODO : TEMPORARY COMPLETION - NEEDS SYNC BLOCK
             try {
-                optionalResultStore.get().signalComplete();
-                optionalResultStore.get().awaitCompletion();
+                lmdbDataStore.getCompletionState().signalComplete();
+                lmdbDataStore.getCompletionState().awaitCompletion();
             } catch (final InterruptedException e) {
                 throw UncheckedInterruptedException.create(e);
             }
@@ -442,20 +441,25 @@ public class ResultStoreAlertSearchExecutor {
             // Create a search request.
             SearchRequest searchRequest = alertRuleSearchRequestHelper.create(alertRuleDoc);
             // Create a time filter.
-            final TimeFilter timeFilter = new TimeFilter(alertRuleDoc.getTimeField(),
-                    from.toInstant(ZoneOffset.UTC),
-                    to.toInstant(ZoneOffset.UTC));
+            final TimeFilter timeFilter = new TimeFilter(
+                    from.toInstant(ZoneOffset.UTC).toEpochMilli(),
+                    to.toInstant(ZoneOffset.UTC).toEpochMilli());
 
             searchRequest = searchRequest.copy().key(queryKey).incremental(true).build();
             // Perform the search.
-            final Map<String, ResultBuilder<?>> resultBuilderMap = new HashMap<>();
-            for (final ResultRequest resultRequest : searchRequest.getResultRequests()) {
-                final TableResultConsumer tableResultConsumer =
-                        new TableResultConsumer(alertRuleDoc, recordConsumer, timeFilter);
-                resultBuilderMap.put(resultRequest.getComponentId(), tableResultConsumer);
-            }
+            ResultRequest resultRequest = searchRequest.getResultRequests().get(0);
+            resultRequest = resultRequest.copy().timeFilter(timeFilter).build();
+            final TableResultConsumer tableResultConsumer =
+                    new TableResultConsumer(alertRuleDoc, recordConsumer);
 
-            resultStoreManager.search(searchRequest, resultBuilderMap);
+            final FieldFormatter fieldFormatter =
+                    new FieldFormatter(new FormatterFactory(null));
+            final TableResultCreator resultCreator = new TableResultCreator(
+                    fieldFormatter,
+                    Sizes.create(Integer.MAX_VALUE));
+
+            // Create result.
+            resultCreator.create(lmdbDataStore, resultRequest, tableResultConsumer);
 
             // Remember last successful execution.
             lastExecutionTimes.put(alertRuleDoc, to);
@@ -518,17 +522,13 @@ public class ResultStoreAlertSearchExecutor {
 
         private final AlertRuleDoc alertRuleDoc;
         private final RecordConsumer recordConsumer;
-        private final TimeFilter timeFilter;
 
         private List<Field> fields;
-        private int timeFieldIndex = -1;
 
         public TableResultConsumer(final AlertRuleDoc alertRuleDoc,
-                                   final RecordConsumer recordConsumer,
-                                   final TimeFilter timeFilter) {
+                                   final RecordConsumer recordConsumer) {
             this.alertRuleDoc = alertRuleDoc;
             this.recordConsumer = recordConsumer;
-            this.timeFilter = timeFilter;
         }
 
         @Override
@@ -547,23 +547,6 @@ public class ResultStoreAlertSearchExecutor {
         @Override
         public TableResultConsumer fields(final List<Field> fields) {
             this.fields = fields;
-
-            try {
-                for (int i = 0; i < fields.size() && timeFieldIndex == -1; i++) {
-                    if (timeFilter.timeField()
-                            .equals(fields.get(i).getName())) {
-                        timeFieldIndex = i;
-                    }
-                }
-                if (timeFieldIndex == -1) {
-                    throw new RuntimeException("Unable to find time field: " +
-                            timeFilter.timeField());
-                }
-            } catch (final RuntimeException e) {
-                LOGGER.error(e::getMessage, e);
-                throw e;
-            }
-
             return this;
         }
 
@@ -571,25 +554,20 @@ public class ResultStoreAlertSearchExecutor {
         public TableResultConsumer addRow(final Row row) {
             try {
                 final List<String> values = row.getValues();
-                // See if we match the time filter.
-                final String timeString = values.get(timeFieldIndex);
-                final Instant time = Instant.ofEpochMilli(DateUtil.parseUnknownString(timeString));
-                if (timeFilter.from().isBefore(time) &&
-                        (timeFilter.to().equals(time) || timeFilter.to().isAfter(time))) {
-                    // Match - dump record.
-                    final List<Data> rows = new ArrayList<>();
-                    rows.add(new Data(AlertManager.DETECT_TIME_DATA_ELEMENT_NAME_ATTR,
-                            DateUtil.createNormalDateTimeString()));
-                    rows.add(new Data("alertRuleUuid", alertRuleDoc.getUuid()));
-                    rows.add(new Data("alertRuleName", alertRuleDoc.getName()));
-                    for (int i = 0; i < fields.size(); i++) {
-                        final String value = values.get(i);
-                        if (value != null) {
-                            rows.add(new Data(fields.get(i).getName(), value));
-                        }
+
+                // Match - dump record.
+                final List<Data> rows = new ArrayList<>();
+                rows.add(new Data(AlertManager.DETECT_TIME_DATA_ELEMENT_NAME_ATTR,
+                        DateUtil.createNormalDateTimeString()));
+                rows.add(new Data("alertRuleUuid", alertRuleDoc.getUuid()));
+                rows.add(new Data("alertRuleName", alertRuleDoc.getName()));
+                for (int i = 0; i < fields.size(); i++) {
+                    final String value = values.get(i);
+                    if (value != null) {
+                        rows.add(new Data(fields.get(i).getName(), value));
                     }
-                    recordConsumer.accept(new Record(rows));
                 }
+                recordConsumer.accept(new Record(rows));
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
                 throw e;

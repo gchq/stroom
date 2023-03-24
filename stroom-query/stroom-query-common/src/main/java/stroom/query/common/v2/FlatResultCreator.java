@@ -28,6 +28,7 @@ import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultBuilder;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.api.v2.TimeFilter;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.util.LambdaLogger;
 import stroom.query.util.LambdaLoggerFactory;
@@ -175,7 +176,7 @@ public class FlatResultCreator implements ResultCreator {
                 // Map data.
                 DataStore mappedDataStore = dataStore;
                 for (final Mapper mapper : mappers) {
-                    mappedDataStore = mapper.map(mappedDataStore);
+                    mappedDataStore = mapper.map(mappedDataStore, resultRequest.getTimeFilter());
                 }
 
                 final List<List<Object>> results = new ArrayList<>();
@@ -183,11 +184,11 @@ public class FlatResultCreator implements ResultCreator {
 
                 // Get top level items.
                 mappedDataStore.getData(data -> {
-                    final Items items = data.get();
+                    final Items items = data.get(Key.ROOT_KEY, resultRequest.getTimeFilter());
                     if (items.size() > 0) {
                         final RangeChecker rangeChecker = RangeCheckerFactory.create(resultRequest.getRequestedRange());
                         final OpenGroups openGroups = OpenGroupsFactory
-                                .create(dataStore.getKeyFactory().convertSet(resultRequest.getOpenGroups()));
+                                .create(dataStore.getKeyFactory().decodeSet(resultRequest.getOpenGroups()));
 
                         // Extract the maxResults settings from the last TableSettings object in the chain.
                         // Do not constrain the max results with the default max results as the result size will have
@@ -210,6 +211,7 @@ public class FlatResultCreator implements ResultCreator {
                         addResults(
                                 data,
                                 rangeChecker,
+                                resultRequest.getTimeFilter(),
                                 openGroups,
                                 items,
                                 results,
@@ -251,6 +253,7 @@ public class FlatResultCreator implements ResultCreator {
 
     private void addResults(final Data data,
                             final RangeChecker rangeChecker,
+                            final TimeFilter timeFilter,
                             final OpenGroups openGroups,
                             final Items items,
                             final List<List<Object>> results,
@@ -303,11 +306,12 @@ public class FlatResultCreator implements ResultCreator {
                 if (item.getKey() != null &&
                         item.getKey().isGrouped() &&
                         openGroups.isOpen(item.getKey())) {
-                    final Items childItems = data.get(item.getKey());
+                    final Items childItems = data.get(item.getKey(), timeFilter);
                     if (childItems.size() > 0) {
                         addResults(
                                 data,
                                 rangeChecker,
+                                timeFilter,
                                 openGroups,
                                 childItems,
                                 results,
@@ -408,11 +412,11 @@ public class FlatResultCreator implements ResultCreator {
                     errorConsumer);
         }
 
-        public DataStore map(final DataStore dataStore) {
+        public DataStore map(final DataStore dataStore, final TimeFilter timeFilter) {
             // Get top level items.
             // TODO : Add an option to get detail level items rather than root level items.
             dataStore.getData(data -> {
-                final Items items = data.get();
+                final Items items = data.get(Key.ROOT_KEY, timeFilter);
                 this.dataStore.clear();
                 if (items.size() > 0) {
                     int itemCount = 0;

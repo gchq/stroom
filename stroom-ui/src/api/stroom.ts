@@ -2841,7 +2841,7 @@ export interface ResultRequest {
   fetch?: "NONE" | "CHANGES" | "ALL";
   mappings: TableSettings[];
 
-  /** TODO */
+  /** A set of group keys of parent rows we want to display children for */
   openGroups: string[];
 
   /** The offset and length of a range of data in a sub-set of a query result set */
@@ -2849,6 +2849,9 @@ export interface ResultRequest {
 
   /** The style of results required. FLAT will provide a FlatResult object, while TABLE will provide a TableResult object */
   resultStyle: "FLAT" | "TABLE";
+
+  /** If the data includes time in the key then you can apply a time filter when retrieving rows */
+  timeFilter?: TimeFilter;
 }
 
 export interface ResultStoreInfo {
@@ -3591,6 +3594,17 @@ export interface ThemeConfig {
   topMenuTextColour?: string;
   tubeOpacity?: string;
   tubeVisible?: string;
+}
+
+/**
+ * If the data includes time in the key then you can apply a time filter when retrieving rows
+ */
+export interface TimeFilter {
+  /** @format int64 */
+  from?: number;
+
+  /** @format int64 */
+  to?: number;
 }
 
 export interface TimeRange {

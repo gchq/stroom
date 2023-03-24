@@ -560,6 +560,7 @@ class stroom.query.api.v2.ResultRequest - public stroom.query.api.v2.OffsetRange
 class stroom.query.api.v2.ResultRequest - public stroom.query.api.v2.ResultRequest$Builder stroom.query.api.v2.ResultRequest.copy()
 class stroom.query.api.v2.ResultRequest - public stroom.query.api.v2.ResultRequest$Fetch stroom.query.api.v2.ResultRequest.getFetch()
 class stroom.query.api.v2.ResultRequest - public stroom.query.api.v2.ResultRequest$ResultStyle stroom.query.api.v2.ResultRequest.getResultStyle()
+class stroom.query.api.v2.ResultRequest - public stroom.query.api.v2.TimeFilter stroom.query.api.v2.ResultRequest.getTimeFilter()
 class stroom.query.api.v2.ResultRequest$Builder - public boolean java.lang.Object.equals(java.lang.Object)
 class stroom.query.api.v2.ResultRequest$Builder - public final native java.lang.Class<?> java.lang.Object.getClass()
 class stroom.query.api.v2.ResultRequest$Builder - public final native void java.lang.Object.notify()
@@ -578,6 +579,7 @@ class stroom.query.api.v2.ResultRequest$Builder - public stroom.query.api.v2.Res
 class stroom.query.api.v2.ResultRequest$Builder - public stroom.query.api.v2.ResultRequest$Builder stroom.query.api.v2.ResultRequest$Builder.openGroups(java.util.Set<java.lang.String>)
 class stroom.query.api.v2.ResultRequest$Builder - public stroom.query.api.v2.ResultRequest$Builder stroom.query.api.v2.ResultRequest$Builder.requestedRange(stroom.query.api.v2.OffsetRange)
 class stroom.query.api.v2.ResultRequest$Builder - public stroom.query.api.v2.ResultRequest$Builder stroom.query.api.v2.ResultRequest$Builder.resultStyle(stroom.query.api.v2.ResultRequest$ResultStyle)
+class stroom.query.api.v2.ResultRequest$Builder - public stroom.query.api.v2.ResultRequest$Builder stroom.query.api.v2.ResultRequest$Builder.timeFilter(stroom.query.api.v2.TimeFilter)
 class stroom.query.api.v2.ResultRequest$Fetch - public final boolean java.lang.Enum.equals(java.lang.Object)
 class stroom.query.api.v2.ResultRequest$Fetch - public final int java.lang.Enum.compareTo(E)
 class stroom.query.api.v2.ResultRequest$Fetch - public final int java.lang.Enum.hashCode()
@@ -796,6 +798,17 @@ class stroom.query.api.v2.TableSettings$Builder - public stroom.query.api.v2.Tab
 class stroom.query.api.v2.TableSettings$Builder - public stroom.query.api.v2.TableSettings$Builder stroom.query.api.v2.TableSettings$Builder.showDetail(java.lang.Boolean)
 class stroom.query.api.v2.TableSettings$Builder - public stroom.query.api.v2.TableSettings$Builder stroom.query.api.v2.TableSettings$Builder.valueFilter(stroom.query.api.v2.ExpressionOperator)
 class stroom.query.api.v2.TableSettings$Builder - public stroom.query.api.v2.TableSettings$Builder stroom.query.api.v2.TableSettings$Builder.window(stroom.query.api.v2.Window)
+class stroom.query.api.v2.TimeFilter - public boolean stroom.query.api.v2.TimeFilter.equals(java.lang.Object)
+class stroom.query.api.v2.TimeFilter - public final native java.lang.Class<?> java.lang.Object.getClass()
+class stroom.query.api.v2.TimeFilter - public final native void java.lang.Object.notify()
+class stroom.query.api.v2.TimeFilter - public final native void java.lang.Object.notifyAll()
+class stroom.query.api.v2.TimeFilter - public final native void java.lang.Object.wait(long) throws java.lang.InterruptedException
+class stroom.query.api.v2.TimeFilter - public final void java.lang.Object.wait() throws java.lang.InterruptedException
+class stroom.query.api.v2.TimeFilter - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
+class stroom.query.api.v2.TimeFilter - public int stroom.query.api.v2.TimeFilter.hashCode()
+class stroom.query.api.v2.TimeFilter - public java.lang.String stroom.query.api.v2.TimeFilter.toString()
+class stroom.query.api.v2.TimeFilter - public long stroom.query.api.v2.TimeFilter.getFrom()
+class stroom.query.api.v2.TimeFilter - public long stroom.query.api.v2.TimeFilter.getTo()
 class stroom.query.api.v2.TimeRange - public boolean stroom.query.api.v2.TimeRange.equals(java.lang.Object)
 class stroom.query.api.v2.TimeRange - public final native java.lang.Class<?> java.lang.Object.getClass()
 class stroom.query.api.v2.TimeRange - public final native void java.lang.Object.notify()

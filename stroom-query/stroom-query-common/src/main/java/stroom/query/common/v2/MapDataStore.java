@@ -26,6 +26,7 @@ import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValSerialiser;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.api.v2.TimeFilter;
 import stroom.query.util.LambdaLogger;
 import stroom.query.util.LambdaLoggerFactory;
 
@@ -86,7 +87,7 @@ public class MapDataStore implements DataStore, Data {
         this.compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), compiledFields);
         this.compiledDepths = compiledDepths;
         keyFactoryConfig = new BasicKeyFactoryConfig();
-        keyFactory = new KeyFactory(keyFactoryConfig, serialisers);
+        keyFactory = KeyFactoryFactory.create(serialisers, keyFactoryConfig, compiledDepths);
         this.maxResults = maxResults;
         this.storeSize = storeSize;
 
@@ -266,29 +267,24 @@ public class MapDataStore implements DataStore, Data {
     }
 
     /**
-     * Get root items from the data store.
+     * Get child items from the data for the provided parent key and time filter.
      *
-     * @return Root items.
+     * @param key        The parent key to get child items for.
+     * @param timeFilter The time filter to use to limit the data returned.
+     * @return The filtered child items for the parent key.
      */
     @Override
-    public Items get() {
-        return get(Key.ROOT_KEY);
-    }
+    public Items get(final Key key, final TimeFilter timeFilter) {
+        if (timeFilter != null) {
+            throw new RuntimeException("Time filtering is not supported by the map data store");
+        }
 
-    /**
-     * Get child items from the data store for the provided parent key.
-     *
-     * @param parentKey The parent key to get child items for.
-     * @return The child items for the parent key.
-     */
-    @Override
-    public Items get(final Key parentKey) {
         Items result;
 
-        if (parentKey == null) {
+        if (key == null) {
             result = childMap.get(Key.ROOT_KEY);
         } else {
-            result = childMap.get(parentKey);
+            result = childMap.get(key);
         }
 
         if (result == null) {
@@ -555,7 +551,7 @@ public class MapDataStore implements DataStore, Data {
                         final Supplier<ChildData> childDataSupplier = () -> new ChildData() {
                             @Override
                             public Val first() {
-                                final Items items = dataStore.get(key);
+                                final Items items = dataStore.get(key, null);
                                 if (items != null && items.size() > 0) {
                                     return items.get(0).getValue(index, false);
                                 }
@@ -564,7 +560,7 @@ public class MapDataStore implements DataStore, Data {
 
                             @Override
                             public Val last() {
-                                final Items items = dataStore.get(key);
+                                final Items items = dataStore.get(key, null);
                                 if (items != null && items.size() > 0) {
                                     return items.get(items.size() - 1).getValue(index, false);
                                 }
@@ -573,7 +569,7 @@ public class MapDataStore implements DataStore, Data {
 
                             @Override
                             public Val nth(final int pos) {
-                                final Items items = dataStore.get(key);
+                                final Items items = dataStore.get(key, null);
                                 if (items != null && items.size() > pos) {
                                     return items.get(pos).getValue(index, false);
                                 }
@@ -592,7 +588,7 @@ public class MapDataStore implements DataStore, Data {
 
                             @Override
                             public Val count() {
-                                final Items items = dataStore.get(key);
+                                final Items items = dataStore.get(key, null);
                                 if (items != null) {
                                     return ValLong.create(items.size());
                                 }
@@ -600,7 +596,7 @@ public class MapDataStore implements DataStore, Data {
                             }
 
                             private Val join(final String delimiter, final int limit, final boolean trimTop) {
-                                final Items items = dataStore.get(key);
+                                final Items items = dataStore.get(key, null);
                                 if (items != null && items.size() > 0) {
 
                                     int start;

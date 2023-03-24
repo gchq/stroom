@@ -15264,10 +15264,10 @@
           },
           "openGroups" : {
             "type" : "array",
-            "description" : "TODO",
+            "description" : "A set of group keys of parent rows we want to display children for",
             "items" : {
               "type" : "string",
-              "description" : "TODO"
+              "description" : "A set of group keys of parent rows we want to display children for"
             },
             "uniqueItems" : true
           },
@@ -15278,6 +15278,9 @@
             "type" : "string",
             "description" : "The style of results required. FLAT will provide a FlatResult object, while TABLE will provide a TableResult object",
             "enum" : [ "FLAT", "TABLE" ]
+          },
+          "timeFilter" : {
+            "$ref" : "#/components/schemas/TimeFilter"
           }
         },
         "required" : [ "componentId", "mappings", "openGroups", "requestedRange", "resultStyle" ]
@@ -16988,6 +16991,20 @@
           },
           "tubeVisible" : {
             "type" : "string"
+          }
+        }
+      },
+      "TimeFilter" : {
+        "type" : "object",
+        "description" : "If the data includes time in the key then you can apply a time filter when retrieving rows",
+        "properties" : {
+          "from" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "to" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       },

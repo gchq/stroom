@@ -301,16 +301,11 @@ class TestSearchResponseCreator {
 
             @Override
             public void getData(final Consumer<Data> consumer) {
-                consumer.accept(new Data() {
-                    @Override
-                    public Items get() {
+                consumer.accept((key, timeFilter) -> {
+                    if (key == Key.ROOT_KEY) {
                         return items;
                     }
-
-                    @Override
-                    public Items get(final Key key) {
-                        return null;
-                    }
+                    return null;
                 });
             }
 
@@ -343,7 +338,10 @@ class TestSearchResponseCreator {
 
             @Override
             public KeyFactory getKeyFactory() {
-                return new KeyFactory(new BasicKeyFactoryConfig(), new Serialisers(new ResultStoreConfig()));
+                return KeyFactoryFactory.create(
+                        new Serialisers(new ResultStoreConfig()),
+                        new BasicKeyFactoryConfig(),
+                        new CompiledDepths(null, false));
             }
         };
     }

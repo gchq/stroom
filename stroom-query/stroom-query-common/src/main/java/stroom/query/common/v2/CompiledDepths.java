@@ -121,10 +121,6 @@ class CompiledDepths {
         return maxDepth;
     }
 
-    public boolean isDetailLevel(final int depth) {
-        return depth == maxDepth && maxGroupDepth < maxDepth;
-    }
-
     @Override
     public String toString() {
         return "CompiledDepths{" +

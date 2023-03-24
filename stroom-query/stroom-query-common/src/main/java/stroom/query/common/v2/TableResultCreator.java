@@ -29,6 +29,7 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableResult.TableResultBuilderImpl;
 import stroom.query.api.v2.TableResultBuilder;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.api.v2.TimeFilter;
 import stroom.query.common.v2.format.FieldFormatter;
 
 import org.slf4j.Logger;
@@ -91,9 +92,9 @@ public class TableResultCreator implements ResultCreator {
         }
 
         try {
-            //What is the interaction between the paging and the maxResults? The assumption is that
-            //maxResults defines the max number of records to come back and the paging can happen up to
-            //that maxResults threshold
+            // What is the interaction between the paging and the maxResults? The assumption is that
+            // maxResults defines the max number of records to come back and the paging can happen up to
+            // that maxResults threshold
 
             TableSettings tableSettings = resultRequest.getMappings().get(0);
             WindowSupport windowSupport = new WindowSupport(tableSettings);
@@ -122,17 +123,18 @@ public class TableResultCreator implements ResultCreator {
             }
             final RowCreator rowCreator = optionalRowCreator.orElse(null);
 
-            final Set<Key> openGroups = keyFactory.convertSet(resultRequest.getOpenGroups());
+            final Set<Key> openGroups = keyFactory.decodeSet(resultRequest.getOpenGroups());
             dataStore.getData(data ->
                     addTableResults(data,
                             latestFields.toArray(new Field[0]),
                             maxResults,
                             offset,
                             length,
+                            resultRequest.getTimeFilter(),
                             openGroups,
                             tableResultBuilder,
                             currentLength,
-                            data.get(),
+                            data.get(Key.ROOT_KEY, resultRequest.getTimeFilter()),
                             0,
                             totalResults,
                             rowCreator,
@@ -152,6 +154,7 @@ public class TableResultCreator implements ResultCreator {
                                  final Sizes maxResults,
                                  final int offset,
                                  final int length,
+                                 final TimeFilter timeFilter,
                                  final Set<Key> openGroups,
                                  final TableResultBuilder tableResultBuilder,
                                  final AtomicInteger currentLength,
@@ -194,10 +197,11 @@ public class TableResultCreator implements ResultCreator {
                             maxResults,
                             offset,
                             length,
+                            timeFilter,
                             openGroups,
                             tableResultBuilder,
                             currentLength,
-                            data.get(item.getKey()),
+                            data.get(item.getKey(), timeFilter),
                             depth + 1,
                             pos,
                             rowCreator,

@@ -103,6 +103,7 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
                     Collections.singletonList(tableSettings),
                     null,
                     null,
+                    null,
                     ResultRequest.ResultStyle.TABLE,
                     Fetch.CHANGES);
             resultRequests.add(tableResultRequest);

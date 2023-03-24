@@ -53,7 +53,7 @@ class LmdbValue {
         this.keyFactory = keyFactory;
         this.fields = fields;
         this.fullKeyBytes = fullKeyBytes;
-        this.key = keyFactory.create(fullKeyBytes);
+        this.key = keyFactory.keyFromBytes(fullKeyBytes);
         this.generators = new Generators(serialisers, fields, generatorBytes);
     }
 
@@ -67,7 +67,7 @@ class LmdbValue {
                 }
                 byteBuffer.rewind();
             } else {
-                fullKeyBytes = keyFactory.getBytes(getKey(), errorConsumer);
+                fullKeyBytes = keyFactory.keyToBytes(getKey(), errorConsumer);
             }
         }
         return fullKeyBytes;
@@ -89,7 +89,7 @@ class LmdbValue {
                 serialisers.getInputFactory().createByteBufferInput(byteBuffer)) {
             final int keyLength = input.readInt();
             fullKeyBytes = input.readBytes(keyLength);
-            key = keyFactory.create(fullKeyBytes);
+            key = keyFactory.keyFromBytes(fullKeyBytes);
             final int generatorLength = input.readInt();
             generatorBytes = input.readBytes(generatorLength);
             generators = new Generators(serialisers, fields, generatorBytes);
@@ -131,7 +131,7 @@ class LmdbValue {
     }
 
     void write(final Output output, final ErrorConsumer errorConsumer) throws IOException {
-        write(output, keyFactory.getBytes(getKey(), errorConsumer), getGenerators().getBytes(errorConsumer));
+        write(output, keyFactory.keyToBytes(getKey(), errorConsumer), getGenerators().getBytes(errorConsumer));
     }
 
     private void write(final Output output, final byte[] fullKeyBytes, final byte[] generatorBytes) throws IOException {

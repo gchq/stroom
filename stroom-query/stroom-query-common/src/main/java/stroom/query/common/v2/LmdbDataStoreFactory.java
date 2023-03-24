@@ -98,6 +98,32 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
         }
     }
 
+    public LmdbDataStore createLmdbDataStore(final QueryKey queryKey,
+                                             final String componentId,
+                                             final TableSettings tableSettings,
+                                             final FieldIndex fieldIndex,
+                                             final Map<String, String> paramMap,
+                                             final Sizes maxResults,
+                                             final Sizes storeSize,
+                                             final DataStoreSettings dataStoreSettings,
+                                             final ErrorConsumer errorConsumer) {
+
+        final ResultStoreConfig resultStoreConfig = resultStoreConfigProvider.get();
+        return new LmdbDataStore(
+                serialisersProvider.get(),
+                lmdbEnvFactory,
+                resultStoreConfig,
+                queryKey,
+                componentId,
+                tableSettings,
+                fieldIndex,
+                paramMap,
+                maxResults,
+                dataStoreSettings,
+                executorProvider,
+                errorConsumer);
+    }
+
     private Path getLocalDir(final Provider<ResultStoreConfig> resultStoreConfigProvider,
                              final PathCreator pathCreator) {
         final String dirFromConfig = NullSafe.get(
