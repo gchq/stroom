@@ -19,6 +19,7 @@ import stroom.proxy.repo.SourceForwarder;
 import stroom.proxy.repo.queue.Batch;
 import stroom.proxy.repo.store.SequentialFileStore;
 import stroom.util.shared.Flushable;
+import stroom.util.shared.ModelStringUtil;
 
 import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
@@ -183,6 +184,7 @@ public class ProxyLifecycle implements Managed {
     private void addParallelExecutor(final String threadName,
                                      final Supplier<Runnable> runnableSupplier,
                                      final int threadCount) {
+        LOGGER.info("Creating parallel executor '{}', threadCount: {}", threadName, threadCount);
         final ParallelExecutor executor = new ParallelExecutor(
                 threadName,
                 runnableSupplier,
@@ -193,6 +195,9 @@ public class ProxyLifecycle implements Managed {
     private void addFrequencyExecutor(final String threadName,
                                       final Supplier<Runnable> runnableSupplier,
                                       final long frequencyMs) {
+        LOGGER.info("Creating frequency executor  '{}', frequencyMs: {}",
+                threadName,
+                ModelStringUtil.formatCsv(frequencyMs));
         final FrequencyExecutor executor = new FrequencyExecutor(
                 threadName,
                 runnableSupplier,
@@ -204,6 +209,7 @@ public class ProxyLifecycle implements Managed {
                                       final int threadCount,
                                       final Supplier<Batch<T>> supplier,
                                       final Consumer<T> consumer) {
+        LOGGER.info("Creating batch executor      '{}', threadCount: {}", threadName, threadCount);
         final BatchExecutor<T> executor = new BatchExecutor<>(
                 threadName,
                 threadCount,

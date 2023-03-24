@@ -7,6 +7,7 @@ import stroom.proxy.repo.LogStream;
 import stroom.receive.common.StreamHandler;
 import stroom.receive.common.StroomStreamException;
 import stroom.security.api.UserIdentityFactory;
+import stroom.util.NullSafe;
 import stroom.util.cert.SSLUtil;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.io.StreamUtil;
@@ -23,9 +24,14 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.Duration;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.net.ssl.SSLSocketFactory;
@@ -43,6 +49,7 @@ public class ForwardStreamHandler implements StreamHandler {
     private final String forwardUrl;
     private final StroomDuration forwardDelay;
     private final byte[] buffer = new byte[StreamUtil.BUFFER_SIZE];
+    private final String forwarderName;
     private HttpURLConnection connection;
     private final ZipOutputStream zipOutputStream;
     private final long startTimeMs;
@@ -56,7 +63,8 @@ public class ForwardStreamHandler implements StreamHandler {
                                 final UserIdentityFactory userIdentityFactory) throws IOException {
         this.logStream = logStream;
         this.forwardUrl = config.getForwardUrl();
-        this.forwardDelay = config.getForwardDelay();
+        this.forwardDelay = NullSafe.duration(config.getForwardDelay());
+        this.forwarderName = config.getName();
         this.attributeMap = attributeMap;
 
         final StroomDuration forwardTimeout = config.getForwardTimeout();
@@ -65,7 +73,10 @@ public class ForwardStreamHandler implements StreamHandler {
         startTimeMs = System.currentTimeMillis();
         attributeMap.computeIfAbsent(StandardHeaderArguments.GUID, k -> UUID.randomUUID().toString());
 
-        LOGGER.debug(() -> "handleHeader() - " + forwardUrl + " Sending request " + attributeMap);
+        LOGGER.debug(() -> LogUtil.message(
+                "'{}' - Opening connection, forwardUrl: {}, userAgent: {}, forwardTimeout: {}, attributeMap (" +
+                        "values truncated):\n{}",
+                forwarderName, forwardUrl, userAgent, forwardTimeout, formatAttributeMapLogging(attributeMap)));
 
         final URL url = new URL(forwardUrl);
         connection = (HttpURLConnection) url.openConnection();
@@ -82,7 +93,8 @@ public class ForwardStreamHandler implements StreamHandler {
             // connection.setReadTimeout(forwardTimeoutMs);
         } else {
             LOGGER.debug(() ->
-                    LogUtil.message("Using default connect timeout: {}",
+                    LogUtil.message("'{}' - Using default connect timeout: {}",
+                            forwarderName,
                             Duration.ofMillis(connection.getConnectTimeout())));
         }
 
@@ -100,15 +112,30 @@ public class ForwardStreamHandler implements StreamHandler {
 
         // Allows sending to systems on the same OpenId realm as us using an access token
         if (config.isAddOpenIdAccessToken()) {
+            LOGGER.debug(() -> LogUtil.message(
+                    "'{}' - Setting request props (values truncated):\n{}",
+                    forwarderName,
+                    userIdentityFactory.getServiceUserAuthHeaders()
+                            .entrySet()
+                            .stream()
+                            .sorted(Entry.comparingByKey())
+                            .map(entry ->
+                                    "  " + String.join(":",
+                                            entry.getKey(),
+                                            LogUtil.truncateUnless(
+                                                    entry.getValue(),
+                                                    50,
+                                                    LOGGER.isTraceEnabled())))
+                            .collect(Collectors.joining("\n"))));
+
             userIdentityFactory.getServiceUserAuthHeaders()
                     .forEach((key, value) -> {
-                        LOGGER.debug("Setting request prop {}: {}", key, value);
                         connection.setRequestProperty(key, value);
                     });
         }
 
         if (forwardChunkSize != null) {
-            LOGGER.debug(() -> "handleHeader() - setting ChunkedStreamingMode = " + forwardChunkSize);
+            LOGGER.debug("'{}' - setting ChunkedStreamingMode: {}", forwarderName, forwardChunkSize);
             connection.setChunkedStreamingMode(forwardChunkSize);
         }
         connection.connect();
@@ -119,14 +146,15 @@ public class ForwardStreamHandler implements StreamHandler {
     public long addEntry(final String entry,
                          final InputStream inputStream,
                          final Consumer<Long> progressHandler) throws IOException {
+        LOGGER.trace("'{}' - adding entry {}, forwardDelay: {}", forwarderName, entry, forwardDelay);
         // First call we set up if we are going to do chunked streaming
         zipOutputStream.putNextEntry(new ZipEntry(entry));
 
         final long bytesSent = StreamUtil.streamToStream(inputStream, zipOutputStream, buffer, progressHandler);
         totalBytesSent += bytesSent;
 
-        if (forwardDelay != null && !forwardDelay.isZero()) {
-            LOGGER.debug(() -> "handleEntryData() - adding delay " + forwardDelay);
+        if (!forwardDelay.isZero()) {
+            LOGGER.trace("'{}' - adding delay {}", forwarderName, forwardDelay);
             ThreadUtil.sleep(forwardDelay);
         }
 
@@ -136,14 +164,53 @@ public class ForwardStreamHandler implements StreamHandler {
     }
 
     void error() {
-        LOGGER.debug(() -> "error() - " + forwardUrl);
+        LOGGER.debug("'{}' - error(), forwardUrl: {}", forwarderName, forwardUrl);
         logAndDisconnect();
     }
 
     void close() throws IOException {
         zipOutputStream.close();
-        LOGGER.debug(() -> "handleFooter() - header fields " + connection.getHeaderFields());
+
+        LOGGER.debug(() -> LogUtil.message("'{}' - Closing stream, response header fields:\n{}",
+                forwarderName,
+                formatHeaderEntryListForLogging(connection.getHeaderFields())));
+
         logAndDisconnect();
+    }
+
+    private String formatHeaderEntryListForLogging(final Map<String, List<String>> headerFields) {
+        return headerFields
+                .entrySet()
+                .stream()
+                .map(entry -> new SimpleEntry<>(
+                        Objects.requireNonNullElse(entry.getKey(), "null"),
+                        entry.getValue())
+                )
+                .sorted(Entry.comparingByKey())
+                .map(entry -> "  " + String.join(
+                        ":",
+                        NullSafe.string(entry.getKey()),
+                        NullSafe.stream(entry.getValue())
+                                .filter(Objects::nonNull)
+                                .map(val -> "'" + val + "'")
+                                .collect(Collectors.joining(", "))))
+                .collect(Collectors.joining("\n"));
+    }
+
+    private String formatAttributeMapLogging(final AttributeMap attributeMap) {
+        return attributeMap
+                .entrySet()
+                .stream()
+                .map(entry -> new SimpleEntry<>(
+                        Objects.requireNonNullElse(entry.getKey(), "null"),
+                        entry.getValue())
+                )
+                .sorted(Entry.comparingByKey())
+                .map(entry -> "  " + String.join(
+                        ":",
+                        NullSafe.string(entry.getKey()),
+                        LogUtil.truncateUnless(entry.getValue(), 50, LOGGER.isTraceEnabled())))
+                .collect(Collectors.joining("\n"));
     }
 
     private void logAndDisconnect() {
@@ -151,6 +218,7 @@ public class ForwardStreamHandler implements StreamHandler {
             int responseCode = -1;
             try {
                 responseCode = StroomStreamException.checkConnectionResponse(connection, attributeMap);
+                LOGGER.debug("'{}' - Response code: {}", forwarderName, responseCode);
             } finally {
                 final long duration = System.currentTimeMillis() - startTimeMs;
                 logStream.log(

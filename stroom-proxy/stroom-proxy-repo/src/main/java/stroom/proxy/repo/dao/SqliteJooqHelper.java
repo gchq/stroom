@@ -2,7 +2,6 @@ package stroom.proxy.repo.dao;
 
 import stroom.proxy.repo.ProxyDbConfig;
 import stroom.proxy.repo.ProxyRepoDbConnProvider;
-import stroom.util.concurrent.ThreadUtil;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -21,7 +20,6 @@ import org.sqlite.SQLiteException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
@@ -208,6 +206,7 @@ public class SqliteJooqHelper {
                     // The first thread that gets the chance should run the maintenance pragmas.
                     if (maintenanceDue()) {
                         lastRunMaintenance = System.currentTimeMillis();
+                        LOGGER.info("Executing SQLLite pragmas: {}", maintenancePragma);
                         for (final String pragma : maintenancePragma) {
                             pragma(pragma);
                         }
@@ -248,7 +247,7 @@ public class SqliteJooqHelper {
     private void pragma(final String pragma) {
         useConnection(connection -> {
             try {
-                LOGGER.info("Executing pragma: " + pragma);
+                LOGGER.debug("Executing pragma: " + pragma);
                 connection.createStatement().execute(pragma);
             } catch (final SQLException e) {
                 LOGGER.error("Error executing " + pragma + ": " + e.getMessage(), e);
