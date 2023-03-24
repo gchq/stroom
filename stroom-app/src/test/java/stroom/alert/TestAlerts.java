@@ -248,7 +248,6 @@ class TestAlerts extends StroomIntegrationTest {
                 .query(query)
                 .alertRuleType(AlertRuleType.AGGREGATE)
                 .processSettings(processSettings)
-                .timeField("EventTime")
                 .destinationFeed(detections)
                 .build();
         alertRuleStore.writeDocument(alertRuleDoc);
@@ -293,7 +292,6 @@ class TestAlerts extends StroomIntegrationTest {
                 .query(query)
                 .alertRuleType(AlertRuleType.AGGREGATE)
                 .processSettings(processSettings)
-                .timeField("EventTime")
                 .destinationFeed(detections)
                 .build();
 
@@ -341,7 +339,6 @@ class TestAlerts extends StroomIntegrationTest {
                 .query(query)
                 .alertRuleType(AlertRuleType.AGGREGATE)
                 .processSettings(processSettings)
-                .timeField("EventTime")
                 .destinationFeed(detections)
                 .build();
 
