@@ -3,6 +3,7 @@ package stroom.util;
 import stroom.test.common.TestUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.time.StroomDuration;
 
 import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -742,6 +744,45 @@ class TestNullSafe {
                 .addCase(null, Collections.emptyMap())
                 .addCase(Collections.emptyMap(), Collections.emptyMap())
                 .addCase(Map.of("foo", "bar"), Map.of("foo", "bar"))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testString() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(String.class)
+                .withTestFunction(testCase ->
+                        NullSafe.string(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, "")
+                .addCase("", "")
+                .addCase("foo", "foo")
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testStroomDuration() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(StroomDuration.class)
+                .withTestFunction(testCase ->
+                        NullSafe.duration(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, StroomDuration.ZERO)
+                .addCase(StroomDuration.ZERO, StroomDuration.ZERO)
+                .addCase(StroomDuration.ofSeconds(5), StroomDuration.ofSeconds(5))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testDuration() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(Duration.class)
+                .withTestFunction(testCase ->
+                        NullSafe.duration(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, Duration.ZERO)
+                .addCase(Duration.ZERO, Duration.ZERO)
+                .addCase(Duration.ofSeconds(5), Duration.ofSeconds(5))
                 .build();
     }
 

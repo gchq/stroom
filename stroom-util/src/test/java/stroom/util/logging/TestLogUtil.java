@@ -108,7 +108,11 @@ class TestLogUtil {
 
     @Test
     void test() {
-        final String output = LogUtil.toPaddedMultiLine("  ", List.of("one", "two", "three"), String::toUpperCase);
+        final String output = LogUtil.toPaddedMultiLine(
+                "  ",
+                List.of("one", "two", "three"),
+                String::toUpperCase);
+        LOGGER.debug("output:\n{}", output);
         assertThat(output)
                 .isEqualTo("  ONE\n" + "  TWO\n" + "  THREE");
     }

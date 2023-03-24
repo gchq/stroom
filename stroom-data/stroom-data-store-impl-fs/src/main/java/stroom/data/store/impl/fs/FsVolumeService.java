@@ -465,6 +465,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
             }
         } else {
             LOGGER.debug(() -> LogUtil.message("Not updating state for vols {}, with min update time {}",
+                    dbVolumes,
                     optMinUpdateTimeEpochMs.map(DateUtil::createNormalDateTimeString)));
             volumes.addAll(dbVolumes);
         }

@@ -283,4 +283,22 @@ public final class LogUtil {
             return value.getClass().getSimpleName() + " " + value;
         }
     }
+
+    public static String truncate(final String str, final int maxLength) {
+        if (str == null || str.length() < maxLength) {
+            return str;
+        } else {
+            return str.substring(0, maxLength) + "..." ;
+        }
+    }
+
+    public static String truncateUnless(final String str,
+                                        final int maxLength,
+                                        final boolean isTruncationSkipped) {
+        if (str == null || str.length() < maxLength || isTruncationSkipped) {
+            return str;
+        } else {
+            return str.substring(0, maxLength) + "..." ;
+        }
+    }
 }
