@@ -247,7 +247,8 @@ public class ExternalIdpConfigurationProvider
         if (!validIssuers.isEmpty()) {
             // Allow local config to define a set of issuers that we expect to see
             if (!validIssuers.contains(responseIssuer)) {
-                throw new AuthenticationException(LogUtil.message("Issuer '{}' obtained from configuration endpoint {} " +
+                throw new AuthenticationException(LogUtil.message(
+                        "Issuer '{}' obtained from configuration endpoint {} " +
                                 "does not match those in the 'issuer' or validIssuers' properties.",
                         openIdConfigurationResponse.getIssuer(), configurationEndpoint));
             }
