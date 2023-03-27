@@ -10,6 +10,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -75,6 +76,11 @@ public class TestIdpConfigurationProvider implements IdpConfigurationProvider {
     public boolean isValidateAudience() {
         showWarning();
         return false;
+    }
+
+    @Override
+    public Set<String> getValidIssuers() {
+        throw new UnsupportedOperationException("Not supported for this implementation");
     }
 
     @Override

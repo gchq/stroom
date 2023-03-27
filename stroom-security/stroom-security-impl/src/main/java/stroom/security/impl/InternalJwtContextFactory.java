@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
@@ -152,8 +153,7 @@ class InternalJwtContextFactory implements JwtContextFactory {
                 publicJsonWebKey.getJsonWebKeys());
 
         final OpenIdConfiguration openIdConfiguration = openIdConfigurationProvider.get();
-        final String issuer = openIdConfiguration.getIssuer();
-        LOGGER.debug("Using issuer: {}", issuer);
+        final String[] validIssuers = getValidIssuers();
 
         final JwtConsumerBuilder builder = new JwtConsumerBuilder()
                 .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims
@@ -166,7 +166,7 @@ class InternalJwtContextFactory implements JwtContextFactory {
                                 AlgorithmConstraints.ConstraintType.WHITELIST, // which is only RS256 here
                                 AlgorithmIdentifiers.RSA_USING_SHA256))
 //                .setExpectedIssuer(InternalIdpConfigurationProvider.INTERNAL_ISSUER);
-                .setExpectedIssuer(issuer);
+                .setExpectedIssuers(true, validIssuers);
 
         if (openIdConfiguration.isValidateAudience()) {
             // aud does not appear in access tokens by default it seems
@@ -175,5 +175,22 @@ class InternalJwtContextFactory implements JwtContextFactory {
             builder.setSkipDefaultAudienceValidation();
         }
         return builder.build();
+    }
+
+    private String[] getValidIssuers() {
+        final OpenIdConfiguration openIdConfiguration = openIdConfigurationProvider.get();
+        if (NullSafe.isBlankString(openIdConfiguration.getIssuer())) {
+            throw new RuntimeException(LogUtil.message(
+                    "'issuer' is not defined in the IDP's or Stroom's configuration"));
+        }
+        final String[] validIssuers = Stream.concat(
+                        Stream.of(openIdConfiguration.getIssuer()),
+                        NullSafe.stream(openIdConfiguration.getValidIssuers()))
+                .filter(Objects::nonNull)
+                .filter(str -> !str.isBlank())
+                .distinct()
+                .toArray(String[]::new);
+        LOGGER.debug(() -> LogUtil.message("Valid issuers:\n{}", String.join("\n", validIssuers)));
+        return validIssuers;
     }
 }

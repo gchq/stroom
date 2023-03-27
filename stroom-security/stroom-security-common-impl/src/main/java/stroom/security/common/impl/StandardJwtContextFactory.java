@@ -321,6 +321,8 @@ public class StandardJwtContextFactory implements JwtContextFactory {
         final PublicKey publicKey = getAwsPublicKey(jwsParts);
         Objects.requireNonNull(publicKey, "Couldn't get public key");
 
+        final String[] validIssuers = getValidIssuers();
+
         try {
             final JwtConsumerBuilder builder = new JwtConsumerBuilder()
                     .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims
@@ -328,7 +330,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                     .setRequireSubject() // the JWT must have a subject claim
                     .setVerificationKey(publicKey)
                     .setRelaxVerificationKeyValidation() // relaxes key length requirement
-                    .setExpectedIssuer(openIdConfigurationProvider.get().getIssuer());
+                    .setExpectedIssuers(true, validIssuers);
             final JwtConsumer jwtConsumer = builder.build();
             return Optional.ofNullable(jwtConsumer.process(jwsParts.jws));
 
@@ -337,6 +339,23 @@ public class StandardJwtContextFactory implements JwtContextFactory {
             throw new RuntimeException(LogUtil.message("Error getting jwt context for AWS JWT: {}",
                     LogUtil.exceptionMessage(e)), e);
         }
+    }
+
+    private String[] getValidIssuers() {
+        final OpenIdConfiguration openIdConfiguration = openIdConfigurationProvider.get();
+        if (NullSafe.isBlankString(openIdConfiguration.getIssuer())) {
+            throw new RuntimeException(LogUtil.message(
+                    "'issuer' is not defined in the IDP's or Stroom's configuration"));
+        }
+        final String[] validIssuers = Stream.concat(
+                        Stream.of(openIdConfiguration.getIssuer()),
+                        NullSafe.stream(openIdConfiguration.getValidIssuers()))
+                .filter(Objects::nonNull)
+                .filter(str -> !str.isBlank())
+                .distinct()
+                .toArray(String[]::new);
+        LOGGER.debug(() -> LogUtil.message("Valid issuers:\n{}", String.join("\n", validIssuers)));
+        return validIssuers;
     }
 
     private Optional<JwtContext> getStandardJwtContext(final String jwt) {
@@ -421,11 +440,11 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                 OpenIdConfiguration::getIdentityProviderType,
                 IdpType.TEST_CREDENTIALS::equals);
 
-        final String issuer = useTestCreds
-                ? defaultOpenIdCredentials.getOauth2Issuer()
-                : openIdConfiguration.getIssuer();
+        final String[] validIssuers = useTestCreds
+                ? new String[]{defaultOpenIdCredentials.getOauth2Issuer()}
+                : getValidIssuers();
 
-        LOGGER.debug("Expecting issuer: {}", issuer);
+        LOGGER.debug("Expecting issuers: {}", (Object) validIssuers);
 
         final JwtConsumerBuilder builder = new JwtConsumerBuilder()
                 .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account
@@ -437,7 +456,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
 //                        new AlgorithmConstraints(
 //                                AlgorithmConstraints.ConstraintType.WHITELIST, // which is only RS256 here
 //                                AlgorithmIdentifiers.RSA_USING_SHA256))
-                .setExpectedIssuer(issuer);
+                .setExpectedIssuers(true, validIssuers);
 
         if (openIdConfiguration.isValidateAudience()) {
             // aud does not appear in access tokens by default it seems so make the check optional

@@ -25,8 +25,10 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -239,13 +241,36 @@ public class ExternalIdpConfigurationProvider
             throw new AuthenticationException(LogUtil.message("Unable to parse open ID configuration " +
                     "from {}. {}", configurationEndpoint, e.getMessage()), e);
         }
-        // Spec says issue must match the config endpoint base
-        // https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationRequest
-        if (!configurationEndpoint.startsWith(openIdConfigurationResponse.getIssuer())) {
-            throw new AuthenticationException(LogUtil.message("Invalid issuer '{}' for endpoint {}",
+        final AbstractOpenIdConfig localConfig = localOpenIdConfigProvider.get();
+        final String responseIssuer = openIdConfigurationResponse.getIssuer();
+        final Set<String> validIssuers = getValidIssuers(localConfig);
+        if (!validIssuers.isEmpty()) {
+            // Allow local config to define a set of issuers that we expect to see
+            if (!validIssuers.contains(responseIssuer)) {
+                throw new AuthenticationException(LogUtil.message("Issuer '{}' obtained from configuration endpoint {} " +
+                                "does not match those in the 'issuer' or validIssuers' properties.",
+                        openIdConfigurationResponse.getIssuer(), configurationEndpoint));
+            }
+        } else if (!configurationEndpoint.startsWith(responseIssuer)) {
+            // Spec says issuer in config response must match the config endpoint base URL
+            // https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationRequest
+            // Some IDPs don't seem to follow the spec.
+            throw new AuthenticationException(LogUtil.message("Issuer '{}' obtained from configuration endpoint {} " +
+                            "does not share the same base URI. If this is valid consider adding the non-standard " +
+                            "issuer to the 'validIssuers' property.",
                     openIdConfigurationResponse.getIssuer(), configurationEndpoint));
         }
         return openIdConfigurationResponse;
+    }
+
+    private Set<String> getValidIssuers(final AbstractOpenIdConfig openIdConfig) {
+        final Set<String> validIssuers = new HashSet<>();
+        if (!NullSafe.isBlankString(openIdConfig.getIssuer())) {
+            validIssuers.add(openIdConfig.getIssuer());
+        }
+        validIssuers.addAll(NullSafe.set(openIdConfig.getValidIssuers()));
+        LOGGER.debug(() -> LogUtil.message("Valid issuers:\n{}", String.join("\n", validIssuers)));
+        return validIssuers;
     }
 
     private static OpenIdConfigurationResponse mergeResponse(
@@ -311,6 +336,11 @@ public class ExternalIdpConfigurationProvider
     @Override
     public boolean isValidateAudience() {
         return localOpenIdConfigProvider.get().isValidateAudience();
+    }
+
+    @Override
+    public Set<String> getValidIssuers() {
+        return localOpenIdConfigProvider.get().getValidIssuers();
     }
 
     @Override

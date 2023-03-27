@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.dropwizard.validation.ValidationMethod;
 
 import java.util.List;
+import java.util.Set;
 import javax.validation.constraints.NotNull;
 
 @JsonPropertyOrder(alphabetic = true)
@@ -36,6 +37,7 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
                              @JsonProperty("requestScopes") final List<String> requestScopes,
                              @JsonProperty("clientCredentialsScopes") final List<String> clientCredentialsScopes,
                              @JsonProperty("validateAudience") final boolean validateAudience,
+                             @JsonProperty("validIssuers") final Set<String> validIssuers,
                              @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim) {
         super(identityProviderType,
                 openIdConfigurationEndpoint,
@@ -51,6 +53,7 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
                 requestScopes,
                 clientCredentialsScopes,
                 validateAudience,
+                validIssuers,
                 uniqueIdentityClaim);
     }
 
@@ -98,6 +101,7 @@ public class ProxyOpenIdConfig extends AbstractOpenIdConfig implements IsProxyCo
                 getRequestScopes(),
                 getClientCredentialsScopes(),
                 isValidateAudience(),
+                getValidIssuers(),
                 getUniqueIdentityClaim());
     }
 }
