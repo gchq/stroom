@@ -207,6 +207,9 @@ public class BootstrapUtil {
                 T output = null;
                 if (isDbBuildVersionUpToDate) {
                     handleCorrectBuildVersion(bootstrapInfo, "no lock or DB migration required.");
+                    // Set local state so the db modules know not to run flyway when work.get() is called
+                    // below
+                    DbMigrationState.markBootstrapMigrationsComplete();
                 } else {
                     LOGGER.info("Found old build version '{}' in {} table with outcome {}. " +
                                     "Bootstrap lock required.",
@@ -225,6 +228,9 @@ public class BootstrapUtil {
 
                     if (isDbBuildVersionUpToDate) {
                         handleCorrectBuildVersion(bootstrapInfo, "releasing lock. No DB migration required.");
+                        // Set local state so the db modules know not to run flyway when work.get() is called
+                        // below
+                        DbMigrationState.markBootstrapMigrationsComplete();
                     } else {
                         LOGGER.info("Upgrading stroom from '{}' to '{}' under lock",
                                 bootstrapInfo.getBuildVersion(), buildVersion);
@@ -253,14 +259,14 @@ public class BootstrapUtil {
                         // If anything fails and we don't update/insert these it is fine, it will just
                         // get done on next successful boot
                         updateDbBuildVersion(txnConfig, buildVersion, thisNodeName, UpgradeOutcome.SUCCESS);
+                        // Set local state so the db modules know not to run flyway when work.get() is called
+                        // below
+                        DbMigrationState.markBootstrapMigrationsComplete();
                     }
                     // We are the first node to get the lock for this build version so now release the lock
                     LOGGER.info(LogUtil.message("Releasing bootstrap lock after {}",
                             Duration.between(startTime, Instant.now())));
                 }
-                // Set local state so the db modules know not to run flyway when work.get() is called
-                // below
-                DbMigrationState.markBootstrapMigrationsComplete();
                 return output;
             });
             LOGGER.debug("Closed connection");
@@ -286,6 +292,7 @@ public class BootstrapUtil {
                         bootstrapInfo.getBuildVersion(),
                         BUILD_VERSION_TABLE_NAME,
                         bootstrapInfo.getUpgradeOutcome());
+
                 // Quickly drop out of the lock so the other waiting nodes can find this out.
             }
             case FAILED -> {
