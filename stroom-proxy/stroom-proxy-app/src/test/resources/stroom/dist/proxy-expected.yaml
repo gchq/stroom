@@ -125,6 +125,7 @@ proxyConfig:
         - "email"
         tokenEndpoint: null
         uniqueIdentityClaim: "sub"
+        validIssuers: []
         validateAudience: true
   sqsConnectors: []
   threads:
