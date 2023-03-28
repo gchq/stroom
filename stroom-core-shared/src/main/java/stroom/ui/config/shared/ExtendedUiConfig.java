@@ -10,6 +10,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 /**
  * Allows us to make other back-end config available to the UI while having one mechanism
  * to cache the config in the ui.
@@ -43,42 +45,56 @@ public class ExtendedUiConfig {
         this.externalIdentityProvider = externalIdentityProvider;
     }
 
+    public UiConfig getUiConfig() {
+        return uiConfig;
+    }
+
+    @JsonIgnore
     public String getWelcomeHtml() {
         return uiConfig.getWelcomeHtml();
     }
 
+    @JsonIgnore
     public String getAboutHtml() {
         return uiConfig.getAboutHtml();
     }
 
+    @JsonIgnore
     public String getMaintenanceMessage() {
         return uiConfig.getMaintenanceMessage();
     }
 
+    @JsonIgnore
     public String getDefaultMaxResults() {
         return uiConfig.getDefaultMaxResults();
     }
 
+    @JsonIgnore
     public ProcessConfig getProcess() {
         return uiConfig.getProcess();
     }
 
+    @JsonIgnore
     public String getHelpUrl() {
         return uiConfig.getHelpUrl();
     }
 
+    @JsonIgnore
     public String getHelpSubPathJobs() {
         return uiConfig.getHelpSubPathJobs();
     }
 
+    @JsonIgnore
     public String getHelpSubPathQuickFilter() {
         return uiConfig.getHelpSubPathQuickFilter();
     }
 
+    @JsonIgnore
     public String getHelpSubPathProperties() {
         return uiConfig.getHelpSubPathProperties();
     }
 
+    @JsonIgnore
     public String getHelpSubPathExpressions() {
         return uiConfig.getHelpSubPathExpressions();
     }
@@ -103,54 +119,84 @@ public class ExtendedUiConfig {
         return uiConfig.getHelpUrlExpressions();
     }
 
+    @JsonIgnore
     public ThemeConfig getTheme() {
         return uiConfig.getTheme();
     }
 
+    @JsonIgnore
     public QueryConfig getQuery() {
         return uiConfig.getQuery();
     }
 
+    @JsonIgnore
     public String getNamePattern() {
         return uiConfig.getNamePattern();
     }
 
+    @JsonIgnore
     public SplashConfig getSplash() {
         return uiConfig.getSplash();
     }
 
+    @JsonIgnore
     public ActivityConfig getActivity() {
         return uiConfig.getActivity();
     }
 
+    @JsonIgnore
     public String getHtmlTitle() {
         return uiConfig.getHtmlTitle();
     }
 
+    @JsonIgnore
     public String getOncontextmenu() {
         return uiConfig.getOncontextmenu();
     }
 
+    @JsonIgnore
     public SourceConfig getSource() {
         return uiConfig.getSource();
     }
 
+    @JsonIgnore
     public Boolean getRequireReactWrapper() {
         return uiConfig.getRequireReactWrapper();
     }
 
+    @JsonIgnore
     public int getApplicationInstanceKeepAliveIntervalMs() {
         return uiConfig.getApplicationInstanceKeepAliveIntervalMs();
     }
 
+    @JsonIgnore
     public boolean isExternalIdentityProvider() {
         return externalIdentityProvider;
     }
 
     @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final ExtendedUiConfig that = (ExtendedUiConfig) o;
+        return externalIdentityProvider == that.externalIdentityProvider && Objects.equals(uiConfig,
+                that.uiConfig);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(uiConfig, externalIdentityProvider);
+    }
+
+    @Override
     public String toString() {
         return "ExtendedUiConfig{" +
-                "externalIdentityProvider=" + externalIdentityProvider +
+                "uiConfig=" + uiConfig +
+                ", externalIdentityProvider=" + externalIdentityProvider +
                 '}';
     }
 }
