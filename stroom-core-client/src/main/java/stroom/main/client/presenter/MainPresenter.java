@@ -26,7 +26,7 @@ import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.task.client.event.OpenTaskManagerEvent;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.ui.config.shared.UiConfig;
+import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.util.client.DoubleSelectTester;
 
@@ -93,7 +93,7 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
         });
         registerHandler(uiConfigCache.addPropertyChangeHandler(
                 event -> {
-                    final UiConfig uiConfig = event.getProperties();
+                    final ExtendedUiConfig uiConfig = event.getProperties();
                     getView().setBanner(uiConfig.getMaintenanceMessage());
                     if (uiConfig.getRequireReactWrapper()) {
                         final Object parentIframe = getParentIframe();

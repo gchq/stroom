@@ -248,13 +248,13 @@ class TestAppConfigModule {
         Set<Class<?>> remaining = new HashSet<>(appConfigTreeClasses);
         remaining.removeAll(stroomConfigClasses);
         assertThat(remaining)
-                .describedAs("Class(es) in the tree but that don't implement IsStroomConfig")
+                .describedAs("Class(es) in the config object tree but that don't implement IsStroomConfig")
                 .isEmpty();
 
         remaining = new HashSet<>(stroomConfigClasses);
         remaining.removeAll(appConfigTreeClasses);
         assertThat(remaining)
-                .describedAs("Class(es) that implement IsStroomConfig but aren't in the tree")
+                .describedAs("Class(es) that implement IsStroomConfig but aren't in the config object tree")
                 .isEmpty();
     }
 

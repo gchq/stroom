@@ -9,7 +9,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.ui.config.shared.UiConfig;
+import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 import com.google.inject.Inject;
@@ -47,7 +47,7 @@ public class UsersPlugin extends NodeToolsPlugin {
     }
 
     private void addManageUsers(final BeforeRevealMenubarEvent event,
-                                final UiConfig uiConfig) {
+                                final ExtendedUiConfig uiConfig) {
         final IconMenuItem usersMenuItem;
         final Preset icon = SvgPresets.USER_GROUP;
         usersMenuItem = new IconMenuItem(
