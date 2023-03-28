@@ -2,6 +2,7 @@ package stroom.security.impl;
 
 import stroom.security.common.impl.OpenIdPublicKeysSupplier;
 import stroom.security.common.impl.StandardJwtContextFactory;
+import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 
@@ -66,6 +67,8 @@ class TestJWTService {
 
         Mockito.when(openIdPublicKeysSupplier.get())
                 .thenReturn(getPublicKeys());
+        Mockito.when(openIdConfiguration.getIdentityProviderType())
+                .thenReturn(IdpType.TEST_CREDENTIALS);
 
         final JwtClaims jwtClaims = jwtService
                 .getJwtContext(apiKey)

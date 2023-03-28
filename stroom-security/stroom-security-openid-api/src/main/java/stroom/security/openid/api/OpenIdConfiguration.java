@@ -1,6 +1,7 @@
 package stroom.security.openid.api;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Defines the configuration required to interact with an Open ID Connect IDP
@@ -71,6 +72,11 @@ public interface OpenIdConfiguration {
      * @see AbstractOpenIdConfig#isValidateAudience()
      */
     boolean isValidateAudience();
+
+    /**
+     * @see AbstractOpenIdConfig#getValidIssuers()
+     */
+    Set<String> getValidIssuers();
 
     /**
      * @see AbstractOpenIdConfig#getUniqueIdentityClaim()

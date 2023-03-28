@@ -9,6 +9,7 @@ import stroom.security.openid.api.OpenIdConfigurationResponse;
 import stroom.util.NullSafe;
 
 import java.util.List;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -122,6 +123,11 @@ public class DelegatingIdpConfigurationProvider implements IdpConfigurationProvi
     @Override
     public boolean isValidateAudience() {
         return delegate.isValidateAudience();
+    }
+
+    @Override
+    public Set<String> getValidIssuers() {
+        return delegate.getValidIssuers();
     }
 
     @Override

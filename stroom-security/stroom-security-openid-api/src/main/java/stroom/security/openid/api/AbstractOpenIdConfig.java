@@ -9,8 +9,10 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.dropwizard.validation.ValidationMethod;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
@@ -111,6 +113,8 @@ public abstract class AbstractOpenIdConfig
      */
     private final boolean validateAudience;
 
+    private final Set<String> validIssuers;
+
     /**
      * The OIDC claim to use to uniquely identify the user on the IDP. This id will be used to link an IDP
      * user to the stroom user. It must be unique on the IDP and not subject to change. Be default is 'sub'.
@@ -138,6 +142,7 @@ public abstract class AbstractOpenIdConfig
         requestScopes = OpenId.DEFAULT_REQUEST_SCOPES;
         clientCredentialsScopes = OpenId.DEFAULT_CLIENT_CREDENTIALS_SCOPES;
         validateAudience = true;
+        validIssuers = Collections.emptySet();
         uniqueIdentityClaim = OpenId.CLAIM__SUBJECT;
         userDisplayNameClaim = OpenId.CLAIM__PREFERRED_USERNAME;
     }
@@ -161,6 +166,7 @@ public abstract class AbstractOpenIdConfig
             @JsonProperty("requestScopes") final List<String> requestScopes,
             @JsonProperty("clientCredentialsScopes") final List<String> clientCredentialsScopes,
             @JsonProperty("validateAudience") final boolean validateAudience,
+            @JsonProperty("validIssuers") final Set<String> validIssuers,
             @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim,
             @JsonProperty("userDisplayNameClaim") final String userDisplayNameClaim) {
 
@@ -178,6 +184,7 @@ public abstract class AbstractOpenIdConfig
         this.requestScopes = requestScopes;
         this.clientCredentialsScopes = clientCredentialsScopes;
         this.validateAudience = validateAudience;
+        this.validIssuers = Objects.requireNonNullElseGet(validIssuers, Collections::emptySet);
         this.uniqueIdentityClaim = uniqueIdentityClaim;
         this.userDisplayNameClaim = userDisplayNameClaim;
     }
@@ -301,6 +308,16 @@ public abstract class AbstractOpenIdConfig
             "to be the clientId.")
     public boolean isValidateAudience() {
         return validateAudience;
+    }
+
+    @Override
+    @JsonProperty
+    @JsonPropertyDescription("A set of issuers (in addition to the 'issuer' property that is provided by the IDP " +
+            "that are deemed valid when seen in a token. If no additional valid issuers are required then set this " +
+            "to an empty set. Also this is used to validate the 'issuer' returned by the IDP when it is not a " +
+            "sub path of 'openIdConfigurationEndpoint'. If this set is empty then Stroom will verify that the ")
+    public Set<String> getValidIssuers() {
+        return validIssuers;
     }
 
     @Override

@@ -126,6 +126,7 @@ proxyConfig:
         tokenEndpoint: null
         uniqueIdentityClaim: "sub"
         userDisplayNameClaim: "preferred_username"
+        validIssuers: []
         validateAudience: true
   sqsConnectors: []
   threads:

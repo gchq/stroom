@@ -632,6 +632,7 @@ appConfig:
         tokenEndpoint: null
         uniqueIdentityClaim: "sub"
         userDisplayNameClaim: "preferred_username"
+        validIssuers: []
         validateAudience: true
       preventLogin: false
     authorisation:

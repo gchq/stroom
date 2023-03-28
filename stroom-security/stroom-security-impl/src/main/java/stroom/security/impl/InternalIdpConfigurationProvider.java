@@ -10,6 +10,7 @@ import stroom.util.shared.ResourcePaths;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -126,6 +127,11 @@ public class InternalIdpConfigurationProvider implements IdpConfigurationProvide
     @Override
     public boolean isValidateAudience() {
         return localOpenIdConfigProvider.get().isValidateAudience();
+    }
+
+    @Override
+    public Set<String> getValidIssuers() {
+        return localOpenIdConfigProvider.get().getValidIssuers();
     }
 
     @Override

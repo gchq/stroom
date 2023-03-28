@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.dropwizard.validation.ValidationMethod;
 
 import java.util.List;
+import java.util.Set;
 
 @JsonPropertyOrder(alphabetic = true)
 public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroomConfig {
@@ -34,6 +35,7 @@ public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroom
                               @JsonProperty("requestScopes") final List<String> requestScopes,
                               @JsonProperty("clientCredentialsScopes") final List<String> clientCredentialsScopes,
                               @JsonProperty("validateAudience") final boolean validateAudience,
+                              @JsonProperty("validIssuers") final Set<String> validIssuers,
                               @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim,
                               @JsonProperty("userDisplayNameClaim") final String userDisplayNameClaim) {
         super(identityProviderType,
@@ -50,6 +52,7 @@ public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroom
                 requestScopes,
                 clientCredentialsScopes,
                 validateAudience,
+                validIssuers,
                 uniqueIdentityClaim,
                 userDisplayNameClaim);
     }
@@ -86,6 +89,7 @@ public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroom
                 getRequestScopes(),
                 getClientCredentialsScopes(),
                 isValidateAudience(),
+                getValidIssuers(),
                 getUniqueIdentityClaim(),
                 getUserDisplayNameClaim());
     }

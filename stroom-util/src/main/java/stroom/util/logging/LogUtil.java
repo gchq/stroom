@@ -193,8 +193,8 @@ public final class LogUtil {
     }
 
     public static <T> String toPaddedMultiLine(final String padding,
-                                        final Collection<T> items,
-                                        final Function<T, String> itemMapper) {
+                                               final Collection<T> items,
+                                               final Function<T, String> itemMapper) {
         if (items == null || items.isEmpty()) {
             return "";
         } else {
@@ -288,7 +288,7 @@ public final class LogUtil {
         if (str == null || str.length() < maxLength) {
             return str;
         } else {
-            return str.substring(0, maxLength) + "..." ;
+            return str.substring(0, maxLength) + "...";
         }
     }
 
@@ -298,7 +298,7 @@ public final class LogUtil {
         if (str == null || str.length() < maxLength || isTruncationSkipped) {
             return str;
         } else {
-            return str.substring(0, maxLength) + "..." ;
+            return str.substring(0, maxLength) + "...";
         }
     }
 }
