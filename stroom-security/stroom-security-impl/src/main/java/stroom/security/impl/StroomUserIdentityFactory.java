@@ -108,6 +108,8 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
                 session,
                 updatableToken);
 
+        updatableToken.setUserIdentity(userIdentity);
+
         addTokenToRefreshQueue(updatableToken);
 
         LOGGER.info(() -> "User " + userIdentity
