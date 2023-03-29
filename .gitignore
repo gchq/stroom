@@ -26,6 +26,7 @@ stroom-core/src/test/resources/transientContentPacks/
 local.yml*
 local2.yml*
 local3.yml*
+proxy-local.yml*
 !local.yml.sh
 
 # IntelliJ

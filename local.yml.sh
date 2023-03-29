@@ -4,6 +4,7 @@
 set -e
 
 # Copies dev.yml to local.yml and substitutes some variables, e.g. STROOM_HOST
+# Also copies proxy-dev.yml to proxy-local.yml in the same way
 
 #Shell Colour constants for use in 'echo -e'
 # shellcheck disable=SC2034
@@ -16,17 +17,20 @@ set -e
 }
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
-SOURCE_CONF_FILE=${SCRIPT_DIR}/stroom-app/dev.yml
+STROOM_SOURCE_CONF_FILE="${SCRIPT_DIR}/stroom-app/dev.yml"
+PROXY_SOURCE_CONF_FILE="${SCRIPT_DIR}/stroom-proxy/stroom-proxy-app/proxy-dev.yml"
 
-LOCAL_CONF_FILE_NAME=local.yml
-LOCAL_2_CONF_FILE_NAME=local2.yml
-LOCAL_3_CONF_FILE_NAME=local3.yml
+STROOM_LOCAL_CONF_FILE_NAME=local.yml
+STROOM_LOCAL_2_CONF_FILE_NAME=local2.yml
+STROOM_LOCAL_3_CONF_FILE_NAME=local3.yml
+PROXY_LOCAL_CONF_FILE_NAME=proxy-local.yml
 
-LOCAL_CONF_FILE=${SCRIPT_DIR}/${LOCAL_CONF_FILE_NAME}
-LOCAL_2_CONF_FILE=${SCRIPT_DIR}/${LOCAL_2_CONF_FILE_NAME}
-LOCAL_3_CONF_FILE=${SCRIPT_DIR}/${LOCAL_3_CONF_FILE_NAME}
+STROOM_LOCAL_CONF_FILE=${SCRIPT_DIR}/${STROOM_LOCAL_CONF_FILE_NAME}
+STROOM_LOCAL_2_CONF_FILE=${SCRIPT_DIR}/${STROOM_LOCAL_2_CONF_FILE_NAME}
+STROOM_LOCAL_3_CONF_FILE=${SCRIPT_DIR}/${STROOM_LOCAL_3_CONF_FILE_NAME}
+PROXY_LOCAL_CONF_FILE=${SCRIPT_DIR}/${PROXY_LOCAL_CONF_FILE_NAME}
 
-setIpAddress(){
+set_ip_address(){
   if [ "$(uname)" == "Darwin" ]; then
     # Code required to find IP address is different in MacOS
     ip=$(ifconfig | grep "inet " | grep -Fv 127.0.0.1 | awk 'NR==1{print $2}')
@@ -52,94 +56,115 @@ setIpAddress(){
     "the operating system"
   }
 
-checkSourceExists(){
-  if [ ! -f "${SOURCE_CONF_FILE}" ]; then
-    exit
-    echo -e "${RED}Source file ${GREEN}${SOURCE_CONF_FILE}${RED}" \
+check_source_exists() {
+  local source="$1"; shift
+  
+  if [ ! -f "${source}" ]; then
+    echo -e "${RED}Source file ${GREEN}${source}${RED}" \
       "does not exist${NC}"
-          exit 1
+    exit 1
   fi
 }
 
-backupCurrentLocalFile(){
-  local backupFile="$1"; shift
+backup_current_local_file() {
+  local source="$1"; shift
+  local backup_file
+  backup_file="${source}.$(date +"%Y%m%dT%H%M")"
 
-  if [ -f "${LOCAL_CONF_FILE}" ]; then
-    backupFile="${LOCAL_CONF_FILE}.$(date +"%Y%m%dT%H%M")"
-    echo
-    echo -e "Backing up ${GREEN}${LOCAL_CONF_FILE}${NC} to ${GREEN}${backupFile}${NC}"
-    cp "${LOCAL_CONF_FILE}" "${backupFile}"
-    echo
+  if [ -f "${source}" ]; then
+    backup_file="${source}.$(date +"%Y%m%dT%H%M")"
+    echo -e "Backing up ${GREEN}${source}${NC} to ${GREEN}${backup_file}${NC}"
+    cp "${source}" "${backup_file}"
   fi
 }
 
-makeLocal2File() {
-  echo -e "Overwriting ${GREEN}${LOCAL_2_CONF_FILE}${NC} as a node 2" \
-    "variant of ${GREEN}${LOCAL_CONF_FILE}${NC}"
+make_local2_file() {
+  echo -e "Overwriting ${GREEN}${STROOM_LOCAL_2_CONF_FILE}${NC} as a node 2" \
+    "variant of ${GREEN}${STROOM_LOCAL_CONF_FILE}${NC}"
 
   sed \
     -r \
     -e 's/node1a/node2a/' \
     -e 's/(port:.*[^\d])8080/\110080/' \
     -e 's/(port:.*[^\d])8081/\110081/' \
-    < "${LOCAL_CONF_FILE}" \
-    > "${LOCAL_2_CONF_FILE}"
-  }
+    < "${STROOM_LOCAL_CONF_FILE}" \
+    > "${STROOM_LOCAL_2_CONF_FILE}"
+}
 
-makeLocal3File() {
-  echo -e "Overwriting ${GREEN}${LOCAL_3_CONF_FILE}${NC} as a node 3" \
-    "variant of ${GREEN}${LOCAL_CONF_FILE}${NC}"
+make_local3_file() {
+  echo -e "Overwriting ${GREEN}${STROOM_LOCAL_3_CONF_FILE}${NC} as a node 3" \
+    "variant of ${GREEN}${STROOM_LOCAL_CONF_FILE}${NC}"
 
   sed \
     -r \
     -e 's/node1a/node3a/' \
     -e 's/(port:.*[^\d])8080/\120080/' \
     -e 's/(port:.*[^\d])8081/\120081/' \
-    < "${LOCAL_CONF_FILE}" \
-    > "${LOCAL_3_CONF_FILE}"
-  }
+    < "${STROOM_LOCAL_CONF_FILE}" \
+    > "${STROOM_LOCAL_3_CONF_FILE}"
+}
 
-main(){
-  setIpAddress
+create_local_file() {
+  local source="$1"; shift
+  local dest="$1"; shift
 
-  #Ensure various dirs exist
-  mkdir -p /tmp/stroom
-
-  checkSourceExists
-
-  backupFile="${LOCAL_CONF_FILE}.$(date +"%Y%m%dT%H%M")"
-  backupCurrentLocalFile "${backupFile}"
-
-  echo -e "Overwriting ${GREEN}${LOCAL_CONF_FILE}${NC} with a version" \
-    "templated from ${GREEN}${SOURCE_CONF_FILE}${NC}"
+  echo -e "Overwriting ${GREEN}${dest}${NC} with a version" \
+    "templated from ${GREEN}${source}${NC}"
 
   #Use '#' delimiter in HOME_DIR sed script as HOME contains '\'
   sed \
     -e "s/<<<IP_ADDRESS>>>/${ip}/g" \
     -e "s#\${HOME_DIR[^}]*}#${HOME}#g" \
-    < "${SOURCE_CONF_FILE}" \
-    > "${LOCAL_CONF_FILE}"
+    < "${source}" \
+    > "${dest}"
+}
 
-  makeLocal2File
-  makeLocal3File
+diff_against_backup() {
+  local file="$1"; shift
+  local backup_file
+  backup_file="${file}.$(date +"%Y%m%dT%H%M")"
 
-  if [[ "x${backupFile}" != "x" ]]; then
-
-    if ! diff -q "${backupFile}" "${LOCAL_CONF_FILE}" > /dev/null; then
-      echo
-      echo -e "Run the following to see the changes made to your" \
-        "${LOCAL_CONF_FILE_NAME} file"
-      echo -e "${GREEN}vimdiff ${backupFile} ${LOCAL_CONF_FILE}${NC}"
-    else
-      echo
-      echo -e "Backup file is identical to new local config file," \
-        "deleting backup file ${backupFile}"
-      rm "${backupFile}"
-    fi
+  if ! diff -q "${backup_file}" "${file}" > /dev/null; then
+    echo
+    echo -e "Run the following to see the changes made to your" \
+      "${file} file"
+    echo -e "${GREEN}vimdiff ${backup_file} ${file}${NC}"
+  else
+    echo -e "Backup file is identical to new local config file," \
+      "deleting backup file ${backup_file}"
+    rm "${backup_file}"
   fi
+}
+
+main(){
+  set_ip_address
+
+  #Ensure various dirs exist
+  mkdir -p /tmp/stroom
+
+  check_source_exists "${STROOM_SOURCE_CONF_FILE}"
+  check_source_exists "${PROXY_SOURCE_CONF_FILE}"
+
+  backup_current_local_file "${STROOM_LOCAL_CONF_FILE}"
+  backup_current_local_file "${STROOM_LOCAL_2_CONF_FILE}"
+  backup_current_local_file "${STROOM_LOCAL_3_CONF_FILE}"
+  backup_current_local_file "${PROXY_LOCAL_CONF_FILE}"
+
+  create_local_file "${STROOM_SOURCE_CONF_FILE}" "${STROOM_LOCAL_CONF_FILE}"
+
+  # Make files for nodes 2 and 3 based on a copy of node 1
+  make_local2_file
+  make_local3_file
+
+  create_local_file "${PROXY_SOURCE_CONF_FILE}" "${PROXY_LOCAL_CONF_FILE}"
+
+  diff_against_backup "${STROOM_LOCAL_CONF_FILE}"
+  diff_against_backup "${STROOM_LOCAL_2_CONF_FILE}"
+  diff_against_backup "${STROOM_LOCAL_3_CONF_FILE}"
+  diff_against_backup "${PROXY_LOCAL_CONF_FILE}"
 
   exit 0
 }
 
-main
+main "$@"
 
