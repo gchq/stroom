@@ -21,6 +21,7 @@ public class AuthorisationConfig extends AbstractConfig implements IsStroomConfi
     private final CacheConfig userGroupsCache;
     private final CacheConfig userAppPermissionsCache;
     private final CacheConfig userCache;
+    private final CacheConfig userByDisplayNameCache;
     private final CacheConfig userDocumentPermissionsCache;
     private final AuthorisationDbConfig dbConfig;
 
@@ -37,6 +38,10 @@ public class AuthorisationConfig extends AbstractConfig implements IsStroomConfi
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(30))
                 .build();
+        userByDisplayNameCache = CacheConfig.builder()
+                .maximumSize(1000L)
+                .expireAfterAccess(StroomDuration.ofMinutes(30))
+                .build();
         userDocumentPermissionsCache = CacheConfig.builder()
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
@@ -49,12 +54,14 @@ public class AuthorisationConfig extends AbstractConfig implements IsStroomConfi
             @JsonProperty("userGroupsCache") final CacheConfig userGroupsCache,
             @JsonProperty("userAppPermissionsCache") final CacheConfig userAppPermissionsCache,
             @JsonProperty("userCache") final CacheConfig userCache,
+            @JsonProperty("userByDisplayNameCache") final CacheConfig userByDisplayNameCache,
             @JsonProperty("userDocumentPermissionsCache") final CacheConfig userDocumentPermissionsCache,
             @JsonProperty("db") final AuthorisationDbConfig dbConfig) {
 
         this.userGroupsCache = userGroupsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
         this.userCache = userCache;
+        this.userByDisplayNameCache = userByDisplayNameCache;
         this.userDocumentPermissionsCache = userDocumentPermissionsCache;
         this.dbConfig = dbConfig;
     }
@@ -69,6 +76,10 @@ public class AuthorisationConfig extends AbstractConfig implements IsStroomConfi
 
     public CacheConfig getUserCache() {
         return userCache;
+    }
+
+    public CacheConfig getUserByDisplayNameCache() {
+        return userByDisplayNameCache;
     }
 
     public CacheConfig getUserDocumentPermissionsCache() {
@@ -87,6 +98,7 @@ public class AuthorisationConfig extends AbstractConfig implements IsStroomConfi
                 "userGroupsCache=" + userGroupsCache +
                 ", userAppPermissionsCache=" + userAppPermissionsCache +
                 ", userCache=" + userCache +
+                ", userByDisplayNameCache=" + userByDisplayNameCache +
                 ", userDocumentPermissionsCache=" + userDocumentPermissionsCache +
                 ", dbConfig=" + dbConfig +
                 '}';

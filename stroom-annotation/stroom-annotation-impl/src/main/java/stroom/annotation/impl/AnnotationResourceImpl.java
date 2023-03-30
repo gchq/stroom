@@ -66,6 +66,7 @@ class AnnotationResourceImpl implements AnnotationResource {
             }
         } catch (final RuntimeException e) {
             documentEventLog.get().view("Annotation " + annotationId, e);
+            throw e;
         }
 //        } else {
 //            LOGGER.info(() -> "Getting annotation " + streamId + ":" + eventId);
@@ -92,6 +93,7 @@ class AnnotationResourceImpl implements AnnotationResource {
             documentEventLog.get().create(annotationDetail, null);
         } catch (final RuntimeException e) {
             documentEventLog.get().create("Annotation entry " + request.getAnnotation(), e);
+            throw e;
         }
 
         return annotationDetail;

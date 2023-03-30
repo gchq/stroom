@@ -241,7 +241,8 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                     (long) (totalBytes * volumeConfigProvider.get().getDefaultIndexVolumeFilesystemUtilisation()));
         } catch (IOException e) {
             LOGGER.warn(() -> LogUtil.message("Unable to determine the total space on the filesystem for path: {}." +
-                    " Please manually set limit for index volume.", FileUtil.getCanonicalPath(Path.of(path))));
+                    " Please manually set limit for index volume. {}",
+                    FileUtil.getCanonicalPath(Path.of(path)), e.getMessage()));
             return OptionalLong.empty();
         }
     }

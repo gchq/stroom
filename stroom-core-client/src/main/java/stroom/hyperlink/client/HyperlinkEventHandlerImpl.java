@@ -8,14 +8,18 @@ import stroom.core.client.ContentManager;
 import stroom.data.client.presenter.DataViewType;
 import stroom.data.client.presenter.DisplayMode;
 import stroom.data.client.presenter.ShowDataEvent;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFramePresenter;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
+import stroom.security.shared.UserNameResource;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.TextRange;
+import stroom.util.shared.UserName;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -47,6 +51,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
     private final Provider<IFrameContentPresenter> iFrameContentPresenterProvider;
     private final Provider<IFramePresenter> iFramePresenterProvider;
     private final ContentManager contentManager;
+    private final RestFactory restFactory;
 
 //    private Map<String, String> namedUrls;
 
@@ -54,11 +59,13 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
     public HyperlinkEventHandlerImpl(final EventBus eventBus,
                                      final Provider<IFramePresenter> iFramePresenterProvider,
                                      final Provider<IFrameContentPresenter> iFrameContentPresenterProvider,
-                                     final ContentManager contentManager) {
+                                     final ContentManager contentManager,
+                                     final RestFactory restFactory) {
         this.eventBus = eventBus;
         this.iFramePresenterProvider = iFramePresenterProvider;
         this.iFrameContentPresenterProvider = iFrameContentPresenterProvider;
         this.contentManager = contentManager;
+        this.restFactory = restFactory;
 
 //        clientPropertyCache.get()
 //                .onSuccess(result ->
@@ -147,20 +154,27 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
         final String assignedTo = getParam(href, "assignedTo");
         final String comment = getParam(href, "comment");
 
-        final Annotation annotation = new Annotation();
-        annotation.setId(annotationId);
-        annotation.setTitle(title);
-        annotation.setSubject(subject);
-        annotation.setStatus(status);
-        annotation.setAssignedTo(assignedTo);
-        annotation.setComment(comment);
+        // assignedTo is a display name so have to convert it back to a unique username
+        final UserNameResource userNameResource = GWT.create(UserNameResource.class);
+        final Rest<UserName> rest = restFactory.create();
+        rest.onSuccess(assignedToUserName -> {
+                    final Annotation annotation = new Annotation();
+                    annotation.setId(annotationId);
+                    annotation.setTitle(title);
+                    annotation.setSubject(subject);
+                    annotation.setStatus(status);
+                    annotation.setAssignedTo(assignedToUserName);
+                    annotation.setComment(comment);
 
-        final List<EventId> linkedEvents = new ArrayList<>();
-        if (streamId != null && eventId != null) {
-            linkedEvents.add(new EventId(streamId, eventId));
-        }
+                    final List<EventId> linkedEvents = new ArrayList<>();
+                    if (streamId != null && eventId != null) {
+                        linkedEvents.add(new EventId(streamId, eventId));
+                    }
 
-        ShowAnnotationEvent.fire(this, annotation, linkedEvents);
+                    ShowAnnotationEvent.fire(this, annotation, linkedEvents);
+                })
+                .call(userNameResource)
+                .getByDisplayName(assignedTo);
     }
 
     private void openData(final String href) {

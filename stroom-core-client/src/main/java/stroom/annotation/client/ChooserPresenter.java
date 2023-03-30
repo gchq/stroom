@@ -34,13 +34,16 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
-public class ChooserPresenter extends MyPresenterWidget<ChooserView> implements ChooserUiHandlers {
+public class ChooserPresenter<T> extends MyPresenterWidget<ChooserView> implements ChooserUiHandlers {
 
-    private final SingleSelectionModel<String> selectionModel = new SingleSelectionModel<>();
-    private final CellTableView<String> table;
-    private DataSupplier dataSupplier;
+    private final SingleSelectionModel<T> selectionModel = new SingleSelectionModel<>();
+    private final CellTableView<T> table;
+    private DataSupplier<T> dataSupplier;
+    private Function<T, String> displayValueFunction = Objects::toString;
 
     @Inject
     public ChooserPresenter(final EventBus eventBus, final ChooserView view) {
@@ -52,12 +55,12 @@ public class ChooserPresenter extends MyPresenterWidget<ChooserView> implements 
         view.setBottomView(table);
 
         // Text.
-        final Column<String, SafeHtml> textColumn = new Column<String, SafeHtml>(new SafeHtmlCell()) {
+        final Column<T, SafeHtml> textColumn = new Column<T, SafeHtml>(new SafeHtmlCell()) {
             @Override
-            public SafeHtml getValue(final String string) {
+            public SafeHtml getValue(final T value) {
                 final SafeHtmlBuilder builder = new SafeHtmlBuilder();
                 builder.appendHtmlConstant("<div style=\"padding: 5px; min-width: 200px\">");
-                builder.appendEscaped(string);
+                builder.appendEscaped(displayValueFunction.apply(value));
                 builder.appendHtmlConstant("</div>");
                 return builder.toSafeHtml();
             }
@@ -71,11 +74,22 @@ public class ChooserPresenter extends MyPresenterWidget<ChooserView> implements 
         getView().clearFilter();
     }
 
-    String getSelected() {
+    /**
+     * Sets the function to provide a display value for value T.
+     */
+    public void setDisplayValueFunction(final Function<T, String> displayValueFunction) {
+        this.displayValueFunction = Objects.requireNonNull(displayValueFunction);
+    }
+
+    T getSelected() {
         return selectionModel.getSelectedObject();
     }
 
-    void setSelected(final String value) {
+    String getSelectedDisplayValue() {
+        return displayValueFunction.apply(getSelected());
+    }
+
+    void setSelected(final T value) {
         selectionModel.setSelected(value, true);
     }
 
@@ -104,15 +118,23 @@ public class ChooserPresenter extends MyPresenterWidget<ChooserView> implements 
         selectionModel.clear();
     }
 
-    public void setDataSupplier(final DataSupplier dataSupplier) {
+    public void setDataSupplier(final DataSupplier<T> dataSupplier) {
         this.dataSupplier = dataSupplier;
         onFilterChange(null);
     }
 
-    public interface DataSupplier {
 
-        void onChange(String filter, Consumer<List<String>> consumer);
+    // --------------------------------------------------------------------------------
+
+
+    public interface DataSupplier<T> {
+
+        void onChange(String filter, Consumer<List<T>> consumer);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface ChooserView extends View, HasUiHandlers<ChooserUiHandlers> {
 

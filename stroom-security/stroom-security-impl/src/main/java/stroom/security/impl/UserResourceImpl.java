@@ -263,7 +263,8 @@ public class UserResourceImpl implements UserResource {
             errorMessage = e.getMessage();
         }
 
-        authorisationEventLogProvider.get().addUserToGroup(userIdForLogging, groupIdForLogging, success, errorMessage);
+        authorisationEventLogProvider.get()
+                .addUserToGroup(userIdForLogging, groupIdForLogging, success, errorMessage);
 
         return success;
     }
@@ -295,7 +296,7 @@ public class UserResourceImpl implements UserResource {
     }
 
     @Override
-    public List<String> getAssociates(final String filter) {
+    public List<UserName> getAssociates(final String filter) {
         return userServiceProvider.get().getAssociates(filter);
     }
 
@@ -304,7 +305,7 @@ public class UserResourceImpl implements UserResource {
             Optional<User> found = securityContextProvider.get()
                     .asProcessingUserResult(() -> userServiceProvider.get().loadByUuid(uuid));
             if (found.isPresent() && !found.get().isGroup()) {
-                return found.get().getName();
+                return found.get().getUserIdentityForAudit();
             }
         } catch (Exception ex) {
             //Ignore at this time
@@ -317,6 +318,7 @@ public class UserResourceImpl implements UserResource {
             Optional<User> found = securityContextProvider.get()
                     .asProcessingUserResult(() -> userServiceProvider.get().loadByUuid(uuid));
             if (found.isPresent() && found.get().isGroup()) {
+                // Groups only have a name
                 return found.get().getName();
             }
         } catch (Exception ex) {

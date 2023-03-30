@@ -17,8 +17,10 @@ import stroom.search.extraction.AnnotationsDecoratorFactory;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.search.extraction.ExtractionReceiver;
 import stroom.security.api.SecurityContext;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.UserName;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,7 +46,8 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
             nullSafeEntry(AnnotationFields.TITLE, Annotation::getTitle),
             nullSafeEntry(AnnotationFields.SUBJECT, Annotation::getSubject),
             nullSafeEntry(AnnotationFields.STATUS, Annotation::getStatus),
-            nullSafeEntry(AnnotationFields.ASSIGNED_TO, Annotation::getAssignedTo),
+            nullSafeEntry(AnnotationFields.ASSIGNED_TO, annotation ->
+                    NullSafe.get(annotation.getAssignedTo(), UserName::getUserIdentityForAudit)),
             nullSafeEntry(AnnotationFields.COMMENT, Annotation::getComment),
             nullSafeEntry(AnnotationFields.HISTORY, Annotation::getHistory));
 
@@ -57,7 +60,8 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
             Map.entry(AnnotationFields.TITLE, Annotation::getTitle),
             Map.entry(AnnotationFields.SUBJECT, Annotation::getSubject),
             Map.entry(AnnotationFields.STATUS, Annotation::getStatus),
-            Map.entry(AnnotationFields.ASSIGNED_TO, Annotation::getAssignedTo),
+            Map.entry(AnnotationFields.ASSIGNED_TO, annotation ->
+                    NullSafe.get(annotation.getAssignedTo(), UserName::getUserIdentityForAudit)),
             Map.entry(AnnotationFields.COMMENT, Annotation::getComment),
             Map.entry(AnnotationFields.HISTORY, Annotation::getHistory));
 
@@ -186,7 +190,8 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
         return annotation -> {
             final Map<String, Object> attributeMap = new HashMap<>();
             for (final String field : usedFields) {
-                final Object value = OBJECT_MAPPING.get(field).apply(annotation);
+                final Object value = OBJECT_MAPPING.get(field)
+                        .apply(annotation);
                 attributeMap.put(field, value);
             }
             return expressionMatcher.match(attributeMap, filteredExpression);
@@ -212,7 +217,12 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
         if (index != null && values.length > index) {
             // Only add values that are missing.
             if (values[index] == null) {
-                final Val val = VALUE_MAPPING.get(field).apply(annotation);
+                final Val val;
+                try {
+                    val = VALUE_MAPPING.get(field).apply(annotation);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
                 values[index] = val;
             }
         }

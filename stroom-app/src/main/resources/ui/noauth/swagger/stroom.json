@@ -1555,6 +1555,25 @@
         "tags" : [ "Global Config" ]
       }
     },
+    "/config/v1/noauth/fetchExtendedUiConfig" : {
+      "get" : {
+        "operationId" : "fetchExtendedUiConfig",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ExtendedUiConfig"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch the extended UI configuration",
+        "tags" : [ "Global Config" ]
+      }
+    },
     "/config/v1/noauth/fetchUiConfig" : {
       "get" : {
         "operationId" : "fetchUiConfig",
@@ -1563,7 +1582,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ExtendedUiConfig"
+                  "$ref" : "#/components/schemas/UiConfig"
                 }
               }
             },
@@ -8238,6 +8257,61 @@
         "tags" : [ "Authorisation" ]
       }
     },
+    "/userNames/v1/getByDisplayName/{displayName}" : {
+      "get" : {
+        "operationId" : "getByDisplayName",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "displayName",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserName"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find the user name matching the supplied displayName",
+        "tags" : [ "Authorisation" ]
+      }
+    },
+    "/userNames/v1/{userId}" : {
+      "get" : {
+        "operationId" : "getByUserId",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserName"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find the user name matching the supplied unique user ID",
+        "tags" : [ "Authorisation" ]
+      }
+    },
     "/users/v1" : {
       "get" : {
         "operationId" : "findUsers",
@@ -8296,7 +8370,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "type" : "string"
+                    "$ref" : "#/components/schemas/UserName"
                   }
                 }
               }
@@ -8308,7 +8382,7 @@
         "tags" : [ "Authorisation" ]
       }
     },
-    "/users/v1/createGroup/{name}" : {
+    "/users/v1/createGroup" : {
       "post" : {
         "operationId" : "createGroup",
         "requestBody" : {
@@ -8338,7 +8412,7 @@
         "tags" : [ "Authorisation" ]
       }
     },
-    "/users/v1/createUser/{name}" : {
+    "/users/v1/createUser" : {
       "post" : {
         "operationId" : "createUser",
         "requestBody" : {
@@ -8365,6 +8439,39 @@
           }
         },
         "summary" : "Creates a user with the supplied name",
+        "tags" : [ "Authorisation" ]
+      }
+    },
+    "/users/v1/createUsers" : {
+      "post" : {
+        "operationId" : "createUsers",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          },
+          "description" : "users",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/User"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Creates a batch of users from a list of CSV entries. Each line is of the form 'id,displayName,fullName', where displayName and fullName are optional",
         "tags" : [ "Authorisation" ]
       }
     },
@@ -8792,6 +8899,10 @@
               "enum" : [ "CONTAINS", "EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
             }
           },
+          "fieldType" : {
+            "type" : "string",
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
+          },
           "name" : {
             "type" : "string"
           },
@@ -9009,7 +9120,7 @@
         "type" : "object",
         "properties" : {
           "assignedTo" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/UserName"
           },
           "comment" : {
             "type" : "string"
@@ -9019,7 +9130,7 @@
             "format" : "int64"
           },
           "createUser" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/UserName"
           },
           "history" : {
             "type" : "string"
@@ -9042,7 +9153,7 @@
             "format" : "int64"
           },
           "updateUser" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/UserName"
           },
           "version" : {
             "type" : "integer",
@@ -9072,13 +9183,13 @@
             "format" : "int64"
           },
           "createUser" : {
-            "type" : "string"
-          },
-          "data" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/UserName"
           },
           "entryType" : {
             "type" : "string"
+          },
+          "entryValue" : {
+            "$ref" : "#/components/schemas/EntryValue"
           },
           "id" : {
             "type" : "integer",
@@ -9089,7 +9200,7 @@
             "format" : "int64"
           },
           "updateUser" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/UserName"
           },
           "version" : {
             "type" : "integer",
@@ -9841,8 +9952,8 @@
           "annotation" : {
             "$ref" : "#/components/schemas/Annotation"
           },
-          "data" : {
-            "type" : "string"
+          "entryValue" : {
+            "$ref" : "#/components/schemas/EntryValue"
           },
           "linkedEvents" : {
             "type" : "array",
@@ -10797,6 +10908,18 @@
           }
         }
       },
+      "EntryValue" : {
+        "type" : "object",
+        "discriminator" : {
+          "propertyName" : "type"
+        },
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "type" ]
+      },
       "EventCoprocessorSettings" : {
         "type" : "object",
         "allOf" : [ {
@@ -11171,70 +11294,11 @@
       "ExtendedUiConfig" : {
         "type" : "object",
         "properties" : {
-          "aboutHtml" : {
-            "type" : "string"
-          },
-          "activity" : {
-            "$ref" : "#/components/schemas/ActivityConfig"
-          },
-          "applicationInstanceKeepAliveIntervalMs" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "defaultMaxResults" : {
-            "type" : "string"
-          },
           "externalIdentityProvider" : {
             "type" : "boolean"
           },
-          "helpSubPathExpressions" : {
-            "type" : "string"
-          },
-          "helpSubPathJobs" : {
-            "type" : "string"
-          },
-          "helpSubPathProperties" : {
-            "type" : "string"
-          },
-          "helpSubPathQuickFilter" : {
-            "type" : "string"
-          },
-          "helpUrl" : {
-            "type" : "string"
-          },
-          "htmlTitle" : {
-            "type" : "string"
-          },
-          "maintenanceMessage" : {
-            "type" : "string"
-          },
-          "namePattern" : {
-            "type" : "string"
-          },
-          "oncontextmenu" : {
-            "type" : "string",
-            "pattern" : "^return (true|false);$"
-          },
-          "process" : {
-            "$ref" : "#/components/schemas/ProcessConfig"
-          },
-          "query" : {
-            "$ref" : "#/components/schemas/QueryConfig"
-          },
-          "requireReactWrapper" : {
-            "type" : "boolean"
-          },
-          "source" : {
-            "$ref" : "#/components/schemas/SourceConfig"
-          },
-          "splash" : {
-            "$ref" : "#/components/schemas/SplashConfig"
-          },
-          "theme" : {
-            "$ref" : "#/components/schemas/ThemeConfig"
-          },
-          "welcomeHtml" : {
-            "type" : "string"
+          "uiConfig" : {
+            "$ref" : "#/components/schemas/UiConfig"
           }
         }
       },
@@ -15016,7 +15080,7 @@
             }
           },
           "assignedTo" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/UserName"
           }
         }
       },
@@ -15662,6 +15726,19 @@
           }
         }
       },
+      "StringEntryValue" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/EntryValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "value" : {
+              "type" : "string"
+            }
+          }
+        } ]
+      },
       "StroomStatsStoreDoc" : {
         "type" : "object",
         "properties" : {
@@ -16239,6 +16316,73 @@
           }
         }
       },
+      "UiConfig" : {
+        "type" : "object",
+        "properties" : {
+          "aboutHtml" : {
+            "type" : "string"
+          },
+          "activity" : {
+            "$ref" : "#/components/schemas/ActivityConfig"
+          },
+          "applicationInstanceKeepAliveIntervalMs" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "defaultMaxResults" : {
+            "type" : "string"
+          },
+          "helpSubPathExpressions" : {
+            "type" : "string"
+          },
+          "helpSubPathJobs" : {
+            "type" : "string"
+          },
+          "helpSubPathProperties" : {
+            "type" : "string"
+          },
+          "helpSubPathQuickFilter" : {
+            "type" : "string"
+          },
+          "helpUrl" : {
+            "type" : "string"
+          },
+          "htmlTitle" : {
+            "type" : "string"
+          },
+          "maintenanceMessage" : {
+            "type" : "string"
+          },
+          "namePattern" : {
+            "type" : "string"
+          },
+          "oncontextmenu" : {
+            "type" : "string",
+            "pattern" : "^return (true|false);$"
+          },
+          "process" : {
+            "$ref" : "#/components/schemas/ProcessConfig"
+          },
+          "query" : {
+            "$ref" : "#/components/schemas/QueryConfig"
+          },
+          "requireReactWrapper" : {
+            "type" : "boolean"
+          },
+          "source" : {
+            "$ref" : "#/components/schemas/SourceConfig"
+          },
+          "splash" : {
+            "$ref" : "#/components/schemas/SplashConfig"
+          },
+          "theme" : {
+            "$ref" : "#/components/schemas/ThemeConfig"
+          },
+          "welcomeHtml" : {
+            "type" : "string"
+          }
+        }
+      },
       "UpdateAccountRequest" : {
         "type" : "object",
         "properties" : {
@@ -16334,6 +16478,9 @@
           "updateUser" : {
             "type" : "string"
           },
+          "userIdentityForAudit" : {
+            "type" : "string"
+          },
           "uuid" : {
             "type" : "string"
           },
@@ -16353,8 +16500,8 @@
             },
             "uniqueItems" : true
           },
-          "userId" : {
-            "type" : "string"
+          "userName" : {
+            "$ref" : "#/components/schemas/UserName"
           }
         }
       },
@@ -16369,8 +16516,24 @@
           },
           "name" : {
             "type" : "string"
+          },
+          "userIdentityForAudit" : {
+            "type" : "string"
           }
         }
+      },
+      "UserNameEntryValue" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/EntryValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "userName" : {
+              "$ref" : "#/components/schemas/UserName"
+            }
+          }
+        } ]
       },
       "UserPreferences" : {
         "type" : "object",
@@ -16381,6 +16544,10 @@
           },
           "density" : {
             "type" : "string"
+          },
+          "editorKeyBindings" : {
+            "type" : "string",
+            "enum" : [ "STANDARD", "VIM" ]
           },
           "editorTheme" : {
             "type" : "string"

@@ -8,6 +8,7 @@ import stroom.security.impl.db.jooq.tables.StroomUser;
 import stroom.security.impl.db.jooq.tables.records.StroomUserRecord;
 import stroom.security.shared.User;
 import stroom.util.filter.QuickFilterPredicateFactory;
+import stroom.util.logging.LogUtil;
 
 import org.jooq.Condition;
 import org.jooq.Record;
@@ -98,32 +99,50 @@ public class UserDaoImpl implements UserDao {
     @Override
     public Optional<User> getByUuid(final String uuid) {
         return JooqUtil.contextResult(securityDbConnProvider, context -> context
-                .select()
-                .from(STROOM_USER)
-                .where(STROOM_USER.UUID.eq(uuid))
-                .fetchOptional())
+                        .select()
+                        .from(STROOM_USER)
+                        .where(STROOM_USER.UUID.eq(uuid))
+                        .fetchOptional())
                 .map(RECORD_TO_USER_MAPPER);
     }
 
     @Override
     public Optional<User> getByName(final String name) {
         return JooqUtil.contextResult(securityDbConnProvider, context -> context
+                        .select()
+                        .from(STROOM_USER)
+                        .where(STROOM_USER.NAME.eq(name))
+                        .fetchOptional())
+                .map(RECORD_TO_USER_MAPPER);
+    }
+
+    @Override
+    public Optional<User> getByDisplayName(final String displayName) {
+        // The user name displayed in the UI could be the displayName or the unique name
+        // depending on whether the user has a display name or not, so try both.
+        final List<User> users = JooqUtil.contextResult(securityDbConnProvider, context -> context
                 .select()
                 .from(STROOM_USER)
-                .where(STROOM_USER.NAME.eq(name))
-                .fetchOptional())
-                .map(RECORD_TO_USER_MAPPER);
+                .where(STROOM_USER.DISPLAY_NAME.eq(displayName))
+                .fetch(RECORD_TO_USER_MAPPER::apply));
+
+        if (users.size() > 1) {
+            throw new RuntimeException(LogUtil.message(
+                    "Found more than one user with displayName or unique name equal to '{}'", displayName));
+        }
+        return users.stream()
+                .findFirst();
     }
 
     @Override
     public Optional<User> getByName(final String name,
                                     final boolean isGroup) {
         return JooqUtil.contextResult(securityDbConnProvider, context -> context
-                .select()
-                .from(STROOM_USER)
-                .where(STROOM_USER.NAME.eq(name))
-                .and(STROOM_USER.IS_GROUP.eq(isGroup))
-                .fetchOptional())
+                        .select()
+                        .from(STROOM_USER)
+                        .where(STROOM_USER.NAME.eq(name))
+                        .and(STROOM_USER.IS_GROUP.eq(isGroup))
+                        .fetchOptional())
                 .map(RECORD_TO_USER_MAPPER);
     }
 
@@ -150,11 +169,12 @@ public class UserDaoImpl implements UserDao {
                 quickFilterInput,
                 FILTER_FIELD_MAPPERS,
                 JooqUtil.contextResult(securityDbConnProvider, context -> context
-                        .select().from(STROOM_USER)
-                        .where(condition)
-                        .and(getExcludedUsersCondition())
-                        .orderBy(STROOM_USER.NAME)
-                        .fetch())
+                                .select()
+                                .from(STROOM_USER)
+                                .where(condition)
+                                .and(getExcludedUsersCondition())
+                                .orderBy(STROOM_USER.NAME)
+                                .fetch())
                         .stream()
                         .map(RECORD_TO_USER_MAPPER)
         ).collect(Collectors.toList());
@@ -166,13 +186,13 @@ public class UserDaoImpl implements UserDao {
                 quickFilterInput,
                 FILTER_FIELD_MAPPERS,
                 JooqUtil.contextResult(securityDbConnProvider, context -> context
-                        .select()
-                        .from(STROOM_USER)
-                        .join(STROOM_USER_GROUP)
-                        .on(STROOM_USER.UUID.eq(STROOM_USER_GROUP.USER_UUID))
-                        .where(STROOM_USER_GROUP.GROUP_UUID.eq(groupUuid))
-                        .and(getExcludedUsersCondition())
-                        .fetch())
+                                .select()
+                                .from(STROOM_USER)
+                                .join(STROOM_USER_GROUP)
+                                .on(STROOM_USER.UUID.eq(STROOM_USER_GROUP.USER_UUID))
+                                .where(STROOM_USER_GROUP.GROUP_UUID.eq(groupUuid))
+                                .and(getExcludedUsersCondition())
+                                .fetch())
                         .stream()
                         .map(RECORD_TO_USER_MAPPER)
         ).collect(Collectors.toList());
@@ -185,12 +205,12 @@ public class UserDaoImpl implements UserDao {
                 quickFilterInput,
                 FILTER_FIELD_MAPPERS,
                 JooqUtil.contextResult(securityDbConnProvider, context -> context
-                        .select()
-                        .from(STROOM_USER)
-                        .join(STROOM_USER_GROUP)
-                        .on(STROOM_USER.UUID.eq(STROOM_USER_GROUP.GROUP_UUID))
-                        .where(STROOM_USER_GROUP.USER_UUID.eq(userUuid))
-                        .fetch())
+                                .select()
+                                .from(STROOM_USER)
+                                .join(STROOM_USER_GROUP)
+                                .on(STROOM_USER.UUID.eq(STROOM_USER_GROUP.GROUP_UUID))
+                                .where(STROOM_USER_GROUP.USER_UUID.eq(userUuid))
+                                .fetch())
                         .stream()
                         .map(RECORD_TO_USER_MAPPER)
         ).collect(Collectors.toList());
@@ -199,10 +219,10 @@ public class UserDaoImpl implements UserDao {
     @Override
     public Set<String> findGroupUuidsForUser(final String userUuid) {
         return JooqUtil.contextResult(securityDbConnProvider, context ->
-                context.select(STROOM_USER_GROUP.GROUP_UUID)
-                        .from(STROOM_USER_GROUP)
-                        .where(STROOM_USER_GROUP.USER_UUID.eq(userUuid))
-                        .fetch())
+                        context.select(STROOM_USER_GROUP.GROUP_UUID)
+                                .from(STROOM_USER_GROUP)
+                                .where(STROOM_USER_GROUP.USER_UUID.eq(userUuid))
+                                .fetch())
                 .stream()
                 .map(Record1::value1)
                 .collect(Collectors.toSet());
@@ -213,17 +233,17 @@ public class UserDaoImpl implements UserDao {
         StroomUser userUser = STROOM_USER.as("userUser");
         StroomUser groupUser = STROOM_USER.as("groupUser");
         return JooqUtil.contextResult(securityDbConnProvider, context ->
-                context.select()
-                        .from(groupUser)
-                        // group users -> groups
-                        .join(STROOM_USER_GROUP)
-                        .on(groupUser.UUID.eq(STROOM_USER_GROUP.GROUP_UUID))
-                        // users -> groups
-                        .join(userUser)
-                        .on(userUser.UUID.eq(STROOM_USER_GROUP.USER_UUID))
-                        .where(userUser.NAME.eq(userName))
-                        .orderBy(groupUser.NAME)
-                        .fetch())
+                        context.select()
+                                .from(groupUser)
+                                // group users -> groups
+                                .join(STROOM_USER_GROUP)
+                                .on(groupUser.UUID.eq(STROOM_USER_GROUP.GROUP_UUID))
+                                // users -> groups
+                                .join(userUser)
+                                .on(userUser.UUID.eq(STROOM_USER_GROUP.USER_UUID))
+                                .where(userUser.NAME.eq(userName))
+                                .orderBy(groupUser.NAME)
+                                .fetch())
                 .map(RECORD_TO_USER_MAPPER::apply);
     }
 

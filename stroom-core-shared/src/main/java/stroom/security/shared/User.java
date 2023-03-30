@@ -3,6 +3,7 @@ package stroom.security.shared;
 
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasIntegerId;
+import stroom.util.shared.SimpleUserName;
 import stroom.util.shared.UserName;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -216,6 +217,10 @@ public class User implements HasAuditInfo, HasIntegerId, UserName {
 
     public void setGroup(boolean group) {
         this.group = group;
+    }
+
+    public UserName asUserName() {
+        return new SimpleUserName(name, displayName, fullName);
     }
 
     @Override

@@ -10,6 +10,7 @@ dependencies {
     implementation project(':stroom-query:stroom-expression')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
+    implementation project(':stroom-security:stroom-security-user-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 

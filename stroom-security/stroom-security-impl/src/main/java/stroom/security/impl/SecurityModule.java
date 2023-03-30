@@ -77,7 +77,7 @@ public class SecurityModule extends AbstractModule {
                         SecurityFilter.class);
 
         GuiceUtil.buildMultiBinder(binder(), UserNameProvider.class)
-                .addBinding(UserServiceImpl.class);
+                .addBinding(StroomUserNameProvider.class);
 
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
                 .addBinding(StroomUserIdentityFactory.class);

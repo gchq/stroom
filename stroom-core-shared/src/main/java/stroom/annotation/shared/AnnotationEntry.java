@@ -1,5 +1,7 @@
 package stroom.annotation.shared;
 
+import stroom.util.shared.UserName;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -15,15 +17,15 @@ public class AnnotationEntry {
     @JsonProperty
     private Long createTime;
     @JsonProperty
-    private String createUser;
+    private UserName createUser;
     @JsonProperty
     private Long updateTime;
     @JsonProperty
-    private String updateUser;
+    private UserName updateUser;
     @JsonProperty
     private String entryType;
     @JsonProperty
-    private String data;
+    private EntryValue entryValue;
 
     public AnnotationEntry() {
     }
@@ -32,11 +34,11 @@ public class AnnotationEntry {
     public AnnotationEntry(@JsonProperty("id") final Long id,
                            @JsonProperty("version") final Integer version,
                            @JsonProperty("createTime") final Long createTime,
-                           @JsonProperty("createUser") final String createUser,
+                           @JsonProperty("createUser") final UserName createUser,
                            @JsonProperty("updateTime") final Long updateTime,
-                           @JsonProperty("updateUser") final String updateUser,
+                           @JsonProperty("updateUser") final UserName updateUser,
                            @JsonProperty("entryType") final String entryType,
-                           @JsonProperty("data") final String data) {
+                           @JsonProperty("entryValue") final EntryValue entryValue) {
         this.id = id;
         this.version = version;
         this.createTime = createTime;
@@ -44,7 +46,7 @@ public class AnnotationEntry {
         this.updateTime = updateTime;
         this.updateUser = updateUser;
         this.entryType = entryType;
-        this.data = data;
+        this.entryValue = entryValue;
     }
 
     public Long getId() {
@@ -71,11 +73,11 @@ public class AnnotationEntry {
         this.createTime = createTime;
     }
 
-    public String getCreateUser() {
+    public UserName getCreateUser() {
         return createUser;
     }
 
-    public void setCreateUser(final String createUser) {
+    public void setCreateUser(final UserName createUser) {
         this.createUser = createUser;
     }
 
@@ -87,11 +89,11 @@ public class AnnotationEntry {
         this.updateTime = updateTime;
     }
 
-    public String getUpdateUser() {
+    public UserName getUpdateUser() {
         return updateUser;
     }
 
-    public void setUpdateUser(final String updateUser) {
+    public void setUpdateUser(final UserName updateUser) {
         this.updateUser = updateUser;
     }
 
@@ -103,11 +105,25 @@ public class AnnotationEntry {
         this.entryType = entryType;
     }
 
-    public String getData() {
-        return data;
+    public EntryValue getEntryValue() {
+        return entryValue;
     }
 
-    public void setData(final String data) {
-        this.data = data;
+    public void setEntryValue(final EntryValue entryValue) {
+        this.entryValue = entryValue;
+    }
+
+    @Override
+    public String toString() {
+        return "AnnotationEntry{" +
+                "id=" + id +
+                ", version=" + version +
+                ", createTime=" + createTime +
+                ", createUser=" + createUser +
+                ", updateTime=" + updateTime +
+                ", updateUser=" + updateUser +
+                ", entryType='" + entryType + '\'' +
+                ", entryValue='" + entryValue + '\'' +
+                '}';
     }
 }

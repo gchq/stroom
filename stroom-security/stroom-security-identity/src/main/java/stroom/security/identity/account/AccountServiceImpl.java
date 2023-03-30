@@ -42,6 +42,11 @@ public class AccountServiceImpl implements AccountService, UserNameProvider {
     }
 
     @Override
+    public boolean isEnabled() {
+        return shouldProvideNames();
+    }
+
+    @Override
     public ResultPage<UserName> findUserNames(final FindUserNameCriteria criteria) {
 
         // Only the internal IDP uses Accounts, so no point hitting it for other IDPs
@@ -65,13 +70,19 @@ public class AccountServiceImpl implements AccountService, UserNameProvider {
     }
 
     @Override
-    public Optional<UserName> getUserName(final String userId) {
+    public Optional<UserName> getByUserId(final String userId) {
         if (shouldProvideNames()) {
             return accountDao.get(userId)
                     .map(this::mapAccountToUserName);
         } else {
             return Optional.empty();
         }
+    }
+
+    @Override
+    public Optional<UserName> getByDisplayName(final String displayName) {
+        // Accounts have no concept of displayName so just get by userId
+        return getByUserId(displayName);
     }
 
     private UserName mapAccountToUserName(final Account account) {

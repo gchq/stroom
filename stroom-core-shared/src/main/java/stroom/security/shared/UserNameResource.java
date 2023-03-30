@@ -11,8 +11,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
@@ -28,4 +30,18 @@ public interface UserNameResource extends RestResource, DirectRestService {
             summary = "Find the user names matching the supplied criteria",
             operationId = "findUserNames")
     ResultPage<UserName> find(@Parameter(description = "criteria", required = true) FindUserNameCriteria criteria);
+
+    @GET
+    @Path("/getByDisplayName/{displayName}")
+    @Operation(
+            summary = "Find the user name matching the supplied displayName",
+            operationId = "getByDisplayName")
+    UserName getByDisplayName(@PathParam("displayName") final String displayName);
+
+    @GET
+    @Path("/{userId}")
+    @Operation(
+            summary = "Find the user name matching the supplied unique user ID",
+            operationId = "getByUserId")
+    UserName getByUserId(final String userId);
 }

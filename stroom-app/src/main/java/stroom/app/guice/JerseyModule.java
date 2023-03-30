@@ -83,7 +83,7 @@ public class JerseyModule extends AbstractModule {
     @Singleton
     WebTargetFactory provideJerseyRequestBuilder(final Client client,
                                                  final SecurityContext securityContext,
-                                                 final UserIdentityFactory userIdentityFactory) {
+                                                 final Provider<UserIdentityFactory> userIdentityFactoryProvider) {
         return url -> {
             final WebTarget webTarget = client.target(url);
             return (WebTarget) new WebTargetProxy(webTarget) {
@@ -110,7 +110,8 @@ public class JerseyModule extends AbstractModule {
 
                 private void addAuthHeader(final Builder builder) {
                     final UserIdentity userIdentity = securityContext.getUserIdentity();
-                    final Map<String, String> authHeaders = userIdentityFactory.getAuthHeaders(userIdentity);
+                    final Map<String, String> authHeaders = userIdentityFactoryProvider.get()
+                            .getAuthHeaders(userIdentity);
                     LOGGER.debug(() -> LogUtil.message("Adding auth headers to request, keys: '{}', userType: {}",
                             String.join(", ", NullSafe.map(authHeaders).keySet()),
                             NullSafe.get(userIdentity, Object::getClass, Class::getSimpleName)));

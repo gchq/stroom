@@ -42,7 +42,7 @@ public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
         implements PopupUiHandlers, ChangeStatusUiHandlers {
 
     private final RestFactory restFactory;
-    private final ChooserPresenter statusPresenter;
+    private final ChooserPresenter<String> statusPresenter;
     private List<Long> annotationIdList;
     private String currentStatus;
 
@@ -50,7 +50,7 @@ public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
     public ChangeStatusPresenter(final EventBus eventBus,
                                  final ChangeStatusView view,
                                  final RestFactory restFactory,
-                                 final ChooserPresenter statusPresenter) {
+                                 final ChooserPresenter<String> statusPresenter) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.statusPresenter = statusPresenter;

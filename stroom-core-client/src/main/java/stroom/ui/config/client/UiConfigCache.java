@@ -83,7 +83,7 @@ public class UiConfigCache implements HasHandlers {
                     PropertyChangeEvent.fire(UiConfigCache.this, result);
                 }).onFailure(future::setThrowable)
                 .call(CONFIG_RESOURCE)
-                .fetchUiConfig();
+                .fetchExtendedUiConfig();
         return future;
     }
 

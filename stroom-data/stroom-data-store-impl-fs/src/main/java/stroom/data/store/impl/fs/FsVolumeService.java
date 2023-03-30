@@ -645,8 +645,9 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
             return OptionalLong.of((long) (totalBytes * volumeConfigProvider.get()
                     .getDefaultStreamVolumeFilesystemUtilisation()));
         } catch (IOException e) {
-            LOGGER.warn(() -> LogUtil.message("Unable to determine the total space on the filesystem for path: {}",
-                    FileUtil.getCanonicalPath(path)));
+            LOGGER.warn(() -> LogUtil.message("Unable to determine the total space on the filesystem for path: {}." +
+                    " Please manually set limit for index volume. {}",
+                    FileUtil.getCanonicalPath(path), e.getMessage()));
             return OptionalLong.empty();
         }
     }

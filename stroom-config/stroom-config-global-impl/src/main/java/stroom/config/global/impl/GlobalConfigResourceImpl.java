@@ -264,10 +264,19 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         }
     }
 
+    // This one gets called by the React UI
     @AutoLogged(OperationType.UNLOGGED) // Called constantly by UI code not user. No need to log.
     @Timed
     @Override
-    public ExtendedUiConfig fetchUiConfig() {
+    public UiConfig fetchUiConfig() {
+        return uiConfig.get();
+    }
+
+    // This one gets called by the GWT UI
+    @AutoLogged(OperationType.UNLOGGED) // Called constantly by UI code not user. No need to log.
+    @Timed
+    @Override
+    public ExtendedUiConfig fetchExtendedUiConfig() {
         final IdpType idpType = openIdConfigProvider.get().getIdentityProviderType();
         final boolean isExternalIdp = idpType != null && idpType.isExternal();
 

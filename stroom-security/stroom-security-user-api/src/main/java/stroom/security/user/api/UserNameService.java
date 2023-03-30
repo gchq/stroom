@@ -10,5 +10,14 @@ public interface UserNameService {
 
     ResultPage<UserName> find(FindUserNameCriteria criteria);
 
-    Optional<UserName> getUserName(final String userId);
+    /**
+     * <p>This will look up a user using their unique identifier.</p>
+     */
+    Optional<UserName> getByUserId(final String userId);
+
+    /**
+     * <p>This will look up a user using the display name as seen in the UI. If a user cannot be found
+     * it will look up the user using their unique identifier.</p>
+     */
+    Optional<UserName> getByDisplayName(final String displayName);
 }

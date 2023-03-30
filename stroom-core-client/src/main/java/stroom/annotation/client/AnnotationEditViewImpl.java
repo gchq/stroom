@@ -18,6 +18,7 @@ package stroom.annotation.client;
 
 import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
 import stroom.svg.client.Preset;
+import stroom.util.shared.UserName;
 import stroom.widget.button.client.SvgButton;
 
 import com.google.gwt.core.client.Scheduler;
@@ -143,12 +144,12 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     }
 
     @Override
-    public void setAssignedTo(final String assignedTo) {
-        if (assignedTo == null || assignedTo.trim().isEmpty()) {
+    public void setAssignedTo(final UserName assignedTo) {
+        if (assignedTo == null) {
             this.assignedTo.setText("Nobody");
             this.assignedTo.getElement().getStyle().setOpacity(0.5);
         } else {
-            this.assignedTo.setText(assignedTo);
+            this.assignedTo.setText(assignedTo.getUserIdentityForAudit());
             this.assignedTo.getElement().getStyle().setOpacity(1);
         }
     }

@@ -31,6 +31,13 @@ public interface UserDao {
 
     Optional<User> getByName(String name);
 
+    /**
+     * Gets by displayName, falling back to
+     * @param displayName
+     * @return
+     */
+    Optional<User> getByDisplayName(String displayName);
+
     Optional<User> getByName(String name, boolean isGroup);
 
     User update(User user);

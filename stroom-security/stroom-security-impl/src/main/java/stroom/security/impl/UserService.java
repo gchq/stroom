@@ -51,6 +51,8 @@ public interface UserService {
 
     Optional<User> getUserByName(String name);
 
+    Optional<User> getUserByDisplayName(String displayName);
+
     Optional<User> loadByUuid(String uuid);
 
     User update(User user);
@@ -79,5 +81,5 @@ public interface UserService {
 
     Boolean removeUserFromGroup(String userUuid, String groupUuid);
 
-    List<String> getAssociates(String filter);
+    List<UserName> getAssociates(String filter);
 }

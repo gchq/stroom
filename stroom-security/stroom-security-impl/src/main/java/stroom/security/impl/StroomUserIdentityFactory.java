@@ -90,7 +90,7 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
                                                          final TokenResponse tokenResponse) {
         final JwtClaims jwtClaims = jwtContext.getJwtClaims();
         final String uniqueId = getUniqueIdentity(jwtClaims);
-        final Optional<User> optUser = userCache.get(uniqueId);
+        final Optional<User> optUser = userCache.getOrCreate(uniqueId);
 
         return optUser
                 .flatMap(user -> {
@@ -239,7 +239,7 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
                 // Using default creds so just fake a user
                 userUuid = UUID.randomUUID().toString();
             } else {
-                final User user = userCache.get(userId).orElseThrow(() ->
+                final User user = userCache.getOrCreate(userId).orElseThrow(() ->
                         new AuthenticationException("Unable to find user: " + userId));
                 updateUserInfo(user, jwtClaims);
                 userUuid = user.getUuid();

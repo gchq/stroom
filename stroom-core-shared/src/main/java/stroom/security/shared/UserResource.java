@@ -101,5 +101,5 @@ public interface UserResource extends RestResource, DirectRestService, FetchWith
     @Operation(
             summary = "Gets a list of associated users",
             operationId = "getAssociatedUsers")
-    List<String> getAssociates(@QueryParam("filter") String filter);
+    List<UserName> getAssociates(@QueryParam("filter") String filter);
 }

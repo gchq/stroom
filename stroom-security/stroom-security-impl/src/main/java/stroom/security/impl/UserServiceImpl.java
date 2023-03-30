@@ -19,15 +19,13 @@ package stroom.security.impl;
 import stroom.docref.DocRef;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.FindUserCriteria;
-import stroom.security.shared.FindUserNameCriteria;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
-import stroom.security.shared.UserNameProvider;
 import stroom.util.AuditUtil;
+import stroom.util.NullSafe;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.SimpleUserName;
 import stroom.util.shared.UserName;
 
@@ -41,7 +39,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
-class UserServiceImpl implements UserService, UserNameProvider {
+class UserServiceImpl implements UserService {
 
     private final SecurityContext securityContext;
     private final UserDao userDao;
@@ -93,15 +91,25 @@ class UserServiceImpl implements UserService, UserNameProvider {
 
     @Override
     public Optional<User> getUserByName(final String name) {
-        if (name != null && name.trim().length() > 0) {
+        if (!NullSafe.isBlankString(name)) {
             return userDao.getByName(name)
                     .filter(user -> {
+                        // TODO: 23/03/2023 Why is this here?
                         if (!user.getName().equals(name)) {
                             throw new RuntimeException(
                                     "Unexpected: returned user name does not match requested user name");
                         }
                         return true;
                     });
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public Optional<User> getUserByDisplayName(final String displayName) {
+        if (!NullSafe.isBlankString(displayName)) {
+            return userDao.getByDisplayName(displayName);
         } else {
             return Optional.empty();
         }
@@ -130,28 +138,6 @@ class UserServiceImpl implements UserService, UserNameProvider {
             fireEntityChangeEvent(userUuid, EntityAction.DELETE);
         });
         return true;
-    }
-
-    @Override
-    public ResultPage<UserName> findUserNames(final FindUserNameCriteria criteria) {
-        final FindUserCriteria findUserCriteria = new FindUserCriteria(
-                criteria.getPageRequest(),
-                criteria.getSortList(),
-                criteria.getQuickFilterInput(),
-                false,
-                null);
-        final List<UserName> userNames = find(findUserCriteria)
-                .stream()
-                .map(usr -> (UserName) usr)
-                .toList();
-
-        return new ResultPage<>(userNames);
-    }
-
-    @Override
-    public Optional<UserName> getUserName(final String userId) {
-        return getUserByName(userId)
-                .map(usr -> usr);
     }
 
     @Override
@@ -199,7 +185,7 @@ class UserServiceImpl implements UserService, UserNameProvider {
     }
 
     @Override
-    public List<String> getAssociates(final String filter) {
+    public List<UserName> getAssociates(final String filter) {
         final Set<User> userSet;
 
         final Predicate<User> userPredicate = user -> user.getUuid().length() > 5 && !user.isGroup();
@@ -230,8 +216,7 @@ class UserServiceImpl implements UserService, UserNameProvider {
         return userSet
                 .stream()
                 .filter(userPredicate)
-                .map(User::getName)
-                .sorted()
+                .map(User::asUserName)
                 .collect(Collectors.toList());
     }
 

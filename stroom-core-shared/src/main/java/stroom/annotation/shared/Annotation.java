@@ -1,13 +1,18 @@
 package stroom.annotation.shared;
 
+import stroom.util.shared.UserName;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 public class Annotation {
 
+    // TODO: 28/03/2023 Why not an Enum?
     public static final String TITLE = "Title";
     public static final String SUBJECT = "Subject";
     public static final String COMMENT = "Comment";
@@ -23,11 +28,11 @@ public class Annotation {
     @JsonProperty
     private Long createTime;
     @JsonProperty
-    private String createUser;
+    private UserName createUser;
     @JsonProperty
     private Long updateTime;
     @JsonProperty
-    private String updateUser;
+    private UserName updateUser;
     @JsonProperty
     private String title;
     @JsonProperty
@@ -35,7 +40,7 @@ public class Annotation {
     @JsonProperty
     private String status;
     @JsonProperty
-    private String assignedTo;
+    private UserName assignedTo;
     @JsonProperty
     private String comment;
     @JsonProperty
@@ -48,13 +53,13 @@ public class Annotation {
     public Annotation(@JsonProperty("id") final Long id,
                       @JsonProperty("version") final Integer version,
                       @JsonProperty("createTime") final Long createTime,
-                      @JsonProperty("createUser") final String createUser,
+                      @JsonProperty("createUser") final UserName createUser,
                       @JsonProperty("updateTime") final Long updateTime,
-                      @JsonProperty("updateUser") final String updateUser,
+                      @JsonProperty("updateUser") final UserName updateUser,
                       @JsonProperty("title") final String title,
                       @JsonProperty("subject") final String subject,
                       @JsonProperty("status") final String status,
-                      @JsonProperty("assignedTo") final String assignedTo,
+                      @JsonProperty("assignedTo") final UserName assignedTo,
                       @JsonProperty("comment") final String comment,
                       @JsonProperty("history") final String history) {
         this.id = id;
@@ -95,11 +100,11 @@ public class Annotation {
         this.createTime = createTime;
     }
 
-    public String getCreateUser() {
+    public UserName getCreateUser() {
         return createUser;
     }
 
-    public void setCreateUser(final String createUser) {
+    public void setCreateUser(final UserName createUser) {
         this.createUser = createUser;
     }
 
@@ -111,11 +116,11 @@ public class Annotation {
         this.updateTime = updateTime;
     }
 
-    public String getUpdateUser() {
+    public UserName getUpdateUser() {
         return updateUser;
     }
 
-    public void setUpdateUser(final String updateUser) {
+    public void setUpdateUser(final UserName updateUser) {
         this.updateUser = updateUser;
     }
 
@@ -143,11 +148,11 @@ public class Annotation {
         this.status = status;
     }
 
-    public String getAssignedTo() {
+    public UserName getAssignedTo() {
         return assignedTo;
     }
 
-    public void setAssignedTo(final String assignedTo) {
+    public void setAssignedTo(final UserName assignedTo) {
         this.assignedTo = assignedTo;
     }
 
@@ -170,5 +175,41 @@ public class Annotation {
     @Override
     public String toString() {
         return "id=" + id;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final Annotation that = (Annotation) o;
+        return Objects.equals(id, that.id) && Objects.equals(version,
+                that.version) && Objects.equals(createTime, that.createTime) && Objects.equals(
+                createUser,
+                that.createUser) && Objects.equals(updateTime, that.updateTime) && Objects.equals(
+                updateUser,
+                that.updateUser) && Objects.equals(title, that.title) && Objects.equals(subject,
+                that.subject) && Objects.equals(status, that.status) && Objects.equals(assignedTo,
+                that.assignedTo) && Objects.equals(comment, that.comment) && Objects.equals(history,
+                that.history);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id,
+                version,
+                createTime,
+                createUser,
+                updateTime,
+                updateUser,
+                title,
+                subject,
+                status,
+                assignedTo,
+                comment,
+                history);
     }
 }

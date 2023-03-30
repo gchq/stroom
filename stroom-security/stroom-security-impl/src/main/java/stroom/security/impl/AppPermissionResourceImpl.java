@@ -15,6 +15,7 @@ import stroom.security.shared.UserAndPermissions;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.SimpleUserName;
 
 import java.util.List;
 import javax.inject.Inject;
@@ -72,7 +73,10 @@ class AppPermissionResourceImpl implements AppPermissionResource {
                     }
                 }
                 final UserAndPermissions userAndPermissions = new UserAndPermissions(
-                        userIdentity.getId(),
+                        new SimpleUserName(
+                                userIdentity.getId(),
+                                userIdentity.getDisplayName(),
+                                userIdentity.getFullName().orElse(null)),
                         userAndPermissionsHelperProvider.get().get(hasStroomUserIdentity.getUuid()));
 
                 LOGGER.debug("Returning {}", userAndPermissions);
@@ -89,7 +93,9 @@ class AppPermissionResourceImpl implements AppPermissionResource {
     @Override
     @AutoLogged(OperationType.VIEW)
     public UserAndPermissions fetchUserAppPermissions(final User user) {
-        return new UserAndPermissions(user.getName(), userAndPermissionsHelperProvider.get().get(user.getUuid()));
+        return new UserAndPermissions(
+                user,
+                userAndPermissionsHelperProvider.get().get(user.getUuid()));
     }
 
     @Override

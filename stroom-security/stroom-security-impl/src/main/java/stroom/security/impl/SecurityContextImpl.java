@@ -79,7 +79,7 @@ class SecurityContextImpl implements SecurityContext {
     @Override
     public UserIdentity createIdentity(final String userId) {
         Objects.requireNonNull(userId, "Null user id provided");
-        final Optional<User> optional = userCache.get(userId);
+        final Optional<User> optional = userCache.getOrCreate(userId);
         if (optional.isEmpty()) {
             throw new AuthenticationException("Unable to find user with id=" + userId);
         }

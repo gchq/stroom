@@ -23,8 +23,12 @@ import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.EventId;
 import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.TableComponentSettings;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.Field;
+import stroom.security.shared.UserNameResource;
 import stroom.svg.client.SvgPresets;
+import stroom.util.shared.UserName;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
@@ -35,6 +39,7 @@ import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 
@@ -49,6 +54,7 @@ public class AnnotationManager {
     private final MenuListPresenter menuListPresenter;
     private final ChangeStatusPresenter changeStatusPresenter;
     private final ChangeAssignedToPresenter changeAssignedToPresenter;
+    private final RestFactory restFactory;
 
     private TableComponentSettings tableComponentSettings;
     private List<TableRow> selectedItems;
@@ -56,10 +62,12 @@ public class AnnotationManager {
     @Inject
     public AnnotationManager(final MenuListPresenter menuListPresenter,
                              final ChangeStatusPresenter changeStatusPresenter,
-                             final ChangeAssignedToPresenter changeAssignedToPresenter) {
+                             final ChangeAssignedToPresenter changeAssignedToPresenter,
+                             final RestFactory restFactory) {
         this.menuListPresenter = menuListPresenter;
         this.changeStatusPresenter = changeStatusPresenter;
         this.changeAssignedToPresenter = changeAssignedToPresenter;
+        this.restFactory = restFactory;
     }
 
     public void showAnnotationMenu(final NativeEvent event,
@@ -252,14 +260,21 @@ public class AnnotationManager {
         final String assignedTo = getValue(tableComponentSettings, selectedItems, "assignedTo");
         final String comment = getValue(tableComponentSettings, selectedItems, "comment");
 
-        final Annotation annotation = new Annotation();
-        annotation.setTitle(title);
-        annotation.setSubject(subject);
-        annotation.setStatus(status);
-        annotation.setAssignedTo(assignedTo);
-        annotation.setComment(comment);
+        // assignedTo is a display name so have to convert it back to a unique username
+        final UserNameResource userNameResource = GWT.create(UserNameResource.class);
+        final Rest<UserName> rest = restFactory.create();
+        rest.onSuccess(optUserName -> {
+                    final Annotation annotation = new Annotation();
+                    annotation.setTitle(title);
+                    annotation.setSubject(subject);
+                    annotation.setStatus(status);
+                    annotation.setAssignedTo(optUserName);
+                    annotation.setComment(comment);
 
-        ShowAnnotationEvent.fire(menuListPresenter, annotation, eventIdList);
+                    ShowAnnotationEvent.fire(menuListPresenter, annotation, eventIdList);
+                })
+                .call(userNameResource)
+                .getByDisplayName(assignedTo);
     }
 
     private void changeStatus(final List<Long> annotationIdList) {

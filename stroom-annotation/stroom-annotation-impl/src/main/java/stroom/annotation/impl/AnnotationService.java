@@ -19,7 +19,10 @@ import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.security.user.api.UserNameService;
+import stroom.util.NullSafe;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.SimpleUserName;
+import stroom.util.shared.UserName;
 
 import java.util.List;
 import javax.inject.Inject;
@@ -64,7 +67,9 @@ public class AnnotationService implements Searchable, AnnotationCreator {
         checkPermission();
 
         final ExpressionFilter expressionFilter = ExpressionFilter.builder()
-                .addReplacementFilter(AnnotationFields.CURRENT_USER_FUNCTION, getCurrentUserForAudit())
+                .addReplacementFilter(
+                        AnnotationFields.CURRENT_USER_FUNCTION,
+                        securityContext.getUserIdentityForAudit())
                 .build();
 
         ExpressionOperator expression = criteria.getExpression();
@@ -74,8 +79,13 @@ public class AnnotationService implements Searchable, AnnotationCreator {
         annotationDao.search(criteria, fields, consumer);
     }
 
-    private String getCurrentUserForAudit() {
-        return securityContext.getUserIdentityForAudit();
+    private UserName getCurrentUser() {
+        return NullSafe.get(
+                securityContext.getUserIdentity(),
+                userIdentity -> new SimpleUserName(
+                        userIdentity.getId(),
+                        userIdentity.getDisplayName(),
+                        userIdentity.getFullName().orElse(null)));
     }
 
     AnnotationDetail getDetail(Long annotationId) {
@@ -85,7 +95,7 @@ public class AnnotationService implements Searchable, AnnotationCreator {
 
     public AnnotationDetail createEntry(final CreateEntryRequest request) {
         checkPermission();
-        return annotationDao.createEntry(request, getCurrentUserForAudit());
+        return annotationDao.createEntry(request, getCurrentUser());
     }
 
     List<EventId> getLinkedEvents(final Long annotationId) {
@@ -95,22 +105,22 @@ public class AnnotationService implements Searchable, AnnotationCreator {
 
     List<EventId> link(final EventLink eventLink) {
         checkPermission();
-        return annotationDao.link(eventLink, getCurrentUserForAudit());
+        return annotationDao.link(eventLink, getCurrentUser());
     }
 
     List<EventId> unlink(final EventLink eventLink) {
         checkPermission();
-        return annotationDao.unlink(eventLink, getCurrentUserForAudit());
+        return annotationDao.unlink(eventLink, getCurrentUser());
     }
 
     Integer setStatus(SetStatusRequest request) {
         checkPermission();
-        return annotationDao.setStatus(request, getCurrentUserForAudit());
+        return annotationDao.setStatus(request, getCurrentUser());
     }
 
     Integer setAssignedTo(SetAssignedToRequest request) {
         checkPermission();
-        return annotationDao.setAssignedTo(request, getCurrentUserForAudit());
+        return annotationDao.setAssignedTo(request, getCurrentUser());
     }
 
     private void checkPermission() {

@@ -1073,6 +1073,19 @@ paths:
         node.
       tags:
       - Global Config
+  /config/v1/noauth/fetchExtendedUiConfig:
+    get:
+      operationId: fetchExtendedUiConfig
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExtendedUiConfig'
+          description: default response
+      summary: Fetch the extended UI configuration
+      tags:
+      - Global Config
   /config/v1/noauth/fetchUiConfig:
     get:
       operationId: fetchUiConfig
@@ -1081,7 +1094,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ExtendedUiConfig'
+                $ref: '#/components/schemas/UiConfig'
           description: default response
       summary: Fetch the UI configuration
       tags:
@@ -5654,6 +5667,43 @@ paths:
       summary: Find the user names matching the supplied criteria
       tags:
       - Authorisation
+  /userNames/v1/getByDisplayName/{displayName}:
+    get:
+      operationId: getByDisplayName
+      parameters:
+      - in: path
+        name: displayName
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserName'
+          description: default response
+      summary: Find the user name matching the supplied displayName
+      tags:
+      - Authorisation
+  /userNames/v1/{userId}:
+    get:
+      operationId: getByUserId
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserName'
+          description: default response
+      summary: Find the user name matching the supplied unique user ID
+      tags:
+      - Authorisation
   /users/v1:
     get:
       operationId: findUsers
@@ -5697,12 +5747,12 @@ paths:
               schema:
                 type: array
                 items:
-                  type: string
+                  $ref: '#/components/schemas/UserName'
           description: default response
       summary: Gets a list of associated users
       tags:
       - Authorisation
-  /users/v1/createGroup/{name}:
+  /users/v1/createGroup:
     post:
       operationId: createGroup
       requestBody:
@@ -5722,7 +5772,7 @@ paths:
       summary: Creates a group with the supplied name
       tags:
       - Authorisation
-  /users/v1/createUser/{name}:
+  /users/v1/createUser:
     post:
       operationId: createUser
       requestBody:
@@ -5740,6 +5790,29 @@ paths:
                 $ref: '#/components/schemas/User'
           description: default response
       summary: Creates a user with the supplied name
+      tags:
+      - Authorisation
+  /users/v1/createUsers:
+    post:
+      operationId: createUsers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+        description: users
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+          description: default response
+      summary: Creates a batch of users from a list of CSV entries. Each line is of
+        the form 'id,displayName,fullName', where displayName and fullName are optional
       tags:
       - Authorisation
   /users/v1/find:
@@ -6056,6 +6129,20 @@ components:
             - IS_NULL
             - IS_NOT_NULL
             - MATCHES_REGEX
+        fieldType:
+          type: string
+          enum:
+          - ID
+          - BOOLEAN
+          - INTEGER
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - DATE
+          - TEXT
+          - KEYWORD
+          - IPV4_ADDRESS
+          - DOC_REF
         name:
           type: string
         queryable:
@@ -6203,14 +6290,14 @@ components:
       type: object
       properties:
         assignedTo:
-          type: string
+          $ref: '#/components/schemas/UserName'
         comment:
           type: string
         createTime:
           type: integer
           format: int64
         createUser:
-          type: string
+          $ref: '#/components/schemas/UserName'
         history:
           type: string
         id:
@@ -6226,7 +6313,7 @@ components:
           type: integer
           format: int64
         updateUser:
-          type: string
+          $ref: '#/components/schemas/UserName'
         version:
           type: integer
           format: int32
@@ -6246,11 +6333,11 @@ components:
           type: integer
           format: int64
         createUser:
-          type: string
-        data:
-          type: string
+          $ref: '#/components/schemas/UserName'
         entryType:
           type: string
+        entryValue:
+          $ref: '#/components/schemas/EntryValue'
         id:
           type: integer
           format: int64
@@ -6258,7 +6345,7 @@ components:
           type: integer
           format: int64
         updateUser:
-          type: string
+          $ref: '#/components/schemas/UserName'
         version:
           type: integer
           format: int32
@@ -6780,8 +6867,8 @@ components:
       properties:
         annotation:
           $ref: '#/components/schemas/Annotation'
-        data:
-          type: string
+        entryValue:
+          $ref: '#/components/schemas/EntryValue'
         linkedEvents:
           type: array
           items:
@@ -7479,6 +7566,15 @@ components:
         rangeValueCount:
           type: integer
           format: int64
+    EntryValue:
+      type: object
+      discriminator:
+        propertyName: type
+      properties:
+        type:
+          type: string
+      required:
+      - type
     EventCoprocessorSettings:
       type: object
       allOf:
@@ -7773,50 +7869,10 @@ components:
     ExtendedUiConfig:
       type: object
       properties:
-        aboutHtml:
-          type: string
-        activity:
-          $ref: '#/components/schemas/ActivityConfig'
-        applicationInstanceKeepAliveIntervalMs:
-          type: integer
-          format: int32
-        defaultMaxResults:
-          type: string
         externalIdentityProvider:
           type: boolean
-        helpSubPathExpressions:
-          type: string
-        helpSubPathJobs:
-          type: string
-        helpSubPathProperties:
-          type: string
-        helpSubPathQuickFilter:
-          type: string
-        helpUrl:
-          type: string
-        htmlTitle:
-          type: string
-        maintenanceMessage:
-          type: string
-        namePattern:
-          type: string
-        oncontextmenu:
-          type: string
-          pattern: ^return (true|false);$
-        process:
-          $ref: '#/components/schemas/ProcessConfig'
-        query:
-          $ref: '#/components/schemas/QueryConfig'
-        requireReactWrapper:
-          type: boolean
-        source:
-          $ref: '#/components/schemas/SourceConfig'
-        splash:
-          $ref: '#/components/schemas/SplashConfig'
-        theme:
-          $ref: '#/components/schemas/ThemeConfig'
-        welcomeHtml:
-          type: string
+        uiConfig:
+          $ref: '#/components/schemas/UiConfig'
     FeedDoc:
       type: object
       properties:
@@ -10646,7 +10702,7 @@ components:
             type: integer
             format: int64
         assignedTo:
-          type: string
+          $ref: '#/components/schemas/UserName'
     SetStatusRequest:
       type: object
       properties:
@@ -11131,6 +11187,14 @@ components:
           type: string
         stringUpper:
           type: string
+    StringEntryValue:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/EntryValue'
+      - type: object
+        properties:
+          value:
+            type: string
     StroomStatsStoreDoc:
       type: object
       properties:
@@ -11573,6 +11637,51 @@ components:
           format: int64
         token_type:
           type: string
+    UiConfig:
+      type: object
+      properties:
+        aboutHtml:
+          type: string
+        activity:
+          $ref: '#/components/schemas/ActivityConfig'
+        applicationInstanceKeepAliveIntervalMs:
+          type: integer
+          format: int32
+        defaultMaxResults:
+          type: string
+        helpSubPathExpressions:
+          type: string
+        helpSubPathJobs:
+          type: string
+        helpSubPathProperties:
+          type: string
+        helpSubPathQuickFilter:
+          type: string
+        helpUrl:
+          type: string
+        htmlTitle:
+          type: string
+        maintenanceMessage:
+          type: string
+        namePattern:
+          type: string
+        oncontextmenu:
+          type: string
+          pattern: ^return (true|false);$
+        process:
+          $ref: '#/components/schemas/ProcessConfig'
+        query:
+          $ref: '#/components/schemas/QueryConfig'
+        requireReactWrapper:
+          type: boolean
+        source:
+          $ref: '#/components/schemas/SourceConfig'
+        splash:
+          $ref: '#/components/schemas/SplashConfig'
+        theme:
+          $ref: '#/components/schemas/ThemeConfig'
+        welcomeHtml:
+          type: string
     UpdateAccountRequest:
       type: object
       properties:
@@ -11644,6 +11753,8 @@ components:
           format: int64
         updateUser:
           type: string
+        userIdentityForAudit:
+          type: string
         uuid:
           type: string
         version:
@@ -11657,8 +11768,8 @@ components:
           items:
             type: string
           uniqueItems: true
-        userId:
-          type: string
+        userName:
+          $ref: '#/components/schemas/UserName'
     UserName:
       type: object
       properties:
@@ -11668,6 +11779,16 @@ components:
           type: string
         name:
           type: string
+        userIdentityForAudit:
+          type: string
+    UserNameEntryValue:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/EntryValue'
+      - type: object
+        properties:
+          userName:
+            $ref: '#/components/schemas/UserName'
     UserPreferences:
       type: object
       properties:
@@ -11677,6 +11798,11 @@ components:
             of java.time.format.DateTimeFormatter
         density:
           type: string
+        editorKeyBindings:
+          type: string
+          enum:
+          - STANDARD
+          - VIM
         editorTheme:
           type: string
         font:
