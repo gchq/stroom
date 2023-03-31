@@ -22,7 +22,7 @@ import java.util.List;
 
 public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements MenuView {
 
-    private static final int SUBMENU_SHOW_DELAY_MILLIS = 500;
+    private static final int SUBMENU_SHOW_DELAY_MILLIS = 100;
 
     private final CellTable<Item> cellTable;
     private final Widget widget;
@@ -152,6 +152,15 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
 
     @Override
     public void focus() {
+
+        // Called by a sub menu, so we know the mouse is now over the sub menu
+        // so cancel any timer that would cause a different sub menu to open.
+        // This can happen if cursor is moved diagonally from top menu item to sub menu,
+        // crossing another top menu as it goes.
+        if (subMenuShowTimer != null) {
+            subMenuShowTimer.cancel();
+        }
+
         int row = getFirstSelectableRow();
         if (row >= 0) {
             selectRow(row, true);
@@ -242,6 +251,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
 
         @Override
         protected void onMouseMove(final CellPreviewEvent<Item> e) {
+            focusParent();
             final Item item = e.getValue();
             if (isSelectable(item)) {
                 final int row = cellTable.getVisibleItems().indexOf(item);
