@@ -18,9 +18,7 @@ package stroom.dashboard.client.input;
 
 import stroom.dashboard.client.input.KeyValueInputPresenter.KeyValueInputView;
 
-import com.google.gwt.event.dom.client.BlurEvent;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -57,7 +55,7 @@ public class KeyValueInputViewImpl extends ViewWithUiHandlers<KeyValueInputUiHan
     }
 
     @UiHandler("params")
-    public void onParamsKeyDown(final KeyDownEvent event) {
+    public void onParamsKeyUp(final KeyUpEvent event) {
 //        switch (event.getNativeKeyCode()) {
 //            case KeyCodes.KEY_ENTER:
 //            case KeyCodes.KEY_TAB:
