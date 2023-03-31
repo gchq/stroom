@@ -284,16 +284,30 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
     }
 
     @Test
+    void fetchExtendedUiConfig() {
+        initNodes();
+
+        String subPath = GlobalConfigResource.FETCH_EXTENDED_UI_CONFIG_SUB_PATH;
+        ExtendedUiConfig expectedResponse = new ExtendedUiConfig();
+
+        final ExtendedUiConfig response = doGetTest(
+                subPath,
+                ExtendedUiConfig.class,
+                expectedResponse);
+
+    }
+
+    @Test
     void fetchUiConfig() {
         initNodes();
 
         String subPath = GlobalConfigResource.FETCH_UI_CONFIG_SUB_PATH;
-        ExtendedUiConfig expectedResponse = new ExtendedUiConfig();
+        UiConfig uiConfig = new UiConfig();
 
-        final ExtendedUiConfig listConfigResponse = doGetTest(
+        final UiConfig response = doGetTest(
                 subPath,
-                ExtendedUiConfig.class,
-                expectedResponse);
+                UiConfig.class,
+                uiConfig);
 
     }
 
