@@ -69,13 +69,15 @@
 
 .editor-error {
     position: relative;
-	background-color: #fdd835;
-	padding: 10px;
-	margin: auto;
-	width: 80%;
-	margin-top: 20px;
-	border: 2px solid black;
-	border-radius: 10px;
+    background-color: #fdd835;
+    padding: 10px;
+    margin: auto;
+    width: 80%;
+    margin-top: 20px;
+    border: 2px solid black;
+    border-radius: 10px;
+    color: black;
+    overflow-wrap: anywhere;
 }
 
 .editor-error p:first-of-type {
