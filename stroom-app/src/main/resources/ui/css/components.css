@@ -1017,10 +1017,6 @@
     padding-left: 5px;
 }
 
-.expressionViewImpl-button {
-    float: left;
-}
-
 .expressionViewImpl-resizePanel {
     display: block;
 }
@@ -1030,16 +1026,9 @@
     background-color: var(--control__background-color);
 }
 
-.expressionViewImpl-completionLabel {
-    float: left;
-}
-
 .expressionViewImpl-labelPanel {
-    float: right;
-}
-
-.expressionViewImpl-btnPanel {
-    float: left;
+    display: flex;
+    align-items: center;
 }
 
 .characterNavigator {
