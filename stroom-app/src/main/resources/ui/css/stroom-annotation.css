@@ -47,6 +47,7 @@
 
 .annotationRight {
     flex-shrink: 1;
+    min-width: 300px;
 }
 
 .annotationTitleContainer {
@@ -134,6 +135,7 @@
 }
 
 .annotationHistory {
+    overflow: hidden;
 }
 
 .annotationComment {
