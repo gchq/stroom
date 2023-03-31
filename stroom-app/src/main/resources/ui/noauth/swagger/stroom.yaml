@@ -6477,8 +6477,6 @@ components:
           $ref: '#/components/schemas/AlertRuleProcessSettings'
         query:
           type: string
-        timeField:
-          type: string
         type:
           type: string
         updateTimeMs:
@@ -12334,6 +12332,11 @@ components:
             of java.time.format.DateTimeFormatter
         density:
           type: string
+        editorKeyBindings:
+          type: string
+          enum:
+          - STANDARD
+          - VIM
         editorTheme:
           type: string
         font:

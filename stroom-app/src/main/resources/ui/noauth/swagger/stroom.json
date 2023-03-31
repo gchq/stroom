@@ -9390,9 +9390,6 @@
           "query" : {
             "type" : "string"
           },
-          "timeField" : {
-            "type" : "string"
-          },
           "type" : {
             "type" : "string"
           },
@@ -17279,6 +17276,10 @@
           },
           "density" : {
             "type" : "string"
+          },
+          "editorKeyBindings" : {
+            "type" : "string",
+            "enum" : [ "STANDARD", "VIM" ]
           },
           "editorTheme" : {
             "type" : "string"

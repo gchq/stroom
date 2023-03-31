@@ -155,7 +155,6 @@ export interface AlertRuleDoc {
   name?: string;
   processSettings?: AlertRuleProcessSettings;
   query?: string;
-  timeField?: string;
   type?: string;
 
   /** @format int64 */
@@ -3754,6 +3753,7 @@ export interface UserPreferences {
   /** A date time formatting pattern string conforming to the specification of java.time.format.DateTimeFormatter */
   dateTimePattern?: string;
   density?: string;
+  editorKeyBindings?: "STANDARD" | "VIM";
   editorTheme?: string;
   font?: string;
   fontSize?: string;
