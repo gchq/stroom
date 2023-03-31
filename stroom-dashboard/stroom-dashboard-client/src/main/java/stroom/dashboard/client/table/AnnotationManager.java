@@ -263,7 +263,9 @@ public class AnnotationManager {
         // assignedTo is a display name so have to convert it back to a unique username
         final UserNameResource userNameResource = GWT.create(UserNameResource.class);
         final Rest<UserName> rest = restFactory.create();
-        rest.onSuccess(optUserName -> {
+
+        rest
+                .onSuccess(optUserName -> {
                     final Annotation annotation = new Annotation();
                     annotation.setTitle(title);
                     annotation.setSubject(subject);

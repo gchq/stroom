@@ -13,7 +13,7 @@ public interface UserNameProvider {
      */
     default boolean isEnabled() {
         return true;
-    };
+    }
 
     ResultPage<UserName> findUserNames(final FindUserNameCriteria criteria);
 
