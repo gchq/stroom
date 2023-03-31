@@ -1,5 +1,9 @@
 package stroom.util;
 
+import stroom.util.logging.LogUtil;
+import stroom.util.time.StroomDuration;
+
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -256,6 +260,33 @@ public class NullSafe {
         return map != null
                 ? map
                 : Collections.emptyMap();
+    }
+
+    /**
+     * Returns the passed string if it is non-null else returns an empty string.
+     */
+    public static String string(final String str) {
+        return str != null
+                ? str
+                : "";
+    }
+
+    /**
+     * Returns the passed stroomDuration if it is non-null else returns a ZERO {@link StroomDuration}
+     */
+    public static StroomDuration duration(final StroomDuration stroomDuration) {
+        return stroomDuration != null
+                ? stroomDuration
+                : StroomDuration.ZERO;
+    }
+
+    /**
+     * Returns the passed duration if it is non-null else returns a ZERO {@link Duration}
+     */
+    public static Duration duration(final Duration duration) {
+        return duration != null
+                ? duration
+                : Duration.ZERO;
     }
 
     /**

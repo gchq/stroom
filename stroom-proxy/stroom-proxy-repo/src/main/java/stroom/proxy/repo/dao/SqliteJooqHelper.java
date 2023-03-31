@@ -206,6 +206,7 @@ public class SqliteJooqHelper {
                     // The first thread that gets the chance should run the maintenance pragmas.
                     if (maintenanceDue()) {
                         lastRunMaintenance = System.currentTimeMillis();
+                        LOGGER.info("Executing SQLLite pragmas: {}", maintenancePragma);
                         for (final String pragma : maintenancePragma) {
                             pragma(pragma);
                         }
@@ -246,7 +247,7 @@ public class SqliteJooqHelper {
     private void pragma(final String pragma) {
         useConnection(connection -> {
             try {
-                LOGGER.info("Executing pragma: " + pragma);
+                LOGGER.debug("Executing pragma: " + pragma);
                 connection.createStatement().execute(pragma);
             } catch (final SQLException e) {
                 LOGGER.error("Error executing " + pragma + ": " + e.getMessage(), e);
