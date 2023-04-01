@@ -214,7 +214,7 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
     private void showActionMenu(final DocRef docRef, final NativeEvent event) {
 
         final PopupPosition popupPosition = new PopupPosition(event.getClientX() + 10, event.getClientY());
-        menuPresenter.setData(buildActionMenu(docRef));
+        menuPresenter.setData(buildActionMenu(docRef), null);
         ShowPopupEvent.builder(menuPresenter)
                 .popupType(PopupType.POPUP)
                 .popupPosition(popupPosition)

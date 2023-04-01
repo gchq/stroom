@@ -6,6 +6,7 @@ import stroom.widget.menu.client.presenter.MenuPresenter.MenuView;
 import stroom.widget.util.client.AbstractSelectionEventManager;
 import stroom.widget.util.client.MySingleSelectionModel;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.cellview.client.AbstractHasData;
@@ -19,10 +20,11 @@ import com.google.gwt.view.client.CellPreviewEvent;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.List;
+import java.util.Objects;
 
 public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements MenuView {
 
-    private static final int SUBMENU_SHOW_DELAY_MILLIS = 100;
+    private static final int SUBMENU_SHOW_DELAY_MILLIS = 400;
 
     private final CellTable<Item> cellTable;
     private final Widget widget;
@@ -30,6 +32,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
     private final MySingleSelectionModel<Item> selectionModel = new MySingleSelectionModel<>();
     private int mouseOverRow = -1;
     private Timer subMenuShowTimer;
+    private Item parentItem = null;
 
     public MenuViewImpl() {
         cellTable = new MyCellTable<>(MyDataGrid.DEFAULT_LIST_PAGE_SIZE);
@@ -71,7 +74,8 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
         }
     }
 
-    private void showSubMenuAfterDelay(final Item item, final int delayMillis) {
+    private void showSubMenuAfterDelay(final Item item,
+                                       final int delayMillis) {
         if (subMenuShowTimer != null) {
             subMenuShowTimer.cancel();
         }
@@ -114,6 +118,13 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
         }
     }
 
+    public void hideSelf() {
+        if (getUiHandlers() != null) {
+            getUiHandlers().hideSelf();
+            getUiHandlers().hideSubMenu();
+        }
+    }
+
     public void escape() {
         if (getUiHandlers() != null) {
             getUiHandlers().escape();
@@ -134,9 +145,11 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
     }
 
     @Override
-    public void setData(final List<Item> items) {
+    public void setData(final List<Item> items, final Item parentItem) {
         cellTable.setRowData(0, items);
         cellTable.setRowCount(items.size());
+        this.parentItem = parentItem;
+        updateParent();
     }
 
     @Override
@@ -151,15 +164,43 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
     }
 
     @Override
-    public void focus() {
+    public void selectItem(final Item item, final boolean stealFocus) {
+        final List<Item> items = cellTable.getVisibleItems();
+        final int row = items.indexOf(item);
+        if (row >= 0 && row < items.size()) {
+            final int keyboardSelectedRow = cellTable.getKeyboardSelectedRow();
+            if (!Objects.equals(keyboardSelectedRow, row)) {
+                selectionModel.setSelected(item, true);
+                cellTable.setKeyboardSelectedRow(row, true);
+                clearSubMenuTimer();
+            }
+        }
+    }
 
+    @Override
+    public void clearSubMenuTimer() {
+        GWT.log("clearSubMenuTimer()");
+        if (subMenuShowTimer != null) {
+            if (subMenuShowTimer.isRunning()) {
+                GWT.log("Cancelling timer (running)");
+            }
+            subMenuShowTimer.cancel();
+        }
+    }
+
+    private void updateParent() {
+        if (getUiHandlers() != null) {
+            getUiHandlers().selectParentItem(this.parentItem);
+        }
+    }
+
+    @Override
+    public void focus() {
         // Called by a sub menu, so we know the mouse is now over the sub menu
         // so cancel any timer that would cause a different sub menu to open.
         // This can happen if cursor is moved diagonally from top menu item to sub menu,
         // crossing another top menu as it goes.
-        if (subMenuShowTimer != null) {
-            subMenuShowTimer.cancel();
-        }
+        clearSubMenuTimer();
 
         int row = getFirstSelectableRow();
         if (row >= 0) {
@@ -173,6 +214,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
             final Item item = items.get(row);
             selectionModel.setSelected(item, true);
             cellTable.setKeyboardSelectedRow(row, true);
+            updateParent();
         }
     }
 
@@ -213,6 +255,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
 
         @Override
         protected void onMoveLeft(final CellPreviewEvent<Item> e) {
+            hideSelf();
             focusParent();
         }
 
@@ -244,14 +287,14 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
                 if (item instanceof MenuItem && ((MenuItem) item).getCommand() != null) {
                     execute((MenuItem) item);
                 } else {
-                    toggleSubMenu(item);
+                    showSubMenu(item);
                 }
             }
         }
 
         @Override
         protected void onMouseMove(final CellPreviewEvent<Item> e) {
-            focusParent();
+            updateParent();
             final Item item = e.getValue();
             if (isSelectable(item)) {
                 final int row = cellTable.getVisibleItems().indexOf(item);
@@ -273,6 +316,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
 
         @Override
         protected void onKeyboardSelectRow(final int row, final boolean stealFocus) {
+            updateParent();
             selectRow(row, true);
             final List<Item> items = cellTable.getVisibleItems();
             final Item item = items.get(row);

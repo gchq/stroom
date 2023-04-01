@@ -11,11 +11,15 @@ public interface MenuUiHandlers extends UiHandlers {
 
     void hideSubMenu();
 
+    void hideSelf();
+
     boolean subMenuVisible();
 
     void focusSubMenu();
 
     void focusParent();
+
+    void selectParentItem(final Item item);
 
     void escape();
 

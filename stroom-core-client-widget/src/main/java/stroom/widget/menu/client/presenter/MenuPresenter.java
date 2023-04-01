@@ -69,10 +69,12 @@ public class MenuPresenter
     public void showSubMenu(final MenuItem menuItem, final Element element) {
         // Only change the popup if the item selected is changing and we have
         // some sub items.
-        if (currentItem == null || !currentItem.equals(menuItem)) {
-            // We are changing the highlighted item so close the current popup
-            // if it is open.
-            hideChildren(false, false);
+        if (currentItem == null || true) {
+            if (currentItem != null && !currentItem.equals(menuItem)) {
+                // We are changing the highlighted item so close the current popup
+                // if it is open.
+                hideChildren(false, false);
+            }
 
             if (menuItem instanceof HasChildren) {
                 // Try and get some sub items.
@@ -87,7 +89,7 @@ public class MenuPresenter
                         final MenuPresenter presenter = menuPresenterProvider.get();
                         presenter.setParent(MenuPresenter.this);
 //                        presenter.setHighlightItems(getHighlightItems());
-                        presenter.setData(children);
+                        presenter.setData(children, menuItem);
 
                         // Set the current presenter telling us that the
                         // popup is showing.
@@ -125,6 +127,11 @@ public class MenuPresenter
     }
 
     @Override
+    public void hideSelf() {
+        hideSelf(false, false);
+    }
+
+    @Override
     public boolean subMenuVisible() {
         return currentMenu != null;
     }
@@ -145,6 +152,13 @@ public class MenuPresenter
         if (parent != null) {
             hideChildren(false, false);
             parent.getView().focus();
+        }
+    }
+
+    @Override
+    public void selectParentItem(final Item item) {
+        if (parent != null) {
+            parent.getView().selectItem(item, false);
         }
     }
 
@@ -200,14 +214,18 @@ public class MenuPresenter
         this.parent = parent;
     }
 
-    public void setData(final List<Item> items) {
-        getView().setData(items);
+    public void setData(final List<Item> items, final Item parentItem) {
+        getView().setData(items, parentItem);
     }
 
     public interface MenuView extends View, Focus, HasUiHandlers<MenuUiHandlers> {
 
-        void setData(List<Item> items);
+        void setData(List<Item> items, final Item parentItem);
 
         void selectFirstItem(boolean stealFocus);
+
+        void selectItem(Item item, boolean stealFocus);
+
+        void clearSubMenuTimer();
     }
 }

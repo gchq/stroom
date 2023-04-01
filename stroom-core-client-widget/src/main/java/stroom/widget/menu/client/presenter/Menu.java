@@ -34,13 +34,16 @@ public class Menu {
             hide(false, false);
 
             menuPresenter = menuPresenterProvider.get();
-            menuPresenter.setData(event.getItems());
+            menuPresenter.setData(event.getItems(), null);
+
             currentItems = event.getItems();
 
             ShowPopupEvent.builder(menuPresenter)
                     .popupType(PopupType.POPUP)
                     .popupPosition(event.getPopupPosition())
                     .addAutoHidePartner(event.getAutoHidePartners())
+                    .onShow(event1 ->
+                            menuPresenter.selectFirstItem(true))
                     .onHide(e -> {
                         if (event.getHideHandler() != null) {
                             event.getHideHandler().onHide(e);
