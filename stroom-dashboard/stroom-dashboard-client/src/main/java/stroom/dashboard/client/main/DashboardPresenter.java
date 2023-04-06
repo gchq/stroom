@@ -408,8 +408,8 @@ public class DashboardPresenter
             }
             resultStoreInfo = null;
 
-            // If we have been given some external link parameters then set those in the "Params" input component if we can
-            // find one.
+            // If we have been given some external link parameters then set those in the "Params" input component if we
+            // can find one.
             if (externalLinkParameters != null) {
                 // Try to find a Key/Value component to put the params in called "Params".
                 for (final Component component : components.getComponents()) {
