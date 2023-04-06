@@ -118,8 +118,6 @@ public class Dialog extends AbstractPopupPanel {
 
     @Override
     public void show() {
-        setGlassEnabled(isModal());
-
         if (resizeHandlerRegistration == null) {
             resizeHandlerRegistration = Window.addResizeHandler(event -> windowWidth = event.getWidth());
         }
