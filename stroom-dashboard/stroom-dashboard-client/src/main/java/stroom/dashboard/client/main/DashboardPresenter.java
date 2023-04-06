@@ -426,7 +426,9 @@ public class DashboardPresenter
             }
 
             // Turn on design mode if this is a new dashboard.
-            if (dashboardConfig != null && dashboardConfig.isDesignMode()) {
+            if (dashboardConfig != null &&
+                    dashboardConfig.getDesignMode() != null &&
+                    dashboardConfig.getDesignMode()) {
                 setDesignMode(true);
             }
         }

@@ -84,7 +84,7 @@ public class DashboardConfig {
     @JsonProperty("preferredSize")
     private Size preferredSize;
     @JsonProperty("designMode")
-    private boolean designMode;
+    private Boolean designMode;
     @JsonProperty("modelVersion")
     private String modelVersion;
 
@@ -100,7 +100,7 @@ public class DashboardConfig {
                            @JsonProperty("layoutConstraints") LayoutConstraints layoutConstraints,
                            @JsonProperty("tabVisibility") final TabVisibility tabVisibility,
                            @JsonProperty("preferredSize") Size preferredSize,
-                           @JsonProperty("designMode") final boolean designMode,
+                           @JsonProperty("designMode") final Boolean designMode,
                            @JsonProperty("modelVersion") final String modelVersion) {
         this.parameters = parameters;
         this.timeRange = timeRange;
@@ -175,11 +175,11 @@ public class DashboardConfig {
         this.preferredSize = preferredSize;
     }
 
-    public boolean isDesignMode() {
+    public Boolean getDesignMode() {
         return designMode;
     }
 
-    public void setDesignMode(final boolean designMode) {
+    public void setDesignMode(final Boolean designMode) {
         this.designMode = designMode;
     }
 
