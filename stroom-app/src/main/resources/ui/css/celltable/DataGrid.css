@@ -52,7 +52,7 @@
 	overflow: hidden;
 	white-space: nowrap;
 	font-weight: 500;
-    height : auto;
+    min-height : auto;
 	cursor: default;
 
 	/*border-bottom: solid 1px var(--header__border-color);*/
@@ -66,7 +66,7 @@
 	padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
 	vertical-align: middle;
 	overflow: hidden;
-	height: 16px;
+	min-height: 16px;
 	white-space: nowrap;
 	
 	-moz-user-focus: initial;

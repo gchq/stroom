@@ -68,7 +68,6 @@
 }
 
 .stroom-dashboard-table .dataGridHeader {
-	padding: 0 0 0 2px;
 }
 
 .stroom-dashboard-table td {
@@ -79,10 +78,12 @@
 }
 
 .stroom-dashboard-table .cell {
-    padding: 5px 10px 5px 3px;
+	padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
+	vertical-align: middle;
+	overflow: hidden;
     min-height: 16px;
+	white-space: nowrap;
     text-overflow: ellipsis;
-    overflow: hidden;
 }
 
 .stroom-dashboard-text {
@@ -93,7 +94,7 @@
 
 .stroom-dashboard-text-measurement {
     display: inline-block;
-    padding: 5px 10px 5px 3px;
+    padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
     min-height: 16px;
     opacity: 0;
 }

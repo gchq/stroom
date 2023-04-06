@@ -54,9 +54,6 @@
 }
 
 .cellTableCell {
-    overflow: hidden;
-    padding: var(--row__padding--vertical) var(--row__padding--horizontal);
-    vertical-align: middle;
 }
 
 .cellTableFirstColumnFooter {
