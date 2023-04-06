@@ -10379,6 +10379,9 @@
               "wrapped" : true
             }
           },
+          "designMode" : {
+            "type" : "boolean"
+          },
           "layout" : {
             "$ref" : "#/components/schemas/LayoutConfig"
           },

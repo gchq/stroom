@@ -7161,6 +7161,8 @@ components:
             $ref: '#/components/schemas/ComponentConfig'
           xml:
             wrapped: true
+        designMode:
+          type: boolean
         layout:
           $ref: '#/components/schemas/LayoutConfig'
         layoutConstraints:
