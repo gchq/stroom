@@ -30,9 +30,9 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.MySplitLayoutPanel;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -44,6 +44,8 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 public class MainViewImpl extends ViewWithUiHandlers<MainUiHandlers> implements MainPresenter.MainView {
 
     private final Widget widget;
+    @UiField
+    FocusPanel root;
     @UiField
     SimplePanel banner;
     @UiField
@@ -178,6 +180,13 @@ public class MainViewImpl extends ViewWithUiHandlers<MainUiHandlers> implements 
     @Override
     public SpinnerDisplay getSpinner() {
         return spinner;
+    }
+
+    @Override
+    public void setBorderStyle(final String style) {
+        if (style != null && style.length() > 0) {
+            root.getElement().setPropertyString("style", style);
+        }
     }
 
     @Override

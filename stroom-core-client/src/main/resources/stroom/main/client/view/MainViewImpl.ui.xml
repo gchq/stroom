@@ -4,7 +4,7 @@
              xmlns:s="urn:import:stroom.main.client.view"
              xmlns:b="urn:import:stroom.widget.button.client">
     <!-- Add a focus panel as the root so we can catch all keyboard events. -->
-    <g:FocusPanel styleName="mainViewImpl-max">
+    <g:FocusPanel ui:field="root" styleName="mainViewImpl-max">
         <g:FlowPanel styleName="mainViewImpl-max">
             <g:SimplePanel ui:field="banner" styleName="mainViewImpl-banner"/>
             <g:FlowPanel ui:field="main" styleName="mainViewImpl-max">

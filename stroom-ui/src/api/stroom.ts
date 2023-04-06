@@ -589,6 +589,7 @@ export interface DBTableStatus {
 
 export interface DashboardConfig {
   components?: ComponentConfig[];
+  designMode?: boolean;
   layout?: LayoutConfig;
   layoutConstraints?: LayoutConstraints;
   modelVersion?: string;
@@ -3583,16 +3584,9 @@ export interface TextConverterDoc {
 export type TextField = AbstractField;
 
 export interface ThemeConfig {
-  backgroundAttachment?: string;
   backgroundColour?: string;
-  backgroundImage?: string;
-  backgroundOpacity?: string;
-  backgroundPosition?: string;
-  backgroundRepeat?: string;
   labelColours?: string;
-  topMenuTextColour?: string;
-  tubeOpacity?: string;
-  tubeVisible?: string;
+  pageBorder?: string;
 }
 
 /**

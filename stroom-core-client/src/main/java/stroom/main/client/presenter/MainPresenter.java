@@ -109,6 +109,9 @@ public class MainPresenter
         registerHandler(uiConfigCache.addPropertyChangeHandler(
                 event -> {
                     final UiConfig uiConfig = event.getProperties();
+                    if (uiConfig.getTheme() != null) {
+                        getView().setBorderStyle(uiConfig.getTheme().getPageBorder());
+                    }
                     getView().setBanner(uiConfig.getMaintenanceMessage());
                     if (uiConfig.getRequireReactWrapper()) {
                         final Object parentIframe = getParentIframe();
@@ -232,6 +235,8 @@ public class MainPresenter
         SpinnerDisplay getSpinner();
 
         void maximise(View view);
+
+        void setBorderStyle(String style);
 
         void setBanner(String text);
     }

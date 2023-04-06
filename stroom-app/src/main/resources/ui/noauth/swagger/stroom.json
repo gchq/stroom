@@ -16962,34 +16962,13 @@
       "ThemeConfig" : {
         "type" : "object",
         "properties" : {
-          "backgroundAttachment" : {
-            "type" : "string"
-          },
           "backgroundColour" : {
-            "type" : "string"
-          },
-          "backgroundImage" : {
-            "type" : "string"
-          },
-          "backgroundOpacity" : {
-            "type" : "string"
-          },
-          "backgroundPosition" : {
-            "type" : "string"
-          },
-          "backgroundRepeat" : {
             "type" : "string"
           },
           "labelColours" : {
             "type" : "string"
           },
-          "topMenuTextColour" : {
-            "type" : "string"
-          },
-          "tubeOpacity" : {
-            "type" : "string"
-          },
-          "tubeVisible" : {
+          "pageBorder" : {
             "type" : "string"
           }
         }
