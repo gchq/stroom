@@ -15,7 +15,7 @@
  */
 
 .icon-button {
-    display: flex !important;
+    display: flex;
     position: relative;
     width: 22px;
     height: 22px;
