@@ -45,7 +45,9 @@ public class MenuPresenter
     private final Provider<MenuPresenter> menuPresenterProvider;
     private MenuPresenter currentMenu;
     private MenuItem currentItem;
+
     private MenuPresenter parent;
+    private MenuItem parentItem;
 
     @Inject
     public MenuPresenter(final EventBus eventBus,
@@ -85,7 +87,7 @@ public class MenuPresenter
                         hideChildren(false, false);
 
                         final MenuPresenter presenter = menuPresenterProvider.get();
-                        presenter.setParent(MenuPresenter.this);
+                        presenter.setParent(MenuPresenter.this, menuItem);
 //                        presenter.setHighlightItems(getHighlightItems());
                         presenter.setData(children);
 
@@ -125,19 +127,25 @@ public class MenuPresenter
     }
 
     @Override
-    public boolean subMenuVisible() {
-        return currentMenu != null;
+    public void ensureParentItemSelected() {
+        if (parent != null && parentItem != null) {
+            parent.getView().ensureItemSelected(parentItem);
+        }
+    }
+
+    public void focus() {
+        getView().focus();
     }
 
     @Override
     public void focusSubMenu() {
         if (currentMenu != null) {
-            currentMenu.selectFirstItem(true);
+            currentMenu.selectFirstItem();
         }
     }
 
-    public void selectFirstItem(final boolean stealFocus) {
-        getView().selectFirstItem(stealFocus);
+    public void selectFirstItem() {
+        getView().selectFirstItem();
     }
 
     @Override
@@ -196,8 +204,9 @@ public class MenuPresenter
         hideParent(autoClose, ok);
     }
 
-    public void setParent(final MenuPresenter parent) {
+    public void setParent(final MenuPresenter parent, final MenuItem parentItem) {
         this.parent = parent;
+        this.parentItem = parentItem;
     }
 
     public void setData(final List<Item> items) {
@@ -206,8 +215,10 @@ public class MenuPresenter
 
     public interface MenuView extends View, Focus, HasUiHandlers<MenuUiHandlers> {
 
+        void ensureItemSelected(Item parentItem);
+
         void setData(List<Item> items);
 
-        void selectFirstItem(boolean stealFocus);
+        void selectFirstItem();
     }
 }

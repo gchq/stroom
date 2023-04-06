@@ -22,7 +22,7 @@ import java.util.List;
 
 public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements MenuView {
 
-    private static final int SUBMENU_SHOW_DELAY_MILLIS = 100;
+    private static final int SUBMENU_SHOW_DELAY_MILLIS = 400;
 
     private final CellTable<Item> cellTable;
     private final Widget widget;
@@ -140,19 +140,18 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
     }
 
     @Override
-    public void selectFirstItem(final boolean stealFocus) {
+    public void selectFirstItem() {
         int row = getFirstSelectableRow();
         if (row >= 0) {
             final List<Item> items = cellTable.getVisibleItems();
             final Item item = items.get(row);
-            selectRow(row, stealFocus);
+            selectRow(row, true);
             showSubMenu(item);
         }
     }
 
     @Override
-    public void focus() {
-
+    public void ensureItemSelected(final Item parentItem) {
         // Called by a sub menu, so we know the mouse is now over the sub menu
         // so cancel any timer that would cause a different sub menu to open.
         // This can happen if cursor is moved diagonally from top menu item to sub menu,
@@ -161,6 +160,17 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
             subMenuShowTimer.cancel();
         }
 
+        // Make sure the item is selected as the parent of the current child menu.
+        if (parentItem != null) {
+            int row = cellTable.getVisibleItems().indexOf(parentItem);
+            if (row >= 0) {
+                selectRow(row, false);
+            }
+        }
+    }
+
+    @Override
+    public void focus() {
         int row = getFirstSelectableRow();
         if (row >= 0) {
             selectRow(row, true);
@@ -172,7 +182,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
         if (row >= 0 && row < items.size()) {
             final Item item = items.get(row);
             selectionModel.setSelected(item, true);
-            cellTable.setKeyboardSelectedRow(row, true);
+            cellTable.setKeyboardSelectedRow(row, stealFocus);
         }
     }
 
@@ -239,7 +249,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
             final Item item = e.getValue();
             if (isSelectable(item)) {
                 final int row = cellTable.getVisibleItems().indexOf(item);
-                selectRow(row, false);
+                selectRow(row, true);
 
                 if (item instanceof MenuItem && ((MenuItem) item).getCommand() != null) {
                     execute((MenuItem) item);
@@ -251,12 +261,17 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
 
         @Override
         protected void onMouseMove(final CellPreviewEvent<Item> e) {
-            focusParent();
+            // We have moved the mouse over this menu so tell the parent to cancel the sub menu timer and ensure the
+            // right menu item is selected.
+            if (getUiHandlers() != null) {
+                getUiHandlers().ensureParentItemSelected();
+            }
+
             final Item item = e.getValue();
             if (isSelectable(item)) {
                 final int row = cellTable.getVisibleItems().indexOf(item);
                 if (row != mouseOverRow) {
-                    selectRow(row, false);
+                    selectRow(row, true);
                     mouseOverRow = row;
                     showSubMenuAfterDelay(item, SUBMENU_SHOW_DELAY_MILLIS);
                 }

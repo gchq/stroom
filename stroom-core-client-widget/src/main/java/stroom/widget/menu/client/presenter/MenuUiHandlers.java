@@ -11,7 +11,7 @@ public interface MenuUiHandlers extends UiHandlers {
 
     void hideSubMenu();
 
-    boolean subMenuVisible();
+    void ensureParentItemSelected();
 
     void focusSubMenu();
 
