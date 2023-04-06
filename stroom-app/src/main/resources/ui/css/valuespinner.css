@@ -26,6 +26,11 @@
 	width: 100%;
 }
 
+/* Limit the height of the spinner in a table */
+.dataGridWidget .valueSpinner .gwt-TextBox {
+    height: 22px
+}
+
 .valueSpinner .arrows {
     position: absolute;
     display: flex;
