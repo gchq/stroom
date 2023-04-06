@@ -350,6 +350,22 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
             ignoredMappings.add("stroom.maxAggregationScan");
             ignoredMappings.add("stroom.maxStreamSize");
 
+            ignoredMappings.add("stroom.ui.theme.backgroundAttachment");
+            ignoredMappings.add("stroom.ui.theme.backgroundImage");
+            ignoredMappings.add("stroom.ui.theme.backgroundOpacity");
+            ignoredMappings.add("stroom.ui.theme.backgroundPosition");
+            ignoredMappings.add("stroom.ui.theme.backgroundRepeat");
+            ignoredMappings.add("stroom.ui.theme.tubeOpacity");
+            ignoredMappings.add("stroom.ui.theme.tubeVisible");
+            ignoredMappings.add("stroom.theme.background-attachment");
+            ignoredMappings.add("stroom.theme.background-image");
+            ignoredMappings.add("stroom.theme.background-position");
+            ignoredMappings.add("stroom.theme.background-repeat");
+            ignoredMappings.add("stroom.theme.background-opacity");
+            ignoredMappings.add("stroom.theme.tube.visible");
+            ignoredMappings.add("stroom.theme.tube.opacity");
+            ignoredMappings.add("stroom.unknownClassification");
+
             // TODO what do we do about mapping c3po pool props to hikari?
             //   Can we map some/any of them to equiv hikari props?
             map("stroom.temp", "stroom.path.temp");
@@ -660,16 +676,16 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
             map("stroom.streamstore.resilientReplicationCount",
                     "stroom.volumes.resilientReplicationCount");
             map("stroom.streamstore.volumeSelector", "stroom.volumes.volumeSelector");
-            map("stroom.theme.background-attachment", "stroom.ui.theme.backgroundAttachment");
+//            map("stroom.theme.background-attachment", "stroom.ui.theme.backgroundAttachment");
             map("stroom.theme.background-color", "stroom.ui.theme.backgroundColour");
-            map("stroom.theme.background-image", "stroom.ui.theme.backgroundImage");
-            map("stroom.theme.background-opacity", "stroom.ui.theme.backgroundOpacity");
-            map("stroom.theme.background-position", "stroom.ui.theme.backgroundPosition");
-            map("stroom.theme.background-repeat", "stroom.ui.theme.backgroundRepeat");
+//            map("stroom.theme.background-image", "stroom.ui.theme.backgroundImage");
+//            map("stroom.theme.background-opacity", "stroom.ui.theme.backgroundOpacity");
+//            map("stroom.theme.background-position", "stroom.ui.theme.backgroundPosition");
+//            map("stroom.theme.background-repeat", "stroom.ui.theme.backgroundRepeat");
             map("stroom.theme.labelColours", "stroom.ui.theme.labelColours");
-            map("stroom.theme.tube.opacity", "stroom.ui.theme.tubeOpacity");
-            map("stroom.theme.tube.visible", "stroom.ui.theme.tubeVisible");
-            map("stroom.unknownClassification", "stroom.ui.theme.tubeVisible");
+//            map("stroom.theme.tube.opacity", "stroom.ui.theme.tubeOpacity");
+//            map("stroom.theme.tube.visible", "stroom.ui.theme.tubeVisible");
+//            map("stroom.unknownClassification", "stroom.ui.theme.tubeVisible");
 
             // Same name in 6 & master
             // stroom.volumes.createDefaultOnStart
