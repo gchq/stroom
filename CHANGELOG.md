@@ -13,6 +13,41 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.2] - 2023-04-06
+
+* Add editor key bindings to user preferences.
+
+* Issue **#3342** : Stop showing current search result stores on login. This was only meant to be visible in development. The proper implementation is related to session restoration.
+
+* Issue **#3346** : Fix popup z-index issue.
+
+* Change menu item delay to 100ms and fix issue of it changing sub menus if your cursor moved across another top menu item.
+
+* Issue **#3345** : Fix key/value input box text change handling.
+
+* Issue **#3338** : Fix dark theme error banner colours.
+
+* Issue **#3347** : Fix annotation edit dialog scrolling.
+
+* Issue **#3352** : Fix layout density for dashboard table.
+
+* Issue **#3355** : Fix copy (ctrl+c) in popups.
+
+* Issue **#3349** : Remove all presence of upload button.
+
+* Issue **#3362** : Fix flickering menu items.
+
+* Issue **#3359** : Limit the height of the value spinner in a table.
+
+* Issue **#3354** : Fix search resource classes.
+
+* Issue **#3344** : Fix passing params between dashboards.
+
+* Issue **#3357** : Make new dashboards immediately editable.
+
+* Issue **#3356** : Add `stroom.ui.theme.pageBorder` property to allow environment identification.
+
+
 ## [v7.2-beta.1] - 2023-03-20
 
 * Issue **#3309** : Add param input to pre 7.2 dashboards.
@@ -5138,7 +5173,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.2...HEAD
+[v7.2-beta.2]: https://github.com/gchq/stroom/compare/v7.2-beta.1...v7.2-beta.2
 [v7.2-beta.1]: https://github.com/gchq/stroom/compare/v7.2-alpha.13...v7.2-beta.1
 [v7.2-alpha.13]: https://github.com/gchq/stroom/compare/v7.2-alpha.12...v7.2-alpha.13
 [v7.2-alpha.12]: https://github.com/gchq/stroom/compare/v7.2-alpha.11...v7.2-alpha.12
