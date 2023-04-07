@@ -78,7 +78,7 @@ class OpenIdManager {
         // Check the state is one we requested.
         final AuthenticationState state = AuthenticationStateSessionUtil.pop(request, stateId);
         if (state == null) {
-            LOGGER.warn(() -> "Unexpected state: " + stateId);
+            LOGGER.debug(() -> "Unexpected state: " + stateId);
 
         } else {
             LOGGER.debug(() -> "backChannelOIDC state=" + state);

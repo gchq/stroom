@@ -42,6 +42,9 @@ public class MenuPresenter
         extends MyPresenterWidget<MenuView>
         implements MenuUiHandlers {
 
+    private static int HORIZONTAL_PADDING = 2;
+    private static int VERTICAL_PADDING = 4;
+
     private final Provider<MenuPresenter> menuPresenterProvider;
     private MenuPresenter currentMenu;
     private MenuItem currentItem;
@@ -97,10 +100,10 @@ public class MenuPresenter
                         currentItem = menuItem;
 
                         final PopupPosition popupPosition = new PopupPosition(
-                                element.getAbsoluteRight(),
-                                element.getAbsoluteLeft(),
-                                element.getAbsoluteTop(),
-                                element.getAbsoluteTop(),
+                                element.getAbsoluteRight() + HORIZONTAL_PADDING,
+                                element.getAbsoluteLeft() - HORIZONTAL_PADDING,
+                                element.getAbsoluteTop() + VERTICAL_PADDING + 30,
+                                element.getAbsoluteTop() - VERTICAL_PADDING,
                                 HorizontalLocation.RIGHT,
                                 null);
 

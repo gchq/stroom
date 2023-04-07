@@ -34,7 +34,7 @@
 
 .button-container {
     display: flex;
-    align-items: center;
+    align-items: top;
     margin: 2px;
 
     /*
@@ -527,11 +527,17 @@
 }
 
 .pipelineStructureViewImpl-bar {
-    position: relative;
+	display: flex;
+	align-items: top;
+	flex-direction: row;
+}
+
+.pipelineStructureViewImpl-bar-right {
     padding: 0 4px;
 	display: flex;
 	align-items: center;
 	flex-direction: row;
+	flex-grow: 1;
 }
 
 .pipelineStructureViewImpl-bar div {
