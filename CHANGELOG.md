@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.3] - 2023-04-07
+
+* Issue **#3341** : Fix stroom proxy creation of zip archives.
+
+* Issue **#3364** : Make Stroom Proxy feed status checking and default behaviour optional.
+
+
 ## [v7.2-beta.2] - 2023-04-06
 
 * Add editor key bindings to user preferences.
@@ -5173,7 +5180,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.3...HEAD
+[v7.2-beta.3]: https://github.com/gchq/stroom/compare/v7.2-beta.2...v7.2-beta.3
 [v7.2-beta.2]: https://github.com/gchq/stroom/compare/v7.2-beta.1...v7.2-beta.2
 [v7.2-beta.1]: https://github.com/gchq/stroom/compare/v7.2-alpha.13...v7.2-beta.1
 [v7.2-alpha.13]: https://github.com/gchq/stroom/compare/v7.2-alpha.12...v7.2-alpha.13
