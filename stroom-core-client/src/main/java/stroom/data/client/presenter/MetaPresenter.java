@@ -432,7 +432,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
         // Only set this criteria once.
         if (!hasSetCriteria) {
             hasSetCriteria = true;
-            showStreamListButtons(true);
+            showUploadButton(false);
             showStreamRelationListButtons(true);
 
             metaListPresenter.setExpression(MetaExpressionUtil.createFolderExpression(folder));
@@ -446,7 +446,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
         if (!hasSetCriteria) {
             hasSetCriteria = true;
             this.feedRef = feedRef;
-            showStreamListButtons(true);
+            showUploadButton(true);
             showStreamRelationListButtons(true);
 
             metaListPresenter.setExpression(MetaExpressionUtil.createFeedExpression(feedRef));
@@ -459,7 +459,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
         // Only set this criteria once.
         if (!hasSetCriteria) {
             hasSetCriteria = true;
-            showStreamListButtons(false);
+            showUploadButton(false);
             showStreamRelationListButtons(false);
 
             metaListPresenter.setExpression(MetaExpressionUtil.createPipelineExpression(pipelineRef));
@@ -469,7 +469,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
     }
 
     private void setNullCriteria() {
-        showStreamListButtons(false);
+        showUploadButton(false);
         showStreamRelationListButtons(false);
 
         metaListPresenter.setExpression(MetaExpressionUtil.createStatusExpression(Status.UNLOCKED));
@@ -495,7 +495,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
         return metaListPresenter.addDataSelectionHandler(handler);
     }
 
-    private void showStreamListButtons(final boolean visible) {
+    private void showUploadButton(final boolean visible) {
         if (streamListUpload != null) {
             streamListUpload.setVisible(visible);
         }

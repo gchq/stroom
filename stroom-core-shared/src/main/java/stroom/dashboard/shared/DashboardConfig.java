@@ -43,6 +43,7 @@ import javax.xml.bind.annotation.XmlType;
         "layoutConstraints",
         "tabVisibility",
         "preferredSize",
+        "designMode",
         "modelVersion"
 })
 @JsonInclude(Include.NON_NULL)
@@ -55,6 +56,7 @@ import javax.xml.bind.annotation.XmlType;
         "layoutConstraints",
         "tabVisibility",
         "preferredSize",
+        "designMode",
         "modelVersion"
 })
 public class DashboardConfig {
@@ -81,6 +83,8 @@ public class DashboardConfig {
     private TabVisibility tabVisibility;
     @JsonProperty("preferredSize")
     private Size preferredSize;
+    @JsonProperty("designMode")
+    private Boolean designMode;
     @JsonProperty("modelVersion")
     private String modelVersion;
 
@@ -96,6 +100,7 @@ public class DashboardConfig {
                            @JsonProperty("layoutConstraints") LayoutConstraints layoutConstraints,
                            @JsonProperty("tabVisibility") final TabVisibility tabVisibility,
                            @JsonProperty("preferredSize") Size preferredSize,
+                           @JsonProperty("designMode") final Boolean designMode,
                            @JsonProperty("modelVersion") final String modelVersion) {
         this.parameters = parameters;
         this.timeRange = timeRange;
@@ -104,6 +109,7 @@ public class DashboardConfig {
         this.layoutConstraints = layoutConstraints;
         this.tabVisibility = tabVisibility;
         this.preferredSize = preferredSize;
+        this.designMode = designMode;
         this.modelVersion = modelVersion;
 
         if (this.tabVisibility == null) {
@@ -167,6 +173,14 @@ public class DashboardConfig {
 
     public void setPreferredSize(final Size preferredSize) {
         this.preferredSize = preferredSize;
+    }
+
+    public Boolean getDesignMode() {
+        return designMode;
+    }
+
+    public void setDesignMode(final Boolean designMode) {
+        this.designMode = designMode;
     }
 
     public String getModelVersion() {

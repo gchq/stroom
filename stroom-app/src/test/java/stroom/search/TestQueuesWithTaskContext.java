@@ -2,7 +2,6 @@ package stroom.search;
 
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.Values;
 import stroom.search.extraction.Event;
 import stroom.search.extraction.StreamEventMap;
 import stroom.search.extraction.StreamEventMap.EventSet;
@@ -114,7 +113,7 @@ public class TestQueuesWithTaskContext extends AbstractCoreIntegrationTest {
                                                 run = false;
                                             } else {
                                                 queue.put(new Event(1, id,
-                                                        Values.of(ValString.create("test"), ValString.create("test"))));
+                                                        Val.of(ValString.create("test"), ValString.create("test"))));
                                             }
                                         }
                                     }, executorService);

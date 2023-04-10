@@ -2,7 +2,6 @@ package stroom.search.extraction;
 
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.Values;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.data.store.api.DataException;
 import stroom.docref.DocRef;
@@ -162,7 +161,7 @@ public class ExtractionDecorator {
                         while (!done) {
                             // Poll for the next set of values.
                             // When we get null we are done.
-                            final Values values = storedDataQueue.take();
+                            final Val[] values = storedDataQueue.take();
                             if (values != null) {
                                 if (!taskContext.isTerminated()) {
                                     try {

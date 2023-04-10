@@ -1,5 +1,6 @@
 package stroom.util.logging;
 
+import stroom.util.NullSafe;
 import stroom.util.concurrent.DurationAdder;
 
 import com.google.common.base.Strings;
@@ -7,6 +8,10 @@ import org.slf4j.helpers.MessageFormatter;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collection;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public final class LogUtil {
 
@@ -182,6 +187,37 @@ public final class LogUtil {
         return withPercentage(value, value, total);
     }
 
+    public static <T> String toPaddedMultiLine(final String padding,
+                                               final Collection<T> items) {
+        return toPaddedMultiLine(padding, items, Objects::toString);
+    }
+
+    public static <T> String toPaddedMultiLine(final String padding,
+                                               final Collection<T> items,
+                                               final Function<T, String> itemMapper) {
+        if (items == null || items.isEmpty()) {
+            return "";
+        } else {
+            return items.stream()
+                    .filter(Objects::nonNull)
+                    .map(itemMapper)
+                    .filter(str1 -> !NullSafe.isBlankString(str1))
+                    .map(str -> Objects.requireNonNullElse(padding, "") + str)
+                    .collect(Collectors.joining("\n"));
+        }
+    }
+
+    /**
+     * Returns the simple class name with the message
+     */
+    public static String exceptionMessage(final Throwable t) {
+        if (t == null) {
+            return null;
+        } else {
+            return t.getClass() + " " + t.getMessage();
+        }
+    }
+
     private static <T> String withPercentage(final Object originalValue,
                                              final T value,
                                              final T total) {
@@ -237,6 +273,32 @@ public final class LogUtil {
                 }
             }
             return str;
+        }
+    }
+
+    public static String typedValue(final Object value) {
+        if (value == null) {
+            return null;
+        } else {
+            return value.getClass().getSimpleName() + " " + value;
+        }
+    }
+
+    public static String truncate(final String str, final int maxLength) {
+        if (str == null || str.length() < maxLength) {
+            return str;
+        } else {
+            return str.substring(0, maxLength) + "...";
+        }
+    }
+
+    public static String truncateUnless(final String str,
+                                        final int maxLength,
+                                        final boolean isTruncationSkipped) {
+        if (str == null || str.length() < maxLength || isTruncationSkipped) {
+            return str;
+        } else {
+            return str.substring(0, maxLength) + "...";
         }
     }
 }

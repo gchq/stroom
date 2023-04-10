@@ -15,6 +15,10 @@
         <form:FormGroup identity="userPreferencesEditorTheme" label="Editor Theme">
             <item:StringListBox ui:field="editorTheme" addStyleNames="w-100"/>
         </form:FormGroup>
+        <!-- Ace editor theme -->
+        <form:FormGroup identity="userPreferencesEditorKeyBindings" label="Editor Key Bindings:">
+            <item:StringListBox ui:field="editorKeyBindings" addStyleNames="w-100"/>
+        </form:FormGroup>
         <!-- Layout Density -->
         <form:FormGroup identity="userPreferencesLayoutDensity" label="Layout Density">
             <item:StringListBox ui:field="density" addStyleNames="w-100"/>

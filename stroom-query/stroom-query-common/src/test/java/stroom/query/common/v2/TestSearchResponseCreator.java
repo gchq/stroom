@@ -4,7 +4,6 @@ import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.StaticValueFunction;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.Values;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
@@ -89,10 +88,7 @@ class TestSearchResponseCreator {
     }
 
     private SearchResponseCreator createSearchResponseCreator() {
-        return new SearchResponseCreator(
-                new SerialisersFactory(),
-                sizesProvider,
-                mockStore);
+        return new SearchResponseCreator(sizesProvider, mockStore);
     }
 
     @Test
@@ -293,28 +289,23 @@ class TestSearchResponseCreator {
         generators[0] = new StaticValueFunction(ValString.create("A")).createGenerator();
         generators[1] = new StaticValueFunction(ValString.create("B")).createGenerator();
         generators[2] = new StaticValueFunction(ValString.create("C")).createGenerator();
-        final Key rootKey = Key.createRoot(new SerialisersFactory().create(new ErrorConsumerImpl()));
+        final Key rootKey = Key.ROOT_KEY;
         items.add(rootKey, generators);
 
         final CompletionState completionState = new CompletionStateImpl();
 
         return new DataStore() {
             @Override
-            public void add(final Values values) {
+            public void add(final Val[] values) {
             }
 
             @Override
             public void getData(final Consumer<Data> consumer) {
-                consumer.accept(new Data() {
-                    @Override
-                    public Items get() {
+                consumer.accept((key, timeFilter) -> {
+                    if (key == Key.ROOT_KEY) {
                         return items;
                     }
-
-                    @Override
-                    public Items get(final Key key) {
-                        return null;
-                    }
+                    return null;
                 });
             }
 
@@ -338,6 +329,19 @@ class TestSearchResponseCreator {
             @Override
             public long getByteSize() {
                 return 0;
+            }
+
+            @Override
+            public Serialisers getSerialisers() {
+                return new Serialisers(new ResultStoreConfig());
+            }
+
+            @Override
+            public KeyFactory getKeyFactory() {
+                return KeyFactoryFactory.create(
+                        new Serialisers(new ResultStoreConfig()),
+                        new BasicKeyFactoryConfig(),
+                        new CompiledDepths(null, false));
             }
         };
     }

@@ -18,7 +18,6 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.Values;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -62,7 +61,7 @@ public class EventCoprocessor implements Coprocessor {
     }
 
     @Override
-    public void add(final Values values) {
+    public void add(final Val[] values) {
         final Long longStreamId = getLong(values, streamIdIndex);
         final Long longEventId = getLong(values, eventIdIndex);
 
@@ -137,10 +136,10 @@ public class EventCoprocessor implements Coprocessor {
         return eventRefs;
     }
 
-    private Long getLong(final Values storedData, final Integer index) {
+    private Long getLong(final Val[] storedData, final Integer index) {
         try {
-            if (index != null && storedData.size() > index) {
-                final Val value = storedData.get(index);
+            if (index != null && storedData.length > index) {
+                final Val value = storedData[index];
                 return value.toLong();
             }
         } catch (final Exception e) {

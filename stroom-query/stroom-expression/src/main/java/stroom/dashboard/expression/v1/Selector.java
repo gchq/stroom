@@ -9,7 +9,7 @@ abstract class Selector extends AbstractSingleChildGenerator {
     }
 
     @Override
-    public void set(final Values values) {
+    public void set(final Val[] values) {
         childGenerator.set(values);
     }
 

@@ -1,7 +1,6 @@
 package stroom.alert.impl;
 
 import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.Values;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -18,8 +17,8 @@ class MultiValuesConsumer implements ValuesConsumer {
     }
 
     @Override
-    public void add(final Values values) {
-        if (values != null && values.size() > 0) {
+    public void add(final Val[] values) {
+        if (values != null && values.length > 0) {
             subConsumers.forEach(subReceiver -> {
                 try {
                     subReceiver.add(values);

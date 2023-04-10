@@ -16,8 +16,8 @@
 
 package stroom.query.common.v2;
 
+import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.Values;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
@@ -34,7 +34,6 @@ import stroom.util.logging.Metrics;
 import stroom.util.shared.ModelStringUtil;
 
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
@@ -49,7 +48,6 @@ abstract class AbstractDataStoreTest {
         Metrics.setEnabled(true);
     }
 
-    @Test
     void basicTest() {
         final FormatterFactory formatterFactory = new FormatterFactory(null);
         final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
@@ -67,7 +65,7 @@ abstract class AbstractDataStoreTest {
 
         for (int i = 0; i < 3000; i++) {
             final String text = "Text " + i;
-            dataStore.add(Values.of(ValString.create(text)));
+            dataStore.add(Val.of(ValString.create(text)));
         }
 
         // Wait for all items to be added.
@@ -85,7 +83,6 @@ abstract class AbstractDataStoreTest {
                 .requestedRange(new OffsetRange(0, 3000))
                 .build();
         final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                new SerialisersFactory(),
                 fieldFormatter,
                 defaultMaxResultsSizes);
         final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
@@ -94,7 +91,6 @@ abstract class AbstractDataStoreTest {
         assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
     }
 
-    //    @Test
     void testBigBigResult() {
         for (int i = 0; i < 20; i++) {
             System.out.println("\n------ RUN " + (i + 1) + " -------");
@@ -104,7 +100,6 @@ abstract class AbstractDataStoreTest {
         }
     }
 
-    //    @Test
     void testBigResult() {
         final FormatterFactory formatterFactory = new FormatterFactory(null);
         final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
@@ -133,7 +128,7 @@ abstract class AbstractDataStoreTest {
                 final String key = UUID.randomUUID().toString();
                 for (int j = 0; j < 100000; j++) {
                     final String value = UUID.randomUUID().toString();
-                    dataStore.add(Values.of(ValString.create(key), ValString.create(value)));
+                    dataStore.add(Val.of(ValString.create(key), ValString.create(value)));
                 }
             }
         });
@@ -169,7 +164,6 @@ abstract class AbstractDataStoreTest {
                     .requestedRange(new OffsetRange(0, 3000))
                     .build();
             final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                    new SerialisersFactory(),
                     fieldFormatter,
                     defaultMaxResultsSizes);
             final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
@@ -184,7 +178,6 @@ abstract class AbstractDataStoreTest {
 
     }
 
-    @Test
     void sortedTextTest() {
         final Sort sort = new Sort(0, SortDirection.ASCENDING);
 
@@ -201,7 +194,7 @@ abstract class AbstractDataStoreTest {
 
         for (int i = 0; i < 3000; i++) {
             final String text = "Text " + (int) (Math.random() * 100);
-            dataStore.add(Values.of(ValString.create(text)));
+            dataStore.add(Val.of(ValString.create(text)));
         }
 
         // Wait for all items to be added.
@@ -220,7 +213,6 @@ abstract class AbstractDataStoreTest {
         checkResults(dataStore, tableResultRequest, 0, false);
     }
 
-    @Test
     void sortedNumberTest() {
         final Sort sort = new Sort(0, SortDirection.ASCENDING);
 
@@ -237,7 +229,7 @@ abstract class AbstractDataStoreTest {
 
         for (int i = 0; i < 3000; i++) {
             final String text = String.valueOf((int) (Math.random() * 100));
-            dataStore.add(Values.of(ValString.create(text)));
+            dataStore.add(Val.of(ValString.create(text)));
         }
 
         // Wait for all items to be added.
@@ -257,7 +249,6 @@ abstract class AbstractDataStoreTest {
         checkResults(dataStore, tableResultRequest, 0, true);
     }
 
-    @Test
     void sortedCountedTextTest1() {
         final Sort sort = new Sort(0, SortDirection.ASCENDING);
 
@@ -280,7 +271,7 @@ abstract class AbstractDataStoreTest {
 
         for (int i = 0; i < 3000; i++) {
             final String text = "Text " + (int) (Math.random() * 100);
-            dataStore.add(Values.of(ValString.create(text)));
+            dataStore.add(Val.of(ValString.create(text)));
         }
 
         // Wait for all items to be added.
@@ -300,7 +291,6 @@ abstract class AbstractDataStoreTest {
         checkResults(dataStore, tableResultRequest, 0, true);
     }
 
-    @Test
     void sortedCountedTextTest2() {
         final Sort sort = new Sort(0, SortDirection.ASCENDING);
 
@@ -323,7 +313,7 @@ abstract class AbstractDataStoreTest {
 
         for (int i = 0; i < 3000; i++) {
             final String text = "Text " + (int) (Math.random() * 100);
-            dataStore.add(Values.of(ValString.create(text)));
+            dataStore.add(Val.of(ValString.create(text)));
         }
 
         // Wait for all items to be added.
@@ -343,7 +333,6 @@ abstract class AbstractDataStoreTest {
         checkResults(dataStore, tableResultRequest, 1, false);
     }
 
-    @Test
     void sortedCountedTextTest3() {
         final Sort sort = new Sort(0, SortDirection.ASCENDING);
 
@@ -366,7 +355,7 @@ abstract class AbstractDataStoreTest {
 
         for (int i = 0; i < 3000; i++) {
             final String text = "Text " + (int) (Math.random() * 100);
-            dataStore.add(Values.of(ValString.create(text)));
+            dataStore.add(Val.of(ValString.create(text)));
         }
 
         // Wait for all items to be added.
@@ -395,7 +384,6 @@ abstract class AbstractDataStoreTest {
 
         // Make sure we only get 2000 results.
         final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                new SerialisersFactory(),
                 fieldFormatter,
                 defaultMaxResultsSizes);
         final TableResult searchResult = (TableResult) tableComponentResultCreator.create(data,

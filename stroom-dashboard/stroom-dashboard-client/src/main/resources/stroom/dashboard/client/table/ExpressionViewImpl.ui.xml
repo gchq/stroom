@@ -3,9 +3,9 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:btn="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="max default-min-sizes dock-container-vertical">
-        <g:FlowPanel addStyleNames="dock-min">
-            <btn:ButtonPanel styleName="expressionViewImpl-btnPanel" ui:field="buttonPanel"/>
-            <g:FlowPanel styleName="expressionViewImpl-labelPanel">
+        <g:FlowPanel addStyleNames="dock-min dock-container-horizontal">
+            <btn:ButtonPanel styleName="button-container dock-max" ui:field="buttonPanel"/>
+            <g:FlowPanel styleName="dock-min expressionViewImpl-labelPanel">
                 <g:HTML styleName="expressionViewImpl-completionLabel">
                     <code>ctrl-space</code>
                     for auto-completion

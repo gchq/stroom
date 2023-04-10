@@ -2,7 +2,6 @@ package stroom.search.impl;
 
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.Values;
 import stroom.query.api.v2.QueryKey;
 import stroom.search.extraction.Event;
 import stroom.search.extraction.StoredDataQueue;
@@ -141,7 +140,7 @@ class TestQueues {
                     if (id > MAX) {
                         run = false;
                     } else {
-                        queue.put(Values.of(ValString.create("test"), ValString.create("test")));
+                        queue.put(Val.of(ValString.create("test"), ValString.create("test")));
                     }
                 }
             }, executorService);
@@ -193,7 +192,7 @@ class TestQueues {
                         run = false;
                     } else {
                         queue.put(new Event(1, id,
-                                Values.of(ValString.create("test"), ValString.create("test"))));
+                                Val.of(ValString.create("test"), ValString.create("test"))));
                     }
                 }
             }, executorService);

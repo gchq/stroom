@@ -29,17 +29,23 @@ public class LmdbPayloadCreator {
     private final QueryKey queryKey;
     private final LmdbDataStore lmdbDataStore;
     private final LmdbPayloadQueue currentPayload = new LmdbPayloadQueue(1);
+    private final LmdbRowKeyFactory lmdbRowKeyFactory;
+    private final KeyFactory keyFactory;
 
     LmdbPayloadCreator(final Serialisers serialisers,
                        final QueryKey queryKey,
                        final LmdbDataStore lmdbDataStore,
                        final CompiledField[] compiledFields,
-                       final ResultStoreConfig resultStoreConfig) {
+                       final ResultStoreConfig resultStoreConfig,
+                       final LmdbRowKeyFactory lmdbRowKeyFactory,
+                       final KeyFactory keyFactory) {
         this.serialisers = serialisers;
         this.queryKey = queryKey;
         this.lmdbDataStore = lmdbDataStore;
         this.compiledFields = compiledFields;
         maxPayloadSize = (int) resultStoreConfig.getMaxPayloadSize().getBytes();
+        this.lmdbRowKeyFactory = lmdbRowKeyFactory;
+        this.keyFactory = keyFactory;
     }
 
     /**
@@ -59,24 +65,22 @@ public class LmdbPayloadCreator {
                     while (!in.end()) {
                         final int rowKeyLength = in.readInt();
                         final byte[] key = in.readBytes(rowKeyLength);
-                        final ByteBuffer keyBuffer = ByteBuffer.allocateDirect(key.length);
+                        ByteBuffer keyBuffer = ByteBuffer.allocateDirect(key.length);
                         keyBuffer.put(key, 0, key.length);
                         keyBuffer.flip();
 
                         final int valueLength = in.readInt();
                         final byte[] value = in.readBytes(valueLength);
-                        final ByteBuffer valueBuffer = ByteBuffer.allocateDirect(value.length);
+                        ByteBuffer valueBuffer = ByteBuffer.allocateDirect(value.length);
                         valueBuffer.put(value, 0, value.length);
                         valueBuffer.flip();
 
-                        LmdbKey rowKey = new LmdbKey(keyBuffer);
-                        if (!rowKey.isGroup()) {
-                            // Create a new unique key if this isn't a group key.
-                            rowKey.makeUnique(lmdbDataStore::getUniqueId);
-                        }
+                        LmdbRowKey rowKey = new LmdbRowKey(keyBuffer);
+                        // Create a new unique key if this isn't a group key.
+                        rowKey = lmdbRowKeyFactory.makeUnique(rowKey);
 
-                        final LmdbKV lmdbKV =
-                                new LmdbKV(rowKey, new LmdbValue(serialisers, compiledFields, valueBuffer));
+                        final LmdbValue lmdbValue = new LmdbValue(serialisers, keyFactory, compiledFields, valueBuffer);
+                        final LmdbKV lmdbKV = new LmdbKV(rowKey, lmdbValue);
                         lmdbDataStore.put(lmdbKV);
                     }
                 }

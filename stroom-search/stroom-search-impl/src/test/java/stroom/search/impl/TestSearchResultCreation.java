@@ -3,7 +3,6 @@ package stroom.search.impl;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.Values;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.docref.DocRef;
 import stroom.lmdb.LmdbEnvFactory;
@@ -29,14 +28,16 @@ import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.DataStoreFactory;
+import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.Item;
 import stroom.query.common.v2.Items;
+import stroom.query.common.v2.Key;
 import stroom.query.common.v2.LmdbDataStoreFactory;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreConfig;
 import stroom.query.common.v2.ResultStoreSettingsFactory;
 import stroom.query.common.v2.SearchDebugUtil;
-import stroom.query.common.v2.SerialisersFactory;
+import stroom.query.common.v2.Serialisers;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.SizesProvider;
 import stroom.util.io.PathCreator;
@@ -94,7 +95,8 @@ class TestSearchResultCreation {
                 lmdbEnvFactory,
                 ResultStoreConfig::new,
                 pathCreator,
-                () -> executorService);
+                () -> executorService,
+                () -> new Serialisers(new ResultStoreConfig()));
     }
 
     @AfterEach
@@ -115,7 +117,6 @@ class TestSearchResultCreation {
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
-                new SerialisersFactory(),
                 sizesProvider,
                 dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
@@ -123,7 +124,7 @@ class TestSearchResultCreation {
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                false);
+                DataStoreSettings.BASIC_SETTINGS);
         final ValuesConsumer consumer = createExtractionReceiver(coprocessors);
 
         // Reorder values if field mappings have changed.
@@ -141,7 +142,6 @@ class TestSearchResultCreation {
 
         final ResultStore resultStore = new ResultStore(
                 searchRequest.getSearchRequestSource(),
-                new SerialisersFactory(),
                 sizesProvider,
                 null,
                 coprocessors,
@@ -224,7 +224,6 @@ class TestSearchResultCreation {
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
-                new SerialisersFactory(),
                 sizesProvider,
                 dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
@@ -232,7 +231,7 @@ class TestSearchResultCreation {
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                true);
+                DataStoreSettings.PAYLOAD_PRODUCER_SETTINGS);
 
         final ValuesConsumer consumer = createExtractionReceiver(coprocessors);
 
@@ -244,7 +243,7 @@ class TestSearchResultCreation {
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                false);
+                DataStoreSettings.BASIC_SETTINGS);
 
         // Add data to the consumer.
         final String[] lines = getLines();
@@ -271,7 +270,6 @@ class TestSearchResultCreation {
 
         final ResultStore resultStore = new ResultStore(
                 searchRequest.getSearchRequestSource(),
-                new SerialisersFactory(),
                 sizesProvider,
                 "test_user_id",
                 coprocessors2,
@@ -299,7 +297,6 @@ class TestSearchResultCreation {
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
-                new SerialisersFactory(),
                 sizesProvider,
                 dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
@@ -307,7 +304,7 @@ class TestSearchResultCreation {
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                true);
+                DataStoreSettings.PAYLOAD_PRODUCER_SETTINGS);
 
         final ValuesConsumer consumer1 = createExtractionReceiver(coprocessors);
 
@@ -319,7 +316,7 @@ class TestSearchResultCreation {
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                false);
+                DataStoreSettings.BASIC_SETTINGS);
 
         // Add data to the consumer.
         final String[] lines = getLines();
@@ -348,7 +345,6 @@ class TestSearchResultCreation {
 
         final ResultStore resultStore = new ResultStore(
                 searchRequest.getSearchRequestSource(),
-                new SerialisersFactory(),
                 sizesProvider,
                 "test_user_id",
                 coprocessors2,
@@ -389,14 +385,13 @@ class TestSearchResultCreation {
 
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
-                new SerialisersFactory(), sizesProvider, dataStoreFactory);
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final Coprocessors coprocessors = coprocessorsFactory.create(
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                false);
+                DataStoreSettings.BASIC_SETTINGS);
 
         final ValuesConsumer consumer = createExtractionReceiver(coprocessors);
 
@@ -408,7 +403,7 @@ class TestSearchResultCreation {
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                false);
+                DataStoreSettings.BASIC_SETTINGS);
 
 
         final CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -459,7 +454,6 @@ class TestSearchResultCreation {
                 searchRequest.getSearchRequestSource(),
                 null,
                 null,
-                null,
                 coprocessors2,
                 "node",
                 new ResultStoreSettingsFactory().get());
@@ -468,7 +462,7 @@ class TestSearchResultCreation {
 
         final DataStore dataStore = resultStore.getData("table-78LF4");
         dataStore.getData(data -> {
-            final Items dataItems = data.get();
+            final Items dataItems = data.get(Key.ROOT_KEY, null);
             final Item dataItem = dataItems.iterator().next();
             final Val val = dataItem.getValue(2, true);
             assertThat(val.toLong())
@@ -487,7 +481,7 @@ class TestSearchResultCreation {
             final int target = mappings[j];
             vals[target] = ValString.create(value);
         }
-        consumer.add(Values.of(vals));
+        consumer.add(Val.of(vals));
     }
 
     private void transferPayloads(final Coprocessors source, final Coprocessors target) {

@@ -18,7 +18,6 @@ package stroom.search.extraction;
 
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.Values;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -62,7 +61,7 @@ public class DynamicSearchResultOutputFilter extends AbstractFieldFilter {
                     values[pos] = fieldValue.value();
                 }
             }
-            extractionStateHolder.getReceiver().add(Values.of(values));
+            extractionStateHolder.getReceiver().add(Val.of(values));
         }
         if (extractionStateHolder.getFieldListConsumer() != null) {
             extractionStateHolder.getFieldListConsumer().accept(fieldValues);

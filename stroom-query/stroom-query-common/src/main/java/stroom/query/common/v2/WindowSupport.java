@@ -2,7 +2,6 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValDate;
-import stroom.dashboard.expression.v1.Values;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.HoppingWindow;
 import stroom.query.api.v2.Sort;
@@ -86,15 +85,14 @@ public class WindowSupport {
     }
 
 
-    public Values addWindow(final Values values,
-                            final SimpleDuration offset) {
-        final Val val = values.get(windowTimeFieldPos);
+    public Val[] addWindow(final Val[] values,
+                           final SimpleDuration offset) {
+        final Val val = values[windowTimeFieldPos];
         final Val adjusted = adjustWithOffset(val, offset);
-        Val[] orig = values.toUnsafeArray();
-        Val[] arr = new Val[orig.length];
-        System.arraycopy(orig, 0, arr, 0, orig.length);
+        Val[] arr = new Val[values.length];
+        System.arraycopy(values, 0, arr, 0, values.length);
         arr[windowTimeFieldPos] = adjusted;
-        return Values.of(arr);
+        return Val.of(arr);
     }
 
     private Val adjustWithOffset(final Val val, final SimpleDuration offset) {

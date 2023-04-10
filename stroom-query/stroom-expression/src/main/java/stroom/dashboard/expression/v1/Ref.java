@@ -59,7 +59,7 @@ class Ref extends AbstractFunction {
 
 
         @Override
-        public void set(final Values values) {
+        public void set(final Val[] values) {
             // Ignore
         }
 
@@ -80,8 +80,8 @@ class Ref extends AbstractFunction {
         }
 
         @Override
-        public void set(final Values values) {
-            current = values.get(fieldIndex);
+        public void set(final Val[] values) {
+            current = values[fieldIndex];
             if (current == null) {
                 current = ValNull.INSTANCE;
             }

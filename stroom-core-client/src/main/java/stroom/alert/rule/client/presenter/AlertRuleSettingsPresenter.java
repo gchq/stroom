@@ -90,7 +90,6 @@ public class AlertRuleSettingsPresenter
         getView().setLanguageVersion(alertRule.getLanguageVersion());
         codePresenter.setText(alertRule.getQuery());
         getView().setAlertRuleType(alertRule.getAlertRuleType());
-        getView().setTimeField(alertRule.getTimeField());
         currentFeed = alertRule.getDestinationFeed();
         feedPresenter.setSelectedEntityReference(currentFeed);
     }
@@ -102,7 +101,6 @@ public class AlertRuleSettingsPresenter
                 .languageVersion(getView().getLanguageVersion())
                 .query(codePresenter.getText())
                 .alertRuleType(getView().getAlertRuleType())
-                .timeField(getView().getTimeField())
                 .destinationFeed(feedPresenter.getSelectedEntityReference())
                 .build();
     }
@@ -132,10 +130,6 @@ public class AlertRuleSettingsPresenter
         AlertRuleType getAlertRuleType();
 
         void setAlertRuleType(AlertRuleType alertRuleType);
-
-        String getTimeField();
-
-        void setTimeField(String timeField);
 
         void setDestinationFeedView(View view);
     }

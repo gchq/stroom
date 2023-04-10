@@ -5,7 +5,6 @@ import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.Values;
 import stroom.query.api.v2.Field;
 
 import org.junit.jupiter.api.Test;
@@ -18,7 +17,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestGenerators {
 
-    private final Serialisers serialisers = new SerialisersFactory().create(new ErrorConsumerImpl());
+    private final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
+    private final Serialisers serialisers = new Serialisers(new ResultStoreConfig());
 
     @Test
     void test() {
@@ -44,11 +44,11 @@ class TestGenerators {
 
         for (int count = 0; count < 295; count++) {
             for (final Generator generator : generators) {
-                generator.set(Values.of(values));
+                generator.set(Val.of(values));
             }
         }
 
-        byte[] generatorBytes = new Generators(serialisers, compiledFields, generators).getBytes();
+        byte[] generatorBytes = new Generators(serialisers, compiledFields, generators).getBytes(errorConsumer);
         final String expected = toString(generators);
 
         final Generator[] generators1 = new Generators(serialisers, compiledFields, generatorBytes).getGenerators();
@@ -59,7 +59,7 @@ class TestGenerators {
         // Try with some null values.
         generators[3] = null;
         generators[4] = null;
-        generatorBytes = new Generators(serialisers, compiledFields, generators).getBytes();
+        generatorBytes = new Generators(serialisers, compiledFields, generators).getBytes(errorConsumer);
         final String expected2 = toString(generators);
 
         final Generator[] generators2 = new Generators(serialisers, compiledFields, generatorBytes).getGenerators();
@@ -114,11 +114,11 @@ class TestGenerators {
 
         for (int count = 0; count < 295; count++) {
             for (final Generator generator : generators) {
-                generator.set(Values.of(values));
+                generator.set(Val.of(values));
             }
         }
 
-        byte[] generatorBytes = new Generators(serialisers, compiledFields, generators).getBytes();
+        byte[] generatorBytes = new Generators(serialisers, compiledFields, generators).getBytes(errorConsumer);
         final String expected = toString(generators);
 
         final Generator[] generators1 = new Generators(serialisers, compiledFields, generatorBytes).getGenerators();
@@ -129,7 +129,7 @@ class TestGenerators {
         // Try with some null values.
         generators[3] = null;
         generators[4] = null;
-        generatorBytes = new Generators(serialisers, compiledFields, generators).getBytes();
+        generatorBytes = new Generators(serialisers, compiledFields, generators).getBytes(errorConsumer);
         final String expected2 = toString(generators);
 
         final Generator[] generators2 = new Generators(serialisers, compiledFields, generatorBytes).getGenerators();
@@ -151,7 +151,7 @@ class TestGenerators {
 
         final Generator[] generators = new Generator[fields.size()];
 
-        byte[] generatorBytes = new Generators(serialisers, compiledFields, generators).getBytes();
+        byte[] generatorBytes = new Generators(serialisers, compiledFields, generators).getBytes(errorConsumer);
         final String expected = toString(generators);
 
         final Generator[] generators1 = new Generators(serialisers, compiledFields, generatorBytes).getGenerators();
@@ -162,7 +162,7 @@ class TestGenerators {
         // Try with some null values.
         generators[3] = null;
         generators[4] = null;
-        generatorBytes = new Generators(serialisers, compiledFields, generators).getBytes();
+        generatorBytes = new Generators(serialisers, compiledFields, generators).getBytes(errorConsumer);
         final String expected2 = toString(generators);
 
         final Generator[] generators2 = new Generators(serialisers, compiledFields, generatorBytes).getGenerators();

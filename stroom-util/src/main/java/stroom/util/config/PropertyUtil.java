@@ -97,10 +97,10 @@ public final class PropertyUtil {
                     final Object childValue = prop.getValueFromConfigObject();
                     if (childValue == null) {
                         LOGGER.trace("{}Null value", indent + "  ");
-                    } else {
+                    } else if (childValue.getClass().getName().startsWith("stroom")) {
                         // descend into the prop, which may or may not have its own props
                         walkObjectTree(
-                                prop.getValueFromConfigObject(),
+                                childValue,
                                 propFilter,
                                 propConsumer,
                                 indent + "  ");
@@ -544,9 +544,9 @@ public final class PropertyUtil {
                 }
                 return constructor.newInstance(args);
             } catch (InvocationTargetException
-                    | IllegalAccessException
-                    | InstantiationException
-                    | IllegalArgumentException e) {
+                     | IllegalAccessException
+                     | InstantiationException
+                     | IllegalArgumentException e) {
                 throw new RuntimeException(
                         LogUtil.message("Error creating new instance of {} with args {}. Message: {}",
                                 objectClass.getName(),

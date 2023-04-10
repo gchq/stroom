@@ -19,9 +19,6 @@
             <l:ItemListBox ui:field="alertRuleType"/>
         </form:FormGroup>
         <g:FlowPanel ui:field="aggregateSettings" styleName="form">
-            <form:FormGroup identity="alertRuleSettingsTimeField" label="Time Field">
-                <g:TextBox ui:field="timeField"/>
-            </form:FormGroup>
             <form:FormGroup identity="alertRuleSettingsDestinationFeed" label="Destination Feed For Alerts">
                 <g:SimplePanel ui:field="destinationFeed"/>
             </form:FormGroup>

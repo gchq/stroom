@@ -155,7 +155,6 @@ export interface AlertRuleDoc {
   name?: string;
   processSettings?: AlertRuleProcessSettings;
   query?: string;
-  timeField?: string;
   type?: string;
 
   /** @format int64 */
@@ -590,6 +589,7 @@ export interface DBTableStatus {
 
 export interface DashboardConfig {
   components?: ComponentConfig[];
+  designMode?: boolean;
   layout?: LayoutConfig;
   layoutConstraints?: LayoutConstraints;
   modelVersion?: string;
@@ -2841,7 +2841,7 @@ export interface ResultRequest {
   fetch?: "NONE" | "CHANGES" | "ALL";
   mappings: TableSettings[];
 
-  /** TODO */
+  /** A set of group keys of parent rows we want to display children for */
   openGroups: string[];
 
   /** The offset and length of a range of data in a sub-set of a query result set */
@@ -2849,6 +2849,9 @@ export interface ResultRequest {
 
   /** The style of results required. FLAT will provide a FlatResult object, while TABLE will provide a TableResult object */
   resultStyle: "FLAT" | "TABLE";
+
+  /** If the data includes time in the key then you can apply a time filter when retrieving rows */
+  timeFilter?: TimeFilter;
 }
 
 export interface ResultStoreInfo {
@@ -3581,16 +3584,20 @@ export interface TextConverterDoc {
 export type TextField = AbstractField;
 
 export interface ThemeConfig {
-  backgroundAttachment?: string;
   backgroundColour?: string;
-  backgroundImage?: string;
-  backgroundOpacity?: string;
-  backgroundPosition?: string;
-  backgroundRepeat?: string;
   labelColours?: string;
-  topMenuTextColour?: string;
-  tubeOpacity?: string;
-  tubeVisible?: string;
+  pageBorder?: string;
+}
+
+/**
+ * If the data includes time in the key then you can apply a time filter when retrieving rows
+ */
+export interface TimeFilter {
+  /** @format int64 */
+  from?: number;
+
+  /** @format int64 */
+  to?: number;
 }
 
 export interface TimeRange {
@@ -3740,6 +3747,7 @@ export interface UserPreferences {
   /** A date time formatting pattern string conforming to the specification of java.time.format.DateTimeFormatter */
   dateTimePattern?: string;
   density?: string;
+  editorKeyBindings?: "STANDARD" | "VIM";
   editorTheme?: string;
   font?: string;
   fontSize?: string;

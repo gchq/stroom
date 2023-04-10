@@ -30,7 +30,7 @@ abstract class AbstractManyChildGenerator extends AbstractGenerator {
     }
 
     @Override
-    public abstract void set(Values values);
+    public abstract void set(Val[] values);
 
     @Override
     public abstract Val eval(final Supplier<ChildData> childDataSupplier);

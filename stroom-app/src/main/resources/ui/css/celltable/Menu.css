@@ -14,10 +14,9 @@
  * the License.
  */
 .menuItem-separator {
-    margin-left: 2px;
-    margin-right: 2px;
 	border-top: 1px solid var(--menu-separator__color);
 	cursor: default;
+	margin: var(--row__padding--vertical) var(--row__padding--horizontal);
 }
 
 .menuItem-groupHeading {
@@ -37,6 +36,12 @@
     border: 1px solid transparent;
     border-radius: .25rem;
     min-width: 180px;
+
+    padding: var(--row__padding--vertical) var(--row__padding--horizontal);
+    vertical-align: middle;
+    overflow: hidden;
+    min-height: 16px;
+    white-space: nowrap;
 }
 
 .menuItem-highlight {

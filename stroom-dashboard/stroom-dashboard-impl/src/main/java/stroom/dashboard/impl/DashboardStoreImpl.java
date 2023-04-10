@@ -81,6 +81,7 @@ class DashboardStoreImpl implements DashboardStore {
                 if (is != null) {
                     final byte[] bytes = is.readAllBytes();
                     template = serialiser.getDashboardConfigFromJson(bytes);
+                    template.setDesignMode(true);
                 } else {
                     LOGGER.error("Error reading dashboard template as template not found: " + TEMPLATE_FILE);
                 }

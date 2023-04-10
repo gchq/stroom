@@ -50,8 +50,6 @@ public class InlineSvgButton extends ButtonBase implements ButtonView {
         super(Document.get().createPushButtonElement());
 
         sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.FOCUSEVENTS | Event.KEYEVENTS);
-        getElement().getStyle().setDisplay(Display.INLINE_BLOCK);
-
         getElement().setClassName("inline-svg-button icon-button");
 
         background = Document.get().createDivElement();

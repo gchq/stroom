@@ -44,6 +44,10 @@ public class UserPreferences {
     private final String editorTheme;
 
     @JsonProperty
+    @JsonPropertyDescription("The key bindings to use in the Ace text editor")
+    private final EditorKeyBindings editorKeyBindings;
+
+    @JsonProperty
     @JsonPropertyDescription("Layout density to use")
     private final String density;
 
@@ -66,6 +70,7 @@ public class UserPreferences {
     @JsonCreator
     public UserPreferences(@JsonProperty("theme") final String theme,
                            @JsonProperty("editorTheme") final String editorTheme,
+                           @JsonProperty("editorKeyBindings") final EditorKeyBindings editorKeyBindings,
                            @JsonProperty("density") final String density,
                            @JsonProperty("font") final String font,
                            @JsonProperty("fontSize") final String fontSize,
@@ -73,6 +78,9 @@ public class UserPreferences {
                            @JsonProperty("timeZone") final TimeZone timeZone) {
         this.theme = theme;
         this.editorTheme = editorTheme;
+        this.editorKeyBindings = editorKeyBindings != null
+                ? editorKeyBindings
+                : Builder.DEFAULT_EDITOR_KEY_BINDINGS;
         this.density = density;
         this.font = font;
         this.fontSize = fontSize;
@@ -86,6 +94,10 @@ public class UserPreferences {
 
     public String getEditorTheme() {
         return editorTheme;
+    }
+
+    public EditorKeyBindings getEditorKeyBindings() {
+        return editorKeyBindings;
     }
 
     public String getDensity() {
@@ -113,19 +125,20 @@ public class UserPreferences {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof UserPreferences)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
         final UserPreferences that = (UserPreferences) o;
         return Objects.equals(theme, that.theme) && Objects.equals(editorTheme,
-                that.editorTheme) && Objects.equals(density, that.density) && Objects.equals(font,
+                that.editorTheme) && Objects.equals(editorKeyBindings,
+                that.editorKeyBindings) && Objects.equals(density, that.density) && Objects.equals(font,
                 that.font) && Objects.equals(fontSize, that.fontSize) && Objects.equals(dateTimePattern,
                 that.dateTimePattern) && Objects.equals(timeZone, that.timeZone);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(theme, editorTheme, density, font, fontSize, dateTimePattern, timeZone);
+        return Objects.hash(theme, editorTheme, editorKeyBindings, density, font, fontSize, dateTimePattern, timeZone);
     }
 
     @Override
@@ -133,6 +146,7 @@ public class UserPreferences {
         return "UserPreferences{" +
                 "theme='" + theme + '\'' +
                 ", editorTheme='" + editorTheme + '\'' +
+                ", editorKeyBindings='" + editorKeyBindings + '\'' +
                 ", density='" + density + '\'' +
                 ", font='" + font + '\'' +
                 ", fontSize='" + fontSize + '\'' +
@@ -149,14 +163,47 @@ public class UserPreferences {
         return new Builder(this);
     }
 
+
+    //--------------------------------------------------------------------------------
+
+
+    public enum EditorKeyBindings {
+        STANDARD("Standard"),
+        VIM("Vim");
+
+        private final String displayValue;
+
+        EditorKeyBindings(final String displayValue) {
+            this.displayValue = displayValue;
+        }
+
+        public String getDisplayValue() {
+            return displayValue;
+        }
+
+        public static EditorKeyBindings fromDisplayValue(final String displayValue) {
+            if (VIM.displayValue.equalsIgnoreCase(displayValue)) {
+                return VIM;
+            } else {
+                return STANDARD;
+            }
+        }
+    }
+
+
+    //--------------------------------------------------------------------------------
+
+
     public static final class Builder {
 
+        public static final EditorKeyBindings DEFAULT_EDITOR_KEY_BINDINGS = EditorKeyBindings.STANDARD;
         public static final String DEFAULT_EDITOR_THEME = "chrome";
         public static final String DEFAULT_EDITOR_THEME_DARK = "tomorrow_night";
         public static final String DEFAULT_DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
 
         private String theme;
         private String editorTheme;
+        private EditorKeyBindings editorKeyBindings;
         private String density;
         private String font;
         private String fontSize;
@@ -166,6 +213,7 @@ public class UserPreferences {
         private Builder() {
             theme = "Dark";
             editorTheme = DEFAULT_EDITOR_THEME_DARK;
+            editorKeyBindings = DEFAULT_EDITOR_KEY_BINDINGS;
             density = "Default";
             font = "Roboto";
             fontSize = "Medium";
@@ -176,6 +224,7 @@ public class UserPreferences {
         private Builder(final UserPreferences userPreferences) {
             this.theme = userPreferences.theme;
             this.editorTheme = userPreferences.editorTheme;
+            this.editorKeyBindings = userPreferences.editorKeyBindings;
             this.density = userPreferences.density;
             this.font = userPreferences.font;
             this.fontSize = userPreferences.fontSize;
@@ -190,6 +239,11 @@ public class UserPreferences {
 
         public Builder editorTheme(final String editorTheme) {
             this.editorTheme = editorTheme;
+            return this;
+        }
+
+        public Builder editorKeyBindings(final EditorKeyBindings editorKeyBindings) {
+            this.editorKeyBindings = editorKeyBindings;
             return this;
         }
 
@@ -219,7 +273,15 @@ public class UserPreferences {
         }
 
         public UserPreferences build() {
-            return new UserPreferences(theme, editorTheme, density, font, fontSize, dateTimePattern, timeZone);
+            return new UserPreferences(
+                    theme,
+                    editorTheme,
+                    editorKeyBindings,
+                    density,
+                    font,
+                    fontSize,
+                    dateTimePattern,
+                    timeZone);
         }
     }
 }

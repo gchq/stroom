@@ -3,7 +3,6 @@ package stroom.proxy.repo;
 import stroom.util.config.annotations.RequiresProxyRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
-import stroom.util.shared.validation.ValidDirectoryPath;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -48,7 +47,6 @@ public class ProxyRepoConfig extends AbstractConfig implements IsProxyConfig {
      * Optional Repository DIR. If set any incoming request will be written to the file system.
      */
     @RequiresProxyRestart
-    @ValidDirectoryPath
     @JsonProperty
     public String getRepoDir() {
         return repoDir;

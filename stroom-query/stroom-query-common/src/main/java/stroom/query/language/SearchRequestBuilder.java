@@ -400,6 +400,7 @@ public class SearchRequestBuilder {
                 Collections.singletonList(tableSettings),
                 null,
                 null,
+                null,
                 ResultRequest.ResultStyle.TABLE,
                 Fetch.ALL);
         resultRequests.add(tableResultRequest);

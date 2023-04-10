@@ -12,6 +12,7 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchTaskProgress;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
+import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreConfig;
 import stroom.query.common.v2.ResultStoreFactory;
@@ -118,7 +119,8 @@ class SearchableSearchProvider implements SearchProvider {
             final SearchRequest modifiedSearchRequest = ExpressionUtil.replaceExpressionParameters(searchRequest);
 
             // Create a handler for search results.
-            final Coprocessors coprocessors = coprocessorsFactory.create(modifiedSearchRequest);
+            final Coprocessors coprocessors =
+                    coprocessorsFactory.create(modifiedSearchRequest, DataStoreSettings.BASIC_SETTINGS);
 
             return buildStore(taskContext,
                     modifiedSearchRequest,

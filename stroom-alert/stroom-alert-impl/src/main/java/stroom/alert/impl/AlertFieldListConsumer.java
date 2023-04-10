@@ -2,7 +2,6 @@ package stroom.alert.impl;
 
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.Values;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.index.impl.FieldFactory;
 import stroom.index.shared.IndexField;
@@ -71,7 +70,7 @@ public class AlertFieldListConsumer implements Consumer<List<FieldValue>> {
                     values[index] = fieldValue.value();
                 }
             }
-            valuesConsumer.add(Values.of(values));
+            valuesConsumer.add(Val.of(values));
         }
     }
 

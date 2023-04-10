@@ -29,7 +29,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -52,8 +51,6 @@ public class AlertRuleSettingsViewImpl
     @UiField
     FlowPanel aggregateSettings;
     @UiField
-    TextBox timeField;
-    @UiField
     SimplePanel destinationFeed;
 
     @Inject
@@ -69,7 +66,6 @@ public class AlertRuleSettingsViewImpl
             getUiHandlers().onDirty();
             aggregateSettings.setVisible(AlertRuleType.AGGREGATE.equals(alertRuleType.getSelectedItem()));
         });
-        timeField.addValueChangeHandler(e -> getUiHandlers().onDirty());
 
         alertRuleType.addItem(AlertRuleType.EVENT);
         alertRuleType.addItem(AlertRuleType.AGGREGATE);
@@ -120,16 +116,6 @@ public class AlertRuleSettingsViewImpl
     public void setAlertRuleType(final AlertRuleType alertRuleType) {
         this.alertRuleType.setSelectedItem(alertRuleType);
         aggregateSettings.setVisible(AlertRuleType.AGGREGATE.equals(alertRuleType));
-    }
-
-    @Override
-    public String getTimeField() {
-        return this.timeField.getValue();
-    }
-
-    @Override
-    public void setTimeField(final String timeField) {
-        this.timeField.setValue(timeField);
     }
 
     @Override

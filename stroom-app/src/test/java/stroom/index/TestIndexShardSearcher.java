@@ -2,7 +2,6 @@ package stroom.index;
 
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.Values;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
@@ -53,7 +52,6 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -322,7 +320,7 @@ public class TestIndexShardSearcher extends AbstractCoreIntegrationTest {
                 }
             }
 
-            valuesConsumer.add(Values.of(values));
+            valuesConsumer.add(Val.of(values));
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
             throw new UncheckedIOException(e);

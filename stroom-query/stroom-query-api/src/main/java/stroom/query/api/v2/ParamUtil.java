@@ -19,10 +19,9 @@ package stroom.query.api.v2;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public final class ParamUtil {
 
@@ -180,9 +179,12 @@ public final class ParamUtil {
         // Create a parameter map.
         final Map<String, String> paramMap;
         if (params != null) {
-            paramMap = params
-                    .stream()
-                    .collect(Collectors.toMap(Param::getKey, Param::getValue));
+            paramMap = new HashMap<>();
+            for (final Param param : params) {
+                if (param.getKey() != null && param.getValue() != null) {
+                    paramMap.put(param.getKey(), param.getValue());
+                }
+            }
         } else {
             paramMap = Collections.emptyMap();
         }

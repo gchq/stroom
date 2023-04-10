@@ -19,7 +19,6 @@ package stroom.query.common.v2;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.Values;
 import stroom.lmdb.LmdbEnvFactory;
 import stroom.lmdb.LmdbLibraryConfig;
 import stroom.query.api.v2.Field;
@@ -80,7 +79,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 () -> lmdbLibraryConfig);
 
         final ErrorConsumerImpl errorConsumer = new ErrorConsumerImpl();
-        final Serialisers serialisers = new SerialisersFactory().create(errorConsumer);
+        final Serialisers serialisers = new Serialisers(resultStoreConfig);
         return new LmdbDataStore(
                 serialisers,
                 lmdbEnvFactory,
@@ -91,7 +90,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 fieldIndex,
                 Collections.emptyMap(),
                 maxResults,
-                false,
+                DataStoreSettings.BASIC_SETTINGS,
                 () -> executorService,
                 errorConsumer);
     }
@@ -121,7 +120,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
 
         for (int i = 0; i < 3000; i++) {
             final Val val = ValString.create("Text " + i + "test".repeat(1000));
-            dataStore.add(Values.of(val, val));
+            dataStore.add(Val.of(val, val));
         }
 
         // Wait for all items to be added.
@@ -139,12 +138,41 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .requestedRange(new OffsetRange(0, 3000))
                 .build();
         final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                new SerialisersFactory(),
                 fieldFormatter,
                 defaultMaxResultsSizes);
         final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                 dataStore,
                 tableResultRequest);
         assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
+    }
+
+    @Test
+    void basicTest() {
+        super.basicTest();
+    }
+
+    @Test
+    void sortedTextTest() {
+        super.sortedTextTest();
+    }
+
+    @Test
+    void sortedNumberTest() {
+        super.sortedNumberTest();
+    }
+
+    @Test
+    void sortedCountedTextTest1() {
+        super.sortedCountedTextTest1();
+    }
+
+    @Test
+    void sortedCountedTextTest2() {
+        super.sortedCountedTextTest2();
+    }
+
+    @Test
+    void sortedCountedTextTest3() {
+        super.sortedCountedTextTest3();
     }
 }

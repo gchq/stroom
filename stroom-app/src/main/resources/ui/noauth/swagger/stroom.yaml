@@ -6477,8 +6477,6 @@ components:
           $ref: '#/components/schemas/AlertRuleProcessSettings'
         query:
           type: string
-        timeField:
-          type: string
         type:
           type: string
         updateTimeMs:
@@ -7163,6 +7161,8 @@ components:
             $ref: '#/components/schemas/ComponentConfig'
           xml:
             wrapped: true
+        designMode:
+          type: boolean
         layout:
           $ref: '#/components/schemas/LayoutConfig'
         layoutConstraints:
@@ -10782,10 +10782,12 @@ components:
             $ref: '#/components/schemas/TableSettings'
         openGroups:
           type: array
-          description: TODO
+          description: A set of group keys of parent rows we want to display children
+            for
           items:
             type: string
-            description: TODO
+            description: A set of group keys of parent rows we want to display children
+              for
           uniqueItems: true
         requestedRange:
           $ref: '#/components/schemas/OffsetRange'
@@ -10796,6 +10798,8 @@ components:
           enum:
           - FLAT
           - TABLE
+        timeFilter:
+          $ref: '#/components/schemas/TimeFilter'
       required:
       - componentId
       - mappings
@@ -12084,26 +12088,23 @@ components:
     ThemeConfig:
       type: object
       properties:
-        backgroundAttachment:
-          type: string
         backgroundColour:
-          type: string
-        backgroundImage:
-          type: string
-        backgroundOpacity:
-          type: string
-        backgroundPosition:
-          type: string
-        backgroundRepeat:
           type: string
         labelColours:
           type: string
-        topMenuTextColour:
+        pageBorder:
           type: string
-        tubeOpacity:
-          type: string
-        tubeVisible:
-          type: string
+    TimeFilter:
+      type: object
+      description: If the data includes time in the key then you can apply a time
+        filter when retrieving rows
+      properties:
+        from:
+          type: integer
+          format: int64
+        to:
+          type: integer
+          format: int64
     TimeRange:
       type: object
       properties:
@@ -12319,6 +12320,11 @@ components:
             of java.time.format.DateTimeFormatter
         density:
           type: string
+        editorKeyBindings:
+          type: string
+          enum:
+          - STANDARD
+          - VIM
         editorTheme:
           type: string
         font:

@@ -63,7 +63,6 @@ public class ResultStore {
     private volatile boolean terminate;
 
     public ResultStore(final SearchRequestSource searchRequestSource,
-                       final SerialisersFactory serialisersFactory,
                        final SizesProvider sizesProvider,
                        final String userId,
                        final Coprocessors coprocessors,
@@ -76,7 +75,7 @@ public class ResultStore {
         lastAccessTime = creationTime;
         this.nodeName = nodeName;
         this.resultStoreSettings = resultStoreSettings;
-        searchResponseCreator = new SearchResponseCreator(serialisersFactory, sizesProvider, this);
+        searchResponseCreator = new SearchResponseCreator(sizesProvider, this);
     }
 
     public SearchRequestSource getSearchRequestSource() {

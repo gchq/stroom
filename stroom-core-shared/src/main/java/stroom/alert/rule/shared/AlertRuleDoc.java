@@ -44,8 +44,6 @@ public class AlertRuleDoc extends Doc {
     @JsonProperty
     private final AlertRuleType alertRuleType;
     @JsonProperty
-    private final String timeField;
-    @JsonProperty
     private final DocRef destinationFeed;
     @JsonProperty
     private final AlertRuleProcessSettings processSettings;
@@ -55,7 +53,6 @@ public class AlertRuleDoc extends Doc {
         languageVersion = null;
         query = null;
         alertRuleType = null;
-        timeField = null;
         destinationFeed = null;
         processSettings = null;
     }
@@ -73,7 +70,6 @@ public class AlertRuleDoc extends Doc {
                         @JsonProperty("languageVersion") final QueryLanguageVersion languageVersion,
                         @JsonProperty("query") final String query,
                         @JsonProperty("alertRuleType") AlertRuleType alertRuleType,
-                        @JsonProperty("timeField") final String timeField,
                         @JsonProperty("destinationFeed") final DocRef destinationFeed,
                         @JsonProperty("processSettings") AlertRuleProcessSettings processSettings) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
@@ -81,7 +77,6 @@ public class AlertRuleDoc extends Doc {
         this.languageVersion = languageVersion;
         this.query = query;
         this.alertRuleType = alertRuleType;
-        this.timeField = timeField;
         this.destinationFeed = destinationFeed;
         this.processSettings = processSettings;
     }
@@ -100,10 +95,6 @@ public class AlertRuleDoc extends Doc {
 
     public AlertRuleType getAlertRuleType() {
         return alertRuleType;
-    }
-
-    public String getTimeField() {
-        return timeField;
     }
 
     public DocRef getDestinationFeed() {
@@ -131,11 +122,12 @@ public class AlertRuleDoc extends Doc {
             return false;
         }
         final AlertRuleDoc that = (AlertRuleDoc) o;
-        return Objects.equals(description,
-                that.description) && languageVersion == that.languageVersion && Objects.equals(query,
-                that.query) && alertRuleType == that.alertRuleType && Objects.equals(timeField,
-                that.timeField) && Objects.equals(destinationFeed,
-                that.destinationFeed) && Objects.equals(processSettings, that.processSettings);
+        return Objects.equals(description, that.description) &&
+                languageVersion == that.languageVersion &&
+                Objects.equals(query, that.query) &&
+                alertRuleType == that.alertRuleType &&
+                Objects.equals(destinationFeed, that.destinationFeed) &&
+                Objects.equals(processSettings, that.processSettings);
     }
 
     @Override
@@ -145,7 +137,6 @@ public class AlertRuleDoc extends Doc {
                 languageVersion,
                 query,
                 alertRuleType,
-                timeField,
                 destinationFeed,
                 processSettings);
     }
@@ -157,7 +148,6 @@ public class AlertRuleDoc extends Doc {
                 ", languageVersion=" + languageVersion +
                 ", query='" + query + '\'' +
                 ", alertRuleType=" + alertRuleType +
-                ", timeField='" + timeField + '\'' +
                 ", destinationFeed=" + destinationFeed +
                 ", processSettings=" + processSettings +
                 '}';
@@ -177,7 +167,6 @@ public class AlertRuleDoc extends Doc {
         private QueryLanguageVersion languageVersion;
         private String query;
         private AlertRuleType alertRuleType;
-        private String timeField;
         private DocRef destinationFeed;
         private AlertRuleProcessSettings processSettings;
 
@@ -190,7 +179,6 @@ public class AlertRuleDoc extends Doc {
             this.languageVersion = doc.languageVersion;
             this.query = doc.query;
             this.alertRuleType = doc.alertRuleType;
-            this.timeField = doc.timeField;
             this.destinationFeed = doc.destinationFeed;
             this.processSettings = doc.processSettings;
         }
@@ -212,11 +200,6 @@ public class AlertRuleDoc extends Doc {
 
         public Builder alertRuleType(final AlertRuleType alertRuleType) {
             this.alertRuleType = alertRuleType;
-            return self();
-        }
-
-        public Builder timeField(final String timeField) {
-            this.timeField = timeField;
             return self();
         }
 
@@ -250,7 +233,6 @@ public class AlertRuleDoc extends Doc {
                     languageVersion,
                     query,
                     alertRuleType,
-                    timeField,
                     destinationFeed,
                     processSettings);
         }

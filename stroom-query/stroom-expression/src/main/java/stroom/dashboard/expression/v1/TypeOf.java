@@ -84,7 +84,7 @@ class TypeOf extends AbstractFunction {
         }
 
         @Override
-        public void set(final Values values) {
+        public void set(final Val[] values) {
             childGenerator.set(values);
         }
 

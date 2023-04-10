@@ -161,7 +161,7 @@ proxyConfig:
   forwardDestinations:
     - type: "post"
       enabled: {{ true | envVar('FORWARDING_ENABLED') }}
-      name: "upstream"
+      name: "downstream"
       forwardUrl: "{{ 'https://nginx/stroom/datafeed' | envVar('FORWARD_URL') }}"
       sslConfig:
         keyStorePath: "certs/client.jks"

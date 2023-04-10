@@ -54,7 +54,7 @@ class Concat extends AbstractManyChildFunction {
         }
 
         @Override
-        public void set(final Values values) {
+        public void set(final Val[] values) {
             for (final Generator generator : childGenerators) {
                 generator.set(values);
             }

@@ -7,7 +7,6 @@ import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.Values;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.ExpressionMatcherFactory;
@@ -128,21 +127,21 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
                 annotations.add(defaultAnnotation);
             }
 
-            Val[] copy = values.toUnsafeArray();
+            Val[] copy = values;
             for (final Annotation annotation : annotations) {
                 try {
                     if (filter == null || filter.apply(annotation)) {
                         // If we have more than one annotation then copy the original values into a new
                         // values object for each new row.
                         if (annotations.size() > 1 || copy.length < fieldIndex.size()) {
-                            copy = Arrays.copyOf(values.toUnsafeArray(), fieldIndex.size());
+                            copy = Arrays.copyOf(values, fieldIndex.size());
                         }
 
                         for (final String field : usedFields) {
                             setValue(copy, fieldIndex, field, annotation);
                         }
 
-                        valuesConsumer.add(Values.of(copy));
+                        valuesConsumer.add(Val.of(copy));
                     }
                 } catch (final RuntimeException e) {
                     LOGGER.debug(e::getMessage, e);
@@ -185,10 +184,10 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
         };
     }
 
-    private Long getLong(final Values values, final int index) {
+    private Long getLong(final Val[] values, final int index) {
         Long result = null;
-        if (values.size() > index) {
-            Val val = values.get(index);
+        if (values.length > index) {
+            Val val = values[index];
             if (val != null) {
                 result = val.toLong();
             }

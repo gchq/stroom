@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -66,6 +67,7 @@ public class RepoSourceItems {
             progressLog.increment("ProxyRepoSourceEntries - examineSource");
 
             final Map<String, RepoSourceItemBuilder> itemNameMap = new HashMap<>();
+            final List<RepoSourceItemBuilder> builderList = new ArrayList<>();
             try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(zipPath))) {
                 final Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
                 while (entries.hasMoreElements()) {
@@ -105,10 +107,14 @@ public class RepoSourceItems {
                             }
                         }
 
-                        final RepoSourceItemBuilder builder = itemNameMap.computeIfAbsent(itemName, k ->
-                                new RepoSourceItemBuilder()
-                                        .repoSource(source)
-                                        .name(itemName));
+                        final RepoSourceItemBuilder builder = itemNameMap.computeIfAbsent(itemName, k -> {
+                            final RepoSourceItemBuilder b = new RepoSourceItemBuilder()
+                                    .repoSource(source)
+                                    .name(itemName);
+                            // Use a list to keep the items in the same order as the source.
+                            builderList.add(b);
+                            return b;
+                        });
 
                         // If we have an existing source item then update the feed and type names if we have some.
                         if (feedName != null && builder.getFeedName() == null) {
@@ -119,7 +125,6 @@ public class RepoSourceItems {
                         }
 
                         builder.addEntry(fileName.extension(), entry.getSize());
-                        itemNameMap.put(fileName.stem(), builder);
                     }
                 }
 
@@ -134,8 +139,7 @@ public class RepoSourceItems {
             }
 
             // We now have a map of all source entries so add them to the DB.
-            final List<RepoSourceItem> items = itemNameMap
-                    .values()
+            final List<RepoSourceItem> items = builderList
                     .stream()
                     .map(builder -> builder.build(feedDao))
                     .collect(Collectors.toList());

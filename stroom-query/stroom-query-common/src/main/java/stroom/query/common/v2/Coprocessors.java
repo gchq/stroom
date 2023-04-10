@@ -1,7 +1,7 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.Values;
+import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.docref.DocRef;
 import stroom.util.logging.LambdaLogger;
@@ -65,7 +65,7 @@ public final class Coprocessors implements Iterable<Coprocessor>, ValuesConsumer
     }
 
     @Override
-    public void add(final Values values) {
+    public void add(final Val[] values) {
         counter.increment();
         LOGGER.trace(() -> String.format("data: [%s]", values));
         // Give the data array to each of our coprocessors

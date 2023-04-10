@@ -33,10 +33,10 @@ public class Generators {
         this.bytes = bytes;
     }
 
-    byte[] getBytes() {
+    byte[] getBytes(final ErrorConsumer errorConsumer) {
         if (bytes == null) {
             Metrics.measure("Item toBytes", () -> {
-                try (final Output output = serialisers.getOutputFactory().createValueOutput()) {
+                try (final Output output = serialisers.getOutputFactory().createValueOutput(errorConsumer)) {
                     if (generators.length > Byte.MAX_VALUE) {
                         throw new RuntimeException("You can only write a maximum of " + 255 + " values");
                     }

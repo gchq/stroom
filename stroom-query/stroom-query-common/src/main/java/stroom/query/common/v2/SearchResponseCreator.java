@@ -49,7 +49,6 @@ public class SearchResponseCreator {
 
     private static final Duration FALL_BACK_DEFAULT_TIMEOUT = Duration.ofMinutes(5);
 
-    private final SerialisersFactory serialisersFactory;
     private final SizesProvider sizesProvider;
     private final ResultStore store;
 
@@ -61,10 +60,8 @@ public class SearchResponseCreator {
     /**
      * @param store The underlying store to use for creating the search responses.
      */
-    public SearchResponseCreator(final SerialisersFactory serialisersFactory,
-                                 final SizesProvider sizesProvider,
+    public SearchResponseCreator(final SizesProvider sizesProvider,
                                  final ResultStore store) {
-        this.serialisersFactory = serialisersFactory;
         this.sizesProvider = sizesProvider;
         this.store = Objects.requireNonNull(store);
     }
@@ -372,6 +369,7 @@ public class SearchResponseCreator {
         if (dataStore != null) {
             try {
                 final ResultCreator resultCreator = getResultCreator(
+                        dataStore.getSerialisers(),
                         searchRequest.getKey(),
                         componentId,
                         resultRequest,
@@ -396,6 +394,7 @@ public class SearchResponseCreator {
         if (dataStore != null) {
             try {
                 final ResultCreator resultCreator = getResultCreator(
+                        dataStore.getSerialisers(),
                         searchRequest.getKey(),
                         componentId,
                         resultRequest,
@@ -409,7 +408,8 @@ public class SearchResponseCreator {
         }
     }
 
-    private ResultCreator getResultCreator(final QueryKey queryKey,
+    private ResultCreator getResultCreator(final Serialisers serialisers,
+                                           final QueryKey queryKey,
                                            final String componentId,
                                            final ResultRequest resultRequest,
                                            final DateTimeSettings dateTimeSettings) {
@@ -421,13 +421,11 @@ public class SearchResponseCreator {
                             new FieldFormatter(
                                     new FormatterFactory(dateTimeSettings));
                     resultCreator = new TableResultCreator(
-                            serialisersFactory,
                             fieldFormatter,
                             sizesProvider.getDefaultMaxResultsSizes());
                 } else {
                     resultCreator = new FlatResultCreator(
-                            serialisersFactory,
-                            new MapDataStoreFactory(),
+                            new MapDataStoreFactory(() -> serialisers),
                             queryKey,
                             componentId,
                             resultRequest,

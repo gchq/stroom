@@ -56,7 +56,7 @@ class Random extends AbstractFunction {
         private Val value;
 
         @Override
-        public void set(final Values values) {
+        public void set(final Val[] values) {
             value = ValDouble.create(Math.random());
         }
 
