@@ -2,6 +2,7 @@ package stroom.proxy.repo;
 
 import stroom.util.config.annotations.RequiresProxyRestart;
 import stroom.util.shared.NotInjectableConfig;
+import stroom.util.shared.validation.ValidDirectoryPath;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
