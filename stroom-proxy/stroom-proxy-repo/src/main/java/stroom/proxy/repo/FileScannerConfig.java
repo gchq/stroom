@@ -34,6 +34,7 @@ public class FileScannerConfig {
 
     @RequiresProxyRestart
     @NotNull
+    @ValidDirectoryPath // if someone sets a path here, it needs to exist really, so don't auto create
     @JsonProperty
     public String getPath() {
         return path;

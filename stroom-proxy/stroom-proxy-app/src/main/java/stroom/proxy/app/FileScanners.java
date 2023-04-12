@@ -3,6 +3,7 @@ package stroom.proxy.app;
 import stroom.proxy.repo.FileScanner;
 import stroom.proxy.repo.FileScannerConfig;
 import stroom.proxy.repo.FrequencyExecutor;
+import stroom.proxy.repo.RepoDirProvider;
 import stroom.proxy.repo.store.SequentialFileStore;
 import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
@@ -27,7 +28,8 @@ public class FileScanners implements Managed {
     @Inject
     public FileScanners(final ProxyConfig proxyConfig,
                         final SequentialFileStore sequentialFileStore,
-                        final PathCreator pathCreator) {
+                        final PathCreator pathCreator,
+                        final RepoDirProvider repoDirProvider) {
         if (NullSafe.hasItems(proxyConfig, ProxyConfig::getFileScanners)) {
             // Check that all dirs are unique.
             final Set<Path> allPaths = proxyConfig
@@ -37,7 +39,7 @@ public class FileScanners implements Managed {
                     .map(pathCreator::toAppPath)
                     .collect(Collectors.toSet());
 
-            final Path repoDir = pathCreator.toAppPath(proxyConfig.getProxyRepositoryConfig().getRepoDir());
+            final Path repoDir = repoDirProvider.get();
             FileUtil.ensureDirExists(repoDir);
             allPaths.add(repoDir);
             if (allPaths.size() != proxyConfig.getFileScanners().size() + 1) {
