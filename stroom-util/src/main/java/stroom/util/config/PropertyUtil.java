@@ -97,7 +97,12 @@ public final class PropertyUtil {
                     final Object childValue = prop.getValueFromConfigObject();
                     if (childValue == null) {
                         LOGGER.trace("{}Null value", indent + "  ");
-                    } else if (childValue.getClass().getName().startsWith("stroom")) {
+                    } else if (childValue instanceof Enum<?>) {
+                        // We don't want to recurse into enums
+                        LOGGER.trace(() -> LogUtil.message("{}Ignoring Enum value of type {}",
+                                indent + "  ",
+                                childValue.getClass().getSimpleName()));
+                    } else {
                         // descend into the prop, which may or may not have its own props
                         walkObjectTree(
                                 childValue,
