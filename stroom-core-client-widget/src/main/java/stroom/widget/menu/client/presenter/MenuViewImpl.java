@@ -19,6 +19,7 @@ import com.google.gwt.view.client.CellPreviewEvent;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.List;
+import java.util.Objects;
 
 public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements MenuView {
 
@@ -30,6 +31,8 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
     private final MySingleSelectionModel<Item> selectionModel = new MySingleSelectionModel<>();
     private int mouseOverRow = -1;
     private Timer subMenuShowTimer;
+    // The item that has a delayed sub menu scheduled
+    private Item timerItem = null;
 
     public MenuViewImpl() {
         cellTable = new MyCellTable<>(MyDataGrid.DEFAULT_LIST_PAGE_SIZE);
@@ -67,28 +70,38 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
 
     public void showSubMenu(final Item item) {
         if (getUiHandlers() != null && item instanceof MenuItem) {
+            cancelDelayedSubMenu();
             getUiHandlers().showSubMenu((MenuItem) item, getRowElement(item));
         }
     }
 
     private void showSubMenuAfterDelay(final Item item, final int delayMillis) {
-        if (subMenuShowTimer != null) {
-            subMenuShowTimer.cancel();
-        }
+        if (item != null) {
+            if (timerItem == null || !Objects.equals(item, timerItem)) {
+                if (subMenuShowTimer != null) {
+                    subMenuShowTimer.cancel();
+                }
 
-        subMenuShowTimer = new Timer() {
-            @Override
-            public void run() {
-                showSubMenu(item);
+                if (item instanceof HasChildren) {
+                    subMenuShowTimer = new Timer() {
+                        @Override
+                        public void run() {
+                            timerItem = null;
+                            getUiHandlers().showSubMenu((MenuItem) item, getRowElement(item));
+                        }
+                    };
+
+                    subMenuShowTimer.schedule(delayMillis);
+                    timerItem = item;
+                }
             }
-        };
-
-        subMenuShowTimer.schedule(delayMillis);
+        }
     }
 
-    public void toggleSubMenu(final Item item) {
-        if (getUiHandlers() != null && item instanceof MenuItem) {
-            getUiHandlers().toggleSubMenu((MenuItem) item, getRowElement(item));
+    public void cancelDelayedSubMenu() {
+        if (subMenuShowTimer != null) {
+            subMenuShowTimer.cancel();
+            timerItem = null;
         }
     }
 
@@ -108,13 +121,18 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
         }
     }
 
-    public void focusParent() {
+    public void focusParent(final boolean hideChildren) {
         if (getUiHandlers() != null) {
-            getUiHandlers().focusParent();
+            getUiHandlers().focusParent(hideChildren);
         }
     }
 
+    public boolean hasParent() {
+        return getUiHandlers() != null && getUiHandlers().hasParent();
+    }
+
     public void escape() {
+        cancelDelayedSubMenu();
         if (getUiHandlers() != null) {
             getUiHandlers().escape();
         }
@@ -156,9 +174,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
         // so cancel any timer that would cause a different sub menu to open.
         // This can happen if cursor is moved diagonally from top menu item to sub menu,
         // crossing another top menu as it goes.
-        if (subMenuShowTimer != null) {
-            subMenuShowTimer.cancel();
-        }
+        cancelDelayedSubMenu();
 
         // Make sure the item is selected as the parent of the current child menu.
         if (parentItem != null) {
@@ -205,6 +221,10 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
         return row;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private class MenuSelectionEventManager
             extends AbstractSelectionEventManager<Item> {
 
@@ -223,7 +243,9 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
 
         @Override
         protected void onMoveLeft(final CellPreviewEvent<Item> e) {
-            focusParent();
+            if (hasParent()) {
+                focusParent(true);
+            }
         }
 
         @Override
@@ -254,7 +276,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
                 if (item instanceof MenuItem && ((MenuItem) item).getCommand() != null) {
                     execute((MenuItem) item);
                 } else {
-                    toggleSubMenu(item);
+                    showSubMenu(item);
                 }
             }
         }
