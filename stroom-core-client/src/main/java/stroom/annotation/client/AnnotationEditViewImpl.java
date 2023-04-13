@@ -17,10 +17,8 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
-import stroom.svg.client.Preset;
-import stroom.util.shared.UserName;
-import stroom.widget.button.client.SvgButton;
 import stroom.svg.client.SvgImages;
+import stroom.util.shared.UserName;
 import stroom.widget.button.client.InlineSvgButton;
 
 import com.google.gwt.core.client.Scheduler;

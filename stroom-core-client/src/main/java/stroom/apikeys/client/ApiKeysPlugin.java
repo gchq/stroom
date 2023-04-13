@@ -33,27 +33,9 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
     protected void addChildItems(BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
             clientPropertyCache.get()
-                    .onSuccess(result -> {
-                        if (!result.isExternalIdentityProvider()) {
-                            final IconMenuItem apiKeysMenuItem;
-                            final Preset icon = SvgPresets.KEY;
-                        apiKeysMenuItem = new IconMenuItem.Builder()
-                                .priority(5)
-                                .icon(icon)
-                                .text("API Keys")
-                                .command(() -> {
-                                    postMessage("manageTokens");
-
-//                                final Hyperlink hyperlink = new Builder()
-//                                        .text("API Keys")
-//                                        .href(apiKeysUi)
-//                                        .type(HyperlinkType.TAB + "|API Keys")
-//                                        .icon(icon)
-//                                        .build();
-//                                HyperlinkEvent.fire(this, hyperlink);
-                                })
-                                .build();
-                            event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, apiKeysMenuItem);
+                    .onSuccess(extendedUiConfig -> {
+                        if (!extendedUiConfig.isExternalIdentityProvider()) {
+                            addMenuItem(event);
                         }
                     })
                     .onFailure(caught ->
@@ -62,5 +44,27 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
                                     caught.getMessage(),
                                     null));
         }
+    }
+
+    private static void addMenuItem(final BeforeRevealMenubarEvent event) {
+        final IconMenuItem apiKeysMenuItem;
+        final Preset icon = SvgPresets.KEY;
+        apiKeysMenuItem = new IconMenuItem.Builder()
+                .priority(5)
+                .icon(icon)
+                .text("API Keys")
+                .command(() -> {
+                    postMessage("manageTokens");
+
+//                                final Hyperlink hyperlink = new Builder()
+//                                        .text("API Keys")
+//                                        .href(apiKeysUi)
+//                                        .type(HyperlinkType.TAB + "|API Keys")
+//                                        .icon(icon)
+//                                        .build();
+//                                HyperlinkEvent.fire(this, hyperlink);
+                })
+                .build();
+        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, apiKeysMenuItem);
     }
 }
