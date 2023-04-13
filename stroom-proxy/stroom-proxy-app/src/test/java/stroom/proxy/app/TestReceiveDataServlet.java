@@ -1,8 +1,6 @@
 package stroom.proxy.app;
 
 import stroom.util.concurrent.ThreadUtil;
-import stroom.util.concurrent.UncheckedInterruptedException;
-import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
 
 import org.apache.http.HttpEntity;

@@ -25,14 +25,13 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
-import stroom.query.api.v2.ParamUtil;
+import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.common.v2.SearchResponseCreatorManager;
+import stroom.query.common.v2.ResultStoreManager;
 import stroom.search.AbstractSearchTest;
 import stroom.search.CommonIndexingTestHelper;
 import stroom.search.extraction.ExtractionConfig;
-import stroom.search.impl.LuceneSearchStoreFactory;
 import stroom.search.impl.shard.IndexShardSearchConfig;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -81,9 +80,7 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
     @Inject
     private TaskManager taskManager;
     @Inject
-    private SearchResponseCreatorManager searchResponseCreatorManager;
-    @Inject
-    private LuceneSearchStoreFactory storeFactory;
+    private ResultStoreManager searchResponseCreatorManager;
     @Inject
     private CommonTestControl commonTestControl;
     @Inject
@@ -168,7 +165,6 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
                 extractValues,
                 resultMapConsumer,
                 indexStore,
-                storeFactory,
                 searchResponseCreatorManager);
 
         LOGGER.info("Completed search");
@@ -178,7 +174,7 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
 
         final Field groupedUserId = Field.builder()
                 .name("User")
-                .expression(ParamUtil.makeParam("User"))
+                .expression(ParamSubstituteUtil.makeParam("User"))
                 .group(0)
                 .build();
 

@@ -4,13 +4,6 @@
 package stroom.proxy.repo.db.jooq;
 
 
-import java.util.Arrays;
-import java.util.List;
-
-import org.jooq.Catalog;
-import org.jooq.Table;
-import org.jooq.impl.SchemaImpl;
-
 import stroom.proxy.repo.db.jooq.tables.Aggregate;
 import stroom.proxy.repo.db.jooq.tables.Feed;
 import stroom.proxy.repo.db.jooq.tables.ForwardAggregate;
@@ -18,6 +11,13 @@ import stroom.proxy.repo.db.jooq.tables.ForwardDest;
 import stroom.proxy.repo.db.jooq.tables.ForwardSource;
 import stroom.proxy.repo.db.jooq.tables.Source;
 import stroom.proxy.repo.db.jooq.tables.SourceItem;
+
+import org.jooq.Catalog;
+import org.jooq.Table;
+import org.jooq.impl.SchemaImpl;
+
+import java.util.Arrays;
+import java.util.List;
 
 
 /**

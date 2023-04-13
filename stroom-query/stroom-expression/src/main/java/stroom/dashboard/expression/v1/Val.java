@@ -30,4 +30,8 @@ public interface Val extends Param, Appendable {
     String toString();
 
     Type type();
+
+    static Val[] of(final Val... values) {
+        return values;
+    }
 }

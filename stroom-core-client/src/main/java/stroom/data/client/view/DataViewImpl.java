@@ -38,16 +38,12 @@ public class DataViewImpl extends ViewImpl implements DataView {
 
     @UiField
     LinkTabBar tabBar;
-
     @UiField
     Label sourceLinkLabel;
-
     @UiField
     SimplePanel navigatorContainer;
-
     @UiField
     LayerContainer layerContainer;
-
     @UiField
     SimplePanel progressBarPanel;
 
@@ -63,6 +59,11 @@ public class DataViewImpl extends ViewImpl implements DataView {
         layerContainer.setFade(true);
         sourceLinkLabel.setText("View Source");
         sourceLinkLabel.setVisible(true);
+    }
+
+    @Override
+    public void focus() {
+        tabBar.focus();
     }
 
     @Override

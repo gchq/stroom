@@ -1,7 +1,5 @@
 package stroom.proxy.app.guice;
 
-import stroom.security.openid.api.AbstractOpenIdConfig;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
@@ -53,11 +51,11 @@ public class ProxyConfigProvidersModule extends AbstractModule {
                 stroom.proxy.app.ProxyOpenIdConfig.class);
     }
 
-    // Binding ProxyOpenIdConfig to additional interface OpenIdConfig
+    // Binding ProxyOpenIdConfig to additional interface AbstractOpenIdConfig
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    AbstractOpenIdConfig getOpenIdConfig(
+    stroom.security.openid.api.AbstractOpenIdConfig getAbstractOpenIdConfig(
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
                 stroom.proxy.app.ProxyOpenIdConfig.class);

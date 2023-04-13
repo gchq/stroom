@@ -61,9 +61,12 @@ public class EditorPresenter
         view.setTheme(getTheme(currentTheme.getTheme(), currentTheme.getEditorTheme()));
         setEditorKeyBindings(view, currentTheme.getEditorKeyBindings());
 
-        registerHandler(view.addMouseDownHandler(event -> contextMenu.hide()));
+//        registerHandler(view.addMouseDownHandler(event -> contextMenu.hide()));
+
         registerHandler(view.addContextMenuHandler(event ->
-                contextMenu.show(EditorPresenter.this, event.getX(), event.getY())));
+                contextMenu.show(
+                        EditorPresenter.this,
+                        event.getPopupPosition())));
         registerHandler(view.addKeyDownHandler(event -> {
             if (event.isAltKeyDown() || event.isControlKeyDown()) {
                 eventBus.fireEvent(event);
@@ -81,11 +84,12 @@ public class EditorPresenter
         view.setUserKeyBindingsPreference(VIM_KEY_BINDS_NAME.equalsIgnoreCase(editorKeyBindingsName));
     }
 
+
     private AceEditorTheme getTheme(final String theme, final String editorTheme) {
         AceEditorTheme aceEditorTheme = AceEditorTheme.CHROME;
         if (theme != null &&
                 theme.toLowerCase(Locale.ROOT).contains("dark")) {
-            aceEditorTheme = AceEditorTheme.TOMORROW_NIGHT_EIGHTIES;
+            aceEditorTheme = AceEditorTheme.TOMORROW_NIGHT;
         }
         if (editorTheme != null) {
             aceEditorTheme = Arrays

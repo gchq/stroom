@@ -8,20 +8,20 @@ import java.util.Map;
 
 public interface DataStoreFactory {
 
-    DataStore create(Serialisers serialisers,
-                     QueryKey queryKey,
+    DataStore create(QueryKey queryKey,
                      String componentId,
                      TableSettings tableSettings,
                      FieldIndex fieldIndex,
                      Map<String, String> paramMap,
                      Sizes maxResults,
                      Sizes storeSize,
-                     boolean producePayloads,
+                     DataStoreSettings dataStoreSettings,
                      ErrorConsumer errorConsumer);
 
     StoreSizeSummary getTotalSizeOnDisk();
 
     class StoreSizeSummary {
+
         private final long totalSizeOnDisk;
         private final int storeCount;
 

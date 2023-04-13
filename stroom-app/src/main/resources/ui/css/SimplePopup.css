@@ -25,13 +25,23 @@
 }
 
 .simplePopup-background {
-	background: var(--main-background-color);
-	border: 1px solid var(--dialog-border-color);
-	box-shadow: var(--popup-shadow);
-	border-radius: 3px;
+	background: var(--page__background-color);
+	border: thin solid var(--dialog__border-color);
+	box-shadow: var(--popup__shadow);
+	border-radius: 8px;
+	z-index: 100;
 }
 
 .simplePopup-content {
-	display: table;
-	padding: 2px 3px;
+	padding: 4px;
+}
+
+.simplePopup-popup .cellTableSelectedRowCell {
+	border-radius: 5px;
+	background-color: transparent;
+}
+
+.simplePopup-popup .cellTableCell:has(.menuItem-separator) {
+	padding-left: 0;
+	padding-right: 0;
 }

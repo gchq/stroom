@@ -20,15 +20,12 @@ package stroom.entity.client.presenter;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.core.client.HasSave;
 import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.HasType;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.SaveAsDocumentEvent;
 import stroom.document.client.event.WriteDocumentEvent;
 import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.ExplorerNode;
-import stroom.explorer.shared.ExplorerResource;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Icon;
 import stroom.svg.client.Preset;
@@ -39,9 +36,7 @@ import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.tab.client.presenter.TabData;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.Layer;
@@ -53,12 +48,9 @@ import java.util.List;
 public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
         extends DocumentEditPresenter<V, D> implements DocumentTabData, Refreshable, HasType, HasSave {
 
-    private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
-
     private final List<TabData> tabs = new ArrayList<>();
     private final ButtonView saveButton;
     private final ButtonView saveAsButton;
-    private final RestFactory restFactory;
     private TabData selectedTab;
     private String lastLabel;
     private ButtonPanel leftButtons;
@@ -68,11 +60,8 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
 
     public DocumentEditTabPresenter(final EventBus eventBus,
                                     final V view,
-                                    final ClientSecurityContext securityContext,
-                                    final RestFactory restFactory) {
+                                    final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
-
-        this.restFactory = restFactory;
 
         saveButton = addButtonLeft(SvgPresets.SAVE);
         saveAsButton = addButtonLeft(SvgPresets.SAVE_AS);
@@ -80,7 +69,7 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
         saveAsButton.setEnabled(false);
 
         registerHandler(saveButton.addClickHandler(event -> save()));
-        registerHandler(saveAsButton.addClickHandler(this::onSaveAsDocument));
+        registerHandler(saveAsButton.addClickHandler(event -> saveAs()));
         registerHandler(getView().getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem())));
     }
 
@@ -91,13 +80,9 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
         }
     }
 
-    private void onSaveAsDocument(ClickEvent event) {
+    private void saveAs() {
         if (saveAsButton.isEnabled()) {
-            restFactory.create()
-                    .onSuccess(explorerNode ->
-                            SaveAsDocumentEvent.fire(DocumentEditTabPresenter.this, (ExplorerNode) explorerNode))
-                    .call(EXPLORER_RESOURCE)
-                    .getFromDocRef(docRef);
+            SaveAsDocumentEvent.fire(DocumentEditTabPresenter.this, docRef);
         }
     }
 

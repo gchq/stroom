@@ -26,7 +26,6 @@ import stroom.data.store.api.Target;
 import stroom.data.store.impl.DataDownloadSettings;
 import stroom.data.store.impl.DataDownloadTaskHandler;
 import stroom.data.store.impl.DataUploadTaskHandler;
-import stroom.data.zip.StroomFileNameUtil;
 import stroom.data.zip.StroomZipFile;
 import stroom.data.zip.StroomZipFileType;
 import stroom.meta.api.MetaProperties;

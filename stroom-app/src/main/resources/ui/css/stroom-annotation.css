@@ -19,7 +19,6 @@
     flex-flow: column;
     width: 100%;
     height: 100%;
-    padding: 10px;
     min-width: 700;
     min-height: 550;
 }
@@ -47,15 +46,9 @@
 }
 
 .annotationRight {
-    display: flex;
-    flex-flow: column;
-    flex-grow: 1;
-    overflow: auto;
-    min-width: 0;
+    flex-shrink: 1;
+    min-width: 300px;
 }
-
-
-
 
 .annotationTitleContainer {
     padding-bottom: 2px;
@@ -68,19 +61,18 @@
 
 .annotationTextBox {
     opacity: 0.8;
-    border: 1px solid transparent;
-    border-radius: 5px;
+    border-color: transparent !important;
     cursor: pointer;
 }
 
 .annotationTextBox:focus {
-    border-color: var(--input-border-color);
     opacity: 1 !important;
- }
+    border-color: var(--focus-border) !important;
+}
 
 .annotationTextBox:hover {
     opacity: 1;
- }
+}
 
 
 
@@ -143,14 +135,11 @@
 }
 
 .annotationHistory {
-    width: 100%;
-    height: 100%;
+    overflow: hidden;
 }
 
 .annotationComment {
     flex-grow: 1;
-    border: 1px solid var(--border-color);
-    border-radius: 5px;
     padding: 5px;
 }
 
@@ -158,10 +147,6 @@
     flex-shrink: 0;
     text-align: right;
     padding-top: 10px;
-}
-
-.annotationDropDownIcon {
-    margin-top: -2px;
 }
 
 .annotationAssignYourself {
@@ -181,10 +166,6 @@
 }
 
 .annotationHistoryContainer {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: 100%;
 }
 
 .annotationHistoryOuter {
@@ -232,8 +213,8 @@
     white-space: pre-wrap;
     word-break: break-word;
     border-bottom: 1px solid var(--border-color);
-    background-color: var(--dialog-titlebar-background-color);
-    color: var(--dialog-titlebar-text-color);
+    background-color: var(--navigation__background-color);
+    color: var(--navigation__text-color);
 }
 
 .annotationHistoryCommentBody {
@@ -241,7 +222,8 @@
     padding: 5px;
     white-space: pre-wrap;
     word-break: break-word;
-    background-color: var(--input-background-color);
+    background-color: var(--control__background-color);
+    color: var(--control__text-color);
 }
 
 .annotationHistoryItem {

@@ -117,8 +117,8 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
         final String subPath = ResourcePaths.buildPath(CacheResource.LIST);
 
         final List<CacheIdentity> caches = Stream.of(
-                "cache1",
-                "cache2")
+                        "cache1",
+                        "cache2")
                 .map(name -> new CacheIdentity(name, PropertyPath.fromParts("root", name)))
                 .collect(Collectors.toList());
 

@@ -118,7 +118,7 @@ public class TestProxyConfigProvidersModule {
                                 // StroomPathConfig is also mapped to PathConfig
                                 softAssertions.assertThat(config.getClass())
                                         .isEqualTo(ProxyPathConfig.class);
-                            } else if (method.getName().equals("getOpenIdConfig")) {
+                            } else if (method.getName().equals("getAbstractOpenIdConfig")) {
                                 // ProxyOpenIdConfig is also mapped to OpenIdConfig
                                 softAssertions.assertThat(config.getClass())
                                         .isEqualTo(ProxyOpenIdConfig.class);

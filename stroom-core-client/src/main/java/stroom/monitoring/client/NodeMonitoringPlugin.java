@@ -30,6 +30,9 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class NodeMonitoringPlugin extends MonitoringPlugin<NodeMonitoringPresenter> {
 
     @Inject
@@ -44,7 +47,12 @@ public class NodeMonitoringPlugin extends MonitoringPlugin<NodeMonitoringPresent
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_NODES_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
-                    new IconMenuItem(10, SvgPresets.NODES, SvgPresets.NODES, "Nodes", null, true, () -> open()));
+                    new IconMenuItem.Builder()
+                            .priority(10)
+                            .icon(SvgPresets.NODES)
+                            .text("Nodes")
+                            .command(this::open)
+                            .build());
         }
     }
 }

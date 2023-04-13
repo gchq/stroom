@@ -36,7 +36,7 @@ public final class ExportFileCompleteUtil {
                                  final PresenterWidget<?> parent,
                                  final ResourceGeneration result) {
         if (parent != null) {
-            HidePopupEvent.fire(parent, parent, false, false);
+            HidePopupEvent.builder(parent).fire();
         }
 
         if (result != null) {
@@ -57,9 +57,9 @@ public final class ExportFileCompleteUtil {
     public static void onFailure(final PresenterWidget<?> parent, final Throwable t) {
         if (parent != null) {
             if (t != null) {
-                AlertEvent.fireError(parent, t.getMessage(), () -> EnablePopupEvent.fire(parent, parent));
+                AlertEvent.fireError(parent, t.getMessage(), () -> EnablePopupEvent.builder(parent).fire());
             } else {
-                EnablePopupEvent.fire(parent, parent);
+                EnablePopupEvent.builder(parent).fire();
             }
         }
     }

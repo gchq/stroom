@@ -24,6 +24,7 @@ import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.feed.client.presenter.SupportedRetentionAge;
 import stroom.index.client.presenter.IndexSettingsPresenter.IndexSettingsView;
 import stroom.index.shared.IndexDoc;
@@ -32,6 +33,8 @@ import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
 import stroom.item.client.ItemListBox;
 import stroom.item.client.StringListBox;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.ResultPage;
 
 import com.google.gwt.core.shared.GWT;
@@ -44,6 +47,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSettingsView, IndexDoc>
@@ -53,15 +57,24 @@ public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSetti
             GWT.create(IndexVolumeGroupResource.class);
 
     private final RestFactory restFactory;
+    private final EntityDropDownPresenter pipelinePresenter;
+
+    private DocRef defaultExtractionPipeline;
 
     @Inject
     public IndexSettingsPresenter(final EventBus eventBus,
                                   final IndexSettingsView view,
+                                  final EntityDropDownPresenter pipelinePresenter,
                                   final RestFactory restFactory) {
         super(eventBus, view);
+        this.pipelinePresenter = pipelinePresenter;
         this.restFactory = restFactory;
 
+        pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
+        pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.READ);
+
         view.setUiHandlers(this);
+        view.setDefaultExtractionPipelineView(pipelinePresenter.getView());
     }
 
     @Override
@@ -73,6 +86,12 @@ public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSetti
             }
         };
         registerHandler(getView().getDescription().addKeyDownHandler(keyDownHander));
+        registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> {
+            if (!Objects.equals(pipelinePresenter.getSelectedEntityReference(), defaultExtractionPipeline)) {
+                setDirty(true);
+                defaultExtractionPipeline = pipelinePresenter.getSelectedEntityReference();
+            }
+        }));
     }
 
     @Override
@@ -92,17 +111,22 @@ public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSetti
         getView().setShardsPerPartition(index.getShardsPerPartition());
         getView().setPartitionBy(index.getPartitionBy());
         getView().setPartitionSize(index.getPartitionSize());
+        getView().setTimeField(index.getTimeField());
         updateRetentionAge(SupportedRetentionAge.get(index.getRetentionDayAge()));
         updateGroupList(index.getVolumeGroupName());
+
+        defaultExtractionPipeline = index.getDefaultExtractionPipeline();
+        pipelinePresenter.setSelectedEntityReference(defaultExtractionPipeline);
     }
 
     @Override
-    protected void onWrite(final IndexDoc index) {
+    protected IndexDoc onWrite(final IndexDoc index) {
         index.setDescription(getView().getDescription().getText().trim());
         index.setMaxDocsPerShard(getView().getMaxDocsPerShard());
         index.setShardsPerPartition(getView().getShardsPerPartition());
         index.setPartitionBy(getView().getPartitionBy());
         index.setPartitionSize(getView().getPartitionSize());
+        index.setTimeField(getView().getTimeField());
         index.setRetentionDayAge(getView().getRetentionAge().getSelectedItem().getDays());
 
         String volumeGroupName = getView().getVolumeGroups().getSelected();
@@ -110,6 +134,8 @@ public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSetti
             volumeGroupName = null;
         }
         index.setVolumeGroupName(volumeGroupName);
+        index.setDefaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference());
+        return index;
     }
 
     private void updateRetentionAge(final SupportedRetentionAge selected) {
@@ -160,8 +186,14 @@ public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSetti
 
         void setPartitionBy(PartitionBy partitionBy);
 
+        String getTimeField();
+
+        void setTimeField(String partitionTimeField);
+
         ItemListBox<SupportedRetentionAge> getRetentionAge();
 
         StringListBox getVolumeGroups();
+
+        void setDefaultExtractionPipelineView(View view);
     }
 }

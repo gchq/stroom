@@ -67,7 +67,7 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
                                final ClientSecurityContext securityContext,
                                final RestFactory restFactory,
                                final LocationManager locationManager) {
-        super(eventBus, view, securityContext, restFactory);
+        super(eventBus, view, securityContext);
         this.settingsPresenter = settingsPresenter;
         this.editorPresenterProvider = editorPresenterProvider;
         this.restFactory = restFactory;
@@ -123,11 +123,12 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
     }
 
     @Override
-    protected void onWrite(final DictionaryDoc doc) {
-        settingsPresenter.write(doc);
+    protected DictionaryDoc onWrite(DictionaryDoc doc) {
+        doc = settingsPresenter.write(doc);
         if (codePresenter != null) {
             doc.setData(codePresenter.getText());
         }
+        return doc;
     }
 
     @Override

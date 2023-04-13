@@ -18,7 +18,6 @@ package stroom.widget.popup.client.event;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
 public class EnablePopupEvent extends GwtEvent<EnablePopupEvent.Handler> {
@@ -30,8 +29,8 @@ public class EnablePopupEvent extends GwtEvent<EnablePopupEvent.Handler> {
         this.presenterWidget = presenterWidget;
     }
 
-    public static void fire(final HasHandlers handlers, final PresenterWidget<?> presenterWidget) {
-        handlers.fireEvent(new EnablePopupEvent(presenterWidget));
+    public static Builder builder(final PresenterWidget<?> presenterWidget) {
+        return new Builder(presenterWidget);
     }
 
     public static Type<Handler> getType() {
@@ -58,5 +57,18 @@ public class EnablePopupEvent extends GwtEvent<EnablePopupEvent.Handler> {
     public interface Handler extends EventHandler {
 
         void onEnable(EnablePopupEvent event);
+    }
+
+    public static class Builder {
+
+        private final PresenterWidget<?> presenterWidget;
+
+        public Builder(final PresenterWidget<?> presenterWidget) {
+            this.presenterWidget = presenterWidget;
+        }
+
+        public void fire() {
+            presenterWidget.fireEvent(new EnablePopupEvent(presenterWidget));
+        }
     }
 }

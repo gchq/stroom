@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 class TestSearchResponseMapper {
@@ -40,7 +41,7 @@ class TestSearchResponseMapper {
     @Test
     void testResponse() {
         final SearchResponseMapper mapper = new SearchResponseMapper();
-        final DashboardSearchResponse result = mapper.mapResponse(getSearchResponse());
+        final DashboardSearchResponse result = mapper.mapResponse(null, getSearchResponse());
         System.out.println(result);
     }
 
@@ -60,8 +61,8 @@ class TestSearchResponseMapper {
                 Collections.singletonList("tableResultError"));
         return new SearchResponse(
                 new QueryKey(UUID.randomUUID().toString()),
-                Arrays.asList("highlight1", "highlight2"),
-                Arrays.asList(tableResult, getVisResult1()),
+                List.of("highlight1", "highlight2"),
+                List.of(tableResult, getVisResult1()),
                 Collections.singletonList("some error"),
                 false);
     }

@@ -14,7 +14,7 @@ public class ProcessChoice {
                          final boolean reprocess,
                          final boolean enabled,
                          final Long minMetaCreateTimeMs,
-                                  final Long maxMetaCreateTimeMs) {
+                         final Long maxMetaCreateTimeMs) {
         this.priority = priority;
         this.autoPriority = autoPriority;
         this.reprocess = reprocess;

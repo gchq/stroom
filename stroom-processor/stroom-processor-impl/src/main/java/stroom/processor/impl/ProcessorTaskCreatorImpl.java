@@ -35,7 +35,6 @@ import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionParamUtil;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.ExpressionValidator;
@@ -58,6 +57,7 @@ import stroom.util.logging.LogUtil;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -558,14 +558,10 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
     }
 
     private List<Param> getParams(final QueryData queryData) {
-        // Create a parameter map.
-        final Map<String, String> parameterMap = ExpressionParamUtil.parse(queryData.getParams());
-
-        final List<Param> params = new ArrayList<>();
-        for (final Entry<String, String> entry : parameterMap.entrySet()) {
-            params.add(new Param(entry.getKey(), entry.getValue()));
+        if (queryData.getParams() == null) {
+            return Collections.emptyList();
         }
-        return params;
+        return queryData.getParams();
     }
 
     private void info(final TaskContext taskContext,

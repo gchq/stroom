@@ -3,6 +3,8 @@ package stroom.proxy.repo;
 import stroom.data.zip.StroomFileNameUtil;
 import stroom.data.zip.StroomZipFile;
 import stroom.data.zip.StroomZipFileType;
+import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.proxy.repo.store.FileSet;
 import stroom.proxy.repo.store.SequentialFileStore;
 import stroom.receive.common.ProgressHandler;
@@ -15,13 +17,14 @@ import stroom.util.shared.ModelStringUtil;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
 import javax.inject.Inject;
@@ -41,18 +44,15 @@ public class SenderImpl implements Sender {
     }
 
     @Override
-    public void sendDataToHandler(final Items items,
+    public void sendDataToHandler(final AttributeMap attributeMap,
+                                  final List<SourceItems> items,
                                   final StreamHandler handler) {
         String targetName;
         long sequenceId = 1;
 
-        final List<Items.Source> sources = items
-                .map()
-                .keySet()
-                .stream()
-                .sorted(Comparator.comparing(Items.Source::id))
-                .toList();
-        for (final Items.Source source : sources) {
+        for (final SourceItems sourceItems : items) {
+            final SourceItems.Source source = sourceItems.source();
+
             // Send no more if told to finish
             if (Thread.currentThread().isInterrupted()) {
                 LOGGER.info(() -> "processFeedFiles() - Quitting early as we have been told to stop");
@@ -62,50 +62,71 @@ public class SenderImpl implements Sender {
 
             final FileSet fileSet = sequentialFileStore.getStoreFileSet(source.fileStoreId());
             try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(fileSet.getZip()))) {
-                final List<Items.Item> repoSourceItems = items
-                        .map()
-                        .get(source)
-                        .stream()
-                        .sorted(Comparator.comparing(Items.Item::id))
-                        .toList();
-                for (final Items.Item item : repoSourceItems) {
+                final List<SourceItems.Item> repoSourceItems = sourceItems.list();
+                for (final SourceItems.Item item : repoSourceItems) {
                     targetName = StroomFileNameUtil.getIdPath(sequenceId++);
 
-                    final String extensions = item.extensions();
-                    final List<String> extensionList = Arrays
-                            .stream(extensions.split(","))
-                            .sorted(Comparator.comparingInt(entry -> StroomZipFileType.fromExtension(entry).getId()))
-                            .toList();
-
-                    for (final String extension : extensionList) {
-                        final String sourceName = item.name();
-                        final String fullSourceName = sourceName + extension;
-                        final String fullTargetName = targetName + extension;
-
+                    // Add attributes as a manifest to the output.
+                    if (sequenceId == 1) {
+                        final StringWriter stringWriter = new StringWriter();
+                        AttributeMapUtil.write(attributeMap, stringWriter);
+                        final InputStream inputStream = new ByteArrayInputStream(
+                                stringWriter.toString().getBytes(StandardCharsets.UTF_8));
+                        final String fullTargetName = targetName + StroomZipFileType.MANIFEST.getExtension();
                         final Consumer<Long> progressHandler = new ProgressHandler("Sending" +
                                 fullTargetName);
+                        handler.addEntry(fullTargetName, inputStream, progressHandler);
+                    }
 
-                        final ZipArchiveEntry zipArchiveEntry = zipFile.getEntry(fullSourceName);
-                        try (final ByteCountInputStream inputStream =
-                                new ByteCountInputStream(zipFile.getInputStream(zipArchiveEntry))) {
-                            LOGGER.debug(() -> "sendEntry() - " + fullTargetName);
-
-                            handler.addEntry(targetName + extension, inputStream, progressHandler);
-                            final long totalRead = inputStream.getCount();
-
-                            LOGGER.trace(() -> "sendEntry() - " +
-                                    fullTargetName +
-                                    " " +
-                                    ModelStringUtil.formatIECByteSizeString(
-                                            totalRead));
-
-                            if (totalRead == 0) {
-                                LOGGER.warn(() -> "sendEntry() - " + fullTargetName + " IS BLANK");
-                            }
-                            LOGGER.debug(() -> "sendEntry() - " + fullTargetName + " size is " + totalRead);
+                    // Figure out if we have meta and/or context extensions.
+                    final String[] extensions = item.extensions().split(",");
+                    String metaExtension = null;
+                    String contextExtension = null;
+                    for (final String extension : extensions) {
+                        final StroomZipFileType stroomZipFileType =
+                                StroomZipFileType.fromExtension(extension);
+                        if (StroomZipFileType.META.equals(stroomZipFileType)) {
+                            metaExtension = extension;
+                        } else if (StroomZipFileType.CONTEXT.equals(stroomZipFileType)) {
+                            contextExtension = extension;
                         }
+                    }
 
-                        progressLog.increment("AggregateForwarder - forwardAggregateEntry");
+                    // Send all file data with data extensions and add meta and context if present.
+                    for (final String extension : extensions) {
+                        final StroomZipFileType stroomZipFileType =
+                                StroomZipFileType.fromExtension(extension);
+                        if (StroomZipFileType.DATA.equals(stroomZipFileType)) {
+
+                            // Add the data.
+                            final String sourceName = item.name();
+                            final String fullSourceName =
+                                    sourceName + extension;
+                            final String fullTargetName =
+                                    targetName + StroomZipFileType.DATA.getExtension();
+
+                            sendEntry(zipFile, fullSourceName, fullTargetName, handler);
+
+                            // Add meta if it exists.
+                            if (metaExtension != null) {
+                                final String fullMetaSourceName =
+                                        sourceName + metaExtension;
+                                final String fullMetaTargetName =
+                                        targetName + StroomZipFileType.META.getExtension();
+
+                                sendEntry(zipFile, fullMetaSourceName, fullMetaTargetName, handler);
+                            }
+
+                            // Add context if it exists.
+                            if (contextExtension != null) {
+                                final String fullContextSourceName =
+                                        sourceName + contextExtension;
+                                final String fullContextTargetName =
+                                        targetName + StroomZipFileType.CONTEXT.getExtension();
+
+                                sendEntry(zipFile, fullContextSourceName, fullContextTargetName, handler);
+                            }
+                        }
                     }
                     progressLog.increment("AggregateForwarder - forwardAggregateItem");
                 }
@@ -113,6 +134,36 @@ public class SenderImpl implements Sender {
                 throw new UncheckedIOException(e);
             }
         }
+    }
+
+    private void sendEntry(final ZipFile zipFile,
+                           final String fullSourceName,
+                           final String fullTargetName,
+                           final StreamHandler handler) throws IOException {
+        final Consumer<Long> progressHandler = new ProgressHandler("Sending" +
+                fullTargetName);
+
+        final ZipArchiveEntry zipArchiveEntry = zipFile.getEntry(fullSourceName);
+        try (final ByteCountInputStream inputStream =
+                new ByteCountInputStream(zipFile.getInputStream(zipArchiveEntry))) {
+            LOGGER.debug(() -> "sendEntry() - " + fullTargetName);
+
+            handler.addEntry(fullTargetName, inputStream, progressHandler);
+            final long totalRead = inputStream.getCount();
+
+            LOGGER.trace(() -> "sendEntry() - " +
+                    fullTargetName +
+                    " " +
+                    ModelStringUtil.formatIECByteSizeString(
+                            totalRead));
+
+            if (totalRead == 0) {
+                LOGGER.warn(() -> "sendEntry() - " + fullTargetName + " IS BLANK");
+            }
+            LOGGER.debug(() -> "sendEntry() - " + fullTargetName + " size is " + totalRead);
+        }
+
+        progressLog.increment("AggregateForwarder - forwardAggregateEntry");
     }
 
     public void sendDataToHandler(final RepoSource source,
@@ -132,14 +183,14 @@ public class SenderImpl implements Sender {
                     // Add manifest.
                     addEntry(stroomZipFile, baseName, StroomZipFileType.MANIFEST, handler, progressHandler);
 
+                    // Add data.
+                    addEntry(stroomZipFile, baseName, StroomZipFileType.DATA, handler, progressHandler);
+
                     // Add meta data.
                     addEntry(stroomZipFile, baseName, StroomZipFileType.META, handler, progressHandler);
 
                     // Add context data.
                     addEntry(stroomZipFile, baseName, StroomZipFileType.CONTEXT, handler, progressHandler);
-
-                    // Add data.
-                    addEntry(stroomZipFile, baseName, StroomZipFileType.DATA, handler, progressHandler);
                 }
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);

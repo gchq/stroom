@@ -1,5 +1,6 @@
 package stroom.explorer.impl;
 
+import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.UniqueNameUtil;
@@ -154,6 +155,11 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
                 .stream()
                 .map(ExplorerTreeNode::getDocRef)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<DocContentMatch> findByContent(final String pattern, final boolean regex, final boolean matchCase) {
+        return Collections.emptyList();
     }
 
     @Override

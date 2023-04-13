@@ -63,7 +63,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     private final PathCreator pathCreator;
     private final IndexVolumeService indexVolumeService;
 
-//    private static boolean needsCleanup;
+    //    private static boolean needsCleanup;
     // Thread local for parallel test running
     private static final ThreadLocal<Boolean> NEEDS_CLEAN_UP_THREAD_LOCAL = ThreadLocal.withInitial(() -> false);
 

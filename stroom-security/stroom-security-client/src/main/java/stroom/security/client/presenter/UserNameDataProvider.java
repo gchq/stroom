@@ -18,7 +18,6 @@ package stroom.security.client.presenter;
 
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.Rest;
@@ -29,6 +28,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserName;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.view.client.Range;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -40,18 +40,18 @@ public class UserNameDataProvider implements Refreshable {
 
     private final EventBus eventBus;
     private final RestFactory restFactory;
-    private final DataGridView<UserName> view;
+    private final DataGrid<UserName> dataGrid;
     private RestDataProvider<UserName, ResultPage<UserName>> dataProvider;
     private FindUserNameCriteria criteria = new FindUserNameCriteria();
 
     public UserNameDataProvider(final EventBus eventBus,
                                 final RestFactory restFactory,
-                                final DataGridView<UserName> view) {
+                                final DataGrid<UserName> dataGrid) {
         this.eventBus = eventBus;
         this.restFactory = restFactory;
-        this.view = view;
+        this.dataGrid = dataGrid;
 
-        view.addColumnSortHandler(event -> {
+        dataGrid.addColumnSortHandler(event -> {
             if (event.getColumn() instanceof OrderByColumn<?, ?>) {
                 final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
                 criteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
@@ -86,7 +86,7 @@ public class UserNameDataProvider implements Refreshable {
                     super.changeData(processedData);
                 }
             };
-            dataProvider.addDataDisplay(view.getDataDisplay());
+            dataProvider.addDataDisplay(dataGrid);
 
         } else {
             dataProvider.refresh();

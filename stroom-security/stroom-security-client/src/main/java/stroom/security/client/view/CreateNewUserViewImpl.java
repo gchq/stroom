@@ -18,7 +18,8 @@
 package stroom.security.client.view;
 
 import stroom.security.client.presenter.CreateNewUserPresenter.CreateNewUserView;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.popup.client.view.HideRequest;
+import stroom.widget.popup.client.view.HideRequestUiHandlers;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -31,7 +32,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class CreateNewUserViewImpl
-        extends ViewWithUiHandlers<PopupUiHandlers>
+        extends ViewWithUiHandlers<HideRequestUiHandlers>
         implements CreateNewUserView {
 
     private final Widget widget;
@@ -74,6 +75,13 @@ public class CreateNewUserViewImpl
         return fullName.getText();
     }
 
+    @Override
+    public void clear() {
+        this.userIdentity.setText("");
+        this.displayName.setText("");
+        this.fullName.setText("");
+    }
+
     @UiHandler("userIdentity")
     void onUserIdentityKeyDown(final KeyDownEvent event) {
         handleKeyDown(event);
@@ -91,9 +99,13 @@ public class CreateNewUserViewImpl
 
     private void handleKeyDown(final KeyDownEvent event) {
         if (event.getNativeKeyCode() == '\r') {
-            getUiHandlers().onHideRequest(false, true);
+            getUiHandlers().hideRequest(new HideRequest(false, true));
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, CreateNewUserViewImpl> {
 

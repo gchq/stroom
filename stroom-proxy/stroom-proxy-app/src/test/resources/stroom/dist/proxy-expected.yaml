@@ -37,6 +37,8 @@ proxyConfig:
     rollFrequency: "PT10S"
   feedStatus:
     apiKey: null
+    defaultStatus: "Receive"
+    enabled: true
     feedStatusCache:
       expireAfterAccess: null
       expireAfterWrite: null

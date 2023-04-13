@@ -9,13 +9,13 @@ import stroom.data.retention.api.DataRetentionTracker;
 import stroom.data.retention.api.RetentionRuleOutcome;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
-import stroom.data.retention.shared.TimeUnit;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.task.api.SimpleTaskContextFactory;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.shared.time.TimeUnit;
 import stroom.util.time.TimePeriod;
 
 import io.vavr.Tuple;

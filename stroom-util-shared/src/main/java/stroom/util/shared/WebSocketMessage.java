@@ -74,6 +74,7 @@ public class WebSocketMessage {
     /**
      * Gets the value of the item with the specified key. The caller will need to cast
      * the value to its required type.
+     *
      * @param key
      * @return The value or null if the key is not known.
      */

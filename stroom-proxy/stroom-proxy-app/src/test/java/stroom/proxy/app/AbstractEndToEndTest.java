@@ -6,6 +6,7 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.proxy.app.forwarder.ForwardFileConfig;
 import stroom.proxy.app.forwarder.ForwardHttpPostConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
+import stroom.proxy.feed.remote.FeedStatus;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.proxy.repo.store.FileSet;
@@ -121,7 +122,7 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
 
     void setupStroomStubs(Function<MappingBuilder, MappingBuilder> datafeedBuilderFunc) {
         final String feedStatusPath = getFeedStatusPath();
-        final GetFeedStatusResponse feedStatusResponse = GetFeedStatusResponse.createOKRecieveResponse();
+        final GetFeedStatusResponse feedStatusResponse = GetFeedStatusResponse.createOKReceiveResponse();
 
         final String responseJson;
         try {
@@ -177,6 +178,8 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
 
     public static FeedStatusConfig createFeedStatusConfig() {
         return new FeedStatusConfig(
+                true,
+                FeedStatus.Receive,
                 "http://localhost:"
                         + DEFAULT_STROOM_PORT
                         + ResourcePaths.buildAuthenticatedApiPath(FeedStatusResource.BASE_RESOURCE_PATH),

@@ -96,27 +96,29 @@ public final class FlatResult extends Result {
         return size + " rows";
     }
 
-    public static Builder builder() {
-        return new Builder();
+    public static FlatResultBuilderImpl builder() {
+        return new FlatResultBuilderImpl();
     }
 
-    public Builder copy() {
-        return new Builder(this);
+    public FlatResultBuilderImpl copy() {
+        return new FlatResultBuilderImpl(this);
     }
 
     /**
      * Builder for constructing a {@link FlatResult}
      */
-    public static final class Builder extends Result.Builder<FlatResult, Builder> {
+    public static final class FlatResultBuilderImpl
+            extends AbstractResultBuilder<FlatResultBuilder>
+            implements FlatResultBuilder {
 
         private List<Field> structure = Collections.emptyList();
         private List<List<Object>> values = Collections.emptyList();
         private Long overriddenSize;
 
-        private Builder() {
+        private FlatResultBuilderImpl() {
         }
 
-        private Builder(final FlatResult flatResult) {
+        private FlatResultBuilderImpl(final FlatResult flatResult) {
             this.structure = flatResult.structure;
             this.values = flatResult.values;
         }
@@ -125,18 +127,20 @@ public final class FlatResult extends Result {
          * Add headings to our data
          *
          * @param structure the fields which act as headings for our data
-         * @return The {@link Builder}, enabling method chaining
+         * @return The {@link FlatResultBuilderImpl}, enabling method chaining
          */
-        public Builder structure(List<Field> structure) {
+        @Override
+        public FlatResultBuilderImpl structure(List<Field> structure) {
             this.structure = structure;
             return this;
         }
 
         /**
          * @param values A collection of 'rows' to add to our values
-         * @return The {@link Builder}, enabling method chaining
+         * @return The {@link FlatResultBuilderImpl}, enabling method chaining
          */
-        public Builder values(final List<List<Object>> values) {
+        @Override
+        public FlatResultBuilderImpl values(final List<List<Object>> values) {
             this.values = values;
             return this;
         }
@@ -145,18 +149,20 @@ public final class FlatResult extends Result {
          * Fix the reported size of the result set.
          *
          * @param value The size to use
-         * @return The {@link Builder}, enabling method chaining
+         * @return The {@link FlatResultBuilderImpl}, enabling method chaining
          */
-        public Builder size(final Long value) {
+        @Override
+        public FlatResultBuilderImpl size(final Long value) {
             this.overriddenSize = value;
             return this;
         }
 
         @Override
-        protected Builder self() {
+        protected FlatResultBuilderImpl self() {
             return this;
         }
 
+        @Override
         public FlatResult build() {
             if (null != overriddenSize) {
                 return new FlatResult(componentId, structure, values, overriddenSize, errors);

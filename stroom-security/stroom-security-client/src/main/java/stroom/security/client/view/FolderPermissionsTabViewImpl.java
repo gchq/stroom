@@ -17,10 +17,10 @@
 package stroom.security.client.view;
 
 import stroom.security.client.presenter.FolderPermissionsTabPresenter;
+import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -36,7 +36,7 @@ public final class FolderPermissionsTabViewImpl extends ViewImpl
     @UiField
     SimplePanel users;
     @UiField
-    Label usersLabel;
+    FormGroup folderPermissionsUsers;
     @UiField
     ScrollPanel permissions;
     @UiField
@@ -64,7 +64,7 @@ public final class FolderPermissionsTabViewImpl extends ViewImpl
 
     @Override
     public void setUsersLabelText(String text) {
-        usersLabel.setText(text);
+        folderPermissionsUsers.setLabel(text);
     }
 
     @Override

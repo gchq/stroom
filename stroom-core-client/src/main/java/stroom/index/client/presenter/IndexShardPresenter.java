@@ -24,9 +24,10 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.OrderByColumn;
+import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -47,15 +48,14 @@ import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
-import stroom.widget.tooltip.client.presenter.TooltipUtil;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.TableBuilder;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.shared.GWT;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.view.client.Range;
@@ -67,11 +67,12 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
-public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexShard>>
+public class IndexShardPresenter extends MyPresenterWidget<PagerView>
         implements Refreshable, HasDocumentRead<IndexDoc>, ReadOnlyChangeHandler {
 
     private static final IndexResource INDEX_RESOURCE = GWT.create(IndexResource.class);
 
+    private final MyDataGrid<IndexShard> dataGrid;
     private final TooltipPresenter tooltipPresenter;
     private final RestFactory restFactory;
     private final NodeManager nodeManager;
@@ -91,12 +92,25 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
 
     @Inject
     public IndexShardPresenter(final EventBus eventBus,
+                               final PagerView view,
                                final TooltipPresenter tooltipPresenter,
                                final RestFactory restFactory,
                                final NodeManager nodeManager,
                                final ClientSecurityContext securityContext,
                                final DateTimeFormatter dateTimeFormatter) {
-        super(eventBus, new DataGridViewImpl<>(false));
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>();
+        dataGrid.addColumnSortHandler(event -> {
+            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
+                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
+                queryCriteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
+                dataProvider.refresh();
+            }
+        });
+
+        view.setDataWidget(dataGrid);
+
         this.tooltipPresenter = tooltipPresenter;
         this.restFactory = restFactory;
         this.nodeManager = nodeManager;
@@ -104,8 +118,8 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         this.dateTimeFormatter = dateTimeFormatter;
 
         if (securityContext.hasAppPermission(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION)) {
-            buttonFlush = getView().addButton(SvgPresets.SHARD_FLUSH);
-            buttonDelete = getView().addButton(SvgPresets.DELETE);
+            buttonFlush = view.addButton(SvgPresets.SHARD_FLUSH);
+            buttonDelete = view.addButton(SvgPresets.DELETE);
         }
 
         addColumns();
@@ -117,14 +131,14 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         super.onBind();
         if (buttonFlush != null) {
             registerHandler(buttonFlush.addClickHandler(event -> {
-                if (NativeEvent.BUTTON_LEFT == event.getNativeButton()) {
+                if (MouseUtil.isPrimary(event)) {
                     flush();
                 }
             }));
         }
         if (buttonDelete != null) {
             registerHandler(buttonDelete.addClickHandler(event -> {
-                if (NativeEvent.BUTTON_LEFT == event.getNativeButton()) {
+                if (MouseUtil.isPrimary(event)) {
                     delete();
                 }
             }));
@@ -167,15 +181,13 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
 //        addCommitDurationColumn();
 //        addCommitCountColumn();
         addVersionColumn();
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addSelectedColumn() {
-        final TickBoxCell.MarginAppearance tickBoxAppearance = GWT.create(TickBoxCell.MarginAppearance.class);
-
         // Select Column
         final Column<IndexShard, TickBoxState> column = new Column<IndexShard, TickBoxState>(
-                TickBoxCell.create(tickBoxAppearance, false, false)) {
+                TickBoxCell.create(false, false)) {
             @Override
             public TickBoxState getValue(final IndexShard indexShard) {
                 final boolean match = selectionCriteria.getIndexShardIdSet().isMatch(indexShard.getId());
@@ -183,9 +195,8 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
             }
 
         };
-        final Header<TickBoxState> header = new Header<TickBoxState>(TickBoxCell.create(tickBoxAppearance,
-                false,
-                false)) {
+        final Header<TickBoxState> header = new Header<TickBoxState>(
+                TickBoxCell.create(false, false)) {
             @Override
             public TickBoxState getValue() {
                 if (selectionCriteria.getIndexShardIdSet().isMatchAll()) {
@@ -196,7 +207,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                 return TickBoxState.UNTICK;
             }
         };
-        getView().addColumn(column, header, ColumnSizeConstants.CHECKBOX_COL);
+        dataGrid.addColumn(column, header, ColumnSizeConstants.CHECKBOX_COL);
 
         // Add Handlers
         header.setUpdater(value -> {
@@ -225,7 +236,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                 }
                 selectionCriteria.getIndexShardIdSet().remove(row.getId());
             }
-            getView().redrawHeaders();
+            dataGrid.redrawHeaders();
             enableButtons();
         });
     }
@@ -235,68 +246,66 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         final InfoColumn<IndexShard> infoColumn = new InfoColumn<IndexShard>() {
             @Override
             protected void showInfo(final IndexShard indexShard, final int x, final int y) {
-                final TooltipUtil.Builder builder = TooltipUtil.builder()
-                        .addTwoColTable(tableBuilder -> {
-                            if (index != null) {
-                                tableBuilder.addRow("Index UUID", String.valueOf(index.getUuid()));
-                            }
-                            tableBuilder
-                                    .addRow("Shard Id", String.valueOf(indexShard.getId()))
-                                    .addRow("Node", indexShard.getNodeName())
-                                    .addRow("Partition", indexShard.getPartition());
+                final TableBuilder tb = new TableBuilder();
 
-                            if (indexShard.getPartitionFromTime() != null) {
-                                tableBuilder.addRow("Partition From",
-                                        dateTimeFormatter.format(indexShard.getPartitionFromTime()));
-                            }
-                            if (indexShard.getPartitionToTime() != null) {
-                                tableBuilder.addRow("Partition To",
-                                        dateTimeFormatter.format(indexShard.getPartitionToTime()));
-                            }
+                if (index != null) {
+                    tb.row("Index UUID", String.valueOf(index.getUuid()));
+                }
+                tb
+                        .row("Shard Id", String.valueOf(indexShard.getId()))
+                        .row("Node", indexShard.getNodeName())
+                        .row("Partition", indexShard.getPartition());
 
-                            return tableBuilder
-                                    .addRow("Path", indexShard.getVolume().getPath())
-                                    .addRow("Status", indexShard.getStatus().getDisplayValue())
-                                    .addRow("Document Count", intToString(indexShard.getDocumentCount()))
-                                    .addRow("File Size", indexShard.getFileSizeString())
-                                    .addRow("Bytes Per Document", intToString(indexShard.getBytesPerDocument()))
-                                    .addRow("Commit", dateTimeFormatter.format(indexShard.getCommitMs()))
-                                    .addRow("Commit Duration",
-                                            ModelStringUtil.formatDurationString(indexShard.getCommitDurationMs()))
-                                    .addRow("Commit Document Count", intToString(indexShard.getCommitDocumentCount()))
-                                    .addRow("Index Version", indexShard.getIndexVersion())
-                                    .build();
-                        });
+                if (indexShard.getPartitionFromTime() != null) {
+                    tb.row("Partition From", dateTimeFormatter.format(indexShard.getPartitionFromTime()));
+                }
+                if (indexShard.getPartitionToTime() != null) {
+                    tb.row("Partition To", dateTimeFormatter.format(indexShard.getPartitionToTime()));
+                }
 
-                tooltipPresenter.setHTML(builder.build());
+                tb
+                        .row("Path", indexShard.getVolume().getPath())
+                        .row("Status", indexShard.getStatus().getDisplayValue())
+                        .row("Document Count", intToString(indexShard.getDocumentCount()))
+                        .row("File Size", indexShard.getFileSizeString())
+                        .row("Bytes Per Document", intToString(indexShard.getBytesPerDocument()))
+                        .row("Commit", dateTimeFormatter.format(indexShard.getCommitMs()))
+                        .row("Commit Duration",
+                                ModelStringUtil.formatDurationString(indexShard.getCommitDurationMs()))
+                        .row("Commit Document Count", intToString(indexShard.getCommitDocumentCount()))
+                        .row("Index Version", indexShard.getIndexVersion());
 
-                final PopupPosition popupPosition = new PopupPosition(x, y);
-                ShowPopupEvent.fire(IndexShardPresenter.this, tooltipPresenter, PopupType.POPUP, popupPosition, null);
+                final HtmlBuilder htmlBuilder = new HtmlBuilder();
+                htmlBuilder.div(tb::write, Attribute.className("infoTable"));
+
+                tooltipPresenter.show(htmlBuilder.toSafeHtml(), x, y);
             }
         };
-        getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
+        dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
     }
 
     private void addNodeColumn() {
-        getView().addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new OrderByColumn<IndexShard, String>(
+                new TextCell(), FindIndexShardCriteria.FIELD_NODE, true) {
             @Override
             public String getValue(final IndexShard indexShard) {
                 return indexShard.getNodeName();
             }
-        }, "Node", 100);
+        }, FindIndexShardCriteria.FIELD_NODE, 100);
     }
 
     private void addPartitionColumn() {
-        getView().addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new OrderByColumn<IndexShard, String>(
+                new TextCell(), FindIndexShardCriteria.FIELD_PARTITION, true) {
             @Override
             public String getValue(final IndexShard indexShard) {
                 return indexShard.getPartition();
             }
-        }, "Partition", 100);
+        }, FindIndexShardCriteria.FIELD_PARTITION, 100);
     }
 
     private void addPathColumn() {
-        getView().addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
             @Override
             public String getValue(final IndexShard indexShard) {
                 return indexShard.getVolume().getPath();
@@ -305,34 +314,37 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     }
 
     private void addStatusColumn() {
-        getView().addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new OrderByColumn<IndexShard, String>(
+                new TextCell(), FindIndexShardCriteria.FIELD_STATUS, true) {
             @Override
             public String getValue(final IndexShard indexShard) {
                 return indexShard.getStatus().getDisplayValue();
             }
-        }, "Status", 100);
+        }, FindIndexShardCriteria.FIELD_STATUS, 100);
     }
 
     private void addDocCountColumn() {
-        getView().addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new OrderByColumn<IndexShard, String>(
+                new TextCell(), FindIndexShardCriteria.FIELD_DOC_COUNT, true) {
             @Override
             public String getValue(final IndexShard indexShard) {
                 return intToString(indexShard.getDocumentCount());
             }
-        }, "Doc Count", 100);
+        }, FindIndexShardCriteria.FIELD_DOC_COUNT, 100);
     }
 
     private void addFileSizeColumn() {
-        getView().addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new OrderByColumn<IndexShard, String>(
+                new TextCell(), FindIndexShardCriteria.FIELD_FILE_SIZE, true) {
             @Override
             public String getValue(final IndexShard indexShard) {
                 return indexShard.getFileSizeString();
             }
-        }, "File Size", 100);
+        }, FindIndexShardCriteria.FIELD_FILE_SIZE, 100);
     }
 
     private void addBytesPDColumn() {
-        getView().addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
             @Override
             public String getValue(final IndexShard indexShard) {
                 return intToString(indexShard.getBytesPerDocument());
@@ -341,16 +353,17 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     }
 
     private void addCommitColumn() {
-        getView().addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new OrderByColumn<IndexShard, String>(
+                new TextCell(), FindIndexShardCriteria.FIELD_LAST_COMMIT, true) {
             @Override
             public String getValue(final IndexShard indexShard) {
                 return dateTimeFormatter.format(indexShard.getCommitMs());
             }
-        }, "Last Commit", 170);
+        }, FindIndexShardCriteria.FIELD_LAST_COMMIT, 170);
     }
 
 //    private void addCommitDurationColumn() {
-//        getView().addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
+//        dataGrid.addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
 //            @Override
 //            public String getValue(final IndexShard indexShard) {
 //                return ModelStringUtil.formatDurationString(indexShard.getCommitDurationMs());
@@ -359,7 +372,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
 //    }
 //
 //    private void addCommitCountColumn() {
-//        getView().addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
+//        dataGrid.addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
 //            @Override
 //            public String getValue(final IndexShard indexShard) {
 //                return intToString(indexShard.getCommitDocumentCount());
@@ -368,7 +381,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
 //    }
 
     private void addVersionColumn() {
-        getView().addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
             @Override
             public String getValue(final IndexShard indexShard) {
                 return indexShard.getIndexVersion();
@@ -428,7 +441,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                         onChangeData(data);
                     }
                 };
-                dataProvider.addDataDisplay(getView().getDataDisplay());
+                dataProvider.addDataDisplay(dataGrid);
             }
 
             securityContext.hasDocumentPermission(index.getUuid(), DocumentPermissionNames.DELETE).onSuccess(result -> {

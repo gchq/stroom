@@ -1218,10 +1218,10 @@ public class ConfigMapper {
                 String delimitedValue = serialisedForm.substring(1);
 
                 return StreamSupport.stream(
-                        Splitter
-                                .on(delimiter)
-                                .split(delimitedValue)
-                                .spliterator(), false)
+                                Splitter
+                                        .on(delimiter)
+                                        .split(delimitedValue)
+                                        .spliterator(), false)
                         .map(str -> convertToObject(prop, str, type))
                         .map(type::cast)
                         .collect(Collectors.toList());
@@ -1252,10 +1252,10 @@ public class ConfigMapper {
             final String delimitedValue = serialisedForm.substring(2);
 
             return StreamSupport.stream(
-                    Splitter
-                            .on(entryDelimiter)
-                            .split(delimitedValue)
-                            .spliterator(), false)
+                            Splitter
+                                    .on(entryDelimiter)
+                                    .split(delimitedValue)
+                                    .spliterator(), false)
                     .map(keyValueStr -> {
                         final List<String> parts = Splitter.on(keyValueDelimiter)
                                 .splitToList(keyValueStr);

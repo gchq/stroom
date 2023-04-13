@@ -549,7 +549,7 @@ class AnnotationDaoImpl implements AnnotationDao {
                             }
                             arr[i] = val;
                         }
-                        consumer.add(arr);
+                        consumer.add(Val.of(arr));
                     });
                 }
             }

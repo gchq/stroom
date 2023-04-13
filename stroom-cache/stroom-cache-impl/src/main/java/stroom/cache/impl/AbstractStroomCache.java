@@ -175,7 +175,7 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
     }
 
     @Override
-    public Optional<V> getOptional(final K key) {
+    public Optional<V> getIfPresent(final K key) {
         LOGGER.trace(() -> buildMessage("getOptional", key));
         return Optional.ofNullable(getCache().getIfPresent(key));
     }
@@ -231,7 +231,11 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
         final List<K> keysToRemove = cacheAsMap.entrySet()
                 .stream()
                 .filter(entry -> {
-                    LOGGER.info("invalidateEntries ID {}", System.identityHashCode(getCache()));
+                    LOGGER.trace(() ->
+                            buildMessage(
+                                    "invalidateEntries",
+                                    entry.getKey(),
+                                    "ID: " + System.identityHashCode(getCache())));
                     return entryPredicate.test(entry.getKey(), entry.getValue());
                 })
                 .map(entry -> {
@@ -341,6 +345,10 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
 
     String buildMessage(final String methodName, final K key) {
         return methodName + "() - cache: '" + name + "', key: " + key;
+    }
+
+    String buildMessage(final String methodName, final K key, final String msg) {
+        return methodName + "() - cache: '" + name + "', key: " + key + " - " + msg;
     }
 
     @Override

@@ -3,10 +3,12 @@ package stroom.dashboard.expression.v1;
 public enum Type {
     NULL("null", 0, false, false, false, true),
     BOOLEAN("boolean", 1, true, false, false, false),
-    DOUBLE("double", 2, true, true, false, false),
-    INTEGER("integer", 3, true, true, false, false),
-    LONG("long", 4, true, true, false, false),
-    STRING("string", 5, true, false, false, false),
+    FLOAT("float", 2, true, true, false, false),
+    DOUBLE("double", 3, true, true, false, false),
+    INTEGER("integer", 4, true, true, false, false),
+    LONG("long", 5, true, true, false, false),
+    DATE("date", 6, true, true, false, false),
+    STRING("string", 7, true, false, false, false),
     ERR("error", 9, false, false, true, false);
 
     private final String name;

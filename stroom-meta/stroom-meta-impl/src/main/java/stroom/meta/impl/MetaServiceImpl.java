@@ -8,6 +8,7 @@ import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.DateField;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
@@ -282,7 +283,15 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     @Override
     public DataSource getDataSource() {
-        return new DataSource(MetaFields.getAllFields());
+        return DataSource
+                .builder()
+                .fields(MetaFields.getAllFields())
+                .build();
+    }
+
+    @Override
+    public DateField getTimeField() {
+        return MetaFields.CREATE_TIME;
     }
 
     @Override

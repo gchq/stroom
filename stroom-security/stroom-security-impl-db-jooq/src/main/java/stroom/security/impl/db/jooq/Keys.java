@@ -4,12 +4,6 @@
 package stroom.security.impl.db.jooq;
 
 
-import org.jooq.ForeignKey;
-import org.jooq.TableField;
-import org.jooq.UniqueKey;
-import org.jooq.impl.DSL;
-import org.jooq.impl.Internal;
-
 import stroom.security.impl.db.jooq.tables.AppPermission;
 import stroom.security.impl.db.jooq.tables.DocPermission;
 import stroom.security.impl.db.jooq.tables.StroomUser;
@@ -18,6 +12,12 @@ import stroom.security.impl.db.jooq.tables.records.AppPermissionRecord;
 import stroom.security.impl.db.jooq.tables.records.DocPermissionRecord;
 import stroom.security.impl.db.jooq.tables.records.StroomUserGroupRecord;
 import stroom.security.impl.db.jooq.tables.records.StroomUserRecord;
+
+import org.jooq.ForeignKey;
+import org.jooq.TableField;
+import org.jooq.UniqueKey;
+import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 
 
 /**

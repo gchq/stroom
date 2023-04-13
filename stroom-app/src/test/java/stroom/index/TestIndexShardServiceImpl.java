@@ -192,13 +192,13 @@ class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
 //            lastShard = indexShard;
 //        }
 //    }
-
-    private void createShard(final IndexDoc index,
-                             final String nodeName,
-                             final String dateTime,
-                             final int shardNo) {
-        final long timeMs = DateUtil.parseNormalDateTimeString(dateTime);
-        final IndexShardKey key = IndexShardKeyUtil.createTimeBasedKey(index, timeMs, shardNo);
-        indexShardService.createIndexShard(key, nodeName);
-    }
+//
+//    private void createShard(final IndexDoc index,
+//                             final String nodeName,
+//                             final String dateTime,
+//                             final int shardNo) {
+//        final long timeMs = DateUtil.parseNormalDateTimeString(dateTime);
+//        final IndexShardKey key = IndexShardKeyUtil.createTimeBasedKey(index, timeMs, shardNo);
+//        indexShardService.createIndexShard(key, nodeName);
+//    }
 }

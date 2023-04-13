@@ -16,39 +16,75 @@
 
 package stroom.widget.menu.client.presenter;
 
-public class MenuItem extends Item {
+import stroom.widget.util.client.KeyBinding.Action;
 
-    private String text;
+import com.google.gwt.user.client.Command;
 
-    public MenuItem(final int priority, final String text) {
+public abstract class MenuItem extends Item {
+
+    private final String text;
+    private final Action action;
+    private final Command command;
+    private final boolean enabled;
+
+    protected MenuItem(final int priority,
+                       final String text,
+                       final Action action,
+                       final boolean enabled,
+                       final Command command) {
         super(priority);
         this.text = text;
+        this.action = action;
+        this.enabled = enabled;
+        this.command = command;
     }
 
     public String getText() {
         return text;
     }
 
-    public void setText(final String text) {
-        this.text = text;
+    public Action getAction() {
+        return action;
     }
 
-    @Override
-    public boolean equals(final Object obj) {
-        if (obj == null || !(obj instanceof MenuItem)) {
-            return false;
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public Command getCommand() {
+        return command;
+    }
+
+    protected abstract static class AbstractBuilder<T extends MenuItem, B extends MenuItem.AbstractBuilder<T, ?>>
+            extends Item.AbstractBuilder<T, B> {
+
+        protected String text;
+        protected Action action;
+        protected Command command;
+        protected boolean enabled = true;
+
+        public B text(final String text) {
+            this.text = text;
+            return self();
         }
-        final MenuItem menuItem = (MenuItem) obj;
-        return menuItem.text.equals(text);
-    }
 
-    @Override
-    public int hashCode() {
-        return text.hashCode();
-    }
+        public B action(final Action action) {
+            this.action = action;
+            return self();
+        }
 
-    @Override
-    public String toString() {
-        return text;
+        public B command(final Command command) {
+            this.command = command;
+            return self();
+        }
+
+        public B enabled(final boolean enabled) {
+            this.enabled = enabled;
+            return self();
+        }
+
+        protected abstract B self();
+
+        public abstract T build();
     }
 }

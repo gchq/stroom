@@ -19,6 +19,7 @@ package stroom.query.common.v2;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
+import stroom.query.api.v2.ResultBuilder;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.ResultRequest.ResultStyle;
@@ -48,10 +49,8 @@ public class SearchResponseCreator {
 
     private static final Duration FALL_BACK_DEFAULT_TIMEOUT = Duration.ofMinutes(5);
 
-    private final SerialisersFactory serialisersFactory;
-    private final String userId;
     private final SizesProvider sizesProvider;
-    private final Store store;
+    private final ResultStore store;
 
     private final Map<String, ResultCreator> cachedResultCreators = new HashMap<>();
 
@@ -61,18 +60,10 @@ public class SearchResponseCreator {
     /**
      * @param store The underlying store to use for creating the search responses.
      */
-    public SearchResponseCreator(final SerialisersFactory serialisersFactory,
-                                 final String userId,
-                                 final SizesProvider sizesProvider,
-                                 final Store store) {
-        this.serialisersFactory = serialisersFactory;
-        this.userId = userId;
+    public SearchResponseCreator(final SizesProvider sizesProvider,
+                                 final ResultStore store) {
         this.sizesProvider = sizesProvider;
         this.store = Objects.requireNonNull(store);
-    }
-
-    public String getUserId() {
-        return userId;
     }
 
     /**
@@ -80,7 +71,7 @@ public class SearchResponseCreator {
      * @return An empty {@link SearchResponse} with the passed error messages
      */
     private static SearchResponse createErrorResponse(final QueryKey queryKey,
-                                                      final Store store,
+                                                      final ResultStore store,
                                                       final Throwable throwable) {
         Objects.requireNonNull(store);
         Objects.requireNonNull(throwable);
@@ -99,11 +90,6 @@ public class SearchResponseCreator {
                 null,
                 errors,
                 false);
-    }
-
-    public boolean keepAlive() {
-        LOGGER.trace(() -> "keepAlive()", new RuntimeException("keepAlive"));
-        return true;
     }
 
     /**
@@ -217,7 +203,55 @@ public class SearchResponseCreator {
         }
     }
 
-    private List<String> buildCompoundErrorList(final Store store, final List<Result> results) {
+    public boolean create(final SearchRequest searchRequest,
+                          final Map<String, ResultBuilder<?>> resultBuilderMap) {
+        final boolean didSearchComplete;
+        final boolean complete = store.isComplete();
+        if (!complete) {
+            LOGGER.debug(() -> "Store not complete so will wait for completion or timeout");
+            try {
+                final Duration effectiveTimeout = getEffectiveTimeout(searchRequest);
+
+                // Block and wait for the store to notify us of its completion/termination, or if the wait is too long
+                // we will timeout
+                LOGGER.debug(() -> "Waiting: effectiveTimeout=" + effectiveTimeout);
+                didSearchComplete = store.awaitCompletion(effectiveTimeout.toMillis(), TimeUnit.MILLISECONDS);
+                LOGGER.debug(() -> "Finished waiting: effectiveTimeout=" +
+                        effectiveTimeout +
+                        ", didSearchComplete=" +
+                        didSearchComplete);
+
+                if (!didSearchComplete && !searchRequest.incremental()) {
+                    // Search didn't complete non-incremental search in time so return a timed out error response
+                    throw new RuntimeException(SearchResponse.TIMEOUT_MESSAGE + effectiveTimeout);
+                }
+
+            } catch (InterruptedException e) {
+                LOGGER.trace(e::getMessage, e);
+                // Keep interrupting this thread.
+                Thread.currentThread().interrupt();
+
+                throw new RuntimeException("Thread was interrupted before the search could complete");
+            }
+        }
+
+        // We will only get here if the search is complete or it is an incremental search in which case we don't care
+        // about completion state. Therefore, assemble whatever results we currently have
+        try {
+            LOGGER.logDurationIfTraceEnabled(() ->
+                    getResults(searchRequest, resultBuilderMap), "Getting results");
+
+        } catch (final RuntimeException e) {
+            LOGGER.error(() -> "Error getting search results for query " + searchRequest.getKey().toString(), e);
+            throw new RuntimeException("Error getting search results: [" +
+                    e.getMessage() +
+                    "], see service's logs for details", e);
+        }
+
+        return complete;
+    }
+
+    private List<String> buildCompoundErrorList(final ResultStore store, final List<Result> results) {
         final List<String> errors = new ArrayList<>();
 
         if (store.getErrors() != null) {
@@ -250,6 +284,20 @@ public class SearchResponseCreator {
 
         // This is synchronous so just use the service's default.
         return FALL_BACK_DEFAULT_TIMEOUT;
+    }
+
+    private void getResults(final SearchRequest searchRequest,
+                            final Map<String, ResultBuilder<?>> resultBuilderMap) {
+        // Copy the requested portion of the result cache into the result.
+        for (final ResultRequest resultRequest : searchRequest.getResultRequests()) {
+            final String componentId = resultRequest.getComponentId();
+
+            // Only deliver data to components that actually want it.
+            final Fetch fetch = resultRequest.getFetch();
+            if (!Fetch.NONE.equals(fetch)) {
+                getResult(searchRequest, resultRequest, resultBuilderMap.get(componentId));
+            }
+        }
     }
 
     private List<Result> getResults(final SearchRequest searchRequest) {
@@ -321,6 +369,7 @@ public class SearchResponseCreator {
         if (dataStore != null) {
             try {
                 final ResultCreator resultCreator = getResultCreator(
+                        dataStore.getSerialisers(),
                         searchRequest.getKey(),
                         componentId,
                         resultRequest,
@@ -337,7 +386,30 @@ public class SearchResponseCreator {
         return result;
     }
 
-    private ResultCreator getResultCreator(final QueryKey queryKey,
+    private void getResult(final SearchRequest searchRequest,
+                           final ResultRequest resultRequest,
+                           final ResultBuilder<?> resultBuilder) {
+        final String componentId = resultRequest.getComponentId();
+        final DataStore dataStore = store.getData(componentId);
+        if (dataStore != null) {
+            try {
+                final ResultCreator resultCreator = getResultCreator(
+                        dataStore.getSerialisers(),
+                        searchRequest.getKey(),
+                        componentId,
+                        resultRequest,
+                        searchRequest.getDateTimeSettings());
+                if (resultCreator != null) {
+                    resultCreator.create(dataStore, resultRequest, resultBuilder);
+                }
+            } catch (final RuntimeException e) {
+                resultBuilder.errors(Collections.singletonList(ExceptionStringUtil.getMessage(e)));
+            }
+        }
+    }
+
+    private ResultCreator getResultCreator(final Serialisers serialisers,
+                                           final QueryKey queryKey,
                                            final String componentId,
                                            final ResultRequest resultRequest,
                                            final DateTimeSettings dateTimeSettings) {
@@ -349,13 +421,11 @@ public class SearchResponseCreator {
                             new FieldFormatter(
                                     new FormatterFactory(dateTimeSettings));
                     resultCreator = new TableResultCreator(
-                            serialisersFactory,
                             fieldFormatter,
                             sizesProvider.getDefaultMaxResultsSizes());
                 } else {
                     resultCreator = new FlatResultCreator(
-                            serialisersFactory,
-                            new MapDataStoreFactory(),
+                            new MapDataStoreFactory(() -> serialisers),
                             queryKey,
                             componentId,
                             resultRequest,

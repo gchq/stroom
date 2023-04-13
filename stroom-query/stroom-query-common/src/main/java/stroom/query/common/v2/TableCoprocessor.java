@@ -76,6 +76,11 @@ public class TableCoprocessor implements Coprocessor {
     }
 
     @Override
+    public long getByteSize() {
+        return dataStore.getByteSize();
+    }
+
+    @Override
     public String toString() {
         return tableSettings.toString();
     }

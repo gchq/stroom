@@ -22,9 +22,8 @@ import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -48,23 +47,20 @@ import stroom.util.shared.Severity;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
-import stroom.widget.tooltip.client.presenter.TooltipUtil;
-import stroom.widget.tooltip.client.presenter.TooltipUtil.Builder;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.TableBuilder;
+import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.shared.GWT;
-import com.google.gwt.dom.client.Style.Overflow;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.dom.client.Style.WhiteSpace;
-import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -81,14 +77,15 @@ import java.util.function.Consumer;
 public class ImportConfigConfirmPresenter extends
         MyPresenter<ImportConfigConfirmPresenter.ImportConfigConfirmView,
                 ImportConfigConfirmPresenter.ImportConfirmProxy>
-        implements ImportConfigConfirmEvent.Handler, PopupUiHandlers {
+        implements ImportConfigConfirmEvent.Handler,
+        HidePopupRequestEvent.Handler {
 
     private static final ContentResource CONTENT_RESOURCE =
             com.google.gwt.core.client.GWT.create(ContentResource.class);
 
     private final TooltipPresenter tooltipPresenter;
     private final ImportConfigConfirmView view;
-    private final DataGridView<ImportState> dataGridView;
+    private final MyDataGrid<ImportState> dataGrid;
     private final RestFactory restFactory;
     private ResourceKey resourceKey;
     private List<ImportState> confirmList = new ArrayList<>();
@@ -116,10 +113,9 @@ public class ImportConfigConfirmPresenter extends
 
         this.view = view;
 
-        this.dataGridView = new DataGridViewImpl<>(false,
-                DataGridViewImpl.MASSIVE_LIST_PAGE_SIZE);
+        dataGrid = new MyDataGrid<>(MyDataGrid.MASSIVE_LIST_PAGE_SIZE);
 
-        view.setDataGridView(this.dataGridView);
+        view.setDataGrid(dataGrid);
         view.setRootFolderView(rootFolderPresenter.getView());
         view.setEnableFilters(false);
         view.setEnableFromDate(System.currentTimeMillis());
@@ -163,9 +159,20 @@ public class ImportConfigConfirmPresenter extends
     public void onConfirmImport(final ImportConfigConfirmEvent event) {
         resourceKey = event.getResponse().getResourceKey();
         confirmList = event.getResponse().getConfirmList();
-        dataGridView.setRowData(0, confirmList);
-        dataGridView.setRowCount(confirmList.size());
+        updateList();
         forceReveal();
+    }
+
+    @Override
+    protected void revealInParent() {
+        final PopupSize popupSize = PopupSize.resizable(800, 800);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Confirm Import")
+                .onShow(e -> getView().focus())
+                .onHideRequest(this)
+                .fire();
     }
 
     public void refresh() {
@@ -177,14 +184,21 @@ public class ImportConfigConfirmPresenter extends
                     if (confirmList.isEmpty()) {
                         warning("The import package contains nothing that can be imported into " +
                                 "this version of Stroom.");
-                    } else {
-                        dataGridView.setRowData(0, confirmList);
-                        dataGridView.setRowCount(confirmList.size());
                     }
+                    updateList();
                 })
                 .onFailure(caught -> error(caught.getMessage()))
                 .call(CONTENT_RESOURCE)
                 .importContent(new ImportConfigRequest(resourceKey, importSettingsBuilder.build(), confirmList));
+    }
+
+    private void updateList() {
+        if (confirmList == null) {
+            dataGrid.setRowCount(0);
+        } else {
+            dataGrid.setRowData(0, confirmList);
+            dataGrid.setRowCount(confirmList.size());
+        }
     }
 
     private void warning(final String message) {
@@ -196,25 +210,11 @@ public class ImportConfigConfirmPresenter extends
     }
 
     @Override
-    protected void revealInParent() {
-        final PopupSize popupSize = PopupSize.resizable(800, 600);
-        ShowPopupEvent.fire(
-                this,
-                this,
-                PopupType.OK_CANCEL_DIALOG,
-                popupSize,
-                "Confirm Import",
-                this);
-    }
-
-    @Override
-    public void onHideRequest(final boolean autoClose, final boolean ok) {
+    public void onHideRequest(final HidePopupRequestEvent e) {
         // Disable the popup ok/cancel buttons before we attempt import.
-        DisablePopupEvent.fire(
-                ImportConfigConfirmPresenter.this,
-                ImportConfigConfirmPresenter.this);
+        DisablePopupEvent.builder(this).fire();
 
-        if (ok) {
+        if (e.isOk()) {
             boolean warnings = false;
             int count = 0;
             importSettingsBuilder.enableFilters(getView().isEnableFilters());
@@ -233,8 +233,7 @@ public class ImportConfigConfirmPresenter extends
                         ImportConfigConfirmPresenter.this,
                         "No items are selected for import", () -> {
                             // Re-enable popup buttons.
-                            EnablePopupEvent.fire(ImportConfigConfirmPresenter.this,
-                                    ImportConfigConfirmPresenter.this);
+                            EnablePopupEvent.builder(this).fire();
                         });
             } else if (warnings) {
                 ConfirmEvent.fireWarn(ImportConfigConfirmPresenter.this,
@@ -244,8 +243,7 @@ public class ImportConfigConfirmPresenter extends
                                 importData();
                             } else {
                                 // Re-enable popup buttons.
-                                EnablePopupEvent.fire(ImportConfigConfirmPresenter.this,
-                                        ImportConfigConfirmPresenter.this);
+                                EnablePopupEvent.builder(this).fire();
                             }
                         });
 
@@ -257,11 +255,6 @@ public class ImportConfigConfirmPresenter extends
         }
     }
 
-    @Override
-    public void onHide(final boolean autoClose, final boolean ok) {
-        // Do nothing.
-    }
-
     private void addColumns() {
         addSelectedColumn();
         addInfoColumn();
@@ -269,15 +262,14 @@ public class ImportConfigConfirmPresenter extends
         addTypeColumn();
         addSourcePathColumn();
         addDestPathColumn();
-        dataGridView.addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addSelectedColumn() {
-        final TickBoxCell.MarginAppearance tickBoxAppearance = GWT.create(TickBoxCell.MarginAppearance.class);
 
         // Select Column
         final Column<ImportState, TickBoxState> column = new Column<ImportState, TickBoxState>(
-                TickBoxCell.create(tickBoxAppearance, false, false)) {
+                TickBoxCell.create(false, false)) {
             @Override
             public TickBoxState getValue(final ImportState object) {
                 final Severity severity = object.getSeverity();
@@ -288,15 +280,14 @@ public class ImportConfigConfirmPresenter extends
                 return TickBoxState.fromBoolean(object.isAction());
             }
         };
-        final Header<TickBoxState> header = new Header<TickBoxState>(TickBoxCell.create(tickBoxAppearance,
-                false,
-                false)) {
+        final Header<TickBoxState> header = new Header<TickBoxState>(
+                TickBoxCell.create(false, false)) {
             @Override
             public TickBoxState getValue() {
                 return getHeaderState();
             }
         };
-        dataGridView.addColumn(column, header, ColumnSizeConstants.CHECKBOX_COL);
+        dataGrid.addColumn(column, header, ColumnSizeConstants.CHECKBOX_COL);
 
         // Add Handlers
         column.setFieldUpdater((index, row, value) -> row.setAction(value.toBoolean()));
@@ -313,8 +304,8 @@ public class ImportConfigConfirmPresenter extends
                     }
                 }
                 // Refresh list
-                dataGridView.setRowData(0, confirmList);
-                dataGridView.setRowCount(confirmList.size());
+                dataGrid.setRowData(0, confirmList);
+                dataGrid.setRowCount(confirmList.size());
             }
         });
     }
@@ -380,50 +371,31 @@ public class ImportConfigConfirmPresenter extends
 
             @Override
             protected void showInfo(final ImportState action, final int x, final int y) {
-
-                final Builder builder = TooltipUtil.builder();
+                final HtmlBuilder htmlBuilder = new HtmlBuilder();
                 if (action.getMessageList().size() > 0) {
-                    builder
-                            .addHeading("Messages:")
-                            .addTwoColTable(tableBuilder -> {
-                                for (final Message msg : action.getMessageList()) {
-                                    tableBuilder.addRow(
-                                            msg.getSeverity().getDisplayValue(),
-                                            msg.getMessage(),
-                                            true,
-                                            new SafeStylesBuilder()
-                                                    .whiteSpace(WhiteSpace.PRE)
-                                                    .paddingRight(8, Unit.PX)
-                                                    .toSafeStyles(),
-                                            new SafeStylesBuilder()
-                                                    .whiteSpace(WhiteSpace.NORMAL)
-                                                    .overflow(Overflow.AUTO)
-                                                    .toSafeStyles());
-                                }
-                                return tableBuilder.build();
-                            });
+
+                    final TableBuilder tb = new TableBuilder();
+                    tb.row(TableCell.header("Messages", 2));
+                    for (final Message msg : action.getMessageList()) {
+                        tb.row(msg.getSeverity().getDisplayValue(), msg.getMessage());
+                    }
+                    htmlBuilder.div(tb::write, Attribute.className("infoTable"));
                 }
 
                 if (action.getUpdatedFieldList().size() > 0) {
                     if (action.getMessageList().size() > 0) {
-                        builder.addBreak();
+                        htmlBuilder.br();
                     }
 
-                    builder.addHeading("Fields Updated:");
-                    action.getUpdatedFieldList().forEach(builder::addLine);
+                    final TableBuilder tb = new TableBuilder();
+                    tb.row(TableCell.header("Fields Updated"));
+                    action.getUpdatedFieldList().forEach(tb::row);
+                    htmlBuilder.div(tb::write, Attribute.className("infoTable"));
                 }
-                tooltipPresenter.setHTML(builder.build());
-
-                final PopupPosition popupPosition = new PopupPosition(x, y);
-                ShowPopupEvent.fire(
-                        ImportConfigConfirmPresenter.this,
-                        tooltipPresenter,
-                        PopupType.POPUP,
-                        popupPosition,
-                        null);
+                tooltipPresenter.show(htmlBuilder.toSafeHtml(), x, y);
             }
         };
-        dataGridView.addColumn(infoColumn, "<br/>", 20);
+        dataGrid.addColumn(infoColumn, "<br/>", 20);
     }
 
     private void addActionColumn() {
@@ -437,7 +409,7 @@ public class ImportConfigConfirmPresenter extends
                 return "Error";
             }
         };
-        dataGridView.addResizableColumn(column, "Action", 50);
+        dataGrid.addResizableColumn(column, "Action", 50);
     }
 
     private void addTypeColumn() {
@@ -448,7 +420,7 @@ public class ImportConfigConfirmPresenter extends
                 return action.getDocRef().getType();
             }
         };
-        dataGridView.addResizableColumn(column, "Type", 100);
+        dataGrid.addResizableColumn(column, "Type", 100);
     }
 
     private void addSourcePathColumn() {
@@ -459,7 +431,7 @@ public class ImportConfigConfirmPresenter extends
                 return action.getSourcePath();
             }
         };
-        dataGridView.addResizableColumn(column, "Source Path", 300);
+        dataGrid.addResizableColumn(column, "Source Path", 300);
     }
 
     private void addDestPathColumn() {
@@ -470,7 +442,7 @@ public class ImportConfigConfirmPresenter extends
                 return action.getDestPath();
             }
         };
-        dataGridView.addResizableColumn(column, "Destination Path", 300);
+        dataGrid.addResizableColumn(column, "Destination Path", 300);
     }
 
     public void abortImport() {
@@ -484,12 +456,10 @@ public class ImportConfigConfirmPresenter extends
         rest
                 .onSuccess(result2 -> AlertEvent.fireWarn(ImportConfigConfirmPresenter.this,
                         "Import Aborted",
-                        () -> HidePopupEvent.fire(ImportConfigConfirmPresenter.this,
-                                ImportConfigConfirmPresenter.this, false, false)))
+                        () -> HidePopupEvent.builder(ImportConfigConfirmPresenter.this).ok(false).fire()))
                 .onFailure(caught -> AlertEvent.fireError(ImportConfigConfirmPresenter.this,
                         caught.getMessage(),
-                        () -> HidePopupEvent.fire(ImportConfigConfirmPresenter.this,
-                                ImportConfigConfirmPresenter.this, false, false)))
+                        () -> HidePopupEvent.builder(ImportConfigConfirmPresenter.this).ok(false).fire()))
                 .call(CONTENT_RESOURCE)
                 .importContent(new ImportConfigRequest(resourceKey, importSettingsBuilder.build(), new ArrayList<>()));
     }
@@ -502,10 +472,7 @@ public class ImportConfigConfirmPresenter extends
                         AlertEvent.fireInfo(
                                 ImportConfigConfirmPresenter.this,
                                 "Import Complete", () -> {
-                                    HidePopupEvent.fire(ImportConfigConfirmPresenter.this,
-                                            ImportConfigConfirmPresenter.this,
-                                            false,
-                                            true);
+                                    HidePopupEvent.builder(ImportConfigConfirmPresenter.this).fire();
                                     RefreshExplorerTreeEvent.fire(ImportConfigConfirmPresenter.this);
 
                                     // We might have loaded a new visualisation or updated
@@ -513,10 +480,7 @@ public class ImportConfigConfirmPresenter extends
                                     clearCaches();
                                 }))
                 .onFailure(caught -> {
-                    HidePopupEvent.fire(ImportConfigConfirmPresenter.this,
-                            ImportConfigConfirmPresenter.this,
-                            false,
-                            true);
+                    HidePopupEvent.builder(ImportConfigConfirmPresenter.this).fire();
                     // Even if the import was error we should refresh the tree in
                     // case it got part done.
                     RefreshExplorerTreeEvent.fire(ImportConfigConfirmPresenter.this);
@@ -535,9 +499,9 @@ public class ImportConfigConfirmPresenter extends
         // ClearFunctionCacheEvent.fire(this);
     }
 
-    public interface ImportConfigConfirmView extends View {
+    public interface ImportConfigConfirmView extends View, Focus {
 
-        void setDataGridView(View view);
+        void setDataGrid(Widget widget);
 
         Long getEnableFromDate();
 

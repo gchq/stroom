@@ -35,17 +35,17 @@ public class ProcessorEditViewImpl extends ViewImpl implements ProcessorEditView
 
     @UiField
     SimplePanel expression;
-    @UiField(provided = true)
+    @UiField
     MyDateBox minMetaCreateTimeMs;
-    @UiField(provided = true)
+    @UiField
     MyDateBox maxMetaCreateTimeMs;
 
     @Inject
     public ProcessorEditViewImpl(final ProcessorEditViewImpl.Binder binder,
                                  final UserPreferencesManager userPreferencesManager) {
-        minMetaCreateTimeMs = new MyDateBox(userPreferencesManager.isUtc());
-        maxMetaCreateTimeMs = new MyDateBox(userPreferencesManager.isUtc());
         widget = binder.createAndBindUi(this);
+        minMetaCreateTimeMs.setUtc(userPreferencesManager.isUtc());
+        maxMetaCreateTimeMs.setUtc(userPreferencesManager.isUtc());
     }
 
     @Override

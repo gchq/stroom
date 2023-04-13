@@ -36,6 +36,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class ElasticClientCacheImpl implements ElasticClientCache, Clearable {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticClientCacheImpl.class);
     private static final String CACHE_NAME = "Elastic Client Cache";
 

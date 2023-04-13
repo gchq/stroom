@@ -16,6 +16,8 @@
 
 package stroom.widget.tab.client.view;
 
+import stroom.svg.client.SvgImages;
+
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
 
@@ -27,6 +29,7 @@ public class BasicTabSelector extends AbstractTabSelector {
     public BasicTabSelector() {
         final Element arrows = DOM.createDiv();
         arrows.setClassName("basicTabSelector-arrows");
+        arrows.setInnerHTML(SvgImages.MONO_DOUBLE_ARROW);
 
         text = DOM.createDiv();
         text.setClassName("basicTabSelector-text");
@@ -36,8 +39,27 @@ public class BasicTabSelector extends AbstractTabSelector {
 
         element.appendChild(arrows);
         element.appendChild(text);
+        element.setAttribute("aria-label", "Tab Selector");
 
         setElement(element);
+    }
+
+    @Override
+    protected void setKeyboardSelected(final boolean selected) {
+        if (selected) {
+            getElement().addClassName("basicTabSelector-keyboardSelected");
+        } else {
+            getElement().removeClassName("basicTabSelector-keyboardSelected");
+        }
+    }
+
+    @Override
+    protected void setHover(final boolean hover) {
+        if (hover) {
+            getElement().addClassName("basicTabSelector-hover");
+        } else {
+            getElement().removeClassName("basicTabSelector-hover");
+        }
     }
 
     @Override

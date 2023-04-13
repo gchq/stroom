@@ -114,11 +114,6 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
-  dashboard:
-    applicationInstanceCache:
-      expireAfterAccess: "PT5M"
-      expireAfterWrite: null
-      maximumSize: null
   data:
     filesystemVolume:
       createDefaultStreamVolumesOnStart: true
@@ -222,12 +217,6 @@ appConfig:
       fileSystemCleanBatchSize: 20
       fileSystemCleanDeleteOut: false
       fileSystemCleanOldAge: "P1D"
-  dataSourceUrl:
-    elasticIndex: "/api/stroom-elastic-index/v2"
-    index: "/api/stroom-index/v2"
-    searchable: "/api/searchable/v2"
-    solrIndex: "/api/stroom-solr-index/v2"
-    statisticStore: "/api/sqlstatistics/v2"
   docstore:
     db:
       connection:
@@ -593,10 +582,6 @@ appConfig:
       maxStringFieldLength: 1000
       minPayloadSize: "1M"
       offHeapResults: true
-      searchResultCache:
-        expireAfterAccess: "PT10M"
-        expireAfterWrite: null
-        maximumSize: 10000
       storeSize: "1000000,100,10,1"
       valueQueueSize: 1000000
     shard:
@@ -940,7 +925,6 @@ appConfig:
       editorTitle: "Edit Activity"
       enabled: false
       managerTitle: "Choose Activity"
-    applicationInstanceKeepAliveIntervalMs: 10000
     defaultMaxResults: "1000000,100,10,1"
     helpSubPathExpressions: "/user-guide/dashboards/expressions/"
     helpSubPathJobs: "/user-guide/jobs/"
@@ -971,16 +955,8 @@ appConfig:
       title: "Splash Screen"
       version: "v0.1"
     theme:
-      backgroundAttachment: "scroll"
       backgroundColour: "#1E88E5"
-      backgroundImage: "none"
-      backgroundOpacity: "0"
-      backgroundPosition: "0 0"
-      backgroundRepeat: "repeat"
       labelColours: "TEST1=#FF0000,TEST2=#FF9900"
-      topMenuTextColour: "#FFFFFF"
-      tubeOpacity: "0.6"
-      tubeVisible: "hidden"
     welcomeHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from\
       \ multiple systems.</p>"
   uiUri:

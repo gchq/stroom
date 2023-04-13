@@ -236,7 +236,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @Test
     void testIf_nullHandling() {
         createGenerator("if(${val1}=null(), true(), false())", gen -> {
-            gen.set(new Val[]{ValNull.INSTANCE});
+            gen.set(Val.of(ValNull.INSTANCE));
 
             final Val out = gen.eval(null);
             assertThat(out.type().isError()).isTrue();
@@ -317,7 +317,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @Test
     void testConcatNUll() {
         createGenerator("concat(${val1}, ${val2})", 2, gen -> {
-            gen.set(new Val[]{ValNull.INSTANCE, ValNull.INSTANCE});
+            gen.set(Val.of(ValNull.INSTANCE, ValNull.INSTANCE));
 
             final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("");
@@ -327,7 +327,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @Test
     void testConcatNullPlus1() {
         createGenerator("${val1}+${val2}", 2, gen -> {
-            gen.set(new Val[]{ValNull.INSTANCE, ValNull.INSTANCE});
+            gen.set(Val.of(ValNull.INSTANCE, ValNull.INSTANCE));
 
             final Val out = gen.eval(null);
             assertThat(out).isEqualTo(ValNull.INSTANCE);
@@ -337,7 +337,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @Test
     void testConcatNullPlus2() {
         createGenerator("${val1}+${val2}+'test'", 2, gen -> {
-            gen.set(new Val[]{ValNull.INSTANCE, ValNull.INSTANCE});
+            gen.set(Val.of(ValNull.INSTANCE, ValNull.INSTANCE));
 
             final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("test");
@@ -347,7 +347,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @Test
     void testConcatNullPlus3() {
         createGenerator("${val1}+${val2}+''", 2, gen -> {
-            gen.set(new Val[]{ValNull.INSTANCE, ValNull.INSTANCE});
+            gen.set(Val.of(ValNull.INSTANCE, ValNull.INSTANCE));
 
             final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("");
@@ -357,7 +357,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @Test
     void testConcatBooleanPlus1() {
         createGenerator("${val1}+${val2}", 2, gen -> {
-            gen.set(new Val[]{ValBoolean.TRUE, ValBoolean.TRUE});
+            gen.set(Val.of(ValBoolean.TRUE, ValBoolean.TRUE));
 
             final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("2");
@@ -367,7 +367,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @Test
     void testConcatBooleanPlus2() {
         createGenerator("${val1}+${val2}+''", 2, gen -> {
-            gen.set(new Val[]{ValBoolean.TRUE, ValBoolean.TRUE});
+            gen.set(Val.of(ValBoolean.TRUE, ValBoolean.TRUE));
 
             final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("2");
@@ -378,7 +378,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @Test
     void testConcatBooleanPlus3() {
         createGenerator("${val1}+${val2}+'test'", 2, gen -> {
-            gen.set(new Val[]{ValBoolean.TRUE, ValBoolean.TRUE});
+            gen.set(Val.of(ValBoolean.TRUE, ValBoolean.TRUE));
 
             final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("2test");
@@ -388,7 +388,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @Test
     void testConcatBooleanPlus4() {
         createGenerator("${val1}+'test'+${val2}", 2, gen -> {
-            gen.set(new Val[]{ValBoolean.TRUE, ValBoolean.TRUE});
+            gen.set(Val.of(ValBoolean.TRUE, ValBoolean.TRUE));
 
             final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("truetesttrue");
@@ -801,7 +801,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @Test
     void testEqualsNull1() {
         createGenerator("${val1}=null()", gen -> {
-            gen.set(new Val[]{ValNull.INSTANCE});
+            gen.set(Val.of(ValNull.INSTANCE));
 
             final Val out = gen.eval(null);
             assertThat(out.type().isError()).isTrue();
@@ -831,7 +831,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @Test
     void testEqualsNull4() {
         createGenerator("if(${val1}=null(), true(), false())", gen -> {
-            gen.set(new Val[]{ValNull.INSTANCE});
+            gen.set(Val.of(ValNull.INSTANCE));
 
             final Val out = gen.eval(null);
             assertThat(out.type().isError()).isTrue();
@@ -841,7 +841,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @Test
     void testIsNull1() {
         createGenerator("isNull(${val1})", gen -> {
-            gen.set(new Val[]{ValNull.INSTANCE});
+            gen.set(Val.of(ValNull.INSTANCE));
 
             final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("true");
@@ -871,7 +871,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     @Test
     void testIsNull4() {
         createGenerator("if(isNull(${val1}), true(), false())", gen -> {
-            gen.set(new Val[]{ValNull.INSTANCE});
+            gen.set(Val.of(ValNull.INSTANCE));
 
             final Val out = gen.eval(null);
             assertThat(out.toString()).isEqualTo("true");

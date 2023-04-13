@@ -86,4 +86,40 @@ public class TabConfig {
     public void setParent(final TabLayoutConfig parent) {
         this.parent = parent;
     }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder {
+
+        private String id;
+        private Boolean visible;
+
+        private Builder() {
+        }
+
+        private Builder(final TabConfig tabConfig) {
+            this.id = tabConfig.id;
+            this.visible = tabConfig.visible;
+        }
+
+        public Builder id(final String value) {
+            this.id = value;
+            return this;
+        }
+
+        public Builder visible(final Boolean visible) {
+            this.visible = visible;
+            return this;
+        }
+
+        public TabConfig build() {
+            return new TabConfig(id, visible);
+        }
+    }
 }

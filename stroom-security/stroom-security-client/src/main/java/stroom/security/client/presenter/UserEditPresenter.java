@@ -19,11 +19,9 @@ package stroom.security.client.presenter;
 import stroom.security.client.presenter.UserEditPresenter.UserEditView;
 import stroom.security.shared.User;
 import stroom.util.shared.UserName;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
 
 import com.google.inject.Inject;
@@ -31,8 +29,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
-import java.util.Objects;
 
 public class UserEditPresenter extends MyPresenterWidget<UserEditView>
         implements UserEditUiHandlers {
@@ -59,26 +55,14 @@ public class UserEditPresenter extends MyPresenterWidget<UserEditView>
         super.onBind();
     }
 
-    public void show(final User userRef, final PopupUiHandlers popupUiHandlers) {
+    public void show(final User userRef, final Runnable closeRunnable) {
         read(userRef);
 
-        final PopupUiHandlers internalPopupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                HidePopupEvent.fire(UserEditPresenter.this, UserEditPresenter.this);
-                popupUiHandlers.onHideRequest(autoClose, ok);
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                popupUiHandlers.onHide(autoClose, ok);
-            }
-        };
         final PopupSize popupSize = PopupSize.builder()
                 .width(Size
                         .builder()
-                        .initial(1000)
-                        .min(1000)
+                        .initial(1_000)
+                        .min(1_000)
                         .resizable(true)
                         .build())
                 .height(Size
@@ -89,13 +73,13 @@ public class UserEditPresenter extends MyPresenterWidget<UserEditView>
                         .build())
                 .build();
         final String caption = "User - " + UserName.buildCombinedName(userRef);
-        ShowPopupEvent.fire(
-                UserEditPresenter.this,
-                UserEditPresenter.this,
-                PopupView.PopupType.CLOSE_DIALOG,
-                popupSize,
-                caption,
-                internalPopupUiHandlers);
+        ShowPopupEvent.builder(UserEditPresenter.this)
+                .popupType(PopupType.CLOSE_DIALOG)
+                .popupSize(popupSize)
+                .caption(caption)
+                .onShow(e -> userListAddRemovePresenter.getView().focus())
+                .onHide(e -> closeRunnable.run())
+                .fire();
     }
 
     private void read(User userRef) {

@@ -16,6 +16,8 @@
 
 package stroom.widget.tab.client.view;
 
+import stroom.svg.client.SvgImages;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -24,12 +26,27 @@ import com.google.gwt.uibinder.client.UiField;
 public class CurveTabSelector extends AbstractTabSelector {
 
     private static final Binder binder = GWT.create(Binder.class);
+
+    @UiField
+    DivElement arrows;
     @UiField
     DivElement text;
 
     public CurveTabSelector() {
         final DivElement element = binder.createAndBindUi(this);
+        arrows.setInnerHTML(SvgImages.MONO_DOUBLE_ARROW);
+
+        element.setAttribute("aria-label", "Tab Selector");
         setElement(element);
+    }
+
+    @Override
+    protected void setKeyboardSelected(final boolean selected) {
+        if (selected) {
+            getElement().addClassName("curveTabSelector-keyboardSelected");
+        } else {
+            getElement().removeClassName("curveTabSelector-keyboardSelected");
+        }
     }
 
     @Override

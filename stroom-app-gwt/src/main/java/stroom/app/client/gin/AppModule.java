@@ -16,15 +16,10 @@
 
 package stroom.app.client.gin;
 
-import stroom.about.client.presenter.AboutPresenter;
-import stroom.about.client.presenter.AboutPresenter.AboutProxy;
-import stroom.about.client.presenter.AboutPresenter.AboutView;
-import stroom.about.client.view.AboutViewImpl;
 import stroom.content.client.presenter.ContentTabPanePresenter;
 import stroom.content.client.presenter.ContentTabPanePresenter.ContentTabPaneProxy;
 import stroom.core.client.ContentManager;
 import stroom.core.client.HasSaveRegistry;
-import stroom.core.client.KeyboardInterceptor;
 import stroom.core.client.LocationManager;
 import stroom.core.client.NameTokens;
 import stroom.core.client.gin.InactivePlaceManager;
@@ -32,20 +27,31 @@ import stroom.core.client.presenter.CorePresenter;
 import stroom.core.client.presenter.CorePresenter.CoreProxy;
 import stroom.core.client.presenter.CorePresenter.CoreView;
 import stroom.core.client.view.CoreViewImpl;
+import stroom.data.grid.client.PagerView;
+import stroom.data.grid.client.PagerViewImpl;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.view.LinkTabPanelViewImpl;
 import stroom.explorer.client.presenter.EntityCheckTreePresenter;
 import stroom.explorer.client.presenter.EntityCheckTreePresenter.EntityCheckTreeView;
 import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.client.presenter.EntityTreePresenter.EntityTreeView;
-import stroom.explorer.client.presenter.ExplorerTabPanePresenter;
-import stroom.explorer.client.presenter.ExplorerTabPanePresenter.ExplorerTabPaneProxy;
 import stroom.explorer.client.presenter.ExplorerTreePresenter;
 import stroom.explorer.client.presenter.ExplorerTreePresenter.ExplorerTreeProxy;
 import stroom.explorer.client.presenter.ExplorerTreePresenter.ExplorerTreeView;
+import stroom.explorer.client.presenter.FindPresenter;
+import stroom.explorer.client.presenter.FindPresenter.FindProxy;
+import stroom.explorer.client.presenter.FindPresenter.FindView;
+import stroom.explorer.client.presenter.NavigationPresenter;
+import stroom.explorer.client.presenter.NavigationPresenter.NavigationProxy;
+import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
+import stroom.explorer.client.presenter.TypeFilterPresenter;
+import stroom.explorer.client.presenter.TypeFilterPresenter.TypeFilterView;
+import stroom.explorer.client.presenter.TypeFilterViewImpl;
 import stroom.explorer.client.view.EntityCheckTreeViewImpl;
 import stroom.explorer.client.view.EntityTreeViewImpl;
 import stroom.explorer.client.view.ExplorerTreeViewImpl;
+import stroom.explorer.client.view.FindViewImpl;
+import stroom.explorer.client.view.NavigationViewImpl;
 import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFrameContentPresenter.IFrameContentView;
@@ -53,18 +59,18 @@ import stroom.iframe.client.presenter.IFramePresenter;
 import stroom.iframe.client.presenter.IFramePresenter.IFrameView;
 import stroom.iframe.client.view.IFrameContentViewImpl;
 import stroom.iframe.client.view.IFrameViewImpl;
+import stroom.importexport.client.ImportConfigPlugin;
 import stroom.item.client.presenter.ListPresenter.ListView;
 import stroom.item.client.view.ListViewImpl;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.main.client.presenter.MainPresenter.MainProxy;
 import stroom.main.client.presenter.MainPresenter.MainView;
 import stroom.main.client.view.MainViewImpl;
-import stroom.menubar.client.presenter.MenubarPresenter;
-import stroom.menubar.client.presenter.MenubarPresenter.MenubarProxy;
-import stroom.menubar.client.presenter.MenubarPresenter.MenubarView;
-import stroom.menubar.client.view.MenubarViewImpl;
+import stroom.widget.menu.client.presenter.Menu;
 import stroom.widget.menu.client.presenter.MenuItems;
-import stroom.widget.menu.client.presenter.MenuListPresenter;
+import stroom.widget.menu.client.presenter.MenuPresenter;
+import stroom.widget.menu.client.presenter.MenuPresenter.MenuView;
+import stroom.widget.menu.client.presenter.MenuViewImpl;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
 import stroom.widget.tab.client.view.CurveTabLayoutViewImpl;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
@@ -92,8 +98,6 @@ public class AppModule extends AbstractPresenterModule {
         // bind(PlaceManager.class).to(AppPlaceManager.class).in(Singleton.class);
         // install(new DefaultModule(AppPlaceManager.class));
 
-        bind(KeyboardInterceptor.class).asEagerSingleton();
-
         bind(HyperlinkEventHandlerImpl.class).asEagerSingleton();
 
         // bind(CurrentUser.class).in(Singleton.class);
@@ -109,14 +113,16 @@ public class AppModule extends AbstractPresenterModule {
         bindPresenter(CorePresenter.class, CoreView.class, CoreViewImpl.class, CoreProxy.class);
 
         bindPresenter(MainPresenter.class, MainView.class, MainViewImpl.class, MainProxy.class);
-        bindPresenter(MenubarPresenter.class, MenubarView.class, MenubarViewImpl.class, MenubarProxy.class);
-        bindPresenter(ExplorerTabPanePresenter.class, ExplorerTabPaneProxy.class);
+        bindPresenter(
+                NavigationPresenter.class,
+                NavigationView.class,
+                NavigationViewImpl.class,
+                NavigationProxy.class);
         bindPresenter(ContentTabPanePresenter.class, ContentTabPaneProxy.class);
 
         bindPresenter(ExplorerTreePresenter.class, ExplorerTreeView.class, ExplorerTreeViewImpl.class,
                 ExplorerTreeProxy.class);
-
-        bindPresenter(AboutPresenter.class, AboutView.class, AboutViewImpl.class, AboutProxy.class);
+        bindPresenterWidget(TypeFilterPresenter.class, TypeFilterView.class, TypeFilterViewImpl.class);
 
         bindPresenterWidget(TooltipPresenter.class, TooltipView.class, TooltipViewImpl.class);
 
@@ -126,15 +132,21 @@ public class AppModule extends AbstractPresenterModule {
         bindPresenterWidget(EntityTreePresenter.class, EntityTreeView.class, EntityTreeViewImpl.class);
         bindPresenterWidget(EntityCheckTreePresenter.class, EntityCheckTreeView.class, EntityCheckTreeViewImpl.class);
 
+        bindPresenter(FindPresenter.class, FindView.class, FindViewImpl.class, FindProxy.class);
+
+        // Menu
+        bind(Menu.class).asEagerSingleton();
         bind(MenuItems.class).in(Singleton.class);
+        bindPresenterWidget(MenuPresenter.class, MenuView.class, MenuViewImpl.class);
+
 
         // Widgets
         // bindPresenterWidget(CurveTabPresenter.class, CurveTabView.class,
         // CurveTabLayoutViewImpl.class);
-        bind(MenuListPresenter.class);
         // bindSharedView(CellTreeView.class, CellTreeViewImpl.class);
         // bind(LinkTabPanelPresenter.class);
         bindSharedView(CurveTabLayoutView.class, CurveTabLayoutViewImpl.class);
+        bindSharedView(PagerView.class, PagerViewImpl.class);
         bindSharedView(LinkTabPanelView.class, LinkTabPanelViewImpl.class);
         bindSharedView(ListView.class, ListViewImpl.class);
     }

@@ -4,13 +4,13 @@
 package stroom.proxy.repo.db.jooq.tables.records;
 
 
+import stroom.proxy.repo.db.jooq.tables.Feed;
+
 import org.jooq.Field;
 import org.jooq.Record1;
 import org.jooq.Record3;
 import org.jooq.Row3;
 import org.jooq.impl.UpdatableRecordImpl;
-
-import stroom.proxy.repo.db.jooq.tables.Feed;
 
 
 /**

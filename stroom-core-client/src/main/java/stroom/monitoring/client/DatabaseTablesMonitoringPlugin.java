@@ -30,6 +30,9 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class DatabaseTablesMonitoringPlugin extends MonitoringPlugin<DatabaseTablesMonitoringPresenter> {
 
     @Inject
@@ -43,13 +46,12 @@ public class DatabaseTablesMonitoringPlugin extends MonitoringPlugin<DatabaseTab
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_DB_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
-                    new IconMenuItem(7,
-                            SvgPresets.DATABASE,
-                            SvgPresets.DATABASE,
-                            "Database Tables",
-                            null,
-                            true,
-                            () -> open()));
+                    new IconMenuItem.Builder()
+                            .priority(7)
+                            .icon(SvgPresets.DATABASE)
+                            .text("Database Tables")
+                            .command(this::open)
+                            .build());
         }
     }
 }

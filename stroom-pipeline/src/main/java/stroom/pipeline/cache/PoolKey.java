@@ -17,6 +17,7 @@
 package stroom.pipeline.cache;
 
 public class PoolKey<K> {
+
     private final K key;
 
     public PoolKey(final K key) {

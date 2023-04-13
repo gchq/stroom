@@ -28,10 +28,11 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 import stroom.util.shared.TextRange;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent;
+import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
@@ -154,8 +155,9 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
     }
 
     private void handleMouseDown(final MouseDownEvent event) {
-        if ((NativeEvent.BUTTON_RIGHT & event.getNativeButton()) != 0) {
-            ContextMenuEvent.fire(this, event.getClientX(), event.getClientY());
+        if (MouseUtil.isSecondary(event)) {
+            final PopupPosition popupPosition = new PopupPosition(event.getClientX(), event.getClientY());
+            ContextMenuEvent.fire(this, popupPosition);
         } else {
             indicatorPopup.hide();
             MouseDownEvent.fireNativeEvent(event.getNativeEvent(), this);

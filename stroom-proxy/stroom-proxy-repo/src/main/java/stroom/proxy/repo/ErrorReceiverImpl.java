@@ -4,16 +4,6 @@ import stroom.proxy.repo.store.FileSet;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
-
 public class ErrorReceiverImpl implements ErrorReceiver {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ErrorReceiverImpl.class);

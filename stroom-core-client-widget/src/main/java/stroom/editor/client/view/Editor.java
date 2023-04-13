@@ -18,6 +18,7 @@ package stroom.editor.client.view;
 
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Location;
+import stroom.widget.util.client.Rect;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
@@ -358,7 +359,11 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
 
     private void updateScrollMargin() {
         if (editor.isAttached() && scrollMarginDirty) {
-            editor.setScrollMargin(scrollMargin.top, scrollMargin.bottom, scrollMargin.left, scrollMargin.right);
+            editor.setScrollMargin(
+                    scrollMargin.getTop(),
+                    scrollMargin.getBottom(),
+                    scrollMargin.getLeft(),
+                    scrollMargin.getRight());
             scrollMarginDirty = false;
         }
     }
@@ -530,21 +535,6 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
                 }
             });
             addChangeHandler = false;
-        }
-    }
-
-    private static class Rect {
-
-        private final int top;
-        private final int bottom;
-        private final int left;
-        private final int right;
-
-        public Rect(final int top, final int bottom, final int left, final int right) {
-            this.top = top;
-            this.bottom = bottom;
-            this.left = left;
-            this.right = right;
         }
     }
 }

@@ -71,13 +71,11 @@ import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.Record2;
 import org.jooq.Record4;
-import org.jooq.Record5;
 import org.jooq.Result;
 import org.jooq.Select;
 import org.jooq.SelectConditionStep;
 import org.jooq.SelectField;
 import org.jooq.SelectJoinStep;
-import org.jooq.SelectSelectStep;
 import org.jooq.Table;
 import org.jooq.exception.DataTypeException;
 import org.jooq.impl.DSL;
@@ -1337,7 +1335,7 @@ public class MetaDaoImpl implements MetaDao {
                             }
                             arr[i] = val;
                         }
-                        consumer.add(arr);
+                        consumer.add(Val.of(arr));
                     });
                 }
             }

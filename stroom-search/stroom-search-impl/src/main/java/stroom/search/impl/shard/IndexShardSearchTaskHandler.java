@@ -278,7 +278,7 @@ public class IndexShardSearchTaskHandler {
                 }
             }
 
-            valuesConsumer.add(values);
+            valuesConsumer.add(Val.of(values));
         } catch (final IOException | RuntimeException e) {
             error(errorConsumer, e);
         }

@@ -279,7 +279,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                             String.format("Adding extraction function for field %s, idx %s", fieldName, idx));
                     return extractor;
                 })
-                .collect(Collectors.toList());
+                .toList();
 
         final int arrSize = valueExtractors.size();
 
@@ -311,7 +311,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                             e);
                 }
             });
-            return data;
+            return Val.of(data);
         };
     }
 
@@ -422,7 +422,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                     // TODO prob needs to change in 6.1
                     while (resultSet.next() &&
                             !Thread.currentThread().isInterrupted()) {
-                        LOGGER.trace("Adding resultt");
+                        LOGGER.trace("Adding result");
                         final Val[] values = resultSetMapper.apply(resultSet);
                         valuesConsumer.add(values);
                         count++;

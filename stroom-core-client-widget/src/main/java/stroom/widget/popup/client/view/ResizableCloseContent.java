@@ -16,8 +16,6 @@
 
 package stroom.widget.popup.client.view;
 
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -28,27 +26,33 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
-public class ResizableCloseContent extends Composite implements HasEnabled {
+public class ResizableCloseContent extends Composite implements DialogButtons {
 
     private static final Binder binder = GWT.create(Binder.class);
-    private final PopupUiHandlers popupUiHandlers;
+    private final HideRequestUiHandlers uiHandlers;
+
     @UiField
     Button close;
     @UiField
     SimplePanel content;
 
-    public ResizableCloseContent(final PopupUiHandlers popupUiHandlers) {
+    public ResizableCloseContent(final HideRequestUiHandlers uiHandlers) {
         initWidget(binder.createAndBindUi(this));
-        this.popupUiHandlers = popupUiHandlers;
+        this.uiHandlers = uiHandlers;
     }
 
     public void setContent(final Widget widget) {
         content.setWidget(widget);
     }
 
+    @Override
+    public void focus() {
+        close.setFocus(true);
+    }
+
     @UiHandler("close")
     public void onCloseClick(final ClickEvent event) {
-        popupUiHandlers.onHideRequest(false, false);
+        uiHandlers.hideRequest(new HideRequest(false, false));
     }
 
     @Override

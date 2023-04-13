@@ -16,21 +16,26 @@
 
 package stroom.widget.util.client;
 
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.cellview.client.HasSelection;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionModel.AbstractSelectionModel;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public abstract class MultiSelectionModelImpl<T> extends AbstractSelectionModel<T>
+public final class MultiSelectionModelImpl<T>
+        extends AbstractSelectionModel<T>
         implements MultiSelectionModel<T>, HasSelection<T> {
 
+    private final Widget widget;
     private Selection<T> selection = new Selection<>();
     private final Set<T> changes = new HashSet<>();
 
-    public MultiSelectionModelImpl() {
+    public MultiSelectionModelImpl(final Widget widget) {
         super(null);
+        this.widget = widget;
     }
 
     @Override
@@ -153,7 +158,13 @@ public abstract class MultiSelectionModelImpl<T> extends AbstractSelectionModel<
         }
     }
 
-    protected void fireChange(final SelectionType selectionType) {
+    @Override
+    public HandlerRegistration addSelectionHandler(final MultiSelectEvent.Handler handler) {
+        return widget.addHandler(handler, MultiSelectEvent.getType());
+    }
+
+    private void fireChange(final SelectionType selectionType) {
+        MultiSelectEvent.fire(widget, selectionType);
     }
 
     @Override

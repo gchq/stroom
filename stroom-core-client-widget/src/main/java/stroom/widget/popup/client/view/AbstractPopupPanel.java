@@ -17,15 +17,17 @@
 package stroom.widget.popup.client.view;
 
 import stroom.data.grid.client.Glass;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.ui.PopupPanel;
 
 public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
+
     private final PopupType popupType;
     private final Glass dragGlass = new Glass(
             "popupPanel-dragGlass",
@@ -51,24 +53,23 @@ public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
 
         if (event.getTypeInt() == Event.ONKEYDOWN) {
             final NativeEvent nativeEvent = event.getNativeEvent();
-
-            switch (nativeEvent.getKeyCode()) {
-                case KeyCodes.KEY_ESCAPE:
-                    onEscapeKeyPressed();
-                    break;
-                case KeyCodes.KEY_ENTER:
-                    // Only close the dialog if the Ctrl modifier is pressed
-                    if (nativeEvent.getCtrlKey()) {
-                        onEnterKeyPressed();
-                    }
-                    break;
-                default:
-                    break;
+            final Action action = KeyBinding.getAction(nativeEvent);
+            if (action != null) {
+                switch (action) {
+                    case CLOSE:
+                        onCloseAction();
+                        break;
+                    case OK:
+                        onOkAction();
+                        break;
+                }
             }
         }
     }
 
-    protected void onEscapeKeyPressed() { }
+    protected void onCloseAction() {
+    }
 
-    protected void onEnterKeyPressed() { }
+    protected void onOkAction() {
+    }
 }

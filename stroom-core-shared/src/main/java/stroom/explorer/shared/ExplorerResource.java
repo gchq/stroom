@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -121,4 +122,12 @@ public interface ExplorerResource extends RestResource, DirectRestService {
             operationId = "fetchExplorerNodes")
     FetchExplorerNodeResult fetchExplorerNodes(
             @Parameter(description = "request", required = true) FindExplorerNodeCriteria request);
+
+    @POST
+    @Path("/findExplorerNodes")
+    @Operation(
+            summary = "Find explorer nodes using a query",
+            operationId = "findExplorerNodes")
+    ResultPage<ExplorerDocContentMatch> findContent(
+            @Parameter(description = "request", required = true) FindExplorerNodeQuery request);
 }

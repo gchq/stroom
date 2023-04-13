@@ -1,5 +1,6 @@
 package stroom.security.client.presenter;
 
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.FindUserCriteria;
 import stroom.ui.config.client.UiConfigCache;
@@ -12,17 +13,22 @@ public abstract class AbstractDataUserListPresenter extends AbstractUserListPres
     private final RestFactory restFactory;
     private final UiConfigCache uiConfigCache;
     private UserDataProvider dataProvider;
-    FindUserCriteria findUserCriteria;
+    private FindUserCriteria findUserCriteria;
 
     @Inject
     public AbstractDataUserListPresenter(final EventBus eventBus,
                                          final UserListView userListView,
+                                         final PagerView pagerView,
                                          final RestFactory restFactory,
                                          final UiConfigCache uiConfigCache) {
-        super(eventBus, userListView, uiConfigCache);
+        super(eventBus, userListView, pagerView, uiConfigCache);
         this.restFactory = restFactory;
         this.uiConfigCache = uiConfigCache;
 
+    }
+
+    public FindUserCriteria getFindUserCriteria() {
+        return findUserCriteria;
     }
 
     @Override
@@ -49,7 +55,7 @@ public abstract class AbstractDataUserListPresenter extends AbstractUserListPres
 
     public void setup(final FindUserCriteria findUserCriteria) {
         this.findUserCriteria = findUserCriteria;
-        dataProvider = new UserDataProvider(getEventBus(), restFactory, getDataGridView());
+        dataProvider = new UserDataProvider(getEventBus(), restFactory, getDataGrid());
         dataProvider.setCriteria(findUserCriteria);
         refresh();
     }

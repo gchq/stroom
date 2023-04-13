@@ -46,6 +46,8 @@ import java.util.Objects;
         "searchSlices",
         "searchScrollSize",
         "fields",
+        "timeField",
+        "defaultExtractionPipeline",
         "retentionExpression"
 })
 @JsonInclude(Include.NON_NULL)
@@ -54,6 +56,7 @@ public class ElasticIndexDoc extends Doc {
     public static final int DEFAULT_SEARCH_SLICES = 1;
     public static final int DEFAULT_SEARCH_SCROLL_SIZE = 1000;
     public static final String DOCUMENT_TYPE = "ElasticIndex";
+    private static final String DEFAULT_TIME_FIELD = "EventTime";
 
     /**
      * Reference to the `ElasticCluster` containing common Elasticsearch cluster connection properties
@@ -87,6 +90,10 @@ public class ElasticIndexDoc extends Doc {
      */
     @JsonProperty
     private List<ElasticIndexField> fields;
+    @JsonProperty
+    private String timeField;
+    @JsonProperty
+    private DocRef defaultExtractionPipeline;
 
     /**
      * Criteria determining which documents should be deleted periodically by the `Elastic Index Retention`
@@ -99,6 +106,7 @@ public class ElasticIndexDoc extends Doc {
         searchSlices = DEFAULT_SEARCH_SLICES;
         searchScrollSize = DEFAULT_SEARCH_SCROLL_SIZE;
         fields = new ArrayList<>();
+        timeField = DEFAULT_TIME_FIELD;
     }
 
     @JsonCreator
@@ -117,8 +125,9 @@ public class ElasticIndexDoc extends Doc {
             @JsonProperty("searchSlices") final Integer searchSlices,
             @JsonProperty("searchScrollSize") final Integer searchScrollSize,
             @JsonProperty("fields") final List<ElasticIndexField> fields,
-            @JsonProperty("retentionExpression") final ExpressionOperator retentionExpression
-    ) {
+            @JsonProperty("timeField") final String timeField,
+            @JsonProperty("defaultExtractionPipeline") final DocRef defaultExtractionPipeline,
+            @JsonProperty("retentionExpression") final ExpressionOperator retentionExpression) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.clusterRef = clusterRef;
@@ -126,6 +135,8 @@ public class ElasticIndexDoc extends Doc {
         this.searchSlices = searchSlices;
         this.searchScrollSize = searchScrollSize;
         this.fields = fields;
+        this.timeField = timeField;
+        this.defaultExtractionPipeline = defaultExtractionPipeline;
         this.retentionExpression = retentionExpression;
 
         if (this.searchSlices == null) {
@@ -188,6 +199,22 @@ public class ElasticIndexDoc extends Doc {
         this.fields = fields;
     }
 
+    public String getTimeField() {
+        return timeField;
+    }
+
+    public void setTimeField(final String timeField) {
+        this.timeField = timeField;
+    }
+
+    public DocRef getDefaultExtractionPipeline() {
+        return defaultExtractionPipeline;
+    }
+
+    public void setDefaultExtractionPipeline(final DocRef defaultExtractionPipeline) {
+        this.defaultExtractionPipeline = defaultExtractionPipeline;
+    }
+
     public ExpressionOperator getRetentionExpression() {
         return retentionExpression;
     }
@@ -219,13 +246,23 @@ public class ElasticIndexDoc extends Doc {
                 Objects.equals(indexName, elasticIndex.indexName) &&
                 Objects.equals(searchSlices, elasticIndex.searchSlices) &&
                 Objects.equals(searchScrollSize, elasticIndex.searchScrollSize) &&
-                Objects.equals(fields, elasticIndex.fields);
+                Objects.equals(fields, elasticIndex.fields) &&
+                Objects.equals(timeField, elasticIndex.timeField) &&
+                Objects.equals(defaultExtractionPipeline, elasticIndex.defaultExtractionPipeline);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), description, indexName, searchSlices, searchScrollSize, clusterRef,
-                fields);
+        return Objects.hash(
+                super.hashCode(),
+                description,
+                indexName,
+                searchSlices,
+                searchScrollSize,
+                clusterRef,
+                fields,
+                timeField,
+                defaultExtractionPipeline);
     }
 
     @Override
@@ -237,6 +274,8 @@ public class ElasticIndexDoc extends Doc {
                 ", searchSlices=" + searchSlices +
                 ", searchScrollSize=" + searchScrollSize +
                 ", fields=" + fields +
+                ", timeField=" + timeField +
+                ", defaultExtractionPipeline=" + defaultExtractionPipeline +
                 '}';
     }
 }

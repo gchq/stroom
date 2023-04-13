@@ -4,6 +4,7 @@ import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldType;
 import stroom.query.api.v2.ConditionalFormattingRule;
+import stroom.util.shared.time.TimeUnit;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -126,10 +127,16 @@ public final class MappingUtil {
         if (value == null) {
             return null;
         }
-        return new stroom.dashboard.shared.DashboardConfig(value.getParameters(),
+        return new stroom.dashboard.shared.DashboardConfig(
+                value.getParameters(),
+                null,
                 mapList(value.getComponents(), MappingUtil::map),
                 map(value.getLayout()),
-                map(value.getTabVisibility()));
+                null,
+                map(value.getTabVisibility()),
+                null,
+                false,
+                null);
     }
 
     public static stroom.dashboard.shared.ComponentConfig map(stroom.legacy.model_6_1.ComponentConfig value) {
@@ -168,6 +175,8 @@ public final class MappingUtil {
         return new stroom.dashboard.shared.QueryComponentSettings(map(value.getDataSource()),
                 map(value.getExpression()),
                 map(value.getAutomate()),
+                null,
+                null,
                 null);
     }
 
@@ -186,6 +195,7 @@ public final class MappingUtil {
 
         return new stroom.dashboard.shared.TableComponentSettings(
                 value.getQueryId(),
+                null,
                 mapList(value.getFields(), MappingUtil::map),
                 value.getExtractValues(),
                 map(value.getExtractionPipeline()),
@@ -452,7 +462,8 @@ public final class MappingUtil {
 
         return new stroom.query.api.v2.Query(map(value.getDataSource()),
                 map(value.getExpression()),
-                mapList(value.getParams(), MappingUtil::map));
+                mapList(value.getParams(), MappingUtil::map),
+                null);
     }
 
     public static stroom.query.api.v2.Param map(stroom.legacy.model_6_1.Param value) {
@@ -677,6 +688,7 @@ public final class MappingUtil {
                 map(value.getDataSource()),
                 map(value.getExpression()),
                 null,
+                null,
                 map(value.getLimits()));
     }
 
@@ -707,11 +719,11 @@ public final class MappingUtil {
                 value.isForever());
     }
 
-    public static stroom.data.retention.shared.TimeUnit map(stroom.legacy.model_6_1.TimeUnit value) {
+    public static TimeUnit map(stroom.legacy.model_6_1.TimeUnit value) {
         if (value == null) {
             return null;
         }
 
-        return stroom.data.retention.shared.TimeUnit.valueOf(value.name());
+        return TimeUnit.valueOf(value.name());
     }
 }

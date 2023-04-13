@@ -17,7 +17,6 @@
 
 package stroom.statistics.impl.hbase.client.presenter;
 
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
@@ -48,10 +47,8 @@ public class StroomStatsStorePresenter extends DocumentEditTabPresenter<LinkTabP
             final Provider<StroomStatsStoreSettingsPresenter> stroomStatsStoreSettingsPresenter,
             final Provider<StroomStatsStoreFieldListPresenter> stroomStatsStoreFieldListPresenter,
             final Provider<StroomStatsStoreCustomMaskListPresenter> stroomStatsStoreCustomMaskListPresenter,
-            final ClientSecurityContext securityContext,
-            final RestFactory restFactory) {
-
-        super(eventBus, view, securityContext, restFactory);
+            final ClientSecurityContext securityContext) {
+        super(eventBus, view, securityContext);
 
         tabContentProvider.setDirtyHandler(event -> {
             if (event.isDirty()) {
@@ -93,8 +90,8 @@ public class StroomStatsStorePresenter extends DocumentEditTabPresenter<LinkTabP
     }
 
     @Override
-    protected void onWrite(final StroomStatsStoreDoc stroomStatsStoreEntity) {
-        tabContentProvider.write(stroomStatsStoreEntity);
+    protected StroomStatsStoreDoc onWrite(final StroomStatsStoreDoc stroomStatsStoreEntity) {
+        return tabContentProvider.write(stroomStatsStoreEntity);
     }
 
     @Override

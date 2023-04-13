@@ -16,7 +16,6 @@
 
 package stroom.widget.tab.client.presenter;
 
-import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
 
 import com.google.inject.Inject;
@@ -43,13 +42,13 @@ public abstract class CurveTabLayoutPresenter<P extends Proxy<?>> extends MyPres
     protected void onBind() {
         super.onBind();
 
-        registerHandler(getView().getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem())));
-        registerHandler(getView().getTabBar().addRequestCloseTabHandler(event -> RequestCloseTabEvent.fire(
-                CurveTabLayoutPresenter.this,
-                event.getTabData())));
-        registerHandler(getView().getTabBar().addMaximiseRequestHandler(event -> MaximiseEvent.fire(
-                CurveTabLayoutPresenter.this,
-                getView())));
+        registerHandler(getView().getTabBar().addSelectionHandler(event ->
+                selectTab(event.getSelectedItem())));
+        registerHandler(getView().getTabBar().addRequestCloseTabHandler(event ->
+                RequestCloseTabEvent.fire(
+                        CurveTabLayoutPresenter.this,
+                        event.getTabData())));
+        registerHandler(getView().getTabBar().addShowMenuHandler(event -> getEventBus().fireEvent(event)));
     }
 
     public void add(final TabData tabData, final Layer layer) {

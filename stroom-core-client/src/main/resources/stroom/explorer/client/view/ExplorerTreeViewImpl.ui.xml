@@ -4,7 +4,7 @@
              xmlns:p="urn:import:stroom.widget.button.client"
              xmlns:v="urn:import:stroom.widget.dropdowntree.client.view">
     <g:FlowPanel styleName="max dock-container-vertical">
-        <g:FlowPanel styleName="dock-min dock-container-horizontal stroom-content stroom-border-bottom">
+        <g:FlowPanel styleName="dock-min dock-container-horizontal stroom-border-bottom">
             <g:FlowPanel styleName="dock-min button-container">
                 <p:SvgButton ui:field="newItem"/>
                 <p:SvgButton ui:field="deleteItem"/>
@@ -14,6 +14,6 @@
                 <p:SvgButton ui:field="typeFilter"/>
             </g:FlowPanel>
         </g:FlowPanel>
-        <g:SimplePanel styleName="dock-max stroom-content" ui:field="treeContainer"/>
+        <g:SimplePanel styleName="dock-max" ui:field="treeContainer"/>
     </g:FlowPanel>
 </ui:UiBinder> 

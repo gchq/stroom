@@ -10,7 +10,6 @@ import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
-import stroom.data.retention.shared.TimeUnit;
 import stroom.db.util.JooqUtil;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
@@ -37,6 +36,7 @@ import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.shared.time.TimeUnit;
 import stroom.util.time.TimePeriod;
 
 import com.google.inject.AbstractModule;

@@ -21,8 +21,10 @@ import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.query.common.v2.SearchProvider;
 import stroom.search.elastic.indexing.ElasticIndexingElementModule;
 import stroom.search.elastic.search.ElasticIndexQueryResourceImpl;
+import stroom.search.elastic.search.ElasticSearchProvider;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.suggest.ElasticSuggestionsQueryHandler;
@@ -48,7 +50,7 @@ public class ElasticSearchModule extends AbstractModule {
 
         // Services
 
-        bind(ElasticIndexService.class).to(ElasticIndexServiceImpl.class);
+        bind(ElasticIndexService.class).to(ElasticSearchProvider.class);
         bind(ElasticSuggestionsQueryHandler.class).to(ElasticSuggestionsQueryHandlerImpl.class);
 
         SuggestionsServiceBinder.create(binder())
@@ -98,7 +100,9 @@ public class ElasticSearchModule extends AbstractModule {
                 .bind(ElasticIndexQueryResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
-                .addBinding(ElasticIndexServiceImpl.class);
+                .addBinding(ElasticSearchProvider.class);
+        GuiceUtil.buildMultiBinder(binder(), SearchProvider.class)
+                .addBinding(ElasticSearchProvider.class);
 
         // Server tasks
 

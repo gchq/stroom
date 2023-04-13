@@ -17,12 +17,9 @@
 package stroom.editor.client.view;
 
 import stroom.util.shared.Severity;
+import stroom.widget.util.client.MouseUtil;
 
-import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
@@ -55,7 +52,7 @@ public class RightBar extends Composite {
         event.stopPropagation();
         event.preventDefault();
 
-        if (eventType == Event.ONMOUSEDOWN && (event.getButton() & NativeEvent.BUTTON_LEFT) != 0
+        if (eventType == Event.ONMOUSEDOWN && MouseUtil.isPrimary(event)
                 && indicators != null) {
             final String className = target.getClassName();
             if (className != null) {

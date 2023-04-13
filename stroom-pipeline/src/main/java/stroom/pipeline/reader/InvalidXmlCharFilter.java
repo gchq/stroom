@@ -35,6 +35,7 @@ import java.io.Reader;
  * SH
  */
 public class InvalidXmlCharFilter extends TransformReader {
+
     private final XmlChars xmlChars;
     private final boolean replace;
     private final char replacementChar;
@@ -154,7 +155,9 @@ public class InvalidXmlCharFilter extends TransformReader {
             }
         }
 
-        return (originalOff == off) ? -1 : off - originalOff;
+        return (originalOff == off)
+                ? -1
+                : off - originalOff;
     }
 
     private boolean validLowSurrogateAhead(final char ch) throws IOException {

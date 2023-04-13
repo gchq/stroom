@@ -1,6 +1,7 @@
 package stroom.config.app;
 
 import stroom.security.impl.ContentSecurityConfig;
+import stroom.ui.config.shared.UiConfig;
 import stroom.util.ColouredStringBuilder;
 import stroom.util.ConsoleColour;
 import stroom.util.shared.AbstractConfig;
@@ -69,6 +70,10 @@ public class SuperDevUtil {
                     .withSecure(SUPER_DEV_SESSION_COOKIE_SECURE_VALUE);
             LOGGER.debug("newSessionCookieConfig: {}", newSessionCookieConfig);
             return newSessionCookieConfig;
+        } else if (config instanceof UiConfig) {
+            final UiConfig uiConfig = (UiConfig) config;
+            uiConfig.setRequireReactWrapper(false);
+            return uiConfig;
         } else {
             return config;
         }

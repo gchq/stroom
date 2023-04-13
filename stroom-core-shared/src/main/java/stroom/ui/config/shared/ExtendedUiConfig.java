@@ -165,11 +165,6 @@ public class ExtendedUiConfig {
     }
 
     @JsonIgnore
-    public int getApplicationInstanceKeepAliveIntervalMs() {
-        return uiConfig.getApplicationInstanceKeepAliveIntervalMs();
-    }
-
-    @JsonIgnore
     public boolean isExternalIdentityProvider() {
         return externalIdentityProvider;
     }

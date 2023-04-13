@@ -21,6 +21,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 class TestLoadingStroomCacheImpl {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestLoadingStroomCacheImpl.class);
 
     private static final String NAME = "My Cache";

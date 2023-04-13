@@ -15,6 +15,9 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class UsersPlugin extends NodeToolsPlugin {
 
     private final UiConfigCache clientPropertyCache;
@@ -50,14 +53,22 @@ public class UsersPlugin extends NodeToolsPlugin {
                                 final ExtendedUiConfig uiConfig) {
         final IconMenuItem usersMenuItem;
         final Preset icon = SvgPresets.USER_GROUP;
-        usersMenuItem = new IconMenuItem(
-                5, icon,
-                null,
-                "Users",
-                null,
-                true,
-                () ->
-                        postMessage("manageUsers"));
+        usersMenuItem = new IconMenuItem.Builder()
+                .priority(5)
+                .icon(icon)
+                .text("Users")
+                .command(() -> {
+                    postMessage("manageUsers");
+
+//                final Hyperlink hyperlink = new Builder()
+//                        .text("Users")
+//                        .href(usersUiUrl)
+//                        .type(HyperlinkType.TAB + "|Users")
+//                        .icon(icon)
+//                        .build();
+//                HyperlinkEvent.fire(this, hyperlink);
+                })
+                .build();
         event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, usersMenuItem);
     }
 //    private void addManageUserAuthorisations(final BeforeRevealMenubarEvent event,

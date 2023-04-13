@@ -20,6 +20,7 @@ public class AtomicLoopedItemSequence {
     /**
      * Gets sequential items from the provided list, looping back to the beginning
      * once it hits the end.
+     *
      * @param list The list to get items from in sequential order.
      * @return The next item in the list or an empty {@link Optional} if there isn't one. If the
      * passed list is null or empty and empty {@link Optional} will be returned.

@@ -11,18 +11,13 @@ public interface LoadingStroomCache<K, V> extends StroomCache<K, V> {
     /**
      * Gets the value associated with key from the cache. If key is not found in the cache
      * then the loadFunction will be called to load the entry into the cache.
+     *
      * @return The value associated with key or null if the loadFunction returns null.
      */
     @Override
     V get(K key);
 
-    /**
-     * Gets the value associated with key from the cache. If key is not found in the cache
-     * then the loadFunction will be called to load the entry into the cache.
-     * @return The value associated with key or an empty {@link Optional} if the loadFunction
-     * returns null.
-     */
-    @Override
+
     Optional<V> getOptional(K key);
 
     /**
@@ -30,6 +25,7 @@ public interface LoadingStroomCache<K, V> extends StroomCache<K, V> {
      * then valueProvider will be called to load the entry into the cache.
      * valueProvider overrides loadFunction so loadFunction will NOT be called, even if
      * valueProvider returns null.
+     *
      * @return The value associated with key or null if the valueProvider returns null.
      */
     @Override
@@ -40,5 +36,6 @@ public interface LoadingStroomCache<K, V> extends StroomCache<K, V> {
      * associated with key, else returns an empty optional.
      * It will NOT call the loadFunction.
      */
+    @Override
     Optional<V> getIfPresent(K key);
 }

@@ -23,22 +23,23 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.DataStoreFactory;
+import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.Item;
 import stroom.query.common.v2.Items;
+import stroom.query.common.v2.Key;
 import stroom.query.common.v2.LmdbDataStoreFactory;
+import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreConfig;
+import stroom.query.common.v2.ResultStoreSettingsFactory;
 import stroom.query.common.v2.SearchDebugUtil;
-import stroom.query.common.v2.SearchResponseCreator;
-import stroom.query.common.v2.SerialisersFactory;
+import stroom.query.common.v2.Serialisers;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.SizesProvider;
-import stroom.search.extraction.ExtractionReceiver;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
@@ -94,7 +95,8 @@ class TestSearchResultCreation {
                 lmdbEnvFactory,
                 ResultStoreConfig::new,
                 pathCreator,
-                () -> executorService);
+                () -> executorService,
+                () -> new Serialisers(new ResultStoreConfig()));
     }
 
     @AfterEach
@@ -115,7 +117,6 @@ class TestSearchResultCreation {
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
-                new SerialisersFactory(),
                 sizesProvider,
                 dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
@@ -123,11 +124,11 @@ class TestSearchResultCreation {
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                false);
-        final ExtractionReceiver consumer = createExtractionReceiver(coprocessors);
+                DataStoreSettings.BASIC_SETTINGS);
+        final ValuesConsumer consumer = createExtractionReceiver(coprocessors);
 
         // Reorder values if field mappings have changed.
-        final int[] mappings = createMappings(consumer);
+        final int[] mappings = createMappings(coprocessors.getFieldIndex());
 
         // Add data to the consumer.
         final String[] lines = getLines();
@@ -139,23 +140,17 @@ class TestSearchResultCreation {
         // Tell the consumer we are finished receiving data.
         complete(coprocessors);
 
-        final ClusterSearchResultCollector collector = new ClusterSearchResultCollector(
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                coprocessors);
-        // Mark the collector as artificially complete.
-        collector.complete();
-
-        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(
-                new SerialisersFactory(),
-                "test_user_id",
+        final ResultStore resultStore = new ResultStore(
+                searchRequest.getSearchRequestSource(),
                 sizesProvider,
-                collector);
-        final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
+                null,
+                coprocessors,
+                "node",
+                new ResultStoreSettingsFactory().get());
+        // Mark the collector as artificially complete.
+        resultStore.signalComplete();
+
+        final SearchResponse searchResponse = resultStore.search(searchRequest);
 
         // Validate the search response.
         validateSearchResponse(searchResponse);
@@ -229,7 +224,6 @@ class TestSearchResultCreation {
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
-                new SerialisersFactory(),
                 sizesProvider,
                 dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
@@ -237,19 +231,19 @@ class TestSearchResultCreation {
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                true);
+                DataStoreSettings.PAYLOAD_PRODUCER_SETTINGS);
 
-        final ExtractionReceiver consumer = createExtractionReceiver(coprocessors);
+        final ValuesConsumer consumer = createExtractionReceiver(coprocessors);
 
         // Reorder values if field mappings have changed.
-        final int[] mappings = createMappings(consumer);
+        final int[] mappings = createMappings(coprocessors.getFieldIndex());
 
         final QueryKey queryKey2 = new QueryKey(UUID.randomUUID().toString());
         final Coprocessors coprocessors2 = coprocessorsFactory.create(
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                false);
+                DataStoreSettings.BASIC_SETTINGS);
 
         // Add data to the consumer.
         final String[] lines = getLines();
@@ -274,23 +268,17 @@ class TestSearchResultCreation {
         coprocessors.getCompletionState().awaitCompletion();
         coprocessors2.getCompletionState().awaitCompletion();
 
-        final ClusterSearchResultCollector collector = new ClusterSearchResultCollector(
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                coprocessors2);
-        // Mark the collector as artificially complete.
-        collector.complete();
-
-        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(
-                new SerialisersFactory(),
-                "test_user_id",
+        final ResultStore resultStore = new ResultStore(
+                searchRequest.getSearchRequestSource(),
                 sizesProvider,
-                collector);
-        final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
+                "test_user_id",
+                coprocessors2,
+                "node",
+                new ResultStoreSettingsFactory().get());
+        // Mark the collector as artificially complete.
+        resultStore.signalComplete();
+
+        final SearchResponse searchResponse = resultStore.search(searchRequest);
 
         // Validate the search response.
         validateSearchResponse(searchResponse);
@@ -309,7 +297,6 @@ class TestSearchResultCreation {
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
         final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
-                new SerialisersFactory(),
                 sizesProvider,
                 dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
@@ -317,19 +304,19 @@ class TestSearchResultCreation {
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                true);
+                DataStoreSettings.PAYLOAD_PRODUCER_SETTINGS);
 
-        final ExtractionReceiver consumer1 = createExtractionReceiver(coprocessors);
+        final ValuesConsumer consumer1 = createExtractionReceiver(coprocessors);
 
         // Reorder values if field mappings have changed.
-        final int[] mappings = createMappings(consumer1);
+        final int[] mappings = createMappings(coprocessors.getFieldIndex());
 
         final QueryKey queryKey2 = new QueryKey(UUID.randomUUID().toString());
         final Coprocessors coprocessors2 = coprocessorsFactory.create(
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                false);
+                DataStoreSettings.BASIC_SETTINGS);
 
         // Add data to the consumer.
         final String[] lines = getLines();
@@ -356,23 +343,17 @@ class TestSearchResultCreation {
         coprocessors.getCompletionState().awaitCompletion();
         coprocessors2.getCompletionState().awaitCompletion();
 
-        final ClusterSearchResultCollector collector = new ClusterSearchResultCollector(
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                coprocessors2);
-        // Mark the collector as artificially complete.
-        collector.complete();
-
-        final SearchResponseCreator searchResponseCreator = new SearchResponseCreator(
-                new SerialisersFactory(),
-                "test_user_id",
+        final ResultStore resultStore = new ResultStore(
+                searchRequest.getSearchRequestSource(),
                 sizesProvider,
-                collector);
-        final SearchResponse searchResponse = searchResponseCreator.create(searchRequest);
+                "test_user_id",
+                coprocessors2,
+                "node",
+                new ResultStoreSettingsFactory().get());
+        // Mark the collector as artificially complete.
+        resultStore.signalComplete();
+
+        final SearchResponse searchResponse = resultStore.search(searchRequest);
 
         // Validate the search response.
         validateSearchResponse(searchResponse);
@@ -404,26 +385,25 @@ class TestSearchResultCreation {
 
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
-                new SerialisersFactory(), sizesProvider, dataStoreFactory);
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(sizesProvider, dataStoreFactory);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final Coprocessors coprocessors = coprocessorsFactory.create(
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                false);
+                DataStoreSettings.BASIC_SETTINGS);
 
-        final ExtractionReceiver consumer = createExtractionReceiver(coprocessors);
+        final ValuesConsumer consumer = createExtractionReceiver(coprocessors);
 
         // Reorder values if field mappings have changed.
-        final int[] mappings = createMappings(consumer);
+        final int[] mappings = createMappings(coprocessors.getFieldIndex());
 
         final QueryKey queryKey2 = new QueryKey(UUID.randomUUID().toString());
         final Coprocessors coprocessors2 = coprocessorsFactory.create(
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                false);
+                DataStoreSettings.BASIC_SETTINGS);
 
 
         final CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -470,20 +450,19 @@ class TestSearchResultCreation {
         // Ensure the target coprocessors get a chance to add the data from the payloads.
         complete(coprocessors2);
 
-        final ClusterSearchResultCollector collector = new ClusterSearchResultCollector(
+        final ResultStore resultStore = new ResultStore(
+                searchRequest.getSearchRequestSource(),
                 null,
                 null,
-                null,
-                null,
-                null,
-                null,
-                coprocessors2);
+                coprocessors2,
+                "node",
+                new ResultStoreSettingsFactory().get());
         // Mark the collector as artificially complete.
-        collector.complete();
+        resultStore.signalComplete();
 
-        final DataStore dataStore = collector.getData("table-78LF4");
+        final DataStore dataStore = resultStore.getData("table-78LF4");
         dataStore.getData(data -> {
-            final Items dataItems = data.get();
+            final Items dataItems = data.get(Key.ROOT_KEY, null);
             final Item dataItem = dataItems.iterator().next();
             final Val val = dataItem.getValue(2, true);
             assertThat(val.toLong())
@@ -502,7 +481,7 @@ class TestSearchResultCreation {
             final int target = mappings[j];
             vals[target] = ValString.create(value);
         }
-        consumer.add(vals);
+        consumer.add(Val.of(vals));
     }
 
     private void transferPayloads(final Coprocessors source, final Coprocessors target) {
@@ -517,44 +496,7 @@ class TestSearchResultCreation {
         }
     }
 
-//    private Coprocessors transfer(final String[] lines,
-//                                  final int[] mappings,
-//                                  final ExtractionReceiver consumer,
-//                                  final CoprocessorsFactory coprocessorsFactory,
-//                                  final Coprocessors coprocessors) {
-//        for (int i = 0; i < lines.length; i++) {
-//            final String line = lines[i];
-//            final String[] values = line.split(",");
-//            final Val[] vals = new Val[values.length];
-//            for (int j = 0; j < values.length; j++) {
-//                final String value = values[j];
-//                final int target = mappings[j];
-//                vals[target] = ValString.create(value);
-//            }
-//            consumer.getValuesConsumer().accept(vals);
-//        }
-//        consumer.getCompletionConsumer().accept((long) lines.length);
-//
-//
-//
-//
-//
-//
-//        final Coprocessors coprocessors2 = coprocessorsFactory.create(
-//        coprocessorSettings, searchRequest.getQuery().getParams());
-//
-//        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-//        try (final Output output = new Output(outputStream)) {
-//            coprocessors.writePayloads(output);
-//        }
-//
-//        try (final Input input = new Input(new ByteArrayInputStream(outputStream.toByteArray()))) {
-//            coprocessors2.readPayloads(input);
-//        }
-//    }
-
-    private int[] createMappings(ExtractionReceiver receiver) {
-        final FieldIndex fieldIndex = receiver.getFieldIndex();
+    private int[] createMappings(final FieldIndex fieldIndex) {
         final int[] mappings = new int[4];
         mappings[0] = fieldIndex.getPos("EventTime");
         mappings[1] = fieldIndex.getPos("UserId");
@@ -586,42 +528,18 @@ class TestSearchResultCreation {
         };
     }
 
-    private ExtractionReceiver createExtractionReceiver(final Coprocessors coprocessors) {
-        final Map<DocRef, ExtractionReceiver> receivers = new HashMap<>();
+    private ValuesConsumer createExtractionReceiver(final Coprocessors coprocessors) {
+        final Map<DocRef, ValuesConsumer> receivers = new HashMap<>();
         coprocessors.forEachExtractionCoprocessor((docRef, coprocessorSet) -> {
             // Create a receiver that will send data to all coprocessors.
-            ExtractionReceiver receiver;
+            ValuesConsumer receiver;
             if (coprocessorSet.size() == 1) {
-                final Coprocessor coprocessor = coprocessorSet.iterator().next();
-                final FieldIndex fieldIndex = coprocessors.getFieldIndex();
-                receiver = new ExtractionReceiver() {
-                    @Override
-                    public void add(final Val[] values) {
-                        coprocessor.add(values);
-                    }
-
-                    @Override
-                    public FieldIndex getFieldIndex() {
-                        return fieldIndex;
-                    }
-                };
+                receiver = coprocessorSet.iterator().next();
             } else {
                 // We assume all coprocessors for the same extraction use the same field index map.
                 // This is only the case at the moment as the CoprocessorsFactory creates field index maps this way.
-                final FieldIndex fieldIndex = coprocessors.getFieldIndex();
-                receiver = new ExtractionReceiver() {
-                    @Override
-                    public void add(final Val[] values) {
-                        coprocessorSet.forEach(coprocessor -> coprocessor.add(values));
-                    }
-
-                    @Override
-                    public FieldIndex getFieldIndex() {
-                        return fieldIndex;
-                    }
-                };
+                receiver = values -> coprocessorSet.forEach(coprocessor -> coprocessor.add(values));
             }
-
             receivers.put(docRef, receiver);
         });
 

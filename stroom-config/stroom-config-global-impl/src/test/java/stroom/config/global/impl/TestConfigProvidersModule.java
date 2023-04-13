@@ -141,7 +141,7 @@ public class TestConfigProvidersModule {
                                 // StroomPathConfig is also mapped to PathConfig
                                 softAssertions.assertThat(config.getClass())
                                         .isEqualTo(StroomPathConfig.class);
-                            } else if (method.getName().equals("getOpenIdConfig2")) {
+                            } else if (method.getName().equals("getAbstractOpenIdConfig")) {
                                 softAssertions.assertThat(config.getClass())
                                         .isEqualTo(StroomOpenIdConfig.class);
 //                            } else if (method.getName().equals("getRepoConfig")) {

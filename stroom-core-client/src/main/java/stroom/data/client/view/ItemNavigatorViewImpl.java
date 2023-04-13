@@ -117,12 +117,6 @@ public class ItemNavigatorViewImpl extends ViewImpl implements ItemNavigatorView
                              final boolean isVisible) {
         button.setEnabled(isEnabled);
         button.setVisible(isVisible);
-        button.getElement()
-                .getStyle()
-                .setPaddingLeft(1, Style.Unit.PX);
-        button.getElement()
-                .getStyle()
-                .setPaddingRight(1, Style.Unit.PX);
     }
 
     private void refreshControls() {

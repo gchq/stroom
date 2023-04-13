@@ -32,6 +32,7 @@ import com.gwtplatform.mvp.client.ViewImpl;
 public class MoveDocumentViewImpl extends ViewImpl implements MoveDocumentView {
 
     private final Widget widget;
+
     @UiField
     SimplePanel foldersInner;
     @UiField

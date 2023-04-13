@@ -44,7 +44,9 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
+import javax.inject.Singleton;
 
+@Singleton
 public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
 
     private static final StatisticResource STATISTIC_RESOURCE = GWT.create(StatisticResource.class);
@@ -108,15 +110,16 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
         final List<StatisticField> prevFieldList = entityFromDb.getStatisticFields();
         final Set<CustomRollUpMask> prevMaskSet = entityFromDb.getCustomRollUpMasks();
 
-        presenter.write(entity);
+        final StatisticStoreDoc writtenEntity = presenter.write(entity);
 
         // if one of a select list of attributes has changed then warn the user
         // only need a null check on the engine name as the rest will never be
         // null
-        if (!prevType.equals(entity.getStatisticType())
-                || !prevRollUpType.equals(entity.getRollUpType()) || !prevInterval.equals(entity.getPrecision())
-                || !prevFieldList.equals(entity.getStatisticFields())
-                || !prevMaskSet.equals(entity.getCustomRollUpMasks())) {
+        if (!prevType.equals(writtenEntity.getStatisticType())
+                || !prevRollUpType.equals(writtenEntity.getRollUpType())
+                || !prevInterval.equals(writtenEntity.getPrecision())
+                || !prevFieldList.equals(writtenEntity.getStatisticFields())
+                || !prevMaskSet.equals(writtenEntity.getCustomRollUpMasks())) {
             ConfirmEvent.fireWarn(
                     this,
                     SafeHtmlUtils.fromTrustedString("Changes to the following attributes of a statistic data " +
@@ -126,7 +129,7 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
                             "change.<br/><br/>" + "Do you wish to continue?"),
                     result -> {
                         if (result) {
-                            doSave(presenter, entity);
+                            doSave(presenter, writtenEntity);
                         } else {
                             // Re-enable popup buttons.
                         }
@@ -134,7 +137,7 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
         } else {
             // user has changed some attributes we don't care about so just do
             // the save
-            doSave(presenter, entity);
+            doSave(presenter, writtenEntity);
         }
     }
 

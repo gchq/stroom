@@ -26,7 +26,7 @@ public class FSVolumeModule extends PluginModule {
     @Override
     protected void configure() {
         bind(ManageFSVolumesPresenter.class);
-        bind(ManageFSVolumesPresenter.ManageVolumesProxy.class).asEagerSingleton();
+//        bind(ManageFSVolumesPresenter.ManageVolumesProxy.class).asEagerSingleton();
 
         bindPresenterWidget(FSVolumeEditPresenter.class, FSVolumeEditPresenter.VolumeEditView.class,
                 FSVolumeEditViewImpl.class);

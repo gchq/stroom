@@ -16,15 +16,10 @@
 
 package stroom.data.grid.client;
 
-import stroom.data.grid.client.DataGridViewImpl.ColSettings;
-import stroom.data.grid.client.DataGridViewImpl.DefaultResources;
-import stroom.data.grid.client.DataGridViewImpl.Heading;
-
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -39,8 +34,7 @@ public class ResizeHandle<R> extends Widget {
     public static final int LINE_WIDTH = 2;
     public static final int HALF_LINE_WIDTH = LINE_WIDTH / 2;
 
-    private final DataGridViewImpl<R> dataGridView;
-    private final DataGrid<R> dataGrid;
+    private final MyDataGrid<R> dataGrid;
     private final List<ColSettings> colSettings;
     private final DefaultResources resources;
 
@@ -52,10 +46,10 @@ public class ResizeHandle<R> extends Widget {
     private int offset;
     private int startPos;
 
-    public ResizeHandle(final DataGridViewImpl<R> dataGridView, final DataGrid<R> dataGrid,
-                        final List<ColSettings> colSettings, final DefaultResources resources) {
+    public ResizeHandle(final MyDataGrid<R> dataGrid,
+                        final List<ColSettings> colSettings,
+                        final DefaultResources resources) {
         this.dataGrid = dataGrid;
-        this.dataGridView = dataGridView;
         this.colSettings = colSettings;
         this.resources = resources;
 
@@ -140,10 +134,14 @@ public class ResizeHandle<R> extends Widget {
         resizing = true;
     }
 
-    public void endResize(final NativeEvent event) {
-        int diff = event.getClientX() - startPos;
+    public int getDiff(final NativeEvent event) {
+        return event.getClientX() - startPos;
+    }
 
+    public void endResize(int diff) {
         if (diff != 0) {
+            resize(startPos + diff - offset);
+
             for (int i = colNo; i >= 0; i--) {
                 final Element col = headerRow.getChild(i).cast();
                 final int existingWidth = col.getOffsetWidth();
@@ -160,7 +158,7 @@ public class ResizeHandle<R> extends Widget {
                         // problem I get the column first and then use the
                         // setColumnWidth() method that takes a column instead
                         // of an index. The GWT control is not behaving consistently.
-                        dataGridView.resizeColumn(i, newWidth);
+                        dataGrid.resizeColumn(i, newWidth);
                     }
                 }
 
@@ -173,7 +171,7 @@ public class ResizeHandle<R> extends Widget {
                 }
             }
 
-            dataGridView.resizeTableToFitColumns();
+            dataGrid.resizeTableToFitColumns();
         }
 
         resizing = false;
@@ -183,9 +181,18 @@ public class ResizeHandle<R> extends Widget {
         Event.releaseCapture(getElement());
     }
 
+    public int getExistingWidth() {
+        final Element col = headerRow.getChild(colNo).cast();
+        return col.getOffsetWidth();
+    }
+
     public void resize(final NativeEvent event) {
+        int left = event.getClientX() - offset;
+        resize(left);
+    }
+
+    private void resize(final int left) {
         if (resizing) {
-            final int left = event.getClientX() - offset;
             getElement().getStyle().setLeft(left, Unit.PX);
             resizeLine.getStyle().setLeft(left + HALF_HANDLE_WIDTH - HALF_LINE_WIDTH, Unit.PX);
         }
@@ -197,6 +204,10 @@ public class ResizeHandle<R> extends Widget {
 
     private void setColNo(final int colNo) {
         this.colNo = colNo;
+    }
+
+    public int getColNo() {
+        return colNo;
     }
 
     public boolean isResizing() {

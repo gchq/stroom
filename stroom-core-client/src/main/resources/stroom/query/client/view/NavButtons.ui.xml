@@ -1,0 +1,8 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:b="urn:import:stroom.widget.button.client">
+    <b:ButtonPanel addStyleNames="NavButtons icon-button-group">
+        <b:InlineSvgButton ui:field="backward" title="Backward" enabled="false"/>
+        <b:InlineSvgButton ui:field="forward" title="Forward" enabled="false"/>
+    </b:ButtonPanel>
+</ui:UiBinder>

@@ -26,37 +26,34 @@
 }
 
 .cellTableFooter {
-	display: none;
-  border-top: 1px solid var(--border-color);
-  padding: 0px;
-  padding-left: 2px;
-  padding-right: 2px;
-  text-align: left;
-  
-  background-color: var(--app-background-color);
-  color: black;
-  overflow: hidden;
-  white-space: nowrap;
-  font-weight: normal;
+    display: none;
+    border-top: 1px solid var(--border-color);
+    padding: 0px;
+    padding-left: 2px;
+    padding-right: 2px;
+    text-align: left;
+
+    background-color: var(--app__background-color);
+    color: black;
+    overflow: hidden;
+    white-space: nowrap;
+    font-weight: normal;
 }
 
 .cellTableHeader {
-  border-bottom: 1px solid var(--border-color);
-  padding: 0px;
-  padding-left: 2px;
-  padding-right: 2px;
-  text-align: left;
-  background-color: var(--app-background-color);
-  color: black;
-  overflow: hidden;
-  white-space: nowrap;
-  font-weight: normal;
+    border-bottom: 1px solid var(--border-color);
+    padding: 0px;
+    padding-left: 2px;
+    padding-right: 2px;
+    text-align: left;
+    background-color: var(--app__background-color);
+    color: black;
+    overflow: hidden;
+    white-space: nowrap;
+    font-weight: normal;
 }
 
 .cellTableCell {
-  padding: 2px 3px;
-  overflow: hidden;
-  vertical-align: middle;
 }
 
 .cellTableFirstColumnFooter {
@@ -82,7 +79,7 @@
 }
 
 .cellTableSortableHeader:hover {
-  color: var(--selected-row-text-color);
+  color: var(--row__text-color--selected);
 }
 
 .cellTableSortedHeaderAscending {
@@ -93,38 +90,21 @@
 
 }
 
-.cellTableEvenRow {
-  background: var(--even-row-background-color);
+.cellTableEvenRow.
+.cellTableOddRow {
+    background: none;
 }
 
 .cellTableEvenRowCell {
 }
 
-.cellTableOddRow {
-  background: var(--odd-row-background-color);
-}
-
 .cellTableOddRowCell {
-}
-
-.cellTableHoveredRow {
-  background: var(--hovered-row-background-color);
-}
-
-.cellTableHoveredRowCell {
 }
 
 .cellTableKeyboardSelectedRow {
 }
 
 .cellTableKeyboardSelectedRowCell {
-}
-
-.cellTableSelectedRow {
-  height: auto;
-  overflow: auto;
-  background: var(--selected-row-background-color) none repeat scroll 0 0 !important;
-  color: var(--selected-row-text-color) !important;
 }
 
 .cellTableSelectedRowCell {
@@ -138,4 +118,22 @@
 
 .cellTableLoading {
   margin: 30px;
+}
+
+.cellTableSelectedRow {
+	background-color: var(--row__background-color--selected);
+	color: var(--row__text-color--selected);
+}
+
+.cellTableSelectedRow:hover {
+    background-color: var(--row__background-color--selected--hovered);
+}
+
+.cellTableOddRow:focus-within,
+.cellTableEvenRow:focus-within {
+    background-color: var(--row__background-color--focussed);
+}
+
+.cellTableSelectedRow:focus-within {
+    background-color: var(--row__background-color--selected--focussed);
 }

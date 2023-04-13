@@ -18,6 +18,7 @@
 package stroom.dictionary.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.data.grid.client.WrapperView;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
@@ -27,7 +28,6 @@ import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.presenter.EntityChooser;
-import stroom.node.client.view.WrapperView;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
@@ -133,12 +133,13 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
     }
 
     @Override
-    public void write(final DictionaryDoc dictionary) {
+    public DictionaryDoc write(final DictionaryDoc dictionary) {
         if (imports.size() == 0) {
             dictionary.setImports(null);
         } else {
             dictionary.setImports(imports);
         }
+        return dictionary;
     }
 
     @Override

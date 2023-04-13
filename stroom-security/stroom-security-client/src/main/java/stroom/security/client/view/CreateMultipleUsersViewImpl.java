@@ -18,7 +18,7 @@
 package stroom.security.client.view;
 
 import stroom.security.client.presenter.CreateMultipleUsersPresenter.CreateMultipleUsersView;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.popup.client.view.HideRequestUiHandlers;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -29,7 +29,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class CreateMultipleUsersViewImpl
-        extends ViewWithUiHandlers<PopupUiHandlers>
+        extends ViewWithUiHandlers<HideRequestUiHandlers>
         implements CreateMultipleUsersView {
 
     private final Widget widget;

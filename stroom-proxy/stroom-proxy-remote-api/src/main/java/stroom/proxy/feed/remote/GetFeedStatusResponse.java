@@ -42,12 +42,16 @@ public class GetFeedStatusResponse extends RemoteResponse {
         this.stroomStatusCode = stroomStatusCode;
     }
 
-    public static GetFeedStatusResponse createOKRecieveResponse() {
-        return new GetFeedStatusResponse();
+    public static GetFeedStatusResponse createOKResponse(FeedStatus feedStatus) {
+        return new GetFeedStatusResponse(feedStatus, null);
+    }
+
+    public static GetFeedStatusResponse createOKReceiveResponse() {
+        return createOKResponse(FeedStatus.Receive);
     }
 
     public static GetFeedStatusResponse createOKDropResponse() {
-        return new GetFeedStatusResponse(FeedStatus.Drop, null);
+        return createOKResponse(FeedStatus.Drop);
     }
 
     public static GetFeedStatusResponse createFeedRequiredResponse() {

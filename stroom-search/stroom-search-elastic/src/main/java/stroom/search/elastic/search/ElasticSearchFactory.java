@@ -1,13 +1,12 @@
 package stroom.search.elastic.search;
 
-import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dictionary.api.WordListProvider;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.Coprocessors;
-import stroom.query.common.v2.ErrorConsumer;
+import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.search.elastic.ElasticIndexCache;
@@ -67,7 +66,7 @@ public class ElasticSearchFactory {
                                           final DateTimeSettings dateTimeSettings,
                                           final ExpressionOperator expression,
                                           final Coprocessors coprocessors,
-                                          final ElasticSearchResultCollector resultCollector,
+                                          final ResultStore resultStore,
                                           final TaskContext parentContext,
                                           final AtomicLong hitCount,
                                           final StoredDataQueue storedDataQueue) {
@@ -93,7 +92,7 @@ public class ElasticSearchFactory {
                         getQuery(expression, indexFieldsMap, dateTimeSettings, now),
                         getHighlighter(),
                         coprocessors,
-                        resultCollector,
+                        resultStore,
                         storedDataQueue,
                         coprocessors.getErrorConsumer(),
                         hitCount));

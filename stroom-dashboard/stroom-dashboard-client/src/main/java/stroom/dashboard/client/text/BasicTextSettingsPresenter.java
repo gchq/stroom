@@ -17,6 +17,7 @@
 package stroom.dashboard.client.text;
 
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
+import stroom.dashboard.client.main.BasicSettingsView;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
@@ -27,6 +28,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.Field;
 import stroom.security.shared.DocumentPermissionNames;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -38,7 +40,7 @@ import java.util.Objects;
 
 public class BasicTextSettingsPresenter
         extends BasicSettingsTabPresenter<BasicTextSettingsPresenter.BasicTextSettingsView>
-        implements BasicTextSettingsUiHandlers {
+        implements BasicTextSettingsUiHandlers, Focus {
 
     private final EntityDropDownPresenter pipelinePresenter;
     private List<Component> tableList;
@@ -56,6 +58,11 @@ public class BasicTextSettingsPresenter
 
         view.setPipelineView(pipelinePresenter.getView());
         view.setUiHandlers(this);
+    }
+
+    @Override
+    public void focus() {
+        getView().focus();
     }
 
     private void setTableList(final List<Component> list) {
@@ -104,13 +111,13 @@ public class BasicTextSettingsPresenter
     }
 
     @Override
-    public void read(final ComponentConfig componentData) {
-        super.read(componentData);
+    public void read(final ComponentConfig componentConfig) {
+        super.read(componentConfig);
 
         final List<Component> list = getComponents().getSortedComponentsByType(TablePresenter.TYPE.getId());
         setTableList(list);
 
-        TextComponentSettings settings = (TextComponentSettings) componentData.getSettings();
+        TextComponentSettings settings = (TextComponentSettings) componentConfig.getSettings();
         final TextComponentSettings.Builder builder = settings.copy();
         setTableId(settings.getTableId());
 
@@ -224,7 +231,7 @@ public class BasicTextSettingsPresenter
     }
 
     public interface BasicTextSettingsView extends
-            BasicSettingsTabPresenter.SettingsView,
+            BasicSettingsView,
             HasUiHandlers<BasicTextSettingsUiHandlers> {
 
         void setTableList(List<Component> tableList);

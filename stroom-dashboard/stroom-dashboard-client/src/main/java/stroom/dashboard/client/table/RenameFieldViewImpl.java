@@ -16,7 +16,6 @@
 
 package stroom.dashboard.client.table;
 
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -44,7 +43,7 @@ public class RenameFieldViewImpl extends ViewImpl implements RenameFieldPresente
 
     @Override
     public void focus() {
-        Scheduler.get().scheduleDeferred(() -> name.setFocus(true));
+        name.setFocus(true);
     }
 
     @Override

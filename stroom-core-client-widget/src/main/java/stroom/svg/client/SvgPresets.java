@@ -71,7 +71,7 @@ public final class SvgPresets {
     public static final Preset MOVE = disabled("svgIcon-move", "Move");
     public static final Preset NEW_ITEM = enabled("svgIcon-add", "New");
     public static final Preset NODES = enabled("svgIcon-nodes", "Nodes");
-    public static final Preset OPEN = disabled("svgIcon-edit", "Open");
+    public static final Preset OPEN = disabled("svgIcon-open", "Open");
     public static final Preset OPERATOR = enabled("svgIcon-operator", "Add Operator");
     public static final Preset PASSWORD = enabled("svgIcon-password", "Change Password");
     public static final Preset PROCESS = disabled("svgIcon-process", "Process");
@@ -97,6 +97,7 @@ public final class SvgPresets {
     public static final Preset USER_DISABLED = enabled("svgIcon-user-disabled", "User");
     public static final Preset USER_GROUP = enabled("svgIcon-users", "User Group");
     public static final Preset USER_GROUP_DISABLED = enabled("svgIcon-users-disabled", "User Group");
+    public static final Preset FIND = enabled("svgIcon-find", "Find");
     public static final Preset VOLUMES = enabled("svgIcon-volumes", "Volumes");
 
     public static final Preset COLLAPSE_UP = enabled("svgIcon-collapse-up", "Collapse");

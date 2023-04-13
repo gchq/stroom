@@ -17,7 +17,6 @@
 
 package stroom.search.elastic.client.presenter;
 
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
@@ -43,12 +42,10 @@ public class ElasticIndexPresenter extends DocumentEditTabPresenter<LinkTabPanel
     public ElasticIndexPresenter(
             final EventBus eventBus,
             final LinkTabPanelView view,
-            final RestFactory restFactory,
             final Provider<ElasticIndexSettingsPresenter> indexSettingsPresenter,
             final Provider<ElasticIndexFieldListPresenter> indexFieldListPresenter,
-            final ClientSecurityContext securityContext
-    ) {
-        super(eventBus, view, securityContext, restFactory);
+            final ClientSecurityContext securityContext) {
+        super(eventBus, view, securityContext);
 
         tabContentProvider.setDirtyHandler(event -> {
             if (event.isDirty()) {
@@ -81,8 +78,8 @@ public class ElasticIndexPresenter extends DocumentEditTabPresenter<LinkTabPanel
     }
 
     @Override
-    protected void onWrite(final ElasticIndexDoc index) {
-        tabContentProvider.write(index);
+    protected ElasticIndexDoc onWrite(final ElasticIndexDoc index) {
+        return tabContentProvider.write(index);
     }
 
     @Override

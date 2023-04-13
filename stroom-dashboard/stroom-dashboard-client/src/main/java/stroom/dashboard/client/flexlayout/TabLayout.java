@@ -16,30 +16,34 @@
 
 package stroom.dashboard.client.flexlayout;
 
-import stroom.core.client.StroomStyleNames;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.shared.DashboardConfig.TabVisibility;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
+import stroom.svg.client.SvgImages;
+import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.view.LayerContainerImpl;
 import stroom.widget.tab.client.view.LinkTabBar;
+import stroom.widget.util.client.MouseUtil;
 
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
+import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HandlerRegistrations;
 import com.gwtplatform.mvp.client.LayerContainer;
 
 public class TabLayout extends Composite implements RequiresResize, ProvidesResize {
+
+    private final EventBus eventBus;
     private final TabLayoutConfig tabLayoutConfig;
     private final FlexLayoutChangeHandler changeHandler;
-    private final Button settings;
-    private final Button close;
+    private final InlineSvgButton settings;
+    private final InlineSvgButton close;
     private final LinkTabBar tabBar;
     private final LayerContainer layerContainer;
     private final HandlerRegistrations handlerRegistrations = new HandlerRegistrations();
@@ -47,41 +51,51 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
     private TabVisibility tabVisibility = TabVisibility.SHOW_ALL;
     private boolean tabsVisible = true;
 
-    public TabLayout(final TabLayoutConfig tabLayoutConfig, final FlexLayoutChangeHandler changeHandler) {
+    public TabLayout(final EventBus eventBus,
+                     final TabLayoutConfig tabLayoutConfig,
+                     final FlexLayoutChangeHandler changeHandler) {
+        this.eventBus = eventBus;
+
         this.tabLayoutConfig = tabLayoutConfig;
         this.changeHandler = changeHandler;
 
-        final FlowPanel panel = new FlowPanel();
-        panel.addStyleName("tabLayout");
-        initWidget(panel);
+        tabBar = new LinkTabBar();
+        tabBar.addStyleName("dock-max tabLayout-tabBar");
 
-        final FlowPanel contentOuter = new FlowPanel();
-        contentOuter.setStyleName("tabLayout-contentOuter");
-        panel.add(contentOuter);
-
-        final FlowPanel contentInner = new FlowPanel();
-        contentInner.setStyleName("tabLayout-contentInner" + " " + StroomStyleNames.STROOM_CONTENT);
-        contentOuter.add(contentInner);
+        final FlowPanel tabContainer = new FlowPanel();
+        tabContainer.setStyleName("tabLayout-tabContainer");
+        tabContainer.add(tabBar);
 
         final FlowPanel barOuter = new FlowPanel();
         barOuter.setStyleName("tabLayout-barOuter");
+        barOuter.add(tabContainer);
+
+        final FlowPanel contentInner = new FlowPanel();
+        contentInner.setStyleName("tabLayout-contentInner");
         contentInner.add(barOuter);
 
-        tabBar = new LinkTabBar();
-        tabBar.addStyleName("dock-max tabLayout-barInner");
-        barOuter.add(tabBar);
+        final FlowPanel contentOuter = new FlowPanel();
+        contentOuter.setStyleName("tabLayout-contentOuter dashboard-panel");
+        contentOuter.add(contentInner);
+
+        final FlowPanel panel = new FlowPanel();
+        panel.addStyleName("tabLayout");
+        panel.add(contentOuter);
+        initWidget(panel);
 
         final FlowPanel buttons = new FlowPanel();
-        buttons.setStyleName("dock-min button-container tabLayout-buttons");
+        buttons.setStyleName("dock-min button-container icon-button-group tabLayout-buttons");
         barOuter.add(buttons);
 
-        settings = new Button();
-        settings.setStyleName("fa-button face tabLayout-settingsButton");
+        settings = new InlineSvgButton();
+        settings.addStyleName("tabLayout-settingsButton");
+        settings.setSvg(SvgImages.MONO_SETTINGS);
         settings.setTitle("Settings");
         buttons.add(settings);
 
-        close = new Button();
-        close.setStyleName("fa-button face tabLayout-closeButton");
+        close = new InlineSvgButton();
+        close.addStyleName("tabLayout-closeButton");
+        close.setSvg(SvgImages.MONO_CLOSE);
         close.setTitle("Close");
         buttons.add(close);
 
@@ -103,9 +117,9 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
             getTabLayoutConfig().setSelected(index);
             changeHandler.onDirty();
         }));
-
+        handlerRegistrations.add(tabBar.addShowMenuHandler(eventBus::fireEvent));
         handlerRegistrations.add(settings.addDomHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 final TabData selectedTab = tabBar.getSelectedTab();
                 if (selectedTab instanceof Component) {
                     final Component component = (Component) selectedTab;
@@ -115,7 +129,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         }, ClickEvent.getType()));
 
         handlerRegistrations.add(close.addDomHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 final TabData selectedTab = tabBar.getSelectedTab();
                 if (selectedTab instanceof Component) {
                     final Component component = (Component) selectedTab;

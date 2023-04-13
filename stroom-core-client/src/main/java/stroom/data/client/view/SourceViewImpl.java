@@ -1,12 +1,6 @@
 package stroom.data.client.view;
 
-import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
 import stroom.data.client.presenter.SourcePresenter.SourceView;
-import stroom.data.client.presenter.TextPresenter.TextView;
-import stroom.svg.client.Preset;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -15,7 +9,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 public class SourceViewImpl extends ViewImpl implements SourceView {
@@ -37,35 +31,16 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
     @UiField
     SimplePanel navigatorContainer;
     @UiField
-    ButtonPanel buttonPanel;
-
-    @UiField
     SimplePanel progressBarPanel;
 
     @Inject
-    public SourceViewImpl(final EventBus eventBus,
-                          final Binder binder) {
+    public SourceViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-    }
-
-    @Override
-    public void addToSlot(final Object slot, final Widget content) {
-
     }
 
     @Override
     public Widget asWidget() {
         return widget;
-    }
-
-    @Override
-    public void removeFromSlot(final Object slot, final Widget content) {
-
-    }
-
-    @Override
-    public void setInSlot(final Object slot, final Widget content) {
-
     }
 
     @Override
@@ -82,12 +57,12 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
     }
 
     @Override
-    public void setTextView(final TextView textView) {
+    public void setTextView(final View textView) {
         container.add(textView.asWidget());
     }
 
     @Override
-    public void setNavigatorView(final CharacterNavigatorView characterNavigatorView) {
+    public void setNavigatorView(final View characterNavigatorView) {
         if (characterNavigatorView != null) {
             navigatorContainer.setWidget(characterNavigatorView.asWidget());
         } else {
@@ -96,17 +71,12 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
     }
 
     @Override
-    public void setProgressView(final ProgressView progressView) {
+    public void setProgressView(final View progressView) {
         if (progressView != null) {
             progressBarPanel.setWidget(progressView.asWidget());
         } else {
             progressBarPanel.clear();
         }
-    }
-
-    @Override
-    public ButtonView addButton(final Preset preset) {
-        return buttonPanel.addButton(preset);
     }
 
     public interface Binder extends UiBinder<Widget, SourceViewImpl> {

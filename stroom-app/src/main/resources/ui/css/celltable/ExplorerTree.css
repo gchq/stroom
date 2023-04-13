@@ -17,17 +17,37 @@
     width: 100%;
  }
 
-.explorerTree .cellTableCell {
+.explorerTree-container {
+    overflow: auto;
+    display: flex;
+    flex-grow: 1;
+    height: 0;
 }
 
-.explorerTree .cellTableEvenRow {
-    background: none;
+.explorerCell {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    gap: var(--row__gap--horizontal);
 }
 
-.explorerTree .cellTableOddRow {
-    background: none;
+.explorerCell-expander {
+	display: flex;
 }
 
-.explorerTree .cellTableHoveredRow {
-  background: var(--hovered-row-background-color);
+.explorerCell-expander svg {
+    width: .7rem;
+    height: .7rem;
+}
+
+.explorerCell-icon {
+	display: flex;
+}
+
+.explorerCell-text {
+    white-space: nowrap;
+	padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
+	vertical-align: middle;
+    min-height: 16px;
+	white-space: nowrap;
 }

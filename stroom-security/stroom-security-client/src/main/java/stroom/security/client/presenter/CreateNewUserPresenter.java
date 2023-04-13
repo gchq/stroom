@@ -20,11 +20,12 @@ package stroom.security.client.presenter;
 import stroom.security.client.presenter.CreateNewUserPresenter.CreateNewUserView;
 import stroom.util.shared.SimpleUserName;
 import stroom.util.shared.UserName;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.popup.client.view.DefaultHideRequestUiHandlers;
+import stroom.widget.popup.client.view.HideRequestUiHandlers;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -40,21 +41,18 @@ public class CreateNewUserPresenter extends MyPresenterWidget<CreateNewUserView>
         super(eventBus, view);
     }
 
-    public void show(final PopupUiHandlers popupUiHandlers) {
-        getView().setUiHandlers(popupUiHandlers);
+    public void show(final HidePopupRequestEvent.Handler handler) {
+        getView().setUiHandlers(new DefaultHideRequestUiHandlers(this));
+        getView().clear();
 
         final PopupSize popupSize = PopupSize.resizableX(600);
-        ShowPopupEvent.fire(this,
-                this,
-                PopupType.OK_CANCEL_DIALOG,
-                popupSize,
-                "Add External Identity Provider User Identity",
-                popupUiHandlers);
-        getView().focus();
-    }
-
-    public void hide() {
-        HidePopupEvent.fire(this, this);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Add External Identity Provider User Identity")
+                .onShow(e -> getView().focus())
+                .onHideRequest(handler)
+                .fire();
     }
 
     public UserName getUserName() {
@@ -64,7 +62,11 @@ public class CreateNewUserPresenter extends MyPresenterWidget<CreateNewUserView>
                 getView().getFullName());
     }
 
-    public interface CreateNewUserView extends View, HasUiHandlers<PopupUiHandlers> {
+
+    // --------------------------------------------------------------------------------
+
+
+    public interface CreateNewUserView extends View, HasUiHandlers<HideRequestUiHandlers> {
 
         String getUserIdentity();
 
@@ -73,5 +75,7 @@ public class CreateNewUserPresenter extends MyPresenterWidget<CreateNewUserView>
         String getFullName();
 
         void focus();
+
+        void clear();
     }
 }

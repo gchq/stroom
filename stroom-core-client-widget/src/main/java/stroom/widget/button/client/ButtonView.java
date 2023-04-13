@@ -18,8 +18,9 @@ package stroom.widget.button.client;
 
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.dom.client.HasMouseDownHandlers;
+import com.google.gwt.user.client.ui.Focus;
 
-public interface ButtonView extends HasClickHandlers, HasMouseDownHandlers {
+public interface ButtonView extends HasClickHandlers, HasMouseDownHandlers, Focus {
 
     boolean isEnabled();
 

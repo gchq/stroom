@@ -3,10 +3,10 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <g:MySplitLayoutPanel unit="PX" vSplits="0.5" styleName="max">
         <g:north size="200">
-            <g:SimplePanel ui:field="table" styleName="max stroom-content stroom-border-bottom"/>
+            <g:SimplePanel ui:field="table" styleName="max stroom-border-bottom"/>
         </g:north>
         <g:center>
-            <g:SimplePanel ui:field="expression" styleName="max stroom-content stroom-border-top"/>
+            <g:SimplePanel ui:field="expression" styleName="max stroom-border-top"/>
         </g:center>
     </g:MySplitLayoutPanel>
 </ui:UiBinder> 

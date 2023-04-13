@@ -1,7 +1,5 @@
 package stroom.config.global.impl;
 
-import stroom.security.openid.api.AbstractOpenIdConfig;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
@@ -150,24 +148,6 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.config.common.UiUriConfig.class);
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
-    stroom.dashboard.impl.DashboardConfig getDashboardConfig(
-            final ConfigMapper configMapper) {
-        return configMapper.getConfigObject(
-                stroom.dashboard.impl.DashboardConfig.class);
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
-    stroom.dashboard.impl.datasource.DataSourceUrlConfig getDataSourceUrlConfig(
-            final ConfigMapper configMapper) {
-        return configMapper.getConfigObject(
-                stroom.dashboard.impl.datasource.DataSourceUrlConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -479,19 +459,19 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.search.elastic.ElasticConfig getElasticConfig(
+    stroom.search.elastic.ElasticClientConfig getElasticClientConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
-                stroom.search.elastic.ElasticConfig.class);
+                stroom.search.elastic.ElasticClientConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.search.elastic.ElasticClientConfig getElasticClientConfig(
+    stroom.search.elastic.ElasticConfig getElasticConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
-                stroom.search.elastic.ElasticClientConfig.class);
+                stroom.search.elastic.ElasticConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -647,11 +627,11 @@ public class ConfigProvidersModule extends AbstractModule {
                 stroom.security.impl.StroomOpenIdConfig.class);
     }
 
-    // Binding StroomOpenIdConfig to additional interface OpenIdConfig
+    // Binding StroomOpenIdConfig to additional interface AbstractOpenIdConfig
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    AbstractOpenIdConfig getOpenIdConfig2(
+    stroom.security.openid.api.AbstractOpenIdConfig getAbstractOpenIdConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.security.impl.StroomOpenIdConfig.class);

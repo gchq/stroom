@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -110,72 +111,64 @@ public class TableResult extends Result {
         return rows.size() + " rows";
     }
 
-    public static Builder builder() {
-        return new Builder();
+    public static TableResultBuilderImpl builder() {
+        return new TableResultBuilderImpl();
     }
 
-    public Builder copy() {
-        return new Builder(this);
+    public TableResultBuilderImpl copy() {
+        return new TableResultBuilderImpl(this);
     }
 
     /**
      * Builder for constructing a {@link TableResult tableResult}
      */
-    public static final class Builder extends Result.Builder<TableResult, Builder> {
+    public static final class TableResultBuilderImpl
+            extends AbstractResultBuilder<TableResultBuilder>
+            implements TableResultBuilder {
 
         private List<Field> fields;
         private List<Row> rows;
         private OffsetRange resultRange;
         private Integer totalResults;
 
-        private Builder() {
-            super();
+        private TableResultBuilderImpl() {
+            rows = new ArrayList<>();
         }
 
-        private Builder(final TableResult tableResult) {
+        private TableResultBuilderImpl(final TableResult tableResult) {
             super(tableResult);
             fields = tableResult.fields;
-            rows = tableResult.rows;
+            rows = new ArrayList<>(tableResult.rows);
             resultRange = tableResult.resultRange;
             totalResults = tableResult.totalResults;
         }
 
-//        /**
-//         * @param values add fields to our table
-//         * @return The {@link Builder}, enabling method chaining
-//         */
-//        public Builder addFields(final Field... values) {
-//            this.fields.addAll(Arrays.asList(values));
-//            return this;
-//        }
-//
-//        /**
-//         * @param values add rows of data to our table
-//         * @return The {@link Builder}, enabling method chaining
-//         */
-//        public Builder addRows(final Row... values) {
-//            this.rows.addAll(Arrays.asList(values));
-//            return this;
-//        }
-
-
-        public Builder fields(final List<Field> fields) {
+        @Override
+        public TableResultBuilderImpl fields(final List<Field> fields) {
             this.fields = fields;
             return this;
         }
 
-        public Builder rows(final List<Row> rows) {
-            this.rows = rows;
+        @Override
+        public TableResultBuilder addRow(final Row row) {
+            this.rows.add(row);
             return this;
         }
 
-        public Builder resultRange(final OffsetRange resultRange) {
+        @Override
+        public TableResultBuilder resultRange(final OffsetRange resultRange) {
             this.resultRange = resultRange;
             return this;
         }
 
         @Override
-        protected Builder self() {
+        public TableResultBuilder totalResults(final Integer totalResults) {
+            this.totalResults = totalResults;
+            return this;
+        }
+
+        @Override
+        protected TableResultBuilderImpl self() {
             return this;
         }
 

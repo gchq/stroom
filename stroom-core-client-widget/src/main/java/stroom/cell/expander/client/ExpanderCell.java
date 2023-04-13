@@ -16,11 +16,13 @@
 
 package stroom.cell.expander.client;
 
+import stroom.svg.client.SvgImages;
 import stroom.util.shared.Expander;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
@@ -37,17 +39,40 @@ import java.util.Set;
 
 public class ExpanderCell extends AbstractCell<Expander> {
 
-    private static final Set<String> ENABLED_EVENTS = new HashSet<>(Arrays.asList("click", "keydown"));
+    public static final int DEFAULT_INITIAL_OFFSET_PX = 5;
+    private static final int COLUMN_WIDTH = 30;
+    private static final int COLUMN_INSET_PX = COLUMN_WIDTH / 2;
+    private static final Set<String> ENABLED_EVENTS = new HashSet<>(
+            Arrays.asList(BrowserEvents.CLICK, BrowserEvents.KEYDOWN));
     private static volatile Template template;
+    private final int initialOffset;
 
     public ExpanderCell() {
+        this(0);
+    }
+
+    public ExpanderCell(final int initialOffset) {
         super(ENABLED_EVENTS);
+
+        this.initialOffset = initialOffset;
+
         if (template == null) {
             synchronized (ExpanderCell.class) {
                 if (template == null) {
                     template = GWT.create(Template.class);
                 }
             }
+        }
+    }
+
+    /**
+     * Get the maximum column width required to fit expander icons for all levels
+     */
+    public static int getColumnWidth(final int maxDepth) {
+        if (maxDepth >= 0) {
+            return COLUMN_INSET_PX * maxDepth + COLUMN_WIDTH;
+        } else {
+            return 0;
         }
     }
 
@@ -79,22 +104,22 @@ public class ExpanderCell extends AbstractCell<Expander> {
     public void render(final Context context, final Expander value, final SafeHtmlBuilder sb) {
         if (value != null) {
             final int depth = value.getDepth();
-            final int padding = depth * 10;
+            final int padding = depth * COLUMN_INSET_PX + initialOffset;
             final SafeStyles style = SafeStylesUtils.fromTrustedString("padding-left:" + padding + "px;");
             String className = "";
-            SafeHtml icon = null;
 
+            SafeHtml expanderIcon;
             if (value.isLeaf()) {
-                icon = template.icon("expanderCell-expanderIcon explorerCell-treeLeaf");
+                expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_DOT);
             } else if (value.isExpanded()) {
-                icon = template.icon("expanderCell-expanderIcon explorerCell-treeOpen");
-                className = "expanderCell-active";
+                expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_DOWN);
+                className = " active";
             } else {
-                icon = template.icon("expanderCell-expanderIcon explorerCell-treeClosed");
-                className = "expanderCell-active";
+                expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_RIGHT);
+                className = " active";
             }
 
-            sb.append(template.outerDiv(className, style, icon));
+            sb.append(template.expander("expanderCell", "expanderIcon" + className, style, expanderIcon));
 
         } else {
             sb.append(SafeHtmlUtils.fromSafeConstant("<br/>"));
@@ -103,10 +128,7 @@ public class ExpanderCell extends AbstractCell<Expander> {
 
     interface Template extends SafeHtmlTemplates {
 
-        @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
-        SafeHtml outerDiv(String className, SafeStyles style, SafeHtml icon);
-
-        @Template("<div class=\"{0}\"></div>")
-        SafeHtml icon(String iconClass);
+        @Template("<div class=\"{0}\" style=\"{2}\"><div class=\"{1}\">{3}</div></div>")
+        SafeHtml expander(String expanderClass, String iconClass, SafeStyles styles, SafeHtml icon);
     }
 }

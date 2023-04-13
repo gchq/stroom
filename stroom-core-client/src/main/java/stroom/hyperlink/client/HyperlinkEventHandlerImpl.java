@@ -5,6 +5,7 @@ import stroom.annotation.client.ShowAnnotationEvent;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.EventId;
 import stroom.core.client.ContentManager;
+import stroom.core.client.event.CloseContentEvent;
 import stroom.data.client.presenter.DataViewType;
 import stroom.data.client.presenter.DisplayMode;
 import stroom.data.client.presenter.ShowDataEvent;
@@ -20,12 +21,10 @@ import stroom.security.shared.UserNameResource;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.TextRange;
 import stroom.util.shared.UserName;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -254,31 +253,19 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
         final PopupSize popupSize = PopupSize.resizable(800, 600);
         final IFramePresenter presenter = iFramePresenterProvider.get();
         final HandlerRegistration handlerRegistration = presenter.addDirtyHandler(event1 ->
-                RenamePopupEvent.fire(this, presenter, presenter.getLabel()));
+                RenamePopupEvent.builder(presenter).caption(presenter.getLabel()).fire());
         presenter.setUrl(hyperlink.getHref());
         presenter.setCustomTitle(customTitle);
 
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                HidePopupEvent.fire(HyperlinkEventHandlerImpl.this, presenter, autoClose, ok);
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                handlerRegistration.removeHandler();
-                presenter.close();
-            }
-        };
-
-        ShowPopupEvent.fire(this,
-                presenter,
-                PopupType.CLOSE_DIALOG,
-                null,
-                popupSize,
-                presenter.getLabel(),
-                popupUiHandlers,
-                null);
+        ShowPopupEvent.builder(presenter)
+                .popupType(PopupType.CLOSE_DIALOG)
+                .popupSize(popupSize)
+                .caption(presenter.getLabel())
+                .onHide(e -> {
+                    handlerRegistration.removeHandler();
+                    presenter.close();
+                })
+                .fire();
     }
 
     private void openTab(final Hyperlink hyperlink, final String customTitle) {
@@ -286,16 +273,17 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
         presenter.setUrl(hyperlink.getHref());
         presenter.setCustomTitle(customTitle);
         presenter.setIcon(hyperlink.getIcon());
+        final CloseContentEvent.Handler handler = event ->
+                ConfirmEvent.fire(this,
+                        "Are you sure you want to close?",
+                        res -> {
+                            if (res) {
+                                presenter.close();
+                            }
+                            event.getCallback().closeTab(res);
+                        });
         contentManager.open(
-                callback ->
-                        ConfirmEvent.fire(this,
-                                "Are you sure you want to close?",
-                                res -> {
-                                    if (res) {
-                                        presenter.close();
-                                    }
-                                    callback.closeTab(res);
-                                }),
+                handler,
                 presenter,
                 presenter);
     }

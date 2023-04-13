@@ -16,7 +16,7 @@
 
 package stroom.folder.client;
 
-import stroom.data.client.presenter.ClassificationWrappedMetaPresenter;
+import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentTabData;
@@ -53,7 +53,7 @@ public class FolderPresenter extends LinkTabPanelPresenter implements DocumentTa
     public FolderPresenter(final EventBus eventBus,
                            final ClientSecurityContext securityContext,
                            final LinkTabPanelView view,
-                           final Provider<ClassificationWrappedMetaPresenter> streamPresenterProvider,
+                           final Provider<MetaPresenter> streamPresenterProvider,
                            final Provider<ProcessorPresenter> processorPresenterProvider,
                            final Provider<ProcessorTaskPresenter> streamTaskPresenterProvider) {
         super(eventBus, view);

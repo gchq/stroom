@@ -18,6 +18,7 @@ package stroom.dashboard.client.query;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
+import stroom.dashboard.client.main.BasicSettingsView;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.QueryComponentSettings;
@@ -27,6 +28,7 @@ import stroom.explorer.shared.StandardTagNames;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.ModelStringUtil;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
@@ -34,7 +36,8 @@ import com.gwtplatform.mvp.client.View;
 import java.util.Objects;
 
 public class BasicQuerySettingsPresenter
-        extends BasicSettingsTabPresenter<BasicQuerySettingsPresenter.BasicQuerySettingsView> {
+        extends BasicSettingsTabPresenter<BasicQuerySettingsPresenter.BasicQuerySettingsView>
+        implements Focus {
 
     private final EntityDropDownPresenter dataSourceSelectionPresenter;
 
@@ -53,6 +56,11 @@ public class BasicQuerySettingsPresenter
 //        dataSourceSelectionPresenter.setSelectionTypes(types);
     }
 
+    @Override
+    public void focus() {
+        getView().focus();
+    }
+
     DocRef getDataSource() {
         return dataSourceSelectionPresenter.getSelectedEntityReference();
     }
@@ -62,10 +70,10 @@ public class BasicQuerySettingsPresenter
     }
 
     @Override
-    public void read(final ComponentConfig componentData) {
-        super.read(componentData);
+    public void read(final ComponentConfig componentConfig) {
+        super.read(componentConfig);
 
-        final QueryComponentSettings settings = (QueryComponentSettings) componentData.getSettings();
+        final QueryComponentSettings settings = (QueryComponentSettings) componentConfig.getSettings();
         setDataSource(settings.getDataSource());
 
         Automate automate = settings.getAutomate();
@@ -133,7 +141,7 @@ public class BasicQuerySettingsPresenter
         return !equal;
     }
 
-    public interface BasicQuerySettingsView extends BasicSettingsTabPresenter.SettingsView {
+    public interface BasicQuerySettingsView extends BasicSettingsView {
 
         void setDataSourceSelectionView(View view);
 

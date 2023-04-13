@@ -23,6 +23,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.Coprocessors;
+import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.search.extraction.ExpressionFilter;
@@ -73,7 +74,7 @@ class ElasticClusterSearchTaskHandler {
                        final long now,
                        final DateTimeSettings dateTimeSettings,
                        final Coprocessors coprocessors,
-                       final ElasticSearchResultCollector resultCollector) {
+                       final ResultStore resultStore) {
         SearchProgressLog.increment(queryKey, SearchPhase.CLUSTER_SEARCH_TASK_HANDLER_EXEC);
         this.taskContext = taskContext;
         securityContext.useAsRead(() -> {
@@ -88,7 +89,7 @@ class ElasticClusterSearchTaskHandler {
                         dateTimeSettings,
                         query,
                         coprocessors,
-                        resultCollector);
+                        resultStore);
             }
         });
     }
@@ -99,7 +100,7 @@ class ElasticClusterSearchTaskHandler {
                           final DateTimeSettings dateTimeSettings,
                           final Query query,
                           final Coprocessors coprocessors,
-                          final ElasticSearchResultCollector resultCollector) {
+                          final ResultStore resultStore) {
         taskContext.info(() -> "Searching...");
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
 
@@ -124,7 +125,7 @@ class ElasticClusterSearchTaskHandler {
                     dateTimeSettings,
                     expression,
                     coprocessors,
-                    resultCollector,
+                    resultStore,
                     taskContext,
                     hitCount,
                     storedDataQueue);

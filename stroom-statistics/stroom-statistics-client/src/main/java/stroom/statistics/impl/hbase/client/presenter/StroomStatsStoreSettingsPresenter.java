@@ -29,7 +29,7 @@ import stroom.statistics.impl.hbase.shared.EventStoreTimeIntervalEnum;
 import stroom.statistics.impl.hbase.shared.StatisticRollUpType;
 import stroom.statistics.impl.hbase.shared.StatisticType;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
@@ -76,21 +76,22 @@ public class StroomStatsStoreSettingsPresenter
         if (stroomStatsStoreEntity != null) {
             getView().getDescription().setText(stroomStatsStoreEntity.getDescription());
             getView().setStatisticType(stroomStatsStoreEntity.getStatisticType());
-            getView().getEnabled().setBooleanValue(stroomStatsStoreEntity.isEnabled());
+            getView().getEnabled().setValue(stroomStatsStoreEntity.isEnabled());
             getView().setPrecision(stroomStatsStoreEntity.getPrecision());
             getView().setRollUpType(stroomStatsStoreEntity.getRollUpType());
         }
     }
 
     @Override
-    public void write(final StroomStatsStoreDoc stroomStatsStoreEntity) {
+    public StroomStatsStoreDoc write(final StroomStatsStoreDoc stroomStatsStoreEntity) {
         if (stroomStatsStoreEntity != null) {
             stroomStatsStoreEntity.setDescription(getView().getDescription().getText());
             stroomStatsStoreEntity.setStatisticType(getView().getStatisticType());
-            stroomStatsStoreEntity.setEnabled(getView().getEnabled().getBooleanValue());
+            stroomStatsStoreEntity.setEnabled(getView().getEnabled().getValue());
             stroomStatsStoreEntity.setPrecision(getView().getPrecision());
             stroomStatsStoreEntity.setRollUpType(getView().getRollUpType());
         }
+        return stroomStatsStoreEntity;
     }
 
     @Override
@@ -120,6 +121,6 @@ public class StroomStatsStoreSettingsPresenter
 
         void setPrecision(EventStoreTimeIntervalEnum precision);
 
-        TickBox getEnabled();
+        CustomCheckBox getEnabled();
     }
 }

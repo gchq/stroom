@@ -4,8 +4,10 @@
 package stroom.meta.impl.db.jooq.tables;
 
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.meta.impl.db.jooq.Indexes;
+import stroom.meta.impl.db.jooq.Keys;
+import stroom.meta.impl.db.jooq.Stroom;
+import stroom.meta.impl.db.jooq.tables.records.MetaValRecord;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
@@ -23,10 +25,8 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import stroom.meta.impl.db.jooq.Indexes;
-import stroom.meta.impl.db.jooq.Keys;
-import stroom.meta.impl.db.jooq.Stroom;
-import stroom.meta.impl.db.jooq.tables.records.MetaValRecord;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**

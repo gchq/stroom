@@ -29,7 +29,7 @@ import stroom.statistics.impl.sql.shared.EventStoreTimeIntervalEnum;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
@@ -72,21 +72,22 @@ public class StatisticsDataSourceSettingsPresenter
         if (statisticsDataSource != null) {
             getView().getDescription().setText(statisticsDataSource.getDescription());
             getView().setStatisticType(statisticsDataSource.getStatisticType());
-            getView().getEnabled().setBooleanValue(statisticsDataSource.isEnabled());
+            getView().getEnabled().setValue(statisticsDataSource.isEnabled());
             getView().setPrecision(EventStoreTimeIntervalEnum.fromColumnInterval(statisticsDataSource.getPrecision()));
             getView().setRollUpType(statisticsDataSource.getRollUpType());
         }
     }
 
     @Override
-    public void write(final StatisticStoreDoc statisticsDataSource) {
+    public StatisticStoreDoc write(final StatisticStoreDoc statisticsDataSource) {
         if (statisticsDataSource != null) {
             statisticsDataSource.setDescription(getView().getDescription().getText());
             statisticsDataSource.setStatisticType(getView().getStatisticType());
-            statisticsDataSource.setEnabled(getView().getEnabled().getBooleanValue());
+            statisticsDataSource.setEnabled(getView().getEnabled().getValue());
             statisticsDataSource.setPrecision(getView().getPrecision().columnInterval());
             statisticsDataSource.setRollUpType(getView().getRollUpType());
         }
+        return statisticsDataSource;
     }
 
     @Override
@@ -116,6 +117,6 @@ public class StatisticsDataSourceSettingsPresenter
 
         void setPrecision(EventStoreTimeIntervalEnum precision);
 
-        TickBox getEnabled();
+        CustomCheckBox getEnabled();
     }
 }

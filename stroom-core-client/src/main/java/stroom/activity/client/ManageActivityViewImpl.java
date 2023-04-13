@@ -63,6 +63,11 @@ public class ManageActivityViewImpl extends ViewWithUiHandlers<ManageActivityUiH
         }
     }
 
+    @Override
+    public void focus() {
+        nameFilter.focus();
+    }
+
     @UiHandler("nameFilter")
     void onFilterChange(final ValueChangeEvent<String> event) {
         getUiHandlers().changeNameFilter(nameFilter.getText());

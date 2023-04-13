@@ -315,6 +315,7 @@ public class HexDumpUtil {
      * be invalid. It also assumes that whatever is displaying the hex dump is showing all of it
      * up to and including this byte or is only showing some but has had its line numbers adjusted
      * accordingly.
+     *
      * @param isOnFistCharInHexPair If true returns first char of the hex pair, else the second.
      */
     public static Location calculateLocation(final long byteOffset, final boolean isOnFistCharInHexPair) {

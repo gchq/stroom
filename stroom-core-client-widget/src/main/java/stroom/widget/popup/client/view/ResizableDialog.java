@@ -17,9 +17,9 @@
 package stroom.widget.popup.client.view;
 
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -47,7 +47,7 @@ public class ResizableDialog extends AbstractPopupPanel {
 
     private static final Binder binder = GWT.create(Binder.class);
 
-    private final PopupUiHandlers popupUiHandlers;
+    private final HideRequestUiHandlers uiHandlers;
     private final PopupSize popupSize;
 
     @UiField
@@ -69,8 +69,8 @@ public class ResizableDialog extends AbstractPopupPanel {
      * Creates an empty dialog box. It should not be shown until its child
      * widget has been added using {@link #add(Widget)}.
      */
-    ResizableDialog(final PopupUiHandlers popupUiHandlers, final PopupSize popupSize, final PopupType popupType) {
-        this(popupUiHandlers, false, popupSize, popupType);
+    ResizableDialog(final HideRequestUiHandlers uiHandlers, final PopupSize popupSize, final PopupType popupType) {
+        this(uiHandlers, false, popupSize, popupType);
     }
 
     /**
@@ -81,9 +81,9 @@ public class ResizableDialog extends AbstractPopupPanel {
      * @param autoHide <code>true</code> if the dialog should be automatically hidden
      *                 when the user clicks outside of it
      */
-    private ResizableDialog(final PopupUiHandlers popupUiHandlers, final boolean autoHide, final PopupSize popupSize,
+    private ResizableDialog(final HideRequestUiHandlers uiHandlers, final boolean autoHide, final PopupSize popupSize,
                             final PopupType popupType) {
-        this(popupUiHandlers, autoHide, true, popupSize, popupType);
+        this(uiHandlers, autoHide, true, popupSize, popupType);
     }
 
     /**
@@ -96,10 +96,10 @@ public class ResizableDialog extends AbstractPopupPanel {
      * @param modal    <code>true</code> if keyboard and mouse events for widgets not
      *                 contained by the dialog should be ignored
      */
-    private ResizableDialog(final PopupUiHandlers popupUiHandlers, final boolean autoHide, final boolean modal,
+    private ResizableDialog(final HideRequestUiHandlers uiHandlers, final boolean autoHide, final boolean modal,
                             final PopupSize popupSize, final PopupType popupType) {
         super(autoHide, modal, popupType);
-        this.popupUiHandlers = popupUiHandlers;
+        this.uiHandlers = uiHandlers;
         this.popupSize = popupSize;
 
         setStyleName("resizableDialog-popup");
@@ -158,17 +158,17 @@ public class ResizableDialog extends AbstractPopupPanel {
      */
     @Override
     public void hide(final boolean autoClosed) {
-        popupUiHandlers.onHideRequest(autoClosed, false);
+        uiHandlers.hideRequest(new HideRequest(autoClosed, false));
     }
 
     @Override
-    protected void onEscapeKeyPressed() {
+    protected void onCloseAction() {
         hide(false);
     }
 
     @Override
-    protected void onEnterKeyPressed() {
-        popupUiHandlers.onHideRequest(false, true);
+    protected void onOkAction() {
+        uiHandlers.hideRequest(new HideRequest(false, true));
     }
 
     @Override
@@ -339,7 +339,7 @@ public class ResizableDialog extends AbstractPopupPanel {
 
         @Override
         public void onMouseDown(final MouseDownEvent event) {
-            if ((Event.BUTTON_LEFT & event.getNativeButton()) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 beginDragging(event);
             }
         }

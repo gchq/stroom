@@ -40,6 +40,11 @@ public enum AceEditorMode {
     STROOM_EXPRESSION("stroom_expression"),
 
     /**
+     * Used for stroom-query syntax editors
+     */
+    STROOM_QUERY("stroom_query"),
+
+    /**
      * Used for view as hex mode
      */
     STROOM_HEX_DUMP("stroom_hex_dump"),

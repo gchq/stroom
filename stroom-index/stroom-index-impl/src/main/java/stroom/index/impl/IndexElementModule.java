@@ -19,8 +19,10 @@ package stroom.index.impl;
 import stroom.pipeline.factory.PipelineElementModule;
 
 public class IndexElementModule extends PipelineElementModule {
+
     @Override
     protected void configureElements() {
         bindElement(IndexingFilter.class);
+        bindElement(DynamicIndexingFilter.class);
     }
 }

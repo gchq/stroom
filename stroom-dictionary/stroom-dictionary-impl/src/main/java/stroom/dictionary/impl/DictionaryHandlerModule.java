@@ -40,5 +40,8 @@ public class DictionaryHandlerModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(DictionaryResourceImpl.class);
+
+        RestResourcesBinder.create(binder())
+                .bind(WordListResourceImpl.class);
     }
 }

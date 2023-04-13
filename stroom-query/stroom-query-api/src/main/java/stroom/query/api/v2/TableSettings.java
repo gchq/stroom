@@ -46,8 +46,6 @@ import java.util.Objects;
         "should be included and what sorting, grouping, filtering, limiting, etc. should be applied")
 public final class TableSettings {
 
-    public static final int[] DEFAULT_MAX_RESULTS = {1000000};
-
     @Schema(description = "TODO",
             required = true)
     @JsonProperty
@@ -56,6 +54,23 @@ public final class TableSettings {
     @Schema(required = true)
     @JsonProperty
     private final List<Field> fields;
+
+    @JsonProperty
+    private final Window window;
+
+    /**
+     * A filter to apply to raw values.
+     */
+    @Schema
+    @JsonProperty
+    private final ExpressionOperator valueFilter;
+
+    /**
+     * A filter to apply to aggregated values.
+     */
+    @Schema
+    @JsonProperty
+    private final ExpressionOperator aggregateFilter;
 
     @JsonPropertyDescription("TODO")
     @JsonProperty
@@ -81,31 +96,31 @@ public final class TableSettings {
             hidden = true)
     @JsonProperty("conditionalFormattingRules")
     private final List<ConditionalFormattingRule> conditionalFormattingRules;
-    @Schema(description = "IGNORE: UI use only",
-            hidden = true)
-    @JsonProperty("modelVersion")
-    private final String modelVersion;
 
     @SuppressWarnings("checkstyle:LineLength")
     @JsonCreator
     public TableSettings(
             @JsonProperty("queryId") final String queryId,
             @JsonProperty("fields") final List<Field> fields,
+            @JsonProperty("window") final Window window,
+            @JsonProperty("valueFilter") final ExpressionOperator valueFilter,
+            @JsonProperty("aggregateFilter") final ExpressionOperator aggregateFilter,
             @JsonProperty("extractValues") final Boolean extractValues,
             @JsonProperty("extractionPipeline") final DocRef extractionPipeline,
             @JsonProperty("maxResults") final List<Integer> maxResults,
             @JsonProperty("showDetail") final Boolean showDetail,
-            @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule> conditionalFormattingRules,
-            @JsonProperty("modelVersion") final String modelVersion) {
-
+            @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule>
+                    conditionalFormattingRules) {
         this.queryId = queryId;
         this.fields = fields;
+        this.window = window;
+        this.valueFilter = valueFilter;
+        this.aggregateFilter = aggregateFilter;
         this.extractValues = extractValues;
         this.extractionPipeline = extractionPipeline;
         this.maxResults = maxResults;
         this.showDetail = showDetail;
         this.conditionalFormattingRules = conditionalFormattingRules;
-        this.modelVersion = modelVersion;
     }
 
     public String getQueryId() {
@@ -114,6 +129,18 @@ public final class TableSettings {
 
     public List<Field> getFields() {
         return fields;
+    }
+
+    public Window getWindow() {
+        return window;
+    }
+
+    public ExpressionOperator getValueFilter() {
+        return valueFilter;
+    }
+
+    public ExpressionOperator getAggregateFilter() {
+        return aggregateFilter;
     }
 
     public Boolean getExtractValues() {
@@ -150,10 +177,6 @@ public final class TableSettings {
         return conditionalFormattingRules;
     }
 
-    public String getModelVersion() {
-        return modelVersion;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -165,24 +188,26 @@ public final class TableSettings {
         final TableSettings that = (TableSettings) o;
         return Objects.equals(queryId, that.queryId) &&
                 Objects.equals(fields, that.fields) &&
+                Objects.equals(window, that.window) &&
+                Objects.equals(aggregateFilter, that.aggregateFilter) &&
                 Objects.equals(extractValues, that.extractValues) &&
                 Objects.equals(extractionPipeline, that.extractionPipeline) &&
                 Objects.equals(maxResults, that.maxResults) &&
                 Objects.equals(showDetail, that.showDetail) &&
-                Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&
-                Objects.equals(modelVersion, that.modelVersion);
+                Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(queryId,
                 fields,
+                window,
+                aggregateFilter,
                 extractValues,
                 extractionPipeline,
                 maxResults,
                 showDetail,
-                conditionalFormattingRules,
-                modelVersion);
+                conditionalFormattingRules);
     }
 
     @Override
@@ -190,12 +215,13 @@ public final class TableSettings {
         return "TableSettings{" +
                 "queryId='" + queryId + '\'' +
                 ", fields=" + fields +
+                ", window=" + window +
+                ", filter=" + aggregateFilter +
                 ", extractValues=" + extractValues +
                 ", extractionPipeline=" + extractionPipeline +
                 ", maxResults=" + maxResults +
                 ", showDetail=" + showDetail +
                 ", conditionalFormattingRules=" + conditionalFormattingRules +
-                ", modelVersion='" + modelVersion + '\'' +
                 '}';
     }
 
@@ -212,14 +238,16 @@ public final class TableSettings {
      */
     public static final class Builder {
 
-        protected String queryId;
-        protected List<Field> fields;
-        protected Boolean extractValues;
-        protected DocRef extractionPipeline;
-        protected List<Integer> maxResults;
-        protected Boolean showDetail;
-        protected List<ConditionalFormattingRule> conditionalFormattingRules;
-        protected String modelVersion;
+        private String queryId;
+        private List<Field> fields;
+        private Window window;
+        private ExpressionOperator valueFilter;
+        private ExpressionOperator aggregateFilter;
+        private Boolean extractValues;
+        private DocRef extractionPipeline;
+        private List<Integer> maxResults;
+        private Boolean showDetail;
+        private List<ConditionalFormattingRule> conditionalFormattingRules;
 
         private Builder() {
         }
@@ -229,6 +257,9 @@ public final class TableSettings {
             this.fields = tableSettings.getFields() == null
                     ? null
                     : new ArrayList<>(tableSettings.getFields());
+            this.window = tableSettings.window;
+            this.valueFilter = tableSettings.valueFilter;
+            this.aggregateFilter = tableSettings.aggregateFilter;
             this.extractValues = tableSettings.getExtractValues();
             this.extractionPipeline = tableSettings.getExtractionPipeline();
             this.maxResults = tableSettings.getMaxResults() == null
@@ -238,7 +269,6 @@ public final class TableSettings {
             this.conditionalFormattingRules = tableSettings.getConditionalFormattingRules() == null
                     ? null
                     : new ArrayList<>(tableSettings.getConditionalFormattingRules());
-            this.modelVersion = tableSettings.getModelVersion();
         }
 
         /**
@@ -250,8 +280,23 @@ public final class TableSettings {
             return this;
         }
 
+        public Builder window(final Window window) {
+            this.window = window;
+            return this;
+        }
+
         public Builder fields(final List<Field> fields) {
             this.fields = fields;
+            return this;
+        }
+
+        public Builder valueFilter(final ExpressionOperator valueFilter) {
+            this.valueFilter = valueFilter;
+            return this;
+        }
+
+        public Builder aggregateFilter(final ExpressionOperator rowFilter) {
+            this.aggregateFilter = rowFilter;
             return this;
         }
 
@@ -358,21 +403,18 @@ public final class TableSettings {
             return this;
         }
 
-        public Builder modelVersion(final String modelVersion) {
-            this.modelVersion = modelVersion;
-            return this;
-        }
-
         public TableSettings build() {
             return new TableSettings(
                     queryId,
                     fields,
+                    window,
+                    valueFilter,
+                    aggregateFilter,
                     extractValues,
                     extractionPipeline,
                     maxResults,
                     showDetail,
-                    conditionalFormattingRules,
-                    modelVersion);
+                    conditionalFormattingRules);
         }
     }
 }

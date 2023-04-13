@@ -4,14 +4,16 @@
 package stroom.explorer.impl.db.jooq;
 
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.explorer.impl.db.jooq.tables.ExplorerFavourite;
+import stroom.explorer.impl.db.jooq.tables.ExplorerNode;
+import stroom.explorer.impl.db.jooq.tables.ExplorerPath;
 
 import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
-import stroom.explorer.impl.db.jooq.tables.ExplorerFavourite;
+import java.util.Arrays;
+import java.util.List;
 import stroom.explorer.impl.db.jooq.tables.ExplorerNode;
 import stroom.explorer.impl.db.jooq.tables.ExplorerPath;
 

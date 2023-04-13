@@ -17,18 +17,20 @@
 package stroom.security.client.presenter;
 
 import stroom.cell.info.client.SvgCell;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.security.shared.User;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
@@ -39,19 +41,25 @@ public abstract class AbstractUserListPresenter
         extends MyPresenterWidget<UserListView>
         implements UserListUiHandlers {
 
-    private final DataGridView<User> dataGridView;
-
+    private final MyDataGrid<User> dataGrid;
+    private final MultiSelectionModelImpl<User> selectionModel;
+    private final PagerView pagerView;
     private final List<Column<User, ?>> columns = new ArrayList<>();
     private boolean isExternalIdentityProvider = false;
     private Boolean lastIncludeUserInfoColsVal = null;
 
     public AbstractUserListPresenter(final EventBus eventBus,
                                      final UserListView userListView,
+                                     final PagerView pagerView,
                                      final UiConfigCache uiConfigCache) {
         super(eventBus, userListView);
+        this.pagerView = pagerView;
 
-        dataGridView = new DataGridViewImpl<>(true);
-        userListView.setDatGridView(dataGridView);
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(false);
+        pagerView.setDataWidget(dataGrid);
+
+        userListView.setDatGridView(pagerView);
         userListView.setUiHandlers(this);
 
         refresh();
@@ -74,7 +82,7 @@ public abstract class AbstractUserListPresenter
     private void setupColumns() {
         // Remove any existing cols ready to add cols back in
         for (final Column<User, ?> column : columns) {
-            dataGridView.removeColumn(column);
+            dataGrid.removeColumn(column);
         }
         columns.clear();
 
@@ -89,7 +97,7 @@ public abstract class AbstractUserListPresenter
                 return SvgPresets.USER_GROUP;
             }
         };
-        dataGridView.addColumn(iconCol, "</br>", 20);
+        dataGrid.addColumn(iconCol, "</br>", 20);
         columns.add(iconCol);
 
         // Name.
@@ -102,7 +110,7 @@ public abstract class AbstractUserListPresenter
         final String nameColName = includeAdditionalUserInfo()
                 ? "User ID"
                 : "Group Name";
-        dataGridView.addResizableColumn(uniqueIdentityCol, nameColName, 280);
+        dataGrid.addResizableColumn(uniqueIdentityCol, nameColName, 280);
         columns.add(uniqueIdentityCol);
 
         if (includeAdditionalUserInfo()) {
@@ -113,7 +121,7 @@ public abstract class AbstractUserListPresenter
                     return userRef.getDisplayName();
                 }
             };
-            dataGridView.addResizableColumn(displayNameCol, "Display Name", 250);
+            dataGrid.addResizableColumn(displayNameCol, "Display Name", 250);
             columns.add(displayNameCol);
 
             // Full name
@@ -123,17 +131,17 @@ public abstract class AbstractUserListPresenter
                     return userRef.getFullName();
                 }
             };
-            dataGridView.addResizableColumn(fullNameCol, "Full Name", 350);
+            dataGrid.addResizableColumn(fullNameCol, "Full Name", 350);
             columns.add(fullNameCol);
         }
 
         final EndColumn<User> endCol = new EndColumn<>();
-        dataGridView.addEndColumn(new EndColumn<User>());
+        dataGrid.addEndColumn(new EndColumn<User>());
         columns.add(endCol);
     }
 
     public ButtonView addButton(final Preset preset) {
-        return dataGridView.addButton(preset);
+        return pagerView.addButton(preset);
     }
 
     @Override
@@ -142,11 +150,11 @@ public abstract class AbstractUserListPresenter
     }
 
     public MultiSelectionModel<User> getSelectionModel() {
-        return dataGridView.getSelectionModel();
+        return selectionModel;
     }
 
-    public DataGridView<User> getDataGridView() {
-        return dataGridView;
+    public DataGrid<User> getDataGrid() {
+        return dataGrid;
     }
 
     public boolean includeAdditionalUserInfo() {

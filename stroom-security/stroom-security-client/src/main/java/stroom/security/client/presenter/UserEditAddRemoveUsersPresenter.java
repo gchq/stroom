@@ -16,6 +16,7 @@
 
 package stroom.security.client.presenter;
 
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.AppPermissionResource;
@@ -53,11 +54,12 @@ public class UserEditAddRemoveUsersPresenter
     @Inject
     public UserEditAddRemoveUsersPresenter(final EventBus eventBus,
                                            final UserListView userListView,
+                                           final PagerView pagerView,
                                            final RestFactory restFactory,
                                            final Provider<SelectGroupPresenter> selectGroupPresenterProvider,
                                            final Provider<SelectUserPresenter> selectUserPresenterProvider,
                                            final UiConfigCache uiConfigCache) {
-        super(eventBus, userListView, restFactory, uiConfigCache);
+        super(eventBus, userListView, pagerView, restFactory, uiConfigCache);
         this.restFactory = restFactory;
         this.selectGroupPresenterProvider = selectGroupPresenterProvider;
         this.selectUserPresenterProvider = selectUserPresenterProvider;
@@ -83,7 +85,9 @@ public class UserEditAddRemoveUsersPresenter
 
                 final Rest<Boolean> rest = restFactory.create();
                 rest
-                        .onSuccess(result -> refresh())
+                        .onSuccess(result -> {
+                            refresh();
+                        })
                         .call(APP_PERMISSION_RESOURCE)
                         .changeUser(request);
             };

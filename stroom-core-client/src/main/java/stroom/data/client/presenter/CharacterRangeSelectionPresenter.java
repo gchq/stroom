@@ -4,15 +4,16 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.CharacterRangeSelectionPresenter.CharacterRangeSelectionView;
 import stroom.util.shared.Count;
 import stroom.util.shared.DataRange;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+
+import java.util.function.Consumer;
 
 public class CharacterRangeSelectionPresenter extends MyPresenterWidget<CharacterRangeSelectionView> {
 
@@ -44,28 +45,22 @@ public class CharacterRangeSelectionPresenter extends MyPresenterWidget<Characte
         getView().setDataRange(dataRange);
     }
 
-    public void show(final PopupUiHandlers popupUiHandlers) {
+    public void show(final Consumer<DataRange> dataRangeConsumer) {
         read();
-        ShowPopupEvent.fire(
-                this,
-                this,
-                PopupType.OK_CANCEL_DIALOG,
-                "Set Source Range",
-                popupUiHandlers);
-    }
-
-    public void hide(final boolean autoClose, final boolean ok) {
-
-        if (!ok || isDataRangeValid()) {
-            if (ok) {
-                write();
-            }
-            HidePopupEvent.fire(
-                    CharacterRangeSelectionPresenter.this,
-                    CharacterRangeSelectionPresenter.this,
-                    autoClose,
-                    ok);
-        }
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .caption("Set Source Range")
+                .onShow(e -> getView().focus())
+                .onHideRequest(e -> {
+                    if (!e.isOk() || isDataRangeValid()) {
+                        if (e.isOk()) {
+                            write();
+                            dataRangeConsumer.accept(getDataRange());
+                        }
+                        e.hide();
+                    }
+                })
+                .fire();
     }
 
     private boolean isDataRangeValid() {
@@ -107,7 +102,7 @@ public class CharacterRangeSelectionPresenter extends MyPresenterWidget<Characte
         return result;
     }
 
-    public interface CharacterRangeSelectionView extends View {
+    public interface CharacterRangeSelectionView extends View, Focus {
 
         DataRange getDataRange();
 

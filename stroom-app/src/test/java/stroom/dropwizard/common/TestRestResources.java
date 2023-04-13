@@ -528,8 +528,8 @@ class TestRestResources {
                             .findAny();
 
                     return optIfaceMethod.map(ifaceMethod -> hasJaxRsAnnotation(restInterface,
-                            ifaceMethod,
-                            checkInterfaces))
+                                    ifaceMethod,
+                                    checkInterfaces))
                             .orElse(false);
                 }
             } else {

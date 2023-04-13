@@ -24,6 +24,7 @@ import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.Partition;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
@@ -77,6 +78,7 @@ public class MockIndexShardService implements IndexShardService {
         indexShardsCreated.incrementAndGet();
 
         // checkedLimit.increment();
+        final Partition partition = indexShardKey.getPartition();
         final IndexShard indexShard = new IndexShard();
         indexShard.setVolume(
                 IndexVolume
@@ -85,9 +87,9 @@ public class MockIndexShardService implements IndexShardService {
                         .path(FileUtil.getCanonicalPath(tempDirProvider.get()))
                         .build());
         indexShard.setIndexUuid(indexShardKey.getIndexUuid());
-        indexShard.setPartition(indexShardKey.getPartition());
-        indexShard.setPartitionFromTime(indexShardKey.getPartitionFromTime());
-        indexShard.setPartitionToTime(indexShardKey.getPartitionToTime());
+        indexShard.setPartition(partition.getLabel());
+        indexShard.setPartitionFromTime(partition.getPartitionFromTime());
+        indexShard.setPartitionToTime(partition.getPartitionToTime());
         indexShard.setNodeName(ownerNodeName);
         indexShard.setId(indexShardId.incrementAndGet());
 

@@ -3,17 +3,16 @@ package stroom.dashboard.client.table;
 import stroom.dashboard.shared.FunctionSignature;
 import stroom.dashboard.shared.FunctionSignature.Arg;
 import stroom.dashboard.shared.FunctionSignature.Type;
-import stroom.util.client.SafeHtmlUtil;
 import stroom.widget.menu.client.presenter.InfoMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
-import stroom.widget.tooltip.client.presenter.TooltipUtil;
-import stroom.widget.tooltip.client.presenter.TooltipUtil.Builder;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.TableBuilder;
+import stroom.widget.util.client.TableCell;
 
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.safecss.shared.SafeStyles;
-import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Command;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletion;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionSnippet;
@@ -38,15 +37,15 @@ public class FunctionSignatureUtil {
     }
 
     public static List<Item> buildMenuItems(final List<FunctionSignature> signatures,
-            final Consumer<String> insertFunction,
-            final String helpUrlBase) {
+                                            final Consumer<String> insertFunction,
+                                            final String helpUrlBase) {
         return buildMenuItems(signatures, insertFunction, helpUrlBase, 0);
     }
 
     public static List<Item> buildMenuItems(final List<FunctionSignature> signatures,
-            final Consumer<String> insertFunction,
-            final String helpUrlBase,
-            final int depth) {
+                                            final Consumer<String> insertFunction,
+                                            final String helpUrlBase,
+                                            final int depth) {
         // This is roughly what we are aiming for
         // Date //primary category
         //   Rounding // sub-category
@@ -107,9 +106,9 @@ public class FunctionSignatureUtil {
     }
 
     private static List<Item> convertLeaves(final List<FunctionSignature> signatures,
-            final AtomicInteger positionInMenu,
-            final Consumer<String> insertFunction,
-            final String helpUrlBase) {
+                                            final AtomicInteger positionInMenu,
+                                            final Consumer<String> insertFunction,
+                                            final String helpUrlBase) {
 
         // Create one for each alias too, except the special one char ones
         // like +, -, /, * etc. as they have a form without brackets
@@ -148,7 +147,7 @@ public class FunctionSignatureUtil {
 
 
     public static List<AceCompletion> buildCompletions(final List<FunctionSignature> signatures,
-            final String helpUrlBase) {
+                                                       final String helpUrlBase) {
         // FlatMap to aliases so we have one func def per alias
         // Filter on name length > 1 to ignore aliases like +, -, * etc which have a different form,
         // e.g. 1+2 vs add(1, 2)
@@ -163,42 +162,40 @@ public class FunctionSignatureUtil {
     }
 
     public static SafeHtml buildInfoHtml(final FunctionSignature signature,
-            final String helpUrlBase) {
+                                         final String helpUrlBase) {
         if (signature != null) {
+            final HtmlBuilder htmlBuilder = new HtmlBuilder();
+            htmlBuilder.div(hb1 -> {
+                hb1.bold(hb2 -> hb2.append(buildSignatureStr(signature)));
+                hb1.br();
+                hb1.hr();
 
-            // Limit the width of the tooltip
-            final Builder builder = TooltipUtil.builder(safeStylesBuilder ->
-                    safeStylesBuilder.appendTrustedString("max-width:600px;"))
-                    .addHeading(buildSignatureStr(signature))
-                    .addSeparator();
+                if (signature.getDescription() != null && !signature.getDescription().isEmpty()) {
+                    hb1.para(hb2 -> hb2.append(signature.getDescription()),
+                            Attribute.className("functionSignatureInfo-description"));
+                }
 
-            if (signature.getDescription() != null && !signature.getDescription().isEmpty()) {
-                builder.addSafeHtml(TooltipUtil.styledParagraph(
-                        signature.getDescription(),
-                        safeStylesBuilder ->
-                                safeStylesBuilder.appendTrustedString("white-space: pre-wrap !important;")));
-            }
+                final boolean addedArgs = addArgsBlockToInfo(signature, hb1);
 
-            final boolean addedArgs = addArgsBlockToInfo(signature, builder);
+                if (addedArgs) {
+                    hb1.br();
+                }
 
-            if (addedArgs) {
-                builder.addBreak();
-            }
+                final List<String> aliases = signature.getAliases();
+                if (!aliases.isEmpty()) {
+                    hb1.para(hb2 -> hb2.append("Aliases: " +
+                            aliases.stream()
+                                    .collect(Collectors.joining(", "))));
+                }
 
-            final List<String> aliases = signature.getAliases();
-            if (!aliases.isEmpty()) {
-                builder.addParagraph("Aliases: " +
-                        aliases.stream()
-                                .collect(Collectors.joining(", ")));
-            }
+                if (helpUrlBase != null) {
+                    addHelpLinkToInfo(signature, helpUrlBase, hb1);
+                }
+            }, Attribute.className("functionSignatureInfo"));
 
-            if (helpUrlBase != null) {
-                addHelpLinkToInfo(signature, helpUrlBase, builder);
-            }
-            return builder.build();
-
+            return htmlBuilder.toSafeHtml();
         } else {
-            return SafeHtmlUtil.getSafeHtml("");
+            return SafeHtmlUtils.EMPTY_SAFE_HTML;
         }
     }
 
@@ -269,8 +266,8 @@ public class FunctionSignatureUtil {
     }
 
     private static String argToSnippetArg(final String argName,
-            final Arg arg,
-            final int position) {
+                                          final Arg arg,
+                                          final int position) {
         final String snippetDefault = arg.getDefaultValue() != null
                 ? arg.getDefaultValue()
                 : argName;
@@ -300,10 +297,10 @@ public class FunctionSignatureUtil {
     }
 
     private static Item convertFunctionDefinitionToItem(final String name,
-            final List<FunctionSignature> signatures,
-            final Consumer<String> insertFunction,
-            final int functionPosition,
-            final String helpUrlBase) {
+                                                        final List<FunctionSignature> signatures,
+                                                        final Consumer<String> insertFunction,
+                                                        final int functionPosition,
+                                                        final String helpUrlBase) {
 
         // We either return
         //   func1 (sig) -> info
@@ -343,9 +340,9 @@ public class FunctionSignatureUtil {
     }
 
     private static Item convertSignatureToItem(final FunctionSignature signature,
-            final Consumer<String> insertFunction,
-            final int signaturePosition,
-            final String helpUrlBase) {
+                                               final Consumer<String> insertFunction,
+                                               final int signaturePosition,
+                                               final String helpUrlBase) {
         // Return something like
         // funcX (sigY) -> info
 
@@ -441,7 +438,7 @@ public class FunctionSignatureUtil {
     }
 
     private static String buildVarargsName(final Arg arg,
-            final int argNo) {
+                                           final int argNo) {
 
         final String suffix = argNo <= arg.getMinVarargsCount()
                 ? String.valueOf(argNo)
@@ -454,75 +451,66 @@ public class FunctionSignatureUtil {
 
 
     private static boolean addArgsBlockToInfo(final FunctionSignature signature,
-            final Builder builder) {
+                                              final HtmlBuilder htmlBuilder) {
         AtomicBoolean addedContent = new AtomicBoolean(false);
         addedContent.set(!signature.getArgs().isEmpty());
-        builder.addThreeColTable(tableBuilder -> {
-            tableBuilder.addHeaderRow("Parameter", "Type", "Description");
 
-            final SafeStyles cellStyles = new SafeStylesBuilder()
-                    .appendTrustedString("white-space: pre-wrap !important;")
-                    .paddingTop(0.25, Unit.EM)
-                    .toSafeStyles();
+        final TableBuilder tb = new TableBuilder();
+        tb.row(
+                TableCell.header("Parameter"),
+                TableCell.header("Type"),
+                TableCell.header("Description"));
+        signature.getArgs()
+                .forEach(arg -> {
+                    final String argName;
 
-            signature.getArgs()
-                    .forEach(arg -> {
+                    if (arg.isVarargs()) {
+                        argName = arg.getName() + "1...N";
+                    } else if (arg.isOptional()) {
+                        argName = "[" + arg.getName() + "]";
+                    } else {
+                        argName = arg.getName();
+                    }
 
-                        final String argName;
+                    final StringBuilder descriptionBuilder = new StringBuilder();
+                    descriptionBuilder.append(arg.getDescription());
+                    if (!arg.getAllowedValues().isEmpty()) {
+                        appendSpaceIfNeeded(descriptionBuilder)
+                                .append("Allowed values: ")
+                                .append(arg.getAllowedValues()
+                                        .stream()
+                                        .map(str -> "\"" + str + "\"")
+                                        .collect(Collectors.joining(", ")))
+                                .append(".");
+                    }
 
-                        if (arg.isVarargs()) {
-                            argName = arg.getName() + "1...N";
-                        } else if (arg.isOptional()) {
-                            argName = "[" + arg.getName() + "]";
-                        } else {
-                            argName = arg.getName();
-                        }
+                    if (arg.getDefaultValue() != null && !arg.getDefaultValue().isEmpty()) {
+                        appendSpaceIfNeeded(descriptionBuilder)
+                                .append("Default value: '")
+                                .append(arg.getDefaultValue())
+                                .append("'.");
+                    }
 
-                        final StringBuilder descriptionBuilder = new StringBuilder();
-                        descriptionBuilder.append(arg.getDescription());
-                        if (!arg.getAllowedValues().isEmpty()) {
-                            appendSpaceIfNeeded(descriptionBuilder)
-                                    .append("Allowed values: ")
-                                    .append(arg.getAllowedValues()
-                                            .stream()
-                                            .map(str -> "\"" + str + "\"")
-                                            .collect(Collectors.joining(", ")))
-                                    .append(".");
-                        }
+                    if (arg.isOptional()) {
+                        appendSpaceIfNeeded(descriptionBuilder)
+                                .append("Optional argument.");
+                    }
 
-                        if (arg.getDefaultValue() != null && !arg.getDefaultValue().isEmpty()) {
-                            appendSpaceIfNeeded(descriptionBuilder)
-                                    .append("Default value: '")
-                                    .append(arg.getDefaultValue())
-                                    .append("'.");
-                        }
-
-                        if (arg.isOptional()) {
-                            appendSpaceIfNeeded(descriptionBuilder)
-                                    .append("Optional argument.");
-                        }
-
-                        tableBuilder.addRow(
-                                argName,
-                                convertType(arg.getArgType()),
-                                descriptionBuilder.toString(),
-                                false,
-                                cellStyles);
-                    });
-            if (signature.getReturnType() != null) {
-                if (!signature.getArgs().isEmpty()) {
-                    tableBuilder.addBlankRow();
-                }
-                tableBuilder.addRow(
-                        "Return",
-                        convertType(signature.getReturnType()),
-                        signature.getReturnDescription(),
-                        false,
-                        cellStyles);
-                addedContent.set(true);
+                    tb.row(argName,
+                            convertType(arg.getArgType()),
+                            descriptionBuilder.toString());
+                });
+        if (signature.getReturnType() != null) {
+            if (!signature.getArgs().isEmpty()) {
+                tb.row();
             }
-            return tableBuilder.build();
-        });
+            tb.row("Return",
+                    convertType(signature.getReturnType()),
+                    signature.getReturnDescription());
+            addedContent.set(true);
+        }
+
+        htmlBuilder.div(tb::write, Attribute.className("functionSignatureTable"));
         return addedContent.get();
     }
 
@@ -534,18 +522,17 @@ public class FunctionSignatureUtil {
     }
 
     private static void addHelpLinkToInfo(final FunctionSignature signature,
-            final String helpUrlBase,
-            final Builder builder) {
-        builder
-                .appendWithoutBreak("For more information see the ")
-                .appendLinkWithoutBreak(
-                        helpUrlBase +
-                                "/user-guide/dashboards/expressions/" +
-                                signature.getPrimaryCategory().toLowerCase().replace(" ", "-") +
-                                "#" +
-                                functionNameToAnchor(signature.getName()),
-                        "Help Documentation")
-                .appendWithoutBreak(".");
+                                          final String helpUrlBase,
+                                          final HtmlBuilder htmlBuilder) {
+        htmlBuilder.append("For more information see the ");
+        htmlBuilder.appendLink(
+                helpUrlBase +
+                        "/user-guide/dashboards/expressions/" +
+                        signature.getPrimaryCategory().toLowerCase().replace(" ", "-") +
+                        "#" +
+                        functionNameToAnchor(signature.getName()),
+                "Help Documentation");
+        htmlBuilder.append(".");
     }
 
 

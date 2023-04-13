@@ -16,37 +16,50 @@
 
 package stroom.dashboard.client.main;
 
+import stroom.preferences.client.UserPreferencesManager;
+import stroom.query.api.v2.TimeRange;
+import stroom.query.client.view.QueryButtons;
+import stroom.query.client.view.TimeRangeSelector;
+import stroom.widget.util.client.MouseUtil;
+
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.BlurEvent;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class DashboardViewImpl extends ViewWithUiHandlers<DashboardUiHandlers>
         implements DashboardPresenter.DashboardView {
 
     private final Widget widget;
+
     @UiField
-    FlowPanel left;
+    Button addPanelButton;
     @UiField
-    FlowPanel right;
+    Button addInputButton;
     @UiField
-    TextBox params;
+    Button constraintsButton;
+    @UiField
+    Button designModeButton;
+    @UiField
+    QueryButtons queryButtons;
     @UiField
     SimplePanel content;
+    @UiField
+    TimeRangeSelector timeRangeSelector;
 
     @Inject
-    public DashboardViewImpl(final Binder binder) {
+    public DashboardViewImpl(final Binder binder,
+                             final UserPreferencesManager userPreferencesManager) {
         widget = binder.createAndBindUi(this);
+        timeRangeSelector.setUtc(userPreferencesManager.isUtc());
+        setReadOnly(true);
     }
 
     @Override
@@ -55,28 +68,13 @@ public class DashboardViewImpl extends ViewWithUiHandlers<DashboardUiHandlers>
     }
 
     @Override
-    public void addWidgetLeft(final Widget widget) {
-        left.add(widget);
+    public void setTimeRange(final TimeRange timeRange) {
+        timeRangeSelector.setValue(timeRange);
     }
 
     @Override
-    public void addWidgetRight(final Widget widget) {
-        right.add(widget);
-    }
-
-    @Override
-    public String getParams() {
-        return params.getText();
-    }
-
-    @Override
-    public void setParams(final String params) {
-        this.params.setText(params);
-    }
-
-    @Override
-    public void setContent(final View view) {
-        content.setWidget(view.asWidget());
+    public void setContent(final Widget content) {
+        this.content.setWidget(content);
     }
 
     @Override
@@ -87,29 +85,68 @@ public class DashboardViewImpl extends ViewWithUiHandlers<DashboardUiHandlers>
         }
     }
 
-    @UiHandler("params")
-    public void onParamsKeyDown(final KeyDownEvent event) {
-        switch (event.getNativeKeyCode()) {
-            case KeyCodes.KEY_ENTER:
-            case KeyCodes.KEY_TAB:
-            case KeyCodes.KEY_ESCAPE:
-                onParamsChanged();
-                break;
-            default:
-                if (getUiHandlers() != null) {
-                    getUiHandlers().onDirty();
-                }
+    @Override
+    public void setReadOnly(final boolean readOnly) {
+        addPanelButton.setEnabled(!readOnly);
+        addInputButton.setEnabled(!readOnly);
+    }
+
+    @Override
+    public void setDesignMode(final boolean designMode) {
+        if (designMode) {
+            designModeButton.setText("Exit Design Mode");
+            widget.addStyleName("dashboard__designMode");
+        } else {
+            designModeButton.setText("Enter Design Mode");
+            widget.removeStyleName("dashboard__designMode");
         }
     }
 
-    @UiHandler("params")
-    public void onParamsBlur(final BlurEvent event) {
-        onParamsChanged();
+    @Override
+    public QueryButtons getQueryButtons() {
+        return queryButtons;
     }
 
-    private void onParamsChanged() {
+    @UiHandler("addPanelButton")
+    public void onAddPanelButtonClick(final ClickEvent event) {
+        if (MouseUtil.isPrimary(event)) {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onAddPanel(event);
+            }
+        }
+    }
+
+    @UiHandler("addInputButton")
+    public void onAddInputButtonClick(final ClickEvent event) {
+        if (MouseUtil.isPrimary(event)) {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onAddInput(event);
+            }
+        }
+    }
+
+    @UiHandler("constraintsButton")
+    public void onConstraintsButtonClick(final ClickEvent event) {
+        if (MouseUtil.isPrimary(event)) {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onConstraints(event);
+            }
+        }
+    }
+
+    @UiHandler("designModeButton")
+    public void onDesignModeButtonClick(final ClickEvent event) {
+        if (MouseUtil.isPrimary(event)) {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onDesign(event);
+            }
+        }
+    }
+
+    @UiHandler("timeRangeSelector")
+    public void onTimeRangeSelector(final ValueChangeEvent<TimeRange> event) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onParamsChanged(params.getText());
+            getUiHandlers().onTimeRange(event.getValue());
         }
     }
 

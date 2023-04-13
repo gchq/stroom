@@ -31,7 +31,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 class ChooserViewImpl extends ViewWithUiHandlers<ChooserUiHandlers> implements ChooserView {
@@ -64,8 +63,9 @@ class ChooserViewImpl extends ViewWithUiHandlers<ChooserUiHandlers> implements C
     }
 
     @Override
-    public void setBottomView(final View view) {
-        bottom.add(view.asWidget());
+    public void setBottomWidget(final Widget widget) {
+        widget.getElement().addClassName("w-100");
+        bottom.add(widget);
     }
 
     @Override

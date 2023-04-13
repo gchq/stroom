@@ -78,7 +78,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.SteppingView> implements HasDirtyHandlers {
+public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.SteppingView> implements
+        HasDirtyHandlers,
+        ClassificationUiHandlers {
 
     private static final PipelineResource PIPELINE_RESOURCE = GWT.create(PipelineResource.class);
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
@@ -86,7 +88,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     private final PipelineStepRequest request;
     private final PipelineTreePresenter pipelineTreePresenter;
     private final SourcePresenter sourcePresenter;
-    private final Provider<ElementPresenter> editorProvider;
+    private final Provider<ElementPresenter> elementPresenterProvider;
     private final StepLocationPresenter stepLocationPresenter;
     private final StepControlPresenter stepControlPresenter;
     private final SteppingFilterPresenter steppingFilterPresenter;
@@ -102,13 +104,14 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     private ButtonPanel leftButtons;
 
     private Meta meta;
+    private String classification;
 
     @Inject
     public SteppingPresenter(final EventBus eventBus, final SteppingView view,
                              final PipelineTreePresenter pipelineTreePresenter,
                              final RestFactory restFactory,
                              final SourcePresenter sourcePresenter,
-                             final Provider<ElementPresenter> editorProvider,
+                             final Provider<ElementPresenter> elementPresenterProvider,
                              final StepLocationPresenter stepLocationPresenter,
                              final StepControlPresenter stepControlPresenter,
                              final SteppingFilterPresenter steppingFilterPresenter) {
@@ -117,7 +120,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
         this.pipelineTreePresenter = pipelineTreePresenter;
         this.sourcePresenter = sourcePresenter;
-        this.editorProvider = editorProvider;
+        this.elementPresenterProvider = elementPresenterProvider;
         this.stepLocationPresenter = stepLocationPresenter;
         this.stepControlPresenter = stepControlPresenter;
         this.steppingFilterPresenter = steppingFilterPresenter;
@@ -126,6 +129,8 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         view.addWidgetRight(stepControlPresenter.getView().asWidget());
         view.setTreeView(pipelineTreePresenter.getView());
 
+        sourcePresenter.getWidget().addStyleName("dashboard-panel overflow-hidden");
+        sourcePresenter.getWidget().addStyleName("dashboard-panel overflow-hidden");
         sourcePresenter.setSteppingSource(true);
 
         pipelineModel = new PipelineModel();
@@ -145,6 +150,15 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                 false);
 
         saveButton = addButtonLeft(SvgPresets.SAVE);
+        sourcePresenter.setClassificationUiHandlers(this);
+    }
+
+    @Override
+    public void setClassification(final String classification) {
+        this.classification = classification;
+        for (final ElementPresenter elementPresenter : editorMap.values()) {
+            elementPresenter.setClassification(classification);
+        }
     }
 
     @Override
@@ -199,11 +213,12 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
                 final List<PipelineProperty> properties = pipelineModel.getProperties(element);
 
-                final ElementPresenter presenter = editorProvider.get();
+                final ElementPresenter presenter = elementPresenterProvider.get();
                 presenter.setElement(element);
                 presenter.setProperties(properties);
                 presenter.setFeedName(meta.getFeedName());
                 presenter.setPipelineName(request.getPipeline().getName());
+                presenter.setClassification(classification);
                 editorMap.put(elementId, presenter);
                 presenter.addDirtyHandler(dirtyEditorHandler);
 
@@ -334,7 +349,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                                 .setSelected(PipelineModel.SOURCE_ELEMENT, true);
 
                         Scheduler.get().scheduleDeferred(() ->
-                                getView().setTreeHeight(pipelineTreePresenter.getTreeHeight() + 3));
+                                getView().setTreeHeight(pipelineTreePresenter.getTreeHeight() + 13));
                     } catch (final PipelineModelException e) {
                         AlertEvent.fireError(SteppingPresenter.this, e.getMessage(), null);
                     }
@@ -544,10 +559,6 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     @Override
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
-    }
-
-    public void setClassificationUiHandlers(final ClassificationUiHandlers classificationUiHandlers) {
-        sourcePresenter.setClassificationUiHandlers(classificationUiHandlers);
     }
 
     public interface SteppingView extends View {

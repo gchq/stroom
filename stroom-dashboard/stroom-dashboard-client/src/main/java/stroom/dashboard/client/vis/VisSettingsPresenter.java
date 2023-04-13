@@ -28,9 +28,9 @@ public class VisSettingsPresenter extends SettingsPresenter {
     public VisSettingsPresenter(final EventBus eventBus, final LinkTabsLayoutView view,
                                 final BasicVisSettingsPresenter basicSettingsPresenter) {
         super(eventBus, view);
+        getView().asWidget().addStyleName("settingsPresenter");
 
         basicSettingsPresenter.setSettingsPresenter(this);
-
         addTab("Basic", basicSettingsPresenter);
     }
 }

@@ -35,7 +35,9 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
+import javax.inject.Singleton;
 
+@Singleton
 public class ScriptPlugin extends DocumentPlugin<ScriptDoc> {
 
     private static final ScriptResource SCRIPT_RESOURCE = GWT.create(ScriptResource.class);

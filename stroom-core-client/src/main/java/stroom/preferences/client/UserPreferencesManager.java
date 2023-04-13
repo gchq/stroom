@@ -27,7 +27,6 @@ public class UserPreferencesManager {
     private final RestFactory restFactory;
     private final CurrentTheme currentTheme;
 
-    private static final Map<String, String> themeMap = new HashMap<>();
     private static final Map<String, String> densityMap = new HashMap<>();
     private static final Map<String, String> fontMap = new HashMap<>();
     private static final Map<String, String> fontSizeMap = new HashMap<>();
@@ -38,10 +37,6 @@ public class UserPreferencesManager {
                                   final CurrentTheme currentTheme) {
         this.restFactory = restFactory;
         this.currentTheme = currentTheme;
-
-        themeMap.put("Light", "stroom-theme-light");
-        themeMap.put("Dark", "stroom-theme-dark");
-        themeMap.put("Dark 2", "stroom-theme-dark stroom-theme-dark2");
 
         densityMap.put("Default", "stroom-density-comfortable");
         densityMap.put("Comfortable", "stroom-density-comfortable");
@@ -102,7 +97,7 @@ public class UserPreferencesManager {
         final com.google.gwt.dom.client.Element element = RootPanel.getBodyElement().getParentElement();
         String className = "stroom";
         if (currentTheme.getTheme() != null) {
-            className += " " + themeMap.get(currentTheme.getTheme());
+            className += " " + Themes.getClassName(currentTheme.getTheme());
         }
         if (currentPreferences != null && currentPreferences.getDensity() != null) {
             className += " " + densityMap.get(currentPreferences.getDensity());
@@ -121,7 +116,7 @@ public class UserPreferencesManager {
     }
 
     public List<String> getThemes() {
-        return themeMap.keySet().stream().sorted().collect(Collectors.toList());
+        return Themes.getThemeNames();
     }
 
     public List<String> getFonts() {

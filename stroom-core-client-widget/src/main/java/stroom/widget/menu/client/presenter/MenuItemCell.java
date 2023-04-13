@@ -17,15 +17,10 @@
 package stroom.widget.menu.client.presenter;
 
 import stroom.svg.client.Icon;
+import stroom.widget.util.client.KeyBinding;
 
 import com.google.gwt.cell.client.AbstractCell;
-import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.BrowserEvents;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.safecss.shared.SafeStyles;
-import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -34,87 +29,15 @@ import com.google.gwt.safehtml.shared.SafeUri;
 
 public class MenuItemCell extends AbstractCell<Item> {
 
-    private final MenuPresenter menuPresenter;
-
-    public MenuItemCell(final MenuPresenter menuPresenter) {
-        super(BrowserEvents.CLICK, BrowserEvents.MOUSEOVER, BrowserEvents.MOUSEOUT);
-        this.menuPresenter = menuPresenter;
-    }
-
-    @Override
-    public void onBrowserEvent(final Context context,
-                               final Element parent,
-                               final Item value,
-                               final NativeEvent event,
-                               final ValueUpdater<Item> valueUpdater) {
-        super.onBrowserEvent(context, parent, value, event, valueUpdater);
-
-        if (value != null) {
-            final String eventType = event.getType();
-            final Element element = getElement(parent);
-
-            if (value instanceof CommandMenuItem) {
-                if (BrowserEvents.MOUSEOVER.equals(eventType)) {
-                    final CommandMenuItem menuItem = (CommandMenuItem) value;
-                    if (menuItem.isEnabled()) {
-                        menuPresenter.onMouseOver(menuItem, element);
-                        if (menuPresenter.isHover(menuItem)) {
-                            element.addClassName("cellTableHoveredRow");
-                        }
-                    } else {
-                        element.removeClassName("cellTableHoveredRow");
-                    }
-
-                } else if (BrowserEvents.MOUSEOUT.equals(eventType)) {
-                    final CommandMenuItem menuItem = (CommandMenuItem) value;
-                    menuPresenter.onMouseOut(menuItem, element);
-                    if (!menuPresenter.isHover(menuItem)) {
-                        element.removeClassName("cellTableHoveredRow");
-                    }
-
-                } else if (BrowserEvents.CLICK.equals(eventType)
-                        && ((event.getButton() & NativeEvent.BUTTON_LEFT) != 0)) {
-                    final CommandMenuItem menuItem = (CommandMenuItem) value;
-                    if (menuItem.isEnabled()) {
-                        menuPresenter.onClick(menuItem, element);
-                    }
-                }
-
-            } else if (value instanceof MenuItem) {
-                final MenuItem menuItem = (MenuItem) value;
-
-                if (BrowserEvents.MOUSEOVER.equals(eventType)) {
-                    element.addClassName("cellTableHoveredRow");
-                    menuPresenter.onMouseOver(menuItem, element);
-
-                } else if (BrowserEvents.MOUSEOUT.equals(eventType)) {
-                    element.removeClassName("cellTableHoveredRow");
-
-                } else if (BrowserEvents.CLICK.equals(eventType)
-                        && ((event.getButton() & NativeEvent.BUTTON_LEFT) != 0)) {
-                    menuPresenter.onClick(menuItem, element);
-                }
-            }
-        }
-    }
-
-    private Element getElement(final Element parent) {
-        if (parent.getFirstChildElement() != null) {
-            return parent.getFirstChildElement();
-        }
-
-        return parent;
-    }
-
     @Override
     public void render(final Context context, final Item value, final SafeHtmlBuilder sb) {
         if (value != null) {
             if (value instanceof IconMenuItem) {
-                new IconMenuItemAppearance(menuPresenter).render(this, context, (IconMenuItem) value, sb);
+                new IconMenuItemAppearance().render(this, context, (IconMenuItem) value, sb);
             } else if (value instanceof SimpleMenuItem) {
-                new SimpleMenuItemAppearance(menuPresenter).render(this, context, (SimpleMenuItem) value, sb);
+                new SimpleMenuItemAppearance().render(this, context, (SimpleMenuItem) value, sb);
             } else if (value instanceof InfoMenuItem) {
-                new InfoMenuItemAppearance(menuPresenter).render(this, context, (InfoMenuItem) value, sb);
+                new InfoMenuItemAppearance().render(this, context, (InfoMenuItem) value, sb);
             } else if (value instanceof MenuItem) {
                 new MenuItemAppearance().render(this, context, (MenuItem) value, sb);
             } else if (value instanceof Separator) {
@@ -144,6 +67,7 @@ public class MenuItemCell extends AbstractCell<Item> {
         }
 
         public interface Template extends SafeHtmlTemplates {
+
             @Template("<div class=\"{0}\"></div>")
             SafeHtml separator(String className);
         }
@@ -164,6 +88,7 @@ public class MenuItemCell extends AbstractCell<Item> {
         }
 
         public interface Template extends SafeHtmlTemplates {
+
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml groupHeading(String className, SafeHtml groupName);
         }
@@ -183,13 +108,6 @@ public class MenuItemCell extends AbstractCell<Item> {
     public static class IconMenuItemAppearance implements Appearance<IconMenuItem> {
 
         private static final Template TEMPLATE = GWT.create(Template.class);
-        private static final SafeStyles NORMAL = SafeStylesUtils.fromTrustedString("cursor:pointer;");
-        private static final SafeStyles DISABLED = SafeStylesUtils.fromTrustedString("cursor:default;");
-        private final MenuPresenter menuPresenter;
-
-        public IconMenuItemAppearance(final MenuPresenter menuPresenter) {
-            this.menuPresenter = menuPresenter;
-        }
 
         @Override
         public void render(final MenuItemCell cell,
@@ -197,12 +115,6 @@ public class MenuItemCell extends AbstractCell<Item> {
                            final IconMenuItem value,
                            final SafeHtmlBuilder sb) {
             if (value.getText() != null) {
-                SafeStyles styles = NORMAL;
-
-                if (!value.isEnabled()) {
-                    styles = DISABLED;
-                }
-
                 final SafeHtmlBuilder inner = new SafeHtmlBuilder();
                 final Icon enabledIcon = value.getEnabledIcon();
                 final Icon disabledIcon = value.getDisabledIcon();
@@ -218,32 +130,49 @@ public class MenuItemCell extends AbstractCell<Item> {
                     if (disabledIcon != null) {
                         inner.append(TEMPLATE.inner("menuItem-icon",
                                 SafeHtmlUtils.fromTrustedString(disabledIcon.asWidget().getElement().getString())));
+                    } else if (enabledIcon != null) {
+                        inner.append(TEMPLATE.inner("menuItem-icon",
+                                SafeHtmlUtils.fromTrustedString(enabledIcon.asWidget().getElement().getString())));
                     } else {
                         inner.append(TEMPLATE.inner("menuItem-icon", SafeHtmlUtils.EMPTY_SAFE_HTML));
                     }
                 }
 
+
                 inner.append(
                         TEMPLATE.inner("menuItem-text", SafeHtmlUtils.fromTrustedString(value.getText())));
 
-                if (value.getShortcut() != null) {
-                    inner.append(TEMPLATE.inner("menuItem-shortcut",
-                            SafeHtmlUtils.fromTrustedString(value.getShortcut())));
+                if (value.getAction() != null) {
+                    final String shortcut = KeyBinding.getShortcut(value.getAction());
+                    if (shortcut != null) {
+                        inner.append(TEMPLATE.inner("menuItem-shortcut",
+                                SafeHtmlUtils.fromTrustedString(shortcut)));
+                    }
                 }
 
-                final String disabledClass = value.isEnabled() ? "" : " menuItem-disabled";
-                if (menuPresenter.isHighlighted(value)) {
-                    sb.append(TEMPLATE.outer("menuItem-highlight" + disabledClass, styles, inner.toSafeHtml()));
-                } else {
-                    sb.append(TEMPLATE.outer("menuItem-outer" + disabledClass, styles, inner.toSafeHtml()));
+                // If this is a parent menu item, render an arrow to the right-hand side
+                if ((value instanceof IconParentMenuItem || value instanceof KeyedParentMenuItem) &&
+                        value.isEnabled()) {
+                    final Icon expandIcon = Icon.create("svgIcon-arrow-solid-right");
+                    inner.append(TEMPLATE.expandArrow("menuItem-expandArrow",
+                            SafeHtmlUtils.fromTrustedString(expandIcon.asWidget().getElement().getString())));
                 }
+
+                String className = "menuItem-outer";
+                className += value.isHighlight()
+                        ? " menuItem-highlight"
+                        : "";
+                className += value.isEnabled()
+                        ? ""
+                        : " menuItem-disabled";
+                sb.append(TEMPLATE.outer(className, inner.toSafeHtml()));
             }
         }
 
         public interface Template extends SafeHtmlTemplates {
 
-            @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
-            SafeHtml outer(String className, SafeStyles styles, SafeHtml inner);
+            @Template("<div class=\"{0}\" tabindex=\"-1\">{1}</div>")
+            SafeHtml outer(String className, SafeHtml inner);
 
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml inner(String className, SafeHtml icon);
@@ -253,19 +182,15 @@ public class MenuItemCell extends AbstractCell<Item> {
 
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml text(String className, SafeHtml text);
+
+            @Template("<div class=\"{0}\">{1}</div>")
+            SafeHtml expandArrow(String className, SafeHtml icon);
         }
     }
 
     public static class SimpleMenuItemAppearance implements Appearance<SimpleMenuItem> {
 
         private static final Template TEMPLATE = GWT.create(Template.class);
-        private static final SafeStyles NORMAL = SafeStylesUtils.fromTrustedString("cursor:pointer;");
-        private static final SafeStyles DISABLED = SafeStylesUtils.fromTrustedString("cursor:default;");
-        private final MenuPresenter menuPresenter;
-
-        public SimpleMenuItemAppearance(final MenuPresenter menuPresenter) {
-            this.menuPresenter = menuPresenter;
-        }
 
         @Override
         public void render(final MenuItemCell cell,
@@ -273,12 +198,6 @@ public class MenuItemCell extends AbstractCell<Item> {
                            final SimpleMenuItem value,
                            final SafeHtmlBuilder sb) {
             if (value.getText() != null) {
-                SafeStyles styles = NORMAL;
-
-                if (!value.isEnabled()) {
-                    styles = DISABLED;
-                }
-
                 final SafeHtmlBuilder inner = new SafeHtmlBuilder();
 
                 inner.append(
@@ -286,25 +205,26 @@ public class MenuItemCell extends AbstractCell<Item> {
                                 "menuItem-simpleText",
                                 SafeHtmlUtils.fromTrustedString(value.getText())));
 
-                if (value.getShortcut() != null) {
-                    inner.append(TEMPLATE.inner("menuItem-shortcut",
-                            SafeHtmlUtils.fromTrustedString(value.getShortcut())));
+                if (value.getAction() != null) {
+                    final String shortcut = KeyBinding.getShortcut(value.getAction());
+                    if (shortcut != null) {
+                        inner.append(TEMPLATE.inner("menuItem-shortcut",
+                                SafeHtmlUtils.fromTrustedString(shortcut)));
+                    }
                 }
 
-                final String disabledClass = value.isEnabled() ? "" : " menuItem-disabled";
-                if (menuPresenter.isHighlighted(value)) {
-                    sb.append(TEMPLATE.outer("menuItem-highlight" + disabledClass, styles,
-                            inner.toSafeHtml()));
-                } else {
-                    sb.append(TEMPLATE.outer("menuItem-outer" + disabledClass, styles, inner.toSafeHtml()));
-                }
+                String className = "menuItem-outer";
+                className += value.isEnabled()
+                        ? ""
+                        : " menuItem-disabled";
+                sb.append(TEMPLATE.outer(className, inner.toSafeHtml()));
             }
         }
 
         public interface Template extends SafeHtmlTemplates {
 
-            @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
-            SafeHtml outer(String className, SafeStyles styles, SafeHtml inner);
+            @Template("<div class=\"{0}\" tabindex=\"-1\">{1}</div>")
+            SafeHtml outer(String className, SafeHtml inner);
 
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml inner(String className, SafeHtml icon);
@@ -317,9 +237,6 @@ public class MenuItemCell extends AbstractCell<Item> {
     public static class InfoMenuItemAppearance implements Appearance<InfoMenuItem> {
 
         private static final Template TEMPLATE = GWT.create(Template.class);
-
-        public InfoMenuItemAppearance(final MenuPresenter menuPresenter) {
-        }
 
         @Override
         public void render(final MenuItemCell cell,
@@ -341,7 +258,7 @@ public class MenuItemCell extends AbstractCell<Item> {
 
         public interface Template extends SafeHtmlTemplates {
 
-            @Template("<div class=\"{0}\">{1}</div>")
+            @Template("<div class=\"{0}\" tabindex=\"-1\">{1}</div>")
             SafeHtml outer(String className, SafeHtml inner);
 
             @Template("<div class=\"{0}\">{1}</div>")

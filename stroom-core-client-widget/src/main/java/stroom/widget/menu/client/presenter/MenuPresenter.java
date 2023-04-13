@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,111 +16,222 @@
 
 package stroom.widget.menu.client.presenter;
 
-import stroom.data.table.client.CellTableView;
-import stroom.data.table.client.ScrollableCellTableViewImpl;
+import stroom.task.client.TaskEndEvent;
+import stroom.task.client.TaskStartEvent;
+import stroom.widget.menu.client.presenter.MenuPresenter.MenuView;
 import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.presenter.PopupPosition.HorizontalLocation;
+import stroom.widget.popup.client.presenter.PopupType;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
+import java.util.Objects;
 
-public abstract class MenuPresenter extends MyPresenterWidget<CellTableView<Item>> {
+public class MenuPresenter
+        extends MyPresenterWidget<MenuView>
+        implements MenuUiHandlers {
 
-    private final Map<Item, Element> hoverItems = new HashMap<>();
-    private Set<Item> highlightItems;
+    private static final int HORIZONTAL_PADDING = 2;
+    private static final int VERTICAL_PADDING = 4;
+
+    private final Provider<MenuPresenter> menuPresenterProvider;
+    private MenuPresenter currentMenu;
+    private MenuItem currentItem;
+
+    private MenuPresenter parent;
+    private MenuItem parentItem;
 
     @Inject
-    public MenuPresenter(final EventBus eventBus) {
-        super(eventBus, new ScrollableCellTableViewImpl<>(
-                false,
-                "menuCellTable",
-                50,
-                600,
-                600));
+    public MenuPresenter(final EventBus eventBus,
+                         final MenuView view,
+                         final Provider<MenuPresenter> menuPresenterProvider) {
+        super(eventBus, view);
+        this.menuPresenterProvider = menuPresenterProvider;
+        view.setUiHandlers(this);
+    }
 
-        final Column<Item, Item> iconColumn = new Column<Item, Item>(new MenuItemCell(this)) {
-            @Override
-            public Item getValue(final Item item) {
-                return item;
+    @Override
+    public void showSubMenu(final MenuItem menuItem, final Element element) {
+        if (!Objects.equals(currentItem, menuItem)) {
+            if (currentItem != null) {
+                // We are changing the highlighted item so close the current popup
+                // if it is open.
+                hideChildren(false, false);
             }
-        };
-        getView().addColumn(iconColumn);
-        getView().setSkipRowHoverCheck(true);
+
+            if (menuItem instanceof HasChildren) {
+                // Try and get some sub items.
+                //noinspection PatternVariableCanBeUsed cos GWT
+                final HasChildren hasChildren = (HasChildren) menuItem;
+
+                hasChildren.getChildren().onSuccess(children -> {
+                    if (children != null && children.size() > 0) {
+                        // We are changing the highlighted item so close the current popup
+                        // if it is open.
+                        hideChildren(false, false);
+
+                        final MenuPresenter presenter = menuPresenterProvider.get();
+                        presenter.setParent(MenuPresenter.this, menuItem);
+//                        presenter.setHighlightItems(getHighlightItems());
+                        presenter.setData(children);
+
+                        // Set the current presenter telling us that the
+                        // popup is showing.
+                        currentMenu = presenter;
+                        currentItem = menuItem;
+
+                        final PopupPosition popupPosition = new PopupPosition(
+                                element.getAbsoluteRight() + HORIZONTAL_PADDING,
+                                element.getAbsoluteLeft() - HORIZONTAL_PADDING,
+                                element.getAbsoluteTop() + VERTICAL_PADDING + 30,
+                                element.getAbsoluteTop() - VERTICAL_PADDING,
+                                HorizontalLocation.RIGHT,
+                                null);
+
+                        ShowPopupEvent.builder(presenter)
+                                .popupType(PopupType.POPUP)
+                                .popupPosition(popupPosition)
+                                .addAutoHidePartner(element)
+                                .onHideRequest(e -> {
+                                    presenter.hideChildren(e.isAutoClose(), e.isOk());
+                                    presenter.hideSelf(e.isAutoClose(), e.isOk());
+                                    currentMenu = null;
+                                    currentItem = null;
+                                })
+                                .fire();
+                    }
+                });
+            }
+        }
+    }
+
+    @Override
+    public void ensureParentItemSelected() {
+        if (parent != null && parentItem != null) {
+            parent.getView().ensureItemSelected(parentItem);
+        }
+    }
+
+    public void focus() {
+        getView().focus();
+    }
+
+    public void focus(final boolean hideChildren) {
+        hideChildren(hideChildren, false);
+        getView().focus();
+    }
+
+    @Override
+    public void focusSubMenu() {
+        if (currentMenu != null) {
+            currentMenu.selectFirstItem();
+        }
+    }
+
+    public void selectFirstItem() {
+        getView().selectFirstItem();
+    }
+
+    @Override
+    public void focusParent(final boolean hideChildren) {
+        if (parent != null) {
+            hideChildren(hideChildren, false);
+            parent.focus(hideChildren);
+        }
+    }
+
+    @Override
+    public boolean hasParent() {
+        return parent != null;
+    }
+
+    @Override
+    public void execute(final MenuItem menuItem) {
+        if (menuItem != null && menuItem.getCommand() != null) {
+            TaskStartEvent.fire(MenuPresenter.this);
+            Scheduler.get().scheduleDeferred(() -> {
+                try {
+                    hideAll(false, false);
+                    menuItem.getCommand().execute();
+                } finally {
+                    TaskEndEvent.fire(MenuPresenter.this);
+                }
+            });
+        }
+    }
+
+    private void hideSelf(final boolean autoClose, final boolean ok) {
+        getView().cancelDelayedSubMenu();
+        HidePopupEvent.builder(this)
+                .autoClose(autoClose)
+                .ok(ok)
+                .fire();
+    }
+
+    private void hideChildren(final boolean autoClose, final boolean ok) {
+        // First make sure all children are hidden.
+        if (currentMenu != null) {
+            currentMenu.getView().cancelDelayedSubMenu();
+            currentMenu.hideChildren(autoClose, ok);
+            currentMenu.hideSelf(autoClose, ok);
+            currentMenu = null;
+        }
+        currentItem = null;
+    }
+
+    private void hideParent(final boolean autoClose, final boolean ok) {
+        // First make sure all children are hidden.
+        if (parent != null) {
+            parent.getView().cancelDelayedSubMenu();
+            parent.hideSelf(autoClose, ok);
+            parent.hideParent(autoClose, ok);
+        }
+    }
+
+    @Override
+    public void escape() {
+        hideAll(true, false);
+    }
+
+    public void hideAll(final boolean autoClose, final boolean ok) {
+        getView().cancelDelayedSubMenu();
+        hideChildren(autoClose, ok);
+        hideSelf(autoClose, ok);
+        hideParent(autoClose, ok);
+    }
+
+    public void setParent(final MenuPresenter parent, final MenuItem parentItem) {
+        this.parent = parent;
+        this.parentItem = parentItem;
     }
 
     public void setData(final List<Item> items) {
-        getView().setRowData(0, items);
-        getView().setRowCount(items.size());
+        getView().setData(items);
     }
 
-    protected void onClick(final MenuItem menuItem, final Element element) {
-    }
 
-    protected void onMouseOver(final MenuItem menuItem, final Element element) {
-        hoverItems.put(menuItem, element);
-    }
+    // --------------------------------------------------------------------------------
 
-    protected void onMouseOut(final MenuItem menuItem, final Element element) {
-        hoverItems.remove(menuItem);
-    }
 
-    protected boolean isHover(final MenuItem menuItem) {
-        return hoverItems.containsKey(menuItem);
-    }
+    public interface MenuView extends View, Focus, HasUiHandlers<MenuUiHandlers> {
 
-    protected void removeHover(final MenuItem menuItem) {
-        final Element tr = hoverItems.remove(menuItem);
-        if (tr != null) {
-            tr.removeClassName("cellTableHoveredRow");
-        }
-    }
+        void ensureItemSelected(Item parentItem);
 
-    protected void removeAllHovers() {
-        final Iterator<Entry<Item, Element>> iter = hoverItems.entrySet().iterator();
-        while (iter.hasNext()) {
-            final Entry<Item, Element> entry = iter.next();
+        void setData(List<Item> items);
 
-            final Element tr = entry.getValue();
-            if (tr != null) {
-                tr.removeClassName("cellTableHoveredRow");
-            }
+        void selectFirstItem();
 
-            iter.remove();
-        }
-    }
-
-    protected boolean isHighlighted(final MenuItem menuItem) {
-        if (highlightItems == null) {
-            return false;
-        }
-        return highlightItems.contains(menuItem);
-    }
-
-    public Set<Item> getHighlightItems() {
-        return highlightItems;
-    }
-
-    public void setHighlightItems(final Set<Item> highlightItems) {
-        this.highlightItems = highlightItems;
-    }
-
-    protected void setEnabled(final MenuItemPresenter menuItemPresenter, final boolean enabled) {
-        if (menuItemPresenter != null) {
-            menuItemPresenter.setEnabled(enabled);
-        }
-    }
-
-    public void hide(final boolean autoClose, final boolean ok, final boolean hideParent) {
-        // Hide this menu.
-        HidePopupEvent.fire(this, this);
+        void cancelDelayedSubMenu();
     }
 }

@@ -19,8 +19,8 @@ package stroom.task.client.view;
 import stroom.task.client.presenter.UserTaskPresenter.UserTaskView;
 import stroom.task.client.presenter.UserTaskUiHandlers;
 import stroom.task.shared.TaskProgress;
+import stroom.widget.util.client.MouseUtil;
 
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -84,7 +84,7 @@ public class UserTaskViewImpl extends ViewWithUiHandlers<UserTaskUiHandlers> imp
 
     @UiHandler("terminate")
     public void onTerminateClick(final ClickEvent event) {
-        if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+        if (MouseUtil.isPrimary(event)) {
             if (getUiHandlers() != null) {
                 getUiHandlers().onTerminate(taskProgress);
             }

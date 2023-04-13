@@ -16,14 +16,13 @@
 
 package stroom.statistics.impl.sql.client.view;
 
-import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.item.client.ItemListBox;
 import stroom.statistics.impl.sql.client.presenter.StatisticsDataSourceSettingsPresenter.StatisticsDataSourceSettingsView;
 import stroom.statistics.impl.sql.client.presenter.StatisticsDataSourceSettingsUiHandlers;
 import stroom.statistics.impl.sql.shared.EventStoreTimeIntervalEnum;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 import stroom.statistics.impl.sql.shared.StatisticType;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -45,7 +44,7 @@ public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<Sta
     @UiField(provided = true)
     ItemListBox<StatisticRollUpType> rollUpType;
     @UiField(provided = true)
-    TickBox enabled;
+    CustomCheckBox enabled;
 
     @Inject
     public StatisticsDataSourceSettingsViewImpl(final Binder binder) {
@@ -64,7 +63,7 @@ public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<Sta
         precision.addItem(EventStoreTimeIntervalEnum.HOUR);
         precision.addItem(EventStoreTimeIntervalEnum.DAY);
 
-        enabled = new TickBox(TickBoxState.UNTICK, null);
+        enabled = new CustomCheckBox();
         // default to not ticked so Stroom doesn't start recording stats while the
         // enity is being built up, i.e. fields
         // added.
@@ -112,7 +111,7 @@ public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<Sta
     }
 
     @Override
-    public TickBox getEnabled() {
+    public CustomCheckBox getEnabled() {
         return enabled;
     }
 

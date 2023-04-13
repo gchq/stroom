@@ -22,6 +22,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -29,7 +30,9 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 
-public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.ExpressionView> {
+public class ExpressionPresenter
+        extends MyPresenterWidget<ExpressionPresenter.ExpressionView>
+        implements Focus {
 
     private final EditExpressionPresenter editExpressionPresenter;
     private final RestFactory restFactory;
@@ -43,6 +46,11 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         this.editExpressionPresenter = editExpressionPresenter;
         this.restFactory = restFactory;
         view.setExpressionView(editExpressionPresenter.getView());
+    }
+
+    @Override
+    public void focus() {
+        editExpressionPresenter.focus();
     }
 
     public void read(final ExpressionOperator expression, final DocRef dataSource, final List<AbstractField> fields) {

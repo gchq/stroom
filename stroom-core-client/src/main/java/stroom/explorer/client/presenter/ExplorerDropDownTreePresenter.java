@@ -29,24 +29,31 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.widget.dropdowntree.client.presenter.DropDownTreePresenter;
+import stroom.widget.dropdowntree.client.view.DropDownTreeUiHandlers;
+import stroom.widget.dropdowntree.client.view.DropDownTreeView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.SelectionType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 
-class ExplorerDropDownTreePresenter extends DropDownTreePresenter
-        implements HasDataSelectionHandlers<ExplorerNode> {
+class ExplorerDropDownTreePresenter
+        extends MyPresenterWidget<DropDownTreeView>
+        implements DropDownTreeUiHandlers, HasDataSelectionHandlers<ExplorerNode> {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
     private final ExtendedExplorerTree explorerTree;
     private final RestFactory restFactory;
     private boolean allowFolderSelection;
+    private String caption = "Choose item";
     private ExplorerNode selectedExplorerNode;
 
     @Inject
@@ -55,8 +62,9 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
                                   final RestFactory restFactory,
                                   final UiConfigCache uiConfigCache) {
         super(eventBus, view);
-
         this.restFactory = restFactory;
+
+        getView().setUiHandlers(this);
 
         explorerTree = new ExtendedExplorerTree(this, restFactory);
         setIncludeNullSelection(true);
@@ -70,6 +78,33 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
                                 "Choose Item Quick Filter",
                                 ExplorerTreeFilter.FIELD_DEFINITIONS,
                                 uiConfig.getHelpUrlQuickFilter())));
+    }
+
+    public void show() {
+        getView().clearFilter();
+        refresh();
+        final PopupSize popupSize = PopupSize.resizable(400, 550);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption(caption)
+                .onShow(e -> getView().focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        final ExplorerNode selected = getSelectedEntityData();
+                        if (isSelectionAllowed(selected)) {
+                            DataSelectionEvent.fire(ExplorerDropDownTreePresenter.this, selected, false);
+                            selectedExplorerNode = selected;
+                            e.hide();
+                        } else {
+                            AlertEvent.fireError(ExplorerDropDownTreePresenter.this,
+                                    "You must choose a valid item.", null);
+                        }
+                    } else {
+                        e.hide();
+                    }
+                })
+                .fire();
     }
 
     protected void setIncludeNullSelection(final boolean includeNullSelection) {
@@ -88,7 +123,7 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
             } else if (selectionType.isDoubleSelect()) {
                 DataSelectionEvent.fire(this, selectedItem, true);
                 this.selectedExplorerNode = selectedItem;
-                HidePopupEvent.fire(this, this, true, true);
+                HidePopupEvent.builder(this).fire();
             }
         }
     }
@@ -109,7 +144,6 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
         explorerTree.changeNameFilter(text);
     }
 
-    @Override
     public void refresh() {
         explorerTree.setSelectedItem(selectedExplorerNode);
         explorerTree.getTreeModel().reset();
@@ -117,13 +151,8 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
         explorerTree.getTreeModel().refresh();
     }
 
-    @Override
-    public void focus() {
-        explorerTree.setFocus(true);
-    }
-
-    public void setIncludedTypes(final String... types) {
-        explorerTree.getTreeModel().setIncludedTypes(types);
+    public void setIncludedTypes(final String... includedTypes) {
+        explorerTree.getTreeModel().setIncludedTypes(includedTypes);
     }
 
     public void setIncludedRootTypes(final String... types) {
@@ -172,29 +201,16 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
         return addHandlerToSource(DataSelectionEvent.getType(), handler);
     }
 
-    @Override
-    public void onHideRequest(final boolean autoClose, final boolean ok) {
-        if (ok) {
-            final ExplorerNode selected = getSelectedEntityData();
-            if (isSelectionAllowed(selected)) {
-                DataSelectionEvent.fire(this, selected, false);
-                this.selectedExplorerNode = selected;
-                super.onHideRequest(autoClose, ok);
-            } else {
-                AlertEvent.fireError(ExplorerDropDownTreePresenter.this,
-                        "You must choose a valid item.", null);
-            }
-        } else {
-            super.onHideRequest(autoClose, ok);
-        }
-    }
-
     private static ExplorerNode resolve(final ExplorerNode selection) {
         if (selection == ExplorerTreeModel.NULL_SELECTION) {
             return null;
         }
 
         return selection;
+    }
+
+    public void setCaption(final String caption) {
+        this.caption = caption;
     }
 
     private static class ExtendedExplorerTree extends ExplorerTree {
