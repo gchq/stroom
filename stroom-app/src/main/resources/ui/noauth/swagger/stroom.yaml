@@ -6493,8 +6493,6 @@ components:
       properties:
         enabled:
           type: boolean
-        executionWindow:
-          $ref: '#/components/schemas/SimpleDuration'
         maxMetaCreateTimeMs:
           type: integer
           format: int64

@@ -166,7 +166,6 @@ export interface AlertRuleDoc {
 
 export interface AlertRuleProcessSettings {
   enabled?: boolean;
-  executionWindow?: SimpleDuration;
 
   /** @format int64 */
   maxMetaCreateTimeMs?: number;

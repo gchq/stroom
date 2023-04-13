@@ -40,8 +40,6 @@ public class AlertRuleProcessingViewImpl
     CustomCheckBox enabled;
     @UiField
     DurationPicker timeToWaitForData;
-    @UiField
-    DurationPicker processingWindow;
 
     @Inject
     public AlertRuleProcessingViewImpl(final Binder binder) {
@@ -74,16 +72,6 @@ public class AlertRuleProcessingViewImpl
         this.timeToWaitForData.setValue(timeToWaitForData);
     }
 
-    @Override
-    public SimpleDuration getProcessingWindow() {
-        return processingWindow.getValue();
-    }
-
-    @Override
-    public void setProcessingWindow(final SimpleDuration processingWindow) {
-        this.processingWindow.setValue(processingWindow);
-    }
-
     @UiHandler("enabled")
     public void onEnabled(final ValueChangeEvent<Boolean> event) {
         getUiHandlers().onDirty();
@@ -91,11 +79,6 @@ public class AlertRuleProcessingViewImpl
 
     @UiHandler("timeToWaitForData")
     public void onTimeToWaitForData(final ValueChangeEvent<SimpleDuration> event) {
-        getUiHandlers().onDirty();
-    }
-
-    @UiHandler("processingWindow")
-    public void onProcessingWindow(final ValueChangeEvent<SimpleDuration> event) {
         getUiHandlers().onDirty();
     }
 

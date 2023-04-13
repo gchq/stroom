@@ -8,6 +8,15 @@ public class ContentPacks {
     private static final String VISUALISATION_RELEASES_URL =
             "https://github.com/gchq/stroom-visualisations-dev/releases/download/";
 
+    private static final GitRepo STROOM_CONTENT_GIT_REPO =
+            new GitRepo("stroom-content",
+                    "https://github.com/gchq/stroom-content.git",
+                    "7.2");
+    private static final GitRepo STROOM_VISUALISATION_DEV_GIT_REPO =
+            new GitRepo("stroom-visualisations-dev",
+                    "https://github.com/gchq/stroom-visualisations-dev.git",
+                    "7.2");
+
     public static final ContentPack CORE_XML_SCHEMAS_PACK = createStandardContentPack(CONTENT_RELEASES_URL,
             "core-xml-schemas",
             "2.2");
@@ -23,9 +32,6 @@ public class ContentPacks {
     public static final ContentPack TEMPLATE_PIPELINES_PACK = createStandardContentPack(CONTENT_RELEASES_URL,
             "template-pipelines",
             "0.3");
-
-    //CORE_XML_SCHEMAS_PACK
-    //EVENT_LOGGING_XML_SCHEMA_PACK
 
     public static final ContentPack INTERNAL_DASHBOARDS = createStandardContentPack(CONTENT_RELEASES_URL,
             "internal-dashboards",
@@ -51,7 +57,7 @@ public class ContentPacks {
 
     //TEMPLATE_PIPELINES_PACK
 
-    public static final ContentPack VISUALISATIONS = createSVisualisationContentPack(VISUALISATION_RELEASES_URL,
+    public static final ContentPack VISUALISATIONS = createVisualisationContentPack(VISUALISATION_RELEASES_URL,
             "visualisations-production",
             "3.12-alpha.1");
 
@@ -72,14 +78,14 @@ public class ContentPacks {
                                                          final String name,
                                                          final String version) {
         final String url = baseUrl + name + "-v" + version + "/" + name + "-v" + version + ".zip";
-        return new ContentPack(url, name, version);
+        return new ContentPack(STROOM_CONTENT_GIT_REPO, url, name, version);
     }
 
-    private static ContentPack createSVisualisationContentPack(final String baseUrl,
-                                                               final String name,
-                                                               final String version) {
+    private static ContentPack createVisualisationContentPack(final String baseUrl,
+                                                              final String name,
+                                                              final String version) {
         final String url = baseUrl + "v" + version + "/" + name + "-v" + version + ".zip";
-        return new ContentPack(url, name, version);
+        return new ContentPack(STROOM_VISUALISATION_DEV_GIT_REPO, url, name, version);
     }
 
     private ContentPacks() {

@@ -8,20 +8,21 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder(alphabetic = true)
-public class ResultStoreConfig extends AbstractResultStoreConfig implements IsStroomConfig {
-    public ResultStoreConfig() {
+public class AnalyticStoreConfig extends AbstractResultStoreConfig implements IsStroomConfig {
+
+    public AnalyticStoreConfig() {
         super(100_000,
                 true,
                 ByteSize.ofMebibytes(1),
-                ByteSize.ofGibibytes(1),
+                ByteSize.ofMebibytes(1),
                 1000,
                 100_000,
-                ResultStoreLmdbConfig.builder().localDir("search_results").build(),
+                ResultStoreLmdbConfig.builder().localDir("analytic_store").build(),
                 "1000000,100,10,1");
     }
 
     @JsonCreator
-    public ResultStoreConfig(@JsonProperty("maxPutsBeforeCommit") final int maxPutsBeforeCommit,
+    public AnalyticStoreConfig(@JsonProperty("maxPutsBeforeCommit") final int maxPutsBeforeCommit,
                                @JsonProperty("offHeapResults") final boolean offHeapResults,
                                @JsonProperty("minPayloadSize") final ByteSize minPayloadSize,
                                @JsonProperty("maxPayloadSize") final ByteSize maxPayloadSize,

@@ -23,8 +23,6 @@ public class MapDataStoreFactory implements DataStoreFactory {
                             final TableSettings tableSettings,
                             final FieldIndex fieldIndex,
                             final Map<String, String> paramMap,
-                            final Sizes maxResults,
-                            final Sizes storeSize,
                             final DataStoreSettings dataStoreSettings,
                             final ErrorConsumer errorConsumer) {
         if (dataStoreSettings.isProducePayloads()) {
@@ -36,8 +34,7 @@ public class MapDataStoreFactory implements DataStoreFactory {
                 tableSettings,
                 fieldIndex,
                 paramMap,
-                maxResults,
-                storeSize);
+                dataStoreSettings);
     }
 
     @Override

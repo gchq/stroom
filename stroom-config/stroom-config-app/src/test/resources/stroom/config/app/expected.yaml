@@ -18,6 +18,19 @@ appConfig:
         prepStmtCacheSqlLimit: 256
   alerting:
     additionalFieldsPrefix: "_"
+    analyticStoreConfig:
+      lmdb:
+        localDir: "analytic_store"
+        maxReaders: 10
+        maxStoreSize: "10G"
+        readAheadEnabled: true
+      maxPayloadSize: "1M"
+      maxPutsBeforeCommit: 100000
+      maxStringFieldLength: 1000
+      minPayloadSize: "1M"
+      offHeapResults: true
+      storeSize: "1000000,100,10,1"
+      valueQueueSize: 100000
     reportAllExtractedFieldsEnabled: false
     rulesFolderList: []
     timezone: "UTC"
@@ -571,7 +584,7 @@ appConfig:
       minPayloadSize: "1M"
       offHeapResults: true
       storeSize: "1000000,100,10,1"
-      valueQueueSize: 1000000
+      valueQueueSize: 100000
     shard:
       indexShardSearcherCache:
         expireAfterAccess: "PT1M"

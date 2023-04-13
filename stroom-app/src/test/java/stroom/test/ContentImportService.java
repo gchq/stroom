@@ -2,6 +2,8 @@ package stroom.test;
 
 import stroom.content.ContentPack;
 import stroom.content.ContentPacks;
+import stroom.content.GitRepo;
+import stroom.importexport.impl.ImportExportSerializer;
 import stroom.importexport.impl.ImportExportService;
 import stroom.importexport.shared.ImportSettings;
 import stroom.test.common.util.test.ContentPackDownloader;
@@ -23,10 +25,13 @@ import javax.inject.Inject;
 public class ContentImportService {
 
     private final ImportExportService importExportService;
+    private final ImportExportSerializer importExportSerializer;
 
     @Inject
-    ContentImportService(final ImportExportService importExportService) {
+    ContentImportService(final ImportExportService importExportService,
+                         final ImportExportSerializer importExportSerializer) {
         this.importExportService = importExportService;
+        this.importExportSerializer = importExportSerializer;
     }
 
     /**
@@ -41,13 +46,26 @@ public class ContentImportService {
         ));
     }
 
-    public void importContentPacks(final List<ContentPack> packs) {
+    private void importContentPacks(final List<ContentPack> packs) {
         packs.forEach(pack -> {
-            final Path packPath = ContentPackDownloader.downloadContentPack(
-                    pack,
-                    FileSystemTestUtil.getContentPackDownloadsDir());
+            final GitRepo gitRepo = pack.getGitRepo();
+            final Path dir = FileSystemTestUtil
+                    .getContentPackDownloadsDir()
+                    .resolve(gitRepo.getName())
+                    .resolve(gitRepo.getBranch());
+            final Path repoPath = ContentPackDownloader.downloadContentPackFromGit(
+                    gitRepo.getUrl(),
+                    gitRepo.getBranch(),
+                    dir);
 
-            importExportService.importConfig(packPath, ImportSettings.auto(), new ArrayList<>());
+            final Path subPath = repoPath.resolve("source").resolve(pack.getName()).resolve("stroomContent");
+
+            importExportSerializer.read(subPath, new ArrayList<>(), ImportSettings.auto());
+//            final Path packPath = ContentPackDownloader.downloadContentPack(
+//                    pack,
+//                    FileSystemTestUtil.getContentPackDownloadsDir());
+//
+//            importExportService.importConfig(packPath, ImportSettings.auto(), new ArrayList<>());
         });
     }
 }

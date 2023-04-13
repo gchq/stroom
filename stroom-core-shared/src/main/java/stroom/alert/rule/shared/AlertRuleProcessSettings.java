@@ -39,20 +39,16 @@ public class AlertRuleProcessSettings {
     private final Long maxMetaCreateTimeMs;
     @JsonProperty
     private final SimpleDuration timeToWaitForData;
-    @JsonProperty
-    private final SimpleDuration executionWindow;
 
     @JsonCreator
     public AlertRuleProcessSettings(@JsonProperty("enabled") final boolean enabled,
                                     @JsonProperty("minMetaCreateTimeMs") Long minMetaCreateTimeMs,
                                     @JsonProperty("maxMetaCreateTimeMs") Long maxMetaCreateTimeMs,
-                                    @JsonProperty("timeToWaitForData") final SimpleDuration timeToWaitForData,
-                                    @JsonProperty("executionWindow") final SimpleDuration executionWindow) {
+                                    @JsonProperty("timeToWaitForData") final SimpleDuration timeToWaitForData) {
         this.enabled = enabled;
         this.minMetaCreateTimeMs = minMetaCreateTimeMs;
         this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
         this.timeToWaitForData = timeToWaitForData;
-        this.executionWindow = executionWindow;
     }
 
     public boolean isEnabled() {
@@ -71,10 +67,6 @@ public class AlertRuleProcessSettings {
         return timeToWaitForData;
     }
 
-    public SimpleDuration getExecutionWindow() {
-        return executionWindow;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -84,15 +76,15 @@ public class AlertRuleProcessSettings {
             return false;
         }
         final AlertRuleProcessSettings settings = (AlertRuleProcessSettings) o;
-        return enabled == settings.enabled && Objects.equals(minMetaCreateTimeMs,
-                settings.minMetaCreateTimeMs) && Objects.equals(maxMetaCreateTimeMs,
-                settings.maxMetaCreateTimeMs) && Objects.equals(timeToWaitForData,
-                settings.timeToWaitForData) && Objects.equals(executionWindow, settings.executionWindow);
+        return enabled == settings.enabled &&
+                Objects.equals(minMetaCreateTimeMs, settings.minMetaCreateTimeMs) &&
+                Objects.equals(maxMetaCreateTimeMs, settings.maxMetaCreateTimeMs) &&
+                Objects.equals(timeToWaitForData, settings.timeToWaitForData);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(enabled, minMetaCreateTimeMs, maxMetaCreateTimeMs, timeToWaitForData, executionWindow);
+        return Objects.hash(enabled, minMetaCreateTimeMs, maxMetaCreateTimeMs, timeToWaitForData);
     }
 
     @Override
@@ -102,7 +94,6 @@ public class AlertRuleProcessSettings {
                 ", minMetaCreateTimeMs=" + minMetaCreateTimeMs +
                 ", maxMetaCreateTimeMs=" + maxMetaCreateTimeMs +
                 ", timeToWaitForData=" + timeToWaitForData +
-                ", executionWindow=" + executionWindow +
                 '}';
     }
 
@@ -120,7 +111,6 @@ public class AlertRuleProcessSettings {
         private Long minMetaCreateTimeMs;
         private Long maxMetaCreateTimeMs;
         private SimpleDuration timeToWaitForData = new SimpleDuration(1, TimeUnit.HOURS);
-        private SimpleDuration executionWindow = new SimpleDuration(1, TimeUnit.HOURS);
 
         private Builder() {
         }
@@ -130,7 +120,6 @@ public class AlertRuleProcessSettings {
             this.minMetaCreateTimeMs = settings.minMetaCreateTimeMs;
             this.maxMetaCreateTimeMs = settings.maxMetaCreateTimeMs;
             this.timeToWaitForData = settings.timeToWaitForData;
-            this.executionWindow = settings.executionWindow;
         }
 
 
@@ -154,18 +143,12 @@ public class AlertRuleProcessSettings {
             return this;
         }
 
-        public Builder executionWindow(final SimpleDuration executionWindow) {
-            this.executionWindow = executionWindow;
-            return this;
-        }
-
         public AlertRuleProcessSettings build() {
             return new AlertRuleProcessSettings(
                     enabled,
                     minMetaCreateTimeMs,
                     maxMetaCreateTimeMs,
-                    timeToWaitForData,
-                    executionWindow);
+                    timeToWaitForData);
         }
     }
 }

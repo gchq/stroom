@@ -77,7 +77,7 @@ public class RemoteSearchService {
                         clusterSearchTask.getKey(),
                         clusterSearchTask.getSettings(),
                         query.getParams(),
-                        DataStoreSettings.PAYLOAD_PRODUCER_SETTINGS);
+                        DataStoreSettings.createPayloadProducerSearchResultStoreSettings());
                 remoteSearchResultFactory.setCoprocessors(coprocessors);
 
                 if (coprocessors != null && coprocessors.size() > 0) {

@@ -8,6 +8,8 @@ import stroom.util.logging.LogUtil;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,6 +109,28 @@ public class ContentPackDownloader {
 
     public static Path downloadContentPack(final ContentPack contentPack, final Path destDir) {
         return downloadContentPack(contentPack, destDir, ConflictMode.KEEP_EXISTING);
+    }
+
+    public static synchronized Path downloadContentPackFromGit(final String uri,
+                                                               final String branch,
+                                                               final Path destDir) {
+        if (!Files.exists(destDir)) {
+            try {
+                Git
+                        .cloneRepository()
+                        .setURI(uri)
+                        .setBranch(branch)
+                        .setDirectory(destDir.toFile())
+                        .call();
+            } catch (final GitAPIException e) {
+                LOGGER.error(e.getMessage(), e);
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        }
+
+        return destDir;
+
+//        return downloadContentPack(contentPack, destDir, ConflictMode.KEEP_EXISTING);
     }
 
     /**

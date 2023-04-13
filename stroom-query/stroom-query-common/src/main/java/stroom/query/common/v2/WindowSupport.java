@@ -1,5 +1,6 @@
 package stroom.query.common.v2;
 
+import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValDate;
 import stroom.query.api.v2.Field;
@@ -22,11 +23,9 @@ import java.util.List;
 public class WindowSupport {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(WindowSupport.class);
-
     private SimpleDuration window;
     private SimpleDuration advance;
     private List<SimpleDuration> offsets;
-    private int windowTimeFieldPos;
     private TableSettings tableSettings;
 
     public WindowSupport(final TableSettings tableSettings) {
@@ -79,20 +78,20 @@ public class WindowSupport {
                 }
 
                 this.tableSettings = tableSettings.copy().fields(newFields).build();
-                windowTimeFieldPos = 0;
             }
         }
     }
 
-
-    public Val[] addWindow(final Val[] values,
+    public Val[] addWindow(final FieldIndex fieldIndex,
+                           final Val[] values,
                            final SimpleDuration offset) {
+        final int windowTimeFieldPos = fieldIndex.getWindowTimeFieldPos();
         final Val val = values[windowTimeFieldPos];
         final Val adjusted = adjustWithOffset(val, offset);
-        Val[] arr = new Val[values.length];
+        final Val[] arr = new Val[values.length];
         System.arraycopy(values, 0, arr, 0, values.length);
         arr[windowTimeFieldPos] = adjusted;
-        return Val.of(arr);
+        return arr;
     }
 
     private Val adjustWithOffset(final Val val, final SimpleDuration offset) {

@@ -9,6 +9,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class ContentPack {
 
     @JsonProperty
+    private final GitRepo gitRepo;
+    @JsonProperty
     private final String url;
     @JsonProperty
     private final String name;
@@ -16,12 +18,18 @@ public class ContentPack {
     private final String version;
 
     @JsonCreator
-    public ContentPack(@JsonProperty("url") final String url,
+    public ContentPack(@JsonProperty("gitRepo") final GitRepo gitRepo,
+            @JsonProperty("url") final String url,
                        @JsonProperty("name") final String name,
                        @JsonProperty("version") final String version) {
+        this.gitRepo = gitRepo;
         this.url = url;
         this.name = name;
         this.version = version;
+    }
+
+    public GitRepo getGitRepo() {
+        return gitRepo;
     }
 
     public String getUrl() {

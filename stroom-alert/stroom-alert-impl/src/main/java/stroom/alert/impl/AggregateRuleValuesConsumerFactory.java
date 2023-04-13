@@ -67,8 +67,6 @@ public class AggregateRuleValuesConsumerFactory {
             // Create error consumer.
             final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
 
-            final Sizes storeSizes = sizesProvider.getStoreSizes();
-
             String componentId = null;
             TableSettings tableSettings = null;
             for (final ResultRequest resultRequest : searchRequest.getResultRequests()) {
@@ -78,27 +76,17 @@ public class AggregateRuleValuesConsumerFactory {
                 }
             }
 
+            final String uuid = queryKey + "_" + componentId;
+            // Make safe for the file system.
+            final String subDirectory = uuid.replaceAll("[^A-Za-z0-9]", "_");
+            final DataStoreSettings dataStoreSettings = DataStoreSettings.createAnalyticStoreSettings(subDirectory);
 
-            // Create a set of sizes that are the minimum values for the combination of user provided sizes for the
-            // table and the default maximum sizes.
-            final Sizes defaultMaxResultsSizes = sizesProvider.getDefaultMaxResultsSizes();
-            final Sizes maxResults = Sizes.min(Sizes.create(tableSettings.getMaxResults()), defaultMaxResultsSizes);
-
-            final DataStoreSettings dataStoreSettings = DataStoreSettings
-                    .builder()
-                    .requireStreamIdValue(false)
-                    .requireEventIdValue(false)
-                    .requireTimeValue(true)
-                    .build();
-
-            return lmdbDataStoreFactory.createLmdbDataStore(
+            return lmdbDataStoreFactory.createAnalyticLmdbDataStore(
                     queryKey,
                     componentId,
                     tableSettings,
                     fieldIndex,
                     paramMap,
-                    maxResults,
-                    storeSizes,
                     dataStoreSettings,
                     errorConsumer);
         });

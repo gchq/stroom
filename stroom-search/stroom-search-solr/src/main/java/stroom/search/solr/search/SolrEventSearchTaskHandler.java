@@ -102,7 +102,7 @@ public class SolrEventSearchTaskHandler {
                     task.getKey(),
                     Collections.singletonList(settings),
                     modifiedQuery.getParams(),
-                    DataStoreSettings.BASIC_SETTINGS);
+                    DataStoreSettings.createBasicSearchResultStoreSettings());
             final EventCoprocessor eventCoprocessor = (EventCoprocessor) coprocessors.get(coprocessorId);
 
             // Create the search result store.

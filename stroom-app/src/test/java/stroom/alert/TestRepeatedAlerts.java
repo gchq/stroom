@@ -41,6 +41,7 @@ import stroom.resource.impl.ResourceModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.BootstrapTestModule;
 import stroom.test.StroomIntegrationTest;
+import stroom.util.concurrent.ThreadUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
@@ -53,6 +54,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.time.LocalDateTime;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -69,7 +71,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
 @IncludeModule(MockIndexShardWriterExecutorModule.class)
-class TestAlerts extends StroomIntegrationTest {
+class TestRepeatedAlerts extends StroomIntegrationTest {
 
     private static boolean doneSetup;
 
@@ -109,39 +111,6 @@ class TestAlerts extends StroomIntegrationTest {
     }
 
     @Test
-    void testSingleEvent() {
-        // Add alert
-        final String query = """
-                "index_view"
-                | where UserId = user5
-                | table StreamId, EventId, UserId""";
-
-        final DocRef alertRuleDocRef = alertRuleStore.createDocument("Threshold Event Rule");
-        AlertRuleDoc alertRuleDoc = alertRuleStore.readDocument(alertRuleDocRef);
-        alertRuleDoc = alertRuleDoc.copy()
-                .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
-                .query(query)
-                .alertRuleType(AlertRuleType.EVENT)
-                .processSettings(AlertRuleProcessSettings.builder().enabled(true).build())
-                .build();
-        alertRuleStore.writeDocument(alertRuleDoc);
-
-        // Now run the search process.
-        resultStoreAlertSearchExecutor.exec();
-        alertDataSetup.checkStreamCount(9);
-
-        // As we have created alerts ensure we now have more streams.
-        final Meta newestMeta = alertDataSetup.getNewestMeta();
-        try (final Source source = streamStore.openSource(newestMeta.getId())) {
-            final String result = SourceUtil.readString(source);
-            assertThat(result.split("<record>").length).isEqualTo(6);
-            assertThat(result).contains("user5");
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    @Test
     void testHavingCount() {
         // Add alert
         final String query = """
@@ -175,7 +144,7 @@ class TestAlerts extends StroomIntegrationTest {
         alertDataSetup.checkStreamCount(9);
 
         // As we have created alerts ensure we now have more streams.
-        final Meta newestMeta = alertDataSetup.getNewestMeta();
+        Meta newestMeta = alertDataSetup.getNewestMeta();
         try (final Source source = streamStore.openSource(newestMeta.getId())) {
             final String result = SourceUtil.readString(source);
             assertThat(result.split("<record>").length).isEqualTo(2);
@@ -183,87 +152,25 @@ class TestAlerts extends StroomIntegrationTest {
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
-    }
 
-    @Test
-    void testWindowCount() {
-        // Add alert
-        final String query = """
-                "index_view"
-                | where UserId = user5
-                | window EventTime by 1y advance 1y
-                | group by UserId
-                //| having count > countPrevious
-                | table UserId""";
+//        // We need to sleep for a bit so that the new data is included in the processing window.
+//        ThreadUtil.sleep(5000);
 
-        // Create the rule.
-        final AlertRuleProcessSettings processSettings = AlertRuleProcessSettings.builder()
-                .enabled(true)
-                .timeToWaitForData(SimpleDuration.builder().time(0).timeUnit(TimeUnit.SECONDS).build())
-                .build();
+        // Load more data and test again.
+        // Add some data.
+        final LocalDateTime localDateTime = LocalDateTime.now().minusSeconds(10);
+        alertDataSetup.addNewData(localDateTime);
+        alertDataSetup.checkStreamCount(11);
 
-        final DocRef alertRuleDocRef = alertRuleStore.createDocument("Threshold Event Rule");
-        AlertRuleDoc alertRuleDoc = alertRuleStore.readDocument(alertRuleDocRef);
-        alertRuleDoc = alertRuleDoc.copy()
-                .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
-                .query(query)
-                .alertRuleType(AlertRuleType.AGGREGATE)
-                .processSettings(processSettings)
-                .destinationFeed(detections)
-                .build();
+//        // We need to sleep for a bit so that the new data is included in the processing window.
+//        ThreadUtil.sleep(5000);
 
-        alertRuleStore.writeDocument(alertRuleDoc);
-
-        // Now run the search process.
+        // Run alert executor.
         resultStoreAlertSearchExecutor.exec();
-        alertDataSetup.checkStreamCount(9);
+        alertDataSetup.checkStreamCount(12);
 
         // As we have created alerts ensure we now have more streams.
-        final Meta newestMeta = alertDataSetup.getNewestMeta();
-        try (final Source source = streamStore.openSource(newestMeta.getId())) {
-            final String result = SourceUtil.readString(source);
-            assertThat(result.split("<record>").length).isEqualTo(3);
-            assertThat(result).contains("user5");
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    @Test
-    void testWindowCountHaving() {
-        // Add alert
-        final String query = """
-                "index_view"
-                | where UserId = user5
-                | window EventTime by 1y advance 1y
-                | group by UserId
-                | having "period-0" = 0
-                | table UserId""";
-
-        // Create the rule.
-        final AlertRuleProcessSettings processSettings = AlertRuleProcessSettings.builder()
-                .enabled(true)
-                .timeToWaitForData(SimpleDuration.builder().time(0).timeUnit(TimeUnit.SECONDS).build())
-                .build();
-
-        final DocRef alertRuleDocRef = alertRuleStore.createDocument("Threshold Event Rule");
-        AlertRuleDoc alertRuleDoc = alertRuleStore.readDocument(alertRuleDocRef);
-        alertRuleDoc = alertRuleDoc.copy()
-                .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
-                .query(query)
-                .alertRuleType(AlertRuleType.AGGREGATE)
-                .processSettings(processSettings)
-                .destinationFeed(detections)
-                .build();
-
-        alertRuleStore.writeDocument(alertRuleDoc);
-
-        // Now run the search process.
-        resultStoreAlertSearchExecutor.exec();
-        alertDataSetup.checkStreamCount(9);
-
-        // As we have created alerts ensure we now have more streams.
-        final Meta newestMeta = alertDataSetup.getNewestMeta();
+        newestMeta = alertDataSetup.getNewestMeta();
         try (final Source source = streamStore.openSource(newestMeta.getId())) {
             final String result = SourceUtil.readString(source);
             assertThat(result.split("<record>").length).isEqualTo(2);

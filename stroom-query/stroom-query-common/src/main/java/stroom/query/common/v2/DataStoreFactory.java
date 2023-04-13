@@ -13,8 +13,6 @@ public interface DataStoreFactory {
                      TableSettings tableSettings,
                      FieldIndex fieldIndex,
                      Map<String, String> paramMap,
-                     Sizes maxResults,
-                     Sizes storeSize,
                      DataStoreSettings dataStoreSettings,
                      ErrorConsumer errorConsumer);
 

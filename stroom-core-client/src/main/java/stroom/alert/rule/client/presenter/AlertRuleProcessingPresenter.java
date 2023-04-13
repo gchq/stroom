@@ -54,7 +54,6 @@ public class AlertRuleProcessingPresenter
         }
         getView().setEnabled(settings.isEnabled());
         getView().setTimeToWaitForData(settings.getTimeToWaitForData());
-        getView().setProcessingWindow(settings.getExecutionWindow());
     }
 
     @Override
@@ -62,7 +61,6 @@ public class AlertRuleProcessingPresenter
         final AlertRuleProcessSettings settings = AlertRuleProcessSettings.builder()
                 .enabled(getView().isEnabled())
                 .timeToWaitForData(getView().getTimeToWaitForData())
-                .executionWindow(getView().getProcessingWindow())
                 .build();
 
         return alertRule.copy()
@@ -89,9 +87,5 @@ public class AlertRuleProcessingPresenter
         SimpleDuration getTimeToWaitForData();
 
         void setTimeToWaitForData(SimpleDuration timeToWaitForData);
-
-        SimpleDuration getProcessingWindow();
-
-        void setProcessingWindow(SimpleDuration setExecutionWindow);
     }
 }

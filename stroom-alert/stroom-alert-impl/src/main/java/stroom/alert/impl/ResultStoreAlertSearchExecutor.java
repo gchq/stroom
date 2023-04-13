@@ -35,10 +35,12 @@ import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.common.v2.CompiledField;
 import stroom.query.common.v2.CompiledFields;
+import stroom.query.common.v2.CurrentDbState;
 import stroom.query.common.v2.ErrorConsumer;
 import stroom.query.common.v2.ErrorConsumerImpl;
 import stroom.query.common.v2.LmdbDataStore;
 import stroom.query.common.v2.Sizes;
+import stroom.query.common.v2.Sync;
 import stroom.query.common.v2.TableResultCreator;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
@@ -59,6 +61,7 @@ import stroom.util.time.SimpleDurationUtil;
 import stroom.view.impl.ViewStore;
 import stroom.view.shared.ViewDoc;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -67,6 +70,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -75,6 +79,8 @@ import javax.inject.Singleton;
 public class ResultStoreAlertSearchExecutor {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ResultStoreAlertSearchExecutor.class);
+    private static final LocalDateTime BEGINNING_OF_TIME =
+            LocalDateTime.ofInstant(Instant.ofEpochMilli(0), ZoneOffset.UTC);
 
     private final AlertRuleSearchRequestHelper alertRuleSearchRequestHelper;
     private final ExecutorProvider executorProvider;
@@ -281,12 +287,7 @@ public class ResultStoreAlertSearchExecutor {
                                        final List<Meta> metaList,
                                        final ViewDoc viewDoc,
                                        final QueryKey queryKey) {
-        LocalDateTime mostRecentData = null;
-        if (metaList.size() == 0) {
-            // There is no new meta to process so assume we are up to date.
-            mostRecentData = LocalDateTime.now();
-
-        } else {
+        if (metaList.size() > 0) {
             final DocRef extractionPipeline = viewDoc.getPipeline();
             final PipelineData pipelineData = getPipelineData(extractionPipeline);
 
@@ -299,12 +300,9 @@ public class ResultStoreAlertSearchExecutor {
             final SearchExpressionQueryCache searchExpressionQueryCache =
                     new SearchExpressionQueryCache(searchExpressionQueryBuilderFactory, searchRequest);
 
-
             for (final Meta meta : metaList) {
                 try {
                     if (Status.UNLOCKED.equals(meta.getStatus())) {
-                        mostRecentData = LocalDateTime
-                                .ofInstant(Instant.ofEpochMilli(meta.getCreateMs()), ZoneOffset.UTC);
                         pipelineScopeRunnable.scopeRunnable(() -> {
                             taskContextFactory.context("Alert Stream Processor", taskContext -> {
                                 try {
@@ -345,13 +343,10 @@ public class ResultStoreAlertSearchExecutor {
         }
 
         // Now run aggregate rule.
-        if (mostRecentData != null) {
-            runAggregateAlert(alertRuleDoc, mostRecentData);
-        }
+        runAggregateAlert(alertRuleDoc);
     }
 
-    private void runAggregateAlert(final AlertRuleDoc alertRuleDoc,
-                                   final LocalDateTime mostRecentData) {
+    private void runAggregateAlert(final AlertRuleDoc alertRuleDoc) {
         if (AlertRuleType.AGGREGATE.equals(alertRuleDoc.getAlertRuleType())) {
             final DocRef feedDocRef = alertRuleDoc.getDestinationFeed();
             pipelineScopeRunnable.scopeRunnable(() -> {
@@ -362,8 +357,7 @@ public class ResultStoreAlertSearchExecutor {
                     try {
                         execThresholdAlertRule(alertRuleDoc,
                                 alertRuleDoc.getProcessSettings(),
-                                detectionsWriter,
-                                mostRecentData);
+                                detectionsWriter);
                     } catch (final RuntimeException e) {
                         LOGGER.error(e::getMessage, e);
                     }
@@ -376,93 +370,57 @@ public class ResultStoreAlertSearchExecutor {
 
     private void execThresholdAlertRule(final AlertRuleDoc alertRuleDoc,
                                         final AlertRuleProcessSettings processSettings,
-                                        final RecordConsumer recordConsumer,
-                                        final LocalDateTime mostRecentData) {
-        final SimpleDuration executionWindow = processSettings.getExecutionWindow();
-        final SimpleDuration timeToWaitForData = processSettings.getTimeToWaitForData();
-
-        final LocalDateTime lastTime = lastExecutionTimes.get(alertRuleDoc);
-        if (lastTime == null) {
-            // Execute from the beginning of time as this hasn't executed before.
-            LocalDateTime from = LocalDateTime.of(1970, 1, 1, 0, 0, 0);
-
-            // Execute up to most recent data minus the time to wait for data to arrive.
-            LocalDateTime to = mostRecentData;
-            to = SimpleDurationUtil.minus(to, timeToWaitForData);
-            to = SimpleDurationUtil.roundDown(to, executionWindow);
-
-            execThresholdAlertRule(alertRuleDoc, from, to, recordConsumer);
-
-        } else {
-            // Get the last time we executed and round down to the frequency.
-            LocalDateTime from = lastTime;
-            from = SimpleDurationUtil.roundDown(from, executionWindow);
-
-            // Add the frequency to the `from` time.
-            LocalDateTime maxTo = mostRecentData;
-            maxTo = SimpleDurationUtil.minus(maxTo, timeToWaitForData);
-            maxTo = SimpleDurationUtil.roundDown(maxTo, executionWindow);
-
-            LocalDateTime to = SimpleDurationUtil.plus(from, executionWindow);
-            to = SimpleDurationUtil.roundDown(to, executionWindow);
-
-            if (to.isAfter(maxTo)) {
-                to = maxTo;
-            }
-
-            // See if it is time to execute again.
-            final LocalDateTime now = LocalDateTime.now();
-            final LocalDateTime next = SimpleDurationUtil.minus(now, timeToWaitForData);
-            if (to.isBefore(next)) {
-                execThresholdAlertRule(alertRuleDoc, from, to, recordConsumer);
-            }
-        }
-    }
-
-
-    private void execThresholdAlertRule(final AlertRuleDoc alertRuleDoc,
-                                        final LocalDateTime from,
-                                        final LocalDateTime to,
                                         final RecordConsumer recordConsumer) {
         final QueryKey queryKey = alertRuleDoc.getQueryKey();
         final Optional<LmdbDataStore> optionalResultStore = aggregateRuleValuesConsumerFactory.getIfPresent(queryKey);
         if (optionalResultStore.isPresent()) {
             final LmdbDataStore lmdbDataStore = optionalResultStore.get();
-
-
-            // TODO : TEMPORARY COMPLETION - NEEDS SYNC BLOCK
-            try {
-                lmdbDataStore.getCompletionState().signalComplete();
-                lmdbDataStore.getCompletionState().awaitCompletion();
-            } catch (final InterruptedException e) {
-                throw UncheckedInterruptedException.create(e);
+            final CurrentDbState currentDbState = lmdbDataStore.sync();
+            final SimpleDuration timeToWaitForData = processSettings.getTimeToWaitForData();
+            final LocalDateTime lastTime = lastExecutionTimes.get(alertRuleDoc);
+            final LocalDateTime from;
+            if (lastTime == null) {
+                // Execute from the beginning of time as this hasn't executed before.
+                from = BEGINNING_OF_TIME;
+            } else {
+                // Get the last time we executed plus one millisecond as this will be the start of the new window.
+                from = lastTime.plus(Duration.ofMillis(1));
             }
 
-            // Create a search request.
-            SearchRequest searchRequest = alertRuleSearchRequestHelper.create(alertRuleDoc);
-            // Create a time filter.
-            final TimeFilter timeFilter = new TimeFilter(
-                    from.toInstant(ZoneOffset.UTC).toEpochMilli(),
-                    to.toInstant(ZoneOffset.UTC).toEpochMilli());
+            // Execute up to most recent data minus the time to wait for data to arrive.
+            LocalDateTime to = Optional
+                    .ofNullable(currentDbState)
+                    .map(CurrentDbState::getLastEventTime)
+                    .map(time -> LocalDateTime.ofInstant(Instant.ofEpochMilli(time), ZoneOffset.UTC))
+                    .orElse(BEGINNING_OF_TIME);
+            to = SimpleDurationUtil.minus(to, timeToWaitForData);
+            if (to.isAfter(from)) {
+                // Create a search request.
+                SearchRequest searchRequest = alertRuleSearchRequestHelper.create(alertRuleDoc);
+                // Create a time filter.
+                final TimeFilter timeFilter = new TimeFilter(
+                        from.toInstant(ZoneOffset.UTC).toEpochMilli(),
+                        to.toInstant(ZoneOffset.UTC).toEpochMilli());
 
-            searchRequest = searchRequest.copy().key(queryKey).incremental(true).build();
-            // Perform the search.
-            ResultRequest resultRequest = searchRequest.getResultRequests().get(0);
-            resultRequest = resultRequest.copy().timeFilter(timeFilter).build();
-            final TableResultConsumer tableResultConsumer =
-                    new TableResultConsumer(alertRuleDoc, recordConsumer);
+                searchRequest = searchRequest.copy().key(queryKey).incremental(true).build();
+                // Perform the search.
+                ResultRequest resultRequest = searchRequest.getResultRequests().get(0);
+                resultRequest = resultRequest.copy().timeFilter(timeFilter).build();
+                final TableResultConsumer tableResultConsumer =
+                        new TableResultConsumer(alertRuleDoc, recordConsumer);
 
-            final FieldFormatter fieldFormatter =
-                    new FieldFormatter(new FormatterFactory(null));
-            final TableResultCreator resultCreator = new TableResultCreator(
-                    fieldFormatter,
-                    Sizes.create(Integer.MAX_VALUE));
+                final FieldFormatter fieldFormatter =
+                        new FieldFormatter(new FormatterFactory(null));
+                final TableResultCreator resultCreator = new TableResultCreator(
+                        fieldFormatter,
+                        Sizes.create(Integer.MAX_VALUE));
 
-            // Create result.
-            resultCreator.create(lmdbDataStore, resultRequest, tableResultConsumer);
+                // Create result.
+                resultCreator.create(lmdbDataStore, resultRequest, tableResultConsumer);
 
-            // Remember last successful execution.
-            lastExecutionTimes.put(alertRuleDoc, to);
+                // Remember last successful execution.
+                lastExecutionTimes.put(alertRuleDoc, to);
+            }
         } else {
             LOGGER.info(() -> LogUtil.message("No result store found to try alert query: {}",
                     alertRuleDoc.getUuid()));

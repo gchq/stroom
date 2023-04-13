@@ -5,6 +5,7 @@ import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.io.ByteSize;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
+import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -16,6 +17,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 @JsonPropertyOrder(alphabetic = true)
+@NotInjectableConfig
 public class ResultStoreLmdbConfig extends AbstractConfig implements LmdbConfig, IsStroomConfig {
 
     static final String DEFAULT_LOCAL_DIR = "search_results";
@@ -106,5 +108,55 @@ public class ResultStoreLmdbConfig extends AbstractConfig implements LmdbConfig,
                 ", maxStoreSize=" + maxStoreSize +
                 ", isReadAheadEnabled=" + isReadAheadEnabled +
                 '}';
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private String localDir = DEFAULT_LOCAL_DIR;
+        private int maxReaders = DEFAULT_MAX_READERS;
+        private ByteSize maxStoreSize = DEFAULT_MAX_STORE_SIZE;
+        private boolean isReadAheadEnabled = DEFAULT_IS_READ_AHEAD_ENABLED;
+
+        private Builder() {
+        }
+
+        private Builder(final ResultStoreLmdbConfig lmdbConfig) {
+            this.localDir = lmdbConfig.localDir;
+            this.maxReaders = lmdbConfig.maxReaders;
+            this.maxStoreSize = lmdbConfig.maxStoreSize;
+            this.isReadAheadEnabled = lmdbConfig.isReadAheadEnabled;
+        }
+
+        public Builder localDir(final String localDir) {
+            this.localDir = localDir;
+            return this;
+        }
+
+        public Builder maxReaders(final int maxReaders) {
+            this.maxReaders = maxReaders;
+            return this;
+        }
+
+        public Builder maxStoreSize(final ByteSize maxStoreSize) {
+            this.maxStoreSize = maxStoreSize;
+            return this;
+        }
+
+        public Builder readAheadEnabled(final boolean readAheadEnabled) {
+            isReadAheadEnabled = readAheadEnabled;
+            return this;
+        }
+
+        public ResultStoreLmdbConfig build() {
+            return new ResultStoreLmdbConfig(localDir, maxReaders, maxStoreSize, isReadAheadEnabled);
+        }
     }
 }

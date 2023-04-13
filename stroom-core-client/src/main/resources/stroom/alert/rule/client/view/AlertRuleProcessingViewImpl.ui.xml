@@ -11,8 +11,5 @@
         <form:FormGroup identity="alertRuleSettingsTimeToWaitForData" label="Time To Wait For Data To Arrive">
             <d:DurationPicker ui:field="timeToWaitForData"/>
         </form:FormGroup>
-        <form:FormGroup identity="alertRuleSettingsProcessingWindow" label="Processing Window">
-            <d:DurationPicker ui:field="processingWindow"/>
-        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 
