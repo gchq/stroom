@@ -29,9 +29,12 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.FileUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.time.StroomDuration;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -53,6 +56,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestOrphanFileFinder.class);
+
     private static final int NEG_SIXTY = -60;
     private static final int NEG_FOUR = -4;
 
@@ -71,6 +76,13 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
     // Use provider so we can set up the config before this guice create this
     @Inject
     private Provider<FsOrphanFileFinderExecutor> fsOrphanFileFinderExecutorProvider;
+
+    @BeforeEach
+    void setup() {
+        final Path path = Path.of(volumeService.getVolume().getPath());
+        LOGGER.info("Clearing contents of {}", path);
+        FileUtil.deleteContents(path);
+    }
 
     @Test
     void testSimple() throws IOException {
@@ -113,6 +125,72 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
 
         assertThat(summary.toString().trim())
                 .isEqualTo(expected);
+
+        final List<FsVolume> volumeList = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
+        assertThat(volumeList.size()).isEqualTo(1);
+        assertThat(fileList).contains(FileUtil.getCanonicalPath(test1));
+    }
+
+    @Test
+    void testSimple_withInvalidPaths() throws IOException {
+        setConfigValueMapper(DataStoreServiceConfig.class, config -> config
+                .withFileSystemCleanOldAge(StroomDuration.ZERO));
+
+        final String feedName = FileSystemTestUtil.getUniqueTestString();
+
+        final Meta md = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
+        final String date = ZonedDateTime
+                .ofInstant(Instant.ofEpochMilli(md.getCreateMs()), ZoneOffset.UTC)
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.ENGLISH));
+
+        commonTestScenarioCreator.createSampleBlankProcessedFile(feedName, md);
+
+        final List<Path> files = fileFinder.findAllStreamFile(md);
+
+        assertThat(files.size() > 0).isTrue();
+
+        final FindDataVolumeCriteria findStreamVolumeCriteria = FindDataVolumeCriteria.create(md);
+        assertThat(dataVolumeService.find(findStreamVolumeCriteria).size() > 0).isTrue();
+
+        final Path validDir = files.iterator()
+                .next()
+                .getParent();
+        final Path test1 = validDir.resolve("badfile1.dat");
+        Files.createFile(test1);
+        assertThat(test1).isRegularFile();
+
+        final Path invalidDirBase = files.iterator()
+                .next()
+                .getParent()
+                .getParent()
+                .getParent()
+                .getParent();
+        final Path invalidDir1 = invalidDirBase.resolve("empty_dir");
+        FileUtil.ensureDirExists(invalidDir1);
+        assertThat(invalidDir1).isDirectory();
+
+        final Path invalidDir2 = invalidDirBase.resolve("contains_file");
+        FileUtil.ensureDirExists(invalidDir2);
+        final Path test2 = invalidDir2.resolve("badfile2.dat");
+        Files.createFile(test2);
+        assertThat(test2).isRegularFile();
+
+        final FsOrphanFileFinderSummary summary = new FsOrphanFileFinderSummary();
+        final List<String> fileList = scan(summary);
+
+        final String expected = LogUtil.message("""
+                Summary:
+
+                | Type       | File/Directory | Feed (if present) | Date       | Orphan Count |
+                |------------|----------------|-------------------|------------|--------------|
+                | RAW_EVENTS | Dir            |                   | {} |            1 |""", date);
+
+        LOGGER.info("Summary:\n{}", summary);
+
+        assertThat(summary.toString().trim())
+                .contains("Summary:")
+                .containsPattern("badfile2.dat *\\| File")
+                .containsPattern("empty_dir *\\| Empty directory");
 
         final List<FsVolume> volumeList = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
         assertThat(volumeList.size()).isEqualTo(1);
@@ -292,6 +370,7 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
         final List<String> fileList = new ArrayList<>();
         final Consumer<Path> orphanConsumer = path -> {
             fileList.add(FileUtil.getCanonicalPath(path));
+            LOGGER.info("Found orphan: {}", path);
             summary.addPath(path);
         };
         fsOrphanFileFinderExecutorProvider.get()
