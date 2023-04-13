@@ -48,7 +48,6 @@ class UserCache implements Clearable, EntityEvent.Handler {
     private static final String CACHE_NAME_BY_DISPLAY_NAME = "User Display Name Cache";
 
     private final AuthenticationService authenticationService;
-    private final UserService userService;
     private final LoadingStroomCache<String, Optional<User>> cacheByName;
     private final LoadingStroomCache<String, Optional<User>> cacheByDisplayName;
 
@@ -58,7 +57,6 @@ class UserCache implements Clearable, EntityEvent.Handler {
               final AuthenticationService authenticationService,
               final UserService userService) {
         this.authenticationService = authenticationService;
-        this.userService = userService;
 
         cacheByName = cacheManager.createLoadingCache(
                 CACHE_NAME_BY_NAME,

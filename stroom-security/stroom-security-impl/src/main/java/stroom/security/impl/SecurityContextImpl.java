@@ -21,6 +21,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -33,7 +34,7 @@ class SecurityContextImpl implements SecurityContext {
     private final UserDocumentPermissionsCache userDocumentPermissionsCache;
     private final UserGroupsCache userGroupsCache;
     private final UserAppPermissionsCache userAppPermissionsCache;
-    private final UserCache userCache;
+    private final Provider<UserCache> userCacheProvider;
     private final ProcessingUserIdentityProvider processingUserIdentityProvider;
     private final UserIdentityFactory userIdentityFactory;
 
@@ -42,13 +43,13 @@ class SecurityContextImpl implements SecurityContext {
             final UserDocumentPermissionsCache userDocumentPermissionsCache,
             final UserGroupsCache userGroupsCache,
             final UserAppPermissionsCache userAppPermissionsCache,
-            final UserCache userCache,
+            final Provider<UserCache> userCacheProvider,
             final ProcessingUserIdentityProvider processingUserIdentityProvider,
             final UserIdentityFactory userIdentityFactory) {
         this.userDocumentPermissionsCache = userDocumentPermissionsCache;
         this.userGroupsCache = userGroupsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
-        this.userCache = userCache;
+        this.userCacheProvider = userCacheProvider;
         this.processingUserIdentityProvider = processingUserIdentityProvider;
         this.userIdentityFactory = userIdentityFactory;
     }
@@ -79,7 +80,8 @@ class SecurityContextImpl implements SecurityContext {
     @Override
     public UserIdentity createIdentity(final String userId) {
         Objects.requireNonNull(userId, "Null user id provided");
-        final Optional<User> optional = userCache.getOrCreate(userId);
+        // Inject as provider to avoid circular dep issues
+        final Optional<User> optional = userCacheProvider.get().getOrCreate(userId);
         if (optional.isEmpty()) {
             throw new AuthenticationException("Unable to find user with id=" + userId);
         }
