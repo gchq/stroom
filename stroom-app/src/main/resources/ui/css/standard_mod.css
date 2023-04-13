@@ -413,8 +413,8 @@ td.datePickerYear {
 }
 
 .gwt-SplitLayoutPanel-Dragger {
+    /* cursor set by .gwt-SplitLayoutPanel-(V|H)Dragger in standard.css */
     background: none;
-	cursor: col-resize;
 	opacity: 0;
 	transition: opacity 0.3s;
     border-style: solid;
