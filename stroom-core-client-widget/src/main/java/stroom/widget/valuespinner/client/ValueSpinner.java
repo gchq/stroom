@@ -19,9 +19,10 @@ package stroom.widget.valuespinner.client;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.TextBox;
 
-public class ValueSpinner extends Composite {
+public class ValueSpinner extends Composite implements Focus {
 
     private final Spinner spinner;
     private final TextBox valueBox = new TextBox();
@@ -37,10 +38,21 @@ public class ValueSpinner extends Composite {
         spinner = new Spinner();
         spinner.addSpinnerHandler(handler);
 
+        valueBox.addStyleName("allow-focus");
         valueBox.addBlurHandler(event -> updateSpinner());
         valueBox.addKeyDownHandler(event -> {
             if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
                 updateSpinner();
+                event.preventDefault();
+                event.stopPropagation();
+            } else if (event.getNativeKeyCode() == KeyCodes.KEY_UP) {
+                spinner.increase();
+                event.preventDefault();
+                event.stopPropagation();
+            } else if (event.getNativeKeyCode() == KeyCodes.KEY_DOWN) {
+                spinner.decrease();
+                event.preventDefault();
+                event.stopPropagation();
             }
         });
 
@@ -55,6 +67,11 @@ public class ValueSpinner extends Composite {
         layout.add(arrowsPanel);
 
         initWidget(layout);
+    }
+
+    @Override
+    public void focus() {
+        valueBox.setFocus(true);
     }
 
     private void updateSpinner() {
@@ -137,8 +154,12 @@ public class ValueSpinner extends Composite {
         spinner.setMinStep(minStep);
     }
 
-    public int getValue() {
+    public int getIntValue() {
         return (int) getSpinner().getValue();
+    }
+
+    public long getValue() {
+        return getSpinner().getValue();
     }
 
     public void setValue(final long value) {

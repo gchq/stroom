@@ -18,10 +18,13 @@ package stroom.cell.valuespinner.client;
 
 import stroom.cell.valuespinner.shared.Editable;
 import stroom.cell.valuespinner.shared.HasSpinnerConstraints;
+import stroom.svg.client.SvgImages;
+import stroom.widget.util.client.ElementUtil;
 
 import com.google.gwt.cell.client.AbstractEditableCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
@@ -36,9 +39,13 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
 
     private static volatile Template template;
     private static final SafeHtml arrowUpHtml =
-            SafeHtmlUtils.fromTrustedString("<button class=\"valueSpinner-arrowUp\"></button>");
+            SafeHtmlUtils.fromTrustedString("<div class=\"valueSpinner-arrow valueSpinner-arrowUp\">" +
+                    SvgImages.MONO_ARROW_UP +
+                    "</div>");
     private static final SafeHtml arrowDownHtml =
-            SafeHtmlUtils.fromTrustedString("<button class=\"valueSpinner-arrowDown\"></button>");
+            SafeHtmlUtils.fromTrustedString("<div class=\"valueSpinner-arrow valueSpinner-arrowDown\">" +
+                    SvgImages.MONO_ARROW_DOWN +
+                    "</div>");
     private static volatile Spinner spinner;
     private long min = 0;
     private long max = 100;
@@ -58,7 +65,15 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
     }
 
     public ValueSpinnerCell(final long min, final long max, final int step, final int maxStep) {
-        super("focus", "blur", "keydown", "keyup", "change", "mouseover", "mouseout", "mousedown", "mouseup");
+        super(BrowserEvents.FOCUS,
+                BrowserEvents.BLUR,
+                BrowserEvents.KEYDOWN,
+                BrowserEvents.KEYUP,
+                BrowserEvents.CHANGE,
+                BrowserEvents.MOUSEOVER,
+                BrowserEvents.MOUSEOUT,
+                BrowserEvents.MOUSEDOWN,
+                BrowserEvents.MOUSEUP);
         this.min = min;
         this.max = max;
         this.step = step;
@@ -124,74 +139,80 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
             vd.setCurrentValue(input.getValue());
 
         } else {
-            final NodeList<Element> nodes = parent.getElementsByTagName("button");
-            Element upArrow = null;
-            Element downArrow = null;
-            if (nodes != null && nodes.getLength() > 1) {
-                upArrow = nodes.getItem(0).cast();
-                downArrow = nodes.getItem(1).cast();
+            final Element upArrow = getByClassName(parent, "valueSpinner-arrowUp");
+            final Element downArrow = getByClassName(parent, "valueSpinner-arrowDown");
 
-                if (upArrow.isOrHasChild(target)) {
-                    if ("mouseover".equals(eventType)) {
-                        upArrow.setClassName("valueSpinner-arrowUpHover");
+            if (upArrow != null && upArrow.isOrHasChild(target)) {
+                if (BrowserEvents.MOUSEOVER.equals(eventType)) {
+                    upArrow.setClassName("valueSpinner-arrow valueSpinner-arrowUp valueSpinner-arrowUp--hover");
 
-                    } else if ("mouseout".equals(eventType)) {
-                        upArrow.setClassName("valueSpinner-arrowUp");
-                        stopSpinning(context, parent, value, valueUpdater);
+                } else if (BrowserEvents.MOUSEOUT.equals(eventType)) {
+                    upArrow.setClassName("valueSpinner-arrow valueSpinner-arrowUp");
+                    stopSpinning(context, parent, value, valueUpdater);
 
-                    } else if ("mouseup".equals(eventType)) {
-                        upArrow.setClassName("valueSpinner-arrowUpHover");
-                        stopSpinning(context, parent, value, valueUpdater);
+                } else if (BrowserEvents.MOUSEUP.equals(eventType)) {
+                    upArrow.setClassName("valueSpinner-arrow valueSpinner-arrowUp valueSpinner-arrowUp--hover");
+                    stopSpinning(context, parent, value, valueUpdater);
 
-                    } else if ("mousedown".equals(eventType)) {
-                        upArrow.setClassName("valueSpinner-arrowUpPressed");
-                        ensureSpinner();
+                } else if (BrowserEvents.MOUSEDOWN.equals(eventType)) {
+                    upArrow.setClassName("valueSpinner-arrow valueSpinner-arrowUp valueSpinner-arrowUp--pressed");
+                    ensureSpinner();
 
-                        // Get the object that we are going to use to apply
-                        // value constraints.
-                        HasSpinnerConstraints constraints = this;
-                        if (value instanceof HasSpinnerConstraints) {
-                            constraints = (HasSpinnerConstraints) value;
-                        }
-
-                        final InputElement input = getInputElement(parent);
-                        if (input == null) {
-                            spinner.start(constraints, true, 0, input);
-                        } else {
-                            final String constrainedValue = constrainValue(constraints, input.getValue());
-                            spinner.start(constraints, true, Long.valueOf(constrainedValue), input);
-                        }
+                    // Get the object that we are going to use to apply
+                    // value constraints.
+                    HasSpinnerConstraints constraints = this;
+                    if (value instanceof HasSpinnerConstraints) {
+                        constraints = (HasSpinnerConstraints) value;
                     }
-                } else if (downArrow.isOrHasChild(target)) {
-                    if ("mouseover".equals(eventType)) {
-                        downArrow.setClassName("valueSpinner-arrowDownHover");
 
-                    } else if ("mouseout".equals(eventType)) {
-                        downArrow.setClassName("valueSpinner-arrowDown");
-                        stopSpinning(context, parent, value, valueUpdater);
-
-                    } else if ("mouseup".equals(eventType)) {
-                        downArrow.setClassName("valueSpinner-arrowDownHover");
-                        stopSpinning(context, parent, value, valueUpdater);
-
-                    } else if ("mousedown".equals(eventType)) {
-                        downArrow.setClassName("valueSpinner-arrowDownPressed");
-                        ensureSpinner();
-
-                        // Get the object that we are going to use to apply
-                        // value constraints.
-                        HasSpinnerConstraints constraints = this;
-                        if (value instanceof HasSpinnerConstraints) {
-                            constraints = (HasSpinnerConstraints) value;
-                        }
-
-                        final InputElement input = getInputElement(parent);
+                    final InputElement input = getInputElement(parent);
+                    if (input == null) {
+                        spinner.start(constraints, true, 0, input);
+                    } else {
                         final String constrainedValue = constrainValue(constraints, input.getValue());
-                        spinner.start(constraints, false, Long.valueOf(constrainedValue), input);
+                        spinner.start(constraints, true, Long.valueOf(constrainedValue), input);
                     }
+                }
+            } else if (downArrow != null && downArrow.isOrHasChild(target)) {
+                if (BrowserEvents.MOUSEOVER.equals(eventType)) {
+                    downArrow.setClassName("valueSpinner-arrow valueSpinner-arrowDown valueSpinner-arrowDown--hover");
+
+                } else if (BrowserEvents.MOUSEOUT.equals(eventType)) {
+                    downArrow.setClassName("valueSpinner-arrow valueSpinner-arrowDown");
+                    stopSpinning(context, parent, value, valueUpdater);
+
+                } else if (BrowserEvents.MOUSEUP.equals(eventType)) {
+                    downArrow.setClassName("valueSpinner-arrow valueSpinner-arrowDown valueSpinner-arrowDown--hover");
+                    stopSpinning(context, parent, value, valueUpdater);
+
+                } else if (BrowserEvents.MOUSEDOWN.equals(eventType)) {
+                    downArrow.setClassName("valueSpinner-arrow valueSpinner-arrowDown valueSpinner-arrowDown--pressed");
+                    ensureSpinner();
+
+                    // Get the object that we are going to use to apply
+                    // value constraints.
+                    HasSpinnerConstraints constraints = this;
+                    if (value instanceof HasSpinnerConstraints) {
+                        constraints = (HasSpinnerConstraints) value;
+                    }
+
+                    final InputElement input = getInputElement(parent);
+                    final String constrainedValue = constrainValue(constraints, input.getValue());
+                    spinner.start(constraints, false, Long.valueOf(constrainedValue), input);
                 }
             }
         }
+    }
+
+    private Element getByClassName(final Element parent, final String className) {
+        final NodeList<Element> nodes = parent.getElementsByTagName("div");
+        for (int i = 0; i < nodes.getLength(); i++) {
+            final Element child = nodes.getItem(i);
+            if (ElementUtil.hasClassName(child, className)) {
+                return child;
+            }
+        }
+        return null;
     }
 
     private void ensureSpinner() {
@@ -345,13 +366,13 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
 
     private InputElement getInputElement(final Element parent) {
         Element vsDiv = null;
-        if (parent.hasTagName("div") && parent.hasClassName("valueSpinner")) {
+        if (parent.hasTagName("div") && ElementUtil.hasClassName(parent, "valueSpinner")) {
             vsDiv = parent;
         } else {
             final NodeList<Element> divs = parent.getElementsByTagName("div");
             for (int i = 0; i < divs.getLength(); i++) {
                 final Element div = divs.getItem(i);
-                if (div.hasClassName("valueSpinner")) {
+                if (ElementUtil.hasClassName(div, "valueSpinner")) {
                     vsDiv = div;
                     break;
                 }

@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
-.stroom-body {
+body {
+	background-color: @THEME_BACKGROUND_COLOUR@;
+}
+
+/*
+.navigation {
 	background-color: @THEME_BACKGROUND_COLOUR@  !important;
 }
 
@@ -26,11 +31,7 @@
 	opacity: @THEME_BACKGROUND_OPACITY@  !important;
 }
 
-.tubeEffect {
-	opacity: @THEME_TUBE_OPACITY@;
-	visibility: @THEME_TUBE_VISIBLE@;
-}
-
 .menuBar .text {
     color: @THEME_TOP_MENU_TEXT_COLOUR@  !important;
 }
+*/

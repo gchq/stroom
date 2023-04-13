@@ -43,12 +43,11 @@ import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.inject.Inject;
@@ -62,7 +61,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class MetaPresenter extends MyPresenterWidget<MetaView>
-        implements HasDataSelectionHandlers<Selection<Long>>, HasDocumentRead<Object>, BeginSteppingHandler {
+        implements HasDataSelectionHandlers<Selection<Long>>,
+        HasDocumentRead<Object>,
+        BeginSteppingHandler {
 
     public static final String DATA = "DATA";
     public static final String STREAM_RELATION_LIST = "STREAM_RELATION_LIST";
@@ -183,75 +184,59 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
 
         registerHandler(streamListFilter.addClickHandler(event -> {
             final ExpressionPresenter presenter = streamListFilterPresenter.get();
+
+            final HidePopupRequestEvent.Handler HidePopupRequestEventHandler = e -> {
+                if (e.isOk()) {
+                    final ExpressionOperator expression = presenter.write();
+                    if (!expression.equals(getCriteria().getExpression())) {
+                        if (hasAdvancedCriteria(expression)) {
+                            ConfirmEvent.fire(MetaPresenter.this,
+                                    "You are setting advanced filters!  It is recommended you constrain " +
+                                            "your filter (e.g. by 'Created') to avoid an expensive query.  "
+                                            + "Are you sure you want to apply this advanced filter?",
+                                    confirm -> {
+                                        if (confirm) {
+                                            setExpression(expression);
+                                            e.hide();
+                                        } else {
+                                            // Don't hide
+                                        }
+                                    });
+
+                        } else {
+                            setExpression(expression);
+                            e.hide();
+                        }
+
+                    } else {
+                        // Nothing changed!
+                        e.hide();
+                    }
+
+                } else {
+                    e.hide();
+                }
+            };
+
             presenter.read(getCriteria().getExpression(),
                     MetaFields.STREAM_STORE_DOC_REF,
                     MetaFields.getAllFields());
 
-            final PopupUiHandlers streamFilterPUH = new DefaultPopupUiHandlers() {
-                @Override
-                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                    if (ok) {
-                        final ExpressionOperator expression = presenter.write();
-                        if (!expression.equals(getCriteria().getExpression())) {
-                            if (hasAdvancedCriteria(expression)) {
-                                ConfirmEvent.fire(MetaPresenter.this,
-                                        "You are setting advanced filters!  It is recommended you constrain " +
-                                                "your filter (e.g. by 'Created') to avoid an expensive query.  "
-                                                + "Are you sure you want to apply this advanced filter?",
-                                        confirm -> {
-                                            if (confirm) {
-                                                setExpression(expression);
-                                                HidePopupEvent.fire(MetaPresenter.this, presenter);
-                                            } else {
-                                                // Don't hide
-                                            }
-                                        });
-
-                            } else {
-                                setExpression(expression);
-                                HidePopupEvent.fire(MetaPresenter.this, presenter);
-                            }
-
-                        } else {
-                            // Nothing changed!
-                            HidePopupEvent.fire(MetaPresenter.this, presenter);
-                        }
-
-                    } else {
-                        HidePopupEvent.fire(MetaPresenter.this, presenter);
-                    }
-                }
-
-                private void setExpression(final ExpressionOperator expression) {
-                    // Copy new filter settings back.
-                    getCriteria().setExpression(expression);
-                    // Reset the page offset.
-                    getCriteria().obtainPageRequest().setOffset(0);
-
-                    // Init the buttons
-                    setStreamListSelectableEnabled(metaListPresenter.getSelection());
-
-                    // Clear the current selection and get a new list of streams.
-                    metaListPresenter.getSelectionModel().clear();
-                    metaListPresenter.refresh();
-                }
-            };
-
             presenter.getWidget().getElement().addClassName("default-min-sizes");
             final PopupSize popupSize = PopupSize.resizable(800, 600);
-            ShowPopupEvent.fire(
-                    MetaPresenter.this,
-                    presenter,
-                    PopupType.OK_CANCEL_DIALOG,
-                    popupSize,
-                    "Filter Streams",
-                    streamFilterPUH);
+            ShowPopupEvent.builder(presenter)
+                    .popupType(PopupType.OK_CANCEL_DIALOG)
+                    .popupSize(popupSize)
+                    .caption("Filter Streams")
+                    .onShow(e -> presenter.focus())
+                    .onHideRequest(HidePopupRequestEventHandler)
+                    .fire();
         }));
 
         // Some button's may not exist due to permissions
         if (streamListUpload != null) {
             registerHandler(streamListUpload.addClickHandler(event -> {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (MouseUtil.isPrimary(event)) {
                     streamUploadPresenter.get().show(MetaPresenter.this, feedRef);
                 }
             }));
@@ -265,14 +250,14 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
         }
         if (streamListDownload != null) {
             registerHandler(streamListDownload.addClickHandler(event -> {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (MouseUtil.isPrimary(event)) {
                     metaListPresenter.download();
                 }
             }));
         }
         if (streamRelationListDownload != null) {
             registerHandler(streamRelationListDownload.addClickHandler(event -> {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (MouseUtil.isPrimary(event)) {
                     metaRelationListPresenter.download();
                 }
             }));
@@ -280,14 +265,14 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
         // Delete
         if (streamListDelete != null) {
             registerHandler(streamListDelete.addClickHandler(event -> {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (MouseUtil.isPrimary(event)) {
                     metaListPresenter.delete();
                 }
             }));
         }
         if (streamRelationListDelete != null) {
             registerHandler(streamRelationListDelete.addClickHandler(event -> {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (MouseUtil.isPrimary(event)) {
                     metaRelationListPresenter.delete();
                 }
             }));
@@ -295,14 +280,14 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
         // Restore
         if (streamListRestore != null) {
             registerHandler(streamListRestore.addClickHandler(event -> {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (MouseUtil.isPrimary(event)) {
                     metaListPresenter.restore();
                 }
             }));
         }
         if (streamRelationListRestore != null) {
             registerHandler(streamRelationListRestore.addClickHandler(event -> {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (MouseUtil.isPrimary(event)) {
                     metaRelationListPresenter.restore();
                 }
             }));
@@ -310,18 +295,32 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
         // Process
         if (streamListProcess != null) {
             registerHandler(streamListProcess.addClickHandler(event -> {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (MouseUtil.isPrimary(event)) {
                     metaListPresenter.process();
                 }
             }));
         }
         if (streamRelationListProcess != null) {
             registerHandler(streamRelationListProcess.addClickHandler(event -> {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (MouseUtil.isPrimary(event)) {
                     metaRelationListPresenter.process();
                 }
             }));
         }
+    }
+
+    private void setExpression(final ExpressionOperator expression) {
+        // Copy new filter settings back.
+        getCriteria().setExpression(expression);
+        // Reset the page offset.
+        getCriteria().obtainPageRequest().setOffset(0);
+
+        // Init the buttons
+        setStreamListSelectableEnabled(metaListPresenter.getSelection());
+
+        // Clear the current selection and get a new list of streams.
+        metaListPresenter.getSelectionModel().clear();
+        metaListPresenter.refresh();
     }
 
     public boolean hasAdvancedCriteria(final ExpressionOperator expression) {
@@ -433,7 +432,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
         // Only set this criteria once.
         if (!hasSetCriteria) {
             hasSetCriteria = true;
-            showStreamListButtons(true);
+            showUploadButton(false);
             showStreamRelationListButtons(true);
 
             metaListPresenter.setExpression(MetaExpressionUtil.createFolderExpression(folder));
@@ -447,7 +446,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
         if (!hasSetCriteria) {
             hasSetCriteria = true;
             this.feedRef = feedRef;
-            showStreamListButtons(true);
+            showUploadButton(true);
             showStreamRelationListButtons(true);
 
             metaListPresenter.setExpression(MetaExpressionUtil.createFeedExpression(feedRef));
@@ -460,7 +459,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
         // Only set this criteria once.
         if (!hasSetCriteria) {
             hasSetCriteria = true;
-            showStreamListButtons(false);
+            showUploadButton(false);
             showStreamRelationListButtons(false);
 
             metaListPresenter.setExpression(MetaExpressionUtil.createPipelineExpression(pipelineRef));
@@ -470,7 +469,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
     }
 
     private void setNullCriteria() {
-        showStreamListButtons(false);
+        showUploadButton(false);
         showStreamRelationListButtons(false);
 
         metaListPresenter.setExpression(MetaExpressionUtil.createStatusExpression(Status.UNLOCKED));
@@ -496,7 +495,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
         return metaListPresenter.addDataSelectionHandler(handler);
     }
 
-    private void showStreamListButtons(final boolean visible) {
+    private void showUploadButton(final boolean visible) {
         if (streamListUpload != null) {
             streamListUpload.setVisible(visible);
         }
@@ -636,10 +635,6 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
                 stepType,
                 stepLocation,
                 pipelineRef);
-    }
-
-    public void setClassificationUiHandlers(final ClassificationUiHandlers classificationUiHandlers) {
-        dataPresenter.setClassificationUiHandlers(classificationUiHandlers);
     }
 
     public interface MetaView extends View {

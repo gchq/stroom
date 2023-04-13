@@ -36,7 +36,12 @@ import java.util.Objects;
 public class FindIndexShardCriteria extends BaseCriteria {
 
     public static final String FIELD_ID = "Id";
+    public static final String FIELD_NODE = "Node";
     public static final String FIELD_PARTITION = "Partition";
+    public static final String FIELD_STATUS = "Status";
+    public static final String FIELD_DOC_COUNT = "Doc Count";
+    public static final String FIELD_FILE_SIZE = "File Size";
+    public static final String FIELD_LAST_COMMIT = "Last Commit";
 
     @JsonProperty
     private Range<Integer> documentCountRange;
@@ -52,6 +57,8 @@ public class FindIndexShardCriteria extends BaseCriteria {
     private final Selection<IndexShardStatus> indexShardStatusSet;
     @JsonProperty
     private final StringCriteria partition;
+    @JsonProperty
+    private Range<Long> partitionTimeRange;
 
     public static FindIndexShardCriteria matchAll() {
         return new FindIndexShardCriteria(
@@ -63,7 +70,8 @@ public class FindIndexShardCriteria extends BaseCriteria {
                 Selection.selectAll(),
                 Selection.selectAll(),
                 Selection.selectAll(),
-                new StringCriteria());
+                new StringCriteria(),
+                new Range<>());
     }
 
     public static FindIndexShardCriteria matchNone() {
@@ -76,7 +84,8 @@ public class FindIndexShardCriteria extends BaseCriteria {
                 Selection.selectNone(),
                 Selection.selectNone(),
                 Selection.selectNone(),
-                new StringCriteria());
+                new StringCriteria(),
+                new Range<>());
     }
 
     @JsonCreator
@@ -89,7 +98,8 @@ public class FindIndexShardCriteria extends BaseCriteria {
             @JsonProperty("indexUuidSet") final Selection<String> indexUuidSet,
             @JsonProperty("indexShardIdSet") final Selection<Long> indexShardIdSet,
             @JsonProperty("indexShardStatusSet") final Selection<IndexShardStatus> indexShardStatusSet,
-            @JsonProperty("partition") final StringCriteria partition) {
+            @JsonProperty("partition") final StringCriteria partition,
+            @JsonProperty("partitionTimeRange") final Range<Long> partitionTimeRange) {
 
         super(pageRequest, sortList);
         this.documentCountRange = documentCountRange;
@@ -99,6 +109,7 @@ public class FindIndexShardCriteria extends BaseCriteria {
         this.indexShardIdSet = indexShardIdSet;
         this.indexShardStatusSet = indexShardStatusSet;
         this.partition = partition;
+        this.partitionTimeRange = partitionTimeRange;
     }
 
     public Selection<IndexShardStatus> getIndexShardStatusSet() {
@@ -133,6 +144,14 @@ public class FindIndexShardCriteria extends BaseCriteria {
         return partition;
     }
 
+    public Range<Long> getPartitionTimeRange() {
+        return partitionTimeRange;
+    }
+
+    public void setPartitionTimeRange(final Range<Long> partitionTimeRange) {
+        this.partitionTimeRange = partitionTimeRange;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
@@ -159,7 +178,8 @@ public class FindIndexShardCriteria extends BaseCriteria {
                 Objects.equals(indexUuidSet, that.indexUuidSet) &&
                 Objects.equals(indexShardIdSet, that.indexShardIdSet) &&
                 Objects.equals(indexShardStatusSet, that.indexShardStatusSet) &&
-                Objects.equals(partition, that.partition);
+                Objects.equals(partition, that.partition) &&
+                Objects.equals(partitionTimeRange, that.partitionTimeRange);
     }
 
     @Override
@@ -171,6 +191,7 @@ public class FindIndexShardCriteria extends BaseCriteria {
                 indexUuidSet,
                 indexShardIdSet,
                 indexShardStatusSet,
-                partition);
+                partition,
+                partitionTimeRange);
     }
 }

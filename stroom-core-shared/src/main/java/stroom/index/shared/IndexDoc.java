@@ -46,7 +46,9 @@ import java.util.Objects;
         "shardsPerPartition",
         "retentionDayAge",
         "fields",
-        "volumeGroupName"})
+        "timeField",
+        "volumeGroupName",
+        "defaultExtractionPipeline"})
 @JsonInclude(Include.NON_NULL)
 public class IndexDoc extends Doc {
 
@@ -54,6 +56,7 @@ public class IndexDoc extends Doc {
     private static final int DEFAULT_SHARDS_PER_PARTITION = 1;
     private static final PartitionBy DEFAULT_PARTITION_BY = PartitionBy.MONTH;
     private static final int DEFAULT_PARTITION_SIZE = 1;
+    private static final String DEFAULT_TIME_FIELD = "EventTime";
 
     public static final String DOCUMENT_TYPE = "Index";
 
@@ -72,13 +75,18 @@ public class IndexDoc extends Doc {
     @JsonProperty
     private List<IndexField> fields;
     @JsonProperty
+    private String timeField;
+    @JsonProperty
     private String volumeGroupName;
+    @JsonProperty
+    private DocRef defaultExtractionPipeline;
 
     public IndexDoc() {
         maxDocsPerShard = DEFAULT_MAX_DOCS_PER_SHARD;
         partitionBy = DEFAULT_PARTITION_BY;
         partitionSize = DEFAULT_PARTITION_SIZE;
         shardsPerPartition = DEFAULT_SHARDS_PER_PARTITION;
+        timeField = DEFAULT_TIME_FIELD;
     }
 
     @JsonCreator
@@ -97,7 +105,9 @@ public class IndexDoc extends Doc {
                     @JsonProperty("shardsPerPartition") final Integer shardsPerPartition,
                     @JsonProperty("retentionDayAge") final Integer retentionDayAge,
                     @JsonProperty("fields") final List<IndexField> fields,
-                    @JsonProperty("volumeGroupName") final String volumeGroupName) {
+                    @JsonProperty("timeField") final String timeField,
+                    @JsonProperty("volumeGroupName") final String volumeGroupName,
+                    @JsonProperty("defaultExtractionPipeline") final DocRef defaultExtractionPipeline) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.maxDocsPerShard = maxDocsPerShard;
@@ -106,7 +116,9 @@ public class IndexDoc extends Doc {
         this.shardsPerPartition = shardsPerPartition;
         this.retentionDayAge = retentionDayAge;
         this.fields = fields;
+        this.timeField = timeField;
         this.volumeGroupName = volumeGroupName;
+        this.defaultExtractionPipeline = defaultExtractionPipeline;
 
         if (this.maxDocsPerShard == null) {
             this.maxDocsPerShard = DEFAULT_MAX_DOCS_PER_SHARD;
@@ -188,12 +200,28 @@ public class IndexDoc extends Doc {
         this.fields = fields;
     }
 
+    public String getTimeField() {
+        return timeField;
+    }
+
+    public void setTimeField(final String timeField) {
+        this.timeField = timeField;
+    }
+
     public String getVolumeGroupName() {
         return volumeGroupName;
     }
 
     public void setVolumeGroupName(String volumeGroupName) {
         this.volumeGroupName = volumeGroupName;
+    }
+
+    public DocRef getDefaultExtractionPipeline() {
+        return defaultExtractionPipeline;
+    }
+
+    public void setDefaultExtractionPipeline(final DocRef defaultExtractionPipeline) {
+        this.defaultExtractionPipeline = defaultExtractionPipeline;
     }
 
     @Override
@@ -213,9 +241,11 @@ public class IndexDoc extends Doc {
                 shardsPerPartition == indexDoc.shardsPerPartition &&
                 Objects.equals(description, indexDoc.description) &&
                 partitionBy == indexDoc.partitionBy &&
+                Objects.equals(timeField, indexDoc.timeField) &&
                 Objects.equals(retentionDayAge, indexDoc.retentionDayAge) &&
                 Objects.equals(fields, indexDoc.fields) &&
-                Objects.equals(volumeGroupName, indexDoc.volumeGroupName);
+                Objects.equals(volumeGroupName, indexDoc.volumeGroupName) &&
+                Objects.equals(defaultExtractionPipeline, indexDoc.defaultExtractionPipeline);
     }
 
     @Override
@@ -229,7 +259,9 @@ public class IndexDoc extends Doc {
                 shardsPerPartition,
                 retentionDayAge,
                 fields,
-                volumeGroupName);
+                timeField,
+                volumeGroupName,
+                defaultExtractionPipeline);
     }
 
     public enum PartitionBy implements HasDisplayValue {

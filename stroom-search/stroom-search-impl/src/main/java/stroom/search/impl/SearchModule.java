@@ -21,7 +21,8 @@ import stroom.job.api.ScheduledJobsBinder;
 import stroom.query.common.v2.DataStoreFactory;
 import stroom.query.common.v2.EventSearch;
 import stroom.query.common.v2.LmdbDataStoreFactory;
-import stroom.query.common.v2.SearchResponseCreatorManager;
+import stroom.query.common.v2.ResultStoreManager;
+import stroom.query.common.v2.SearchProvider;
 import stroom.query.common.v2.SizesProvider;
 import stroom.search.extraction.ExtractionModule;
 import stroom.util.RunnableWrapper;
@@ -47,9 +48,11 @@ public class SearchModule extends AbstractModule {
         bind(SizesProvider.class).to(SizesProviderImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
-                .addBinding(StroomIndexQueryService.class);
+                .addBinding(LuceneSearchProvider.class);
+        GuiceUtil.buildMultiBinder(binder(), SearchProvider.class)
+                .addBinding(LuceneSearchProvider.class);
 
-        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(SearchResponseCreatorManager.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(ResultStoreManager.class);
 
         RestResourcesBinder.create(binder())
                 .bind(StroomIndexQueryResourceImpl.class)
@@ -78,8 +81,8 @@ public class SearchModule extends AbstractModule {
     private static class EvictExpiredElements extends RunnableWrapper {
 
         @Inject
-        EvictExpiredElements(final SearchResponseCreatorManager searchResponseCreatorManager) {
-            super(searchResponseCreatorManager::evictExpiredElements);
+        EvictExpiredElements(final ResultStoreManager resultStoreManager) {
+            super(resultStoreManager::evictExpiredElements);
         }
     }
 }

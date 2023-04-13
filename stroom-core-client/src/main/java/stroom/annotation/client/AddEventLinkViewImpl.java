@@ -47,7 +47,7 @@ public class AddEventLinkViewImpl extends ViewImpl implements AddEventLinkView {
 
     @Override
     public void focus() {
-        Scheduler.get().scheduleDeferred(() -> event.setFocus(true));
+        event.setFocus(true);
     }
 
     @Override

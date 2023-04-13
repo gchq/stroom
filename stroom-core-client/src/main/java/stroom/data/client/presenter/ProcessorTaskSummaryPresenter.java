@@ -17,10 +17,10 @@
 package stroom.data.client.presenter;
 
 import stroom.cell.info.client.InfoColumn;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -35,12 +35,13 @@ import stroom.processor.shared.ProcessorTaskResource;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
-import stroom.widget.tooltip.client.presenter.TooltipUtil;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.TableBuilder;
+import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
@@ -52,20 +53,27 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.function.Consumer;
 
-public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridView<ProcessorTaskSummary>>
+public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
         implements HasDocumentRead<Object> {
 
     private static final ProcessorTaskResource PROCESSOR_TASK_RESOURCE = GWT.create(ProcessorTaskResource.class);
 
+    private final MyDataGrid<ProcessorTaskSummary> dataGrid;
+    private final MultiSelectionModelImpl<ProcessorTaskSummary> selectionModel;
     private final RestDataProvider<ProcessorTaskSummary, ResultPage<ProcessorTaskSummary>> dataProvider;
     private final ExpressionCriteria criteria;
     private boolean initialised;
 
     @Inject
     public ProcessorTaskSummaryPresenter(final EventBus eventBus,
+                                         final PagerView view,
                                          final RestFactory restFactory,
                                          final TooltipPresenter tooltipPresenter) {
-        super(eventBus, new DataGridViewImpl<>(true, false));
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(false);
+        view.setDataWidget(dataGrid);
 
         criteria = new ExpressionCriteria();
         dataProvider = new RestDataProvider<ProcessorTaskSummary, ResultPage<ProcessorTaskSummary>>(eventBus) {
@@ -84,12 +92,12 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
 
             @Override
             protected void changeData(final ResultPage<ProcessorTaskSummary> data) {
-                final ProcessorTaskSummary selected = getView().getSelectionModel().getSelected();
+                final ProcessorTaskSummary selected = selectionModel.getSelected();
                 if (selected != null) {
                     // Reselect the task set.
-                    getView().getSelectionModel().clear();
+                    selectionModel.clear();
                     if (data != null && data.getValues().contains(selected)) {
-                        getView().getSelectionModel().setSelected(selected);
+                        selectionModel.setSelected(selected);
                     }
                 }
                 super.changeData(data);
@@ -100,40 +108,34 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
         final InfoColumn<ProcessorTaskSummary> infoColumn = new InfoColumn<ProcessorTaskSummary>() {
             @Override
             protected void showInfo(final ProcessorTaskSummary row, final int x, final int y) {
-                final TooltipUtil.Builder builder = TooltipUtil.builder()
-                        .addTwoColTable(tableBuilder -> {
-                            tableBuilder.addHeaderRow("Key Data");
-                            final DocRef pipeline = row.getPipeline();
-                            if (pipeline != null) {
-                                tableBuilder.addRow("Pipeline", DocRefUtil.createSimpleDocRefString(pipeline));
-                            }
-                            return tableBuilder
-                                    .addRow("Feed", row.getFeed())
-                                    .addRow("Priority", row.getPriority())
-                                    .addRow("Status", row.getStatus())
-                                    .build();
-                        });
+                final TableBuilder tb = new TableBuilder();
+                tb.row(TableCell.header("Key Data", 2));
+                final DocRef pipeline = row.getPipeline();
+                if (pipeline != null) {
+                    tb.row("Pipeline", DocRefUtil.createSimpleDocRefString(pipeline));
+                }
 
-                tooltipPresenter.setHTML(builder.build());
+                tb
+                        .row("Feed", row.getFeed())
+                        .row("Priority", String.valueOf(row.getPriority()))
+                        .row("Status", String.valueOf(row.getStatus()));
 
-                final PopupPosition popupPosition = new PopupPosition(x, y);
-                ShowPopupEvent.fire(ProcessorTaskSummaryPresenter.this,
-                        tooltipPresenter,
-                        PopupType.POPUP,
-                        popupPosition,
-                        null);
+                final HtmlBuilder htmlBuilder = new HtmlBuilder();
+                htmlBuilder.div(tb::write, Attribute.className("infoTable"));
+
+                tooltipPresenter.show(htmlBuilder.toSafeHtml(), x, y);
             }
         };
-        getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
+        dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
 
-        getView().addResizableColumn(new Column<ProcessorTaskSummary, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<ProcessorTaskSummary, String>(new TextCell()) {
             @Override
             public String getValue(final ProcessorTaskSummary row) {
                 return row.getPipeline().getName();
             }
         }, "Pipeline", ColumnSizeConstants.BIG_COL);
 
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(), ProcessorTaskFields.FIELD_FEED, true) {
                     @Override
                     public String getValue(final ProcessorTaskSummary row) {
@@ -141,7 +143,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
                     }
                 }, "Feed", ColumnSizeConstants.BIG_COL);
 
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(),
                         ProcessorTaskFields.FIELD_PRIORITY,
                         false) {
@@ -151,7 +153,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
                     }
                 }, "Priority", 60);
 
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(),
                         ProcessorTaskFields.FIELD_STATUS,
                         false) {
@@ -161,7 +163,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
                     }
                 }, "Status", ColumnSizeConstants.SMALL_COL);
 
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(),
                         ProcessorTaskFields.FIELD_COUNT,
                         false) {
@@ -171,9 +173,9 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
                     }
                 }, "Count", ColumnSizeConstants.SMALL_COL);
 
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
 
-        getView().addColumnSortHandler(event -> {
+        dataGrid.addColumnSortHandler(event -> {
             if (event.getColumn() instanceof OrderByColumn<?, ?>) {
                 final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
                 criteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
@@ -183,7 +185,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
     }
 
     public MultiSelectionModel<ProcessorTaskSummary> getSelectionModel() {
-        return getView().getSelectionModel();
+        return selectionModel;
     }
 
     private void setPipeline(final DocRef pipeline) {
@@ -222,7 +224,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
     public void refresh() {
         if (!initialised) {
             initialised = true;
-            dataProvider.addDataDisplay(getView().getDataDisplay());
+            dataProvider.addDataDisplay(dataGrid);
         } else {
             dataProvider.refresh();
         }

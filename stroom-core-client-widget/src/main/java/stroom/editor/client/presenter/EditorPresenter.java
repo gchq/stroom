@@ -58,24 +58,32 @@ public class EditorPresenter
         this.contextMenu = contextMenu;
         this.delegatingAceCompleter = delegatingAceCompleter;
         view.setTheme(getTheme(currentTheme.getTheme(), currentTheme.getEditorTheme()));
+        view.setUserKeyBindingsPreference("VIM".equalsIgnoreCase(currentTheme.getEditorKeyBindings()));
 
-        registerHandler(view.addMouseDownHandler(event -> contextMenu.hide()));
+//        registerHandler(view.addMouseDownHandler(event -> contextMenu.hide()));
+
         registerHandler(view.addContextMenuHandler(event ->
-                contextMenu.show(EditorPresenter.this, event.getX(), event.getY())));
+                contextMenu.show(
+                        EditorPresenter.this,
+                        event.getPopupPosition())));
         registerHandler(view.addKeyDownHandler(event -> {
             if (event.isAltKeyDown() || event.isControlKeyDown()) {
                 eventBus.fireEvent(event);
             }
         }));
-        registerHandler(eventBus.addHandler(ChangeThemeEvent.getType(), event ->
-                view.setTheme(getTheme(event.getTheme(), event.getEditorTheme()))));
+        registerHandler(eventBus.addHandler(ChangeThemeEvent.getType(), event -> {
+            view.setTheme(getTheme(event.getTheme(), event.getEditorTheme()));
+            // For the moment only standard and vim bindings are supported given the boolean
+            // nature of the context menu
+            view.setUserKeyBindingsPreference("VIM".equalsIgnoreCase(event.getEditorKeyBindings()));
+        }));
     }
 
     private AceEditorTheme getTheme(final String theme, final String editorTheme) {
         AceEditorTheme aceEditorTheme = AceEditorTheme.CHROME;
         if (theme != null &&
                 theme.toLowerCase(Locale.ROOT).contains("dark")) {
-            aceEditorTheme = AceEditorTheme.TOMORROW_NIGHT_EIGHTIES;
+            aceEditorTheme = AceEditorTheme.TOMORROW_NIGHT;
         }
         if (editorTheme != null) {
             aceEditorTheme = Arrays

@@ -20,13 +20,14 @@ package stroom.dashboard.client.table.cf;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
@@ -36,11 +37,19 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.List;
 
-public class RuleListPresenter extends MyPresenterWidget<DataGridView<ConditionalFormattingRule>> {
+public class RuleListPresenter extends MyPresenterWidget<PagerView> {
+
+    private final MyDataGrid<ConditionalFormattingRule> dataGrid;
+    private final MultiSelectionModelImpl<ConditionalFormattingRule> selectionModel;
 
     @Inject
-    public RuleListPresenter(final EventBus eventBus) {
-        super(eventBus, new DataGridViewImpl<>(true, false));
+    public RuleListPresenter(final EventBus eventBus,
+                             final PagerView view) {
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(false);
+        view.setDataWidget(dataGrid);
 
         // Add a border to the list.
         getWidget().getElement().addClassName("stroom-border");
@@ -60,7 +69,7 @@ public class RuleListPresenter extends MyPresenterWidget<DataGridView<Conditiona
                         return row.getExpression().toString();
                     }
                 };
-        getView().addResizableColumn(expressionColumn, "Expression", 200);
+        dataGrid.addResizableColumn(expressionColumn, "Expression", 200);
 
         // Background colour.
         final Column<ConditionalFormattingRule, String> backgroundColumn =
@@ -70,7 +79,7 @@ public class RuleListPresenter extends MyPresenterWidget<DataGridView<Conditiona
                         return row.getBackgroundColor();
                     }
                 };
-        getView().addResizableColumn(backgroundColumn, "Background", ColumnSizeConstants.MEDIUM_COL);
+        dataGrid.addResizableColumn(backgroundColumn, "Background", ColumnSizeConstants.MEDIUM_COL);
 
         // Text colour.
         final Column<ConditionalFormattingRule, String> textColumn =
@@ -80,7 +89,7 @@ public class RuleListPresenter extends MyPresenterWidget<DataGridView<Conditiona
                         return row.getTextColor();
                     }
                 };
-        getView().addResizableColumn(textColumn, "Text", ColumnSizeConstants.MEDIUM_COL);
+        dataGrid.addResizableColumn(textColumn, "Text", ColumnSizeConstants.MEDIUM_COL);
 
         // Hide.
         final Column<ConditionalFormattingRule, TickBoxState> hideColumn =
@@ -98,7 +107,7 @@ public class RuleListPresenter extends MyPresenterWidget<DataGridView<Conditiona
                         return TickBoxState.fromBoolean(row.isHide());
                     }
                 };
-        getView().addColumn(hideColumn, "Hide", 50);
+        dataGrid.addColumn(hideColumn, "Hide", 50);
 
         // Enabled.
         final Column<ConditionalFormattingRule, TickBoxState> enabledColumn =
@@ -116,18 +125,18 @@ public class RuleListPresenter extends MyPresenterWidget<DataGridView<Conditiona
                         return TickBoxState.fromBoolean(row.isEnabled());
                     }
                 };
-        getView().addColumn(enabledColumn, "Enabled", 50);
+        dataGrid.addColumn(enabledColumn, "Enabled", 50);
 
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     public void setData(final List<ConditionalFormattingRule> data) {
-        getView().setRowData(0, data);
-        getView().setRowCount(data.size());
+        dataGrid.setRowData(0, data);
+        dataGrid.setRowCount(data.size());
     }
 
     public MultiSelectionModel<ConditionalFormattingRule> getSelectionModel() {
-        return getView().getSelectionModel();
+        return selectionModel;
     }
 
     public ButtonView add(final Preset preset) {

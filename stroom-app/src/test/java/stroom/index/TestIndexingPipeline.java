@@ -42,7 +42,6 @@ import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.xslt.XsltStore;
 import stroom.task.api.SimpleTaskContext;
-import stroom.task.api.TaskContext;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
@@ -133,10 +132,10 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
             final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore,
                     StroomPipelineTestFileUtil.getString(PIPELINE));
             final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
-            pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xsltRef));
-            pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty("indexingFilter",
-                    "index",
-                    indexRef));
+            pipelineDoc.getPipelineData()
+                    .addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xsltRef));
+            pipelineDoc.getPipelineData()
+                    .addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", indexRef));
             pipelineStore.writeDocument(pipelineDoc);
 
             // Create the parser.
@@ -155,10 +154,14 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
 
             // Check that we indexed 4 documents.
             assertThat(writer.getDocuments().size()).isEqualTo(4);
-            assertThat(writer.getDocuments().get(0).getField("Action").stringValue()).isEqualTo("Authenticate");
-            assertThat(writer.getDocuments().get(1).getField("Action").stringValue()).isEqualTo("Process");
-            assertThat(writer.getDocuments().get(2).getField("Action").stringValue()).isEqualTo("Process");
-            assertThat(writer.getDocuments().get(3).getField("Action").stringValue()).isEqualTo("Process");
+            assertThat(writer.getDocuments().get(0).getField("Action").stringValue())
+                    .isEqualTo("Authenticate");
+            assertThat(writer.getDocuments().get(1).getField("Action").stringValue())
+                    .isEqualTo("Process");
+            assertThat(writer.getDocuments().get(2).getField("Action").stringValue())
+                    .isEqualTo("Process");
+            assertThat(writer.getDocuments().get(3).getField("Action").stringValue())
+                    .isEqualTo("Process");
 
             for (int i = 0; i < 4; i++) {
                 final String streamId = writer.getDocuments().get(i).getField("StreamId").stringValue();

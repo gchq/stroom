@@ -87,7 +87,7 @@ class FeedStatusServiceImpl implements FeedStatusService {
 //            }
 //        }
 //
-            return GetFeedStatusResponse.createOKRecieveResponse();
+            return GetFeedStatusResponse.createOKReceiveResponse();
 
         });
     }

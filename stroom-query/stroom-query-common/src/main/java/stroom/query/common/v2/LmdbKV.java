@@ -2,16 +2,16 @@ package stroom.query.common.v2;
 
 class LmdbKV {
 
-    private final LmdbKey rowKey;
+    private final LmdbRowKey rowKey;
     private final LmdbValue rowValue;
 
-    public LmdbKV(final LmdbKey rowKey,
+    public LmdbKV(final LmdbRowKey rowKey,
                   final LmdbValue rowValue) {
         this.rowKey = rowKey;
         this.rowValue = rowValue;
     }
 
-    public LmdbKey getRowKey() {
+    public LmdbRowKey getRowKey() {
         return rowKey;
     }
 

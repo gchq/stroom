@@ -21,9 +21,9 @@ import stroom.cache.shared.CacheInfoResponse;
 import stroom.cache.shared.CacheResource;
 import stroom.cell.info.client.ActionCell;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeManager;
@@ -61,7 +61,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<CacheInfo>> {
+public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
 
     private static final CacheResource CACHE_RESOURCE = GWT.create(CacheResource.class);
 
@@ -72,6 +72,8 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
     protected static final String CACHE_INFO_KEY_HIT_COUNT = "HitCount";
     protected static final String CACHE_INFO_KEY_MISS_COUNT = "MissCount";
     protected static final String HIT_RATIO_KEY = "HitRatio";
+
+    private final MyDataGrid<CacheInfo> dataGrid;
 
     private final RestFactory restFactory;
     private final NodeManager nodeManager;
@@ -90,9 +92,14 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
 
     @Inject
     public CacheNodeListPresenter(final EventBus eventBus,
+                                  final PagerView view,
                                   final RestFactory restFactory,
                                   final NodeManager nodeManager) {
-        super(eventBus, new DataGridViewImpl<>(false));
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>();
+        view.setDataWidget(dataGrid);
+
         this.restFactory = restFactory;
         this.nodeManager = nodeManager;
         this.delayedUpdate = new DelayedUpdate(this::update);
@@ -100,7 +107,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
 
     private void addColumns() {
         for (final Column<CacheInfo, ?> column : columns) {
-            getView().removeColumn(column);
+            dataGrid.removeColumn(column);
         }
         columns.clear();
 
@@ -118,7 +125,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
                 });
 
         // Node.
-        addColumn(new Column<CacheInfo, String>(new TextCell()) {
+        dataGrid.addColumn(new Column<CacheInfo, String>(new TextCell()) {
             @Override
             public String getValue(final CacheInfo row) {
                 return row.getNodeName();
@@ -147,7 +154,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
 
         final EndColumn<CacheInfo> endColumn = new EndColumn<>();
         columns.add(endColumn);
-        getView().addEndColumn(endColumn);
+        dataGrid.addEndColumn(endColumn);
     }
 
     private void addIconButtonColumn(final Preset svgPreset,
@@ -170,7 +177,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
                     }
                 };
         columns.add(col);
-        getView().addColumn(col, "", ICON_COL);
+        dataGrid.addColumn(col, "", ICON_COL);
     }
 
     private void addStatColumn(final String name,
@@ -187,7 +194,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
         final int newWidth = width == -1
                 ? determineColumnWidth(name)
                 : width;
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 col,
                 DataGridUtil.createRightAlignedHeader(name),
                 newWidth);
@@ -230,7 +237,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
         final int newWidth = width == -1
                 ? determineColumnWidth(name)
                 : width;
-        getView().addResizableColumn(column, name, newWidth);
+        dataGrid.addResizableColumn(column, name, newWidth);
     }
 
     /**
@@ -286,7 +293,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
                                 fetchTasksForNodes(dataConsumer, throwableConsumer, nodeNames), throwableConsumer);
                     }
                 };
-                dataProvider.addDataDisplay(getView().getDataDisplay());
+                dataProvider.addDataDisplay(dataGrid);
             }
 
             dataProvider.refresh();

@@ -3,7 +3,6 @@ package stroom.proxy.repo.dao;
 import stroom.proxy.repo.ProxyRepoTestModule;
 import stroom.proxy.repo.RepoSource;
 import stroom.proxy.repo.queue.Batch;
-import stroom.util.concurrent.ThreadUtil;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;

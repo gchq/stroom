@@ -58,6 +58,8 @@ public interface Component extends TabData, Layer, HasDisplayValue {
 
     void setTabConfig(TabConfig tabConfig);
 
+    void onClose();
+
     void onRemove();
 
     String getId();
@@ -65,4 +67,6 @@ public interface Component extends TabData, Layer, HasDisplayValue {
     void read(ComponentConfig componentConfig);
 
     ComponentConfig write();
+
+    void setDashboardContext(DashboardContext dashboardContext);
 }

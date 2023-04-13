@@ -45,14 +45,7 @@ public class MenuItems {
 
     public void addMenuItem(final MenuKey menuKey, final Item item) {
         needsCompression = true;
-
-        Set<Item> items = menuItems.get(menuKey);
-        if (items == null) {
-            items = new HashSet<>();
-            menuItems.put(menuKey, items);
-        }
-
-        items.add(item);
+        menuItems.computeIfAbsent(menuKey, k -> new HashSet<>()).add(item);
     }
 
     private void compress() {

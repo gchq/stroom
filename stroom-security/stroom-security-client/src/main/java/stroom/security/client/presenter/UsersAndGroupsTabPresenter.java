@@ -26,11 +26,9 @@ import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -75,7 +73,7 @@ public class UsersAndGroupsTabPresenter extends
         setInSlot(LIST, listPresenter);
 
         newButton = listPresenter.addButton(SvgPresets.NEW_ITEM);
-        openButton = listPresenter.addButton(SvgPresets.OPEN);
+        openButton = listPresenter.addButton(SvgPresets.EDIT);
         deleteButton = listPresenter.addButton(SvgPresets.DELETE);
 
         final boolean updatePerm = securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION);
@@ -91,24 +89,24 @@ public class UsersAndGroupsTabPresenter extends
 
     @Override
     protected void onBind() {
-        registerHandler(listPresenter.getDataGridView().getSelectionModel().addSelectionHandler(event -> {
+        registerHandler(listPresenter.getSelectionModel().addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
                 onOpen();
             }
         }));
         registerHandler(newButton.addClickHandler(event -> {
-            if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+            if (MouseUtil.isPrimary(event)) {
                 onNew();
             }
         }));
         registerHandler(openButton.addClickHandler(event -> {
-            if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+            if (MouseUtil.isPrimary(event)) {
                 onOpen();
             }
         }));
         registerHandler(deleteButton.addClickHandler(event -> {
-            if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+            if (MouseUtil.isPrimary(event)) {
                 onDelete();
             }
         }));
@@ -132,7 +130,6 @@ public class UsersAndGroupsTabPresenter extends
         onEdit(e);
     }
 
-    @SuppressWarnings("unchecked")
     public void onEdit(final User userRef) {
         if (userRef != null) {
             edit(userRef);
@@ -161,54 +158,36 @@ public class UsersAndGroupsTabPresenter extends
 
     private void onNew() {
         if (criteria.isGroup()) {
-            final PopupUiHandlers hidePopupUiHandlers = new PopupUiHandlers() {
-                @Override
-                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                    if (ok) {
-                        final Rest<User> rest = restFactory.create();
-                        rest
-                                .onSuccess(result -> {
-                                    newPresenter.hide();
-                                    edit(result);
-                                })
-                                .call(USER_RESOURCE)
-                                .create(newPresenter.getName(), criteria.isGroup());
-                    } else {
-                        newPresenter.hide();
-                    }
+            newPresenter.show(e -> {
+                if (e.isOk()) {
+                    final Rest<User> rest = restFactory.create();
+                    rest
+                            .onSuccess(result -> {
+                                e.hide();
+                                edit(result);
+                            })
+                            .call(USER_RESOURCE)
+                            .create(newPresenter.getName(), criteria.isGroup());
+                } else {
+                    e.hide();
                 }
-
-                @Override
-                public void onHide(final boolean autoClose, final boolean ok) {
-                    // Ignore hide.
-                }
-            };
-
-            newPresenter.show(hidePopupUiHandlers);
+            });
 
         } else {
-
             selectUserPresenterProvider.get().show(this::edit);
         }
     }
 
     private void edit(final User userRef) {
-        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                listPresenter.refresh();
-            }
-        };
-
         if (userRef.isGroup()) {
             if (groupEditPresenterProvider != null) {
                 final GroupEditPresenter groupEditPresenter = groupEditPresenterProvider.get();
-                groupEditPresenter.show(userRef, popupUiHandlers);
+                groupEditPresenter.show(userRef, listPresenter::refresh);
             }
         } else {
             if (userEditPresenterProvider != null) {
                 final UserEditPresenter userEditPresenter = userEditPresenterProvider.get();
-                userEditPresenter.show(userRef, popupUiHandlers);
+                userEditPresenter.show(userRef, listPresenter::refresh);
             }
         }
     }

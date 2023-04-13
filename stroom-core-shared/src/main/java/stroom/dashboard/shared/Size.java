@@ -87,4 +87,40 @@ public class Size {
     public String toString() {
         return "[" + width + ", " + height + "]";
     }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private int width;
+        private int height;
+
+        private Builder() {
+        }
+
+        private Builder(final Size size) {
+            this.width = size.width;
+            this.height = size.height;
+        }
+
+        public Builder width(final int width) {
+            this.width = width;
+            return this;
+        }
+
+        public Builder height(final int height) {
+            this.height = height;
+            return this;
+        }
+
+        public Size build() {
+            return new Size(width, height);
+        }
+    }
 }

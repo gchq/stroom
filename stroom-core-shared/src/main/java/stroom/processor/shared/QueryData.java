@@ -18,7 +18,8 @@ package stroom.processor.shared;
 
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.util.shared.StringUtil;
+import stroom.query.api.v2.Param;
+import stroom.query.api.v2.TimeRange;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -26,11 +27,12 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serializable;
+import java.util.List;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
-@XmlType(name = "query", propOrder = {"dataSource", "expression", "params", "limits"})
+@XmlType(name = "query", propOrder = {"dataSource", "expression", "params", "timeRange", "limits"})
 @XmlRootElement(name = "query")
 @JsonInclude(Include.NON_NULL)
 public class QueryData implements Serializable {
@@ -40,7 +42,9 @@ public class QueryData implements Serializable {
     @JsonProperty
     private ExpressionOperator expression;
     @JsonProperty
-    private String params;
+    private List<Param> params;
+    @JsonProperty
+    private TimeRange timeRange;
     @JsonProperty
     private Limits limits;
 
@@ -50,11 +54,13 @@ public class QueryData implements Serializable {
     @JsonCreator
     public QueryData(@JsonProperty("dataSource") final DocRef dataSource,
                      @JsonProperty("expression") final ExpressionOperator expression,
-                     @JsonProperty("params") final String params,
+                     @JsonProperty("params") final List<Param> params,
+                     @JsonProperty("timeRange") final TimeRange timeRange,
                      @JsonProperty("limits") final Limits limits) {
         this.dataSource = dataSource;
         this.expression = expression;
-        this.params = StringUtil.blankAsNull(params);
+        this.params = params;
+        this.timeRange = timeRange;
         this.limits = limits;
     }
 
@@ -77,12 +83,20 @@ public class QueryData implements Serializable {
     }
 
     @XmlElement
-    public String getParams() {
+    public List<Param> getParams() {
         return params;
     }
 
-    public void setParams(final String params) {
-        this.params = StringUtil.blankAsNull(params);
+    public void setParams(final List<Param> params) {
+        this.params = params;
+    }
+
+    public TimeRange getTimeRange() {
+        return timeRange;
+    }
+
+    public void setTimeRange(final TimeRange timeRange) {
+        this.timeRange = timeRange;
     }
 
     @XmlElement
@@ -106,7 +120,8 @@ public class QueryData implements Serializable {
 
         private DocRef dataSource;
         private ExpressionOperator expression;
-        private String params;
+        private List<Param> params;
+        private TimeRange timeRange;
         private Limits limits;
 
         private Builder() {
@@ -116,6 +131,7 @@ public class QueryData implements Serializable {
             this.dataSource = queryData.dataSource;
             this.expression = queryData.expression;
             this.params = queryData.params;
+            this.timeRange = queryData.timeRange;
             this.limits = queryData.limits;
         }
 
@@ -134,13 +150,18 @@ public class QueryData implements Serializable {
             return this;
         }
 
-        public Builder params(final String value) {
+        public Builder params(final List<Param> value) {
             this.params = value;
             return this;
         }
 
+        public Builder timeRange(final TimeRange timeRange) {
+            this.timeRange = timeRange;
+            return this;
+        }
+
         public QueryData build() {
-            return new QueryData(dataSource, expression, params, limits);
+            return new QueryData(dataSource, expression, params, timeRange, limits);
         }
     }
 }

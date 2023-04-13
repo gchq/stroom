@@ -30,13 +30,12 @@ import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.RandomId;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.dom.client.Style.BorderStyle;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -49,7 +48,7 @@ import java.util.stream.Collectors;
 
 public class RulesPresenter
         extends AbstractSettingsTabPresenter<RulesPresenter.RulesView>
-        implements HasDirtyHandlers {
+        implements HasDirtyHandlers, Focus {
 
     private final RuleListPresenter listPresenter;
     private final Provider<RulePresenter> editRulePresenterProvider;
@@ -89,6 +88,11 @@ public class RulesPresenter
         listPresenter.getView().asWidget().getElement().getStyle().setBorderStyle(BorderStyle.NONE);
 
         updateButtons();
+    }
+
+    @Override
+    public void focus() {
+        addButton.focus();
     }
 
     @Override
@@ -196,31 +200,23 @@ public class RulesPresenter
         final RulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(newRule, fields);
 
-        final PopupSize popupSize = PopupSize.resizable(800, 400);
-        ShowPopupEvent.fire(RulesPresenter.this,
-                editRulePresenter,
-                PopupType.OK_CANCEL_DIALOG,
-                popupSize,
-                "Add New Rule",
-                new PopupUiHandlers() {
-                    @Override
-                    public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        if (ok) {
-                            final ConditionalFormattingRule rule = editRulePresenter.write();
-                            rules.add(rule);
-                            update();
-                            listPresenter.getSelectionModel().setSelected(rule);
-                            setDirty(true);
-                        }
-
-                        HidePopupEvent.fire(RulesPresenter.this, editRulePresenter);
+        final PopupSize popupSize = PopupSize.resizable(800, 550);
+        ShowPopupEvent.builder(editRulePresenter)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Add New Rule")
+                .onShow(e -> addButton.focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        final ConditionalFormattingRule rule = editRulePresenter.write();
+                        rules.add(rule);
+                        update();
+                        listPresenter.getSelectionModel().setSelected(rule);
+                        setDirty(true);
                     }
-
-                    @Override
-                    public void onHide(final boolean autoClose, final boolean ok) {
-                        // Do nothing.
-                    }
-                });
+                    e.hide();
+                })
+                .fire();
     }
 
     private void edit(final ConditionalFormattingRule existingRule) {
@@ -228,39 +224,29 @@ public class RulesPresenter
         editRulePresenter.read(existingRule, fields);
 
         final PopupSize popupSize = PopupSize.resizable(800, 400);
-        ShowPopupEvent.fire(
-                RulesPresenter.this,
-                editRulePresenter,
-                PopupType.OK_CANCEL_DIALOG,
-                popupSize,
-                "Edit Rule",
-                new PopupUiHandlers() {
+        ShowPopupEvent.builder(editRulePresenter)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Edit Rule")
+                .onShow(e -> addButton.focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        final ConditionalFormattingRule rule = editRulePresenter.write();
+                        final int index = rules.indexOf(existingRule);
+                        rules.remove(index);
+                        rules.add(index, rule);
 
-                    @Override
-                    public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        if (ok) {
-                            final ConditionalFormattingRule rule = editRulePresenter.write();
-                            final int index = rules.indexOf(existingRule);
-                            rules.remove(index);
-                            rules.add(index, rule);
+                        update();
+                        listPresenter.getSelectionModel().setSelected(rule);
 
-                            update();
-                            listPresenter.getSelectionModel().setSelected(rule);
-
-                            // Only mark the policies as dirty if the rule was actually changed.
-                            if (!existingRule.equals(rule)) {
-                                setDirty(true);
-                            }
+                        // Only mark the policies as dirty if the rule was actually changed.
+                        if (!existingRule.equals(rule)) {
+                            setDirty(true);
                         }
-
-                        HidePopupEvent.fire(RulesPresenter.this, editRulePresenter);
                     }
-
-                    @Override
-                    public void onHide(final boolean autoClose, final boolean ok) {
-                        // Do nothing.
-                    }
-                });
+                    e.hide();
+                })
+                .fire();
     }
 
 
@@ -322,7 +308,7 @@ public class RulesPresenter
     }
 
     @Override
-    public boolean isDirty(final ComponentConfig componentData) {
+    public boolean isDirty(final ComponentConfig componentConfig) {
         return dirty;
     }
 

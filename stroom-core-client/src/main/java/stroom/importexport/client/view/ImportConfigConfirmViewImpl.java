@@ -19,14 +19,12 @@ package stroom.importexport.client.view;
 import stroom.importexport.client.presenter.ImportConfigConfirmPresenter.ImportConfigConfirmView;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.widget.customdatebox.client.MyDateBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -38,18 +36,17 @@ import java.util.function.Consumer;
 public class ImportConfigConfirmViewImpl extends ViewImpl implements ImportConfigConfirmView {
 
     private final Widget widget;
-    @UiField
-    Grid grid;
+
     @UiField
     SimplePanel dataGridView;
     @UiField
-    CheckBox enableFilters;
-    @UiField(provided = true)
+    CustomCheckBox enableFilters;
+    @UiField
     MyDateBox enableFrom;
     @UiField
-    CheckBox useImportNames;
+    CustomCheckBox useImportNames;
     @UiField
-    CheckBox useImportFolders;
+    CustomCheckBox useImportFolders;
     @UiField
     SimplePanel rootFolder;
 
@@ -59,9 +56,8 @@ public class ImportConfigConfirmViewImpl extends ViewImpl implements ImportConfi
     @Inject
     public ImportConfigConfirmViewImpl(final Binder binder,
                                        final UserPreferencesManager userPreferencesManager) {
-        enableFrom = new MyDateBox(userPreferencesManager.isUtc());
         widget = binder.createAndBindUi(this);
-        grid.getRowFormatter().getElement(0).getStyle().setHeight(100, Style.Unit.PCT);
+        enableFrom.setUtc(userPreferencesManager.isUtc());
     }
 
     @Override
@@ -70,8 +66,13 @@ public class ImportConfigConfirmViewImpl extends ViewImpl implements ImportConfi
     }
 
     @Override
-    public void setDataGridView(final View view) {
-        dataGridView.setWidget(view.asWidget());
+    public void focus() {
+        enableFilters.setFocus(true);
+    }
+
+    @Override
+    public void setDataGrid(final Widget widget) {
+        dataGridView.setWidget(widget);
     }
 
     @Override

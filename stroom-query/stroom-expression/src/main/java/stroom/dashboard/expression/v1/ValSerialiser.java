@@ -19,6 +19,9 @@ public final class ValSerialiser {
         SERIALISERS[Type.BOOLEAN.getId()] = new Serialiser(
                 input -> ValBoolean.create(input.readBoolean()),
                 (output, value) -> output.writeBoolean(value.toBoolean()));
+        SERIALISERS[Type.FLOAT.getId()] = new Serialiser(
+                input -> ValFloat.create(input.readFloat()),
+                (output, value) -> output.writeFloat(value.toDouble().floatValue()));
         SERIALISERS[Type.DOUBLE.getId()] = new Serialiser(
                 input -> ValDouble.create(input.readDouble()),
                 (output, value) -> output.writeDouble(value.toDouble()));
@@ -27,6 +30,9 @@ public final class ValSerialiser {
                 (output, value) -> output.writeInt(value.toInteger()));
         SERIALISERS[Type.LONG.getId()] = new Serialiser(
                 input -> ValLong.create(input.readLong()),
+                (output, value) -> output.writeLong(value.toLong()));
+        SERIALISERS[Type.DATE.getId()] = new Serialiser(
+                input -> ValDate.create(input.readLong()),
                 (output, value) -> output.writeLong(value.toLong()));
         SERIALISERS[Type.STRING.getId()] = new Serialiser(
                 input -> ValString.create(input.readString()),

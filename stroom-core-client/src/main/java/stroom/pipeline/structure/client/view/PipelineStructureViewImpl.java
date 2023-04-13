@@ -20,8 +20,8 @@ import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.Pip
 import stroom.pipeline.structure.client.presenter.PipelineStructureUiHandlers;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.SvgButton;
+import stroom.widget.util.client.MouseUtil;
 
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -130,7 +130,7 @@ public class PipelineStructureViewImpl extends ViewWithUiHandlers<PipelineStruct
 
     @UiHandler("viewSource")
     void onViewSource(final ClickEvent event) {
-        if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+        if (MouseUtil.isPrimary(event)) {
             if (getUiHandlers() != null) {
                 getUiHandlers().viewSource();
             }

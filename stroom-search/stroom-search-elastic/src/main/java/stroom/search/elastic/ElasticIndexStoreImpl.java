@@ -17,6 +17,7 @@
 
 package stroom.search.elastic;
 
+import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
@@ -46,8 +47,7 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
     public ElasticIndexStoreImpl(
             final StoreFactory storeFactory,
             final ElasticIndexService elasticIndexService,
-            final ElasticIndexSerialiser serialiser
-    ) {
+            final ElasticIndexSerialiser serialiser) {
         this.store = storeFactory.createStore(serialiser, ElasticIndexDoc.DOCUMENT_TYPE, ElasticIndexDoc.class);
         this.elasticIndexService = elasticIndexService;
     }
@@ -189,7 +189,12 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
     }
 
     @Override
-    public List<DocRef> findByNames(final List<String> names, final boolean allowWildCards) {
-        return store.findByNames(names, allowWildCards);
+    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
+        return store.findByNames(name, allowWildCards);
+    }
+
+    @Override
+    public List<DocContentMatch> findByContent(final String pattern, final boolean regex, final boolean matchCase) {
+        return store.findByContent(pattern, regex, matchCase);
     }
 }

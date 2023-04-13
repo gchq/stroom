@@ -16,9 +16,27 @@
 
 package stroom.dashboard.client.main;
 
+import stroom.query.api.v2.ResultStoreInfo;
+
+import java.util.function.Consumer;
+
 public interface Queryable {
 
-    void onQuery(String params, String queryInfo);
+    void addModeListener(Consumer<Boolean> consumer);
+
+    void removeModeListener(Consumer<Boolean> consumer);
+
+    boolean getMode();
+
+    void start();
+
+    void stop();
+
+    void setQueryInfo(String queryInfo);
 
     void setQueryOnOpen(boolean queryOnOpen);
+
+    void setDashboardContext(DashboardContext dashboardContext);
+
+    void setResultStoreInfo(ResultStoreInfo resultStoreInfo);
 }

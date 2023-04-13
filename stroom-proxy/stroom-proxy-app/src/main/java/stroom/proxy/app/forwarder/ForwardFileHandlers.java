@@ -18,10 +18,10 @@ public class ForwardFileHandlers implements StreamHandlers {
 
     private final SequentialFileStore sequentialFileStore;
 
-    public ForwardFileHandlers(final ForwardFileConfig config,
+    public ForwardFileHandlers(final ForwardFileConfig forwardFileConfig,
                                final PathCreator pathCreator) {
         this.sequentialFileStore = new SequentialFileStore(() ->
-                pathCreator.toAppPath(config.getPath()));
+                pathCreator.toAppPath(forwardFileConfig.getPath()));
     }
 
     @Override

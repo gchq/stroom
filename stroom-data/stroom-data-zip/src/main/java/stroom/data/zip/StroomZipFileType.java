@@ -7,10 +7,10 @@ import java.util.Optional;
 import static java.util.Map.entry;
 
 public enum StroomZipFileType {
-    MANIFEST(1, ".mf", new String[]{".mf", ".manifest"}),
-    META(2, ".meta", new String[]{".hdr", ".header", ".meta", ".met"}),
-    CONTEXT(3, ".ctx", new String[]{".ctx", ".context"}),
-    DATA(4, ".dat", new String[]{".dat"});
+    MANIFEST(".mf", new String[]{".mf", ".manifest"}),
+    META(".meta", new String[]{".hdr", ".header", ".meta", ".met"}),
+    CONTEXT(".ctx", new String[]{".ctx", ".context"}),
+    DATA(".dat", new String[]{".dat"});
 
     private static final Map<String, StroomZipFileType> EXTENSION_MAP = Map.ofEntries(
             entry(".mf", StroomZipFileType.MANIFEST),
@@ -24,34 +24,13 @@ public enum StroomZipFileType {
             entry(".dat", StroomZipFileType.DATA)
     );
 
-    public static final Map<Integer, StroomZipFileType> TYPE_MAP = Map.of(
-            MANIFEST.id, MANIFEST,
-            META.id, META,
-            CONTEXT.getId(), CONTEXT,
-            DATA.id, DATA);
-
-    /**
-     * We need to be able to sort by type so we hold a numeric id that allows meta to be found before accompanying data.
-     */
-    private final int id;
     private final String extension;
     private final String[] recognisedExtensions;
 
-    StroomZipFileType(final int id,
-                      final String extension,
+    StroomZipFileType(final String extension,
                       final String[] recognisedExtensions) {
-        this.id = id;
         this.extension = extension;
         this.recognisedExtensions = recognisedExtensions;
-    }
-
-    /**
-     * We need to be able to sort by type so we hold a numeric id that allows meta to be found before accompanying data.
-     *
-     * @return The id of the type.
-     */
-    public int getId() {
-        return id;
     }
 
     /**

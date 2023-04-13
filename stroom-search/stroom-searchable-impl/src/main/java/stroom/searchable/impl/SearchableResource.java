@@ -56,14 +56,6 @@ public interface SearchableResource extends DataSourceResource, RestResource {
     SearchResponse search(@Parameter(description = "SearchRequest", required = true) SearchRequest request);
 
     @POST
-    @Path("/keepAlive")
-    @Operation(
-            summary = "Keep a running query alive",
-            operationId = "keepAliveSearchableQuery")
-    @Override
-    Boolean keepAlive(@Parameter(description = "QueryKey", required = true) QueryKey queryKey);
-
-    @POST
     @Path("/destroy")
     @Operation(
             summary = "Destroy a running query",

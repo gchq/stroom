@@ -40,8 +40,6 @@ public class LinkedEventViewImpl extends ViewImpl implements LinkedEventView, Re
     SimplePanel eventList;
     @UiField
     SimplePanel data;
-    @UiField
-    ButtonPanel buttonPanel;
 
     @Inject
     public LinkedEventViewImpl(final Binder binder) {
@@ -56,11 +54,6 @@ public class LinkedEventViewImpl extends ViewImpl implements LinkedEventView, Re
     @Override
     public void onResize() {
         ((RequiresResize) widget).onResize();
-    }
-
-    @Override
-    public ButtonView addButton(final Preset preset) {
-        return buttonPanel.addButton(preset);
     }
 
     @Override

@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.OptionalDouble;
 
 public class MostFreePercentCapacitySelector extends AbstractSelector {
+
     public static final String NAME = "MostFreePercent";
 
     public MostFreePercentCapacitySelector() {

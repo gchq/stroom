@@ -22,62 +22,18 @@ import stroom.query.api.v2.ExpressionOperator;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
-class RuleConfig {
-    private final String queryId;
-    private final ExpressionOperator expression;
-    private final DocRef pipeline;
-    private final List<AlertDefinition> alertDefinitions;
-    private final Map<String, String> params;
+interface RuleConfig {
 
-    RuleConfig(final String dashboardUUID,
-               final String queryId,
-               final ExpressionOperator expression,
-               final DocRef pipeline,
-               final List<AlertDefinition> alertDefinitions,
-               final Map<String, String> params) {
-        this.queryId = dashboardUUID + "/" + queryId;
-        this.expression = expression;
-        this.pipeline = pipeline;
-        this.alertDefinitions = alertDefinitions;
-        this.params = params;
-    }
+    String getUuid();
 
-    public String getQueryId() {
-        return queryId;
-    }
+    String getName();
 
-    public DocRef getPipeline() {
-        return pipeline;
-    }
+    Map<String, String> getParams();
 
-    public List<AlertDefinition> getAlertDefinitions() {
-        return alertDefinitions;
-    }
+    ExpressionOperator getExpression();
 
-    public Map<String, String> getParams() {
-        return params;
-    }
+    DocRef getExtractionPipeline();
 
-    public ExpressionOperator getExpression() {
-        return expression;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        final RuleConfig that = (RuleConfig) o;
-        return queryId.equals(that.queryId) && pipeline.equals(that.pipeline);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(queryId, pipeline);
-    }
+    List<AlertDefinition> getAlertDefinitions();
 }

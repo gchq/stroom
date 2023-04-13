@@ -19,6 +19,7 @@ package stroom.data.retention.impl;
 
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
+import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
@@ -248,7 +249,12 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
     }
 
     @Override
-    public List<DocRef> findByNames(final List<String> names, final boolean allowWildCards) {
-        return store.findByNames(names, allowWildCards);
+    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
+        return store.findByNames(name, allowWildCards);
+    }
+
+    @Override
+    public List<DocContentMatch> findByContent(final String pattern, final boolean regex, final boolean matchCase) {
+        return store.findByContent(pattern, regex, matchCase);
     }
 }

@@ -16,11 +16,12 @@
 
 package stroom.index.client.presenter;
 
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.index.shared.IndexVolume;
 import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
@@ -30,11 +31,19 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.List;
 
-public class IndexVolumeListPresenter extends MyPresenterWidget<DataGridView<IndexVolume>> {
+public class IndexVolumeListPresenter extends MyPresenterWidget<PagerView> {
+
+    private final MyDataGrid<IndexVolume> dataGrid;
+    private final MultiSelectionModelImpl<IndexVolume> selectionModel;
 
     @Inject
-    public IndexVolumeListPresenter(final EventBus eventBus) {
-        super(eventBus, new DataGridViewImpl<>(true, true));
+    public IndexVolumeListPresenter(final EventBus eventBus,
+                                    final PagerView view) {
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        view.setDataWidget(dataGrid);
 
         // Add a border to the list.
         getWidget().getElement().addClassName("stroom-border");
@@ -56,7 +65,7 @@ public class IndexVolumeListPresenter extends MyPresenterWidget<DataGridView<Ind
                 return row.getPath();
             }
         };
-        getView().addResizableColumn(volumeColumn, "Path", 300);
+        dataGrid.addResizableColumn(volumeColumn, "Path", 300);
 
         // Status.
         final Column<IndexVolume, String> streamStatusColumn = new Column<IndexVolume, String>(new TextCell()) {
@@ -68,17 +77,17 @@ public class IndexVolumeListPresenter extends MyPresenterWidget<DataGridView<Ind
                 return row.getState().getDisplayValue();
             }
         };
-        getView().addResizableColumn(streamStatusColumn, "Status", 90);
+        dataGrid.addResizableColumn(streamStatusColumn, "Status", 90);
 
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     public void setData(final List<IndexVolume> volumes) {
-        getView().setRowData(0, volumes);
-        getView().setRowCount(volumes.size());
+        dataGrid.setRowData(0, volumes);
+        dataGrid.setRowCount(volumes.size());
     }
 
     public MultiSelectionModel<IndexVolume> getSelectionModel() {
-        return getView().getSelectionModel();
+        return selectionModel;
     }
 }

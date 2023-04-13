@@ -4,6 +4,10 @@
 package stroom.activity.impl.db.jooq.tables;
 
 
+import stroom.activity.impl.db.jooq.Keys;
+import stroom.activity.impl.db.jooq.Stroom;
+import stroom.activity.impl.db.jooq.tables.records.ActivityRecord;
+
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
@@ -18,10 +22,6 @@ import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
-
-import stroom.activity.impl.db.jooq.Keys;
-import stroom.activity.impl.db.jooq.Stroom;
-import stroom.activity.impl.db.jooq.tables.records.ActivityRecord;
 
 
 /**

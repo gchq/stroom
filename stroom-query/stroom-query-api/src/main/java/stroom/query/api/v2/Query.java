@@ -33,7 +33,7 @@ import java.util.Objects;
 /**
  * {@value #CLASS_DESC}
  */
-@JsonPropertyOrder({"dataSource", "expression", "params"})
+@JsonPropertyOrder({"dataSource", "expression", "params", "timeRange"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = Query.CLASS_DESC)
 public final class Query {
@@ -53,13 +53,20 @@ public final class Query {
     @JsonProperty
     private final List<Param> params;
 
+    @JsonPropertyDescription("High level time range filter to apply to the query used to filter shards and add " +
+            "narrow the query expression")
+    @JsonProperty
+    private final TimeRange timeRange;
+
     @JsonCreator
     public Query(@JsonProperty("dataSource") final DocRef dataSource,
                  @JsonProperty("expression") final ExpressionOperator expression,
-                 @JsonProperty("params") final List<Param> params) {
+                 @JsonProperty("params") final List<Param> params,
+                 @JsonProperty("timeRange") final TimeRange timeRange) {
         this.dataSource = dataSource;
         this.expression = expression;
         this.params = params;
+        this.timeRange = timeRange;
     }
 
     public DocRef getDataSource() {
@@ -74,6 +81,10 @@ public final class Query {
         return params;
     }
 
+    public TimeRange getTimeRange() {
+        return timeRange;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -85,12 +96,13 @@ public final class Query {
         Query query = (Query) o;
         return Objects.equals(dataSource, query.dataSource) &&
                 Objects.equals(expression, query.expression) &&
-                Objects.equals(params, query.params);
+                Objects.equals(params, query.params) &&
+                Objects.equals(timeRange, query.timeRange);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(dataSource, expression, params);
+        return Objects.hash(dataSource, expression, params, timeRange);
     }
 
     @Override
@@ -99,6 +111,7 @@ public final class Query {
                 "dataSource=" + dataSource +
                 ", expression=" + expression +
                 ", params=" + params +
+                ", timeRange=" + timeRange +
                 '}';
     }
 
@@ -118,6 +131,7 @@ public final class Query {
         private DocRef dataSource;
         private ExpressionOperator expression;
         private List<Param> params;
+        private TimeRange timeRange;
 
         private Builder() {
         }
@@ -126,6 +140,7 @@ public final class Query {
             this.dataSource = query.dataSource;
             this.expression = query.expression;
             this.params = query.params;
+            this.timeRange = query.timeRange;
         }
 
         /**
@@ -185,8 +200,13 @@ public final class Query {
             return this;
         }
 
+        public Builder timeRange(final TimeRange timeRange) {
+            this.timeRange = timeRange;
+            return this;
+        }
+
         public Query build() {
-            return new Query(dataSource, expression, params);
+            return new Query(dataSource, expression, params, timeRange);
         }
     }
 }

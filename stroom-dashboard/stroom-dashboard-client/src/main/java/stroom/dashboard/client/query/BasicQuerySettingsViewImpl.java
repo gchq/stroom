@@ -17,7 +17,7 @@
 package stroom.dashboard.client.query;
 
 import stroom.dashboard.client.query.BasicQuerySettingsPresenter.BasicQuerySettingsView;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -41,9 +41,9 @@ public class BasicQuerySettingsViewImpl extends ViewImpl implements BasicQuerySe
     @UiField
     SimplePanel dataSource;
     @UiField
-    TickBox queryOnOpen;
+    CustomCheckBox queryOnOpen;
     @UiField
-    TickBox autoRefresh;
+    CustomCheckBox autoRefresh;
     @UiField
     TextBox refreshInterval;
 
@@ -55,6 +55,11 @@ public class BasicQuerySettingsViewImpl extends ViewImpl implements BasicQuerySe
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public void focus() {
+        name.setFocus(true);
     }
 
     @Override
@@ -82,22 +87,22 @@ public class BasicQuerySettingsViewImpl extends ViewImpl implements BasicQuerySe
 
     @Override
     public boolean isQueryOnOpen() {
-        return queryOnOpen.getBooleanValue();
+        return queryOnOpen.getValue();
     }
 
     @Override
     public void setQueryOnOpen(final boolean queryOnOpen) {
-        this.queryOnOpen.setBooleanValue(queryOnOpen);
+        this.queryOnOpen.setValue(queryOnOpen);
     }
 
     @Override
     public boolean isAutoRefresh() {
-        return autoRefresh.getBooleanValue();
+        return autoRefresh.getValue();
     }
 
     @Override
     public void setAutoRefresh(final boolean autoRefresh) {
-        this.autoRefresh.setBooleanValue(autoRefresh);
+        this.autoRefresh.setValue(autoRefresh);
     }
 
     @Override

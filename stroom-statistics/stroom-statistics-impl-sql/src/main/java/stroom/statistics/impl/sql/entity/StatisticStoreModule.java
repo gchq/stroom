@@ -33,7 +33,6 @@ public class StatisticStoreModule extends AbstractModule {
     protected void configure() {
         bind(StatisticStoreStore.class).to(StatisticStoreStoreImpl.class);
         bind(StatisticStoreCache.class).to(StatisticsDataSourceCacheImpl.class);
-        bind(StatisticsDataSourceProvider.class).to(StatisticsDataSourceProviderImpl.class);
         bind(StatisticStoreValidator.class).to(StatisticsDataSourceValidatorImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)

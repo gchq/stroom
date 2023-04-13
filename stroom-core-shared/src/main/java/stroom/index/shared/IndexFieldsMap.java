@@ -21,8 +21,6 @@ import java.util.List;
 
 public class IndexFieldsMap extends HashMap<String, IndexField> {
 
-    private static final long serialVersionUID = -7687167987530520359L;
-
     public IndexFieldsMap() {
     }
 
@@ -34,7 +32,11 @@ public class IndexFieldsMap extends HashMap<String, IndexField> {
         }
     }
 
-    public void put(final IndexField indexField) {
-        put(indexField.getFieldName(), indexField);
+    public IndexField put(final IndexField indexField) {
+        return put(indexField.getFieldName(), indexField);
+    }
+
+    public IndexField putIfAbsent(final IndexField indexField) {
+        return putIfAbsent(indexField.getFieldName(), indexField);
     }
 }

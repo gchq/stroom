@@ -18,7 +18,6 @@ package stroom.widget.popup.client.event;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
 public class HidePopupEvent extends GwtEvent<HidePopupEvent.Handler> {
@@ -34,13 +33,8 @@ public class HidePopupEvent extends GwtEvent<HidePopupEvent.Handler> {
         this.ok = ok;
     }
 
-    public static void fire(final HasHandlers handlers, final PresenterWidget<?> presenterWidget) {
-        fire(handlers, presenterWidget, false, false);
-    }
-
-    public static void fire(final HasHandlers handlers, final PresenterWidget<?> presenterWidget,
-                            final boolean autoClose, final boolean ok) {
-        handlers.fireEvent(new HidePopupEvent(presenterWidget, autoClose, ok));
+    public static Builder builder(final PresenterWidget<?> presenterWidget) {
+        return new Builder(presenterWidget);
     }
 
     public static Type<Handler> getType() {
@@ -75,5 +69,37 @@ public class HidePopupEvent extends GwtEvent<HidePopupEvent.Handler> {
     public interface Handler extends EventHandler {
 
         void onHide(HidePopupEvent event);
+    }
+
+    public static class Builder {
+
+        private final PresenterWidget<?> presenterWidget;
+        private boolean autoClose;
+        private boolean ok = true;
+
+        public Builder(final PresenterWidget<?> presenterWidget) {
+            this.presenterWidget = presenterWidget;
+        }
+
+        public Builder autoClose(final boolean autoClose) {
+            this.autoClose = autoClose;
+            return this;
+        }
+
+        public Builder ok(final boolean ok) {
+            this.ok = ok;
+            return this;
+        }
+
+        public HidePopupEvent build() {
+            return new HidePopupEvent(
+                    presenterWidget,
+                    autoClose,
+                    ok);
+        }
+
+        public void fire() {
+            presenterWidget.fireEvent(build());
+        }
     }
 }

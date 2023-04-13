@@ -8,8 +8,6 @@ import com.esotericsoftware.kryo.KryoException;
 import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.unsafe.UnsafeByteBufferOutput;
 
-import java.io.OutputStream;
-
 public class OutputFactory {
 
     private static final int MIN_KEY_SIZE = (int) ByteSizeUnit.BYTE.longBytes(10);
@@ -18,16 +16,13 @@ public class OutputFactory {
 
     private final int minPayloadSize;
     private final int maxStringFieldLength;
-    private final ErrorConsumer errorConsumer;
 
-    public OutputFactory(final ResultStoreConfig resultStoreConfig,
-                         final ErrorConsumer errorConsumer) {
+    public OutputFactory(final ResultStoreConfig resultStoreConfig) {
         this.minPayloadSize = (int) resultStoreConfig.getMinPayloadSize().getBytes();
         maxStringFieldLength = resultStoreConfig.getMaxStringFieldLength();
-        this.errorConsumer = errorConsumer;
     }
 
-    private String truncate(final String value) {
+    private String truncate(final String value, final ErrorConsumer errorConsumer) {
         if (value.length() > maxStringFieldLength) {
             LOGGER.debug(() -> "Truncating string: " + value);
             final String truncated = value.substring(0, maxStringFieldLength);
@@ -40,20 +35,20 @@ public class OutputFactory {
         return value;
     }
 
-    public Output createValueOutput() {
+    public Output createValueOutput(final ErrorConsumer errorConsumer) {
         return new Output(MIN_VALUE_SIZE, -1) {
             @Override
             public void writeString(final String value) throws KryoException {
-                super.writeString(truncate(value));
+                super.writeString(truncate(value, errorConsumer));
             }
         };
     }
 
-    public Output createKeyOutput() {
+    public Output createKeyOutput(final ErrorConsumer errorConsumer) {
         return new Output(MIN_KEY_SIZE, -1) {
             @Override
             public void writeString(final String value) throws KryoException {
-                super.writeString(truncate(value));
+                super.writeString(truncate(value, errorConsumer));
             }
         };
     }
@@ -62,11 +57,11 @@ public class OutputFactory {
         return new PayloadOutput(minPayloadSize);
     }
 
-    public UnsafeByteBufferOutput createByteBufferOutput(final int bufferSize) {
+    public UnsafeByteBufferOutput createByteBufferOutput(final int bufferSize, final ErrorConsumer errorConsumer) {
         return new UnsafeByteBufferOutput(bufferSize, -1) {
             @Override
             public void writeString(final String value) throws KryoException {
-                super.writeString(truncate(value));
+                super.writeString(truncate(value, errorConsumer));
             }
         };
     }

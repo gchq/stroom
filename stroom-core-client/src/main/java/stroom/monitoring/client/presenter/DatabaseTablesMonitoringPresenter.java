@@ -19,10 +19,10 @@ package stroom.monitoring.client.presenter;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.shared.DBTableStatus;
@@ -31,7 +31,6 @@ import stroom.node.shared.FindDBTableCriteria;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
 import com.google.gwt.cell.client.TextCell;
@@ -43,7 +42,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.function.Consumer;
 
 public class DatabaseTablesMonitoringPresenter
-        extends ContentTabPresenter<DataGridView<DBTableStatus>> {
+        extends ContentTabPresenter<PagerView> {
 
     private static final DbStatusResource DB_STATUS_RESOURCE = GWT.create(DbStatusResource.class);
 
@@ -51,10 +50,15 @@ public class DatabaseTablesMonitoringPresenter
     private final RestDataProvider<DBTableStatus, ResultPage<DBTableStatus>> dataProvider;
 
     @Inject
-    public DatabaseTablesMonitoringPresenter(final EventBus eventBus, final RestFactory restFactory) {
-        super(eventBus, new DataGridViewImpl<>(false, 1000));
+    public DatabaseTablesMonitoringPresenter(final EventBus eventBus,
+                                             final PagerView view,
+                                             final RestFactory restFactory) {
+        super(eventBus, view);
 
-        getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(
+        final MyDataGrid<DBTableStatus> dataGrid = new MyDataGrid<>(1000);
+        view.setDataWidget(dataGrid);
+
+        dataGrid.addResizableColumn(new OrderByColumn<DBTableStatus, String>(
                 new TextCell(), DBTableStatus.FIELD_DATABASE, true) {
             @Override
             public String getValue(final DBTableStatus row) {
@@ -62,7 +66,7 @@ public class DatabaseTablesMonitoringPresenter
             }
         }, DBTableStatus.FIELD_DATABASE, 200);
 
-        getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(
+        dataGrid.addResizableColumn(new OrderByColumn<DBTableStatus, String>(
                 new TextCell(), DBTableStatus.FIELD_TABLE, true) {
             @Override
             public String getValue(final DBTableStatus row) {
@@ -70,7 +74,7 @@ public class DatabaseTablesMonitoringPresenter
             }
         }, DBTableStatus.FIELD_TABLE, 200);
 
-        getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(
+        dataGrid.addResizableColumn(new OrderByColumn<DBTableStatus, String>(
                 new TextCell(), DBTableStatus.FIELD_ROW_COUNT, false) {
             @Override
             public String getValue(final DBTableStatus row) {
@@ -78,7 +82,7 @@ public class DatabaseTablesMonitoringPresenter
             }
         }, DBTableStatus.FIELD_ROW_COUNT, 100);
 
-        getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(
+        dataGrid.addResizableColumn(new OrderByColumn<DBTableStatus, String>(
                 new TextCell(), DBTableStatus.FIELD_DATA_SIZE, false) {
             @Override
             public String getValue(final DBTableStatus row) {
@@ -86,7 +90,7 @@ public class DatabaseTablesMonitoringPresenter
             }
         }, DBTableStatus.FIELD_DATA_SIZE, 100);
 
-        getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(
+        dataGrid.addResizableColumn(new OrderByColumn<DBTableStatus, String>(
                 new TextCell(), DBTableStatus.FIELD_INDEX_SIZE, false) {
             @Override
             public String getValue(final DBTableStatus row) {
@@ -94,7 +98,7 @@ public class DatabaseTablesMonitoringPresenter
             }
         }, DBTableStatus.FIELD_INDEX_SIZE, 100);
 
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
 
         criteria = new FindDBTableCriteria();
         dataProvider = new RestDataProvider<DBTableStatus, ResultPage<DBTableStatus>>(eventBus) {
@@ -111,11 +115,11 @@ public class DatabaseTablesMonitoringPresenter
                         .findSystemTableStatus(criteria);
             }
         };
-        dataProvider.addDataDisplay(getView().getDataDisplay());
+        dataProvider.addDataDisplay(dataGrid);
 //        dataProvider.refresh();
 
 
-        getView().addColumnSortHandler(event -> {
+        dataGrid.addColumnSortHandler(event -> {
             if (event.getColumn() instanceof OrderByColumn<?, ?>) {
                 final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
                 criteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());

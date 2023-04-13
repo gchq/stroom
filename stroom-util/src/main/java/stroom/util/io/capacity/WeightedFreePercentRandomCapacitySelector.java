@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class WeightedFreePercentRandomCapacitySelector extends AbstractSelector {
+
     public static final String NAME = "WeightedFreePercentRandom";
 
     public WeightedFreePercentRandomCapacitySelector() {

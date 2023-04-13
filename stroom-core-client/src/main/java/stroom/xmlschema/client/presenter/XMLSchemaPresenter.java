@@ -17,7 +17,6 @@
 
 package stroom.xmlschema.client.presenter;
 
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
@@ -56,9 +55,8 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
                               final XMLSchemaSettingsPresenter settingsPresenter,
                               final XSDBrowserPresenter xsdBrowserPresenter,
                               final EditorPresenter codePresenter,
-                              final ClientSecurityContext securityContext,
-                              final RestFactory restFactory) {
-        super(eventBus, view, securityContext, restFactory);
+                              final ClientSecurityContext securityContext) {
+        super(eventBus, view, securityContext);
         this.settingsPresenter = settingsPresenter;
         this.xsdBrowserPresenter = xsdBrowserPresenter;
         this.codePresenter = codePresenter;
@@ -130,11 +128,12 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
     }
 
     @Override
-    protected void onWrite(final XmlSchemaDoc xmlSchema) {
-        settingsPresenter.write(xmlSchema);
+    protected XmlSchemaDoc onWrite(XmlSchemaDoc xmlSchema) {
+        xmlSchema = settingsPresenter.write(xmlSchema);
         if (shownText) {
             xmlSchema.setData(codePresenter.getText().trim());
         }
+        return xmlSchema;
     }
 
     @Override

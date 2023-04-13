@@ -12,6 +12,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PropertyPath;
 import stroom.util.time.StroomDuration;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -203,7 +204,7 @@ class TestStroomCacheImpl {
 
     @Test
     void testPut() {
-        assertThat(cache.getOptional(999))
+        Assertions.assertThat(cache.getIfPresent(999))
                 .isEmpty();
 
         assertThat(cache.size())
@@ -213,7 +214,7 @@ class TestStroomCacheImpl {
         assertThat(cache.size())
                 .isEqualTo(13);
 
-        assertThat(cache.getOptional(999))
+        Assertions.assertThat(cache.getIfPresent(999))
                 .hasValue("foo");
     }
 
@@ -223,21 +224,21 @@ class TestStroomCacheImpl {
         assertThat(cache.size())
                 .isEqualTo(ALL_MONTHS_COUNT);
 
-        assertThat(cache.getOptional(5))
+        Assertions.assertThat(cache.getIfPresent(5))
                 .hasValue("May");
 
         cache.put(5, "NewMay");
         assertThat(cache.size())
                 .isEqualTo(ALL_MONTHS_COUNT);
 
-        assertThat(cache.getOptional(5))
+        Assertions.assertThat(cache.getIfPresent(5))
                 .hasValue("NewMay");
     }
 
     @Test
     void testGetOptional() {
         numbers.forEach(i -> {
-            final Optional<String> optName = cache.getOptional(i);
+            final Optional<String> optName = cache.getIfPresent(i);
             LOGGER.info("i: {}, name: {}", i, optName);
 
             assertThat(optName)
@@ -248,7 +249,7 @@ class TestStroomCacheImpl {
     @Test
     void testGetOptional_miss() {
         final int i = 999;
-        final Optional<String> optName = cache.getOptional(i);
+        final Optional<String> optName = cache.getIfPresent(i);
         LOGGER.info("i: {}, name: {}", i, optName);
 
         assertThat(optName)
@@ -586,7 +587,7 @@ class TestStroomCacheImpl {
                 .collect(Collectors.toList()));
 
         // Touch an entry so its access time is later than the others and won't be evicted
-        assertThat(cache.getOptional(5))
+        Assertions.assertThat(cache.getIfPresent(5))
                 .hasValue("May");
 
         ThreadUtil.sleepIgnoringInterrupts(200);
@@ -602,7 +603,7 @@ class TestStroomCacheImpl {
         assertThat(cache.size())
                 .isEqualTo(1);
 
-        assertThat(cache.getOptional(5))
+        Assertions.assertThat(cache.getIfPresent(5))
                 .hasValue("May");
 
         // Wait for > expiry time

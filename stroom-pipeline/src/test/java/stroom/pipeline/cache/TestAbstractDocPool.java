@@ -62,7 +62,7 @@ class TestAbstractDocPool {
         PoolItem<String> poolItem1 = myDocPool.borrowObject(myDoc, true);
 
         Assertions.assertThat(valueCreationCounter)
-                        .hasValue(1);
+                .hasValue(1);
 
         Assertions.assertThat(poolItem1.getValue())
                 .isEqualTo(createPoolValue(myDoc));

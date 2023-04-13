@@ -4,14 +4,15 @@ import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.HyperlinkCell;
 import stroom.cell.info.client.SvgCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.docref.HasDisplayValue;
 import stroom.svg.client.Preset;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.Expander;
 import stroom.util.shared.TreeAction;
+import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.Cell.Context;
@@ -20,6 +21,7 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.cellview.client.SafeHtmlHeader;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -187,7 +189,7 @@ public class DataGridUtil {
         return column;
     }
 
-//    public static <T_VIEW extends DataGridView<T_ROW>, T_ROW> void addResizableTextColumn(
+//    public static <T_VIEW extends MyDataGrid<T_ROW>, T_ROW> void addResizableTextColumn(
 //            final T_VIEW view,
 //            final Function<T_ROW, String> cellValueExtractor,
 //            final String name,
@@ -195,7 +197,7 @@ public class DataGridUtil {
 //        view.addResizableColumn(buildColumn(cellValueExtractor, TextCell::new), name, width);
 //    }
 //
-//    public static <T_VIEW extends DataGridView<T_ROW>, T_ROW> void addResizableNumericTextColumn(
+//    public static <T_VIEW extends MyDataGrid<T_ROW>, T_ROW> void addResizableNumericTextColumn(
 //            final T_VIEW view,
 //            final Function<T_ROW, Number> cellValueExtractor,
 //            final String name,
@@ -203,7 +205,7 @@ public class DataGridUtil {
 //        view.addResizableColumn(numericTextColumn(cellValueExtractor), name, width);
 //    }
 //
-//    public static <T_VIEW extends DataGridView<T_ROW>, T_ROW> void addResizableSafeHtmlColumn(
+//    public static <T_VIEW extends MyDataGrid<T_ROW>, T_ROW> void addResizableSafeHtmlColumn(
 //            final T_VIEW view,
 //            final Function<T_ROW, SafeHtml> cellValueExtractor,
 //            final String name,
@@ -211,7 +213,8 @@ public class DataGridUtil {
 //        view.addResizableColumn(safeHtmlColumn(cellValueExtractor), name, width);
 //    }
 
-    public static <T_VIEW extends DataGridView<T_ROW>, T_ROW> void addExpanderColumn(
+
+    public static <T_VIEW extends MyDataGrid<T_ROW>, T_ROW> void addExpanderColumn(
             final T_VIEW view,
             final Function<T_ROW, Expander> expanderExtractor,
             final TreeAction<T_ROW> treeAction,
@@ -223,7 +226,7 @@ public class DataGridUtil {
                 width);
     }
 
-    public static <T_VIEW extends DataGridView<T_ROW>, T_ROW> void addExpanderColumn(
+    public static <T_VIEW extends MyDataGrid<T_ROW>, T_ROW> void addExpanderColumn(
             final T_VIEW view,
             final Function<T_ROW, Expander> expanderExtractor,
             final int width) {
@@ -233,7 +236,7 @@ public class DataGridUtil {
                 width);
     }
 
-    public static <T_VIEW extends DataGridView<T_ROW>, T_ROW> void addStatusIconColumn(
+    public static <T_VIEW extends MyDataGrid<T_ROW>, T_ROW> void addStatusIconColumn(
             final T_VIEW view,
             final Function<T_ROW, Preset> statusIconExtractor) {
 
@@ -243,7 +246,7 @@ public class DataGridUtil {
                 ColumnSizeConstants.ICON_COL);
     }
 
-//    public static <T_VIEW extends DataGridView<T_ROW>, T_ROW> void addResizableColumn(
+//    public static <T_VIEW extends MyDataGrid<T_ROW>, T_ROW> void addResizableColumn(
 //            final T_VIEW view,
 //            final Column<T_ROW, ?> column,
 //            final String name,
@@ -251,11 +254,34 @@ public class DataGridUtil {
 //        view.addResizableColumn(column, name, width);
 //    }
 
-    public static void addEndColumn(final DataGridView<?> view) {
+    public static void addEndColumn(final MyDataGrid<?> view) {
         view.addEndColumn(new EndColumn<>());
     }
 
-    public static void addColumnSortHandler(final DataGridView<?> view,
+    public static void addColumnSortHandler(final MyDataGrid<?> view,
+                                            final BaseCriteria criteria,
+                                            final Runnable onSortChange) {
+
+        view.addColumnSortHandler(event -> {
+            if (event != null
+                    && event.getColumn() instanceof OrderByColumn<?, ?>
+                    && event.getColumn().isSortable()) {
+
+                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
+                criteria.setSort(
+                        orderByColumn.getField(),
+                        !event.isSortAscending(),
+                        orderByColumn.isIgnoreCase());
+                onSortChange.run();
+            }
+        });
+    }
+
+    public static void addEndColumn(final DataGrid<?> view) {
+        view.addColumn(new EndColumn<>());
+    }
+
+    public static void addColumnSortHandler(final DataGrid<?> view,
                                             final BaseCriteria criteria,
                                             final Runnable onSortChange) {
 

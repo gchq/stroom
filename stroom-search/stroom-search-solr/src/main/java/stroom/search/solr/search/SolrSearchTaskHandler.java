@@ -282,7 +282,7 @@ public class SolrSearchTaskHandler {
                 }
 
                 if (values != null) {
-                    valuesConsumer.add(values);
+                    valuesConsumer.add(Val.of(values));
                 }
             } catch (final RuntimeException e) {
                 error(e);
@@ -452,7 +452,7 @@ public class SolrSearchTaskHandler {
                 }
 
                 if (values != null) {
-                    valuesConsumer.add(values);
+                    valuesConsumer.add(Val.of(values));
                 }
             } catch (final RuntimeException e) {
                 error(e);

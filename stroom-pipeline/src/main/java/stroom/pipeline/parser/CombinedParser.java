@@ -95,7 +95,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
     private final TextConverterStore textConverterStore;
     private final Provider<FeedHolder> feedHolder;
     private final Provider<PipelineHolder> pipelineHolder;
-    private final DocFinder<TextConverterDoc> docHelper;
+    private final DocFinder<TextConverterDoc> docFinder;
     private final Provider<LocationHolder> locationHolderProvider;
 
     private String type;
@@ -123,7 +123,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
         this.pipelineHolder = pipelineHolder;
         this.locationHolderProvider = locationHolderProvider;
 
-        this.docHelper = new DocFinder<>(TextConverterDoc.DOCUMENT_TYPE, pathCreator, textConverterStore);
+        this.docFinder = new DocFinder<>(TextConverterDoc.DOCUMENT_TYPE, pathCreator, textConverterStore);
     }
 
     @Override
@@ -372,7 +372,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
 
     @Override
     public DocRef findDoc(final String feedName, final String pipelineName, final Consumer<String> errorConsumer) {
-        return docHelper.findDoc(
+        return docFinder.findDoc(
                 textConverterRef,
                 namePattern,
                 feedName,

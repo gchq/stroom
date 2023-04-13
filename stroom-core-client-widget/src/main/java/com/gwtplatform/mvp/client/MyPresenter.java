@@ -27,30 +27,35 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 public abstract class MyPresenter<T_VIEW extends View, T_PROXY extends Proxy<?>> extends Presenter<T_VIEW, T_PROXY>
         implements Layer {
 
-    private double opacity;
+//    private double opacity;
     private boolean firstReveal = true;
 
     public MyPresenter(final EventBus eventBus, final T_VIEW view, final T_PROXY proxy) {
         super(eventBus, view, proxy);
     }
 
-    @Override
-    public double getOpacity() {
-        return opacity;
-    }
+//    @Override
+//    public double getOpacity() {
+//        return opacity;
+//    }
+//
+//    /**************
+//     * Start Layer
+//     **************/
+//    @Override
+//    public void setOpacity(final double opacity) {
+//        this.opacity = opacity;
+//        getWidget().getElement().getStyle().setOpacity(opacity);
+//    }
 
-    /**************
-     * Start Layer
-     **************/
     @Override
-    public void setOpacity(final double opacity) {
-        this.opacity = opacity;
-        getWidget().getElement().getStyle().setOpacity(opacity);
+    public void setLayerVisible(final boolean fade, final boolean visible) {
+        Layer.setLayerVisible(getWidget().getElement(), fade, visible);
     }
 
     @Override
     public void addLayer(final LayerContainer tabContentView) {
-        setOpacity(opacity);
+//        setOpacity(opacity);
         tabContentView.add(getWidget());
     }
 

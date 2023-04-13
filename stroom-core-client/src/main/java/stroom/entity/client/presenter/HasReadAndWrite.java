@@ -16,7 +16,9 @@
 
 package stroom.entity.client.presenter;
 
-public interface HasReadAndWrite<E> {
+import com.google.gwt.user.client.ui.Focus;
+
+public interface HasReadAndWrite<E> extends Focus {
 
     void read(E entity);
 

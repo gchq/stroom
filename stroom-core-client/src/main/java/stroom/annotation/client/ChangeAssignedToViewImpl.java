@@ -17,8 +17,8 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.ChangeAssignedToPresenter.ChangeAssignedToView;
-import stroom.svg.client.Preset;
-import stroom.widget.button.client.SvgButton;
+import stroom.svg.client.SvgImages;
+import stroom.widget.button.client.InlineSvgButton;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -32,16 +32,12 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 public class ChangeAssignedToViewImpl extends ViewWithUiHandlers<ChangeAssignedToUiHandlers>
         implements ChangeAssignedToView {
 
-    private static final Preset CHANGE_ASSIGNED_TO = new Preset("images/tree-open.svg",
-            "Change Assigned To",
-            true);
-
     private final Widget widget;
 
     @UiField
     Label assignedToLabel;
-    @UiField(provided = true)
-    SvgButton assignedToIcon;
+    @UiField
+    InlineSvgButton assignedToIcon;
     @UiField
     Label assignedTo;
     @UiField
@@ -49,13 +45,18 @@ public class ChangeAssignedToViewImpl extends ViewWithUiHandlers<ChangeAssignedT
 
     @Inject
     public ChangeAssignedToViewImpl(final Binder binder) {
-        assignedToIcon = SvgButton.create(CHANGE_ASSIGNED_TO);
         widget = binder.createAndBindUi(this);
+        assignedToIcon.setSvg(SvgImages.MONO_ARROW_DOWN);
     }
 
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public void focus() {
+        assignedToIcon.setFocus(true);
     }
 
     @Override

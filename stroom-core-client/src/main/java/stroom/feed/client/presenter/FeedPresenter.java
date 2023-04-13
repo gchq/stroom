@@ -17,9 +17,8 @@
 
 package stroom.feed.client.presenter;
 
-import stroom.data.client.presenter.ClassificationWrappedMetaPresenter;
+import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
@@ -49,11 +48,10 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
     public FeedPresenter(final EventBus eventBus,
                          final LinkTabPanelView view,
                          final ClientSecurityContext securityContext,
-                         final RestFactory restFactory,
                          final Provider<FeedSettingsPresenter> settingsPresenterProvider,
-                         final Provider<ClassificationWrappedMetaPresenter> metaPresenterProvider,
+                         final Provider<MetaPresenter> metaPresenterProvider,
                          final Provider<ProcessorTaskPresenter> taskPresenterProvider) {
-        super(eventBus, view, securityContext, restFactory);
+        super(eventBus, view, securityContext);
 
         tabContentProvider.setDirtyHandler(event -> {
             if (event.isDirty()) {
@@ -93,15 +91,15 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
     }
 
     @Override
-    protected void onWrite(final FeedDoc feed) {
-        tabContentProvider.write(feed);
+    protected FeedDoc onWrite(FeedDoc feed) {
+        feed = tabContentProvider.write(feed);
         // Something has changed, e.g. the encoding so refresh the meta presenter to reflect it
         final PresenterWidget<?> presenter = tabContentProvider.getPresenter(DATA);
-        if (presenter instanceof ClassificationWrappedMetaPresenter) {
-            final ClassificationWrappedMetaPresenter metaPresenter =
-                    (ClassificationWrappedMetaPresenter) presenter;
+        if (presenter instanceof MetaPresenter) {
+            final MetaPresenter metaPresenter = (MetaPresenter) presenter;
             metaPresenter.refreshData();
         }
+        return feed;
     }
 
     @Override

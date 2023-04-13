@@ -68,7 +68,7 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
                                 final Provider<EditorPresenter> editorPresenterProvider,
                                 final RestFactory restFactory,
                                 final LocationManager locationManager) {
-        super(eventBus, view, securityContext, restFactory);
+        super(eventBus, view, securityContext);
         this.settingsPresenter = settingsPresenter;
         this.editorPresenterProvider = editorPresenterProvider;
         this.restFactory = restFactory;
@@ -126,11 +126,12 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
     }
 
     @Override
-    protected void onWrite(final KafkaConfigDoc doc) {
-        settingsPresenter.write(doc);
+    protected KafkaConfigDoc onWrite(KafkaConfigDoc doc) {
+        doc = settingsPresenter.write(doc);
         if (editorPresenter != null) {
             doc.setData(editorPresenter.getText());
         }
+        return doc;
     }
 
     @Override

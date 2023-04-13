@@ -28,13 +28,7 @@ public interface AlertManager {
     String EVENT_ID_DATA_ELEMENT_NAME_ATTR = "alertOriginalEventId";
     String STREAM_ID_DATA_ELEMENT_NAME_ATTR = "alertOriginalStreamId";
 
-    String getTimeZoneId();
-
     Optional<AlertProcessor> createAlertProcessor(final DocRef indexDocRef);
 
-    String getAdditionalFieldsPrefix();
-
-    boolean isReportAllExtractedFieldsEnabled();
-
-    void initialiseCache();
+    void refreshRules();
 }

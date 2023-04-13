@@ -22,11 +22,11 @@ import stroom.annotation.shared.EventId;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -35,14 +35,12 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.function.Consumer;
 
-public class AddEventLinkPresenter extends MyPresenterWidget<AddEventLinkView> implements PopupUiHandlers {
+public class AddEventLinkPresenter extends MyPresenterWidget<AddEventLinkView> {
 
     @Inject
     public AddEventLinkPresenter(final EventBus eventBus, final AddEventLinkView view) {
         super(eventBus, view);
     }
-
-    private Consumer<EventId> consumer;
 
     @Override
     protected void onBind() {
@@ -50,57 +48,62 @@ public class AddEventLinkPresenter extends MyPresenterWidget<AddEventLinkView> i
 
         registerHandler(getView().getNameBox().addKeyDownHandler(event -> {
             if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-                onHideRequest(false, true);
+                hide();
             }
         }));
     }
 
     public void show(final Consumer<EventId> consumer) {
-        this.consumer = consumer;
         getView().getName().setText("");
-
-        final PopupSize popupSize = PopupSize.resizableX();
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, "Link An Event", this);
-        getView().focus();
-    }
-
-    @Override
-    public void onHideRequest(final boolean autoClose, final boolean ok) {
-        if (ok) {
-            final String name = getView().getName().getText();
-            if (name != null) {
-                final String[] parts = name.split(":");
-                if (parts.length != 2) {
-                    AlertEvent.fireError(this, "Invalid event id '" + name + "'", null);
-                } else {
-                    try {
-                        final EventId eventId = new EventId(Long.parseLong(parts[0]), Long.parseLong(parts[1]));
-                        consumer.accept(eventId);
-                        HidePopupEvent.fire(this, this);
-                    } catch (final NumberFormatException e) {
-                        AlertEvent.fireError(this, "Invalid event id '" + name + "'", null);
+        final PopupSize popupSize = PopupSize.resizableX(300);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Link An Event")
+                .onShow((event) -> getView().focus())
+                .onHideRequest((event) -> {
+                    if (event.isOk()) {
+                        final String name = getView().getName().getText();
+                        if (name != null) {
+                            final String[] parts = name.split(":");
+                            if (parts.length != 2) {
+                                AlertEvent.fireError(
+                                        AddEventLinkPresenter.this,
+                                        "Invalid event id '" + name + "'",
+                                        null);
+                            } else {
+                                try {
+                                    final EventId eventId = new EventId(Long.parseLong(parts[0]),
+                                            Long.parseLong(parts[1]));
+                                    consumer.accept(eventId);
+                                    event.hide();
+                                } catch (final NumberFormatException e) {
+                                    AlertEvent.fireError(
+                                            AddEventLinkPresenter.this,
+                                            "Invalid event id '" + name + "'",
+                                            null);
+                                }
+                            }
+                        }
+                    } else {
+                        event.hide();
                     }
-                }
-            }
-        } else {
-            HidePopupEvent.fire(this, this);
-        }
+                })
+                .fire();
     }
 
-    @Override
-    public void onHide(final boolean autoClose, final boolean ok) {
+    private void hide() {
+        HidePopupEvent.builder(this).fire();
     }
 
     public String getName() {
         return getView().getName().getText();
     }
 
-    public interface AddEventLinkView extends View {
+    public interface AddEventLinkView extends View, Focus {
 
         HasText getName();
 
         HasKeyDownHandlers getNameBox();
-
-        void focus();
     }
 }

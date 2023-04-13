@@ -175,7 +175,7 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
     }
 
     @Override
-    public Optional<V> getOptional(final K key) {
+    public Optional<V> getIfPresent(final K key) {
         LOGGER.trace(() -> buildMessage("getOptional", key));
         return Optional.ofNullable(getCache().getIfPresent(key));
     }

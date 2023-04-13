@@ -1,11 +1,11 @@
 package stroom.proxy.repo.dao;
 
 import stroom.db.util.JooqUtil;
-import stroom.proxy.repo.Items;
 import stroom.proxy.repo.ProxyDbConfig;
 import stroom.proxy.repo.RepoSource;
 import stroom.proxy.repo.RepoSourceItem;
 import stroom.proxy.repo.RepoSourceItemRef;
+import stroom.proxy.repo.SourceItems;
 import stroom.proxy.repo.queue.Batch;
 import stroom.proxy.repo.queue.BindWriteQueue;
 import stroom.proxy.repo.queue.OperationWriteQueue;
@@ -20,6 +20,7 @@ import org.jooq.Field;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -173,8 +174,8 @@ public class SourceItemDao implements Flushable {
      * @param aggregateId The id of the aggregate to get source entries for.
      * @return A list of source entries for the aggregate.
      */
-    public Items fetchSourceItemsByAggregateId(final long aggregateId) {
-        final Map<Items.Source, List<Items.Item>> resultMap = new HashMap<>();
+    public List<SourceItems> fetchSourceItemsByAggregateId(final long aggregateId) {
+        final Map<SourceItems.Source, List<SourceItems.Item>> resultMap = new HashMap<>();
 
         // Get all the source zip entries that we want to write to the forwarding location.
         jooq.readOnlyTransactionResult(context -> context
@@ -191,12 +192,11 @@ public class SourceItemDao implements Flushable {
                         .where(SOURCE_ITEM.FK_AGGREGATE_ID.eq(aggregateId))
                         .fetch())
                 .forEach(r -> {
-                    final Items.Source source = new Items.Source(
+                    final SourceItems.Source source = new SourceItems.Source(
                             r.get(SOURCE_ITEM.FK_SOURCE_ID),
                             r.get(SOURCE_ITEM.FILE_STORE_ID));
 
-                    final Items.Item item = new Items.Item(
-                            source,
+                    final SourceItems.Item item = new SourceItems.Item(
                             r.get(SOURCE_ITEM.ID),
                             r.get(SOURCE_ITEM.NAME),
                             r.get(SOURCE_ITEM.FK_FEED_ID),
@@ -207,7 +207,14 @@ public class SourceItemDao implements Flushable {
                     resultMap.computeIfAbsent(source, s -> new ArrayList<>()).add(item);
                 });
 
-        return new Items(resultMap);
+        // Sort the sources and items.
+        return resultMap
+                .entrySet()
+                .stream()
+                .map(entry -> new SourceItems(entry.getKey(), entry.getValue()))
+                .peek(sourceItems -> sourceItems.list().sort(Comparator.comparing(SourceItems.Item::id)))
+                .sorted(Comparator.comparing(sourceItems -> sourceItems.source().id()))
+                .toList();
     }
 
     @Override

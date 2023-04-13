@@ -16,6 +16,8 @@
 
 package stroom.dashboard.client.gin;
 
+import stroom.about.client.gin.AboutGinjector;
+import stroom.about.client.gin.AboutModule;
 import stroom.activity.client.ActivityModule;
 import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
@@ -27,11 +29,9 @@ import stroom.dashboard.client.vis.gin.VisModule;
 import stroom.dispatch.client.RestModule;
 import stroom.entity.client.gin.EntityGinjector;
 import stroom.entity.client.gin.EntityModule;
-import stroom.instance.client.InstanceGinjector;
-import stroom.instance.client.InstanceModule;
 import stroom.preferences.client.gin.UserPreferencesGinjector;
 import stroom.preferences.client.gin.UserPreferencesModule;
-import stroom.query.client.QueryModule;
+import stroom.query.client.gin.QueryModule;
 import stroom.security.client.gin.SecurityGinjector;
 import stroom.security.client.gin.SecurityModule;
 import stroom.widget.popup.client.gin.PopupGinjector;
@@ -47,10 +47,10 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         RestModule.class,
         DashboardAppModule.class,
         PopupModule.class,
+        AboutModule.class,
         ActivityModule.class,
         AnnotationModule.class,
         AlertModule.class,
-        InstanceModule.class,
         SecurityModule.class,
         EntityModule.class,
         UserPreferencesModule.class,
@@ -60,8 +60,8 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
 public interface DashboardAppGinjectorUser extends
         Ginjector,
         PopupGinjector,
+        AboutGinjector,
         AlertGinjector,
-        InstanceGinjector,
         SecurityGinjector,
         EntityGinjector,
         DashboardGinjector,

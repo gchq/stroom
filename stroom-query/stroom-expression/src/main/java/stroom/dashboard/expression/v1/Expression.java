@@ -71,4 +71,8 @@ public class Expression implements Function {
     public boolean requiresChildData() {
         return function.requiresChildData();
     }
+
+    public boolean isCountPrevious() {
+        return function instanceof CountPrevious;
+    }
 }

@@ -16,15 +16,14 @@
 
 package stroom.security.client.presenter;
 
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
 
 import com.google.inject.Inject;
@@ -34,75 +33,48 @@ import java.util.function.Consumer;
 
 public class SelectGroupPresenter extends AbstractDataUserListPresenter {
 
-    private Consumer<User> userConsumer;
-
     @Inject
     public SelectGroupPresenter(final EventBus eventBus,
                                 final UserListView userListView,
+                                final PagerView pagerView,
                                 final RestFactory restFactory) {
-        super(eventBus, userListView, restFactory);
+        super(eventBus, userListView, pagerView, restFactory);
     }
 
     @Override
     protected void onBind() {
         super.onBind();
         registerHandler(getSelectionModel().addSelectionHandler(event -> {
-            if (event.getSelectionType().isDoubleSelect() && getSelectionModel().getSelected() != null) {
-                if (findUserCriteria != null && findUserCriteria.getRelatedUser() == null) {
-                    hide(false, true);
+            if (event.getSelectionType().isDoubleSelect()) {
+                if (getFindUserCriteria() != null &&
+                        getFindUserCriteria().getRelatedUser() == null) {
+                    HidePopupRequestEvent.builder(this).fire();
                 }
             }
         }));
     }
 
     public void show(final Consumer<User> groupConsumer) {
-        this.userConsumer = groupConsumer;
         final FindUserCriteria findUserCriteria = new FindUserCriteria();
 
         // If we are a group then get users and vice versa.
         findUserCriteria.setGroup(true);
         setup(findUserCriteria);
 
-        final PopupSize popupSize = PopupSize.builder()
-                .width(Size
-                        .builder()
-                        .initial(400)
-                        .min(400)
-                        .resizable(true)
-                        .build())
-                .height(Size
-                        .builder()
-                        .initial(400)
-                        .min(400)
-                        .resizable(true)
-                        .build())
-                .build();
-        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
-            @Override
-            public void onHideRequest(boolean autoClose, boolean ok) {
-                hide(autoClose, ok);
-            }
-        };
-        ShowPopupEvent.fire(this,
-                this,
-                PopupView.PopupType.OK_CANCEL_DIALOG,
-                popupSize,
-                "Choose Group To Add",
-                popupUiHandlers);
-    }
-
-    private void hide(boolean autoClose, boolean ok) {
-        if (ok && userConsumer != null) {
-            final User selected = getSelectionModel().getSelected();
-            if (selected != null) {
-                userConsumer.accept(selected);
-            }
-        }
-
-        HidePopupEvent.fire(
-                this,
-                this,
-                autoClose,
-                ok);
+        final PopupSize popupSize = PopupSize.resizable(400, 400);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Choose Group To Add")
+                .onShow(e -> getView().focus())
+                .onHide(e -> {
+                    if (e.isOk() && groupConsumer != null) {
+                        final User selected = getSelectionModel().getSelected();
+                        if (selected != null) {
+                            groupConsumer.accept(selected);
+                        }
+                    }
+                })
+                .fire();
     }
 }

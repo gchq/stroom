@@ -21,26 +21,28 @@ import stroom.data.client.SourceTabPlugin;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import javax.inject.Provider;
 
 public class DataDisplaySupport {
 
-    private final Provider<ClassificationWrappedDataPresenter> dataPresenterProvider;
+    private final Provider<DataPresenter> dataPresenterProvider;
     private final Provider<DataPreviewTabPlugin> dataPreviewTabPluginProvider;
 
-    private final Provider<ClassificationWrappedSourcePresenter> sourcePresenterProvider;
+    private final Provider<SourcePresenter> sourcePresenterProvider;
     private final Provider<SourceTabPlugin> sourceTabPluginProvider;
 
     @Inject
     public DataDisplaySupport(final EventBus eventBus,
-                              final Provider<ClassificationWrappedDataPresenter> dataPresenterProvider,
+                              final Provider<DataPresenter> dataPresenterProvider,
                               final Provider<DataPreviewTabPlugin> dataPreviewTabPluginProvider,
-                              final Provider<ClassificationWrappedSourcePresenter> sourcePresenterProvider,
+                              final Provider<SourcePresenter> sourcePresenterProvider,
                               final Provider<SourceTabPlugin> sourceTabPluginProvider) {
 
         this.dataPresenterProvider = dataPresenterProvider;
@@ -49,7 +51,6 @@ public class DataDisplaySupport {
         this.sourceTabPluginProvider = sourceTabPluginProvider;
 
         eventBus.addHandler(ShowDataEvent.getType(), showDataEvent -> {
-
             switch (showDataEvent.getDisplayMode()) {
                 case DIALOG:
                     openPopupDialog(showDataEvent);
@@ -75,31 +76,33 @@ public class DataDisplaySupport {
 
     private void openPopupDialog(final ShowDataEvent showDataEvent) {
         final SourceLocation sourceLocation = showDataEvent.getSourceLocation();
-        final ClassificationWrapperPresenter presenter;
+        final MyPresenterWidget<?> presenter;
         final String caption;
 
+        final Focus focus;
         if (DataViewType.PREVIEW.equals(showDataEvent.getDataViewType())) {
-            final ClassificationWrappedDataPresenter dataPresenter = dataPresenterProvider.get();
+            final DataPresenter dataPresenter = dataPresenterProvider.get();
             dataPresenter.setDisplayMode(showDataEvent.getDisplayMode());
             dataPresenter.fetchData(sourceLocation);
             presenter = dataPresenter;
             caption = "Stream "
                     + sourceLocation.getIdentifierString();
+            focus = dataPresenter;
         } else {
-            final ClassificationWrappedSourcePresenter sourcePresenter = sourcePresenterProvider.get();
+            final SourcePresenter sourcePresenter = sourcePresenterProvider.get();
             sourcePresenter.setSourceLocationUsingHighlight(sourceLocation);
             presenter = sourcePresenter;
             // Convert to one based for UI;
             caption = "Stream " + sourceLocation.getIdentifierString();
+            focus = sourcePresenter;
         }
 
         final PopupSize popupSize = PopupSize.resizable(1400, 800);
-        ShowPopupEvent.fire(
-                presenter,
-                presenter,
-                PopupType.OK_CANCEL_DIALOG,
-                popupSize,
-                caption,
-                null);
+        ShowPopupEvent.builder(presenter)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption(caption)
+                .onShow(e -> focus.focus())
+                .fire();
     }
 }

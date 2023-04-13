@@ -26,6 +26,7 @@ import stroom.dashboard.expression.v1.ValString;
 import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.ErrorConsumer;
+import stroom.query.common.v2.ResultStore;
 import stroom.search.elastic.ElasticClientCache;
 import stroom.search.elastic.ElasticClusterStore;
 import stroom.search.elastic.shared.ElasticClusterDoc;
@@ -100,7 +101,7 @@ public class ElasticSearchTaskHandler {
                        final QueryBuilder queryBuilder,
                        final HighlightBuilder highlightBuilder,
                        final Coprocessors coprocessors,
-                       final ElasticSearchResultCollector resultCollector,
+                       final ResultStore resultStore,
                        final ValuesConsumer valuesConsumer,
                        final ErrorConsumer errorConsumer,
                        final AtomicLong hitCount) {
@@ -117,7 +118,7 @@ public class ElasticSearchTaskHandler {
                     queryBuilder,
                     highlightBuilder,
                     coprocessors,
-                    resultCollector,
+                    resultStore,
                     valuesConsumer,
                     errorConsumer,
                     hitCount,
@@ -140,7 +141,7 @@ public class ElasticSearchTaskHandler {
                                                   final QueryBuilder queryBuilder,
                                                   final HighlightBuilder highlightBuilder,
                                                   final Coprocessors coprocessors,
-                                                  final ElasticSearchResultCollector resultCollector,
+                                                  final ResultStore resultStore,
                                                   final ValuesConsumer valuesConsumer,
                                                   final ErrorConsumer errorConsumer,
                                                   final AtomicLong hitCount,
@@ -162,7 +163,7 @@ public class ElasticSearchTaskHandler {
                                     queryBuilder,
                                     highlightBuilder,
                                     coprocessors,
-                                    resultCollector,
+                                    resultStore,
                                     valuesConsumer,
                                     errorConsumer,
                                     hitCount,
@@ -185,7 +186,7 @@ public class ElasticSearchTaskHandler {
                              final QueryBuilder queryBuilder,
                              final HighlightBuilder highlightBuilder,
                              final Coprocessors coprocessors,
-                             final ElasticSearchResultCollector resultCollector,
+                             final ResultStore resultStore,
                              final ValuesConsumer valuesConsumer,
                              final ErrorConsumer errorConsumer,
                              final AtomicLong hitCount,
@@ -224,7 +225,7 @@ public class ElasticSearchTaskHandler {
 
             // Retrieve the initial result batch
             SearchHit[] searchHits = searchResponse.getHits().getHits();
-            processResultBatch(fieldIndex, resultCollector, valuesConsumer, errorConsumer, hitCount, searchHits);
+            processResultBatch(fieldIndex, resultStore, valuesConsumer, errorConsumer, hitCount, searchHits);
             int totalHitCount = searchHits.length;
 
             // Continue requesting results until we have all results
@@ -233,7 +234,7 @@ public class ElasticSearchTaskHandler {
                 searchResponse = elasticClient.scroll(scrollRequest, RequestOptions.DEFAULT);
                 searchHits = searchResponse.getHits().getHits();
 
-                processResultBatch(fieldIndex, resultCollector, valuesConsumer, errorConsumer, hitCount, searchHits);
+                processResultBatch(fieldIndex, resultStore, valuesConsumer, errorConsumer, hitCount, searchHits);
 
                 totalHitCount += searchHits.length;
                 final Integer finalTotalHitCount = totalHitCount;
@@ -258,7 +259,7 @@ public class ElasticSearchTaskHandler {
      * Receive a batch of search hits and send each one to the values consumer
      */
     private void processResultBatch(final FieldIndex fieldIndex,
-                                    final ElasticSearchResultCollector resultCollector,
+                                    final ResultStore resultStore,
                                     final ValuesConsumer valuesConsumer,
                                     final ErrorConsumer errorConsumer,
                                     final AtomicLong hitCount,
@@ -270,10 +271,9 @@ public class ElasticSearchTaskHandler {
                 // Add highlights
                 if (elasticSearchConfigProvider.get().getHighlight()) {
                     for (final HighlightField highlightField : searchHit.getHighlightFields().values()) {
-                        resultCollector.addHighlights(Arrays.stream(highlightField.getFragments())
-                                .distinct()
+                        resultStore.addHighlights(Arrays.stream(highlightField.getFragments())
                                 .map(Text::string)
-                                .collect(Collectors.toList()));
+                                .collect(Collectors.toSet()));
                     }
                 }
 
@@ -310,7 +310,7 @@ public class ElasticSearchTaskHandler {
                 }
 
                 if (values != null) {
-                    valuesConsumer.add(values);
+                    valuesConsumer.add(Val.of(values));
                 }
             }
         } catch (final RuntimeException e) {

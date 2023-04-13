@@ -11,10 +11,11 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Collection;
@@ -42,13 +43,19 @@ public class AutocompletePopup<T extends HasDisplayValue> extends Composite impl
 
         items = new HashMap<>();
 
-        final VerticalPanel verticalPanel = new VerticalPanel();
-        verticalPanel.add(autoTextBox);
-        verticalPanel.add(autoListBox);
-        popupPanel.add(verticalPanel);
+        final FlowPanel layout = new FlowPanel();
+        layout.setStyleName("max autocompletePopup-layout");
+        layout.add(autoTextBox);
+        layout.add(autoListBox);
+
+        final SimplePanel outer = new SimplePanel(layout);
+        outer.setStyleName("max autocompletePopup-outer");
+
+        popupPanel.add(outer);
         popupPanel.setAutoHideEnabled(true);
-        popupPanel.addStyleName("autocompletePanel");
+        popupPanel.setStyleName("simplePopup-background autocompletePopup");
         popupPanel.addCloseHandler(event -> hide());
+        popupPanel.setSize("300px", "500px");
 
         autoTextBox.addKeyUpHandler(this::filterItems);
         autoListBox.addClickHandler(this::onListSelectionChange);
@@ -181,9 +188,6 @@ public class AutocompletePopup<T extends HasDisplayValue> extends Composite impl
         for (final String item : items) {
             autoListBox.addItem(item);
         }
-
-        // Ensure the search box width matches the select element
-        autoTextBox.setWidth(autoListBox.getOffsetWidth() + "px");
 
         updateSelectedItem();
     }

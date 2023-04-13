@@ -70,12 +70,12 @@
 .stroom .stroom-control-label {
   	width: 100%;
   	white-space: nowrap;
-  	padding: 2px;
+  	padding: 3px 0;
   	-webkit-user-select: text;
   	-moz-user-select: text;
   	user-select: text;
 }
 
 .stroom .stroom-control-border {
-    border: solid 1px var(--input-border-color);
+    border: solid 1px var(--control__border-color);
 }

@@ -35,7 +35,9 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
+import javax.inject.Singleton;
 
+@Singleton
 public class TextConverterPlugin extends DocumentPlugin<TextConverterDoc> {
 
     private static final TextConverterResource TEXT_CONVERTER_RESOURCE = GWT.create(TextConverterResource.class);

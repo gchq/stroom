@@ -53,4 +53,6 @@ public interface Coprocessor extends ValuesConsumer {
      * @param output The output to write to.
      */
     void writePayload(Output output);
+
+    long getByteSize();
 }

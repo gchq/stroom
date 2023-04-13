@@ -47,7 +47,7 @@ import java.util.function.Supplier;
                                 argType = Val.class,
                                 isVarargs = true,
                                 minVarargsCount = 2))})
-class CountUnique extends AbstractFunction {
+class CountUnique extends AbstractFunction implements AggregateFunction {
 
     static final String NAME = "countUnique";
 

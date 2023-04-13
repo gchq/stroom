@@ -197,9 +197,9 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
 
     public XsltDoc loadXsltDoc() {
 
-        final DocFinder<XsltDoc> docHelper = new DocFinder<>(XsltDoc.DOCUMENT_TYPE, pathCreator, xsltStore);
+        final DocFinder<XsltDoc> docFinder = new DocFinder<>(XsltDoc.DOCUMENT_TYPE, pathCreator, xsltStore);
         final DocRef docRef =
-                docHelper.findDoc(
+                docFinder.findDoc(
                         xsltRef,
                         xsltNamePattern,
                         getFeedName(),

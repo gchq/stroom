@@ -14,6 +14,91 @@
  * limitations under the License.
  */
 
+.icon-button {
+    display: flex;
+    position: relative;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    margin: 0;
+    border: none;
+    align-items: center;
+    color: var(--text-color);
+    outline: none;
+    background-color: transparent;
+	cursor: pointer;
+	text-decoration: none;
+	font-size: 0;
+	border-radius: .25rem;
+}
+
+.icon-button .background {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: .25rem;
+}
+
+/*
+* FOCUS BEHAVIOUR
+*/
+.icon-button:focus-visible {
+  box-shadow: var(--focus-shadow);
+}
+
+.icon-button:focus-visible .background {
+  border: thin solid var(--focus-border) !important;
+}
+
+
+
+
+
+
+.icon-button:hover .background {
+    background-color: var(--icon-button__background-color--hover);
+    border: thin solid var(--icon-button__border-color--hover);
+}
+
+.icon-button.on .background {
+    background-color: var(--icon-button__background-color--on);
+    border: thin solid var(--icon-button__border-color--on);
+}
+
+.navigation .icon-button:hover .background {
+    background-color: var(--navigation-icon-button__background-color--hover);
+    border: thin solid var(--navigation-icon-button__border-color--hover);
+}
+
+.navigation .icon-button.on .background {
+    background-color: var(--navigation-icon-button__background-color--on);
+    border: thin solid var(--navigation-icon-button__border-color--on);
+}
+
+.icon-button.disabled {
+    opacity: .4;
+}
+
+.icon-button.disabled .background {
+    background-color: transparent;
+    border: none;
+}
+
+.icon-button .face {
+    position: absolute;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+
+
+
+.icon-button svg {
+    width: 16px;
+    height: 16px;
+}
+
 .stroom-button-fab {
 	display: inline-block;
 	border: none;
@@ -41,7 +126,6 @@
 	box-shadow: 0 1px 1.5px 0 rgba(0, 0, 0, .12), 0 1px 1px 0
 		rgba(0, 0, 0, .24);
 	position: relative;
-	background: #ddd;
 	color: #fff;
 	font-size: 0;
 	transition: background-color .5s;
@@ -51,12 +135,16 @@
 }
 
 .stroom-button-fab .face--disabled {
-	background: #ddd !important;
 	cursor: default;
+	opacity: 0;
 }
 
 .stroom-button-fab .face--down {
 	left: 1px;
 	top: 1px;
 	box-shadow: none;
+}
+
+.icon-button-group {
+    display: flex;
 }

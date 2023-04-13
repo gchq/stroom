@@ -28,10 +28,11 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 import stroom.util.shared.TextRange;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent;
+import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
@@ -80,12 +81,12 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
     private final Option lineWrapOption;
     private final Option showIndentGuides;
     private final Option showInvisiblesOption;
-    private final Option useVimBindingsOption;
     private final Option basicAutoCompletionOption;
     private final Option snippetsOption;
     private final Option liveAutoCompletionOption;
     private final Option highlightActiveLineOption;
     private final Option viewAsHexOption;
+    private Option useVimBindingsOption;
 
     private final Widget widget;
 
@@ -99,6 +100,7 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
     private AceEditorMode mode = AceEditorMode.XML;
     private int firstLineNumber = 1;
     private Function<String, List<TextRange>> formattedHighlightsFunc;
+    private boolean isVimPreferredKeyBinding = false;
 
     @Inject
     public EditorViewImpl(final Binder binder) {
@@ -136,8 +138,7 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
                 "Show Indent Guides", true, true, (on) -> editor.setShowIndentGuides(on));
         showInvisiblesOption = new Option(
                 "Show Hidden Characters", false, true, (on) -> editor.setShowInvisibles(on));
-        useVimBindingsOption = new Option(
-                "Vim Key Bindings", false, true, (on) -> editor.setUseVimBindings(on));
+        useVimBindingsOption = buildVimBindingsOption(false);
         basicAutoCompletionOption = new Option(
                 "Auto Completion", true, true, (on) -> editor.setUseBasicAutoCompletion(on));
         liveAutoCompletionOption = new Option(
@@ -154,8 +155,9 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
     }
 
     private void handleMouseDown(final MouseDownEvent event) {
-        if ((NativeEvent.BUTTON_RIGHT & event.getNativeButton()) != 0) {
-            ContextMenuEvent.fire(this, event.getClientX(), event.getClientY());
+        if (MouseUtil.isSecondary(event)) {
+            final PopupPosition popupPosition = new PopupPosition(event.getClientX(), event.getClientY());
+            ContextMenuEvent.fire(this, popupPosition);
         } else {
             indicatorPopup.hide();
             MouseDownEvent.fireNativeEvent(event.getNativeEvent(), this);
@@ -390,6 +392,23 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
     @Override
     public void setTheme(final AceEditorTheme theme) {
         editor.setTheme(theme);
+    }
+
+    @Override
+    public void setUserKeyBindingsPreference(final boolean useVimBindings) {
+        this.isVimPreferredKeyBinding = useVimBindings;
+        this.useVimBindingsOption = buildVimBindingsOption(useVimBindings);
+        // Option overrides user preference so even if the user prefers vim (why wouldn't he/she?)
+        // they can temporarily disable it
+        editor.setUseVimBindings(getUseVimBindingsOption().isOn());
+    }
+
+    private Option buildVimBindingsOption(final boolean useVimBindings) {
+        return new Option(
+                "Vim Key Bindings",
+                useVimBindings,
+                true,
+                (on) -> editor.setUseVimBindings(on));
     }
 
     private String formatAsIfXml(final String text) {

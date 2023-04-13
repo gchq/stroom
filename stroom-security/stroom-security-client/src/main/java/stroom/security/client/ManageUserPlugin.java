@@ -29,13 +29,17 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.inject.client.AsyncProvider;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class ManageUserPlugin extends NodeToolsPlugin {
 
     private final AsyncProvider<UsersAndGroupsPresenter> usersAndGroupsPresenterProvider;
@@ -63,20 +67,30 @@ public class ManageUserPlugin extends NodeToolsPlugin {
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
-            event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
-                    new IconMenuItem(1, SvgPresets.USER, SvgPresets.USER, "User Permissions", null, true,
-                            () -> usersAndGroupsPresenterProvider.get(new AsyncCallback<UsersAndGroupsPresenter>() {
-                                @Override
-                                public void onSuccess(final UsersAndGroupsPresenter presenter) {
-                                    final PopupSize popupSize = PopupSize.resizable(800, 600);
-                                    ShowPopupEvent.fire(ManageUserPlugin.this, presenter,
-                                            PopupType.CLOSE_DIALOG, null, popupSize, "User Permissions", null, null);
-                                }
+            final Command command = () ->
+                    usersAndGroupsPresenterProvider.get(new AsyncCallback<UsersAndGroupsPresenter>() {
+                        @Override
+                        public void onSuccess(final UsersAndGroupsPresenter presenter) {
+                            final PopupSize popupSize = PopupSize.resizable(800, 600);
+                            ShowPopupEvent.builder(presenter)
+                                    .popupType(PopupType.CLOSE_DIALOG)
+                                    .popupSize(popupSize)
+                                    .caption("User Permissions")
+                                    .onShow(e -> presenter.focus())
+                                    .fire();
+                        }
 
-                                @Override
-                                public void onFailure(final Throwable caught) {
-                                }
-                            })));
+                        @Override
+                        public void onFailure(final Throwable caught) {
+                        }
+                    });
+            event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
+                    new IconMenuItem.Builder()
+                            .priority(1)
+                            .icon(SvgPresets.USER)
+                            .text("User Permissions")
+                            .command(command)
+                            .build());
         }
     }
 }

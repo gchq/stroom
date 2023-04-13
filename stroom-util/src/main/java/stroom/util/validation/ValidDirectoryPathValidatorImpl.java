@@ -8,6 +8,7 @@ import stroom.util.shared.validation.ValidDirectoryPathValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import javax.inject.Inject;
@@ -18,6 +19,7 @@ public class ValidDirectoryPathValidatorImpl implements ValidDirectoryPathValida
     private static final Logger LOGGER = LoggerFactory.getLogger(ValidDirectoryPathValidatorImpl.class);
 
     private final PathCreator pathCreator;
+    private boolean ensureExistence = false;
 
     @Inject
     public ValidDirectoryPathValidatorImpl(final SimplePathCreator pathCreator) {
@@ -37,7 +39,7 @@ public class ValidDirectoryPathValidatorImpl implements ValidDirectoryPathValida
      */
     @Override
     public void initialize(final ValidDirectoryPath constraintAnnotation) {
-
+        this.ensureExistence = constraintAnnotation.ensureExistence();
     }
 
     /**
@@ -54,26 +56,55 @@ public class ValidDirectoryPathValidatorImpl implements ValidDirectoryPathValida
     @Override
     public boolean isValid(final String dir, final ConstraintValidatorContext context) {
         final boolean isValid;
-        if (dir != null) {
+        if (dir != null && !dir.isBlank()) {
             // Use the PathCreator, so we can interpret relative paths and paths with '~' in.
             final Path modifiedDir = pathCreator.toAppPath(dir);
 
             LOGGER.debug("Validating dir {} (modified to {})", dir, modifiedDir);
-            final Path path = modifiedDir;
-            isValid = Files.isDirectory(path) && Files.isReadable(path);
-            if (!isValid) {
-                String msg = context.getDefaultConstraintMessageTemplate();
-                if (!modifiedDir.toString().equals(dir)) {
-                    msg += " (as absolute path: " + modifiedDir + ")";
+            boolean exists = Files.exists(modifiedDir);
+            if (!exists && ensureExistence) {
+                try {
+                    LOGGER.debug("Creating dir {} (modified to {})", dir, modifiedDir);
+                    Files.createDirectories(modifiedDir);
+                } catch (IOException e) {
+                    final String msg = "error creating directory: " + e.getMessage();
+                    addValidationMessage(context, dir, modifiedDir, msg);
                 }
-                context.disableDefaultConstraintViolation();
-                context
-                        .buildConstraintViolationWithTemplate(msg)
-                        .addConstraintViolation();
+            }
+            exists = Files.exists(modifiedDir);
+
+            if (!exists) {
+                final String msg = "path does not exist";
+                addValidationMessage(context, dir, modifiedDir, msg);
+                isValid = false;
+            } else if (!Files.isDirectory(modifiedDir)) {
+                final String msg = "path is not a directory";
+                addValidationMessage(context, dir, modifiedDir, msg);
+                isValid = false;
+            } else if (!Files.isWritable(modifiedDir)) {
+                final String msg = "directory is not writable";
+                addValidationMessage(context, dir, modifiedDir, msg);
+                isValid = false;
+            } else {
+                isValid = true;
             }
         } else {
             isValid = true;
         }
         return isValid;
+    }
+
+    private void addValidationMessage(final ConstraintValidatorContext context,
+                                      final String configValue,
+                                      final Path path,
+                                      final String msg) {
+        String msg2 = msg;
+        if (!path.toString().equals(configValue)) {
+            msg2 += " (as absolute path: " + path + ")";
+        }
+        context.disableDefaultConstraintViolation();
+        context
+                .buildConstraintViolationWithTemplate(msg2)
+                .addConstraintViolation();
     }
 }

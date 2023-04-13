@@ -22,13 +22,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 public class FieldIndex {
 
     private final Map<String, Integer> fieldToPos = new HashMap<>();
-    private final Map<Integer, String> posToField = new HashMap<>();
+    private final Map<Integer, String> posToField = new TreeMap<>();
     private int index;
 
     public static FieldIndex forFields(final String... fieldNames) {
@@ -65,8 +66,8 @@ public class FieldIndex {
         return fieldToPos.entrySet().stream();
     }
 
-    public void forEach(final BiConsumer<String, Integer> consumer) {
-        fieldToPos.forEach(consumer);
+    public void forEach(final BiConsumer<Integer, String> consumer) {
+        posToField.forEach(consumer);
     }
 
     @Override

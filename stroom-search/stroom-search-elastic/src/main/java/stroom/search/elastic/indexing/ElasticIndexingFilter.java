@@ -46,6 +46,7 @@ import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.DocWriteRequest.OpType;
 import org.elasticsearch.action.bulk.BulkItemResponse.Failure;

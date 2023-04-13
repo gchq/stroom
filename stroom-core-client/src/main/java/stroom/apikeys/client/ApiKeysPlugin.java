@@ -14,6 +14,9 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class ApiKeysPlugin extends NodeToolsPlugin {
 
     private final UiConfigCache clientPropertyCache;
@@ -33,15 +36,22 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
                     .onSuccess(result -> {
                         final IconMenuItem apiKeysMenuItem;
                         final Preset icon = SvgPresets.KEY;
-                        apiKeysMenuItem = new IconMenuItem(
-                                5,
-                                icon,
-                                null,
-                                "API Keys",
-                                null,
-                                true,
-                                () ->
-                                        postMessage("manageTokens"));
+                        apiKeysMenuItem = new IconMenuItem.Builder()
+                                .priority(5)
+                                .icon(icon)
+                                .text("API Keys")
+                                .command(() -> {
+                                    postMessage("manageTokens");
+
+//                                final Hyperlink hyperlink = new Builder()
+//                                        .text("API Keys")
+//                                        .href(apiKeysUi)
+//                                        .type(HyperlinkType.TAB + "|API Keys")
+//                                        .icon(icon)
+//                                        .build();
+//                                HyperlinkEvent.fire(this, hyperlink);
+                                })
+                                .build();
                         event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, apiKeysMenuItem);
                     })
                     .onFailure(caught ->

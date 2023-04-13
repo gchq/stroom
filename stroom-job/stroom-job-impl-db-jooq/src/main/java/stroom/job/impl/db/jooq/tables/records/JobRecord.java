@@ -4,13 +4,13 @@
 package stroom.job.impl.db.jooq.tables.records;
 
 
+import stroom.job.impl.db.jooq.tables.Job;
+
 import org.jooq.Field;
 import org.jooq.Record1;
 import org.jooq.Record8;
 import org.jooq.Row8;
 import org.jooq.impl.UpdatableRecordImpl;
-
-import stroom.job.impl.db.jooq.tables.Job;
 
 
 /**

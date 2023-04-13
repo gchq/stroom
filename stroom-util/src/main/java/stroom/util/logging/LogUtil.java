@@ -3,7 +3,6 @@ package stroom.util.logging;
 import stroom.util.NullSafe;
 import stroom.util.concurrent.DurationAdder;
 
-import com.google.common.base.Function;
 import com.google.common.base.Strings;
 import org.slf4j.helpers.MessageFormatter;
 
@@ -11,6 +10,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public final class LogUtil {
@@ -273,6 +273,14 @@ public final class LogUtil {
                 }
             }
             return str;
+        }
+    }
+
+    public static String typedValue(final Object value) {
+        if (value == null) {
+            return null;
+        } else {
+            return value.getClass().getSimpleName() + " " + value;
         }
     }
 

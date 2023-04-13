@@ -25,27 +25,12 @@ import java.util.Optional;
 public class MockAlertManager implements AlertManager {
 
     @Override
-    public String getTimeZoneId() {
-        return "UTC";
-    }
-
-    @Override
     public Optional<AlertProcessor> createAlertProcessor(final DocRef indexDocRef) {
         return Optional.empty();
     }
 
     @Override
-    public String getAdditionalFieldsPrefix() {
-        return "-";
-    }
-
-    @Override
-    public boolean isReportAllExtractedFieldsEnabled() {
-        return false;
-    }
-
-    @Override
-    public void initialiseCache() {
+    public void refreshRules() {
 
     }
 }

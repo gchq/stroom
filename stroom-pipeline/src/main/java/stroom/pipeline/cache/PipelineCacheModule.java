@@ -24,6 +24,7 @@ import stroom.util.shared.Clearable;
 import com.google.inject.AbstractModule;
 
 public class PipelineCacheModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(SchemaPool.class).to(SchemaPoolImpl.class);

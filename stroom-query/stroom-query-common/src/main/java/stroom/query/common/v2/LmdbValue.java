@@ -16,55 +16,96 @@ class LmdbValue {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbValue.class);
 
     private final Serialisers serialisers;
+    private final KeyFactory keyFactory;
     private CompiledField[] fields;
     private ByteBuffer byteBuffer;
     private Key key;
     private Generators generators;
+    private byte[] fullKeyBytes;
+    private byte[] generatorBytes;
 
     LmdbValue(final Serialisers serialisers,
-              final byte[] fullKeyBytes,
+              final KeyFactory keyFactory,
+              final Key key,
               final Generators generators) {
         this.serialisers = serialisers;
-        this.key = new Key(serialisers, fullKeyBytes);
+        this.keyFactory = keyFactory;
+        this.key = key;
         this.generators = generators;
     }
 
     LmdbValue(final Serialisers serialisers,
+              final KeyFactory keyFactory,
               final CompiledField[] fields,
               final ByteBuffer byteBuffer) {
         this.serialisers = serialisers;
+        this.keyFactory = keyFactory;
         this.fields = fields;
         this.byteBuffer = byteBuffer;
     }
 
     public LmdbValue(final Serialisers serialisers,
+                     final KeyFactory keyFactory,
                      final CompiledField[] fields,
                      final byte[] fullKeyBytes,
                      final byte[] generatorBytes) {
         this.serialisers = serialisers;
+        this.keyFactory = keyFactory;
         this.fields = fields;
-        this.key = new Key(serialisers, fullKeyBytes);
+        this.fullKeyBytes = fullKeyBytes;
+        this.key = keyFactory.keyFromBytes(fullKeyBytes);
         this.generators = new Generators(serialisers, fields, generatorBytes);
+    }
+
+    public byte[] getFullKeyBytes(final ErrorConsumer errorConsumer) {
+        if (fullKeyBytes == null) {
+            if (byteBuffer != null) {
+                try (final UnsafeByteBufferInput input =
+                        serialisers.getInputFactory().createByteBufferInput(byteBuffer)) {
+                    final int keyLength = input.readInt();
+                    fullKeyBytes = input.readBytes(keyLength);
+                }
+                byteBuffer.rewind();
+            } else {
+                fullKeyBytes = keyFactory.keyToBytes(getKey(), errorConsumer);
+            }
+        }
+        return fullKeyBytes;
+    }
+
+    public byte[] getGeneratorBytes(final ErrorConsumer errorConsumer) {
+        if (generatorBytes == null) {
+            if (byteBuffer != null) {
+                unpack();
+            } else {
+                generatorBytes = getGenerators().getBytes(errorConsumer);
+            }
+        }
+        return generatorBytes;
     }
 
     private void unpack() {
         try (final UnsafeByteBufferInput input =
                 serialisers.getInputFactory().createByteBufferInput(byteBuffer)) {
             final int keyLength = input.readInt();
-            key = new Key(serialisers, input.readBytes(keyLength));
+            fullKeyBytes = input.readBytes(keyLength);
+            key = keyFactory.keyFromBytes(fullKeyBytes);
             final int generatorLength = input.readInt();
-            generators = new Generators(serialisers, fields, input.readBytes(generatorLength));
+            generatorBytes = input.readBytes(generatorLength);
+            generators = new Generators(serialisers, fields, generatorBytes);
         }
+        byteBuffer.rewind();
     }
 
-    private void pack() {
-        final byte[] keyBytes = getKey().getBytes();
-        final byte[] generatorBytes = getGenerators().getBytes();
+    private void pack(final ErrorConsumer errorConsumer) {
+        final byte[] generatorBytes = getGeneratorBytes(errorConsumer);
+        final byte[] keyBytes = getFullKeyBytes(errorConsumer);
         final int requiredCapacity = calculateRequiredCapacity(keyBytes, generatorBytes);
 
         try (final UnsafeByteBufferOutput output =
-                serialisers.getOutputFactory().createByteBufferOutput(requiredCapacity)) {
+                serialisers.getOutputFactory().createByteBufferOutput(requiredCapacity, errorConsumer)) {
             write(output, keyBytes, generatorBytes);
+            output.flush();
             byteBuffer = output.getByteBuffer().flip();
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
@@ -79,17 +120,18 @@ class LmdbValue {
     }
 
     static LmdbValue read(final Serialisers serialisers,
+                          final KeyFactory keyFactory,
                           final CompiledField[] fields,
                           final Input input) {
         final int fullKeyLength = input.readInt();
         final byte[] fullKey = input.readBytes(fullKeyLength);
         final int generatorsLength = input.readInt();
         final byte[] generatorBytes = input.readBytes(generatorsLength);
-        return new LmdbValue(serialisers, fields, fullKey, generatorBytes);
+        return new LmdbValue(serialisers, keyFactory, fields, fullKey, generatorBytes);
     }
 
-    void write(final Output output) throws IOException {
-        write(output, getKey().getBytes(), getGenerators().getBytes());
+    void write(final Output output, final ErrorConsumer errorConsumer) throws IOException {
+        write(output, keyFactory.keyToBytes(getKey(), errorConsumer), getGenerators().getBytes(errorConsumer));
     }
 
     private void write(final Output output, final byte[] fullKeyBytes, final byte[] generatorBytes) throws IOException {
@@ -99,9 +141,9 @@ class LmdbValue {
         output.writeBytes(generatorBytes);
     }
 
-    ByteBuffer getByteBuffer() {
+    ByteBuffer getByteBuffer(final ErrorConsumer errorConsumer) {
         if (byteBuffer == null) {
-            pack();
+            pack(errorConsumer);
         }
         return byteBuffer;
     }

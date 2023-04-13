@@ -20,7 +20,7 @@ package stroom.xmlschema.client.presenter;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.xmlschema.client.presenter.XMLSchemaSettingsPresenter.XMLSchemaSettingsView;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
@@ -65,16 +65,17 @@ public class XMLSchemaSettingsPresenter
         getView().getNamespaceURI().setText(xmlSchema.getNamespaceURI());
         getView().getSystemId().setText(xmlSchema.getSystemId());
         getView().getSchemaGroup().setText(xmlSchema.getSchemaGroup());
-        getView().getDeprecated().setBooleanValue(xmlSchema.isDeprecated());
+        getView().getDeprecated().setValue(xmlSchema.isDeprecated());
     }
 
     @Override
-    public void onWrite(final XmlSchemaDoc xmlSchema) {
+    public XmlSchemaDoc onWrite(final XmlSchemaDoc xmlSchema) {
         xmlSchema.setDescription(getView().getDescription().getText().trim());
         xmlSchema.setNamespaceURI(getView().getNamespaceURI().getText().trim());
         xmlSchema.setSystemId(getView().getSystemId().getText());
         xmlSchema.setSchemaGroup(getView().getSchemaGroup().getText());
-        xmlSchema.setDeprecated(getView().getDeprecated().getBooleanValue());
+        xmlSchema.setDeprecated(getView().getDeprecated().getValue());
+        return xmlSchema;
     }
 
     public interface XMLSchemaSettingsView extends View {
@@ -87,6 +88,6 @@ public class XMLSchemaSettingsPresenter
 
         TextBox getSchemaGroup();
 
-        TickBox getDeprecated();
+        CustomCheckBox getDeprecated();
     }
 }

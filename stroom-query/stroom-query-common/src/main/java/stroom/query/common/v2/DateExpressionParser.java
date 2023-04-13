@@ -17,6 +17,8 @@
 package stroom.query.common.v2;
 
 import stroom.query.api.v2.DateTimeSettings;
+import stroom.query.api.v2.TimeRange;
+import stroom.util.shared.Range;
 
 import java.time.DateTimeException;
 import java.time.Instant;

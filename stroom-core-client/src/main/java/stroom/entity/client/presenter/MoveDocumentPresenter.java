@@ -17,7 +17,6 @@
 
 package stroom.entity.client.presenter;
 
-import stroom.docref.DocRef;
 import stroom.document.client.event.MoveDocumentEvent;
 import stroom.document.client.event.ShowMoveDocumentDialogEvent;
 import stroom.entity.client.presenter.MoveDocumentPresenter.MoveDocumentProxy;
@@ -27,11 +26,9 @@ import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -42,11 +39,10 @@ import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class MoveDocumentPresenter
         extends MyPresenter<MoveDocumentView, MoveDocumentProxy>
-        implements ShowMoveDocumentDialogEvent.Handler, PopupUiHandlers {
+        implements ShowMoveDocumentDialogEvent.Handler {
 
     private final EntityTreePresenter entityTreePresenter;
     private List<ExplorerNode> explorerNodeList;
@@ -87,27 +83,25 @@ public class MoveDocumentPresenter
         getView().setPermissionInheritance(PermissionInheritance.DESTINATION);
 
         final PopupSize popupSize = PopupSize.resizable(400, 550);
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, this);
-    }
-
-    @Override
-    public void onHideRequest(final boolean autoClose, final boolean ok) {
-        if (ok) {
-            final ExplorerNode folder = entityTreePresenter.getSelectedItem();
-            MoveDocumentEvent.fire(
-                    this,
-                    this,
-                    explorerNodeList,
-                    folder,
-                    getView().getPermissionInheritance());
-        } else {
-            HidePopupEvent.fire(this, this, autoClose, ok);
-        }
-    }
-
-    @Override
-    public void onHide(final boolean autoClose, final boolean ok) {
-        // Do nothing.
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption(caption)
+                .onShow(e -> entityTreePresenter.focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        final ExplorerNode folder = entityTreePresenter.getSelectedItem();
+                        MoveDocumentEvent.fire(
+                                MoveDocumentPresenter.this,
+                                MoveDocumentPresenter.this,
+                                explorerNodeList,
+                                folder,
+                                getView().getPermissionInheritance());
+                    } else {
+                        e.hide();
+                    }
+                })
+                .fire();
     }
 
     public interface MoveDocumentView extends View {

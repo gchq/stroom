@@ -1,7 +1,5 @@
 package stroom.data.client.view;
 
-import stroom.data.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
-import stroom.data.client.presenter.SourcePresenter;
 import stroom.data.client.presenter.SourceTabPresenter.SourceTabView;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -9,12 +7,10 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 public class SourceTabViewImpl extends ViewImpl implements SourceTabView {
-
-    private final SourcePresenter sourcePresenter;
 
     private final Widget widget;
 
@@ -22,15 +18,8 @@ public class SourceTabViewImpl extends ViewImpl implements SourceTabView {
     SimplePanel container;
 
     @Inject
-    public SourceTabViewImpl(final SourcePresenter sourcePresenter,
-                             final Binder binder) {
-        this.sourcePresenter = sourcePresenter;
+    public SourceTabViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-    }
-
-    @Override
-    public void addToSlot(final Object slot, final Widget content) {
-
     }
 
     @Override
@@ -38,25 +27,11 @@ public class SourceTabViewImpl extends ViewImpl implements SourceTabView {
         return widget;
     }
 
-    @Override
-    public void removeFromSlot(final Object slot, final Widget content) {
-
-    }
 
     @Override
-    public void setInSlot(final Object slot, final Widget content) {
-
-    }
-
-    @Override
-    public void setSourceView(final ClassificationWrapperView sourceView) {
+    public void setSourceView(final View sourceView) {
         container.setWidget(sourceView.asWidget());
     }
-
-//    @Override
-//    public LayerContainer getLayerContainer() {
-////        return layerContainer;
-//    }
 
     public interface Binder extends UiBinder<Widget, SourceTabViewImpl> {
 

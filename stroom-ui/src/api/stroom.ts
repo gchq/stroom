@@ -141,6 +141,41 @@ export type AddPermissionEvent = PermissionChangeEvent & {
   userUuid?: string;
 };
 
+export interface AlertRuleDoc {
+  alertRuleType?: "EVENT" | "AGGREGATE";
+
+  /** @format int64 */
+  createTimeMs?: number;
+  createUser?: string;
+  description?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  destinationFeed?: DocRef;
+  languageVersion?: "STROOM_QL_VERSION_0_1" | "SIGMA";
+  name?: string;
+  processSettings?: AlertRuleProcessSettings;
+  query?: string;
+  type?: string;
+
+  /** @format int64 */
+  updateTimeMs?: number;
+  updateUser?: string;
+  uuid?: string;
+  version?: string;
+}
+
+export interface AlertRuleProcessSettings {
+  enabled?: boolean;
+  executionWindow?: SimpleDuration;
+
+  /** @format int64 */
+  maxMetaCreateTimeMs?: number;
+
+  /** @format int64 */
+  minMetaCreateTimeMs?: number;
+  timeToWaitForData?: SimpleDuration;
+}
+
 export interface Annotation {
   assignedTo?: string;
   comment?: string;
@@ -218,13 +253,6 @@ export interface ApiKeyResultPage {
   pageResponse?: PageResponse;
   qualifiedFilterInput?: string;
   values?: ApiKey[];
-}
-
-export interface ApplicationInstanceInfo {
-  /** @format int64 */
-  createTime?: number;
-  userId?: string;
-  uuid?: string;
 }
 
 export interface Arg {
@@ -561,9 +589,14 @@ export interface DBTableStatus {
 
 export interface DashboardConfig {
   components?: ComponentConfig[];
+  designMode?: boolean;
   layout?: LayoutConfig;
+  layoutConstraints?: LayoutConstraints;
+  modelVersion?: string;
   parameters?: string;
+  preferredSize?: Size;
   tabVisibility?: "SHOW_ALL" | "HIDE_SINGLE" | "HIDE_ALL";
+  timeRange?: TimeRange;
 }
 
 export interface DashboardDoc {
@@ -571,6 +604,7 @@ export interface DashboardDoc {
   createTimeMs?: number;
   createUser?: string;
   dashboardConfig?: DashboardConfig;
+  description?: string;
   name?: string;
   type?: string;
 
@@ -582,10 +616,7 @@ export interface DashboardDoc {
 }
 
 export interface DashboardSearchRequest {
-  applicationInstanceUuid?: string;
-  componentId?: string;
   componentResultRequests?: ComponentResultRequest[];
-  dashboardUuid?: string;
 
   /** The client date/time settings */
   dateTimeSettings?: DateTimeSettings;
@@ -593,6 +624,7 @@ export interface DashboardSearchRequest {
   /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
   queryKey?: QueryKey;
   search?: Search;
+  searchRequestSource?: SearchRequestSource;
   storeHistory?: boolean;
 
   /**
@@ -606,6 +638,7 @@ export interface DashboardSearchResponse {
   complete?: boolean;
   errors?: string[];
   highlights?: string[];
+  node?: string;
 
   /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
   queryKey?: QueryKey;
@@ -675,7 +708,7 @@ export interface DataRetentionRule {
 
   /** @format int32 */
   ruleNumber?: number;
-  timeUnit?: "MINUTES" | "HOURS" | "DAYS" | "WEEKS" | "MONTHS" | "YEARS";
+  timeUnit?: "NANOSECONDS" | "MILLISECONDS" | "SECONDS" | "MINUTES" | "HOURS" | "DAYS" | "WEEKS" | "MONTHS" | "YEARS";
 }
 
 export interface DataRetentionRules {
@@ -694,6 +727,8 @@ export interface DataRetentionRules {
 }
 
 export interface DataSource {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  defaultExtractionPipeline?: DocRef;
   fields?: AbstractField[];
 }
 
@@ -740,15 +775,8 @@ export interface DependencyCriteria {
   sortList?: CriteriaFieldSort[];
 }
 
-export interface DestroyRequest {
-  applicationInstanceInfo?: ApplicationInstanceInfo;
-  reason?: string;
-}
-
-export interface DestroySearchRequest {
-  applicationInstanceUuid?: string;
-  componentId?: string;
-  dashboardUuid?: string;
+export interface DestroyStoreRequest {
+  destroyReason?: "MANUAL" | "NO_LONGER_NEEDED" | "TAB_CLOSE" | "WINDOW_CLOSE";
 
   /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
   queryKey?: QueryKey;
@@ -769,6 +797,18 @@ export interface DictionaryDoc {
   updateUser?: string;
   uuid?: string;
   version?: string;
+}
+
+export interface DocContentMatch {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  docRef?: DocRef;
+
+  /** @format int64 */
+  matchLength?: number;
+
+  /** @format int64 */
+  matchOffset?: number;
+  sample?: string;
 }
 
 /**
@@ -835,6 +875,16 @@ export interface DocumentTypes {
 
 export type DoubleField = AbstractField;
 
+export interface DownloadQueryResultsRequest {
+  componentId?: string;
+  fileType?: "EXCEL" | "CSV" | "TSV";
+
+  /** @format int32 */
+  percent?: number;
+  sample?: boolean;
+  searchRequest?: QuerySearchRequest;
+}
+
 export interface DownloadSearchResultsRequest {
   componentId?: string;
   fileType?: "EXCEL" | "CSV" | "TSV";
@@ -885,6 +935,9 @@ export interface ElasticIndexDoc {
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  defaultExtractionPipeline?: DocRef;
   description?: string;
   fields?: ElasticIndexField[];
   indexName?: string;
@@ -898,6 +951,7 @@ export interface ElasticIndexDoc {
 
   /** @format int32 */
   searchSlices?: number;
+  timeField?: string;
   type?: string;
 
   /** @format int64 */
@@ -977,6 +1031,13 @@ export interface Expander {
   depth?: number;
   expanded?: boolean;
   leaf?: boolean;
+}
+
+export interface ExplorerDocContentMatch {
+  docContentMatch?: DocContentMatch;
+  iconClassName?: string;
+  isFavourite?: boolean;
+  path?: string;
 }
 
 export interface ExplorerNode {
@@ -1286,6 +1347,15 @@ export interface FindExplorerNodeCriteria {
   temporaryOpenedItems?: ExplorerNodeKey[];
 }
 
+export interface FindExplorerNodeQuery {
+  matchCase?: boolean;
+  pageRequest?: PageRequest;
+  pattern?: string;
+  regex?: boolean;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+}
+
 export interface FindFsVolumeCriteria {
   pageRequest?: PageRequest;
   selection?: SelectionVolumeUseStatus;
@@ -1301,6 +1371,7 @@ export interface FindIndexShardCriteria {
   nodeNameSet?: SelectionString;
   pageRequest?: PageRequest;
   partition?: StringCriteria;
+  partitionTimeRange?: RangeLong;
   sort?: string;
   sortList?: CriteriaFieldSort[];
   volumeIdSet?: SelectionInteger;
@@ -1325,6 +1396,13 @@ export interface FindMetaCriteria {
 
 export interface FindNodeStatusCriteria {
   pageRequest?: PageRequest;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+}
+
+export interface FindResultStoreCriteria {
+  pageRequest?: PageRequest;
+  quickFilterInput?: string;
   sort?: string;
   sortList?: CriteriaFieldSort[];
 }
@@ -1504,6 +1582,8 @@ export interface GlobalConfigCriteria {
   sortList?: CriteriaFieldSort[];
 }
 
+export type HoppingWindow = Window & { advanceSize?: string; timeField?: string; windowSize?: string };
+
 export type IdField = AbstractField;
 
 export interface ImportConfigRequest {
@@ -1549,6 +1629,9 @@ export interface IndexDoc {
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  defaultExtractionPipeline?: DocRef;
   description?: string;
   fields?: IndexField[];
 
@@ -1565,6 +1648,7 @@ export interface IndexDoc {
 
   /** @format int32 */
   shardsPerPartition?: number;
+  timeField?: string;
   type?: string;
 
   /** @format int64 */
@@ -1768,11 +1852,25 @@ export interface KafkaConfigDoc {
   version?: string;
 }
 
+export type KeyValueInputComponentSettings = ComponentSettings & { text?: string };
+
 export type KeywordField = AbstractField;
 
 export interface LayoutConfig {
   preferredSize?: Size;
   type: string;
+}
+
+export interface LayoutConstraints {
+  fitHeight?: boolean;
+  fitWidth?: boolean;
+}
+
+export interface LifespanInfo {
+  destroyOnTabClose?: boolean;
+  destroyOnWindowClose?: boolean;
+  timeToIdle?: string;
+  timeToLive?: string;
 }
 
 export interface Limits {
@@ -1797,6 +1895,14 @@ export interface ListConfigResponse {
   qualifiedFilterInput?: string;
   values?: ConfigProperty[];
 }
+
+export type ListInputComponentSettings = ComponentSettings & {
+  dictionary?: DocRef;
+  key?: string;
+  useDictionary?: boolean;
+  value?: string;
+  values?: string[];
+};
 
 export interface Location {
   /** @format int32 */
@@ -2327,7 +2433,8 @@ export interface Prop {
 }
 
 export interface PropertyPath {
-  parts?: string[];
+  leafPart?: string;
+  parentParts?: string[];
 }
 
 /**
@@ -2340,17 +2447,28 @@ export interface Query {
   /** A logical addOperator term in a query expression tree */
   expression: ExpressionOperator;
   params?: Param[];
+  timeRange?: TimeRange;
 }
 
 export type QueryComponentSettings = ComponentSettings & {
   automate?: Automate;
   dataSource?: DocRef;
   expression?: ExpressionOperator;
+  lastQueryKey?: QueryKey;
+  lastQueryNode?: string;
   selectionHandlers?: ComponentSelectionHandler[];
 };
 
 export interface QueryConfig {
   infoPopup?: InfoPopupConfig;
+}
+
+export interface QueryContext {
+  /** The client date/time settings */
+  dateTimeSettings?: DateTimeSettings;
+  params?: Param[];
+  queryInfo?: string;
+  timeRange?: TimeRange;
 }
 
 export interface QueryData {
@@ -2360,7 +2478,24 @@ export interface QueryData {
   /** A logical addOperator term in a query expression tree */
   expression?: ExpressionOperator;
   limits?: Limits;
-  params?: string;
+  params?: Param[];
+  timeRange?: TimeRange;
+}
+
+export interface QueryDoc {
+  /** @format int64 */
+  createTimeMs?: number;
+  createUser?: string;
+  description?: string;
+  name?: string;
+  query?: string;
+  type?: string;
+
+  /** @format int64 */
+  updateTimeMs?: number;
+  updateUser?: string;
+  uuid?: string;
+  version?: string;
 }
 
 /**
@@ -2372,6 +2507,24 @@ export interface QueryKey {
    * @example 7740bcd0-a49e-4c22-8540-044f85770716
    */
   uuid: string;
+}
+
+export interface QuerySearchRequest {
+  incremental?: boolean;
+  openGroups?: string[];
+  query?: string;
+  queryContext?: QueryContext;
+
+  /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
+  queryKey?: QueryKey;
+
+  /** The offset and length of a range of data in a sub-set of a query result set */
+  requestedRange?: OffsetRange;
+  searchRequestSource?: SearchRequestSource;
+  storeHistory?: boolean;
+
+  /** @format int64 */
+  timeout?: number;
 }
 
 export interface RangeInteger {
@@ -2568,6 +2721,15 @@ export interface ResultPageDependency {
 /**
  * A page of results.
  */
+export interface ResultPageExplorerDocContentMatch {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: ExplorerDocContentMatch[];
+}
+
+/**
+ * A page of results.
+ */
 export interface ResultPageFsVolume {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
@@ -2682,7 +2844,7 @@ export interface ResultRequest {
   fetch?: "NONE" | "CHANGES" | "ALL";
   mappings: TableSettings[];
 
-  /** TODO */
+  /** A set of group keys of parent rows we want to display children for */
   openGroups: string[];
 
   /** The offset and length of a range of data in a sub-set of a query result set */
@@ -2690,6 +2852,36 @@ export interface ResultRequest {
 
   /** The style of results required. FLAT will provide a FlatResult object, while TABLE will provide a TableResult object */
   resultStyle: "FLAT" | "TABLE";
+
+  /** If the data includes time in the key then you can apply a time filter when retrieving rows */
+  timeFilter?: TimeFilter;
+}
+
+export interface ResultStoreInfo {
+  complete?: boolean;
+
+  /** @format int64 */
+  creationTime?: number;
+  nodeName?: string;
+
+  /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
+  queryKey?: QueryKey;
+  searchProcessLifespan?: LifespanInfo;
+  searchRequestSource?: SearchRequestSource;
+  storeLifespan?: LifespanInfo;
+
+  /** @format int64 */
+  storeSize?: number;
+  taskProgress?: SearchTaskProgress;
+  userId?: string;
+}
+
+export interface ResultStoreResponse {
+  errors?: string[];
+
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: ResultStoreInfo[];
 }
 
 /**
@@ -2752,6 +2944,7 @@ export interface Search {
   incremental?: boolean;
   params?: Param[];
   queryInfo?: string;
+  timeRange?: TimeRange;
 }
 
 export interface SearchAccountRequest {
@@ -2779,17 +2972,24 @@ export interface SearchRequest {
   incremental: boolean;
 
   /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
-  key: QueryKey;
+  key?: QueryKey;
 
   /** The query terms for the search */
   query: Query;
   resultRequests: ResultRequest[];
+  searchRequestSource?: SearchRequestSource;
 
   /**
    * Set the maximum time (in ms) for the server to wait for a complete result set. The timeout applies to both incremental and non incremental queries, though the behaviour is slightly different. The timeout will make the server wait for which ever comes first out of the query completing or the timeout period being reached. If no value is supplied then for an incremental query a default value of 0 will be used (i.e. returning immediately) and for a non-incremental query the server's default timeout period will be used. For an incremental query, if the query has not completed by the end of the timeout period, it will return the currently know results with complete=false, however for a non-incremental query it will return no results, complete=false and details of the timeout in the error field
    * @format int64
    */
   timeout?: number;
+}
+
+export interface SearchRequestSource {
+  componentId?: string;
+  ownerDocUuid?: string;
+  sourceType?: "ALERT_RULE" | "DASHBOARD_UI" | "QUERY_UI" | "API" | "BATCH_SEARCH";
 }
 
 /**
@@ -2803,8 +3003,22 @@ export interface SearchResponse {
   highlights: string[];
 
   /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
-  queryKey: QueryKey;
+  key: QueryKey;
   results?: Result[];
+}
+
+export interface SearchTaskProgress {
+  nodeName?: string;
+
+  /** @format int64 */
+  submitTimeMs?: number;
+  taskInfo?: string;
+  taskName?: string;
+  threadName?: string;
+
+  /** @format int64 */
+  timeNowMs?: number;
+  userName?: string;
 }
 
 export interface SelectionIndexShardStatus {
@@ -2901,6 +3115,12 @@ export interface SharedStepData {
   sourceLocation?: SourceLocation;
 }
 
+export interface SimpleDuration {
+  /** @format int64 */
+  time?: number;
+  timeUnit?: "NANOSECONDS" | "MILLISECONDS" | "SECONDS" | "MINUTES" | "HOURS" | "DAYS" | "WEEKS" | "MONTHS" | "YEARS";
+}
+
 export interface SimpleUser {
   name?: string;
   uuid?: string;
@@ -2933,6 +3153,9 @@ export interface SolrIndexDoc {
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  defaultExtractionPipeline?: DocRef;
   deletedFields?: SolrIndexField[];
   description?: string;
   fields?: SolrIndexField[];
@@ -2942,6 +3165,7 @@ export interface SolrIndexDoc {
   retentionExpression?: ExpressionOperator;
   solrConnectionConfig?: SolrConnectionConfig;
   solrSynchState?: SolrSynchState;
+  timeField?: string;
   type?: string;
 
   /** @format int64 */
@@ -3230,6 +3454,9 @@ export interface TabConfig {
 export type TabLayoutConfig = LayoutConfig & { selected?: number; tabs?: TabConfig[] };
 
 export interface TableComponentSettings {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  dataSourceRef?: DocRef;
+
   /** TODO */
   extractValues?: boolean;
 
@@ -3265,6 +3492,8 @@ export type TableResultRequest = ComponentResultRequest & {
  * An object to describe how the query results should be returned, including which fields should be included and what sorting, grouping, filtering, limiting, etc. should be applied
  */
 export interface TableSettings {
+  /** A logical addOperator term in a query expression tree */
+  aggregateFilter?: ExpressionOperator;
   extractValues?: boolean;
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
@@ -3282,6 +3511,10 @@ export interface TableSettings {
 
   /** When grouping is used a value of true indicates that the results will include the full detail of any results aggregated into a group as well as their aggregates. A value of false will only include the aggregated values for each group. Defaults to false. */
   showDetail?: boolean;
+
+  /** A logical addOperator term in a query expression tree */
+  valueFilter?: ExpressionOperator;
+  window?: Window;
 }
 
 export interface TaskId {
@@ -3354,16 +3587,41 @@ export interface TextConverterDoc {
 export type TextField = AbstractField;
 
 export interface ThemeConfig {
-  backgroundAttachment?: string;
   backgroundColour?: string;
-  backgroundImage?: string;
-  backgroundOpacity?: string;
-  backgroundPosition?: string;
-  backgroundRepeat?: string;
   labelColours?: string;
-  topMenuTextColour?: string;
-  tubeOpacity?: string;
-  tubeVisible?: string;
+  pageBorder?: string;
+}
+
+/**
+ * If the data includes time in the key then you can apply a time filter when retrieving rows
+ */
+export interface TimeFilter {
+  /** @format int64 */
+  from?: number;
+
+  /** @format int64 */
+  to?: number;
+}
+
+export interface TimeRange {
+  condition?:
+    | "CONTAINS"
+    | "EQUALS"
+    | "GREATER_THAN"
+    | "GREATER_THAN_OR_EQUAL_TO"
+    | "LESS_THAN"
+    | "LESS_THAN_OR_EQUAL_TO"
+    | "BETWEEN"
+    | "IN"
+    | "IN_DICTIONARY"
+    | "IN_FOLDER"
+    | "IS_DOC_REF"
+    | "IS_NULL"
+    | "IS_NOT_NULL"
+    | "MATCHES_REGEX";
+  from?: string;
+  name?: string;
+  to?: string;
 }
 
 /**
@@ -3410,9 +3668,6 @@ export interface TokenResponse {
 export interface UiConfig {
   aboutHtml?: string;
   activity?: ActivityConfig;
-
-  /** @format int32 */
-  applicationInstanceKeepAliveIntervalMs?: number;
   defaultMaxResults?: string;
   helpSubPathExpressions?: string;
   helpSubPathJobs?: string;
@@ -3444,6 +3699,13 @@ export interface UpdateStatusRequest {
   criteria?: FindMetaCriteria;
   currentStatus?: "UNLOCKED" | "LOCKED" | "DELETED";
   newStatus?: "UNLOCKED" | "LOCKED" | "DELETED";
+}
+
+export interface UpdateStoreRequest {
+  /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
+  queryKey?: QueryKey;
+  searchProcessLifespan?: LifespanInfo;
+  storeLifespan?: LifespanInfo;
 }
 
 export interface UploadDataRequest {
@@ -3488,6 +3750,7 @@ export interface UserPreferences {
   /** A date time formatting pattern string conforming to the specification of java.time.format.DateTimeFormatter */
   dateTimePattern?: string;
   density?: string;
+  editorKeyBindings?: "STANDARD" | "VIM";
   editorTheme?: string;
   font?: string;
   fontSize?: string;
@@ -3511,6 +3774,30 @@ export interface ValidateSessionResponse {
 export interface ValidationResult {
   message?: string;
   severity?: "INFO" | "WARN" | "ERROR" | "FATAL";
+}
+
+export interface ViewDoc {
+  /** @format int64 */
+  createTimeMs?: number;
+  createUser?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  dataSource?: DocRef;
+  description?: string;
+
+  /** A logical addOperator term in a query expression tree */
+  filter?: ExpressionOperator;
+  name?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  pipeline?: DocRef;
+  type?: string;
+
+  /** @format int64 */
+  updateTimeMs?: number;
+  updateUser?: string;
+  uuid?: string;
+  version?: string;
 }
 
 export type VisComponentSettings = ComponentSettings & {
@@ -3549,6 +3836,10 @@ export interface VisualisationDoc {
 
 export interface Welcome {
   html?: string;
+}
+
+export interface Window {
+  type: string;
 }
 
 export interface XPathFilter {
@@ -4085,6 +4376,43 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         ...params,
       }),
   };
+  alertRule = {
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name FetchAlertRule
+     * @summary Fetch an alert rule doc by its UUID
+     * @request GET:/alertRule/v1/{uuid}
+     * @secure
+     */
+    fetchAlertRule: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, AlertRuleDoc>({
+        path: `/alertRule/v1/${uuid}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name UpdateAlertRule
+     * @summary Update an alert rule doc
+     * @request PUT:/alertRule/v1/{uuid}
+     * @secure
+     */
+    updateAlertRule: (uuid: string, data: AlertRuleDoc, params: RequestParams = {}) =>
+      this.request<any, AlertRuleDoc>({
+        path: `/alertRule/v1/${uuid}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
   annotation = {
     /**
      * No description
@@ -4409,43 +4737,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         method: "GET",
         query: query,
         secure: true,
-        ...params,
-      }),
-  };
-  applicationInstance = {
-    /**
-     * No description
-     *
-     * @tags Application
-     * @name ApplicationInstanceRegister
-     * @summary Register a new application instance
-     * @request GET:/application-instance/v1/register
-     * @secure
-     */
-    applicationInstanceRegister: (params: RequestParams = {}) =>
-      this.request<any, ApplicationInstanceInfo>({
-        path: `/application-instance/v1/register`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Application
-     * @name ApplicationInstanceRemove
-     * @summary Remove an application instance
-     * @request POST:/application-instance/v1/remove
-     * @secure
-     */
-    applicationInstanceRemove: (data: DestroyRequest, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/application-instance/v1/remove`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
         ...params,
       }),
   };
@@ -4917,25 +5208,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Dashboards
-     * @name DashboardDestroySearch
-     * @summary Destroy a running search
-     * @request POST:/dashboard/v1/destroy
-     * @secure
-     */
-    dashboardDestroySearch: (data: DestroySearchRequest, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/dashboard/v1/destroy`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Dashboards
      * @name DownloadDashboardQuery
      * @summary Download a query
      * @request POST:/dashboard/v1/downloadQuery
@@ -4957,12 +5229,16 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @tags Dashboards
      * @name DownloadDashboardSearchResults
      * @summary Download search results
-     * @request POST:/dashboard/v1/downloadSearchResults
+     * @request POST:/dashboard/v1/downloadSearchResults/{nodeName}
      * @secure
      */
-    downloadDashboardSearchResults: (data: DownloadSearchResultsRequest, params: RequestParams = {}) =>
+    downloadDashboardSearchResults: (
+      nodeName: string,
+      data: DownloadSearchResultsRequest,
+      params: RequestParams = {},
+    ) =>
       this.request<any, ResourceGeneration>({
-        path: `/dashboard/v1/downloadSearchResults`,
+        path: `/dashboard/v1/downloadSearchResults/${nodeName}`,
         method: "POST",
         body: data,
         secure: true,
@@ -5010,12 +5286,12 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @tags Dashboards
      * @name DashboardSearch
      * @summary Perform a new search or get new results
-     * @request POST:/dashboard/v1/search
+     * @request POST:/dashboard/v1/search/{nodeName}
      * @secure
      */
-    dashboardSearch: (data: DashboardSearchRequest, params: RequestParams = {}) =>
+    dashboardSearch: (nodeName: string, data: DashboardSearchRequest, params: RequestParams = {}) =>
       this.request<any, DashboardSearchResponse>({
-        path: `/dashboard/v1/search`,
+        path: `/dashboard/v1/search/${nodeName}`,
         method: "POST",
         body: data,
         secure: true,
@@ -5274,7 +5550,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     fetchDataSourceFields: (data: DocRef, params: RequestParams = {}) =>
-      this.request<any, AbstractField[]>({
+      this.request<any, DataSource>({
         path: `/dataSource/v1/fetchFields`,
         method: "POST",
         body: data,
@@ -5633,6 +5909,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     fetchExplorerPermissions: (data: ExplorerNode[], params: RequestParams = {}) =>
       this.request<any, ExplorerNodePermissions[]>({
         path: `/explorer/v2/fetchExplorerPermissions`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Explorer (v2)
+     * @name FindExplorerNodes
+     * @summary Find explorer nodes using a query
+     * @request POST:/explorer/v2/findExplorerNodes
+     * @secure
+     */
+    findExplorerNodes: (data: FindExplorerNodeQuery, params: RequestParams = {}) =>
+      this.request<any, ResultPageExplorerDocContentMatch>({
+        path: `/explorer/v2/findExplorerNodes`,
         method: "POST",
         body: data,
         secure: true,
@@ -7535,6 +7830,117 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         ...params,
       }),
   };
+  query = {
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name DownloadQuerySearchResults
+     * @summary Download search results
+     * @request POST:/query/v1/downloadSearchResults/{nodeName}
+     * @secure
+     */
+    downloadQuerySearchResults: (nodeName: string, data: DownloadQueryResultsRequest, params: RequestParams = {}) =>
+      this.request<any, ResourceGeneration>({
+        path: `/query/v1/downloadSearchResults/${nodeName}`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name FetchTimeZones1
+     * @summary Fetch time zone data from the server
+     * @request GET:/query/v1/fetchTimeZones
+     * @secure
+     */
+    fetchTimeZones1: (params: RequestParams = {}) =>
+      this.request<any, string[]>({
+        path: `/query/v1/fetchTimeZones`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name QuerySearch
+     * @summary Perform a new search or get new results
+     * @request POST:/query/v1/search/{nodeName}
+     * @secure
+     */
+    querySearch: (nodeName: string, data: QuerySearchRequest, params: RequestParams = {}) =>
+      this.request<any, DashboardSearchResponse>({
+        path: `/query/v1/search/${nodeName}`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name ValidateQuery
+     * @summary Validate an expression
+     * @request POST:/query/v1/validateQuery
+     * @secure
+     */
+    validateQuery: (data: string, params: RequestParams = {}) =>
+      this.request<any, ValidateExpressionResult>({
+        path: `/query/v1/validateQuery`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name FetchQuery
+     * @summary Fetch a query doc by its UUID
+     * @request GET:/query/v1/{uuid}
+     * @secure
+     */
+    fetchQuery: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, QueryDoc>({
+        path: `/query/v1/${uuid}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name UpdateQuery
+     * @summary Update a query doc
+     * @request PUT:/query/v1/{uuid}
+     * @secure
+     */
+    updateQuery: (uuid: string, data: QueryDoc, params: RequestParams = {}) =>
+      this.request<any, QueryDoc>({
+        path: `/query/v1/${uuid}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
   refData = {
     /**
      * No description
@@ -7700,6 +8106,119 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     startRemoteSearch: (data: ClusterSearchTask, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/remoteSearch/v1/start`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
+  resultStore = {
+    /**
+     * No description
+     *
+     * @tags ResultStore
+     * @name DestroyResultStore
+     * @summary Destroy a search result store for a node
+     * @request POST:/result-store/v1/destroy/{nodeName}
+     * @secure
+     */
+    destroyResultStore: (nodeName: string, data: DestroyStoreRequest, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/result-store/v1/destroy/${nodeName}`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags ResultStore
+     * @name ResultStoreExists
+     * @summary Determines if the requested result store still exists
+     * @request POST:/result-store/v1/exists/{nodeName}
+     * @secure
+     */
+    resultStoreExists: (nodeName: string, data: QueryKey, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/result-store/v1/exists/${nodeName}`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags ResultStore
+     * @name FindResultStores
+     * @summary Find the result stores matching the supplied criteria for a node
+     * @request POST:/result-store/v1/find/{nodeName}
+     * @secure
+     */
+    findResultStores: (nodeName: string, data: FindResultStoreCriteria, params: RequestParams = {}) =>
+      this.request<any, ResultStoreResponse>({
+        path: `/result-store/v1/find/${nodeName}`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags ResultStore
+     * @name ListResultStores
+     * @summary Lists result stores for a node
+     * @request GET:/result-store/v1/list/{nodeName}
+     * @secure
+     */
+    listResultStores: (nodeName: string, params: RequestParams = {}) =>
+      this.request<any, ResultStoreResponse>({
+        path: `/result-store/v1/list/${nodeName}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags ResultStore
+     * @name TerminateSearchTask
+     * @summary Terminates search tasks for a node
+     * @request POST:/result-store/v1/terminate/{nodeName}
+     * @secure
+     */
+    terminateSearchTask: (nodeName: string, data: QueryKey, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/result-store/v1/terminate/${nodeName}`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags ResultStore
+     * @name UpdateResultStore
+     * @summary Find the result stores matching the supplied criteria for a node
+     * @request POST:/result-store/v1/update/{nodeName}
+     * @secure
+     */
+    updateResultStore: (nodeName: string, data: UpdateStoreRequest, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/result-store/v1/update/${nodeName}`,
         method: "POST",
         body: data,
         secure: true,
@@ -7918,25 +8437,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Searchable
-     * @name KeepAliveSearchableQuery
-     * @summary Keep a running query alive
-     * @request POST:/searchable/v2/keepAlive
-     * @secure
-     */
-    keepAliveSearchableQuery: (data: QueryKey, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/searchable/v2/keepAlive`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Searchable
      * @name StartSearchableQuery
      * @summary Submit a search request
      * @request POST:/searchable/v2/search
@@ -8132,25 +8632,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     destroySqlStatisticsQuery: (data: QueryKey, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/sqlstatistics/v2/destroy`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Sql Statistics Query
-     * @name KeepAliveSqlStatisticsQuery
-     * @summary Keep a running query alive
-     * @request POST:/sqlstatistics/v2/keepAlive
-     * @secure
-     */
-    keepAliveSqlStatisticsQuery: (data: QueryKey, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/sqlstatistics/v2/keepAlive`,
         method: "POST",
         body: data,
         secure: true,
@@ -8562,25 +9043,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Elasticsearch Queries
-     * @name KeepAliveElasticIndexQuery
-     * @summary Keep a running query alive
-     * @request POST:/stroom-elastic-index/v2/keepAlive
-     * @secure
-     */
-    keepAliveElasticIndexQuery: (data: QueryKey, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/stroom-elastic-index/v2/keepAlive`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Elasticsearch Queries
      * @name SearchElasticIndex
      * @summary Submit a search request
      * @request POST:/stroom-elastic-index/v2/search
@@ -8639,25 +9101,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Stroom-Index Queries
-     * @name KeepAliveStroomIndexQuery
-     * @summary Keep a running query alive
-     * @request POST:/stroom-index/v2/keepAlive
-     * @secure
-     */
-    keepAliveStroomIndexQuery: (data: QueryKey, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/stroom-index/v2/keepAlive`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Stroom-Index Queries
      * @name StartStroomIndexQuery
      * @summary Submit a search request
      * @request POST:/stroom-index/v2/search
@@ -8705,25 +9148,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     destroySolrIndexQuery: (data: QueryKey, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/stroom-solr-index/v2/destroy`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Solr Queries
-     * @name KeepAliveSolrIndexQuery
-     * @summary Keep a running query alive
-     * @request POST:/stroom-solr-index/v2/keepAlive
-     * @secure
-     */
-    keepAliveSolrIndexQuery: (data: QueryKey, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/stroom-solr-index/v2/keepAlive`,
         method: "POST",
         body: data,
         secure: true,
@@ -9110,6 +9534,43 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         ...params,
       }),
   };
+  view = {
+    /**
+     * No description
+     *
+     * @tags Views
+     * @name FetchView
+     * @summary Fetch a view doc by its UUID
+     * @request GET:/view/v1/{uuid}
+     * @secure
+     */
+    fetchView: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, ViewDoc>({
+        path: `/view/v1/${uuid}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Views
+     * @name UpdateView
+     * @summary Update a view doc
+     * @request PUT:/view/v1/{uuid}
+     * @secure
+     */
+    updateView: (uuid: string, data: ViewDoc, params: RequestParams = {}) =>
+      this.request<any, ViewDoc>({
+        path: `/view/v1/${uuid}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
   visualisation = {
     /**
      * No description
@@ -9160,6 +9621,24 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     fetchWelcome: (params: RequestParams = {}) =>
       this.request<any, Welcome>({
         path: `/welcome/v1`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+  };
+  wordList = {
+    /**
+     * No description
+     *
+     * @tags Word List (v1)
+     * @name GetWords
+     * @summary Fetch a list of words from a dictionary by its UUID
+     * @request GET:/wordList/v1/{uuid}
+     * @secure
+     */
+    getWords: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, string[]>({
+        path: `/wordList/v1/${uuid}`,
         method: "GET",
         secure: true,
         ...params,

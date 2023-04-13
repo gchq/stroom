@@ -16,7 +16,12 @@
 
 package stroom.widget.tooltip.client.presenter;
 
+import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.presenter.PopupType;
+
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -29,15 +34,26 @@ public class TooltipPresenter extends MyPresenterWidget<TooltipPresenter.Tooltip
         super(eventBus, view);
     }
 
-    public void setText(final String text) {
+    public void show(final String text, final int x, final int y) {
         getView().setText(text);
+        show(x, y);
     }
 
-    public void setHTML(final SafeHtml html) {
+    public void show(final SafeHtml html, final int x, final int y) {
         getView().setHTML(html);
+        show(x, y);
     }
 
-    public interface TooltipView extends View {
+    private void show(final int x, final int y) {
+        final PopupPosition popupPosition = new PopupPosition(x, y);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.POPUP)
+                .popupPosition(popupPosition)
+                .onShow(e -> getView().focus())
+                .fire();
+    }
+
+    public interface TooltipView extends View, Focus {
 
         void setText(String text);
 

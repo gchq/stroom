@@ -129,6 +129,10 @@ public final class ExpressionOperator extends ExpressionItem {
         return children;
     }
 
+    public boolean hasChildren() {
+        return children != null && children.size() > 0;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -223,6 +227,7 @@ public final class ExpressionOperator extends ExpressionItem {
         private Builder(final ExpressionOperator expressionOperator) {
             super(expressionOperator);
             this.op = expressionOperator.op;
+            this.children.addAll(expressionOperator.children);
         }
 
         /**

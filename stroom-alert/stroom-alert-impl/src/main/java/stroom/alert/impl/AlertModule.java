@@ -26,7 +26,8 @@ import javax.inject.Inject;
 
 import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
-public class AlertModule  extends AbstractModule {
+public class AlertModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(AlertManager.class).to(AlertManagerImpl.class);
@@ -35,16 +36,32 @@ public class AlertModule  extends AbstractModule {
                 .bindJobTo(AlertManagerCacheRefresh.class, builder -> builder
                         .name("Alert Rule Refresh")
                         .description("Update alert generation rules with recent changes")
-                        .schedule(PERIODIC, "10m"));
+                        .schedule(PERIODIC, "10m")
+                        .advanced(true)
+                        .enabled(false));
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(ResultStoreAlertSearchExecutorRunnable.class, builder -> builder
+                        .name("Aggregate Alert Rule Executor")
+                        .description("Run aggregate alert rules periodically")
+                        .schedule(PERIODIC, "10m")
+                        .enabled(false)
+                        .advanced(true));
     }
 
     private static class AlertManagerCacheRefresh extends RunnableWrapper {
 
         @Inject
         AlertManagerCacheRefresh(final AlertManager alertManager) {
-            super(alertManager::initialiseCache);
+            super(alertManager::refreshRules);
         }
     }
 
+    private static class ResultStoreAlertSearchExecutorRunnable extends RunnableWrapper {
+
+        @Inject
+        ResultStoreAlertSearchExecutorRunnable(final ResultStoreAlertSearchExecutor executor) {
+            super(executor::exec);
+        }
+    }
 }
 

@@ -1,11 +1,10 @@
 package stroom.data.client.presenter;
 
 import stroom.util.shared.Selection;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -25,33 +24,27 @@ public class ProcessChoicePresenter extends MyPresenterWidget<ProcessChoicePrese
             getView().setMaxMetaCreateTimeMs(System.currentTimeMillis());
         }
 
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, "Create Processors", new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    final ProcessChoice processChoice = new ProcessChoice(
-                            getView().getPriority(),
-                            getView().isAutoPriority(),
-                            getView().isReprocess(),
-                            getView().isEnabled(),
-                            getView().getMinMetaCreateTimeMs(),
-                            getView().getMaxMetaCreateTimeMs());
-                    processorChoiceUiHandler.onChoice(processChoice);
-                }
-                hide();
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-            }
-        });
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .caption("Create Processors")
+                .onShow(e -> getView().focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        final ProcessChoice processChoice = new ProcessChoice(
+                                getView().getPriority(),
+                                getView().isAutoPriority(),
+                                getView().isReprocess(),
+                                getView().isEnabled(),
+                                getView().getMinMetaCreateTimeMs(),
+                                getView().getMaxMetaCreateTimeMs());
+                        processorChoiceUiHandler.onChoice(processChoice);
+                    }
+                    e.hide();
+                })
+                .fire();
     }
 
-    private void hide() {
-        HidePopupEvent.fire(ProcessChoicePresenter.this, ProcessChoicePresenter.this, false, true);
-    }
-
-    public interface ProcessChoiceView extends View {
+    public interface ProcessChoiceView extends View, Focus {
 
         int getPriority();
 

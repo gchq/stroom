@@ -17,6 +17,11 @@ import stroom.explorer.impl.db.jooq.tables.records.ExplorerFavouriteRecord;
 import stroom.explorer.impl.db.jooq.tables.records.ExplorerNodeRecord;
 import stroom.explorer.impl.db.jooq.tables.records.ExplorerPathRecord;
 
+import org.jooq.TableField;
+import org.jooq.UniqueKey;
+import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
+
 
 /**
  * A class modelling foreign key relationships and constraints of tables in

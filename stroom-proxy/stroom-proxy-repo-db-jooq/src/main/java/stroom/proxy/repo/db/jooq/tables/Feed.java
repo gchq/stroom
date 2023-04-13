@@ -4,6 +4,10 @@
 package stroom.proxy.repo.db.jooq.tables;
 
 
+import stroom.proxy.repo.db.jooq.DefaultSchema;
+import stroom.proxy.repo.db.jooq.Keys;
+import stroom.proxy.repo.db.jooq.tables.records.FeedRecord;
+
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Name;
@@ -17,10 +21,6 @@ import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
-
-import stroom.proxy.repo.db.jooq.DefaultSchema;
-import stroom.proxy.repo.db.jooq.Keys;
-import stroom.proxy.repo.db.jooq.tables.records.FeedRecord;
 
 
 /**

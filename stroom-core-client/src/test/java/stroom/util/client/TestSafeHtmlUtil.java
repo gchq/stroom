@@ -2,6 +2,7 @@ package stroom.util.client;
 
 import stroom.test.common.TestCase;
 import stroom.test.common.TestUtil;
+import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import org.assertj.core.api.Assertions;

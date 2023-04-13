@@ -19,12 +19,15 @@ package stroom.dashboard.client.main;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.query.api.v2.Result;
+import stroom.query.api.v2.ResultRequest.Fetch;
 
 public interface ResultComponent {
 
     ComponentSettings getSettings();
 
-    ComponentResultRequest getResultRequest();
+    boolean isPaused();
+
+    ComponentResultRequest getResultRequest(Fetch fetch);
 
     ComponentResultRequest createDownloadQueryRequest();
 
@@ -33,8 +36,6 @@ public interface ResultComponent {
     void startSearch();
 
     void endSearch();
-
-    void setWantsData(boolean wantsData);
 
     void setData(Result componentResult);
 }

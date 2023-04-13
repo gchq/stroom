@@ -26,6 +26,7 @@ import stroom.util.shared.Location;
 import javax.inject.Inject;
 
 class LineFrom extends AbstractLocationFunction {
+
     @Inject
     LineFrom(final LocationHolder locationHolder) {
         super(locationHolder);

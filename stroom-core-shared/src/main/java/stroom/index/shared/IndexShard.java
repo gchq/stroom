@@ -338,7 +338,7 @@ public class IndexShard {
         private final byte primitiveValue;
         private static final Map<String, IndexShardStatus> DISPLAY_NAME_TO_STATUS_MAP =
                 Arrays.stream(IndexShardStatus.values())
-                                .collect(Collectors.toMap(IndexShardStatus::getDisplayValue, Function.identity()));
+                        .collect(Collectors.toMap(IndexShardStatus::getDisplayValue, Function.identity()));
 
         IndexShardStatus(final String displayValue, final int primitiveValue) {
             this.displayValue = displayValue;

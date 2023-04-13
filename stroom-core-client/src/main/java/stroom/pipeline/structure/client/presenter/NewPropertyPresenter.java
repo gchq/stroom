@@ -34,6 +34,7 @@ import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -159,10 +160,10 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
             final String value = listBox.getItemText(listBox.getSelectedIndex());
             property.setValue(new PipelinePropertyValue(Boolean.valueOf(value)));
         } else if ("int".equals(propertyType.getType())) {
-            final Integer value = valueSpinner.getValue();
+            final Integer value = valueSpinner.getIntValue();
             property.setValue(new PipelinePropertyValue(value));
         } else if ("long".equals(propertyType.getType())) {
-            final Long value = (long) valueSpinner.getValue();
+            final Long value = (long) valueSpinner.getIntValue();
             property.setValue(new PipelinePropertyValue(value));
         } else if ("String".equals(propertyType.getType())) {
             property.setValue(new PipelinePropertyValue(textBox.getText()));
@@ -376,7 +377,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
         setDirty(dirty, true);
     }
 
-    public interface NewPropertyView extends View {
+    public interface NewPropertyView extends View, Focus {
 
         void setElement(String element);
 

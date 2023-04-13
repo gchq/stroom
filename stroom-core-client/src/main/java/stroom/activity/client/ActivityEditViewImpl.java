@@ -23,18 +23,13 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+import com.gwtplatform.mvp.client.ViewImpl;
 
-public class ActivityEditViewImpl extends ViewWithUiHandlers implements ActivityEditView {
-
-    public interface Binder extends UiBinder<Widget, ActivityEditViewImpl> {
-
-    }
-
-    @UiField
-    HTML html;
+public class ActivityEditViewImpl extends ViewImpl implements ActivityEditView {
 
     private final Widget widget;
+    @UiField
+    HTML html;
 
     @Inject
     public ActivityEditViewImpl(final Binder binder) {
@@ -51,4 +46,7 @@ public class ActivityEditViewImpl extends ViewWithUiHandlers implements Activity
         return widget;
     }
 
+    public interface Binder extends UiBinder<Widget, ActivityEditViewImpl> {
+
+    }
 }

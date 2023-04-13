@@ -26,7 +26,7 @@ public interface DashboardService {
 
     DashboardSearchResponse search(DashboardSearchRequest request);
 
-    Boolean destroy(DestroySearchRequest request);
+//    Boolean destroy(DestroySearchRequest request);
 
     List<String> fetchTimeZones();
 

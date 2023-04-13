@@ -18,9 +18,9 @@ package stroom.index.client.presenter;
 
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.shared.ExpressionCriteria;
@@ -28,6 +28,7 @@ import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
 import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
@@ -39,19 +40,27 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.function.Consumer;
 
-public class IndexVolumeGroupListPresenter extends MyPresenterWidget<DataGridView<IndexVolumeGroup>> {
+public class IndexVolumeGroupListPresenter extends MyPresenterWidget<PagerView> {
 
     private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE =
             GWT.create(IndexVolumeGroupResource.class);
 
+    private final MyDataGrid<IndexVolumeGroup> dataGrid;
+    private final MultiSelectionModelImpl<IndexVolumeGroup> selectionModel;
     private final RestDataProvider<IndexVolumeGroup, ResultPage<IndexVolumeGroup>> dataProvider;
 
     @Inject
-    public IndexVolumeGroupListPresenter(final EventBus eventBus, final RestFactory restFactory) {
-        super(eventBus, new DataGridViewImpl<>(true, true));
+    public IndexVolumeGroupListPresenter(final EventBus eventBus,
+                                         final PagerView view,
+                                         final RestFactory restFactory) {
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        view.setDataWidget(dataGrid);
 
         // Add a border to the list.
-        getWidget().getElement().addClassName("stroom-border");
+//        getWidget().getElement().addClassName("stroom-border");
         getWidget().getElement().addClassName("default-min-sizes");
 
         initTableColumns();
@@ -71,7 +80,7 @@ public class IndexVolumeGroupListPresenter extends MyPresenterWidget<DataGridVie
                         .find(criteria);
             }
         };
-        dataProvider.addDataDisplay(getView().getDataDisplay());
+        dataProvider.addDataDisplay(dataGrid);
     }
 
     /**
@@ -85,13 +94,13 @@ public class IndexVolumeGroupListPresenter extends MyPresenterWidget<DataGridVie
                 return volume.getName();
             }
         };
-        getView().addResizableColumn(volumeColumn, "Name", 400);
+        dataGrid.addResizableColumn(volumeColumn, "Name", 400);
 
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     public MultiSelectionModel<IndexVolumeGroup> getSelectionModel() {
-        return getView().getSelectionModel();
+        return selectionModel;
     }
 
     public void refresh() {

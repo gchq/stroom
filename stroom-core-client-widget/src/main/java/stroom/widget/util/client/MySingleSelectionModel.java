@@ -22,11 +22,7 @@
 
 package stroom.widget.util.client;
 
-import stroom.data.grid.client.DoubleClickEvent;
-
-import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionModel.AbstractSelectionModel;
@@ -47,9 +43,6 @@ public class MySingleSelectionModel<T> extends AbstractSelectionModel<T> impleme
     private boolean newSelected;
     private T newSelectedItem = null;
     private boolean newSelectedPending;
-
-    private EventBus eventBus;
-    private DoubleClickTester doubleClickTest;
     private DoubleSelectTester doubleSelectTest;
 
     /**
@@ -116,30 +109,34 @@ public class MySingleSelectionModel<T> extends AbstractSelectionModel<T> impleme
             return;
         }
 
-        if (doubleClickTest != null) {
-            if (doubleClickTest.isDoubleClick(selected)) {
-                DoubleClickEvent.fire(eventBus);
+        boolean ignore = false;
+        if (doubleSelectTest != null) {
+            if (doubleSelectTest.test(selected)) {
+                DoubleSelectEvent.fire(this);
+                ignore = true;
             }
         }
 
+        if (!ignore) {
 //        // If we are deselecting an item that isn't actually selected, ignore
 //        // it.
 //        if (!selected) {
 
-        if (newSelected == selected) {
-            final Object oldKey = newSelectedPending
-                    ? getKey(newSelectedItem)
-                    : curKey;
-            final Object newKey = getKey(item);
-            if (equalsOrBothNull(oldKey, newKey)) {
-                return;
+            if (newSelected == selected) {
+                final Object oldKey = newSelectedPending
+                        ? getKey(newSelectedItem)
+                        : curKey;
+                final Object newKey = getKey(item);
+                if (equalsOrBothNull(oldKey, newKey)) {
+                    return;
+                }
             }
-        }
 
-        newSelectedItem = item;
-        newSelected = selected;
-        newSelectedPending = true;
-        scheduleSelectionChangeEvent();
+            newSelectedItem = item;
+            newSelected = selected;
+            newSelectedPending = true;
+            scheduleSelectionChangeEvent();
+        }
     }
 
     @Override
@@ -159,11 +156,6 @@ public class MySingleSelectionModel<T> extends AbstractSelectionModel<T> impleme
     private void resolveChanges() {
         if (!newSelectedPending) {
             return;
-        }
-
-        // My addition to test for double selection.
-        if (doubleSelectTest != null) {
-            doubleSelectTest.test(newSelectedItem);
         }
 
         final Object key = getKey(newSelectedItem);
@@ -206,13 +198,13 @@ public class MySingleSelectionModel<T> extends AbstractSelectionModel<T> impleme
 //            }
 //        }
 //    }
-
-    public HandlerRegistration addDoubleClickHandler(final DoubleClickEvent.Handler handler) {
-        if (eventBus == null) {
-            eventBus = new SimpleEventBus();
-            doubleClickTest = new DoubleClickTester();
-        }
-
-        return eventBus.addHandler(DoubleClickEvent.getType(), handler);
-    }
+//
+//    public HandlerRegistration addDoubleClickHandler(final DoubleClickEvent.Handler handler) {
+//        if (eventBus == null) {
+//            eventBus = new SimpleEventBus();
+//            doubleClickTest = new DoubleClickTester();
+//        }
+//
+//        return eventBus.addHandler(DoubleClickEvent.getType(), handler);
+//    }
 }

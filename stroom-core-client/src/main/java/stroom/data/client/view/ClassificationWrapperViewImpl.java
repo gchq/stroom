@@ -16,13 +16,14 @@
 
 package stroom.data.client.view;
 
-import stroom.data.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
+import stroom.data.client.presenter.ClassificationWrapperView;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 public class ClassificationWrapperViewImpl extends ViewImpl implements ClassificationWrapperView {
@@ -45,10 +46,8 @@ public class ClassificationWrapperViewImpl extends ViewImpl implements Classific
     }
 
     @Override
-    public void setInSlot(final Object slot, final Widget content) {
-        if (ClassificationWrapperView.CONTENT.equals(slot)) {
-            this.content.setWidget(content);
-        }
+    public void setContent(final View content) {
+        this.content.setWidget(content.asWidget());
     }
 
     @Override

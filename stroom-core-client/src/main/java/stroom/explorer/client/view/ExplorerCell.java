@@ -1,7 +1,11 @@
 package stroom.explorer.client.view;
 
+import stroom.cell.tickbox.client.TickBoxCell;
+import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.explorer.client.presenter.TickBoxSelectionModel;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.svg.client.SvgImages;
 import stroom.svg.client.SvgPresets;
 
 import com.google.gwt.cell.client.AbstractCell;
@@ -12,94 +16,114 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.view.client.SelectionModel;
 
 public class ExplorerCell extends AbstractCell<ExplorerNode> {
 
     private static Template template;
+    private final SelectionModel<ExplorerNode> selectionModel;
+    private TickBoxCell tickBoxCell;
 
-    public ExplorerCell() {
+    public ExplorerCell(final SelectionModel<ExplorerNode> selectionModel) {
+        this.selectionModel = selectionModel;
+
+        if (selectionModel != null && selectionModel instanceof TickBoxSelectionModel) {
+            tickBoxCell = TickBoxCell.create(true, false);
+        }
+
         if (template == null) {
             template = GWT.create(Template.class);
         }
     }
 
+    private String getCellClassName() {
+        return "explorerCell";
+    }
+
     public String getExpanderClassName() {
-        return "explorerCell-expanderIcon";
+        return getCellClassName() + "-expander";
+    }
+
+    public String getTickBoxClassName() {
+        return getCellClassName() + "-tickBox";
     }
 
     @Override
     public void render(final Context context, final ExplorerNode item, final SafeHtmlBuilder sb) {
         if (item != null) {
+            final SafeHtmlBuilder content = new SafeHtmlBuilder();
 
             int expanderPadding = 4;
 
-            SafeHtml expanderIcon = null;
+            SafeHtml expanderIcon = SafeHtmlUtils.EMPTY_SAFE_HTML;
             if (item.getNodeState() != null) {
                 switch (item.getNodeState()) {
                     case LEAF:
-                        expanderIcon = SafeHtmlUtils.EMPTY_SAFE_HTML;
-                        expanderPadding += 13;
+                        expanderIcon = SafeHtmlUtils.fromTrustedString("<svg></svg>");
                         break;
                     case OPEN:
-                        expanderIcon = template.icon(
-                                "svgIcon explorerCell-expanderIcon explorerCell-treeOpen",
-                                item.getType());
+                        expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_DOWN);
                         break;
                     case CLOSED:
-                        expanderIcon = template.icon(
-                                "svgIcon explorerCell-expanderIcon explorerCell-treeClosed",
-                                item.getType());
+                        expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_RIGHT);
                         break;
                     default:
                         throw new RuntimeException("Unexpected state " + item.getNodeState());
                 }
             }
-//            else {
-//                expanderIcon = getImageHtml(resources.leaf());
-//            }
 
             int indent = item.getDepth();
-//            if (item.isLeaf()) {
-//                indent++;
-//            }
             indent = expanderPadding + (indent * 17);
+            final SafeStyles paddingLeft = SafeStylesUtils.fromTrustedString("padding-left:" + indent + "px;");
 
-//            final SafeHtml indentHtml = template.indent(style.indent(), indent);
+            // Add expander.
+            content.append(template.expander(getCellClassName() + "-expander", paddingLeft, expanderIcon));
 
-            SafeHtml expanderHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
-            SafeHtml iconHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
-            SafeHtml textHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
-            SafeHtml favIconHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
+            if (tickBoxCell != null) {
+                final SafeHtmlBuilder tb = new SafeHtmlBuilder();
+                tickBoxCell.render(context, getValue(item), tb);
 
-            if (expanderIcon != null) {
-                final SafeStyles paddingLeft = SafeStylesUtils.fromTrustedString("padding-left:" + indent + "px;");
-                expanderHtml = template.expander("explorerCell-expander", paddingLeft, expanderIcon);
+                final SafeHtml tickBoxHtml = template.div(getCellClassName() + "-tickBox", tb.toSafeHtml());
+                // Add tickbox
+                content.append(tickBoxHtml);
             }
 
             if (item.getIconClassName() != null) {
-                iconHtml = template.icon("explorerCell-icon " + item.getIconClassName(), item.getType());
+                // Add icon
+                content.append(template.icon(getCellClassName() + "-icon " + item.getIconClassName(),
+                        item.getType()));
             }
 
             if (item.getDisplayValue() != null) {
-                textHtml = template.text("explorerCell-text",
-                        SafeHtmlUtils.fromString(item.getDisplayValue()));
+                // Add text
+                content.append(template.div(getCellClassName() + "-text",
+                        SafeHtmlUtils.fromString(item.getDisplayValue())));
             }
 
             // If the item is a favourite and not part of the Favourites node, display a star next to it
             if (item.getIsFavourite() && item.getRootNodeUuid() != null &&
                     !ExplorerConstants.FAVOURITES_DOC_REF.getUuid().equals(item.getRootNodeUuid())) {
-                favIconHtml = template.favIcon(
+                content.append(template.favIcon(
                         SvgPresets.FAVOURITES.getClassName() + " small",
-                        "Item is a favourite");
+                        "Item is a favourite"));
             }
 
-            final SafeHtmlBuilder content = new SafeHtmlBuilder();
-            content.append(expanderHtml);
-            content.append(iconHtml);
-            content.append(textHtml);
-            content.append(favIconHtml);
+            sb.append(template.outer(content.toSafeHtml()));
+        }
+    }
 
-            sb.append(template.outer("explorerCell-outer", content.toSafeHtml()));
+    private TickBoxState getValue(final ExplorerNode item) {
+        if (selectionModel == null) {
+            return TickBoxState.UNTICK;
+        } else if (selectionModel instanceof TickBoxSelectionModel) {
+            final TickBoxSelectionModel tickBoxSelectionModel = (TickBoxSelectionModel) selectionModel;
+            return tickBoxSelectionModel.getState(item);
+        } else {
+            if (selectionModel.isSelected(item)) {
+                return TickBoxState.TICK;
+            } else {
+                return TickBoxState.UNTICK;
+            }
         }
     }
 
@@ -109,21 +133,15 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
         SafeHtml expander(String iconClass, SafeStyles styles, SafeHtml icon);
 
         @Template("<div class=\"{0}\" title=\"{1}\"></div>")
-        SafeHtml icon(String iconClass, String title);
+        SafeHtml icon(String iconClass, String typeName);
 
         @Template("<div class=\"{0}\">{1}</div>")
-        SafeHtml text(String textClass, SafeHtml text);
+        SafeHtml div(String className, SafeHtml content);
 
         @Template("<div class=\"{0}\" title=\"{1}\"></div>")
         SafeHtml favIcon(String iconClass, String title);
 
-        @Template("<div class=\"{0}\">{1}</div>")
-        SafeHtml outer(String outerClass, SafeHtml content);
-
-        /**
-         * The wrapper around the image vertically aligned to the middle.
-         */
-        @Template("")
-        SafeHtml imageWrapperMiddle(SafeStyles styles, SafeHtml image);
+        @Template("<div class=\"explorerCell\">{0}</div>")
+        SafeHtml outer(SafeHtml content);
     }
 }

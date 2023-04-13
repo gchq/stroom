@@ -20,9 +20,9 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
+import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.table.TablePresenter;
-import stroom.dashboard.client.table.TableRow;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.IndexConstants;
@@ -43,6 +43,7 @@ import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.query.api.v2.Field;
+import stroom.query.client.presenter.TableRow;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.DataRange;
@@ -71,7 +72,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
     private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
 
-    public static final ComponentType TYPE = new ComponentType(2, "text", "Text");
+    public static final ComponentType TYPE = new ComponentType(2, "text", "Text", ComponentUse.PANEL);
 
     private static final Version CURRENT_MODEL_VERSION = new Version(6, 1, 26);
 

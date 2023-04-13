@@ -1,6 +1,6 @@
 .gwt-TextBox.autocompleteTextBox {
     background-image: url('../images/drop-down.svg');
-    cursor: default;
+    cursor: pointer;
     background-size: 12px;
     background-origin: content-box;
     background-repeat: no-repeat;
@@ -16,36 +16,51 @@
     background-image: url('../images/drop-down-dark.svg');
 }
 
-.gwt-PopupPanel.autocompletePanel {
-    padding: 0;
-    border: none;
-    border-radius: 0 5px 5px 5px;
+
+.autocompletePopup {
 }
 
-.gwt-PopupPanel.autocompletePanel input {
+.autocompletePopup-outer {
+    padding: .2rem;
+}
+
+.autocompletePopup-layout {
+    display : flex;
+    flex-direction: column;
+}
+
+.autocompletePopup input {
     background-image: url('../images/search.svg');
-    background-size: 12px;
+    background-size: 13px;
     background-origin: content-box;
     background-repeat: no-repeat;
     background-position-x: right;
-    background-position-y: 1px;
+    background-position-y: center;
+    height: 2rem;
+    width: 100%;
 }
 
-.stroom-theme-dark .gwt-PopupPanel.autocompletePanel input,
-.stroom-theme-dark-2 .gwt-PopupPanel.autocompletePanel input {
+.stroom-theme-dark .autocompletePopup input,
+.stroom-theme-dark-2 .autocompletePopup input {
     background-image: url('../images/search-dark.svg');
 }
 
-.gwt-PopupPanel.autocompletePanel .gwt-ListBox {
+.autocompletePopup .gwt-ListBox {
     background-image: none;
     padding: 0;
-    overflow-y: auto;
-    border-radius: 0;
-    width: auto;
-    min-width: 200px;
+    border: none;
+    background: none;
+    flex-grow: 1;
+    width: 100%;
 }
 
-.gwt-PopupPanel.autocompletePanel select > option {
-    padding: 2px 5px;
-    border: none;
+.autocompletePopup .gwt-ListBox option {
+    background: none;
+    padding:  .3rem;
 }
+
+.autocompletePopup .gwt-ListBox option:hover {
+    background: var(--row__background-color--hovered);
+}
+
+

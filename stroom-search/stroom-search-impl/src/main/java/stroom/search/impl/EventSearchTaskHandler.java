@@ -16,14 +16,16 @@
 
 package stroom.search.impl;
 
-import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
+import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.EventCoprocessor;
 import stroom.query.common.v2.EventCoprocessorSettings;
 import stroom.query.common.v2.EventRefs;
+import stroom.query.common.v2.ResultStore;
+import stroom.query.common.v2.ResultStoreFactory;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -38,20 +40,20 @@ public class EventSearchTaskHandler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EventSearchTaskHandler.class);
 
-    private final NodeInfo nodeInfo;
-    private final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory;
     private final SecurityContext securityContext;
     private final CoprocessorsFactory coprocessorsFactory;
+    private final ResultStoreFactory resultStoreFactory;
+    private final LuceneSearchExecutor luceneSearchExecutor;
 
     @Inject
-    EventSearchTaskHandler(final NodeInfo nodeInfo,
-                           final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory,
-                           final SecurityContext securityContext,
-                           final CoprocessorsFactory coprocessorsFactory) {
-        this.nodeInfo = nodeInfo;
-        this.clusterSearchResultCollectorFactory = clusterSearchResultCollectorFactory;
+    EventSearchTaskHandler(final SecurityContext securityContext,
+                           final CoprocessorsFactory coprocessorsFactory,
+                           final ResultStoreFactory resultStoreFactory,
+                           final LuceneSearchExecutor luceneSearchExecutor) {
         this.securityContext = securityContext;
         this.coprocessorsFactory = coprocessorsFactory;
+        this.resultStoreFactory = resultStoreFactory;
+        this.luceneSearchExecutor = luceneSearchExecutor;
     }
 
     public void exec(final EventSearchTask task,
@@ -93,27 +95,20 @@ public class EventSearchTaskHandler {
                         task.getKey(),
                         Collections.singletonList(settings),
                         modifiedQuery.getParams(),
-                        false);
+                        DataStoreSettings.BASIC_SETTINGS);
                 final EventCoprocessor eventCoprocessor = (EventCoprocessor) coprocessors.get(coprocessorId);
 
-                // Create a collector to store search results.
-                final ClusterSearchResultCollector searchResultCollector = clusterSearchResultCollectorFactory.create(
-                        asyncSearchTask,
-                        nodeInfo.getThisNodeName(),
+                // Create the search result collector.
+                final ResultStore resultStore = resultStoreFactory.create(
                         null,
                         coprocessors);
-
-                // Tell the task where results will be collected.
-                asyncSearchTask.setResultCollector(searchResultCollector);
-
                 try {
-                    // Start asynchronous search execution.
-                    searchResultCollector.start();
+                    luceneSearchExecutor.start(asyncSearchTask, resultStore);
 
-                    LOGGER.debug(() -> "Started searchResultCollector " + searchResultCollector);
+                    LOGGER.debug(() -> "Started searchResultCollector " + resultStore);
 
                     // Wait for completion or termination
-                    searchResultCollector.awaitCompletion();
+                    resultStore.awaitCompletion();
 
                     eventRefs = eventCoprocessor.getEventRefs();
                     if (eventRefs != null) {
@@ -137,7 +132,7 @@ public class EventSearchTaskHandler {
                             LogUtil.message("Thread {} interrupted executing task {}",
                                     Thread.currentThread().getName(), task));
                 } finally {
-                    searchResultCollector.destroy();
+                    resultStore.destroy();
                 }
             } finally {
                 consumer.accept(eventRefs, throwable);

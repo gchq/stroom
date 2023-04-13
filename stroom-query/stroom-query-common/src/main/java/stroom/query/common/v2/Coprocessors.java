@@ -11,7 +11,6 @@ import stroom.util.logging.LogUtil;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -21,7 +20,7 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
 import javax.validation.constraints.NotNull;
 
-public class Coprocessors implements Iterable<Coprocessor>, ValuesConsumer {
+public final class Coprocessors implements Iterable<Coprocessor>, ValuesConsumer {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Coprocessors.class);
 
@@ -68,7 +67,7 @@ public class Coprocessors implements Iterable<Coprocessor>, ValuesConsumer {
     @Override
     public void add(final Val[] values) {
         counter.increment();
-        LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(values)));
+        LOGGER.trace(() -> String.format("data: [%s]", values));
         // Give the data array to each of our coprocessors
         coprocessorMap.values().forEach(coprocessor -> coprocessor.add(values));
     }
@@ -155,5 +154,13 @@ public class Coprocessors implements Iterable<Coprocessor>, ValuesConsumer {
 
     public void forEachExtractionCoprocessor(final BiConsumer<DocRef, Set<Coprocessor>> consumer) {
         extractionPipelineCoprocessorMap.forEach(consumer);
+    }
+
+    public long getByteSize() {
+        return coprocessorMap
+                .values()
+                .stream()
+                .map(Coprocessor::getByteSize)
+                .reduce(0L, Long::sum);
     }
 }

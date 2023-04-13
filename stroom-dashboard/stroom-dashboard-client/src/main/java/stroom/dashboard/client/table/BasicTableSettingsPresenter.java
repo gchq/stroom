@@ -17,6 +17,7 @@
 package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
+import stroom.dashboard.client.main.BasicSettingsView;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.shared.ComponentConfig;
@@ -26,6 +27,7 @@ import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.shared.DocumentPermissionNames;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
@@ -35,7 +37,8 @@ import java.util.List;
 import java.util.Objects;
 
 public class BasicTableSettingsPresenter
-        extends BasicSettingsTabPresenter<BasicTableSettingsPresenter.BasicTableSettingsView> {
+        extends BasicSettingsTabPresenter<BasicTableSettingsPresenter.BasicTableSettingsView>
+        implements Focus {
 
     private final EntityDropDownPresenter pipelinePresenter;
 
@@ -49,6 +52,11 @@ public class BasicTableSettingsPresenter
         pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 
         view.setPipelineView(pipelinePresenter.getView());
+    }
+
+    @Override
+    public void focus() {
+        getView().focus();
     }
 
     private void setQueryList(final List<Component> list) {
@@ -101,13 +109,13 @@ public class BasicTableSettingsPresenter
     }
 
     @Override
-    public void read(final ComponentConfig componentData) {
-        super.read(componentData);
+    public void read(final ComponentConfig componentConfig) {
+        super.read(componentConfig);
 
         final List<Component> list = getComponents().getSortedComponentsByType(QueryPresenter.TYPE.getId());
         setQueryList(list);
 
-        final TableComponentSettings settings = (TableComponentSettings) componentData.getSettings();
+        final TableComponentSettings settings = (TableComponentSettings) componentConfig.getSettings();
         setQueryId(settings.getQueryId());
         setExtractValues(settings.extractValues());
         setPipeline(settings.getExtractionPipeline());
@@ -185,7 +193,7 @@ public class BasicTableSettingsPresenter
         return list;
     }
 
-    public interface BasicTableSettingsView extends BasicSettingsTabPresenter.SettingsView {
+    public interface BasicTableSettingsView extends BasicSettingsView {
 
         void setQueryList(List<Component> queryList);
 

@@ -88,28 +88,30 @@ public class TabContentProvider<E> implements HasDocumentRead<E>, HasWrite<E>, R
         this.docRef = docRef;
         this.entity = entity;
 
-        // Clear the used presenter set as we are reading a new entity.
         if (usedPresenters != null) {
-            usedPresenters.clear();
+            for (final PresenterWidget<?> presenterWidget : usedPresenters) {
+                read(presenterWidget, docRef, entity);
+            }
+            if (currentPresenter != null && !usedPresenters.contains(currentPresenter)) {
+                read(currentPresenter, docRef, entity);
+            }
+        } else if (currentPresenter != null) {
+            read(currentPresenter, docRef, entity);
         }
+
         // Clear the dirty tab state as we are reading a new entity.
         if (dirtyTabs != null) {
             dirtyTabs.clear();
         }
-
-        // If there is currently a presenter visible then let it read the
-        // entity.
-        if (currentPresenter != null) {
-            read(currentPresenter, docRef, entity);
-        }
     }
 
-    public void write(final E entity) {
+    public E write(E entity) {
         if (usedPresenters != null) {
             for (final PresenterWidget<?> presenter : usedPresenters) {
-                write(presenter, entity);
+                entity = write(presenter, entity);
             }
         }
+        return entity;
     }
 
     @Override
@@ -138,11 +140,12 @@ public class TabContentProvider<E> implements HasDocumentRead<E>, HasWrite<E>, R
     }
 
     @SuppressWarnings("unchecked")
-    private void write(final PresenterWidget<?> presenter, final E entity) {
+    private E write(final PresenterWidget<?> presenter, E entity) {
         if (entity != null && presenter instanceof HasWrite<?>) {
             final HasWrite<E> hasWrite = (HasWrite<E>) presenter;
-            hasWrite.write(entity);
+            entity = hasWrite.write(entity);
         }
+        return entity;
     }
 
     private void setReadOnly(final PresenterWidget<?> presenter, final boolean readOnly) {

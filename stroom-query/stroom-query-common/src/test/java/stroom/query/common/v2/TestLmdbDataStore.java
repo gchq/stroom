@@ -24,7 +24,7 @@ import stroom.lmdb.LmdbLibraryConfig;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.ParamUtil;
+import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.TableResult;
@@ -79,7 +79,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 () -> lmdbLibraryConfig);
 
         final ErrorConsumerImpl errorConsumer = new ErrorConsumerImpl();
-        final Serialisers serialisers = new SerialisersFactory().create(errorConsumer);
+        final Serialisers serialisers = new Serialisers(resultStoreConfig);
         return new LmdbDataStore(
                 serialisers,
                 lmdbEnvFactory,
@@ -90,7 +90,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 fieldIndex,
                 Collections.emptyMap(),
                 maxResults,
-                false,
+                DataStoreSettings.BASIC_SETTINGS,
                 () -> executorService,
                 errorConsumer);
     }
@@ -104,14 +104,14 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .addFields(Field.builder()
                         .id("Text")
                         .name("Text")
-                        .expression(ParamUtil.makeParam("Text"))
+                        .expression(ParamSubstituteUtil.makeParam("Text"))
                         .format(Format.TEXT)
                         .group(0)
                         .build())
                 .addFields(Field.builder()
                         .id("Text2")
                         .name("Text2")
-                        .expression(ParamUtil.makeParam("Text2"))
+                        .expression(ParamSubstituteUtil.makeParam("Text2"))
                         .format(Format.TEXT)
                         .build())
                 .build();
@@ -120,10 +120,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
 
         for (int i = 0; i < 3000; i++) {
             final Val val = ValString.create("Text " + i + "test".repeat(1000));
-            final Val[] values = new Val[2];
-            values[0] = val;
-            values[1] = val;
-            dataStore.add(values);
+            dataStore.add(Val.of(val, val));
         }
 
         // Wait for all items to be added.
@@ -141,12 +138,41 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .requestedRange(new OffsetRange(0, 3000))
                 .build();
         final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                new SerialisersFactory(),
                 fieldFormatter,
                 defaultMaxResultsSizes);
         final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                 dataStore,
                 tableResultRequest);
         assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
+    }
+
+    @Test
+    void basicTest() {
+        super.basicTest();
+    }
+
+    @Test
+    void sortedTextTest() {
+        super.sortedTextTest();
+    }
+
+    @Test
+    void sortedNumberTest() {
+        super.sortedNumberTest();
+    }
+
+    @Test
+    void sortedCountedTextTest1() {
+        super.sortedCountedTextTest1();
+    }
+
+    @Test
+    void sortedCountedTextTest2() {
+        super.sortedCountedTextTest2();
+    }
+
+    @Test
+    void sortedCountedTextTest3() {
+        super.sortedCountedTextTest3();
     }
 }

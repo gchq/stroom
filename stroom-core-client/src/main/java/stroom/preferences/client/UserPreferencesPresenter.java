@@ -25,13 +25,13 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.ui.config.shared.UserPreferences.Builder;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.ui.config.shared.UserPreferences.EditorKeyBindings;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -57,7 +57,6 @@ public final class UserPreferencesPresenter
             final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
         this.userPreferencesManager = userPreferencesManager;
-
         view.setUiHandlers(this);
         view.setAsDefaultVisible(clientSecurityContext.hasAppPermission(PermissionNames.MANAGE_PROPERTIES_PERMISSION));
     }
@@ -76,7 +75,7 @@ public final class UserPreferencesPresenter
             // Editor theme was reset due to UI theme change, so show the new value in the dialog
             getView().setEditorTheme(editorTheme);
         }
-        triggerThemeChange(after.getTheme(), editorTheme);
+        triggerThemeChange(after.getTheme(), editorTheme, after.getEditorKeyBindings());
     }
 
     /**
@@ -100,9 +99,11 @@ public final class UserPreferencesPresenter
         }
     }
 
-    private void triggerThemeChange(final String theme, final String editorTheme) {
+    private void triggerThemeChange(final String theme,
+                                    final String editorTheme,
+                                    final EditorKeyBindings editorKeyBindings) {
         final HasHandlers handlers = event -> getEventBus().fireEvent(event);
-        ChangeThemeEvent.fire(handlers, theme, editorTheme);
+        ChangeThemeEvent.fire(handlers, theme, editorTheme, editorKeyBindings.name());
     }
 
     @Override
@@ -127,62 +128,43 @@ public final class UserPreferencesPresenter
         read(userPreferences);
         userPreferencesManager.setCurrentPreferences(userPreferences);
         final String editorTheme = selectEditorTheme(originalPreferences, userPreferences);
-        triggerThemeChange(userPreferences.getTheme(), editorTheme);
+        triggerThemeChange(userPreferences.getTheme(), editorTheme, userPreferences.getEditorKeyBindings());
     }
 
     public void show() {
         final String caption = "User Preferences";
-        final PopupType popupType = PopupType.OK_CANCEL_DIALOG;
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    final UserPreferences userPreferences = write();
-                    userPreferencesManager.setCurrentPreferences(userPreferences);
-                    if (!Objects.equals(userPreferences, originalPreferences)) {
-                        userPreferencesManager.update(userPreferences, (result) -> hide());
-                    } else {
-                        hide();
-                    }
-                } else {
-                    userPreferencesManager.setCurrentPreferences(originalPreferences);
-                    hide();
-                }
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-            }
-        };
 
         userPreferencesManager.fetch(userPreferences -> {
             originalPreferences = userPreferences;
             read(userPreferences);
-            ShowPopupEvent.fire(
-                    UserPreferencesPresenter.this,
-                    UserPreferencesPresenter.this,
-                    popupType,
-                    getPopupSize(),
-                    caption,
-                    popupUiHandlers);
+            ShowPopupEvent.builder(this)
+                    .popupType(PopupType.OK_CANCEL_DIALOG)
+                    .popupSize(PopupSize.resizableX())
+                    .caption(caption)
+                    .onShow(e -> getView().focus())
+                    .onHideRequest(e -> {
+                        if (e.isOk()) {
+                            final UserPreferences newUserPreferences = write();
+                            userPreferencesManager.setCurrentPreferences(newUserPreferences);
+                            if (!Objects.equals(newUserPreferences, originalPreferences)) {
+                                userPreferencesManager.update(newUserPreferences, (result) -> e.hide());
+                            } else {
+                                e.hide();
+                            }
+                        } else {
+                            userPreferencesManager.setCurrentPreferences(originalPreferences);
+                            e.hide();
+                        }
+                    })
+                    .fire();
         });
     }
-
-    private PopupSize getPopupSize() {
-        return PopupSize.resizableX();
-    }
-
-    protected void hide() {
-        HidePopupEvent.fire(
-                UserPreferencesPresenter.this,
-                UserPreferencesPresenter.this);
-    }
-
 
     private void read(final UserPreferences userPreferences) {
         getView().setThemes(userPreferencesManager.getThemes());
         getView().setTheme(userPreferences.getTheme());
         getView().setEditorThemes(userPreferencesManager.getEditorThemes());
+        getView().setEditorKeyBindings(userPreferences.getEditorKeyBindings());
         getView().setDensity(userPreferences.getDensity());
         getView().setFonts(userPreferencesManager.getFonts());
         getView().setFont(userPreferences.getFont());
@@ -213,6 +195,7 @@ public final class UserPreferencesPresenter
         return UserPreferences.builder()
                 .theme(getView().getTheme())
                 .editorTheme(getView().getEditorTheme())
+                .editorKeyBindings(getView().getEditorKeyBindings())
                 .density(getView().getDensity())
                 .font(getView().getFont())
                 .fontSize(getView().getFontSize())
@@ -221,7 +204,7 @@ public final class UserPreferencesPresenter
                 .build();
     }
 
-    public interface UserPreferencesView extends View, HasUiHandlers<UserPreferencesUiHandlers> {
+    public interface UserPreferencesView extends View, Focus, HasUiHandlers<UserPreferencesUiHandlers> {
 
         String getTheme();
 
@@ -234,6 +217,10 @@ public final class UserPreferencesPresenter
         void setEditorTheme(String editorTheme);
 
         void setEditorThemes(List<String> editorThemes);
+
+        EditorKeyBindings getEditorKeyBindings();
+
+        void setEditorKeyBindings(EditorKeyBindings editorKeyBindings);
 
         String getDensity();
 

@@ -23,12 +23,14 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.MenuItem;
 import stroom.widget.menu.client.presenter.Separator;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class ExportConfigPlugin extends Plugin {
 
     private final ClientSecurityContext securityContext;
@@ -43,20 +45,15 @@ public class ExportConfigPlugin extends Plugin {
     @Override
     public void onReveal(final BeforeRevealMenubarEvent event) {
         // Add items to the tools menu.
-        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, new Separator(100));
         if (securityContext.hasAppPermission("Export Configuration")) {
-            event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, createExportMenuItem());
+            event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, new Separator(200));
+            event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
+                    new IconMenuItem.Builder()
+                            .priority(202)
+                            .icon(SvgPresets.DOWNLOAD)
+                            .text("Export")
+                            .command(() -> ExportConfigEvent.fire(ExportConfigPlugin.this, null))
+                            .build());
         }
-
-    }
-
-    private MenuItem createExportMenuItem() {
-        return new IconMenuItem(110,
-                SvgPresets.DOWNLOAD,
-                SvgPresets.DOWNLOAD,
-                "Export",
-                null,
-                true,
-                () -> ExportConfigEvent.fire(ExportConfigPlugin.this, null));
     }
 }

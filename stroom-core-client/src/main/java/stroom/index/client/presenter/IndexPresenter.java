@@ -17,7 +17,6 @@
 
 package stroom.index.client.presenter;
 
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
@@ -43,12 +42,11 @@ public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, I
     @Inject
     public IndexPresenter(final EventBus eventBus,
                           final LinkTabPanelView view,
-                          final RestFactory restFactory,
                           final Provider<IndexSettingsPresenter> indexSettingsPresenter,
                           final Provider<IndexFieldListPresenter> indexFieldListPresenter,
                           final Provider<IndexShardPresenter> indexShardPresenter,
                           final ClientSecurityContext securityContext) {
-        super(eventBus, view, securityContext, restFactory);
+        super(eventBus, view, securityContext);
 
         tabContentProvider.setDirtyHandler(event -> {
             if (event.isDirty()) {
@@ -83,8 +81,8 @@ public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, I
     }
 
     @Override
-    protected void onWrite(final IndexDoc index) {
-        tabContentProvider.write(index);
+    protected IndexDoc onWrite(final IndexDoc index) {
+        return tabContentProvider.write(index);
     }
 
     @Override

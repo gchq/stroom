@@ -19,14 +19,14 @@ package stroom.dashboard.client.table;
 import stroom.alert.client.event.AlertEvent;
 import stroom.query.api.v2.Field;
 import stroom.util.shared.EqualsUtil;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -38,7 +38,7 @@ import java.util.function.BiConsumer;
 
 public class RenameFieldPresenter
         extends MyPresenterWidget<RenameFieldPresenter.RenameFieldView>
-        implements PopupUiHandlers {
+        implements HidePopupRequestEvent.Handler {
 
     private TablePresenter tablePresenter;
     private Field field;
@@ -55,7 +55,7 @@ public class RenameFieldPresenter
 
         registerHandler(getView().getNameBox().addKeyDownHandler(event -> {
             if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-                onHideRequest(false, true);
+                HidePopupRequestEvent.builder(this).fire();
             }
         }));
     }
@@ -70,20 +70,19 @@ public class RenameFieldPresenter
         getView().getName().setText(field.getName());
 
         final PopupSize popupSize = PopupSize.resizableX();
-        ShowPopupEvent.fire(
-                this,
-                this,
-                PopupType.OK_CANCEL_DIALOG,
-                popupSize,
-                "Rename Field",
-                this);
 
-        getView().focus();
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Rename Field")
+                .onShow(e -> getView().focus())
+                .onHideRequest(this)
+                .fire();
     }
 
     @Override
-    public void onHideRequest(final boolean autoClose, final boolean ok) {
-        if (ok) {
+    public void onHideRequest(final HidePopupRequestEvent e) {
+        if (e.isOk()) {
             final String newFieldName = getView().getName().getText();
             if (newFieldName != null
                     && !newFieldName.trim().isEmpty()
@@ -106,30 +105,24 @@ public class RenameFieldPresenter
                             null);
                 } else {
                     fieldChangeConsumer.accept(field, field.copy().name(newFieldName).build());
-                    HidePopupEvent.fire(tablePresenter, RenameFieldPresenter.this);
+                    e.hide();
                 }
             } else {
-                HidePopupEvent.fire(tablePresenter, RenameFieldPresenter.this);
+                e.hide();
             }
         } else {
-            HidePopupEvent.fire(tablePresenter, RenameFieldPresenter.this);
+            e.hide();
         }
-    }
-
-    @Override
-    public void onHide(final boolean autoClose, final boolean ok) {
     }
 
     public String getName() {
         return getView().getName().getText();
     }
 
-    public interface RenameFieldView extends View {
+    public interface RenameFieldView extends View, Focus {
 
         HasText getName();
 
         HasKeyDownHandlers getNameBox();
-
-        void focus();
     }
 }

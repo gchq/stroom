@@ -4,13 +4,13 @@
 package stroom.meta.impl.db.jooq;
 
 
+import stroom.meta.impl.db.jooq.tables.Meta;
+import stroom.meta.impl.db.jooq.tables.MetaVal;
+
 import org.jooq.Index;
 import org.jooq.OrderField;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
-
-import stroom.meta.impl.db.jooq.tables.Meta;
-import stroom.meta.impl.db.jooq.tables.MetaVal;
 
 
 /**

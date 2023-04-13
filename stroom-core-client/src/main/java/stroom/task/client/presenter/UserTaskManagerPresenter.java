@@ -33,14 +33,12 @@ import stroom.task.shared.TaskResource;
 import stroom.task.shared.TerminateTaskProgressRequest;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.ResultPage;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -111,18 +109,17 @@ public class UserTaskManagerPresenter
         refreshing.clear();
         visible = true;
 
-        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                refreshTimer.cancel();
-                refreshing.clear();
-                visible = false;
-
-                HidePopupEvent.fire(UserTaskManagerPresenter.this, UserTaskManagerPresenter.this);
-            }
-        };
-
-        ShowPopupEvent.fire(this, this, PopupType.CLOSE_DIALOG, "Task Manager", popupUiHandlers, false);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.CLOSE_DIALOG)
+                .caption("Task Manager")
+                .onShow(e -> getView().focus())
+                .onHideRequest(e -> {
+                    refreshTimer.cancel();
+                    refreshing.clear();
+                    visible = false;
+                    e.hide();
+                })
+                .fire();
     }
 
     private void refreshTaskStatus() {
@@ -229,7 +226,7 @@ public class UserTaskManagerPresenter
     protected void revealInParent() {
     }
 
-    public interface UserTaskManagerView extends View {
+    public interface UserTaskManagerView extends View, Focus {
 
         void addTask(View task);
 

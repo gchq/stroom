@@ -46,6 +46,7 @@ import stroom.task.api.TaskContext;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.io.ByteCountInputStream;
+import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.Severity;
@@ -61,8 +62,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -342,7 +341,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
 
                 final String refData = StreamUtil.fileToString(refFile);
                 final String data = StreamUtil.streamToString(segmentInputStream);
-                assertThat(data).isEqualTo(refData);
+                assertThat(data).withFailMessage(() -> FileUtil.getCanonicalPath(refFile)).isEqualTo(refData);
 
 //                Files.writeString(refFile, data);
             }
@@ -362,7 +361,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
 
                 final String refData = StreamUtil.fileToString(refFile);
                 final String data = StreamUtil.streamToString(segmentInputStream);
-                assertThat(data).isEqualTo(refData);
+                assertThat(data).withFailMessage(() -> FileUtil.getCanonicalPath(refFile)).isEqualTo(refData);
 
 //                Files.writeString(refFile, data);
             }

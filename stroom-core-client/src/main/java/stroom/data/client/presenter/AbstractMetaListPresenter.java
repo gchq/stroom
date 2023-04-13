@@ -24,9 +24,11 @@ import stroom.core.client.LocationManager;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
+import stroom.data.grid.client.DataGridSelectionEventManager;
+import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
+import stroom.data.grid.client.PagerView;
 import stroom.data.shared.DataResource;
 import stroom.data.table.client.Refreshable;
 import stroom.datasource.api.v2.AbstractField;
@@ -59,12 +61,14 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
+import stroom.util.client.MyDataGridUtil;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 import stroom.util.shared.Severity;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.shared.GWT;
@@ -85,7 +89,7 @@ import java.util.function.Function;
 import javax.inject.Provider;
 
 public abstract class AbstractMetaListPresenter
-        extends MyPresenterWidget<DataGridView<MetaRow>>
+        extends MyPresenterWidget<PagerView>
         implements HasDataSelectionHandlers<Selection<Long>>, Refreshable {
 
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
@@ -104,8 +108,12 @@ public abstract class AbstractMetaListPresenter
 
     private ResultPage<MetaRow> resultPage;
     private boolean initialised;
+    final MyDataGrid<MetaRow> dataGrid;
+    private final MultiSelectionModelImpl<MetaRow> selectionModel;
+    private final DataGridSelectionEventManager<MetaRow> selectionEventManager;
 
     AbstractMetaListPresenter(final EventBus eventBus,
+                              final PagerView view,
                               final RestFactory restFactory,
                               final LocationManager locationManager,
                               final DateTimeFormatter dateTimeFormatter,
@@ -113,13 +121,20 @@ public abstract class AbstractMetaListPresenter
                               final Provider<ProcessChoicePresenter> processChoicePresenterProvider,
                               final Provider<EntityChooser> pipelineSelection,
                               final boolean allowSelectAll) {
-        super(eventBus, new DataGridViewImpl<>(true));
+        super(eventBus, view);
         this.restFactory = restFactory;
         this.locationManager = locationManager;
         this.dateTimeFormatter = dateTimeFormatter;
         this.selectionSummaryPresenterProvider = selectionSummaryPresenterProvider;
         this.processChoicePresenterProvider = processChoicePresenterProvider;
         this.pipelineSelection = pipelineSelection;
+
+        this.dataGrid = new MyDataGrid<>();
+        selectionModel = new MultiSelectionModelImpl<>(dataGrid);
+        selectionEventManager = new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
+        dataGrid.setSelectionModel(selectionModel, selectionEventManager);
+
+        view.setDataWidget(dataGrid);
 
         selection.setMatchAll(false);
         addColumns(allowSelectAll);
@@ -150,14 +165,17 @@ public abstract class AbstractMetaListPresenter
                 super.changeData(onProcessData(data));
             }
         };
+    }
 
-        getView().addColumnSortHandler(event -> {
+    @Override
+    protected void onBind() {
+        registerHandler(dataGrid.addColumnSortHandler(event -> {
             if (event.getColumn() instanceof OrderByColumn<?, ?>) {
                 final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
                 criteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
                 refresh();
             }
-        });
+        }));
     }
 
     protected ResultPage<MetaRow> onProcessData(final ResultPage<MetaRow> data) {
@@ -215,10 +233,10 @@ public abstract class AbstractMetaListPresenter
         // There might have been a selection change so fire a data selection event.
         DataSelectionEvent.fire(AbstractMetaListPresenter.this, selection, false);
 
-        MetaRow selected = getView().getSelectionModel().getSelected();
+        MetaRow selected = selectionModel.getSelected();
         if (selected != null) {
             if (!resultPage.getValues().contains(selected)) {
-                getView().getSelectionModel().setSelected(selected, false);
+                selectionModel.setSelected(selected, false);
             }
         }
 
@@ -227,12 +245,19 @@ public abstract class AbstractMetaListPresenter
 
     protected abstract void addColumns(boolean allowSelectAll);
 
-    void addSelectedColumn(final boolean allowSelectAll) {
-        final TickBoxCell.MarginAppearance tickBoxAppearance = GWT.create(TickBoxCell.MarginAppearance.class);
+    private void setMatchAll(final boolean select) {
+        selection.clear();
+        selection.setMatchAll(select);
+        if (dataProvider != null) {
+            dataProvider.updateRowData(dataProvider.getRanges()[0].getStart(), resultPage.getValues());
+        }
+        DataSelectionEvent.fire(AbstractMetaListPresenter.this, selection, false);
+    }
 
+    void addSelectedColumn(final boolean allowSelectAll) {
         // Select Column
         final Column<MetaRow, TickBoxState> column = new Column<MetaRow, TickBoxState>(
-                TickBoxCell.create(tickBoxAppearance, false, false)) {
+                TickBoxCell.create(false, false)) {
             @Override
             public TickBoxState getValue(final MetaRow object) {
                 return TickBoxState.fromBoolean(selection.isMatch(object.getMeta().getId()));
@@ -240,7 +265,7 @@ public abstract class AbstractMetaListPresenter
         };
         if (allowSelectAll) {
             final Header<TickBoxState> header = new Header<TickBoxState>(
-                    TickBoxCell.create(tickBoxAppearance, false, false)) {
+                    TickBoxCell.create(false, false)) {
                 @Override
                 public TickBoxState getValue() {
                     if (selection.isMatchAll()) {
@@ -252,25 +277,21 @@ public abstract class AbstractMetaListPresenter
                     return TickBoxState.UNTICK;
                 }
             };
-            getView().addColumn(column, header, ColumnSizeConstants.CHECKBOX_COL);
+            dataGrid.addColumn(column, header, ColumnSizeConstants.CHECKBOX_COL);
 
             header.setUpdater(value -> {
                 if (value.equals(TickBoxState.UNTICK)) {
-                    selection.clear();
-                    selection.setMatchAll(false);
+                    setMatchAll(false);
+                } else if (value.equals(TickBoxState.TICK)) {
+                    setMatchAll(true);
                 }
-                if (value.equals(TickBoxState.TICK)) {
-                    selection.clear();
-                    selection.setMatchAll(true);
-                }
-                if (dataProvider != null) {
-                    dataProvider.updateRowData(dataProvider.getRanges()[0].getStart(), resultPage.getValues());
-                }
-                DataSelectionEvent.fire(AbstractMetaListPresenter.this, selection, false);
             });
 
+            registerHandler(selectionEventManager.addSelectAllHandler(event ->
+                    setMatchAll(!selection.isMatchAll())));
+
         } else {
-            getView().addColumn(column, "", ColumnSizeConstants.CHECKBOX_COL);
+            dataGrid.addColumn(column, "", ColumnSizeConstants.CHECKBOX_COL);
         }
 
         // Add Handlers
@@ -288,7 +309,7 @@ public abstract class AbstractMetaListPresenter
                 }
                 selection.remove(row.getMeta().getId());
             }
-            getView().redrawHeaders();
+            dataGrid.redrawHeaders();
             DataSelectionEvent.fire(AbstractMetaListPresenter.this, selection, false);
         });
     }
@@ -309,14 +330,14 @@ public abstract class AbstractMetaListPresenter
     }
 
     void addInfoColumn() {
-        DataGridUtil.addStatusIconColumn(getView(), this::getInfoCellState);
+        MyDataGridUtil.addStatusIconColumn(dataGrid, this::getInfoCellState);
     }
 
     void addCreatedColumn() {
 
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder((MetaRow metaRow) ->
-                        dateTimeFormatter.format(metaRow.getMeta().getCreateMs()))
+                                dateTimeFormatter.format(metaRow.getMeta().getCreateMs()))
                         .withSorting(MetaFields.CREATE_TIME)
                         .build(),
                 "Created",
@@ -324,7 +345,7 @@ public abstract class AbstractMetaListPresenter
     }
 
     void addFeedColumn() {
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder((MetaRow metaRow) ->
                                 Optional.ofNullable(metaRow)
                                         .map(MetaRow::getMeta)
@@ -337,7 +358,7 @@ public abstract class AbstractMetaListPresenter
     }
 
     void addStreamTypeColumn() {
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder((MetaRow metaRow) ->
                                 Optional.ofNullable(metaRow)
                                         .map(MetaRow::getMeta)
@@ -350,7 +371,7 @@ public abstract class AbstractMetaListPresenter
     }
 
     void addPipelineColumn() {
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 DataGridUtil
                         .textColumnBuilder((MetaRow metaRow) -> {
                             if (metaRow.getMeta().getProcessorUuid() != null) {
@@ -368,7 +389,7 @@ public abstract class AbstractMetaListPresenter
     }
 
     protected MultiSelectionModel<MetaRow> getSelectionModel() {
-        return getView().getSelectionModel();
+        return selectionModel;
     }
 
     Selection<Long> getSelection() {
@@ -401,7 +422,7 @@ public abstract class AbstractMetaListPresenter
         final Column<MetaRow, String> column = DataGridUtil.columnBuilder(extractor, formatter, TextCell::new)
                 .build();
 
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 column,
                 name,
                 size);
@@ -419,7 +440,7 @@ public abstract class AbstractMetaListPresenter
                 .rightAligned()
                 .build();
 
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 column,
                 DataGridUtil.createRightAlignedHeader(name),
                 size);
@@ -460,10 +481,14 @@ public abstract class AbstractMetaListPresenter
                 .rightAligned()
                 .build();
 
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 column,
                 DataGridUtil.createRightAlignedHeader(name),
                 size);
+    }
+
+    void addEndColumn() {
+        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     public void setExpression(final ExpressionOperator expression) {
@@ -839,14 +864,14 @@ public abstract class AbstractMetaListPresenter
     public void refresh() {
         if (!initialised) {
             initialised = true;
-            dataProvider.addDataDisplay(getView().getDataDisplay());
+            dataProvider.addDataDisplay(dataGrid);
         } else {
             dataProvider.refresh();
         }
     }
 
     MetaRow getSelected() {
-        return getView().getSelectionModel().getSelected();
+        return selectionModel.getSelected();
     }
 
     @Override

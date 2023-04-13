@@ -17,11 +17,11 @@
 package stroom.alert.client.view;
 
 import stroom.alert.client.presenter.CommonAlertPresenter.CommonAlertView;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.IFrameElement;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -29,7 +29,6 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Hyperlink;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RichTextArea;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -41,42 +40,36 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
 
     private static final int MAX_MESSAGE_LENGTH = 1000;
 
-    private final HorizontalPanel widget = new HorizontalPanel();
-    private final VerticalPanel messageArea = new VerticalPanel();
+    private final SimplePanel container = new SimplePanel();
     private final SimplePanel image = new SimplePanel();
     private final HTML message = new HTML();
     private final Hyperlink showHideDetail = new Hyperlink();
-    private final RichTextArea detail = new RichTextArea();
+    private final SimplePanel detail = new SimplePanel();
     private boolean detailVisible = false;
 
     @Inject
     public CommonAlertViewImpl() {
-        widget.add(image);
-        widget.add(messageArea);
+        final HorizontalPanel layout = new HorizontalPanel();
+        container.add(layout);
+
+        layout.add(image);
+        final VerticalPanel messageArea = new VerticalPanel();
+        layout.add(messageArea);
 
         messageArea.add(message);
         messageArea.add(showHideDetail);
         messageArea.add(detail);
-        detail.setEnabled(false);
 
-        widget.addStyleName("alert-table");
+        layout.addStyleName("alert-table");
         message.addStyleName("alert-message");
         showHideDetail.addStyleName("alert-showHide");
         detail.addStyleName("alert-detail");
-
-        detail.addInitializeHandler(event -> {
-            final Element e = detail.getElement();
-            final IFrameElement ife = IFrameElement.as(e);
-            final Document doc = ife.getContentDocument();
-            doc.getBody().getStyle().setPadding(3, Unit.PX);
-            doc.getBody().getStyle().setMargin(0, Unit.PX);
-        });
 
         showHideDetail.setVisible(false);
         setDetailVisible(false);
 
         showHideDetail.addHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 showDetail(!detailVisible);
             }
         }, ClickEvent.getType());
@@ -88,7 +81,7 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
 
     @Override
     public Widget asWidget() {
-        return widget;
+        return container;
     }
 
     @Override
@@ -128,10 +121,10 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
     public void setDetail(final SafeHtml html) {
         if (html != null && html.asString().length() > 0) {
             final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-            builder.appendHtmlConstant("<div style=\"font-family: Courier New; font-size: 10px; white-space: pre;\">");
+            builder.appendHtmlConstant("<div class=\"alert-detail-text\">");
             builder.append(html);
             builder.appendHtmlConstant("</div>");
-            detail.setHTML(builder.toSafeHtml());
+            detail.getElement().setInnerHTML(builder.toSafeHtml().asString());
             showDetail(true);
         } else {
             showHideDetail.setVisible(false);

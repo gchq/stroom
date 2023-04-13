@@ -29,7 +29,7 @@ import java.util.function.Supplier;
         commonReturnDescription = "Number of unique child group keys within the current group.",
         signatures = @FunctionSignature(
                 args = {}))
-class CountGroups extends AbstractFunction {
+class CountGroups extends AbstractFunction implements AggregateFunction {
 
     static final String NAME = "countGroups";
 

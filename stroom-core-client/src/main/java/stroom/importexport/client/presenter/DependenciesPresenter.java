@@ -20,8 +20,8 @@ import stroom.cell.info.client.ActionCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -42,12 +42,10 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuBuilder;
-import stroom.widget.menu.client.presenter.MenuListPresenter;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
@@ -67,7 +65,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Dependency>> {
+public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
 
     private static final ContentResource CONTENT_RESOURCE = GWT.create(ContentResource.class);
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
@@ -88,18 +86,23 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
     private final RestFactory restFactory;
     private final DependencyCriteria criteria;
     private final RestDataProvider<Dependency, ResultPage<Dependency>> dataProvider;
+    private final MyDataGrid<Dependency> dataGrid;
     private final DocumentPluginEventManager entityPluginEventManager;
-    private final MenuListPresenter menuListPresenter;
+    private final MenuPresenter menuPresenter;
 
     // Holds all the doc type icons
     private Map<String, Preset> typeToSvgMap = new HashMap<>();
 
     @Inject
     public DependenciesPresenter(final EventBus eventBus,
+                                 final PagerView view,
                                  final RestFactory restFactory,
                                  final DocumentPluginEventManager entityPluginEventManager,
-                                 final MenuListPresenter menuListPresenter) {
-        super(eventBus, new DataGridViewImpl<>(false, DEFAULT_PAGE_SIZE));
+                                 final MenuPresenter menuPresenter) {
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>(100);
+        view.setDataWidget(dataGrid);
 
         this.restFactory = restFactory;
         criteria = new DependencyCriteria();
@@ -120,24 +123,23 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
                         .fetchDependencies(criteria);
             }
         };
-        dataProvider.addDataDisplay(getView().getDataDisplay());
+        dataProvider.addDataDisplay(dataGrid);
         this.entityPluginEventManager = entityPluginEventManager;
-        this.menuListPresenter = menuListPresenter;
-
+        this.menuPresenter = menuPresenter;
         initColumns();
     }
 
     private void initColumns() {
 
         // From (Icon)
-        getView().addColumn(DataGridUtil.svgPresetColumnBuilder(false, (Dependency row) ->
+        dataGrid.addColumn(DataGridUtil.svgPresetColumnBuilder(false, (Dependency row) ->
                                 getDocTypeIcon(row.getFrom()))
                         .build(),
                 "<br/>",
                 ColumnSizeConstants.ICON_COL);
 
         // From (Type)
-        getView().addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
+        dataGrid.addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
                                 getValue(row, Dependency::getFrom, DocRef::getType))
                         .withSorting(DependencyCriteria.FIELD_FROM_TYPE, true)
                         .build(),
@@ -150,7 +152,7 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
                 .withSorting(DependencyCriteria.FIELD_FROM_NAME, true)
                 .build();
         fromNameColumn.setFieldUpdater((index, object, value) -> onOpenDoc(object.getFrom()));
-        getView().addResizableColumn(fromNameColumn,
+        dataGrid.addResizableColumn(fromNameColumn,
                 DependencyCriteria.FIELD_FROM_NAME,
                 COL_WIDTH_NAME);
 
@@ -158,14 +160,14 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
         addActionButtonColumn(Dependency::getFrom, "", 40);
 
         // To (Icon)
-        getView().addColumn(DataGridUtil.svgPresetColumnBuilder(false, (Dependency row) ->
+        dataGrid.addColumn(DataGridUtil.svgPresetColumnBuilder(false, (Dependency row) ->
                                 getDocTypeIcon(row.getTo()))
                         .build(),
                 "<br/>",
                 ColumnSizeConstants.ICON_COL);
 
         // To (Type)
-        getView().addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
+        dataGrid.addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
                                 getValue(row, Dependency::getTo, DocRef::getType))
                         .withSorting(DependencyCriteria.FIELD_TO_TYPE, true)
                         .build(),
@@ -178,7 +180,7 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
                 .withSorting(DependencyCriteria.FIELD_TO_NAME, true)
                 .build();
         toNameColumn.setFieldUpdater((index, object, value) -> onOpenDoc(object.getTo()));
-        getView().addResizableColumn(toNameColumn,
+        dataGrid.addResizableColumn(toNameColumn,
                 DependencyCriteria.FIELD_TO_NAME,
                 COL_WIDTH_NAME);
 
@@ -186,15 +188,15 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
         addActionButtonColumn(Dependency::getTo, "", 40);
 
         // Status
-        getView().addResizableColumn(DataGridUtil.htmlColumnBuilder(this::getStatusValue)
+        dataGrid.addResizableColumn(DataGridUtil.htmlColumnBuilder(this::getStatusValue)
                         .withSorting(DependencyCriteria.FIELD_STATUS, false)
                         .centerAligned()
                         .build(),
                 DataGridUtil.createCenterAlignedHeader(DependencyCriteria.FIELD_STATUS),
                 60);
 
-        DataGridUtil.addEndColumn(getView());
-        DataGridUtil.addColumnSortHandler(getView(), criteria, dataProvider::refresh);
+        DataGridUtil.addEndColumn(dataGrid);
+        DataGridUtil.addColumnSortHandler(dataGrid, criteria, dataProvider::refresh);
     }
 
     private void addActionButtonColumn(final Function<Dependency, DocRef> docRefSelector,
@@ -206,47 +208,38 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
                 Function.identity(),
                 () -> actionCell
         ).build();
-        getView().addColumn(actionColumn, name, width);
+        dataGrid.addColumn(actionColumn, name, width);
     }
 
     private void showActionMenu(final DocRef docRef, final NativeEvent event) {
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                HidePopupEvent.fire(DependenciesPresenter.this, menuListPresenter);
-            }
 
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-            }
-        };
-
-        final com.google.gwt.dom.client.Element target = event.getEventTarget().cast();
         final PopupPosition popupPosition = new PopupPosition(event.getClientX() + 10, event.getClientY());
-
-        menuListPresenter.setData(buildActionMenu(docRef));
-        ShowPopupEvent.fire(this, menuListPresenter, PopupType.POPUP, popupPosition, popupUiHandlers);
+        menuPresenter.setData(buildActionMenu(docRef));
+        ShowPopupEvent.builder(menuPresenter)
+                .popupType(PopupType.POPUP)
+                .popupPosition(popupPosition)
+                .fire();
     }
 
     private List<Item> buildActionMenu(final DocRef docRef) {
 
         return MenuBuilder.builder()
                 .withIconMenuItem(itemBuilder -> itemBuilder
-                        .withIcon(DOC_INFO_PRESET)
-                        .withText(DOC_INFO_PRESET.getTitle())
-                        .withCommand(() -> onDocInfo(docRef)))
+                        .icon(DOC_INFO_PRESET)
+                        .text(DOC_INFO_PRESET.getTitle())
+                        .command(() -> onDocInfo(docRef)))
                 .withIconMenuItem(itemBuilder -> itemBuilder
-                        .withIcon(DELETE_DOC_PRESET)
-                        .withText(DELETE_DOC_PRESET.getTitle())
-                        .withCommand(() -> onDeleteDoc(docRef)))
+                        .icon(DELETE_DOC_PRESET)
+                        .text(DELETE_DOC_PRESET.getTitle())
+                        .command(() -> onDeleteDoc(docRef)))
                 .withIconMenuItem(itemBuilder -> itemBuilder
-                        .withIcon(REVEAL_DOC_PRESET)
-                        .withText(REVEAL_DOC_PRESET.getTitle())
-                        .withCommand(() -> onRevealDoc(docRef)))
+                        .icon(REVEAL_DOC_PRESET)
+                        .text(REVEAL_DOC_PRESET.getTitle())
+                        .command(() -> onRevealDoc(docRef)))
                 .withIconMenuItem(itemBuilder -> itemBuilder
-                        .withIcon(SHOW_DEPENDENCIES_PRESET)
-                        .withText(SHOW_DEPENDENCIES_PRESET.getTitle())
-                        .withCommand(() -> onShowDependencies(docRef)))
+                        .icon(SHOW_DEPENDENCIES_PRESET)
+                        .text(SHOW_DEPENDENCIES_PRESET.getTitle())
+                        .command(() -> onShowDependencies(docRef)))
                 .build();
     }
 
@@ -319,21 +312,6 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
         }
     }
 
-    private SafeHtml getUUID(final Dependency row,
-                             final Function<Dependency, DocRef> docRefExtractor) {
-
-        final DocRef docRef = docRefExtractor.apply(row);
-        final String uuid = docRef != null
-                ? docRef.getUuid()
-                : null;
-
-        final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-        builder.appendHtmlConstant("<span style=\"color:grey\">");
-        builder.appendEscaped(uuid);
-        builder.appendHtmlConstant("</span>");
-        return builder.toSafeHtml();
-    }
-
     private Preset getDocTypeIcon(final DocRef docRef) {
         if (docRef != null && docRef.getType() != null && !docRef.getType().isEmpty()) {
             final Preset svgPreset = typeToSvgMap.get(docRef.getType());
@@ -376,7 +354,7 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
     }
 
     private void resetRange() {
-        getView().getDataDisplay().setVisibleRange(new Range(0, DEFAULT_PAGE_SIZE));
+        dataGrid.setVisibleRange(new Range(0, DEFAULT_PAGE_SIZE));
     }
 
     void refresh() {

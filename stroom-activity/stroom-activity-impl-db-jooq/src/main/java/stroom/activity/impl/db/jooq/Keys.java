@@ -4,13 +4,13 @@
 package stroom.activity.impl.db.jooq;
 
 
+import stroom.activity.impl.db.jooq.tables.Activity;
+import stroom.activity.impl.db.jooq.tables.records.ActivityRecord;
+
 import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
-
-import stroom.activity.impl.db.jooq.tables.Activity;
-import stroom.activity.impl.db.jooq.tables.records.ActivityRecord;
 
 
 /**

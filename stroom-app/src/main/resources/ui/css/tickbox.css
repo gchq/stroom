@@ -14,123 +14,139 @@
  * limitations under the License.
  */
 
-
-
 .tickBox {
-	display: inline-block;
-	text-align: left;
-	padding-top: 2px;
-	padding-bottom: 2px;
-}
-/*
-.tickBox img {
-	vertical-align: top !important;
-	margin-top: 1px;
-}
-*/
-.tickBox .tickBox-text {
-	display: inline-block;
-	margin-left: 4px;
-	cursor: pointer;
+    display: flex;
+    width: 16px;
+    height: 16px;
+    background-color: var(--control__background-color);
+    border: 1px solid var(--control__border-color);
+    border-radius: .25rem;
+    fill: white;
+    overflow: hidden;
 }
 
-
-.tickBox .tickBox-tick {
-    background-image: url("../images/tickbox/tick.png");
-    width: 13px;
-    height: 13px;
+.tickBox-text {
+    display: inline-block;
+    margin-left: 4px;
+    cursor: pointer;
 }
 
-.tickBox .tickBox-tickNB {
-    background-image: url("../images/tickbox/tickNB.png");
-    width: 13px;
-    height: 13px;
+.tickBox-tick {
+    background-color: var(--primary);
+    border: 3px solid var(--primary);
 }
 
-.tickBox .tickBox-halfTick {
-    background-image: url("../images/tickbox/halfTick.png");
-    width: 13px;
-    height: 13px;
+.tickBox-halfTick {
+    padding: 3px;
 }
 
-.tickBox .tickBox-halfTickNB {
-    background-image: url("../images/tickbox/halfTickNB.png");
-    width: 13px;
-    height: 13px;
+.tickBox-halfTick-inner {
+    background-color: var(--primary);
+    width: 100%;
+    height: 100%;
 }
 
-.tickBox .tickBox-untick {
-    background-image: url("../images/tickbox/untick.png");
-    width: 13px;
-    height: 13px;
+.tickBox-untick {
 }
 
-.tickBox .tickBox-untickNB {
-    background-image: url("../images/tickbox/untickNB.png");
-    width: 13px;
-    height: 13px;
+.tickBox-tick + .tickBox-noBorder {
+    border: 3px solid var(--primary);
 }
 
-.tickBox .tickBox-tickDisabled {
-    background-image: url("../images/tickbox/tickDisabled.png");
-    width: 13px;
-    height: 13px;
+.tickBox-noBorder {
+    border: 3px solid transparent;
 }
 
-.tickBox .tickBox-halfTickDisabled {
-    background-image: url("../images/tickbox/halfTickDisabled.png");
-    width: 13px;
-    height: 13px;
-}
-
-.tickBox .tickBox-untickDisabled {
-    background-image: url("../images/tickbox/untickDisabled.png");
-    width: 13px;
-    height: 13px;
+.tickBox-disabled {
+    opacity: 0.5;
 }
 
 
-.stroom-theme-dark .tickBox .tickBox-halfTick {
-    background-image: url("../images/tickbox/halfTick-dark.png");
+.SimpleTickBox {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
 }
 
-.stroom-theme-dark .tickBox .tickBox-halfTickDisabled {
-    background-image: url("../images/tickbox/halfTickDisabled-dark.png");
+.SimpleTickBox > .form-label {
+    margin: 0 0 0 9px;
+    font-weight: normal;
 }
 
-.stroom-theme-dark .tickBox .tickBox-untick {
-    background-image: url("../images/tickbox/untick-dark.png");
+.SimpleTickBox > .checkbox-container {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    font-size: 0;
+    color: transparent;
 }
 
-.stroom-theme-dark .tickBox .tickBox-untickDisabled {
-    background-image: url("../images/tickbox/untickDisabled-dark.png");
+.SimpleTickBox .checkbox {
+    position: absolute;
+    opacity: 0;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    z-index: 1;
 }
 
-
-.stroom-theme-dark2 .tickBox .tickBox-tick {
-    background-image: url("../images/tickbox/tick-dark2.png");
+.SimpleTickBox:not(.SimpleTickBox-disabled) :is(.form-label, .checkbox) {
+    cursor: pointer;
 }
 
-.stroom-theme-dark2 .tickBox .tickBox-tickNB {
-    background-image: url("../images/tickbox/tickNB-dark2.png");
+.SimpleTickBox .checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background-color: var(--control__background-color);
+    border: 1px solid var(--control__border-color);
+    border-radius: .25rem;
 }
 
-.stroom-theme-dark2 .tickBox .tickBox-halfTick {
-    background-image: url("../images/tickbox/halfTick-dark2.png");
+.SimpleTickBox .checkmark svg {
+    display: none;
+    color: white;
+    margin: 3px;
 }
 
-.stroom-theme-dark2 .tickBox .tickBox-halfTickNB {
-    background-image: url("../images/tickbox/halfTickNB-dark2.png");
+/* When the checkbox is checked, add a blue background */
+.SimpleTickBox input:checked ~ .checkmark {
+    background-color: #2196F3;
 }
 
-.stroom-theme-dark2 .tickBox .tickBox-halfTickDisabled {
-    background-image: url("../images/tickbox/halfTickDisabled-dark2.png");
+.SimpleTickBox input:disabled:checked ~ .checkmark {
+    background-color: var(--control__background-color--disabled);
 }
 
-.stroom-theme-dark2 .tickBox .tickBox-untick {
-    background-image: url("../images/tickbox/untick-dark2.png");
+.SimpleTickBox input:checked ~ .checkmark svg {
+    display: block;
 }
 
-.stroom-theme-dark2 .tickBox .tickBox-untickDisabled {
-    background-image: url("../images/tickbox/untickDisabled-dark2.png");
+.SimpleTickBox input:focus ~ .checkmark {
+    outline: 0;
+    border-color: var(--focus-border);
+    box-shadow: var(--focus-shadow);
+}
+
+.SimpleTickBox-tick {
+    color: white;
+}
+
+.SimpleTickBox-halfTick {
+}
+
+.SimpleTickBox-untick {
+}
+
+.SimpleTickBox-disabled {
+    opacity: 0.5;
+}
+
+.stroom-theme-dark .SimpleTickBox-halfTick {
+}
+
+.stroom-theme-dark .SimpleTickBox-untick {
 }

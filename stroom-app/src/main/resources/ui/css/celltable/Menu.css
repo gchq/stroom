@@ -1,0 +1,83 @@
+/*
+ * Copyright 2010 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+.menuItem-separator {
+	border-top: 1px solid var(--menu-separator__color);
+	cursor: default;
+	margin: var(--row__padding--vertical) var(--row__padding--horizontal);
+}
+
+.menuItem-groupHeading {
+	padding: 6px 0 3px 6px;
+	opacity: 0.8;
+	font-size: var(--font-size-13);
+	text-transform: uppercase;
+	display: block;
+	cursor: default;
+}
+
+.menuItem-outer {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    gap: var(--row__gap--horizontal);
+    border: 1px solid transparent;
+    border-radius: .25rem;
+    min-width: 180px;
+
+    padding: var(--row__padding--vertical) var(--row__padding--horizontal);
+    vertical-align: middle;
+    overflow: hidden;
+    min-height: 16px;
+    white-space: nowrap;
+}
+
+.menuItem-highlight {
+	background-color: var(--code-editor__background-color--highlight);
+	color: var(--row__text-color--selected);
+}
+
+.menuItem-icon {
+	display: flex;
+}
+
+.menuItem-disabled {
+	cursor: default;
+	opacity: 0.4;
+}
+
+.menuItem-text {
+    white-space: nowrap;
+	flex-grow: 1;
+}
+
+.menuItem-simpleText {
+	display: inline-block;
+	vertical-align: top;
+	padding-top: 1px;
+	margin-left: 5px;
+	margin-right: 5px;
+}
+
+.menuItem-shortcut {
+    padding-left: 15px;
+    white-space: nowrap;
+    text-align: right;
+    flex-grow: 1;
+}
+
+.menuItem-expandArrow {
+	display: flex;
+}

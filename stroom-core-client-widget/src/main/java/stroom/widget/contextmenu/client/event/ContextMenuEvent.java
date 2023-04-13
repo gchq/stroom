@@ -16,23 +16,24 @@
 
 package stroom.widget.contextmenu.client.event;
 
+import stroom.widget.popup.client.presenter.PopupPosition;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class ContextMenuEvent extends GwtEvent<ContextMenuEvent.Handler> {
 
     private static Type<Handler> TYPE;
-    private final int x;
-    private final int y;
+    private final PopupPosition popupPosition;
 
-    protected ContextMenuEvent(final int x, final int y) {
-        this.x = x;
-        this.y = y;
+    protected ContextMenuEvent(final PopupPosition popupPosition) {
+        this.popupPosition = popupPosition;
     }
 
-    public static <I> void fire(final HasContextMenuHandlers source, final int x, final int y) {
+    public static <I> void fire(final HasContextMenuHandlers source,
+                                final PopupPosition popupPosition) {
         if (TYPE != null) {
-            source.fireEvent(new ContextMenuEvent(x, y));
+            source.fireEvent(new ContextMenuEvent(popupPosition));
         }
     }
 
@@ -53,12 +54,8 @@ public class ContextMenuEvent extends GwtEvent<ContextMenuEvent.Handler> {
         handler.onContextMenu(this);
     }
 
-    public int getX() {
-        return x;
-    }
-
-    public int getY() {
-        return y;
+    public PopupPosition getPopupPosition() {
+        return popupPosition;
     }
 
     public interface Handler extends EventHandler {

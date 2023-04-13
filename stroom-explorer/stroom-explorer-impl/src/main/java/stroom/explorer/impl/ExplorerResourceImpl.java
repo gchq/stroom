@@ -29,6 +29,7 @@ import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
+import stroom.explorer.shared.ExplorerDocContentMatch;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNodePermissions;
 import stroom.explorer.shared.ExplorerResource;
@@ -40,9 +41,11 @@ import stroom.explorer.shared.ExplorerServiceRenameRequest;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
+import stroom.explorer.shared.FindExplorerNodeQuery;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ResultPage;
 
 import com.google.common.base.Strings;
 import event.logging.ComplexLoggedOutcome;
@@ -200,4 +203,8 @@ class ExplorerResourceImpl implements ExplorerResource {
                 .build();
     }
 
+    @Override
+    public ResultPage<ExplorerDocContentMatch> findContent(final FindExplorerNodeQuery request) {
+        return explorerServiceProvider.get().findContent(request);
+    }
 }

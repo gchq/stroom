@@ -30,18 +30,17 @@ import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DelayedUpdate;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -131,7 +130,7 @@ public final class ManageGlobalPropertyEditPresenter
     @Override
     protected void onBind() {
         ClickHandler iconClickHandler = event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 onOpenClusterValues();
             }
         };
@@ -139,20 +138,13 @@ public final class ManageGlobalPropertyEditPresenter
         registerHandler(effectiveValueInfoButton.addClickHandler(iconClickHandler));
         registerHandler(effectiveValueWarningsButton.addClickHandler(iconClickHandler));
         registerHandler(dataTypeHelpButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 showHelp("Data Types");
             }
         }));
     }
 
     private void onOpenClusterValues() {
-        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-
-            }
-        };
-
         if (clusterValuesPresenterProvider != null) {
             final ConfigPropertyClusterValuesPresenter clusterValuesPresenter = clusterValuesPresenterProvider.get();
 
@@ -179,8 +171,7 @@ public final class ManageGlobalPropertyEditPresenter
             clusterValuesPresenter.show(
                     getEntity(),
                     modifiedEffectiveValueToNodeSourcesMap,
-                    offsetPopupPosition,
-                    popupUiHandlers);
+                    offsetPopupPosition);
         }
     }
 
@@ -188,12 +179,12 @@ public final class ManageGlobalPropertyEditPresenter
         return securityContext;
     }
 
-    void showEntity(final ConfigProperty configProperty, final PopupUiHandlers popupUiHandlers) {
+    void showEntity(final ConfigProperty configProperty, final Runnable hideRunnable) {
         if (configProperty.getId() != null) {
-            updateValuesFromResource(configProperty.getName().toString(), popupUiHandlers);
+            updateValuesFromResource(configProperty.getName().toString(), hideRunnable);
         } else {
             // new configProperty
-            show(configProperty, popupUiHandlers);
+            show(configProperty, hideRunnable);
         }
     }
 
@@ -230,11 +221,11 @@ public final class ManageGlobalPropertyEditPresenter
         }
     }
 
-    private void updateValuesFromResource(final String propertyName, final PopupUiHandlers popupUiHandlers) {
+    private void updateValuesFromResource(final String propertyName, final Runnable hideRunnable) {
         final Rest<ConfigProperty> rest = restFactory.create();
         rest
                 .onSuccess(configProperty ->
-                        show(configProperty, popupUiHandlers))
+                        show(configProperty, hideRunnable))
                 .onFailure(throwable ->
                         showError(throwable, "Error fetching property " + propertyName))
                 .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
@@ -347,7 +338,7 @@ public final class ManageGlobalPropertyEditPresenter
     }
 
     private void show(final ConfigProperty configProperty,
-                      final PopupUiHandlers popupUiHandlers) {
+                      final Runnable hideRunnable) {
         setEntity(configProperty);
         // find out the yaml values for each node in the cluster
         refreshYamlOverrideForAllNodes();
@@ -356,38 +347,21 @@ public final class ManageGlobalPropertyEditPresenter
         final String caption = getEntityDisplayType() + " - " + configProperty.getName();
         final PopupType popupType = PopupType.OK_CANCEL_DIALOG;
 
-        final PopupUiHandlers internalPopupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    write(true);
-                } else {
-                    hide();
-                }
-
-                popupUiHandlers.onHideRequest(autoClose, ok);
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                popupUiHandlers.onHide(autoClose, ok);
-            }
-        };
-
         read();
-        ShowPopupEvent.fire(
-                ManageGlobalPropertyEditPresenter.this,
-                ManageGlobalPropertyEditPresenter.this,
-                popupType,
-                getPopupSize(),
-                caption,
-                internalPopupUiHandlers);
-    }
-
-    protected void hide() {
-        HidePopupEvent.fire(
-                ManageGlobalPropertyEditPresenter.this,
-                ManageGlobalPropertyEditPresenter.this);
+        ShowPopupEvent.builder(this)
+                .popupType(popupType)
+                .popupSize(getPopupSize())
+                .caption(caption)
+                .onShow(e -> getView().focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        write(true, e);
+                    } else {
+                        e.hide();
+                    }
+                })
+                .onHide(e -> hideRunnable.run())
+                .fire();
     }
 
     private ConfigProperty getEntity() {
@@ -472,7 +446,7 @@ public final class ManageGlobalPropertyEditPresenter
         getView().setEditable(getEntity().isEditable());
     }
 
-    private void write(final boolean hideOnSave) {
+    private void write(final boolean hideOnSave, final HidePopupRequestEvent event) {
         refreshValuesOnChange();
 
         ConfigProperty configPropertyToSave = getEntity();
@@ -482,7 +456,7 @@ public final class ManageGlobalPropertyEditPresenter
                 .onSuccess(savedConfigProperty -> {
                     setEntity(savedConfigProperty);
                     if (hideOnSave) {
-                        hide();
+                        event.hide();
                         // Refresh client properties in case they were affected by this change.
                         clientPropertyCache.refresh();
                     }
@@ -575,7 +549,7 @@ public final class ManageGlobalPropertyEditPresenter
         return "#" + name.replace(" ", "-").toLowerCase();
     }
 
-    public interface GlobalPropertyEditView extends View, HasUiHandlers<ManageGlobalPropertyEditUiHandlers> {
+    public interface GlobalPropertyEditView extends View, Focus, HasUiHandlers<ManageGlobalPropertyEditUiHandlers> {
 
         HasText getName();
 

@@ -18,6 +18,7 @@ package stroom.dashboard.client.table;
 
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -42,7 +43,7 @@ public class DownloadPresenter extends MyPresenterWidget<DownloadPresenter.Downl
         return getView().getPercent();
     }
 
-    public interface DownloadView extends View {
+    public interface DownloadView extends View, Focus {
 
         DownloadSearchResultFileType getFileType();
 

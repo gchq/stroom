@@ -17,6 +17,7 @@
 
 package stroom.pipeline.xslt;
 
+import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
@@ -177,6 +178,11 @@ class XsltStoreImpl implements XsltStore {
     @Override
     public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
         return store.findByNames(name, allowWildCards);
+    }
+
+    @Override
+    public List<DocContentMatch> findByContent(final String pattern, final boolean regex, final boolean matchCase) {
+        return store.findByContent(pattern, regex, matchCase);
     }
 
     @Override

@@ -52,7 +52,7 @@ public class ForwardFileConfig extends AbstractConfig implements ForwardConfig, 
      * The string to use for the destination path.
      */
     @NotNull
-    @ValidDirectoryPath
+    @ValidDirectoryPath(ensureExistence = true)
     @JsonProperty
     public String getPath() {
         return path;
