@@ -110,17 +110,13 @@ class AnnotationDaoImpl implements AnnotationDao {
 //        valueMapper.map(AnnotationDataSource.STREAM_ID_FIELD, ANNOTATION_DATA_LINK.STREAM_ID, ValLong::create);
 //        valueMapper.map(AnnotationDataSource.EVENT_ID_FIELD, ANNOTATION_DATA_LINK.EVENT_ID, ValLong::create);
         valueMapper.map(AnnotationFields.CREATED_ON_FIELD, ANNOTATION.CREATE_TIME_MS, ValLong::create);
-        valueMapper.map(AnnotationFields.CREATED_BY_FIELD, ANNOTATION.CREATE_USER, ValString::create);
+        valueMapper.map(AnnotationFields.CREATED_BY_FIELD, ANNOTATION.CREATE_USER, this::mapdbUserToValString);
         valueMapper.map(AnnotationFields.UPDATED_ON_FIELD, ANNOTATION.UPDATE_TIME_MS, ValLong::create);
-        valueMapper.map(AnnotationFields.UPDATED_BY_FIELD, ANNOTATION.UPDATE_USER, ValString::create);
+        valueMapper.map(AnnotationFields.UPDATED_BY_FIELD, ANNOTATION.UPDATE_USER, this::mapdbUserToValString);
         valueMapper.map(AnnotationFields.TITLE_FIELD, ANNOTATION.TITLE, ValString::create);
         valueMapper.map(AnnotationFields.SUBJECT_FIELD, ANNOTATION.SUBJECT, ValString::create);
         valueMapper.map(AnnotationFields.STATUS_FIELD, ANNOTATION.STATUS, ValString::create);
-        valueMapper.map(AnnotationFields.ASSIGNED_TO_FIELD, ANNOTATION.ASSIGNED_TO, value ->
-                userNameService.getByUserId(value)
-                        .map(UserName::getUserIdentityForAudit)
-                        .map(val -> (Val) ValString.create(val))
-                        .orElseGet(() -> ValNull.INSTANCE));
+        valueMapper.map(AnnotationFields.ASSIGNED_TO_FIELD, ANNOTATION.ASSIGNED_TO, this::mapdbUserToValString);
         valueMapper.map(AnnotationFields.COMMENT_FIELD, ANNOTATION.COMMENT, ValString::create);
         valueMapper.map(AnnotationFields.HISTORY_FIELD, ANNOTATION.HISTORY, ValString::create);
     }
@@ -554,6 +550,21 @@ class AnnotationDaoImpl implements AnnotationDao {
                 }
             }
         });
+    }
+
+    private Val mapdbUserToValString(final String dbUser) {
+        if (dbUser == null) {
+            return ValNull.INSTANCE;
+        } else if (NullSafe.isBlankString(dbUser)) {
+            return ValString.create(dbUser);
+        } else {
+            return NullSafe.getAsOptional(
+                    dbUser,
+                    this::mapdbUserToUserName,
+                    UserName::getUserIdentityForAudit,
+                            value -> (Val) ValString.create(value))
+                    .orElse(ValNull.INSTANCE);
+        }
     }
 
     private UserName mapdbUserToUserName(final String dbUser) {
