@@ -7,6 +7,8 @@ public interface MenuUiHandlers extends UiHandlers {
 
     void showSubMenu(MenuItem menuItem, Element element);
 
+    void hideExistingSubMenu(MenuItem newItem);
+
     void ensureParentItemSelected();
 
     void focusSubMenu();

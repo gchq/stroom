@@ -117,6 +117,13 @@ public class MenuPresenter
     }
 
     @Override
+    public void hideExistingSubMenu(final MenuItem newMenuItem) {
+        if (currentItem != null && !Objects.equals(currentItem, newMenuItem)) {
+            hideChildren(false, false);
+        }
+    }
+
+    @Override
     public void ensureParentItemSelected() {
         if (parent != null && parentItem != null) {
             parent.getView().ensureItemSelected(parentItem);
