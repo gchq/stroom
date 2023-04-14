@@ -94,7 +94,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
 
                     subMenuShowTimer.schedule(delayMillis);
                     timerItem = item;
-                } else if (item instanceof MenuItem){
+                } else if (item instanceof MenuItem) {
                     // Item with no children so hide any existing sub-menu from the previous menu item
                     getUiHandlers().hideExistingSubMenu((MenuItem) item);
                     cancelDelayedSubMenu();
