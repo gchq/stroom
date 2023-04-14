@@ -166,7 +166,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
                 return row.getNodeName();
             }
         };
-        dataGrid.addColumn(nodeColumn,"Node", MEDIUM_COL);
+        dataGrid.addColumn(nodeColumn, "Node", MEDIUM_COL);
         columns.add(nodeColumn);
     }
 
