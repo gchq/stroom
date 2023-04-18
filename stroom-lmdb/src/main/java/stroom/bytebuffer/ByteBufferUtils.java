@@ -74,6 +74,61 @@ public class ByteBufferUtils {
         return sb.toString();
     }
 
+    /**
+     * Increments a Long value at absolute position idx. Does not modify the position
+     * of the buffer.
+     */
+    public static void incrementLong(final ByteBuffer byteBuffer,
+                                     final int idx) {
+        increment(byteBuffer, idx, Long.BYTES);
+    }
+
+    /**
+     * Increments a Integer value at absolute position idx. Does not modify the position
+     * of the buffer.
+     */
+    public static void incrementInt(final ByteBuffer byteBuffer,
+                                    final int idx) {
+        increment(byteBuffer, idx, Integer.BYTES);
+    }
+
+    /**
+     * Increments a Short value at absolute position idx. Does not modify the position
+     * of the buffer.
+     */
+    public static void incrementShort(final ByteBuffer byteBuffer,
+                                      final int idx) {
+        increment(byteBuffer, idx, Short.BYTES);
+    }
+
+    /**
+     * Increments the numeric value with length len at index. Does not modify the position
+     * of the buffer.
+     * <p>
+     * NOTE this appears to be no quicker than doing putInt(getint(...) + 1) type thing.
+     * </p>
+     */
+    public static void increment(final ByteBuffer byteBuffer,
+                                 final int idx,
+                                 final int len) {
+        // Work from right to left
+        for (int i = idx + len - 1; i >= idx; i--) {
+            byte b = byteBuffer.get(i);
+            if (b == (byte) 0xFF) {
+                // Byte rolls around to zero and we need to carry over to the next one
+                byteBuffer.put(i, (byte) 0x00);
+            } else if (i == idx && b == 0x7F) {
+                // 7F is the highest value for the first byte due to the sign bit
+                throw new IllegalArgumentException("Can't increment without overflowing");
+            } else {
+                // Not going to overflow this byte so just increment it then break out
+                // as the rest are unchanged
+                byteBuffer.put(i, (byte) (b + 1));
+                break;
+            }
+        }
+    }
+
     public static String byteBufferInfo(final ByteBuffer byteBuffer) {
         if (byteBuffer == null) {
             return "null";

@@ -24,6 +24,7 @@ public class StringValue implements RefDataValue {
     public static final int TYPE_ID = 0;
 
     private final String value;
+    private volatile Long valueHash = null;
 
     public StringValue(final String value) {
         this.value = value;
@@ -56,7 +57,13 @@ public class StringValue implements RefDataValue {
 
     @Override
     public long getValueHashCode(final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
-        return valueStoreHashAlgorithm.hash(value);
+        // Lazily compute the hash and hold for future use.
+        // This will mostly be used during a load which is single threaded so no need to
+        // avoid a synch at the risk of getting the same hash value twice.
+        if (valueHash == null) {
+            valueHash = valueStoreHashAlgorithm.hash(value);
+        }
+        return valueHash;
     }
 
     @Override

@@ -129,7 +129,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                                   final ByteBuffer valueStoreKeyBuffer,
                                   final RefDataValue newRefDataValue) {
 
-        long currentValueHashCode = keySerde.extractValueHashCode(valueStoreKeyBuffer);
+        long currentValueHashCode = ValueStoreKeySerde.extractValueHashCode(valueStoreKeyBuffer);
         long newValueHashCode = newRefDataValue.getValueHashCode(valueStoreHashAlgorithm);
         boolean areValuesEqual;
         if (currentValueHashCode != newValueHashCode) {
@@ -142,13 +142,16 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                 final Optional<ByteBuffer> optCurrentValueBuf = getAsBytes(txn, valueStoreKeyBuffer);
 
                 if (optCurrentValueBuf.isPresent()) {
+                    final ByteBuffer currentValueBuf = optCurrentValueBuf.get();
                     final ByteBuffer newValueBuffer = valueSerde.serialize(
                             newValueOutputStream,
                             newRefDataValue);
 
-                    areValuesEqual = optCurrentValueBuf.get().equals(newValueBuffer);
-//                    areValuesEqual = valueSerde.areValuesEqual(
-//                            optCurrentValueBuf.get(), newRefDataValuePooledBuf.getByteBuffer());
+                    areValuesEqual = currentValueBuf.equals(newValueBuffer);
+                    if (!areValuesEqual) {
+                        // Hopefully this won't happen often
+                        LAMBDA_LOGGER.debug("Hash collision");
+                    }
                 } else {
                     areValuesEqual = false;
                 }

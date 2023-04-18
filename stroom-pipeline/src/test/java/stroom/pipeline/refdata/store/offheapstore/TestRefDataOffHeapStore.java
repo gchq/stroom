@@ -43,6 +43,7 @@ import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.task.mock.MockTaskModule;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.concurrent.ThreadUtil;
+import stroom.util.io.FileUtil;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
@@ -51,6 +52,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeModule;
+import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Range;
 import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.time.StroomDuration;
@@ -63,6 +65,7 @@ import io.vavr.Tuple2;
 import io.vavr.Tuple3;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
@@ -80,6 +83,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Scanner;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -114,6 +118,15 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
     private static final int ENTRIES_PER_MAP_DEF = 20;
     private static final int MAPS_PER_REF_STREAM_DEF = 2;
 
+    @SuppressWarnings("checkstyle:LineLength")
+    // 1916 bytes
+    private static final String LOREM_IPSUM = """
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras commodo sit amet sem non posuere. Sed nec venenatis mi, vel facilisis nisl. Maecenas commodo id nulla quis gravida. Morbi nec lacinia ante, quis iaculis risus. Nulla at leo quis orci rutrum congue at id lorem. Vivamus venenatis porta mauris, pellentesque porta risus maximus eget. Sed molestie id lectus vel fermentum. Integer quis metus quis ante elementum auctor eget eget augue.
+
+            Aenean fringilla porta ultrices. Nullam mollis rhoncus commodo. Nunc scelerisque ex velit, eu dignissim purus eleifend vitae. Sed sit amet hendrerit tortor, et feugiat turpis. Etiam eu lacinia ipsum. Pellentesque tincidunt elit odio. Donec venenatis eros eget sem congue finibus. Aenean at euismod ante. Vestibulum pharetra vehicula libero, ac aliquam purus imperdiet ac. Aenean viverra posuere sapien, ac tempus libero bibendum tempor. Sed sed pretium mauris. Nunc ullamcorper, urna vel congue blandit, tellus diam gravida elit, sed scelerisque mi dui quis dui. Fusce sem justo, tincidunt sit amet sagittis ut, malesuada ultricies dui. Nam lacinia diam vel ex vestibulum, ac sodales magna aliquet.
+
+            Aenean egestas, sapien nec interdum mattis, purus ex euismod enim, sit amet blandit ante libero quis nisl. Duis malesuada quis ex a feugiat. Sed in cursus ex. Fusce massa leo, interdum vitae nibh at, imperdiet sagittis ante. Aenean volutpat mauris eu orci scelerisque rhoncus. Suspendisse non nisi vel mi luctus dignissim id in ipsum. Sed pellentesque elit nulla, rhoncus luctus dui commodo ullamcorper. Vivamus aliquam felis eu lorem elementum, vel lacinia ante pellentesque. Donec at rutrum metus. Nullam ut turpis malesuada, volutpat est at, consectetur lectus. Nunc pretium bibendum ante sed imperdiet. Suspendisse a est id neque consectetur malesuada. Morbi in ligula ut magna porta pulvinar vitae non mi. Phasellus cursus turpis nulla, non placerat mi faucibus maximus.""";
+
     @Inject
     private RefDataStoreFactory refDataStoreFactory;
     @Inject
@@ -135,7 +148,11 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
     @BeforeEach
     void setup() throws IOException {
         dbDir = Files.createTempDirectory("stroom");
-        LOGGER.debug("Creating LMDB environment in dbDir {}", dbDir.toAbsolutePath().toString());
+//        dbDir = Paths.get("/home/dev/tmp/ref_test");
+        Files.createDirectories(dbDir);
+        FileUtil.deleteContents(dbDir);
+
+        LOGGER.info("Creating LMDB environment in dbDir {}", dbDir.toAbsolutePath().toString());
 
         // This should ensure batching is exercised, including partial batches
         final int batchSize = Math.max(1, ENTRIES_PER_MAP_DEF / 2) - 1;
@@ -1323,6 +1340,19 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
     }
 
     @Test
+    void testBigLoadAndPurgeForPerfTesting() {
+
+        // Wait for visualvm to spin up
+        try {
+            Thread.sleep(0_000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        doBigLoadGetAndPurgeForPerfTesting(5, true, false, true, true);
+    }
+
+    @Test
     void testConcurrentBigLoadAndGet() {
         // Wait for visualvm to spin up
         try {
@@ -1424,9 +1454,11 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
     /**
      * Make entryCount very big for manual performance testing or profiling
      */
+    @Disabled // manual perf testing only
     @Test
     void testBigLoadGetAndPurgeForPerfTesting() {
-        doBigLoadGetAndPurgeForPerfTesting(5, true, true, true, true);
+        referenceDataConfig = referenceDataConfig.withMaxPurgeDeletesBeforeCommit(200_000);
+        doPurgePerfTest(50_000);
     }
 
 
@@ -1603,6 +1635,70 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
         LOGGER.info("Full test time {}", Duration.between(fullTestStartTime, Instant.now()));
     }
 
+    /**
+     * Make entryCount very big for manual performance testing or profiling
+     */
+    private void doPurgePerfTest(final int entryCount) {
+        Scanner scan = new Scanner(System.in);
+
+        System.out.print("Press any key to continue . . . ");
+        scan.nextLine();
+
+        final Instant fullTestStartTime = Instant.now();
+
+        MapNamFunc mapNamFunc = this::buildMapNameWithoutRefStreamDef;
+
+        setPurgeAgeProperty(StroomDuration.ofDays(1));
+        int refStreamDefCount = 30;
+        int keyValueMapCount = 2;
+        int rangeValueMapCount = 0;
+        int totalMapEntries = (refStreamDefCount * keyValueMapCount) + (refStreamDefCount * rangeValueMapCount);
+
+        int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;
+        int totalRangeValueEntryCount = refStreamDefCount * rangeValueMapCount * entryCount;
+        int totalValueEntryCount = (totalKeyValueEntryCount + totalRangeValueEntryCount) / refStreamDefCount;
+
+        List<RefStreamDefinition> refStreamDefs1 = null;
+
+        final Instant startInstant = Instant.now();
+
+        LOGGER.info("-------------------------load starts here--------------------------------------");
+        refStreamDefs1 = loadBulkDataWithLargeValues(
+                refStreamDefCount,
+                keyValueMapCount,
+                entryCount,
+                0,
+                mapNamFunc);
+
+        // here to aid debugging problems at low volumes
+        if (entryCount < 10) {
+            refDataStore.logAllContents(LOGGER::info);
+        }
+
+        LOGGER.info("Size on disk: {}", ModelStringUtil.formatIECByteSizeString(refDataStore.getSizeOnDisk()));
+        LOGGER.info("KV entry count: {}, value count: {}",
+                ModelStringUtil.formatCsv(refDataStore.getKeyValueEntryCount()),
+                ModelStringUtil.formatCsv(((RefDataOffHeapStore) refDataStore).getValueStoreCount()));
+
+        System.out.print("Press any key to continue . . . ");
+        scan.nextLine();
+
+        LOGGER.info("------------------------purge-starts-here--------------------------------------");
+
+        long twoDaysAgoMs = Instant.now().minus(2, ChronoUnit.DAYS).toEpochMilli();
+
+        refStreamDefs1.forEach(refStreamDefinition -> setLastAccessedTime(refStreamDefinition, twoDaysAgoMs));
+
+        // do the purge
+        refDataStore.purgeOldData();
+
+        final SystemInfoResult systemInfo = byteBufferPool.getSystemInfo();
+
+        LOGGER.info(systemInfo.toString());
+
+        LOGGER.info("Full test time {}", Duration.between(fullTestStartTime, Instant.now()));
+    }
+
     private void assertDbCounts(final int refStreamDefCount,
                                 final int totalMapEntries,
                                 final int totalKeyValueEntryCount,
@@ -1675,6 +1771,64 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
                 .boxed()
                 .map(i -> buildRefStreamDefinition(i + offset))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * @param refStreamDefinitionCount  Number of {@link RefStreamDefinition}s to create.
+     * @param keyValueMapCount          Number of KeyValue type maps to create per {@link RefStreamDefinition}
+     * @param entryCount                Number of map entries to create per map
+     * @param refStreamDefinitionOffset The offset from zero for the refStreamDefinition partIndex
+     * @return The created {@link RefStreamDefinition} objects
+     */
+    private List<RefStreamDefinition> loadBulkDataWithLargeValues(
+            final int refStreamDefinitionCount,
+            final int keyValueMapCount,
+            final int entryCount,
+            final int refStreamDefinitionOffset,
+            final MapNamFunc mapNamFunc) {
+
+        assertThat(refStreamDefinitionCount)
+                .isGreaterThan(0);
+        assertThat(keyValueMapCount)
+                .isGreaterThanOrEqualTo(0);
+        assertThat(entryCount)
+                .isGreaterThan(0);
+
+        List<RefStreamDefinition> refStreamDefinitions = new ArrayList<>();
+
+        final Instant startInstant = Instant.now();
+
+        buildRefStreamDefs(refStreamDefinitionCount, refStreamDefinitionOffset)
+                .forEach(refStreamDefinition -> {
+                    refStreamDefinitions.add(refStreamDefinition);
+
+                    refDataStore.doWithLoaderUnlessComplete(
+                            refStreamDefinition,
+                            System.currentTimeMillis(),
+                            loader -> {
+                                loader.initialise(false);
+                                loader.setCommitInterval(32_000);
+
+                                loadKeyValueDataWithLargeValues(
+                                        keyValueMapCount,
+                                        entryCount,
+                                        refStreamDefinition,
+                                        loader,
+                                        mapNamFunc);
+
+                                loader.completeProcessing();
+                            });
+                });
+
+        LOGGER.info("Loaded {} ref stream definitions in {}",
+                refStreamDefinitionCount, Duration.between(startInstant, Instant.now()).toString());
+
+        LOGGER.info("Counts:, KeyValue: {}, KeyRangeValue: {}, ProcInfo: {}",
+                refDataStore.getKeyValueEntryCount(),
+                refDataStore.getRangeValueEntryCount(),
+                refDataStore.getProcessingInfoEntryCount());
+
+        return refStreamDefinitions;
     }
 
     /**
@@ -1806,6 +1960,25 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
             for (int k = 0; k < entryCount; k++) {
                 String key = buildKey(k);
                 String value = buildKeyStoreValue(mapName, k, key);
+                loader.put(mapDefinition, key, StringValue.of(value));
+            }
+        }
+    }
+
+    private void loadKeyValueDataWithLargeValues(final int keyValueMapCount,
+                                                 final int entryCount,
+                                                 final RefStreamDefinition refStreamDefinition,
+                                                 final RefDataLoader loader,
+                                                 final MapNamFunc mapNamFunc) {
+        // load the key/value data
+        for (int j = 0; j < keyValueMapCount; j++) {
+            String mapName = mapNamFunc.buildMapName(refStreamDefinition, KV_TYPE, j);
+            MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
+
+            for (int k = 0; k < entryCount; k++) {
+                String key = buildKey(k);
+                final String value = LogUtil.message("{}-{}-value{}{}",
+                        mapName, key, k, LOREM_IPSUM);
                 loader.put(mapDefinition, key, StringValue.of(value));
             }
         }

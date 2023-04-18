@@ -28,6 +28,7 @@ public class FastInfosetValue implements RefDataValue {
     public static final int TYPE_ID = 1;
 
     private final ByteBuffer fastInfosetByteBuffer;
+    private volatile Long fastInfosetValueHash = null;
 
     public FastInfosetValue(final ByteBuffer fastInfosetByteBuffer) {
         this.fastInfosetByteBuffer = fastInfosetByteBuffer;
@@ -42,10 +43,15 @@ public class FastInfosetValue implements RefDataValue {
         return TYPE_ID;
     }
 
-
     @Override
     public long getValueHashCode(final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
-        return valueStoreHashAlgorithm.hash(fastInfosetByteBuffer);
+        // Lazily compute the hash and hold for future use these values can be quite big.
+        // This will mostly be used during a load which is single threaded so no need to
+        // avoid a synch at the risk of getting the same hash value twice.
+        if (fastInfosetValueHash == null) {
+            fastInfosetValueHash = valueStoreHashAlgorithm.hash(fastInfosetByteBuffer);
+        }
+        return fastInfosetValueHash;
     }
 
     @Override

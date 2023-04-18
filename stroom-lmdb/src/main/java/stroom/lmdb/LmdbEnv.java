@@ -12,6 +12,7 @@ import com.google.common.collect.ImmutableMap;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
+import org.lmdbjava.EnvFlags;
 import org.lmdbjava.EnvInfo;
 import org.lmdbjava.Stat;
 import org.lmdbjava.Txn;
@@ -24,9 +25,11 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -51,6 +54,7 @@ public class LmdbEnv implements AutoCloseable {
 
     private final Path localDir;
     private final Env<ByteBuffer> env;
+    private final Set<EnvFlags> envFlags;
 
     // Lock to ensure only one thread can hold a write txn at once.
     // If doWritesBlockReads is true then will only one thread can hold an open txn
@@ -61,15 +65,18 @@ public class LmdbEnv implements AutoCloseable {
     private final Semaphore activeReadTransactionsSemaphore;
 
     LmdbEnv(final Path localDir,
-            final Env<ByteBuffer> env) {
-        this(localDir, env, false);
+            final Env<ByteBuffer> env,
+            final Set<EnvFlags> envFlags) {
+        this(localDir, env, envFlags, false);
     }
 
     LmdbEnv(final Path localDir,
             final Env<ByteBuffer> env,
+            final Set<EnvFlags> envFlags,
             final boolean isReaderBlockedByWriter) {
         this.localDir = localDir;
         this.env = env;
+        this.envFlags = Collections.unmodifiableSet(envFlags);
 
         // Limit concurrent readers java side to ensure we don't get a max readers reached error
         final int maxReaders = env.info().maxReaders;
@@ -121,6 +128,13 @@ public class LmdbEnv implements AutoCloseable {
      */
     public void sync(final boolean force) {
         env.sync(force);
+    }
+
+    /**
+     * @return This set of {@link EnvFlags} that were used when this env was created.
+     */
+    public Set<EnvFlags> getEnvFlags() {
+        return envFlags;
     }
 
     /**
@@ -477,7 +491,7 @@ public class LmdbEnv implements AutoCloseable {
                     })
                     .sum();
         } catch (IOException
-                | RuntimeException e) {
+                 | RuntimeException e) {
             LOGGER.error("Error calculating disk usage for path {}",
                     localDir.normalize(), e);
             totalSizeBytes = -1;
@@ -506,6 +520,10 @@ public class LmdbEnv implements AutoCloseable {
                 .put("mapSize", Long.toString(envInfo.mapSize))
                 .build();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     @NotThreadSafe
     public static class WriteTxn implements AutoCloseable {
@@ -559,6 +577,10 @@ public class LmdbEnv implements AutoCloseable {
             }
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     /**
      * Creates a write txn on calls to {@link BatchingWriteTxn#getTxn()}
@@ -652,6 +674,7 @@ public class LmdbEnv implements AutoCloseable {
          * and then commit if the batch has reach its max size.
          * If the batch size is zero then it will never commit and will
          * always return false.
+         *
          * @return True if a commit took place.
          */
         public boolean commitIfRequired() {

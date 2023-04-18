@@ -17,11 +17,15 @@
 
 package stroom.bytebuffer;
 
+import stroom.test.common.TestUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.TestFactory;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -50,7 +54,7 @@ import static org.assertj.core.api.Assertions.fail;
 
 class TestByteBufferUtils {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestByteBufferUtils.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestByteBufferUtils.class);
 
     @Test
     void testIntCompare() {
@@ -241,6 +245,121 @@ class TestByteBufferUtils {
         assertThat(hash1).isEqualTo(hash2);
     }
 
+    @TestFactory
+    Stream<DynamicTest> testIncrementShort() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(short.class)
+                .withTestFunction(testCase -> {
+                    final ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[20]);
+                    final int idx = 5;
+                    byteBuffer.putShort(idx, testCase.getInput());
+                    LOGGER.debug("byteBuffer before: {}", ByteBufferUtils.byteBufferToHex(byteBuffer));
+                    ByteBufferUtils.incrementShort(byteBuffer, idx);
+                    LOGGER.debug("byteBuffer after: {}", ByteBufferUtils.byteBufferToHex(byteBuffer));
+                    return byteBuffer.getShort(idx);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase((short) 0, (short) 1)
+                .addCase((short) 1, (short) 2)
+                .addCase((short) -2, (short) -1)
+                .addCase((short) 1_000, (short) 1_001)
+                .addCase((short) (Short.MAX_VALUE - (short) 1), Short.MAX_VALUE)
+                .addThrowsCase(Short.MAX_VALUE, IllegalArgumentException.class)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testIncrementInt() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(int.class)
+                .withTestFunction(testCase -> {
+                    final ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[20]);
+                    final int idx = 5;
+                    byteBuffer.putInt(idx, testCase.getInput());
+                    LOGGER.debug("byteBuffer before: {}", ByteBufferUtils.byteBufferToHex(byteBuffer));
+                    ByteBufferUtils.incrementInt(byteBuffer, idx);
+                    LOGGER.debug("byteBuffer after: {}", ByteBufferUtils.byteBufferToHex(byteBuffer));
+                    return byteBuffer.getInt(idx);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(0, 1)
+                .addCase(-2, -1)
+                .addCase(1_000, 1_001)
+                .addCase(Integer.MAX_VALUE - 1, Integer.MAX_VALUE)
+                .addThrowsCase(Integer.MAX_VALUE, IllegalArgumentException.class)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testIncrementLong() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(long.class)
+                .withTestFunction(testCase -> {
+                    final ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[20]);
+                    final int idx = 5;
+                    byteBuffer.putLong(idx, testCase.getInput());
+                    LOGGER.debug("byteBuffer before: {}", ByteBufferUtils.byteBufferToHex(byteBuffer));
+                    ByteBufferUtils.incrementLong(byteBuffer, idx);
+                    LOGGER.debug("byteBuffer after: {}", ByteBufferUtils.byteBufferToHex(byteBuffer));
+                    return byteBuffer.getLong(idx);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(0L, 1L)
+                .addCase(-1L, 0L)
+                .addCase(-2L, -1L)
+                .addCase(1_000L, 1_001L)
+                .addCase(Long.MAX_VALUE - 1, Long.MAX_VALUE)
+                .addThrowsCase(Long.MAX_VALUE, IllegalArgumentException.class)
+                .build();
+    }
+
+    @Test
+    void testIncrementInteger_perf() throws NoSuchFieldException, IllegalAccessException {
+        for (int j = 0; j < 3; j++) {
+            LOGGER.info("Round: " + j);
+
+            final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(20);
+            final int idx = 5;
+            final int iterations = 500000;
+            final int maxVal = 100;
+
+            LOGGER.logDurationIfInfoEnabled(() -> {
+                for (int k = 0; k < iterations; k++) {
+                    byteBuffer.putInt(idx, 0);
+                    byteBuffer.clear();
+                    for (int i = 0; i < maxVal; i++) {
+                        ByteBufferUtils.incrementInt(byteBuffer, idx);
+                    }
+                }
+            }, "incrementInt");
+
+            Assertions.assertThat(byteBuffer.getInt(idx))
+                    .isEqualTo(maxVal);
+
+            LOGGER.logDurationIfInfoEnabled(() -> {
+                for (int k = 0; k < iterations; k++) {
+                    byteBuffer.putInt(idx, 0);
+                    byteBuffer.clear();
+                    for (int i = 0; i < maxVal; i++) {
+                        byteBuffer.putInt(idx, byteBuffer.getInt(idx) + 1);
+                    }
+                }
+            }, "get/put");
+
+            Assertions.assertThat(byteBuffer.getInt(idx))
+                    .isEqualTo(maxVal);
+        }
+    }
+
+    @Test
+    void testIncrement_bufferTooShort() {
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            final ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[20]);
+                            ByteBufferUtils.increment(byteBuffer, 18, Long.BYTES);
+                        })
+                .isInstanceOf(IllegalArgumentException.class);
+    }
 
     @Disabled // manual perf testing only
     @Test

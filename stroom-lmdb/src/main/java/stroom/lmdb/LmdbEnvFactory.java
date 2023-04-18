@@ -19,7 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -90,7 +90,7 @@ public class LmdbEnvFactory {
         private final TempDirProvider tempDirProvider;
         private final LmdbLibraryConfig lmdbLibraryConfig;
         private final Path localDir;
-        private final Set<EnvFlags> envFlags = new HashSet<>();
+        private final Set<EnvFlags> envFlags = EnumSet.noneOf(EnvFlags.class);
 
         protected int maxReaders = LmdbConfig.DEFAULT_MAX_READERS;
         protected ByteSize maxStoreSize = LmdbConfig.DEFAULT_MAX_STORE_SIZE;
@@ -353,7 +353,7 @@ public class LmdbEnvFactory {
                         "Error creating LMDB env at {}: {}",
                         envDir.toAbsolutePath().normalize(), e.getMessage()), e);
             }
-            return new LmdbEnv(envDir, env, isReaderBlockedByWriter);
+            return new LmdbEnv(envDir, env, envFlags, isReaderBlockedByWriter);
         }
     }
 

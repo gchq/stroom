@@ -52,6 +52,7 @@ public class RangeStoreDb
         extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey>
         implements EntryStoreDb<RangeStoreKey> {
 
+    protected static final Range<Long> IGNORED_RANGE = Range.of(0L, 1L);
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RangeStoreDb.class);
 
     public static final String DB_NAME = "RangeStore";
@@ -229,32 +230,27 @@ public class RangeStoreDb
                                  final UID mapUid,
                                  final EntryConsumer entryConsumer) {
 
-        try (PooledByteBuffer startKeyIncPooledBuffer = getPooledKeyBuffer()) {
+        try (PooledByteBuffer startKeyIncPooledBuffer = getPooledKeyBuffer();
+                PooledByteBuffer endKeyExcPooledBuffer = getPooledKeyBuffer()) {
 
-            // TODO there appears to be a bug in LMDB that causes an IndexOutOfBoundsException
-            //  when both the start and end key are used in the keyRange
-            //  see https://github.com/lmdbjava/lmdbjava/issues/98
-            //  As a work around will have to use an AT_LEAST cursor and manually
-            //  test entries to see when I have gone too far.
-//            final KeyRange<ByteBuffer> singleMapUidKeyRange = buildSingleMapUidKeyRange(
-//                    mapUid, startKeyIncPooledBuffer.getByteBuffer(), endKeyExcPooledBuffer.getByteBuffer());
-
-            final Range<Long> dummyRange = Range.of(0L, 1L);
-            final RangeStoreKey startKeyInc = new RangeStoreKey(mapUid, dummyRange);
-            final ByteBuffer startKeyIncBuffer = startKeyIncPooledBuffer.getByteBuffer();
-            keySerde.serializeWithoutRangePart(startKeyIncBuffer, startKeyInc);
-            final KeyRange<ByteBuffer> atLeastKeyRange = KeyRange.atLeast(startKeyIncBuffer);
+            final KeyRange<ByteBuffer> singleMapUidKeyRange = buildSingleMapUidKeyRange(
+                    mapUid,
+                    startKeyIncPooledBuffer.getByteBuffer(),
+                    endKeyExcPooledBuffer.getByteBuffer());
 
             boolean isComplete = false;
             int totalCount = 0;
 
+            // We need the outer loop as the inner loop may reach batch full state part way through
+            // and break out. After the inner loop we commit the txn, so the iterable has to be re-created.
             while (!isComplete) {
                 boolean foundMatchingEntry;
                 // Scan over all entries from our start key and test each one to check we
                 // haven't gone past the ones we want.
                 try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
-                        batchingWriteTxn.getTxn(), atLeastKeyRange)) {
+                        batchingWriteTxn.getTxn(), singleMapUidKeyRange)) {
 
+                    boolean didBreakOutEarly = false;
                     int batchCount = 0;
                     foundMatchingEntry = false;
                     final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
@@ -265,33 +261,28 @@ public class RangeStoreDb
                                 ByteBufferUtils.byteBufferInfo(keyVal.key()),
                                 ByteBufferUtils.byteBufferInfo(keyVal.val())));
 
-                        if (ByteBufferUtils.containsPrefix(keyVal.key(), startKeyIncBuffer)) {
-                            foundMatchingEntry = true;
-                            // prefixed with our UID
+                        foundMatchingEntry = true;
+                        // prefixed with our UID
 
-                            // pass the found kv pair from this entry to the consumer
-                            // consumer MUST not hold on to the key/value references as they can change
-                            // once the cursor is closed or moves position
-                            entryConsumer.accept(batchingWriteTxn.getTxn(), keyVal.key(), keyVal.val());
-                            iterator.remove();
-                            batchCount++;
+                        // Pass the found kv pair from this entry to the consumer.
+                        // Consumer MUST not hold on to the key/value references as they can change
+                        // once the cursor is closed or moves position
+                        entryConsumer.accept(batchingWriteTxn.getTxn(), keyVal.key(), keyVal.val());
+                        // Delete this entry
+                        iterator.remove();
+                        batchCount++;
 
-
-                            // Can't use batchingWriteTxn.commitIfRequired() as the commit would close
-                            // the txn which then causes an error in the cursorIterable auto close
-                            if (batchingWriteTxn.incrementBatchCount()) {
-                                // Batch is full so break out
-                                break;
-                            }
-                        } else {
-                            // gone past our UID so break out
-                            LOGGER.trace("Breaking out of loop");
-                            isComplete = true;
+                        // Can't use batchingWriteTxn.commitIfRequired() as the commit would close
+                        // the txn which then causes an error in the cursorIterable auto close
+                        if (batchingWriteTxn.incrementBatchCount()) {
+                            // Batch is full so break out
+                            didBreakOutEarly = true;
                             break;
                         }
                     }
 
                     if (foundMatchingEntry) {
+                        isComplete = !didBreakOutEarly;
                         totalCount += batchCount;
                         LOGGER.debug("Deleted {} {} entries this iteration, total deleted: {}",
                                 batchCount, DB_NAME, totalCount);
@@ -302,7 +293,7 @@ public class RangeStoreDb
 
                 if (foundMatchingEntry) {
                     // Force the commit as we either have a full batch or we have finished
-                    // We may now have a partial purge committed but we are still under write
+                    // We may now have a partial purge committed, but we are still under write
                     // lock so no other threads can purge or load and there is a lock on the
                     // ref stream.
                     LOGGER.debug("Committing, totalCount {}", totalCount);
@@ -339,8 +330,8 @@ public class RangeStoreDb
     private KeyRange<ByteBuffer> buildSingleMapUidKeyRange(final UID mapUid,
                                                            final ByteBuffer startKeyIncBuffer,
                                                            final ByteBuffer endKeyExcBuffer) {
-        final Range<Long> ignoredRange = Range.of(0L, 1L);
-        final RangeStoreKey startKeyInc = new RangeStoreKey(mapUid, ignoredRange);
+        // The range part is irrelevant as we are only concerned with the uid part
+        final RangeStoreKey startKeyInc = new RangeStoreKey(mapUid, IGNORED_RANGE);
 
         // serialise the startKeyInc to both start and end buffers, then
         // we will mutate the uid of the end buffer

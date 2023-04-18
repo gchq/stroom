@@ -17,11 +17,13 @@
 
 package stroom.pipeline.refdata.store.offheapstore;
 
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.lmdb.LmdbEnv;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreMetaDb;
+import stroom.util.logging.LogUtil;
 
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
@@ -134,8 +136,15 @@ public class ValueStore {
         return valueStoreMetaDb.deReferenceOrDeleteValue(
                 writeTxn,
                 valueStoreKeyBuffer,
-                ((txn, keyBuffer, valueBuffer) ->
-                        valueStoreDb.delete(txn, keyBuffer)));
+                ((writeTxn2, keyBuffer) -> {
+                    try {
+                        valueStoreDb.delete(writeTxn2, keyBuffer);
+                    } catch (Exception e) {
+                        throw new RuntimeException(LogUtil.message(
+                                "Error deleting value entry for value key: {}",
+                                ByteBufferUtils.byteBufferInfo(keyBuffer), e));
+                    }
+                }));
     }
 
     Optional<TypedByteBuffer> getTypedValueBuffer(final Txn<ByteBuffer> txn,
@@ -157,5 +166,9 @@ public class ValueStore {
 
     public PooledByteBuffer getPooledKeyBuffer() {
         return valueStoreDb.getPooledKeyBuffer();
+    }
+
+    long getEntryCount() {
+        return valueStoreMetaDb.getEntryCount();
     }
 }

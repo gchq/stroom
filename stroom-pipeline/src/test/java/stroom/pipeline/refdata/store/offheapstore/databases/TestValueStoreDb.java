@@ -2,11 +2,13 @@ package stroom.pipeline.refdata.store.offheapstore.databases;
 
 
 import stroom.bytebuffer.ByteBufferPoolFactory;
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.bytebuffer.PooledByteBufferOutputStream.Factory;
 import stroom.lmdb.EntryConsumer;
 import stroom.pipeline.refdata.store.BasicValueStoreHashAlgorithmImpl;
+import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
@@ -352,13 +354,90 @@ class TestValueStoreDb extends AbstractStoreDbTest {
     }
 
     @Test
-    void testAreValueEqual_twoEqualValues() {
+    void testAreValueEqual_twoEqualStringValues() {
         doAreValuesEqualAssert(StringValue.of("value1"), StringValue.of("value1"), true);
     }
 
     @Test
-    void testAreValueEqual_twoDifferentValues() {
-        doAreValuesEqualAssert(StringValue.of("value1"), StringValue.of("value2"), false);
+    void testAreValueEqual_twoEqualFastInfosetValues_1() {
+        final ByteBuffer valBuff1 = ByteBuffer.allocateDirect(20);
+        valBuff1.put("value".getBytes());
+        valBuff1.flip();
+        final ByteBuffer valBuff2 = ByteBuffer.allocateDirect(20);
+        valBuff2.put("value".getBytes());
+        valBuff2.flip();
+        final FastInfosetValue val1 = FastInfosetValue.wrap(valBuff1);
+        final FastInfosetValue val2 = FastInfosetValue.wrap(valBuff2);
+        doAreValuesEqualAssert(
+                val1,
+                val2,
+                true);
+    }
+
+    @Test
+    void testAreValueEqual_twoEqualFastInfosetValues_2() {
+        // Same value in both buffers but different size buffers and different positions
+        final ByteBuffer valBuff1 = ByteBuffer.allocateDirect(30);
+        valBuff1.put(5, "value".getBytes());
+        valBuff1.position(5);
+        valBuff1.limit(5 + "value".length());
+        LOGGER.info("valBuff1: {}", ByteBufferUtils.byteBufferInfo(valBuff1));
+
+        final ByteBuffer valBuff2 = ByteBuffer.allocateDirect(20);
+        valBuff2.put("value".getBytes());
+        valBuff2.flip();
+        LOGGER.info("valBuff2: {}", ByteBufferUtils.byteBufferInfo(valBuff2));
+
+        final FastInfosetValue val1 = FastInfosetValue.wrap(valBuff1);
+        final FastInfosetValue val2 = FastInfosetValue.wrap(valBuff2);
+        doAreValuesEqualAssert(
+                val1,
+                val2,
+                true);
+    }
+
+    @Test
+    void testAreValueEqual_twoDifferentStringValuesWithHashCollision() {
+        setupValueStoreDb(new ConstantHashHashAlgorithm());
+        doAreValuesEqualAssert(
+                StringValue.of("value1"),
+                StringValue.of("value2"),
+                false);
+    }
+
+    @Test
+    void testAreValueEqual_twoDifferentFastInfosetValues() {
+        final ByteBuffer valBuff1 = ByteBuffer.allocateDirect(20);
+        valBuff1.put("value1".getBytes());
+        valBuff1.flip();
+        final ByteBuffer valBuff2 = ByteBuffer.allocateDirect(20);
+        valBuff2.put("value2".getBytes());
+        valBuff2.flip();
+        final FastInfosetValue val1 = FastInfosetValue.wrap(valBuff1);
+        final FastInfosetValue val2 = FastInfosetValue.wrap(valBuff2);
+        doAreValuesEqualAssert(
+                val1,
+                val2,
+                false);
+    }
+
+    @Test
+    void testAreValueEqual_twoDifferentFastInfosetValuesWithHashCollision() {
+        setupValueStoreDb(new ConstantHashHashAlgorithm());
+
+        // Hash collision so has to do equality on value
+        final ByteBuffer valBuff1 = ByteBuffer.allocateDirect(20);
+        valBuff1.put("value1".getBytes());
+        valBuff1.flip();
+        final ByteBuffer valBuff2 = ByteBuffer.allocateDirect(20);
+        valBuff2.put("value2".getBytes());
+        valBuff2.flip();
+        final FastInfosetValue val1 = FastInfosetValue.wrap(valBuff1);
+        final FastInfosetValue val2 = FastInfosetValue.wrap(valBuff2);
+        doAreValuesEqualAssert(
+                val1,
+                val2,
+                false);
     }
 
     @Test
@@ -405,8 +484,8 @@ class TestValueStoreDb extends AbstractStoreDbTest {
                         .collect(Collectors.toList()));
     }
 
-    private void doAreValuesEqualAssert(final StringValue value1,
-                                        final StringValue value2,
+    private void doAreValuesEqualAssert(final RefDataValue value1,
+                                        final RefDataValue value2,
                                         final boolean expectedResult) {
         lmdbEnv.doWithWriteTxn(writeTxn -> {
             ValueStoreKey valueStoreKey1 = getOrCreate(writeTxn, value1);
@@ -417,5 +496,24 @@ class TestValueStoreDb extends AbstractStoreDbTest {
             boolean areValuesEqual = valueStoreDb.areValuesEqual(writeTxn, valueStoreKeyBuffer, value2);
             assertThat(areValuesEqual).isEqualTo(expectedResult);
         });
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class ConstantHashHashAlgorithm implements ValueStoreHashAlgorithm {
+
+        @Override
+        public long hash(final ByteBuffer byteBuffer) {
+            // Always return same hash
+            return 0;
+        }
+
+        @Override
+        public long hash(final String value) {
+            // Always return same hash
+            return 0;
+        }
     }
 }

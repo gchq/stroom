@@ -21,9 +21,14 @@ import stroom.bytebuffer.ByteBufferPool;
 import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
+import stroom.bytebuffer.PooledByteBufferPair;
 import stroom.lmdb.LmdbEnv.WriteTxn;
 import stroom.lmdb.serde.IntegerSerde;
 import stroom.lmdb.serde.StringSerde;
+import stroom.lmdb.serde.UnsignedBytes;
+import stroom.lmdb.serde.UnsignedBytesInstances;
+import stroom.lmdb.serde.UnsignedLong;
+import stroom.lmdb.serde.UnsignedLongSerde;
 import stroom.test.common.TemporaryPathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -40,10 +45,13 @@ import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.EnvFlags;
 import org.lmdbjava.KeyRange;
+import org.lmdbjava.PutFlags;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -64,12 +72,18 @@ import static org.assertj.core.api.Assertions.fail;
 class TestBasicLmdbDb extends AbstractLmdbDbTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestBasicLmdbDb.class);
+    private static final int UNSIGNED_LONG_LEN = 4;
+    private static final UnsignedBytes UNSIGNED_BYTES = UnsignedBytesInstances.ofLength(UNSIGNED_LONG_LEN);
     private final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
+
+    private final UnsignedLongSerde unsignedLongSerde = new UnsignedLongSerde(UNSIGNED_LONG_LEN, UNSIGNED_BYTES);
 
     private BasicLmdbDb<String, String> basicLmdbDb;
     private BasicLmdbDb<String, String> basicLmdbDb2;
     private BasicLmdbDb<Integer, String> basicLmdbDb3;
     private BasicLmdbDb<Integer, String> basicLmdbDb4;
+    private BasicLmdbDb<String, UnsignedLong> basicLmdbDb5;
+
 
     @BeforeEach
     void setup() {
@@ -102,6 +116,13 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                 "MyBasicLmdb4",
                 DbiFlags.MDB_CREATE,
                 DbiFlags.MDB_INTEGERKEY);
+
+        basicLmdbDb5 = new BasicLmdbDb<>(
+                lmdbEnv,
+                new ByteBufferPoolFactory().getByteBufferPool(),
+                new StringSerde(),
+                unsignedLongSerde,
+                "MyBasicLmdb5");
     }
 
     @Test
@@ -272,6 +293,154 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                 String val = basicLmdbDb.deserializeKey(optValueBuffer.get());
                 assertThat(val).isEqualTo("value2");
             }
+        });
+    }
+
+    @Test
+    void testValueMutation() {
+        final List<Entry<String, UnsignedLong>> entries = IntStream.rangeClosed(1, 10)
+                .boxed()
+                .map(i -> new SimpleEntry<>("key-" + i, UnsignedLong.of(i, UNSIGNED_LONG_LEN)))
+                .collect(Collectors.toList());
+
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
+            LOGGER.logDurationIfDebugEnabled(() -> {
+                entries
+                        .forEach(entry -> {
+                            try (final PooledByteBufferPair pooledBufferPair = basicLmdbDb5.getPooledBufferPair()) {
+                                final ByteBuffer keyBuff = pooledBufferPair.getKeyBuffer();
+                                final ByteBuffer valBuff = pooledBufferPair.getValueBuffer();
+                                basicLmdbDb5.serializeKey(keyBuff, entry.getKey());
+                                basicLmdbDb5.serializeValue(valBuff, entry.getValue());
+                                basicLmdbDb5.getLmdbDbi().put(
+                                        writeTxn,
+                                        keyBuff,
+                                        valBuff,
+                                        PutFlags.MDB_NOOVERWRITE);
+                            }
+                        });
+            }, "initial load");
+        });
+
+        if (lmdbEnv.getEnvFlags().contains(EnvFlags.MDB_WRITEMAP)) {
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
+                LOGGER.logDurationIfDebugEnabled(() -> {
+                    entries
+                            .forEach(entry -> {
+                                try (final PooledByteBufferPair pooledBufferPair = basicLmdbDb5.getPooledBufferPair()) {
+                                    final ByteBuffer keyBuff = pooledBufferPair.getKeyBuffer();
+                                    basicLmdbDb5.serializeKey(keyBuff, entry.getKey());
+                                    final ByteBuffer valBuff = basicLmdbDb5.getLmdbDbi().get(writeTxn,
+                                            keyBuff);
+
+                                    // Mutating the value buffer without a copy only works if MDB_WRITEMAP is set
+                                    UNSIGNED_BYTES.increment(valBuff);
+                                }
+                            });
+                }, "increment in place");
+            });
+        } else {
+            LOGGER.info("{} not set on env so can't increment in place", EnvFlags.MDB_WRITEMAP);
+        }
+//        basicLmdbDb5.logDatabaseContents();
+
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
+            LOGGER.logDurationIfDebugEnabled(() -> {
+                entries
+                        .forEach(entry -> {
+                            try (final PooledByteBufferPair pooledBufferPair = basicLmdbDb5.getPooledBufferPair()) {
+                                final ByteBuffer keyBuff = pooledBufferPair.getKeyBuffer();
+                                final ByteBuffer newValBuff = pooledBufferPair.getValueBuffer();
+                                basicLmdbDb5.serializeKey(keyBuff, entry.getKey());
+                                // Mutate the value using get/put via a copy of the buffer. This is the only
+                                // way if MDB_WRITEMAP is not set.
+                                final ByteBuffer dbValBuff = basicLmdbDb5.getLmdbDbi().get(
+                                        writeTxn,
+                                        keyBuff);
+                                ByteBufferUtils.copy(dbValBuff, newValBuff);
+
+                                UNSIGNED_BYTES.increment(newValBuff);
+                                basicLmdbDb5.put(writeTxn, keyBuff, newValBuff, false);
+                            }
+                        });
+            }, "increment with get/put");
+        });
+//        basicLmdbDb5.logDatabaseContents();
+    }
+
+    @Test
+    void testLoadingSortedKeys() {
+        final List<Entry<String, String>> entries = IntStream.rangeClosed(1, 10)
+                .boxed()
+                .map(i -> new SimpleEntry<>("key-" + i, "value-" + i))
+                .collect(Collectors.toList());
+
+        // Random order for 1st load
+        Collections.shuffle(entries);
+
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
+            LOGGER.logDurationIfDebugEnabled(() -> {
+                entries
+                        .forEach(entry -> {
+                            try (final PooledByteBufferPair pooledBufferPair = basicLmdbDb.getPooledBufferPair()) {
+                                final ByteBuffer keyBuff = pooledBufferPair.getKeyBuffer();
+                                final ByteBuffer valBuff = pooledBufferPair.getValueBuffer();
+                                basicLmdbDb.serializeKey(keyBuff, entry.getKey());
+                                basicLmdbDb.serializeValue(valBuff, entry.getValue());
+                                basicLmdbDb.getLmdbDbi().put(
+                                        writeTxn,
+                                        keyBuff,
+                                        valBuff,
+                                        PutFlags.MDB_NOOVERWRITE);
+                            }
+                        });
+            }, "un-sorted puts");
+        });
+
+        // Read all entries back out in lmdb sort order
+        final List<Entry<String, String>> sortedEntries = lmdbEnv.getWithReadTxn(readTxn ->
+                basicLmdbDb.streamEntries(readTxn, KeyRange.all(), stream ->
+                        stream.collect(Collectors.toList())));
+
+        // Now load them into the other db in order using MDB_APPEND to tell LMDB they are in order
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
+            LOGGER.logDurationIfDebugEnabled(() -> {
+                sortedEntries
+                        .forEach(entry -> {
+                            try (final PooledByteBufferPair pooledBufferPair = basicLmdbDb2.getPooledBufferPair()) {
+                                final ByteBuffer keyBuff = pooledBufferPair.getKeyBuffer();
+                                final ByteBuffer valBuff = pooledBufferPair.getValueBuffer();
+                                basicLmdbDb2.serializeKey(keyBuff, entry.getKey());
+                                basicLmdbDb2.serializeValue(valBuff, entry.getValue());
+                                basicLmdbDb2.getLmdbDbi().put(
+                                        writeTxn,
+                                        keyBuff,
+                                        valBuff,
+                                        PutFlags.MDB_NOOVERWRITE,
+                                        PutFlags.MDB_APPEND);
+                            }
+                        });
+            }, "sorted puts");
+        });
+
+        // Now do all the puts again overwriting values
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
+            LOGGER.logDurationIfDebugEnabled(() -> {
+                sortedEntries
+                        .forEach(entry -> {
+                            try (final PooledByteBufferPair pooledBufferPair = basicLmdbDb2.getPooledBufferPair()) {
+                                final ByteBuffer keyBuff = pooledBufferPair.getKeyBuffer();
+                                final ByteBuffer valBuff = pooledBufferPair.getValueBuffer();
+                                basicLmdbDb2.serializeKey(keyBuff, entry.getKey());
+                                basicLmdbDb2.serializeValue(valBuff, entry.getValue());
+                                basicLmdbDb2.getLmdbDbi().put(
+                                        writeTxn,
+                                        keyBuff,
+                                        valBuff);
+                                // Can't user MDB_APPEND now as it will barf when it finds an existing key
+                            }
+                        });
+            }, "sorted puts 2");
         });
     }
 
@@ -543,6 +712,9 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
      */
     @Test
     void testLoadOrderAndIntKeyPerformance() {
+
+        // TODO: 18/04/2023 I think this test is wrong, see https://github.com/lmdbjava/lmdbjava/wiki/Keys#numeric-keys
+        //  Think it needs to be long not integer and ensure the correct endianness.
 
 //        final int iterations = 10_000_000;
         final int iterations = 10;

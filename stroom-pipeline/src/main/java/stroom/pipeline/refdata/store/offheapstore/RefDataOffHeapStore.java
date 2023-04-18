@@ -654,6 +654,10 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         return processingInfoDb.getEntryCount();
     }
 
+    long getValueStoreCount() {
+        return valueStore.getEntryCount();
+    }
+
     /**
      * Synchronized to prevent to ensure concurrent purge jobs don't clash
      *
@@ -917,6 +921,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         LOGGER.info("Purging refStreamDefinition with {}", refStreamDefStr);
 
         RefStreamPurgeCounts refStreamSummaryInfo = RefStreamPurgeCounts.zero();
+        final Instant refStreamStartTime = Instant.now();
         try {
             // mark it is purge in progress, so if we are committing part way through
             // other processes will know it is a partial state.
@@ -943,22 +948,24 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             batchingWriteTxn.commit();
 
             LOGGER.info("Completed purge of refStreamDefinition with stream {} (" +
-                            "{} maps deleted, {} values deleted, {} values de-referenced)",
+                            "{} maps deleted, {} values deleted, {} values de-referenced) in {}",
                     refStreamDefinition.getStreamId(),
                     refStreamSummaryInfo.mapsDeletedCount,
                     refStreamSummaryInfo.valuesDeletedCount,
-                    refStreamSummaryInfo.valuesDeReferencedCount);
+                    refStreamSummaryInfo.valuesDeReferencedCount,
+                    Duration.between(refStreamStartTime, Instant.now()));
 
         } catch (Exception e) {
             refStreamSummaryInfo = refStreamSummaryInfo.increment(
                     0, 0, 0, false);
 
             LOGGER.error("Failed purge of refStreamDefinition with stream {} (" +
-                            "{} maps deleted, {} values deleted, {} values de-referenced): {}",
+                            "{} maps deleted, {} values deleted, {} values de-referenced) in {}: {}",
                     refStreamDefinition.getStreamId(),
                     refStreamSummaryInfo.mapsDeletedCount,
                     refStreamSummaryInfo.valuesDeletedCount,
                     refStreamSummaryInfo.valuesDeReferencedCount,
+                    Duration.between(refStreamStartTime, Instant.now()),
                     e.getMessage(), e);
 
             try {
@@ -1030,7 +1037,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     LOGGER.debug("Found mapUid {} for refStreamDefinition {}", mapUid, refStreamDefinition);
 
                     final Tuple2<Integer, Integer> dataPurgeCounts = purgeMapData(
-                            batchingWriteTxn, optMapUid.get());
+                            batchingWriteTxn, mapUid);
 
                     summaryInfo = summaryInfo.increment(
                             1,
@@ -1065,7 +1072,6 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 batchingWriteTxn,
                 mapUid,
                 (writeTxn, keyValueStoreKeyBuffer, valueStoreKeyBuffer) -> {
-
                     //dereference this value, deleting it if required
                     deReferenceOrDeleteValue(
                             writeTxn,
