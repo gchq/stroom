@@ -19,7 +19,7 @@ public class ContentPack {
 
     @JsonCreator
     public ContentPack(@JsonProperty("gitRepo") final GitRepo gitRepo,
-            @JsonProperty("url") final String url,
+                       @JsonProperty("url") final String url,
                        @JsonProperty("name") final String name,
                        @JsonProperty("version") final String version) {
         this.gitRepo = gitRepo;
