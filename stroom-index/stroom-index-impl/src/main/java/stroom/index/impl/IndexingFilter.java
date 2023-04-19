@@ -16,8 +16,8 @@
 
 package stroom.index.impl;
 
-import stroom.alert.api.AlertManager;
-import stroom.alert.api.AlertProcessor;
+import stroom.analytics.api.AlertManager;
+import stroom.analytics.api.AlertProcessor;
 import stroom.docref.DocRef;
 import stroom.index.shared.AllPartition;
 import stroom.index.shared.IndexDoc;

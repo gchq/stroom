@@ -27,10 +27,19 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.alert.impl.AlertConfig getAlertConfig(
+    stroom.analytics.impl.AlertConfig getAlertConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
-                stroom.alert.impl.AlertConfig.class);
+                stroom.analytics.impl.AlertConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.analytics.impl.AnalyticsConfig getAnalyticsConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.analytics.impl.AnalyticsConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")

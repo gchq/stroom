@@ -399,9 +399,13 @@ public class LmdbDataStore implements DataStore {
                                 currentDbState = lmdbKV.getCurrentDbState();
                                 insert(writeTxn, dbi, lmdbKV);
                                 uncommittedCount++;
-                            } else if (queueItem instanceof final Sync sync) {
-                                commit(writeTxn, currentDbState);
-                                sync.sync();
+                            } else {
+                                if (queueItem instanceof final Sync sync) {
+                                    commit(writeTxn, currentDbState);
+                                    sync.sync();
+                                } else if (queueItem instanceof final DeleteCommand deleteCommand) {
+                                    delete(writeTxn, deleteCommand);
+                                }
                             }
                         }
 
@@ -470,6 +474,21 @@ public class LmdbDataStore implements DataStore {
                 transferState.setThread(null);
             }
         });
+    }
+
+    private void delete(final BatchingWriteTxn writeTxn,
+                        final DeleteCommand deleteCommand) {
+        final KeyRange<ByteBuffer> keyRange =
+                lmdbRowKeyFactory.createChildKeyRange(deleteCommand.getParentKey(), deleteCommand.getTimeFilter());
+        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(writeTxn.getTxn(), keyRange)) {
+            for (final KeyVal<ByteBuffer> kv : cursorIterable) {
+                final ByteBuffer keyBuffer = kv.key();
+                if (keyBuffer.limit() > 1) {
+                    dbi.delete(writeTxn.getTxn(), keyBuffer);
+                }
+            }
+        }
+        writeTxn.commit();
     }
 
     private void commit(final BatchingWriteTxn writeTxn,
@@ -871,6 +890,10 @@ public class LmdbDataStore implements DataStore {
             throw UncheckedInterruptedException.create(e);
         }
         return currentDbState;
+    }
+
+    public void delete(final DeleteCommand deleteCommand) {
+        put(deleteCommand);
     }
 
     private static class ValCache {

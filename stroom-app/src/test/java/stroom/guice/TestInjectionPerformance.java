@@ -17,9 +17,9 @@
 package stroom.guice;
 
 
-import stroom.alert.AlertDataSetup;
-import stroom.alert.impl.ResultStoreAlertSearchExecutor;
-import stroom.alert.rule.impl.AlertRuleStore;
+import stroom.analytics.AnalyticsDataSetup;
+import stroom.analytics.impl.AnalyticsExecutor;
+import stroom.analytics.rule.impl.AnalyticRuleStore;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
@@ -120,9 +120,9 @@ class TestInjectionPerformance {
                 TempDirProvider.class,
                 MetaService.class,
                 Store.class,
-                AlertRuleStore.class,
-                ResultStoreAlertSearchExecutor.class,
-                AlertDataSetup.class,
+                AnalyticRuleStore.class,
+                AnalyticsExecutor.class,
+                AnalyticsDataSetup.class,
         };
 
 //        createDataSources(injector);
