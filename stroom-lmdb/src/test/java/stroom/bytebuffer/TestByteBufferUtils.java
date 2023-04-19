@@ -358,7 +358,7 @@ class TestByteBufferUtils {
                             final ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[20]);
                             ByteBufferUtils.increment(byteBuffer, 18, Long.BYTES);
                         })
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(IndexOutOfBoundsException.class);
     }
 
     @Disabled // manual perf testing only
