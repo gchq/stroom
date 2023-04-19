@@ -9,47 +9,30 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class ContentPack {
 
     @JsonProperty
-    private final GitRepo gitRepo;
-    @JsonProperty
-    private final String url;
-    @JsonProperty
     private final String name;
     @JsonProperty
-    private final String version;
+    private final String path;
+    @JsonProperty("repo")
+    private final GitRepo repo;
 
     @JsonCreator
-    public ContentPack(@JsonProperty("gitRepo") final GitRepo gitRepo,
-                       @JsonProperty("url") final String url,
-                       @JsonProperty("name") final String name,
-                       @JsonProperty("version") final String version) {
-        this.gitRepo = gitRepo;
-        this.url = url;
+    public ContentPack(@JsonProperty("name") final String name,
+                       @JsonProperty("path") final String path,
+                       @JsonProperty("repo") final GitRepo repo) {
         this.name = name;
-        this.version = version;
-    }
-
-    public GitRepo getGitRepo() {
-        return gitRepo;
-    }
-
-    public String getUrl() {
-        return url;
+        this.path = path;
+        this.repo = repo;
     }
 
     public String getName() {
         return name;
     }
 
-    public String getVersion() {
-        return version;
+    public String getPath() {
+        return path;
     }
 
-    public String toFileName() {
-        return name + "-v" + version + ".zip";
-    }
-
-    @Override
-    public String toString() {
-        return name + "-v" + version;
+    public GitRepo getRepo() {
+        return repo;
     }
 }

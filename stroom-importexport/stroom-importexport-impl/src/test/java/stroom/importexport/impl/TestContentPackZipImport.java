@@ -47,9 +47,9 @@ import java.util.ArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
-class TestContentPackImport {
+class TestContentPackZipImport {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestContentPackImport.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestContentPackZipImport.class);
 
     private static final Path CONTENT_PACK_IMPORT_DIR = Paths.get("contentPackImport");
 

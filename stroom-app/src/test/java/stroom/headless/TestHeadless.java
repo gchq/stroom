@@ -18,10 +18,9 @@ package stroom.headless;
 
 import stroom.content.ContentPacks;
 import stroom.test.common.ComparisonHelper;
-import stroom.test.common.util.test.ContentPackDownloader;
+import stroom.test.common.util.test.ContentPackZipDownloader;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.FileUtil;
-import stroom.util.shared.Version;
 import stroom.util.zip.ZipUtil;
 
 import org.apache.commons.io.FileUtils;
@@ -34,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
@@ -46,9 +44,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestHeadless {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestHeadless.class);
-
-    private static final Version CORE_XML_SCHEMAS_VERSION = Version.of(1, 0);
-    private static final Version EVENT_LOGGING_XML_SCHEMA_VERSION = Version.of(1, 0);
 
     @Test
     void test(@TempDir Path newTempDir) throws IOException {
@@ -87,28 +82,15 @@ class TestHeadless {
         Files.deleteIfExists(inputFilePath);
         ZipUtil.zip(inputFilePath, rawInputPath);
 
-        // Create config zip file
-        final Path downloadedContentPacks = FileSystemTestUtil.getContentPackDownloadsDir();
-        downloadXmlSchemas(downloadedContentPacks);
-
         // Copy required config into the temp dir.
         final Path rawConfigPath = tmpPath.resolve("config");
         Files.createDirectories(rawConfigPath);
         final Path configUnzippedDirPath = samplesPath.resolve("config");
         FileUtils.copyDirectory(configUnzippedDirPath.toFile(), rawConfigPath.toFile());
 
-        // Unzip the downloaded content packs into the temp dir.
-        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(downloadedContentPacks)) {
-            stream.forEach(file -> {
-                try {
-                    ZipUtil.unzip(file, rawConfigPath);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        // Add XML schemas.
+        final Path downloadedContentPacks = FileSystemTestUtil.getContentPackDownloadsDir();
+        addXmlSchemas(downloadedContentPacks, rawConfigPath);
 
         // Build the config zip file.
         final Path configFilePath = tmpPath.resolve("config.zip");
@@ -128,8 +110,8 @@ class TestHeadless {
         final List<String> outputLines = Files.readAllLines(outputFilePath, Charset.defaultCharset());
 
         LOGGER.info("Comparing expected vs actual:\n\t{}\n\t{}",
-                expectedOutputFilePath.toAbsolutePath().toString(),
-                outputFilePath.toAbsolutePath().toString());
+                expectedOutputFilePath.toAbsolutePath(),
+                outputFilePath.toAbsolutePath());
 
         // same number of lines output as expected
         assertThat(outputLines).hasSize(expectedLines.size());
@@ -141,10 +123,17 @@ class TestHeadless {
         ComparisonHelper.compareFiles(expectedOutputFilePath, outputFilePath);
     }
 
-    private void downloadXmlSchemas(final Path path) {
+    private void addXmlSchemas(final Path path, final Path dest) {
         List.of(ContentPacks.CORE_XML_SCHEMAS_PACK,
-                ContentPacks.EVENT_LOGGING_XML_SCHEMA_PACK)
-                .forEach(contentPack ->
-                        ContentPackDownloader.downloadContentPack(contentPack, path));
+                        ContentPacks.EVENT_LOGGING_XML_SCHEMA_PACK)
+                .forEach(contentPack -> {
+                    try {
+                        final Path p = ContentPackZipDownloader.downloadContentPack(contentPack, path);
+                        final Path sub = p.resolve(contentPack.getPath());
+                        Files.copy(sub, dest);
+                    } catch (final IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                });
     }
 }

@@ -1,7 +1,7 @@
 package stroom.test.common.util.test;
 
 import stroom.content.ContentPack;
-import stroom.content.ContentPackCollection;
+import stroom.content.GitRepo;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogUtil;
@@ -28,31 +28,31 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
 
-public class ContentPackDownloader {
+public class ContentPackZipDownloader {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ContentPackDownloader.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ContentPackZipDownloader.class);
     public static final String CONTENT_PACK_DOWNLOAD_DIR = "~/.stroom/contentPackDownload";
 
-    private static void download(final String url,
-                                 final Path file) throws IOException {
+    private static void downloadZip(final String url,
+                                    final Path file) throws IOException {
         try (final InputStream in = new URL(url).openStream()) {
             Files.copy(in, file, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 
-    private static void download(final ContentPack contentPack,
-                                 final Path contentPackDownloadDir,
-                                 final Path contentPackImportDir) {
+    private static void downloadZip(final ContentPackZip contentPackZip,
+                                    final Path contentPackDownloadDir,
+                                    final Path contentPackImportDir) {
 
-        final Path downloadFile = buildDestFilePath(contentPack, contentPackDownloadDir);
-        final Path importFile = buildDestFilePath(contentPack, contentPackImportDir);
+        final Path downloadFile = buildDestFilePath(contentPackZip, contentPackDownloadDir);
+        final Path importFile = buildDestFilePath(contentPackZip, contentPackImportDir);
 
         ensureDirectoryExists(contentPackImportDir);
 
         if (!Files.isRegularFile(importFile)) {
 
             // Do the download (if it is not there already)
-            downloadContentPack(contentPack, contentPackDownloadDir);
+            downloadContentPackZip(contentPackZip, contentPackDownloadDir);
 
             LOGGER.info("Copying from " + downloadFile + " to " + importFile);
             try {
@@ -75,9 +75,9 @@ public class ContentPackDownloader {
         }
     }
 
-    public static synchronized void downloadPacks(final Path contentPacksDefinition,
-                                                  final Path contentPackDownloadDir,
-                                                  final Path contentPackImportDir) {
+    public static synchronized void downloadZipPacks(final Path contentPacksDefinition,
+                                                     final Path contentPackDownloadDir,
+                                                     final Path contentPackImportDir) {
         LOGGER.info("Downloading content packs using definition {}, with download dir {} and import dir {}",
                 contentPacksDefinition.toAbsolutePath(),
                 contentPackDownloadDir.toAbsolutePath(),
@@ -96,56 +96,71 @@ public class ContentPackDownloader {
 
         try {
             final ObjectMapper mapper = new ObjectMapper();
-            final ContentPackCollection contentPacks = mapper.readValue(
+            final ContentPackZipCollection contentPacks = mapper.readValue(
                     contentPacksDefinition.toFile(),
-                    ContentPackCollection.class);
+                    ContentPackZipCollection.class);
             contentPacks.getContentPacks().forEach(contentPack ->
-                    download(contentPack, contentPackDownloadDir, contentPackImportDir));
+                    downloadZip(contentPack, contentPackDownloadDir, contentPackImportDir));
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }
     }
 
-    public static Path downloadContentPack(final ContentPack contentPack, final Path destDir) {
-        return downloadContentPack(contentPack, destDir, ConflictMode.KEEP_EXISTING);
+    public static Path downloadContentPackZip(final ContentPackZip contentPackZip, final Path destDir) {
+        return downloadContentPackZip(contentPackZip, destDir, ConflictMode.KEEP_EXISTING);
     }
 
-    public static synchronized Path downloadContentPackFromGit(final String uri,
-                                                               final String branch,
-                                                               final Path destDir) {
-        if (!Files.exists(destDir)) {
-            try {
-                Git
-                        .cloneRepository()
-                        .setURI(uri)
-                        .setBranch(branch)
-                        .setDirectory(destDir.toFile())
-                        .call();
-            } catch (final GitAPIException e) {
-                LOGGER.error(e.getMessage(), e);
-                throw new RuntimeException(e.getMessage(), e);
-            }
+    public static synchronized Path downloadContentPack(final ContentPack contentPack,
+                                                        final Path destDir) {
+        final GitRepo gitRepo  = contentPack.getRepo();
+        final Path dir = destDir
+                .resolve(gitRepo.getName())
+                .resolve(gitRepo.getBranch())
+                .resolve(gitRepo.getCommit());
+
+        if (!Files.exists(dir)) {
+            gitPull(contentPack.getRepo(), dir);
+        }
+
+        return dir;
+    }
+
+    public static synchronized Path gitPull(final GitRepo gitRepo,
+                                            final Path destDir) {
+        if (Files.exists(destDir)) {
+            throw new RuntimeException("Expected new dir");
+        }
+
+        LOGGER.info("Pulling from Git repo: " + gitRepo);
+        try (final Git git = Git
+                .cloneRepository()
+                .setURI(gitRepo.getUri())
+                .setBranch(gitRepo.getBranch())
+                .setDirectory(destDir.toFile())
+                .call()) {
+            git.checkout().setName(gitRepo.getCommit()).call();
+        } catch (final GitAPIException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
         }
 
         return destDir;
-
-//        return downloadContentPack(contentPack, destDir, ConflictMode.KEEP_EXISTING);
     }
 
     /**
      * synchronized to avoid multiple test threads downloading the same pack concurrently
      */
-    public static synchronized Path downloadContentPack(final ContentPack contentPack,
-                                                        final Path destDir,
-                                                        final ConflictMode conflictMode) {
-        Preconditions.checkNotNull(contentPack);
+    public static synchronized Path downloadContentPackZip(final ContentPackZip contentPackZip,
+                                                           final Path destDir,
+                                                           final ConflictMode conflictMode) {
+        Preconditions.checkNotNull(contentPackZip);
         Preconditions.checkNotNull(destDir);
         Preconditions.checkNotNull(conflictMode);
         Preconditions.checkArgument(Files.isDirectory(destDir));
 
-        final Path destFilePath = buildDestFilePath(contentPack, destDir);
-        final Path lockFilePath = buildLockFilePath(contentPack, destDir);
+        final Path destFilePath = buildDestFilePath(contentPackZip, destDir);
+        final Path lockFilePath = buildLockFilePath(contentPackZip, destDir);
 
         ensureDirectoryExists(destDir);
 
@@ -156,12 +171,12 @@ public class ContentPackDownloader {
 
             if (destFileExists && conflictMode.equals(ConflictMode.KEEP_EXISTING)) {
                 LOGGER.debug("Requested contentPack {} already exists in {}, keeping existing",
-                        contentPack.getName(),
+                        contentPackZip.getName(),
                         FileUtil.getCanonicalPath(destFilePath));
             } else {
                 if (destFileExists && conflictMode.equals(ConflictMode.OVERWRITE_EXISTING)) {
                     LOGGER.debug("Requested contentPack {} already exists in {}, overwriting existing",
-                            contentPack.getName(),
+                            contentPackZip.getName(),
                             FileUtil.getCanonicalPath(destFilePath));
                     try {
                         Files.delete(destFilePath);
@@ -174,12 +189,12 @@ public class ContentPackDownloader {
 
                 if (destFileExists) {
                     LOGGER.info("ContentPack {} already exists {}",
-                            contentPack.getName(),
+                            contentPackZip.getName(),
                             FileUtil.getCanonicalPath(destFilePath));
                 } else {
-                    final URL fileUrl = getUrl(contentPack);
+                    final URL fileUrl = getUrl(contentPackZip);
                     LOGGER.info("Downloading contentPack {} from {} to {}",
-                            contentPack.getName(),
+                            contentPackZip.getName(),
                             fileUrl.toString(),
                             FileUtil.getCanonicalPath(destFilePath));
 
@@ -191,27 +206,27 @@ public class ContentPackDownloader {
         return destFilePath;
     }
 
-    private static URL getUrl(final ContentPack contentPack) {
+    private static URL getUrl(final ContentPackZip contentPackZip) {
         try {
-            return new URL(contentPack.getUrl());
+            return new URL(contentPackZip.getUrl());
         } catch (MalformedURLException e) {
             throw new RuntimeException("Url " +
-                    contentPack.getUrl() +
+                    contentPackZip.getUrl() +
                     " for content pack " +
-                    contentPack.getName() +
+                    contentPackZip.getName() +
                     " and version " +
-                    contentPack.getVersion() +
+                    contentPackZip.getVersion() +
                     " is badly formed", e);
         }
     }
 
-    static Path buildDestFilePath(final ContentPack contentPack, final Path destDir) {
-        final String filename = contentPack.toFileName();
+    static Path buildDestFilePath(final ContentPackZip contentPackZip, final Path destDir) {
+        final String filename = contentPackZip.toFileName();
         return destDir.resolve(filename);
     }
 
-    static Path buildLockFilePath(final ContentPack contentPack, final Path destDir) {
-        final String filename = contentPack.toFileName();
+    static Path buildLockFilePath(final ContentPackZip contentPackZip, final Path destDir) {
+        final String filename = contentPackZip.toFileName();
         return destDir.resolve(filename + ".lock");
     }
 

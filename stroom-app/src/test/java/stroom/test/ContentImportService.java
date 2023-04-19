@@ -1,13 +1,16 @@
 package stroom.test;
 
 import stroom.content.ContentPack;
+import stroom.content.ContentPackCollection;
 import stroom.content.ContentPacks;
-import stroom.content.GitRepo;
 import stroom.importexport.impl.ImportExportSerializer;
 import stroom.importexport.impl.ImportExportService;
 import stroom.importexport.shared.ImportSettings;
-import stroom.test.common.util.test.ContentPackDownloader;
+import stroom.test.common.util.test.ContentPackZipDownloader;
 import stroom.test.common.util.test.FileSystemTestUtil;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -46,26 +49,37 @@ public class ContentImportService {
         ));
     }
 
+    public void importSamplePacks() {
+        importContentPacks(Arrays.asList(
+                ContentPacks.CORE_XML_SCHEMAS_PACK,
+                ContentPacks.EVENT_LOGGING_XML_SCHEMA_PACK,
+                ContentPacks.TEMPLATE_PIPELINES_PACK,
+                ContentPacks.STANDARD_PIPELINES_PACK
+        ));
+    }
+
     private void importContentPacks(final List<ContentPack> packs) {
-        packs.forEach(pack -> {
-            final GitRepo gitRepo = pack.getGitRepo();
-            final Path dir = FileSystemTestUtil
-                    .getContentPackDownloadsDir()
-                    .resolve(gitRepo.getName())
-                    .resolve(gitRepo.getBranch());
-            final Path repoPath = ContentPackDownloader.downloadContentPackFromGit(
-                    gitRepo.getUrl(),
-                    gitRepo.getBranch(),
-                    dir);
+        packs.forEach(this::importContentPack);
+    }
 
-            final Path subPath = repoPath.resolve("source").resolve(pack.getName()).resolve("stroomContent");
+    public void importContentPack(final ContentPack pack) {
+        final Path repoPath = ContentPackZipDownloader.downloadContentPack(
+                pack, FileSystemTestUtil.getContentPackDownloadsDir());
 
-            importExportSerializer.read(subPath, new ArrayList<>(), ImportSettings.auto());
-//            final Path packPath = ContentPackDownloader.downloadContentPack(
-//                    pack,
-//                    FileSystemTestUtil.getContentPackDownloadsDir());
-//
-//            importExportService.importConfig(packPath, ImportSettings.auto(), new ArrayList<>());
-        });
+        final Path subPath = repoPath.resolve(pack.getPath());
+
+        importExportSerializer.read(subPath, new ArrayList<>(), ImportSettings.auto());
+    }
+
+    public void importFromDefinitionYaml(final Path definitionYaml) {
+        try {
+            final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+            final ContentPackCollection contentPacks = mapper.readValue(
+                    definitionYaml.toFile(),
+                    ContentPackCollection.class);
+            contentPacks.getContentPacks().forEach(this::importContentPack);
+        } catch (final Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

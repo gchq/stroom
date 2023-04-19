@@ -11,37 +11,46 @@ public class GitRepo {
     @JsonProperty
     private final String name;
     @JsonProperty
-    private final String url;
+    private final String uri;
     @JsonProperty
     private final String branch;
+    @JsonProperty
+    private final String commit;
 
     @JsonCreator
     public GitRepo(@JsonProperty("name") final String name,
-                   @JsonProperty("url") final String url,
-                   @JsonProperty("branch") final String branch) {
+                   @JsonProperty("uri") final String uri,
+                   @JsonProperty("branch") final String branch,
+                   @JsonProperty("commit") final String commit) {
         this.name = name;
-        this.url = url;
+        this.uri = uri;
         this.branch = branch;
+        this.commit = commit;
     }
 
     public String getName() {
         return name;
     }
 
-    public String getUrl() {
-        return url;
+    public String getUri() {
+        return uri;
     }
 
     public String getBranch() {
         return branch;
     }
 
+    public String getCommit() {
+        return commit;
+    }
+
     @Override
     public String toString() {
         return "GitRepo{" +
                 "name='" + name + '\'' +
-                ", url='" + url + '\'' +
+                ", uri='" + uri + '\'' +
                 ", branch='" + branch + '\'' +
+                ", commit='" + commit + '\'' +
                 '}';
     }
 }

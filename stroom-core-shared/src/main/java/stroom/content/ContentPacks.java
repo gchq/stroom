@@ -11,55 +11,40 @@ public class ContentPacks {
     private static final GitRepo STROOM_CONTENT_GIT_REPO =
             new GitRepo("stroom-content",
                     "https://github.com/gchq/stroom-content.git",
-                    "7.2");
+                    "7.2",
+                    "8b5f629bb1363a339101248414db875e9fbc453a");
     private static final GitRepo STROOM_VISUALISATION_DEV_GIT_REPO =
             new GitRepo("stroom-visualisations-dev",
                     "https://github.com/gchq/stroom-visualisations-dev.git",
-                    "7.2");
+                    "7.2",
+                    "0f7f50b4138ab3cdb4cff8dcabedc2ca922bab7e");
 
-    public static final ContentPack CORE_XML_SCHEMAS_PACK = createStandardContentPack(CONTENT_RELEASES_URL,
-            "core-xml-schemas",
-            "2.2");
+    public static final ContentPack CORE_XML_SCHEMAS_PACK = createStandardContentPack("core-xml-schemas");
 
-    public static final ContentPack EVENT_LOGGING_XML_SCHEMA_PACK = createStandardContentPack(CONTENT_RELEASES_URL,
-            "event-logging-xml-schema",
-            "3.4.2");
+    public static final ContentPack EVENT_LOGGING_XML_SCHEMA_PACK =
+            createStandardContentPack("event-logging-xml-schema");
 
-    public static final ContentPack STANDARD_PIPELINES_PACK = createStandardContentPack(CONTENT_RELEASES_URL,
-            "standard-pipelines",
-            "0.2");
+    public static final ContentPack STANDARD_PIPELINES_PACK = createStandardContentPack("standard-pipelines");
 
-    public static final ContentPack TEMPLATE_PIPELINES_PACK = createStandardContentPack(CONTENT_RELEASES_URL,
-            "template-pipelines",
-            "0.3");
+    public static final ContentPack TEMPLATE_PIPELINES_PACK = createStandardContentPack("template-pipelines");
 
-    public static final ContentPack INTERNAL_DASHBOARDS = createStandardContentPack(CONTENT_RELEASES_URL,
-            "internal-dashboards",
-            "1.1");
+    public static final ContentPack INTERNAL_DASHBOARDS = createStandardContentPack("internal-dashboards");
 
-    public static final ContentPack INTERNAL_STATISTICS_SQL = createStandardContentPack(CONTENT_RELEASES_URL,
-            "internal-statistics-sql",
-            "2.1");
+    public static final ContentPack INTERNAL_STATISTICS_SQL = createStandardContentPack("internal-statistics-sql");
 
-    public static final ContentPack INTERNAL_STATISTICS_STROOM_STATS = createStandardContentPack(CONTENT_RELEASES_URL,
-            "internal-statistics-stroom-stats",
-            "2.1");
+    public static final ContentPack INTERNAL_STATISTICS_STROOM_STATS = createStandardContentPack(
+            "internal-statistics-stroom-stats");
 
     //STANDARD_PIPELINES_PACK
 
-    public static final ContentPack STROOM_101 = createStandardContentPack(CONTENT_RELEASES_URL,
-            "stroom-101",
-            "1.0");
+    public static final ContentPack STROOM_101 = createStandardContentPack("stroom-101");
 
-    public static final ContentPack STROOM_LOGS = createStandardContentPack(CONTENT_RELEASES_URL,
-            "stroom-logs",
-            "3.0-beta.1");
+    public static final ContentPack STROOM_LOGS = createStandardContentPack("stroom-logs");
 
     //TEMPLATE_PIPELINES_PACK
 
-    public static final ContentPack VISUALISATIONS = createVisualisationContentPack(VISUALISATION_RELEASES_URL,
-            "visualisations-production",
-            "3.12-alpha.1");
+    public static final ContentPack VISUALISATIONS = createVisualisationContentPack(
+            "visualisations-production");
 
     public static final ContentPackCollection SAMPLE_DATA_CONTENT_PACKS = new ContentPackCollection(
             List.of(
@@ -74,18 +59,12 @@ public class ContentPacks {
                     TEMPLATE_PIPELINES_PACK,
                     VISUALISATIONS));
 
-    private static ContentPack createStandardContentPack(final String baseUrl,
-                                                         final String name,
-                                                         final String version) {
-        final String url = baseUrl + name + "-v" + version + "/" + name + "-v" + version + ".zip";
-        return new ContentPack(STROOM_CONTENT_GIT_REPO, url, name, version);
+    private static ContentPack createStandardContentPack(final String name) {
+        return new ContentPack(name, "source/" + name + "/stroomContent", STROOM_CONTENT_GIT_REPO);
     }
 
-    private static ContentPack createVisualisationContentPack(final String baseUrl,
-                                                              final String name,
-                                                              final String version) {
-        final String url = baseUrl + "v" + version + "/" + name + "-v" + version + ".zip";
-        return new ContentPack(STROOM_VISUALISATION_DEV_GIT_REPO, url, name, version);
+    private static ContentPack createVisualisationContentPack(final String name) {
+        return new ContentPack(name, "war/stroomContent", STROOM_VISUALISATION_DEV_GIT_REPO);
     }
 
     private ContentPacks() {
