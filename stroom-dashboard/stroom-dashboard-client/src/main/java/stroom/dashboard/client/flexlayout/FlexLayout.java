@@ -60,7 +60,7 @@ public class FlexLayout extends Composite {
 
     private static final double DRAG_ZONE = 20;
     private static final double MIN_COMPONENT_WIDTH = 50;
-    private static final double SPLIT_SIZE = 6;
+    private static final double SPLIT_SIZE = 1;
     private static Glass marker;
     private static Glass glass;
     private final EventBus eventBus;

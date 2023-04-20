@@ -94,6 +94,10 @@ public class Glass {
         if (glassElem == null) {
             glassElem = Document.get().createDivElement();
             glassElem.setClassName(className);
+
+            final Element glassElemMarker = Document.get().createDivElement();
+            glassElemMarker.setClassName("marker");
+            glassElem.appendChild(glassElemMarker);
         }
     }
 

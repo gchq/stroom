@@ -68,7 +68,7 @@ import com.google.gwt.user.client.Event;
  */
 public class MySplitLayoutPanel extends DockLayoutPanel {
 
-    private static final int SPLITTER_SIZE = 6;
+    private static final int SPLITTER_SIZE = 1;
     /**
      * The element that masks the screen so we can catch mouse events over
      * iframes.
@@ -307,6 +307,7 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
         }
 
         super.insert(splitter, layout.direction, SPLITTER_SIZE, before);
+        splitter.getElement().getParentElement().setClassName("gwt-SplitLayoutPanel-Dragger-Outer");
     }
 
     private Element getGlass() {
