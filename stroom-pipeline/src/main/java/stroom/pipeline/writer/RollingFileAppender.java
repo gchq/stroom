@@ -109,7 +109,7 @@ public class RollingFileAppender extends AbstractRollingAppender {
                     Files.setPosixFilePermissions(parentDir, permissions);
                 }
             } catch (final IOException e) {
-                throw new ProcessException("Unable to create output dirs: " + FileUtil.getCanonicalPath(parentDir));
+                throw ProcessException.create("Unable to create output dirs: " + FileUtil.getCanonicalPath(parentDir));
             }
         }
 
@@ -190,19 +190,19 @@ public class RollingFileAppender extends AbstractRollingAppender {
     @Override
     protected void validateSpecificSettings() {
         if (outputPaths == null || outputPaths.length == 0) {
-            throw new ProcessException("No output paths have been specified");
+            throw ProcessException.create("No output paths have been specified");
         }
 
         if (fileNamePattern == null || fileNamePattern.length() == 0) {
-            throw new ProcessException("No file name has been specified");
+            throw ProcessException.create("No file name has been specified");
         }
 
         if (rolledFileNamePattern == null || rolledFileNamePattern.length() == 0) {
-            throw new ProcessException("No rolled file name has been specified");
+            throw ProcessException.create("No rolled file name has been specified");
         }
 
         if (fileNamePattern.equals(rolledFileNamePattern)) {
-            throw new ProcessException("File name and rolled file name cannot be the same");
+            throw ProcessException.create("File name and rolled file name cannot be the same");
         }
     }
 

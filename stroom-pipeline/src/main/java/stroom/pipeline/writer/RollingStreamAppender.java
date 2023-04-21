@@ -89,7 +89,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     @Override
     public RollingDestination createDestination() {
         if (key.getStreamType() == null) {
-            throw new ProcessException("Stream type not specified");
+            throw ProcessException.create("Stream type not specified");
         }
 
         // Don't set the processor or the task or else this rolling stream will be deleted automatically because the
@@ -144,12 +144,12 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
         }
 
         if (Strings.isNullOrEmpty(streamType)) {
-            throw new ProcessException("Stream type not specified");
+            throw ProcessException.create("Stream type not specified");
         }
     }
 
     private void fatal(final String message) {
-        throw new ProcessException(message);
+        throw ProcessException.create(message);
     }
 
     @PipelineProperty(

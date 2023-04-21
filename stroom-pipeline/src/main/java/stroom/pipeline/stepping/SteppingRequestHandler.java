@@ -634,7 +634,7 @@ class SteppingRequestHandler {
                     || controller.getRecordDetector() == null
                     || controller.getMonitors() == null
                     || controller.getMonitors().size() == 0) {
-                throw new ProcessException(
+                throw ProcessException.create(
                         "You cannot step with this pipeline as it does not contain required elements.");
             }
         }

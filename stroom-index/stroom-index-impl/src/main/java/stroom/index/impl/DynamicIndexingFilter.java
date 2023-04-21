@@ -115,14 +115,14 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
         try {
             if (indexRef == null) {
                 log(Severity.FATAL_ERROR, "Index has not been set", null);
-                throw new LoggedException("Index has not been set");
+                throw LoggedException.create("Index has not been set");
             }
 
             // Get the index and index fields from the cache.
             final IndexStructure indexStructure = indexStructureCache.get(indexRef);
             if (indexStructure == null) {
                 log(Severity.FATAL_ERROR, "Unable to load index", null);
-                throw new LoggedException("Unable to load index");
+                throw LoggedException.create("Unable to load index");
             }
 
             index = indexStructure.getIndex();
@@ -226,7 +226,7 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
             } catch (final RuntimeException e) {
                 log(Severity.FATAL_ERROR, e.getMessage(), e);
                 // Terminate processing as this is a fatal error.
-                throw new LoggedException(e.getMessage(), e);
+                throw LoggedException.wrap(e);
             }
         }
     }

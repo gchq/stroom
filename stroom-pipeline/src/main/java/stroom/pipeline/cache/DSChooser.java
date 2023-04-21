@@ -63,12 +63,12 @@ public class DSChooser {
                 return dataSplitterParserFactory;
 
             } else {
-                throw new ProcessException("Unknown data splitter version \"" + version + "\" in XML configuration");
+                throw ProcessException.create("Unknown data splitter version \"" + version + "\" in XML configuration");
             }
 
         }
 //        else {
-//            throw new ProcessException("Unable to determine text converter type from XML configuration");
+//            throw ProcessException.create("Unable to determine text converter type from XML configuration");
 
 //        }
 

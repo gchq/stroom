@@ -88,7 +88,7 @@ public class HttpClientCache {
                         .readerFor(OkHttpClientConfig.class)
                         .readValue(clientConfigStr);
             } catch (IOException e) {
-                throw new ProcessException(LogUtil.message(
+                throw ProcessException.create(LogUtil.message(
                         "Error parsing HTTP client configuration \"{}\". {}", clientConfigStr, e.getMessage()), e);
             }
 
@@ -128,7 +128,7 @@ public class HttpClientCache {
                     builder.hostnameVerifier(SSLUtil.PERMISSIVE_HOSTNAME_VERIFIER);
                 }
             } catch (NoSuchAlgorithmException | KeyManagementException e) {
-                throw new ProcessException(
+                throw ProcessException.create(
                         "Error initialising SSL context, is the http client configuration valid?. "
                                 + e.getMessage(), e);
             }
@@ -139,7 +139,7 @@ public class HttpClientCache {
         try {
             return SSLUtil.createTrustManagers(sslConfig, pathCreator);
         } catch (Exception e) {
-            throw new ProcessException("Invalid client trustStore configuration: " + e.getMessage(), e);
+            throw ProcessException.create("Invalid client trustStore configuration: " + e.getMessage(), e);
         }
     }
 
@@ -148,7 +148,7 @@ public class HttpClientCache {
             final KeyManager[] keyManagers = SSLUtil.createKeyManagers(sslConfig, pathCreator);
             return keyManagers;
         } catch (Exception e) {
-            throw new ProcessException("Invalid client keyStore configuration: " + e.getMessage(), e);
+            throw ProcessException.create("Invalid client keyStore configuration: " + e.getMessage(), e);
         }
     }
 
@@ -179,7 +179,7 @@ public class HttpClientCache {
                             try {
                                 return Protocol.get(protocolStr);
                             } catch (IOException e) {
-                                throw new ProcessException(LogUtil.message(
+                                throw ProcessException.create(LogUtil.message(
                                         "Invalid http protocol [{}] in client configuration", protocolStr), e);
                             }
                         }

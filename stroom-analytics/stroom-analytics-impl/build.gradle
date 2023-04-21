@@ -32,5 +32,6 @@ dependencies {
     implementation libs.jackson_annotations
     implementation libs.jaxb_api
     implementation libs.lucene_memory
+    implementation libs.saxon_he
     implementation libs.slf4j_api
 }

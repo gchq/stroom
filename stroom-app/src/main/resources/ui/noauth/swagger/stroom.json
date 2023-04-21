@@ -9360,10 +9360,6 @@
       "AnalyticRuleDoc" : {
         "type" : "object",
         "properties" : {
-          "alertRuleType" : {
-            "type" : "string",
-            "enum" : [ "EVENT", "AGGREGATE" ]
-          },
           "analyticRuleType" : {
             "type" : "string",
             "enum" : [ "EVENT", "AGGREGATE" ]

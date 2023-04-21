@@ -108,7 +108,7 @@ public class XMLRecordEmitter extends XMLFilterAdaptor implements HasElementId {
             handler = th;
         } catch (final TransformerConfigurationException e) {
             errorReceiver.log(Severity.FATAL_ERROR, null, getElementId(), e.getMessage(), e);
-            throw new LoggedException(e.getMessage(), e);
+            throw LoggedException.wrap(e);
         }
 
         return handler;
