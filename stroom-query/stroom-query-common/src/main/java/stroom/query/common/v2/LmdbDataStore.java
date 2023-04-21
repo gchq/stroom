@@ -1177,7 +1177,7 @@ public class LmdbDataStore implements DataStore {
 
             final Generator generator = generators[index];
             if (generator != null) {
-                if (evaluateChildren) {
+                if (evaluateChildren && key.isGrouped()) {
                     final Supplier<ChildData> childDataSupplier = () -> {
                         // If we don't have any children at the requested depth then return null.
                         if (data.compiledSorters.length <= key.getDepth()) {
