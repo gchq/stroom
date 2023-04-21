@@ -142,7 +142,6 @@ export type AddPermissionEvent = PermissionChangeEvent & {
 };
 
 export interface AnalyticRuleDoc {
-  alertRuleType?: "EVENT" | "AGGREGATE";
   analyticRuleType?: "EVENT" | "AGGREGATE";
 
   /** @format int64 */
