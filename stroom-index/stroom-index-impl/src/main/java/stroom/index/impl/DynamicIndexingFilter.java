@@ -89,7 +89,7 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
     private Long currentEventTime;
     private Partition defaultPartition;
 
-    private Set<IndexField> foundFields = new HashSet<>();
+    private final Set<IndexField> foundFields = new HashSet<>();
 
     @Inject
     DynamicIndexingFilter(final MetaHolder metaHolder,
