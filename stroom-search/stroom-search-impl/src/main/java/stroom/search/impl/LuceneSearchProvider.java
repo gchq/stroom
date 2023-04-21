@@ -155,7 +155,7 @@ public class LuceneSearchProvider implements SearchProvider {
                 modifiedSearchRequest.getKey(),
                 coprocessorSettingsList,
                 query.getParams(),
-                DataStoreSettings.BASIC_SETTINGS);
+                DataStoreSettings.createBasicSearchResultStoreSettings());
 
         // Create an asynchronous search task.
         final String searchName = "Search '" + modifiedSearchRequest.getKey().toString() + "'";

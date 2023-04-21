@@ -23,6 +23,10 @@
             <type>XSLTFilter</type>
          </element>
          <element>
+            <id>schemaFilter</id>
+            <type>SchemaFilter</type>
+         </element>
+         <element>
             <id>indexingFilter</id>
             <type>DynamicIndexingFilter</type>
          </element>
@@ -56,6 +60,13 @@
             </value>
          </property>
          <property>
+            <element>schemaFilter</element>
+            <name>schemaGroup</name>
+            <value>
+               <string>INDEX_DOCUMENTS</string>
+            </value>
+         </property>
+         <property>
             <element>writeRecordCountFilter</element>
             <name>countRead</name>
             <value>
@@ -84,6 +95,10 @@
          </link>
          <link>
             <from>xsltFilter</from>
+            <to>schemaFilter</to>
+         </link>
+         <link>
+            <from>schemaFilter</from>
             <to>indexingFilter</to>
          </link>
          <link>

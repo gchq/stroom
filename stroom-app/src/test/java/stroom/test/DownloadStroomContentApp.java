@@ -1,6 +1,6 @@
 package stroom.test;
 
-import stroom.test.common.util.test.ContentPackDownloader;
+import stroom.test.common.util.test.ContentPackZipDownloader;
 import stroom.util.io.FileUtil;
 
 import java.nio.file.Paths;
@@ -14,7 +14,7 @@ public class DownloadStroomContentApp {
         final String contentPacksDefinition = args[0];
         final String contentPackDownload = args[1];
         final String contentPackImport = args[2];
-        ContentPackDownloader.downloadPacks(
+        ContentPackZipDownloader.downloadZipPacks(
                 Paths.get(FileUtil.replaceHome(contentPacksDefinition)),
                 Paths.get(FileUtil.replaceHome(contentPackDownload)),
                 Paths.get(FileUtil.replaceHome(contentPackImport)));

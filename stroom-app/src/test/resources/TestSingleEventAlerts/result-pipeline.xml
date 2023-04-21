@@ -49,6 +49,13 @@
             </value>
          </property>
          <property>
+            <element>schemaFilter</element>
+            <name>schemaGroup</name>
+            <value>
+               <string>INDEX_DOCUMENTS</string>
+            </value>
+         </property>
+         <property>
             <element>xmlWriter</element>
             <name>indentOutput</name>
             <value>
@@ -80,6 +87,10 @@
          </link>
          <link>
             <from>xsltFilter</from>
+            <to>schemaFilter</to>
+         </link>
+         <link>
+            <from>schemaFilter</from>
             <to>searchResultOutputFilter</to>
          </link>
          <link>

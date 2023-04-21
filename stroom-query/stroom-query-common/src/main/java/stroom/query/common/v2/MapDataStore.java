@@ -79,8 +79,7 @@ public class MapDataStore implements DataStore, Data {
                         final TableSettings tableSettings,
                         final FieldIndex fieldIndex,
                         final Map<String, String> paramMap,
-                        final Sizes maxResults,
-                        final Sizes storeSize) {
+                        final DataStoreSettings dataStoreSettings) {
         this.serialisers = serialisers;
         compiledFields = CompiledFields.create(tableSettings.getFields(), fieldIndex, paramMap);
         final CompiledDepths compiledDepths = new CompiledDepths(compiledFields, tableSettings.showDetail());
@@ -88,8 +87,8 @@ public class MapDataStore implements DataStore, Data {
         this.compiledDepths = compiledDepths;
         keyFactoryConfig = new BasicKeyFactoryConfig();
         keyFactory = KeyFactoryFactory.create(serialisers, keyFactoryConfig, compiledDepths);
-        this.maxResults = maxResults;
-        this.storeSize = storeSize;
+        this.maxResults = dataStoreSettings.getMaxResults();
+        this.storeSize = dataStoreSettings.getStoreSize();
 
         groupingFunctions = new GroupingFunction[compiledDepths.getMaxDepth() + 1];
         for (int depth = 0; depth <= compiledDepths.getMaxGroupDepth(); depth++) {

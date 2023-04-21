@@ -1,7 +1,7 @@
 ext.moduleName = 'stroom.index.impl'
 
 dependencies {
-    implementation project(':stroom-alert:stroom-alert-api')
+    implementation project(':stroom-analytics:stroom-analytics-api')
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-cluster:stroom-cluster-task-api')
     implementation project(':stroom-config:stroom-config-common')

@@ -4,9 +4,5 @@ public interface KeyFactoryConfig {
 
     int getTimeFieldIndex();
 
-    int getStreamIdFieldIndex();
-
-    int getEventIdFieldIndex();
-
     boolean addTimeToKey();
 }

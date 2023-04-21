@@ -16,7 +16,6 @@
 
 package stroom.query.client;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
@@ -29,7 +28,6 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
