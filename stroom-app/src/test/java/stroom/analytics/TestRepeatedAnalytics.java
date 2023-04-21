@@ -132,7 +132,7 @@ class TestRepeatedAnalytics extends StroomIntegrationTest {
         analyticRuleDoc = analyticRuleDoc.copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
-                .alertRuleType(AnalyticRuleType.AGGREGATE)
+                .analyticRuleType(AnalyticRuleType.AGGREGATE)
                 .processSettings(processSettings)
                 .destinationFeed(detections)
                 .build();

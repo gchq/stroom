@@ -16,7 +16,7 @@
 
 package stroom.analytics.client.view;
 
-import stroom.analytics.client.presenter.AnalyticRuleSettingsPresenter.AlertRuleSettingsView;
+import stroom.analytics.client.presenter.AnalyticRuleSettingsPresenter.AnalyticRuleSettingsView;
 import stroom.analytics.shared.AnalyticRuleType;
 import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.document.client.event.DirtyUiHandlers;
@@ -36,7 +36,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class AnalyticRuleSettingsViewImpl
         extends ViewWithUiHandlers<DirtyUiHandlers>
-        implements AlertRuleSettingsView, ReadOnlyChangeHandler {
+        implements AnalyticRuleSettingsView, ReadOnlyChangeHandler {
 
     private final Widget widget;
 
@@ -47,7 +47,7 @@ public class AnalyticRuleSettingsViewImpl
     @UiField
     SimplePanel query;
     @UiField
-    ItemListBox<AnalyticRuleType> alertRuleType;
+    ItemListBox<AnalyticRuleType> analyticRuleType;
     @UiField
     FlowPanel aggregateSettings;
     @UiField
@@ -62,13 +62,13 @@ public class AnalyticRuleSettingsViewImpl
 
         description.addDomHandler(e -> getUiHandlers().onDirty(), InputEvent.getType());
         languageVersion.addSelectionHandler(e -> getUiHandlers().onDirty());
-        alertRuleType.addSelectionHandler(e -> {
+        analyticRuleType.addSelectionHandler(e -> {
             getUiHandlers().onDirty();
-            aggregateSettings.setVisible(AnalyticRuleType.AGGREGATE.equals(alertRuleType.getSelectedItem()));
+            aggregateSettings.setVisible(AnalyticRuleType.AGGREGATE.equals(analyticRuleType.getSelectedItem()));
         });
 
-        alertRuleType.addItem(AnalyticRuleType.EVENT);
-        alertRuleType.addItem(AnalyticRuleType.AGGREGATE);
+        analyticRuleType.addItem(AnalyticRuleType.EVENT);
+        analyticRuleType.addItem(AnalyticRuleType.AGGREGATE);
 
         aggregateSettings.setVisible(false);
     }
@@ -108,13 +108,13 @@ public class AnalyticRuleSettingsViewImpl
 
 
     @Override
-    public AnalyticRuleType getAlertRuleType() {
-        return this.alertRuleType.getSelectedItem();
+    public AnalyticRuleType getAnalyticRuleType() {
+        return this.analyticRuleType.getSelectedItem();
     }
 
     @Override
-    public void setAlertRuleType(final AnalyticRuleType analyticRuleType) {
-        this.alertRuleType.setSelectedItem(analyticRuleType);
+    public void setAnalyticRuleType(final AnalyticRuleType analyticRuleType) {
+        this.analyticRuleType.setSelectedItem(analyticRuleType);
         aggregateSettings.setVisible(AnalyticRuleType.AGGREGATE.equals(analyticRuleType));
     }
 

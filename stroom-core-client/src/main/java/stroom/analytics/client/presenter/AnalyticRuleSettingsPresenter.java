@@ -17,7 +17,7 @@
 
 package stroom.analytics.client.presenter;
 
-import stroom.analytics.client.presenter.AnalyticRuleSettingsPresenter.AlertRuleSettingsView;
+import stroom.analytics.client.presenter.AnalyticRuleSettingsPresenter.AnalyticRuleSettingsView;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleType;
 import stroom.analytics.shared.QueryLanguageVersion;
@@ -40,7 +40,7 @@ import java.util.Objects;
 import javax.inject.Provider;
 
 public class AnalyticRuleSettingsPresenter
-        extends DocumentSettingsPresenter<AlertRuleSettingsView, AnalyticRuleDoc>
+        extends DocumentSettingsPresenter<AnalyticRuleSettingsView, AnalyticRuleDoc>
         implements DirtyUiHandlers {
 
     private final EditorPresenter codePresenter;
@@ -50,7 +50,7 @@ public class AnalyticRuleSettingsPresenter
 
     @Inject
     public AnalyticRuleSettingsPresenter(final EventBus eventBus,
-                                         final AlertRuleSettingsView view,
+                                         final AnalyticRuleSettingsView view,
                                          final Provider<EditorPresenter> editorPresenterProvider,
                                          final EntityDropDownPresenter feedPresenter) {
         super(eventBus, view);
@@ -89,7 +89,7 @@ public class AnalyticRuleSettingsPresenter
         getView().setDescription(alertRule.getDescription());
         getView().setLanguageVersion(alertRule.getLanguageVersion());
         codePresenter.setText(alertRule.getQuery());
-        getView().setAlertRuleType(alertRule.getAlertRuleType());
+        getView().setAnalyticRuleType(alertRule.getAnalyticRuleType());
         currentFeed = alertRule.getDestinationFeed();
         feedPresenter.setSelectedEntityReference(currentFeed);
     }
@@ -100,7 +100,7 @@ public class AnalyticRuleSettingsPresenter
                 .description(getView().getDescription())
                 .languageVersion(getView().getLanguageVersion())
                 .query(codePresenter.getText())
-                .alertRuleType(getView().getAlertRuleType())
+                .analyticRuleType(getView().getAnalyticRuleType())
                 .destinationFeed(feedPresenter.getSelectedEntityReference())
                 .build();
     }
@@ -115,7 +115,7 @@ public class AnalyticRuleSettingsPresenter
         return AnalyticRuleDoc.DOCUMENT_TYPE;
     }
 
-    public interface AlertRuleSettingsView extends View, HasUiHandlers<DirtyUiHandlers> {
+    public interface AnalyticRuleSettingsView extends View, HasUiHandlers<DirtyUiHandlers> {
 
         String getDescription();
 
@@ -127,9 +127,9 @@ public class AnalyticRuleSettingsPresenter
 
         void setQueryWidget(Widget widget);
 
-        AnalyticRuleType getAlertRuleType();
+        AnalyticRuleType getAnalyticRuleType();
 
-        void setAlertRuleType(AnalyticRuleType analyticRuleType);
+        void setAnalyticRuleType(AnalyticRuleType analyticRuleType);
 
         void setDestinationFeedView(View view);
     }

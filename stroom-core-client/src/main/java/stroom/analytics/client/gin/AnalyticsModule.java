@@ -19,9 +19,9 @@ package stroom.analytics.client.gin;
 import stroom.analytics.client.AnalyticsPlugin;
 import stroom.analytics.client.presenter.AnalyticRulePresenter;
 import stroom.analytics.client.presenter.AnalyticRuleProcessingPresenter;
-import stroom.analytics.client.presenter.AnalyticRuleProcessingPresenter.AlertRuleProcessingView;
+import stroom.analytics.client.presenter.AnalyticRuleProcessingPresenter.AnalyticRuleProcessingView;
 import stroom.analytics.client.presenter.AnalyticRuleSettingsPresenter;
-import stroom.analytics.client.presenter.AnalyticRuleSettingsPresenter.AlertRuleSettingsView;
+import stroom.analytics.client.presenter.AnalyticRuleSettingsPresenter.AnalyticRuleSettingsView;
 import stroom.analytics.client.view.AnalyticRuleProcessingViewImpl;
 import stroom.analytics.client.view.AnalyticRuleSettingsViewImpl;
 import stroom.core.client.gin.PluginModule;
@@ -35,10 +35,10 @@ public class AnalyticsModule extends PluginModule {
         bind(AnalyticRulePresenter.class);
 
         bindPresenterWidget(AnalyticRuleSettingsPresenter.class,
-                AlertRuleSettingsView.class,
+                AnalyticRuleSettingsView.class,
                 AnalyticRuleSettingsViewImpl.class);
         bindPresenterWidget(AnalyticRuleProcessingPresenter.class,
-                AlertRuleProcessingView.class,
+                AnalyticRuleProcessingView.class,
                 AnalyticRuleProcessingViewImpl.class);
     }
 }

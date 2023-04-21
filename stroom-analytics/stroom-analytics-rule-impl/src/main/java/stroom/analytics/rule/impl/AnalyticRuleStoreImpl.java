@@ -99,7 +99,7 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(DocumentTypeGroup.SEARCH, AnalyticRuleDoc.DOCUMENT_TYPE, "Alert Rule");
+        return new DocumentType(DocumentTypeGroup.SEARCH, AnalyticRuleDoc.DOCUMENT_TYPE, "Analytic Rule");
     }
 
     ////////////////////////////////////////////////////////////////////////

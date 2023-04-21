@@ -166,10 +166,10 @@ public class AnalyticsExecutor {
                          final DocRef dataSource) {
         final AnalyticRuleProcessSettings processSettings = analyticRuleDoc.getProcessSettings();
         if (processSettings != null && processSettings.isEnabled()) {
-            if (AnalyticRuleType.EVENT.equals(analyticRuleDoc.getAlertRuleType())) {
+            if (AnalyticRuleType.EVENT.equals(analyticRuleDoc.getAnalyticRuleType())) {
                 processEventAnalytic(analyticRuleDoc, searchRequest, dataSource, searchRequest.getKey());
 
-            } else if (AnalyticRuleType.AGGREGATE.equals(analyticRuleDoc.getAlertRuleType())) {
+            } else if (AnalyticRuleType.AGGREGATE.equals(analyticRuleDoc.getAnalyticRuleType())) {
                 processAggregateAnalytic(analyticRuleDoc, searchRequest, dataSource, searchRequest.getKey());
             }
         }
@@ -225,7 +225,7 @@ public class AnalyticsExecutor {
                                     final DetectionsWriter detectionsWriter = detectionsWriterProvider.get();
 
                                     final AlertWriter2 alertWriter = alertWriterProvider.get();
-                                    alertWriter.setAlertRuleDoc(analyticRuleDoc);
+                                    alertWriter.setAnalyticRuleDoc(analyticRuleDoc);
                                     alertWriter.setCompiledFields(compiledFields);
                                     alertWriter.setFieldIndex(fieldIndex);
                                     alertWriter.setRecordConsumer(detectionsWriter);

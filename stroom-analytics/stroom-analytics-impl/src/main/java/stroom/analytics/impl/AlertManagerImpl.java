@@ -79,7 +79,7 @@ public class AlertManagerImpl implements AlertManager {
     private final MultiValuesReceiverFactory multiValuesReceiverFactory;
     private final Provider<AlertConfig> alertConfigProvider;
     private final Provider<SearchConfig> searchConfigProvider;
-    private final Provider<AnalyticRuleStore> alertRuleStoreProvider;
+    private final Provider<AnalyticRuleStore> analyticRuleStoreProvider;
     private final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper;
     private final Provider<ViewStore> viewStoreProvider;
 
@@ -99,7 +99,7 @@ public class AlertManagerImpl implements AlertManager {
                      final Provider<ExtractionTaskHandler> handlerProvider,
                      final Provider<DetectionsWriter> detectionsWriterProvider,
                      final MultiValuesReceiverFactory multiValuesReceiverFactory,
-                     final Provider<AnalyticRuleStore> alertRuleStoreProvider,
+                     final Provider<AnalyticRuleStore> analyticRuleStoreProvider,
                      final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper,
                      final Provider<ViewStore> viewStoreProvider) {
         this.taskContextFactory = taskContextFactory;
@@ -114,7 +114,7 @@ public class AlertManagerImpl implements AlertManager {
         this.handlerProvider = handlerProvider;
         this.detectionsWriterProvider = detectionsWriterProvider;
         this.multiValuesReceiverFactory = multiValuesReceiverFactory;
-        this.alertRuleStoreProvider = alertRuleStoreProvider;
+        this.analyticRuleStoreProvider = analyticRuleStoreProvider;
         this.analyticRuleSearchRequestHelper = analyticRuleSearchRequestHelper;
         this.viewStoreProvider = viewStoreProvider;
     }
@@ -171,7 +171,7 @@ public class AlertManagerImpl implements AlertManager {
             // Add the special folder rules.
             addSpecialFolderRules(rules);
             // Add rules based on alert rule entities.
-            addAlertRules(rules);
+            addAnalyticRules(rules);
 
             currentRules = rules;
             lastCacheUpdateTimeMs = Instant.now();
@@ -316,21 +316,21 @@ public class AlertManagerImpl implements AlertManager {
         }
     }
 
-    private void addAlertRules(final Map<DocRef, List<RuleConfig>> indexToRules) {
-        final AnalyticRuleStore analyticRuleStore = alertRuleStoreProvider.get();
+    private void addAnalyticRules(final Map<DocRef, List<RuleConfig>> indexToRules) {
+        final AnalyticRuleStore analyticRuleStore = analyticRuleStoreProvider.get();
         final List<DocRef> list = analyticRuleStore.list();
         for (final DocRef docRef : list) {
             try {
                 final AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(docRef);
-                addAlertRule(analyticRuleDoc, indexToRules);
+                addAnalyticRule(analyticRuleDoc, indexToRules);
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }
         }
     }
 
-    private void addAlertRule(final AnalyticRuleDoc alertRule,
-                              final Map<DocRef, List<RuleConfig>> indexToRules) {
+    private void addAnalyticRule(final AnalyticRuleDoc alertRule,
+                                 final Map<DocRef, List<RuleConfig>> indexToRules) {
         final AnalyticRuleProcessSettings processSettings = alertRule.getProcessSettings();
         if (processSettings != null && processSettings.isEnabled()) {
             final SearchRequest searchRequest = analyticRuleSearchRequestHelper.create(alertRule);
@@ -352,7 +352,7 @@ public class AlertManagerImpl implements AlertManager {
 
                 if (extractionPipeline != null) {
                     final TableSettings tableSettings = searchRequest.getResultRequests().get(0).getMappings().get(0);
-                    final AlertRuleConfig rule = new AlertRuleConfig(
+                    final AnalyticRuleConfig rule = new AnalyticRuleConfig(
                             alertRule,
                             queryContext,
                             expression,

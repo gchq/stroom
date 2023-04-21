@@ -75,7 +75,7 @@ public class AlertWriter2 implements ValuesConsumer, ProcessLifecycleAware {
         }
     }
 
-    public void setAlertRuleDoc(final AnalyticRuleDoc analyticRuleDoc) {
+    public void setAnalyticRuleDoc(final AnalyticRuleDoc analyticRuleDoc) {
         this.analyticRuleDoc = analyticRuleDoc;
     }
 

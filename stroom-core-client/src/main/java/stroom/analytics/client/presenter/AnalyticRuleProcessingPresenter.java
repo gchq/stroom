@@ -17,7 +17,7 @@
 
 package stroom.analytics.client.presenter;
 
-import stroom.analytics.client.presenter.AnalyticRuleProcessingPresenter.AlertRuleProcessingView;
+import stroom.analytics.client.presenter.AnalyticRuleProcessingPresenter.AnalyticRuleProcessingView;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleProcessSettings;
 import stroom.docref.DocRef;
@@ -31,12 +31,12 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 public class AnalyticRuleProcessingPresenter
-        extends DocumentSettingsPresenter<AlertRuleProcessingView, AnalyticRuleDoc>
+        extends DocumentSettingsPresenter<AnalyticRuleProcessingView, AnalyticRuleDoc>
         implements DirtyUiHandlers {
 
     @Inject
     public AnalyticRuleProcessingPresenter(final EventBus eventBus,
-                                           final AlertRuleProcessingView view) {
+                                           final AnalyticRuleProcessingView view) {
         super(eventBus, view);
         view.setUiHandlers(this);
     }
@@ -78,7 +78,7 @@ public class AnalyticRuleProcessingPresenter
         return AnalyticRuleDoc.DOCUMENT_TYPE;
     }
 
-    public interface AlertRuleProcessingView extends View, HasUiHandlers<DirtyUiHandlers> {
+    public interface AnalyticRuleProcessingView extends View, HasUiHandlers<DirtyUiHandlers> {
 
         boolean isEnabled();
 

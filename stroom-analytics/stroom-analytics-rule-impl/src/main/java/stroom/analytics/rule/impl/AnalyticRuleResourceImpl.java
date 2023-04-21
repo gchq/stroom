@@ -29,19 +29,19 @@ import javax.inject.Provider;
 @AutoLogged
 class AnalyticRuleResourceImpl implements AnalyticRuleResource {
 
-    private final Provider<AnalyticRuleStore> alertRuleStoreProvider;
+    private final Provider<AnalyticRuleStore> analyticRuleStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
 
     @Inject
-    AnalyticRuleResourceImpl(final Provider<AnalyticRuleStore> alertRuleStoreProvider,
+    AnalyticRuleResourceImpl(final Provider<AnalyticRuleStore> analyticRuleStoreProvider,
                              final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
-        this.alertRuleStoreProvider = alertRuleStoreProvider;
+        this.analyticRuleStoreProvider = analyticRuleStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
     }
 
     @Override
     public AnalyticRuleDoc fetch(final String uuid) {
-        return documentResourceHelperProvider.get().read(alertRuleStoreProvider.get(), getDocRef(uuid));
+        return documentResourceHelperProvider.get().read(analyticRuleStoreProvider.get(), getDocRef(uuid));
     }
 
     @Override
@@ -49,7 +49,7 @@ class AnalyticRuleResourceImpl implements AnalyticRuleResource {
         if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
             throw new EntityServiceException("The document UUID must match the update UUID");
         }
-        return documentResourceHelperProvider.get().update(alertRuleStoreProvider.get(), doc);
+        return documentResourceHelperProvider.get().update(analyticRuleStoreProvider.get(), doc);
     }
 
     private DocRef getDocRef(final String uuid) {

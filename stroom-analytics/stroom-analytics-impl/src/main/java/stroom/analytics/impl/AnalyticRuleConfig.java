@@ -31,7 +31,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 import java.util.Map;
 
-class AlertRuleConfig implements RuleConfig {
+class AnalyticRuleConfig implements RuleConfig {
     private final AnalyticRuleDoc analyticRuleDoc;
     private final QueryContext queryContext;
     private final ExpressionOperator expression;
@@ -39,12 +39,12 @@ class AlertRuleConfig implements RuleConfig {
     private  final TableSettings tableSettings;
     private final SearchRequest searchRequest;
 
-    AlertRuleConfig(final AnalyticRuleDoc analyticRuleDoc,
-                    final QueryContext queryContext,
-                    final ExpressionOperator expression,
-                    final DocRef extractionPipeline,
-                    final TableSettings tableSettings,
-                    final SearchRequest searchRequest) {
+    AnalyticRuleConfig(final AnalyticRuleDoc analyticRuleDoc,
+                       final QueryContext queryContext,
+                       final ExpressionOperator expression,
+                       final DocRef extractionPipeline,
+                       final TableSettings tableSettings,
+                       final SearchRequest searchRequest) {
         this.analyticRuleDoc = analyticRuleDoc;
         this.queryContext = queryContext;
         this.expression = expression;
@@ -86,7 +86,7 @@ class AlertRuleConfig implements RuleConfig {
                         AlertManager.TABLE_NAME_KEY, getName())));
     }
 
-    public AnalyticRuleDoc getAlertRuleDoc() {
+    public AnalyticRuleDoc getAnalyticRuleDoc() {
         return analyticRuleDoc;
     }
 

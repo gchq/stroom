@@ -16,7 +16,7 @@
 
 package stroom.analytics.client.view;
 
-import stroom.analytics.client.presenter.AnalyticRuleProcessingPresenter.AlertRuleProcessingView;
+import stroom.analytics.client.presenter.AnalyticRuleProcessingPresenter.AnalyticRuleProcessingView;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.customdatebox.client.DurationPicker;
@@ -32,7 +32,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class AnalyticRuleProcessingViewImpl
         extends ViewWithUiHandlers<DirtyUiHandlers>
-        implements AlertRuleProcessingView {
+        implements AnalyticRuleProcessingView {
 
     private final Widget widget;
 

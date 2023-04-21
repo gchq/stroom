@@ -40,7 +40,7 @@ import javax.inject.Singleton;
 @Singleton
 public class AnalyticsPlugin extends DocumentPlugin<AnalyticRuleDoc> {
 
-    private static final AnalyticRuleResource ALERT_RULE_RESOURCE = GWT.create(AnalyticRuleResource.class);
+    private static final AnalyticRuleResource ANALYTIC_RULE_RESOURCE = GWT.create(AnalyticRuleResource.class);
 
     private final Provider<AnalyticRulePresenter> editorProvider;
     private final RestFactory restFactory;
@@ -69,7 +69,7 @@ public class AnalyticsPlugin extends DocumentPlugin<AnalyticRuleDoc> {
         rest
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(ALERT_RULE_RESOURCE)
+                .call(ANALYTIC_RULE_RESOURCE)
                 .fetch(docRef.getUuid());
     }
 
@@ -82,7 +82,7 @@ public class AnalyticsPlugin extends DocumentPlugin<AnalyticRuleDoc> {
         rest
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(ALERT_RULE_RESOURCE)
+                .call(ANALYTIC_RULE_RESOURCE)
                 .update(document.getUuid(), document);
     }
 

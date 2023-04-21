@@ -93,7 +93,7 @@ public class AnalyticRuleDoc extends Doc {
         return query;
     }
 
-    public AnalyticRuleType getAlertRuleType() {
+    public AnalyticRuleType getAnalyticRuleType() {
         return analyticRuleType;
     }
 
@@ -198,7 +198,7 @@ public class AnalyticRuleDoc extends Doc {
             return self();
         }
 
-        public Builder alertRuleType(final AnalyticRuleType analyticRuleType) {
+        public Builder analyticRuleType(final AnalyticRuleType analyticRuleType) {
             this.analyticRuleType = analyticRuleType;
             return self();
         }

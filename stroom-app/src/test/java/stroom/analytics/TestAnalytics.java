@@ -121,7 +121,7 @@ class TestAnalytics extends StroomIntegrationTest {
         analyticRuleDoc = analyticRuleDoc.copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
-                .alertRuleType(AnalyticRuleType.EVENT)
+                .analyticRuleType(AnalyticRuleType.EVENT)
                 .processSettings(AnalyticRuleProcessSettings.builder().enabled(true).build())
                 .build();
         analyticRuleStore.writeDocument(analyticRuleDoc);
@@ -164,7 +164,7 @@ class TestAnalytics extends StroomIntegrationTest {
         analyticRuleDoc = analyticRuleDoc.copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
-                .alertRuleType(AnalyticRuleType.AGGREGATE)
+                .analyticRuleType(AnalyticRuleType.AGGREGATE)
                 .processSettings(processSettings)
                 .destinationFeed(detections)
                 .build();
@@ -207,7 +207,7 @@ class TestAnalytics extends StroomIntegrationTest {
         analyticRuleDoc = analyticRuleDoc.copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
-                .alertRuleType(AnalyticRuleType.AGGREGATE)
+                .analyticRuleType(AnalyticRuleType.AGGREGATE)
                 .processSettings(processSettings)
                 .destinationFeed(detections)
                 .build();
@@ -251,7 +251,7 @@ class TestAnalytics extends StroomIntegrationTest {
         analyticRuleDoc = analyticRuleDoc.copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
-                .alertRuleType(AnalyticRuleType.AGGREGATE)
+                .analyticRuleType(AnalyticRuleType.AGGREGATE)
                 .processSettings(processSettings)
                 .destinationFeed(detections)
                 .build();
