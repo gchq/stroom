@@ -217,6 +217,12 @@ public class DataDownloadTaskHandler {
                                 AttributeMapUtil.write(source.getAttributes(), outputStream);
                             }
                         }
+                        try (final InputStream dataInputStream = inputStreamProvider.get()) {
+                            streamToStream(dataInputStream,
+                                    stroomZipOutputStream,
+                                    basePartName,
+                                    StroomZipFileType.DATA);
+                        }
                         try (final InputStream metaInputStream = inputStreamProvider.get(StreamTypeNames.META)) {
                             streamToStream(metaInputStream,
                                     stroomZipOutputStream,
@@ -228,12 +234,6 @@ public class DataDownloadTaskHandler {
                                     stroomZipOutputStream,
                                     basePartName,
                                     StroomZipFileType.CONTEXT);
-                        }
-                        try (final InputStream dataInputStream = inputStreamProvider.get()) {
-                            streamToStream(dataInputStream,
-                                    stroomZipOutputStream,
-                                    basePartName,
-                                    StroomZipFileType.DATA);
                         }
                     }
                 }

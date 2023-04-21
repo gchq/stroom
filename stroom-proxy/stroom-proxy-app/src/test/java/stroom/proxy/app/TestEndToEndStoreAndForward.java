@@ -1,6 +1,5 @@
 package stroom.proxy.app;
 
-import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
@@ -8,7 +7,6 @@ import stroom.test.common.TestUtil;
 import stroom.util.time.StroomDuration;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
-import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -16,13 +14,10 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.Collections;
-import java.util.List;
 
 public class TestEndToEndStoreAndForward extends AbstractEndToEndTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestEndToEndStoreAndForward.class);
-    protected static final String FEED_TEST_EVENTS_1 = "TEST-EVENTS_1";
-    protected static final String FEED_TEST_EVENTS_2 = "TEST-EVENTS_2";
     protected static final String SYSTEM_TEST_SYSTEM = "TEST SYSTEM";
     protected static final String ENVIRONMENT_DEV = "DEV";
 
@@ -90,28 +85,12 @@ public class TestEndToEndStoreAndForward extends AbstractEndToEndTest {
                 Duration.ofMillis(50),
                 Duration.ofSeconds(1));
 
+        // Check number of forwarded files.
         WireMock.verify((int) 4, WireMock.postRequestedFor(
                 WireMock.urlPathEqualTo(getDataFeedPath())));
 
-        final List<LoggedRequest> postsToStroomDataFeed = getPostsToStroomDataFeed();
-
-        Assertions.assertThat(postsToStroomDataFeed)
-                .extracting(req -> req.getHeader(StandardHeaderArguments.FEED))
-                .containsExactlyInAnyOrder(
-                        FEED_TEST_EVENTS_1,
-                        FEED_TEST_EVENTS_2,
-                        FEED_TEST_EVENTS_1,
-                        FEED_TEST_EVENTS_2);
-
-        final List<DataFeedRequest> dataFeedRequests = getDataFeedRequests();
-        Assertions.assertThat(dataFeedRequests)
-                .hasSize(4);
-
-        // Can't be sure of the order they are sent,
-        Assertions.assertThat(dataFeedRequests.stream()
-                        .map(dataFeedRequest -> dataFeedRequest.getNameToItemMap().size())
-                        .toList())
-                .containsExactlyInAnyOrder(6, 6, 2, 2);
+        // Assert the content of posts
+        assertPosts();
 
         // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
         Assertions.assertThat(getPostsToFeedStatusCheck())

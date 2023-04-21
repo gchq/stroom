@@ -3,6 +3,7 @@ package stroom.proxy.app;
 import stroom.data.zip.StroomZipFileType;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
+import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.forwarder.ForwardConfig;
 import stroom.proxy.app.forwarder.ForwardFileConfig;
 import stroom.proxy.app.forwarder.ForwardHttpPostConfig;
@@ -60,7 +61,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.LongAdder;
@@ -78,6 +78,9 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractEndToEndTest.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+    protected static final String FEED_TEST_EVENTS_1 = "TEST-EVENTS_1";
+    protected static final String FEED_TEST_EVENTS_2 = "TEST-EVENTS_2";
 
     static final int DEFAULT_STROOM_PORT = 8080;
 
@@ -346,7 +349,7 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
         final byte[] body = request.getBody();
         if (body.length > 0) {
             final AttributeMap attributeMap = buildAttributeMap(request);
-            final Map<String, DataFeedRequestItem> nameToItemMap = new HashMap<>();
+            final List<DataFeedRequestItem> dataFeedRequestItems = new ArrayList<>();
             final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
                     attributeMap,
                     (entry, inputStream, progressHandler) -> {
@@ -366,7 +369,7 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
                                 baseName,
                                 type,
                                 content);
-                        nameToItemMap.put(entry, item);
+                        dataFeedRequestItems.add(item);
                         return byteCountInputStream.getCount();
                     },
                     val -> {
@@ -374,7 +377,7 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
 
             stroomStreamProcessor.processInputStream(new ByteArrayInputStream(body), "");
 
-            final DataFeedRequest dataFeedRequest = new DataFeedRequest(attributeMap, nameToItemMap);
+            final DataFeedRequest dataFeedRequest = new DataFeedRequest(dataFeedRequestItems);
             dataFeedRequests.add(dataFeedRequest);
         }
     }
@@ -590,41 +593,130 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
         }
     }
 
+    void assertFileContents() {
+        final List<ForwardFileItem> forwardFileItems = getForwardFiles();
+
+        // Check number of forwarded files.
+        Assertions.assertThat(forwardFileItems)
+                .hasSize(4);
+
+        // Check feed names.
+        Assertions.assertThat(forwardFileItems)
+                .extracting(forwardFileItem ->
+                        forwardFileItem.getMetaAttributeMap().get(StandardHeaderArguments.FEED))
+                .containsExactlyInAnyOrder(
+                        FEED_TEST_EVENTS_1,
+                        FEED_TEST_EVENTS_2,
+                        FEED_TEST_EVENTS_1,
+                        FEED_TEST_EVENTS_2);
+
+        // Check zip content file count.
+        Assertions.assertThat(forwardFileItems.stream()
+                        .map(forwardFileItem -> forwardFileItem.zipItems().size())
+                        .toList())
+                .containsExactlyInAnyOrder(7, 7, 3, 3);
+
+        // Check zip contents.
+        final List<String> expectedFiles = List.of(
+                "001.mf",
+                "001.dat",
+                "001.meta",
+                "002.dat",
+                "002.meta",
+                "003.dat",
+                "003.meta",
+                "004.dat",
+                "004.meta");
+        assertForwardFileItemContent(forwardFileItems, expectedFiles);
+    }
+
+    void assertPosts() {
+        final List<LoggedRequest> postsToStroomDataFeed = getPostsToStroomDataFeed();
+
+        // Check feed names.
+        Assertions.assertThat(postsToStroomDataFeed)
+                .extracting(req -> req.getHeader(StandardHeaderArguments.FEED))
+                .containsExactlyInAnyOrder(
+                        FEED_TEST_EVENTS_1,
+                        FEED_TEST_EVENTS_2,
+                        FEED_TEST_EVENTS_1,
+                        FEED_TEST_EVENTS_2);
+
+        // Check zip content file count.
+        final List<DataFeedRequest> dataFeedRequests = getDataFeedRequests();
+        Assertions.assertThat(dataFeedRequests)
+                .hasSize(4);
+
+        // Can't be sure of the order they are sent,
+        Assertions.assertThat(dataFeedRequests.stream()
+                        .map(dataFeedRequest -> dataFeedRequest.getDataFeedRequestItems().size())
+                        .toList())
+                .containsExactlyInAnyOrder(7, 7, 3, 3);
+
+        assertDataFeedRequestContent(dataFeedRequests);
+    }
+
+    private void assertDataFeedRequestContent(final List<DataFeedRequest> dataFeedRequests) {
+        final List<String> expectedFiles = List.of(
+                "001.mf",
+                "001.dat",
+                "001.meta",
+                "002.dat",
+                "002.meta",
+                "003.dat",
+                "003.meta",
+                "004.dat",
+                "004.meta");
+        assertDataFeedRequestContent(dataFeedRequests, expectedFiles);
+    }
+
+    void assertSimpleDataFeedRequestContent(final List<DataFeedRequest> dataFeedRequests) {
+        final List<String> expectedFiles = List.of(
+                "001.dat",
+                "001.meta");
+        assertDataFeedRequestContent(dataFeedRequests, expectedFiles);
+    }
+
+    private void assertDataFeedRequestContent(final List<DataFeedRequest> dataFeedRequests,
+                                              final List<String> expectedFiles) {
+        dataFeedRequests.forEach(dataFeedRequest -> {
+            for (int i = 0; i < dataFeedRequest.getDataFeedRequestItems().size(); i++) {
+                final DataFeedRequestItem zipItem = dataFeedRequest.getDataFeedRequestItems().get(i);
+                final String expectedName = expectedFiles.get(i);
+                final String actualName = zipItem.baseName() + "." + zipItem.type();
+                Assertions.assertThat(actualName).isEqualTo(expectedName);
+                Assertions.assertThat(zipItem.content().length()).isGreaterThan(1);
+            }
+        });
+    }
+
+    private void assertForwardFileItemContent(final List<ForwardFileItem> forwardFileItems,
+                                              final List<String> expectedFiles) {
+        forwardFileItems.forEach(forwardFileItem -> {
+            for (int i = 0; i < forwardFileItem.zipItems().size(); i++) {
+                final ZipItem zipItem = forwardFileItem.zipItems().get(i);
+                final String expectedName = expectedFiles.get(i);
+                final String actualName = zipItem.baseName() + zipItem.type().getExtension();
+                Assertions.assertThat(actualName).isEqualTo(expectedName);
+                Assertions.assertThat(zipItem.content().length()).isGreaterThan(1);
+            }
+        });
+    }
+
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
     public static class DataFeedRequest {
 
-        private final AttributeMap attributeMap;
-        private final Map<String, DataFeedRequestItem> nameToItemMap;
+        private final List<DataFeedRequestItem> dataFeedRequestItems;
 
-        public DataFeedRequest(final AttributeMap attributeMap,
-                               final Map<String, DataFeedRequestItem> nameToItemMap) {
-            this.attributeMap = attributeMap;
-            this.nameToItemMap = nameToItemMap;
+        public DataFeedRequest(final List<DataFeedRequestItem> dataFeedRequestItems) {
+            this.dataFeedRequestItems = dataFeedRequestItems;
         }
 
-        public Map<String, DataFeedRequestItem> getNameToItemMap() {
-            return nameToItemMap;
-        }
-
-        public DataFeedRequestItem getItemByType(final String type) {
-            return getNthItemByType(type, 0, 1);
-        }
-
-        public DataFeedRequestItem getNthItemByType(final String type,
-                                                    final int idx,
-                                                    final int expectedCount) {
-            final List<DataFeedRequestItem> items = nameToItemMap.values()
-                    .stream()
-                    .filter(item -> item.type.equals(type))
-                    .toList();
-            if (items.size() > expectedCount) {
-                throw new RuntimeException(LogUtil.message("Found {} items of type {}, expected {}",
-                        items.size(), type, expectedCount));
-            }
-            return items.get(idx);
+        public List<DataFeedRequestItem> getDataFeedRequestItems() {
+            return dataFeedRequestItems;
         }
     }
 
@@ -643,10 +735,11 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
 
     /**
      * Represents a meta + zip pair as created by the file forwarder
+     *
      * @param name
      * @param basePath
      * @param metaContent
-     * @param zipItems One for each item in the zip
+     * @param zipItems    One for each item in the zip
      */
     public record ForwardFileItem(String name,
                                   String basePath,

@@ -48,7 +48,7 @@ public class SenderImpl implements Sender {
                                   final List<SourceItems> items,
                                   final StreamHandler handler) {
         String targetName;
-        long sequenceId = 1;
+        long sequenceId = 0;
 
         for (final SourceItems sourceItems : items) {
             final SourceItems.Source source = sourceItems.source();
@@ -64,7 +64,8 @@ public class SenderImpl implements Sender {
             try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(fileSet.getZip()))) {
                 final List<SourceItems.Item> repoSourceItems = sourceItems.list();
                 for (final SourceItems.Item item : repoSourceItems) {
-                    targetName = StroomFileNameUtil.getIdPath(sequenceId++);
+                    sequenceId++;
+                    targetName = StroomFileNameUtil.getIdPath(sequenceId);
 
                     // Add attributes as a manifest to the output.
                     if (sequenceId == 1) {
@@ -97,9 +98,9 @@ public class SenderImpl implements Sender {
                         final StroomZipFileType stroomZipFileType =
                                 StroomZipFileType.fromExtension(extension);
                         if (StroomZipFileType.DATA.equals(stroomZipFileType)) {
+                            final String sourceName = item.name();
 
                             // Add the data.
-                            final String sourceName = item.name();
                             final String fullSourceName =
                                     sourceName + extension;
                             final String fullTargetName =

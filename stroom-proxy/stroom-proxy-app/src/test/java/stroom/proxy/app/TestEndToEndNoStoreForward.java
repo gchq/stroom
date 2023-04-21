@@ -20,8 +20,6 @@ import java.util.List;
 public class TestEndToEndNoStoreForward extends AbstractEndToEndTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestEndToEndNoStoreForward.class);
-    protected static final String FEED_TEST_EVENTS_1 = "TEST-EVENTS_1";
-    protected static final String FEED_TEST_EVENTS_2 = "TEST-EVENTS_2";
     protected static final String SYSTEM_TEST_SYSTEM = "TEST SYSTEM";
     protected static final String ENVIRONMENT_DEV = "DEV";
 
@@ -98,21 +96,7 @@ public class TestEndToEndNoStoreForward extends AbstractEndToEndTest {
         Assertions.assertThat(dataFeedRequests)
                 .hasSize(2);
 
-        final DataFeedRequestItem dataItem1 = dataFeedRequests.get(0).getItemByType("dat");
-        Assertions.assertThat(dataItem1)
-                .extracting(DataFeedRequestItem::content)
-                .isEqualTo(content1);
-        final DataFeedRequestItem metaItem1 = dataFeedRequests.get(0).getItemByType("meta");
-        Assertions.assertThat(metaItem1.content())
-                .contains(FEED_TEST_EVENTS_1);
-
-        final DataFeedRequestItem dataItem2 = dataFeedRequests.get(1).getItemByType("dat");
-        Assertions.assertThat(dataItem2)
-                .extracting(DataFeedRequestItem::content)
-                .isEqualTo(content2);
-        final DataFeedRequestItem metaItem2 = dataFeedRequests.get(1).getItemByType("meta");
-        Assertions.assertThat(metaItem2.content())
-                .contains(FEED_TEST_EVENTS_2);
+        assertSimpleDataFeedRequestContent(dataFeedRequests);
 
         // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
         Assertions.assertThat(getPostsToFeedStatusCheck())
