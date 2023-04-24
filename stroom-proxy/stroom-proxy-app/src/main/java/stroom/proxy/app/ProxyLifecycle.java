@@ -18,6 +18,9 @@ import stroom.proxy.repo.RepoSources;
 import stroom.proxy.repo.SourceForwarder;
 import stroom.proxy.repo.queue.Batch;
 import stroom.proxy.repo.store.SequentialFileStore;
+import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Flushable;
 import stroom.util.shared.ModelStringUtil;
 
@@ -35,7 +38,7 @@ import javax.inject.Provider;
 
 public class ProxyLifecycle implements Managed {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyLifecycle.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyLifecycle.class);
 
     private final List<Managed> services = new ArrayList<>();
 
@@ -236,6 +239,8 @@ public class ProxyLifecycle implements Managed {
         for (int i = services.size() - 1; i >= 0; i--) {
             try {
                 services.get(i).stop();
+            } catch (final InterruptedException | UncheckedInterruptedException e) {
+                LOGGER.debug(e::getMessage, e);
             } catch (final Exception e) {
                 LOGGER.error("error", e);
             }

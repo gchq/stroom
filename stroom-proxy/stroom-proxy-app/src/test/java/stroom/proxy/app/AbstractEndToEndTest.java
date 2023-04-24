@@ -63,12 +63,9 @@ import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status.Family;
@@ -115,13 +112,10 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
             }))
             .build();
 
-    final LongAdder postToProxyCount = new LongAdder();
-
     @BeforeEach
     void setUp(final WireMockRuntimeInfo wmRuntimeInfo) {
         LOGGER.info("WireMock running on: {}", wmRuntimeInfo.getHttpBaseUrl());
         dataFeedRequests.clear();
-        postToProxyCount.reset();
     }
 
     void setupStroomStubs(Function<MappingBuilder, MappingBuilder> datafeedBuilderFunc) {
@@ -440,36 +434,9 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
                 responseBody);
     }
 
-    public int sendPostToProxyDatafeed(final String feed,
-                                       final String system,
-                                       final String environment,
-                                       final Map<String, String> extraHeaders,
-                                       final String data) {
-        int status = -1;
-        // URL on wiremocked stroom
+    public PostDataHelper createPostDataHelper() {
         final String url = buildProxyAppPath(ResourcePaths.buildUnauthenticatedServletPath("datafeed"));
-        try {
-
-            final Builder builder = getClient().target(url)
-                    .request()
-                    .header("Feed", feed)
-                    .header("System", system)
-                    .header("Environment", environment);
-
-            if (extraHeaders != null) {
-                extraHeaders.forEach(builder::header);
-            }
-            LOGGER.info("Sending POST request to {}", url);
-            final Response response = builder.post(Entity.text(data));
-            postToProxyCount.increment();
-            status = response.getStatus();
-            final String responseText = response.readEntity(String.class);
-            LOGGER.info("datafeed response ({}):\n{}", status, responseText);
-
-        } catch (final Exception e) {
-            throw new RuntimeException("Error sending request to " + url, e);
-        }
-        return status;
+        return new PostDataHelper(getClient(), url);
     }
 
     void waitForHealthyProxyApp(final Duration timeout) {
@@ -529,13 +496,6 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
 
     String buildProxyAdminPath(final String path) {
         return getProxyBaseAdminUrl().replaceAll("/$", "") + path;
-    }
-
-    /**
-     * @return Count of POSTs sent to proxy
-     */
-    public int getPostsToProxyCount() {
-        return postToProxyCount.intValue();
     }
 
     public int getDataFeedPostsToStroomCount() {
@@ -619,14 +579,14 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
         // Check zip contents.
         final List<String> expectedFiles = List.of(
                 "001.mf",
-                "001.dat",
                 "001.meta",
-                "002.dat",
+                "001.dat",
                 "002.meta",
-                "003.dat",
+                "002.dat",
                 "003.meta",
-                "004.dat",
-                "004.meta");
+                "003.dat",
+                "004.meta",
+                "004.dat");
         assertForwardFileItemContent(forwardFileItems, expectedFiles);
     }
 
@@ -659,14 +619,14 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
     private void assertDataFeedRequestContent(final List<DataFeedRequest> dataFeedRequests) {
         final List<String> expectedFiles = List.of(
                 "001.mf",
-                "001.dat",
                 "001.meta",
-                "002.dat",
+                "001.dat",
                 "002.meta",
-                "003.dat",
+                "002.dat",
                 "003.meta",
-                "004.dat",
-                "004.meta");
+                "003.dat",
+                "004.meta",
+                "004.dat");
         assertDataFeedRequestContent(dataFeedRequests, expectedFiles);
     }
 

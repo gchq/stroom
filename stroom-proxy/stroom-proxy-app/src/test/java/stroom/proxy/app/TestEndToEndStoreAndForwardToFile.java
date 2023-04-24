@@ -58,15 +58,16 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
         final String content2 = "Goodbye";
 
         // Two feeds each send 4, agg max items of 3 so two batches each
+        final PostDataHelper postDataHelper = createPostDataHelper();
         for (int i = 0; i < 4; i++) {
-            sendPostToProxyDatafeed(
+            postDataHelper.sendData(
                     FEED_TEST_EVENTS_1,
                     SYSTEM_TEST_SYSTEM,
                     ENVIRONMENT_DEV,
                     Collections.emptyMap(),
                     content1);
 
-            sendPostToProxyDatafeed(
+            postDataHelper.sendData(
                     FEED_TEST_EVENTS_2,
                     SYSTEM_TEST_SYSTEM,
                     ENVIRONMENT_DEV,
@@ -74,7 +75,7 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
                     content2);
         }
 
-        Assertions.assertThat(getPostsToProxyCount())
+        Assertions.assertThat(postDataHelper.getPostCount())
                 .isEqualTo(8);
 
         TestUtil.waitForIt(

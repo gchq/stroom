@@ -115,9 +115,9 @@ public class StroomStreamProcessor {
             try {
                 final List<StroomZipFileType> zipFileTypes = List.of(
                         StroomZipFileType.MANIFEST,
-                        StroomZipFileType.DATA,
                         StroomZipFileType.META,
-                        StroomZipFileType.CONTEXT);
+                        StroomZipFileType.CONTEXT,
+                        StroomZipFileType.DATA);
 
                 final List<String> baseNameList = stroomZipFile.getStroomZipNameSet().getBaseNameList();
                 for (final String baseName : baseNameList) {

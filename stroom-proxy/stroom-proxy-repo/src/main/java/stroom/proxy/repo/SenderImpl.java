@@ -100,14 +100,6 @@ public class SenderImpl implements Sender {
                         if (StroomZipFileType.DATA.equals(stroomZipFileType)) {
                             final String sourceName = item.name();
 
-                            // Add the data.
-                            final String fullSourceName =
-                                    sourceName + extension;
-                            final String fullTargetName =
-                                    targetName + StroomZipFileType.DATA.getExtension();
-
-                            sendEntry(zipFile, fullSourceName, fullTargetName, handler);
-
                             // Add meta if it exists.
                             if (metaExtension != null) {
                                 final String fullMetaSourceName =
@@ -127,6 +119,14 @@ public class SenderImpl implements Sender {
 
                                 sendEntry(zipFile, fullContextSourceName, fullContextTargetName, handler);
                             }
+
+                            // Add the data.
+                            final String fullSourceName =
+                                    sourceName + extension;
+                            final String fullTargetName =
+                                    targetName + StroomZipFileType.DATA.getExtension();
+
+                            sendEntry(zipFile, fullSourceName, fullTargetName, handler);
                         }
                     }
                     progressLog.increment("AggregateForwarder - forwardAggregateItem");

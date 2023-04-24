@@ -51,14 +51,15 @@ public class TestEndToEndNoStoreForward extends AbstractEndToEndTest {
 
         final String content1 = "Hello";
         final String content2 = "Goodbye";
-        sendPostToProxyDatafeed(
+        final PostDataHelper postDataHelper = createPostDataHelper();
+        postDataHelper.sendData(
                 FEED_TEST_EVENTS_1,
                 SYSTEM_TEST_SYSTEM,
                 ENVIRONMENT_DEV,
                 Collections.emptyMap(),
                 content1);
 
-        sendPostToProxyDatafeed(
+        postDataHelper.sendData(
                 FEED_TEST_EVENTS_2,
                 SYSTEM_TEST_SYSTEM,
                 ENVIRONMENT_DEV,
@@ -67,7 +68,7 @@ public class TestEndToEndNoStoreForward extends AbstractEndToEndTest {
 
         final long expectedRequestCount = 2;
 
-        Assertions.assertThat(getPostsToProxyCount())
+        Assertions.assertThat(postDataHelper.getPostCount())
                 .isEqualTo(expectedRequestCount);
 
         TestUtil.waitForIt(

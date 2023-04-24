@@ -135,7 +135,7 @@ abstract class AbstractTestStoreAndForward {
 
             await(forwarderDestinations);
 
-            // Wait fdr source dao to be cleared.
+            // Wait for source dao to be cleared.
             while (sourceDao.countSources() > 0) {
                 ThreadUtil.sleep(1000);
             }
