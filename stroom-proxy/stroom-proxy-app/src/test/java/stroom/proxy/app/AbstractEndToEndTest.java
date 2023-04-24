@@ -133,7 +133,7 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
      * Get all the files in the directories specified in {@link ForwardFileConfig}.
      * The dir will contain .meta and .zip pairs. Each pair is one item in the returned list.
      */
-    public List<ForwardFileItem> getForwardFiles() {
+    private List<ForwardFileItem> getForwardFiles() {
 
         final List<ForwardConfig> forwardConfigs = NullSafe.getOrElseGet(
                 getConfig(),
