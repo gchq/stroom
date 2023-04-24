@@ -49,10 +49,12 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
     void testBasicEndToEnd() {
         LOGGER.info("Starting basic end-end test");
 
-        super.isRequestLoggingEnabled = true;
-
-        setupStroomStubs(mappingBuilder ->
+        wireMockProxyDestination.setRequestLoggingEnabled(true);
+        wireMockProxyDestination.setupStroomStubs(mappingBuilder ->
                 mappingBuilder.willReturn(WireMock.ok()));
+        // now the stubs are set up wait for proxy to be ready as proxy needs the
+        // stubs to be available to be healthy
+        waitForHealthyProxyApp(Duration.ofSeconds(30));
 
         final String content1 = "Hello";
         final String content2 = "Goodbye";
@@ -90,13 +92,13 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
         assertFileContents();
 
         // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
-        Assertions.assertThat(getPostsToFeedStatusCheck())
+        Assertions.assertThat(wireMockProxyDestination.getPostsToFeedStatusCheck())
                 .extracting(GetFeedStatusRequest::getFeedName)
                 .filteredOn(feed -> !"DUMMY_FEED".equals(feed))
                 .containsExactly(FEED_TEST_EVENTS_1, FEED_TEST_EVENTS_2);
 
         // No http forwarders set up so nothing goes to stroom
-        final List<LoggedRequest> postsToStroomDataFeed = getPostsToStroomDataFeed();
+        final List<LoggedRequest> postsToStroomDataFeed = wireMockProxyDestination.getPostsToStroomDataFeed();
         Assertions.assertThat(postsToStroomDataFeed)
                 .hasSize(0);
     }

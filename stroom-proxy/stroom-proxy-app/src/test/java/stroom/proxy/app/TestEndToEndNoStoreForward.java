@@ -44,10 +44,12 @@ public class TestEndToEndNoStoreForward extends AbstractEndToEndTest {
     void testBasicEndToEnd(final WireMockRuntimeInfo wireMockRuntimeInfo) {
         LOGGER.info("Starting basic end-end test");
 
-        super.isRequestLoggingEnabled = true;
-
-        setupStroomStubs(mappingBuilder ->
+        wireMockProxyDestination.setRequestLoggingEnabled(true);
+        wireMockProxyDestination.setupStroomStubs(mappingBuilder ->
                 mappingBuilder.willReturn(WireMock.ok()));
+        // now the stubs are set up wait for proxy to be ready as proxy needs the
+        // stubs to be available to be healthy
+        waitForHealthyProxyApp(Duration.ofSeconds(30));
 
         final String content1 = "Hello";
         final String content2 = "Goodbye";
@@ -72,7 +74,7 @@ public class TestEndToEndNoStoreForward extends AbstractEndToEndTest {
                 .isEqualTo(expectedRequestCount);
 
         TestUtil.waitForIt(
-                this::getDataFeedPostsToStroomCount,
+                wireMockProxyDestination::getDataFeedPostsToStroomCount,
                 (int) expectedRequestCount,
                 () -> "Forward to stroom datafeed count",
                 Duration.ofSeconds(10),
@@ -82,25 +84,25 @@ public class TestEndToEndNoStoreForward extends AbstractEndToEndTest {
         WireMock.verify((int) expectedRequestCount, WireMock.postRequestedFor(
                 WireMock.urlPathEqualTo(getDataFeedPath())));
 
-        final List<LoggedRequest> postsToStroomDataFeed = getPostsToStroomDataFeed();
+        final List<LoggedRequest> postsToStroomDataFeed = wireMockProxyDestination.getPostsToStroomDataFeed();
 
         postsToStroomDataFeed.forEach(loggedRequest -> {
-            assertHeaderValue(loggedRequest, "System", SYSTEM_TEST_SYSTEM);
-            assertHeaderValue(loggedRequest, "Environment", ENVIRONMENT_DEV);
+            wireMockProxyDestination.assertHeaderValue(loggedRequest, "System", SYSTEM_TEST_SYSTEM);
+            wireMockProxyDestination.assertHeaderValue(loggedRequest, "Environment", ENVIRONMENT_DEV);
         });
 
         Assertions.assertThat(postsToStroomDataFeed)
                 .extracting(req -> req.getHeader(StandardHeaderArguments.FEED))
                 .containsExactly(FEED_TEST_EVENTS_1, FEED_TEST_EVENTS_2);
 
-        final List<DataFeedRequest> dataFeedRequests = getDataFeedRequests();
+        final List<DataFeedRequest> dataFeedRequests = wireMockProxyDestination.getDataFeedRequests();
         Assertions.assertThat(dataFeedRequests)
                 .hasSize(2);
 
         assertSimpleDataFeedRequestContent(dataFeedRequests);
 
         // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
-        Assertions.assertThat(getPostsToFeedStatusCheck())
+        Assertions.assertThat(wireMockProxyDestination.getPostsToFeedStatusCheck())
                 .extracting(GetFeedStatusRequest::getFeedName)
                 .filteredOn(feed -> !"DUMMY_FEED".equals(feed))
                 .containsExactly(FEED_TEST_EVENTS_1, FEED_TEST_EVENTS_2);

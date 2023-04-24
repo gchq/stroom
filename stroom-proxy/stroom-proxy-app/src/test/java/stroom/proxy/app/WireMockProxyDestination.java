@@ -1,8 +1,12 @@
 package stroom.proxy.app;
 
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.AbstractEndToEndTest.DataFeedRequest;
 import stroom.proxy.app.AbstractEndToEndTest.DataFeedRequestItem;
+import stroom.proxy.feed.remote.GetFeedStatusRequest;
+import stroom.proxy.feed.remote.GetFeedStatusResponse;
+import stroom.receive.common.FeedStatusResource;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.receive.common.StroomStreamProcessor;
 import stroom.util.NullSafe;
@@ -12,6 +16,9 @@ import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.tomakehurst.wiremock.client.MappingBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.Admin;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
@@ -20,59 +27,94 @@ import com.github.tomakehurst.wiremock.http.HttpHeaders;
 import com.github.tomakehurst.wiremock.http.LoggedResponse;
 import com.github.tomakehurst.wiremock.http.MultiValue;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import com.github.tomakehurst.wiremock.matching.UrlPattern;
 import com.github.tomakehurst.wiremock.stubbing.ServeEvent;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.io.FilenameUtils;
-import org.junit.jupiter.api.extension.RegisterExtension;
+import org.assertj.core.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class WireMockProxyDestination {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractEndToEndTest.class);
 
-    static final int DEFAULT_STROOM_PORT = 8080;
+    public static final int DEFAULT_STROOM_PORT = 8080;
+
+    protected static final String FEED_TEST_EVENTS_1 = "TEST-EVENTS_1";
+    protected static final String FEED_TEST_EVENTS_2 = "TEST-EVENTS_2";
 
     // Can be changed by subclasses, e.g. if one test is noisy but others are not
     protected volatile boolean isRequestLoggingEnabled = true;
     protected volatile boolean isHeaderLoggingEnabled = true;
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     // Hold all requests send to the wiremock stroom datafeed endpoint
     private final List<DataFeedRequest> dataFeedRequests = new ArrayList<>();
 
-    // Use RegisterExtension instead of @WireMockTest so we can set up the req listener
-    @SuppressWarnings("unused")
-    @RegisterExtension
-    private final WireMockExtension wireMockExtension = WireMockExtension.newInstance()
-            .options(WireMockConfiguration.wireMockConfig().port(DEFAULT_STROOM_PORT))
-            .options(WireMockConfiguration.wireMockConfig().extensions(new PostServeAction() {
-                @Override
-                public String getName() {
-                    return "Request logging action";
-                }
+    public WireMockExtension createExtension() {
+        return WireMockExtension.newInstance()
+                .options(WireMockConfiguration.wireMockConfig().port(DEFAULT_STROOM_PORT))
+                .options(WireMockConfiguration.wireMockConfig().extensions(new PostServeAction() {
+                    @Override
+                    public String getName() {
+                        return "Request logging action";
+                    }
 
-                @Override
-                public void doGlobalAction(final ServeEvent serveEvent, final Admin admin) {
-                    super.doGlobalAction(serveEvent, admin);
-                    if (isRequestLoggingEnabled) {
-                        dumpWireMockEvent(serveEvent);
+                    @Override
+                    public void doGlobalAction(final ServeEvent serveEvent, final Admin admin) {
+                        super.doGlobalAction(serveEvent, admin);
+                        if (isRequestLoggingEnabled) {
+                            dumpWireMockEvent(serveEvent);
+                        }
+                        if (serveEvent.getRequest().getUrl().equals(getDataFeedPath())) {
+                            captureDataFeedRequest(serveEvent);
+                        }
                     }
-                    if (serveEvent.getRequest().getUrl().equals(getDataFeedPath())) {
-                        captureDataFeedRequest(serveEvent);
-                    }
-                }
-            }))
-            .build();
+                }))
+                .build();
+    }
+
+    void setupStroomStubs(Function<MappingBuilder, MappingBuilder> datafeedBuilderFunc) {
+        final String feedStatusPath = getFeedStatusPath();
+        final GetFeedStatusResponse feedStatusResponse = GetFeedStatusResponse.createOKReceiveResponse();
+
+        final String responseJson;
+        try {
+            responseJson = OBJECT_MAPPER.writeValueAsString(feedStatusResponse);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error creating json for " + feedStatusResponse);
+        }
+
+        WireMock.stubFor(WireMock.post(feedStatusPath)
+                .willReturn(WireMock.aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(responseJson)));
+        LOGGER.info("Setup WireMock POST stub for {}", feedStatusPath);
+
+        final String datafeedPath = getDataFeedPath();
+        WireMock.stubFor(datafeedBuilderFunc.apply(WireMock.post(datafeedPath)));
+        LOGGER.info("Setup WireMock POST stub for {}", datafeedPath);
+
+        WireMock.stubFor(WireMock.options(UrlPattern.ANY)
+                .willReturn(
+                        WireMock.aResponse()
+                                .withHeader("Allow", "POST")));
+        LOGGER.info("Setup WireMock OPTIONS stub for any URL");
+    }
 
     public static String getDataFeedPath() {
         return ResourcePaths.buildUnauthenticatedServletPath(ReceiveDataServlet.DATA_FEED_PATH_PART);
@@ -216,5 +258,132 @@ public class WireMockProxyDestination {
                     attributeMap.put(httpHeader.key(), httpHeader.firstValue());
                 });
         return attributeMap;
+    }
+
+    public int getDataFeedPostsToStroomCount() {
+        return dataFeedRequests.size();
+    }
+
+    public List<LoggedRequest> getPostsToStroomDataFeed() {
+        return WireMock.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(getDataFeedPath())));
+    }
+
+    public List<GetFeedStatusRequest> getPostsToFeedStatusCheck() {
+        return WireMock.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(getFeedStatusPath())))
+                .stream()
+                .map(req -> extractContent(req, GetFeedStatusRequest.class))
+                .toList();
+    }
+
+    private static String getFeedStatusPath() {
+        return ResourcePaths.buildAuthenticatedApiPath(
+                FeedStatusResource.BASE_RESOURCE_PATH,
+                FeedStatusResource.GET_FEED_STATUS_PATH_PART);
+    }
+
+    /**
+     * Assert that a http header is present and has this value
+     */
+    public static void assertHeaderValue(final LoggedRequest loggedRequest,
+                                         final String key,
+                                         final String value) {
+        Assertions.assertThat(loggedRequest.getHeader(key))
+                .isNotNull()
+                .isEqualTo(value);
+    }
+
+    /**
+     * @return All requests received by the /datafeed endpoint
+     */
+    public List<DataFeedRequest> getDataFeedRequests() {
+        return dataFeedRequests;
+    }
+
+    public void clear() {
+        dataFeedRequests.clear();
+    }
+
+    private static <T> T extractContent(final LoggedRequest loggedRequest, final Class<T> clazz) {
+        // Assume UTF8
+        final Charset charset = StandardCharsets.UTF_8;
+        final String contentStr;
+
+        try {
+            contentStr = new String(loggedRequest.getBody(), charset);
+        } catch (Exception e) {
+            throw new RuntimeException(LogUtil.message(
+                    "Error reading content bytes as {}, error: {}",
+                    clazz.getSimpleName(), e.getMessage()), e);
+        }
+
+        try {
+            return OBJECT_MAPPER.readValue(contentStr, clazz);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(LogUtil.message(
+                    "Error de-serialising content to {}, error: {}, content:\n{}",
+                    clazz.getSimpleName(), e.getMessage(), contentStr), e);
+        }
+    }
+
+
+    void assertPosts() {
+        final List<LoggedRequest> postsToStroomDataFeed = getPostsToStroomDataFeed();
+
+        // Check feed names.
+        Assertions.assertThat(postsToStroomDataFeed)
+                .extracting(req -> req.getHeader(StandardHeaderArguments.FEED))
+                .containsExactlyInAnyOrder(
+                        FEED_TEST_EVENTS_1,
+                        FEED_TEST_EVENTS_2,
+                        FEED_TEST_EVENTS_1,
+                        FEED_TEST_EVENTS_2);
+
+        // Check zip content file count.
+        final List<DataFeedRequest> dataFeedRequests = getDataFeedRequests();
+        Assertions.assertThat(dataFeedRequests)
+                .hasSize(4);
+
+        // Can't be sure of the order they are sent,
+        Assertions.assertThat(dataFeedRequests.stream()
+                        .map(dataFeedRequest -> dataFeedRequest.getDataFeedRequestItems().size())
+                        .toList())
+                .containsExactlyInAnyOrder(7, 7, 3, 3);
+
+        assertDataFeedRequestContent(dataFeedRequests);
+    }
+
+    private void assertDataFeedRequestContent(final List<DataFeedRequest> dataFeedRequests) {
+        final List<String> expectedFiles = List.of(
+                "001.mf",
+                "001.meta",
+                "001.dat",
+                "002.meta",
+                "002.dat",
+                "003.meta",
+                "003.dat",
+                "004.meta",
+                "004.dat");
+        assertDataFeedRequestContent(dataFeedRequests, expectedFiles);
+    }
+
+    private void assertDataFeedRequestContent(final List<DataFeedRequest> dataFeedRequests,
+                                              final List<String> expectedFiles) {
+        dataFeedRequests.forEach(dataFeedRequest -> {
+            for (int i = 0; i < dataFeedRequest.getDataFeedRequestItems().size(); i++) {
+                final DataFeedRequestItem zipItem = dataFeedRequest.getDataFeedRequestItems().get(i);
+                final String expectedName = expectedFiles.get(i);
+                final String actualName = zipItem.baseName() + "." + zipItem.type();
+                Assertions.assertThat(actualName).isEqualTo(expectedName);
+                Assertions.assertThat(zipItem.content().length()).isGreaterThan(1);
+            }
+        });
+    }
+
+    public void setHeaderLoggingEnabled(final boolean headerLoggingEnabled) {
+        isHeaderLoggingEnabled = headerLoggingEnabled;
+    }
+
+    public void setRequestLoggingEnabled(final boolean requestLoggingEnabled) {
+        isRequestLoggingEnabled = requestLoggingEnabled;
     }
 }

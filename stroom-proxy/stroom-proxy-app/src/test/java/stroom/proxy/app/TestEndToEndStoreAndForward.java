@@ -73,10 +73,12 @@ public class TestEndToEndStoreAndForward extends AbstractEndToEndTest {
     void testBasicEndToEnd() {
         LOGGER.info("Starting basic end-end test");
 
-        super.isRequestLoggingEnabled = true;
-
-        setupStroomStubs(mappingBuilder ->
+        wireMockProxyDestination.setRequestLoggingEnabled(true);
+        wireMockProxyDestination.setupStroomStubs(mappingBuilder ->
                 mappingBuilder.willReturn(WireMock.ok()));
+        // now the stubs are set up wait for proxy to be ready as proxy needs the
+        // stubs to be available to be healthy
+        waitForHealthyProxyApp(Duration.ofSeconds(30));
 
         final String content1 = "Hello";
         final String content2 = "Goodbye";
@@ -103,7 +105,7 @@ public class TestEndToEndStoreAndForward extends AbstractEndToEndTest {
                 .isEqualTo(8);
 
         TestUtil.waitForIt(
-                this::getDataFeedPostsToStroomCount,
+                wireMockProxyDestination::getDataFeedPostsToStroomCount,
                 4,
                 () -> "Forward to stroom datafeed count",
                 Duration.ofSeconds(10),
@@ -115,10 +117,10 @@ public class TestEndToEndStoreAndForward extends AbstractEndToEndTest {
                 WireMock.urlPathEqualTo(getDataFeedPath())));
 
         // Assert the content of posts
-        assertPosts();
+        wireMockProxyDestination.assertPosts();
 
         // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
-        Assertions.assertThat(getPostsToFeedStatusCheck())
+        Assertions.assertThat(wireMockProxyDestination.getPostsToFeedStatusCheck())
                 .extracting(GetFeedStatusRequest::getFeedName)
                 .filteredOn(feed -> !"DUMMY_FEED".equals(feed))
                 .containsExactly(FEED_TEST_EVENTS_1, FEED_TEST_EVENTS_2);
@@ -134,10 +136,12 @@ public class TestEndToEndStoreAndForward extends AbstractEndToEndTest {
         DbRecordCounts expected = new DbRecordCounts(0, 0, 0, 1, 0, 0, 0, 0);
         Assertions.assertThat(getDbRecordCounts()).isEqualTo(expected);
 
-        super.isRequestLoggingEnabled = true;
-
-        setupStroomStubs(mappingBuilder ->
+        wireMockProxyDestination.setRequestLoggingEnabled(true);
+        wireMockProxyDestination.setupStroomStubs(mappingBuilder ->
                 mappingBuilder.willReturn(WireMock.ok()));
+        // now the stubs are set up wait for proxy to be ready as proxy needs the
+        // stubs to be available to be healthy
+        waitForHealthyProxyApp(Duration.ofSeconds(30));
 
         final String content1 = "Hello";
         final String content2 = "Goodbye";
@@ -166,7 +170,7 @@ public class TestEndToEndStoreAndForward extends AbstractEndToEndTest {
 
         // Assert that proxy attempted to forward 4 files to Stroom.
         TestUtil.waitForIt(
-                this::getDataFeedPostsToStroomCount,
+                wireMockProxyDestination::getDataFeedPostsToStroomCount,
                 4,
                 () -> "Forward to Stroom datafeed count",
                 Duration.ofSeconds(10),
@@ -178,7 +182,7 @@ public class TestEndToEndStoreAndForward extends AbstractEndToEndTest {
                 WireMock.urlPathEqualTo(getDataFeedPath())));
 
         // Assert the content of posts
-        assertPosts();
+        wireMockProxyDestination.assertPosts();
 
         expected = new DbRecordCounts(0, 2, 0, 1, 0, 0, 0, 0);
         TestUtil.waitForIt(
@@ -190,7 +194,7 @@ public class TestEndToEndStoreAndForward extends AbstractEndToEndTest {
                 Duration.ofSeconds(1));
 
         // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
-        Assertions.assertThat(getPostsToFeedStatusCheck())
+        Assertions.assertThat(wireMockProxyDestination.getPostsToFeedStatusCheck())
                 .extracting(GetFeedStatusRequest::getFeedName)
                 .filteredOn(feed -> !"DUMMY_FEED".equals(feed))
                 .containsExactly(FEED_TEST_EVENTS_1, FEED_TEST_EVENTS_2);

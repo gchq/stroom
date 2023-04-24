@@ -49,10 +49,12 @@ public class TestEndToEndStoreAndForwardToFileAndHttp extends AbstractEndToEndTe
     void test() {
         LOGGER.info("Starting basic end-end test");
 
-        super.isRequestLoggingEnabled = true;
-
-        setupStroomStubs(mappingBuilder ->
+        wireMockProxyDestination.setRequestLoggingEnabled(true);
+        wireMockProxyDestination.setupStroomStubs(mappingBuilder ->
                 mappingBuilder.willReturn(WireMock.ok()));
+        // now the stubs are set up wait for proxy to be ready as proxy needs the
+        // stubs to be available to be healthy
+        waitForHealthyProxyApp(Duration.ofSeconds(30));
 
         final String content1 = "Hello";
         final String content2 = "Goodbye";
@@ -93,7 +95,7 @@ public class TestEndToEndStoreAndForwardToFileAndHttp extends AbstractEndToEndTe
         assertFileContents();
 
         // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
-        Assertions.assertThat(getPostsToFeedStatusCheck())
+        Assertions.assertThat(wireMockProxyDestination.getPostsToFeedStatusCheck())
                 .extracting(GetFeedStatusRequest::getFeedName)
                 .filteredOn(feed -> !"DUMMY_FEED".equals(feed))
                 .containsExactly(FEED_TEST_EVENTS_1, FEED_TEST_EVENTS_2);
@@ -102,7 +104,7 @@ public class TestEndToEndStoreAndForwardToFileAndHttp extends AbstractEndToEndTe
         // Check the HTTP forwarding
 
         TestUtil.waitForIt(
-                this::getDataFeedPostsToStroomCount,
+                wireMockProxyDestination::getDataFeedPostsToStroomCount,
                 4,
                 () -> "Forward to stroom datafeed count",
                 Duration.ofSeconds(10),
@@ -113,12 +115,12 @@ public class TestEndToEndStoreAndForwardToFileAndHttp extends AbstractEndToEndTe
                 WireMock.urlPathEqualTo(getDataFeedPath())));
 
         // Assert the posts.
-        assertPosts();
+        wireMockProxyDestination.assertPosts();
 
         // ---------------------------------
         // Check the feed status checking
 
-        Assertions.assertThat(getPostsToFeedStatusCheck())
+        Assertions.assertThat(wireMockProxyDestination.getPostsToFeedStatusCheck())
                 .extracting(GetFeedStatusRequest::getFeedName)
                 .filteredOn(feed -> !"DUMMY_FEED".equals(feed))
                 .containsExactly(FEED_TEST_EVENTS_1, FEED_TEST_EVENTS_2);
