@@ -180,7 +180,9 @@ public class SenderImpl implements Sender {
                                final Consumer<Long> progressHandler) {
         try (final StroomZipFile stroomZipFile = new StroomZipFile(zipFilePath)) {
             try {
-                for (final String baseName : stroomZipFile.getStroomZipNameSet().getBaseNameSet()) {
+                final List<String> baseNames = stroomZipFile.getBaseNames();
+                for (final String baseName : baseNames) {
+
                     // Add manifest.
                     addEntry(stroomZipFile, baseName, StroomZipFileType.MANIFEST, handler, progressHandler);
 

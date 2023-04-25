@@ -7,10 +7,10 @@ import java.util.Optional;
 import static java.util.Map.entry;
 
 public enum StroomZipFileType {
-    MANIFEST(".mf", new String[]{".mf", ".manifest"}),
-    META(".meta", new String[]{".hdr", ".header", ".meta", ".met"}),
-    CONTEXT(".ctx", new String[]{".ctx", ".context"}),
-    DATA(".dat", new String[]{".dat"});
+    MANIFEST(0, ".mf", new String[]{".mf", ".manifest"}),
+    META(1, ".meta", new String[]{".hdr", ".header", ".meta", ".met"}),
+    CONTEXT(2, ".ctx", new String[]{".ctx", ".context"}),
+    DATA(3, ".dat", new String[]{".dat"});
 
     private static final Map<String, StroomZipFileType> EXTENSION_MAP = Map.ofEntries(
             entry(".mf", StroomZipFileType.MANIFEST),
@@ -24,13 +24,20 @@ public enum StroomZipFileType {
             entry(".dat", StroomZipFileType.DATA)
     );
 
+    private final int index;
     private final String extension;
     private final String[] recognisedExtensions;
 
-    StroomZipFileType(final String extension,
+    StroomZipFileType(final int index,
+                      final String extension,
                       final String[] recognisedExtensions) {
+        this.index = index;
         this.extension = extension;
         this.recognisedExtensions = recognisedExtensions;
+    }
+
+    public int getIndex() {
+        return index;
     }
 
     /**

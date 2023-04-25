@@ -16,7 +16,7 @@ class TestStroomZipFile_RealExample {
         final Path sourceFile = Paths.get("./src/test/resources/stroom/data/zip/BlankZip.zip");
         StroomZipFile stroomZipFile = new StroomZipFile(sourceFile);
 
-        ArrayList<String> list = new ArrayList<>(stroomZipFile.getStroomZipNameSet().getBaseNameList());
+        ArrayList<String> list = new ArrayList<>(stroomZipFile.getBaseNames());
         Collections.sort(list);
 
         stroomZipFile.close();

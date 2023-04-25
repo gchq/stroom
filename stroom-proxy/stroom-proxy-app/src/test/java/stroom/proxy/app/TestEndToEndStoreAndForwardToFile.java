@@ -81,4 +81,40 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
         Assertions.assertThat(postsToStroomDataFeed)
                 .hasSize(0);
     }
+
+    @Test
+    void testBasicZipEndToEnd() {
+        LOGGER.info("Starting basic end-end test");
+        dbRecordCountAssertion.assertRecordCounts(new DbRecordCounts(0, 0, 0, 1, 0, 0, 0, 0));
+
+        mockHttpDestination.setupStroomStubs(mappingBuilder ->
+                mappingBuilder.willReturn(WireMock.ok()));
+        // now the stubs are set up wait for proxy to be ready as proxy needs the
+        // stubs to be available to be healthy
+        waitForHealthyProxyApp(Duration.ofSeconds(30));
+
+        // Two feeds each send 4, agg max items of 3 so two batches each
+        final PostDataHelper postDataHelper = createPostDataHelper();
+        for (int i = 0; i < 4; i++) {
+            postDataHelper.sendZipTestData1();
+            postDataHelper.sendZipTestData2();
+        }
+
+        Assertions.assertThat(postDataHelper.getPostCount())
+                .isEqualTo(8);
+
+
+        // Assert the contents of the files.
+        mockFileDestination.assertFileContents(getConfig(), 12);
+
+        dbRecordCountAssertion.assertRecordCounts(new DbRecordCounts(0, 2, 0, 1, 0, 0, 0, 0));
+
+        // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
+        mockHttpDestination.assertFeedStatusCheck();
+
+        // No http forwarders set up so nothing goes to stroom
+        final List<LoggedRequest> postsToStroomDataFeed = mockHttpDestination.getPostsToStroomDataFeed();
+        Assertions.assertThat(postsToStroomDataFeed)
+                .hasSize(0);
+    }
 }

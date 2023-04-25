@@ -1,5 +1,6 @@
 package stroom.data.zip;
 
+import stroom.util.io.FileNameUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -11,22 +12,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 public class StroomZipFile implements Closeable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomZipFile.class);
 
-    private static final String SINGLE_ENTRY_ZIP_BASE_NAME = "001";
-
-    public static final StroomZipEntry SINGLE_DATA_ENTRY = StroomZipEntry.create(SINGLE_ENTRY_ZIP_BASE_NAME,
-            StroomZipFileType.DATA);
-    public static final StroomZipEntry SINGLE_META_ENTRY = StroomZipEntry.create(SINGLE_ENTRY_ZIP_BASE_NAME,
-            StroomZipFileType.META);
-
     private final Path file;
     private ZipFile zipFile;
-    private StroomZipNameSet stroomZipNameSet;
+    private StroomZipEntries stroomZipEntries;
+    private List<String> baseNameList;
 
     public StroomZipFile(final Path path) {
         this.file = path;
@@ -43,23 +43,47 @@ public class StroomZipFile implements Closeable {
         return file;
     }
 
-    public StroomZipNameSet getStroomZipNameSet() throws IOException {
-        if (stroomZipNameSet == null) {
-            stroomZipNameSet = new StroomZipNameSet(false);
-            Enumeration<ZipArchiveEntry> entryE = getZipFile().getEntries();
+    StroomZipEntries getStroomZipFileGroups() throws IOException {
+        if (stroomZipEntries == null) {
+            stroomZipEntries = new StroomZipEntries();
+            final Enumeration<ZipArchiveEntry> entries = getZipFile().getEntries();
 
-            while (entryE.hasMoreElements()) {
-                ZipArchiveEntry entry = entryE.nextElement();
+            while (entries.hasMoreElements()) {
+                final ZipArchiveEntry entry = entries.nextElement();
 
-                // Skip Dir's
+                // Skip directories.
                 if (!entry.isDirectory()) {
                     LOGGER.debug("File entry: {}", entry);
                     String fileName = entry.getName();
-                    stroomZipNameSet.add(fileName);
+                    stroomZipEntries.addFile(fileName);
                 }
             }
         }
-        return stroomZipNameSet;
+        return stroomZipEntries;
+    }
+
+    public List<String> getBaseNames() throws IOException {
+        if (baseNameList == null) {
+            baseNameList = new ArrayList<>();
+            final Enumeration<ZipArchiveEntry> entries = getZipFile().getEntries();
+
+            final Set<String> baseNameSet = new HashSet<>();
+            while (entries.hasMoreElements()) {
+                final ZipArchiveEntry entry = entries.nextElement();
+
+                // Skip directories.
+                if (!entry.isDirectory()) {
+                    LOGGER.debug("File entry: {}", entry);
+                    String fileName = entry.getName();
+                    final String baseName = FileNameUtil.getBaseName(fileName);
+                    if (!baseNameSet.contains(baseName)) {
+                        baseNameSet.add(baseName);
+                        baseNameList.add(baseName);
+                    }
+                }
+            }
+        }
+        return baseNameList;
     }
 
     @Override
@@ -68,7 +92,7 @@ public class StroomZipFile implements Closeable {
             zipFile.close();
             zipFile = null;
         }
-        stroomZipNameSet = null;
+        stroomZipEntries = null;
 
     }
 
@@ -93,10 +117,11 @@ public class StroomZipFile implements Closeable {
     }
 
     private ZipArchiveEntry getEntry(String baseName, StroomZipFileType fileType) throws IOException {
-        final String fullName = getStroomZipNameSet().getName(baseName, fileType);
-        if (fullName == null) {
+        final Optional<StroomZipEntry> optionalStroomZipEntry =
+                getStroomZipFileGroups().getByType(baseName, fileType);
+        if (optionalStroomZipEntry.isEmpty()) {
             return null;
         }
-        return getZipFile().getEntry(fullName);
+        return getZipFile().getEntry(optionalStroomZipEntry.get().getFullName());
     }
 }

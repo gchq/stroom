@@ -203,16 +203,16 @@ public class DataDownloadTaskHandler {
                         final int pos = index;
                         taskContext.info(() -> "Data Input " + pos + "/" + count);
 
-                        String basePartName = StroomFileNameUtil.getIdPath(id);
+                        String baseName = StroomFileNameUtil.getIdPath(id);
                         if (count > 1) {
-                            basePartName += AGGREGATION_DELIMITER + (index + 1);
+                            baseName += AGGREGATION_DELIMITER + (index + 1);
                         }
 
                         // Write out the manifest
                         if (index == 0) {
                             try (final OutputStream outputStream = stroomZipOutputStream
-                                    .addEntry(StroomZipEntry.create(
-                                            basePartName,
+                                    .addEntry(StroomZipEntry.createFromBaseName(
+                                            baseName,
                                             StroomZipFileType.MANIFEST).getFullName())) {
                                 AttributeMapUtil.write(source.getAttributes(), outputStream);
                             }
@@ -220,19 +220,19 @@ public class DataDownloadTaskHandler {
                         try (final InputStream dataInputStream = inputStreamProvider.get()) {
                             streamToStream(dataInputStream,
                                     stroomZipOutputStream,
-                                    basePartName,
+                                    baseName,
                                     StroomZipFileType.DATA);
                         }
                         try (final InputStream metaInputStream = inputStreamProvider.get(StreamTypeNames.META)) {
                             streamToStream(metaInputStream,
                                     stroomZipOutputStream,
-                                    basePartName,
+                                    baseName,
                                     StroomZipFileType.META);
                         }
                         try (final InputStream contextInputStream = inputStreamProvider.get(StreamTypeNames.CONTEXT)) {
                             streamToStream(contextInputStream,
                                     stroomZipOutputStream,
-                                    basePartName,
+                                    baseName,
                                     StroomZipFileType.CONTEXT);
                         }
                     }
@@ -244,10 +244,10 @@ public class DataDownloadTaskHandler {
 
     private void streamToStream(final InputStream inputStream,
                                 final StroomZipOutputStream zipOutputStream,
-                                final String basePartName,
+                                final String baseName,
                                 final StroomZipFileType fileType) throws IOException {
         if (inputStream != null) {
-            final StroomZipEntry stroomZipEntry = StroomZipEntry.create(basePartName, fileType);
+            final StroomZipEntry stroomZipEntry = StroomZipEntry.createFromBaseName(baseName, fileType);
             try (final OutputStream outputStream = zipOutputStream.addEntry(stroomZipEntry.getFullName())) {
                 StreamUtil.streamToStream(inputStream, outputStream);
             }
@@ -280,10 +280,10 @@ public class DataDownloadTaskHandler {
         // Create directories and files in a synchronized way so that the clean() method will not remove empty
         // directories that we are just about to write to.
         final Path dir = file.getParent();
-        // Ensure parent dir's exist
+        // Ensure parent dirs exist
         Files.createDirectories(dir);
 
-        outputStream = new StroomZipOutputStreamImpl(file, taskContext, false);
+        outputStream = new StroomZipOutputStreamImpl(file, taskContext);
 
         return outputStream;
     }

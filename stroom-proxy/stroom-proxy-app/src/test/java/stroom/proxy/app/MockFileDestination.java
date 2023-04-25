@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
@@ -154,9 +155,13 @@ public class MockFileDestination {
 
 
     void assertFileContents(final Config config) {
+        assertFileContents(config, 4);
+    }
+
+    void assertFileContents(final Config config, final int count) {
         TestUtil.waitForIt(
                 () -> getForwardFileMetaCount(config),
-                4L,
+                (long) count,
                 () -> "Forwarded file pairs count",
                 Duration.ofSeconds(10),
                 Duration.ofMillis(100),
@@ -165,24 +170,29 @@ public class MockFileDestination {
         final List<ForwardFileItem> forwardFileItems = getForwardFiles(config);
 
         // Check number of forwarded files.
-        Assertions.assertThat(forwardFileItems)
-                .hasSize(4);
+        Assertions.assertThat(forwardFileItems).hasSize(count);
 
         // Check feed names.
+        final String[] feedNames = new String[count];
+        for (int i = 0; i < count; i++) {
+            feedNames[i++] = TestConstants.FEED_TEST_EVENTS_1;
+            feedNames[i] = TestConstants.FEED_TEST_EVENTS_2;
+        }
+
         Assertions.assertThat(forwardFileItems)
-                .extracting(forwardFileItem ->
-                        forwardFileItem.getMetaAttributeMap().get(StandardHeaderArguments.FEED))
-                .containsExactlyInAnyOrder(
-                        TestConstants.FEED_TEST_EVENTS_1,
-                        TestConstants.FEED_TEST_EVENTS_2,
-                        TestConstants.FEED_TEST_EVENTS_1,
-                        TestConstants.FEED_TEST_EVENTS_2);
+                .extracting(forwardFileItem -> forwardFileItem.getMetaAttributeMap().get(StandardHeaderArguments.FEED))
+                .containsExactlyInAnyOrder(feedNames);
 
         // Check zip content file count.
+        final Integer[] sizes = new Integer[count];
+        Arrays.fill(sizes, 7);
+        sizes[sizes.length - 1] = 3;
+        sizes[sizes.length - 2] = 3;
+
         Assertions.assertThat(forwardFileItems.stream()
                         .map(forwardFileItem -> forwardFileItem.zipItems().size())
                         .toList())
-                .containsExactlyInAnyOrder(7, 7, 3, 3);
+                .containsExactlyInAnyOrder(sizes);
 
         // Check zip contents.
         final List<String> expectedFiles = List.of(

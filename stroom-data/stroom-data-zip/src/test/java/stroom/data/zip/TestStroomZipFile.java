@@ -1,6 +1,7 @@
 package stroom.data.zip;
 
 
+import stroom.data.zip.StroomZipEntries.StroomZipEntryGroup;
 import stroom.util.io.CloseableUtil;
 
 import org.junit.jupiter.api.Test;
@@ -8,8 +9,8 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.Collection;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -39,11 +40,14 @@ class TestStroomZipFile {
         try {
             stroomZipFile = new StroomZipFile(file);
 
-            assertThat(new HashSet<>(Collections.singleton("test/test.dat")))
-                    .isEqualTo(stroomZipFile.getStroomZipNameSet().getBaseNameSet());
+            final Collection<StroomZipEntryGroup> groups = stroomZipFile.getStroomZipFileGroups().getGroups();
+            assertThat(groups.size()).isEqualTo(1);
+            final StroomZipEntryGroup group = groups.stream().findFirst().orElseThrow();
+            final StroomZipEntry entry = group.getByType(StroomZipFileType.DATA).orElseThrow();
+            assertThat("test/test.dat").isEqualTo(entry.getFullName());
 
-            assertThat(stroomZipFile.getInputStream("test/test.dat", StroomZipFileType.DATA)).isNotNull();
-            assertThat(stroomZipFile.getInputStream("test/test.dat", StroomZipFileType.CONTEXT)).isNull();
+            assertThat(stroomZipFile.getInputStream("test/test", StroomZipFileType.DATA)).isNotNull();
+            assertThat(stroomZipFile.getInputStream("test/test", StroomZipFileType.CONTEXT)).isNull();
 
         } finally {
             CloseableUtil.close(stroomZipFile);
@@ -74,9 +78,8 @@ class TestStroomZipFile {
         StroomZipFile stroomZipFile = null;
         try {
             stroomZipFile = new StroomZipFile(file);
-
-            assertThat(new HashSet<>(Collections.singleton("request")))
-                    .isEqualTo(stroomZipFile.getStroomZipNameSet().getBaseNameSet());
+            final List<String> baseNames = stroomZipFile.getBaseNames();
+            assertThat(List.of("request")).isEqualTo(baseNames);
 
             assertThat(stroomZipFile.getInputStream("request", StroomZipFileType.DATA)).isNotNull();
             assertThat(stroomZipFile.getInputStream("request", StroomZipFileType.META)).isNotNull();

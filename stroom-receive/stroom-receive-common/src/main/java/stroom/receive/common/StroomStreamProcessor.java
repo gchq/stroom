@@ -16,10 +16,11 @@
 
 package stroom.receive.common;
 
+import stroom.data.zip.StroomZipEntries;
+import stroom.data.zip.StroomZipEntries.StroomZipEntryGroup;
 import stroom.data.zip.StroomZipEntry;
 import stroom.data.zip.StroomZipFile;
 import stroom.data.zip.StroomZipFileType;
-import stroom.data.zip.StroomZipNameSet;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
@@ -45,6 +46,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 import javax.servlet.http.HttpServletRequest;
@@ -119,8 +121,8 @@ public class StroomStreamProcessor {
                         StroomZipFileType.CONTEXT,
                         StroomZipFileType.DATA);
 
-                final List<String> baseNameList = stroomZipFile.getStroomZipNameSet().getBaseNameList();
-                for (final String baseName : baseNameList) {
+                final List<String> baseNames = stroomZipFile.getBaseNames();
+                for (final String baseName : baseNames) {
                     for (final StroomZipFileType zipFileType : zipFileTypes) {
                         addEntry(stroomZipFile, baseName, zipFileType);
                     }
@@ -137,8 +139,7 @@ public class StroomStreamProcessor {
     private void addEntry(final StroomZipFile stroomZipFile,
                           final String baseName,
                           final StroomZipFileType stroomZipFileType) throws IOException {
-        try (final InputStream inputStream =
-                stroomZipFile.getInputStream(baseName, stroomZipFileType)) {
+        try (final InputStream inputStream = stroomZipFile.getInputStream(baseName, stroomZipFileType)) {
             if (inputStream != null) {
                 handler.addEntry(
                         baseName + stroomZipFileType.getExtension(),
@@ -210,13 +211,13 @@ public class StroomStreamProcessor {
                 bufferedInputStream.reset();
 
                 final long totalRead = handler.addEntry(
-                        StroomZipFile.SINGLE_DATA_ENTRY.getFullName(),
+                        StroomZipEntry.SINGLE_DATA_ENTRY.getFullName(),
                         bufferedInputStream,
                         progressHandler);
 
                 final AttributeMap entryAttributeMap = AttributeMapUtil.cloneAllowable(globalAttributeMap);
                 entryAttributeMap.put(StandardHeaderArguments.STREAM_SIZE, String.valueOf(totalRead));
-                sendHeader(StroomZipFile.SINGLE_META_ENTRY, entryAttributeMap);
+                sendHeader(StroomZipEntry.SINGLE_META_ENTRY, entryAttributeMap);
             }
         }
     }
@@ -227,7 +228,7 @@ public class StroomStreamProcessor {
 
             final Map<String, AttributeMap> bufferedAttributeMap = new HashMap<>();
             final Map<String, Long> dataStreamSizeMap = new HashMap<>();
-            final StroomZipNameSet stroomZipNameSet = new StroomZipNameSet(false);
+            final StroomZipEntries stroomZipEntries = new StroomZipEntries();
 
             final ZipArchiveInputStream zipArchiveInputStream = new ZipArchiveInputStream(byteCountInputStream);
 
@@ -260,7 +261,7 @@ public class StroomStreamProcessor {
 
                 final String entryName = prefix + zipEntry.getName();
                 final long uncompressedSize = zipEntry.getSize();
-                final StroomZipEntry stroomZipEntry = stroomZipNameSet.add(entryName);
+                final StroomZipEntry stroomZipEntry = stroomZipEntries.addFile(entryName);
 
                 if (uncompressedSize == 0) {
                     // Ideally we would want to ignore empty entries but because there may be multiple child
@@ -310,13 +311,13 @@ public class StroomStreamProcessor {
                     } else {
                         // We need to add the stream size
                         // Send the data file yet ?
-                        final String dataFile = stroomZipNameSet.getName(
+                        final Optional<StroomZipEntry> dataFile = stroomZipEntries.getByType(
                                 stroomZipEntry.getBaseName(),
                                 StroomZipFileType.DATA);
-                        if (dataFile != null && dataStreamSizeMap.containsKey(dataFile)) {
+                        if (dataFile.isPresent() && dataStreamSizeMap.containsKey(dataFile.get().getFullName())) {
                             // Yes we can send the header now
                             entryAttributeMap.put(StandardHeaderArguments.STREAM_SIZE,
-                                    String.valueOf(dataStreamSizeMap.get(dataFile)));
+                                    String.valueOf(dataStreamSizeMap.get(dataFile.get().getFullName())));
                             sendHeader(stroomZipEntry, entryAttributeMap);
                         } else {
                             // Else we have to buffer it
@@ -351,7 +352,7 @@ public class StroomStreamProcessor {
                                 .remove(stroomZipEntry.getBaseName());
                         if (entryAttributeMap != null) {
                             entryAttributeMap.put(StandardHeaderArguments.STREAM_SIZE, String.valueOf(totalRead));
-                            final StroomZipEntry entry = StroomZipEntry.create(
+                            final StroomZipEntry entry = StroomZipEntry.createFromBaseName(
                                     stroomZipEntry.getBaseName(),
                                     StroomZipFileType.META);
                             final byte[] headerBytes = AttributeMapUtil.toByteArray(entryAttributeMap);
@@ -364,7 +365,7 @@ public class StroomStreamProcessor {
                 }
             }
 
-            if (stroomZipNameSet.getBaseNameSet().isEmpty()) {
+            if (stroomZipEntries.getGroups().isEmpty()) {
                 // A zip stream with no entries is always 22 bytes in size.
                 if (byteCountInputStream.getCount() > 22) {
                     throw new StroomStreamException(
@@ -375,15 +376,24 @@ public class StroomStreamProcessor {
             }
 
             // Add missing headers
-            for (final String baseName : stroomZipNameSet.getBaseNameList()) {
-                final String headerName = stroomZipNameSet.getName(baseName, StroomZipFileType.META);
+            for (final StroomZipEntryGroup group : stroomZipEntries.getGroups()) {
+                final Optional<StroomZipEntry> optionalMeta = group.getByType(StroomZipFileType.META);
+
                 // Send Generic Header
-                if (headerName == null) {
-                    final String dataFileName = stroomZipNameSet.getName(baseName, StroomZipFileType.DATA);
+                if (optionalMeta.isEmpty()) {
                     final AttributeMap entryAttributeMap = AttributeMapUtil.cloneAllowable(globalAttributeMap);
-                    entryAttributeMap.put(StandardHeaderArguments.STREAM_SIZE,
-                            String.valueOf(dataStreamSizeMap.remove(dataFileName)));
-                    sendHeader(StroomZipEntry.create(baseName, StroomZipFileType.META), entryAttributeMap);
+
+                    final Optional<StroomZipEntry> optionalData = group.getByType(StroomZipFileType.DATA);
+                    if (optionalData.isPresent()) {
+                        final Long size = dataStreamSizeMap.remove(optionalData.get().getFullName());
+                        if (size != null) {
+                            entryAttributeMap.put(StandardHeaderArguments.STREAM_SIZE, String.valueOf(size));
+                        }
+                    }
+
+                    final StroomZipEntry metaEntry =
+                            StroomZipEntry.createFromBaseName(group.getBaseName(), StroomZipFileType.META);
+                    sendHeader(metaEntry, entryAttributeMap);
                 }
             }
         } catch (final IOException e) {

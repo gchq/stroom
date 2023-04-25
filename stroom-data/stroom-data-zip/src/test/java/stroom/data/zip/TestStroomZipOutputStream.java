@@ -27,15 +27,15 @@ class TestStroomZipOutputStream {
             for (int i = 0; i < TEST_SIZE; i++) {
                 uuid = UUID.randomUUID().toString();
                 stream = stroomZipOutputStream.addEntry(
-                        StroomZipEntry.create(uuid, StroomZipFileType.META).getFullName());
+                        StroomZipEntry.createFromBaseName(uuid, StroomZipFileType.META).getFullName());
                 stream.write("Header".getBytes(CharsetConstants.DEFAULT_CHARSET));
                 stream.close();
                 stream = stroomZipOutputStream.addEntry(
-                        StroomZipEntry.create(uuid, StroomZipFileType.CONTEXT).getFullName());
+                        StroomZipEntry.createFromBaseName(uuid, StroomZipFileType.CONTEXT).getFullName());
                 stream.write("Context".getBytes(CharsetConstants.DEFAULT_CHARSET));
                 stream.close();
                 stream = stroomZipOutputStream.addEntry(
-                        StroomZipEntry.create(uuid, StroomZipFileType.DATA).getFullName());
+                        StroomZipEntry.createFromBaseName(uuid, StroomZipFileType.DATA).getFullName());
                 stream.write("Data".getBytes(CharsetConstants.DEFAULT_CHARSET));
                 stream.close();
             }
@@ -44,7 +44,7 @@ class TestStroomZipOutputStream {
 
             final StroomZipFile stroomZipFile = new StroomZipFile(testFile);
 
-            assertThat(stroomZipFile.getStroomZipNameSet().getBaseNameSet().size())
+            assertThat(stroomZipFile.getBaseNames().size())
                     .isEqualTo(TEST_SIZE);
 
             stroomZipFile.close();

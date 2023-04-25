@@ -193,14 +193,14 @@ class TestStroomStreamProcessor {
         doCheckOrder(byteArrayOutputStream, zipFile);
 
         final StroomZipFile stroomZipFile = new StroomZipFile(zipFile);
-        assertThat(StreamUtil.streamToString(stroomZipFile.getInputStream("1.txt", StroomZipFileType.DATA)))
+        assertThat(StreamUtil.streamToString(stroomZipFile.getInputStream("1", StroomZipFileType.DATA)))
                 .isEqualTo("data");
-        assertMeta(stroomZipFile, "1.txt", "TEST:VALUE");
-        assertThat(StreamUtil.streamToString(stroomZipFile.getInputStream("2.txt", StroomZipFileType.DATA)))
+        assertMeta(stroomZipFile, "1", "TEST:VALUE");
+        assertThat(StreamUtil.streamToString(stroomZipFile.getInputStream("2", StroomZipFileType.DATA)))
                 .isEqualTo("data");
-        assertMeta(stroomZipFile, "2.txt", "TEST:VALUE");
+        assertMeta(stroomZipFile, "2", "TEST:VALUE");
 
-        assertMeta(stroomZipFile, "2.txt", "TEST:VALUE");
+        assertMeta(stroomZipFile, "2", "TEST:VALUE");
 
         stroomZipFile.close();
     }
