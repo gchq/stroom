@@ -3,6 +3,7 @@ package stroom.proxy.app;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.LongAdder;
 import javax.ws.rs.client.Client;
@@ -22,6 +23,24 @@ public class PostDataHelper {
                           final String url) {
         this.client = client;
         this.url = url;
+    }
+
+    void sendTestData1() {
+        sendData(
+                TestConstants.FEED_TEST_EVENTS_1,
+                TestConstants.SYSTEM_TEST_SYSTEM,
+                TestConstants.ENVIRONMENT_DEV,
+                Collections.emptyMap(),
+                "Hello");
+    }
+
+    void sendTestData2() {
+        sendData(
+                TestConstants.FEED_TEST_EVENTS_2,
+                TestConstants.SYSTEM_TEST_SYSTEM,
+                TestConstants.ENVIRONMENT_DEV,
+                Collections.emptyMap(),
+                "Goodbye");
     }
 
     public int sendData(final String feed,
