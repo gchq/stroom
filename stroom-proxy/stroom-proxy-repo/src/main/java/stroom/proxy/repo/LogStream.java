@@ -30,6 +30,17 @@ public class LogStream {
                     final int responseCode,
                     final long bytes,
                     final long duration) {
+        log(logger, attributeMap, type, url, responseCode, bytes, duration, null);
+    }
+
+    public void log(final Logger logger,
+                    final AttributeMap attributeMap,
+                    final String type,
+                    final String url,
+                    final int responseCode,
+                    final long bytes,
+                    final long duration,
+                    final String message) {
 
         if (logger.isInfoEnabled()) {
             final Set<String> metaKeys = logStreamConfigProvider.get().getMetaKeys();
@@ -40,7 +51,7 @@ public class LogStream {
                         .filter(entry -> metaKeys.contains(entry.getKey().toLowerCase()))
                         .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
                 final String kvPairs = CSVFormatter.format(filteredMap);
-                final String message = CSVFormatter.escape(type) +
+                final String logLine = CSVFormatter.escape(type) +
                         "," +
                         CSVFormatter.escape(url) +
                         "," +
@@ -50,8 +61,10 @@ public class LogStream {
                         "," +
                         duration +
                         "," +
+                        CSVFormatter.escape(message) +
+                        "," +
                         kvPairs;
-                logger.info(message);
+                logger.info(logLine);
             }
         }
     }

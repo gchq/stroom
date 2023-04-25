@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.Collections;
+import java.util.function.Supplier;
 import javax.inject.Inject;
 
 public class TestEndToEndStoreAndForward extends AbstractEndToEndTest {
@@ -72,6 +73,12 @@ public class TestEndToEndStoreAndForward extends AbstractEndToEndTest {
     @Test
     void testBasicEndToEnd() {
         LOGGER.info("Starting basic end-end test");
+        final App app = getDropwizard().getApplication();
+        final Injector injector = app.getInjector();
+        injector.injectMembers(this);
+
+        DbRecordCounts expected = new DbRecordCounts(0, 0, 0, 1, 0, 0, 0, 0);
+        assertRecordCounts(this::getDbRecordCounts, expected);
 
         wireMockProxyDestination.setRequestLoggingEnabled(true);
         wireMockProxyDestination.setupStroomStubs(mappingBuilder ->
@@ -119,6 +126,9 @@ public class TestEndToEndStoreAndForward extends AbstractEndToEndTest {
         // Assert the content of posts
         wireMockProxyDestination.assertPosts();
 
+        expected = new DbRecordCounts(0, 2, 0, 1, 0, 0, 0, 0);
+        assertRecordCounts(this::getDbRecordCounts, expected);
+
         // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
         Assertions.assertThat(wireMockProxyDestination.getPostsToFeedStatusCheck())
                 .extracting(GetFeedStatusRequest::getFeedName)
@@ -134,11 +144,11 @@ public class TestEndToEndStoreAndForward extends AbstractEndToEndTest {
         injector.injectMembers(this);
 
         DbRecordCounts expected = new DbRecordCounts(0, 0, 0, 1, 0, 0, 0, 0);
-        Assertions.assertThat(getDbRecordCounts()).isEqualTo(expected);
+        assertRecordCounts(this::getDbRecordCounts, expected);
 
         wireMockProxyDestination.setRequestLoggingEnabled(true);
         wireMockProxyDestination.setupStroomStubs(mappingBuilder ->
-                mappingBuilder.willReturn(WireMock.ok()));
+                mappingBuilder.willReturn(WireMock.serverError()));
         // now the stubs are set up wait for proxy to be ready as proxy needs the
         // stubs to be available to be healthy
         waitForHealthyProxyApp(Duration.ofSeconds(30));
@@ -184,14 +194,8 @@ public class TestEndToEndStoreAndForward extends AbstractEndToEndTest {
         // Assert the content of posts
         wireMockProxyDestination.assertPosts();
 
-        expected = new DbRecordCounts(0, 2, 0, 1, 0, 0, 0, 0);
-        TestUtil.waitForIt(
-                this::getDbRecordCounts,
-                expected,
-                () -> "Unexpected record counts",
-                Duration.ofSeconds(10),
-                Duration.ofMillis(50),
-                Duration.ofSeconds(1));
+        expected = new DbRecordCounts(4, 2, 4, 1, 0, 8, 0, 8);
+        assertRecordCounts(this::getDbRecordCounts, expected);
 
         // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
         Assertions.assertThat(wireMockProxyDestination.getPostsToFeedStatusCheck())
@@ -211,13 +215,25 @@ public class TestEndToEndStoreAndForward extends AbstractEndToEndTest {
                 sourceItemDao.countItems());
     }
 
-    private record DbRecordCounts( int countAggregates,
-                                   int countFeeds,
-                                   int countForwardAggregates,
-                                   int countForwardDest,
-                                   int countForwardSource,
-                                   int countSources,
-                                   int countDeletableSources,
-                                   int countItems) {
+    private void assertRecordCounts(final Supplier<DbRecordCounts> actual,
+                                    final DbRecordCounts expected) {
+        TestUtil.waitForIt(
+                actual,
+                expected,
+                () -> "Unexpected record counts",
+                Duration.ofSeconds(10),
+                Duration.ofMillis(50),
+                Duration.ofSeconds(1));
+    }
+
+    private record DbRecordCounts(int countAggregates,
+                                  int countFeeds,
+                                  int countForwardAggregates,
+                                  int countForwardDest,
+                                  int countForwardSource,
+                                  int countSources,
+                                  int countDeletableSources,
+                                  int countItems) {
+
     }
 }
