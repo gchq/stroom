@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.5] - 2023-04-25
+
+* Issue **#3367** : Fix proxy forward failure handling.
+
+
 ## [v7.2-beta.4] - 2023-04-21
 
 * Prevent DB migrations running if stroom is at the desired version.
@@ -5207,7 +5212,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.4...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.5...HEAD
+[v7.2-beta.5]: https://github.com/gchq/stroom/compare/v7.2-beta.4...v7.2-beta.5
 [v7.2-beta.4]: https://github.com/gchq/stroom/compare/v7.2-beta.3...v7.2-beta.4
 [v7.2-beta.3]: https://github.com/gchq/stroom/compare/v7.2-beta.2...v7.2-beta.3
 [v7.2-beta.2]: https://github.com/gchq/stroom/compare/v7.2-beta.1...v7.2-beta.2
