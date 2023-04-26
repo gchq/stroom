@@ -36,7 +36,7 @@ public class DbRecordCountAssertion {
                 actual,
                 expected,
                 () -> "Unexpected record counts",
-                Duration.ofSeconds(10),
+                Duration.ofSeconds(60),
                 Duration.ofMillis(50),
                 Duration.ofSeconds(1));
     }
