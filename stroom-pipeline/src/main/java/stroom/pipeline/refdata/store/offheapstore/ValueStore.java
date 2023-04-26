@@ -21,6 +21,7 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.lmdb.LmdbEnv;
 import stroom.pipeline.refdata.store.RefDataValue;
+import stroom.pipeline.refdata.store.StagingValue;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreMetaDb;
 import stroom.util.logging.LogUtil;
@@ -55,20 +56,31 @@ public class ValueStore {
         this.valueStoreMetaDb = valueStoreMetaDb;
     }
 
+    /**
+     * Either gets the {@link ValueStoreKey} corresponding to the passed refDataValue
+     * from the database if we already hold it or creates the entry in the database
+     * and returns the generated key. To determine if we already hold it, the value
+     * will be hashed and that hash will be looked up and any matches tested for equality
+     * using the serialised bytes.
+     * <p>
+     * onExistingValueAction Action to perform when the value is found to already exist
+     *
+     * @return A clone of the {@link ByteBuffer} containing the database key.
+     */
     ByteBuffer getOrCreateKey(final Txn<ByteBuffer> writeTxn,
                               final PooledByteBuffer valueStorePooledKeyBuffer,
-                              final RefDataValue refDataValue,
+                              final StagingValue stagingValue,
                               final boolean overwriteExisting) {
         //get the ValueStoreKey for the RefDataValue (creating the entry if it doesn't exist)
         return valueStoreDb.getOrCreateKey(
                 writeTxn,
-                refDataValue,
+                stagingValue,
                 valueStorePooledKeyBuffer,
                 overwriteExisting,
                 (txn, keyBuffer, valueBuffer) ->
                         valueStoreMetaDb.incrementReferenceCount(txn, keyBuffer),
                 (txn, keyBuffer, valueBuffer) ->
-                        valueStoreMetaDb.createMetaEntryForValue(txn, keyBuffer, refDataValue));
+                        valueStoreMetaDb.createMetaEntryForValue(txn, keyBuffer, stagingValue));
     }
 
     public Optional<RefDataValue> get(final Txn<ByteBuffer> txn,
@@ -124,8 +136,8 @@ public class ValueStore {
 
     boolean areValuesEqual(final Txn<ByteBuffer> txn,
                            final ByteBuffer valueStoreKeyBuffer,
-                           final RefDataValue newRefDataValue) {
-        return valueStoreDb.areValuesEqual(txn, valueStoreKeyBuffer, newRefDataValue);
+                           final StagingValue stagingValue) {
+        return valueStoreDb.areValuesEqual(txn, valueStoreKeyBuffer, stagingValue);
     }
 
     boolean deReferenceOrDeleteValue(final Txn<ByteBuffer> writeTxn,

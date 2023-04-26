@@ -17,7 +17,8 @@ public interface EntryStoreDb<K> {
     PutOutcome put(final Txn<ByteBuffer> writeTxn,
                    final ByteBuffer keyBuffer,
                    final ByteBuffer valueBuffer,
-                   final boolean overwriteExisting);
+                   final boolean overwriteExisting,
+                   final boolean arePutsInKeyOrder);
 
     boolean delete(final Txn<ByteBuffer> writeTxn, final ByteBuffer keyBuffer);
 

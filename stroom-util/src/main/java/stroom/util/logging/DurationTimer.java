@@ -9,6 +9,7 @@ import java.util.function.Supplier;
 public class DurationTimer {
 
     private final Instant startTime = Instant.now();
+    private volatile Instant endTime = null;
 
     private DurationTimer() {
         // Use start() factory method.
@@ -18,12 +19,26 @@ public class DurationTimer {
         return new DurationTimer();
     }
 
+    /**
+     * Marks the stop time. Can be called multiple times, each time overwriting the stop time.
+     * Allows you to freeze the timer if you want to log it at a later time.
+     */
+    public void stop() {
+        endTime = Instant.now();
+    }
+
     public static IterationTimer newIterationTimer() {
         return new IterationTimer();
     }
 
+    /**
+     * @return The duration between the start and stop time (if {@link DurationTimer#stop()} was called)
+     * else the duration between the start time and now.
+     */
     public Duration get() {
-        return Duration.between(startTime, Instant.now());
+        return Duration.between(
+                startTime,
+                Objects.requireNonNullElseGet(endTime, Instant::now));
     }
 
     public static Duration measure(final Runnable timedWork) {
@@ -65,7 +80,7 @@ public class DurationTimer {
 
     @Override
     public String toString() {
-        return Duration.between(startTime, Instant.now()).toString();
+        return get().toString();
     }
 
     // --------------------------------------------------------------------------------

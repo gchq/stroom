@@ -24,7 +24,7 @@ import stroom.lmdb.AbstractLmdbDb;
 import stroom.lmdb.KeyConsumer;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.PutOutcome;
-import stroom.pipeline.refdata.store.RefDataValue;
+import stroom.pipeline.refdata.store.StagingValue;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreMeta;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
@@ -106,7 +106,7 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
 
     public void createMetaEntryForValue(final Txn<ByteBuffer> txn,
                                         final ByteBuffer keyBuffer,
-                                        final RefDataValue refDataValue) {
+                                        final StagingValue refDataValue) {
 
         try (PooledByteBuffer pooledValueBuffer = getPooledValueBuffer()) {
             final ByteBuffer valueBuffer = pooledValueBuffer.getByteBuffer();

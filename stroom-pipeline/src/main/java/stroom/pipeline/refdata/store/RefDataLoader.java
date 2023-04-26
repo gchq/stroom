@@ -21,6 +21,7 @@ import stroom.lmdb.PutOutcome;
 import stroom.util.shared.Range;
 
 import java.util.Set;
+import java.util.function.Supplier;
 
 public interface RefDataLoader extends AutoCloseable {
 
@@ -42,6 +43,12 @@ public interface RefDataLoader extends AutoCloseable {
      * @return
      */
     PutOutcome initialise(final boolean overwriteExisting);
+
+    /**
+     * Call this when all calls to {@link RefDataLoader#put(MapDefinition, Range, StagingValue)}
+     * and {@link RefDataLoader#put(MapDefinition, String, StagingValue)} have been completed.
+     */
+    void markPutsComplete();
 
     /**
      * Completes the load, committing any outstanding work and marking the ProcessingInfo
@@ -69,11 +76,10 @@ public interface RefDataLoader extends AutoCloseable {
      * @param mapDefinition The {@link MapDefinition} that this entry is associated with
      * @param key           The key
      * @param refDataValue  The value
-     * @return True if the entry was put into the store
      */
-    PutOutcome put(final MapDefinition mapDefinition,
-                   final String key,
-                   final RefDataValue refDataValue);
+    void put(final MapDefinition mapDefinition,
+             final String key,
+             final StagingValue refDataValue);
 
     /**
      * Put an entry into the range/value store. The overwriteExisting setting of the loader
@@ -82,9 +88,35 @@ public interface RefDataLoader extends AutoCloseable {
      * @param mapDefinition The {@link MapDefinition} that this entry is associated with
      * @param keyRange      The key range that the value is associate with
      * @param refDataValue  The value
-     * @return True if the entry was put into the store
      */
-    PutOutcome put(final MapDefinition mapDefinition,
-                   final Range<Long> keyRange,
-                   final RefDataValue refDataValue);
+    void put(final MapDefinition mapDefinition,
+             final Range<Long> keyRange,
+             final StagingValue refDataValue);
+
+
+    void setKeyPutOutcomeHandler(final KeyPutOutcomeHandler keyPutOutcomeHandler);
+
+    void setRangePutOutcomeHandler(final RangePutOutcomeHandler keyPutOutcomeHandler);
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface KeyPutOutcomeHandler {
+
+        void handleOutcome(final Supplier<MapDefinition> mapDefinitionSupplier,
+                           final String key,
+                           final PutOutcome putOutcome);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface RangePutOutcomeHandler {
+
+        void handleOutcome(final Supplier<MapDefinition> mapDefinitionSupplier,
+                           final Range<Long> range,
+                           final PutOutcome putOutcome);
+    }
 }

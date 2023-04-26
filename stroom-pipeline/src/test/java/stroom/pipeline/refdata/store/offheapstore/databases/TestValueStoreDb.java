@@ -10,12 +10,14 @@ import stroom.lmdb.EntryConsumer;
 import stroom.pipeline.refdata.store.BasicValueStoreHashAlgorithmImpl;
 import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.RefDataValue;
+import stroom.pipeline.refdata.store.StagingValue;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
 import stroom.pipeline.refdata.store.XxHashValueStoreHashAlgorithm;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.serdes.GenericRefDataValueSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataValueSerdeFactory;
+import stroom.pipeline.refdata.store.offheapstore.serdes.StagingValueSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
 
 import org.assertj.core.api.Assertions;
@@ -53,6 +55,7 @@ class TestValueStoreDb extends AbstractStoreDbTest {
         }
     };
     private ValueStoreDb valueStoreDb = null;
+    private ValueStoreHashAlgorithm currValueStoreHashAlgorithm;
 
 
     @BeforeEach
@@ -65,6 +68,7 @@ class TestValueStoreDb extends AbstractStoreDbTest {
                 new GenericRefDataValueSerde(refDataValueSerdeFactory),
                 xxHashAlgorithm,
                 pooledByteBufferOutputStreamFactory);
+        currValueStoreHashAlgorithm = xxHashAlgorithm;
     }
 
     private void setupValueStoreDb(final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
@@ -75,14 +79,23 @@ class TestValueStoreDb extends AbstractStoreDbTest {
                 new GenericRefDataValueSerde(refDataValueSerdeFactory),
                 valueStoreHashAlgorithm,
                 pooledByteBufferOutputStreamFactory);
+        currValueStoreHashAlgorithm = valueStoreHashAlgorithm;
     }
 
+    ValueStoreHashAlgorithm getCurrValueStoreHashAlgorithm() {
+        return currValueStoreHashAlgorithm;
+    }
 
-    private ValueStoreKey getOrCreate(Txn<ByteBuffer> writeTxn, RefDataValue refDataValue) {
+    private ValueStoreKey getOrCreate(final Txn<ByteBuffer> writeTxn,
+                                      final RefDataValue refDataValue) {
         try (PooledByteBuffer valueStoreKeyPooledBuffer = valueStoreDb.getPooledKeyBuffer()) {
+            final StagingValue stagingValue = StagingValueSerde.convert(
+                    ByteBuffer::allocateDirect,
+                    getCurrValueStoreHashAlgorithm(),
+                    refDataValue);
             ByteBuffer valueStoreKeyBuffer = valueStoreDb.getOrCreateKey(
                     writeTxn,
-                    refDataValue,
+                    stagingValue,
                     valueStoreKeyPooledBuffer,
                     EntryConsumer.doNothingConsumer(),
                     EntryConsumer.doNothingConsumer());
@@ -90,7 +103,6 @@ class TestValueStoreDb extends AbstractStoreDbTest {
             return valueStoreDb.deserializeKey(valueStoreKeyBuffer);
         }
     }
-
 
     @Test
     void testGetOrCreateSparseIds() {
@@ -113,6 +125,7 @@ class TestValueStoreDb extends AbstractStoreDbTest {
             // id values.
             for (int i = 0; i < 5; i++) {
                 valueStoreKey = getOrCreate(writeTxn, refDataValues.get(i));
+                LOGGER.debug("i: {}, valueStoreKey: {}", i, valueStoreKey);
                 valueStoreKeysMap.put(i, valueStoreKey);
                 assertThat(valueStoreKey.getUniqueId()).isEqualTo((short) i);
             }
@@ -447,8 +460,9 @@ class TestValueStoreDb extends AbstractStoreDbTest {
         ByteBuffer unknownValueStoreKeyBuffer = valueStoreDb.getPooledKeyBuffer().getByteBuffer();
         valueStoreDb.serializeKey(unknownValueStoreKeyBuffer, unknownValueStoreKey);
 
+        final StagingValue stagingValue = convert(value2);
         lmdbEnv.doWithWriteTxn(writeTxn -> {
-            boolean areValuesEqual = valueStoreDb.areValuesEqual(writeTxn, unknownValueStoreKeyBuffer, value2);
+            boolean areValuesEqual = valueStoreDb.areValuesEqual(writeTxn, unknownValueStoreKeyBuffer, stagingValue);
             assertThat(areValuesEqual).isFalse();
         });
     }
@@ -493,9 +507,15 @@ class TestValueStoreDb extends AbstractStoreDbTest {
             ByteBuffer valueStoreKeyBuffer = valueStoreDb.getPooledKeyBuffer().getByteBuffer();
             valueStoreDb.serializeKey(valueStoreKeyBuffer, valueStoreKey1);
 
-            boolean areValuesEqual = valueStoreDb.areValuesEqual(writeTxn, valueStoreKeyBuffer, value2);
+            final StagingValue stagingValue = convert(value2);
+
+            boolean areValuesEqual = valueStoreDb.areValuesEqual(writeTxn, valueStoreKeyBuffer, stagingValue);
             assertThat(areValuesEqual).isEqualTo(expectedResult);
         });
+    }
+
+    private StagingValue convert(final RefDataValue refDataValue) {
+        return StagingValueSerde.convert(ByteBuffer::allocateDirect, xxHashAlgorithm, refDataValue);
     }
 
 

@@ -27,6 +27,7 @@ import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbUtils;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.RefDataValue;
+import stroom.pipeline.refdata.store.StagingValue;
 import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.serdes.GenericRefDataValueSerde;
@@ -127,34 +128,25 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
      */
     public boolean areValuesEqual(final Txn<ByteBuffer> txn,
                                   final ByteBuffer valueStoreKeyBuffer,
-                                  final RefDataValue newRefDataValue) {
+                                  final StagingValue newRefDataValue) {
 
         long currentValueHashCode = ValueStoreKeySerde.extractValueHashCode(valueStoreKeyBuffer);
-        long newValueHashCode = newRefDataValue.getValueHashCode(valueStoreHashAlgorithm);
+        long newValueHashCode = newRefDataValue.getValueHashCode();
         boolean areValuesEqual;
         if (currentValueHashCode != newValueHashCode) {
             // valueHashCodes differ so values differ
             areValuesEqual = false;
         } else {
             // valueHashCodes match so need to do a full equality check
-            try (final PooledByteBufferOutputStream newValueOutputStream = getPooledByteBufferOutputStream()) {
+            final ByteBuffer currentValueBuf = getAsBytes(txn, valueStoreKeyBuffer)
+                    .orElseThrow(() -> new RuntimeException("The value should exist at this point"));
 
-                final Optional<ByteBuffer> optCurrentValueBuf = getAsBytes(txn, valueStoreKeyBuffer);
+            final ByteBuffer newValueBuffer = newRefDataValue.getValueBuffer();
 
-                if (optCurrentValueBuf.isPresent()) {
-                    final ByteBuffer currentValueBuf = optCurrentValueBuf.get();
-                    final ByteBuffer newValueBuffer = valueSerde.serialize(
-                            newValueOutputStream,
-                            newRefDataValue);
-
-                    areValuesEqual = currentValueBuf.equals(newValueBuffer);
-                    if (!areValuesEqual) {
-                        // Hopefully this won't happen often
-                        LAMBDA_LOGGER.debug("Hash collision");
-                    }
-                } else {
-                    areValuesEqual = false;
-                }
+            areValuesEqual = currentValueBuf.equals(newValueBuffer);
+            if (!areValuesEqual) {
+                // Hopefully this won't happen often, logging in case we want to track collisions.
+                LAMBDA_LOGGER.debug("Hash collision");
             }
         }
         return areValuesEqual;
@@ -164,7 +156,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
      * For testing use
      */
     ByteBuffer getOrCreateKey(final Txn<ByteBuffer> writeTxn,
-                              final RefDataValue refDataValue,
+                              final StagingValue refDataValue,
                               final PooledByteBuffer valueStoreKeyPooledBuffer,
                               final EntryConsumer onExistingEntryAction,
                               final EntryConsumer onNewEntryAction) {
@@ -191,7 +183,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
      * @return A clone of the {@link ByteBuffer} containing the database key.
      */
     public ByteBuffer getOrCreateKey(final Txn<ByteBuffer> writeTxn,
-                                     final RefDataValue refDataValue,
+                                     final StagingValue refDataValue,
                                      final PooledByteBuffer valueStoreKeyPooledBuffer,
                                      final boolean isOverwrite,
                                      final EntryConsumer onExistingEntryAction,
@@ -201,140 +193,135 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
 
         LOGGER.trace("getOrCreate called for refDataValue: {}, isOverwrite: {}", refDataValue, isOverwrite);
 
-        try (final PooledByteBufferOutputStream pooledByteBufferOutputStream = getPooledByteBufferOutputStream()) {
+        final ByteBuffer valueBuffer = refDataValue.getValueBuffer();
 
-            final ByteBuffer valueBuffer = valueSerde.serialize(
-                    pooledByteBufferOutputStream,
-                    refDataValue);
+        LAMBDA_LOGGER.trace(() ->
+                LogUtil.message("valueBuffer: {}", ByteBufferUtils.byteBufferInfo(valueBuffer)));
 
-            LAMBDA_LOGGER.trace(() ->
-                    LogUtil.message("valueBuffer: {}", ByteBufferUtils.byteBufferInfo(valueBuffer)));
+        // Use atomics so they can be mutated and then used in lambdas
+        final AtomicBoolean isValueInDb = new AtomicBoolean(false);
+        final AtomicInteger valuesCount = new AtomicInteger(0);
+        short firstUnusedKeyId = -1;
+        short firstUsedKeyId = -1;
 
-            // Use atomics so they can be mutated and then used in lambdas
-            final AtomicBoolean isValueInDb = new AtomicBoolean(false);
-            final AtomicInteger valuesCount = new AtomicInteger(0);
-            short firstUnusedKeyId = -1;
-            short firstUsedKeyId = -1;
+        // We have to allocate a new ByteBuffer here as we may/may not return it
+        final ByteBuffer startKey = buildStartKeyBuffer(refDataValue, valueStoreKeyPooledBuffer);
+        ByteBuffer lastKeyBufferClone = null;
 
-            // We have to allocate a new ByteBuffer here as we may/may not return it
-            final ByteBuffer startKey = buildStartKeyBuffer(refDataValue, valueStoreKeyPooledBuffer);
-            ByteBuffer lastKeyBufferClone = null;
+        try (Cursor<ByteBuffer> cursor = getLmdbDbi().openCursor(writeTxn)) {
+            // get this key or one greater than it
+            boolean isFound = cursor.get(startKey, GetOp.MDB_SET_RANGE);
 
-            try (Cursor<ByteBuffer> cursor = getLmdbDbi().openCursor(writeTxn)) {
-                // get this key or one greater than it
-                boolean isFound = cursor.get(startKey, GetOp.MDB_SET_RANGE);
-
-                short lastKeyId = -1;
-                while (isFound) {
-                    if (ValueStoreKeySerde.compareValueHashCode(startKey, cursor.key()) != 0) {
-                        // cursor key has a different hashcode to ours so we can stop looping
-                        break;
-                    }
-                    valuesCount.incrementAndGet();
-
-                    final ByteBuffer valueFromDbBuf = cursor.val();
-                    final ByteBuffer keyFromDbBuf = cursor.key();
-                    short thisKeyId = ValueStoreKeySerde.extractId(keyFromDbBuf);
-
-                    // Because we have removal of entries we can end up with sparse id sequences
-                    // therefore capture the first used and unused IDs so we can use it if we need to put a
-                    // new key/value.
-                    if (firstUsedKeyId == -1) {
-                        // Capture the first id we find for this hash
-                        firstUsedKeyId = thisKeyId;
-                    }
-                    if (firstUnusedKeyId == -1 && firstUsedKeyId > ValueStoreKey.MIN_UNIQUE_ID) {
-                        // There is a gap before the first used key so use the lowest id
-                        // e.g. 2,3,7, so use 0
-                        firstUnusedKeyId = ValueStoreKey.MIN_UNIQUE_ID;
-                    } else if (firstUnusedKeyId == -1 && lastKeyId != -1) {
-                        if (thisKeyId <= lastKeyId) {
-                            throw new RuntimeException(LogUtil.message(
-                                    "thisKeyId [{}] should be greater than lastId [{}]", thisKeyId, lastKeyId));
-                        }
-                        if ((thisKeyId - lastKeyId) > 1) {
-                            // There is a gap between this id and the last so use one after the last
-                            // e.g. 0,1,2,3,7, so use 4
-                            firstUnusedKeyId = (short) (lastKeyId + 1);
-                        }
-                    }
-                    lastKeyId = thisKeyId;
-
-                    LAMBDA_LOGGER.trace(() -> LogUtil.message("Our value {}, db value {}",
-                            LmdbUtils.byteBufferToHex(valueBuffer),
-                            LmdbUtils.byteBufferToHex(valueFromDbBuf)));
-
-                    // we cannot use keyVal outside of the cursor loop so have to copy the content
-                    if (lastKeyBufferClone == null) {
-                        // make a new buffer from the cursor key content
-                        lastKeyBufferClone = valueStoreKeyPooledBuffer.getByteBuffer();
-                    }
-                    lastKeyBufferClone.clear();
-
-                    // copy the cursor key content out of the LMDB managed buffer and into our passed in one
-                    ByteBufferUtils.copy(keyFromDbBuf, lastKeyBufferClone);
-
-                    // see if the found value is identical to the value passed in
-                    if (valueBuffer.equals(valueFromDbBuf)) {
-                        isValueInDb.set(true);
-                        LAMBDA_LOGGER.trace(() ->
-                                "Found our value so incrementing its ref count and breaking out");
-
-                        // perform any entry found actions
-                        onExistingEntryAction.accept(writeTxn, keyFromDbBuf, valueFromDbBuf);
-
-                        break;
-                    } else {
-                        LAMBDA_LOGGER.trace(() -> "Values are not equal, keep looking");
-                    }
-                    // advance cursor
-                    isFound = cursor.next();
+            short lastKeyId = -1;
+            while (isFound) {
+                if (ValueStoreKeySerde.compareValueHashCode(startKey, cursor.key()) != 0) {
+                    // cursor key has a different hashcode to ours so we can stop looping
+                    break;
                 }
-            }
+                valuesCount.incrementAndGet();
 
-            LAMBDA_LOGGER.trace(() -> LogUtil.message("isValueInMap: {}, valuesCount {}",
-                    isValueInDb.get(),
-                    valuesCount.get()));
+                final ByteBuffer valueFromDbBuf = cursor.val();
+                final ByteBuffer keyFromDbBuf = cursor.key();
+                short thisKeyId = ValueStoreKeySerde.extractId(keyFromDbBuf);
 
-            ByteBuffer valueStoreKeyBuffer;
+                // Because we have removal of entries we can end up with sparse id sequences
+                // therefore capture the first used and unused IDs so we can use it if we need to put a
+                // new key/value.
+                if (firstUsedKeyId == -1) {
+                    // Capture the first id we find for this hash
+                    firstUsedKeyId = thisKeyId;
+                }
+                if (firstUnusedKeyId == -1 && firstUsedKeyId > ValueStoreKey.MIN_UNIQUE_ID) {
+                    // There is a gap before the first used key so use the lowest id
+                    // e.g. 2,3,7, so use 0
+                    firstUnusedKeyId = ValueStoreKey.MIN_UNIQUE_ID;
+                } else if (firstUnusedKeyId == -1 && lastKeyId != -1) {
+                    if (thisKeyId <= lastKeyId) {
+                        throw new RuntimeException(LogUtil.message(
+                                "thisKeyId [{}] should be greater than lastId [{}]", thisKeyId, lastKeyId));
+                    }
+                    if ((thisKeyId - lastKeyId) > 1) {
+                        // There is a gap between this id and the last so use one after the last
+                        // e.g. 0,1,2,3,7, so use 4
+                        firstUnusedKeyId = (short) (lastKeyId + 1);
+                    }
+                }
+                lastKeyId = thisKeyId;
 
-            if (isValueInDb.get()) {
-                // value is already in the map, so use its key
-                LOGGER.trace("Found value");
-                valueStoreKeyBuffer = lastKeyBufferClone;
-            } else {
-                // value is not in the map so we need to add it
-                final ByteBuffer keyBuffer;
+                LAMBDA_LOGGER.trace(() -> LogUtil.message("Our value {}, db value {}",
+                        LmdbUtils.byteBufferToHex(valueBuffer),
+                        LmdbUtils.byteBufferToHex(valueFromDbBuf)));
+
+                // we cannot use keyVal outside of the cursor loop so have to copy the content
                 if (lastKeyBufferClone == null) {
-                    LOGGER.trace("no existing entry for this valueHashCode so use first uniqueId");
-                    // the start key is the first key for that valueHashcode so use that
-                    keyBuffer = startKey;
+                    // make a new buffer from the cursor key content
+                    lastKeyBufferClone = valueStoreKeyPooledBuffer.getByteBuffer();
+                }
+                lastKeyBufferClone.clear();
+
+                // copy the cursor key content out of the LMDB managed buffer and into our passed in one
+                ByteBufferUtils.copy(keyFromDbBuf, lastKeyBufferClone);
+
+                // see if the found value is identical to the value passed in
+                if (valueBuffer.equals(valueFromDbBuf)) {
+                    isValueInDb.set(true);
+                    LAMBDA_LOGGER.trace(() ->
+                            "Found our value so incrementing its ref count and breaking out");
+
+                    // perform any entry found actions
+                    onExistingEntryAction.accept(writeTxn, keyFromDbBuf, valueFromDbBuf);
+
+                    break;
                 } else {
-                    // One or more entries share our valueHashCode (but with different values)
-                    // so give it a new ID value
-                    if (firstUnusedKeyId != -1) {
-                        ValueStoreKeySerde.updateId(lastKeyBufferClone, firstUnusedKeyId);
-                    } else {
-                        // No gaps in the ids so just use one more than last one
-                        ValueStoreKeySerde.incrementId(lastKeyBufferClone);
-                    }
-                    keyBuffer = lastKeyBufferClone;
-//                LOGGER.trace("Incrementing key, valueStoreKey {}", valueStoreKey);
+                    LAMBDA_LOGGER.trace(() -> "Values are not equal, keep looking");
                 }
-                valueStoreKeyBuffer = keyBuffer;
-                final PutOutcome putOutcome = put(writeTxn, keyBuffer, valueBuffer, false);
-
-                // perform any new entry created actions
-                onNewEntryAction.accept(writeTxn, keyBuffer, valueBuffer);
-
-                if (!putOutcome.isSuccess()) {
-                    throw new RuntimeException(LogUtil.message("Put failed for key: {}, value {}",
-                            ByteBufferUtils.byteBufferInfo(keyBuffer),
-                            ByteBufferUtils.byteBufferInfo(valueBuffer)));
-                }
+                // advance cursor
+                isFound = cursor.next();
             }
-            return valueStoreKeyBuffer;
         }
+
+        LAMBDA_LOGGER.trace(() -> LogUtil.message("isValueInMap: {}, valuesCount {}",
+                isValueInDb.get(),
+                valuesCount.get()));
+
+        ByteBuffer valueStoreKeyBuffer;
+
+        if (isValueInDb.get()) {
+            // value is already in the map, so use its key
+            LOGGER.trace("Found value");
+            valueStoreKeyBuffer = lastKeyBufferClone;
+        } else {
+            // value is not in the map so we need to add it
+            final ByteBuffer keyBuffer;
+            if (lastKeyBufferClone == null) {
+                LOGGER.trace("no existing entry for this valueHashCode so use first uniqueId");
+                // the start key is the first key for that valueHashcode so use that
+                keyBuffer = startKey;
+            } else {
+                // One or more entries share our valueHashCode (but with different values)
+                // so give it a new ID value
+                if (firstUnusedKeyId != -1) {
+                    ValueStoreKeySerde.updateId(lastKeyBufferClone, firstUnusedKeyId);
+                } else {
+                    // No gaps in the ids so just use one more than last one
+                    ValueStoreKeySerde.incrementId(lastKeyBufferClone);
+                }
+                keyBuffer = lastKeyBufferClone;
+//                LOGGER.trace("Incrementing key, valueStoreKey {}", valueStoreKey);
+            }
+            valueStoreKeyBuffer = keyBuffer;
+            final PutOutcome putOutcome = put(writeTxn, keyBuffer, valueBuffer, false);
+
+            // perform any new entry created actions
+            onNewEntryAction.accept(writeTxn, keyBuffer, valueBuffer);
+
+            if (!putOutcome.isSuccess()) {
+                throw new RuntimeException(LogUtil.message("Put failed for key: {}, value {}",
+                        ByteBufferUtils.byteBufferInfo(keyBuffer),
+                        ByteBufferUtils.byteBufferInfo(valueBuffer)));
+            }
+        }
+        return valueStoreKeyBuffer;
     }
 
     public Optional<RefDataValue> get(final Txn<ByteBuffer> txn,
@@ -345,10 +332,11 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                         valueSerde.deserialize(valueBuffer, typeId));
     }
 
-    private ByteBuffer buildStartKeyBuffer(final RefDataValue value, final PooledByteBuffer pooledKeyBuffer) {
+    private ByteBuffer buildStartKeyBuffer(final StagingValue value,
+                                           final PooledByteBuffer pooledKeyBuffer) {
         return keySerde.serialize(
                 pooledKeyBuffer::getByteBuffer,
-                ValueStoreKey.lowestKey(value.getValueHashCode(valueStoreHashAlgorithm)));
+                ValueStoreKey.lowestKey(value.getValueHashCode()));
     }
 
     public interface Factory {

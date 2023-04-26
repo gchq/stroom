@@ -17,6 +17,7 @@
 
 package stroom.pipeline.refdata;
 
+import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.cache.api.CacheManager;
 import stroom.cache.impl.CacheManagerImpl;
 import stroom.data.shared.StreamTypeNames;
@@ -24,24 +25,32 @@ import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.meta.api.EffectiveMeta;
 import stroom.pipeline.PipelineStore;
+import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.MapDefinition;
+import stroom.pipeline.refdata.store.NullValue;
+import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.refdata.store.StagingValueOutputStream;
 import stroom.pipeline.refdata.store.StringValue;
+import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
+import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
+import stroom.util.shared.Range;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
@@ -77,6 +86,12 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     private Provider<ReferenceData> referenceDataProvider;
     @Inject
     private EffectiveStreamService effectiveStreamService;
+    @Inject
+    private PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory;
+    @Inject
+    private ValueStoreHashAlgorithm valueStoreHashAlgorithm;
+    @Inject
+    private StagingValueOutputStream stagingValueOutputStream;
 
     private RefDataStore refDataStore;
 
@@ -164,8 +179,8 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                     refDataLoader.initialise(false);
                     for (final String mapName : mapNames) {
                         MapDefinition mapDefinition = new MapDefinition(refStreamDefinition1, mapName);
-                        refDataLoader.put(mapDefinition, "user1", StringValue.of("1111"));
-                        refDataLoader.put(mapDefinition, "user2", StringValue.of("2222"));
+                        doLoaderPut(refDataLoader, mapDefinition, "user1", StringValue.of("1111"));
+                        doLoaderPut(refDataLoader, mapDefinition, "user2", StringValue.of("2222"));
                     }
                     refDataLoader.completeProcessing();
                 });
@@ -179,8 +194,8 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                     refDataLoader.initialise(false);
                     for (final String mapName : mapNames) {
                         MapDefinition mapDefinition = new MapDefinition(refStreamDefinition2, mapName);
-                        refDataLoader.put(mapDefinition, "user1", StringValue.of("A1111"));
-                        refDataLoader.put(mapDefinition, "user2", StringValue.of("A2222"));
+                        doLoaderPut(refDataLoader, mapDefinition, "user1", StringValue.of("A1111"));
+                        doLoaderPut(refDataLoader, mapDefinition, "user2", StringValue.of("A2222"));
                     }
                     refDataLoader.completeProcessing();
                 });
@@ -194,8 +209,8 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                     refDataLoader.initialise(false);
                     for (final String mapName : mapNames) {
                         MapDefinition mapDefinition = new MapDefinition(refStreamDefinition3, mapName);
-                        refDataLoader.put(mapDefinition, "user1", StringValue.of("B1111"));
-                        refDataLoader.put(mapDefinition, "user2", StringValue.of("B2222"));
+                        doLoaderPut(refDataLoader, mapDefinition, "user1", StringValue.of("B1111"));
+                        doLoaderPut(refDataLoader, mapDefinition, "user2", StringValue.of("B2222"));
                     }
                     refDataLoader.completeProcessing();
                 });
@@ -267,17 +282,17 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                             for (int i = 1; i <= 3; i++) {
                                 MapDefinition mapDefinition = new MapDefinition(refStreamDefinition,
                                         "CARD_NUMBER_TO_USERNAME");
-                                refDataLoader.put(mapDefinition,
+                                doLoaderPut(refDataLoader, mapDefinition,
                                         addSuffix("cardNo", i),
                                         StringValue.of(addSuffix("user", i)));
 
                                 mapDefinition = new MapDefinition(refStreamDefinition, "USERNAME_TO_PAYROLL_NUMBER");
-                                refDataLoader.put(mapDefinition,
+                                doLoaderPut(refDataLoader, mapDefinition,
                                         addSuffix("user", i),
                                         StringValue.of(addSuffix("payrollNo", i)));
 
                                 mapDefinition = new MapDefinition(refStreamDefinition, "PAYROLL_NUMBER_TO_LOCATION");
-                                refDataLoader.put(mapDefinition,
+                                doLoaderPut(refDataLoader, mapDefinition,
                                         addSuffix("payrollNo", i),
                                         StringValue.of(addSuffix("location", i)));
                             }
@@ -369,5 +384,41 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
 
     private static EffectiveMeta buildEffectiveMeta(final long id, final long effectiveMs) {
         return new EffectiveMeta(id, "DUMMY_FEED", "DummyType", effectiveMs);
+    }
+
+    private void doLoaderPut(final RefDataLoader refDataLoader,
+                             final MapDefinition mapDefinition,
+                             final String key,
+                             final RefDataValue refDataValue) {
+        writeValue(refDataValue);
+        refDataLoader.put(mapDefinition, key, stagingValueOutputStream);
+    }
+
+    private void doLoaderPut(final RefDataLoader refDataLoader,
+                             final MapDefinition mapDefinition,
+                             final Range<Long> range,
+                             final RefDataValue refDataValue) {
+        writeValue(refDataValue);
+        refDataLoader.put(mapDefinition, range, stagingValueOutputStream);
+    }
+
+    private void writeValue(final RefDataValue refDataValue) {
+        stagingValueOutputStream.clear();
+        try {
+            if (refDataValue instanceof StringValue) {
+                final StringValue stringValue = (StringValue) refDataValue;
+                stagingValueOutputStream.write(stringValue.getValue());
+                stagingValueOutputStream.setTypeId(StringValue.TYPE_ID);
+            } else if (refDataValue instanceof FastInfosetValue) {
+                stagingValueOutputStream.write(((FastInfosetValue) refDataValue).getByteBuffer());
+                stagingValueOutputStream.setTypeId(FastInfosetValue.TYPE_ID);
+            } else if (refDataValue instanceof NullValue) {
+                stagingValueOutputStream.setTypeId(NullValue.TYPE_ID);
+            } else {
+                throw new RuntimeException("Unexpected type " + refDataValue.getClass().getSimpleName());
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(LogUtil.message("Error writing value: {}", e.getMessage()), e);
+        }
     }
 }

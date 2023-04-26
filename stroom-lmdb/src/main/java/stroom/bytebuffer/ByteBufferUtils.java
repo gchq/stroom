@@ -80,7 +80,11 @@ public class ByteBufferUtils {
      */
     public static void incrementLong(final ByteBuffer byteBuffer,
                                      final int idx) {
-        increment(byteBuffer, idx, Long.BYTES);
+        final long val = byteBuffer.getLong(idx);
+        if (val == Long.MAX_VALUE) {
+            throw new ArithmeticException("Can't increment beyond max value of " + Long.MAX_VALUE);
+        }
+        byteBuffer.putLong(idx, val + 1L);
     }
 
     /**
@@ -89,7 +93,11 @@ public class ByteBufferUtils {
      */
     public static void incrementInt(final ByteBuffer byteBuffer,
                                     final int idx) {
-        increment(byteBuffer, idx, Integer.BYTES);
+        final int val = byteBuffer.getInt(idx);
+        if (val == Integer.MAX_VALUE) {
+            throw new ArithmeticException("Can't increment beyond max value of " + Integer.MAX_VALUE);
+        }
+        byteBuffer.putInt(idx, val + 1);
     }
 
     /**
@@ -98,7 +106,11 @@ public class ByteBufferUtils {
      */
     public static void incrementShort(final ByteBuffer byteBuffer,
                                       final int idx) {
-        increment(byteBuffer, idx, Short.BYTES);
+        final short val = byteBuffer.getShort(idx);
+        if (val == Short.MAX_VALUE) {
+            throw new ArithmeticException("Can't increment beyond max value of " + Short.MAX_VALUE);
+        }
+        byteBuffer.putShort(idx, (short) (val + 1));
     }
 
     /**
@@ -145,6 +157,9 @@ public class ByteBufferUtils {
     }
 
     public static String byteBufferToAllForms(final ByteBuffer byteBuffer) {
+        if (byteBuffer == null) {
+            return "null";
+        }
         return ByteArrayUtils.byteArrayToAllForms(Bytes.getBytes(byteBuffer));
     }
 
@@ -288,6 +303,19 @@ public class ByteBufferUtils {
      */
     public static ByteBuffer copyToDirectBuffer(final ByteBuffer input) {
         ByteBuffer output = ByteBuffer.allocateDirect(input.remaining());
+        output.put(input);
+        output.flip();
+        input.rewind();
+        return output;
+    }
+
+    /**
+     * Creates a new direct {@link ByteBuffer} from the input {@link ByteBuffer}.
+     * The bytes from position() to limit() will be copied into a newly allocated
+     * buffer. The new buffer will be flipped to set its position read for get operations
+     */
+    public static ByteBuffer copyToHeapBuffer(final ByteBuffer input) {
+        ByteBuffer output = ByteBuffer.allocate(input.remaining());
         output.put(input);
         output.flip();
         input.rewind();

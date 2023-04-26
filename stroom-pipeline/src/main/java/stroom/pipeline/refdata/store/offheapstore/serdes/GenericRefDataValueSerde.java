@@ -36,9 +36,8 @@ public class GenericRefDataValueSerde implements RefDataValueSerde {
 
     @Override
     public RefDataValue deserialize(final ByteBuffer byteBuffer) {
-        // to correctly deserialise you need to get the typeId from the
-        // ValueStoreMetaDb to work out which serde to use. Therefore, we deserialise
-        // as an UnknownRefDataValue object
+        // To correctly deserialise you need to get the typeId from the
+        // ValueStoreMetaDb to work out which delegate serde to use.
         return new UnknownRefDataValue(byteBuffer);
     }
 
@@ -51,7 +50,6 @@ public class GenericRefDataValueSerde implements RefDataValueSerde {
 
         // defer to the specific serde associated with the typeId
         final RefDataValueSerde serde = refDataValueSerdeFactory.get(refDataValue);
-
         serde.serialize(byteBuffer, refDataValue);
     }
 

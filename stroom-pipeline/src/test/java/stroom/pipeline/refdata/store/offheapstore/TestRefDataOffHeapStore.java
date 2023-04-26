@@ -18,9 +18,11 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.bytebuffer.ByteBufferPool;
+import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.ReferenceDataLmdbConfig;
+import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.NullValue;
 import stroom.pipeline.refdata.store.ProcessingState;
@@ -33,13 +35,18 @@ import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefStoreEntry;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.refdata.store.StagingValueOutputStream;
 import stroom.pipeline.refdata.store.StringValue;
+import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
 import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.MapUidForwardDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.MapUidReverseDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
+import stroom.pipeline.refdata.test.RefTestUtil;
+import stroom.pipeline.refdata.test.RefTestUtil.KeyOutcomeMap;
+import stroom.pipeline.refdata.test.RefTestUtil.RangeOutcomeMap;
 import stroom.task.mock.MockTaskModule;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.concurrent.ThreadUtil;
@@ -131,6 +138,10 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
     private RefDataStoreFactory refDataStoreFactory;
     @Inject
     private ByteBufferPool byteBufferPool;
+    @Inject
+    private PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory;
+    @Inject
+    private ValueStoreHashAlgorithm valueStoreHashAlgorithm;
 
     private ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
     private Injector injector;
@@ -180,14 +191,6 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
 
         injector.injectMembers(this);
         refDataStore = refDataStoreFactory.getOffHeapStore();
-    }
-
-    @Test
-    void getProcessingInfo() {
-    }
-
-    @Test
-    void isDataLoaded_true() {
     }
 
     @Test
@@ -283,27 +286,16 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
         assertThat(refDataStore.getKeyValueEntryCount())
                 .isEqualTo(0);
 
-        AtomicBoolean didPutSucceed = new AtomicBoolean(false);
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
             loader.initialise(overwriteExisting);
-
-            PutOutcome putOutcome;
-
-            putOutcome = loader.put(mapDefinition, key, value1);
-
-            assertThat(putOutcome.isSuccess())
-                    .isTrue();
-            assertThat(putOutcome.isDuplicate())
-                    .hasValue(false);
-
-            putOutcome = loader.put(mapDefinition, key, value2);
-
-            assertThat(putOutcome.isSuccess())
-                    .isEqualTo(overwriteExisting);
-            assertThat(putOutcome.isDuplicate())
-                    .hasValue(true);
-
+            final List<PutOutcome> putOutcomes = handleKeyOutcomes(loader);
+            doLoaderPut(loader, mapDefinition, key, value1);
+            doLoaderPut(loader, mapDefinition, key, value2);
+            loader.markPutsComplete();
             loader.completeProcessing();
+
+            assertPutOutcome(putOutcomes.get(0), true, false);
+            assertPutOutcome(putOutcomes.get(1), overwriteExisting, true);
         });
         refDataStore.logAllContents();
 
@@ -331,24 +323,16 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
             loader.initialise(overwriteExisting);
 
-            PutOutcome putOutcome;
+            final List<PutOutcome> putOutcomes = handleRangeOutcomes(loader);
 
-            putOutcome = loader.put(mapDefinition, range, value1);
-
-            assertThat(putOutcome.isSuccess())
-                    .isTrue();
-            assertThat(putOutcome.isDuplicate())
-                    .hasValue(false);
-
+            doLoaderPut(loader, mapDefinition, range, value1);
             // second put for same key, should only succeed if overwriteExisting is enabled
-            putOutcome = loader.put(mapDefinition, range, value2);
-
-            assertThat(putOutcome.isSuccess())
-                    .isEqualTo(overwriteExisting);
-            assertThat(putOutcome.isDuplicate())
-                    .hasValue(true);
-
+            doLoaderPut(loader, mapDefinition, range, value2);
+            loader.markPutsComplete();
             loader.completeProcessing();
+
+            assertPutOutcome(putOutcomes.get(0), true, false);
+            assertPutOutcome(putOutcomes.get(1), overwriteExisting, true);
         });
 
         refDataStore.logAllContents();
@@ -392,38 +376,23 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
                 .isEqualTo(0);
 
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
+            final KeyOutcomeMap outcomeMap = RefTestUtil.handleKeyOutcomes(loader);
             loader.initialise(overwriteExisting);
 
-            PutOutcome putOutcome;
-
-            putOutcome = loader.put(mapDefinition, key1, nonNullValue);
-            assertThat(putOutcome.isSuccess())
-                    .isTrue();
-            assertThat(putOutcome.isDuplicate())
-                    .hasValue(false);
-            putOutcome = loader.put(mapDefinition, key2, nullValue);
-            assertThat(putOutcome.isSuccess())
-                    .isTrue();
-            assertThat(putOutcome.isDuplicate())
-                    .isEmpty();
-
-
+            doLoaderPut(loader, mapDefinition, key1, nonNullValue);
+            doLoaderPut(loader, mapDefinition, key2, nullValue);
             // second set of puts for same keys, if overwrite should remove prev entry, else leaves it
             // Values are swapped, so null => nonnull and vice versa
-            putOutcome = loader.put(mapDefinition, key1, nullValue);
+            doLoaderPut(loader, mapDefinition, key1, nullValue);
+            doLoaderPut(loader, mapDefinition, key2, nonNullValue);
 
-            assertThat(putOutcome.isSuccess())
-                    .isEqualTo(overwriteExisting);
-            assertThat(putOutcome.isDuplicate())
-                    .hasValue(true);
-
-            putOutcome = loader.put(mapDefinition, key2, nonNullValue);
-            assertThat(putOutcome.isSuccess())
-                    .isEqualTo(true); // was null before
-            assertThat(putOutcome.isDuplicate())
-                    .hasValue(false);
-
+            loader.markPutsComplete();
             loader.completeProcessing();
+
+            outcomeMap.assertPutOutcome(mapDefinition, key1, 0, true, false);
+            outcomeMap.assertPutOutcome(mapDefinition, key2, 0, true, Optional.empty());
+            outcomeMap.assertPutOutcome(mapDefinition, key1, 1, overwriteExisting, true);
+            outcomeMap.assertPutOutcome(mapDefinition, key2, 1, true, false);
         });
         refDataStore.logAllContents();
 
@@ -449,16 +418,18 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
 
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
             loader.initialise(true);
+            final List<PutOutcome> putOutcomes = handleKeyOutcomes(loader);
 
             for (int i = 1; i <= 5; i++) {
                 final String key = keyPrefix + i;
-                final PutOutcome putOutcome = loader.put(mapDefinition, key, nullValue);
-                assertThat(putOutcome.isSuccess())
-                        .isTrue();
-                assertThat(putOutcome.isDuplicate())
-                        .isEmpty();
+                doLoaderPut(loader, mapDefinition, key, nullValue);
             }
+            loader.markPutsComplete();
             loader.completeProcessing();
+
+            for (int i = 0; i < 5; i++) {
+                assertPutOutcome(putOutcomes.get(0), true, Optional.empty());
+            }
         });
         refDataStore.logAllContents();
 
@@ -500,36 +471,22 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
 
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
             loader.initialise(overwriteExisting);
+//            final List<PutOutcome> putOutcomes = handleRangeOutcomes(loader);
+            final RangeOutcomeMap outcomeMap = RefTestUtil.handleRangeOutcomes(loader);
 
-            PutOutcome putOutcome;
-
-            putOutcome = loader.put(mapDefinition, range1, nonNullValue);
-            assertThat(putOutcome.isSuccess())
-                    .isTrue();
-            assertThat(putOutcome.isDuplicate())
-                    .hasValue(false);
-            putOutcome = loader.put(mapDefinition, range2, nullValue);
-            assertThat(putOutcome.isSuccess())
-                    .isTrue();
-            assertThat(putOutcome.isDuplicate())
-                    .isEmpty();
-
+            doLoaderPut(loader, mapDefinition, range1, nonNullValue);
+            doLoaderPut(loader, mapDefinition, range2, nullValue);
             // second put for same key, if overwrite should remove prev entry, else leaves it
-            putOutcome = loader.put(mapDefinition, range1, nullValue);
+            doLoaderPut(loader, mapDefinition, range1, nullValue);
+            doLoaderPut(loader, mapDefinition, range2, nonNullValue);
 
-            assertThat(putOutcome.isSuccess())
-                    .isEqualTo(overwriteExisting);
-            assertThat(putOutcome.isDuplicate())
-                    .hasValue(true);
-
-            putOutcome = loader.put(mapDefinition, range2, nonNullValue);
-
-            assertThat(putOutcome.isSuccess())
-                    .isEqualTo(true); // was null before, i.e. not there
-            assertThat(putOutcome.isDuplicate())
-                    .hasValue(false);
-
+            loader.markPutsComplete();
             loader.completeProcessing();
+
+            outcomeMap.assertPutOutcome(mapDefinition, range1, 0, true, false);
+            outcomeMap.assertPutOutcome(mapDefinition, range2, 0, true, Optional.empty());
+            outcomeMap.assertPutOutcome(mapDefinition, range1, 1, overwriteExisting, true);
+            outcomeMap.assertPutOutcome(mapDefinition, range2, 1, true, false);
         });
         refDataStore.logAllContents();
 
@@ -558,7 +515,7 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
 
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
             loader.initialise(overwriteExisting);
-            loader.put(mapDefinition, key1, val1);
+            doLoaderPut(loader, mapDefinition, key1, val1);
             loader.completeProcessing(ProcessingState.FAILED);
         });
 
@@ -570,8 +527,8 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
                             refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
                                 wasWorkDone.set(true);
                                 loader.initialise(overwriteExisting);
-                                loader.put(mapDefinition, key1, val1);
-                                loader.put(mapDefinition, key2, val2);
+                                doLoaderPut(loader, mapDefinition, key1, val1);
+                                doLoaderPut(loader, mapDefinition, key2, val2);
                                 loader.completeProcessing(ProcessingState.COMPLETE);
                             });
                         })
@@ -608,7 +565,7 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
             wasWorkDone.set(true);
             loader.initialise(overwriteExisting);
-            loader.put(mapDefinition, key1, val1);
+            doLoaderPut(loader, mapDefinition, key1, val1);
             loader.completeProcessing(ProcessingState.COMPLETE);
         });
 
@@ -622,8 +579,8 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
             wasWorkDone.set(true);
             loader.initialise(overwriteExisting);
-            loader.put(mapDefinition, key1, val1);
-            loader.put(mapDefinition, key2, val2);
+            doLoaderPut(loader, mapDefinition, key1, val1);
+            doLoaderPut(loader, mapDefinition, key2, val2);
             loader.completeProcessing(ProcessingState.COMPLETE);
         });
         assertThat(wasWorkDone)
@@ -665,7 +622,7 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
                                     loader -> {
                                         wasWorkDone.set(true);
                                         loader.initialise(overwriteExisting);
-                                        loader.put(mapDefinition, key1, val1);
+                                        doLoaderPut(loader, mapDefinition, key1, val1);
 
                                         // if we don't complete it will be left as load in progress
                                         if (!ProcessingState.LOAD_IN_PROGRESS.equals(processingState)) {
@@ -686,8 +643,8 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
                                         wasWorkDone.set(true);
                                         loader.initialise(overwriteExisting);
                                         // Put two this time
-                                        loader.put(mapDefinition, key1, val1);
-                                        loader.put(mapDefinition, key2, val2);
+                                        doLoaderPut(loader, mapDefinition, key1, val1);
+                                        doLoaderPut(loader, mapDefinition, key2, val2);
                                         loader.completeProcessing(ProcessingState.COMPLETE);
                                     });
                             assertThat(wasWorkDone)
@@ -747,7 +704,6 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
         bulkLoadAndAssert(refStreamDefinitions, true, commitInterval);
     }
 
-
     @Test
     void testLoaderConcurrency() {
 
@@ -761,22 +717,22 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
         Runnable loadTask = () -> {
             LOGGER.debug("Running loadTask on thread {}", Thread.currentThread().getName());
             try {
-                refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, refDataLoader -> {
-                    refDataLoader.setCommitInterval(200);
-                    refDataLoader.initialise(false);
+                refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
+                    loader.setCommitInterval(200);
+                    loader.initialise(false);
 
                     long rangeStartInc = 0;
                     long rangeEndExc;
                     for (int i = 0; i < recCount; i++) {
-                        refDataLoader.put(mapDefinitionKey, "key" + i, StringValue.of("Value" + i));
+                        doLoaderPut(loader, mapDefinitionKey, "key" + i, StringValue.of("Value" + i));
 
                         rangeEndExc = rangeStartInc + 10;
                         Range<Long> range = new Range<>(rangeStartInc, rangeEndExc);
                         rangeStartInc = rangeEndExc;
-                        refDataLoader.put(mapDefinitionRange, range, StringValue.of("Value" + i));
+                        doLoaderPut(loader, mapDefinitionRange, range, StringValue.of("Value" + i));
                         //                        ThreadUtil.sleepAtLeastIgnoreInterrupts(50);
                     }
-                    refDataLoader.completeProcessing();
+                    loader.completeProcessing();
                     LOGGER.debug("Finished loading data");
 
                 });
@@ -845,22 +801,22 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
         final BiConsumer<RefStreamDefinition, MapDefinition> loadTask = (refStreamDefinition, mapDefinitionKey) -> {
             LOGGER.debug("Running loadTask on thread {}", Thread.currentThread().getName());
             try {
-                refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, refDataLoader -> {
+                refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
                     // Add a cheeky sleep to make the task take a bit longer
                     ThreadUtil.sleep(ThreadLocalRandom.current().nextInt(maxTaskSleepMs));
                     try {
-                        refDataLoader.setCommitInterval(200);
-                        final PutOutcome putOutcome = refDataLoader.initialise(true);
+                        loader.setCommitInterval(200);
+                        final PutOutcome putOutcome = loader.initialise(true);
                         assertThat(putOutcome.isSuccess())
                                 .isTrue();
 
                         for (int i = 0; i < recCount; i++) {
-                            refDataLoader.put(mapDefinitionKey, "key" + i, StringValue.of("Value" + i));
+                            doLoaderPut(loader, mapDefinitionKey, "key" + i, StringValue.of("Value" + i));
                         }
-                        refDataLoader.completeProcessing();
+                        loader.completeProcessing();
                         LOGGER.debug("Finished loading data");
                     } catch (Exception e) {
-                        Assertions.fail("Error: " + e.getMessage());
+                        Assertions.fail("Error: " + e.getMessage(), e);
                     }
 
                     LOGGER.debug("Getting values under lock");
@@ -934,26 +890,27 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
         final int recCount = 1_000;
 
         Consumer<RefStreamDefinition> loadTask = refStreamDefinition -> {
+            LOGGER.info("Running task for refStreamDef: {}", refStreamDefinition);
             final MapDefinition mapDefinitionKey = new MapDefinition(refStreamDefinition, "MyKeyMap");
             final MapDefinition mapDefinitionRange = new MapDefinition(refStreamDefinition, "MyRangeMap");
             LOGGER.debug("Running loadTask on thread {}", Thread.currentThread().getName());
             try {
-                refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, refDataLoader -> {
-                    refDataLoader.setCommitInterval(200);
-                    refDataLoader.initialise(false);
+                refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
+                    loader.setCommitInterval(200);
+                    loader.initialise(false);
 
                     long rangeStartInc = 0;
                     long rangeEndExc;
                     for (int i = 0; i < recCount; i++) {
-                        refDataLoader.put(mapDefinitionKey, "key" + i, StringValue.of("Value" + i));
+                        doLoaderPut(loader, mapDefinitionKey, "key" + i, StringValue.of("Value" + i));
 
                         rangeEndExc = rangeStartInc + 10;
                         Range<Long> range = new Range<>(rangeStartInc, rangeEndExc);
                         rangeStartInc = rangeEndExc;
-                        refDataLoader.put(mapDefinitionRange, range, StringValue.of("Value" + i));
+                        doLoaderPut(loader, mapDefinitionRange, range, StringValue.of("Value" + i));
                         //                        ThreadUtil.sleepAtLeastIgnoreInterrupts(50);
                     }
-                    refDataLoader.completeProcessing();
+                    loader.completeProcessing();
                     LOGGER.debug("Finished loading data");
 
                 });
@@ -1930,7 +1887,7 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
             for (int k = 0; k < entryCount; k++) {
                 Range<Long> range = buildRangeKey(k);
                 String value = buildRangeStoreValue(mapName, k, range);
-                loader.put(mapDefinition, range, StringValue.of(value));
+                doLoaderPut(loader, mapDefinition, range, StringValue.of(value));
             }
         }
     }
@@ -1960,7 +1917,7 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
             for (int k = 0; k < entryCount; k++) {
                 String key = buildKey(k);
                 String value = buildKeyStoreValue(mapName, k, key);
-                loader.put(mapDefinition, key, StringValue.of(value));
+                doLoaderPut(loader, mapDefinition, key, StringValue.of(value));
             }
         }
     }
@@ -1979,7 +1936,7 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
                 String key = buildKey(k);
                 final String value = LogUtil.message("{}-{}-value{}{}",
                         mapName, key, k, LOREM_IPSUM);
-                loader.put(mapDefinition, key, StringValue.of(value));
+                doLoaderPut(loader, mapDefinition, key, StringValue.of(value));
             }
         }
     }
@@ -2021,7 +1978,6 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
     private void bulkLoadAndAssert(final List<RefStreamDefinition> refStreamDefinitions,
                                    final boolean overwriteExisting,
                                    final int commitInterval) {
-
 
         long effectiveTimeMs = System.currentTimeMillis();
         AtomicInteger counter = new AtomicInteger();
@@ -2248,7 +2204,7 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
                                     String key = buildKey(cnt);
                                     StringValue value = StringValue.of("value" + cnt);
                                     LOGGER.debug("Putting cnt {}, key {}, value {}", cnt, key, value);
-                                    loader.put(mapDefinition, key, value);
+                                    doLoaderPut(loader, mapDefinition, key, value);
 
                                     keyValueLoadedData.add(Tuple.of(mapDefinition, key, value));
                                 });
@@ -2261,7 +2217,7 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
                                     Range<Long> keyRange = new Range<>((long) (cnt * 10), (long) ((cnt * 10) + 10));
                                     StringValue value = StringValue.of("value" + cnt);
                                     LOGGER.debug("Putting cnt {}, key-range {}, value {}", cnt, keyRange, value);
-                                    loader.put(mapDefinition, keyRange, value);
+                                    doLoaderPut(loader, mapDefinition, keyRange, value);
                                     keyRangeValueLoadedData.add(Tuple.of(mapDefinition, keyRange, value));
                                 });
                     }
@@ -2296,5 +2252,92 @@ class TestRefDataOffHeapStore extends StroomUnitTest {
 
     protected void setPurgeAgeProperty(final StroomDuration purgeAge) {
         referenceDataConfig = referenceDataConfig.withPurgeAge(purgeAge);
+    }
+
+    private void doLoaderPut(final RefDataLoader refDataLoader,
+                             final MapDefinition mapDefinition,
+                             final String key,
+                             final RefDataValue refDataValue) {
+        try (StagingValueOutputStream stagingValueOutputStream = new StagingValueOutputStream(
+                valueStoreHashAlgorithm,
+                pooledByteBufferOutputStreamFactory)) {
+            writeValue(refDataValue, stagingValueOutputStream);
+            refDataLoader.put(mapDefinition, key, stagingValueOutputStream);
+        }
+    }
+
+    private void doLoaderPut(final RefDataLoader refDataLoader,
+                             final MapDefinition mapDefinition,
+                             final Range<Long> range,
+                             final RefDataValue refDataValue) {
+        try (StagingValueOutputStream stagingValueOutputStream = new StagingValueOutputStream(
+                valueStoreHashAlgorithm,
+                pooledByteBufferOutputStreamFactory)) {
+            writeValue(refDataValue, stagingValueOutputStream);
+            refDataLoader.put(mapDefinition, range, stagingValueOutputStream);
+        }
+    }
+
+    private void writeValue(final RefDataValue refDataValue,
+                            final StagingValueOutputStream stagingValueOutputStream) {
+        stagingValueOutputStream.clear();
+        try {
+            if (refDataValue instanceof StringValue) {
+                final StringValue stringValue = (StringValue) refDataValue;
+                stagingValueOutputStream.write(stringValue.getValue());
+                stagingValueOutputStream.setTypeId(StringValue.TYPE_ID);
+            } else if (refDataValue instanceof FastInfosetValue) {
+                stagingValueOutputStream.write(((FastInfosetValue) refDataValue).getByteBuffer());
+                stagingValueOutputStream.setTypeId(FastInfosetValue.TYPE_ID);
+            } else if (refDataValue instanceof NullValue) {
+                stagingValueOutputStream.setTypeId(NullValue.TYPE_ID);
+            } else {
+                throw new RuntimeException("Unexpected type " + refDataValue.getClass().getSimpleName());
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(LogUtil.message("Error writing value: {}", e.getMessage()), e);
+        }
+    }
+
+    private List<PutOutcome> handleKeyOutcomes(final RefDataLoader refDataLoader) {
+        final List<PutOutcome> putOutcomes = new ArrayList<>();
+        refDataLoader.setKeyPutOutcomeHandler((mapDefinitionSupplier, key, putOutcome) -> {
+            LOGGER.debug(() -> LogUtil.message("Got outcome: {}, map: {}, key: {}",
+                    putOutcome,
+                    mapDefinitionSupplier.get().getMapName(),
+                    key));
+            putOutcomes.add(putOutcome);
+        });
+        return putOutcomes;
+    }
+
+    private List<PutOutcome> handleRangeOutcomes(final RefDataLoader refDataLoader) {
+        final List<PutOutcome> putOutcomes = new ArrayList<>();
+        refDataLoader.setRangePutOutcomeHandler((mapDefinitionSupplier, range, putOutcome) -> {
+            LOGGER.debug(() -> LogUtil.message("Got outcome: {}, map: {}, key: {}",
+                    putOutcome,
+                    mapDefinitionSupplier.get().getMapName(),
+                    range));
+            putOutcomes.add(putOutcome);
+        });
+        return putOutcomes;
+    }
+
+    private void assertPutOutcome(final PutOutcome putOutcome,
+                                  final boolean expectedIsSuccess,
+                                  final boolean expectedIsDuplicate) {
+        assertThat(putOutcome.isSuccess())
+                .isEqualTo(expectedIsSuccess);
+        assertThat(putOutcome.isDuplicate())
+                .hasValue(expectedIsDuplicate);
+    }
+
+    private void assertPutOutcome(final PutOutcome putOutcome,
+                                  final boolean expectedIsSuccess,
+                                  final Optional<Boolean> expectedIsDuplicate) {
+        assertThat(putOutcome.isSuccess())
+                .isEqualTo(expectedIsSuccess);
+        assertThat(putOutcome.isDuplicate())
+                .isEqualTo(expectedIsDuplicate);
     }
 }

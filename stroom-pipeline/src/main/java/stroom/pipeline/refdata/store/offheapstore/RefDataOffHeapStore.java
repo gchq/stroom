@@ -121,6 +121,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     private static final String LMDB_NATIVE_LIB_PROP = "lmdbjava.native.lib";
 
     private final LmdbEnvFactory lmdbEnvFactory;
+    private final OffHeapRefDataLoader.OffHeapRefDataLoaderFactory offHeapRefDataLoaderFactory;
     private final TaskContextFactory taskContextFactory;
 
     private final LmdbEnv lmdbEnvironment;
@@ -148,6 +149,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     @Inject
     RefDataOffHeapStore(
             final LmdbEnvFactory lmdbEnvFactory,
+            final OffHeapRefDataLoader.OffHeapRefDataLoaderFactory offHeapRefDataLoaderFactory,
             final Provider<ReferenceDataConfig> referenceDataConfigProvider,
             final ByteBufferPool byteBufferPool,
             final Factory keyValueStoreDbFactory,
@@ -161,6 +163,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             final TaskContextFactory taskContextFactory) {
 
         this.lmdbEnvFactory = lmdbEnvFactory;
+        this.offHeapRefDataLoaderFactory = offHeapRefDataLoaderFactory;
         this.referenceDataConfigProvider = referenceDataConfigProvider;
         this.refDataValueConverter = refDataValueConverter;
         this.taskContextFactory = taskContextFactory;
@@ -623,15 +626,14 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     protected RefDataLoader loader(final RefStreamDefinition refStreamDefinition,
                                    final long effectiveTimeMs) {
         //TODO should we pass in an ErrorReceivingProxy so we can log errors with it?
-        RefDataLoader refDataLoader = new OffHeapRefDataLoader(
-                this,
-                refStreamDefStripedReentrantLock,
+        RefDataLoader refDataLoader = offHeapRefDataLoaderFactory.create(
                 keyValueStoreDb,
                 rangeStoreDb,
                 valueStore,
                 mapDefinitionUIDStore,
                 processingInfoDb,
                 lmdbEnvironment,
+                refStreamDefStripedReentrantLock,
                 refStreamDefinition,
                 effectiveTimeMs);
 

@@ -18,6 +18,7 @@
 package stroom.pipeline.refdata.store;
 
 import stroom.bytebuffer.ByteBufferUtils;
+import stroom.util.logging.LogUtil;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -25,13 +26,36 @@ import java.util.function.Supplier;
 
 public class FastInfosetValue implements RefDataValue {
 
+    /**
+     * MUST not change this else it is stored in the ref store. MUST be unique over all
+     * {@link RefDataValue} impls.
+     */
     public static final int TYPE_ID = 1;
 
     private final ByteBuffer fastInfosetByteBuffer;
     private volatile Long fastInfosetValueHash = null;
+    // Hold this so we know what was used to compute the hash
+    private volatile ValueStoreHashAlgorithm valueStoreHashAlgorithm = null;
 
     public FastInfosetValue(final ByteBuffer fastInfosetByteBuffer) {
         this.fastInfosetByteBuffer = fastInfosetByteBuffer;
+    }
+
+    private FastInfosetValue(final ByteBuffer fastInfosetByteBuffer,
+                             final long valueHash,
+                             final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
+        this.fastInfosetByteBuffer = fastInfosetByteBuffer;
+        this.fastInfosetValueHash = valueHash;
+        this.valueStoreHashAlgorithm = valueStoreHashAlgorithm;
+    }
+
+    public FastInfosetValue(final StagingValue stagingValue) {
+        final int typeId = stagingValue.getTypeId();
+        if (TYPE_ID != typeId) {
+            throw new RuntimeException(LogUtil.message("Expecting type {}, got {}", FastInfosetValue.TYPE_ID, typeId));
+        }
+        this.fastInfosetByteBuffer = stagingValue.getValueBuffer();
+        this.fastInfosetValueHash = stagingValue.getValueHashCode();
     }
 
     public static FastInfosetValue wrap(final ByteBuffer fastInfosetByteBuffer) {
@@ -44,14 +68,27 @@ public class FastInfosetValue implements RefDataValue {
     }
 
     @Override
+    public boolean isNullValue() {
+        return fastInfosetByteBuffer.remaining() == 0;
+    }
+
+    @Override
     public long getValueHashCode(final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
         // Lazily compute the hash and hold for future use these values can be quite big.
         // This will mostly be used during a load which is single threaded so no need to
         // avoid a synch at the risk of getting the same hash value twice.
+
         if (fastInfosetValueHash == null) {
             fastInfosetValueHash = valueStoreHashAlgorithm.hash(fastInfosetByteBuffer);
+            this.valueStoreHashAlgorithm = valueStoreHashAlgorithm;
+            return fastInfosetValueHash;
+        } else if (valueStoreHashAlgorithm != null
+                && !Objects.equals(this.valueStoreHashAlgorithm, valueStoreHashAlgorithm)) {
+            // If hash algo doesn't match then compute with the provided one
+            return valueStoreHashAlgorithm.hash(fastInfosetByteBuffer);
+        } else {
+            return fastInfosetValueHash;
         }
-        return fastInfosetValueHash;
     }
 
     @Override
@@ -78,11 +115,15 @@ public class FastInfosetValue implements RefDataValue {
     public RefDataValue copy(final Supplier<ByteBuffer> byteBufferSupplier) {
         ByteBuffer newByteBuffer = byteBufferSupplier.get();
         ByteBufferUtils.copy(this.fastInfosetByteBuffer, newByteBuffer);
-        return new FastInfosetValue(newByteBuffer);
+        return new FastInfosetValue(newByteBuffer, fastInfosetValueHash, valueStoreHashAlgorithm);
     }
 
     public int size() {
         return fastInfosetByteBuffer.limit() - fastInfosetByteBuffer.position();
+    }
+
+    public boolean isDirect() {
+        return fastInfosetByteBuffer.isDirect();
     }
 
     @Override

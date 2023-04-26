@@ -16,7 +16,6 @@
 
 package stroom.pipeline.refdata;
 
-import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -26,8 +25,8 @@ import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.NullValue;
 import stroom.pipeline.refdata.store.RefDataLoader;
-import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.refdata.store.StagingValueOutputStream;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -44,8 +43,8 @@ import com.sun.xml.fastinfoset.sax.SAXDocumentSerializer;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
+import java.io.IOException;
 import java.nio.BufferOverflowException;
-import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -136,7 +135,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
             <RefFragment xmlns:evt="event-logging:4"></RefFragment>
         </root>
      */
-    private static final int BUFFER_OUTPUT_STREAM_INITIAL_CAPACITY = 1_000;
+    private static final int BUFFER_OUTPUT_STREAM_INITIAL_CAPACITY = 2_000;
 
     private static final String REFERENCE_ELEMENT = "reference";
     private static final String MAP_ELEMENT = "map";
@@ -149,7 +148,8 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private final RefDataLoaderHolder refDataLoaderHolder;
 
     private final SAXDocumentSerializer saxDocumentSerializer = new SAXDocumentSerializer();
-    private final PooledByteBufferOutputStream pooledByteBufferOutputStream;
+    //    private final PooledByteBufferOutputStream pooledByteBufferOutputStream;
+    private final StagingValueOutputStream stagingValueOutputStream;
     private final CharBuffer contentBuffer = new CharBuffer(20);
 
     private RefStreamDefinition refStreamDefinition;
@@ -159,7 +159,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private boolean haveSeenXmlInValueElement = false;
     private Long rangeFrom;
     private Long rangeTo;
-    private RefDataValue refDataValue;
+    //    private RefDataValue refDataValue;
     private boolean warnOnDuplicateKeys = false;
     private boolean overrideExistingValues = true;
 
@@ -185,26 +185,28 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     @Inject
     public ReferenceDataFilter(final ErrorReceiverProxy errorReceiverProxy,
                                final RefDataLoaderHolder refDataLoaderHolder,
-                               final PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory) {
+                               final StagingValueOutputStream stagingValueOutputStream) {
 
         this.errorReceiverProxy = errorReceiverProxy;
         this.refDataLoaderHolder = refDataLoaderHolder;
-        this.pooledByteBufferOutputStream = pooledByteBufferOutputStreamFactory
-                .create(BUFFER_OUTPUT_STREAM_INITIAL_CAPACITY);
+        this.stagingValueOutputStream = stagingValueOutputStream;
     }
 
 
     @Override
     public void startProcessing() {
         super.startProcessing();
-        saxDocumentSerializer.setOutputStream(pooledByteBufferOutputStream);
+        saxDocumentSerializer.setOutputStream(stagingValueOutputStream);
 //        try {
 //            saxDocumentSerializer.startDocument();
 //        } catch (SAXException e) {
 //            throw new RuntimeException(e);
 //        }
-        final PutOutcome putOutcome = refDataLoaderHolder.getRefDataLoader()
-                .initialise(overrideExistingValues);
+        final RefDataLoader refDataLoader = refDataLoaderHolder.getRefDataLoader();
+        final PutOutcome putOutcome = refDataLoader.initialise(overrideExistingValues);
+
+        refDataLoader.setKeyPutOutcomeHandler(this::validateKeyValuePutSuccess);
+        refDataLoader.setRangePutOutcomeHandler(this::validateRangeValuePutSuccess);
 
         if (!putOutcome.isSuccess()) {
             errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
@@ -220,6 +222,9 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     @Override
     public void startStream() {
         super.startStream();
+        // Pretty sure startStream is never called by the pipeline processing, so favour startProcessing
+        // which is
+
         // build the definition of the stream that is being processed
 
         if (refDataLoaderHolder.getRefDataLoader() == null) {
@@ -235,7 +240,6 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 .getRefStreamDefinition();
 
         LOGGER.debug("StartStream called, refStreamDefinition: {}", refStreamDefinition);
-
     }
 
     @Override
@@ -337,6 +341,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         String newQName = qName;
         if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
             insideValueElement = true;
+            stagingValueOutputStream.clear();
         } else if (insideValueElement) {
             recordHavingSeenXmlContent();
 
@@ -431,10 +436,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
         insideElement = false;
         if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
-            LOGGER.trace("End of value XML fragment");
-            LOGGER.trace("================================================");
-            insideValueElement = false;
-            refDataValue = getRefDataValueFromBuffers();
+            handleValueEndElement();
         }
 
         if (insideValueElement) {
@@ -451,11 +453,9 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 // capture the name of the map that the subsequent values will belong to. A ref
                 // stream can contain data for multiple maps
                 mapName = contentBuffer.toString();
-
             } else if (KEY_ELEMENT.equalsIgnoreCase(localName)) {
                 // the key for the KV pair
                 key = contentBuffer.toString();
-
             } else if (FROM_ELEMENT.equalsIgnoreCase(localName)) {
                 // the start key for the key range
                 final String string = contentBuffer.toString();
@@ -465,7 +465,6 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                     errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
                             "Unable to parse string \"" + string + "\" as long for range from", e);
                 }
-
             } else if (TO_ELEMENT.equalsIgnoreCase(localName)) {
                 // the end key for the key range
                 final String string = contentBuffer.toString();
@@ -510,6 +509,31 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         depthLevel--;
     }
 
+    private void handleValueEndElement() throws SAXException {
+        LOGGER.trace("End of value XML fragment");
+        LOGGER.trace("================================================");
+        insideValueElement = false;
+
+        if (haveSeenXmlInValueElement) {
+            // Complete the fastInfoSet serialisation to stagingValueOutputStream
+            fastInfosetEndDocument();
+            stagingValueOutputStream.setTypeId(FastInfosetValue.TYPE_ID);
+        } else {
+            // Simple string value
+            final String value = contentBuffer.toString();
+            if (NullSafe.isBlankString(value)) {
+                stagingValueOutputStream.setTypeId(NullValue.TYPE_ID);
+            } else {
+                try {
+                    stagingValueOutputStream.setTypeId(StringValue.TYPE_ID);
+                    stagingValueOutputStream.write(value);
+                } catch (IOException e) {
+                    throw new RuntimeException(LogUtil.message(
+                            "Error writing string to stagingValueOutputStream: {}\n{}", e.getMessage(), value), e);
+                }
+            }
+        }
+    }
 
     private void handleReferenceEndElement() {
         // end of the ref data item so ensure it is persisted in the store
@@ -520,15 +544,8 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 final MapDefinition mapDefinition = new MapDefinition(refDataLoader.getRefStreamDefinition(), mapName);
 
                 if (key != null) {
-                    // TODO We are holding onto a txn most of the time between put calls. It may be
-                    //  better to hold onto the kv pairs locally then put them all in a batch so the txn is only
-                    //  used for lmdb CRUD and not xml processing. However this would not work with the current
-                    //  approach of a reusable bytebuffer.
-
                     LOGGER.trace("Putting key {} into map {}", key, mapDefinition);
-                    final PutOutcome putOutcome = refDataLoaderHolder.getRefDataLoader()
-                            .put(mapDefinition, key, refDataValue);
-                    validateKeyValuePutSuccess(putOutcome, mapDefinition);
+                    refDataLoaderHolder.getRefDataLoader().put(mapDefinition, key, stagingValueOutputStream);
                 } else if (rangeFrom != null && rangeTo != null) {
                     if (rangeFrom > rangeTo) {
                         errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
@@ -548,9 +565,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                         // if from==to we still record it as a range
                         final Range<Long> range = new Range<>(rangeFrom, rangeTo + 1);
                         LOGGER.trace("Putting range {} into map {}", range, mapDefinition);
-                        final PutOutcome putOutcome = refDataLoaderHolder.getRefDataLoader()
-                                .put(mapDefinition, range, refDataValue);
-                        validateRangeValuePutSuccess(putOutcome, mapDefinition);
+                        refDataLoaderHolder.getRefDataLoader().put(mapDefinition, range, stagingValueOutputStream);
                     }
                 }
             }
@@ -576,87 +591,96 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         valueXmlDefaultNamespaceUri = null;
     }
 
-    private String getKeyText() {
+    private String getKeyText(final String key) {
         return LogUtil.message("key [{}]", key);
     }
 
-    private String getRangeText() {
-        return LogUtil.message("range [{}] to [{}]", rangeFrom, rangeTo);
+    private String getRangeText(final Range<Long> range) {
+        return LogUtil.message("range [{}] to [{}]", range.getFrom(), range.getTo());
     }
 
-    private void validateRangeValuePutSuccess(final PutOutcome putOutcome,
-                                              final MapDefinition mapDefinition) {
+    private void validateRangeValuePutSuccess(final Supplier<MapDefinition> mapDefSupplier,
+                                              final Range<Long> range,
+                                              final PutOutcome putOutcome) {
         LOGGER.debug(() -> LogUtil.message("PutOutcome {} for {} in map {}",
-                putOutcome, getRangeText(), mapName));
-        validatePutSuccess(putOutcome, mapDefinition, this::getRangeText);
+                putOutcome, getRangeText(range), mapDefSupplier.get().getMapName()));
+        validatePutSuccess(mapDefSupplier, () -> getRangeText(range), putOutcome);
     }
 
-    private void validateKeyValuePutSuccess(final PutOutcome putOutcome,
-                                            final MapDefinition mapDefinition) {
+    private void validateKeyValuePutSuccess(final Supplier<MapDefinition> mapDefSupplier,
+                                            final String key,
+                                            final PutOutcome putOutcome) {
         LOGGER.debug(() -> LogUtil.message("PutOutcome {} for {} in map {}",
-                putOutcome, getKeyText(), mapName));
-        validatePutSuccess(putOutcome, mapDefinition, this::getKeyText);
+                putOutcome, getKeyText(key), mapDefSupplier.get().getMapName()));
+        validatePutSuccess(mapDefSupplier, () -> getKeyText(key), putOutcome);
     }
 
-    private void validatePutSuccess(final PutOutcome putOutcome,
-                                    final MapDefinition mapDefinition,
-                                    final Supplier<String> keyTextSupplier) {
+    private void validatePutSuccess(final Supplier<MapDefinition> mapDefSupplier,
+                                    final Supplier<String> keyTextSupplier,
+                                    final PutOutcome putOutcome) {
         if (warnOnDuplicateKeys) {
             if (overrideExistingValues
                     && putOutcome.isSuccess()
                     && putOutcome.isDuplicate().orElse(false)) {
 
+                final MapDefinition mapDefinition = mapDefSupplier.get();
                 errorReceiverProxy.log(Severity.WARNING, null, getElementId(),
                         LogUtil.message(
                                 "Replaced entry for {} in map {} from stream {} as an entry already exists in the " +
                                         "store and overrideExistingValues is set to true on the reference " +
                                         "loader pipeline. Set warnOnDuplicateKeys to false to hide these warnings.",
                                 keyTextSupplier.get(),
-                                mapName,
+                                mapDefinition.getMapName(),
                                 mapDefinition.getRefStreamDefinition().getStreamId()), null);
 
             } else if (!overrideExistingValues
                     && putOutcome.isDuplicate().orElse(false)) {
+                final MapDefinition mapDefinition = mapDefSupplier.get();
                 errorReceiverProxy.log(Severity.WARNING, null, getElementId(),
                         LogUtil.message(
                                 "Unable to load entry for {} into map {} from stream {} as an entry already exists " +
                                         "in the store and overrideExistingValues is set to false on the reference " +
                                         "loader pipeline. Set warnOnDuplicateKeys to false to hide these warnings.",
                                 keyTextSupplier.get(),
-                                mapName,
+                                mapDefinition.getMapName(),
                                 mapDefinition.getRefStreamDefinition().getStreamId()), null);
             }
         }
     }
 
-    private RefDataValue getRefDataValueFromBuffers() throws SAXException {
-        final RefDataValue refDataValue;
-        if (haveSeenXmlInValueElement) {
-            //serialize the event list using fastInfoset
-            fastInfosetEndDocument();
-//            appliedUris.clear();
-            LOGGER.trace("Serializing fast infoset events");
-            final ByteBuffer fastInfosetBuffer = pooledByteBufferOutputStream.getPooledByteBuffer()
-                    .getByteBuffer();
-
-            // we are wrapping a reusable buffer up in our RefDataValue object so this refDataValue
-            // MUST not be used after we have finished with this reference xml element else you will
-            // risk mutating data that you did not mean to.
-            refDataValue = FastInfosetValue.wrap(fastInfosetBuffer);
-        } else {
-            // Not seen any XML content so treat as string or null
-            final String content = contentBuffer.toString();
-            // simple string value so use content buffer
-            if (NullSafe.isBlankString(content)) {
-                LOGGER.trace("Null value");
-                refDataValue = NullValue.getInstance();
-            } else {
-                LOGGER.trace("Getting string data");
-                refDataValue = StringValue.of(content);
-            }
-        }
-        return refDataValue;
-    }
+//    private RefDataValue getRefDataValueFromBuffers() throws SAXException {
+//        final RefDataValue refDataValue;
+//        if (haveSeenXmlInValueElement) {
+//            //serialize the event list using fastInfoset
+//            fastInfosetEndDocument();
+////            appliedUris.clear();
+//            LOGGER.trace("Serializing fast infoset events");
+//            final ByteBuffer fastInfosetBuffer = stagingValueOutputStream.getFullByteBuffer();
+//
+//            // we are wrapping a reusable buffer up in our RefDataValue object so this refDataValue
+//            // MUST not be used after we have finished with this reference xml element else you will
+//            // risk mutating data that you did not mean to.
+//            refDataValue = FastInfosetValue.wrap(fastInfosetBuffer);
+//        } else {
+//            // Not seen any XML content so treat as string or null
+//            final String content = contentBuffer.toString();
+//            // simple string value so use content buffer
+//            if (NullSafe.isBlankString(content)) {
+//                LOGGER.trace("Null value");
+//                refDataValue = NullValue.getInstance();
+//            } else {
+//                LOGGER.trace("Getting string data");
+//                refDataValue = StringValue.of(content);
+//                try {
+//                    stagingValueOutputStream.write(content.getBytes(StandardCharsets.UTF_8));
+//                } catch (IOException e) {
+//                    throw new RuntimeException(LogUtil.message(
+//                            "Error writing content to stagingValueOutputStream: {}\n{}", e.getMessage(), content), e);
+//                }
+//            }
+//        }
+//        return refDataValue;
+//    }
 
     /**
      * @param ch     An array of characters.
@@ -668,21 +692,33 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
      */
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
-        if (insideValueElement && haveSeenXmlInValueElement) {
-            LOGGER.trace(() -> LogUtil.message(
-                    "characters(\"{}\")", new String(ch, start, length).trim()));
-            if (insideElement || !isAllWhitespace(ch, start, length)) {
-                // Delegate to the fastInfoset content handler
-                fastInfosetCharacters(ch, start, length);
+        if (insideValueElement) {
+            if (haveSeenXmlInValueElement) {
+                // This is an XML FastInfoSet value
+                LOGGER.trace(() -> LogUtil.message(
+                        "characters(\"{}\")", new String(ch, start, length).trim()));
+                if (insideElement || !isAllWhitespace(ch, start, length)) {
+                    // Delegate to the fastInfoset content handler which will write to stagingValueOutputStream
+                    fastInfosetCharacters(ch, start, length);
+                }
+            } else {
+                contentBuffer.append(ch, start, length);
+//                // This is a simple String value
+//                final String str = new String(ch, start, length);
+//                try {
+//                    stagingValueOutputStream.write(str.getBytes(StandardCharsets.UTF_8));
+//                } catch (IOException e) {
+//                    throw new RuntimeException(LogUtil.message(
+//                            "Error writing chars '{}' to stagingValueOutputStream", str), e);
+//                }
             }
         } else {
-            // outside the value element so capture the chars so we can get keys, map names, etc.
+            // outside the value element so capture the chars, so we can get keys, map names, etc.
             contentBuffer.append(ch, start, length);
         }
 
         super.characters(ch, start, length);
     }
-
 
     @Override
     public void endProcessing() {
@@ -690,8 +726,10 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 valueCount,
                 refStreamDefinition);
 
+        refDataLoaderHolder.getRefDataLoader().markPutsComplete();
+
         // It is critical that this happens else the buffer it uses will not be released back to the pool
-        pooledByteBufferOutputStream.release();
+        stagingValueOutputStream.close();
         super.endProcessing();
     }
 
@@ -731,7 +769,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         if (!isFastInfosetDocStarted) {
             LOGGER.trace("saxDocumentSerializer - startDocument()");
             saxDocumentSerializer.reset();
-            pooledByteBufferOutputStream.clear();
+            stagingValueOutputStream.clear();
             appliedPrefixToUriMap.clear();
             saxDocumentSerializer.startDocument();
             isFastInfosetDocStarted = true;

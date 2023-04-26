@@ -31,7 +31,7 @@ class TestUID {
         final UID uid1 = UID.of(getNewUidBuffer(), 0, 0, 0, 5);
 
         // Compare two buffers of different capacities
-        final ByteBuffer byteBuffer = getNewUidBuffer();
+        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(uid1.getBackingBuffer().capacity() * 2);
         UID uid2 = UID.of(5, byteBuffer);
 
         LOGGER.info("uid1: {}", uid1);
@@ -42,6 +42,34 @@ class TestUID {
 
         Assertions.assertThat(uid2)
                 .isEqualTo(uid1);
+
+        Assertions.assertThat(uid2.hashCode())
+                .isEqualTo(uid1.hashCode());
+    }
+
+    @Test
+    void testEquals2() {
+        final UID uid1 = UID.of(getNewUidBuffer(), 0, 0, 0, 5);
+
+        // Compare two buffers of different capacities and positions
+        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(uid1.getBackingBuffer().capacity() * 2);
+        byteBuffer.position(2);
+        byteBuffer.put(new byte[]{0, 0, 0, 5});
+        byteBuffer.flip();
+        byteBuffer.position(2);
+        UID uid2 = UID.wrap(byteBuffer);
+
+        LOGGER.info("uid1: {}", uid1);
+        LOGGER.info("uid2: {}", uid2);
+
+        Assertions.assertThat(uid2.getBackingBuffer())
+                .isEqualByComparingTo(uid1.getBackingBuffer());
+
+        Assertions.assertThat(uid2)
+                .isEqualTo(uid1);
+
+        Assertions.assertThat(uid2.hashCode())
+                .isEqualTo(uid1.hashCode());
     }
 
     @Test

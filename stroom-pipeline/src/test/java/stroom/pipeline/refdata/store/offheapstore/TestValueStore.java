@@ -25,6 +25,7 @@ import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.bytebuffer.PooledByteBufferOutputStream.Factory;
 import stroom.pipeline.refdata.store.BasicValueStoreHashAlgorithmImpl;
 import stroom.pipeline.refdata.store.RefDataValue;
+import stroom.pipeline.refdata.store.StagingValue;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
 import stroom.pipeline.refdata.store.XxHashValueStoreHashAlgorithm;
@@ -33,6 +34,7 @@ import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreMetaDb;
 import stroom.pipeline.refdata.store.offheapstore.serdes.GenericRefDataValueSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataValueSerdeFactory;
+import stroom.pipeline.refdata.store.offheapstore.serdes.StagingValueSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreMetaSerde;
 
@@ -99,10 +101,14 @@ class TestValueStore extends AbstractStoreDbTest {
 
     private ValueStoreKey getOrCreate(Txn<ByteBuffer> writeTxn, RefDataValue refDataValue) {
         try (PooledByteBuffer valueStoreKeyPooledBuffer = valueStore.getPooledKeyBuffer()) {
+            final StagingValue stagingValue = StagingValueSerde.convert(
+                    ByteBuffer::allocateDirect,
+                    basicHashAlgorithm,
+                    refDataValue);
             ByteBuffer valueStoreKeyBuffer = valueStore.getOrCreateKey(
                     writeTxn,
                     valueStoreKeyPooledBuffer,
-                    refDataValue,
+                    stagingValue,
                     false);
 
             return valueStoreDb.deserializeKey(valueStoreKeyBuffer);

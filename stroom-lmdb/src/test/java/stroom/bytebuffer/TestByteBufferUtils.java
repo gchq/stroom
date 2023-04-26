@@ -264,7 +264,7 @@ class TestByteBufferUtils {
                 .addCase((short) -2, (short) -1)
                 .addCase((short) 1_000, (short) 1_001)
                 .addCase((short) (Short.MAX_VALUE - (short) 1), Short.MAX_VALUE)
-                .addThrowsCase(Short.MAX_VALUE, IllegalArgumentException.class)
+                .addThrowsCase(Short.MAX_VALUE, ArithmeticException.class)
                 .build();
     }
 
@@ -286,7 +286,7 @@ class TestByteBufferUtils {
                 .addCase(-2, -1)
                 .addCase(1_000, 1_001)
                 .addCase(Integer.MAX_VALUE - 1, Integer.MAX_VALUE)
-                .addThrowsCase(Integer.MAX_VALUE, IllegalArgumentException.class)
+                .addThrowsCase(Integer.MAX_VALUE, ArithmeticException.class)
                 .build();
     }
 
@@ -309,7 +309,7 @@ class TestByteBufferUtils {
                 .addCase(-2L, -1L)
                 .addCase(1_000L, 1_001L)
                 .addCase(Long.MAX_VALUE - 1, Long.MAX_VALUE)
-                .addThrowsCase(Long.MAX_VALUE, IllegalArgumentException.class)
+                .addThrowsCase(Long.MAX_VALUE, ArithmeticException.class)
                 .build();
     }
 

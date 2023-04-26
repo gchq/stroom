@@ -25,6 +25,7 @@ import stroom.test.common.TestUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import com.google.inject.TypeLiteral;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -172,7 +173,7 @@ class TestValueStoreMetaSerde extends AbstractSerdeTest<ValueStoreMeta, ValueSto
     }
 
     @Override
-    Class<ValueStoreMetaSerde> getSerdeType() {
-        return ValueStoreMetaSerde.class;
+    TypeLiteral<ValueStoreMetaSerde> getSerdeType() {
+        return new TypeLiteral<ValueStoreMetaSerde>(){};
     }
 }
