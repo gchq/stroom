@@ -739,6 +739,10 @@ public class LmdbEnv implements AutoCloseable {
             }
         }
 
+        public boolean isClosed() {
+            return writeTxnSupplier == null;
+        }
+
         private void checkState() {
             Objects.requireNonNull(writeLock, "BatchingWriteTxn is already closed");
         }

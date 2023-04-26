@@ -47,7 +47,7 @@ class TestKeyValueStoreDb extends AbstractStoreDbTest {
     @BeforeEach
     void setup() {
         keyValueStoreDb = new KeyValueStoreDb(
-                lmdbEnv,
+                refDataLmdbEnv,
                 new ByteBufferPoolFactory().getByteBufferPool(),
                 new KeyValueStoreKeySerde(),
                 new ValueStoreKeySerde());

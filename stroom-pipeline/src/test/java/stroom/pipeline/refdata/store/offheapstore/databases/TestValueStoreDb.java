@@ -62,7 +62,7 @@ class TestValueStoreDb extends AbstractStoreDbTest {
     void setup() {
         // the default
         valueStoreDb = new ValueStoreDb(
-                lmdbEnv,
+                refDataLmdbEnv,
                 new ByteBufferPoolFactory().getByteBufferPool(),
                 new ValueStoreKeySerde(),
                 new GenericRefDataValueSerde(refDataValueSerdeFactory),
@@ -73,7 +73,7 @@ class TestValueStoreDb extends AbstractStoreDbTest {
 
     private void setupValueStoreDb(final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
         valueStoreDb = new ValueStoreDb(
-                lmdbEnv,
+                refDataLmdbEnv,
                 new ByteBufferPoolFactory().getByteBufferPool(),
                 new ValueStoreKeySerde(),
                 new GenericRefDataValueSerde(refDataValueSerdeFactory),

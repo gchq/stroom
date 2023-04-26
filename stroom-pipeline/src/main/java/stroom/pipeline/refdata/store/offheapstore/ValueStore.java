@@ -19,7 +19,6 @@ package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
-import stroom.lmdb.LmdbEnv;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.StagingValue;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
@@ -33,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.OptionalInt;
+import javax.inject.Inject;
 
 /**
  * Class to manage all interactions with the {@link ValueStoreDb} and {@link ValueStoreMetaDb}
@@ -43,12 +43,13 @@ public class ValueStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ValueStore.class);
 
-    private final LmdbEnv lmdbEnv;
+    private final RefDataLmdbEnv lmdbEnv;
     private final ValueStoreDb valueStoreDb;
     private final ValueStoreMetaDb valueStoreMetaDb;
 
 
-    ValueStore(final LmdbEnv lmdbEnv,
+    @Inject
+    ValueStore(final RefDataLmdbEnv lmdbEnv,
                final ValueStoreDb valueStoreDb,
                final ValueStoreMetaDb valueStoreMetaDb) {
         this.lmdbEnv = lmdbEnv;

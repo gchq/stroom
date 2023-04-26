@@ -23,11 +23,8 @@ import stroom.bytebuffer.PooledByteBuffer;
 import stroom.bytebuffer.PooledByteBufferPair;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.lmdb.LmdbDb;
-import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
-import stroom.lmdb.LmdbEnvFactory;
 import stroom.pipeline.refdata.ReferenceDataConfig;
-import stroom.pipeline.refdata.ReferenceDataLmdbConfig;
 import stroom.pipeline.refdata.store.AbstractRefDataStore;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingInfoResponse;
@@ -41,13 +38,8 @@ import stroom.pipeline.refdata.store.RefDataValueConverter;
 import stroom.pipeline.refdata.store.RefStoreEntry;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStoreDb;
-import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStoreDb.Factory;
-import stroom.pipeline.refdata.store.offheapstore.databases.MapUidForwardDb;
-import stroom.pipeline.refdata.store.offheapstore.databases.MapUidReverseDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
-import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
-import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreMetaDb;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataProcessingInfoSerde;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -66,15 +58,12 @@ import com.google.common.util.concurrent.Striped;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.lmdbjava.CursorIterable;
-import org.lmdbjava.EnvFlags;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -112,25 +101,13 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RefDataOffHeapStore.class);
 
-    private static final String DEFAULT_STORE_SUB_DIR_NAME = "refDataOffHeapStore";
-
-    private static final TemporalUnit PROCESSING_INFO_TRUNCATION_UNIT = ChronoUnit.HOURS;
-
-    // These are dups of org.lmdbjava.Library.LMDB_* but that class is pkg private for some reason.
-    private static final String LMDB_EXTRACT_DIR_PROP = "lmdbjava.extract.dir";
-    private static final String LMDB_NATIVE_LIB_PROP = "lmdbjava.native.lib";
-
-    private final LmdbEnvFactory lmdbEnvFactory;
-    private final OffHeapRefDataLoader.OffHeapRefDataLoaderFactory offHeapRefDataLoaderFactory;
+    private final OffHeapRefDataLoader.Factory offHeapRefDataLoaderFactory;
     private final TaskContextFactory taskContextFactory;
-
-    private final LmdbEnv lmdbEnvironment;
-
+    private final RefDataLmdbEnv lmdbEnvironment;
     // the DBs that make up the store
     private final KeyValueStoreDb keyValueStoreDb;
     private final RangeStoreDb rangeStoreDb;
     private final ProcessingInfoDb processingInfoDb;
-
     // classes that front multiple DBs
     private final ValueStore valueStore;
     private final MapDefinitionUIDStore mapDefinitionUIDStore;
@@ -148,54 +125,31 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     @Inject
     RefDataOffHeapStore(
-            final LmdbEnvFactory lmdbEnvFactory,
-            final OffHeapRefDataLoader.OffHeapRefDataLoaderFactory offHeapRefDataLoaderFactory,
+            final RefDataLmdbEnv lmdbEnvironment,
+            final OffHeapRefDataLoader.Factory offHeapRefDataLoaderFactory,
             final Provider<ReferenceDataConfig> referenceDataConfigProvider,
             final ByteBufferPool byteBufferPool,
-            final Factory keyValueStoreDbFactory,
-            final ValueStoreDb.Factory valueStoreDbFactory,
-            final ValueStoreMetaDb.Factory valueStoreMetaDbFactory,
-            final RangeStoreDb.Factory rangeStoreDbFactory,
-            final MapUidForwardDb.Factory mapUidForwardDbFactory,
-            final MapUidReverseDb.Factory mapUidReverseDbFactory,
+            final KeyValueStoreDb keyValueStoreDb,
+            final RangeStoreDb rangeStoreDb,
             final RefDataValueConverter refDataValueConverter,
-            final ProcessingInfoDb.Factory processingInfoDbFactory,
-            final TaskContextFactory taskContextFactory) {
+            final ProcessingInfoDb processingInfoDb,
+            final TaskContextFactory taskContextFactory,
+            final ValueStore valueStore,
+            final MapDefinitionUIDStore mapDefinitionUIDStore) {
 
-        this.lmdbEnvFactory = lmdbEnvFactory;
+        this.lmdbEnvironment = lmdbEnvironment;
         this.offHeapRefDataLoaderFactory = offHeapRefDataLoaderFactory;
         this.referenceDataConfigProvider = referenceDataConfigProvider;
         this.refDataValueConverter = refDataValueConverter;
         this.taskContextFactory = taskContextFactory;
 
-        this.lmdbEnvironment = createEnvironment(referenceDataConfigProvider.get().getLmdbConfig());
-
         // create all the databases
-        this.keyValueStoreDb = keyValueStoreDbFactory.create(lmdbEnvironment);
-        this.rangeStoreDb = rangeStoreDbFactory.create(lmdbEnvironment);
-        final ValueStoreDb valueStoreDb = valueStoreDbFactory.create(lmdbEnvironment);
-        final MapUidForwardDb mapUidForwardDb = mapUidForwardDbFactory.create(lmdbEnvironment);
-        final MapUidReverseDb mapUidReverseDb = mapUidReverseDbFactory.create(lmdbEnvironment);
-        this.processingInfoDb = processingInfoDbFactory.create(lmdbEnvironment);
-        final ValueStoreMetaDb valueStoreMetaDb = valueStoreMetaDbFactory.create(lmdbEnvironment);
-
-        // hold all the DBs in a map so we can get at them by name
-        addDbsToMap(
-                keyValueStoreDb,
-                rangeStoreDb,
-                valueStoreDb,
-                mapUidForwardDb,
-                mapUidReverseDb,
-                processingInfoDb,
-                valueStoreMetaDb);
-
-        this.valueStore = new ValueStore(lmdbEnvironment, valueStoreDb, valueStoreMetaDb);
-        this.mapDefinitionUIDStore = new MapDefinitionUIDStore(
-                lmdbEnvironment,
-                mapUidForwardDb,
-                mapUidReverseDb);
-
+        this.keyValueStoreDb = keyValueStoreDb;
+        this.rangeStoreDb = rangeStoreDb;
+        this.processingInfoDb = processingInfoDb;
         this.byteBufferPool = byteBufferPool;
+        this.valueStore = valueStore;
+        this.mapDefinitionUIDStore = mapDefinitionUIDStore;
 
         // Need a reasonable number to try and avoid keys that are not equal from using the
         // same stripe
@@ -290,37 +244,9 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         return invalidStreams;
     }
 
-    private LmdbEnv createEnvironment(final ReferenceDataLmdbConfig lmdbConfig) {
-
-        // By default LMDB opens with readonly mmaps so you cannot mutate the bytebuffers inside a txn.
-        // Instead you need to create a new bytebuffer for the value and put that. If you want faster writes
-        // then you can use EnvFlags.MDB_WRITEMAP in the open() call to allow mutation inside a txn but that
-        // comes with greater risk of corruption.
-
-        // NOTE on setMapSize() from LMDB author found on https://groups.google.com/forum/#!topic/caffe-users/0RKsTTYRGpQ
-        // On Windows the OS sets the filesize equal to the mapsize. (MacOS requires that too, and allocates
-        // all of the physical space up front, it doesn't support sparse files.) The mapsize should not be
-        // hardcoded into software, it needs to be reconfigurable. On Windows and MacOS you really shouldn't
-        // set it larger than the amount of free space on the filesystem.
-
-        final LmdbEnv env = lmdbEnvFactory.builder(lmdbConfig)
-                .withMaxDbCount(7)
-                .addEnvFlag(EnvFlags.MDB_NOTLS)
-                .build();
-
-        LOGGER.info("Existing databases: [{}]", String.join(",", env.getDbiNames()));
-        return env;
-    }
-
     @Override
     public StorageType getStorageType() {
         return StorageType.OFF_HEAP;
-    }
-
-    private void addDbsToMap(final LmdbDb... lmdbDbs) {
-        for (LmdbDb lmdbDb : lmdbDbs) {
-            this.databaseMap.put(lmdbDb.getDbName(), lmdbDb);
-        }
     }
 
     @Override
@@ -623,16 +549,10 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
      * <pre>try (RefDataLoader refDataLoader = refDataOffHeapStore.getLoader(...)) { ... }</pre>
      */
     @Override
-    protected RefDataLoader loader(final RefStreamDefinition refStreamDefinition,
-                                   final long effectiveTimeMs) {
+    protected RefDataLoader createLoader(final RefStreamDefinition refStreamDefinition,
+                                         final long effectiveTimeMs) {
         //TODO should we pass in an ErrorReceivingProxy so we can log errors with it?
         RefDataLoader refDataLoader = offHeapRefDataLoaderFactory.create(
-                keyValueStoreDb,
-                rangeStoreDb,
-                valueStore,
-                mapDefinitionUIDStore,
-                processingInfoDb,
-                lmdbEnvironment,
                 refStreamDefStripedReentrantLock,
                 refStreamDefinition,
                 effectiveTimeMs);
@@ -1091,7 +1011,6 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 batchingWriteTxn,
                 mapUid,
                 (writeTxn, rangeValueStoreKeyBuffer, valueStoreKeyBuffer) -> {
-
                     //dereference this value, deleting it if required
                     deReferenceOrDeleteValue(
                             writeTxn,
@@ -1122,7 +1041,6 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         }
     }
 
-
     /**
      * Package-private for testing
      */
@@ -1143,44 +1061,11 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
      */
     @Override
     public void logAllContents(Consumer<String> logEntryConsumer) {
-        databaseMap.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .map(Map.Entry::getValue)
-                .forEach(lmdbDb -> lmdbDb.logDatabaseContents(logEntryConsumer));
-    }
-
-    void logContents(final String dbName) {
-        doWithLmdb(dbName, LmdbDb::logDatabaseContents);
-    }
-
-    void doWithLmdb(final String dbName, final Consumer<LmdbDb> work) {
-        LmdbDb lmdbDb = databaseMap.get(dbName);
-        if (lmdbDb == null) {
-            throw new IllegalArgumentException(LogUtil.message("No database with name {} exists", dbName));
-        }
-        work.accept(lmdbDb);
-    }
-
-    /**
-     * For use in testing at SMALL scale. Dumps the content of each DB to the logger.
-     */
-    void logAllRawContents(Consumer<String> logEntryConsumer) {
-        databaseMap.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .map(Map.Entry::getValue)
-                .forEach(lmdbDb -> lmdbDb.logDatabaseContents(logEntryConsumer));
-    }
-
-    void logRawContents(final String dbName) {
-        doWithLmdb(dbName, LmdbDb::logRawDatabaseContents);
+        lmdbEnvironment.logAllContents(logEntryConsumer);
     }
 
     long getEntryCount(final String dbName) {
-        LmdbDb lmdbDb = databaseMap.get(dbName);
-        if (lmdbDb == null) {
-            throw new IllegalArgumentException(LogUtil.message("No database with name {} exists", dbName));
-        }
-        return lmdbDb.getEntryCount();
+        return lmdbEnvironment.getEntryCount(dbName);
     }
 
     @Override

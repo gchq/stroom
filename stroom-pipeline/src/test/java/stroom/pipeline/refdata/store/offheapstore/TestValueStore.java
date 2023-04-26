@@ -70,7 +70,7 @@ class TestValueStore extends AbstractStoreDbTest {
     @BeforeEach
     void setup() {
         valueStoreDb = new ValueStoreDb(
-                lmdbEnv,
+                refDataLmdbEnv,
                 byteBufferPool,
                 new ValueStoreKeySerde(),
                 new GenericRefDataValueSerde(refDataValueSerdeFactory),
@@ -79,24 +79,24 @@ class TestValueStore extends AbstractStoreDbTest {
 
 
         valueStoreMetaDb = new ValueStoreMetaDb(
-                lmdbEnv,
+                refDataLmdbEnv,
                 byteBufferPool,
                 new ValueStoreKeySerde(),
                 new ValueStoreMetaSerde());
 
-        valueStore = new ValueStore(lmdbEnv, valueStoreDb, valueStoreMetaDb);
+        valueStore = new ValueStore(refDataLmdbEnv, valueStoreDb, valueStoreMetaDb);
     }
 
     private void setupValueStoreDb(final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
         valueStoreDb = new ValueStoreDb(
-                lmdbEnv,
+                refDataLmdbEnv,
                 new ByteBufferPoolFactory().getByteBufferPool(),
                 new ValueStoreKeySerde(),
                 new GenericRefDataValueSerde(refDataValueSerdeFactory),
                 valueStoreHashAlgorithm,
                 pooledByteBufferOutputStreamFactory);
 
-        valueStore = new ValueStore(lmdbEnv, valueStoreDb, valueStoreMetaDb);
+        valueStore = new ValueStore(refDataLmdbEnv, valueStoreDb, valueStoreMetaDb);
     }
 
     private ValueStoreKey getOrCreate(Txn<ByteBuffer> writeTxn, RefDataValue refDataValue) {

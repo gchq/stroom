@@ -319,8 +319,8 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
      * @param effectiveTimeMs
      */
     @Override
-    protected RefDataLoader loader(final RefStreamDefinition refStreamDefinition,
-                                   final long effectiveTimeMs) {
+    protected RefDataLoader createLoader(final RefStreamDefinition refStreamDefinition,
+                                         final long effectiveTimeMs) {
 
         return new OnHeapRefDataLoader(
                 refStreamDefinition,

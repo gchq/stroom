@@ -25,6 +25,7 @@ import stroom.lmdb.EntryConsumer;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
+import stroom.pipeline.refdata.store.offheapstore.RefDataLmdbEnv;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RangeStoreKeySerde;
@@ -36,7 +37,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Range;
 
-import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.KeyRange;
@@ -61,14 +61,15 @@ public class RangeStoreDb
     private final ValueStoreKeySerde valueSerde;
 
     @Inject
-    public RangeStoreDb(@Assisted final LmdbEnv lmdbEnvironment,
+    public RangeStoreDb(final RefDataLmdbEnv lmdbEnvironment,
                         final ByteBufferPool byteBufferPool,
                         final RangeStoreKeySerde keySerde,
                         final ValueStoreKeySerde valueSerde) {
 
-        super(lmdbEnvironment, byteBufferPool, keySerde, valueSerde, DB_NAME);
+        super(lmdbEnvironment.getEnvironment(), byteBufferPool, keySerde, valueSerde, DB_NAME);
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
+        lmdbEnvironment.registerDatabases(this);
     }
 
     /**

@@ -25,6 +25,7 @@ import stroom.lmdb.EntryConsumer;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.pipeline.refdata.store.offheapstore.KeyValueStoreKey;
+import stroom.pipeline.refdata.store.offheapstore.RefDataLmdbEnv;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.serdes.KeyValueStoreKeySerde;
@@ -33,7 +34,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.KeyRange;
@@ -59,14 +59,15 @@ public class KeyValueStoreDb
     private final ValueStoreKeySerde valueSerde;
 
     @Inject
-    KeyValueStoreDb(@Assisted final LmdbEnv lmdbEnvironment,
+    KeyValueStoreDb(final RefDataLmdbEnv lmdbEnvironment,
                     final ByteBufferPool byteBufferPool,
                     final KeyValueStoreKeySerde keySerde,
                     final ValueStoreKeySerde valueSerde) {
 
-        super(lmdbEnvironment, byteBufferPool, keySerde, valueSerde, DB_NAME);
+        super(lmdbEnvironment.getEnvironment(), byteBufferPool, keySerde, valueSerde, DB_NAME);
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
+        lmdbEnvironment.registerDatabases(this);
     }
 
     public void deleteMapEntries(final BatchingWriteTxn batchingWriteTxn,

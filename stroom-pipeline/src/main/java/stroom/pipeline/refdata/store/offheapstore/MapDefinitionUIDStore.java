@@ -2,7 +2,6 @@ package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
-import stroom.lmdb.LmdbEnv;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.offheapstore.databases.MapUidForwardDb;
@@ -25,6 +24,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.inject.Inject;
 
 /**
  * This class provides a front door for all interactions with the {@link MapUidForwardDb} and
@@ -41,7 +41,7 @@ public class MapDefinitionUIDStore {
 
     private final MapUidForwardDb mapUidForwardDb;
     private final MapUidReverseDb mapUidReverseDb;
-    private final LmdbEnv lmdbEnv;
+    private final RefDataLmdbEnv lmdbEnv;
 
     // TODO may want some way of reusing UIDs after they have been purged. Simplest solution would be to
     //  have a new table to hold a pool of UIDs for reuse.  This would be populated during the purge of the
@@ -54,7 +54,8 @@ public class MapDefinitionUIDStore {
     //  However if we had UID reuse we could reduce the size of the UID to 3 or even 2 bytes, with the limiting
     //  factor being the retention period of the data.
 
-    MapDefinitionUIDStore(final LmdbEnv lmdbEnv,
+    @Inject
+    MapDefinitionUIDStore(final RefDataLmdbEnv lmdbEnv,
                           final MapUidForwardDb mapUidForwardDb,
                           final MapUidReverseDb mapUidReverseDb) {
         this.lmdbEnv = lmdbEnv;

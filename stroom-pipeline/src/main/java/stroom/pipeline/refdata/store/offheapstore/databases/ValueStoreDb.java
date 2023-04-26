@@ -29,6 +29,7 @@ import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.StagingValue;
 import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
+import stroom.pipeline.refdata.store.offheapstore.RefDataLmdbEnv;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.serdes.GenericRefDataValueSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
@@ -37,7 +38,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.google.common.base.Preconditions;
-import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.Cursor;
 import org.lmdbjava.GetOp;
 import org.lmdbjava.Txn;
@@ -99,18 +99,19 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
     private final PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory;
 
     @Inject
-    public ValueStoreDb(@Assisted final LmdbEnv lmdbEnvironment,
+    public ValueStoreDb(final RefDataLmdbEnv lmdbEnvironment,
                         final ByteBufferPool byteBufferPool,
                         final ValueStoreKeySerde keySerde,
                         final GenericRefDataValueSerde valueSerde,
                         final ValueStoreHashAlgorithm valueStoreHashAlgorithm,
                         final PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory) {
 
-        super(lmdbEnvironment, byteBufferPool, keySerde, valueSerde, DB_NAME);
+        super(lmdbEnvironment.getEnvironment(), byteBufferPool, keySerde, valueSerde, DB_NAME);
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
         this.valueStoreHashAlgorithm = valueStoreHashAlgorithm;
         this.pooledByteBufferOutputStreamFactory = pooledByteBufferOutputStreamFactory;
+        lmdbEnvironment.registerDatabases(this);
     }
 
     public ValueStoreHashAlgorithm getValueStoreHashAlgorithm() {

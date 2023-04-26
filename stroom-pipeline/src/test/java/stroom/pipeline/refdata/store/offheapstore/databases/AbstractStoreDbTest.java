@@ -20,6 +20,8 @@ package stroom.pipeline.refdata.store.offheapstore.databases;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnvFactory;
 import stroom.lmdb.LmdbLibraryConfig;
+import stroom.pipeline.refdata.ReferenceDataConfig;
+import stroom.pipeline.refdata.store.offheapstore.RefDataLmdbEnv;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.ByteSize;
 import stroom.util.io.FileUtil;
@@ -43,6 +45,7 @@ public abstract class AbstractStoreDbTest extends StroomUnitTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractStoreDbTest.class);
     private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(2_000);
+    protected RefDataLmdbEnv refDataLmdbEnv = null;
     protected LmdbEnv lmdbEnv = null;
     private Path dbDir = null;
 
@@ -61,13 +64,20 @@ public abstract class AbstractStoreDbTest extends StroomUnitTest {
         final PathCreator pathCreator = new SimplePathCreator(() -> dbDir, () -> dbDir);
         final TempDirProvider tempDirProvider = () -> dbDir;
 
-        lmdbEnv = new LmdbEnvFactory(pathCreator, tempDirProvider, LmdbLibraryConfig::new)
-                .builder(dbDir)
-                .withMapSize(getMaxSizeBytes())
-                .withMaxDbCount(10)
-                .withEnvFlags(envFlags)
-                .makeWritersBlockReaders()
-                .build();
+        final LmdbEnvFactory lmdbEnvFactory = new LmdbEnvFactory(
+                pathCreator,
+                tempDirProvider,
+                LmdbLibraryConfig::new);
+        refDataLmdbEnv = new RefDataLmdbEnv(lmdbEnvFactory, ReferenceDataConfig::new);
+        lmdbEnv = refDataLmdbEnv.getEnvironment();
+
+//        lmdbEnv = new LmdbEnvFactory(pathCreator, tempDirProvider, LmdbLibraryConfig::new)
+//                .builder(dbDir)
+//                .withMapSize(getMaxSizeBytes())
+//                .withMaxDbCount(10)
+//                .withEnvFlags(envFlags)
+//                .makeWritersBlockReaders()
+//                .build();
     }
 
     @AfterEach

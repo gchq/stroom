@@ -48,8 +48,8 @@ public abstract class AbstractRefDataStore implements RefDataStore {
      * should be used in a try with resources block to ensure any transactions are closed, e.g.
      * <pre>try (RefDataLoader refDataLoader = refDataOffHeapStore.getLoader(...)) { ... }</pre>
      */
-    protected abstract RefDataLoader loader(RefStreamDefinition refStreamDefinition,
-                                            long effectiveTimeMs);
+    protected abstract RefDataLoader createLoader(RefStreamDefinition refStreamDefinition,
+                                                  long effectiveTimeMs);
 
 
     @Override
@@ -58,7 +58,7 @@ public abstract class AbstractRefDataStore implements RefDataStore {
                                               final Consumer<RefDataLoader> work) {
 
         final boolean result;
-        try (RefDataLoader refDataLoader = loader(refStreamDefinition, effectiveTimeMs)) {
+        try (RefDataLoader refDataLoader = createLoader(refStreamDefinition, effectiveTimeMs)) {
             // we now hold the lock for this RefStreamDefinition so re-test the completion state
 
             final Optional<ProcessingState> optLoadState = getLoadState(refStreamDefinition);

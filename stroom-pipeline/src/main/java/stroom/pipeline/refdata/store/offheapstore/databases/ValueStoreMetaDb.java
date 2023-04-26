@@ -25,6 +25,7 @@ import stroom.lmdb.KeyConsumer;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.StagingValue;
+import stroom.pipeline.refdata.store.offheapstore.RefDataLmdbEnv;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreMeta;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
@@ -33,7 +34,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.Cursor;
 import org.lmdbjava.GetOp;
 import org.lmdbjava.PutFlags;
@@ -74,15 +74,15 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
     private final ValueStoreMetaSerde valueSerde;
 
     @Inject
-    public ValueStoreMetaDb(
-            @Assisted final LmdbEnv lmdbEnvironment,
-            final ByteBufferPool byteBufferPool,
-            final ValueStoreKeySerde keySerde,
-            final ValueStoreMetaSerde valueSerde) {
+    public ValueStoreMetaDb(final RefDataLmdbEnv lmdbEnvironment,
+                            final ByteBufferPool byteBufferPool,
+                            final ValueStoreKeySerde keySerde,
+                            final ValueStoreMetaSerde valueSerde) {
 
-        super(lmdbEnvironment, byteBufferPool, keySerde, valueSerde, DB_NAME);
+        super(lmdbEnvironment.getEnvironment(), byteBufferPool, keySerde, valueSerde, DB_NAME);
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
+        lmdbEnvironment.registerDatabases(this);
     }
 
     public OptionalInt getTypeId(final Txn<ByteBuffer> txn, final ByteBuffer keyBuffer) {

@@ -1,45 +1,35 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
-import stroom.bytebuffer.ByteBufferPool;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
-import stroom.lmdb.LmdbEnvFactory;
+import stroom.lmdb.PutOutcome;
 import stroom.lmdb.UnSortedDupKey;
 import stroom.lmdb.UnSortedDupKey.UnsortedDupKeyFactory;
 import stroom.pipeline.refdata.store.MapDefinition;
-import stroom.pipeline.refdata.store.RefDataValue;
-import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StagingValue;
 import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStagingDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeValueStagingDb;
-import stroom.util.io.ByteSize;
-import stroom.util.io.TempDirProvider;
+import stroom.pipeline.refdata.store.offheapstore.databases.StagingDb;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Range;
 
-import org.lmdbjava.EnvFlags;
+import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.KeyRange;
 
 import java.nio.ByteBuffer;
-import java.nio.file.Path;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 /**
  * A transient store to load the ref entries from a single stream into. The purpose of this is to
@@ -52,11 +42,9 @@ public class OffHeapStagingStore implements AutoCloseable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OffHeapStagingStore.class);
     private static final int BUFFER_OUTPUT_STREAM_INITIAL_CAPACITY = 2_000;
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")
-            .withZone(ZoneOffset.UTC);
 
     private final LmdbEnv stagingLmdbEnv;
-    private final LmdbEnv refStoreLmdbEnv;
+    private final RefDataLmdbEnv refStoreLmdbEnv;
     private final KeyValueStagingDb keyValueStagingDb;
     private final RangeValueStagingDb rangeValueStagingDb;
     private final MapDefinitionUIDStore mapDefinitionUIDStore;
@@ -72,8 +60,8 @@ public class OffHeapStagingStore implements AutoCloseable {
     private final UnsortedDupKeyFactory<RangeStoreKey> rangeStoreKeyFactory;
     private boolean isComplete = false;
 
-    public OffHeapStagingStore(final LmdbEnv stagingLmdbEnv,
-                               final LmdbEnv refStoreLmdbEnv,
+    public OffHeapStagingStore(@Assisted final LmdbEnv stagingLmdbEnv,
+                               final RefDataLmdbEnv refStoreLmdbEnv,
                                final KeyValueStagingDb keyValueStagingDb,
                                final RangeValueStagingDb rangeValueStagingDb,
                                final MapDefinitionUIDStore mapDefinitionUIDStore,
@@ -106,12 +94,11 @@ public class OffHeapStagingStore implements AutoCloseable {
      */
     void put(final MapDefinition mapDefinition,
              final String key,
-             final RefDataValue refDataValue) {
+             final StagingValue stagingValue) {
 
-        LOGGER.trace("put({}, {}, {}", mapDefinition, key, refDataValue);
+        LOGGER.trace("put({}, {}, {}", mapDefinition, key, stagingValue);
         Objects.requireNonNull(mapDefinition);
         Objects.requireNonNull(key);
-        final StagingValue stagingValue = getStagingValue(refDataValue);
         keyPooledKeyBuffer.clear();
         checkComplete();
 
@@ -122,25 +109,8 @@ public class OffHeapStagingStore implements AutoCloseable {
         final KeyValueStoreKey keyValueStoreKey = new KeyValueStoreKey(mapUid, key);
         final UnSortedDupKey<KeyValueStoreKey> wrappedKey = keyValueStoreKeyFactory.createUnsortedKey(keyValueStoreKey);
         final ByteBuffer keyBuffer = keyPooledKeyBuffer.getByteBuffer();
-        keyValueStagingDb.serializeKey(keyBuffer, wrappedKey);
-        final ByteBuffer valueBuffer = stagingValue.getFullByteBuffer();
 
-        batchingWriteTxn.processBatchItem(writeTxn -> {
-            // Use the put method on the Dbi as we want to put directly without all the get/put stuff
-            // to determine what was there before. Also, the db is set to MDB_DUPSORT so any dups in
-            // the source data will be kept as dups in the db.
-            try {
-                keyValueStagingDb.getLmdbDbi().put(writeTxn, keyBuffer, valueBuffer);
-            } catch (Exception e) {
-                throw new RuntimeException(LogUtil.message("""
-                                Error putting key/value to staging store: {}
-                                keyBuffer: {},
-                                valueBuffer: {}""",
-                        e.getMessage(),
-                        ByteBufferUtils.byteBufferInfo(keyBuffer),
-                        ByteBufferUtils.byteBufferInfo(valueBuffer)), e);
-            }
-        });
+        doPut(wrappedKey, keyBuffer, stagingValue, keyValueStagingDb);
     }
 
     /**
@@ -149,12 +119,11 @@ public class OffHeapStagingStore implements AutoCloseable {
      */
     void put(final MapDefinition mapDefinition,
              final Range<Long> keyRange,
-             final RefDataValue refDataValue) {
+             final StagingValue stagingValue) {
 
-        LOGGER.trace("put({}, {}, {}", mapDefinition, keyRange, refDataValue);
+        LOGGER.trace("put({}, {}, {}", mapDefinition, keyRange, stagingValue);
         Objects.requireNonNull(mapDefinition);
         Objects.requireNonNull(keyRange);
-        final StagingValue stagingValue = getStagingValue(refDataValue);
         rangePooledKeyBuffer.clear();
         checkComplete();
 
@@ -165,7 +134,16 @@ public class OffHeapStagingStore implements AutoCloseable {
         final RangeStoreKey rangeStoreKey = new RangeStoreKey(mapUid, keyRange);
         final UnSortedDupKey<RangeStoreKey> wrappedKey = rangeStoreKeyFactory.createUnsortedKey(rangeStoreKey);
         final ByteBuffer keyBuffer = rangePooledKeyBuffer.getByteBuffer();
-        rangeValueStagingDb.serializeKey(keyBuffer, wrappedKey);
+
+        doPut(wrappedKey, keyBuffer, stagingValue, rangeValueStagingDb);
+    }
+
+    private <K> void doPut(final K key,
+                           final ByteBuffer keyBuffer,
+                           final StagingValue stagingValue,
+                           final StagingDb<K> stagingDb) {
+
+        stagingDb.serializeKey(keyBuffer, key);
         final ByteBuffer valueBuffer = stagingValue.getFullByteBuffer();
 
         batchingWriteTxn.processBatchItem(writeTxn -> {
@@ -173,28 +151,27 @@ public class OffHeapStagingStore implements AutoCloseable {
             // to determine what was there before. Also, the db is set to MDB_DUPSORT so any dups in
             // the source data will be kept as dups in the db.
             try {
-                rangeValueStagingDb.getLmdbDbi().put(writeTxn, keyBuffer, valueBuffer);
+                final PutOutcome putOutcome = stagingDb.put(
+                        writeTxn,
+                        keyBuffer,
+                        valueBuffer,
+                        false,
+                        false);
+                if (!putOutcome.isSuccess()) {
+                    throw new RuntimeException(LogUtil.message("Unsuccessful putOutcome {} putting entry to {}",
+                            putOutcome, stagingDb.getDbName()));
+                }
             } catch (Exception e) {
                 throw new RuntimeException(LogUtil.message("""
-                                Error putting range/value to staging store: {}
+                                Error putting entry to staging store (db: {}): {}
                                 keyBuffer: {},
                                 valueBuffer: {}""",
+                        stagingDb.getDbName(),
                         e.getMessage(),
                         ByteBufferUtils.byteBufferInfo(keyBuffer),
                         ByteBufferUtils.byteBufferInfo(valueBuffer)), e);
             }
         });
-    }
-
-    private StagingValue getStagingValue(final RefDataValue refDataValue) {
-        Objects.requireNonNull(refDataValue);
-        // We could maybe convert from other RefDataValue types to StagingValue, but for now
-        // this is fine.
-        if (!(refDataValue instanceof StagingValue)) {
-            throw new RuntimeException(LogUtil.message("Unexpected type {}, expecting {}",
-                    refDataValue.getClass().getSimpleName(), StagingValue.class.getSimpleName()));
-        }
-        return (StagingValue) refDataValue;
     }
 
     /**
@@ -288,7 +265,9 @@ public class OffHeapStagingStore implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
-        closeAndSwallow(batchingWriteTxn, "batchingWriteTxn");
+        if (!batchingWriteTxn.isClosed()) {
+            closeAndSwallow(batchingWriteTxn, "batchingWriteTxn");
+        }
         closeAndSwallow(pooledByteBufferOutputStream, "pooledByteBufferOutputStream");
 
         pooledByteBuffers.forEach(pooledByteBuffer ->
@@ -324,86 +303,5 @@ public class OffHeapStagingStore implements AutoCloseable {
         // If we know the uid then the mapping should already be in the map
         final MapDefinition mapDefinition = uidToMapDefinitionMap.get(uid);
         return Objects.requireNonNull(mapDefinition, () -> "We should have a mapDefinition for UID " + uid);
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    public static class OffHeapStagingStoreFactory {
-
-        private final TempDirProvider tempDirProvider;
-        private final LmdbEnvFactory lmdbEnvFactory;
-        private final ByteBufferPool byteBufferPool;
-        private final KeyValueStagingDb.Factory keyValueStagingDbFactory;
-        private final RangeValueStagingDb.Factory rangeValueStagingDbFactory;
-        private final PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory;
-
-        @Inject
-        public OffHeapStagingStoreFactory(
-                final TempDirProvider tempDirProvider,
-                final LmdbEnvFactory lmdbEnvFactory,
-                final ByteBufferPool byteBufferPool,
-                final KeyValueStagingDb.Factory keyValueStagingDbFactory,
-                final RangeValueStagingDb.Factory rangeValueStagingDbFactory,
-                final PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory) {
-
-            this.tempDirProvider = tempDirProvider;
-            this.lmdbEnvFactory = lmdbEnvFactory;
-            this.byteBufferPool = byteBufferPool;
-            this.keyValueStagingDbFactory = keyValueStagingDbFactory;
-            this.rangeValueStagingDbFactory = rangeValueStagingDbFactory;
-            this.pooledByteBufferOutputStreamFactory = pooledByteBufferOutputStreamFactory;
-        }
-
-        public OffHeapStagingStore create(
-                final LmdbEnv refStoreLmdbEnv,
-                final MapDefinitionUIDStore mapDefinitionUIDStore,
-                final RefStreamDefinition refStreamDefinition) {
-
-            final LmdbEnv stagingLmdbEnv = buildStagingEnv(
-                    tempDirProvider,
-                    lmdbEnvFactory,
-                    refStreamDefinition);
-
-            final KeyValueStagingDb keyValueStagingDb = keyValueStagingDbFactory.create(stagingLmdbEnv);
-            final RangeValueStagingDb rangeValueStagingDb = rangeValueStagingDbFactory.create(stagingLmdbEnv);
-
-            return new OffHeapStagingStore(
-                    stagingLmdbEnv,
-                    refStoreLmdbEnv,
-                    keyValueStagingDb,
-                    rangeValueStagingDb,
-                    mapDefinitionUIDStore,
-                    pooledByteBufferOutputStreamFactory);
-        }
-
-        private LmdbEnv buildStagingEnv(final TempDirProvider tempDirProvider,
-                                        final LmdbEnvFactory lmdbEnvFactory,
-                                        final RefStreamDefinition refStreamDefinition) {
-            // TODO: 19/04/2023 Maybe get a dir from config
-            // TODO: 19/04/2023 Create an LmdbConfig impl for ref staging
-            final Path stagingEnvDir = tempDirProvider.get().resolve("ref-data-staging");
-
-            // Dir needs to be quite unique to avoid any clashes
-            final String subDirName = DATE_FORMATTER.format(Instant.now())
-                    + "-" + refStreamDefinition.getStreamId()
-                    + "-" + refStreamDefinition.getPartNumber()
-                    + "-" + UUID.randomUUID();
-
-            try {
-                LOGGER.info("Creating reference data staging LMDB environment in {}/{}", stagingEnvDir, subDirName);
-                return lmdbEnvFactory.builder(stagingEnvDir)
-                        .withMapSize(ByteSize.ofGibibytes(50))
-                        .withMaxDbCount(128)
-                        .setIsReaderBlockedByWriter(false)
-                        .withSubDirectory(subDirName)
-                        .addEnvFlag(EnvFlags.MDB_NOTLS)
-                        .build();
-            } catch (Exception e) {
-                throw new RuntimeException(LogUtil.message("Error building staging LMDB in {}/{}: {}",
-                        stagingEnvDir, subDirName, e.getMessage()), e);
-            }
-        }
     }
 }

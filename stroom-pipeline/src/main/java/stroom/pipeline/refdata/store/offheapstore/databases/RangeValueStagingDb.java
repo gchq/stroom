@@ -17,7 +17,9 @@ import org.lmdbjava.Env;
 
 import javax.inject.Inject;
 
-public class RangeValueStagingDb extends AbstractLmdbDb<UnSortedDupKey<RangeStoreKey>, StagingValue> {
+public class RangeValueStagingDb
+        extends AbstractLmdbDb<UnSortedDupKey<RangeStoreKey>, StagingValue>
+        implements StagingDb<UnSortedDupKey<RangeStoreKey>> {
 
     public static final String DB_NAME = "RangeValueStaging";
 

@@ -3,7 +3,6 @@ package stroom.pipeline.refdata.store.offheapstore;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.ReferenceDataLmdbConfig;
 import stroom.pipeline.refdata.store.RefDataStoreModule;
-import stroom.pipeline.refdata.store.offheapstore.OffHeapStagingStore.OffHeapStagingStoreFactory;
 import stroom.task.mock.MockTaskModule;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;

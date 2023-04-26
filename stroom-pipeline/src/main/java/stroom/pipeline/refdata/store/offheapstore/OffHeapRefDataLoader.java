@@ -18,7 +18,6 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.bytebuffer.PooledByteBuffer;
-import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.MapDefinition;
@@ -28,7 +27,6 @@ import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StagingValue;
-import stroom.pipeline.refdata.store.offheapstore.OffHeapStagingStore.OffHeapStagingStoreFactory;
 import stroom.pipeline.refdata.store.offheapstore.databases.EntryStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
@@ -42,6 +40,7 @@ import stroom.util.shared.Range;
 
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Striped;
+import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,22 +72,16 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(OffHeapRefDataLoader.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(OffHeapRefDataLoader.class);
 
-    //    private WriteTxn writeTxn = null;
-    private Instant txnStartTime = null;
     private final Lock refStreamDefReentrantLock;
-
     private final KeyValueStoreDb keyValueStoreDb;
     private final RangeStoreDb rangeStoreDb;
     private final ValueStore valueStore;
     private final MapDefinitionUIDStore mapDefinitionUIDStore;
     private final ProcessingInfoDb processingInfoDb;
-
-    private final LmdbEnv refStoreLmdbEnv;
+    private final RefDataLmdbEnv refStoreLmdbEnv;
     private final OffHeapStagingStoreFactory offHeapStagingStoreFactory;
     private final RefStreamDefinition refStreamDefinition;
     private final long effectiveTimeMs;
-    private Runnable commitIfRequireFunc = () -> {
-    }; // default position is to not commit mid-load
 
     private int newEntriesCount = 0;
     private int replacedEntriesCount = 0;
@@ -114,16 +107,17 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     private RangePutOutcomeHandler rangePutOutcomeHandler = null;
     private OffHeapStagingStore offHeapStagingStore = null;
 
-    OffHeapRefDataLoader(final Striped<Lock> refStreamDefStripedReentrantLock,
+    @Inject
+    OffHeapRefDataLoader(@Assisted final Striped<Lock> refStreamDefStripedReentrantLock,
+                         @Assisted final RefStreamDefinition refStreamDefinition,
+                         @Assisted final long effectiveTimeMs,
                          final KeyValueStoreDb keyValueStoreDb,
                          final RangeStoreDb rangeStoreDb,
                          final ValueStore valueStore,
                          final MapDefinitionUIDStore mapDefinitionUIDStore,
                          final ProcessingInfoDb processingInfoDb,
-                         final LmdbEnv refStoreLmdbEnv,
-                         final OffHeapStagingStoreFactory offHeapStagingStoreFactory,
-                         final RefStreamDefinition refStreamDefinition,
-                         final long effectiveTimeMs) {
+                         final RefDataLmdbEnv refStoreLmdbEnv,
+                         final OffHeapStagingStoreFactory offHeapStagingStoreFactory) {
 
         this.keyValueStoreDb = keyValueStoreDb;
         this.rangeStoreDb = rangeStoreDb;
@@ -196,10 +190,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         final PutOutcome putOutcome = processingInfoDb.put(
                 refStreamDefinition, refDataProcessingInfo, overwriteExisting);
 
-        this.offHeapStagingStore = offHeapStagingStoreFactory.create(
-                refStoreLmdbEnv,
-                mapDefinitionUIDStore,
-                refStreamDefinition);
+        this.offHeapStagingStore = offHeapStagingStoreFactory.create(refStoreLmdbEnv, refStreamDefinition);
 
         currentLoaderState = LoaderState.INITIALISED;
         return putOutcome;
@@ -337,16 +328,16 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     @Override
     public void put(final MapDefinition mapDefinition,
                     final Range<Long> keyRange,
-                    final StagingValue refDataValue) {
-        LOGGER.trace("put({}, {}, {}", mapDefinition, keyRange, refDataValue);
+                    final StagingValue stagingValue) {
+        LOGGER.trace("put({}, {}, {}", mapDefinition, keyRange, stagingValue);
         Objects.requireNonNull(mapDefinition);
         Objects.requireNonNull(keyRange);
-        Objects.requireNonNull(refDataValue);
+        Objects.requireNonNull(stagingValue);
         checkCurrentState(LoaderState.INITIALISED);
 
         // Stage the value
         putsToStagingStoreCounter++;
-        offHeapStagingStore.put(mapDefinition, keyRange, refDataValue);
+        offHeapStagingStore.put(mapDefinition, keyRange, stagingValue);
     }
 
     @Override
@@ -582,38 +573,10 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     // --------------------------------------------------------------------------------
 
 
-    public static class OffHeapRefDataLoaderFactory {
+    public interface Factory {
 
-        //        private final LmdbEnvFactory lmdbEnvFactory;
-        private final OffHeapStagingStoreFactory offHeapStagingStoreFactory;
-
-        @Inject
-        public OffHeapRefDataLoaderFactory(final OffHeapStagingStoreFactory offHeapStagingStoreFactory) {
-//            this.lmdbEnvFactory = lmdbEnvFactory;
-            this.offHeapStagingStoreFactory = offHeapStagingStoreFactory;
-        }
-
-        OffHeapRefDataLoader create(final KeyValueStoreDb keyValueStoreDb,
-                                    final RangeStoreDb rangeStoreDb,
-                                    final ValueStore valueStore,
-                                    final MapDefinitionUIDStore mapDefinitionUIDStore,
-                                    final ProcessingInfoDb processingInfoDb,
-                                    final LmdbEnv lmdbEnvironment,
-                                    final Striped<Lock> refStreamDefStripedReentrantLock,
+        OffHeapRefDataLoader create(final Striped<Lock> refStreamDefStripedReentrantLock,
                                     final RefStreamDefinition refStreamDefinition,
-                                    final long effectiveTimeMs) {
-
-            return new OffHeapRefDataLoader(
-                    refStreamDefStripedReentrantLock,
-                    keyValueStoreDb,
-                    rangeStoreDb,
-                    valueStore,
-                    mapDefinitionUIDStore,
-                    processingInfoDb,
-                    lmdbEnvironment,
-                    offHeapStagingStoreFactory,
-                    refStreamDefinition,
-                    effectiveTimeMs);
-        }
+                                    final long effectiveTimeMs);
     }
 }

@@ -22,18 +22,12 @@ import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.job.api.Schedule;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.pipeline.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
+import stroom.pipeline.refdata.store.offheapstore.OffHeapRefDataLoader;
 import stroom.pipeline.refdata.store.offheapstore.OffHeapRefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.offheapstore.RefDataOffHeapStore;
 import stroom.pipeline.refdata.store.offheapstore.StringByteBufferConsumer;
 import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStagingDb;
-import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStoreDb;
-import stroom.pipeline.refdata.store.offheapstore.databases.MapUidForwardDb;
-import stroom.pipeline.refdata.store.offheapstore.databases.MapUidReverseDb;
-import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
-import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeValueStagingDb;
-import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
-import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreMetaDb;
 import stroom.pipeline.refdata.store.onheapstore.FastInfosetValueConsumer;
 import stroom.pipeline.refdata.store.onheapstore.OnHeapRefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.onheapstore.StringValueConsumer;
@@ -54,27 +48,20 @@ public class RefDataStoreModule extends AbstractModule {
     protected void configure() {
         install(new ByteBufferModule());
 
-        // bind the various RefDataValue ByteBuffer consumer factories into a map keyed on their ID
+        // Bind the various RefDataValue ByteBuffer consumer factories into a map keyed on their ID
         ByteBufferConsumerBinder.create(binder())
                 .bind(FastInfosetValue.TYPE_ID, FastInfosetByteBufferConsumer.Factory.class)
                 .bind(StringValue.TYPE_ID, StringByteBufferConsumer.Factory.class);
 
-        // bind the various RefDataValue consumer factories into a map keyed on their ID
+        // Bind the various RefDataValue consumer factories into a map keyed on their ID
         ValueConsumerBinder.create(binder())
                 .bind(FastInfosetValue.TYPE_ID, FastInfosetValueConsumer.Factory.class)
                 .bind(StringValue.TYPE_ID, StringValueConsumer.Factory.class);
 
-        // bind all the reference data off heap tables
-        install(new FactoryModuleBuilder().build(KeyValueStoreDb.Factory.class));
-        install(new FactoryModuleBuilder().build(RangeStoreDb.Factory.class));
-        install(new FactoryModuleBuilder().build(ValueStoreDb.Factory.class));
-        install(new FactoryModuleBuilder().build(MapUidForwardDb.Factory.class));
-        install(new FactoryModuleBuilder().build(MapUidReverseDb.Factory.class));
-        install(new FactoryModuleBuilder().build(ProcessingInfoDb.Factory.class));
-        install(new FactoryModuleBuilder().build(ValueStoreMetaDb.Factory.class));
+        // Bind the @Assisted inject factories
         install(new FactoryModuleBuilder().build(KeyValueStagingDb.Factory.class));
         install(new FactoryModuleBuilder().build(RangeValueStagingDb.Factory.class));
-
+        install(new FactoryModuleBuilder().build(OffHeapRefDataLoader.Factory.class));
         install(new FactoryModuleBuilder().build(OffHeapRefDataValueProxyConsumer.Factory.class));
         install(new FactoryModuleBuilder().build(OnHeapRefDataValueProxyConsumer.Factory.class));
         install(new FactoryModuleBuilder().build(PooledByteBufferOutputStream.Factory.class));
