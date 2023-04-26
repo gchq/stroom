@@ -118,6 +118,7 @@ ext.versions = [
         gwt               : '2.10.0',
         hikari            : '5.0.0',
         jackson_swagger   : '2.11.1', // Specific version of jackson for use with the swagger plugin
+        jersey            : '2.35', // This is a fudge. We should get it from the dropwiz bom but dropwizard-jersey pulls in 2.33 and metrics-jersey pulls in 2.35. IJ seems to get confused and put both on the classpath. See dependencySubstitution below.
         jmh               : '1.35',
         jooq              : '3.16.4',
         junit_jupiter     : '5.8.2',
@@ -392,6 +393,11 @@ subprojects {
                     substitute module('javax.activation:activation') using module('javax.activation:javax.activation-api:1.2.0')
                     //substitute module('log4j:log4j') using module("org.slf4j:log4j-over-slf4j:1.7.25")
                     substitute module('log4j:log4j') using module("org.slf4j:log4j-over-slf4j:$dropwizardBomSlf4jVersion")
+
+                    // These three are a fudge. We should get it from the dropwiz bom but dropwizard-jersey pulls in 2.33 and metrics-jersey pulls in 2.35. IJ seems to get confused and put both on the classpath. See dependencySubstitution below.
+                    substitute module('org.glassfish.jersey.core:jersey-common') using module("org.glassfish.jersey.core:jersey-common:$versions.jersey")
+                    substitute module('org.glassfish.jersey.core:jersey-server') using module("org.glassfish.jersey.core:jersey-server:$versions.jersey")
+                    substitute module('org.glassfish.jersey.core:jersey-client') using module("org.glassfish.jersey.core:jersey-client:$versions.jersey")
 
 //                    substitute module('org.apache.lucene:lucene-analyzers-common') with module("org.apache.lucene:lucene-analyzers-common:$versions.lucene")
 //                    substitute module('org.apache.lucene:lucene-backward-codecs') with module("org.apache.lucene:lucene-backward-codecs:$versions.lucene")
