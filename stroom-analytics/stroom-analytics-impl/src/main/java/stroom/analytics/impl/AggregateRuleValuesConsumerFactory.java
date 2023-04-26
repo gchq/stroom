@@ -6,19 +6,13 @@ import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.ErrorConsumer;
 import stroom.query.common.v2.ErrorConsumerImpl;
 import stroom.query.common.v2.LmdbDataStore;
 import stroom.query.common.v2.LmdbDataStoreFactory;
-import stroom.query.common.v2.ResultStoreFactory;
-import stroom.query.common.v2.ResultStoreManager;
-import stroom.query.common.v2.Sizes;
-import stroom.query.common.v2.SizesProvider;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -26,25 +20,12 @@ import javax.inject.Singleton;
 @Singleton
 public class AggregateRuleValuesConsumerFactory {
 
-    private final CoprocessorsFactory coprocessorsFactory;
-    private final ResultStoreFactory resultStoreFactory;
-    private final ResultStoreManager resultStoreManager;
-
-    private final SizesProvider sizesProvider;
     private final LmdbDataStoreFactory lmdbDataStoreFactory;
 
     private final Map<QueryKey, LmdbDataStore> dataStoreMap;
 
     @Inject
-    public AggregateRuleValuesConsumerFactory(final CoprocessorsFactory coprocessorsFactory,
-                                              final ResultStoreFactory resultStoreFactory,
-                                              final ResultStoreManager resultStoreManager,
-                                              final SizesProvider sizesProvider,
-                                              final LmdbDataStoreFactory lmdbDataStoreFactory) {
-        this.coprocessorsFactory = coprocessorsFactory;
-        this.resultStoreFactory = resultStoreFactory;
-        this.resultStoreManager = resultStoreManager;
-        this.sizesProvider = sizesProvider;
+    public AggregateRuleValuesConsumerFactory(final LmdbDataStoreFactory lmdbDataStoreFactory) {
         this.lmdbDataStoreFactory = lmdbDataStoreFactory;
 
         dataStoreMap = new ConcurrentHashMap<>();
@@ -88,9 +69,5 @@ public class AggregateRuleValuesConsumerFactory {
                     dataStoreSettings,
                     errorConsumer);
         });
-    }
-
-    public Optional<LmdbDataStore> getIfPresent(final QueryKey queryKey) {
-        return Optional.ofNullable(dataStoreMap.get(queryKey));
     }
 }

@@ -91,7 +91,7 @@ public class AnalyticsExecutor {
     private final Provider<AnalyticsStreamProcessor> analyticsStreamProcessorProvider;
     private final Provider<ExtractionStateHolder> extractionStateHolderProvider;
     private final AggregateRuleValuesConsumerFactory aggregateRuleValuesConsumerFactory;
-    private final Provider<AlertWriter2> alertWriterProvider;
+    private final Provider<AlertWriter> alertWriterProvider;
     private final TaskContextFactory taskContextFactory;
     private final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory;
     private final AnalyticRuleStateDao analyticRuleStateDao;
@@ -117,7 +117,7 @@ public class AnalyticsExecutor {
                              final TaskContextFactory taskContextFactory,
                              final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory,
                              final AggregateRuleValuesConsumerFactory aggregateRuleValuesConsumerFactory,
-                             final Provider<AlertWriter2> alertWriterProvider,
+                             final Provider<AlertWriter> alertWriterProvider,
                              final AnalyticRuleStateDao analyticRuleStateDao,
                              final AnalyticErrorWritingExecutor analyticErrorWritingExecutor) {
         this.analyticRuleSearchRequestHelper = analyticRuleSearchRequestHelper;
@@ -224,7 +224,7 @@ public class AnalyticsExecutor {
                                 taskContext -> {
                                     final DetectionsWriter detectionsWriter = detectionsWriterProvider.get();
 
-                                    final AlertWriter2 alertWriter = alertWriterProvider.get();
+                                    final AlertWriter alertWriter = alertWriterProvider.get();
                                     alertWriter.setAnalyticRuleDoc(analyticRuleDoc);
                                     alertWriter.setCompiledFields(compiledFields);
                                     alertWriter.setFieldIndex(fieldIndex);

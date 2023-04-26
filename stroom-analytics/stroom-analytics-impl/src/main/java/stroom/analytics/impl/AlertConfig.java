@@ -9,19 +9,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
 @JsonPropertyOrder(alphabetic = true)
 public class AlertConfig extends AbstractConfig implements IsStroomConfig {
 
     @JsonPropertyDescription("Name of timezone (ZoneId) that will be used during alert generation.")
     private final String timezone;
-
-    @JsonPropertyDescription("Comma delimited list of the Stroom folder explorer paths used " +
-            "to hold dashboards that will be run as rules, in order to create alerts during indexing.")
-    private final List<String> rulesFolderList;
 
     @JsonPropertyDescription("Should alerts include all fields from extraction pipeline," +
             " in addition to those defined in the dashboard")
@@ -36,7 +28,6 @@ public class AlertConfig extends AbstractConfig implements IsStroomConfig {
 
     public AlertConfig() {
         timezone = "UTC";
-        rulesFolderList = new ArrayList<>();
         reportAllExtractedFieldsEnabled = false;
         additionalFieldsPrefix = "_";
         analyticStoreConfig = new AnalyticStoreConfig();
@@ -45,20 +36,13 @@ public class AlertConfig extends AbstractConfig implements IsStroomConfig {
     @SuppressWarnings("unused")
     @JsonCreator
     public AlertConfig(@JsonProperty("timezone") final String timezone,
-                       @JsonProperty("rulesFolderList") final List<String> rulesFolderList,
                        @JsonProperty("reportAllExtractedFieldsEnabled") final boolean reportAllExtractedFieldsEnabled,
                        @JsonProperty("additionalFieldsPrefix") final String additionalFieldsPrefix,
                        @JsonProperty("analyticStoreConfig") final AnalyticStoreConfig analyticStoreConfig) {
         this.timezone = timezone;
-        this.rulesFolderList = rulesFolderList;
         this.reportAllExtractedFieldsEnabled = reportAllExtractedFieldsEnabled;
         this.additionalFieldsPrefix = additionalFieldsPrefix;
         this.analyticStoreConfig = analyticStoreConfig;
-    }
-
-    @JsonProperty
-    public List<String> getRulesFolderList() {
-        return rulesFolderList;
     }
 
     @JsonProperty
@@ -85,8 +69,6 @@ public class AlertConfig extends AbstractConfig implements IsStroomConfig {
     public String toString() {
         return "AlertConfig{" +
                 "timezone='" + timezone + '\'' +
-                ", rulesFolderList=[" + rulesFolderList.stream().map(s -> "\"" + s + "\"")
-                .collect(Collectors.joining(", ")) + ']' +
                 ", reportAllExtractedFields='" + reportAllExtractedFieldsEnabled + '\'' +
                 ", additionalFieldsPrefix='" + additionalFieldsPrefix + '\'' +
                 ", analyticStoreConfig='" + analyticStoreConfig + '\'' +

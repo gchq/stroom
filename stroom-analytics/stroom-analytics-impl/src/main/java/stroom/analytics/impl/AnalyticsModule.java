@@ -16,7 +16,6 @@
 
 package stroom.analytics.impl;
 
-import stroom.analytics.api.AlertManager;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.util.RunnableWrapper;
 
@@ -30,7 +29,6 @@ public class AnalyticsModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(AlertManager.class).to(AlertManagerImpl.class);
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(AnalyticsExecutorRunnable.class, builder -> builder
                         .name("Analytics Executor")

@@ -2,11 +2,9 @@ package stroom.analytics.impl;
 
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
-import stroom.feed.api.FeedStore;
 import stroom.pipeline.writer.StreamAppender;
 import stroom.pipeline.writer.XMLWriter;
 
-import java.util.List;
 import javax.inject.Inject;
 
 public class DetectionsWriter implements RecordConsumer, ProcessLifecycleAware {
