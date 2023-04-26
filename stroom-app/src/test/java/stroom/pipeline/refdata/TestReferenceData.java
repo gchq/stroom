@@ -17,6 +17,7 @@
 
 package stroom.pipeline.refdata;
 
+import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.cache.api.CacheManager;
 import stroom.cache.impl.CacheManagerImpl;
 import stroom.data.shared.StreamTypeNames;
@@ -27,12 +28,18 @@ import stroom.meta.api.EffectiveMeta;
 import stroom.pipeline.PipelineSerialiser;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.cache.DocumentPermissionCache;
+import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.MapDefinition;
+import stroom.pipeline.refdata.store.NullValue;
+import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
+import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.refdata.store.StagingValueOutputStream;
 import stroom.pipeline.refdata.store.StringValue;
+import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.security.mock.MockSecurityContext;
@@ -40,6 +47,7 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
 import stroom.util.io.ByteSize;
 import stroom.util.io.FileUtil;
+import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.Range;
 
@@ -123,6 +131,12 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
 
     @Inject
     private Provider<RefDataStoreHolder> refDataStoreHolderProvider;
+    @Inject
+    private PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory;
+    @Inject
+    private ValueStoreHashAlgorithm valueStoreHashAlgorithm;
+    @Inject
+    private StagingValueOutputStream stagingValueOutputStream;
 
     @BeforeEach
     void setup() throws IOException {
@@ -349,11 +363,11 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                             refDataLoader.initialise(false);
                             for (String mapName : mapNames) {
                                 MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
-                                refDataLoader.put(
+                                doLoaderPut(refDataLoader,
                                         mapDefinition,
                                         USER_1,
                                         buildValue(mapDefinition, VALUE_1));
-                                refDataLoader.put(
+                                doLoaderPut(refDataLoader,
                                         mapDefinition,
                                         "user2",
                                         buildValue(mapDefinition, VALUE_2));
@@ -385,7 +399,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                                 String key = mapKeyValueTuple._2();
                                 String value = mapKeyValueTuple._3();
                                 MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
-                                refDataLoader.put(mapDefinition, key, StringValue.of(value));
+                                doLoaderPut(refDataLoader, mapDefinition, key, StringValue.of(value));
                             }
                             refDataLoader.completeProcessing();
                         });
@@ -415,7 +429,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                                 Range<Long> range = mapKeyValueTuple._2();
                                 String value = mapKeyValueTuple._3();
                                 MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
-                                refDataLoader.put(mapDefinition, range, StringValue.of(value));
+                                doLoaderPut(refDataLoader, mapDefinition, range, StringValue.of(value));
                             }
                             refDataLoader.completeProcessing();
                         });
@@ -703,5 +717,41 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
 
     private EffectiveMeta buildEffectiveMeta(final long id, final long effectiveMs) {
         return new EffectiveMeta(id, "DUMMY_FEED", "DummyType", effectiveMs);
+    }
+
+    private void doLoaderPut(final RefDataLoader refDataLoader,
+                             final MapDefinition mapDefinition,
+                             final String key,
+                             final RefDataValue refDataValue) {
+        writeValue(refDataValue);
+        refDataLoader.put(mapDefinition, key, stagingValueOutputStream);
+    }
+
+    private void doLoaderPut(final RefDataLoader refDataLoader,
+                             final MapDefinition mapDefinition,
+                             final Range<Long> range,
+                             final RefDataValue refDataValue) {
+        writeValue(refDataValue);
+        refDataLoader.put(mapDefinition, range, stagingValueOutputStream);
+    }
+
+    private void writeValue(final RefDataValue refDataValue) {
+        stagingValueOutputStream.clear();
+        try {
+            if (refDataValue instanceof StringValue) {
+                final StringValue stringValue = (StringValue) refDataValue;
+                stagingValueOutputStream.write(stringValue.getValue());
+                stagingValueOutputStream.setTypeId(StringValue.TYPE_ID);
+            } else if (refDataValue instanceof FastInfosetValue) {
+                stagingValueOutputStream.write(((FastInfosetValue) refDataValue).getByteBuffer());
+                stagingValueOutputStream.setTypeId(FastInfosetValue.TYPE_ID);
+            } else if (refDataValue instanceof NullValue) {
+                stagingValueOutputStream.setTypeId(NullValue.TYPE_ID);
+            } else {
+                throw new RuntimeException("Unexpected type " + refDataValue.getClass().getSimpleName());
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(LogUtil.message("Error writing value: {}", e.getMessage()), e);
+        }
     }
 }

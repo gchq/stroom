@@ -22,20 +22,37 @@ public enum ProcessingState {
     // byte values MUST be unique and existing ones MUST NOT be changed
     // or it will break de-serialisation of existing data.
 
-    // A thread is busy loading this ref stream at the moment
+    /**
+     * A thread is busy loading this ref stream at the moment
+     */
     LOAD_IN_PROGRESS((byte) 0, "Load In Progress"),
-    // A thread is busy puring this ref stream at the moment
+    /**
+     * A thread is busy puring this ref stream at the moment
+     */
     PURGE_IN_PROGRESS((byte) 1, "Purge In Progress"),
-    // The load of this ref stream completed successfully
+    /**
+     * The load of this ref stream completed successfully
+     */
     COMPLETE((byte) 2, "Complete"),
-    // The load of the this ref stream failed due to an error, e.g. parsing the reference
-    // data XML. It is incomplete and/or wrong so should not be used. No point in retrying.
+    /**
+     * The load of this ref stream failed due to an error, e.g. parsing the reference data XML.
+     * It is incomplete and/or wrong so should not be used. No point in retrying.
+     */
     FAILED((byte) 3, "Failed"),
-    // The load was terminated, i.e. by task cancellation or system shutdown.
-    // It is incomplete and/or wrong so should not be used but we can retry later.
+    /**
+     * The load was terminated, i.e. by task cancellation or system shutdown.
+     * It is incomplete and/or wrong so should not be used but we can retry later.
+     */
     TERMINATED((byte) 4, "Terminated"),
-    // The purge of this ref stream failed for some unexpected error.
+    /**
+     * The purge of this ref stream failed for some unexpected error.
+     */
     PURGE_FAILED((byte) 5, "Purge Failed"),
+    /**
+     * The reference entries have been staged in the temporary store and are awaiting transfer
+     * into the reference store.
+     */
+    STAGED((byte) 6, "Entries Staged"),
     ;
 
     private final byte id;

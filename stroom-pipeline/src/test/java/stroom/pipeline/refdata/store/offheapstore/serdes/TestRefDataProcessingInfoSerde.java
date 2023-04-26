@@ -21,6 +21,7 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 
+import com.google.inject.TypeLiteral;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -191,7 +192,7 @@ class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessing
     }
 
     @Override
-    Class<RefDataProcessingInfoSerde> getSerdeType() {
-        return RefDataProcessingInfoSerde.class;
+    TypeLiteral<RefDataProcessingInfoSerde> getSerdeType() {
+        return new TypeLiteral<RefDataProcessingInfoSerde>(){};
     }
 }

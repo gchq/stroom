@@ -48,7 +48,6 @@ public interface RefDataStore {
                 .isPresent();
     }
 
-
     /**
      * Returns the set of map names for the passed refStreamDefinition. Intended to be run
      * after a load.

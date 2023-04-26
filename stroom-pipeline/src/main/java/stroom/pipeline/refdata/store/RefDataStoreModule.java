@@ -25,11 +25,13 @@ import stroom.pipeline.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
 import stroom.pipeline.refdata.store.offheapstore.OffHeapRefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.offheapstore.RefDataOffHeapStore;
 import stroom.pipeline.refdata.store.offheapstore.StringByteBufferConsumer;
+import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStagingDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.MapUidForwardDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.MapUidReverseDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
+import stroom.pipeline.refdata.store.offheapstore.databases.RangeValueStagingDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreMetaDb;
 import stroom.pipeline.refdata.store.onheapstore.FastInfosetValueConsumer;
@@ -70,6 +72,8 @@ public class RefDataStoreModule extends AbstractModule {
         install(new FactoryModuleBuilder().build(MapUidReverseDb.Factory.class));
         install(new FactoryModuleBuilder().build(ProcessingInfoDb.Factory.class));
         install(new FactoryModuleBuilder().build(ValueStoreMetaDb.Factory.class));
+        install(new FactoryModuleBuilder().build(KeyValueStagingDb.Factory.class));
+        install(new FactoryModuleBuilder().build(RangeValueStagingDb.Factory.class));
 
         install(new FactoryModuleBuilder().build(OffHeapRefDataValueProxyConsumer.Factory.class));
         install(new FactoryModuleBuilder().build(OnHeapRefDataValueProxyConsumer.Factory.class));

@@ -24,6 +24,8 @@ public class ValueStoreMetaSerde implements Serde<ValueStoreMeta> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ValueStoreMetaSerde.class);
 
     private static final UnsignedBytes REF_COUNT_UNSIGNED_BYTES = UnsignedBytesInstances.THREE;
+    private static final byte[] REF_COUNT_ZERO = REF_COUNT_UNSIGNED_BYTES.toBytes(0);
+    private static final byte[] REF_COUNT_ONE = REF_COUNT_UNSIGNED_BYTES.toBytes(1);
 
     private static final int TYPE_ID_OFFSET = 0;
     private static final int TYPE_ID_BYTES = 1;
@@ -68,6 +70,20 @@ public class ValueStoreMetaSerde implements Serde<ValueStoreMeta> {
      */
     public int extractReferenceCount(final ByteBuffer byteBuffer) {
         return (int) REF_COUNT_UNSIGNED_BYTES.get(byteBuffer, REFERENCE_COUNT_OFFSET);
+    }
+
+    /**
+     * @return True if the reference count is one or zero.
+     */
+    public boolean isLastReference(final ByteBuffer byteBuffer) {
+        // Ever so slightly cheaper than extracting the count and checking the long value
+        return org.apache.hadoop.hbase.util.ByteBufferUtils.compareTo(
+                REF_COUNT_ONE, 0, REFERENCE_COUNT_BYTES,
+                byteBuffer, REFERENCE_COUNT_OFFSET, REFERENCE_COUNT_BYTES) == 0L
+                ||
+                org.apache.hadoop.hbase.util.ByteBufferUtils.compareTo(
+                        REF_COUNT_ZERO, 0, REFERENCE_COUNT_BYTES,
+                        byteBuffer, REFERENCE_COUNT_OFFSET, REFERENCE_COUNT_BYTES) == 0L;
     }
 
     public void cloneAndDecrementRefCount(final ByteBuffer sourceBuffer, final ByteBuffer destBuffer) {

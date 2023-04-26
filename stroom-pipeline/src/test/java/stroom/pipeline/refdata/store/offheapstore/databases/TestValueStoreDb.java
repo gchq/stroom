@@ -2,18 +2,22 @@ package stroom.pipeline.refdata.store.offheapstore.databases;
 
 
 import stroom.bytebuffer.ByteBufferPoolFactory;
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.bytebuffer.PooledByteBufferOutputStream.Factory;
 import stroom.lmdb.EntryConsumer;
 import stroom.pipeline.refdata.store.BasicValueStoreHashAlgorithmImpl;
+import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.RefDataValue;
+import stroom.pipeline.refdata.store.StagingValue;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
 import stroom.pipeline.refdata.store.XxHashValueStoreHashAlgorithm;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.serdes.GenericRefDataValueSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataValueSerdeFactory;
+import stroom.pipeline.refdata.store.offheapstore.serdes.StagingValueSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
 
 import org.assertj.core.api.Assertions;
@@ -51,6 +55,7 @@ class TestValueStoreDb extends AbstractStoreDbTest {
         }
     };
     private ValueStoreDb valueStoreDb = null;
+    private ValueStoreHashAlgorithm currValueStoreHashAlgorithm;
 
 
     @BeforeEach
@@ -63,6 +68,7 @@ class TestValueStoreDb extends AbstractStoreDbTest {
                 new GenericRefDataValueSerde(refDataValueSerdeFactory),
                 xxHashAlgorithm,
                 pooledByteBufferOutputStreamFactory);
+        currValueStoreHashAlgorithm = xxHashAlgorithm;
     }
 
     private void setupValueStoreDb(final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
@@ -73,14 +79,23 @@ class TestValueStoreDb extends AbstractStoreDbTest {
                 new GenericRefDataValueSerde(refDataValueSerdeFactory),
                 valueStoreHashAlgorithm,
                 pooledByteBufferOutputStreamFactory);
+        currValueStoreHashAlgorithm = valueStoreHashAlgorithm;
     }
 
+    ValueStoreHashAlgorithm getCurrValueStoreHashAlgorithm() {
+        return currValueStoreHashAlgorithm;
+    }
 
-    private ValueStoreKey getOrCreate(Txn<ByteBuffer> writeTxn, RefDataValue refDataValue) {
+    private ValueStoreKey getOrCreate(final Txn<ByteBuffer> writeTxn,
+                                      final RefDataValue refDataValue) {
         try (PooledByteBuffer valueStoreKeyPooledBuffer = valueStoreDb.getPooledKeyBuffer()) {
+            final StagingValue stagingValue = StagingValueSerde.convert(
+                    ByteBuffer::allocateDirect,
+                    getCurrValueStoreHashAlgorithm(),
+                    refDataValue);
             ByteBuffer valueStoreKeyBuffer = valueStoreDb.getOrCreateKey(
                     writeTxn,
-                    refDataValue,
+                    stagingValue,
                     valueStoreKeyPooledBuffer,
                     EntryConsumer.doNothingConsumer(),
                     EntryConsumer.doNothingConsumer());
@@ -88,7 +103,6 @@ class TestValueStoreDb extends AbstractStoreDbTest {
             return valueStoreDb.deserializeKey(valueStoreKeyBuffer);
         }
     }
-
 
     @Test
     void testGetOrCreateSparseIds() {
@@ -111,6 +125,7 @@ class TestValueStoreDb extends AbstractStoreDbTest {
             // id values.
             for (int i = 0; i < 5; i++) {
                 valueStoreKey = getOrCreate(writeTxn, refDataValues.get(i));
+                LOGGER.debug("i: {}, valueStoreKey: {}", i, valueStoreKey);
                 valueStoreKeysMap.put(i, valueStoreKey);
                 assertThat(valueStoreKey.getUniqueId()).isEqualTo((short) i);
             }
@@ -352,13 +367,90 @@ class TestValueStoreDb extends AbstractStoreDbTest {
     }
 
     @Test
-    void testAreValueEqual_twoEqualValues() {
+    void testAreValueEqual_twoEqualStringValues() {
         doAreValuesEqualAssert(StringValue.of("value1"), StringValue.of("value1"), true);
     }
 
     @Test
-    void testAreValueEqual_twoDifferentValues() {
-        doAreValuesEqualAssert(StringValue.of("value1"), StringValue.of("value2"), false);
+    void testAreValueEqual_twoEqualFastInfosetValues_1() {
+        final ByteBuffer valBuff1 = ByteBuffer.allocateDirect(20);
+        valBuff1.put("value".getBytes());
+        valBuff1.flip();
+        final ByteBuffer valBuff2 = ByteBuffer.allocateDirect(20);
+        valBuff2.put("value".getBytes());
+        valBuff2.flip();
+        final FastInfosetValue val1 = FastInfosetValue.wrap(valBuff1);
+        final FastInfosetValue val2 = FastInfosetValue.wrap(valBuff2);
+        doAreValuesEqualAssert(
+                val1,
+                val2,
+                true);
+    }
+
+    @Test
+    void testAreValueEqual_twoEqualFastInfosetValues_2() {
+        // Same value in both buffers but different size buffers and different positions
+        final ByteBuffer valBuff1 = ByteBuffer.allocateDirect(30);
+        valBuff1.put(5, "value".getBytes());
+        valBuff1.position(5);
+        valBuff1.limit(5 + "value".length());
+        LOGGER.info("valBuff1: {}", ByteBufferUtils.byteBufferInfo(valBuff1));
+
+        final ByteBuffer valBuff2 = ByteBuffer.allocateDirect(20);
+        valBuff2.put("value".getBytes());
+        valBuff2.flip();
+        LOGGER.info("valBuff2: {}", ByteBufferUtils.byteBufferInfo(valBuff2));
+
+        final FastInfosetValue val1 = FastInfosetValue.wrap(valBuff1);
+        final FastInfosetValue val2 = FastInfosetValue.wrap(valBuff2);
+        doAreValuesEqualAssert(
+                val1,
+                val2,
+                true);
+    }
+
+    @Test
+    void testAreValueEqual_twoDifferentStringValuesWithHashCollision() {
+        setupValueStoreDb(new ConstantHashHashAlgorithm());
+        doAreValuesEqualAssert(
+                StringValue.of("value1"),
+                StringValue.of("value2"),
+                false);
+    }
+
+    @Test
+    void testAreValueEqual_twoDifferentFastInfosetValues() {
+        final ByteBuffer valBuff1 = ByteBuffer.allocateDirect(20);
+        valBuff1.put("value1".getBytes());
+        valBuff1.flip();
+        final ByteBuffer valBuff2 = ByteBuffer.allocateDirect(20);
+        valBuff2.put("value2".getBytes());
+        valBuff2.flip();
+        final FastInfosetValue val1 = FastInfosetValue.wrap(valBuff1);
+        final FastInfosetValue val2 = FastInfosetValue.wrap(valBuff2);
+        doAreValuesEqualAssert(
+                val1,
+                val2,
+                false);
+    }
+
+    @Test
+    void testAreValueEqual_twoDifferentFastInfosetValuesWithHashCollision() {
+        setupValueStoreDb(new ConstantHashHashAlgorithm());
+
+        // Hash collision so has to do equality on value
+        final ByteBuffer valBuff1 = ByteBuffer.allocateDirect(20);
+        valBuff1.put("value1".getBytes());
+        valBuff1.flip();
+        final ByteBuffer valBuff2 = ByteBuffer.allocateDirect(20);
+        valBuff2.put("value2".getBytes());
+        valBuff2.flip();
+        final FastInfosetValue val1 = FastInfosetValue.wrap(valBuff1);
+        final FastInfosetValue val2 = FastInfosetValue.wrap(valBuff2);
+        doAreValuesEqualAssert(
+                val1,
+                val2,
+                false);
     }
 
     @Test
@@ -368,8 +460,9 @@ class TestValueStoreDb extends AbstractStoreDbTest {
         ByteBuffer unknownValueStoreKeyBuffer = valueStoreDb.getPooledKeyBuffer().getByteBuffer();
         valueStoreDb.serializeKey(unknownValueStoreKeyBuffer, unknownValueStoreKey);
 
+        final StagingValue stagingValue = convert(value2);
         lmdbEnv.doWithWriteTxn(writeTxn -> {
-            boolean areValuesEqual = valueStoreDb.areValuesEqual(writeTxn, unknownValueStoreKeyBuffer, value2);
+            boolean areValuesEqual = valueStoreDb.areValuesEqual(writeTxn, unknownValueStoreKeyBuffer, stagingValue);
             assertThat(areValuesEqual).isFalse();
         });
     }
@@ -405,8 +498,8 @@ class TestValueStoreDb extends AbstractStoreDbTest {
                         .collect(Collectors.toList()));
     }
 
-    private void doAreValuesEqualAssert(final StringValue value1,
-                                        final StringValue value2,
+    private void doAreValuesEqualAssert(final RefDataValue value1,
+                                        final RefDataValue value2,
                                         final boolean expectedResult) {
         lmdbEnv.doWithWriteTxn(writeTxn -> {
             ValueStoreKey valueStoreKey1 = getOrCreate(writeTxn, value1);
@@ -414,8 +507,33 @@ class TestValueStoreDb extends AbstractStoreDbTest {
             ByteBuffer valueStoreKeyBuffer = valueStoreDb.getPooledKeyBuffer().getByteBuffer();
             valueStoreDb.serializeKey(valueStoreKeyBuffer, valueStoreKey1);
 
-            boolean areValuesEqual = valueStoreDb.areValuesEqual(writeTxn, valueStoreKeyBuffer, value2);
+            final StagingValue stagingValue = convert(value2);
+
+            boolean areValuesEqual = valueStoreDb.areValuesEqual(writeTxn, valueStoreKeyBuffer, stagingValue);
             assertThat(areValuesEqual).isEqualTo(expectedResult);
         });
+    }
+
+    private StagingValue convert(final RefDataValue refDataValue) {
+        return StagingValueSerde.convert(ByteBuffer::allocateDirect, xxHashAlgorithm, refDataValue);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class ConstantHashHashAlgorithm implements ValueStoreHashAlgorithm {
+
+        @Override
+        public long hash(final ByteBuffer byteBuffer) {
+            // Always return same hash
+            return 0;
+        }
+
+        @Override
+        public long hash(final String value) {
+            // Always return same hash
+            return 0;
+        }
     }
 }

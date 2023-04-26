@@ -19,20 +19,22 @@ package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.lmdb.LmdbEnv;
-import stroom.lmdb.LmdbEnv.WriteTxn;
+import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.MapDefinition;
-import stroom.pipeline.refdata.store.NullValue;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.pipeline.refdata.store.RefDataStore;
-import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.refdata.store.StagingValue;
+import stroom.pipeline.refdata.store.offheapstore.OffHeapStagingStore.OffHeapStagingStoreFactory;
 import stroom.pipeline.refdata.store.offheapstore.databases.EntryStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
+import stroom.util.NullSafe;
+import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -40,6 +42,7 @@ import stroom.util.shared.Range;
 
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Striped;
+import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,14 +51,12 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 /**
  * Class for adding multiple items to the {@link RefDataOffHeapStore} within a single
@@ -72,9 +73,8 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(OffHeapRefDataLoader.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(OffHeapRefDataLoader.class);
 
-    private WriteTxn writeTxn = null;
+    //    private WriteTxn writeTxn = null;
     private Instant txnStartTime = null;
-    private final RefDataOffHeapStore refDataOffHeapStore;
     private final Lock refStreamDefReentrantLock;
 
     private final KeyValueStoreDb keyValueStoreDb;
@@ -83,13 +83,13 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     private final MapDefinitionUIDStore mapDefinitionUIDStore;
     private final ProcessingInfoDb processingInfoDb;
 
-    private final LmdbEnv lmdbEnvironment;
+    private final LmdbEnv refStoreLmdbEnv;
+    private final OffHeapStagingStoreFactory offHeapStagingStoreFactory;
     private final RefStreamDefinition refStreamDefinition;
     private final long effectiveTimeMs;
     private Runnable commitIfRequireFunc = () -> {
     }; // default position is to not commit mid-load
 
-    private int inputCount = 0;
     private int newEntriesCount = 0;
     private int replacedEntriesCount = 0;
     private int unchangedEntriesCount = 0;
@@ -97,45 +97,41 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     private int ignoredCount = 0;
     private int ignoredNullsCount = 0;
 
-    private int putsCounter = 0;
+    private int putsToStagingStoreCounter = 0;
+    private int putsToRefStoreCounter = 0;
     private boolean overwriteExisting = false;
-    private Instant startTime = Instant.EPOCH;
+    private DurationTimer overallTimer = null;
+    private DurationTimer transferStagedEntriesTimer = null;
+    private DurationTimer loadIntoStagingTimer = null;
     private LoaderState currentLoaderState = LoaderState.NEW;
-
-    // TODO we could just hit lmdb each time, but there may be serde costs
-    private final Map<MapDefinition, UID> mapDefinitionToUIDMap = new HashMap<>();
 
     private final PooledByteBuffer keyValuePooledKeyBuffer;
     private final PooledByteBuffer rangeValuePooledKeyBuffer;
     private final PooledByteBuffer valueStorePooledKeyBuffer;
     private final List<PooledByteBuffer> pooledByteBuffers = new ArrayList<>();
+    private int maxPutsBeforeCommit = 0;
+    private KeyPutOutcomeHandler keyPutOutcomeHandler = null;
+    private RangePutOutcomeHandler rangePutOutcomeHandler = null;
+    private OffHeapStagingStore offHeapStagingStore = null;
 
-    private enum LoaderState {
-        NEW,
-        INITIALISED,
-        COMPLETED,
-        CLOSED
-    }
-
-    OffHeapRefDataLoader(final RefDataOffHeapStore refDataOffHeapStore,
-                         final Striped<Lock> refStreamDefStripedReentrantLock,
+    OffHeapRefDataLoader(final Striped<Lock> refStreamDefStripedReentrantLock,
                          final KeyValueStoreDb keyValueStoreDb,
                          final RangeStoreDb rangeStoreDb,
                          final ValueStore valueStore,
                          final MapDefinitionUIDStore mapDefinitionUIDStore,
                          final ProcessingInfoDb processingInfoDb,
-                         final LmdbEnv lmdbEnvironment,
+                         final LmdbEnv refStoreLmdbEnv,
+                         final OffHeapStagingStoreFactory offHeapStagingStoreFactory,
                          final RefStreamDefinition refStreamDefinition,
                          final long effectiveTimeMs) {
 
-        this.refDataOffHeapStore = refDataOffHeapStore;
         this.keyValueStoreDb = keyValueStoreDb;
         this.rangeStoreDb = rangeStoreDb;
         this.processingInfoDb = processingInfoDb;
-
+        this.offHeapStagingStoreFactory = offHeapStagingStoreFactory;
         this.valueStore = valueStore;
         this.mapDefinitionUIDStore = mapDefinitionUIDStore;
-        this.lmdbEnvironment = lmdbEnvironment;
+        this.refStoreLmdbEnv = refStoreLmdbEnv;
         this.refStreamDefinition = refStreamDefinition;
         this.effectiveTimeMs = effectiveTimeMs;
 
@@ -181,11 +177,11 @@ public class OffHeapRefDataLoader implements RefDataLoader {
 
     @Override
     public PutOutcome initialise(final boolean overwriteExisting) {
-
         LOGGER.debug("initialise called, overwriteExisting: {}", overwriteExisting);
         checkCurrentState(LoaderState.NEW);
 
-        startTime = Instant.now();
+        overallTimer = DurationTimer.start();
+        loadIntoStagingTimer = DurationTimer.start();
 
         this.overwriteExisting = overwriteExisting;
 
@@ -195,16 +191,53 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 effectiveTimeMs,
                 ProcessingState.LOAD_IN_PROGRESS);
 
+        // Create this in the main store before we stage any data so any map definitions created
+        // during staging can get purged later if the load is unsuccessful
         final PutOutcome putOutcome = processingInfoDb.put(
                 refStreamDefinition, refDataProcessingInfo, overwriteExisting);
+
+        this.offHeapStagingStore = offHeapStagingStoreFactory.create(
+                refStoreLmdbEnv,
+                mapDefinitionUIDStore,
+                refStreamDefinition);
 
         currentLoaderState = LoaderState.INITIALISED;
         return putOutcome;
     }
 
     @Override
+    public void markPutsComplete() {
+        LOGGER.debug("markPutsComplete() called, currentLoaderState: {}, put count: {}",
+                currentLoaderState, putsToRefStoreCounter);
+
+        checkCurrentState(LoaderState.INITIALISED);
+//            beginTxnIfRequired();
+        offHeapStagingStore.completeLoad();
+        loadIntoStagingTimer.stop();
+
+        // Pipe processing successful so transfer our staged data
+        currentLoaderState = LoaderState.STAGED;
+        // Update the meta data in the store
+        updateProcessingState(ProcessingState.STAGED);
+
+        try {
+            // Move all the entries loaded into the staging store into the main ref store
+            transferStagedEntries();
+        } catch (Exception e) {
+            throw new RuntimeException(LogUtil.message("Error transferring entries into the ref store: {}",
+                    e.getMessage()), e);
+        }
+    }
+
+    @Override
     public void completeProcessing(final ProcessingState processingState) {
-        LOGGER.trace("Completing processing with state {} (put count {})", processingState, putsCounter);
+        LOGGER.debug("completeProcessing() called, currentLoaderState: {}, processingState: {}, put count: {}",
+                currentLoaderState, processingState, putsToRefStoreCounter);
+
+        if (LoaderState.INITIALISED.equals(currentLoaderState)) {
+            // markPutsComplete hasn't been called, so call it now
+            markPutsComplete();
+        }
 
         if (!VALID_COMPLETION_STATES.contains(processingState)) {
             throw new RuntimeException(LogUtil.message("Invalid processing state {}, should be one of {}",
@@ -215,34 +248,27 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         if (LoaderState.COMPLETED.equals(currentLoaderState)) {
             LOGGER.debug("Loader already completed, doing nothing");
         } else {
-            checkCurrentState(LoaderState.INITIALISED);
-            beginTxnIfRequired();
-
+            checkCurrentState(LoaderState.INITIALISED, LoaderState.STAGED);
             // Set the processing info record to processingState and update the last update time
-            processingInfoDb.updateProcessingState(
-                    writeTxn.getTxn(),
-                    refStreamDefinition,
-                    processingState,
-                    true);
-
-            // Need to commit the state change
-            commit();
-
+            updateProcessingState(processingState);
             logLoadInfo(processingState);
-
             currentLoaderState = LoaderState.COMPLETED;
         }
     }
 
+    private void updateProcessingState(final ProcessingState processingState) {
+        refStoreLmdbEnv.doWithWriteTxn(writeTxn -> {
+            processingInfoDb.updateProcessingState(
+                    writeTxn,
+                    refStreamDefinition,
+                    processingState,
+                    true);
+        });
+    }
+
     private void logLoadInfo(final ProcessingState processingState) {
 
-        final Duration loadDuration = Duration.between(startTime, Instant.now());
-
-        final String mapNames = mapDefinitionToUIDMap.keySet()
-                .stream()
-                .map(MapDefinition::getMapName)
-                .collect(Collectors.joining(", "));
-
+        final String mapNames = String.join(", ", offHeapStagingStore.getMapNames());
         final String pipeline = refStreamDefinition.getPipelineDocRef().getName() != null
                 ? refStreamDefinition.getPipelineDocRef().getName()
                 : refStreamDefinition.getPipelineDocRef().getUuid();
@@ -256,8 +282,8 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                         "dup-key ignored: {}) " +
                         "with map name(s): [{}], " +
                         "stream: {}, " +
-                        "pipeline: {} in {}",
-                inputCount,
+                        "pipeline: {} in {} (load to staging: {}, transfer from staging: {})",
+                putsToStagingStoreCounter,
                 processingState,
                 newEntriesCount,
                 ignoredNullsCount,
@@ -268,92 +294,135 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 mapNames,
                 refStreamDefinition.getStreamId(),
                 pipeline,
-                loadDuration);
+                overallTimer,
+                loadIntoStagingTimer,
+                transferStagedEntriesTimer);
     }
 
     @Override
     public void setCommitInterval(final int maxPutsBeforeCommit) {
         Preconditions.checkArgument(maxPutsBeforeCommit >= 0);
-        if (maxPutsBeforeCommit == 0) {
-            commitIfRequireFunc = () -> {
-                // No mid-load commits required
-            };
-        } else {
-            commitIfRequireFunc = () -> {
-                if (putsCounter % maxPutsBeforeCommit == 0) {
-                    LOGGER.trace("Committing with putsCounter {}, maxPutsBeforeCommit {}",
-                            putsCounter, maxPutsBeforeCommit);
-                    commit();
-                }
-            };
-        }
+        this.maxPutsBeforeCommit = maxPutsBeforeCommit;
+
+//        if (maxPutsBeforeCommit == 0) {
+//            commitIfRequireFunc = () -> {
+//                // No mid-load commits required
+//            };
+//        } else {
+//            commitIfRequireFunc = () -> {
+//                if (putsToRefStoreCounter % maxPutsBeforeCommit == 0) {
+//                    LOGGER.trace("Committing with putsCounter {}, maxPutsBeforeCommit {}",
+//                            putsToRefStoreCounter, maxPutsBeforeCommit);
+//                    commit();
+//                }
+//            };
+//        }
     }
 
     @Override
-    public PutOutcome put(final MapDefinition mapDefinition,
-                          final String key,
-                          final RefDataValue refDataValue) {
+    public void put(final MapDefinition mapDefinition,
+                    final String key,
+                    final StagingValue refDataValue) {
         LOGGER.trace("put({}, {}, {}", mapDefinition, key, refDataValue);
-
         Objects.requireNonNull(mapDefinition);
         Objects.requireNonNull(key);
         Objects.requireNonNull(refDataValue);
-
         checkCurrentState(LoaderState.INITIALISED);
-        beginTxnIfRequired();
 
-        final UID mapUid = getOrCreateUid(mapDefinition);
-        LOGGER.trace("Using mapUid {} for {}", mapUid, mapDefinition);
-        final KeyValueStoreKey keyValueStoreKey = new KeyValueStoreKey(mapUid, key);
-
-        return doPut(
-                keyValueStoreKey,
-                refDataValue,
-                keyValuePooledKeyBuffer,
-                keyValueStoreDb);
+        // Stage the value
+        putsToStagingStoreCounter++;
+        offHeapStagingStore.put(mapDefinition, key, refDataValue);
     }
 
     @Override
-    public PutOutcome put(final MapDefinition mapDefinition,
-                          final Range<Long> keyRange,
-                          final RefDataValue refDataValue) {
+    public void put(final MapDefinition mapDefinition,
+                    final Range<Long> keyRange,
+                    final StagingValue refDataValue) {
         LOGGER.trace("put({}, {}, {}", mapDefinition, keyRange, refDataValue);
         Objects.requireNonNull(mapDefinition);
         Objects.requireNonNull(keyRange);
         Objects.requireNonNull(refDataValue);
+        checkCurrentState(LoaderState.INITIALISED);
 
-        final UID mapUid = getOrCreateUid(mapDefinition);
-        LOGGER.trace("Using mapUid {} for {}", mapUid, mapDefinition);
-        final RangeStoreKey rangeStoreKey = new RangeStoreKey(mapUid, keyRange);
-
-        return doPut(
-                rangeStoreKey,
-                refDataValue,
-                rangeValuePooledKeyBuffer,
-                rangeStoreDb);
+        // Stage the value
+        putsToStagingStoreCounter++;
+        offHeapStagingStore.put(mapDefinition, keyRange, refDataValue);
     }
 
-    private <K> PutOutcome doPut(final K dbKey,
-                                 final RefDataValue refDataValue,
-                                 final PooledByteBuffer pooledKeyBuffer,
-                                 final EntryStoreDb<K> entryStoreDb) {
+    @Override
+    public void setKeyPutOutcomeHandler(final KeyPutOutcomeHandler keyPutOutcomeHandler) {
+        this.keyPutOutcomeHandler = keyPutOutcomeHandler;
+    }
 
-        LOGGER.trace("doPut({}, {}", dbKey, refDataValue);
-        inputCount++;
+    @Override
+    public void setRangePutOutcomeHandler(final RangePutOutcomeHandler rangePutOutcomeHandler) {
+        this.rangePutOutcomeHandler = rangePutOutcomeHandler;
+    }
+
+    private void transferStagedEntries() {
+        checkCurrentState(LoaderState.STAGED);
+
+        transferStagedEntriesTimer = DurationTimer.start();
+        try (final BatchingWriteTxn batchingWriteTxn = refStoreLmdbEnv.openBatchingWriteTxn(maxPutsBeforeCommit)) {
+            // NOTE we are looping in key order, not in the order put to this loader
+            offHeapStagingStore.forEachKeyValueEntry(entry -> {
+                final KeyValueStoreKey keyValueStoreKey = entry.getKey();
+                final PutOutcome putOutcome = transferEntryToRefStore(
+                        batchingWriteTxn,
+                        keyValueStoreKey,
+                        entry.getValue(),
+                        keyValuePooledKeyBuffer,
+                        keyValueStoreDb);
+
+                NullSafe.consume(keyPutOutcomeHandler, handler -> handler.handleOutcome(
+                        () -> offHeapStagingStore.getMapDefinition(keyValueStoreKey.getMapUid()),
+                        keyValueStoreKey.getKey(),
+                        putOutcome));
+            });
+
+            offHeapStagingStore.forEachRangeValueEntry(entry -> {
+                final RangeStoreKey rangeStoreKey = entry.getKey();
+                final PutOutcome putOutcome = transferEntryToRefStore(
+                        batchingWriteTxn,
+                        rangeStoreKey,
+                        entry.getValue(),
+                        rangeValuePooledKeyBuffer,
+                        rangeStoreDb);
+
+                NullSafe.consume(rangePutOutcomeHandler, handler -> handler.handleOutcome(
+                        () -> offHeapStagingStore.getMapDefinition(rangeStoreKey.getMapUid()),
+                        rangeStoreKey.getKeyRange(),
+                        putOutcome));
+            });
+            // Final commit
+            batchingWriteTxn.commit();
+        }
+        transferStagedEntriesTimer.stop();
+
+        LOGGER.debug("Completed transfer of {} entries from staging store to ref data store in {}",
+                putsToStagingStoreCounter, transferStagedEntriesTimer);
+    }
+
+    private <K> PutOutcome transferEntryToRefStore(final BatchingWriteTxn batchingWriteTxn,
+                                                   final K dbKey,
+                                                   final StagingValue stagingValue,
+                                                   final PooledByteBuffer pooledKeyBuffer,
+                                                   final EntryStoreDb<K> entryStoreDb) {
+
+        LOGGER.trace("transferEntryToRefStore({}, {}", dbKey, stagingValue);
+        putsToRefStoreCounter++;
 
         Objects.requireNonNull(dbKey);
-        Objects.requireNonNull(refDataValue);
+        Objects.requireNonNull(stagingValue);
         Objects.requireNonNull(pooledKeyBuffer);
 
-        checkCurrentState(LoaderState.INITIALISED);
-        beginTxnIfRequired();
-
+        final Txn<ByteBuffer> writeTxn = batchingWriteTxn.getTxn();
         final ByteBuffer keyBuffer = pooledKeyBuffer.getByteBuffer();
         // ensure the buffer is clear as we are reusing the same one for each put
         keyBuffer.clear();
         // See if the store already has an entry for this lookup key
         entryStoreDb.serializeKey(keyBuffer, dbKey);
-        final Optional<ByteBuffer> optCurrValueStoreKeyBuffer = entryStoreDb.getAsBytes(writeTxn.getTxn(), keyBuffer);
+        final Optional<ByteBuffer> optCurrValueStoreKeyBuffer = entryStoreDb.getAsBytes(writeTxn, keyBuffer);
 
         // see if we have a value already for this key
         // if overwrite == false, we can just drop out here
@@ -371,18 +440,18 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 // new values are the same.
                 final ByteBuffer currValueStoreKeyBuffer = optCurrValueStoreKeyBuffer.get();
 
-                if (refDataValue instanceof NullValue) {
+                if (stagingValue.isNullValue()) {
                     // New value is null, so we need to de-reference/delete the old one
-                    valueStore.deReferenceOrDeleteValue(writeTxn.getTxn(), currValueStoreKeyBuffer);
+                    valueStore.deReferenceOrDeleteValue(writeTxn, currValueStoreKeyBuffer);
 
                     // Delete the existing entry
-                    entryStoreDb.delete(writeTxn.getTxn(), keyBuffer);
+                    entryStoreDb.delete(writeTxn, keyBuffer);
 
                     putOutcome = PutOutcome.replacedEntry();
                     removedEntriesCount++;
                 } else {
                     boolean areValuesEqual = valueStore.areValuesEqual(
-                            writeTxn.getTxn(), currValueStoreKeyBuffer, refDataValue);
+                            writeTxn, currValueStoreKeyBuffer, stagingValue);
                     if (areValuesEqual) {
                         // value is the same as the existing value so nothing to do
                         // and no ref counts to change
@@ -391,10 +460,10 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                         unchangedEntriesCount++;
                     } else {
                         // value is different so we need to de-reference the old one
-                        valueStore.deReferenceOrDeleteValue(writeTxn.getTxn(), currValueStoreKeyBuffer);
+                        valueStore.deReferenceOrDeleteValue(writeTxn, currValueStoreKeyBuffer);
 
                         // Now create the replacement entry (and a value if one does not already exist)
-                        putOutcome = putEntryWithValue(entryStoreDb, refDataValue, keyBuffer);
+                        putOutcome = putEntryWithValue(writeTxn, entryStoreDb, stagingValue, keyBuffer);
 //                        putOutcome = entryCreationFunc.apply(refDataValue, keyBuffer);
                         replacedEntriesCount++;
                     }
@@ -402,54 +471,53 @@ public class OffHeapRefDataLoader implements RefDataLoader {
             }
         } else {
             // no existing valueStoreKey so create the entry+value if non-null
-            if (refDataValue instanceof NullValue) {
+            if (stagingValue.isNullValue()) {
                 putOutcome = PutOutcome.success();
                 ignoredNullsCount++;
             } else {
-                putOutcome = putEntryWithValue(entryStoreDb, refDataValue, keyBuffer);
+                putOutcome = putEntryWithValue(writeTxn, entryStoreDb, stagingValue, keyBuffer);
                 newEntriesCount++;
             }
         }
 
-        commitIfRequired(putOutcome);
-        pooledKeyBuffer.clear();
+        batchingWriteTxn.commitIfRequired();
+        keyBuffer.clear();
 
         LOGGER.trace("Returning outcome: {}, inputCount: {}, newEntriesCount: {}, " +
                         "replacedEntriesCount: {}, removedEntriesCount: {}, unchangedEntriesCount: {}, " +
                         "ignoredCount: {}, nullCount: {}",
-                putOutcome, inputCount, newEntriesCount, replacedEntriesCount, removedEntriesCount,
+                putOutcome, putsToStagingStoreCounter, newEntriesCount, replacedEntriesCount, removedEntriesCount,
                 unchangedEntriesCount, ignoredCount, ignoredNullsCount);
 
         return putOutcome;
     }
 
-    private <K> PutOutcome putEntryWithValue(final EntryStoreDb<K> entryStoreDb,
-                                             final RefDataValue refDataValue,
+    private <K> PutOutcome putEntryWithValue(final Txn<ByteBuffer> writeTxn,
+                                             final EntryStoreDb<K> entryStoreDb,
+                                             final StagingValue refDataValue,
                                              final ByteBuffer keyBuffer) {
 
-        // First get/create the value so we can then link our entry to it
+        // First get/create the value entry, so we can then link our entry to it
         final ByteBuffer valueStoreKeyBuffer = valueStore.getOrCreateKey(
-                writeTxn.getTxn(), valueStorePooledKeyBuffer, refDataValue, overwriteExisting);
+                writeTxn, valueStorePooledKeyBuffer, refDataValue, overwriteExisting);
 
-        // assuming it is cheaper to just try the put and let LMDB handle duplicates rather than
-        // do a get then optional put.
         return entryStoreDb.put(
-                writeTxn.getTxn(), keyBuffer, valueStoreKeyBuffer, overwriteExisting);
+                writeTxn, keyBuffer, valueStoreKeyBuffer, overwriteExisting, true);
     }
 
     @Override
     public void close() {
         LOGGER.trace("Close called for {}", refStreamDefinition);
 
-        if (currentLoaderState.equals(LoaderState.INITIALISED)) {
-            LOGGER.warn("Reference data loader for {} was initialised but then closed before being completed",
-                    refStreamDefinition);
+        if (!currentLoaderState.equals(LoaderState.COMPLETED)) {
+            LOGGER.warn("Reference data loader for {} was closed with a state of {}",
+                    refStreamDefinition, currentLoaderState);
         }
 
         try {
-            commit();
+            offHeapStagingStore.close();
         } catch (Exception e) {
-            LOGGER.error("Error committing txn: {}", e.getMessage(), e);
+            LOGGER.error("Error closing offHeapStagingStore: {}", e.getMessage(), e);
         }
 
         try {
@@ -465,90 +533,8 @@ public class OffHeapRefDataLoader implements RefDataLoader {
             LOGGER.debug("Releasing lock for {}", refStreamDefinition);
             refStreamDefReentrantLock.unlock();
         }
-
         // uncomment this for development testing, handy for seeing what is in the stores post load
 //            refDataOffHeapStore.logAllContents();
-    }
-
-    private void beginTxn() {
-        if (writeTxn != null) {
-            throw new RuntimeException("Transaction is already open");
-        }
-        LOGGER.trace("Beginning write transaction");
-        writeTxn = lmdbEnvironment.openWriteTxn();
-        if (LOGGER.isDebugEnabled()) {
-            txnStartTime = Instant.now();
-        }
-    }
-
-    private void commit() {
-        if (writeTxn != null) {
-            try {
-                LOGGER.trace("Committing and closing txn (put count {})", putsCounter);
-                writeTxn.commit();
-                writeTxn.close();
-                writeTxn = null;
-
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Txn held open for {}", (txnStartTime != null
-                            ? Duration.between(txnStartTime, Instant.now())
-                            : "-"));
-                    txnStartTime = null;
-                }
-            } catch (Exception e) {
-                throw new RuntimeException("Error committing and closing write transaction", e);
-            }
-        }
-    }
-
-    private UID getOrCreateUid(final MapDefinition mapDefinition) {
-
-        // get the UID for this mapDefinition, and as we should only have a handful of mapDefinitions
-        // per loader it makes sense to cache the MapDefinition=>UID mappings on heap for quicker access.
-        final UID uid = mapDefinitionToUIDMap.computeIfAbsent(mapDefinition, mapDef -> {
-            LOGGER.trace("MapDefinition not found in local cache so getting it from the store, {}", mapDefinition);
-            beginTxnIfRequired();
-
-            // The temporaryUidPooledBuffer may not be used if we find the map def in the DB
-            try (final PooledByteBuffer temporaryUidPooledBuffer = mapDefinitionUIDStore.getUidPooledByteBuffer()) {
-
-                final PooledByteBuffer cachedUidPooledBuffer = mapDefinitionUIDStore.getUidPooledByteBuffer();
-                // Add it to the list so it will be released on close
-                pooledByteBuffers.add(cachedUidPooledBuffer);
-
-                // The returned UID wraps a direct buffer that is either owned by LMDB or came from
-                // temporaryUidPooledBuffer so as we don't know when the txn will be closed or what
-                // cursor operations will happen after this and because we want to cache it we will
-                // make a copy of it using a buffer from the pool. The cache only lasts for the life
-                // of the load and will only have a couple of UIDs in it so should be fine to hold on to them.
-                final UID newUid = mapDefinitionUIDStore.getOrCreateUid(
-                        writeTxn.getTxn(),
-                        mapDef,
-                        temporaryUidPooledBuffer);
-
-                // Now clone it into a different buffer and wrap in a new UID instance
-                final UID newUidClone = newUid.cloneToBuffer(cachedUidPooledBuffer.getByteBuffer());
-
-                return newUidClone;
-            }
-        });
-        return uid;
-    }
-
-    /**
-     * To be called after each put
-     */
-    private void commitIfRequired(final PutOutcome putOutcome) {
-        if (putOutcome.isSuccess()) {
-            putsCounter++;
-        }
-        commitIfRequireFunc.run();
-    }
-
-    private void beginTxnIfRequired() {
-        if (writeTxn == null) {
-            beginTxn();
-        }
     }
 
     private void checkCurrentState(final LoaderState... validStates) {
@@ -562,6 +548,72 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         if (!isCurrentStateValid) {
             throw new IllegalStateException(LogUtil.message("Current loader state: {}, valid states: {}",
                     currentLoaderState, Arrays.toString(validStates)));
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private enum LoaderState {
+        /**
+         * New loader with no change to the store.
+         */
+        NEW,
+        /**
+         * Loader initialised and processing info record written to store.
+         */
+        INITIALISED,
+        /**
+         * All data loaded into the staging store ready for transfer.
+         */
+        STAGED,
+        /**
+         * The load into the main store is complete.
+         */
+        COMPLETED,
+        /**
+         * The loader has been closed and all resources freed.
+         */
+        CLOSED
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class OffHeapRefDataLoaderFactory {
+
+        //        private final LmdbEnvFactory lmdbEnvFactory;
+        private final OffHeapStagingStoreFactory offHeapStagingStoreFactory;
+
+        @Inject
+        public OffHeapRefDataLoaderFactory(final OffHeapStagingStoreFactory offHeapStagingStoreFactory) {
+//            this.lmdbEnvFactory = lmdbEnvFactory;
+            this.offHeapStagingStoreFactory = offHeapStagingStoreFactory;
+        }
+
+        OffHeapRefDataLoader create(final KeyValueStoreDb keyValueStoreDb,
+                                    final RangeStoreDb rangeStoreDb,
+                                    final ValueStore valueStore,
+                                    final MapDefinitionUIDStore mapDefinitionUIDStore,
+                                    final ProcessingInfoDb processingInfoDb,
+                                    final LmdbEnv lmdbEnvironment,
+                                    final Striped<Lock> refStreamDefStripedReentrantLock,
+                                    final RefStreamDefinition refStreamDefinition,
+                                    final long effectiveTimeMs) {
+
+            return new OffHeapRefDataLoader(
+                    refStreamDefStripedReentrantLock,
+                    keyValueStoreDb,
+                    rangeStoreDb,
+                    valueStore,
+                    mapDefinitionUIDStore,
+                    processingInfoDb,
+                    lmdbEnvironment,
+                    offHeapStagingStoreFactory,
+                    refStreamDefinition,
+                    effectiveTimeMs);
         }
     }
 }

@@ -207,7 +207,7 @@ public class UID {
 
     @Override
     public int hashCode() {
-        return Objects.hash(byteBuffer);
+        return Objects.hashCode(byteBuffer);
     }
 
     /**

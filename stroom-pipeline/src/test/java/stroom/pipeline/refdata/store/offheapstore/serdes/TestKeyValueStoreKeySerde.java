@@ -25,6 +25,7 @@ import com.esotericsoftware.kryo.io.ByteBufferInputStream;
 import com.esotericsoftware.kryo.io.ByteBufferOutputStream;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import com.google.inject.TypeLiteral;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -114,7 +115,7 @@ class TestKeyValueStoreKeySerde extends AbstractSerdeTest<KeyValueStoreKey, KeyV
     }
 
     @Override
-    Class<KeyValueStoreKeySerde> getSerdeType() {
-        return KeyValueStoreKeySerde.class;
+    TypeLiteral<KeyValueStoreKeySerde> getSerdeType() {
+        return new TypeLiteral<KeyValueStoreKeySerde>(){};
     }
 }

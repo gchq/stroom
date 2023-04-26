@@ -22,6 +22,7 @@ import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.util.shared.Range;
 
+import com.google.inject.TypeLiteral;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
@@ -39,7 +40,7 @@ class TestRangeStoreKeySerde extends AbstractSerdeTest<RangeStoreKey, RangeStore
     }
 
     @Override
-    Class<RangeStoreKeySerde> getSerdeType() {
-        return RangeStoreKeySerde.class;
+    TypeLiteral<RangeStoreKeySerde> getSerdeType() {
+        return new TypeLiteral<RangeStoreKeySerde>(){};
     }
 }

@@ -27,6 +27,19 @@ public class StringSerde implements Serde<String> {
 
     @Override
     public String deserialize(final ByteBuffer byteBuffer) {
+        return extractValue(byteBuffer);
+    }
+
+    @Override
+    public void serialize(final ByteBuffer byteBuffer, final String str) {
+        byteBuffer.put(str.getBytes(StandardCharsets.UTF_8));
+        byteBuffer.flip();
+    }
+
+    /**
+     * Extracts the string value from the buffer.
+     */
+    public static String extractValue(final ByteBuffer byteBuffer) {
         try {
             String str = StandardCharsets.UTF_8.decode(byteBuffer).toString();
             byteBuffer.flip();
@@ -35,11 +48,5 @@ public class StringSerde implements Serde<String> {
             throw new RuntimeException(LogUtil.message("Unable to decode string from byteBuffer {}",
                     ByteBufferUtils.byteBufferInfo(byteBuffer)), e);
         }
-    }
-
-    @Override
-    public void serialize(final ByteBuffer byteBuffer, final String str) {
-        byteBuffer.put(str.getBytes(StandardCharsets.UTF_8));
-        byteBuffer.flip();
     }
 }

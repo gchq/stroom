@@ -12,6 +12,7 @@ import com.google.common.collect.ImmutableMap;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
+import org.lmdbjava.EnvFlags;
 import org.lmdbjava.EnvInfo;
 import org.lmdbjava.Stat;
 import org.lmdbjava.Txn;
@@ -24,9 +25,11 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -50,6 +53,7 @@ public class LmdbEnv implements AutoCloseable {
 
     private final Path localDir;
     private final Env<ByteBuffer> env;
+    private final Set<EnvFlags> envFlags;
 
     // Lock to ensure only one thread can hold a write txn at once.
     // If doWritesBlockReads is true then will only one thread can hold an open txn
@@ -60,15 +64,18 @@ public class LmdbEnv implements AutoCloseable {
     private final Semaphore activeReadTransactionsSemaphore;
 
     LmdbEnv(final Path localDir,
-            final Env<ByteBuffer> env) {
-        this(localDir, env, false);
+            final Env<ByteBuffer> env,
+            final Set<EnvFlags> envFlags) {
+        this(localDir, env, envFlags, false);
     }
 
     LmdbEnv(final Path localDir,
             final Env<ByteBuffer> env,
+            final Set<EnvFlags> envFlags,
             final boolean isReaderBlockedByWriter) {
         this.localDir = localDir;
         this.env = env;
+        this.envFlags = Collections.unmodifiableSet(envFlags);
 
         // Limit concurrent readers java side to ensure we don't get a max readers reached error
         final int maxReaders = env.info().maxReaders;
@@ -123,6 +130,13 @@ public class LmdbEnv implements AutoCloseable {
     }
 
     /**
+     * @return This set of {@link EnvFlags} that were used when this env was created.
+     */
+    public Set<EnvFlags> getEnvFlags() {
+        return envFlags;
+    }
+
+    /**
      * Opens a database with the supplied name. If no dbiFlags are supplied then
      * {@link DbiFlags#MDB_CREATE} is used to create the database if it doesn't exist.
      */
@@ -139,7 +153,7 @@ public class LmdbEnv implements AutoCloseable {
                         Arrays.toString(flags),
                         localDir.toAbsolutePath().normalize()));
         try {
-            return env.openDbi(name, DbiFlags.MDB_CREATE);
+            return env.openDbi(name, flags);
         } catch (final Exception e) {
             final String message = LogUtil.message("Error opening LMDB database '{}' in '{}' ({})",
                     name,
@@ -508,6 +522,10 @@ public class LmdbEnv implements AutoCloseable {
                 .build();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class WriteTxn implements AutoCloseable {
 
         private final Lock writeLock;
@@ -564,12 +582,16 @@ public class LmdbEnv implements AutoCloseable {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     /**
      * Creates a write txn on calls to {@link BatchingWriteTxn#getTxn()}
      */
     public static class BatchingWriteTxn implements AutoCloseable {
 
-        private final Lock writeLock;
+        private Lock writeLock = null;
         private Supplier<Txn<ByteBuffer>> writeTxnSupplier;
         private Txn<ByteBuffer> writeTxn;
 
@@ -605,6 +627,7 @@ public class LmdbEnv implements AutoCloseable {
          * use {@link WriteTxn#close()} or a try-with-resources block.
          */
         public Txn<ByteBuffer> getTxn() {
+            checkState();
             if (writeTxn == null) {
                 Objects.requireNonNull(writeTxnSupplier, "Has already been closed");
                 writeTxn = writeTxnSupplier.get();
@@ -613,9 +636,11 @@ public class LmdbEnv implements AutoCloseable {
         }
 
         /**
+         * Aborts the txn but holds the write lock.
          * {@link Txn#abort()}
          */
         public void abort() {
+            checkState();
             if (writeTxn != null) {
                 writeTxn.abort();
                 writeTxn = null;
@@ -630,6 +655,7 @@ public class LmdbEnv implements AutoCloseable {
          * @return True if the batch is full, false if not.
          */
         public boolean incrementBatchCount() {
+            checkState();
             return (++batchCounter >= maxBatchSize);
         }
 
@@ -638,6 +664,7 @@ public class LmdbEnv implements AutoCloseable {
          * {@link Txn#commit()}
          */
         public boolean commit() {
+            checkState();
             if (writeTxn != null) {
                 LOGGER.trace("Committing txn with batchCounter: {}", batchCounter);
                 writeTxn.commit();
@@ -645,6 +672,22 @@ public class LmdbEnv implements AutoCloseable {
                 writeTxn = null;
                 batchCounter = 0;
                 return true;
+            } else {
+                return false;
+            }
+        }
+
+        /**
+         * Performs work then increments the batch count by one and commits if the batch size has
+         * been reached.
+         *
+         * @return True if a commit happened
+         */
+        public boolean processBatchItem(final Consumer<Txn<ByteBuffer>> work) {
+            checkState();
+            if (work != null) {
+                work.accept(getTxn());
+                return commitIfRequired();
             } else {
                 return false;
             }
@@ -659,10 +702,12 @@ public class LmdbEnv implements AutoCloseable {
          * @return True if a commit took place.
          */
         public boolean commitIfRequired() {
+            checkState();
             return commitFunc.getAsBoolean();
         }
 
         private boolean commitWithBatchCheck() {
+            checkState();
             if (++batchCounter >= maxBatchSize) {
                 return commit();
             } else {
@@ -687,8 +732,15 @@ public class LmdbEnv implements AutoCloseable {
                 }
             } finally {
                 // whatever happens we must release the lock
-                writeLock.unlock();
+                if (writeLock != null) {
+                    writeLock.unlock();
+                    writeLock = null;
+                }
             }
+        }
+
+        private void checkState() {
+            Objects.requireNonNull(writeLock, "BatchingWriteTxn is already closed");
         }
 
         @Override

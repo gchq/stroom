@@ -28,8 +28,6 @@ import java.util.function.Supplier;
 
 public interface Serializer<T> {
 
-    // TODO @AT This ought to be in config, or ideally we need something that will optimistically
-    //   serialise to a certain size of buffer and if that fails try again with a bigger one.
     int DEFAULT_CAPACITY = 1_000;
 
     /**
@@ -69,7 +67,7 @@ public interface Serializer<T> {
      * @param object                       The object to be serialised.
      * @return The serialised form of the object, flipped and ready for reading. This buffer should
      * be used instead of calling {@link PooledByteBufferOutputStream#getPooledByteBuffer()} in case
-     * the implementation chooses not to used the passed {@link PooledByteBufferOutputStream}.
+     * the implementation chooses not to use the passed {@link PooledByteBufferOutputStream}.
      * The returned {@link ByteBuffer} may be a pooled one so ensure that the close method
      * of pooledByteBufferOutputStream is called once byteBuffer is no longer needed.
      */

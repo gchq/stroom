@@ -79,11 +79,13 @@ public enum UnsignedBytesInstances implements UnsignedBytes {
             return ZERO_BYTES;
         } else if (len < 1) {
             throw new IllegalArgumentException("You cannot use less than 1 byte to store a value.");
+        } else if (val == 0) {
+            return new byte[len];
+        } else {
+            final byte[] bytes = new byte[len];
+            put(bytes, 0, val);
+            return bytes;
         }
-
-        final byte[] bytes = new byte[len];
-        put(bytes, 0, val);
-        return bytes;
     }
 
     @Override

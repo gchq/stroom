@@ -77,34 +77,23 @@ public class KeyValueStoreDb
         try (PooledByteBuffer startKeyIncPooledBuffer = getPooledKeyBuffer();
                 PooledByteBuffer endKeyExcPooledBuffer = getPooledKeyBuffer()) {
 
-            // TODO there appears to be a bug in lmdbjava that prevents closedOpen key ranges working
-            //   see https://github.com/lmdbjava/lmdbjava/issues/169
-            //   As a work around will have to use an AT_LEAST cursor and manually
-            //   test entries to see when I have gone too far.
-//            final KeyRange<ByteBuffer> singleMapUidKeyRange = buildSingleMapUidKeyRange(
-//                    mapUid,
-//                    startKeyIncPooledBuffer.getByteBuffer(),
-//                    endKeyExcPooledBuffer.getByteBuffer());
-
-            final KeyValueStoreKey startKeyInc = new KeyValueStoreKey(mapUid, "");
-            final ByteBuffer startKeyIncBuffer = startKeyIncPooledBuffer.getByteBuffer();
-            keySerde.serializeWithoutKeyPart(startKeyIncBuffer, startKeyInc);
-
-            LAMBDA_LOGGER.trace(() -> LogUtil.message(
-                    "startKeyIncBuffer {}", ByteBufferUtils.byteBufferInfo(startKeyIncBuffer)));
-
-            final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(startKeyIncBuffer);
+            final KeyRange<ByteBuffer> singleMapUidKeyRange = buildSingleMapUidKeyRange(
+                    mapUid,
+                    startKeyIncPooledBuffer.getByteBuffer(),
+                    endKeyExcPooledBuffer.getByteBuffer());
 
             boolean isComplete = false;
             int totalCount = 0;
 
+            // We need the outer loop as the inner loop may reach batch full state part way through
+            // and break out. After the inner loop we commit the txn, so the iterable has to be re-created.
             while (!isComplete) {
-                boolean foundMatchingEntry;
+                boolean foundMatchingEntry = false;
                 try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
-                        batchingWriteTxn.getTxn(), keyRange)) {
+                        batchingWriteTxn.getTxn(), singleMapUidKeyRange)) {
 
+                    boolean didBreakOutEarly = false;
                     int batchCount = 0;
-                    foundMatchingEntry = false;
                     final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
 
                     while (iterator.hasNext()) {
@@ -113,32 +102,28 @@ public class KeyValueStoreDb
                                 ByteBufferUtils.byteBufferInfo(keyVal.key()),
                                 ByteBufferUtils.byteBufferInfo(keyVal.val())));
 
-                        if (ByteBufferUtils.containsPrefix(keyVal.key(), startKeyIncBuffer)) {
-                            foundMatchingEntry = true;
-                            // prefixed with our UID
+                        foundMatchingEntry = true;
+                        // prefixed with our UID
 
-                            // pass the found kv pair from this entry to the consumer
-                            // consumer MUST not hold on to the key/value references as they can change
-                            // once the cursor is closed or moves position
-                            entryConsumer.accept(batchingWriteTxn.getTxn(), keyVal.key(), keyVal.val());
-                            iterator.remove();
-                            batchCount++;
+                        // Pass the found kv pair from this entry to the consumer.
+                        // Consumer MUST not hold on to the key/value references as they can change
+                        // once the cursor is closed or moves position
+                        entryConsumer.accept(batchingWriteTxn.getTxn(), keyVal.key(), keyVal.val());
+                        // Delete this entry
+                        iterator.remove();
+                        batchCount++;
 
-                            // Can't use batchingWriteTxn.commitIfRequired() as the commit would close
-                            // the txn which then causes an error in the cursorIterable auto close
-                            if (batchingWriteTxn.incrementBatchCount()) {
-                                // Batch is full so break out
-                                break;
-                            }
-                        } else {
-                            // passed our UID so break out
-                            LOGGER.trace("Breaking out of loop");
-                            isComplete = true;
+                        // Can't use batchingWriteTxn.commitIfRequired() as the commit would close
+                        // the txn which then causes an error in the cursorIterable auto close
+                        if (batchingWriteTxn.incrementBatchCount()) {
+                            // Batch is full so break out
+                            didBreakOutEarly = true;
                             break;
                         }
                     }
 
                     if (foundMatchingEntry) {
+                        isComplete = !didBreakOutEarly;
                         totalCount += batchCount;
                         LOGGER.debug("Deleted {} {} entries this iteration, total deleted: {}",
                                 batchCount, DB_NAME, totalCount);
@@ -149,7 +134,7 @@ public class KeyValueStoreDb
 
                 if (foundMatchingEntry) {
                     // Force the commit as we either have a full batch or we have finished
-                    // We may now have a partial purge committed but we are still under write
+                    // We may now have a partial purge committed, but we are still under write
                     // lock so no other threads can purge or load and there is a lock on the
                     // ref stream.
                     LOGGER.debug("Committing, totalCount {}", totalCount);
@@ -172,11 +157,9 @@ public class KeyValueStoreDb
                     startKeyBuffer.getByteBuffer(),
                     endKeyBuffer.getByteBuffer());
 
-            // TODO @AT Once a version of LMDBJava >0.8.1 is released then remove the comparator
-            //  see https://github.com/lmdbjava/lmdbjava/issues/169
             try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
                     readTxn, keyRange)) {
-
+                //noinspection unused
                 for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
 //                    LAMBDA_LOGGER.trace(() -> LogUtil.message(
 //                            "Key: {}",

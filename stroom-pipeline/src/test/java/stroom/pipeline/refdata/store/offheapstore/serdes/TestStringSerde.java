@@ -20,6 +20,7 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 import stroom.lmdb.serde.StringSerde;
 
+import com.google.inject.TypeLiteral;
 import org.junit.jupiter.api.Test;
 
 class TestStringSerde extends AbstractSerdeTest<String, StringSerde> {
@@ -32,7 +33,7 @@ class TestStringSerde extends AbstractSerdeTest<String, StringSerde> {
     }
 
     @Override
-    Class<StringSerde> getSerdeType() {
-        return StringSerde.class;
+    TypeLiteral<StringSerde> getSerdeType() {
+        return new TypeLiteral<StringSerde>(){};
     }
 }

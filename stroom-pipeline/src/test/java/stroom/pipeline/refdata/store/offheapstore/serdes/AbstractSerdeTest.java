@@ -23,6 +23,7 @@ import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.lmdb.serde.Serde;
 
+import com.google.inject.TypeLiteral;
 import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +36,13 @@ import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Make sure T implements equals as {@link AbstractSerdeTest#doSerialisationDeserialisationTest(Object)} will do an
+ * equality check. If your serde doesn't have a no-args constructor then implement
+ * {@link AbstractSerdeTest#getSerdeSupplier()}.
+ * @param <T> The type of the object being (de-)serialised.
+ * @param <S> The type of the serde.
+ */
 abstract class AbstractSerdeTest<T, S extends Serde<T>> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSerdeTest.class);
@@ -57,17 +65,17 @@ abstract class AbstractSerdeTest<T, S extends Serde<T>> {
     Supplier<S> getSerdeSupplier() {
         return () -> {
             try {
-                return getSerdeType().getConstructor().newInstance();
+                return (S) getSerdeType().getRawType().getConstructor().newInstance();
             } catch (NoSuchMethodException
-                    | InvocationTargetException
-                    | InstantiationException
-                    | IllegalAccessException e) {
+                     | InvocationTargetException
+                     | InstantiationException
+                     | IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
         };
     }
 
-    abstract Class<S> getSerdeType();
+    abstract TypeLiteral<S> getSerdeType();
 
     S getSerde() {
         // serde is kept for the life of the test
@@ -125,11 +133,11 @@ abstract class AbstractSerdeTest<T, S extends Serde<T>> {
         assertThat(outputObject2).isEqualTo(expectedOutputObject);
     }
 
-    void doSerialisationDeserialisationTest(T object) {
-        doSerialisationDeserialisationTest(object, this::getSerde);
+    T doSerialisationDeserialisationTest(T object) {
+        return doSerialisationDeserialisationTest(object, this::getSerde);
     }
 
-    void doSerialisationDeserialisationTest(T object, Supplier<Serde<T>> serdeSupplier) {
+    T doSerialisationDeserialisationTest(T object, Supplier<Serde<T>> serdeSupplier) {
         // use two serde instances to be sure ser and de-ser are independent
         final Serde<T> serde1 = serdeSupplier.get();
         final Serde<T> serde2 = serdeSupplier.get();
@@ -156,6 +164,8 @@ abstract class AbstractSerdeTest<T, S extends Serde<T>> {
         // ensure hashcode work across ser-deser
         assertThat(object.hashCode()).isEqualTo(object2.hashCode());
         assertThat(object.hashCode()).isEqualTo(object3.hashCode());
+
+        return object2;
     }
 
 

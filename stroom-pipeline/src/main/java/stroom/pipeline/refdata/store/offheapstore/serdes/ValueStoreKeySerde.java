@@ -59,8 +59,9 @@ public class ValueStoreKeySerde implements Serde<ValueStoreKey> {
      * alter the offset/limit
      */
     public static void incrementId(final ByteBuffer byteBuffer) {
-        short currId = byteBuffer.getShort(ID_OFFSET);
-        byteBuffer.putShort(ID_OFFSET, (short) (currId + 1));
+        byteBuffer.putShort(
+                ID_OFFSET,
+                ((short) (byteBuffer.getShort(ID_OFFSET) + (short) 1)));
     }
 
     /**
