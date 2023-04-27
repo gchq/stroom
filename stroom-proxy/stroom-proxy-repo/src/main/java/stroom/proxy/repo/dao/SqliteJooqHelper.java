@@ -29,13 +29,13 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 
-import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
-import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
-import static stroom.proxy.repo.db.jooq.tables.Feed.FEED;
 import static stroom.proxy.repo.db.jooq.tables.Aggregate.AGGREGATE;
+import static stroom.proxy.repo.db.jooq.tables.Feed.FEED;
 import static stroom.proxy.repo.db.jooq.tables.ForwardAggregate.FORWARD_AGGREGATE;
 import static stroom.proxy.repo.db.jooq.tables.ForwardDest.FORWARD_DEST;
 import static stroom.proxy.repo.db.jooq.tables.ForwardSource.FORWARD_SOURCE;
+import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
+import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
 
 @Singleton
 public class SqliteJooqHelper {

@@ -42,12 +42,10 @@ class TestStroomZipOutputStream {
 
             stroomZipOutputStream.close();
 
-            final StroomZipFile stroomZipFile = new StroomZipFile(testFile);
-
-            assertThat(stroomZipFile.getBaseNames().size())
-                    .isEqualTo(TEST_SIZE);
-
-            stroomZipFile.close();
+            try (final StroomZipFile stroomZipFile = new StroomZipFile(testFile)) {
+                assertThat(stroomZipFile.getBaseNames().size())
+                        .isEqualTo(TEST_SIZE);
+            }
         } finally {
             assertThat(Files.deleteIfExists(testFile))
                     .isTrue();

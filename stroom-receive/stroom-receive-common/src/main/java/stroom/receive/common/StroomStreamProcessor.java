@@ -142,7 +142,7 @@ public class StroomStreamProcessor {
         try (final InputStream inputStream = stroomZipFile.getInputStream(baseName, stroomZipFileType)) {
             if (inputStream != null) {
                 handler.addEntry(
-                        baseName + stroomZipFileType.getExtension(),
+                        baseName + stroomZipFileType.getDotExtension(),
                         inputStream,
                         progressHandler);
             }

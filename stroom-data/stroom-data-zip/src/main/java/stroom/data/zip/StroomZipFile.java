@@ -1,6 +1,6 @@
 package stroom.data.zip;
 
-import stroom.util.io.FileName;
+import stroom.data.zip.StroomZipEntries.StroomZipEntryGroup;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -12,116 +12,64 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 public class StroomZipFile implements Closeable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomZipFile.class);
 
     private final Path file;
-    private ZipFile zipFile;
-    private StroomZipEntries stroomZipEntries;
-    private List<String> baseNameList;
+    private final ZipFile zipFile;
+    private final StroomZipEntries stroomZipEntries;
 
-    public StroomZipFile(final Path path) {
+    public StroomZipFile(final Path path) throws IOException {
         this.file = path;
-    }
+        this.zipFile = new ZipFile(Files.newByteChannel(file));
+        stroomZipEntries = new StroomZipEntries();
+        final Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
 
-    private ZipFile getZipFile() throws IOException {
-        if (zipFile == null) {
-            this.zipFile = new ZipFile(Files.newByteChannel(file));
-        }
-        return zipFile;
-    }
+        while (entries.hasMoreElements()) {
+            final ZipArchiveEntry entry = entries.nextElement();
 
-    public Path getFile() {
-        return file;
-    }
-
-    StroomZipEntries getStroomZipFileGroups() throws IOException {
-        if (stroomZipEntries == null) {
-            stroomZipEntries = new StroomZipEntries();
-            final Enumeration<ZipArchiveEntry> entries = getZipFile().getEntries();
-
-            while (entries.hasMoreElements()) {
-                final ZipArchiveEntry entry = entries.nextElement();
-
-                // Skip directories.
-                if (!entry.isDirectory()) {
-                    LOGGER.debug("File entry: {}", entry);
-                    String fileName = entry.getName();
-                    stroomZipEntries.addFile(fileName);
-                }
+            // Skip directories.
+            if (!entry.isDirectory()) {
+                LOGGER.debug("File entry: {}", entry);
+                String fileName = entry.getName();
+                stroomZipEntries.addFile(fileName);
             }
         }
-        return stroomZipEntries;
     }
 
     public List<String> getBaseNames() throws IOException {
-        if (baseNameList == null) {
-            baseNameList = new ArrayList<>();
-            final Enumeration<ZipArchiveEntry> entries = getZipFile().getEntries();
+        return stroomZipEntries.getBaseNames();
+    }
 
-            final Set<String> baseNameSet = new HashSet<>();
-            while (entries.hasMoreElements()) {
-                final ZipArchiveEntry entry = entries.nextElement();
-
-                // Skip directories.
-                if (!entry.isDirectory()) {
-                    LOGGER.debug("File entry: {}", entry);
-                    String fileName = entry.getName();
-                    final String baseName = FileName.parse(fileName).getBaseName();
-                    if (!baseNameSet.contains(baseName)) {
-                        baseNameSet.add(baseName);
-                        baseNameList.add(baseName);
-                    }
-                }
-            }
-        }
-        return baseNameList;
+    public Collection<StroomZipEntryGroup> getGroups() {
+        return stroomZipEntries.getGroups();
     }
 
     @Override
     public void close() throws IOException {
-        if (zipFile != null) {
-            zipFile.close();
-            zipFile = null;
-        }
-        stroomZipEntries = null;
-
+        zipFile.close();
     }
 
-    public InputStream getInputStream(String baseName, StroomZipFileType fileType) throws IOException {
+    public InputStream getInputStream(final String baseName, final StroomZipFileType fileType) throws IOException {
         final ZipArchiveEntry entry = getEntry(baseName, fileType);
         if (entry != null) {
-            return getZipFile().getInputStream(entry);
+            return zipFile.getInputStream(entry);
         }
         return null;
     }
 
-    public long getSize(String baseName, StroomZipFileType fileType) throws IOException {
-        final ZipArchiveEntry entry = getEntry(baseName, fileType);
-        if (entry != null) {
-            return entry.getSize();
-        }
-        return 0;
-    }
-
-    public boolean containsEntry(String baseName, StroomZipFileType fileType) throws IOException {
+    public boolean containsEntry(final String baseName, final StroomZipFileType fileType) {
         return getEntry(baseName, fileType) != null;
     }
 
-    private ZipArchiveEntry getEntry(String baseName, StroomZipFileType fileType) throws IOException {
-        final Optional<StroomZipEntry> optionalStroomZipEntry =
-                getStroomZipFileGroups().getByType(baseName, fileType);
-        if (optionalStroomZipEntry.isEmpty()) {
-            return null;
-        }
-        return getZipFile().getEntry(optionalStroomZipEntry.get().getFullName());
+    private ZipArchiveEntry getEntry(final String baseName, final StroomZipFileType fileType) {
+        final Optional<StroomZipEntry> optionalStroomZipEntry = stroomZipEntries.getByType(baseName, fileType);
+        return optionalStroomZipEntry.map(entry -> zipFile.getEntry(entry.getFullName())).orElse(null);
     }
 }

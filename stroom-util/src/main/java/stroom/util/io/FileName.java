@@ -14,12 +14,28 @@ public class FileName {
         this.extension = extension;
     }
 
+    public static FileName fromParts(final String baseName, final String extension) {
+        if (baseName == null) {
+            if (extension == null || extension.length() == 0) {
+                return new FileName("", "", "");
+            } else {
+                return new FileName("." + extension, "", extension);
+            }
+        } else {
+            if (extension == null || extension.length() == 0) {
+                return new FileName(baseName, baseName, "");
+            } else {
+                return new FileName(baseName + "." + extension, baseName, extension);
+            }
+        }
+    }
+
     public static FileName parse(final String fileName) {
         Objects.requireNonNull(fileName, "fileName is null");
-        final int i = fileName.lastIndexOf('.');
-        if (i != -1) {
-            final String baseName = fileName.substring(0, i);
-            final String extension = fileName.substring(i);
+        final int dotIndex = fileName.lastIndexOf('.');
+        if (dotIndex != -1) {
+            final String baseName = fileName.substring(0, dotIndex);
+            final String extension = fileName.substring(dotIndex + 1);
             return new FileName(fileName, baseName, extension);
         }
         return new FileName(fileName, fileName, "");

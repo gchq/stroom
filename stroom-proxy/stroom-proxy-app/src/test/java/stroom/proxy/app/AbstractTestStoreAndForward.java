@@ -115,9 +115,9 @@ abstract class AbstractTestStoreAndForward {
                                         attributeMap,
                                         handler -> {
                                             try {
-                                                handler.addEntry("1" + StroomZipFileType.META.getExtension(),
+                                                handler.addEntry("1" + StroomZipFileType.META.getDotExtension(),
                                                         new ByteArrayInputStream(metaBytes), progressHandler);
-                                                handler.addEntry("1" + StroomZipFileType.DATA.getExtension(),
+                                                handler.addEntry("1" + StroomZipFileType.DATA.getDotExtension(),
                                                         new ByteArrayInputStream(dataBytes), progressHandler);
                                             } catch (final IOException e) {
                                                 throw new UncheckedIOException(e);

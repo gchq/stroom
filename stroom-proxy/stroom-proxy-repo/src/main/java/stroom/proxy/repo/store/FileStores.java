@@ -69,19 +69,18 @@ public class FileStores {
                         .comparing(Key::order)
                         .thenComparing(Key::name))
                 .forEach(key -> {
-                    Long size = sizes.get(key);
-                    Long count = fileCounts.get(key);
-
                     sb.append("<tr>");
                     sb.append("<td>");
                     sb.append(key.name);
                     sb.append("</td>");
                     sb.append("<td>");
+                    final Long count = fileCounts.get(key);
                     if (count != null) {
                         sb.append(count);
                     }
                     sb.append("</td>");
                     sb.append("<td>");
+                    final Long size = sizes.get(key);
                     if (size != null) {
                         sb.append(ModelStringUtil.formatMetricByteSizeString(size));
                     }

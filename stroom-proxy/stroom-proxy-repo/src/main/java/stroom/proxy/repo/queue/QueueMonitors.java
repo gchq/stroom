@@ -30,24 +30,24 @@ public class QueueMonitors {
                 .forEach(e -> {
                     final String name = e.getKey().name;
                     final QueueMonitorImpl monitor = e.getValue();
-                    long buffer = monitor.bufferPos;
-                    long read = monitor.readPos;
-                    long write = monitor.writePos;
 
                     sb.append("<tr>");
                     sb.append("<td>");
                     sb.append(name);
                     sb.append("</td>");
                     sb.append("<td>");
+                    final long write = monitor.writePos;
                     sb.append(write);
                     sb.append("</td>");
                     sb.append("<td>");
+                    final long read = monitor.readPos;
                     sb.append(read);
                     sb.append("</td>");
                     sb.append("<td>");
                     sb.append(write - read);
                     sb.append("</td>");
                     sb.append("<td>");
+                    final long buffer = monitor.bufferPos;
                     if (buffer > 0) {
                         sb.append(buffer);
                     }

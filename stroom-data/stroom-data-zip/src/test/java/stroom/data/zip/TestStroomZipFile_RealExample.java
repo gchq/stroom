@@ -14,11 +14,9 @@ class TestStroomZipFile_RealExample {
     @Test
     void testRealZip1() throws IOException {
         final Path sourceFile = Paths.get("./src/test/resources/stroom/data/zip/BlankZip.zip");
-        StroomZipFile stroomZipFile = new StroomZipFile(sourceFile);
-
-        ArrayList<String> list = new ArrayList<>(stroomZipFile.getBaseNames());
-        Collections.sort(list);
-
-        stroomZipFile.close();
+        try (final StroomZipFile stroomZipFile = new StroomZipFile(sourceFile)) {
+            ArrayList<String> list = new ArrayList<>(stroomZipFile.getBaseNames());
+            Collections.sort(list);
+        }
     }
 }

@@ -266,10 +266,9 @@ public class Cli extends AbstractCommandLineTool {
     }
 
     private void process(final Writer errorWriter, final Path path) {
-        try {
-            LOGGER.info("Processing: " + FileUtil.getCanonicalPath(path));
+        LOGGER.info("Processing: " + FileUtil.getCanonicalPath(path));
 
-            final StroomZipFile stroomZipFile = new StroomZipFile(path);
+        try (final StroomZipFile stroomZipFile = new StroomZipFile(path)) {
             final List<String> baseNames = stroomZipFile.getBaseNames();
 
             // Process each base file in a consistent order
@@ -282,9 +281,6 @@ public class Cli extends AbstractCommandLineTool {
                 handler.exec(IgnoreCloseInputStream.wrap(dataStream), IgnoreCloseInputStream.wrap(metaStream),
                         IgnoreCloseInputStream.wrap(contextStream), errorWriter, new SimpleTaskContext());
             }
-
-            // Close the zip file.
-            stroomZipFile.close();
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);
         }

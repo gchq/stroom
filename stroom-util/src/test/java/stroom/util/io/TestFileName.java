@@ -26,12 +26,12 @@ class TestFileName {
     @Test
     void testSimple() {
         assertThat(FileName.parse("001.dat").getBaseName()).isEqualTo("001");
-        assertThat(FileName.parse("001.dat").getExtension()).isEqualTo(".dat");
+        assertThat(FileName.parse("001.dat").getExtension()).isEqualTo("dat");
         assertThat(FileName.parse("001.001.dat").getBaseName()).isEqualTo("001.001");
-        assertThat(FileName.parse("001.001.dat").getExtension()).isEqualTo(".dat");
+        assertThat(FileName.parse("001.001.dat").getExtension()).isEqualTo("dat");
         assertThat(FileName.parse("001").getBaseName()).isEqualTo("001");
         assertThat(FileName.parse("001").getExtension()).isEqualTo("");
         assertThat(FileName.parse(".dat").getBaseName()).isEqualTo("");
-        assertThat(FileName.parse(".dat").getExtension()).isEqualTo(".dat");
+        assertThat(FileName.parse(".dat").getExtension()).isEqualTo("dat");
     }
 }
