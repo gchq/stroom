@@ -40,8 +40,8 @@ public class ByteBufferTimePrefixComparator implements Comparator<ByteBuffer> {
                     : o2.getLong(i);
             final int diff = Long.compareUnsigned(lw, rw);
             if (diff != 0) {
-//                return diff;
-                return defaultReturn;
+                return diff;
+//                return defaultReturn;
             }
         }
 
@@ -50,8 +50,8 @@ public class ByteBufferTimePrefixComparator implements Comparator<ByteBuffer> {
             final int rw = Byte.toUnsignedInt(o2.get(i));
             final int result = Integer.compareUnsigned(lw, rw);
             if (result != 0) {
-//                return result;
-                return defaultReturn;
+                return result;
+//                return defaultReturn;
             }
         }
 

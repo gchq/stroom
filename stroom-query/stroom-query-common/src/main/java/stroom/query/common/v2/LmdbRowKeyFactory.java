@@ -18,7 +18,7 @@ public interface LmdbRowKeyFactory {
      * @param timeMs          The time if needed.
      * @return A new LMDB row key.
      */
-    LmdbRowKey create(int depth,
+    LmdbRowKey create(long depth,
                       long parentGroupHash,
                       long groupHash,
                       long timeMs);
