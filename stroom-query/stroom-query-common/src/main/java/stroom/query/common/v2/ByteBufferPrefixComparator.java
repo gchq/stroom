@@ -3,9 +3,17 @@ package stroom.query.common.v2;
 import java.nio.ByteBuffer;
 import java.util.Comparator;
 
-import static java.util.Objects.requireNonNull;
-
 public class ByteBufferPrefixComparator implements Comparator<ByteBuffer> {
+
+    private final int defaultReturn;
+
+    public ByteBufferPrefixComparator(final boolean cursorDirectionForward) {
+        if (cursorDirectionForward) {
+            defaultReturn = 1;
+        } else {
+            defaultReturn = -1;
+        }
+    }
 
     @Override
     public int compare(final ByteBuffer o1, final ByteBuffer o2) {
@@ -15,19 +23,11 @@ public class ByteBufferPrefixComparator implements Comparator<ByteBuffer> {
             final byte b2 = o2.get(i);
             final int result = Byte.compare(b1, b2);
             if (result != 0) {
-                return result;
+//                return result;
+                return defaultReturn;
             }
         }
         return 0;
-
-
-
-
-
-
-
-
-
 
 
 //        requireNonNull(o1);

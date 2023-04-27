@@ -8,6 +8,15 @@ import static java.nio.ByteOrder.LITTLE_ENDIAN;
 import static java.util.Objects.requireNonNull;
 
 public class ByteBufferDepthTimeComparator implements Comparator<ByteBuffer> {
+    private final int defaultReturn;
+
+    public ByteBufferDepthTimeComparator(final boolean cursorDirectionForward) {
+        if (cursorDirectionForward) {
+            defaultReturn = 1;
+        } else {
+            defaultReturn = -1;
+        }
+    }
 
     @Override
     public int compare(final ByteBuffer o1, final ByteBuffer o2) {
@@ -25,7 +34,8 @@ public class ByteBufferDepthTimeComparator implements Comparator<ByteBuffer> {
             final byte b2 = o2.get(0);
             final int result = Byte.compare(b1, b2);
             if (result != 0) {
-                return result;
+//                return result;
+                return defaultReturn;
             }
         }
 
@@ -40,7 +50,8 @@ public class ByteBufferDepthTimeComparator implements Comparator<ByteBuffer> {
                     : o2.getLong(i);
             final int diff = Long.compareUnsigned(lw, rw);
             if (diff != 0) {
-                return diff;
+//                return diff;
+                return defaultReturn;
             }
         }
 
@@ -49,7 +60,8 @@ public class ByteBufferDepthTimeComparator implements Comparator<ByteBuffer> {
             final int rw = Byte.toUnsignedInt(o2.get(i));
             final int result = Integer.compareUnsigned(lw, rw);
             if (result != 0) {
-                return result;
+//                return result;
+                return defaultReturn;
             }
         }
 

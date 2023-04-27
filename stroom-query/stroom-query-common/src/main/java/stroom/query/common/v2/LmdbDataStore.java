@@ -17,6 +17,7 @@
 
 package stroom.query.common.v2;
 
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.dashboard.expression.v1.ChildData;
 import stroom.dashboard.expression.v1.CountPrevious;
 import stroom.dashboard.expression.v1.Expression;
@@ -35,6 +36,7 @@ import stroom.query.api.v2.Field;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
+import stroom.query.common.v2.LmdbRowKeyFactoryFactory.NestedGroupedLmdbRowKeyFactory;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.util.concurrent.CompleteException;
 import stroom.util.concurrent.UncheckedInterruptedException;
@@ -60,6 +62,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -984,75 +987,92 @@ public class LmdbDataStore implements DataStore {
                                       final int childDepth,
                                       final int trimmedSize,
                                       final boolean trimTop) {
-            SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_GET_CHILDREN);
-            // If we don't have any children at the requested depth then return an empty list.
-            if (compiledSorters.length <= childDepth) {
-                return ItemsImpl.EMPTY;
-            }
+            try {
+                SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_GET_CHILDREN);
+                // If we don't have any children at the requested depth then return an empty list.
+                if (compiledSorters.length <= childDepth) {
+                    return ItemsImpl.EMPTY;
+                }
 
-            final ItemsImpl list = new ItemsImpl(10);
+                final ItemsImpl list = new ItemsImpl(10);
 
-            final KeyRange<ByteBuffer> keyRange = lmdbRowKeyFactory.createChildKeyRange(parentKey, timeFilter);
-            final int maxSize;
-            if (trimmedSize < Integer.MAX_VALUE / 2) {
-                maxSize = Math.max(1000, trimmedSize * 2);
-            } else {
-                maxSize = Integer.MAX_VALUE;
-            }
-            final CompiledSorter<Item> sorter = compiledSorters[childDepth];
+                final KeyRange<ByteBuffer> keyRange = lmdbRowKeyFactory.createChildKeyRange(parentKey, timeFilter);
+                final int maxSize;
+                if (trimmedSize < Integer.MAX_VALUE / 2) {
+                    maxSize = Math.max(1000, trimmedSize * 2);
+                } else {
+                    maxSize = Integer.MAX_VALUE;
+                }
+                final CompiledSorter<Item> sorter = compiledSorters[childDepth];
 
-            boolean trimmed = true;
-            boolean addMore = true;
+                boolean trimmed = true;
+                boolean addMore = true;
 
-            try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(
-                    readTxn,
-                    keyRange,
-                    lmdbRowKeyFactory.getKeyComparator())) {
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+//                final byte[] start = ByteBufferUtils.toBytes(keyRange.getStart());
+//                final byte[] stop = ByteBufferUtils.toBytes(keyRange.getStop());
+//
+//                NestedGroupedLmdbRowKeyFactory fac = (NestedGroupedLmdbRowKeyFactory) lmdbRowKeyFactory;
+//                ByteBuffer parentKeyByteBuffer = fac.createKey(parentKey);
+//                final byte[] parentKeyByteBufferBytes = ByteBufferUtils.toBytes(parentKeyByteBuffer);
 
-                while (iterator.hasNext()
-                        && addMore
-                        && !Thread.currentThread().isInterrupted()) {
+                final Comparator<ByteBuffer> keyComparator = lmdbRowKeyFactory.getKeyComparator();
+                try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(
+                        readTxn,
+                        keyRange,
+                        keyComparator)) {
+                    final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
 
-                    final KeyVal<ByteBuffer> keyVal = iterator.next();
+                    while (iterator.hasNext()
+                            && addMore
+                            && !Thread.currentThread().isInterrupted()) {
 
-                    // All valid keys are more than a single byte long. Single byte keys are used to store db info.
-                    if (keyVal.key().limit() > 1) {
-                        final ByteBuffer valueBuffer = keyVal.val();
-                        try (final UnsafeByteBufferInput input =
-                                serialisers.getInputFactory().createByteBufferInput(valueBuffer)) {
-                            while (!input.end() && addMore) {
-                                final LmdbValue rowValue = LmdbValue.read(serialisers,
-                                        keyFactory,
-                                        compiledFields,
-                                        input);
-                                final Key key = rowValue.getKey();
+                        final KeyVal<ByteBuffer> keyVal = iterator.next();
+//                        final byte[] currentKeyBytes = ByteBufferUtils.toBytes(keyVal.key());
+
+                        // All valid keys are more than a single byte long. Single byte keys are used to store db info.
+                        if (keyVal.key().limit() > 1) {
+                            final ByteBuffer valueBuffer = keyVal.val();
+                            try (final UnsafeByteBufferInput input =
+                                    serialisers.getInputFactory().createByteBufferInput(valueBuffer)) {
+                                while (!input.end() && addMore) {
+                                    final LmdbValue rowValue = LmdbValue.read(serialisers,
+                                            keyFactory,
+                                            compiledFields,
+                                            input);
+                                    final Key key = rowValue.getKey();
 //                            if (key.getParent().equals(parentKey)) {
-                                final Generator[] generators = rowValue.getGenerators().getGenerators();
-                                list.add(new ItemImpl(this, key, timeFilter, generators));
-                                if (list.size >= trimmedSize && sorter == null) {
-                                    // Stop without sorting etc.
-                                    addMore = false;
+                                    final Generator[] generators = rowValue.getGenerators().getGenerators();
+                                    list.add(new ItemImpl(this, key, timeFilter, generators));
+                                    if (list.size >= trimmedSize && sorter == null) {
+                                        // Stop without sorting etc.
+                                        addMore = false;
 
-                                } else {
-                                    trimmed = false;
-                                    if (list.size() > maxSize) {
-                                        list.sortAndTrim(sorter, trimmedSize, trimTop);
-                                        trimmed = true;
+                                    } else {
+                                        trimmed = false;
+                                        if (list.size() > maxSize) {
+                                            list.sortAndTrim(sorter, trimmedSize, trimTop);
+                                            trimmed = true;
+                                        }
                                     }
-                                }
 //                            }
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            if (!trimmed) {
-                list.sortAndTrim(sorter, trimmedSize, trimTop);
-            }
+                if (!trimmed) {
+                    list.sortAndTrim(sorter, trimmedSize, trimTop);
+                }
 
-            return list;
+                return list;
+            } catch (final UncheckedInterruptedException e) {
+                LOGGER.debug(e::getMessage, e);
+                throw e;
+            } catch (final RuntimeException e) {
+                LOGGER.error(e::getMessage, e);
+                throw e;
+            }
         }
 
         private long countChildren(final Key parentKey,

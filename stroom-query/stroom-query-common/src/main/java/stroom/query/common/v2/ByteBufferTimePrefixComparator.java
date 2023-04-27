@@ -9,6 +9,16 @@ import static java.util.Objects.requireNonNull;
 
 public class ByteBufferTimePrefixComparator implements Comparator<ByteBuffer> {
 
+    private final int defaultReturn;
+
+    public ByteBufferTimePrefixComparator(final boolean cursorDirectionForward) {
+        if (cursorDirectionForward) {
+            defaultReturn = 1;
+        } else {
+            defaultReturn = -1;
+        }
+    }
+
     @Override
     public int compare(final ByteBuffer o1, final ByteBuffer o2) {
         requireNonNull(o1);
@@ -30,7 +40,8 @@ public class ByteBufferTimePrefixComparator implements Comparator<ByteBuffer> {
                     : o2.getLong(i);
             final int diff = Long.compareUnsigned(lw, rw);
             if (diff != 0) {
-                return diff;
+//                return diff;
+                return defaultReturn;
             }
         }
 
@@ -39,7 +50,8 @@ public class ByteBufferTimePrefixComparator implements Comparator<ByteBuffer> {
             final int rw = Byte.toUnsignedInt(o2.get(i));
             final int result = Integer.compareUnsigned(lw, rw);
             if (result != 0) {
-                return result;
+//                return result;
+                return defaultReturn;
             }
         }
 
