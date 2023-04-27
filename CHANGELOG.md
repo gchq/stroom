@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.6] - 2023-04-27
+
+* Issue **#3400** : Fix dashboard table selector issue caused by key range comparator.
+
+
 ## [v7.2-beta.5] - 2023-04-25
 
 * Issue **#3367** : Fix proxy forward failure handling.
@@ -5212,7 +5217,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.5...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.6...HEAD
+[v7.2-beta.6]: https://github.com/gchq/stroom/compare/v7.2-beta.5...v7.2-beta.6
 [v7.2-beta.5]: https://github.com/gchq/stroom/compare/v7.2-beta.4...v7.2-beta.5
 [v7.2-beta.4]: https://github.com/gchq/stroom/compare/v7.2-beta.3...v7.2-beta.4
 [v7.2-beta.3]: https://github.com/gchq/stroom/compare/v7.2-beta.2...v7.2-beta.3
