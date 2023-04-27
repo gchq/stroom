@@ -41,7 +41,7 @@ public class DbRecordCountAssertion {
                 Duration.ofSeconds(1));
     }
 
-    private DbRecordCounts getDbRecordCounts() {
+    public DbRecordCounts getDbRecordCounts() {
         return new DbRecordCounts(aggregateDao.countAggregates(),
                 feedDao.countFeeds(),
                 forwardAggregateDao.countForwardAggregates(),

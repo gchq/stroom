@@ -6,6 +6,8 @@ import stroom.proxy.repo.ProxyDbConfig;
 import stroom.proxy.repo.RepoSource;
 import stroom.proxy.repo.queue.Batch;
 import stroom.proxy.repo.queue.BindWriteQueue;
+import stroom.proxy.repo.queue.QueueMonitor;
+import stroom.proxy.repo.queue.QueueMonitors;
 import stroom.proxy.repo.queue.ReadQueue;
 import stroom.proxy.repo.queue.RecordQueue;
 import stroom.proxy.repo.queue.WriteQueue;
@@ -41,11 +43,16 @@ public class SourceDao implements Flushable {
     private final BindWriteQueue sourceQueue;
     private final ReadQueue<RepoSource> sourceReadQueue;
 
+    private final QueueMonitor queueMonitor;
+
 
     @Inject
     SourceDao(final SqliteJooqHelper jooq,
               final FeedDao feedDao,
-              final ProxyDbConfig dbConfig) {
+              final ProxyDbConfig dbConfig,
+              final QueueMonitors queueMonitors) {
+        queueMonitor = queueMonitors.create(2, "Sources");
+
         this.jooq = jooq;
         this.feedDao = feedDao;
         init();
@@ -60,6 +67,8 @@ public class SourceDao implements Flushable {
     }
 
     private long read(final long currentReadPos, final long limit, List<RepoSource> readQueue) {
+        queueMonitor.setReadPos(currentReadPos);
+
         final AtomicLong pos = new AtomicLong(currentReadPos);
         jooq.readOnlyTransactionResult(context -> context
                         .select(SOURCE.ID,
@@ -73,7 +82,10 @@ public class SourceDao implements Flushable {
                         .limit(limit)
                         .fetch())
                 .forEach(r -> {
-                    pos.set(r.get(SOURCE.NEW_POSITION));
+                    final long newPosition = r.get(SOURCE.NEW_POSITION);
+                    pos.set(newPosition);
+                    queueMonitor.setBufferPos(newPosition);
+
                     final RepoSource repoSource = new RepoSource(
                             r.get(SOURCE.ID),
                             r.get(SOURCE.FILE_STORE_ID),
@@ -88,9 +100,12 @@ public class SourceDao implements Flushable {
             sourceId.set(JooqUtil
                     .getMaxId(context, SOURCE, SOURCE.ID)
                     .orElse(0L));
-            sourceNewPosition.set(JooqUtil
+
+            final long newPosition = JooqUtil
                     .getMaxId(context, SOURCE, SOURCE.NEW_POSITION)
-                    .orElse(0L));
+                    .orElse(0L);
+            queueMonitor.setWritePos(newPosition);
+            sourceNewPosition.set(newPosition);
         });
     }
 
@@ -139,11 +154,14 @@ public class SourceDao implements Flushable {
                           final String typeName) {
         final long feedId = feedDao.getId(new FeedKey(feedName, typeName));
         recordQueue.add(() -> {
+            final long newPosition = sourceNewPosition.incrementAndGet();
+            queueMonitor.setWritePos(newPosition);
+
             final Object[] source = new Object[SOURCE_COLUMNS.length];
             source[0] = sourceId.incrementAndGet();
             source[1] = fileStoreId;
             source[2] = feedId;
-            source[3] = sourceNewPosition.incrementAndGet();
+            source[3] = newPosition;
             sourceQueue.add(source);
         });
     }

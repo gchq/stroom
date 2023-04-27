@@ -1,6 +1,6 @@
 package stroom.data.zip;
 
-import stroom.util.io.FileNameUtil;
+import stroom.util.io.FileName;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -75,7 +75,7 @@ public class StroomZipFile implements Closeable {
                 if (!entry.isDirectory()) {
                     LOGGER.debug("File entry: {}", entry);
                     String fileName = entry.getName();
-                    final String baseName = FileNameUtil.getBaseName(fileName);
+                    final String baseName = FileName.parse(fileName).getBaseName();
                     if (!baseNameSet.contains(baseName)) {
                         baseNameSet.add(baseName);
                         baseNameList.add(baseName);

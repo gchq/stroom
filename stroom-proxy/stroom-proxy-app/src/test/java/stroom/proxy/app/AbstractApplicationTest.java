@@ -197,10 +197,6 @@ public abstract class AbstractApplicationTest {
         return client;
     }
 
-    public PathCreator getPathCreator() {
-        return pathCreator;
-    }
-
     public DropwizardAppExtension<Config> getDropwizard() {
         return dropwizard;
     }
@@ -220,7 +216,7 @@ public abstract class AbstractApplicationTest {
                         Jackson.newObjectMapper(),
                         "dw");
 
-        Config config = null;
+        Config config;
         try {
             config = configurationFactory.build(configurationSourceProvider, configFile.toAbsolutePath().toString());
         } catch (ConfigurationException | IOException e) {

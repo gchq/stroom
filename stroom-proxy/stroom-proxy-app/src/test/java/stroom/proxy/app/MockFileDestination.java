@@ -101,7 +101,8 @@ public class MockFileDestination {
                 .map(ForwardFileConfig.class::cast)
                 .flatMap(forwardFileConfig -> {
                     final Path forwardDir = pathCreator.toAppPath(forwardFileConfig.getPath());
-                    final SequentialFileStore sequentialFileStore = new SequentialFileStore(() -> forwardDir);
+                    final SequentialFileStore sequentialFileStore =
+                            new SequentialFileStore(() -> forwardDir);
                     int id = 1;
                     final List<ForwardFileItem> forwardFileItems = new ArrayList<>();
                     while (true) {

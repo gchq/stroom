@@ -1,5 +1,7 @@
 package stroom.data.zip;
 
+import stroom.util.io.FileName;
+
 public class StroomZipEntry {
 
     private static final String SINGLE_ENTRY_ZIP_BASE_NAME = "001";
@@ -22,13 +24,8 @@ public class StroomZipEntry {
     }
 
     public static StroomZipEntry createFromFileName(final String fileName) {
-        final int index = fileName.lastIndexOf(".");
-        if (index != -1) {
-            final String stem = fileName.substring(0, index);
-            final String extension = fileName.substring(index);
-            return new StroomZipEntry(stem, fileName, StroomZipFileType.fromExtension(extension));
-        }
-        return new StroomZipEntry(fileName, fileName, StroomZipFileType.DATA);
+        final FileName fn = FileName.parse(fileName);
+        return new StroomZipEntry(fn.getBaseName(), fn.getFullName(), StroomZipFileType.DATA);
     }
 
     public static StroomZipEntry createFromBaseName(final String stem, final StroomZipFileType stroomZipFileType) {
