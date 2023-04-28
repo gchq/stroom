@@ -333,13 +333,13 @@ class TestSearchResponseCreator {
 
             @Override
             public Serialisers getSerialisers() {
-                return new Serialisers(new ResultStoreConfig());
+                return new Serialisers(new SearchResultStoreConfig());
             }
 
             @Override
             public KeyFactory getKeyFactory() {
                 return KeyFactoryFactory.create(
-                        new Serialisers(new ResultStoreConfig()),
+                        new Serialisers(new SearchResultStoreConfig()),
                         new BasicKeyFactoryConfig(),
                         new CompiledDepths(null, false));
             }

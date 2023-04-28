@@ -437,13 +437,13 @@ abstract class AbstractDataStoreTest {
                 new QueryKey(UUID.randomUUID().toString()),
                 "0",
                 tableSettings,
-                new ResultStoreConfig(),
+                new SearchResultStoreConfig(),
                 dataStoreSettings);
     }
 
     abstract DataStore create(QueryKey queryKey,
                               String componentId,
                               TableSettings tableSettings,
-                              AbstractResultStoreConfig resultStoreConfig,
+                              ResultStoreConfig resultStoreConfig,
                               DataStoreSettings dataStoreSettings);
 }

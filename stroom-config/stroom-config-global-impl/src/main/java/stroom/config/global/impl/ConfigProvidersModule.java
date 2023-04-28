@@ -1,5 +1,7 @@
 package stroom.config.global.impl;
 
+import stroom.query.common.v2.SearchResultStoreConfig;
+
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
@@ -450,10 +452,10 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.query.common.v2.ResultStoreConfig getResultStoreConfig(
+    SearchResultStoreConfig getResultStoreConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
-                stroom.query.common.v2.ResultStoreConfig.class);
+                SearchResultStoreConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")

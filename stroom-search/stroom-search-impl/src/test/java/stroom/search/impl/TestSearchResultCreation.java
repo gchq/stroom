@@ -35,10 +35,9 @@ import stroom.query.common.v2.Items;
 import stroom.query.common.v2.Key;
 import stroom.query.common.v2.LmdbDataStoreFactory;
 import stroom.query.common.v2.ResultStore;
-import stroom.query.common.v2.ResultStoreConfig;
 import stroom.query.common.v2.ResultStoreSettingsFactory;
 import stroom.query.common.v2.SearchDebugUtil;
-import stroom.query.common.v2.Serialisers;
+import stroom.query.common.v2.SearchResultStoreConfig;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.SizesProvider;
 import stroom.util.io.PathCreator;
@@ -94,11 +93,10 @@ class TestSearchResultCreation {
                 () -> lmdbLibraryConfig);
         dataStoreFactory = new LmdbDataStoreFactory(
                 lmdbEnvFactory,
-                ResultStoreConfig::new,
+                SearchResultStoreConfig::new,
                 AnalyticStoreConfig::new,
                 pathCreator,
-                () -> executorService,
-                () -> new Serialisers(new ResultStoreConfig()));
+                () -> executorService);
     }
 
     @AfterEach

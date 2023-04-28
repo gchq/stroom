@@ -36,7 +36,7 @@ public class LmdbPayloadCreator {
                        final QueryKey queryKey,
                        final LmdbDataStore lmdbDataStore,
                        final CompiledField[] compiledFields,
-                       final AbstractResultStoreConfig resultStoreConfig,
+                       final ResultStoreConfig resultStoreConfig,
                        final LmdbRowKeyFactory lmdbRowKeyFactory,
                        final KeyFactory keyFactory) {
         this.serialisers = serialisers;
