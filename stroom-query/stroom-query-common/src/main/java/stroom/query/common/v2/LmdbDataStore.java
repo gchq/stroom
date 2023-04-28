@@ -17,7 +17,6 @@
 
 package stroom.query.common.v2;
 
-import stroom.bytebuffer.ByteBufferUtils;
 import stroom.dashboard.expression.v1.ChildData;
 import stroom.dashboard.expression.v1.CountPrevious;
 import stroom.dashboard.expression.v1.Expression;
@@ -36,7 +35,6 @@ import stroom.query.api.v2.Field;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
-import stroom.query.common.v2.LmdbRowKeyFactoryFactory.NestedGroupedLmdbRowKeyFactory;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.util.concurrent.CompleteException;
 import stroom.util.concurrent.UncheckedInterruptedException;
@@ -62,7 +60,6 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -857,8 +854,7 @@ public class LmdbDataStore implements DataStore {
         lmdbEnv.doWithReadTxn(readTxn -> {
             try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(
                     readTxn,
-                    keyRange,
-                    lmdbRowKeyFactory.getKeyComparator())) {
+                    keyRange)) {
                 final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
 
                 if (iterator.hasNext()) {
@@ -1015,11 +1011,9 @@ public class LmdbDataStore implements DataStore {
 //                ByteBuffer parentKeyByteBuffer = fac.createKey(parentKey);
 //                final byte[] parentKeyByteBufferBytes = ByteBufferUtils.toBytes(parentKeyByteBuffer);
 
-                final Comparator<ByteBuffer> keyComparator = lmdbRowKeyFactory.getKeyComparator();
                 try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(
                         readTxn,
-                        keyRange,
-                        keyComparator)) {
+                        keyRange)) {
                     final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
 
                     while (iterator.hasNext()
