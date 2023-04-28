@@ -972,7 +972,7 @@ public class LmdbDataStore implements DataStore {
             LOGGER.trace(() -> "get() called for parentKey: " + parentKey);
 
             return Metrics.measure("get", () -> {
-                final int childDepth = parentKey.getDepth() + 1;
+                final int childDepth = parentKey.getChildDepth();
                 final int trimmedSize = maxResults.size(childDepth);
                 return getChildren(parentKey, timeFilter, childDepth, trimmedSize, false);
             });
@@ -1191,10 +1191,10 @@ public class LmdbDataStore implements DataStore {
 
             final Generator generator = generators[index];
             if (generator != null) {
-                if (evaluateChildren && key.isGrouped()) {
+                if (key.isGrouped()) {
                     final Supplier<ChildData> childDataSupplier = () -> {
                         // If we don't have any children at the requested depth then return null.
-                        if (data.compiledSorters.length <= key.getDepth()) {
+                        if (data.compiledSorters.length <= key.getChildDepth()) {
                             return null;
                         }
 
@@ -1228,7 +1228,7 @@ public class LmdbDataStore implements DataStore {
                             public Val count() {
                                 final long count = data.countChildren(
                                         key,
-                                        key.getDepth());
+                                        key.getChildDepth());
                                 if (count <= 0) {
                                     return ValNull.INSTANCE;
                                 }
@@ -1239,11 +1239,11 @@ public class LmdbDataStore implements DataStore {
                                 final Items items = data.getChildren(
                                         key,
                                         timeFilter,
-                                        key.getDepth(),
+                                        key.getChildDepth(),
                                         trimmedSize,
                                         trimTop);
                                 if (items != null && items.size() == trimmedSize) {
-                                    return items.get(trimmedSize - 1).getValue(index, false);
+                                    return items.get(trimmedSize - 1).getValue(index, true);
                                 }
                                 return ValNull.INSTANCE;
                             }
@@ -1252,13 +1252,13 @@ public class LmdbDataStore implements DataStore {
                                 final Items items = data.getChildren(
                                         key,
                                         timeFilter,
-                                        key.getDepth(),
+                                        key.getChildDepth(),
                                         limit,
                                         trimTop);
                                 if (items != null && items.size() > 0) {
                                     final StringBuilder sb = new StringBuilder();
                                     for (final Item item : items) {
-                                        final Val val = item.getValue(index, false);
+                                        final Val val = item.getValue(index, true);
                                         if (val.type().isValue()) {
                                             if (sb.length() > 0) {
                                                 sb.append(delimiter);

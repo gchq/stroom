@@ -54,6 +54,10 @@ public class Key {
         return keyParts.size() - 1;
     }
 
+    int getChildDepth() {
+        return keyParts.size();
+    }
+
     boolean isGrouped() {
         final KeyPart last = getLast();
         return last == null || last.isGrouped();

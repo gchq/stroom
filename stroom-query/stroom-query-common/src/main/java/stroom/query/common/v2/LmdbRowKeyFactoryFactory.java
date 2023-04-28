@@ -337,7 +337,7 @@ public class LmdbRowKeyFactoryFactory {
 
             // If this is a grouping key then we need to add the depth first.
             final int depth = parentKey.getDepth();
-            final byte childDepth = (byte) (depth + 1);
+            final byte childDepth = (byte) parentKey.getChildDepth();
             if (isDetailLevel(depth)) {
                 // This is a detail level - non-grouped row.
                 // Not valid for a parent key stem.
@@ -469,7 +469,7 @@ public class LmdbRowKeyFactoryFactory {
 
             // If this is a grouping key then we need to add the depth first.
             final int depth = parentKey.getDepth();
-            final byte childDepth = (byte) (depth + 1);
+            final byte childDepth = (byte) parentKey.getChildDepth();
             if (isDetailLevel(depth)) {
                 // This is a detail level - non-grouped row.
                 // Not valid for a parent key stem.
@@ -507,7 +507,7 @@ public class LmdbRowKeyFactoryFactory {
 
             // If this is a grouping key then we need to add the depth first.
             final int depth = parentKey.getDepth();
-            final byte childDepth = (byte) (depth + 1);
+            final byte childDepth = (byte) parentKey.getChildDepth();
             if (isDetailLevel(depth)) {
                 // This is a detail level - non-grouped row.
                 // Not valid for a parent key stem.

@@ -138,8 +138,10 @@ class Data extends AbstractLink {
             append(sb, 8, ARG_VIEW_TYPE);
             append(sb, 9, ARG_DISPLAY_TYPE);
 
+            final Val val = childGenerators[0].eval(childDataSupplier);
+            final String escaped = getEscapedString(val);
             return makeLink(
-                    getEscapedString(childGenerators[0].eval(childDataSupplier)),
+                    escaped,
                     EncodingUtil.encodeUrl(sb.toString()),
                     "data");
         }
