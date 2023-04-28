@@ -39,11 +39,13 @@ public class ReferenceDataStagingLmdbConfig extends AbstractConfig implements Lm
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public ReferenceDataStagingLmdbConfig(@JsonProperty("localDir") final String localDir,
-                                          @JsonProperty("maxReaders") final int maxReaders,
-                                          @JsonProperty("maxStoreSize") final ByteSize maxStoreSize,
-                                          @JsonProperty("readAheadEnabled") final boolean isReadAheadEnabled,
-                                          @JsonProperty("readerBlockedByWriter") final boolean isReaderBlockedByWriter) {
+    public ReferenceDataStagingLmdbConfig(
+            @JsonProperty("localDir") final String localDir,
+            @JsonProperty("maxReaders") final int maxReaders,
+            @JsonProperty("maxStoreSize") final ByteSize maxStoreSize,
+            @JsonProperty("readAheadEnabled") final boolean isReadAheadEnabled,
+            @JsonProperty("readerBlockedByWriter") final boolean isReaderBlockedByWriter) {
+
         this.localDir = localDir;
         this.maxReaders = maxReaders;
         this.maxStoreSize = maxStoreSize;
