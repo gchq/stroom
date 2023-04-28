@@ -124,18 +124,17 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     private final ByteBufferPool byteBufferPool;
 
     @Inject
-    RefDataOffHeapStore(
-            final RefDataLmdbEnv lmdbEnvironment,
-            final OffHeapRefDataLoader.Factory offHeapRefDataLoaderFactory,
-            final Provider<ReferenceDataConfig> referenceDataConfigProvider,
-            final ByteBufferPool byteBufferPool,
-            final KeyValueStoreDb keyValueStoreDb,
-            final RangeStoreDb rangeStoreDb,
-            final RefDataValueConverter refDataValueConverter,
-            final ProcessingInfoDb processingInfoDb,
-            final TaskContextFactory taskContextFactory,
-            final ValueStore valueStore,
-            final MapDefinitionUIDStore mapDefinitionUIDStore) {
+    RefDataOffHeapStore(final RefDataLmdbEnv lmdbEnvironment,
+                        final OffHeapRefDataLoader.Factory offHeapRefDataLoaderFactory,
+                        final Provider<ReferenceDataConfig> referenceDataConfigProvider,
+                        final ByteBufferPool byteBufferPool,
+                        final KeyValueStoreDb keyValueStoreDb,
+                        final RangeStoreDb rangeStoreDb,
+                        final RefDataValueConverter refDataValueConverter,
+                        final ProcessingInfoDb processingInfoDb,
+                        final TaskContextFactory taskContextFactory,
+                        final ValueStore valueStore,
+                        final MapDefinitionUIDStore mapDefinitionUIDStore) {
 
         this.lmdbEnvironment = lmdbEnvironment;
         this.offHeapRefDataLoaderFactory = offHeapRefDataLoaderFactory;

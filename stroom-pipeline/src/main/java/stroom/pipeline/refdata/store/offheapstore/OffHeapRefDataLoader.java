@@ -198,9 +198,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         final PutOutcome putOutcome = processingInfoDb.put(
                 refStreamDefinition, refDataProcessingInfo, true);
 
-        this.offHeapStagingStore = offHeapStagingStoreFactory.create(
-                refStoreLmdbEnv,
-                refStreamDefinition);
+        this.offHeapStagingStore = offHeapStagingStoreFactory.create(refStreamDefinition);
 
         currentLoaderState = LoaderState.INITIALISED;
         return putOutcome;

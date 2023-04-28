@@ -23,6 +23,7 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
     private final StroomDuration purgeAge;
     private final int loadingLockStripes;
     private final ReferenceDataLmdbConfig lmdbConfig;
+    private final ReferenceDataStagingLmdbConfig stagingLmdbConfig;
     private final CacheConfig effectiveStreamCache;
 
     public ReferenceDataConfig() {
@@ -31,6 +32,7 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
         purgeAge = StroomDuration.ofDays(30);
         loadingLockStripes = 2048;
         lmdbConfig = new ReferenceDataLmdbConfig();
+        stagingLmdbConfig = new ReferenceDataStagingLmdbConfig();
 
         effectiveStreamCache = CacheConfig.builder()
                 .maximumSize(1000L)
@@ -44,12 +46,14 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
                                @JsonProperty("purgeAge") final StroomDuration purgeAge,
                                @JsonProperty("loadingLockStripes") final int loadingLockStripes,
                                @JsonProperty("lmdb") final ReferenceDataLmdbConfig lmdbConfig,
+                               @JsonProperty("stagingLmdb") final ReferenceDataStagingLmdbConfig stagingLmdbConfig,
                                @JsonProperty("effectiveStreamCache") final CacheConfig effectiveStreamCache) {
         this.maxPutsBeforeCommit = maxPutsBeforeCommit;
         this.maxPurgeDeletesBeforeCommit = maxPurgeDeletesBeforeCommit;
         this.purgeAge = purgeAge;
         this.loadingLockStripes = loadingLockStripes;
         this.lmdbConfig = lmdbConfig;
+        this.stagingLmdbConfig = stagingLmdbConfig;
         this.effectiveStreamCache = effectiveStreamCache;
     }
 
@@ -93,6 +97,11 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
         return lmdbConfig;
     }
 
+    @JsonProperty("stagingLmdb")
+    public ReferenceDataStagingLmdbConfig getStagingLmdbConfig() {
+        return stagingLmdbConfig;
+    }
+
     public CacheConfig getEffectiveStreamCache() {
         return effectiveStreamCache;
     }
@@ -104,6 +113,7 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
                 purgeAge,
                 loadingLockStripes,
                 lmdbConfig,
+                stagingLmdbConfig,
                 effectiveStreamCache);
     }
 
@@ -114,6 +124,7 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
                 purgeAge,
                 loadingLockStripes,
                 lmdbConfig,
+                stagingLmdbConfig,
                 effectiveStreamCache);
     }
 
@@ -124,6 +135,7 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
                 purgeAge,
                 loadingLockStripes,
                 lmdbConfig,
+                stagingLmdbConfig,
                 effectiveStreamCache);
     }
 
@@ -134,6 +146,7 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
                 purgeAge,
                 loadingLockStripes,
                 lmdbConfig,
+                stagingLmdbConfig,
                 effectiveStreamCache);
     }
 
@@ -144,6 +157,7 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
                 purgeAge,
                 loadingLockStripes,
                 lmdbConfig,
+                stagingLmdbConfig,
                 effectiveStreamCache);
     }
 
@@ -155,6 +169,7 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
                 ", purgeAge=" + purgeAge +
                 ", loadingLockStripes=" + loadingLockStripes +
                 ", lmdbConfig=" + lmdbConfig +
+                ", stagingLmdbConfig=" + stagingLmdbConfig +
                 ", effectiveStreamCache=" + effectiveStreamCache +
                 '}';
     }

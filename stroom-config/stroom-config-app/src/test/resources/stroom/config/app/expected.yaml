@@ -481,6 +481,12 @@ appConfig:
       maxPurgeDeletesBeforeCommit: 200000
       maxPutsBeforeCommit: 200000
       purgeAge: "P30D"
+      stagingLmdb:
+        localDir: "reference_staging_data"
+        maxReaders: 5
+        maxStoreSize: "10G"
+        readAheadEnabled: true
+        readerBlockedByWriter: false
     xmlSchema:
       cache:
         expireAfterAccess: "PT10M"

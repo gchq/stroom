@@ -110,9 +110,7 @@ class TestOffHeapStagingStore extends StroomUnitTest {
                 });
 
         injector.injectMembers(this);
-        offHeapStagingStore = offHeapStagingStoreFactory.create(
-                refDataLmdbEnv,
-                refStreamDefinition);
+        offHeapStagingStore = offHeapStagingStoreFactory.create(refStreamDefinition);
         refDataStore = refDataStoreFactory.getOffHeapStore();
         LOGGER.debug("setup() finished");
     }

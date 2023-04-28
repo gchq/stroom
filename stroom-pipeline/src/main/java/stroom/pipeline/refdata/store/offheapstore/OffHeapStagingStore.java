@@ -286,6 +286,7 @@ public class OffHeapStagingStore implements AutoCloseable {
                 closeAndSwallow(pooledByteBuffer, "pooledByteBuffer"));
 
         stagingLmdbEnv.close();
+        LOGGER.info(() -> "Deleting reference data staging store from " + stagingLmdbEnv.getLocalDir());
         stagingLmdbEnv.delete();
     }
 
