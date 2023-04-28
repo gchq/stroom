@@ -81,7 +81,7 @@ public class ProxyJerseyClientProvider implements Provider<Client> {
                         } else {
                             LOGGER.error("Error creating jersey client, msg: {}, config: {} " +
                                             "Proxy will continue to use previous client based on previous config: {}",
-                                    e.getMessage(), currentRestClientConfig, this.restClientConfig);
+                                    e.getMessage(), currentRestClientConfig, this.restClientConfig, e);
                         }
                     }
                 }
