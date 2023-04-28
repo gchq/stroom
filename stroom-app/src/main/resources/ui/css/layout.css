@@ -12,8 +12,8 @@
 }
 
 .stroom-density-compact {
-    --row__padding--horizontal: .1rem;
-    --row__padding--vertical: .1rem;
+    --row__padding--horizontal: .2rem;
+    --row__padding--vertical: .2rem;
     --row__gap--horizontal: .4rem;
     --row__gap--vertical: .1rem;
     --control__padding--horizontal: .4rem;
