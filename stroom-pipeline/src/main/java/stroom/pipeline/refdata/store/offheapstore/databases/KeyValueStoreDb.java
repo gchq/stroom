@@ -43,6 +43,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Iterator;
+import java.util.Optional;
 import javax.inject.Inject;
 
 public class KeyValueStoreDb
@@ -171,6 +172,24 @@ public class KeyValueStoreDb
             }
         }
         return cnt;
+    }
+
+    public Optional<UID> getMaxUid(final Txn<ByteBuffer> txn, PooledByteBuffer pooledByteBuffer) {
+
+        try (CursorIterable<ByteBuffer> iterable = getLmdbDbi().iterate(txn, KeyRange.allBackward())) {
+            final Iterator<KeyVal<ByteBuffer>> iterator = iterable.iterator();
+
+            if (iterator.hasNext()) {
+                final ByteBuffer keyBuffer = iterator.next().key();
+                final UID uid = keySerde.extractUid(keyBuffer);
+                final ByteBuffer copyByteBuffer = pooledByteBuffer.getByteBuffer();
+                copyByteBuffer.clear();
+                final UID uidClone = uid.cloneToBuffer(pooledByteBuffer.getByteBuffer());
+                return Optional.ofNullable(uidClone);
+            } else {
+                return Optional.empty();
+            }
+        }
     }
 
     private KeyRange<ByteBuffer> buildSingleMapUidKeyRange(final UID mapUid,

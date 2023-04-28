@@ -3,6 +3,7 @@ package stroom.pipeline.refdata.store.offheapstore;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.bytebuffer.PooledByteBufferOutputStream;
+import stroom.lmdb.AbstractLmdbDb;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.lmdb.PutOutcome;
@@ -12,24 +13,25 @@ import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.StagingValue;
 import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStagingDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeValueStagingDb;
-import stroom.pipeline.refdata.store.offheapstore.databases.StagingDb;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Range;
 
-import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.KeyRange;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A transient store to load the ref entries from a single stream into. The purpose of this is to
@@ -60,7 +62,7 @@ public class OffHeapStagingStore implements AutoCloseable {
     private final UnsortedDupKeyFactory<RangeStoreKey> rangeStoreKeyFactory;
     private boolean isComplete = false;
 
-    public OffHeapStagingStore(@Assisted final LmdbEnv stagingLmdbEnv,
+    public OffHeapStagingStore(final LmdbEnv stagingLmdbEnv,
                                final RefDataLmdbEnv refStoreLmdbEnv,
                                final KeyValueStagingDb keyValueStagingDb,
                                final RangeValueStagingDb rangeValueStagingDb,
@@ -141,7 +143,7 @@ public class OffHeapStagingStore implements AutoCloseable {
     private <K> void doPut(final K key,
                            final ByteBuffer keyBuffer,
                            final StagingValue stagingValue,
-                           final StagingDb<K> stagingDb) {
+                           final AbstractLmdbDb<K, ?> stagingDb) {
 
         stagingDb.serializeKey(keyBuffer, key);
         final ByteBuffer valueBuffer = stagingValue.getFullByteBuffer();
@@ -186,6 +188,8 @@ public class OffHeapStagingStore implements AutoCloseable {
     /**
      * Loop over all entries in the key/value store. There may be multiple values for the
      * same key. Looping is done in key order, NOT in the oder they were originally put.
+     * REMEMBER, the entries contain buffers used by LMDB so if you want to do anything with the entries
+     * outside of the consumer you need to copy!
      */
     void forEachKeyValueEntry(final Consumer<Entry<KeyValueStoreKey, StagingValue>> entryStreamConsumer) {
         stagingLmdbEnv.doWithReadTxn(readTxn -> {
@@ -200,6 +204,8 @@ public class OffHeapStagingStore implements AutoCloseable {
     /**
      * Loop over all entries in the range/value store. There may be multiple values for the same range.
      * Looping is done in key order, NOT in the oder they were originally put.
+     * REMEMBER, the entries contain buffers used by LMDB so if you want to do anything with the entries
+     * outside of the consumer you need to copy!
      */
     void forEachRangeValueEntry(final Consumer<Entry<RangeStoreKey, StagingValue>> entryStreamConsumer) {
         stagingLmdbEnv.doWithReadTxn(readTxn -> {
@@ -209,6 +215,12 @@ public class OffHeapStagingStore implements AutoCloseable {
                 entryStreamConsumer.accept(Map.entry(key, stagingValue));
             });
         });
+    }
+
+    public void logAllContents(Consumer<String> logEntryConsumer) {
+        Stream.of(keyValueStagingDb, rangeValueStagingDb)
+                .forEach(lmdbDb ->
+                        lmdbDb.logDatabaseContents(logEntryConsumer));
     }
 
     private void checkComplete() {
@@ -280,11 +292,18 @@ public class OffHeapStagingStore implements AutoCloseable {
     /**
      * @return The map names loaded so far
      */
-    List<String> getMapNames() {
+    List<String> getStagedMapNames() {
         return mapDefinitionToUIDMap.keySet()
                 .stream()
                 .map(MapDefinition::getMapName)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * @return The map definition UIDs loaded so far
+     */
+    Set<UID> getStagedUids() {
+        return new HashSet<>(mapDefinitionToUIDMap.values());
     }
 
     private void closeAndSwallow(final AutoCloseable autoCloseable, final String name) {

@@ -47,6 +47,8 @@ public interface RefDataLoader extends AutoCloseable {
     /**
      * Call this when all calls to {@link RefDataLoader#put(MapDefinition, Range, StagingValue)}
      * and {@link RefDataLoader#put(MapDefinition, String, StagingValue)} have been completed.
+     * This will initiate the transfer of entries from the staging store to the main ref store.
+     * Call it before {@link RefDataLoader#completeProcessing(ProcessingState)}.
      */
     void markPutsComplete();
 
@@ -93,9 +95,14 @@ public interface RefDataLoader extends AutoCloseable {
              final Range<Long> keyRange,
              final StagingValue refDataValue);
 
-
+    /**
+     * Provide a handler that will be called each time a staged entry is put to the store.
+     */
     void setKeyPutOutcomeHandler(final KeyPutOutcomeHandler keyPutOutcomeHandler);
 
+    /**
+     * Provide a handler that will be called each time a staged entry is put to the store.
+     */
     void setRangePutOutcomeHandler(final RangePutOutcomeHandler keyPutOutcomeHandler);
 
 

@@ -36,14 +36,14 @@ import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Range;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.util.concurrent.Striped;
 import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.Txn;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.time.Duration;
@@ -53,8 +53,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 /**
@@ -69,8 +72,8 @@ import javax.inject.Inject;
  */
 public class OffHeapRefDataLoader implements RefDataLoader {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(OffHeapRefDataLoader.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(OffHeapRefDataLoader.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OffHeapRefDataLoader.class);
+    protected static final int PAD_LENGTH = 14;
 
     private final Lock refStreamDefReentrantLock;
     private final KeyValueStoreDb keyValueStoreDb;
@@ -92,7 +95,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
 
     private int putsToStagingStoreCounter = 0;
     private int putsToRefStoreCounter = 0;
-    private boolean overwriteExisting = false;
+    private boolean overwriteExistingEntries = false;
     private DurationTimer overallTimer = null;
     private DurationTimer transferStagedEntriesTimer = null;
     private DurationTimer loadIntoStagingTimer = null;
@@ -101,6 +104,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     private final PooledByteBuffer keyValuePooledKeyBuffer;
     private final PooledByteBuffer rangeValuePooledKeyBuffer;
     private final PooledByteBuffer valueStorePooledKeyBuffer;
+    private final PooledByteBuffer pooledUidBuffer;
     private final List<PooledByteBuffer> pooledByteBuffers = new ArrayList<>();
     private int maxPutsBeforeCommit = 0;
     private KeyPutOutcomeHandler keyPutOutcomeHandler = null;
@@ -130,12 +134,10 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         this.effectiveTimeMs = effectiveTimeMs;
 
         // get three buffers to (re)use for the life of the loader
-        this.keyValuePooledKeyBuffer = keyValueStoreDb.getPooledKeyBuffer();
-        this.rangeValuePooledKeyBuffer = rangeStoreDb.getPooledKeyBuffer();
-        this.valueStorePooledKeyBuffer = valueStore.getPooledKeyBuffer();
-        pooledByteBuffers.add(keyValuePooledKeyBuffer);
-        pooledByteBuffers.add(rangeValuePooledKeyBuffer);
-        pooledByteBuffers.add(valueStorePooledKeyBuffer);
+        this.keyValuePooledKeyBuffer = getAndRegisterPooledByteBuffer(keyValueStoreDb::getPooledKeyBuffer);
+        this.rangeValuePooledKeyBuffer = getAndRegisterPooledByteBuffer(rangeStoreDb::getPooledKeyBuffer);
+        this.valueStorePooledKeyBuffer = getAndRegisterPooledByteBuffer(valueStore::getPooledKeyBuffer);
+        this.pooledUidBuffer = getAndRegisterPooledByteBuffer(mapDefinitionUIDStore::getUidPooledByteBuffer);
 
         // Get the lock object for this refStreamDefinition
         this.refStreamDefReentrantLock = refStreamDefStripedReentrantLock.get(refStreamDefinition);
@@ -164,20 +166,26 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         }
     }
 
+    private PooledByteBuffer getAndRegisterPooledByteBuffer(final Supplier<PooledByteBuffer> pooledByteBufferSupplier) {
+        final PooledByteBuffer pooledByteBuffer = pooledByteBufferSupplier.get();
+        pooledByteBuffers.add(pooledByteBuffer);
+        return pooledByteBuffer;
+    }
+
     @Override
     public RefStreamDefinition getRefStreamDefinition() {
         return refStreamDefinition;
     }
 
     @Override
-    public PutOutcome initialise(final boolean overwriteExisting) {
-        LOGGER.debug("initialise called, overwriteExisting: {}", overwriteExisting);
+    public PutOutcome initialise(final boolean overwriteExistingEntries) {
+        LOGGER.debug("initialise called, overwriteExistingEntries: {}", overwriteExistingEntries);
         checkCurrentState(LoaderState.NEW);
 
         overallTimer = DurationTimer.start();
         loadIntoStagingTimer = DurationTimer.start();
 
-        this.overwriteExisting = overwriteExisting;
+        this.overwriteExistingEntries = overwriteExistingEntries;
 
         final RefDataProcessingInfo refDataProcessingInfo = new RefDataProcessingInfo(
                 System.currentTimeMillis(),
@@ -188,9 +196,11 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         // Create this in the main store before we stage any data so any map definitions created
         // during staging can get purged later if the load is unsuccessful
         final PutOutcome putOutcome = processingInfoDb.put(
-                refStreamDefinition, refDataProcessingInfo, overwriteExisting);
+                refStreamDefinition, refDataProcessingInfo, true);
 
-        this.offHeapStagingStore = offHeapStagingStoreFactory.create(refStoreLmdbEnv, refStreamDefinition);
+        this.offHeapStagingStore = offHeapStagingStoreFactory.create(
+                refStoreLmdbEnv,
+                refStreamDefinition);
 
         currentLoaderState = LoaderState.INITIALISED;
         return putOutcome;
@@ -205,6 +215,12 @@ public class OffHeapRefDataLoader implements RefDataLoader {
 //            beginTxnIfRequired();
         offHeapStagingStore.completeLoad();
         loadIntoStagingTimer.stop();
+
+        LOGGER.debug(() -> LogUtil.getDurationMessage(
+                LogUtil.message("Load of {} entries into staging store for pipe {}",
+                        putsToStagingStoreCounter, refStreamDefinition, getPipelineNameStr()),
+                loadIntoStagingTimer.get(),
+                putsToStagingStoreCounter));
 
         // Pipe processing successful so transfer our staged data
         currentLoaderState = LoaderState.STAGED;
@@ -257,37 +273,46 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         });
     }
 
-    private void logLoadInfo(final ProcessingState processingState) {
+    private String getMapNamesStr() {
+        return String.join(", ", offHeapStagingStore.getStagedMapNames());
+    }
 
-        final String mapNames = String.join(", ", offHeapStagingStore.getMapNames());
-        final String pipeline = refStreamDefinition.getPipelineDocRef().getName() != null
+    private String getPipelineNameStr() {
+        return refStreamDefinition.getPipelineDocRef().getName() != null
                 ? refStreamDefinition.getPipelineDocRef().getName()
                 : refStreamDefinition.getPipelineDocRef().getUuid();
+    }
 
-        LOGGER.info("Processed {} entries with outcome {} (" +
-                        "new: {}, " +
-                        "null values ignored: {}, " +
-                        "dup-key value updated: {}, " +
-                        "dup-key value identical: {}, " +
-                        "dup-key entry removed: {}, " +
-                        "dup-key ignored: {}) " +
-                        "with map name(s): [{}], " +
-                        "stream: {}, " +
-                        "pipeline: {} in {} (load to staging: {}, transfer from staging: {})",
-                putsToStagingStoreCounter,
+    private void logLoadInfo(final ProcessingState processingState) {
+        LOGGER.info(LogUtil.inBoxOnNewLine(
+                """
+                        Processed {} reference entries with outcome {}
+                        New entries:                {}
+                        Null values ignored:        {}
+                        dup-key value updated:      {}
+                        dup-key value identical:    {}
+                        dup-key entry removed:      {}
+                        dup-key ignored:            {}
+                        Map name(s): [{}]
+                        Stream: {}
+                        Pipeline: {}
+                        Load to staging time:       {}
+                        Transfer from staging time: {}
+                        Total time:                 {}""",
+                ModelStringUtil.formatCsv(putsToStagingStoreCounter),
                 processingState,
-                newEntriesCount,
-                ignoredNullsCount,
-                replacedEntriesCount,
-                unchangedEntriesCount,
-                removedEntriesCount,
-                ignoredCount,
-                mapNames,
+                Strings.padStart(ModelStringUtil.formatCsv(newEntriesCount), PAD_LENGTH, ' '),
+                Strings.padStart(ModelStringUtil.formatCsv(ignoredNullsCount), PAD_LENGTH, ' '),
+                Strings.padStart(ModelStringUtil.formatCsv(replacedEntriesCount), PAD_LENGTH, ' '),
+                Strings.padStart(ModelStringUtil.formatCsv(unchangedEntriesCount), PAD_LENGTH, ' '),
+                Strings.padStart(ModelStringUtil.formatCsv(removedEntriesCount), PAD_LENGTH, ' '),
+                Strings.padStart(ModelStringUtil.formatCsv(ignoredCount), PAD_LENGTH, ' '),
+                getMapNamesStr(),
                 refStreamDefinition.getStreamId(),
-                pipeline,
-                overallTimer,
+                getPipelineNameStr(),
                 loadIntoStagingTimer,
-                transferStagedEntriesTimer);
+                transferStagedEntriesTimer,
+                overallTimer));
     }
 
     @Override
@@ -355,50 +380,117 @@ public class OffHeapRefDataLoader implements RefDataLoader {
 
         transferStagedEntriesTimer = DurationTimer.start();
         try (final BatchingWriteTxn batchingWriteTxn = refStoreLmdbEnv.openBatchingWriteTxn(maxPutsBeforeCommit)) {
-            // NOTE we are looping in key order, not in the order put to this loader
-            offHeapStagingStore.forEachKeyValueEntry(entry -> {
-                final KeyValueStoreKey keyValueStoreKey = entry.getKey();
-                final PutOutcome putOutcome = transferEntryToRefStore(
-                        batchingWriteTxn,
-                        keyValueStoreKey,
-                        entry.getValue(),
-                        keyValuePooledKeyBuffer,
-                        keyValueStoreDb);
+            // We now hold the single write lock for the main ref store
 
-                NullSafe.consume(keyPutOutcomeHandler, handler -> handler.handleOutcome(
-                        () -> offHeapStagingStore.getMapDefinition(keyValueStoreKey.getMapUid()),
-                        keyValueStoreKey.getKey(),
-                        putOutcome));
-            });
+            transferStagedKeyValueEntries(batchingWriteTxn);
+            transferStagedRangeValueEntries(batchingWriteTxn);
 
-            offHeapStagingStore.forEachRangeValueEntry(entry -> {
-                final RangeStoreKey rangeStoreKey = entry.getKey();
-                final PutOutcome putOutcome = transferEntryToRefStore(
-                        batchingWriteTxn,
-                        rangeStoreKey,
-                        entry.getValue(),
-                        rangeValuePooledKeyBuffer,
-                        rangeStoreDb);
-
-                NullSafe.consume(rangePutOutcomeHandler, handler -> handler.handleOutcome(
-                        () -> offHeapStagingStore.getMapDefinition(rangeStoreKey.getMapUid()),
-                        rangeStoreKey.getKeyRange(),
-                        putOutcome));
-            });
             // Final commit
             batchingWriteTxn.commit();
         }
         transferStagedEntriesTimer.stop();
 
-        LOGGER.debug("Completed transfer of {} entries from staging store to ref data store in {}",
-                putsToStagingStoreCounter, transferStagedEntriesTimer);
+        LOGGER.debug(() -> LogUtil.getDurationMessage(
+                LogUtil.message(
+                        "Transfer of {} entries from staging store to ref data store for pipe",
+                        ModelStringUtil.formatCsv(putsToStagingStoreCounter), getPipelineNameStr()),
+                transferStagedEntriesTimer.get(),
+                putsToStagingStoreCounter));
+    }
+
+    private <K> boolean isAppendableData(final BatchingWriteTxn batchingWriteTxn,
+                                         final EntryStoreDb<K> entryStoreDb) {
+        // Need to assess if we are appending data onto the end of the DB. This is so we can make
+        // use of the MDB_APPEND put flag
+        final Optional<UID> optMaxUidInDb = entryStoreDb.getMaxUid(batchingWriteTxn.getTxn(), pooledUidBuffer);
+        final Set<UID> stagedUids = offHeapStagingStore.getStagedUids();
+
+        if (stagedUids.isEmpty()) {
+            throw new RuntimeException(LogUtil.message(
+                    "We should have at least one staged UID, else how did we get here"));
+        }
+
+        final boolean isAppendable;
+        if (optMaxUidInDb.isEmpty()) {
+            // Totally empty DB, so we are appending
+            isAppendable = true;
+        } else {
+            final UID maxUidInDb = optMaxUidInDb.get();
+            final UID minUidInStaging = stagedUids.stream()
+                    .sorted()
+                    .findFirst()
+                    .get();
+
+            if (minUidInStaging.compareTo(maxUidInDb) > 0) {
+                // The lowest staged UID is after all those in the DB, so we know we are appending. This relies on
+                // new UIDs always increasing. If we ever change to reusing purged UIDs then this will not
+                // work.
+                isAppendable = true;
+            } else {
+                // Either overwriting a load or another load jumped in ahead of us, e.g. it started after us
+                // but finished staging before us, so we are not appending.
+                isAppendable = false;
+            }
+        }
+
+        LOGGER.debug(() -> LogUtil.message("optMaxUidInDb: {}, stagedUids: '{}', isAppendable: {}",
+                optMaxUidInDb.map(UID::getValue),
+                stagedUids.stream()
+                        .map(UID::getValue)
+                        .sorted()
+                        .map(String::valueOf)
+                        .collect(Collectors.joining(", ")),
+                isAppendable));
+
+        return isAppendable;
+    }
+
+    private void transferStagedKeyValueEntries(final BatchingWriteTxn batchingWriteTxn) {
+        final boolean isAppendableData = isAppendableData(batchingWriteTxn, keyValueStoreDb);
+        // NOTE we are looping in key order, not in the order put to this loader
+        offHeapStagingStore.forEachKeyValueEntry(entry -> {
+            final KeyValueStoreKey keyValueStoreKey = entry.getKey();
+            final PutOutcome putOutcome = transferEntryToRefStore(
+                    batchingWriteTxn,
+                    keyValueStoreKey,
+                    entry.getValue(),
+                    keyValuePooledKeyBuffer,
+                    keyValueStoreDb,
+                    isAppendableData);
+
+            NullSafe.consume(keyPutOutcomeHandler, handler -> handler.handleOutcome(
+                    () -> offHeapStagingStore.getMapDefinition(keyValueStoreKey.getMapUid()),
+                    keyValueStoreKey.getKey(),
+                    putOutcome));
+        });
+    }
+
+    private void transferStagedRangeValueEntries(final BatchingWriteTxn batchingWriteTxn) {
+        final boolean isAppendableData = isAppendableData(batchingWriteTxn, keyValueStoreDb);
+        // NOTE we are looping in key order, not in the order put to this loader
+        offHeapStagingStore.forEachRangeValueEntry(entry -> {
+            final RangeStoreKey rangeStoreKey = entry.getKey();
+            final PutOutcome putOutcome = transferEntryToRefStore(
+                    batchingWriteTxn,
+                    rangeStoreKey,
+                    entry.getValue(),
+                    rangeValuePooledKeyBuffer,
+                    rangeStoreDb,
+                    isAppendableData);
+
+            NullSafe.consume(rangePutOutcomeHandler, handler -> handler.handleOutcome(
+                    () -> offHeapStagingStore.getMapDefinition(rangeStoreKey.getMapUid()),
+                    rangeStoreKey.getKeyRange(),
+                    putOutcome));
+        });
     }
 
     private <K> PutOutcome transferEntryToRefStore(final BatchingWriteTxn batchingWriteTxn,
                                                    final K dbKey,
                                                    final StagingValue stagingValue,
                                                    final PooledByteBuffer pooledKeyBuffer,
-                                                   final EntryStoreDb<K> entryStoreDb) {
+                                                   final EntryStoreDb<K> entryStoreDb,
+                                                   final boolean isAppendableData) {
 
         LOGGER.trace("transferEntryToRefStore({}, {}", dbKey, stagingValue);
         putsToRefStoreCounter++;
@@ -413,6 +505,8 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         keyBuffer.clear();
         // See if the store already has an entry for this lookup key
         entryStoreDb.serializeKey(keyBuffer, dbKey);
+        // Even if isAppendableData is true, within the staged entries there may be dups that we have to
+        // handle.
         final Optional<ByteBuffer> optCurrValueStoreKeyBuffer = entryStoreDb.getAsBytes(writeTxn, keyBuffer);
 
         // see if we have a value already for this key
@@ -421,7 +515,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         // then create a new value, assuming they are different
         final PutOutcome putOutcome;
         if (optCurrValueStoreKeyBuffer.isPresent()) {
-            if (!overwriteExisting) {
+            if (!overwriteExistingEntries) {
                 // already have an entry for this key so drop out here
                 // with nothing to do as we can't overwrite anything
                 putOutcome = PutOutcome.failed();
@@ -454,7 +548,8 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                         valueStore.deReferenceOrDeleteValue(writeTxn, currValueStoreKeyBuffer);
 
                         // Now create the replacement entry (and a value if one does not already exist)
-                        putOutcome = putEntryWithValue(writeTxn, entryStoreDb, stagingValue, keyBuffer);
+                        putOutcome = putEntryWithValue(
+                                writeTxn, entryStoreDb, stagingValue, keyBuffer, false);
 //                        putOutcome = entryCreationFunc.apply(refDataValue, keyBuffer);
                         replacedEntriesCount++;
                     }
@@ -466,7 +561,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 putOutcome = PutOutcome.success();
                 ignoredNullsCount++;
             } else {
-                putOutcome = putEntryWithValue(writeTxn, entryStoreDb, stagingValue, keyBuffer);
+                putOutcome = putEntryWithValue(writeTxn, entryStoreDb, stagingValue, keyBuffer, isAppendableData);
                 newEntriesCount++;
             }
         }
@@ -486,14 +581,15 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     private <K> PutOutcome putEntryWithValue(final Txn<ByteBuffer> writeTxn,
                                              final EntryStoreDb<K> entryStoreDb,
                                              final StagingValue refDataValue,
-                                             final ByteBuffer keyBuffer) {
+                                             final ByteBuffer keyBuffer,
+                                             final boolean isAppending) {
 
         // First get/create the value entry, so we can then link our entry to it
         final ByteBuffer valueStoreKeyBuffer = valueStore.getOrCreateKey(
-                writeTxn, valueStorePooledKeyBuffer, refDataValue, overwriteExisting);
+                writeTxn, valueStorePooledKeyBuffer, refDataValue, overwriteExistingEntries);
 
         return entryStoreDb.put(
-                writeTxn, keyBuffer, valueStoreKeyBuffer, overwriteExisting, true);
+                writeTxn, keyBuffer, valueStoreKeyBuffer, overwriteExistingEntries, isAppending);
     }
 
     @Override
@@ -506,17 +602,21 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         }
 
         try {
-            offHeapStagingStore.close();
+            if (offHeapStagingStore != null) {
+                offHeapStagingStore.close();
+            }
         } catch (Exception e) {
             LOGGER.error("Error closing offHeapStagingStore: {}", e.getMessage(), e);
         }
 
-        try {
-            // release our pooled buffers back to the pool
-            pooledByteBuffers.forEach(PooledByteBuffer::release);
-        } catch (Exception e) {
-            LOGGER.error("Error releasing buffers: {}", e.getMessage(), e);
-        }
+        // release our pooled buffers back to the pool
+        pooledByteBuffers.forEach(pooledByteBuffer -> {
+            try {
+                pooledByteBuffer.release();
+            } catch (Exception e) {
+                LOGGER.error("Error releasing pooled buffer: {}", e.getMessage(), e);
+            }
+        });
 
         currentLoaderState = LoaderState.CLOSED;
 

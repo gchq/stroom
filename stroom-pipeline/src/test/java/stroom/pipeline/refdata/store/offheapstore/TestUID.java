@@ -94,9 +94,35 @@ class TestUID {
                 .isEqualByComparingTo(uid1.getBackingBuffer());
     }
 
+    @Test
+    void testCompare_equal() {
+        final UID uid1 = UID.of(42, getNewUidBuffer());
+        final UID uid2 = UID.of(42, getNewUidBuffer());
+        Assertions.assertThat(uid1.compareTo(uid2))
+                .isEqualTo(0);
+    }
+
+    @Test
+    void testCompare_lessThan() {
+        final UID uid1 = UID.of(41, getNewUidBuffer());
+        final UID uid2 = UID.of(42, getNewUidBuffer());
+        Assertions.assertThat(uid1.compareTo(uid2))
+                .isLessThan(0);
+    }
+
+    @Test
+    void testCompare_greaterThan() {
+        final UID uid1 = UID.of(43, getNewUidBuffer());
+        final UID uid2 = UID.of(42, getNewUidBuffer());
+        Assertions.assertThat(uid1.compareTo(uid2))
+                .isGreaterThan(0);
+    }
+
     ByteBuffer getNewUidBuffer() {
         // Don't use UID capacity for more realistic testing as we are normally using
         // pooled buffers of random sizes
         return ByteBuffer.allocateDirect(10);
     }
+
+
 }

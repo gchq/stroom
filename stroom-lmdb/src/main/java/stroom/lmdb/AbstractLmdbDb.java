@@ -76,9 +76,6 @@ import java.util.stream.StreamSupport;
  * @param <K> The class of the database keys
  * @param <V> The class of the database values
  */
-// TODO: 20/04/2023 Change to have generic types for the serdes so when we call get(Key|Valuer)Serde we
-//  don't have to do any casting
-//public abstract class AbstractLmdbDb<K, V, T_K_SERDE extends Serde<K>, T_V_SERDE extends Serde<V>>
 public abstract class AbstractLmdbDb<K, V>
         implements LmdbDb {
 
@@ -208,7 +205,6 @@ public abstract class AbstractLmdbDb<K, V>
     /**
      * @return The {@link Serde} for (de)serialising this database's keys
      */
-//    public T_K_SERDE getKeySerde() {
     public Serde<K> getKeySerde() {
         return keySerde;
     }
@@ -216,7 +212,6 @@ public abstract class AbstractLmdbDb<K, V>
     /**
      * @return The {@link Serde} for (de)serialising this database's value
      */
-//    public T_V_SERDE getValueSerde() {
     public Serde<V> getValueSerde() {
         return valueSerde;
     }
@@ -537,15 +532,15 @@ public abstract class AbstractLmdbDb<K, V>
      *                          not do anything if an existing entry exists. If the database has
      *                          {@link DbiFlags#MDB_DUPSORT} set then you need to set this to true
      *                          to put multiple values for the same key.
-     * @param arePutsInKeyOrder Set this to true if you are calling put in the order that keys are stored in the
-     *                          DB as it will speed it up.
+     * @param isAppending       Set this to true if you are sure the key is going on the end of the DB.
+     *                          Speeds up the put.
      * @return
      */
     public PutOutcome put(final Txn<ByteBuffer> writeTxn,
                           final K key,
                           final V value,
                           final boolean overwriteExisting,
-                          final boolean arePutsInKeyOrder) {
+                          final boolean isAppending) {
         try (final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer();
                 final PooledByteBuffer pooledValueBuffer = getPooledValueBuffer()) {
 
@@ -560,19 +555,35 @@ public abstract class AbstractLmdbDb<K, V>
                     keyBuffer,
                     valueBuffer,
                     overwriteExisting,
-                    arePutsInKeyOrder);
+                    isAppending);
         } catch (RuntimeException e) {
             throw new RuntimeException(LogUtil.message("Error putting key {}, value {}", key, value), e);
         }
     }
 
+    public PutOutcome put(final K key,
+                          final V value,
+                          final boolean overwriteExisting) {
+        return lmdbEnvironment.getWithWriteTxn(writeTxn -> {
+            try {
+                final PutOutcome putOutcome = put(writeTxn, key, value, overwriteExisting, false);
+                return putOutcome;
+            } catch (RuntimeException e) {
+                throw new RuntimeException(LogUtil.message("Error putting key {}, value {}", key, value), e);
+            }
+        });
+    }
+
     /**
      * This will fail if you are already inside a txn.
      */
-    public PutOutcome put(final K key, final V value, final boolean overwriteExisting) {
+    public PutOutcome put(final K key,
+                          final V value,
+                          final boolean overwriteExisting,
+                          final boolean isAppending) {
         return lmdbEnvironment.getWithWriteTxn(writeTxn -> {
             try {
-                final PutOutcome putOutcome = put(writeTxn, key, value, overwriteExisting);
+                final PutOutcome putOutcome = put(writeTxn, key, value, overwriteExisting, isAppending);
                 return putOutcome;
             } catch (RuntimeException e) {
                 throw new RuntimeException(LogUtil.message("Error putting key {}, value {}", key, value), e);
@@ -591,7 +602,7 @@ public abstract class AbstractLmdbDb<K, V>
                           final ByteBuffer keyBuffer,
                           final ByteBuffer valueBuffer,
                           final boolean overwriteExisting,
-                          final boolean arePutsInKeyOrder) {
+                          final boolean isAppending) {
         try {
             boolean didPutSucceed;
 
@@ -599,7 +610,7 @@ public abstract class AbstractLmdbDb<K, V>
             // For use cases with heavy updates to existing entries this two-step put is not ideal,
             // we would need some kind of flag to indicate if we care about what was there before or not.
             // If we know the puts are in key order then using MDB_APPEND speeds up the puts a lot.
-            final PutFlags[] initialPutFlags = arePutsInKeyOrder
+            final PutFlags[] initialPutFlags = isAppending
                     ? NO_OVERWRITE_AND_APPEND
                     : NO_OVERWRITE;
             didPutSucceed = lmdbDbi.put(writeTxn, keyBuffer, valueBuffer, initialPutFlags);
@@ -796,6 +807,23 @@ public abstract class AbstractLmdbDb<K, V>
             throw new RuntimeException(LogUtil.message("Error deleting key {}",
                     ByteBufferUtils.byteBufferInfo(keyBuffer)), e);
         }
+    }
+
+    /**
+     * Drops all data in the database.
+     */
+    public void drop() {
+        lmdbEnvironment.doWithWriteTxn(this::drop);
+    }
+
+    /**
+     * Drops all data in the database.
+     *
+     * @param writeTxn
+     */
+    public void drop(final Txn<ByteBuffer> writeTxn) {
+        LOGGER.debug("Dropping all data in database {}", dbName);
+        lmdbDbi.drop(writeTxn);
     }
 
     /**

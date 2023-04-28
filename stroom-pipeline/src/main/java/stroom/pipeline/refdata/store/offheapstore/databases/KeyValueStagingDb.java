@@ -18,8 +18,7 @@ import org.lmdbjava.Env;
 import javax.inject.Inject;
 
 public class KeyValueStagingDb
-        extends AbstractLmdbDb<UnSortedDupKey<KeyValueStoreKey>, StagingValue>
-        implements StagingDb<UnSortedDupKey<KeyValueStoreKey>> {
+        extends AbstractLmdbDb<UnSortedDupKey<KeyValueStoreKey>, StagingValue> {
 
     public static final String DB_NAME = "KeyValueStaging";
 

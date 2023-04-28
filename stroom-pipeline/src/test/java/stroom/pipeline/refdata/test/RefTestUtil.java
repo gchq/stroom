@@ -34,7 +34,7 @@ public class RefTestUtil {
     private RefTestUtil() {
     }
 
-    private static void doPut(final ValueStoreHashAlgorithm valueStoreHashAlgorithm,
+    public static void doPut(final ValueStoreHashAlgorithm valueStoreHashAlgorithm,
                               final PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory,
                               final RefDataLoader refDataLoader,
                               final MapDefinition mapDefinition,
@@ -47,7 +47,7 @@ public class RefTestUtil {
         }
     }
 
-    private static void doPut(final ValueStoreHashAlgorithm valueStoreHashAlgorithm,
+    public static void doPut(final ValueStoreHashAlgorithm valueStoreHashAlgorithm,
                               final PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory,
                               final RefDataLoader refDataLoader,
                               final MapDefinition mapDefinition,
@@ -60,7 +60,7 @@ public class RefTestUtil {
         }
     }
 
-    private static void writeValue(final StagingValueOutputStream stagingValueOutputStream,
+    public static void writeValue(final StagingValueOutputStream stagingValueOutputStream,
                                    final RefDataValue refDataValue) {
         stagingValueOutputStream.clear();
         try {

@@ -112,6 +112,14 @@ public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
         byteBuffer.limit(UID.UID_ARRAY_LENGTH);
     }
 
+    /**
+     * The returned UID is just a wrapper onto the passed {@link ByteBuffer}. If you need to use it outside
+     * a txn/cursor then you will need to copy it.
+     */
+    public UID extractUid(final ByteBuffer byteBuffer) {
+        return UIDSerde.extractUid(byteBuffer, UID_OFFSET);
+    }
+
     @Override
     public int getBufferCapacity() {
         return BUFFER_CAPACITY;

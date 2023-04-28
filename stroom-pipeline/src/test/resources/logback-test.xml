@@ -9,13 +9,15 @@
     </appender>
 
     <logger name="stroom" level="info" />
-
     <logger name="stroom.pipeline" level="debug" />
-
     <logger name="stroom.pipeline.reader" level="debug" />
-
     <logger name="stroom.pipeline.refdata" level="info" />
 
+
+<!--    <logger name="stroom.lmdb.LmdbEnv" level="debug" />-->
+<!--    <logger name="stroom.pipeline.refdata.store.offheapstore.OffHeapRefDataLoader" level="debug" />-->
+<!--    <logger name="stroom.pipeline.refdata.store.offheapstore.OffHeapStagingStore" level="debug" />-->
+<!--    <logger name="stroom.pipeline.refdata.store.offheapstore.TestOffHeapStagingStore" level="debug" />-->
 <!--    <logger name="stroom.pipeline.refdata" level="trace" />-->
 <!--    <logger name="stroom.pipeline.refdata.ReferenceDataFilter" level="trace" />-->
 <!--    <logger name="stroom.pipeline.refdata.store.StagingValueOutputStream" level="trace" />-->

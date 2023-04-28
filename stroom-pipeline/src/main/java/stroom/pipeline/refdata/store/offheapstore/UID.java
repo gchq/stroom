@@ -25,6 +25,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.google.common.base.Preconditions;
+import org.jetbrains.annotations.NotNull;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -34,7 +35,7 @@ import java.util.Objects;
  * set of bytes (see UID_ARRAY_LENGTH) that forms a unique identifier. The underlying
  * {@link ByteBuffer} MUST not be mutated.
  */
-public class UID {
+public class UID implements Comparable<UID> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UID.class);
 
@@ -130,9 +131,7 @@ public class UID {
     }
 
     public long getValue() {
-        final long val = UNSIGNED_BYTES.get(byteBuffer);
-        byteBuffer.flip();
-        return val;
+        return UNSIGNED_BYTES.get(byteBuffer, byteBuffer.position());
     }
 
     /**
@@ -217,5 +216,14 @@ public class UID {
         UNSIGNED_BYTES.put(byteBuffer, id);
         byteBuffer.flip();
         return byteBuffer;
+    }
+
+    @Override
+    public int compareTo(@NotNull final UID other) {
+        return UNSIGNED_BYTES.compare(
+                this.byteBuffer,
+                this.byteBuffer.position(),
+                other.byteBuffer,
+                other.byteBuffer.position());
     }
 }

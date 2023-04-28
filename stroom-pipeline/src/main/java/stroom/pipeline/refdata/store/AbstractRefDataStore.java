@@ -82,7 +82,8 @@ public abstract class AbstractRefDataStore implements RefDataStore {
                 // If we get here then the data was not loaded when we checked before getting the lock,
                 // so we waited for the lock and in the meantime another stream did the load.
                 // Thus, we can drop out.
-                LOGGER.info("Reference Data is already loaded for {}, so doing nothing", refStreamDefinition);
+                LOGGER.info("Reference Data is already successfully loaded for {}, so doing nothing",
+                        refStreamDefinition);
                 result = false;
             } else {
                 // Ref stream not in the store or a previous load was terminated part way through so

@@ -53,6 +53,8 @@ public class MapDefinitionUIDStore {
     //  days!
     //  However if we had UID reuse we could reduce the size of the UID to 3 or even 2 bytes, with the limiting
     //  factor being the retention period of the data.
+    //  NOTE: Reusing purged UIDs would prevent us using MDB_APPEND on the puts to the key/range DBs, see
+    //  stroom.pipeline.refdata.store.offheapstore.OffHeapRefDataLoader#isAppendableData
 
     @Inject
     MapDefinitionUIDStore(final RefDataLmdbEnv lmdbEnv,

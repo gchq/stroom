@@ -1,6 +1,5 @@
 package stroom.util;
 
-import stroom.util.logging.LogUtil;
 import stroom.util.time.StroomDuration;
 
 import java.time.Duration;
@@ -81,6 +80,13 @@ public class NullSafe {
      */
     public static boolean isEmptyString(final String str) {
         return str == null || str.isEmpty();
+    }
+
+    /**
+     * @return True if val is not null and true
+     */
+    public static boolean isTrue(final Boolean val) {
+        return val != null && val;
     }
 
     /**

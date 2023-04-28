@@ -1,8 +1,19 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
+import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.ReferenceDataLmdbConfig;
+import stroom.pipeline.refdata.store.MapDefinition;
+import stroom.pipeline.refdata.store.RefDataStore;
+import stroom.pipeline.refdata.store.RefDataStoreFactory;
 import stroom.pipeline.refdata.store.RefDataStoreModule;
+import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.refdata.store.StagingValue;
+import stroom.pipeline.refdata.store.StagingValueOutputStream;
+import stroom.pipeline.refdata.store.StringValue;
+import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
+import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataValueSerde;
+import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataValueSerdeFactory;
 import stroom.task.mock.MockTaskModule;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
@@ -12,34 +23,60 @@ import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 
+import com.google.common.base.Strings;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.UUID;
+import java.util.function.BiConsumer;
 import javax.inject.Inject;
 
 class TestOffHeapStagingStore extends StroomUnitTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestOffHeapStagingStore.class);
+    private static final String MAP1 = "map1";
+    private static final String MAP2 = "map2";
+    private static final List<String> MAPS = List.of(MAP1, MAP2);
 
     @Inject
     private OffHeapStagingStoreFactory offHeapStagingStoreFactory;
+    @Inject
+    private RefDataLmdbEnv refDataLmdbEnv;
+    @Inject
+    private ValueStoreHashAlgorithm valueStoreHashAlgorithm;
+    @Inject
+    private PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory;
+    @Inject
+    private RefDataStoreFactory refDataStoreFactory;
 
     private ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
     private Injector injector;
     private Path dbDir = null;
     private OffHeapStagingStore offHeapStagingStore;
+    private RefDataStore refDataStore;
 
+    private final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+            UUID.randomUUID().toString(),
+            UUID.randomUUID().toString(),
+            123L);
 
     @BeforeEach
     void setup() throws IOException {
+        LOGGER.debug("setup() started");
         dbDir = Files.createTempDirectory("stroom");
 //        dbDir = Paths.get("/home/dev/tmp/ref_test");
         Files.createDirectories(dbDir);
@@ -73,11 +110,90 @@ class TestOffHeapStagingStore extends StroomUnitTest {
                 });
 
         injector.injectMembers(this);
-//        offHeapStagingStore = offHeapStagingStoreFactory.create()
+        offHeapStagingStore = offHeapStagingStoreFactory.create(
+                refDataLmdbEnv,
+                refStreamDefinition);
+        refDataStore = refDataStoreFactory.getOffHeapStore();
+        LOGGER.debug("setup() finished");
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        LOGGER.debug("teardown() started");
+        offHeapStagingStore.close();
+        LOGGER.debug("teardown() finished");
     }
 
     @Test
-    void put() {
+    void put_keyValues() {
+        final int typeId = StringValue.TYPE_ID;
+        putKeyValueData(5, typeId);
+        offHeapStagingStore.completeLoad();
+        offHeapStagingStore.logAllContents(LOGGER::debug);
+
+        final List<Entry<KeyValueStoreKey, StagingValue>> entryList = new ArrayList<>();
+        offHeapStagingStore.forEachKeyValueEntry(entryList::add);
+
+        Assertions.assertThat(entryList)
+                .extracting(entry ->
+                        entry.getKey().getMapUid().getValue()
+                                + "-" + entry.getKey().getKey())
+                .containsExactly(
+                        "0-key-000",
+                        "0-key-001",
+                        "0-key-002",
+                        "0-key-003",
+                        "0-key-004",
+                        "1-key-000",
+                        "1-key-001",
+                        "1-key-002",
+                        "1-key-003",
+                        "1-key-004");
+
+        final RefDataValueSerde valueSerde = new RefDataValueSerdeFactory().get(typeId);
+//
+//        Assertions.assertThat(entryList)
+//                .extracting(entry ->
+//                        ((StringValue) valueSerde.deserialize(entry.getValue().getValueBuffer())).getValue())
+//                .containsExactly(
+//                        "value-001",
+//                        "value-002",
+//                        "value-003",
+//                        "value-004",
+//                        "value-005");
+
+        LOGGER.info("--------------------------------------------------------------------------------");
+//        refDataStore.logAllContents(LOGGER::debug);
+    }
+
+    private void putKeyValueData(final int count, final int typeId) {
+        doWithMapDef((stagingValueOutputStream, mapDefinition) -> {
+            for (int i = 0; i < count; i++) {
+                try {
+                    final String numberPart = Strings.padStart(
+                            Integer.toString(i), 3, '0');
+                    stagingValueOutputStream.clear();
+                    stagingValueOutputStream.write("value-" + numberPart);
+                    stagingValueOutputStream.setTypeId(typeId);
+                    final String key = "key-" + numberPart;
+                    offHeapStagingStore.put(mapDefinition, key, stagingValueOutputStream);
+                } catch (IOException e) {
+                    throw new RuntimeException(LogUtil.message("Error: {}", e.getMessage()), e);
+                }
+            }
+        });
+    }
+
+    private void doWithMapDef(final BiConsumer<StagingValueOutputStream, MapDefinition> work) {
+        try (StagingValueOutputStream stagingValueOutputStream = new StagingValueOutputStream(
+                valueStoreHashAlgorithm,
+                pooledByteBufferOutputStreamFactory)) {
+
+            for (final String mapName : MAPS) {
+                final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
+                work.accept(stagingValueOutputStream, mapDefinition);
+            }
+        }
     }
 
     @Test

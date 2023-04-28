@@ -21,6 +21,7 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.util.logging.LogUtil;
 
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 /**
  * Each instance provides methods for working with unsigned longs that are written
@@ -251,4 +252,29 @@ public enum UnsignedBytesInstances implements UnsignedBytes {
         return serde;
     }
 
+    @Override
+    public int compare(final ByteBuffer buffer1,
+                       final int index1,
+                       final ByteBuffer buffer2,
+                       final int index2) {
+
+        Objects.requireNonNull(buffer1);
+        Objects.requireNonNull(buffer2);
+        if (buffer1.remaining() != len) {
+            throw new IllegalArgumentException(LogUtil.message("buffer1 has remaining {}, expecting {}",
+                    buffer1.remaining(), len));
+        }
+        if (buffer2.remaining() != len) {
+            throw new IllegalArgumentException(LogUtil.message("buffer2 has remaining {}, expecting {}",
+                    buffer2.remaining(), len));
+        }
+        return Long.compare(
+                get(buffer1, index1),
+                get(buffer2, index2));
+    }
+
+    @Override
+    public int compare(final ByteBuffer buffer1, final ByteBuffer buffer2) {
+        return compare(buffer1, buffer1.position(), buffer2, buffer2.position());
+    }
 }

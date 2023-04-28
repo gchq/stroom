@@ -766,6 +766,19 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testIsTrue() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(Boolean.class)
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> NullSafe.isTrue(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, false)
+                .addCase(false, false)
+                .addCase(true, true)
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testDuration() {
         return TestUtil.buildDynamicTestStream()
                 .withInputAndOutputType(Duration.class)
