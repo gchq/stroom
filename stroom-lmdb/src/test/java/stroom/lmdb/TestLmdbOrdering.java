@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-public class TestLmdbOrdering extends AbstractLmdbDbTest{
+public class TestLmdbOrdering extends AbstractLmdbDbTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestLmdbOrdering.class);
 
@@ -141,9 +141,10 @@ public class TestLmdbOrdering extends AbstractLmdbDbTest{
             byteBuffer.flip();
         }
     }
-        // --------------------------------------------------------------------------------
+    // --------------------------------------------------------------------------------
 
     private static class TestKey {
+
         // 2 bytes
         private final long part1;
         // 3 bytes
@@ -168,7 +169,7 @@ public class TestLmdbOrdering extends AbstractLmdbDbTest{
                     '0')
                     + "_"
                     + Strings.padStart(
-                            String.valueOf(part2),
+                    String.valueOf(part2),
                     String.valueOf(THREE_BYTE_UNSIGNED.maxValue()).length(),
                     '0')
                     + "_"
@@ -176,7 +177,7 @@ public class TestLmdbOrdering extends AbstractLmdbDbTest{
         }
     }
 
-        // --------------------------------------------------------------------------------
+    // --------------------------------------------------------------------------------
 
     private static class TestKeySerde implements Serde<TestKey> {
 
