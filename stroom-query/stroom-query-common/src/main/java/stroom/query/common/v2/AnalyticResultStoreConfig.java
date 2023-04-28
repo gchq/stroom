@@ -17,7 +17,7 @@ public class AnalyticResultStoreConfig extends AbstractResultStoreConfig impleme
                 ByteSize.ofGibibytes(1),
                 1000,
                 10_000,
-                ResultStoreLmdbConfig.builder().localDir("search_results").build(),
+                ResultStoreLmdbConfig.builder().localDir("analytic_store").build(),
                 "1000000,100,10,1");
     }
 
