@@ -23,7 +23,6 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.core.client.HasSave;
 import stroom.core.client.HasSaveRegistry;
 import stroom.core.client.event.CloseContentEvent;
-import stroom.core.client.event.CloseContentEvent.Callback;
 import stroom.data.client.presenter.ClassificationWrapperView;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;

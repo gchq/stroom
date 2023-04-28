@@ -167,6 +167,7 @@
 
     /* Menu */
     --menu-item__text-color: rgba(255, 255, 255, 0.8);
+    --menu-item__text-color--highlighted: #ccc;
     --menu-item__background-color--focus--highlighted: rgba(24, 94, 144, 0.3);
     --menu-item__text-color--focus--highlighted: #cacbcb;
     --menu-item__background-color--focus--highlighted--hover: rgba(24, 94, 144, 0.3); /* rgba(24,94,144,0.4); */

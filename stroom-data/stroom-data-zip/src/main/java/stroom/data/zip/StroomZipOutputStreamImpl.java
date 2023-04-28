@@ -23,7 +23,6 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
     private final Path lockFile;
     private final ZipOutputStream zipOutputStream;
     private final TaskProgressHandler progressHandler;
-    private StroomZipNameSet stroomZipNameSet;
     private boolean inEntry = false;
     private long entryCount = 0;
 
@@ -32,11 +31,6 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
     }
 
     public StroomZipOutputStreamImpl(final Path file, final TaskContext taskContext) throws IOException {
-        this(file, taskContext, true);
-    }
-
-    public StroomZipOutputStreamImpl(final Path file, final TaskContext taskContext, final boolean monitorEntries)
-            throws IOException {
         Path dir = file.getParent();
         Path lockFile = dir.resolve(file.getFileName().toString() + LOCK_EXTENSION);
 
@@ -77,9 +71,6 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
         final OutputStream progressOutputStream = new FilterOutputStreamProgressMonitor(bufferedOutputStream,
                 progressHandler);
         zipOutputStream = new ZipOutputStream(progressOutputStream);
-        if (monitorEntries) {
-            stroomZipNameSet = new StroomZipNameSet(false);
-        }
     }
 
     @Override
@@ -102,9 +93,6 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
         }
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace("addEntry() - " + file + " - " + name + " - adding");
-        }
-        if (stroomZipNameSet != null) {
-            stroomZipNameSet.add(name);
         }
         zipOutputStream.putNextEntry(new ZipEntry(name));
         return new WrappedOutputStream(zipOutputStream) {

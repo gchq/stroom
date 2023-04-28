@@ -8,16 +8,6 @@ public class BasicKeyFactoryConfig implements KeyFactoryConfig {
     }
 
     @Override
-    public int getStreamIdFieldIndex() {
-        return -1;
-    }
-
-    @Override
-    public int getEventIdFieldIndex() {
-        return -1;
-    }
-
-    @Override
     public boolean addTimeToKey() {
         return false;
     }

@@ -23,6 +23,7 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.common.v2.AnalyticStoreConfig;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
@@ -94,6 +95,7 @@ class TestSearchResultCreation {
         dataStoreFactory = new LmdbDataStoreFactory(
                 lmdbEnvFactory,
                 ResultStoreConfig::new,
+                AnalyticStoreConfig::new,
                 pathCreator,
                 () -> executorService,
                 () -> new Serialisers(new ResultStoreConfig()));
@@ -124,7 +126,7 @@ class TestSearchResultCreation {
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.BASIC_SETTINGS);
+                DataStoreSettings.createBasicSearchResultStoreSettings());
         final ValuesConsumer consumer = createExtractionReceiver(coprocessors);
 
         // Reorder values if field mappings have changed.
@@ -231,7 +233,7 @@ class TestSearchResultCreation {
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.PAYLOAD_PRODUCER_SETTINGS);
+                DataStoreSettings.createPayloadProducerSearchResultStoreSettings());
 
         final ValuesConsumer consumer = createExtractionReceiver(coprocessors);
 
@@ -243,7 +245,7 @@ class TestSearchResultCreation {
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.BASIC_SETTINGS);
+                DataStoreSettings.createBasicSearchResultStoreSettings());
 
         // Add data to the consumer.
         final String[] lines = getLines();
@@ -304,7 +306,7 @@ class TestSearchResultCreation {
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.PAYLOAD_PRODUCER_SETTINGS);
+                DataStoreSettings.createPayloadProducerSearchResultStoreSettings());
 
         final ValuesConsumer consumer1 = createExtractionReceiver(coprocessors);
 
@@ -316,7 +318,7 @@ class TestSearchResultCreation {
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.BASIC_SETTINGS);
+                DataStoreSettings.createBasicSearchResultStoreSettings());
 
         // Add data to the consumer.
         final String[] lines = getLines();
@@ -391,7 +393,7 @@ class TestSearchResultCreation {
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.BASIC_SETTINGS);
+                DataStoreSettings.createBasicSearchResultStoreSettings());
 
         final ValuesConsumer consumer = createExtractionReceiver(coprocessors);
 
@@ -403,7 +405,7 @@ class TestSearchResultCreation {
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.BASIC_SETTINGS);
+                DataStoreSettings.createBasicSearchResultStoreSettings());
 
 
         final CountDownLatch countDownLatch = new CountDownLatch(1);

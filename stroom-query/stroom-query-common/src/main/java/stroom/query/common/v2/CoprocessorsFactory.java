@@ -170,6 +170,10 @@ public class CoprocessorsFactory {
         // and the default maximum sizes.
         final Sizes defaultMaxResultsSizes = sizesProvider.getDefaultMaxResultsSizes();
         final Sizes maxResults = Sizes.min(Sizes.create(tableSettings.getMaxResults()), defaultMaxResultsSizes);
+        final DataStoreSettings modifiedSettings =
+                dataStoreSettings.copy()
+                        .maxResults(maxResults)
+                        .storeSize(storeSizes).build();
 
         return dataStoreFactory.create(
                 queryKey,
@@ -177,9 +181,7 @@ public class CoprocessorsFactory {
                 tableSettings,
                 fieldIndex,
                 paramMap,
-                maxResults,
-                storeSizes,
-                dataStoreSettings,
+                modifiedSettings,
                 errorConsumer);
     }
 }

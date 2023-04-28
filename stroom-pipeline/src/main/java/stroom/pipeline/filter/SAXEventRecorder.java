@@ -185,7 +185,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
                         xPathFilters.add(compiledXPathFilter);
                     }
                 } catch (final XPathExpressionException e) {
-                    throw ProcessException.wrap("Error in XPath filter expression", e);
+                    throw ProcessException.create("Error in XPath filter expression", e);
                 }
             }
         }

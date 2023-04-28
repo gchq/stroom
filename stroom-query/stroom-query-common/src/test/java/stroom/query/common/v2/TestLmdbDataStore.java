@@ -18,6 +18,7 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.lmdb.LmdbEnvFactory;
 import stroom.lmdb.LmdbLibraryConfig;
@@ -66,12 +67,15 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
     }
 
     @Override
-    DataStore create(final TableSettings tableSettings, final Sizes maxResults, final Sizes storeSize) {
+    DataStore create(final QueryKey queryKey,
+                     final String componentId,
+                     final TableSettings tableSettings,
+                     final AbstractResultStoreConfig resultStoreConfig,
+                     final DataStoreSettings dataStoreSettings) {
         final FieldIndex fieldIndex = new FieldIndex();
 
         final TempDirProvider tempDirProvider = () -> tempDir;
         final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
-        final ResultStoreConfig resultStoreConfig = new ResultStoreConfig();
         final LmdbLibraryConfig lmdbLibraryConfig = new LmdbLibraryConfig();
         final LmdbEnvFactory lmdbEnvFactory = new LmdbEnvFactory(
                 pathCreator,
@@ -84,13 +88,12 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 serialisers,
                 lmdbEnvFactory,
                 resultStoreConfig,
-                new QueryKey(UUID.randomUUID().toString()),
-                "0",
+                queryKey,
+                componentId,
                 tableSettings,
                 fieldIndex,
                 Collections.emptyMap(),
-                maxResults,
-                DataStoreSettings.BASIC_SETTINGS,
+                dataStoreSettings,
                 () -> executorService,
                 errorConsumer);
     }
@@ -116,7 +119,9 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                         .build())
                 .build();
 
-        final DataStore dataStore = create(tableSettings);
+        final DataStoreSettings dataStoreSettings = DataStoreSettings
+                .createBigStoreSettings();
+        final DataStore dataStore = create(tableSettings, dataStoreSettings);
 
         for (int i = 0; i < 3000; i++) {
             final Val val = ValString.create("Text " + i + "test".repeat(1000));
@@ -142,6 +147,97 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 defaultMaxResultsSizes);
         final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                 dataStore,
+                tableResultRequest);
+        assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
+    }
+
+    @Test
+    void testReload() throws Exception {
+        final FormatterFactory formatterFactory = new FormatterFactory(null);
+        final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
+
+        final TableSettings tableSettings = TableSettings.builder()
+                .addFields(Field.builder()
+                        .id("StreamId")
+                        .name("StreamId")
+                        .expression(ParamSubstituteUtil.makeParam("StreamId"))
+                        .format(Format.NUMBER)
+                        .build())
+                .addFields(Field.builder()
+                        .id("EventId")
+                        .name("EventId")
+                        .expression(ParamSubstituteUtil.makeParam("EventId"))
+                        .format(Format.NUMBER)
+                        .build())
+                .addFields(Field.builder()
+                        .id("EventTime")
+                        .name("EventTime")
+                        .group(0)
+                        .expression(ParamSubstituteUtil.makeParam("EventTime"))
+                        .format(Format.DATE_TIME)
+                        .build())
+                .build();
+
+        final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
+        final AbstractResultStoreConfig resultStoreConfig = new AnalyticStoreConfig();
+        final DataStoreSettings dataStoreSettings = DataStoreSettings.createAnalyticStoreSettings("test");
+        LmdbDataStore dataStore = (LmdbDataStore)
+                create(
+                        queryKey,
+                        "0",
+                        tableSettings,
+                        resultStoreConfig,
+                        dataStoreSettings);
+
+        for (int i = 1; i <= 100; i++) {
+            for (int j = 1; j <= 100; j++) {
+                final Val streamId = ValLong.create(i);
+                final Val eventId = ValLong.create(j);
+                final Val eventTime = ValLong.create(System.currentTimeMillis());
+                dataStore.add(Val.of(streamId, eventId, eventTime));
+            }
+        }
+
+        // Wait for all items to be added.
+        final CurrentDbState currentDbState = dataStore.sync();
+        assertThat(currentDbState.getStreamId()).isEqualTo(100);
+        assertThat(currentDbState.getEventId()).isEqualTo(100);
+
+        // Make sure we only get 50 results.
+        final ResultRequest tableResultRequest = ResultRequest.builder()
+                .componentId("0")
+                .addMappings(tableSettings)
+                .requestedRange(new OffsetRange(0, 3000))
+                .build();
+        final TableResultCreator tableComponentResultCreator = new TableResultCreator(
+                fieldFormatter,
+                defaultMaxResultsSizes);
+        TableResult searchResult = (TableResult) tableComponentResultCreator.create(
+                dataStore,
+                tableResultRequest);
+        assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
+
+        // Close the db.
+        dataStore.getCompletionState().signalComplete();
+        dataStore.getCompletionState().awaitCompletion();
+        dataStore.close();
+
+        // Try and open the datastore again.
+        LmdbDataStore dataStore2 = (LmdbDataStore)
+                create(
+                        queryKey,
+                        "0",
+                        tableSettings,
+                        resultStoreConfig,
+                        dataStoreSettings);
+
+        final CurrentDbState currentDbState2 = dataStore2.sync();
+        assertThat(currentDbState2.getStreamId()).isEqualTo(100);
+        assertThat(currentDbState2.getEventId()).isEqualTo(100);
+
+        // Make sure we only get 50 results.
+        searchResult = (TableResult) tableComponentResultCreator.create(
+                dataStore2,
                 tableResultRequest);
         assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
     }

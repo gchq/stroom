@@ -86,6 +86,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
                     subMenuShowTimer = new Timer() {
                         @Override
                         public void run() {
+                            // Timer has fired so clear the item associated with it
                             timerItem = null;
                             getUiHandlers().showSubMenu((MenuItem) item, getRowElement(item));
                         }
@@ -93,6 +94,10 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
 
                     subMenuShowTimer.schedule(delayMillis);
                     timerItem = item;
+                } else if (item instanceof MenuItem) {
+                    // Item with no children so hide any existing sub-menu from the previous menu item
+                    getUiHandlers().hideExistingSubMenu((MenuItem) item);
+                    cancelDelayedSubMenu();
                 }
             }
         }

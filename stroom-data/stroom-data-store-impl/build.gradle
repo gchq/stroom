@@ -36,6 +36,7 @@ dependencies {
     implementation libs.jaxb_api
     implementation libs.guice5
     implementation libs.restygwt
+    implementation libs.saxon_he
     implementation libs.slf4j_api
     implementation libs.swagger_annotations
     implementation libs.ws_rs_api

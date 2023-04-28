@@ -9,6 +9,16 @@ import java.util.Comparator;
 
 public class LmdbRowKeyFactoryFactory {
 
+    public static final ByteBuffer DB_STATE_KEY = ByteBuffer.allocateDirect(1);
+
+    static {
+        DB_STATE_KEY.put((byte) -1);
+        DB_STATE_KEY.flip();
+    }
+
+    public static final KeyRange<ByteBuffer> DB_STATE_KEY_RANGE = KeyRange.closed(DB_STATE_KEY, DB_STATE_KEY);
+    public static final KeyRange<ByteBuffer> ALL = KeyRange.all();
+
     private LmdbRowKeyFactoryFactory() {
         // Non instantiable.
     }
@@ -42,6 +52,10 @@ public class LmdbRowKeyFactoryFactory {
         }
     }
 
+    public static KeyRange<ByteBuffer> all() {
+        return ALL;
+    }
+
     /**
      * Creates a flat group key. <GROUP_HASH>
      */
@@ -69,7 +83,7 @@ public class LmdbRowKeyFactoryFactory {
 
         @Override
         public KeyRange<ByteBuffer> createChildKeyRange(final Key parentKey) {
-            return KeyRange.all();
+            return all();
         }
 
         @Override
@@ -77,7 +91,7 @@ public class LmdbRowKeyFactoryFactory {
             if (timeFilter != null) {
                 throw new RuntimeException("Time filtering is not supported by this key factory");
             }
-            return KeyRange.all();
+            return all();
         }
 
         @Override
@@ -121,7 +135,7 @@ public class LmdbRowKeyFactoryFactory {
 
         @Override
         public KeyRange<ByteBuffer> createChildKeyRange(final Key parentKey) {
-            return KeyRange.all();
+            return all();
         }
 
         @Override
@@ -129,7 +143,7 @@ public class LmdbRowKeyFactoryFactory {
             if (timeFilter != null) {
                 throw new RuntimeException("Time filtering is not supported by this key factory");
             }
-            return KeyRange.all();
+            return all();
         }
 
         @Override
@@ -166,13 +180,13 @@ public class LmdbRowKeyFactoryFactory {
 
         @Override
         public KeyRange<ByteBuffer> createChildKeyRange(final Key parentKey) {
-            return KeyRange.all();
+            return all();
         }
 
         @Override
         public KeyRange<ByteBuffer> createChildKeyRange(final Key parentKey, final TimeFilter timeFilter) {
             if (timeFilter == null) {
-                return KeyRange.all();
+                return all();
             }
 
             final ByteBuffer start = ByteBuffer.allocateDirect(Long.BYTES);
@@ -226,13 +240,13 @@ public class LmdbRowKeyFactoryFactory {
 
         @Override
         public KeyRange<ByteBuffer> createChildKeyRange(final Key parentKey) {
-            return KeyRange.all();
+            return all();
         }
 
         @Override
         public KeyRange<ByteBuffer> createChildKeyRange(final Key parentKey, final TimeFilter timeFilter) {
             if (timeFilter == null) {
-                return KeyRange.all();
+                return all();
             }
 
             final ByteBuffer start = ByteBuffer.allocateDirect(Long.BYTES);

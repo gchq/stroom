@@ -112,6 +112,17 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
         columns.clear();
 
         // Clear.
+        addClearColumn();
+        // Node.
+        addNodeColumn();
+        addStatColumns();
+
+        final EndColumn<CacheInfo> endColumn = new EndColumn<>();
+        columns.add(endColumn);
+        dataGrid.addEndColumn(endColumn);
+    }
+
+    private void addClearColumn() {
         addIconButtonColumn(
                 SvgPresets.of(SvgPresets.DELETE, "Clear and rebuild cache", true),
                 (row, nativeEvent) -> {
@@ -123,15 +134,9 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
                             .call(CACHE_RESOURCE)
                             .clear(row.getName(), row.getNodeName());
                 });
+    }
 
-        // Node.
-        dataGrid.addColumn(new Column<CacheInfo, String>(new TextCell()) {
-            @Override
-            public String getValue(final CacheInfo row) {
-                return row.getNodeName();
-            }
-        }, "Node", MEDIUM_COL);
-
+    private void addStatColumns() {
         final List<String> sortedCacheKeys = new ArrayList<>(cacheInfoKeys);
         sortedCacheKeys.add(HIT_RATIO_KEY);
         sortedCacheKeys.sort(Comparator.naturalOrder());
@@ -151,16 +156,26 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
                 });
             }
         }
+    }
 
-        final EndColumn<CacheInfo> endColumn = new EndColumn<>();
-        columns.add(endColumn);
-        dataGrid.addEndColumn(endColumn);
+    private void addNodeColumn() {
+        //noinspection Convert2Diamond
+        final Column<CacheInfo, String> nodeColumn = new Column<CacheInfo, String>(new TextCell()) {
+            @Override
+            public String getValue(final CacheInfo row) {
+                return row.getNodeName();
+            }
+        };
+        dataGrid.addColumn(nodeColumn, "Node", MEDIUM_COL);
+        columns.add(nodeColumn);
     }
 
     private void addIconButtonColumn(final Preset svgPreset,
                                      final BiConsumer<CacheInfo, NativeEvent> action) {
+        //noinspection Convert2Diamond
         final ActionCell<CacheInfo> cell = new stroom.cell.info.client.ActionCell<CacheInfo>(
                 svgPreset, action);
+        //noinspection Convert2Diamond
         final Column<CacheInfo, CacheInfo> col =
                 new Column<CacheInfo, CacheInfo>(cell) {
                     @Override
@@ -281,6 +296,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
             responseMap.clear();
 
             if (dataProvider == null) {
+                //noinspection Convert2Diamond
                 dataProvider = new RestDataProvider<CacheInfo, CacheInfoResponse>(getEventBus()) {
                     @Override
                     protected void exec(final Range range,

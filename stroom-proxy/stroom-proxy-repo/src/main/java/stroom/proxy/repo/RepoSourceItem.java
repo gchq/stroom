@@ -1,5 +1,6 @@
 package stroom.proxy.repo;
 
+import stroom.data.zip.StroomZipEntry;
 import stroom.proxy.repo.dao.FeedDao;
 
 public record RepoSourceItem(
@@ -56,7 +57,7 @@ public record RepoSourceItem(
             if (extensions.length() == 0) {
                 this.extensions = extension;
             } else {
-                this.extensions = this.extensions + "," + extension;
+                this.extensions = this.extensions + StroomZipEntry.REPO_EXTENSION_DELIMITER + extension;
             }
             this.totalByteSize += byteSize;
             return this;

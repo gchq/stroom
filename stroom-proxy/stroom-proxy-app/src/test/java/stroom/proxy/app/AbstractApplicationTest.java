@@ -54,7 +54,7 @@ public abstract class AbstractApplicationTest {
     private PathCreator pathCreator;
 
     // This is needed by DropwizardExtensionsSupport to fire up the proxy app
-    // If we were always using the same config or all config was hot changable then we could
+    // If we were always using the same config or all config was hot changeable then we could
     // make this static which would be much faster as we would only need to spin it up once.
     @RegisterExtension
     private final DropwizardAppExtension<Config> dropwizard = getDropwizardAppExtension();
@@ -200,10 +200,6 @@ public abstract class AbstractApplicationTest {
         return client;
     }
 
-    public PathCreator getPathCreator() {
-        return pathCreator;
-    }
-
     public DropwizardAppExtension<Config> getDropwizard() {
         return dropwizard;
     }
@@ -223,7 +219,7 @@ public abstract class AbstractApplicationTest {
                         Jackson.newObjectMapper(),
                         "dw");
 
-        Config config = null;
+        Config config;
         try {
             config = configurationFactory.build(configurationSourceProvider, configFile.toAbsolutePath().toString());
         } catch (ConfigurationException | IOException e) {

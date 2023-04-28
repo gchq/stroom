@@ -1,11 +1,12 @@
 package stroom.proxy.repo;
 
+import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.thread.CustomThreadFactory;
 import stroom.util.thread.StroomThreadGroup;
 
 import io.dropwizard.lifecycle.Managed;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -14,7 +15,7 @@ import java.util.function.Supplier;
 
 public class ParallelExecutor implements Managed {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ParallelExecutor.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ParallelExecutor.class);
 
     private final ExecutorService executorService;
     private final Supplier<Runnable> runnableSupplier;
@@ -41,13 +42,15 @@ public class ParallelExecutor implements Managed {
     }
 
     private void run() {
-        while (!Thread.currentThread().isInterrupted()) {
-            try {
+        try {
+            while (!Thread.currentThread().isInterrupted()) {
                 final Runnable runnable = runnableSupplier.get();
                 runnable.run();
-            } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
             }
+        } catch (final UncheckedInterruptedException e) {
+            LOGGER.debug(e::getMessage, e);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
         }
     }
 

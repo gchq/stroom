@@ -2,7 +2,7 @@ ext.moduleName = 'stroom.config.app'
 
 dependencies {
     implementation project(':stroom-activity:stroom-activity-impl-db')
-    implementation project(':stroom-alert:stroom-alert-impl')
+    implementation project(':stroom-analytics:stroom-analytics-impl')
     implementation project(':stroom-annotation:stroom-annotation-impl')
     implementation project(':stroom-annotation:stroom-annotation-impl-db')
     implementation project(':stroom-core')

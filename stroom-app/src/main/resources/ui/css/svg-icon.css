@@ -326,8 +326,8 @@
   height: 18px;
 }
 
-.svgIcon-document-AlertRule {
-  background-image: url("../images/document/ReceiveDataRuleSet.svg");
+.svgIcon-document-AnalyticRule {
+  background-image: url("../images/document/AnalyticRule.svg");
 }
 .svgIcon-document-AnalyticOutputStore {
   background-image: url("../images/document/AnalyticOutputStore.svg");

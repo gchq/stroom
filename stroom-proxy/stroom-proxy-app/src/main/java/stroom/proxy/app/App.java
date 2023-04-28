@@ -90,6 +90,8 @@ public class App extends Application<Config> {
     @Inject
     private TempDirProvider tempDirProvider;
 
+    private Injector injector;
+
     private final Path configFile;
 
     // This is an additional injector for use only with javax.validation. It means we can do validation
@@ -156,7 +158,7 @@ public class App extends Application<Config> {
         LOGGER.info("Starting Stroom Proxy");
 
         final ProxyModule proxyModule = new ProxyModule(configuration, environment, configFile);
-        final Injector injector = Guice.createInjector(proxyModule);
+        injector = Guice.createInjector(proxyModule);
         injector.injectMembers(this);
 
         // Ensure we have our home/temp dirs set up
@@ -315,5 +317,9 @@ public class App extends Application<Config> {
                     proxyConfig.getFullPathStr(ProxyConfig.PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE));
             System.exit(1);
         }
+    }
+
+    public Injector getInjector() {
+        return injector;
     }
 }

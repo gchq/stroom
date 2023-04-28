@@ -699,8 +699,8 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         private final int hashcode;
 
         private VolGroupNode(final String groupName, final String nodeName) {
-            this.groupName = Objects.requireNonNull(groupName);
-            this.nodeName = Objects.requireNonNull(nodeName);
+            this.groupName = Objects.requireNonNull(groupName, "Index volume group name must be specified");
+            this.nodeName = Objects.requireNonNull(nodeName, "Index volume node name must be specified");
             this.hashcode = Objects.hash(groupName, nodeName);
         }
 

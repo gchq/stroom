@@ -216,19 +216,32 @@ public class ForwardStreamHandler implements StreamHandler {
     private void logAndDisconnect() {
         if (connection != null) {
             int responseCode = -1;
+            String errorMsg = null;
             try {
                 responseCode = StroomStreamException.checkConnectionResponse(connection, attributeMap);
                 LOGGER.debug("'{}' - Response code: {}", forwarderName, responseCode);
+            } catch (StroomStreamException e) {
+                responseCode = e.getStroomStreamStatus().getStroomStatusCode().getHttpCode();
+                errorMsg = e.getMessage();
+                throw e;
+            } catch (Exception e) {
+                try {
+                    responseCode = connection.getResponseCode();
+                    errorMsg = e.getMessage();
+                } catch (IOException ex) {
+                    // swallow, not much we can do about this
+                }
+                throw e;
             } finally {
                 final long duration = System.currentTimeMillis() - startTimeMs;
-                logStream.log(
-                        SEND_LOG,
+                logStream.log(SEND_LOG,
                         attributeMap,
                         "SEND",
                         forwardUrl,
                         responseCode,
                         totalBytesSent,
-                        duration);
+                        duration,
+                        errorMsg);
 
                 connection.disconnect();
                 connection = null;

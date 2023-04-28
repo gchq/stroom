@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.LongAdder;
 import javax.inject.Inject;
@@ -34,27 +35,32 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
 
     private final LmdbEnvFactory lmdbEnvFactory;
     private final Provider<ResultStoreConfig> resultStoreConfigProvider;
+    private final Provider<AnalyticStoreConfig> analyticStoreConfigProvider;
     private final Provider<Executor> executorProvider;
     private final Provider<Serialisers> serialisersProvider;
-    private final Path localDir;
+    private final Path searchResultStoreDir;
+    private final Path analyticResultStoreDir;
 
     @Inject
     public LmdbDataStoreFactory(final LmdbEnvFactory lmdbEnvFactory,
                                 final Provider<ResultStoreConfig> resultStoreConfigProvider,
+                                final Provider<AnalyticStoreConfig> analyticStoreConfigProvider,
                                 final PathCreator pathCreator,
                                 final Provider<Executor> executorProvider,
                                 final Provider<Serialisers> serialisersProvider) {
         this.lmdbEnvFactory = lmdbEnvFactory;
         this.resultStoreConfigProvider = resultStoreConfigProvider;
+        this.analyticStoreConfigProvider = analyticStoreConfigProvider;
         this.executorProvider = executorProvider;
         this.serialisersProvider = serialisersProvider;
 
         // This config prop requires restart, so we can hold on to it
-        this.localDir = getLocalDir(resultStoreConfigProvider, pathCreator);
+        this.searchResultStoreDir = getLocalDir(resultStoreConfigProvider.get(), pathCreator);
+        this.analyticResultStoreDir = getLocalDir(analyticStoreConfigProvider.get(), pathCreator);
 
-        // As result stores are transient they serve no purpose after shutdown so delete any that
+        // As search result stores are transient they serve no purpose after shutdown so delete any that
         // may still be there
-        cleanStoresDir(localDir);
+        cleanStoresDir(searchResultStoreDir);
     }
 
     @Override
@@ -63,8 +69,6 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                             final TableSettings tableSettings,
                             final FieldIndex fieldIndex,
                             final Map<String, String> paramMap,
-                            final Sizes maxResults,
-                            final Sizes storeSize,
                             final DataStoreSettings dataStoreSettings,
                             final ErrorConsumer errorConsumer) {
 
@@ -79,9 +83,12 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                     tableSettings,
                     fieldIndex,
                     paramMap,
-                    maxResults,
-                    storeSize);
+                    dataStoreSettings);
         } else {
+            final String subDirectory = queryKey + "_" + componentId + "_" + UUID.randomUUID();
+            final DataStoreSettings modifiedDataStoreSettings =
+                    dataStoreSettings.copy().subDirectory(subDirectory).build();
+
             return new LmdbDataStore(
                     serialisersProvider.get(),
                     lmdbEnvFactory,
@@ -91,44 +98,40 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                     tableSettings,
                     fieldIndex,
                     paramMap,
-                    maxResults,
-                    dataStoreSettings,
+                    modifiedDataStoreSettings,
                     executorProvider,
                     errorConsumer);
         }
     }
 
-    public LmdbDataStore createLmdbDataStore(final QueryKey queryKey,
-                                             final String componentId,
-                                             final TableSettings tableSettings,
-                                             final FieldIndex fieldIndex,
-                                             final Map<String, String> paramMap,
-                                             final Sizes maxResults,
-                                             final Sizes storeSize,
-                                             final DataStoreSettings dataStoreSettings,
-                                             final ErrorConsumer errorConsumer) {
+    public LmdbDataStore createAnalyticLmdbDataStore(final QueryKey queryKey,
+                                                     final String componentId,
+                                                     final TableSettings tableSettings,
+                                                     final FieldIndex fieldIndex,
+                                                     final Map<String, String> paramMap,
+                                                     final DataStoreSettings dataStoreSettings,
+                                                     final ErrorConsumer errorConsumer) {
 
-        final ResultStoreConfig resultStoreConfig = resultStoreConfigProvider.get();
+        final AnalyticStoreConfig storeConfig = analyticStoreConfigProvider.get();
         return new LmdbDataStore(
                 serialisersProvider.get(),
                 lmdbEnvFactory,
-                resultStoreConfig,
+                storeConfig,
                 queryKey,
                 componentId,
                 tableSettings,
                 fieldIndex,
                 paramMap,
-                maxResults,
                 dataStoreSettings,
                 executorProvider,
                 errorConsumer);
     }
 
-    private Path getLocalDir(final Provider<ResultStoreConfig> resultStoreConfigProvider,
+    private Path getLocalDir(final AbstractResultStoreConfig resultStoreConfig,
                              final PathCreator pathCreator) {
         final String dirFromConfig = NullSafe.get(
-                resultStoreConfigProvider.get(),
-                ResultStoreConfig::getLmdbConfig,
+                resultStoreConfig,
+                AbstractResultStoreConfig::getLmdbConfig,
                 LmdbConfig::getLocalDir);
 
         Objects.requireNonNull(dirFromConfig, "localDir not set");
@@ -152,11 +155,11 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
         final LongAdder totalSizeBytes = new LongAdder();
         final LongAdder storeCount = new LongAdder();
 
-        LOGGER.debug("Getting total size in {}", localDir);
+        LOGGER.debug("Getting total size in {}", searchResultStoreDir);
 
         LOGGER.logDurationIfDebugEnabled(() -> {
             try {
-                Files.walkFileTree(localDir, new FileVisitor<>() {
+                Files.walkFileTree(searchResultStoreDir, new FileVisitor<>() {
                     @Override
                     public FileVisitResult preVisitDirectory(final Path dir,
                                                              final BasicFileAttributes attrs) {
@@ -189,7 +192,7 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                 });
             } catch (IOException | RuntimeException e) {
                 LOGGER.error("Error calculating disk usage for path {}",
-                        localDir.normalize(), e);
+                        searchResultStoreDir.normalize(), e);
                 // Return -1 to indicate a failure
                 totalSizeBytes.reset();
                 totalSizeBytes.decrement();
@@ -198,7 +201,7 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
             }
         }, "Getting total size");
 
-        LOGGER.debug("total size is {} in {}", totalSizeBytes, localDir);
+        LOGGER.debug("total size is {} in {}", totalSizeBytes, searchResultStoreDir);
 
         return new StoreSizeSummary(totalSizeBytes.longValue(), storeCount.intValue());
     }

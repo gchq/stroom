@@ -25,6 +25,7 @@ dependencies {
     implementation libs.jaxb_api
     implementation libs.kafka_clients
     implementation libs.restygwt
+    implementation libs.saxon_he
     implementation libs.slf4j_api
     implementation libs.vavr
     implementation libs.xml_apis

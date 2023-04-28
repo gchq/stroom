@@ -80,7 +80,6 @@ import stroom.security.shared.PermissionNames;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.ClipboardUtil;
-import stroom.widget.menu.client.presenter.GroupHeading;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -109,7 +108,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -794,29 +792,42 @@ public class DocumentPluginEventManager extends Plugin {
                                           final ExplorerNodePermissions documentPermissions,
                                           final DocumentTypes documentTypes) {
         final List<Item> children = new ArrayList<>();
-        final List<DocumentType> availableTypes = documentTypes.getNonSystemTypes().stream()
+        //noinspection SimplifyStreamApiCallChains
+        final List<DocumentType> availableTypes = documentTypes.getNonSystemTypes()
+                .stream()
                 .filter(documentPermissions::hasCreatePermission)
                 .collect(Collectors.toList());
 
         // Group all document types
-        final Map<DocumentTypeGroup, ArrayList<DocumentType>> groupedTypes = new HashMap<>();
-        for (DocumentType documentType : availableTypes) {
-            final DocumentTypeGroup typeGroup = documentType.getGroup();
-            if (!groupedTypes.containsKey(typeGroup)) {
-                groupedTypes.put(typeGroup, new ArrayList<>());
-            }
-            groupedTypes.get(typeGroup).add(documentType);
-        }
+        final Map<DocumentTypeGroup, List<DocumentType>> groupedTypes = availableTypes.stream()
+                .collect(Collectors.groupingBy(DocumentType::getGroup, Collectors.toList()));
 
         // Add each type group as a sorted list of menu items
-        for (DocumentTypeGroup group : groupedTypes.keySet()) {
-            children.add(new GroupHeading(group.getPriority(), group.getName()));
-            children.addAll(groupedTypes.get(group).stream()
-                    .sorted(Comparator.comparing(DocumentType::getDisplayType))
-                    .map(t -> createIconMenuItemFromDocumentType(t, explorerNode))
-                    .collect(Collectors.toList()));
-        }
+        groupedTypes
+                .entrySet()
+                .stream()
+                .sorted(Comparator.comparing(entry -> entry.getKey().getPriority()))
+                .forEach(entry -> {
+                    final DocumentTypeGroup group = entry.getKey();
+                    final List<DocumentType> types = entry.getValue();
+                    if (DocumentTypeGroup.STRUCTURE.equals(group) && types != null && types.size() == 1) {
+                        children.add(createIconMenuItemFromDocumentType(types.get(0), explorerNode));
+                        if (groupedTypes.keySet().size() > 1) {
+                            children.add(new Separator(1));
+                        }
+                    } else if (types != null && !types.isEmpty()) {
+                        final List<Item> grandChildren = types.stream()
+                                .sorted(Comparator.comparing(DocumentType::getDisplayType))
+                                .map(type -> (Item) createIconMenuItemFromDocumentType(type, explorerNode))
+                                .collect(Collectors.toList());
 
+                        // Add the group level item with its children
+                        children.add(new IconParentMenuItem.Builder()
+                                .text(group.getName())
+                                .children(grandChildren)
+                                .build());
+                    }
+                });
         return children;
     }
 

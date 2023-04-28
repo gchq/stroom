@@ -52,7 +52,7 @@ public class CommonTranslationTestHelper {
     private static final String DIR = "CommonTranslationTest/";
     public static final Path INVALID_RESOURCE_NAME = StroomPipelineTestFileUtil.getTestResourcesFile(
             DIR + "Invalid.in");
-    private static final Path VALID_RESOURCE_NAME = StroomPipelineTestFileUtil
+    public static final Path VALID_RESOURCE_NAME = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "NetworkMonitoringSample.in");
     //    private static final Path CSV = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "CSV.ds");
     private static final Path CSV_WITH_HEADING = StroomPipelineTestFileUtil.getTestResourcesFile(
@@ -123,10 +123,6 @@ public class CommonTranslationTestHelper {
 
     public void setup() {
         setup(FEED_NAME, Collections.singletonList(VALID_RESOURCE_NAME));
-    }
-
-    public void setup(final Path dataLocation) {
-        setup(FEED_NAME, Collections.singletonList(dataLocation));
     }
 
     public void setup(final List<Path> dataLocations) {

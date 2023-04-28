@@ -825,9 +825,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         log(Severity.FATAL_ERROR, message, e);
 
         if (e != null) {
-            throw new LoggedException(message, e);
+            throw LoggedException.wrap(message, e);
         } else {
-            throw new LoggedException(message);
+            throw LoggedException.create(message);
         }
     }
 

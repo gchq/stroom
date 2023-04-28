@@ -61,7 +61,7 @@ public class DocFinder<D extends Doc> {
                 }
                 sb.setLength(sb.length() - 2);
                 sb.append(")");
-                throw new ProcessException(sb.toString());
+                throw ProcessException.create(sb.toString());
             }
 
             LOGGER.debug("Finding " + type + " with resolved name '{}' from pattern '{}'", resolvedName, namePattern);
@@ -110,7 +110,7 @@ public class DocFinder<D extends Doc> {
                         type + " \"" +
                         defaultRef.getName() +
                         "\" appears to have been deleted";
-                throw new ProcessException(message);
+                throw ProcessException.create(message);
             }
         }
 

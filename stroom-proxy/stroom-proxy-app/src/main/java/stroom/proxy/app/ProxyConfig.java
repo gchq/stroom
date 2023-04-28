@@ -99,7 +99,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         eventStoreConfig = new EventStoreConfig();
         fileScanners = Collections.emptyList();
         aggregatorConfig = new AggregatorConfig();
-//        forwardDestinations = Collections.emptyList();
         forwardFileDestinations = Collections.emptyList();
         forwardHttpDestinations = Collections.emptyList();
         logStreamConfig = new LogStreamConfig();
@@ -411,12 +410,14 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         }
 
         public Builder addForwardDestination(final ForwardConfig forwarderConfig) {
-            if (forwarderConfig instanceof final ForwardFileConfig forwardFileConfig) {
-                this.forwardFileDestinations.add(forwardFileConfig);
-            } else if (forwarderConfig instanceof final ForwardHttpPostConfig forwardHttpPostConfig) {
-                this.forwardHttpDestinations.add(forwardHttpPostConfig);
-            } else {
-                throw new IllegalArgumentException("Unexpected type " + forwarderConfig.getClass().getName());
+            if (forwarderConfig != null) {
+                if (forwarderConfig instanceof final ForwardFileConfig forwardFileConfig) {
+                    addForwardFileDestination(forwardFileConfig);
+                } else if (forwarderConfig instanceof final ForwardHttpPostConfig forwardHttpPostConfig) {
+                    addForwardHttpDestination(forwardHttpPostConfig);
+                } else {
+                    throw new IllegalArgumentException("Unexpected type " + forwarderConfig.getClass().getName());
+                }
             }
             return this;
         }
