@@ -70,7 +70,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
     DataStore create(final QueryKey queryKey,
                      final String componentId,
                      final TableSettings tableSettings,
-                     final ResultStoreConfig resultStoreConfig,
+                     final AbstractResultStoreConfig resultStoreConfig,
                      final DataStoreSettings dataStoreSettings) {
         final FieldIndex fieldIndex = new FieldIndex();
 
@@ -179,7 +179,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .build();
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final ResultStoreConfig resultStoreConfig = new AnalyticStoreConfig();
+        final AbstractResultStoreConfig resultStoreConfig = new AnalyticResultStoreConfig();
         final DataStoreSettings dataStoreSettings = DataStoreSettings.createAnalyticStoreSettings("test");
         LmdbDataStore dataStore = (LmdbDataStore)
                 create(

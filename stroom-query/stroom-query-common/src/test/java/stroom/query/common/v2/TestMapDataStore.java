@@ -30,7 +30,7 @@ class TestMapDataStore extends AbstractDataStoreTest {
     DataStore create(final QueryKey queryKey,
                      final String componentId,
                      final TableSettings tableSettings,
-                     final ResultStoreConfig resultStoreConfig,
+                     final AbstractResultStoreConfig resultStoreConfig,
                      final DataStoreSettings dataStoreSettings) {
         final FieldIndex fieldIndex = new FieldIndex();
         final Serialisers serialisers = new Serialisers(new SearchResultStoreConfig());

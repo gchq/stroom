@@ -5,7 +5,7 @@ public class Serialisers {
     private final InputFactory inputFactory;
     private final OutputFactory outputFactory;
 
-    public Serialisers(final ResultStoreConfig resultStoreConfig) {
+    public Serialisers(final AbstractResultStoreConfig resultStoreConfig) {
         this.inputFactory = new InputFactory();
         this.outputFactory = new OutputFactory(resultStoreConfig);
     }

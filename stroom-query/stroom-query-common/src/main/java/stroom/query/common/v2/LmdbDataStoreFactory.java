@@ -35,7 +35,7 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
 
     private final LmdbEnvFactory lmdbEnvFactory;
     private final Provider<SearchResultStoreConfig> resultStoreConfigProvider;
-    private final Provider<AnalyticStoreConfig> analyticStoreConfigProvider;
+    private final Provider<AnalyticResultStoreConfig> analyticStoreConfigProvider;
     private final Provider<Executor> executorProvider;
     private final Path searchResultStoreDir;
     private final Path analyticResultStoreDir;
@@ -43,7 +43,7 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
     @Inject
     public LmdbDataStoreFactory(final LmdbEnvFactory lmdbEnvFactory,
                                 final Provider<SearchResultStoreConfig> resultStoreConfigProvider,
-                                final Provider<AnalyticStoreConfig> analyticStoreConfigProvider,
+                                final Provider<AnalyticResultStoreConfig> analyticStoreConfigProvider,
                                 final PathCreator pathCreator,
                                 final Provider<Executor> executorProvider) {
         this.lmdbEnvFactory = lmdbEnvFactory;
@@ -109,7 +109,7 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                                                      final DataStoreSettings dataStoreSettings,
                                                      final ErrorConsumer errorConsumer) {
 
-        final AnalyticStoreConfig storeConfig = analyticStoreConfigProvider.get();
+        final AnalyticResultStoreConfig storeConfig = analyticStoreConfigProvider.get();
         return new LmdbDataStore(
                 new Serialisers(storeConfig),
                 lmdbEnvFactory,
@@ -124,11 +124,11 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                 errorConsumer);
     }
 
-    private Path getLocalDir(final ResultStoreConfig resultStoreConfig,
+    private Path getLocalDir(final AbstractResultStoreConfig resultStoreConfig,
                              final PathCreator pathCreator) {
         final String dirFromConfig = NullSafe.get(
                 resultStoreConfig,
-                ResultStoreConfig::getLmdbConfig,
+                AbstractResultStoreConfig::getLmdbConfig,
                 LmdbConfig::getLocalDir);
 
         Objects.requireNonNull(dirFromConfig, "localDir not set");

@@ -1,7 +1,5 @@
 package stroom.config.global.impl;
 
-import stroom.query.common.v2.SearchResultStoreConfig;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
@@ -443,19 +441,19 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.query.common.v2.AnalyticStoreConfig getAnalyticStoreConfig(
+    stroom.query.common.v2.AnalyticResultStoreConfig getAnalyticResultStoreConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
-                stroom.query.common.v2.AnalyticStoreConfig.class);
+                stroom.query.common.v2.AnalyticResultStoreConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    SearchResultStoreConfig getResultStoreConfig(
+    stroom.query.common.v2.SearchResultStoreConfig getSearchResultStoreConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
-                SearchResultStoreConfig.class);
+                stroom.query.common.v2.SearchResultStoreConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -841,6 +839,16 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         throw new UnsupportedOperationException(
                 "stroom.query.common.v2.ResultStoreLmdbConfig cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.query.common.v2.AbstractResultStoreConfig getAbstractResultStoreConfigButThrow(
+            final ConfigMapper configMapper) {
+        throw new UnsupportedOperationException(
+                "stroom.query.common.v2.AbstractResultStoreConfig cannot be injected directly. "
                         + "Inject a config class that uses it or one of its sub-class instead.");
     }
 

@@ -124,7 +124,7 @@ public class LmdbDataStore implements DataStore {
 
     LmdbDataStore(final Serialisers serialisers,
                   final LmdbEnvFactory lmdbEnvFactory,
-                  final ResultStoreConfig resultStoreConfig,
+                  final AbstractResultStoreConfig resultStoreConfig,
                   final QueryKey queryKey,
                   final String componentId,
                   final TableSettings tableSettings,

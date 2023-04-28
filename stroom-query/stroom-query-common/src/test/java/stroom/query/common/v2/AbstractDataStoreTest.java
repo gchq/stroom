@@ -444,6 +444,6 @@ abstract class AbstractDataStoreTest {
     abstract DataStore create(QueryKey queryKey,
                               String componentId,
                               TableSettings tableSettings,
-                              ResultStoreConfig resultStoreConfig,
+                              AbstractResultStoreConfig resultStoreConfig,
                               DataStoreSettings dataStoreSettings);
 }
