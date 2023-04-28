@@ -13,6 +13,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.7] - 2023-04-28
+
+* Issue **#3396** : Made filter dialog modal.
+
+* Issue **#3406** : Increase spacing.
+
+* Issue **#3407** : Fix order of stepping filters.
+
+* Change proxy forwarding config structure. `forwardDestinations` has been replaced with `forwardHttpDestinations` and `forwardFileDestinations`. The sub-property `type` has been removed.
+
+* Issue **#3398** : Fix mutability of search/analytic result store settings.
+
+
 ## [v7.2-beta.6] - 2023-04-27
 
 * Issue **#3400** : Fix dashboard table selector issue caused by key range comparator.
@@ -5217,7 +5230,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.6...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.7...HEAD
+[v7.2-beta.7]: https://github.com/gchq/stroom/compare/v7.2-beta.6...v7.2-beta.7
 [v7.2-beta.6]: https://github.com/gchq/stroom/compare/v7.2-beta.5...v7.2-beta.6
 [v7.2-beta.5]: https://github.com/gchq/stroom/compare/v7.2-beta.4...v7.2-beta.5
 [v7.2-beta.4]: https://github.com/gchq/stroom/compare/v7.2-beta.3...v7.2-beta.4
