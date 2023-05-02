@@ -96,7 +96,7 @@ public class AlertWriter2 implements ValuesConsumer, ProcessLifecycleAware {
         // Analytics generation search extraction - create records when filters match
         if (values == null || values.length == 0) {
             log(Severity.WARNING, "Rules error: Query " +
-                    getQueryId() +
+                    analyticRuleDoc.getUuid() +
                     ". No values to extract from ", null);
             return;
         }
@@ -116,7 +116,7 @@ public class AlertWriter2 implements ValuesConsumer, ProcessLifecycleAware {
             if (expression != null) {
                 if (expression.hasAggregate()) {
                     LOGGER.error("Rules error: Query " +
-                            getQueryId() +
+                            analyticRuleDoc.getUuid() +
                             " contains aggregate functions." +
                             " This is not supported for Event Type Rules.");
                     return null;
@@ -150,13 +150,6 @@ public class AlertWriter2 implements ValuesConsumer, ProcessLifecycleAware {
         LOGGER.error(message, e);
         errorReceiverProxy.log(severity, null,
                 "AlertExtractionReceiver", message, e);
-    }
-
-    private String getQueryId() {
-        return analyticRuleDoc.getName() +
-                " (" +
-                analyticRuleDoc.getUuid() +
-                ")";
     }
 
     private void writeRecord(final CompiledFieldValue[] fieldVals) {
