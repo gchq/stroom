@@ -46,13 +46,13 @@
 }
 
 .dataGridHeader {
-	padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
+	padding: 0 0 0 var(--row__padding--horizontal);
     vertical-align: middle;
 	text-align: left;
 	overflow: hidden;
 	white-space: nowrap;
 	font-weight: 500;
-    min-height : auto;
+    min-height: var(--row__height);
 	cursor: default;
 
 	/*border-bottom: solid 1px var(--header__border-color);*/
@@ -63,10 +63,10 @@
 }
 
 .dataGridCell {
-	padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
+	padding: 0 0 0 var(--row__padding--horizontal);
 	vertical-align: middle;
 	overflow: hidden;
-	min-height: 16px;
+	height: var(--row__height);
 	white-space: nowrap;
 	
 	-moz-user-focus: initial;

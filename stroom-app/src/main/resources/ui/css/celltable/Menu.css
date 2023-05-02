@@ -40,7 +40,7 @@
     padding: var(--row__padding--vertical) var(--row__padding--horizontal);
     vertical-align: middle;
     overflow: hidden;
-    min-height: 16px;
+    height: var(--row__height);
     white-space: nowrap;
 }
 
