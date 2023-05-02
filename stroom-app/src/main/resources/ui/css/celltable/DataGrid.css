@@ -83,6 +83,7 @@
 
 .dataGridHeader > div,
 .dataGridCell > div {
+    display: flex;
 	text-overflow: ellipsis;
 	overflow-x: hidden;
 }
