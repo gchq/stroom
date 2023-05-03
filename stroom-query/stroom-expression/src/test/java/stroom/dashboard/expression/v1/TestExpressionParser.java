@@ -1814,15 +1814,15 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         return List.of(
                         TestCase.of(
                                 "parseDate(${val1})",
-                                ValLong.create(1393071132888L),
+                                ValDate.create(1393071132888L),
                                 getVals("2014-02-22T12:12:12.888Z")),
                         TestCase.of(
                                 "parseDate(${val1}, 'yyyy MM dd')",
-                                ValLong.create(1393027200000L),
+                                ValDate.create(1393027200000L),
                                 getVals("2014 02 22")),
                         TestCase.of(
                                 "parseDate(${val1}, 'yyyy MM dd', '+0400')",
-                                ValLong.create(1393012800000L),
+                                ValDate.create(1393012800000L),
                                 getVals("2014 02 22"))
                 )
                 .stream()

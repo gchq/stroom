@@ -437,7 +437,7 @@ abstract class AbstractDataStoreTest {
                 new QueryKey(UUID.randomUUID().toString()),
                 "0",
                 tableSettings,
-                new ResultStoreConfig(),
+                new SearchResultStoreConfig(),
                 dataStoreSettings);
     }
 

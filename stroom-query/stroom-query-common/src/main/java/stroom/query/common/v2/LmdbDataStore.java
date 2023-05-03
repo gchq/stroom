@@ -854,8 +854,7 @@ public class LmdbDataStore implements DataStore {
         lmdbEnv.doWithReadTxn(readTxn -> {
             try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(
                     readTxn,
-                    keyRange,
-                    lmdbRowKeyFactory.getKeyComparator())) {
+                    keyRange)) {
                 final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
 
                 if (iterator.hasNext()) {
@@ -973,7 +972,7 @@ public class LmdbDataStore implements DataStore {
             LOGGER.trace(() -> "get() called for parentKey: " + parentKey);
 
             return Metrics.measure("get", () -> {
-                final int childDepth = parentKey.getDepth() + 1;
+                final int childDepth = parentKey.getChildDepth();
                 final int trimmedSize = maxResults.size(childDepth);
                 return getChildren(parentKey, timeFilter, childDepth, trimmedSize, false);
             });
@@ -984,75 +983,90 @@ public class LmdbDataStore implements DataStore {
                                       final int childDepth,
                                       final int trimmedSize,
                                       final boolean trimTop) {
-            SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_GET_CHILDREN);
-            // If we don't have any children at the requested depth then return an empty list.
-            if (compiledSorters.length <= childDepth) {
-                return ItemsImpl.EMPTY;
-            }
+            try {
+                SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_GET_CHILDREN);
+                // If we don't have any children at the requested depth then return an empty list.
+                if (compiledSorters.length <= childDepth) {
+                    return ItemsImpl.EMPTY;
+                }
 
-            final ItemsImpl list = new ItemsImpl(10);
+                final ItemsImpl list = new ItemsImpl(10);
 
-            final KeyRange<ByteBuffer> keyRange = lmdbRowKeyFactory.createChildKeyRange(parentKey, timeFilter);
-            final int maxSize;
-            if (trimmedSize < Integer.MAX_VALUE / 2) {
-                maxSize = Math.max(1000, trimmedSize * 2);
-            } else {
-                maxSize = Integer.MAX_VALUE;
-            }
-            final CompiledSorter<Item> sorter = compiledSorters[childDepth];
+                final KeyRange<ByteBuffer> keyRange = lmdbRowKeyFactory.createChildKeyRange(parentKey, timeFilter);
+                final int maxSize;
+                if (trimmedSize < Integer.MAX_VALUE / 2) {
+                    maxSize = Math.max(1000, trimmedSize * 2);
+                } else {
+                    maxSize = Integer.MAX_VALUE;
+                }
+                final CompiledSorter<Item> sorter = compiledSorters[childDepth];
 
-            boolean trimmed = true;
-            boolean addMore = true;
+                boolean trimmed = true;
+                boolean addMore = true;
 
-            try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(
-                    readTxn,
-                    keyRange,
-                    lmdbRowKeyFactory.getKeyComparator())) {
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+//                final byte[] start = ByteBufferUtils.toBytes(keyRange.getStart());
+//                final byte[] stop = ByteBufferUtils.toBytes(keyRange.getStop());
+//
+//                NestedGroupedLmdbRowKeyFactory fac = (NestedGroupedLmdbRowKeyFactory) lmdbRowKeyFactory;
+//                ByteBuffer parentKeyByteBuffer = fac.createKey(parentKey);
+//                final byte[] parentKeyByteBufferBytes = ByteBufferUtils.toBytes(parentKeyByteBuffer);
 
-                while (iterator.hasNext()
-                        && addMore
-                        && !Thread.currentThread().isInterrupted()) {
+                try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(
+                        readTxn,
+                        keyRange)) {
+                    final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
 
-                    final KeyVal<ByteBuffer> keyVal = iterator.next();
+                    while (iterator.hasNext()
+                            && addMore
+                            && !Thread.currentThread().isInterrupted()) {
 
-                    // All valid keys are more than a single byte long. Single byte keys are used to store db info.
-                    if (keyVal.key().limit() > 1) {
-                        final ByteBuffer valueBuffer = keyVal.val();
-                        try (final UnsafeByteBufferInput input =
-                                serialisers.getInputFactory().createByteBufferInput(valueBuffer)) {
-                            while (!input.end() && addMore) {
-                                final LmdbValue rowValue = LmdbValue.read(serialisers,
-                                        keyFactory,
-                                        compiledFields,
-                                        input);
-                                final Key key = rowValue.getKey();
+                        final KeyVal<ByteBuffer> keyVal = iterator.next();
+//                        final byte[] currentKeyBytes = ByteBufferUtils.toBytes(keyVal.key());
+
+                        // All valid keys are more than a single byte long. Single byte keys are used to store db info.
+                        if (keyVal.key().limit() > 1) {
+                            final ByteBuffer valueBuffer = keyVal.val();
+                            try (final UnsafeByteBufferInput input =
+                                    serialisers.getInputFactory().createByteBufferInput(valueBuffer)) {
+                                while (!input.end() && addMore) {
+                                    final LmdbValue rowValue = LmdbValue.read(serialisers,
+                                            keyFactory,
+                                            compiledFields,
+                                            input);
+                                    final Key key = rowValue.getKey();
 //                            if (key.getParent().equals(parentKey)) {
-                                final Generator[] generators = rowValue.getGenerators().getGenerators();
-                                list.add(new ItemImpl(this, key, timeFilter, generators));
-                                if (list.size >= trimmedSize && sorter == null) {
-                                    // Stop without sorting etc.
-                                    addMore = false;
+                                    final Generator[] generators = rowValue.getGenerators().getGenerators();
+                                    list.add(new ItemImpl(this, key, timeFilter, generators));
+                                    if (list.size >= trimmedSize && sorter == null) {
+                                        // Stop without sorting etc.
+                                        addMore = false;
 
-                                } else {
-                                    trimmed = false;
-                                    if (list.size() > maxSize) {
-                                        list.sortAndTrim(sorter, trimmedSize, trimTop);
-                                        trimmed = true;
+                                    } else {
+                                        trimmed = false;
+                                        if (list.size() > maxSize) {
+                                            list.sortAndTrim(sorter, trimmedSize, trimTop);
+                                            trimmed = true;
+                                        }
                                     }
-                                }
 //                            }
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            if (!trimmed) {
-                list.sortAndTrim(sorter, trimmedSize, trimTop);
-            }
+                if (!trimmed) {
+                    list.sortAndTrim(sorter, trimmedSize, trimTop);
+                }
 
-            return list;
+                return list;
+            } catch (final UncheckedInterruptedException e) {
+                LOGGER.debug(e::getMessage, e);
+                throw e;
+            } catch (final RuntimeException e) {
+                LOGGER.error(e::getMessage, e);
+                throw e;
+            }
         }
 
         private long countChildren(final Key parentKey,
@@ -1177,10 +1191,10 @@ public class LmdbDataStore implements DataStore {
 
             final Generator generator = generators[index];
             if (generator != null) {
-                if (evaluateChildren && key.isGrouped()) {
+                if (key.isGrouped()) {
                     final Supplier<ChildData> childDataSupplier = () -> {
                         // If we don't have any children at the requested depth then return null.
-                        if (data.compiledSorters.length <= key.getDepth()) {
+                        if (data.compiledSorters.length <= key.getChildDepth()) {
                             return null;
                         }
 
@@ -1214,7 +1228,7 @@ public class LmdbDataStore implements DataStore {
                             public Val count() {
                                 final long count = data.countChildren(
                                         key,
-                                        key.getDepth());
+                                        key.getChildDepth());
                                 if (count <= 0) {
                                     return ValNull.INSTANCE;
                                 }
@@ -1225,11 +1239,11 @@ public class LmdbDataStore implements DataStore {
                                 final Items items = data.getChildren(
                                         key,
                                         timeFilter,
-                                        key.getDepth(),
+                                        key.getChildDepth(),
                                         trimmedSize,
                                         trimTop);
                                 if (items != null && items.size() == trimmedSize) {
-                                    return items.get(trimmedSize - 1).getValue(index, false);
+                                    return items.get(trimmedSize - 1).getValue(index, true);
                                 }
                                 return ValNull.INSTANCE;
                             }
@@ -1238,13 +1252,13 @@ public class LmdbDataStore implements DataStore {
                                 final Items items = data.getChildren(
                                         key,
                                         timeFilter,
-                                        key.getDepth(),
+                                        key.getChildDepth(),
                                         limit,
                                         trimTop);
                                 if (items != null && items.size() > 0) {
                                     final StringBuilder sb = new StringBuilder();
                                     for (final Item item : items) {
-                                        final Val val = item.getValue(index, false);
+                                        final Val val = item.getValue(index, true);
                                         if (val.type().isValue()) {
                                             if (sb.length() > 0) {
                                                 sb.append(delimiter);

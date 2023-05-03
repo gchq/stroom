@@ -24,6 +24,7 @@ import stroom.entity.client.presenter.CopyDocumentPresenter.CopyDocumentProxy;
 import stroom.entity.client.presenter.CopyDocumentPresenter.CopyDocumentView;
 import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.shared.DocumentTypes;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.shared.DocumentPermissionNames;
@@ -69,7 +70,14 @@ public class CopyDocumentPresenter
 
         entityTreePresenter.setSelectedItem(null);
 
-        final ExplorerNode firstChild = event.getExplorerNodeList().get(0);
+        ExplorerNode firstChild = event.getExplorerNodeList().get(0);
+        // Make sure we reference the main node rather than the favourites' node.
+        if (firstChild != null) {
+            firstChild = firstChild
+                    .copy()
+                    .rootNodeUuid(ExplorerConstants.SYSTEM_DOC_REF.getUuid())
+                    .build();
+        }
         entityTreePresenter.setSelectedItem(firstChild);
         entityTreePresenter.getModel().reset();
         entityTreePresenter.getModel().setEnsureVisible(firstChild);
