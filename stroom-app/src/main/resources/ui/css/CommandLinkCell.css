@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-.hyperlinkCell:hover {
+.CommandLinkCell:hover {
     text-decoration: underline;
     cursor: pointer;
 }

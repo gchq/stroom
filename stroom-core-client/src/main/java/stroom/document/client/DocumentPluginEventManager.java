@@ -606,9 +606,11 @@ public class DocumentPluginEventManager extends Plugin {
             // Decorate the DocRef with its name from the info service (required by the doc presenter)
             restFactory.create()
                     .onSuccess(result -> {
-                        final DocRefInfo docRefInfo = (DocRefInfo) result;
-                        if (docRefInfo.getDocRef() != null) {
-                            docRef.setName(docRefInfo.getDocRef().getName());
+                        if (result != null) {
+                            final DocRefInfo docRefInfo = (DocRefInfo) result;
+                            if (docRefInfo.getDocRef() != null) {
+                                docRef.setName(docRefInfo.getDocRef().getName());
+                            }
                         }
                     })
                     .call(EXPLORER_RESOURCE)
