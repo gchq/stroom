@@ -12,7 +12,9 @@ import java.util.Objects;
 @JsonPropertyOrder({"from", "to"})
 public class TimeFilter {
 
+    @JsonProperty
     private final long from;
+    @JsonProperty
     private final long to;
 
     @JsonCreator
