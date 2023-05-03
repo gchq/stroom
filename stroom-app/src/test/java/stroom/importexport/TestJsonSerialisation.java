@@ -614,7 +614,6 @@ class TestJsonSerialisation {
         final Set<Class<?>> stroomClasses = new HashSet<>();
         try (ScanResult scanResult =
                 new ClassGraph()
-                        .disableJarScanning()
                         .enableClassInfo()             // Scan classes, methods, fields, annotations
                         .acceptPackages(PACKAGE_NAME)  // Scan com.xyz and subpackages (omit to scan all packages)
                         .scan()) {                   // Start the scan
@@ -639,7 +638,6 @@ class TestJsonSerialisation {
 
         try (ScanResult scanResult =
                 new ClassGraph()
-                        .disableJarScanning()
                         .enableClassInfo()
                         .acceptPackages(PACKAGE_NAME)
                         .rejectPackages("hadoopcommonshaded")
