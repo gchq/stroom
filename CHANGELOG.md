@@ -13,6 +13,33 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.8] - 2023-05-03
+
+* Issue **#3383** : Fix dashboard query setting selection for searchable providers.
+
+* Issue **#3374** : Fix issue where search extraction prevents shutdown.
+
+* Issue **#3414** : Improve error logging.
+
+* Issue **#3415** : Improve row spacing.
+
+* Issue **#3417** : Fix date rounding functions to return date values.
+
+* Issue **#3393** : Copy/move of favourite items will now select the parent folder of the original node.
+
+* Issue **#3391** : Allow selection of processor filter text box.
+
+* Issue **#3403** : Remove `restClient` config property from proxy config. In stroom and proxy add `jerseryClients` configuration item outside the `appConfig`/`proxyConfig` sections. `jerseryClients:` supports multiple jersey client configurations keyed by name. Possible keys are `default`, `stroom`, `open_id`, `content_sync`, `feed_status`, `http_post_filter`. If a required name is not found in the config file `default` will be used. If that is not found, a vanilla jersey client configuration will be used. For configuration options see https://www.dropwizard.io/en/latest/manual/configuration.html#jerseyclient. Relative key/trust store paths will be treated as relative to stroom home.
+
+* Issue **#3405** : Fix NPE on dependencies screen for missing dependencies.
+
+* Issue **#3421** : Improve error handling for query expressions.
+
+* Issue **#3426** : Allow customisation of window column fields.
+
+* Issue **#3428** : Automatically disable rules that error.
+
+
 ## [v7.2-beta.7] - 2023-04-28
 
 * Issue **#3396** : Made filter dialog modal.
@@ -5230,7 +5257,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.7...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.8...HEAD
+[v7.2-beta.8]: https://github.com/gchq/stroom/compare/v7.2-beta.7...v7.2-beta.8
 [v7.2-beta.7]: https://github.com/gchq/stroom/compare/v7.2-beta.6...v7.2-beta.7
 [v7.2-beta.6]: https://github.com/gchq/stroom/compare/v7.2-beta.5...v7.2-beta.6
 [v7.2-beta.5]: https://github.com/gchq/stroom/compare/v7.2-beta.4...v7.2-beta.5
