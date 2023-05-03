@@ -192,7 +192,7 @@ public class AnalyticsExecutor {
                             disableRule(analyticRuleDoc);
                         }
                     }
-                });
+                }).run();
     }
 
     private void disableRule(final AnalyticRuleDoc analyticRuleDoc) {
