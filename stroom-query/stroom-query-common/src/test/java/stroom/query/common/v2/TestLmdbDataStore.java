@@ -271,4 +271,9 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
     void sortedCountedTextTest3() {
         super.sortedCountedTextTest3();
     }
+
+    @Test
+    void firstLastSelectorTest() {
+        super.firstLastSelectorTest();
+    }
 }
