@@ -78,6 +78,7 @@ public class BootStrapModule extends AbstractModule {
         // datasources connected and read all the DB based config props.
 
         bind(Config.class).toInstance(configuration);
+        bind(Environment.class).toInstance(environment);
 
         final AppConfigModule appConfigModule = appConfigModuleFunc.apply(configHolder);
         install(appConfigModule);

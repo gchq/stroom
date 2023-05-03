@@ -38,6 +38,7 @@ import stroom.util.io.DirProvidersModule;
 import stroom.util.io.PathConfig;
 import stroom.util.io.StreamCloser;
 import stroom.util.io.StroomPathConfig;
+import stroom.util.jersey.MockJerseyModule;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.util.servlet.MockServletModule;
@@ -102,6 +103,7 @@ public class CliModule extends AbstractModule {
 
         bind(PathConfig.class).to(StroomPathConfig.class);
         install(new DirProvidersModule());
+        install(new MockJerseyModule());
     }
 
     @Provides

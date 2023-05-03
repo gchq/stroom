@@ -6,6 +6,7 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.commons_lang
+    implementation libs.dropwizard_client
     implementation libs.dropwizard_core
     implementation libs.dropwizard_jersey
     implementation libs.dropwizard_jetty

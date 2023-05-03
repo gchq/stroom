@@ -33,4 +33,11 @@ class NodeInfoImpl implements NodeInfo {
     public String getThisNodeName() {
         return nodeConfig.getNodeName();
     }
+
+    @Override
+    public String toString() {
+        return "NodeInfoImpl{" +
+                "nodeConfig=" + nodeConfig +
+                '}';
+    }
 }

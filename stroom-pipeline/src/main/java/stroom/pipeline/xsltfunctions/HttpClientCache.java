@@ -51,6 +51,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+// TODO: 03/05/2023 Consider changing this to use Jersey clients for consistency with the rest of the app.
 @Singleton
 public class HttpClientCache {
 

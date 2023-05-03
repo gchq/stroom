@@ -87,25 +87,6 @@ proxyConfig:
   repository:
     repoDir: "repo"
     storingEnabled: true
-  restClient:
-    chunkedEncodingEnabled: true
-    connectionRequestTimeout: "PT0.5S"
-    connectionTimeout: "PT0.5S"
-    cookiesEnabled: false
-    gzipEnabled: true
-    gzipEnabledForRequests: true
-    keepAlive: "PT0S"
-    maxConnections: 1024
-    maxConnectionsPerRoute: 1024
-    maxThreads: 128
-    minThreads: 1
-    retries: 0
-    timeToLive: "PT1H"
-    timeout: "PT0.5S"
-    tls: null
-    userAgent: null
-    validateAfterInactivityPeriod: "PT0S"
-    workQueueSize: 8
   sqsConnectors: []
   threads:
     examineSourceThreadCount: 3
