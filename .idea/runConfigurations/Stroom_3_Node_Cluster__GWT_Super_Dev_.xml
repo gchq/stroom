@@ -1,0 +1,8 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Stroom 3 Node Cluster (GWT Super Dev)" type="CompoundRunConfigurationType">
+    <toRun name="Stroom Node 2 (GWT Super Dev)" type="Application" />
+    <toRun name="Stroom Node 3 (GWT Super Dev)" type="Application" />
+    <toRun name="Stroom Node1 (GWT Super Dev)" type="Application" />
+    <method v="2" />
+  </configuration>
+</component>

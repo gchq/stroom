@@ -38,9 +38,6 @@ public class TestEndToEndStoreAndForwardToHttp extends AbstractEndToEndTest {
                         .maxItemsPerAggregate(3)
                         .build())
                 .addForwardDestination(MockHttpDestination.createForwardHttpPostConfig())
-                .restClientConfig(RestClientConfig.builder()
-                        .withTlsConfiguration(null)
-                        .build())
                 .feedStatusConfig(MockHttpDestination.createFeedStatusConfig())
                 .build();
     }

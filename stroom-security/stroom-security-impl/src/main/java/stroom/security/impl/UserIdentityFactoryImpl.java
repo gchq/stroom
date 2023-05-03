@@ -8,44 +8,38 @@ import stroom.security.openid.api.TokenRequest;
 import stroom.security.openid.api.TokenResponse;
 import stroom.security.shared.User;
 import stroom.util.authentication.DefaultOpenIdCredentials;
-import stroom.util.io.StreamUtil;
+import stroom.util.jersey.JerseyClientFactory;
+import stroom.util.jersey.JerseyClientName;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.http.HttpEntity;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.message.BasicNameValuePair;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.NumericDate;
 import org.jose4j.jwt.consumer.JwtContext;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Base64;
-import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation.Builder;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Form;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.Response;
 
 @Singleton
 class UserIdentityFactoryImpl implements UserIdentityFactory {
@@ -59,7 +53,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
     private final ResolvedOpenIdConfig resolvedOpenIdConfig;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final UserCache userCache;
-    private final Provider<CloseableHttpClient> httpClientProvider;
+    private final JerseyClientFactory jerseyClientFactory;
 
     @Inject
     UserIdentityFactoryImpl(final ProcessingUserIdentityProvider processingUserIdentityProvider,
@@ -69,7 +63,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
                             final ResolvedOpenIdConfig resolvedOpenIdConfig,
                             final DefaultOpenIdCredentials defaultOpenIdCredentials,
                             final UserCache userCache,
-                            final Provider<CloseableHttpClient> httpClientProvider) {
+                            final JerseyClientFactory jerseyClientFactory) {
         this.processingUserIdentityProvider = processingUserIdentityProvider;
         this.internalJwtContextFactory = internalJwtContextFactory;
         this.standardJwtContextFactory = standardJwtContextFactory;
@@ -77,7 +71,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
         this.resolvedOpenIdConfig = resolvedOpenIdConfig;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.userCache = userCache;
-        this.httpClientProvider = httpClientProvider;
+        this.jerseyClientFactory = jerseyClientFactory;
     }
 
     private boolean useExternalIdentityProvider() {
@@ -125,18 +119,18 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
 
         final ObjectMapper mapper = getMapper();
         final String tokenEndpoint = resolvedOpenIdConfig.getTokenEndpoint();
-        final HttpPost httpPost = new HttpPost(tokenEndpoint);
 
+        final TokenResponse tokenResponse;
         // AWS requires form content and not a JSON object.
         if (resolvedOpenIdConfig.isFormTokenRequest()) {
-            final List<NameValuePair> nvps = new ArrayList<>();
-            nvps.add(new BasicNameValuePair(OpenId.CODE, code));
-            nvps.add(new BasicNameValuePair(OpenId.GRANT_TYPE, OpenId.GRANT_TYPE__AUTHORIZATION_CODE));
-            nvps.add(new BasicNameValuePair(OpenId.CLIENT_ID, resolvedOpenIdConfig.getClientId()));
-            nvps.add(new BasicNameValuePair(OpenId.CLIENT_SECRET, resolvedOpenIdConfig.getClientSecret()));
-            nvps.add(new BasicNameValuePair(OpenId.REDIRECT_URI, state.getUri()));
-            setFormParams(httpPost, nvps);
+            final Map<String, String> formParams = Map.of(
+                    OpenId.CODE, code,
+                    OpenId.GRANT_TYPE, OpenId.GRANT_TYPE__AUTHORIZATION_CODE,
+                    OpenId.CLIENT_ID, resolvedOpenIdConfig.getClientId(),
+                    OpenId.CLIENT_SECRET, resolvedOpenIdConfig.getClientSecret(),
+                    OpenId.REDIRECT_URI, state.getUri());
 
+            tokenResponse = getTokenResponse(mapper, tokenEndpoint, formParams);
         } else {
             try {
                 final TokenRequest tokenRequest = TokenRequest.builder()
@@ -146,15 +140,11 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
                         .clientSecret(resolvedOpenIdConfig.getClientSecret())
                         .redirectUri(state.getUri())
                         .build();
-                final String json = mapper.writeValueAsString(tokenRequest);
-
-                httpPost.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-            } catch (final JsonProcessingException e) {
+                tokenResponse = getTokenResponse(mapper, tokenEndpoint, tokenRequest);
+            } catch (final Exception e) {
                 throw new AuthenticationException(e.getMessage(), e);
             }
         }
-
-        final TokenResponse tokenResponse = getTokenResponse(mapper, httpPost, tokenEndpoint);
 
         // Always try the internal context factory first.
         Optional<JwtContext> optionalContext = internalJwtContextFactory.getJwtContext(tokenResponse.getIdToken());
@@ -206,24 +196,18 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
 
             final ObjectMapper mapper = getMapper();
             final String tokenEndpoint = resolvedOpenIdConfig.getTokenEndpoint();
-            final HttpPost httpPost = new HttpPost(tokenEndpoint);
 
             // AWS requires form content and not a JSON object.
             if (resolvedOpenIdConfig.isFormTokenRequest()) {
-                final List<NameValuePair> nvps = new ArrayList<>();
-                nvps.add(new BasicNameValuePair(OpenId.GRANT_TYPE, OpenId.REFRESH_TOKEN));
-                nvps.add(new BasicNameValuePair(OpenId.REFRESH_TOKEN,
-                        identity.getTokenResponse().getRefreshToken()));
-                nvps.add(new BasicNameValuePair(OpenId.CLIENT_ID, resolvedOpenIdConfig.getClientId()));
-                nvps.add(new BasicNameValuePair(OpenId.CLIENT_SECRET,
-                        resolvedOpenIdConfig.getClientSecret()));
-                setFormParams(httpPost, nvps);
-
+                final Map<String, String> formParams = Map.of(
+                        OpenId.GRANT_TYPE, OpenId.REFRESH_TOKEN,
+                        OpenId.REFRESH_TOKEN, identity.getTokenResponse().getRefreshToken(),
+                        OpenId.CLIENT_ID, resolvedOpenIdConfig.getClientId(),
+                        OpenId.CLIENT_SECRET, resolvedOpenIdConfig.getClientSecret());
+                tokenResponse = getTokenResponse(mapper, tokenEndpoint, formParams);
             } else {
                 throw new UnsupportedOperationException("JSON not supported for token refresh");
             }
-
-            tokenResponse = getTokenResponse(mapper, httpPost, tokenEndpoint);
 
             // Always try the internal context factory first.
             Optional<JwtContext> optionalContext =
@@ -275,39 +259,64 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
         return false;
     }
 
-    private void setFormParams(final HttpPost httpPost,
-                               final List<NameValuePair> nvps) {
-        try {
-            String authorization = resolvedOpenIdConfig.getClientId() + ":" + resolvedOpenIdConfig.getClientSecret();
-            authorization = Base64.getEncoder().encodeToString(authorization.getBytes(StandardCharsets.UTF_8));
-            authorization = "Basic " + authorization;
-
-            httpPost.setHeader(HttpHeaders.AUTHORIZATION, authorization);
-            httpPost.setHeader(HttpHeaders.ACCEPT, "*/*");
-            httpPost.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
-            httpPost.setEntity(new UrlEncodedFormEntity(nvps));
-        } catch (final UnsupportedEncodingException e) {
-            throw new AuthenticationException(e.getMessage(), e);
-        }
+    private WebTarget createWebTarget(final String endpoint) {
+        final Client client = jerseyClientFactory.getNamedClient(JerseyClientName.OPEN_ID);
+        return client.target(endpoint);
     }
 
     private TokenResponse getTokenResponse(final ObjectMapper mapper,
-                                           final HttpPost httpPost,
-                                           final String tokenEndpoint) {
+                                           final String tokenEndpoint,
+                                           final Map<String, String> formParams) {
         TokenResponse tokenResponse = null;
-        try (final CloseableHttpClient httpClient = httpClientProvider.get()) {
-            try (final CloseableHttpResponse response = httpClient.execute(httpPost)) {
-                if (HttpServletResponse.SC_OK == response.getStatusLine().getStatusCode()) {
-                    final String msg = getMessage(response);
-                    tokenResponse = mapper.readValue(msg, TokenResponse.class);
-                } else {
-                    throw new AuthenticationException("Received status " +
-                            response.getStatusLine() +
-                            " from " +
-                            tokenEndpoint);
-                }
+
+        final WebTarget webTarget = createWebTarget(tokenEndpoint);
+        final Form form = new Form(new MultivaluedHashMap<>(formParams));
+        final Builder request = webTarget.request();
+
+        String authorization = resolvedOpenIdConfig.getClientId() + ":" + resolvedOpenIdConfig.getClientSecret();
+        authorization = Base64.getEncoder().encodeToString(authorization.getBytes(StandardCharsets.UTF_8));
+        authorization = "Basic " + authorization;
+        request.header(HttpHeaders.AUTHORIZATION, authorization);
+        request.header(HttpHeaders.ACCEPT, "*/*");
+        request.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+
+        try (Response response = request.post(Entity.form(form), Response.class)) {
+            if (HttpServletResponse.SC_OK == response.getStatus()) {
+                final String msg = getMessage(response);
+                tokenResponse = mapper.readValue(msg, TokenResponse.class);
+            } else {
+                throw new AuthenticationException(LogUtil.message("Received status {} from {}",
+                        response.getStatus(), tokenEndpoint));
             }
-        } catch (final IOException e) {
+        } catch (Exception e) {
+            LOGGER.debug(e::getMessage, e);
+        }
+
+        if (tokenResponse == null || tokenResponse.getIdToken() == null) {
+            throw new AuthenticationException("'" +
+                    OpenId.ID_TOKEN +
+                    "' not provided in response");
+        }
+        return tokenResponse;
+    }
+
+    private TokenResponse getTokenResponse(final ObjectMapper mapper,
+                                           final String tokenEndpoint,
+                                           final TokenRequest tokenRequest) {
+        TokenResponse tokenResponse = null;
+
+        final WebTarget webTarget = createWebTarget(tokenEndpoint);
+        final Builder request = webTarget.request(MediaType.APPLICATION_JSON_TYPE);
+
+        try (Response response = request.post(Entity.json(tokenRequest), Response.class)) {
+            if (HttpServletResponse.SC_OK == response.getStatus()) {
+                final String msg = getMessage(response);
+                tokenResponse = mapper.readValue(msg, TokenResponse.class);
+            } else {
+                throw new AuthenticationException(LogUtil.message("Received status {} from {}",
+                        response.getStatus(), tokenEndpoint));
+            }
+        } catch (Exception e) {
             LOGGER.debug(e::getMessage, e);
         }
 
@@ -320,14 +329,11 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
         return tokenResponse;
     }
 
-    private String getMessage(final CloseableHttpResponse response) {
+    private String getMessage(final Response response) {
         String msg = "";
         try {
-            final HttpEntity entity = response.getEntity();
-            try (final InputStream is = entity.getContent()) {
-                msg = StreamUtil.streamToString(is);
-            }
-        } catch (final RuntimeException | IOException e) {
+            msg = response.readEntity(String.class);
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
         return msg;

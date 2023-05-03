@@ -127,7 +127,6 @@ public abstract class AbstractApplicationTest {
         } else {
             // Can't use Map.of() due to null value
             final Map<PropertyPath, Object> propValueMap = new HashMap<>();
-            propValueMap.put(ProxyConfig.buildPath(ProxyConfig.PROP_NAME_REST_CLIENT, "tls"), null);
             propValueMap.put(ProxyConfig.buildPath(ProxyConfig.PROP_NAME_PATH), proxyPathConfig);
             propValueMap.put(ProxyConfig.buildPath(
                     ProxyConfig.PROP_NAME_REPOSITORY,
@@ -142,7 +141,12 @@ public abstract class AbstractApplicationTest {
                     propValueMap);
 
             config.setProxyConfig(modifiedProxyConfig);
+
         }
+        // Remove any TLS config as wire mock is http only
+        NullSafe.map(config.getJerseyClients())
+                .values()
+                .forEach(jerseyClientConfig -> jerseyClientConfig.setTlsConfiguration(null));
 
         ensureDirectories(config.getProxyConfig());
     }

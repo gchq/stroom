@@ -1,5 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Stroom GWT SuperDevMode" type="Application" factoryName="Application" singleton="false">
+  <configuration default="false" name="Stroom Node1 (GWT Super Dev)" type="Application" factoryName="Application" singleton="false">
+    <envs>
+      <env name="STROOM_RESOURCES_REPO_DIR" value="$PROJECT_DIR$/../stroom-resources" />
+    </envs>
     <option name="MAIN_CLASS_NAME" value="stroom.app.App" />
     <module name="stroom.stroom-app.main" />
     <option name="PROGRAM_PARAMETERS" value="server local.yml" />
