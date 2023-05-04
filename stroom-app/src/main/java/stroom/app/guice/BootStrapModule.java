@@ -61,15 +61,6 @@ public class BootStrapModule extends AbstractModule {
                 AppConfigModule::new);
     }
 
-    public BootStrapModule(final Config configuration,
-                           final Path configFile) {
-        this(configuration,
-                null,
-                configFile,
-                DbModule::new,
-                AppConfigModule::new);
-    }
-
     @Override
     protected void configure() {
         super.configure();

@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.9] - 2023-05-03
+
+* Issue **#3428** : Automatically disable rules that error.
+
+
 ## [v7.2-beta.8] - 2023-05-03
 
 * Issue **#3383** : Fix dashboard query setting selection for searchable providers.
@@ -5257,7 +5262,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.8...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.9...HEAD
+[v7.2-beta.9]: https://github.com/gchq/stroom/compare/v7.2-beta.8...v7.2-beta.9
 [v7.2-beta.8]: https://github.com/gchq/stroom/compare/v7.2-beta.7...v7.2-beta.8
 [v7.2-beta.7]: https://github.com/gchq/stroom/compare/v7.2-beta.6...v7.2-beta.7
 [v7.2-beta.6]: https://github.com/gchq/stroom/compare/v7.2-beta.5...v7.2-beta.6

@@ -89,7 +89,7 @@ public class BootstrapUtil {
                                                 final Path configFile) {
         return bootstrapApplication(
                 configuration,
-                () -> new BootStrapModule(configuration, configFile));
+                () -> new BootStrapModule(configuration, new Environment("Dummy Environment"), configFile));
     }
 
     private static Injector bootstrapApplication(

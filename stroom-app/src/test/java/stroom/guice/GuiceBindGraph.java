@@ -9,6 +9,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.grapher.graphviz.GraphvizGrapher;
 import com.google.inject.grapher.graphviz.GraphvizModule;
+import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +34,10 @@ public class GuiceBindGraph {
         Config config = new Config();
         config.setYamlAppConfig(new AppConfig());
         final Injector injector = Guice.createInjector(
-                new BootStrapModule(config, Path.of("dummy/path/to/config.yml")),
+                new BootStrapModule(
+                        config,
+                        new Environment("Test Environment"),
+                        Path.of("dummy/path/to/config.yml")),
                 new AppModule());
 
         graph(("build/AppModule.dot"), injector);
