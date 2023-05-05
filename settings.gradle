@@ -84,6 +84,7 @@ include 'stroom-data:stroom-data-store-impl'
 include 'stroom-data:stroom-data-store-impl-fs'
 include 'stroom-data:stroom-data-store-impl-fs-db'
 include 'stroom-data:stroom-data-store-impl-fs-db-jooq'
+include 'stroom-data:stroom-data-store-impl-s3'
 include 'stroom-data:stroom-data-store-mock'
 include 'stroom-data:stroom-data-store-util'
 include 'stroom-data:stroom-data-zip'
@@ -272,3 +273,4 @@ include 'stroom-util-shared'
 
 
 include 'stroom-ssl-test'
+
