@@ -14,11 +14,11 @@ import stroom.security.shared.User;
 import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.cert.CertificateExtractor;
+import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.consumer.JwtContext;
@@ -45,17 +45,17 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
     @Inject
     public StroomUserIdentityFactory(final JwtContextFactory jwtContextFactory,
                                      final Provider<OpenIdConfiguration> openIdConfigProvider,
-                                     final Provider<CloseableHttpClient> httpClientProvider,
                                      final DefaultOpenIdCredentials defaultOpenIdCredentials,
                                      final CertificateExtractor certificateExtractor,
                                      final UserCache userCache,
-                                     final ProcessingUserIdentityProvider processingUserIdentityProvider) {
+                                     final ProcessingUserIdentityProvider processingUserIdentityProvider,
+                                     final JerseyClientFactory jerseyClientFactory) {
         super(jwtContextFactory,
                 openIdConfigProvider,
-                httpClientProvider,
                 defaultOpenIdCredentials,
                 certificateExtractor,
-                processingUserIdentityProvider);
+                processingUserIdentityProvider,
+                jerseyClientFactory);
         this.processingUserIdentityProvider = processingUserIdentityProvider;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.userCache = userCache;

@@ -16,6 +16,7 @@ import stroom.proxy.app.guice.NoOpImportConverter;
 import stroom.proxy.app.guice.ProxyConfigModule;
 import stroom.proxy.app.handler.ProxyRequestHandler;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
+import stroom.proxy.app.jersey.ProxyJerseyModule;
 import stroom.proxy.app.security.ProxySecurityModule;
 import stroom.proxy.repo.ErrorReceiver;
 import stroom.proxy.repo.ErrorReceiverImpl;
@@ -45,6 +46,7 @@ import stroom.util.shared.BuildInfo;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import io.dropwizard.setup.Environment;
 import org.mockito.Mockito;
 
 import java.nio.file.Path;
@@ -67,6 +69,7 @@ public abstract class AbstractStoreAndForwardTestModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(Config.class).toInstance(configuration);
+        bind(Environment.class).toInstance(new Environment("TestEnvironment"));
 
         install(new ProxyConfigModule(proxyConfigHolder));
         install(new DbModule());
@@ -82,6 +85,7 @@ public abstract class AbstractStoreAndForwardTestModule extends AbstractModule {
         install(new RemoteFeedModule());
 
         install(new TaskContextModule());
+        install(new ProxyJerseyModule());
 
         bind(BuildInfo.class).toProvider(BuildInfoProvider.class);
         bind(DataReceiptPolicyAttributeMapFilterFactory.class).to(DataReceiptPolicyAttributeMapFilterFactoryImpl.class);

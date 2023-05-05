@@ -8,8 +8,8 @@ import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenResponse;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.cert.CertificateExtractor;
+import stroom.util.jersey.JerseyClientFactory;
 
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.jose4j.jwt.consumer.JwtContext;
 
 import java.util.Objects;
@@ -25,16 +25,16 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
     @Inject
     ProxyUserIdentityFactory(final JwtContextFactory jwtContextFactory,
                              final Provider<OpenIdConfiguration> openIdConfigProvider,
-                             final Provider<CloseableHttpClient> httpClientProvider,
                              final DefaultOpenIdCredentials defaultOpenIdCredentials,
                              final CertificateExtractor certificateExtractor,
-                             final ProcessingUserIdentityProvider processingUserIdentityProvider) {
+                             final ProcessingUserIdentityProvider processingUserIdentityProvider,
+                             final JerseyClientFactory jerseyClientFactory) {
         super(jwtContextFactory,
                 openIdConfigProvider,
-                httpClientProvider,
                 defaultOpenIdCredentials,
                 certificateExtractor,
-                processingUserIdentityProvider);
+                processingUserIdentityProvider,
+                jerseyClientFactory);
     }
 
     @Override

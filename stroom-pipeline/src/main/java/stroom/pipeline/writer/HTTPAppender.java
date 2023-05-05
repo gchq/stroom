@@ -39,6 +39,7 @@ import javax.inject.Inject;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 
+// TODO: 03/05/2023 Consider changing this to use Jersey clients for consistency with the rest of the app.
 /**
  * Handler class that forwards the request to a URL.
  */

@@ -15,6 +15,7 @@ dependencies {
     implementation libs.guava
     implementation libs.guice5
     implementation libs.hikari
+    implementation libs.jgit
     implementation libs.jooq
     implementation libs.junit_jupiter_api
     implementation libs.junit_platform_launcher

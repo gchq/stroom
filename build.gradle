@@ -232,6 +232,7 @@ ext.libs = [
         jetty_server                        : "org.eclipse.jetty:jetty-server", // version controlled by dropwizard-dependencies
         jetty_servlet                       : "org.eclipse.jetty:jetty-servlet", // version controlled by dropwizard-dependencies
         jetty_servlets                      : "org.eclipse.jetty:jetty-servlets", // version controlled by dropwizard-dependencies
+        jgit                                : "org.eclipse.jgit:org.eclipse.jgit:6.5.0.202303070854-r",
         jinjava                             : "com.hubspot.jinjava:jinjava:2.6.0",
         jmh_core                            : "org.openjdk.jmh:jmh-core:$versions.jmh",
         jmh_generator_annprocess            : "org.openjdk.jmh:jmh-generator-annprocess:$versions.jmh",

@@ -51,6 +51,7 @@ public interface StandardHeaderArguments {
     String STREAM_SIZE = "StreamSize";
 
     String STROOM_STATUS = "Stroom-Status";
+    String STROOM_ERROR = "Stroom-Error";
 
     String FEED = "Feed";
     String TYPE = "Type";

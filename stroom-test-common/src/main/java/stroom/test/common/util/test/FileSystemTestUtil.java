@@ -16,7 +16,6 @@
 
 package stroom.test.common.util.test;
 
-import stroom.content.ContentPack;
 import stroom.util.logging.LogUtil;
 import stroom.util.zip.ZipUtil;
 
@@ -79,32 +78,32 @@ public abstract class FileSystemTestUtil {
         return EXPLODED_DIR;
     }
 
-    /**
-     * @return The directory of the unziped content pack. If it has not already
-     * been unziped then it will unzip the pack first, which is assumed to exist.
-     */
-    public static Path getExplodedContentPackDir(final ContentPack contentPack) {
-
-        final Path explodedPackDir = getExplodedContentPacksDir()
-                .resolve(contentPack.toString());
-
-        if (!Files.exists(explodedPackDir)) {
-            final Path downloadsDir = getContentPackDownloadsDir();
-            final Path packZip = downloadsDir.resolve(contentPack.toFileName());
-
-            if (!Files.exists(packZip)) {
-                ContentPackDownloader.downloadContentPack(contentPack, downloadsDir);
-            }
-
-            // Unzip the zip file.
-            try {
-                ZipUtil.unzip(packZip, explodedPackDir);
-            } catch (IOException e) {
-                throw new RuntimeException(LogUtil.message("Error unzipping {} into {}",
-                        packZip.toAbsolutePath().normalize(),
-                        explodedPackDir.toAbsolutePath().normalize()));
-            }
-        }
-        return explodedPackDir;
-    }
+//    /**
+//     * @return The directory of the unziped content pack. If it has not already
+//     * been unziped then it will unzip the pack first, which is assumed to exist.
+//     */
+//    public static Path getExplodedContentPackDir(final ContentPackZip contentPack) {
+//
+//        final Path explodedPackDir = getExplodedContentPacksDir()
+//                .resolve(contentPack.toString());
+//
+//        if (!Files.exists(explodedPackDir)) {
+//            final Path downloadsDir = getContentPackDownloadsDir();
+//            final Path packZip = downloadsDir.resolve(contentPack.toFileName());
+//
+//            if (!Files.exists(packZip)) {
+//                ContentPackZipDownloader.downloadContentPack(contentPack, downloadsDir);
+//            }
+//
+//            // Unzip the zip file.
+//            try {
+//                ZipUtil.unzip(packZip, explodedPackDir);
+//            } catch (IOException e) {
+//                throw new RuntimeException(LogUtil.message("Error unzipping {} into {}",
+//                        packZip.toAbsolutePath().normalize(),
+//                        explodedPackDir.toAbsolutePath().normalize()));
+//            }
+//        }
+//        return explodedPackDir;
+//    }
 }

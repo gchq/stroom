@@ -61,15 +61,6 @@ public class BootStrapModule extends AbstractModule {
                 AppConfigModule::new);
     }
 
-    public BootStrapModule(final Config configuration,
-                           final Path configFile) {
-        this(configuration,
-                null,
-                configFile,
-                DbModule::new,
-                AppConfigModule::new);
-    }
-
     @Override
     protected void configure() {
         super.configure();
@@ -78,6 +69,7 @@ public class BootStrapModule extends AbstractModule {
         // datasources connected and read all the DB based config props.
 
         bind(Config.class).toInstance(configuration);
+        bind(Environment.class).toInstance(environment);
 
         final AppConfigModule appConfigModule = appConfigModuleFunc.apply(configHolder);
         install(appConfigModule);

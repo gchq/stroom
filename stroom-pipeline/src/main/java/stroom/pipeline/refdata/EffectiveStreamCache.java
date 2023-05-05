@@ -89,10 +89,10 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
 
     public NavigableSet<EffectiveMeta> get(final EffectiveStreamKey effectiveStreamKey) {
         if (effectiveStreamKey.getFeed() == null) {
-            throw new ProcessException("No feed has been specified for reference data lookup");
+            throw ProcessException.create("No feed has been specified for reference data lookup");
         }
         if (effectiveStreamKey.getStreamType() == null) {
-            throw new ProcessException("No stream type has been specified for reference data lookup");
+            throw ProcessException.create("No stream type has been specified for reference data lookup");
         }
 
         final NavigableSet<EffectiveMeta> effectiveStreams = cache.get(effectiveStreamKey);

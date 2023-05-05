@@ -42,8 +42,6 @@ import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.explorer.shared.FindExplorerNodeQuery;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
 
@@ -61,8 +59,6 @@ import javax.inject.Provider;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class ExplorerResourceImpl implements ExplorerResource {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExplorerResourceImpl.class);
 
     private final Provider<ExplorerService> explorerServiceProvider;
     private final Provider<ExplorerNodeService> explorerNodeServiceProvider;
@@ -128,7 +124,7 @@ class ExplorerResourceImpl implements ExplorerResource {
     @Override
     @AutoLogged(OperationType.VIEW)
     public ExplorerNode getFromDocRef(final DocRef docRef) {
-        return explorerNodeServiceProvider.get().getNodeWithRoot(docRef).orElse(null);
+        return explorerServiceProvider.get().getFromDocRef(docRef).orElse(null);
     }
 
     @Override

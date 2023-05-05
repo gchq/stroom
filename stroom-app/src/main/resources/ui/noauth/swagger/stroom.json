@@ -448,9 +448,9 @@
         "tags" : [ "Activities" ]
       }
     },
-    "/alertRule/v1/{uuid}" : {
+    "/analyticRule/v1/{uuid}" : {
       "get" : {
-        "operationId" : "fetchAlertRule",
+        "operationId" : "fetchAnalyticRule",
         "parameters" : [ {
           "in" : "path",
           "name" : "uuid",
@@ -464,18 +464,18 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/AlertRuleDoc"
+                  "$ref" : "#/components/schemas/AnalyticRuleDoc"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "Fetch an alert rule doc by its UUID",
+        "summary" : "Fetch an analytic rule doc by its UUID",
         "tags" : [ "Queries" ]
       },
       "put" : {
-        "operationId" : "updateAlertRule",
+        "operationId" : "updateAnalyticRule",
         "parameters" : [ {
           "in" : "path",
           "name" : "uuid",
@@ -488,7 +488,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/AlertRuleDoc"
+                "$ref" : "#/components/schemas/AnalyticRuleDoc"
               }
             }
           },
@@ -500,14 +500,14 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/AlertRuleDoc"
+                  "$ref" : "#/components/schemas/AnalyticRuleDoc"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "Update an alert rule doc",
+        "summary" : "Update an analytic rule doc",
         "tags" : [ "Queries" ]
       }
     },
@@ -9357,10 +9357,10 @@
           }
         } ]
       },
-      "AlertRuleDoc" : {
+      "AnalyticRuleDoc" : {
         "type" : "object",
         "properties" : {
-          "alertRuleType" : {
+          "analyticRuleType" : {
             "type" : "string",
             "enum" : [ "EVENT", "AGGREGATE" ]
           },
@@ -9385,7 +9385,7 @@
             "type" : "string"
           },
           "processSettings" : {
-            "$ref" : "#/components/schemas/AlertRuleProcessSettings"
+            "$ref" : "#/components/schemas/AnalyticRuleProcessSettings"
           },
           "query" : {
             "type" : "string"
@@ -9408,14 +9408,11 @@
           }
         }
       },
-      "AlertRuleProcessSettings" : {
+      "AnalyticRuleProcessSettings" : {
         "type" : "object",
         "properties" : {
           "enabled" : {
             "type" : "boolean"
-          },
-          "executionWindow" : {
-            "$ref" : "#/components/schemas/SimpleDuration"
           },
           "maxMetaCreateTimeMs" : {
             "type" : "integer",
@@ -15566,7 +15563,7 @@
           },
           "sourceType" : {
             "type" : "string",
-            "enum" : [ "ALERT_RULE", "DASHBOARD_UI", "QUERY_UI", "API", "BATCH_SEARCH" ]
+            "enum" : [ "ANALYTIC_RULE", "DASHBOARD_UI", "QUERY_UI", "API", "BATCH_SEARCH" ]
           }
         }
       },

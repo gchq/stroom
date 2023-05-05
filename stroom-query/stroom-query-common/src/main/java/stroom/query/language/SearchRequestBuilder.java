@@ -63,6 +63,12 @@ public class SearchRequestBuilder {
 
         // Try to make a query.
         Query query = queryBuilder.build();
+        if (query.getDataSource() == null) {
+            throw new TokenException(null, "No data source has been specified.");
+        }
+        if (query.getExpression() == null) {
+            throw new TokenException(null, "No query expression has been defined, are you missing a `where` clause?");
+        }
 
         // Create result requests.
         final List<ResultRequest> resultRequests = new ArrayList<>();

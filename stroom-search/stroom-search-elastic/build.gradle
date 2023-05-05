@@ -35,6 +35,7 @@ dependencies {
     implementation libs.jackson_annotations
     implementation libs.javax_inject
     implementation libs.restygwt
+    implementation libs.saxon_he
     implementation libs.slf4j_api
     implementation libs.swagger_annotations
     implementation libs.ws_rs_api

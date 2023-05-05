@@ -17,7 +17,7 @@
 ext.moduleName = 'stroom.search.extraction'
 
 dependencies {
-    implementation project(':stroom-alert:stroom-alert-api')
+    implementation project(':stroom-analytics:stroom-analytics-api')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-data:stroom-data-store-api')
     implementation project(':stroom-docref')

@@ -113,8 +113,6 @@ public class App extends Application<Config> {
     private ManagedServices managedServices;
     @Inject
     private RestResourceAutoLogger resourceAutoLogger;
-    @Inject
-    private Provider<Set<DataSource>> dataSourcesProvider;
 
     // Injected manually
     private HomeDirProvider homeDirProvider;

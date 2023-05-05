@@ -16,10 +16,11 @@
 
 package stroom.pipeline.errorhandler;
 
+import net.sf.saxon.trans.XPathException;
+
 public class ExpectedProcessException extends ProcessException {
-    private static final long serialVersionUID = -7360011976020716290L;
 
     public ExpectedProcessException(final String message) {
-        super(message);
+        super(new XPathException(message));
     }
 }

@@ -327,7 +327,7 @@
 .linkTab-background {
 	cursor: pointer;
 	white-space: nowrap;
-	font-weight: 500;
+	font-weight: 600;
 	opacity: 0;
 }
 
@@ -1696,11 +1696,8 @@ button.main-menu svg {
 }
 
 .infoTable th, .infoTable td {
-    padding-right: var(--row__padding--horizontal);
-}
-
-.infoTable th:first-child, .infoTable td:first-child {
     padding-left: var(--row__padding--horizontal);
+    padding-right: var(--row__padding--horizontal);
 }
 
 .infoTable td:first-child {

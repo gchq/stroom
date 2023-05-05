@@ -23,6 +23,7 @@ import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.common.v2.AnalyticResultStoreConfig;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
@@ -34,10 +35,9 @@ import stroom.query.common.v2.Items;
 import stroom.query.common.v2.Key;
 import stroom.query.common.v2.LmdbDataStoreFactory;
 import stroom.query.common.v2.ResultStore;
-import stroom.query.common.v2.ResultStoreConfig;
 import stroom.query.common.v2.ResultStoreSettingsFactory;
 import stroom.query.common.v2.SearchDebugUtil;
-import stroom.query.common.v2.Serialisers;
+import stroom.query.common.v2.SearchResultStoreConfig;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.SizesProvider;
 import stroom.util.io.PathCreator;
@@ -93,10 +93,10 @@ class TestSearchResultCreation {
                 () -> lmdbLibraryConfig);
         dataStoreFactory = new LmdbDataStoreFactory(
                 lmdbEnvFactory,
-                ResultStoreConfig::new,
+                SearchResultStoreConfig::new,
+                AnalyticResultStoreConfig::new,
                 pathCreator,
-                () -> executorService,
-                () -> new Serialisers(new ResultStoreConfig()));
+                () -> executorService);
     }
 
     @AfterEach
@@ -124,7 +124,7 @@ class TestSearchResultCreation {
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.BASIC_SETTINGS);
+                DataStoreSettings.createBasicSearchResultStoreSettings());
         final ValuesConsumer consumer = createExtractionReceiver(coprocessors);
 
         // Reorder values if field mappings have changed.
@@ -231,7 +231,7 @@ class TestSearchResultCreation {
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.PAYLOAD_PRODUCER_SETTINGS);
+                DataStoreSettings.createPayloadProducerSearchResultStoreSettings());
 
         final ValuesConsumer consumer = createExtractionReceiver(coprocessors);
 
@@ -243,7 +243,7 @@ class TestSearchResultCreation {
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.BASIC_SETTINGS);
+                DataStoreSettings.createBasicSearchResultStoreSettings());
 
         // Add data to the consumer.
         final String[] lines = getLines();
@@ -304,7 +304,7 @@ class TestSearchResultCreation {
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.PAYLOAD_PRODUCER_SETTINGS);
+                DataStoreSettings.createPayloadProducerSearchResultStoreSettings());
 
         final ValuesConsumer consumer1 = createExtractionReceiver(coprocessors);
 
@@ -316,7 +316,7 @@ class TestSearchResultCreation {
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.BASIC_SETTINGS);
+                DataStoreSettings.createBasicSearchResultStoreSettings());
 
         // Add data to the consumer.
         final String[] lines = getLines();
@@ -391,7 +391,7 @@ class TestSearchResultCreation {
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.BASIC_SETTINGS);
+                DataStoreSettings.createBasicSearchResultStoreSettings());
 
         final ValuesConsumer consumer = createExtractionReceiver(coprocessors);
 
@@ -403,7 +403,7 @@ class TestSearchResultCreation {
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.BASIC_SETTINGS);
+                DataStoreSettings.createBasicSearchResultStoreSettings());
 
 
         final CountDownLatch countDownLatch = new CountDownLatch(1);

@@ -74,6 +74,31 @@ logging:
       timeZone: UTC
       logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
 
+jerseyClients:
+  default:
+    timeout: 500ms
+    connectionTimeout: 500ms
+    timeToLive: 1h
+    cookiesEnabled: false
+    maxConnections: 1024
+    maxConnectionsPerRoute: 1024
+    keepAlive: 0ms
+    retries: 0
+    tls:
+      protocol: TLSv1.2
+      verifyHostname: true
+      keyStorePath: "${STROOM_RESOURCES_REPO_DIR:-~/work/stroom-resources}/dev-resources/certs/client/client.jks"
+      keyStorePassword: password
+      keyStoreType: JKS
+      trustStorePath: "${STROOM_RESOURCES_REPO_DIR:-~/work/stroom-resources}/dev-resources/certs/server/ca.jks"
+      trustStorePassword: password
+      trustStoreType: JKS
+      trustSelfSignedCertificates: false
+  #      supportedProtocols:
+  #        - TLSv1.1
+  #        - TLSv1.2
+  #      supportedCipherSuites:
+  #        - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256
 
 proxyConfig:
 
@@ -133,28 +158,3 @@ proxyConfig:
   feedStatus:
     url: "http://localhost:8080/api/feedStatus/v1"
 
-  restClient:
-    timeout: 500ms
-    connectionTimeout: 500ms
-    timeToLive: 1h
-    cookiesEnabled: false
-    maxConnections: 1024
-    maxConnectionsPerRoute: 1024
-    keepAlive: 0ms
-    retries: 0
-    #    userAgent: Stroom-Proxy (Jersey)
-    tls:
-      protocol: TLSv1.2
-      verifyHostname: true
-      keyStorePath: "${STROOM_RESOURCES_REPO_DIR:-~/work/stroom-resources}/dev-resources/certs/client/client.jks"
-      keyStorePassword: password
-      keyStoreType: JKS
-      trustStorePath: "${STROOM_RESOURCES_REPO_DIR:-~/work/stroom-resources}/dev-resources/certs/server/ca.jks"
-      trustStorePassword: password
-      trustStoreType: JKS
-      trustSelfSignedCertificates: false
-#      supportedProtocols:
-#        - TLSv1.1
-#        - TLSv1.2
-#      supportedCipherSuites:
-#        - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256

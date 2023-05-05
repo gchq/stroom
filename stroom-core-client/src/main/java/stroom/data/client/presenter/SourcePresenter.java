@@ -26,7 +26,6 @@ import stroom.util.shared.HasCharacterData.NavigationMode;
 import stroom.util.shared.Location;
 import stroom.util.shared.TextRange;
 import stroom.util.shared.string.HexDump;
-import stroom.widget.button.client.ButtonView;
 import stroom.widget.progress.client.presenter.Progress;
 import stroom.widget.progress.client.presenter.ProgressPresenter;
 

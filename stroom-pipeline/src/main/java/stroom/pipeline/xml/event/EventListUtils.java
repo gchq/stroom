@@ -93,7 +93,7 @@ public final class EventListUtils {
             return outputStream.toString();
 
         } catch (final SAXException | TransformerConfigurationException | RuntimeException e) {
-            throw new ProcessException(e.getMessage());
+            throw ProcessException.create(e.getMessage());
         }
     }
 
@@ -108,7 +108,7 @@ public final class EventListUtils {
             QueryResult.serialize(nodeInfo, sr, getOutputProperties());
             return sw.toString();
         } catch (final XPathException | RuntimeException e) {
-            throw new ProcessException(e.getMessage());
+            throw ProcessException.create(e.getMessage());
         }
     }
 
@@ -125,7 +125,7 @@ public final class EventListUtils {
             return (String) xPathExpression.evaluate(nodeInfo, XPathConstants.STRING);
 
         } catch (final XPathExpressionException | RuntimeException e) {
-            throw new ProcessException(e.getMessage());
+            throw ProcessException.create(e.getMessage());
         }
     }
 
@@ -164,7 +164,7 @@ public final class EventListUtils {
             return outputStream.toString();
 
         } catch (final SAXException | TransformerConfigurationException | RuntimeException e) {
-            throw new ProcessException(e.getMessage());
+            throw ProcessException.create(e.getMessage());
         }
     }
 

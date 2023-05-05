@@ -54,7 +54,7 @@ public abstract class AbstractApplicationTest {
     private PathCreator pathCreator;
 
     // This is needed by DropwizardExtensionsSupport to fire up the proxy app
-    // If we were always using the same config or all config was hot changable then we could
+    // If we were always using the same config or all config was hot changeable then we could
     // make this static which would be much faster as we would only need to spin it up once.
     @RegisterExtension
     private final DropwizardAppExtension<Config> dropwizard = getDropwizardAppExtension();
@@ -127,7 +127,6 @@ public abstract class AbstractApplicationTest {
         } else {
             // Can't use Map.of() due to null value
             final Map<PropertyPath, Object> propValueMap = new HashMap<>();
-            propValueMap.put(ProxyConfig.buildPath(ProxyConfig.PROP_NAME_REST_CLIENT, "tls"), null);
             propValueMap.put(ProxyConfig.buildPath(ProxyConfig.PROP_NAME_PATH), proxyPathConfig);
             propValueMap.put(ProxyConfig.buildPath(
                     ProxyConfig.PROP_NAME_REPOSITORY,
@@ -142,7 +141,12 @@ public abstract class AbstractApplicationTest {
                     propValueMap);
 
             config.setProxyConfig(modifiedProxyConfig);
+
         }
+        // Remove any TLS config as wire mock is http only
+        NullSafe.map(config.getJerseyClients())
+                .values()
+                .forEach(jerseyClientConfig -> jerseyClientConfig.setTlsConfiguration(null));
 
         ensureDirectories(config.getProxyConfig());
     }
@@ -200,10 +204,6 @@ public abstract class AbstractApplicationTest {
         return client;
     }
 
-    public PathCreator getPathCreator() {
-        return pathCreator;
-    }
-
     public DropwizardAppExtension<Config> getDropwizard() {
         return dropwizard;
     }
@@ -223,7 +223,7 @@ public abstract class AbstractApplicationTest {
                         Jackson.newObjectMapper(),
                         "dw");
 
-        Config config = null;
+        Config config;
         try {
             config = configurationFactory.build(configurationSourceProvider, configFile.toAbsolutePath().toString());
         } catch (ConfigurationException | IOException e) {

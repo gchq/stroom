@@ -29,8 +29,10 @@ import stroom.proxy.app.forwarder.ForwarderDestinationsImpl;
 import stroom.proxy.app.handler.ProxyId;
 import stroom.proxy.app.handler.ProxyRequestHandler;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
+import stroom.proxy.app.jersey.ProxyJerseyModule;
 import stroom.proxy.app.security.ProxySecurityModule;
 import stroom.proxy.app.security.ProxyUserIdentityFactory;
+import stroom.proxy.app.servlet.ProxyQueueMonitoringServlet;
 import stroom.proxy.app.servlet.ProxySecurityFilter;
 import stroom.proxy.app.servlet.ProxyStatusServlet;
 import stroom.proxy.app.servlet.ProxyWelcomeServlet;
@@ -121,8 +123,8 @@ public class ProxyModule extends AbstractModule {
         install(new RemoteFeedModule());
 
         install(new TaskContextModule());
-        install(new ProxySecurityModule());
         install(new ProxyJerseyModule());
+        install(new ProxySecurityModule());
 
         bind(BuildInfo.class).toProvider(BuildInfoProvider.class);
 //        bind(BufferFactory.class).to(BufferFactoryImpl.class);
@@ -161,6 +163,7 @@ public class ProxyModule extends AbstractModule {
         ServletBinder.create(binder())
                 .bind(DebugServlet.class)
                 .bind(ProxyStatusServlet.class)
+                .bind(ProxyQueueMonitoringServlet.class)
                 .bind(ProxyWelcomeServlet.class)
                 .bind(ReceiveDataServlet.class);
 

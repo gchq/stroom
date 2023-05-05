@@ -125,7 +125,7 @@ class HttpCall extends StroomExtensionFunctionCall {
         try {
             return client.newCall(request).execute();
         } catch (IOException e) {
-            throw new ProcessException(LogUtil.message(
+            throw ProcessException.create(LogUtil.message(
                     "Error sending request to \"{}\": {}", url, e.getMessage()), e);
         }
     }

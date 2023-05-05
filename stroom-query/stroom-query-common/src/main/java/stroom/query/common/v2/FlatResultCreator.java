@@ -400,15 +400,18 @@ public class FlatResultCreator implements ResultCreator {
                     ? child.getMaxResults()
                     : Collections.emptyList();
             final Sizes maxResults = Sizes.create(childMaxResults, Integer.MAX_VALUE);
+            final DataStoreSettings dataStoreSettings = DataStoreSettings.createBasicSearchResultStoreSettings()
+                    .copy()
+                    .maxResults(maxResults)
+                    .storeSize(Sizes.create(Integer.MAX_VALUE))
+                    .build();
             dataStore = dataStoreFactory.create(
                     queryKey,
                     componentId,
                     child,
                     childFieldIndex,
                     paramMap,
-                    maxResults,
-                    Sizes.create(Integer.MAX_VALUE),
-                    DataStoreSettings.BASIC_SETTINGS,
+                    dataStoreSettings,
                     errorConsumer);
         }
 

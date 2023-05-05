@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestGenerators {
 
     private final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
-    private final Serialisers serialisers = new Serialisers(new ResultStoreConfig());
+    private final Serialisers serialisers = new Serialisers(new SearchResultStoreConfig());
 
     @Test
     void test() {

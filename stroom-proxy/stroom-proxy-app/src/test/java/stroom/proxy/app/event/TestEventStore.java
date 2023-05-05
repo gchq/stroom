@@ -4,6 +4,7 @@ import stroom.meta.api.AttributeMap;
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.handler.ReceiveStreamHandlers;
 import stroom.proxy.repo.RepoDirProvider;
+import stroom.proxy.repo.store.FileStores;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -32,7 +33,8 @@ public class TestEventStore {
                 receiveStreamHandlers,
                 () -> proxyConfig,
                 () -> eventStoreConfig,
-                repoDirProvider);
+                repoDirProvider,
+                new FileStores());
 
         for (int i = 0; i < 10; i++) {
             final AttributeMap attributeMap = new AttributeMap();
