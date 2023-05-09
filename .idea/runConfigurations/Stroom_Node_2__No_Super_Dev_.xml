@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Stroom Node 2" type="Application" factoryName="Application" singleton="false">
+  <configuration default="false" name="Stroom Node 2 (No Super Dev)" type="Application" factoryName="Application" singleton="false">
     <envs>
       <env name="STROOM_RESOURCES_REPO_DIR" value="$PROJECT_DIR$/../stroom-resources" />
     </envs>
