@@ -179,7 +179,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .build();
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final AbstractResultStoreConfig resultStoreConfig = new AnalyticStoreConfig();
+        final AbstractResultStoreConfig resultStoreConfig = new AnalyticResultStoreConfig();
         final DataStoreSettings dataStoreSettings = DataStoreSettings.createAnalyticStoreSettings("test");
         LmdbDataStore dataStore = (LmdbDataStore)
                 create(

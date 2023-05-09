@@ -25,6 +25,7 @@ import stroom.task.impl.MockTaskModule;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.TempDirProvider;
+import stroom.util.jersey.MockJerseyModule;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 import stroom.util.servlet.MockServletModule;
 
@@ -47,6 +48,7 @@ public class MockServiceModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        install(new MockJerseyModule());
         install(new MockActivityModule());
         install(new MockAlertModule());
         install(new MockDocRefInfoModule());
@@ -54,6 +56,7 @@ public class MockServiceModule extends AbstractModule {
         install(new MockMetaModule());
         install(new MockStreamStoreModule());
         install(new MockWordListProviderModule());
+        install(new MockEnvironmentModule());
         install(new stroom.docstore.impl.DocStoreModule());
         install(new stroom.docstore.impl.memory.MemoryPersistenceModule());
         install(new stroom.event.logging.impl.EventLoggingModule());

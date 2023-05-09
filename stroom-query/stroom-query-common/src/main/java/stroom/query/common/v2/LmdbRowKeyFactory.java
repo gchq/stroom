@@ -5,7 +5,6 @@ import stroom.query.api.v2.TimeFilter;
 import org.lmdbjava.KeyRange;
 
 import java.nio.ByteBuffer;
-import java.util.Comparator;
 
 public interface LmdbRowKeyFactory {
 
@@ -55,12 +54,4 @@ public interface LmdbRowKeyFactory {
      * @return A key range to filter rows to find the children of the supplied parent key that also filters by time.
      */
     KeyRange<ByteBuffer> createChildKeyRange(Key parentKey, TimeFilter timeFilter);
-
-    /**
-     * Get a comparator that is specific to the key construction that will allow us to iterate over the row keys in
-     * LMDB.
-     *
-     * @return A key comparator.
-     */
-    Comparator<ByteBuffer> getKeyComparator();
 }

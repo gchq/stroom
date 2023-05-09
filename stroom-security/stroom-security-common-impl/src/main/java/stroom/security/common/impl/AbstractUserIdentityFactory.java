@@ -15,7 +15,8 @@ import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.exception.ThrowingFunction;
-import stroom.util.io.StreamUtil;
+import stroom.util.jersey.JerseyClientFactory;
+import stroom.util.jersey.JerseyClientName;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -23,16 +24,10 @@ import stroom.util.logging.LogUtil;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.lifecycle.Managed;
-import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.NumericDate;
 import org.jose4j.jwt.consumer.JwtContext;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
@@ -47,7 +42,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.WebTarget;
 
 @Singleton
 public abstract class AbstractUserIdentityFactory implements UserIdentityFactory, Managed {
@@ -56,17 +52,17 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
 
     private final JwtContextFactory jwtContextFactory;
     private final Provider<OpenIdConfiguration> openIdConfigProvider;
-    private final Provider<CloseableHttpClient> httpClientProvider;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final CertificateExtractor certificateExtractor;
     private final ProcessingUserIdentityProvider processingUserIdentityProvider;
+    private final JerseyClientFactory jerseyClientFactory;
 
     // A service account/user for communicating with other apps in the same OIDC realm,
     // e.g. proxy => stroom. Created lazily.
     // This is tied to stroom/proxy's clientId, and we have only one of them
     private volatile UserIdentity serviceUserIdentity;
 
-//    private final BlockingQueue<AbstractTokenUserIdentity> refreshTokensDelayQueue = new DelayQueue<>();
+    //    private final BlockingQueue<AbstractTokenUserIdentity> refreshTokensDelayQueue = new DelayQueue<>();
     private final BlockingQueue<UpdatableToken> updatableTokensDelayQueue = new DelayQueue<>();
     private ExecutorService refreshExecutorService = null;
     private final AtomicBoolean isShutdownInProgress = new AtomicBoolean(false);
@@ -75,16 +71,16 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
 
     public AbstractUserIdentityFactory(final JwtContextFactory jwtContextFactory,
                                        final Provider<OpenIdConfiguration> openIdConfigProvider,
-                                       final Provider<CloseableHttpClient> httpClientProvider,
                                        final DefaultOpenIdCredentials defaultOpenIdCredentials,
                                        final CertificateExtractor certificateExtractor,
-                                       final ProcessingUserIdentityProvider processingUserIdentityProvider) {
+                                       final ProcessingUserIdentityProvider processingUserIdentityProvider,
+                                       final JerseyClientFactory jerseyClientFactory) {
         this.jwtContextFactory = jwtContextFactory;
         this.openIdConfigProvider = openIdConfigProvider;
-        this.httpClientProvider = httpClientProvider;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.certificateExtractor = certificateExtractor;
         this.processingUserIdentityProvider = processingUserIdentityProvider;
+        this.jerseyClientFactory = jerseyClientFactory;
         objectMapper = createObjectMapper();
     }
 
@@ -252,15 +248,12 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
 
         final String tokenEndpoint = openIdConfiguration.getTokenEndpoint();
 
-        final HttpPost httpPost = new OpenIdPostBuilder(tokenEndpoint, openIdConfiguration, objectMapper)
+        final TokenResponse tokenResponse = new OpenIdTokenRequestHelper(
+                tokenEndpoint, openIdConfiguration, objectMapper, jerseyClientFactory)
                 .withCode(code)
                 .withGrantType(OpenId.GRANT_TYPE__AUTHORIZATION_CODE)
-                .withClientId(openIdConfiguration.getClientId())
-                .withClientSecret(openIdConfiguration.getClientSecret())
                 .withRedirectUri(state.getUri())
-                .build();
-
-        final TokenResponse tokenResponse = getTokenResponse(httpPost, tokenEndpoint, true);
+                .sendRequest(true);
 
         final Optional<UserIdentity> optUserIdentity = jwtContextFactory.getJwtContext(tokenResponse.getIdToken())
                 .flatMap(jwtContext ->
@@ -384,7 +377,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                                 TokenResponse::getExpiresIn,
                                 Duration::ofSeconds),
                         NullSafe.toString(updatableToken.getTokenResponse(),
-                                TokenResponse::getRefreshTokenExpiresIn,
+                                TokenResponse::getEffectiveRefreshExpiresIn,
                                 Duration::ofSeconds)));
 
                 fetchTokenResult = refreshTokens(currentTokenResponse);
@@ -405,8 +398,8 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                             .copy()
                             .refreshToken(currentTokenResponse.getRefreshToken())
                             .refreshTokenExpiresIn(Objects.requireNonNullElseGet(
-                                    newTokenResponse.getRefreshTokenExpiresIn(),
-                                    currentTokenResponse::getRefreshTokenExpiresIn))
+                                    newTokenResponse.getEffectiveRefreshExpiresIn(),
+                                    currentTokenResponse::getEffectiveRefreshExpiresIn))
                             .build();
                 }
                 fetchTokenResult = new FetchTokenResult(newTokenResponse, jwtClaims);
@@ -415,7 +408,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                         "New token expiry max age: {}, refresh token expiry max age: {}",
                         NullSafe.toString(newTokenResponse, TokenResponse::getExpiresIn, Duration::ofSeconds),
                         NullSafe.toString(newTokenResponse,
-                                TokenResponse::getRefreshTokenExpiresIn,
+                                TokenResponse::getEffectiveRefreshExpiresIn,
                                 Duration::ofSeconds)));
             }
         }
@@ -457,14 +450,11 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
         final OpenIdConfiguration openIdConfiguration = openIdConfigProvider.get();
         final String tokenEndpoint = openIdConfiguration.getTokenEndpoint();
 
-        final HttpPost httpPost = new OpenIdPostBuilder(tokenEndpoint, openIdConfiguration, objectMapper)
+        final TokenResponse newTokenResponse = new OpenIdTokenRequestHelper(
+                tokenEndpoint, openIdConfiguration, objectMapper, jerseyClientFactory)
                 .withGrantType(OpenId.GRANT_TYPE__REFRESH_TOKEN)
                 .withRefreshToken(refreshToken)
-                .withClientId(openIdConfiguration.getClientId())
-                .withClientSecret(openIdConfiguration.getClientSecret())
-                .build();
-
-        final TokenResponse newTokenResponse = getTokenResponse(httpPost, tokenEndpoint, true);
+                .sendRequest(true);
 
         final JwtClaims jwtClaims = jwtContextFactory.getJwtContext(newTokenResponse.getIdToken())
                 .map(JwtContext::getJwtClaims)
@@ -473,59 +463,9 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
         return new FetchTokenResult(newTokenResponse, jwtClaims);
     }
 
-
-    private TokenResponse getTokenResponse(final HttpPost httpPost,
-                                           final String tokenEndpoint,
-                                           final boolean expectingIdToken) {
-        TokenResponse tokenResponse = null;
-        try (final CloseableHttpClient httpClient = httpClientProvider.get()) {
-            try (final CloseableHttpResponse response = httpClient.execute(httpPost)) {
-                if (HttpServletResponse.SC_OK == response.getStatusLine().getStatusCode()) {
-                    final String msg = getMessage(response);
-                    tokenResponse = objectMapper.readValue(msg, TokenResponse.class);
-                } else {
-                    // Attempt to get content from the response, e.g. an error msg
-                    final String msg = getMessage(response, false);
-
-                    throw new AuthenticationException("Received status '" +
-                            response.getStatusLine() +
-                            "' from " +
-                            tokenEndpoint + " :\n" + msg);
-                }
-            }
-        } catch (final IOException e) {
-            throw new AuthenticationException(
-                    "Error requesting token from " + tokenEndpoint + ": " + e.getMessage(), e);
-        }
-
-        if (tokenResponse == null) {
-            throw new AuthenticationException("Null tokenResponse using url: " + tokenEndpoint);
-        } else if (expectingIdToken && tokenResponse.getIdToken() == null) {
-            throw new AuthenticationException("Expecting '" +
-                    OpenId.ID_TOKEN +
-                    "' to be in response but it is absent. Using url: " + tokenEndpoint);
-        }
-
-        return tokenResponse;
-    }
-
-    private String getMessage(final CloseableHttpResponse response) {
-        return getMessage(response, true);
-    }
-
-    private String getMessage(final CloseableHttpResponse response, final boolean logErrors) {
-        String msg = "";
-        try {
-            final HttpEntity entity = response.getEntity();
-            try (final InputStream is = entity.getContent()) {
-                msg = StreamUtil.streamToString(is);
-            }
-        } catch (final RuntimeException | IOException e) {
-            if (logErrors) {
-                LOGGER.error(e.getMessage(), e);
-            }
-        }
-        return msg;
+    private WebTarget createWebTarget(final String endpoint) {
+        final Client client = jerseyClientFactory.getNamedClient(JerseyClientName.OPEN_ID);
+        return client.target(endpoint);
     }
 
     private ObjectMapper createObjectMapper() {
@@ -620,19 +560,13 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
     private FetchTokenResult fetchExternalServiceUserToken() {
         final OpenIdConfiguration openIdConfiguration = openIdConfigProvider.get();
         final String tokenEndpoint = openIdConfiguration.getTokenEndpoint();
-        final OpenIdPostBuilder builder = new OpenIdPostBuilder(tokenEndpoint, openIdConfiguration, objectMapper)
-                .withGrantType(OpenId.GRANT_TYPE__CLIENT_CREDENTIALS)
-                .withClientId(openIdConfiguration.getClientId())
-                .withClientSecret(openIdConfiguration.getClientSecret());
-
-        if (NullSafe.hasItems(openIdConfiguration.getClientCredentialsScopes())) {
-            builder.withScopes(openIdConfiguration.getClientCredentialsScopes());
-        }
-
-        final HttpPost httpPost = builder.build();
 
         // Only need the access token for a client_credentials flow
-        final TokenResponse tokenResponse = getTokenResponse(httpPost, tokenEndpoint, false);
+        final TokenResponse tokenResponse = new OpenIdTokenRequestHelper(
+                tokenEndpoint, openIdConfiguration, objectMapper, jerseyClientFactory)
+                .withGrantType(OpenId.GRANT_TYPE__CLIENT_CREDENTIALS)
+                .addScopes(openIdConfiguration.getClientCredentialsScopes())
+                .sendRequest(false);
 
         final FetchTokenResult fetchTokenResult = jwtContextFactory.getJwtContext(tokenResponse.getAccessToken())
                 .map(jwtContext ->

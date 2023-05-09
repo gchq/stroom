@@ -442,7 +442,9 @@ td {
 }
 
 .statusIcon {
-	padding-top: 1px !important;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
 	cursor: default !important;
 }
 

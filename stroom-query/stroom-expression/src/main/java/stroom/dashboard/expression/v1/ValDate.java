@@ -33,6 +33,10 @@ public final class ValDate implements ValNumber {
         return new ValDate(value);
     }
 
+    public static ValDate create(final String date) {
+        return new ValDate(DateUtil.parseNormalDateTimeString(date));
+    }
+
     @Override
     public Integer toInteger() {
         return (int) value;

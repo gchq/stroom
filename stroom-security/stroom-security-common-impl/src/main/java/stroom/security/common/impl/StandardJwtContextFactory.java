@@ -6,6 +6,8 @@ import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
+import stroom.util.jersey.JerseyClientFactory;
+import stroom.util.jersey.JerseyClientName;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -48,7 +50,6 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
@@ -93,6 +94,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
     private final OpenIdPublicKeysSupplier openIdPublicKeysSupplier;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
+    private final JerseyClientFactory jerseyClientFactory;
 
     // Stateful things
     // Not clear whether AWS re-uses public keys or not so this may not be needed
@@ -102,10 +104,12 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     @Inject
     public StandardJwtContextFactory(final Provider<OpenIdConfiguration> openIdConfigurationProvider,
                                      final OpenIdPublicKeysSupplier openIdPublicKeysSupplier,
-                                     final DefaultOpenIdCredentials defaultOpenIdCredentials) {
+                                     final DefaultOpenIdCredentials defaultOpenIdCredentials,
+                                     final JerseyClientFactory jerseyClientFactory) {
         this.openIdConfigurationProvider = openIdConfigurationProvider;
         this.openIdPublicKeysSupplier = openIdPublicKeysSupplier;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
+        this.jerseyClientFactory = jerseyClientFactory;
     }
 
     private LoadingCache<String, PublicKey> createAwsPublicKeyCache() {
@@ -496,7 +500,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
 
         LOGGER.debug(() -> LogUtil.message("Fetching AWS public key from uri: {}, current cache size: {}",
                 uri, awsPublicKeyCache.estimatedSize()));
-        final Client client = ClientBuilder.newClient();
+        final Client client = jerseyClientFactory.getNamedClient(JerseyClientName.AWS_PUBLIC_KEYS);
         // Don't use injected WebTargetFactory as that slaps a token on which we don't want in
         // this case as it is an unauthenticated endpoint
         final WebTarget target = client.target(uri);

@@ -55,7 +55,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     public static final String PROP_NAME_LOG_STREAM = "logStream";
     public static final String PROP_NAME_CONTENT_SYNC = "contentSync";
     public static final String PROP_NAME_FEED_STATUS = "feedStatus";
-    public static final String PROP_NAME_REST_CLIENT = "restClient";
     public static final String PROP_NAME_THREADS = "threads";
     public static final String PROP_NAME_FORWARD_RETRY = "forwardRetry";
     public static final String PROP_NAME_SECURITY = "security";
@@ -81,7 +80,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     private final LogStreamConfig logStreamConfig;
     private final ContentSyncConfig contentSyncConfig;
     private final FeedStatusConfig feedStatusConfig;
-    private final RestClientConfig restClientConfig;
     private final ThreadConfig threadConfig;
     private final ForwardRetryConfig forwardRetry;
     private final ProxySecurityConfig proxySecurityConfig;
@@ -104,7 +102,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         logStreamConfig = new LogStreamConfig();
         contentSyncConfig = new ContentSyncConfig();
         feedStatusConfig = new FeedStatusConfig();
-        restClientConfig = new RestClientConfig();
         threadConfig = new ThreadConfig();
         forwardRetry = new ForwardRetryConfig();
         proxySecurityConfig = new ProxySecurityConfig();
@@ -130,7 +127,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             @JsonProperty(PROP_NAME_LOG_STREAM) final LogStreamConfig logStreamConfig,
             @JsonProperty(PROP_NAME_CONTENT_SYNC) final ContentSyncConfig contentSyncConfig,
             @JsonProperty(PROP_NAME_FEED_STATUS) final FeedStatusConfig feedStatusConfig,
-            @JsonProperty(PROP_NAME_REST_CLIENT) final RestClientConfig restClientConfig,
             @JsonProperty(PROP_NAME_THREADS) final ThreadConfig threadConfig,
             @JsonProperty(PROP_NAME_FORWARD_RETRY) final ForwardRetryConfig forwardRetry,
             @JsonProperty(PROP_NAME_SECURITY) final ProxySecurityConfig proxySecurityConfig,
@@ -151,7 +147,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         this.logStreamConfig = logStreamConfig;
         this.contentSyncConfig = contentSyncConfig;
         this.feedStatusConfig = feedStatusConfig;
-        this.restClientConfig = restClientConfig;
         this.threadConfig = threadConfig;
         this.forwardRetry = forwardRetry;
         this.proxySecurityConfig = proxySecurityConfig;
@@ -259,11 +254,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return feedStatusConfig;
     }
 
-    @JsonProperty(PROP_NAME_REST_CLIENT)
-    public RestClientConfig getRestClientConfig() {
-        return restClientConfig;
-    }
-
     @JsonProperty(PROP_NAME_THREADS)
     public ThreadConfig getThreadConfig() {
         return threadConfig;
@@ -279,12 +269,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return proxySecurityConfig;
     }
 
-    @JsonPropertyDescription("Configurations for AWS SQS connectors")
-    @JsonProperty
-    public List<SqsConnectorConfig> getSqsConnectors() {
-        return sqsConnectors;
-    }
-
     @JsonIgnore
     @SuppressWarnings("unused")
     @ValidationMethod(message = "If repository.storingEnabled is not true, then forwardFileDestinations " +
@@ -297,6 +281,12 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         } else {
             return true;
         }
+    }
+
+    @JsonPropertyDescription("Configurations for AWS SQS connectors")
+    @JsonProperty
+    public List<SqsConnectorConfig> getSqsConnectors() {
+        return sqsConnectors;
     }
 
     @JsonIgnore
@@ -349,7 +339,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         private LogStreamConfig logStreamConfig = new LogStreamConfig();
         private ContentSyncConfig contentSyncConfig = new ContentSyncConfig();
         private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
-        private RestClientConfig restClientConfig = new RestClientConfig();
         private ThreadConfig threadConfig = new ThreadConfig();
         private ForwardRetryConfig forwardRetry = new ForwardRetryConfig();
         private ProxySecurityConfig proxySecurityConfig = new ProxySecurityConfig();
@@ -447,11 +436,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             return this;
         }
 
-        public Builder restClientConfig(final RestClientConfig restClientConfig) {
-            this.restClientConfig = restClientConfig;
-            return this;
-        }
-
         public Builder threadConfig(final ThreadConfig threadConfig) {
             this.threadConfig = threadConfig;
             return this;
@@ -489,7 +473,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                     logStreamConfig,
                     contentSyncConfig,
                     feedStatusConfig,
-                    restClientConfig,
                     threadConfig,
                     forwardRetry,
                     proxySecurityConfig,

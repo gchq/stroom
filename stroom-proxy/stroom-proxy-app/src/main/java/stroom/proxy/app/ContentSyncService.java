@@ -10,6 +10,8 @@ import stroom.security.api.UserIdentityFactory;
 import stroom.util.HasHealthCheck;
 import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
+import stroom.util.jersey.JerseyClientFactory;
+import stroom.util.jersey.JerseyClientName;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -30,7 +32,6 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.core.GenericType;
@@ -49,7 +50,7 @@ public class ContentSyncService implements Managed, HasHealthCheck {
     private final Provider<ContentSyncConfig> contentSyncConfigProvider;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final Set<ImportExportActionHandler> importExportActionHandlers;
-    private final Provider<Client> jerseyClientProvider;
+    private final JerseyClientFactory jerseyClientFactory;
     private final UserIdentityFactory userIdentityFactory;
 
     private volatile ScheduledExecutorService scheduledExecutorService;
@@ -59,11 +60,11 @@ public class ContentSyncService implements Managed, HasHealthCheck {
                               final Provider<ContentSyncConfig> contentSyncConfigProvider,
                               final DefaultOpenIdCredentials defaultOpenIdCredentials,
                               final Set<ImportExportActionHandler> importExportActionHandlers,
-                              final Provider<Client> jerseyClientProvider,
+                              final JerseyClientFactory jerseyClientFactory,
                               final UserIdentityFactory userIdentityFactory) {
         this.contentSyncConfigProvider = contentSyncConfigProvider;
         this.importExportActionHandlers = importExportActionHandlers;
-        this.jerseyClientProvider = jerseyClientProvider;
+        this.jerseyClientFactory = jerseyClientFactory;
         this.proxyConfigProvider = proxyConfigProvider;
         this.userIdentityFactory = userIdentityFactory;
         contentSyncConfigProvider.get().validateConfiguration();
@@ -157,11 +158,14 @@ public class ContentSyncService implements Managed, HasHealthCheck {
     private Invocation.Builder createClient(final String url,
                                             final String path,
                                             final ContentSyncConfig contentSyncConfig) {
-        return jerseyClientProvider.get()
-                .target(url)
+        return jerseyClientFactory.createWebTarget(JerseyClientName.CONTENT_SYNC, url)
                 .path(path)
                 .request(MediaType.APPLICATION_JSON)
                 .headers(getHeaders(contentSyncConfig));
+//        final Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
+//        ClientSecurityUtil.addAuthorisationHeader(invocationBuilder, getApiKey());
+//
+//        return invocationBuilder;
     }
 
     private MultivaluedMap<String, Object> getHeaders(final ContentSyncConfig contentSyncConfig) {

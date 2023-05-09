@@ -34,25 +34,22 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbDataStoreFactory.class);
 
     private final LmdbEnvFactory lmdbEnvFactory;
-    private final Provider<ResultStoreConfig> resultStoreConfigProvider;
-    private final Provider<AnalyticStoreConfig> analyticStoreConfigProvider;
+    private final Provider<SearchResultStoreConfig> resultStoreConfigProvider;
+    private final Provider<AnalyticResultStoreConfig> analyticStoreConfigProvider;
     private final Provider<Executor> executorProvider;
-    private final Provider<Serialisers> serialisersProvider;
     private final Path searchResultStoreDir;
     private final Path analyticResultStoreDir;
 
     @Inject
     public LmdbDataStoreFactory(final LmdbEnvFactory lmdbEnvFactory,
-                                final Provider<ResultStoreConfig> resultStoreConfigProvider,
-                                final Provider<AnalyticStoreConfig> analyticStoreConfigProvider,
+                                final Provider<SearchResultStoreConfig> resultStoreConfigProvider,
+                                final Provider<AnalyticResultStoreConfig> analyticStoreConfigProvider,
                                 final PathCreator pathCreator,
-                                final Provider<Executor> executorProvider,
-                                final Provider<Serialisers> serialisersProvider) {
+                                final Provider<Executor> executorProvider) {
         this.lmdbEnvFactory = lmdbEnvFactory;
         this.resultStoreConfigProvider = resultStoreConfigProvider;
         this.analyticStoreConfigProvider = analyticStoreConfigProvider;
         this.executorProvider = executorProvider;
-        this.serialisersProvider = serialisersProvider;
 
         // This config prop requires restart, so we can hold on to it
         this.searchResultStoreDir = getLocalDir(resultStoreConfigProvider.get(), pathCreator);
@@ -72,14 +69,14 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                             final DataStoreSettings dataStoreSettings,
                             final ErrorConsumer errorConsumer) {
 
-        final ResultStoreConfig resultStoreConfig = resultStoreConfigProvider.get();
+        final SearchResultStoreConfig resultStoreConfig = resultStoreConfigProvider.get();
         if (!resultStoreConfig.isOffHeapResults()) {
             if (dataStoreSettings.isProducePayloads()) {
                 throw new RuntimeException("MapDataStore cannot produce payloads");
             }
 
             return new MapDataStore(
-                    serialisersProvider.get(),
+                    new Serialisers(resultStoreConfig),
                     tableSettings,
                     fieldIndex,
                     paramMap,
@@ -90,7 +87,7 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                     dataStoreSettings.copy().subDirectory(subDirectory).build();
 
             return new LmdbDataStore(
-                    serialisersProvider.get(),
+                    new Serialisers(resultStoreConfig),
                     lmdbEnvFactory,
                     resultStoreConfig,
                     queryKey,
@@ -112,9 +109,9 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                                                      final DataStoreSettings dataStoreSettings,
                                                      final ErrorConsumer errorConsumer) {
 
-        final AnalyticStoreConfig storeConfig = analyticStoreConfigProvider.get();
+        final AnalyticResultStoreConfig storeConfig = analyticStoreConfigProvider.get();
         return new LmdbDataStore(
-                serialisersProvider.get(),
+                new Serialisers(storeConfig),
                 lmdbEnvFactory,
                 storeConfig,
                 queryKey,

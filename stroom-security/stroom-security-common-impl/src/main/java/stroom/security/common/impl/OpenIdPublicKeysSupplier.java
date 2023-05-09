@@ -3,6 +3,8 @@ package stroom.security.common.impl;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.util.authentication.DefaultOpenIdCredentials;
+import stroom.util.jersey.JerseyClientFactory;
+import stroom.util.jersey.JerseyClientName;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -24,7 +26,6 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import javax.ws.rs.client.Client;
 import javax.ws.rs.core.Response;
 
 @Singleton
@@ -33,7 +34,7 @@ public class OpenIdPublicKeysSupplier implements Supplier<JsonWebKeySet> {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OpenIdPublicKeysSupplier.class);
 
     private final Provider<OpenIdConfiguration> openIdConfigProvider;
-    private final Client jerseyClient;
+    private final JerseyClientFactory jerseyClientFactory;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
 
     private final Map<String, KeySetWrapper> cache = new ConcurrentHashMap<>();
@@ -47,10 +48,10 @@ public class OpenIdPublicKeysSupplier implements Supplier<JsonWebKeySet> {
 
     @Inject
     OpenIdPublicKeysSupplier(final Provider<OpenIdConfiguration> openIdConfigProvider,
-                             final Client jerseyClient,
+                             final JerseyClientFactory jerseyClientFactory,
                              final DefaultOpenIdCredentials defaultOpenIdCredentials) {
         this.openIdConfigProvider = openIdConfigProvider;
-        this.jerseyClient = jerseyClient;
+        this.jerseyClientFactory = jerseyClientFactory;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
     }
 
@@ -124,8 +125,7 @@ public class OpenIdPublicKeysSupplier implements Supplier<JsonWebKeySet> {
         String json = null;
         try {
             // Use Client instead of WebTargetFactory so we do it un-authenticated
-            final Response res = jerseyClient
-                    .target(jwksUri)
+            final Response res = jerseyClientFactory.createWebTarget(JerseyClientName.OPEN_ID, jwksUri)
                     .request()
                     .get();
             json = res.readEntity(String.class);

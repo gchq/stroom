@@ -285,28 +285,47 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 final List<DocRef> additionalDocRefs = explorerDecorator.list()
                         .stream()
                         .filter(fuzzyMatchPredicate)
-                        .collect(Collectors.toList());
+                        .toList();
 
                 if (!additionalDocRefs.isEmpty()) {
                     if (rootNode == null) {
                         throw new RuntimeException("Missing root node");
                     }
-
-                    additionalDocRefs.forEach(docRef -> {
-                        final ExplorerNode node = ExplorerNode
-                                .builder()
-                                .docRef(docRef)
-                                .tags(StandardTagNames.DATA_SOURCE)
-                                .nodeState(NodeState.LEAF)
-                                .depth(1)
-                                .iconClassName(DocumentType.DOC_IMAGE_CLASS_NAME + "searchable")
-                                .build();
-                        builder.addChild(node);
-                    });
+                    additionalDocRefs.forEach(docRef -> builder.addChild(createSearchableNode(docRef)));
                 }
             }
         }
         return builder.build();
+    }
+
+    @Override
+    public Optional<ExplorerNode> getFromDocRef(final DocRef docRef) {
+        final Optional<ExplorerNode> optional = explorerNodeService.getNodeWithRoot(docRef);
+        if (optional.isPresent()) {
+            return optional;
+        }
+
+        final ExplorerDecorator explorerDecorator = explorerDecoratorProvider.get();
+        if (explorerDecorator == null) {
+            return Optional.empty();
+        }
+
+        return explorerDecorator.list()
+                .stream()
+                .filter(ref -> Objects.equals(docRef, ref))
+                .findAny()
+                .map(this::createSearchableNode);
+    }
+
+    private ExplorerNode createSearchableNode(final DocRef docRef) {
+        return ExplorerNode
+                .builder()
+                .docRef(docRef)
+                .tags(StandardTagNames.DATA_SOURCE)
+                .nodeState(NodeState.LEAF)
+                .depth(1)
+                .iconClassName(DocumentType.DOC_IMAGE_CLASS_NAME + "searchable")
+                .build();
     }
 
     @Override

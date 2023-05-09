@@ -95,7 +95,9 @@ public class AlertWriter2 implements ValuesConsumer, ProcessLifecycleAware {
     public void add(final Val[] values) {
         // Analytics generation search extraction - create records when filters match
         if (values == null || values.length == 0) {
-            log(Severity.WARNING, "No values to extract from ", null);
+            log(Severity.WARNING, "Rules error: Query " +
+                    analyticRuleDoc.getUuid() +
+                    ". No values to extract from ", null);
             return;
         }
         final CompiledFieldValue[] outputFields = extractAlert(values);
@@ -113,7 +115,10 @@ public class AlertWriter2 implements ValuesConsumer, ProcessLifecycleAware {
 
             if (expression != null) {
                 if (expression.hasAggregate()) {
-                    LOGGER.error("Rules error: Query contains aggregate functions.  This is not supported.");
+                    LOGGER.error("Rules error: Query " +
+                            analyticRuleDoc.getUuid() +
+                            " contains aggregate functions." +
+                            " This is not supported for Event Type Rules.");
                     return null;
                 } else {
                     final Generator generator = expression.createGenerator();

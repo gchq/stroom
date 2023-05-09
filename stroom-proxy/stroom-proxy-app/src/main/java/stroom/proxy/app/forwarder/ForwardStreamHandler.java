@@ -234,7 +234,8 @@ public class ForwardStreamHandler implements StreamHandler {
                 throw e;
             } finally {
                 final long duration = System.currentTimeMillis() - startTimeMs;
-                logStream.log(SEND_LOG,
+                logStream.log(
+                        SEND_LOG,
                         attributeMap,
                         "SEND",
                         forwardUrl,
