@@ -33,8 +33,7 @@ public enum JerseyClientName {
      * Client for the HttpPostFilter.
      */
     @Deprecated
-    HTTP_POST_FILTER // HttpPostFilter is deprecated, use HttpAppender which has content controlled config
-    ,
+    HTTP_POST_FILTER, // HttpPostFilter is deprecated, use HttpAppender which has content controlled config
 
     /**
      * Client for communications with an external Open ID Connect provider,

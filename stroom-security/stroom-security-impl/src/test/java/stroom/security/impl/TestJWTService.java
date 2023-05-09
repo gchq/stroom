@@ -5,6 +5,7 @@ import stroom.security.common.impl.StandardJwtContextFactory;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.util.authentication.DefaultOpenIdCredentials;
+import stroom.util.jersey.JerseyClientFactory;
 
 import org.jose4j.base64url.Base64;
 import org.jose4j.jwa.AlgorithmConstraints;
@@ -48,6 +49,9 @@ class TestJWTService {
     private OpenIdPublicKeysSupplier openIdPublicKeysSupplier;
     @Mock
     private OpenIdConfiguration openIdConfiguration;
+    @Mock
+    private JerseyClientFactory mockJerseyClientFactory;
+
 
     private DefaultOpenIdCredentials defaultOpenIdCredentials = new DefaultOpenIdCredentials();
 
@@ -61,7 +65,8 @@ class TestJWTService {
         final StandardJwtContextFactory jwtService = new StandardJwtContextFactory(
                 () -> openIdConfiguration,
                 openIdPublicKeysSupplier,
-                defaultOpenIdCredentials, jerseyClientFactory);
+                defaultOpenIdCredentials,
+                mockJerseyClientFactory);
 
         final String apiKey = defaultOpenIdCredentials.getApiKey();
 
