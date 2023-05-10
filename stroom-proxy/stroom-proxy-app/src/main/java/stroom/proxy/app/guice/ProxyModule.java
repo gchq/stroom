@@ -12,6 +12,7 @@ import stroom.docstore.impl.Persistence;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.docstore.impl.StoreFactoryImpl;
 import stroom.docstore.impl.fs.FSPersistence;
+import stroom.dropwizard.common.DropwizardModule;
 import stroom.dropwizard.common.FilteredHealthCheckServlet;
 import stroom.dropwizard.common.LogLevelInspector;
 import stroom.dropwizard.common.PermissionExceptionMapper;
@@ -114,6 +115,7 @@ public class ProxyModule extends AbstractModule {
         bind(ProxyId.class).asEagerSingleton();
 
         install(new ProxyConfigModule(proxyConfigHolder));
+        install(new DropwizardModule());
         install(new DbModule());
         install(new ProxyDbModule());
         install(new MockCollectionModule());
