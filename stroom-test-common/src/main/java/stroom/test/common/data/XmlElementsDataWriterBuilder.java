@@ -1,4 +1,4 @@
-package stroom.test.common.util.test.data;
+package stroom.test.common.data;
 
 import java.util.List;
 import java.util.stream.Collectors;
