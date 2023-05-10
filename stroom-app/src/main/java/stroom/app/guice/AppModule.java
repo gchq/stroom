@@ -22,7 +22,6 @@ public class AppModule extends AbstractModule {
     @Override
     protected void configure() {
 
-        install(new DropwizardModule());
         install(new UriFactoryModule());
         install(new CoreModule());
         install(new LifecycleServiceModule());
