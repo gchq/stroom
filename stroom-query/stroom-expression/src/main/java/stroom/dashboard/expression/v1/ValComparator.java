@@ -2,7 +2,7 @@ package stroom.dashboard.expression.v1;
 
 import java.util.Comparator;
 
-public class AutoComparator implements Comparator<Val> {
+public class ValComparator implements Comparator<Val> {
 
     @Override
     public int compare(final Val o1, final Val o2) {

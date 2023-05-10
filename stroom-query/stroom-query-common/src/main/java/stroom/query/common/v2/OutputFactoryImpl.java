@@ -1,5 +1,7 @@
 package stroom.query.common.v2;
 
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
+import stroom.dashboard.expression.v1.ref.OutputFactory;
 import stroom.util.io.ByteSizeUnit;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -8,16 +10,16 @@ import com.esotericsoftware.kryo.KryoException;
 import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.unsafe.UnsafeByteBufferOutput;
 
-public class OutputFactory {
+public class OutputFactoryImpl implements OutputFactory {
 
     private static final int MIN_KEY_SIZE = (int) ByteSizeUnit.BYTE.longBytes(10);
     private static final int MIN_VALUE_SIZE = (int) ByteSizeUnit.KIBIBYTE.longBytes(1);
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OutputFactory.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OutputFactoryImpl.class);
 
     private final int minPayloadSize;
     private final int maxStringFieldLength;
 
-    public OutputFactory(final AbstractResultStoreConfig resultStoreConfig) {
+    public OutputFactoryImpl(final AbstractResultStoreConfig resultStoreConfig) {
         this.minPayloadSize = (int) resultStoreConfig.getMinPayloadSize().getBytes();
         maxStringFieldLength = resultStoreConfig.getMaxStringFieldLength();
     }
@@ -35,6 +37,7 @@ public class OutputFactory {
         return value;
     }
 
+    @Override
     public Output createValueOutput(final ErrorConsumer errorConsumer) {
         return new Output(MIN_VALUE_SIZE, -1) {
             @Override
@@ -57,6 +60,7 @@ public class OutputFactory {
         return new PayloadOutput(minPayloadSize);
     }
 
+    @Override
     public UnsafeByteBufferOutput createByteBufferOutput(final int bufferSize, final ErrorConsumer errorConsumer) {
         return new UnsafeByteBufferOutput(bufferSize, -1) {
             @Override

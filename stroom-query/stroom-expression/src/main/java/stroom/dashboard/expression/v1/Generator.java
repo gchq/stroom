@@ -16,20 +16,18 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import stroom.dashboard.expression.v1.ref.StoredValues;
 
 import java.util.function.Supplier;
 
-public interface Generator extends Comparable<Generator> {
-
+public interface Generator {
     /**
      * Set values that can be used to source whatever data is required by value
      * references using the Ref - ${} construct.
      *
      * @param values The current data values to pick data from.
      */
-    void set(Val[] values);
+    void set(Val[] values, StoredValues storedValues);
 
     /**
      * Evaluate this generator by applying the function that this generator
@@ -39,7 +37,7 @@ public interface Generator extends Comparable<Generator> {
      *                          This is used for `countGroups()` and child selection functions.
      * @return The result of applying this function to the supplied values.
      */
-    Val eval(Supplier<ChildData> childDataSupplier);
+    Val eval(StoredValues storedValues, Supplier<ChildData> childDataSupplier);
 
     /**
      * Merge the values from another generator into this generator, e.g. for a
@@ -48,9 +46,5 @@ public interface Generator extends Comparable<Generator> {
      *
      * @param generator The generator to merge with this one.
      */
-    void merge(Generator generator);
-
-    void read(Input input);
-
-    void write(Output output);
+    void merge(StoredValues existingValues, StoredValues newValues);
 }

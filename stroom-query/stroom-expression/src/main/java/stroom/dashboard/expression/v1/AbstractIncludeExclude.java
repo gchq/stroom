@@ -16,6 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
+import stroom.dashboard.expression.v1.ref.StoredValues;
+
 import java.text.ParseException;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -65,9 +67,9 @@ abstract class AbstractIncludeExclude extends AbstractManyChildFunction {
             }
 
             if (found) {
-                gen = new StaticValueFunction(ValString.create(value)).createGenerator();
+                gen = new StaticValueGen(ValString.create(value));
             } else {
-                gen = new StaticValueFunction(ValNull.INSTANCE).createGenerator();
+                gen = Null.GEN;
             }
 
         } else {
@@ -110,15 +112,8 @@ abstract class AbstractIncludeExclude extends AbstractManyChildFunction {
         }
 
         @Override
-        public void set(final Val[] values) {
-            for (final Generator generator : childGenerators) {
-                generator.set(values);
-            }
-        }
-
-        @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
-            final Val val = childGenerators[0].eval(childDataSupplier);
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
+            final Val val = childGenerators[0].eval(storedValues, childDataSupplier);
             if (!val.type().isValue()) {
                 return val;
             }
@@ -128,7 +123,7 @@ abstract class AbstractIncludeExclude extends AbstractManyChildFunction {
 
                 boolean found = false;
                 for (int i = 1; i < childGenerators.length && !found; i++) {
-                    final Val v = childGenerators[i].eval(childDataSupplier);
+                    final Val v = childGenerators[i].eval(storedValues, childDataSupplier);
                     if (v.type().isValue()) {
                         final String regex = v.toString();
                         if (regex.length() > 0) {

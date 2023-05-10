@@ -16,6 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
+import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
+
 import java.text.ParseException;
 import java.util.Map;
 
@@ -48,6 +50,17 @@ abstract class AbstractFunction implements Function, Appendable {
             for (final Param param : params) {
                 if (param instanceof Function) {
                     ((Function) param).setStaticMappedValues(staticMappedValues);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
+        if (params != null) {
+            for (final Param param : params) {
+                if (param instanceof Function) {
+                    ((Function) param).addValueReferences(valueReferenceIndex);
                 }
             }
         }

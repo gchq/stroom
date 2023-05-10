@@ -172,7 +172,6 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .addFields(Field.builder()
                         .id("EventTime")
                         .name("EventTime")
-                        .group(0)
                         .expression(ParamSubstituteUtil.makeParam("EventTime"))
                         .format(Format.DATE_TIME)
                         .build())

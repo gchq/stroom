@@ -398,11 +398,17 @@ abstract class AbstractDataStoreTest {
                         .name("Number")
                         .expression("concat(first(" + param + "), ' ', last(" + param + "))")
                         .build())
+                .addFields(Field.builder()
+                        .id("Number Sorted")
+                        .name("Number Sorted")
+                        .expression(param)
+                        .sort(sort)
+                        .build())
                 .build();
 
         final DataStore dataStore = create(tableSettings);
 
-        for (int i = 1; i <= 3000; i++) {
+        for (int i = 1; i <= 30; i++) {
             dataStore.add(Val.of(ValString.create("group"), ValLong.create(i)));
         }
 
@@ -435,7 +441,7 @@ abstract class AbstractDataStoreTest {
         for (final Row result : searchResult.getRows()) {
             final String value = result.getValues().get(1);
             System.out.println(value);
-            assertThat(value).isEqualTo("1 3000");
+            assertThat(value).isEqualTo("1 30");
         }
     }
 

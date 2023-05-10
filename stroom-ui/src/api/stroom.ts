@@ -42,6 +42,18 @@ export interface AbstractField {
     | "IS_NOT_NULL"
     | "MATCHES_REGEX"
   )[];
+  fieldType?:
+    | "ID"
+    | "BOOLEAN"
+    | "INTEGER"
+    | "LONG"
+    | "FLOAT"
+    | "DOUBLE"
+    | "DATE"
+    | "TEXT"
+    | "KEYWORD"
+    | "IPV4_ADDRESS"
+    | "DOC_REF";
   name?: string;
   queryable?: boolean;
   type: string;

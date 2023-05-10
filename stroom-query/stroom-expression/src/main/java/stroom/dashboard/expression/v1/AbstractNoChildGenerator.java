@@ -16,6 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
+import stroom.dashboard.expression.v1.ref.StoredValues;
+
 import java.util.function.Supplier;
 
 abstract class AbstractNoChildGenerator extends AbstractGenerator {
@@ -24,13 +26,13 @@ abstract class AbstractNoChildGenerator extends AbstractGenerator {
     }
 
     @Override
-    public void set(final Val[] values) {
+    public void set(final Val[] values, final StoredValues storedValues) {
     }
 
     @Override
-    public abstract Val eval(final Supplier<ChildData> childDataSupplier);
+    public abstract Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier);
 
     @Override
-    public void merge(final Generator generator) {
+    public void merge(final StoredValues existingValues, final StoredValues newValues) {
     }
 }

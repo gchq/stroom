@@ -17,14 +17,11 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.ChildData;
-import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValLong;
-import stroom.dashboard.expression.v1.ValNull;
-import stroom.dashboard.expression.v1.ValSerialiser;
-import stroom.dashboard.expression.v1.ValString;
+import stroom.dashboard.expression.v1.ref.StoredValues;
+import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.util.LambdaLogger;
@@ -50,7 +47,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.validation.constraints.NotNull;
 
 public class MapDataStore implements DataStore, Data {
 
@@ -59,6 +55,7 @@ public class MapDataStore implements DataStore, Data {
     private final Serialisers serialisers;
     private final Map<Key, ItemsImpl> childMap = new ConcurrentHashMap<>();
 
+    private final ValueReferenceIndex valueReferenceIndex;
     private final CompiledField[] compiledFields;
     private final CompiledSorter<ItemImpl>[] compiledSorters;
     private final CompiledDepths compiledDepths;
@@ -81,9 +78,11 @@ public class MapDataStore implements DataStore, Data {
                         final Map<String, String> paramMap,
                         final DataStoreSettings dataStoreSettings) {
         this.serialisers = serialisers;
-        compiledFields = CompiledFields.create(tableSettings.getFields(), fieldIndex, paramMap);
-        final CompiledDepths compiledDepths = new CompiledDepths(compiledFields, tableSettings.showDetail());
-        this.compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), compiledFields);
+        final CompiledFields compiledFields = CompiledFields.create(tableSettings.getFields(), fieldIndex, paramMap);
+        valueReferenceIndex = compiledFields.getValueReferenceIndex();
+        this.compiledFields = compiledFields.getCompiledFields();
+        final CompiledDepths compiledDepths = new CompiledDepths(this.compiledFields, tableSettings.showDetail());
+        this.compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), this.compiledFields);
         this.compiledDepths = compiledDepths;
         keyFactoryConfig = new BasicKeyFactoryConfig();
         keyFactory = KeyFactoryFactory.create(serialisers, keyFactoryConfig, compiledDepths);
@@ -92,7 +91,7 @@ public class MapDataStore implements DataStore, Data {
 
         groupingFunctions = new GroupingFunction[compiledDepths.getMaxDepth() + 1];
         for (int depth = 0; depth <= compiledDepths.getMaxGroupDepth(); depth++) {
-            groupingFunctions[depth] = new GroupingFunction();
+            groupingFunctions[depth] = new GroupingFunction(compiledFields.getCompiledFields());
         }
 
         // Find out if we have any sorting.
@@ -120,13 +119,12 @@ public class MapDataStore implements DataStore, Data {
         Key key = Key.ROOT_KEY;
         Key parentKey = key;
         for (int depth = 0; depth < groupIndicesByDepth.length; depth++) {
-            final Generator[] generators = new Generator[compiledFields.length];
-
+            final StoredValues storedValues = valueReferenceIndex.createStoredValues();
             final int groupSize = groupSizeByDepth[depth];
             final boolean[] groupIndices = groupIndicesByDepth[depth];
             final boolean[] valueIndices = valueIndicesByDepth[depth];
 
-            Val[] groupValues = ValSerialiser.EMPTY_VALUES;
+            Val[] groupValues = Val.empty();
             if (groupSize > 0) {
                 groupValues = new Val[groupSize];
             }
@@ -135,21 +133,18 @@ public class MapDataStore implements DataStore, Data {
             for (int fieldIndex = 0; fieldIndex < compiledFields.length; fieldIndex++) {
                 final CompiledField compiledField = compiledFields[fieldIndex];
 
-                final Expression expression = compiledField.getExpression();
-                if (expression != null) {
-                    Generator generator = null;
-                    Val value = null;
+                final Generator generator = compiledField.getGenerator();
+                if (generator != null) {
+                    final ValCache valCache = new ValCache(generator);
+                    Val value;
 
                     // If this is the first level then check if we should filter out this data.
                     if (depth == 0) {
                         final CompiledFilter compiledFilter = compiledField.getCompiledFilter();
                         if (compiledFilter != null) {
-                            generator = expression.createGenerator();
-                            generator.set(values);
-
                             // If we are filtering then we need to evaluate this field
                             // now so that we can filter the resultant value.
-                            value = generator.eval(null);
+                            value = valCache.getVal(values, storedValues);
 
                             if (value != null && !compiledFilter.match(value.toString())) {
                                 // We want to exclude this item so get out of this method ASAP.
@@ -161,22 +156,14 @@ public class MapDataStore implements DataStore, Data {
                     // If we are grouping at this level then evaluate the expression and add to the group values.
                     if (groupIndices[fieldIndex]) {
                         // If we haven't already created the generator then do so now.
-                        if (generator == null) {
-                            generator = expression.createGenerator();
-                            generator.set(values);
-                            value = generator.eval(null);
-                        }
+                        value = valCache.getVal(values, storedValues);
                         groupValues[groupIndex++] = value;
                     }
 
                     // If we need a value at this level then evaluate the expression and add the value.
                     if (valueIndices[fieldIndex]) {
                         // If we haven't already created the generator then do so now.
-                        if (generator == null) {
-                            generator = expression.createGenerator();
-                            generator.set(values);
-                        }
-                        generators[fieldIndex] = generator;
+                        value = valCache.getVal(values, storedValues);
                     }
                 }
             }
@@ -195,7 +182,7 @@ public class MapDataStore implements DataStore, Data {
                 key = key.resolve(0, keyFactory.getUniqueId());
             }
 
-            addToChildMap(depth, parentKey, key, generators);
+            addToChildMap(depth, parentKey, key, storedValues);
             parentKey = key;
         }
     }
@@ -203,7 +190,7 @@ public class MapDataStore implements DataStore, Data {
     private void addToChildMap(final int depth,
                                final Key parentKey,
                                final Key groupKey,
-                               final Generator[] generators) {
+                               final StoredValues storedValues) {
         LOGGER.trace(() -> "addToChildMap called for item");
         if (Thread.currentThread().isInterrupted() || hasEnoughData) {
             completionState.signalComplete();
@@ -225,11 +212,11 @@ public class MapDataStore implements DataStore, Data {
                         groupingFunction,
                         sortingFunction,
                         this::remove);
-                result.add(groupKey, generators);
+                result.add(groupKey, storedValues);
                 resultCount.incrementAndGet();
 
             } else {
-                result.add(groupKey, generators);
+                result.add(groupKey, storedValues);
             }
 
             return result;
@@ -254,7 +241,7 @@ public class MapDataStore implements DataStore, Data {
                 final ItemsImpl items = childMap.remove(parentKey);
                 if (items != null) {
                     resultCount.addAndGet(-items.size());
-                    items.forEach(item -> remove(item.getKey()));
+                    items.getIterable().forEach(item -> remove(item.getKey()));
                 }
             });
         }
@@ -273,40 +260,39 @@ public class MapDataStore implements DataStore, Data {
      * @return The filtered child items for the parent key.
      */
     @Override
-    public Items get(final Key key, final TimeFilter timeFilter) {
+    public ItemsImpl get(final Key key, final TimeFilter timeFilter) {
         if (timeFilter != null) {
             throw new RuntimeException("Time filtering is not supported by the map data store");
         }
 
-        Items result;
-
+        final ItemsImpl result;
         if (key == null) {
             result = childMap.get(Key.ROOT_KEY);
         } else {
             result = childMap.get(key);
         }
-
-        if (result == null) {
-            result = new Items() {
-                @Override
-                public Item get(final int index) {
-                    return null;
-                }
-
-                @Override
-                public int size() {
-                    return 0;
-                }
-
-                @Override
-                @NotNull
-                public Iterator<Item> iterator() {
-                    return Collections.emptyIterator();
-                }
-            };
-        }
-
         return result;
+    }
+
+
+    private List<ItemImpl> getChildren(final Key parentKey,
+                                       final TimeFilter timeFilter,
+                                       final int childDepth,
+                                       final int trimmedSize,
+                                       final boolean trimTop) {
+        ItemsImpl items = get(parentKey, timeFilter);
+        if (items == null) {
+            return null;
+        }
+        List<ItemImpl> list = items.copy();
+        if (list.size() <= trimmedSize) {
+            return list;
+        }
+        if (trimTop) {
+            return list.subList(list.size() - trimmedSize, list.size());
+        } else {
+            return list.subList(0, trimmedSize);
+        }
     }
 
     /**
@@ -418,6 +404,27 @@ public class MapDataStore implements DataStore, Data {
         return keyFactory;
     }
 
+    private static class ValCache {
+
+        private final Generator generator;
+        private Val val;
+
+        public ValCache(final Generator generator) {
+            this.generator = generator;
+        }
+
+        Val getVal(final Val[] values, final StoredValues storedValues) {
+            if (val == null) {
+                generator.set(values, storedValues);
+
+                // If we are filtering then we need to evaluate this field
+                // now so that we can filter the resultant value.
+                val = generator.eval(storedValues, null);
+            }
+            return val;
+        }
+    }
+
     public static class ItemsImpl implements Items {
 
         private final int trimmedSize;
@@ -450,15 +457,15 @@ public class MapDataStore implements DataStore, Data {
             list = new ArrayList<>();
         }
 
-        synchronized void add(final Key groupKey, final Generator[] generators) {
+        synchronized void add(final Key groupKey, final StoredValues storedValues) {
             if (groupingFunction != null || sortingFunction != null) {
-                list.add(new ItemImpl(dataStore, groupKey, generators));
+                list.add(new ItemImpl(dataStore, groupKey, storedValues));
                 trimmed = false;
                 if (list.size() > maxSize) {
                     sortAndTrim();
                 }
             } else if (list.size() < trimmedSize) {
-                list.add(new ItemImpl(dataStore, groupKey, generators));
+                list.add(new ItemImpl(dataStore, groupKey, storedValues));
             } else {
                 full = true;
                 removeHandler.accept(groupKey);
@@ -498,7 +505,7 @@ public class MapDataStore implements DataStore, Data {
             }
         }
 
-        private synchronized List<Item> copy() {
+        private synchronized List<ItemImpl> copy() {
             sortAndTrim();
             return new ArrayList<>(list);
         }
@@ -514,9 +521,15 @@ public class MapDataStore implements DataStore, Data {
         }
 
         @Override
-        @NotNull
-        public Iterator<Item> iterator() {
-            return copy().iterator();
+        public Iterable<StoredValues> getStoredValueIterable() {
+            final List<ItemImpl> items = copy();
+            return () -> items.stream().map(item -> item.storedValues).iterator();
+        }
+
+        @Override
+        public Iterable<Item> getIterable() {
+            final List<ItemImpl> items = copy();
+            return () -> items.stream().map(item -> (Item) item).iterator();
         }
     }
 
@@ -524,14 +537,16 @@ public class MapDataStore implements DataStore, Data {
 
         private final MapDataStore dataStore;
         private final Key key;
-        private final Generator[] generators;
+        private final StoredValues storedValues;
+        private final Val[] cachedValues;
 
         public ItemImpl(final MapDataStore dataStore,
                         final Key key,
-                        final Generator[] generators) {
+                        final StoredValues storedValues) {
             this.dataStore = dataStore;
             this.key = key;
-            this.generators = generators;
+            this.storedValues = storedValues;
+            this.cachedValues = new Val[dataStore.compiledFields.length];
         }
 
         @Override
@@ -541,94 +556,80 @@ public class MapDataStore implements DataStore, Data {
 
         @Override
         public Val getValue(final int index, final boolean evaluateChildren) {
-            Val val = null;
+            Val val = cachedValues[index];
+            if (val == null) {
+                val = createValue(index, evaluateChildren);
+                cachedValues[index] = val;
+            }
+            return val;
+        }
 
-            if (index >= 0 && index < generators.length) {
-                final Generator generator = generators[index];
-                if (generator != null) {
-                    if (evaluateChildren) {
-                        final Supplier<ChildData> childDataSupplier = () -> new ChildData() {
-                            @Override
-                            public Val first() {
-                                final Items items = dataStore.get(key, null);
-                                if (items != null && items.size() > 0) {
-                                    return items.get(0).getValue(index, false);
-                                }
-                                return ValNull.INSTANCE;
-                            }
-
-                            @Override
-                            public Val last() {
-                                final Items items = dataStore.get(key, null);
-                                if (items != null && items.size() > 0) {
-                                    return items.get(items.size() - 1).getValue(index, false);
-                                }
-                                return ValNull.INSTANCE;
-                            }
-
-                            @Override
-                            public Val nth(final int pos) {
-                                final Items items = dataStore.get(key, null);
-                                if (items != null && items.size() > pos) {
-                                    return items.get(pos).getValue(index, false);
-                                }
-                                return ValNull.INSTANCE;
-                            }
-
-                            @Override
-                            public Val top(final String delimiter, final int limit) {
-                                return join(delimiter, limit, false);
-                            }
-
-                            @Override
-                            public Val bottom(final String delimiter, final int limit) {
-                                return join(delimiter, limit, true);
-                            }
-
-                            @Override
-                            public Val count() {
-                                final Items items = dataStore.get(key, null);
-                                if (items != null) {
-                                    return ValLong.create(items.size());
-                                }
-                                return ValNull.INSTANCE;
-                            }
-
-                            private Val join(final String delimiter, final int limit, final boolean trimTop) {
-                                final Items items = dataStore.get(key, null);
-                                if (items != null && items.size() > 0) {
-
-                                    int start;
-                                    int end;
-                                    if (trimTop) {
-                                        end = items.size() - 1;
-                                        start = Math.max(0, end - limit);
-                                    } else {
-                                        end = Math.min(limit, items.size());
-                                        start = 0;
-                                    }
-
-                                    final StringBuilder sb = new StringBuilder();
-                                    for (int i = start; i <= end; i++) {
-                                        final Val val = items.get(i).getValue(index, false);
-                                        if (val.type().isValue()) {
-                                            if (sb.length() > 0) {
-                                                sb.append(delimiter);
-                                            }
-                                            sb.append(val);
-                                        }
-                                    }
-                                    return ValString.create(sb.toString());
-                                }
-                                return ValNull.INSTANCE;
-                            }
-                        };
-                        val = generator.eval(childDataSupplier);
-
-                    } else {
-                        val = generator.eval(null);
+        private Val createValue(final int index, final boolean evaluateChildren) {
+            Val val;
+            final Generator generator = dataStore.compiledFields[index].getGenerator();
+            if (key.isGrouped()) {
+                final Supplier<ChildData> childDataSupplier = () -> new ChildData() {
+                    @Override
+                    public StoredValues first() {
+                        return singleValue(1, false);
                     }
-                }
+
+                    @Override
+                    public StoredValues last() {
+                        return singleValue(1, true);
+                    }
+
+                    @Override
+                    public StoredValues nth(final int pos) {
+                        return singleValue(pos + 1, false);
+                    }
+
+                    @Override
+                    public Iterable<StoredValues> top(final int limit) {
+                        return getStoredValueIterable(limit, false);
+                    }
+
+                    @Override
+                    public Iterable<StoredValues> bottom(final int limit) {
+                        return getStoredValueIterable(limit, true);
+                    }
+
+                    @Override
+                    public long count() {
+                        final ItemsImpl items = dataStore.get(key, null);
+                        if (items != null) {
+                            return items.size();
+                        }
+                        return 0;
+                    }
+
+                    private StoredValues singleValue(final int trimmedSize, final boolean trimTop) {
+                        final Iterable<StoredValues> values = getStoredValueIterable(trimmedSize, trimTop);
+                        final Iterator<StoredValues> iterator = values.iterator();
+                        if (iterator.hasNext()) {
+                            return iterator.next();
+                        }
+                        return null;
+                    }
+
+                    private Iterable<StoredValues> getStoredValueIterable(final int limit,
+                                                                          final boolean trimTop) {
+                        final List<ItemImpl> items = dataStore.getChildren(
+                                key,
+                                null,
+                                key.getChildDepth(),
+                                limit,
+                                trimTop);
+                        if (items != null && items.size() > 0) {
+                            return () -> items.stream().map(item -> item.storedValues).iterator();
+                        }
+                        return Collections::emptyIterator;
+                    }
+                };
+                val = generator.eval(storedValues, childDataSupplier);
+
+            } else {
+                val = generator.eval(storedValues, null);
             }
             return val;
         }
@@ -636,30 +637,29 @@ public class MapDataStore implements DataStore, Data {
 
     private class GroupingFunction implements Function<Stream<ItemImpl>, Stream<ItemImpl>> {
 
+        private final CompiledField[] compiledFields;
+
+        public GroupingFunction(final CompiledField[] compiledFields) {
+            this.compiledFields = compiledFields;
+        }
+
         @Override
         public Stream<ItemImpl> apply(final Stream<ItemImpl> stream) {
-            final Map<Key, Generator[]> groupingMap = new ConcurrentHashMap<>();
+            final Map<Key, StoredValues> groupingMap = new ConcurrentHashMap<>();
             stream.forEach(item -> {
                 final Key rawKey = item.getKey();
-                final Generator[] generators = item.generators;
+                final StoredValues storedValues = item.storedValues;
 
                 groupingMap.compute(rawKey, (k, v) -> {
-                    Generator[] result = v;
+                    StoredValues result = v;
 
                     if (result == null) {
-                        result = generators;
+                        result = storedValues;
                     } else {
                         // Combine the new item into the original item.
-                        for (int i = 0; i < result.length; i++) {
-                            Generator existingGenerator = result[i];
-                            Generator newGenerator = generators[i];
-                            if (newGenerator != null) {
-                                if (existingGenerator == null) {
-                                    result[i] = newGenerator;
-                                } else {
-                                    existingGenerator.merge(newGenerator);
-                                }
-                            }
+                        for (int i = 0; i < compiledFields.length; i++) {
+                            final Generator generator = compiledFields[i].getGenerator();
+                            generator.merge(result, storedValues);
                         }
                     }
 

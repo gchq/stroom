@@ -16,6 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
+import stroom.dashboard.expression.v1.ref.StoredValues;
+
 import java.text.ParseException;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -115,19 +117,12 @@ class Match extends AbstractManyChildFunction {
         }
 
         @Override
-        public void set(final Val[] values) {
-            for (final Generator generator : childGenerators) {
-                generator.set(values);
-            }
-        }
-
-        @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
-            final Val val = childGenerators[0].eval(childDataSupplier);
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
+            final Val val = childGenerators[0].eval(storedValues, childDataSupplier);
             if (!val.type().isValue()) {
                 return val;
             }
-            final Val valRegex = childGenerators[1].eval(childDataSupplier);
+            final Val valRegex = childGenerators[1].eval(storedValues, childDataSupplier);
             if (!valRegex.type().isValue()) {
                 return ValErr.wrap(valRegex);
             }

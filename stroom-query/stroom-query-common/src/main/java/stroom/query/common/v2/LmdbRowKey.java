@@ -1,5 +1,7 @@
 package stroom.query.common.v2;
 
+import stroom.bytebuffer.ByteBufferUtils;
+
 import java.nio.ByteBuffer;
 
 class LmdbRowKey {
@@ -12,5 +14,10 @@ class LmdbRowKey {
 
     ByteBuffer getByteBuffer() {
         return this.byteBuffer;
+    }
+
+    @Override
+    public String toString() {
+        return ByteBufferUtils.byteBufferToString(byteBuffer);
     }
 }

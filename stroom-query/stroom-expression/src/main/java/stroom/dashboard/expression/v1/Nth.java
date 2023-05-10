@@ -16,6 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
+import stroom.dashboard.expression.v1.ref.StoredValues;
+
 import java.text.ParseException;
 
 @FunctionDef(
@@ -73,8 +75,13 @@ public class Nth extends AbstractSelectorFunction {
         }
 
         @Override
-        Val select(final ChildData childData) {
-            return childData.nth(pos);
+        Val select(final Generator childGenerator,
+                   final ChildData childData) {
+            final StoredValues storedValues = childData.nth(pos);
+            if (storedValues == null) {
+                return null;
+            }
+            return childGenerator.eval(storedValues, () -> childData);
         }
     }
 }

@@ -1,6 +1,7 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndex;
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnvFactory;

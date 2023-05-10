@@ -11,8 +11,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-class TestAutoComparator {
-    private final Comparator<Val> comparator = new AutoComparator();
+class TestValComparator {
+    private final Comparator<Val> comparator = new ValComparator();
 
     @Test
     void testCompareAsDouble() {
