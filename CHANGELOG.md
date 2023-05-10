@@ -13,6 +13,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.10-open-id] - 2023-05-10
+
+* Issue **#3117** : Add _Preferred Username_ and _Full name_ to the user permissions data grids when using an external IDP. This is to make it easier to identify which users are which when assigning permissions as the IDP unique identity may be a UUID.
+
+* Issue **#3118** : Hide the Tools => (API Keys|Users) menu items when using an external IDP.
+
+* Add editor key bindings to user preferences.
+
+* Issue **#3203** : Allow unauthenticated servlets to have paths without `/noauth/` in. Add path specs `/stroom/datafeed` and `/stroom/datafeed/*` for the data receipt servlet in addition to the existing `/noauth/` ones.
+
+
 ## [v7.2-beta.10] - 2023-05-05
 
 * Issue **#3428** : Automatically disable rules that error.
@@ -5267,7 +5278,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.10...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id...HEAD
+[v7.2-beta.10-open-id]: https://github.com/gchq/stroom/compare/v7.2-beta.10...v7.2-beta.10-open-id
 [v7.2-beta.10]: https://github.com/gchq/stroom/compare/v7.2-beta.9...v7.2-beta.10
 [v7.2-beta.9]: https://github.com/gchq/stroom/compare/v7.2-beta.8...v7.2-beta.9
 [v7.2-beta.8]: https://github.com/gchq/stroom/compare/v7.2-beta.7...v7.2-beta.8
