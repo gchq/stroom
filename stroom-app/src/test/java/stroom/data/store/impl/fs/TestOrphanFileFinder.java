@@ -23,6 +23,8 @@ import stroom.data.store.api.TargetUtil;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.meta.api.MetaProperties;
+import stroom.meta.api.MetaService;
+import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.task.api.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -49,6 +51,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -73,15 +76,51 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
     private FsVolumeService volumeService;
     @Inject
     private Store streamStore;
+    @Inject
+    private MetaService metaService;
     // Use provider so we can set up the config before this guice create this
     @Inject
     private Provider<FsOrphanFileFinderExecutor> fsOrphanFileFinderExecutorProvider;
 
     @BeforeEach
     void setup() {
-        final Path path = Path.of(volumeService.getVolume().getPath());
-        LOGGER.info("Clearing contents of {}", path);
-        FileUtil.deleteContents(path);
+        metaService.find(new FindMetaCriteria())
+                .forEach(meta -> {
+                    LOGGER.info("Deleting meta with id: {}, volume: {}",
+                            meta.getId(),
+                            dataVolumeService.findDataVolume(meta.getId()).getVolumePath());
+                    metaService.delete(meta.getId());
+                });
+
+        final List<FsVolume> volumeList = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
+        volumeList.forEach(fsVolume -> {
+            final String pathStr = fsVolume.getPath();
+            final Path path = Path.of(pathStr);
+            LOGGER.info("Clearing contents of {}", path);
+            FileUtil.deleteContents(path);
+        });
+        listAllVolsContent();
+    }
+
+    private void listAllVolsContent() {
+        final List<FsVolume> volumeList = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
+        volumeList.forEach(fsVolume -> {
+            final String pathStr = fsVolume.getPath();
+            final Path path = Path.of(pathStr);
+            listContents(path);
+        });
+    }
+
+    private static void listContents(final Path path) {
+        final StringBuilder sb = new StringBuilder();
+        try (Stream<Path> stream = Files.walk(path)) {
+            stream.forEach(path2 -> sb.append("\n  ")
+                    .append(path2.toString()));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        LOGGER.info("Listing contents of {}{}", path, sb);
     }
 
     @Test
@@ -177,13 +216,6 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
 
         final FsOrphanFileFinderSummary summary = new FsOrphanFileFinderSummary();
         final List<String> fileList = scan(summary);
-
-        final String expected = LogUtil.message("""
-                Summary:
-
-                | Type       | File/Directory | Feed (if present) | Date       | Orphan Count |
-                |------------|----------------|-------------------|------------|--------------|
-                | RAW_EVENTS | Dir            |                   | {} |            1 |""", date);
 
         LOGGER.info("Summary:\n{}", summary);
 
@@ -304,6 +336,8 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
      */
     @Test
     void testArchiveRemovedFile() {
+        setConfigValueMapper(DataStoreServiceConfig.class, config -> config
+                .withFileSystemCleanOldAge(StroomDuration.ofDays(1)));
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
         final Meta meta = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
@@ -311,6 +345,7 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
         Collection<Path> files = fileFinder.findAllStreamFile(meta);
 
         for (final Path file : files) {
+            listContents(file.getParent());
             assertThat(FileUtil.delete(file)).isTrue();
         }
 
@@ -341,8 +376,10 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
 
     @Test
     void testScanLotsOfFiles() throws IOException {
+        setConfigValueMapper(DataStoreServiceConfig.class, config -> config
+                .withFileSystemCleanOldAge(StroomDuration.ofDays(1)));
         final FsOrphanFileFinderSummary summary = new FsOrphanFileFinderSummary();
-        scan(summary);
+        scan(summary, false);
         assertThat(summary.toString()).isEqualTo("");
 
         final String feedName = FileSystemTestUtil.getUniqueTestString();
@@ -362,11 +399,26 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
         }
 
         final FsOrphanFileFinderSummary summary2 = new FsOrphanFileFinderSummary();
-        scan(summary2);
+        scan(summary2, false);
         assertThat(summary2.toString()).isEqualTo("");
     }
 
     private List<String> scan(final FsOrphanFileFinderSummary summary) {
+        return scan(summary, true);
+    }
+
+    private List<String> scan(final FsOrphanFileFinderSummary summary, final boolean logContents) {
+        if (logContents) {
+            metaService.find(new FindMetaCriteria())
+                    .forEach(meta -> {
+                        LOGGER.info("Found meta with id: {}, volume: {}",
+                                meta.getId(),
+                                dataVolumeService.findDataVolume(meta.getId()).getVolumePath());
+                    });
+
+            listAllVolsContent();
+        }
+
         final List<String> fileList = new ArrayList<>();
         final Consumer<Path> orphanConsumer = path -> {
             fileList.add(FileUtil.getCanonicalPath(path));
@@ -375,6 +427,7 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
         };
         fsOrphanFileFinderExecutorProvider.get()
                 .scan(orphanConsumer, new SimpleTaskContext());
+        LOGGER.info("summary:\n{}", summary.toString());
         return fileList;
     }
 }
