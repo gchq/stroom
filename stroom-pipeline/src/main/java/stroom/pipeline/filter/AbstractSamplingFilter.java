@@ -74,7 +74,7 @@ public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
             errorReceiverProxy.log(Severity.FATAL_ERROR,
                     locationFactory.create(e.getLocator().getLineNumber(), e.getLocator().getColumnNumber()),
                     getElementId(), e.getMessage(), e);
-            throw new LoggedException(e.getMessage(), e);
+            throw LoggedException.wrap(e);
         } finally {
             super.startProcessing();
         }

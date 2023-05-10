@@ -63,7 +63,9 @@ public abstract class AbstractDataSourceProviderModule<
                 getModuleName(),
                 createUniquePool());
 
-        performMigration(dataSource);
+        LOGGER.logDurationIfInfoEnabled(() ->
+                        performMigration(dataSource),
+                "Performed migration for " + getModuleName());
 
         return createConnectionProvider(dataSource);
     }

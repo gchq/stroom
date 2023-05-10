@@ -22,6 +22,7 @@ import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ParamSubstituteUtil;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.Sort;
@@ -121,7 +122,12 @@ abstract class AbstractDataStoreTest {
                 .showDetail(true)
                 .build();
 
-        final DataStore dataStore = createBig(tableSettings);
+        final DataStoreSettings dataStoreSettings = DataStoreSettings
+                .createBasicSearchResultStoreSettings()
+                .copy()
+                .maxResults(Sizes.create(Integer.MAX_VALUE))
+                .storeSize(Sizes.create(Integer.MAX_VALUE)).build();
+        final DataStore dataStore = create(tableSettings, dataStoreSettings);
 
         Metrics.measure("Loaded data", () -> {
             for (int i = 0; i < 100; i++) {
@@ -411,19 +417,33 @@ abstract class AbstractDataStoreTest {
         }
     }
 
-    DataStore create(TableSettings tableSettings) {
+    DataStore create(final TableSettings tableSettings) {
         // Create a set of sizes that are the minimum values for the combination of user provided sizes for the table
         // and the default maximum sizes.
         final Sizes defaultMaxResultsSizes = Sizes.create(50);
         final Sizes storeSize = Sizes.create(100);
         final Sizes maxResults = Sizes.min(Sizes.create(tableSettings.getMaxResults()), defaultMaxResultsSizes);
-
-        return create(tableSettings, maxResults, storeSize);
+        final DataStoreSettings dataStoreSettings = DataStoreSettings
+                .createBasicSearchResultStoreSettings()
+                .copy()
+                .maxResults(maxResults)
+                .storeSize(storeSize)
+                .build();
+        return create(tableSettings, dataStoreSettings);
     }
 
-    DataStore createBig(TableSettings tableSettings) {
-        return create(tableSettings, Sizes.create(Integer.MAX_VALUE), Sizes.create(Integer.MAX_VALUE));
+    DataStore create(final TableSettings tableSettings, final DataStoreSettings dataStoreSettings) {
+        return create(
+                new QueryKey(UUID.randomUUID().toString()),
+                "0",
+                tableSettings,
+                new SearchResultStoreConfig(),
+                dataStoreSettings);
     }
 
-    abstract DataStore create(TableSettings tableSettings, Sizes maxResults, Sizes storeSize);
+    abstract DataStore create(QueryKey queryKey,
+                              String componentId,
+                              TableSettings tableSettings,
+                              AbstractResultStoreConfig resultStoreConfig,
+                              DataStoreSettings dataStoreSettings);
 }

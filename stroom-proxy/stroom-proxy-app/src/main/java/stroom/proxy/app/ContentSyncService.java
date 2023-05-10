@@ -9,6 +9,8 @@ import stroom.security.api.ClientSecurityUtil;
 import stroom.util.HasHealthCheck;
 import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
+import stroom.util.jersey.JerseyClientFactory;
+import stroom.util.jersey.JerseyClientName;
 import stroom.util.logging.LogUtil;
 
 import com.codahale.metrics.health.HealthCheck;
@@ -31,7 +33,6 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
@@ -49,7 +50,7 @@ public class ContentSyncService implements Managed, HasHealthCheck {
     private final Provider<ContentSyncConfig> contentSyncConfigProvider;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final Set<ImportExportActionHandler> importExportActionHandlers;
-    private final Provider<Client> clientProvider;
+    private final JerseyClientFactory jerseyClientFactory;
 
     private volatile ScheduledExecutorService scheduledExecutorService;
 
@@ -58,10 +59,10 @@ public class ContentSyncService implements Managed, HasHealthCheck {
                               final Provider<ContentSyncConfig> contentSyncConfigProvider,
                               final DefaultOpenIdCredentials defaultOpenIdCredentials,
                               final Set<ImportExportActionHandler> importExportActionHandlers,
-                              final Provider<Client> clientProvider) {
+                              final JerseyClientFactory jerseyClientFactory) {
         this.contentSyncConfigProvider = contentSyncConfigProvider;
         this.importExportActionHandlers = importExportActionHandlers;
-        this.clientProvider = clientProvider;
+        this.jerseyClientFactory = jerseyClientFactory;
         this.proxyConfigProvider = proxyConfigProvider;
         contentSyncConfigProvider.get().validateConfiguration();
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
@@ -150,8 +151,7 @@ public class ContentSyncService implements Managed, HasHealthCheck {
     }
 
     private Invocation.Builder createClient(final String url, final String path) {
-        final Client client = clientProvider.get();
-        final WebTarget webTarget = client.target(url)
+        final WebTarget webTarget = jerseyClientFactory.createWebTarget(JerseyClientName.CONTENT_SYNC, url)
                 .path(path);
         final Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         ClientSecurityUtil.addAuthorisationHeader(invocationBuilder, getApiKey());

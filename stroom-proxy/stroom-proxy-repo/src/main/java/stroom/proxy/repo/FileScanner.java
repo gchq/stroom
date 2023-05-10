@@ -21,6 +21,7 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.proxy.repo.store.Entries;
 import stroom.proxy.repo.store.FileSet;
 import stroom.proxy.repo.store.SequentialFileStore;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogExecutionTime;
@@ -80,6 +81,8 @@ public final class FileScanner {
             } else {
                 LOGGER.debug("Repo dir " + sourceDir + " not found");
             }
+        } catch (final UncheckedInterruptedException e) {
+            LOGGER.debug(e.getMessage(), e);
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
         }

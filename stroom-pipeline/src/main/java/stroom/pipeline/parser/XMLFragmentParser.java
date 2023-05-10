@@ -110,7 +110,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
         // been updated.
         final TextConverterDoc tc = loadTextConverterDoc();
         if (!TextConverterType.XML_FRAGMENT.equals(tc.getConverterType())) {
-            throw new ProcessException("The assigned text converter is not an XML fragment.");
+            throw ProcessException.create("The assigned text converter is not an XML fragment.");
         }
 
         // If we are in stepping mode and have made code changes then we want to
@@ -191,7 +191,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
                 message ->
                         getErrorReceiverProxy().log(Severity.WARNING, null, getElementId(), message, null));
         if (docRef == null) {
-            throw new ProcessException(
+            throw ProcessException.create(
                     "No text converter is configured or can be found to match the provided name pattern");
         } else {
             final TextConverterDoc tc = textConverterStore.readDocument(docRef);
@@ -199,7 +199,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
                 final String message = "Text converter \"" +
                         docRef.getName() +
                         "\" appears to have been deleted";
-                throw new ProcessException(message);
+                throw ProcessException.create(message);
             }
 
             return tc;

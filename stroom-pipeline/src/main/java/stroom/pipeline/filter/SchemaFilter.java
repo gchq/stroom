@@ -530,7 +530,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
 
         // If we aren't stepping then throw an exception to terminate early.
         if (!pipelineContext.isStepping()) {
-            throw new LoggedException(message, exception);
+            throw LoggedException.wrap(message, exception);
         }
     }
 

@@ -174,19 +174,26 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         registerHandler(stepControlPresenter.addStepControlHandler(event ->
                 step(event.getStepType(), event.getStepLocation())));
         registerHandler(stepControlPresenter.addChangeFilterHandler(event -> {
-            final List<String> elements =
-                    pipelineModel
-                            .getChildMap()
-                            .keySet()
-                            .stream()
-                            .filter(element ->
-                                    element.getElementType().hasRole(PipelineElementType.VISABILITY_STEPPING))
-                            .map(PipelineElement::getId)
-                            .sorted()
-                            .collect(Collectors.toList());
+            final List<String> elements = new ArrayList<>();
+            getDescendantFilters(PipelineModel.SOURCE_ELEMENT, pipelineModel.getChildMap(), elements);
             steppingFilterPresenter.show(elements, request.getStepFilterMap(), request::setStepFilterMap);
         }));
         registerHandler(saveButton.addClickHandler(event -> save()));
+    }
+
+    private void getDescendantFilters(final PipelineElement parent,
+                                      final Map<PipelineElement, List<PipelineElement>> childMap,
+                                      final List<String> descendants) {
+        final List<PipelineElement> children = childMap.get(parent);
+        if (children != null && children.size() > 0) {
+            for (final PipelineElement child : children) {
+                final PipelineElementType type = child.getElementType();
+                if (type.hasRole(PipelineElementType.VISABILITY_STEPPING)) {
+                    descendants.add(child.getId());
+                }
+                getDescendantFilters(child, childMap, descendants);
+            }
+        }
     }
 
     private ButtonView addButtonLeft(final Preset preset) {

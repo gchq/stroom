@@ -205,6 +205,7 @@ public class AggregateForwarder {
                     progressLog.increment("AggregateForwarder - forward");
                 });
             } catch (final RuntimeException ex) {
+                success.set(false);
                 error.set(ex.getMessage());
                 LOGGER.warn(() -> "Failed to send to feed " +
                         feedKey.feed() +

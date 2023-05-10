@@ -78,7 +78,7 @@ public class MergeFilter extends AbstractXMLFilter {
                 super.endDocument();
             }
         } catch (final SAXException e) {
-            throw new ProcessException(e.getMessage(), e);
+            throw ProcessException.wrap(e);
         } finally {
             super.endProcessing();
         }

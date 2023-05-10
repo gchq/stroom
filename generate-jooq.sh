@@ -55,3 +55,7 @@ cd -
 cd stroom-proxy/stroom-proxy-repo-db-jooq
 ../../gradlew generateJooq
 cd -
+cd stroom-analytics/stroom-analytics-repo-db-jooq
+../../gradlew generateJooq
+cd -
+

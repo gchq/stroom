@@ -21,6 +21,7 @@ import stroom.pipeline.xml.converter.ds3.ref.VarFactoryMap;
 import stroom.pipeline.xml.converter.ds3.ref.VarMap;
 
 public class RootFactory extends NodeFactory {
+
     public static final int DEFAULT_BUFFER_SIZE = 20000;
     public static final int MIN_BUFFER_SIZE = DEFAULT_BUFFER_SIZE;
     // The max buffer size of 1bn chars is 2Gb of memory. We should never need
@@ -74,13 +75,13 @@ public class RootFactory extends NodeFactory {
 
     public void setBufferSize(final int bufferSize) {
         if (bufferSize < MIN_BUFFER_SIZE) {
-            throw new ProcessException("Buffer size '" + bufferSize + "' is less than min allowed buffer size of '"
-                    + MIN_BUFFER_SIZE + "'.");
+            throw ProcessException.create("Buffer size '" + bufferSize +
+                    "' is less than min allowed buffer size of '" + MIN_BUFFER_SIZE + "'.");
         }
 
         if (bufferSize > MAX_BUFFER_SIZE) {
-            throw new ProcessException("Buffer size '" + bufferSize + "' is greater than max allowed buffer size of '"
-                    + MAX_BUFFER_SIZE + "'.");
+            throw ProcessException.create("Buffer size '" + bufferSize +
+                    "' is greater than max allowed buffer size of '" + MAX_BUFFER_SIZE + "'.");
         }
 
         this.bufferSize = bufferSize;

@@ -17,6 +17,7 @@
 
 package stroom.explorer.impl;
 
+import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
@@ -29,6 +30,7 @@ import stroom.explorer.shared.PermissionInheritance;
 import stroom.util.shared.ResultPage;
 
 import java.util.List;
+import java.util.Optional;
 
 class MockExplorerService implements ExplorerService {
 
@@ -90,5 +92,10 @@ class MockExplorerService implements ExplorerService {
     @Override
     public ResultPage<ExplorerDocContentMatch> findContent(final FindExplorerNodeQuery request) {
         return null;
+    }
+
+    @Override
+    public Optional<ExplorerNode> getFromDocRef(final DocRef docRef) {
+        return Optional.empty();
     }
 }

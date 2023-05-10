@@ -108,13 +108,19 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
             currentFieldValues = null;
             currentFieldBuilder = null;
             currentValue = null;
+
         } else if (FIELD.equals(localName)) {
-            final IndexField indexField = currentFieldBuilder.build();
-            final Val val = convertValue(indexField, currentValue);
-            if (val != null) {
-                final FieldValue fieldValue = new FieldValue(indexField, val);
-                currentFieldValues.add(fieldValue);
+            if (currentFieldBuilder != null && currentValue != null) {
+                final IndexField indexField = currentFieldBuilder.build();
+                final Val val = convertValue(indexField, currentValue);
+                if (val != null) {
+                    final FieldValue fieldValue = new FieldValue(indexField, val);
+                    currentFieldValues.add(fieldValue);
+                }
             }
+
+            currentFieldBuilder = null;
+            currentValue = null;
         }
 
         super.endElement(uri, localName, qName);

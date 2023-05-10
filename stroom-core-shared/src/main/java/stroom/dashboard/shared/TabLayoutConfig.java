@@ -44,6 +44,7 @@ import javax.xml.bind.annotation.XmlType;
 @JsonInclude(Include.NON_NULL)
 public class TabLayoutConfig extends LayoutConfig {
 
+    @JsonIgnore
     private final String id;
 
     /**

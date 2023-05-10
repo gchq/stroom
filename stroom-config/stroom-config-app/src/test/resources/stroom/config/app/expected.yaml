@@ -19,8 +19,38 @@ appConfig:
   alerting:
     additionalFieldsPrefix: "_"
     reportAllExtractedFieldsEnabled: false
+    resultStore:
+      lmdb:
+        localDir: "analytic_store"
+        maxReaders: 10
+        maxStoreSize: "10G"
+        readAheadEnabled: true
+      maxPayloadSize: "1G"
+      maxPutsBeforeCommit: 10000
+      maxStringFieldLength: 1000
+      minPayloadSize: "1M"
+      offHeapResults: true
+      storeSize: "1000000,100,10,1"
+      valueQueueSize: 10000
     rulesFolderList: []
     timezone: "UTC"
+  analytics:
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverPassword: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+      connectionPool:
+        cachePrepStmts: false
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        leakDetectionThreshold: "PT0S"
+        maxLifetime: "PT30M"
+        maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
   annotation:
     createText: "Create Annotation"
     db:
@@ -566,12 +596,12 @@ appConfig:
         maxStoreSize: "10G"
         readAheadEnabled: true
       maxPayloadSize: "1G"
-      maxPutsBeforeCommit: 100000
+      maxPutsBeforeCommit: 10000
       maxStringFieldLength: 1000
       minPayloadSize: "1M"
       offHeapResults: true
       storeSize: "1000000,100,10,1"
-      valueQueueSize: 1000000
+      valueQueueSize: 10000
     shard:
       indexShardSearcherCache:
         expireAfterAccess: "PT1M"

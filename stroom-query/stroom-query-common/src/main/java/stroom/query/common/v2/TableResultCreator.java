@@ -31,6 +31,7 @@ import stroom.query.api.v2.TableResultBuilder;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.common.v2.format.FieldFormatter;
+import stroom.util.concurrent.UncheckedInterruptedException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -139,8 +140,11 @@ public class TableResultCreator implements ResultCreator {
                             totalResults,
                             rowCreator,
                             errorConsumer));
-        } catch (final RuntimeException e) {
+        } catch (final UncheckedInterruptedException e) {
             LOGGER.debug(e.getMessage(), e);
+            errorConsumer.add(e);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
             errorConsumer.add(e);
         }
 

@@ -1,7 +1,7 @@
 ext.moduleName = 'stroom.index.impl'
 
 dependencies {
-    implementation project(':stroom-alert:stroom-alert-api')
+    implementation project(':stroom-analytics:stroom-analytics-api')
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-cluster:stroom-cluster-task-api')
     implementation project(':stroom-config:stroom-config-common')
@@ -41,6 +41,7 @@ dependencies {
     implementation libs.lucene_core
     implementation libs.lucene_queryparser
     implementation libs.restygwt
+    implementation libs.saxon_he
     implementation libs.slf4j_api
     implementation libs.swagger_annotations
     implementation libs.ws_rs_api

@@ -18,6 +18,7 @@ package stroom.data.store.impl.fs;
 
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.IsServlet;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.Unauthenticated;
 
 import java.io.IOException;
@@ -32,7 +33,8 @@ public class EchoServlet extends HttpServlet implements IsServlet {
 
     private static final long serialVersionUID = -2569496543022536282L;
 
-    private static final Set<String> PATH_SPECS = Set.of("/echo");
+    private static final Set<String> PATH_SPECS = Set.of(
+            ResourcePaths.addUnauthenticatedPrefix("/echo"));
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {

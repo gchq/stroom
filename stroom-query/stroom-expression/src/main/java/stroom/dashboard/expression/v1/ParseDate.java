@@ -154,7 +154,7 @@ class ParseDate extends AbstractFunction {
             }
 
             try {
-                return ValLong.create(FormatterCache.parse(val.toString(), pattern, timeZone));
+                return ValDate.create(FormatterCache.parse(val.toString(), pattern, timeZone));
             } catch (final RuntimeException e) {
                 return ValErr.create(e.getMessage());
             }

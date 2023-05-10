@@ -127,7 +127,7 @@ public class DSParser extends AbstractParser implements SupportsCodeInjection {
         }
 
         storedErrorReceiver.replay(new ErrorReceiverIdDecorator(getElementId(), getErrorReceiverProxy()));
-        throw new ProcessException("Unable to create parser");
+        throw ProcessException.create("Unable to create parser");
     }
 
     @Override
@@ -199,7 +199,7 @@ public class DSParser extends AbstractParser implements SupportsCodeInjection {
                 getPipelineName(),
                 message -> getErrorReceiverProxy().log(Severity.WARNING, null, getElementId(), message, null));
         if (docRef == null) {
-            throw new ProcessException(
+            throw ProcessException.create(
                     "No data splitter is configured or can be found to match the provided name pattern");
         } else {
             final TextConverterDoc tc = textConverterStore.readDocument(docRef);
@@ -207,7 +207,7 @@ public class DSParser extends AbstractParser implements SupportsCodeInjection {
                 final String message = "Data splitter \"" +
                         docRef.getName() +
                         "\" appears to have been deleted";
-                throw new ProcessException(message);
+                throw ProcessException.create(message);
             }
 
             return tc;

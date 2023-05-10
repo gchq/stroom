@@ -18,12 +18,10 @@ package stroom.test;
 
 import stroom.config.app.Config;
 import stroom.config.app.StroomYamlUtil;
-import stroom.importexport.impl.ContentPackImport;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.task.api.TaskManager;
-import stroom.test.common.util.test.ContentPackDownloader;
+import stroom.test.common.util.test.ContentPackZipDownloader;
 import stroom.util.io.PathCreator;
-import stroom.util.io.SimplePathCreator;
 import stroom.util.yaml.YamlUtil;
 
 import com.google.inject.Guice;
@@ -64,13 +62,8 @@ public final class SetupSampleData {
             throw new RuntimeException("Unable to read yaml config");
         }
 
-        final Path contentPackDefinition = configFile.getParent().resolve("content-packs.json");
-
         // We are running stroom so want to use a proper db
         final Injector injector = Guice.createInjector(new SetupSampleDataModule(config, configFile));
-
-        final PathCreator pathCreator = injector.getInstance(SimplePathCreator.class);
-        downloadContent(contentPackDefinition, pathCreator, config.getYamlAppConfig().getContentPackImportConfig());
 
         // Start task manager
         injector.getInstance(TaskManager.class).startup();
@@ -86,9 +79,10 @@ public final class SetupSampleData {
         final SetupSampleDataBean setupSampleDataBean = injector.getInstance(SetupSampleDataBean.class);
         setupSampleDataBean.run(true);
 
-        // Load the content packs that gradle should have downloaded
-        final ContentPackImport contentPackImport = injector.getInstance(ContentPackImport.class);
-        contentPackImport.startup();
+        // Load the content packs specified in the definition.
+        final Path contentPackDefinition = configFile.getParent().resolve("content-packs.yml");
+        final ContentImportService contentImportService = injector.getInstance(ContentImportService.class);
+        contentImportService.importFromDefinitionYaml(contentPackDefinition);
 
         // Stop task manager
         injector.getInstance(TaskManager.class).shutdown();
@@ -99,14 +93,14 @@ public final class SetupSampleData {
                                         final ContentPackImportConfig contentPackImportConfig) {
         try {
             final Path downloadDir =
-                    pathCreator.toAppPath(ContentPackDownloader.CONTENT_PACK_DOWNLOAD_DIR);
+                    pathCreator.toAppPath(ContentPackZipDownloader.CONTENT_PACK_DOWNLOAD_DIR);
             final Path importDir =
                     pathCreator.toAppPath(contentPackImportConfig.getImportDirectory());
 
             Files.createDirectories(downloadDir);
             Files.createDirectories(importDir);
 
-            ContentPackDownloader.downloadPacks(
+            ContentPackZipDownloader.downloadZipPacks(
                     contentPacksDefinition,
                     downloadDir,
                     importDir);

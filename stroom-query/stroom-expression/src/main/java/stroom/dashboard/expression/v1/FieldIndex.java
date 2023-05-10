@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.BiConsumer;
@@ -28,9 +29,20 @@ import java.util.stream.Stream;
 
 public class FieldIndex {
 
+    public static final String DEFAULT_TIME_FIELD_NAME = "__time__";
+    public static final String FALLBACK_TIME_FIELD_NAME = "EventTime";
+    private static final String DEFAULT_STREAM_ID_FIELD_NAME = "__stream_id__";
+    private static final String DEFAULT_EVENT_ID_FIELD_NAME = "__event_id__";
+    private static final String FALLBACK_STREAM_ID_FIELD_NAME = "StreamId";
+    private static final String FALLBACK_EVENT_ID_FIELD_NAME = "EventId";
+
     private final Map<String, Integer> fieldToPos = new HashMap<>();
     private final Map<Integer, String> posToField = new TreeMap<>();
     private int index;
+
+    private int windowTimeFieldPos = -2;
+    private int streamIdFieldIndex = -2;
+    private int eventIdFieldIndex = -2;
 
     public static FieldIndex forFields(final String... fieldNames) {
         final FieldIndex instance = new FieldIndex();
@@ -68,6 +80,48 @@ public class FieldIndex {
 
     public void forEach(final BiConsumer<Integer, String> consumer) {
         posToField.forEach(consumer);
+    }
+
+    public int getWindowTimeFieldPos() {
+        if (windowTimeFieldPos == -2) {
+            windowTimeFieldPos = Optional.ofNullable(getPos(DEFAULT_TIME_FIELD_NAME))
+                    .or(() -> Optional.ofNullable(getPos(FALLBACK_TIME_FIELD_NAME)))
+                    .orElseThrow(() ->
+                            new RuntimeException("Cannot apply window when there is no time field"));
+        }
+        return windowTimeFieldPos;
+    }
+
+
+    public int getStreamIdFieldIndex() {
+        if (streamIdFieldIndex == -2) {
+            streamIdFieldIndex =
+                    Optional.ofNullable(getPos(DEFAULT_STREAM_ID_FIELD_NAME))
+                            .or(() -> Optional.ofNullable(
+                                    getPos(FALLBACK_STREAM_ID_FIELD_NAME)))
+                            .or(() -> {
+                                create(FALLBACK_STREAM_ID_FIELD_NAME);
+                                return Optional.ofNullable(
+                                        getPos(FALLBACK_STREAM_ID_FIELD_NAME));
+                            })
+                            .orElse(-1);
+        }
+        return streamIdFieldIndex;
+    }
+
+    public int getEventIdFieldIndex() {
+        if (eventIdFieldIndex == -2) {
+            eventIdFieldIndex =
+                    Optional.ofNullable(getPos(DEFAULT_EVENT_ID_FIELD_NAME))
+                            .or(() -> Optional.ofNullable(
+                                    getPos(FALLBACK_EVENT_ID_FIELD_NAME)))
+                            .or(() -> {
+                                create(FALLBACK_EVENT_ID_FIELD_NAME);
+                                return Optional.ofNullable(
+                                        getPos(FALLBACK_EVENT_ID_FIELD_NAME));
+                            }).orElse(-1);
+        }
+        return eventIdFieldIndex;
     }
 
     @Override

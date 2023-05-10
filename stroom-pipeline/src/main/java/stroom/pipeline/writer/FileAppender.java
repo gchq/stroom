@@ -110,7 +110,7 @@ public class FileAppender extends AbstractAppender {
                         Files.setPosixFilePermissions(dir, permissions);
                     }
                 } catch (final IOException e) {
-                    throw new ProcessException("Unable to create output dirs: " + FileUtil.getCanonicalPath(dir));
+                    throw ProcessException.create("Unable to create output dirs: " + FileUtil.getCanonicalPath(dir));
                 }
             }
 
@@ -119,11 +119,11 @@ public class FileAppender extends AbstractAppender {
             // Make sure we can create both output files without overwriting
             // another file.
             if (Files.exists(lockFile)) {
-                throw new ProcessException(
+                throw ProcessException.create(
                         "Output file \"" + FileUtil.getCanonicalPath(lockFile) + "\" already exists");
             }
             if (Files.exists(file)) {
-                throw new ProcessException(
+                throw ProcessException.create(
                         "Output file \"" + FileUtil.getCanonicalPath(file) + "\" already exists");
             }
             LOGGER.trace("Creating output stream for path {}", path);

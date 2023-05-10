@@ -10,6 +10,7 @@ import stroom.util.guice.GuiceUtil;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import io.dropwizard.setup.Environment;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -29,7 +30,7 @@ class TestBootStrapModule {
 
         final BootStrapModule bootstrapModule = new BootStrapModule(
                 config,
-                null,
+                new Environment("TestEnvironment"),
                 configFile,
                 DbTestModule::new,
                 AppConfigModule::new);

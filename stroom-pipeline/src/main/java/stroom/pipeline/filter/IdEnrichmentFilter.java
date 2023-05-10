@@ -86,7 +86,7 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
                 } else {
                     final String msg = "No stream set in stream holder";
                     errorReceiverProxy
-                            .log(Severity.WARNING, null, getElementId(), msg, new ProcessException(msg));
+                            .log(Severity.WARNING, null, getElementId(), msg, ProcessException.create(msg));
                 }
             }
             depth = 0;

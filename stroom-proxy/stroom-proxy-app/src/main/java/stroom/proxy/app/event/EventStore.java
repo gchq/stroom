@@ -5,6 +5,7 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.handler.ReceiveStreamHandlers;
 import stroom.proxy.repo.RepoDirProvider;
+import stroom.proxy.repo.store.FileStores;
 import stroom.receive.common.ProgressHandler;
 import stroom.receive.common.StroomStreamProcessor;
 import stroom.util.concurrent.ThreadUtil;
@@ -54,7 +55,8 @@ public class EventStore implements EventConsumer, RemovalListener<FeedKey, Event
     public EventStore(final ReceiveStreamHandlers receiveStreamHandlerProvider,
                       final Provider<ProxyConfig> proxyConfigProvider,
                       final Provider<EventStoreConfig> eventStoreConfigProvider,
-                      final RepoDirProvider repoDirProvider) {
+                      final RepoDirProvider repoDirProvider,
+                      final FileStores fileStores) {
         this.eventStoreConfigProvider = eventStoreConfigProvider;
         final EventStoreConfig eventStoreConfig = eventStoreConfigProvider.get();
         this.forwardQueue = new LinkedBlockingQueue<>(eventStoreConfig.getForwardQueueSize());
@@ -66,6 +68,7 @@ public class EventStore implements EventConsumer, RemovalListener<FeedKey, Event
         // Create the event directory.
         dir = repoDir.resolve("event");
         ensureDirExists(dir);
+        fileStores.add(0, "Event Store", dir);
 
         this.receiveStreamHandlerProvider = receiveStreamHandlerProvider;
         this.proxyConfigProvider = proxyConfigProvider;

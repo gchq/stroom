@@ -71,7 +71,7 @@ public abstract class AbstractWriter extends AbstractXMLFilter implements Target
     protected Writer getWriter() {
         if (writer == null) {
             if (getDestinationProviders().size() == 0) {
-                throw new ProcessException("No destination providers have been set");
+                throw ProcessException.create("No destination providers have been set");
             }
 
             Charset charset = StreamUtil.DEFAULT_CHARSET;

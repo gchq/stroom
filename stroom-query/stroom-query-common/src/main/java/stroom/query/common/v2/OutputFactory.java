@@ -17,7 +17,7 @@ public class OutputFactory {
     private final int minPayloadSize;
     private final int maxStringFieldLength;
 
-    public OutputFactory(final ResultStoreConfig resultStoreConfig) {
+    public OutputFactory(final AbstractResultStoreConfig resultStoreConfig) {
         this.minPayloadSize = (int) resultStoreConfig.getMinPayloadSize().getBytes();
         maxStringFieldLength = resultStoreConfig.getMaxStringFieldLength();
     }

@@ -21,9 +21,9 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
+import stroom.data.zip.StroomZipEntries;
 import stroom.data.zip.StroomZipEntry;
 import stroom.data.zip.StroomZipFileType;
-import stroom.data.zip.StroomZipNameSet;
 import stroom.feed.api.FeedProperties;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
@@ -74,7 +74,7 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
     private final String typeName;
     private final AttributeMap globalAttributeMap;
     private final HashSet<Meta> streamSet;
-    private final StroomZipNameSet stroomZipNameSet;
+    private final StroomZipEntries stroomZipEntries;
     private final Map<String, Target> targetMap = new HashMap<>();
     private final ByteArrayOutputStream tempByteArrayOutputStream = new ByteArrayOutputStream();
     private String lastBaseName;
@@ -97,7 +97,7 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
         this.currentFeedName = feedName;
         this.typeName = typeName;
         this.streamSet = new HashSet<>();
-        this.stroomZipNameSet = new StroomZipNameSet(true);
+        this.stroomZipEntries = new StroomZipEntries();
 
         if (globalAttributeMap == null) {
             this.globalAttributeMap = null;
@@ -113,7 +113,7 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
         long bytesWritten;
         LOGGER.debug(() -> "addEntry() - " + entryName);
 
-        final StroomZipEntry entry = stroomZipNameSet.add(entryName);
+        final StroomZipEntry entry = stroomZipEntries.addFile(entryName);
         final String baseName = entry.getBaseName();
         final StroomZipFileType stroomZipFileType = entry.getStroomZipFileType();
 

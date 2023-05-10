@@ -18,7 +18,6 @@
 package stroom.entity.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.docref.DocRef;
 import stroom.document.client.event.CreateDocumentEvent;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.entity.client.presenter.CreateDocumentPresenter.CreateDocumentProxy;
