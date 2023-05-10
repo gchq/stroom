@@ -1,6 +1,7 @@
 package stroom.analytics.impl;
 
 import stroom.dashboard.expression.v1.FieldIndex;
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
@@ -8,13 +9,11 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.DataStoreSettings;
-import stroom.query.common.v2.ErrorConsumer;
 import stroom.query.common.v2.ErrorConsumerImpl;
 import stroom.query.common.v2.LmdbDataStore;
 import stroom.query.common.v2.LmdbDataStoreFactory;
 import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.ResultStoreManager;
-import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.SizesProvider;
 
 import java.util.Map;

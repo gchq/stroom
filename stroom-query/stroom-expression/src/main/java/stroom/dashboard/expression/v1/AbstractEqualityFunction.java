@@ -16,6 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
+import stroom.dashboard.expression.v1.ref.StoredValues;
+
 import java.util.function.Supplier;
 
 abstract class AbstractEqualityFunction extends AbstractManyChildFunction {
@@ -73,20 +75,13 @@ abstract class AbstractEqualityFunction extends AbstractManyChildFunction {
         }
 
         @Override
-        public void set(final Val[] values) {
-            for (final Generator generator : childGenerators) {
-                generator.set(values);
-            }
-        }
-
-        @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
             final Val[] values = new Val[childGenerators.length];
 
             for (int i = 0; i < childGenerators.length; i++) {
                 Val val;
                 try {
-                    val = childGenerators[i].eval(childDataSupplier);
+                    val = childGenerators[i].eval(storedValues, childDataSupplier);
                 } catch (final RuntimeException e) {
                     return CHILD_ERROR;
                 }

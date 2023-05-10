@@ -16,8 +16,7 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import stroom.dashboard.expression.v1.ref.StoredValues;
 
 import java.text.ParseException;
 import java.util.function.Supplier;
@@ -76,8 +75,8 @@ class Substring extends AbstractFunction {
             // Optimise replacement of static input in case user does something stupid.
             if (startFunction instanceof StaticValueFunction && endFunction instanceof StaticValueFunction) {
                 final String value = param.toString();
-                final Double startPos = startFunction.createGenerator().eval(null).toDouble();
-                final Double endPos = endFunction.createGenerator().eval(null).toDouble();
+                final Double startPos = ((StaticValueFunction) startFunction).getValue().toDouble();
+                final Double endPos = ((StaticValueFunction) endFunction).getValue().toDouble();
 
                 if (value == null || startPos == null || endPos == null) {
                     gen = new StaticValueFunction(ValString.EMPTY).createGenerator();
@@ -130,8 +129,22 @@ class Substring extends AbstractFunction {
         return hasAggregate;
     }
 
-    private static final class Gen extends AbstractSingleChildGenerator {
+    @Override
+    public boolean requiresChildData() {
+        boolean requiresChildData = super.requiresChildData();
+        if (startFunction != null && !requiresChildData) {
+            requiresChildData = startFunction.requiresChildData();
+        }
+        if (endFunction != null && !requiresChildData) {
+            requiresChildData = endFunction.requiresChildData();
+        }
+        if (function != null && !requiresChildData) {
+            requiresChildData = function.requiresChildData();
+        }
+        return requiresChildData;
+    }
 
+    private static final class Gen extends AbstractSingleChildGenerator {
 
         private final Generator startPosGenerator;
         private final Generator endPosGenerator;
@@ -143,23 +156,23 @@ class Substring extends AbstractFunction {
         }
 
         @Override
-        public void set(final Val[] values) {
-            childGenerator.set(values);
-            startPosGenerator.set(values);
-            endPosGenerator.set(values);
+        public void set(final Val[] values, final StoredValues storedValues) {
+            childGenerator.set(values, storedValues);
+            startPosGenerator.set(values, storedValues);
+            endPosGenerator.set(values, storedValues);
         }
 
         @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
-            final Val val = childGenerator.eval(childDataSupplier);
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
+            final Val val = childGenerator.eval(storedValues, childDataSupplier);
             if (!val.type().isValue()) {
                 return ValErr.wrap(val);
             }
-            final Val startVal = startPosGenerator.eval(childDataSupplier);
+            final Val startVal = startPosGenerator.eval(storedValues, childDataSupplier);
             if (!startVal.type().isValue()) {
                 return ValErr.wrap(startVal);
             }
-            final Val endVal = endPosGenerator.eval(childDataSupplier);
+            final Val endVal = endPosGenerator.eval(storedValues, childDataSupplier);
             if (!endVal.type().isValue()) {
                 return ValErr.wrap(endVal);
             }
@@ -186,20 +199,6 @@ class Substring extends AbstractFunction {
                 return ValString.create(value.substring(start));
             }
             return ValString.create(value.substring(start, end));
-        }
-
-        @Override
-        public void read(final Input input) {
-            super.read(input);
-            startPosGenerator.read(input);
-            endPosGenerator.read(input);
-        }
-
-        @Override
-        public void write(final Output output) {
-            super.write(output);
-            startPosGenerator.write(output);
-            endPosGenerator.write(output);
         }
     }
 }

@@ -2,7 +2,7 @@ package stroom.statistics.impl.sql.search;
 
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.ValuesConsumer;
-import stroom.query.common.v2.ErrorConsumer;
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.task.api.TaskContext;
 

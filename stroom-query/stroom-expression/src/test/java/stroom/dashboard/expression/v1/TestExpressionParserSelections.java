@@ -19,9 +19,6 @@ package stroom.dashboard.expression.v1;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,128 +27,67 @@ class TestExpressionParserSelections extends AbstractExpressionParserTest {
 
     @Test
     void testAny() {
-        createGenerator("any(${val1})", gen -> {
-            gen.set(getVals(300));
-
-            final List<Val> childValues = IntStream
-                    .rangeClosed(1, 10)
-                    .mapToObj(ValLong::create)
-                    .collect(Collectors.toList());
-            final Supplier<ChildData> childDataSupplier = createChildDataSupplier(childValues);
-            // Check that any just returns the cell value ignoring children.
-            assertThat(gen.eval(childDataSupplier).toDouble()).isEqualTo(300, Offset.offset(0D));
-        });
+        // Check that any just returns the cell value ignoring children.
+        testSelectors("any(${val1})",
+                IntStream.rangeClosed(1, 10),
+                val -> assertThat(val.toDouble())
+                        .isEqualTo(300, Offset.offset(0D)));
     }
+
 
     @Test
     void testFirst() {
-        createGenerator("first(${val1})", gen -> {
-            gen.set(getVals(300));
-            Val out = gen.eval(null);
-            assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
-
-            final List<Val> childValues = IntStream
-                    .rangeClosed(1, 10)
-                    .mapToObj(ValLong::create)
-                    .collect(Collectors.toList());
-            final Supplier<ChildData> childDataSupplier = createChildDataSupplier(childValues);
-            assertThat(gen.eval(childDataSupplier).toDouble()).isEqualTo(1, Offset.offset(0D));
-        });
+        testSelectors("first(${val1})",
+                IntStream.rangeClosed(1, 10),
+                val -> assertThat(val.toDouble())
+                        .isEqualTo(1, Offset.offset(0D)));
     }
 
     @Test
     void testLast() {
-        createGenerator("last(${val1})", gen -> {
-            gen.set(getVals(300));
-            Val out = gen.eval(null);
-            assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
-
-            final List<Val> childValues = IntStream
-                    .rangeClosed(1, 10)
-                    .mapToObj(ValLong::create)
-                    .collect(Collectors.toList());
-            final Supplier<ChildData> childDataSupplier = createChildDataSupplier(childValues);
-            assertThat(gen.eval(childDataSupplier).toDouble()).isEqualTo(10, Offset.offset(0D));
-        });
+        testSelectors("last(${val1})",
+                IntStream.rangeClosed(1, 10),
+                val -> assertThat(val.toDouble())
+                        .isEqualTo(10, Offset.offset(0D)));
     }
 
     @Test
     void testNth() {
-        createGenerator("nth(${val1}, 7)", gen -> {
-            gen.set(getVals(300));
-            Val out = gen.eval(null);
-            assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
-
-            final List<Val> childValues = IntStream
-                    .rangeClosed(1, 10)
-                    .mapToObj(ValLong::create)
-                    .collect(Collectors.toList());
-            final Supplier<ChildData> childDataSupplier = createChildDataSupplier(childValues);
-            assertThat(gen.eval(childDataSupplier).toDouble()).isEqualTo(7, Offset.offset(0D));
-        });
+        testSelectors("nth(${val1}, 7)",
+                IntStream.rangeClosed(1, 10),
+                val -> assertThat(val.toDouble())
+                        .isEqualTo(7, Offset.offset(0D)));
     }
 
     @Test
     void testTop() {
-        createGenerator("top(${val1}, ',', 3)", gen -> {
-            gen.set(getVals(300));
-            Val out = gen.eval(null);
-            assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
-
-            final List<Val> childValues = IntStream
-                    .rangeClosed(1, 10)
-                    .mapToObj(ValLong::create)
-                    .collect(Collectors.toList());
-            final Supplier<ChildData> childDataSupplier = createChildDataSupplier(childValues);
-            assertThat(gen.eval(childDataSupplier).toString()).isEqualTo("1,2,3");
-        });
+        testSelectors("top(${val1}, ',', 3)",
+                IntStream.rangeClosed(1, 10),
+                val -> assertThat(val.toString())
+                        .isEqualTo("1,2,3"));
     }
 
     @Test
     void testTopSmall() {
-        createGenerator("top(${val1}, ',', 3)", gen -> {
-            gen.set(getVals(300));
-            Val out = gen.eval(null);
-            assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
-
-            final List<Val> childValues = IntStream
-                    .rangeClosed(1, 2)
-                    .mapToObj(ValLong::create)
-                    .collect(Collectors.toList());
-            final Supplier<ChildData> childDataSupplier = createChildDataSupplier(childValues);
-            assertThat(gen.eval(childDataSupplier).toString()).isEqualTo("1,2");
-        });
+        testSelectors("top(${val1}, ',', 3)",
+                IntStream.rangeClosed(1, 2),
+                val -> assertThat(val.toString())
+                        .isEqualTo("1,2"));
     }
 
     @Test
     void testBottom() {
-        createGenerator("bottom(${val1}, ',', 3)", gen -> {
-            gen.set(getVals(300));
-            Val out = gen.eval(null);
-            assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
-
-            final List<Val> childValues = IntStream
-                    .rangeClosed(1, 10)
-                    .mapToObj(ValLong::create)
-                    .collect(Collectors.toList());
-            final Supplier<ChildData> childDataSupplier = createChildDataSupplier(childValues);
-            assertThat(gen.eval(childDataSupplier).toString()).isEqualTo("8,9,10");
-        });
+        testSelectors("bottom(${val1}, ',', 3)",
+                IntStream.rangeClosed(1, 10),
+                val -> assertThat(val.toString())
+                        .isEqualTo("8,9,10"));
     }
 
     @Test
     void testBottomSmall() {
-        createGenerator("bottom(${val1}, ',', 3)", gen -> {
-            gen.set(getVals(300));
-            Val out = gen.eval(null);
-            assertThat(out.toDouble()).isEqualTo(300, Offset.offset(0D));
-
-            final List<Val> childValues = IntStream
-                    .rangeClosed(1, 2)
-                    .mapToObj(ValLong::create)
-                    .collect(Collectors.toList());
-            final Supplier<ChildData> childDataSupplier = createChildDataSupplier(childValues);
-            assertThat(gen.eval(childDataSupplier).toString()).isEqualTo("1,2");
-        });
+        testSelectors("bottom(${val1}, ',', 3)",
+                IntStream.rangeClosed(1, 2),
+                val -> assertThat(val.toString())
+                        .isEqualTo("1,2"));
     }
 }

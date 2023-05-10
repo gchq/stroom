@@ -18,6 +18,7 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.FlatResultBuilder;
@@ -264,7 +265,7 @@ public class FlatResultCreator implements ResultCreator {
         int maxResultsAtThisDepth = maxResults.size(depth);
         int resultCountAtThisLevel = 0;
 
-        for (final Item item : items) {
+        for (final Item item : items.getIterable()) {
             if (rangeChecker.check(count.get())) {
                 final List<Object> resultList = new ArrayList<>(fields.size() + 3);
 
@@ -423,7 +424,7 @@ public class FlatResultCreator implements ResultCreator {
                 this.dataStore.clear();
                 if (items.size() > 0) {
                     int itemCount = 0;
-                    for (final Item item : items) {
+                    for (final Item item : items.getIterable()) {
                         final Val[] values = new Val[parentFieldIndices.length];
                         for (int i = 0; i < parentFieldIndices.length; i++) {
                             final int index = parentFieldIndices[i];
