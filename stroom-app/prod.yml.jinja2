@@ -15,7 +15,7 @@
 #  depending on the value of includeEnvVarSubstitution.  I.e. in the docker
 #  distribution we want bash style env var substitution but in the zip
 #  distribution we don't.
-#  'envVar()' is our own custom jinja2 filter defined in 
+#  'envVar()' is our own custom jinja2 filter defined in
 #  stroom.dist.GenerateDistributionConfig.
 #  To see how this renders run the main method in GenerateDistributionConfig.
 #  That main method is run from gradle when building the distributions.
@@ -139,9 +139,16 @@ logging:
     logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
   {% endif %}
 #
+# This section contains the configuration for the various HTTP clients used in stroom
+# See https://gchq.github.io/stroom-docs/docs/user-guide/properties/#jersey-http-client-configuration
+jerseyClients:
+  OPEN_ID:
+    # KeyCloak and Azure AD don't like gzip encoded requests
+    gzipEnabledForRequests: false
+#
 # This section contains the Stroom configuration properties
 # For more information see:
-# https://gchq.github.io/stroom-docs/user-guide/properties.html
+# https://gchq.github.io/stroom-docs/docs/user-guide/properties/
 #
 appConfig:
   commonDbDetails:

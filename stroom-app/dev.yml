@@ -80,6 +80,11 @@ logging:
       timeZone: UTC
       logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
 
+jerseyClients:
+  OPEN_ID:
+    # KeyCloak and Azure AD don't like gzip encoded requests
+    gzipEnabledForRequests: false
+
 appConfig:
   commonDbDetails:
     connection:
