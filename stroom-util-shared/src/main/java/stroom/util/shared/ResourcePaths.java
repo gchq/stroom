@@ -54,6 +54,16 @@ public interface ResourcePaths {
     String V3 = "/v3";
 
 
+    static String addUnauthenticatedPrefix(final String... parts) {
+        return new Builder()
+                .addPathPart(NO_AUTH)
+                .addPathParts(parts)
+                .build();
+    }
+
+    /**
+     * Creates a full path (including root) to an unauthenticated servlet ending in parts
+     */
     static String buildUnauthenticatedServletPath(final String... parts) {
         return new Builder()
                 .addPathPart(ROOT_PATH)
@@ -62,7 +72,10 @@ public interface ResourcePaths {
                 .build();
     }
 
-    static String buildAuthenticatedServletPath(final String... parts) {
+    /**
+     * Creates a full path (including root) to a servlet ending in parts
+     */
+    static String buildServletPath(final String... parts) {
         return new Builder()
                 .addPathPart(ROOT_PATH)
                 .addPathParts(parts)

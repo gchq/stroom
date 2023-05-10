@@ -4,6 +4,7 @@ import stroom.proxy.repo.dao.SqliteJooqHelper;
 import stroom.proxy.repo.queue.QueueMonitors;
 import stroom.proxy.repo.store.FileStores;
 import stroom.util.shared.IsServlet;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.Unauthenticated;
 
 import java.io.IOException;
@@ -19,7 +20,8 @@ import javax.servlet.http.HttpServletResponse;
 @Unauthenticated
 public class ProxyQueueMonitoringServlet extends HttpServlet implements IsServlet {
 
-    private static final Set<String> PATH_SPECS = Set.of("/queues");
+    private static final Set<String> PATH_SPECS = Set.of(
+            ResourcePaths.addUnauthenticatedPrefix("/queues"));
 
     private final Provider<QueueMonitors> queueMonitorsProvider;
     private final Provider<SqliteJooqHelper> sqliteJooqHelperProvider;
