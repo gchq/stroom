@@ -1,9 +1,9 @@
-package stroom.test.common.util.test.data;
+package stroom.test.common.data;
 
-import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
@@ -12,6 +12,9 @@ import java.util.function.Supplier;
  * of test data field, e.g. a random IP address
  */
 public class Field {
+
+    //TODO add a builder for the Field class
+    //TODO add an optional percentage of empty values, e.g. 10% are empty.
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Field.class);
 
@@ -25,8 +28,8 @@ public class Field {
     public Field(final String name,
                  final Supplier<String> valueSupplier) {
 
-        this.name = Preconditions.checkNotNull(name);
-        this.valueFunction = Preconditions.checkNotNull(valueSupplier);
+        this.name = Objects.requireNonNull(name);
+        this.valueFunction = Objects.requireNonNull(valueSupplier);
     }
 
     /**

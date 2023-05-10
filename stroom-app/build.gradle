@@ -290,6 +290,7 @@ dependencies {
 
     testImplementation libs.commons_io
     testImplementation libs.classgraph
+    testImplementation libs.data_faker
     testImplementation libs.guice5
     testImplementation libs.guice_extension
     testImplementation libs.guice_grapher
@@ -302,7 +303,6 @@ dependencies {
     testImplementation libs.lucene_core
     testImplementation libs.saxon_he
     testImplementation libs.slf4j_api
-    testImplementation libs.stroomTestData
     testImplementation libs.swagger_annotations
     testImplementation libs.vavr
 

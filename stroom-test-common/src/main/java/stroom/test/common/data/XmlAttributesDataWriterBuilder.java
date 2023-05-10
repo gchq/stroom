@@ -1,4 +1,4 @@
-package stroom.test.common.util.test.data;
+package stroom.test.common.data;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -62,7 +62,7 @@ public class XmlAttributesDataWriterBuilder extends AbstractXmlDataWriterBuilder
     @Override
     protected final String buildRecordFormatString(final List<Field> fields) {
         final String fieldsPart = fields.stream()
-                .map(field -> "<" + fieldValueElementName + " name=\"" + field.getName() + "\" value=\"%s\"></div>")
+                .map(field -> "<" + fieldValueElementName + " name=\"" + field.getName() + "\" value=\"%s\" />")
                 .collect(Collectors.joining());
 
         return "<" + recordElementName + ">"

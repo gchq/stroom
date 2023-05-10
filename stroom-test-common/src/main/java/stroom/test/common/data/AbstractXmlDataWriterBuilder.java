@@ -1,4 +1,4 @@
-package stroom.test.common.util.test.data;
+package stroom.test.common.data;
 
 import java.util.List;
 import java.util.Optional;
@@ -6,7 +6,6 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 public abstract class AbstractXmlDataWriterBuilder {
-
     private Optional<String> namespace = Optional.empty();
     private String rootElementName = "records";
     String recordElementName = "record";
@@ -31,19 +30,20 @@ public abstract class AbstractXmlDataWriterBuilder {
         return this::mapRecords;
     }
 
-    private Function<Rec, String> getDataMapper(final List<Field> fields) {
+    private Function<DataRecord, String> getDataMapper(final List<Field> fields) {
         final String recordFormatStr = buildRecordFormatString(fields);
 
-        return record -> {
-            final String[] valuesArr = record.getValues().toArray(new String[0]);
+        return dataRecord -> {
+            String[] valuesArr = new String[dataRecord.values().size()];
+            dataRecord.values().toArray(valuesArr);
             return String.format(recordFormatStr, (Object[]) valuesArr);
         };
     }
 
     protected abstract String buildRecordFormatString(List<Field> fields);
 
-    Stream<String> mapRecords(List<Field> fields, Stream<Rec> recordStream) {
-        final Function<Rec, String> dataMapper = getDataMapper(fields);
+    Stream<String> mapRecords(List<Field> fields, Stream<DataRecord> recordStream) {
+        final Function<DataRecord, String> dataMapper = getDataMapper(fields);
 
         final Stream<String> dataStream = recordStream.map(dataMapper);
         final String namespaceAtr = namespace
@@ -56,6 +56,11 @@ public abstract class AbstractXmlDataWriterBuilder {
 
         final Stream<String> headerStream = Stream.of(xmlDeclaration, openRootElm);
         final Stream<String> footerStream = Stream.of(closeRootElm);
-        return Stream.concat(Stream.concat(headerStream, dataStream), footerStream);
+
+        //have to force stream to sequential to ensure header and footer go at the
+        //top and bottom respectively.
+        //TODO it would probably be better to improve the DataWrite interface to expose methods
+        //to get the header/footer, then the data stream can be done in parallel
+        return Stream.concat(Stream.concat(headerStream, dataStream), footerStream).sequential();
     }
 }

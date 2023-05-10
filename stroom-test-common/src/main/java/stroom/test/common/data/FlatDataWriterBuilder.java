@@ -1,4 +1,4 @@
-package stroom.test.common.util.test.data;
+package stroom.test.common.data;
 
 import java.util.List;
 import java.util.Optional;
@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class FlatDataWriterBuilder {
-
     private boolean isHeaderIncluded = true;
     private String delimiter = ",";
     private Optional<String> optEnclosingChars = Optional.empty();
@@ -18,9 +17,9 @@ public class FlatDataWriterBuilder {
 
     public static DataWriter defaultCsvFormat() {
         return FlatDataWriterBuilder.builder()
-                .outputHeaderRow(true)
-                .delimitedBy(",")
-                .build();
+                        .outputHeaderRow(true)
+                        .delimitedBy(",")
+                        .build();
     }
 
     public FlatDataWriterBuilder outputHeaderRow(final boolean isHeaderIncluded) {
@@ -40,11 +39,11 @@ public class FlatDataWriterBuilder {
         return this;
     }
 
-    private Function<Rec, String> getDataMapper() {
+    private Function<DataRecord, String> getDataMapper() {
         final Function<String, String> enclosureMapper = getEnclosureMapper();
 
-        return record ->
-                record.getValues().stream()
+        return dataRecord ->
+                dataRecord.values().stream()
                         .map(enclosureMapper)
                         .collect(Collectors.joining(delimiter));
     }
@@ -54,8 +53,8 @@ public class FlatDataWriterBuilder {
         return this::mapRecords;
     }
 
-    private Stream<String> mapRecords(List<Field> fieldDefinitions, Stream<Rec> recordStream) {
-        Function<Rec, String> dataMapper = getDataMapper();
+    private Stream<String> mapRecords(List<Field> fieldDefinitions, Stream<DataRecord> recordStream) {
+        Function<DataRecord, String> dataMapper = getDataMapper();
 
         Stream<String> dataStream = recordStream.map(dataMapper);
         if (isHeaderIncluded) {
