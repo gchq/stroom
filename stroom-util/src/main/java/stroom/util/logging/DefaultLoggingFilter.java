@@ -1,6 +1,4 @@
-package stroom.app.logging;
-
-import stroom.util.logging.NoResponseBodyLogging;
+package stroom.util.logging;
 
 import org.glassfish.jersey.logging.LoggingFeature;
 import org.glassfish.jersey.message.MessageUtils;
@@ -33,8 +31,9 @@ import javax.ws.rs.ext.WriterInterceptorContext;
 
 /**
  * This custom logging feature class extends built-in Jersey logging by providing control over when response body
- * contents are logged. The built-in behaviour when verbosity `PAYLOAD_ALL` is specified, is to log response body
- * contents, regardless of MIME type.
+ * contents are logged. The built-in behaviour when verbosity
+ * {@link org.glassfish.jersey.logging.LoggingFeature.Verbosity#PAYLOAD_ANY} is specified, is to log response body
+ * contents, regardless of MIME type. Logging is sent to the logger for {@link LoggingFeature}.
  * <p>
  * For endpoints returning sensitive or binary data, it doesn't make sense to log this information, so in such cases,
  * the API method should be annotated with `@NoResponseBodyLogging`.
@@ -43,11 +42,29 @@ public class DefaultLoggingFilter extends LoggingFeature implements ContainerReq
         ClientRequestFilter, ClientResponseFilter, WriterInterceptor {
 
     public static final String ENTITY_LOGGER_PROPERTY = LoggingFeature.class.getName();
-    private static final int MAX_ENTITY_SIZE = 8 * 1024;
     private static final Logger LOGGER = Logger.getLogger(ENTITY_LOGGER_PROPERTY);
+    public static final int DEFAULT_MAX_ENTITY_SIZE = LoggingFeature.DEFAULT_MAX_ENTITY_SIZE;
+    private final int maxEntitySize;
 
-    public DefaultLoggingFilter(Logger logger, Level level, Verbosity verbosity, Integer maxEntitySize) {
+    public DefaultLoggingFilter(final Logger logger,
+                                final Level level,
+                                final Verbosity verbosity,
+                                final int maxEntitySize) {
         super(logger, level, verbosity, maxEntitySize);
+        this.maxEntitySize = Math.max(0, maxEntitySize);
+    }
+
+    /**
+     * @return A {@link DefaultLoggingFilter} configured to log requests/responses with their payloads,
+     * using the logger for {@link LoggingFeature} with a log level of {@link Level#INFO} and a maximum
+     * entity size of {@link DefaultLoggingFilter#DEFAULT_MAX_ENTITY_SIZE}.
+     */
+    public static DefaultLoggingFilter createWithDefaults() {
+        return new DefaultLoggingFilter(
+                LOGGER,
+                Level.INFO,
+                Verbosity.PAYLOAD_ANY,
+                DEFAULT_MAX_ENTITY_SIZE);
     }
 
     @Override
@@ -78,7 +95,8 @@ public class DefaultLoggingFilter extends LoggingFeature implements ContainerReq
      * Server response
      */
     @Override
-    public void filter(final ContainerRequestContext requestContext, final ContainerResponseContext responseContext)
+    public void filter(final ContainerRequestContext requestContext,
+                       final ContainerResponseContext responseContext)
             throws IOException {
         final StringBuilder sb = new StringBuilder();
         sb.append(String.format("%d\n", responseContext.getStatus()));
@@ -89,7 +107,7 @@ public class DefaultLoggingFilter extends LoggingFeature implements ContainerReq
                 .stream(responseContext.getEntityAnnotations())
                 .noneMatch(annotation -> annotation instanceof NoResponseBodyLogging);
         if (responseContext.hasEntity() && logResponseBody) {
-            final OutputStream outputStream = new LoggingStream(sb, responseContext.getEntityStream());
+            final OutputStream outputStream = new LoggingStream(sb, responseContext.getEntityStream(), maxEntitySize);
             responseContext.setEntityStream(outputStream);
             requestContext.setProperty(ENTITY_LOGGER_PROPERTY, outputStream);
         } else {
@@ -106,7 +124,10 @@ public class DefaultLoggingFilter extends LoggingFeature implements ContainerReq
         sb.append(String.format("%s %s\n", requestContext.getMethod(), requestContext.getUri().getPath()));
         printHeaders(sb, requestContext.getStringHeaders(), "> ");
         if (requestContext.hasEntity()) {
-            final OutputStream outputStream = new LoggingStream(sb, requestContext.getEntityStream());
+            final OutputStream outputStream = new LoggingStream(
+                    sb,
+                    requestContext.getEntityStream(),
+                    maxEntitySize);
             requestContext.setEntityStream(outputStream);
             requestContext.setProperty(ENTITY_LOGGER_PROPERTY, outputStream);
         } else {
@@ -165,11 +186,11 @@ public class DefaultLoggingFilter extends LoggingFeature implements ContainerReq
         if (!inputStream.markSupported()) {
             inputStream = new BufferedInputStream(inputStream);
         }
-        inputStream.mark(MAX_ENTITY_SIZE + 1);
-        final byte[] entity = new byte[MAX_ENTITY_SIZE + 1];
+        inputStream.mark(maxEntitySize + 1);
+        final byte[] entity = new byte[maxEntitySize + 1];
         final int entitySize = inputStream.read(entity);
-        sb.append(new String(entity, 0, Math.min(entitySize, MAX_ENTITY_SIZE), charset));
-        if (entitySize > MAX_ENTITY_SIZE) {
+        sb.append(new String(entity, 0, Math.min(entitySize, maxEntitySize), charset));
+        if (entitySize > maxEntitySize) {
             sb.append("...[truncated]");
         }
         sb.append('\n');
@@ -181,17 +202,19 @@ public class DefaultLoggingFilter extends LoggingFeature implements ContainerReq
 
         private final StringBuilder stringBuilder;
         private final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        private final int maxEntitySize;
 
-        LoggingStream(final StringBuilder stringBuilder, final OutputStream innerStream) {
+        LoggingStream(final StringBuilder stringBuilder, final OutputStream innerStream, final int maxEntitySize) {
             super(innerStream);
             this.stringBuilder = stringBuilder;
+            this.maxEntitySize = maxEntitySize;
         }
 
         public StringBuilder getStringBuilder(Charset charset) {
             final byte[] entity = byteArrayOutputStream.toByteArray();
 
-            stringBuilder.append(new String(entity, 0, Math.min(entity.length, MAX_ENTITY_SIZE), charset));
-            if (entity.length > MAX_ENTITY_SIZE) {
+            stringBuilder.append(new String(entity, 0, Math.min(entity.length, maxEntitySize), charset));
+            if (entity.length > maxEntitySize) {
                 stringBuilder.append("...[truncated]");
             }
             stringBuilder.append('\n');
@@ -200,7 +223,7 @@ public class DefaultLoggingFilter extends LoggingFeature implements ContainerReq
         }
 
         public void write(final int i) throws IOException {
-            if (byteArrayOutputStream.size() <= MAX_ENTITY_SIZE) {
+            if (byteArrayOutputStream.size() <= maxEntitySize) {
                 byteArrayOutputStream.write(i);
             }
             out.write(i);
