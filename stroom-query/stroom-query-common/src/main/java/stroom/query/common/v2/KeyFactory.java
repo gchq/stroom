@@ -1,6 +1,8 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.ref.ErrorConsumer;
+import stroom.dashboard.expression.v1.ref.MyByteBufferInput;
+import stroom.dashboard.expression.v1.ref.MyByteBufferOutput;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -15,7 +17,7 @@ public interface KeyFactory {
      *
      * @param key The key to serialise.
      */
-    void write(Key key, Output output);
+    void write(Key key, MyByteBufferOutput output);
 
     /**
      * Read a key from an input.
@@ -23,7 +25,7 @@ public interface KeyFactory {
      * @param input The input to read the key from.
      * @return The key read from the input.
      */
-    Key read(Input input);
+    Key read(MyByteBufferInput input);
 
     /**
      * Read a key from a byteBuffer.

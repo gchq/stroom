@@ -17,7 +17,7 @@ public class ValHasher {
         } else if (values.length == 0) {
             return 0;
         }
-        try (final MyByteBufferOutput output = new MyByteBufferOutput(bufferSize, -1)) {
+        try (final MyByteBufferOutput output = new MyByteBufferOutput(bufferSize)) {
             ValSerialiser.writeArray(output, values);
             output.flush();
             final ByteBuffer buffer = output.getByteBuffer().flip();

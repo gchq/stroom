@@ -33,7 +33,7 @@ public class OutputFactoryImpl implements OutputFactory {
 
     @Override
     public MyByteBufferOutput createOutput(final int bufferSize, final ErrorConsumer errorConsumer) {
-        return new MyByteBufferOutput(bufferSize, -1) {
+        return new MyByteBufferOutput(bufferSize) {
             @Override
             public void writeString(final String value) throws KryoException {
                 super.writeString(truncate(value, errorConsumer));

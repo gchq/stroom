@@ -1,12 +1,13 @@
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import stroom.dashboard.expression.v1.ref.MyByteBufferInput;
+import stroom.dashboard.expression.v1.ref.MyByteBufferOutput;
 
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public final class ValSerialiser {
+
     private static final Serialiser[] SERIALISERS = new Serialiser[20];
 
     static {
@@ -40,20 +41,20 @@ public final class ValSerialiser {
                 (output, value) -> output.writeString(((ValErr) value).getMessage()));
     }
 
-    public static Val read(final Input input) {
+    public static Val read(final MyByteBufferInput input) {
         final int id = input.readByte();
         final Serialiser serialiser = SERIALISERS[id];
         return serialiser.reader.apply(input);
     }
 
-    public static void write(final Output output, final Val val) {
+    public static void write(final MyByteBufferOutput output, final Val val) {
         final byte id = val.type().getId();
         output.writeByte(id);
         final Serialiser serialiser = SERIALISERS[id];
         serialiser.writer.accept(output, val);
     }
 
-    public static Val[] readArray(final Input input) {
+    public static Val[] readArray(final MyByteBufferInput input) {
         Val[] values = Val.empty();
 
         final int valueCount = input.readByteUnsigned();
@@ -67,7 +68,7 @@ public final class ValSerialiser {
         return values;
     }
 
-    public static void writeArray(final Output output, final Val[] values) {
+    public static void writeArray(final MyByteBufferOutput output, final Val[] values) {
         if (values.length > 255) {
             throw new RuntimeException("You can only write a maximum of " + 255 + " values");
         }
@@ -79,11 +80,11 @@ public final class ValSerialiser {
 
     private static class Serialiser {
 
-        final Function<Input, Val> reader;
-        final BiConsumer<Output, Val> writer;
+        final Function<MyByteBufferInput, Val> reader;
+        final BiConsumer<MyByteBufferOutput, Val> writer;
 
-        public Serialiser(final Function<Input, Val> reader,
-                          final BiConsumer<Output, Val> writer) {
+        public Serialiser(final Function<MyByteBufferInput, Val> reader,
+                          final BiConsumer<MyByteBufferOutput, Val> writer) {
             this.reader = reader;
             this.writer = writer;
         }

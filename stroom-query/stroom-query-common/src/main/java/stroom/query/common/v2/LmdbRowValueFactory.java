@@ -74,7 +74,7 @@ public class LmdbRowValueFactory {
     private void addPart(final MyByteBufferOutput output,
                          final Consumer<MyByteBufferOutput> consumer) {
         final int pos = output.getByteBuffer().position();
-        output.writeIntDirect(0);
+        output.writeInt(0);
         consumer.accept(output);
         output.flush();
         final ByteBuffer byteBuffer = output.getByteBuffer();
@@ -84,7 +84,7 @@ public class LmdbRowValueFactory {
 
     public void copyPart(final ByteBuffer byteBuffer,
                          final MyByteBufferOutput output) {
-        output.writeIntDirect(byteBuffer.remaining());
+        output.writeInt(byteBuffer.remaining());
         output.writeByteBuffer(byteBuffer);
     }
 }

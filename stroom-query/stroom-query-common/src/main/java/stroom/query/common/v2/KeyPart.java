@@ -1,6 +1,7 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ref.MyByteBufferOutput;
 
 import com.esotericsoftware.kryo.io.Output;
 
@@ -10,7 +11,7 @@ interface KeyPart {
 
     Val[] getGroupValues();
 
-    void write(Output output);
+    void write(MyByteBufferOutput output);
 
     void append(StringBuilder sb);
 }

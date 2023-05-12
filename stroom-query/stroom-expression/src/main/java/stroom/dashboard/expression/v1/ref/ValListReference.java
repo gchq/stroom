@@ -32,7 +32,7 @@ public class ValListReference implements ValueReference<List<Val>> {
     }
 
     @Override
-    public void read(final StoredValues storedValues, final Input input) {
+    public void read(final StoredValues storedValues, final MyByteBufferInput input) {
         final int length = input.readInt();
         final List<Val> list = new ArrayList<>(length);
         for (int i = 0; i < length; i++) {
@@ -42,7 +42,7 @@ public class ValListReference implements ValueReference<List<Val>> {
     }
 
     @Override
-    public void write(final StoredValues storedValues, final Output output) {
+    public void write(final StoredValues storedValues, final MyByteBufferOutput output) {
         final List<Val> list = get(storedValues);
         output.writeInt(list.size());
         for (final Val val : list) {

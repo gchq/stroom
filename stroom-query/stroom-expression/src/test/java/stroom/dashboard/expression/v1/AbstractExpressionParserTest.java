@@ -89,7 +89,7 @@ public class AbstractExpressionParserTest {
         final Val val = generator.eval(storedValues, null);
 
         ByteBuffer buffer;
-        try (final MyByteBufferOutput output = new MyByteBufferOutput(1024, -1)) {
+        try (final MyByteBufferOutput output = new MyByteBufferOutput(1024)) {
             valueReferenceIndex.write(storedValues, output);
             output.flush();
             buffer = output.getByteBuffer();
@@ -322,7 +322,7 @@ public class AbstractExpressionParserTest {
 
             System.out.printf("%s => [%s:%s%s]%n",
                     expression,
-                    out.getClass().getSimpleName(), out.toString(),
+                    out.getClass().getSimpleName(), out,
                     (out instanceof ValErr
                             ? (" - " + ((ValErr) out).getMessage())
                             : ""));

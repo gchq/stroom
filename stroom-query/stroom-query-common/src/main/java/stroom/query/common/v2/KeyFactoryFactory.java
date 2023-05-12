@@ -2,11 +2,9 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.ValSerialiser;
 import stroom.dashboard.expression.v1.ref.ErrorConsumer;
+import stroom.dashboard.expression.v1.ref.MyByteBufferInput;
+import stroom.dashboard.expression.v1.ref.MyByteBufferOutput;
 import stroom.util.logging.Metrics;
-
-import com.esotericsoftware.kryo.io.ByteBufferInput;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -58,7 +56,7 @@ public class KeyFactoryFactory {
 
         @Override
         public Key read(final ByteBuffer byteBuffer) {
-            try (final ByteBufferInput input = new ByteBufferInput(byteBuffer)) {
+            try (final MyByteBufferInput input = new MyByteBufferInput(byteBuffer)) {
                 return read(input);
             }
         }
@@ -81,11 +79,11 @@ public class KeyFactoryFactory {
         @Override
         public String encode(final Key key, final ErrorConsumer errorConsumer) {
             return Metrics.measure("Encoding groups", () -> {
-                try (final Output output = new Output(bufferSize, -1)) {
+                try (final MyByteBufferOutput output = new MyByteBufferOutput(bufferSize)) {
                     write(key, output);
                     output.flush();
-                    final byte[] bytes = output.toBytes();
-                    bufferSize = Math.max(bufferSize, output.getBuffer().length);
+                    final byte[] bytes = output.getByteBuffer().array();
+                    bufferSize = Math.max(bufferSize, output.getByteBuffer().capacity());
                     return Base64.getEncoder().encodeToString(bytes);
                 }
             });
@@ -103,14 +101,14 @@ public class KeyFactoryFactory {
     private static class FlatGroupedKeyFactory extends AbstractKeyFactory implements KeyFactory {
 
         @Override
-        public void write(final Key key, final Output output) {
+        public void write(final Key key, final MyByteBufferOutput output) {
             // Write single key part.
             final KeyPart keyPart = key.getKeyParts().get(0);
             keyPart.write(output);
         }
 
         @Override
-        public Key read(final Input input) {
+        public Key read(final MyByteBufferInput input) {
             // Read single key part.
             final GroupKeyPart groupKeyPart = new GroupKeyPart(ValSerialiser.readArray(input));
             final List<KeyPart> list = Collections.singletonList(groupKeyPart);
@@ -124,14 +122,14 @@ public class KeyFactoryFactory {
     private static class FlatUngroupedKeyFactory extends AbstractKeyFactory implements KeyFactory {
 
         @Override
-        public void write(final Key key, final Output output) {
+        public void write(final Key key, final MyByteBufferOutput output) {
             // Write single key part.
             final KeyPart keyPart = key.getKeyParts().get(0);
             keyPart.write(output);
         }
 
         @Override
-        public Key read(final Input input) {
+        public Key read(final MyByteBufferInput input) {
             // Read single key part.
             final UngroupedKeyPart keyPart = new UngroupedKeyPart(input.readLong());
             final List<KeyPart> list = Collections.singletonList(keyPart);
@@ -145,7 +143,7 @@ public class KeyFactoryFactory {
     private static class FlatTimeGroupedKeyFactory extends AbstractKeyFactory implements KeyFactory {
 
         @Override
-        public void write(final Key key, final Output output) {
+        public void write(final Key key, final MyByteBufferOutput output) {
             // Write time millis since epoch.
             output.writeLong(key.getTimeMs());
 
@@ -155,7 +153,7 @@ public class KeyFactoryFactory {
         }
 
         @Override
-        public Key read(final Input input) {
+        public Key read(final MyByteBufferInput input) {
             // Read time millis since epoch.
             final long timeMs = input.readLong();
 
@@ -172,7 +170,7 @@ public class KeyFactoryFactory {
     private static class FlatTimeUngroupedKeyFactory extends AbstractKeyFactory implements KeyFactory {
 
         @Override
-        public void write(final Key key, final Output output) {
+        public void write(final Key key, final MyByteBufferOutput output) {
             // Write time millis since epoch.
             output.writeLong(key.getTimeMs());
 
@@ -182,7 +180,7 @@ public class KeyFactoryFactory {
         }
 
         @Override
-        public Key read(final Input input) {
+        public Key read(final MyByteBufferInput input) {
             // Read time millis since epoch.
             final long timeMs = input.readLong();
 
@@ -199,7 +197,7 @@ public class KeyFactoryFactory {
     private static class NestedGroupedKeyFactory extends AbstractKeyFactory implements KeyFactory {
 
         @Override
-        public void write(final Key key, final Output output) {
+        public void write(final Key key, final MyByteBufferOutput output) {
             // Write number of key parts (depth).
             output.writeByte(key.getKeyParts().size());
 
@@ -212,7 +210,7 @@ public class KeyFactoryFactory {
         }
 
         @Override
-        public Key read(final Input input) {
+        public Key read(final MyByteBufferInput input) {
             // Read number of key parts (depth).
             final int size = Byte.toUnsignedInt(input.readByte());
 
@@ -237,7 +235,7 @@ public class KeyFactoryFactory {
     private static class NestedTimeGroupedKeyFactory extends AbstractKeyFactory implements KeyFactory {
 
         @Override
-        public void write(final Key key, final Output output) {
+        public void write(final Key key, final MyByteBufferOutput output) {
             // Write number of key parts (depth).
             output.writeByte(key.getKeyParts().size());
 
@@ -253,7 +251,7 @@ public class KeyFactoryFactory {
         }
 
         @Override
-        public Key read(final Input input) {
+        public Key read(final MyByteBufferInput input) {
             // Read number of key parts (depth).
             final int size = Byte.toUnsignedInt(input.readByte());
 

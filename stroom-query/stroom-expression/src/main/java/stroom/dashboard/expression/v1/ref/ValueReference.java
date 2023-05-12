@@ -8,7 +8,7 @@ public interface ValueReference<T> {
 
     void set(StoredValues storedValues, T value);
 
-    void read(StoredValues storedValues, Input input);
+    void read(StoredValues storedValues, MyByteBufferInput input);
 
-    void write(StoredValues storedValues, Output output);
+    void write(StoredValues storedValues, MyByteBufferOutput output);
 }

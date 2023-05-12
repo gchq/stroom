@@ -2,8 +2,7 @@ package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValSerialiser;
-
-import com.esotericsoftware.kryo.io.Output;
+import stroom.dashboard.expression.v1.ref.MyByteBufferOutput;
 
 import java.util.Arrays;
 
@@ -16,7 +15,7 @@ class GroupKeyPart implements KeyPart {
     }
 
     @Override
-    public void write(final Output output) {
+    public void write(final MyByteBufferOutput output) {
         ValSerialiser.writeArray(output, groupValues);
     }
 

@@ -33,12 +33,12 @@ public class CountReference implements ValueReference<Long> {
     }
 
     @Override
-    public void read(final StoredValues storedValues, final Input input) {
+    public void read(final StoredValues storedValues, final MyByteBufferInput input) {
         set(storedValues, input.readLong());
     }
 
     @Override
-    public void write(final StoredValues storedValues, final Output output) {
+    public void write(final StoredValues storedValues, final MyByteBufferOutput output) {
         output.writeLong(get(storedValues));
     }
 }
