@@ -67,15 +67,17 @@ class EntityEventResourceImpl implements EntityEventResource {
                     nodeName);
 
             try {
-                final Response response = webTargetFactoryProvider
+                final Boolean success;
+                try (Response response = webTargetFactoryProvider
                         .get()
                         .create(url)
                         .request(MediaType.APPLICATION_JSON)
-                        .put(Entity.json(entityEvent));
-                if (response.getStatus() != 200) {
-                    throw new WebApplicationException(response);
+                        .put(Entity.json(entityEvent))) {
+                    if (response.getStatus() != 200) {
+                        throw new WebApplicationException(response);
+                    }
+                    success = response.readEntity(Boolean.class);
                 }
-                final Boolean success = response.readEntity(Boolean.class);
                 Objects.requireNonNull(success, "Null success");
                 return success;
             } catch (Throwable e) {
