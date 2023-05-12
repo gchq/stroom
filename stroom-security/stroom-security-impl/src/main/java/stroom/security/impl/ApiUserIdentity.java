@@ -17,19 +17,24 @@ class ApiUserIdentity implements UserIdentity, HasSessionId, HasStroomUserIdenti
 
     private final String userUuid;
     private final String id;
+    private final String displayName;
     private final String sessionId;
     private final JwtContext jwtContext;
 
     /**
-     * @param userUuid The stroom_user UUID
-     * @param id The unique ID on the IDP, i.e. the 'sub' claim
+     * @param userUuid    The stroom_user UUID
+     * @param id          The unique ID on the IDP, i.e. the 'sub' claim
+     * @param displayName
      */
     ApiUserIdentity(final String userUuid,
                     final String id,
+                    final String displayName,
                     final String sessionId,
                     final JwtContext jwtContext) {
         this.userUuid = userUuid;
         this.id = id;
+        // Fall back to id if not present
+        this.displayName = Objects.requireNonNullElse(displayName, id);
         this.sessionId = sessionId;
         this.jwtContext = jwtContext;
     }
@@ -46,8 +51,7 @@ class ApiUserIdentity implements UserIdentity, HasSessionId, HasStroomUserIdenti
 
     @Override
     public String getDisplayName() {
-        return getClaimValue("preferred_username")
-                .orElseGet(this::getId);
+        return displayName;
     }
 
     @Override
@@ -75,12 +79,13 @@ class ApiUserIdentity implements UserIdentity, HasSessionId, HasStroomUserIdenti
         }
         final ApiUserIdentity that = (ApiUserIdentity) o;
         return Objects.equals(userUuid, that.userUuid) && Objects.equals(id,
-                that.id) && Objects.equals(sessionId, that.sessionId);
+                that.id) && Objects.equals(displayName, that.displayName) && Objects.equals(sessionId,
+                that.sessionId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(userUuid, id, sessionId);
+        return Objects.hash(userUuid, id, displayName, sessionId);
     }
 
     @Override

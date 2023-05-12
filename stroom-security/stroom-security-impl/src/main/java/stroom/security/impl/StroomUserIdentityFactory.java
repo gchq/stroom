@@ -1,5 +1,6 @@
 package stroom.security.impl;
 
+import stroom.docref.DocRef;
 import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
@@ -16,6 +17,9 @@ import stroom.security.shared.User;
 import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.cert.CertificateExtractor;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventBus;
 import stroom.util.exception.DataChangedException;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.logging.LambdaLogger;
@@ -29,6 +33,7 @@ import org.jose4j.jwt.consumer.JwtContext;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -47,6 +52,7 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
     private final Provider<OpenIdConfiguration> openIdConfigProvider;
     private final UserService userService;
     private final SecurityContext securityContext;
+    private final EntityEventBus entityEventBus;
 
     @Inject
     public StroomUserIdentityFactory(final JwtContextFactory jwtContextFactory,
@@ -57,7 +63,8 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
                                      final ProcessingUserIdentityProvider processingUserIdentityProvider,
                                      final UserService userService,
                                      final SecurityContext securityContext,
-                                     final JerseyClientFactory jerseyClientFactory) {
+                                     final JerseyClientFactory jerseyClientFactory,
+                                     final EntityEventBus entityEventBus) {
 
 
         super(jwtContextFactory,
@@ -73,6 +80,7 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
         this.openIdConfigProvider = openIdConfigProvider;
         this.userService = userService;
         this.securityContext = securityContext;
+        this.entityEventBus = entityEventBus;
     }
 
     @Override
@@ -94,16 +102,15 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
 
         return optUser
                 .flatMap(user -> {
+                    final User effectiveUser = updateUserInfo(user, jwtClaims);
                     final UserIdentity userIdentity = createAuthFlowUserIdentity(
-                            jwtClaims, request, tokenResponse, user);
-                    updateUserInfo(user, jwtClaims);
+                            jwtClaims, request, tokenResponse, effectiveUser);
                     return Optional.of(userIdentity);
                 })
                 .or(() -> {
                     throw new AuthenticationException("Unable to find user: " + uniqueId);
                 });
     }
-
 
     /**
      * External IDP users are identified by their subject which is a not very helpful UUID.
@@ -112,8 +119,9 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
      * them logging in though.
      * Each time we map their identity we check the cached info is up-to-date and if so update it.
      */
-    private void updateUserInfo(final User user, final JwtClaims jwtClaims) {
+    private User updateUserInfo(final User user, final JwtClaims jwtClaims) {
 
+        AtomicReference<User> userRef = new AtomicReference<>(user);
         final String displayName = getUserDisplayName(jwtClaims)
                 .orElse(null);
 
@@ -138,17 +146,31 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
                                         "Expecting to find user with uuid " + user.getUuid()));
 
                         if (hasUserInfoChangedPredicate.test(user)) {
+                            final String currentDisplayName = persistedUser.getDisplayName();
+                            final String currentFullName = persistedUser.getFullName();
+
                             persistedUser.setDisplayName(displayName);
                             persistedUser.setFullName(fullName);
-                            LOGGER.info("Updating IDP user info for user with name/subject: {}" +
-                                            " - displayName '{}' and fullName: '{}'",
-                                    persistedUser.getName(),
-                                    displayName,
-                                    fullName);
                             try {
                                 // It is possible for another node to do this, so OCC would throw
                                 // an exception
-                                userService.update(persistedUser);
+                                final User updatedUser = userService.update(persistedUser);
+                                logNameChange(persistedUser,
+                                        currentDisplayName,
+                                        currentFullName,
+                                        displayName,
+                                        fullName);
+
+                                // Caches need to know the user has changed
+                                EntityEvent.fire(
+                                        entityEventBus,
+                                        DocRef.builder()
+                                                .uuid(updatedUser.getUuid())
+                                                .type(UserDocRefUtil.USER)
+                                                .build(),
+                                        EntityAction.UPDATE);
+
+                                userRef.set(updatedUser);
                                 success = true;
                             } catch (DataChangedException e) {
                                 LOGGER.debug(LogUtil.message(
@@ -168,6 +190,35 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
                 });
             }
         }
+        return Objects.requireNonNull(userRef.get());
+    }
+
+    private static void logNameChange(final User persistedUser,
+                                      final String currentDisplayName,
+                                      final String currentFullName,
+                                      final String displayName,
+                                      final String fullName) {
+        final StringBuilder sb = new StringBuilder()
+                .append("Updating IDP user info for user with name/subject: ")
+                .append(persistedUser.getName());
+
+        if (!Objects.equals(currentDisplayName, displayName)) {
+            sb.append(", displayName: '")
+                    .append(currentDisplayName)
+                    .append("' => '")
+                    .append(displayName)
+                    .append("'");
+        }
+
+        if (!Objects.equals(currentFullName, fullName)) {
+            sb.append(", fullName: '")
+                    .append(currentFullName)
+                    .append("' => '")
+                    .append(fullName)
+                    .append("'");
+        }
+
+        LOGGER.info(sb.toString());
     }
 
     private UserIdentity createAuthFlowUserIdentity(final JwtClaims jwtClaims,
@@ -227,8 +278,9 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
         try {
             final JwtClaims jwtClaims = jwtContext.getJwtClaims();
             final String userId = getUniqueIdentity(jwtClaims);
-            LOGGER.debug(() -> LogUtil.message("Getting API user identity for user id: {} uri: {}",
-                    userId, request.getRequestURI()));
+            final Optional<String> optDisplayName = getUserDisplayName(jwtClaims);
+            LOGGER.debug(() -> LogUtil.message("Getting API user identity for user id: {}, displayName: {}, uri: {}",
+                    userId, optDisplayName, request.getRequestURI()));
 
             final String userUuid;
 
@@ -239,13 +291,19 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
                 // Using default creds so just fake a user
                 userUuid = UUID.randomUUID().toString();
             } else {
-                final User user = userCache.getOrCreate(userId).orElseThrow(() ->
-                        new AuthenticationException("Unable to find user: " + userId));
-                updateUserInfo(user, jwtClaims);
+                User user = userCache.getOrCreate(userId).orElseThrow(() ->
+                        new AuthenticationException("Unable to find user with id: " + userId
+                                + "(displayName: " + optDisplayName + ")"));
+                user = updateUserInfo(user, jwtClaims);
                 userUuid = user.getUuid();
             }
 
-            return Optional.of(createApiUserIdentity(jwtContext, userId, userUuid, request));
+            return Optional.of(createApiUserIdentity(
+                    jwtContext,
+                    userId,
+                    optDisplayName.orElse(null),
+                    userUuid,
+                    request));
         } catch (final MalformedClaimException e) {
             LOGGER.error(() -> "Error extracting claims from token in request " + request.getRequestURI());
             return Optional.empty();
@@ -254,6 +312,7 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
 
     private static ApiUserIdentity createApiUserIdentity(final JwtContext jwtContext,
                                                          final String userId,
+                                                         final String displayName,
                                                          final String userUuid,
                                                          final HttpServletRequest request) {
         Objects.requireNonNull(userId);
@@ -263,6 +322,7 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
         return new ApiUserIdentity(
                 userUuid,
                 userId,
+                displayName,
                 NullSafe.get(session, HttpSession::getId),
                 jwtContext);
     }

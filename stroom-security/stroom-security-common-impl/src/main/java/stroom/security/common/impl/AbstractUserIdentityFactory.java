@@ -603,6 +603,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
         // TODO: 03/03/2023 Need
         final UserIdentity serviceUserIdentity = new ServiceUserIdentity(
                 getUniqueIdentity(jwtClaims),
+                getUserDisplayName(jwtClaims).orElse(null),
                 updatableToken);
 
         // Associate the token with the user it is for

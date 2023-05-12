@@ -1,10 +1,8 @@
 package stroom.security.common.impl;
 
 import stroom.security.api.UserIdentity;
-import stroom.security.openid.api.OpenId;
 
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * User identity for a service user for this application to authenticate with other
@@ -14,11 +12,15 @@ import java.util.Optional;
 public class ServiceUserIdentity implements UserIdentity, HasJwtClaims, HasUpdatableToken {
 
     private final String id;
+    private final String displayName;
     private final UpdatableToken updatableToken;
 
     public ServiceUserIdentity(final String id,
+                               final String displayName,
                                final UpdatableToken updatableToken) {
         this.id = Objects.requireNonNull(id);
+        // Fall back to id if not present
+        this.displayName = Objects.requireNonNullElse(displayName, id);
         this.updatableToken = Objects.requireNonNull(updatableToken);
     }
 
@@ -29,14 +31,29 @@ public class ServiceUserIdentity implements UserIdentity, HasJwtClaims, HasUpdat
 
     @Override
     public String getDisplayName() {
-        return Optional.ofNullable(getJwtClaims())
-                .flatMap(claims -> JwtUtil.getClaimValue(claims, OpenId.CLAIM__PREFERRED_USERNAME))
-                .orElse(id);
+        return displayName;
     }
 
     @Override
     public UpdatableToken getUpdatableToken() {
         return updatableToken;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final ServiceUserIdentity that = (ServiceUserIdentity) o;
+        return id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 
     @Override

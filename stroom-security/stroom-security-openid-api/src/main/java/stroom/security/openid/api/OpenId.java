@@ -53,6 +53,10 @@ public class OpenId {
 
     /**
      * Subject - Identifier for the End-User at the Issuer.
+     * <p>
+     * NOTE: Not all IDPs use this, e.g. Azure AD use 'oid', so refer to {@link OpenIdConfiguration} for
+     * which claims to use.
+     * </p>
      */
     public static final String CLAIM__SUBJECT = "sub";
     /**
@@ -63,6 +67,10 @@ public class OpenId {
      * Shorthand name by which the End-User wishes to be referred to at the RP, such as janedoe or j.doe.
      * This value MAY be any valid JSON string including special characters such as @, /,
      * or whitespace. The RP MUST NOT rely upon this value being unique
+     * <p>
+     * NOTE: Not all IDPs use this, e.g. Azure AD use 'upn', so refer to {@link OpenIdConfiguration} for
+     * which claims to use.
+     * </p>
      */
     public static final String CLAIM__PREFERRED_USERNAME = "preferred_username";
 

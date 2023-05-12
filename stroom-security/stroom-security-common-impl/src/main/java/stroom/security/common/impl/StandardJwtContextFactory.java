@@ -342,11 +342,19 @@ public class StandardJwtContextFactory implements JwtContextFactory {
             final JwtConsumer jwtConsumer = newJwtConsumer();
             final JwtContext jwtContext = jwtConsumer.process(jwt);
 
-            LOGGER.debug(() -> LogUtil.message("Verified token - {}: '{}', {}: '{}'",
-                    OpenId.CLAIM__SUBJECT,
-                    JwtUtil.getClaimValue(jwtContext, OpenId.CLAIM__SUBJECT).orElse(""),
-                    OpenId.CLAIM__PREFERRED_USERNAME,
-                    JwtUtil.getClaimValue(jwtContext, OpenId.CLAIM__PREFERRED_USERNAME).orElse("")));
+            if (LOGGER.isDebugEnabled()) {
+                final String uniqueIdentityClaim = openIdConfigurationProvider.get().getUniqueIdentityClaim();
+                final String userDisplayNameClaim = openIdConfigurationProvider.get().getUserDisplayNameClaim();
+                final String uniqueId = NullSafe.isBlankString(uniqueIdentityClaim)
+                        ? "<ERROR uniqueIdentityClaim not configured>"
+                        : JwtUtil.getClaimValue(jwtContext, uniqueIdentityClaim).orElse(null);
+                final String displayName = NullSafe.isBlankString(userDisplayNameClaim)
+                        ? "<ERROR userDisplayNameClaim not configured>"
+                        : JwtUtil.getClaimValue(jwtContext, userDisplayNameClaim).orElse(null);
+
+                LOGGER.debug(() -> LogUtil.message("Verified token - {}: '{}', {}: '{}'",
+                        uniqueIdentityClaim, uniqueId, userDisplayNameClaim, displayName));
+            }
 
             // TODO : @66 Check against blacklist to see if token has been revoked. Blacklist
             //  is a list of JWI (JWT IDs) on auth service. Only tokens with `jwi` claims are API

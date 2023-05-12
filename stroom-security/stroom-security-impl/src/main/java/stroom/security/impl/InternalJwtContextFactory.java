@@ -2,7 +2,6 @@ package stroom.security.impl;
 
 import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.JwtUtil;
-import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.PublicJsonWebKeyProvider;
@@ -106,11 +105,19 @@ class InternalJwtContextFactory implements JwtContextFactory {
             final JwtConsumer jwtConsumer = newJwtConsumer();
             final JwtContext jwtContext = jwtConsumer.process(jwt);
 
-            LOGGER.trace(() -> LogUtil.message("Verified token - {}: '{}', {}: '{}'",
-                    OpenId.CLAIM__SUBJECT,
-                    JwtUtil.getClaimValue(jwtContext, OpenId.CLAIM__SUBJECT).orElse(""),
-                    OpenId.CLAIM__PREFERRED_USERNAME,
-                    JwtUtil.getClaimValue(jwtContext, OpenId.CLAIM__PREFERRED_USERNAME).orElse("")));
+            if (LOGGER.isDebugEnabled()) {
+                final String uniqueIdentityClaim = openIdConfigurationProvider.get().getUniqueIdentityClaim();
+                final String userDisplayNameClaim = openIdConfigurationProvider.get().getUserDisplayNameClaim();
+                final String uniqueId = NullSafe.isBlankString(uniqueIdentityClaim)
+                        ? "<ERROR uniqueIdentityClaim not configured>"
+                        : JwtUtil.getClaimValue(jwtContext, uniqueIdentityClaim).orElse(null);
+                final String displayName = NullSafe.isBlankString(userDisplayNameClaim)
+                        ? "<ERROR userDisplayNameClaim not configured>"
+                        : JwtUtil.getClaimValue(jwtContext, userDisplayNameClaim).orElse(null);
+
+                LOGGER.debug(() -> LogUtil.message("Verified token - {}: '{}', {}: '{}'",
+                        uniqueIdentityClaim, uniqueId, userDisplayNameClaim, displayName));
+            }
 
             optionalJwtContext = Optional.ofNullable(jwtContext);
 

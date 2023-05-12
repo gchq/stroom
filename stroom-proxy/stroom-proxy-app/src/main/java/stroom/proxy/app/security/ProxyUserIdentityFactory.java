@@ -12,7 +12,6 @@ import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.jersey.JerseyClientFactory;
 
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.consumer.JwtContext;
 
@@ -50,8 +49,7 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
         final JwtClaims jwtClaims = jwtContext.getJwtClaims();
 
         final String uniqueIdentity = getUniqueIdentity(jwtClaims);
-        final String displayName = JwtUtil.getClaimValue(jwtClaims, OpenId.CLAIM__PREFERRED_USERNAME)
-                .orElse(uniqueIdentity);
+        final String displayName = getUserDisplayName(jwtClaims).orElse(null);
         final String fullName = JwtUtil.getClaimValue(jwtClaims, OpenId.CLAIM__NAME)
                 .orElse(null);
 
