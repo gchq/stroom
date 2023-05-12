@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.10-open-id-3] - 2023-05-12
+
+* Issue **#3117** : Fix problems with user display name not showing on welcome screen.
+
+
 ## [v7.2-beta.10-open-id-2] - 2023-05-12
 
 * Change manage user command to run as processing user.
@@ -5285,7 +5290,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-3...HEAD
+[v7.2-beta.10-open-id-3]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-2...v7.2-beta.10-open-id-3
 [v7.2-beta.10-open-id-2]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id...v7.2-beta.10-open-id-2
 [v7.2-beta.10-open-id]: https://github.com/gchq/stroom/compare/v7.2-beta.10...v7.2-beta.10-open-id
 [v7.2-beta.10]: https://github.com/gchq/stroom/compare/v7.2-beta.9...v7.2-beta.10
