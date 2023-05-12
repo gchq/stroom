@@ -221,7 +221,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                             });
         } catch (Exception e) {
             LOGGER.debug("Error", e);
-            throw new RuntimeException("Error " + msg + ":" + e.getMessage());
+            throw new RuntimeException("Error " + msg + ":" + e.getMessage(), e);
         }
     }
 
@@ -264,7 +264,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                         false,
                         e.getMessage(),
                         true);
-                throw new RuntimeException("Error " + msg + ":" + e.getMessage());
+                throw new RuntimeException("Error " + msg + ":" + e.getMessage(), e);
             }
         });
     }
@@ -296,7 +296,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                         false,
                         null,
                         false);
-                throw new RuntimeException("Error " + msg + ":" + e.getMessage());
+                throw new RuntimeException("Error " + msg + ":" + e.getMessage(), e);
             }
         });
     }
@@ -415,7 +415,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                         false,
                         e.getMessage(),
                         false);
-                throw new RuntimeException("Error " + msg + ":" + e.getMessage());
+                throw new RuntimeException("Error " + msg + ":" + e.getMessage(), e);
             }
         });
     }
