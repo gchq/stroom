@@ -63,11 +63,8 @@ public abstract class AbstractStroomAccountConfiguredCommand extends ConfiguredC
 
             final SecurityContext securityContext = appInjector.getInstance(SecurityContext.class);
 
-            // Don't think we want to run as proc user here as when using an external
-            // IDP, the proc user would depend on the IDP config being set up
-            securityContext.asAdminUser(() -> {
-                runCommand(bootstrap, namespace, config, appInjector);
-            });
+            securityContext.asProcessingUser(() ->
+                    runCommand(bootstrap, namespace, config, appInjector));
 
         } catch (Exception e) {
             LOGGER.error("Error initialising application", e);

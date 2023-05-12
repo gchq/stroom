@@ -32,7 +32,7 @@ public class ExternalProcessingUserIdentityProvider implements ProcessingUserIde
 
     @Override
     public boolean isProcessingUser(final UserIdentity userIdentity) {
-        return Objects.equals(userIdentity, userIdentityFactory.getServiceUserIdentity());
+        return userIdentityFactory.isServiceUserIdentity(userIdentity);
     }
 
     @Override

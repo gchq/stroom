@@ -297,6 +297,18 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
         return serviceUserIdentity;
     }
 
+    @Override
+    public boolean isServiceUserIdentity(final UserIdentity userIdentity) {
+        final UserIdentity serviceUserIdentity = getServiceUserIdentity();
+        // Use instance equality check as there should only ever be one ServiceUserIdentity
+        // in this JVM
+        final boolean isServiceUserIdentity = userIdentity instanceof ServiceUserIdentity
+                && userIdentity == serviceUserIdentity;
+        LOGGER.debug("isServiceUserIdentity: {}, userIdentity: {}, serviceUserIdentity: {}",
+                isServiceUserIdentity, userIdentity, serviceUserIdentity);
+        return isServiceUserIdentity;
+    }
+
     /**
      * Refresh the user identity including any tokens associated with that user.
      *

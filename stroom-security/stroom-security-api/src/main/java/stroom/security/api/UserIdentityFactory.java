@@ -18,6 +18,11 @@ public interface UserIdentityFactory {
     UserIdentity getServiceUserIdentity();
 
     /**
+     * Return true if userIdentity is the service user identity
+     */
+    boolean isServiceUserIdentity(final UserIdentity userIdentity);
+
+    /**
      * True if the request contains the certs/headers needed to authenticate.
      * Does not perform authentication.
      */
