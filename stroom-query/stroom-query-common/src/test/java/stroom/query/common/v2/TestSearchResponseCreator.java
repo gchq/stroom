@@ -361,7 +361,6 @@ class TestSearchResponseCreator {
             @Override
             public KeyFactory getKeyFactory() {
                 return KeyFactoryFactory.create(
-                        new Serialisers(new SearchResultStoreConfig()),
                         new BasicKeyFactoryConfig(),
                         new CompiledDepths(null, false));
             }

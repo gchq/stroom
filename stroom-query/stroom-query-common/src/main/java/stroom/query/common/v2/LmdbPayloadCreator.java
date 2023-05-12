@@ -23,23 +23,22 @@ public class LmdbPayloadCreator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbPayloadCreator.class);
 
-    private final OutputFactoryImpl outputFactory;
     private final int maxPayloadSize;
     private final QueryKey queryKey;
     private final LmdbDataStore lmdbDataStore;
     private final LmdbPayloadQueue currentPayload = new LmdbPayloadQueue(1);
     private final LmdbRowKeyFactory lmdbRowKeyFactory;
+    private final int minPayloadSize;
 
-    LmdbPayloadCreator(final OutputFactoryImpl outputFactory,
-                       final QueryKey queryKey,
+    LmdbPayloadCreator(final QueryKey queryKey,
                        final LmdbDataStore lmdbDataStore,
                        final AbstractResultStoreConfig resultStoreConfig,
                        final LmdbRowKeyFactory lmdbRowKeyFactory) {
-        this.outputFactory = outputFactory;
         this.queryKey = queryKey;
         this.lmdbDataStore = lmdbDataStore;
         maxPayloadSize = (int) resultStoreConfig.getMaxPayloadSize().getBytes();
         this.lmdbRowKeyFactory = lmdbRowKeyFactory;
+        this.minPayloadSize = (int) resultStoreConfig.getMinPayloadSize().getBytes();
     }
 
     /**
@@ -158,7 +157,7 @@ public class LmdbPayloadCreator {
 
         return Metrics.measure("createPayload", () -> {
             if (maxPayloadSize > 0) {
-                final PayloadOutput payloadOutput = outputFactory.createPayloadOutput();
+                final PayloadOutput payloadOutput = new PayloadOutput(minPayloadSize);
                 boolean finalPayload = complete;
                 long size = 0;
                 long count = 0;
@@ -196,7 +195,7 @@ public class LmdbPayloadCreator {
                 return new LmdbPayload(finalPayload, payloadOutput.toBytes());
 
             } else {
-                final PayloadOutput payloadOutput = outputFactory.createPayloadOutput();
+                final PayloadOutput payloadOutput = new PayloadOutput(minPayloadSize);
                 try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn)) {
                     for (final KeyVal<ByteBuffer> kv : cursorIterable) {
                         final ByteBuffer keyBuffer = kv.key();

@@ -23,6 +23,7 @@ import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ref.ErrorConsumer;
+import stroom.dashboard.expression.v1.ref.MyByteBufferOutput;
 import stroom.dashboard.expression.v1.ref.StoredValues;
 import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
 import stroom.lmdb.LmdbEnv;
@@ -43,8 +44,6 @@ import stroom.util.shared.time.SimpleDuration;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import com.esotericsoftware.kryo.unsafe.UnsafeByteBufferInput;
-import com.esotericsoftware.kryo.unsafe.UnsafeByteBufferOutput;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Dbi;
@@ -160,7 +159,7 @@ public class LmdbDataStore implements DataStore {
         compiledDepths = new CompiledDepths(this.compiledFieldArray, modifiedTableSettings.showDetail());
         compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), this.compiledFieldArray);
         keyFactoryConfig = new KeyFactoryConfigImpl(this.compiledFieldArray, compiledDepths, dataStoreSettings);
-        keyFactory = KeyFactoryFactory.create(serialisers, keyFactoryConfig, compiledDepths);
+        keyFactory = KeyFactoryFactory.create(keyFactoryConfig, compiledDepths);
         lmdbRowKeyFactory = LmdbRowKeyFactoryFactory.create(keyFactory, keyFactoryConfig, compiledDepths);
         lmdbRowValueFactory = new LmdbRowValueFactory(
                 keyFactory,
@@ -168,7 +167,6 @@ public class LmdbDataStore implements DataStore {
                 serialisers.getOutputFactory(),
                 errorConsumer);
         payloadCreator = new LmdbPayloadCreator(
-                serialisers.getOutputFactory(),
                 queryKey,
                 this,
                 resultStoreConfig,
@@ -517,73 +515,57 @@ public class LmdbDataStore implements DataStore {
                 } else if (lmdbRowKeyFactory.isGroup(rowKey)) {
                     // Get the existing entry for this key.
                     final ByteBuffer existingValueBuffer = dbi.get(writeTxn.getTxn(), rowKey.getByteBuffer());
-
-                    final int minValSize = Math.max(1024, existingValueBuffer.remaining());
-                    try (final UnsafeByteBufferOutput output =
-                            serialisers.getOutputFactory().createByteBufferOutput(minValSize, errorConsumer)) {
+                    final ByteBuffer newValueBuffer = lmdbRowValueFactory.useOutput(output -> {
                         boolean merged = false;
 
-                        final LmdbValueBytes newValueBytes =
-                                LmdbValueBytes.create(serialisers.getInputFactory(), rowValue.getByteBuffer());
+                        final LmdbRowValue newValue =
+                                LmdbRowValueFactory.read(rowValue.getByteBuffer());
 
-                        try (final UnsafeByteBufferInput input =
-                                serialisers.getInputFactory().createByteBufferInput(existingValueBuffer)) {
-                            while (!input.end()) {
-                                final LmdbValueBytes existingValueBytes = LmdbValueBytes.create(input);
+                        while (existingValueBuffer.remaining() > 0) {
+                            final LmdbRowValue existingValue =
+                                    LmdbRowValueFactory.read(existingValueBuffer);
+                            final ByteBuffer key = existingValue.getKey();
+                            final ByteBuffer value = existingValue.getValue();
 
-                                // If this is the same value then update it and reinsert.
-                                if (Arrays.equals(existingValueBytes.fullKeyBytes(), newValueBytes.fullKeyBytes())) {
-                                    final StoredValues existingStoredValues =
-                                            valueReferenceIndex.read(
-                                                    serialisers.getInputFactory(),
-                                                    existingValueBytes.valueBytes());
-                                    final StoredValues newStoredValues =
-                                            valueReferenceIndex.read(
-                                                    serialisers.getInputFactory(),
-                                                    newValueBytes.valueBytes());
-                                    for (final CompiledField compiledField : compiledFieldArray) {
-                                        compiledField.getGenerator().merge(existingStoredValues, newStoredValues);
-                                    }
-
-                                    LOGGER.trace(() -> "Merging combined value to output");
-                                    final byte[] combinedValueBytes =
-                                            valueReferenceIndex.getBytes(
-                                                    serialisers.getOutputFactory(),
-                                                    existingStoredValues,
-                                                    errorConsumer);
-                                    final LmdbValueBytes combined =
-                                            new LmdbValueBytes(existingValueBytes.fullKeyBytes(), combinedValueBytes);
-                                    combined.write(output);
-
-                                    // Copy any remaining values.
-                                    if (!input.end()) {
-                                        final byte[] remainingBytes = input.readAllBytes();
-                                        output.writeBytes(remainingBytes, 0, remainingBytes.length);
-                                    }
-
-                                    merged = true;
-
-                                } else {
-                                    LOGGER.debug(() -> "Copying value to output");
-                                    existingValueBytes.write(output);
+                            // If this is the same value then update it and reinsert.
+                            if (key.equals(newValue.getKey())) {
+                                final StoredValues existingStoredValues =
+                                        valueReferenceIndex.read(value.slice());
+                                final StoredValues newStoredValues =
+                                        valueReferenceIndex.read(newValue.getValue());
+                                for (final CompiledField compiledField : compiledFieldArray) {
+                                    compiledField.getGenerator().merge(existingStoredValues, newStoredValues);
                                 }
+
+                                LOGGER.trace(() -> "Merging combined value to output");
+
+                                lmdbRowValueFactory.copyPart(key, output);
+                                lmdbRowValueFactory.writeValue(existingStoredValues, output);
+
+                                // Copy any remaining values.
+                                output.writeByteBuffer(existingValueBuffer);
+                                merged = true;
+
+                            } else {
+                                LOGGER.debug(() -> "Copying value to output");
+                                lmdbRowValueFactory.copyPart(key, output);
+                                lmdbRowValueFactory.copyPart(value, output);
                             }
                         }
 
                         // Append if we didn't merge.
                         if (!merged) {
                             LOGGER.debug(() -> "Appending value to output");
-                            newValueBytes.write(output);
+                            lmdbRowValueFactory.copyPart(newValue.getKey(), output);
+                            lmdbRowValueFactory.copyPart(newValue.getValue(), output);
                             resultCount.incrementAndGet();
                         }
+                    });
 
-                        output.flush();
-                        final ByteBuffer newValue = output.getByteBuffer().flip();
-                        final boolean ok = put(writeTxn, dbi, rowKey.getByteBuffer(), newValue);
-                        if (!ok) {
-                            LOGGER.debug(() -> "Unable to update");
-                            throw new RuntimeException("Unable to update");
-                        }
+                    final boolean ok = put(writeTxn, dbi, rowKey.getByteBuffer(), newValueBuffer);
+                    if (!ok) {
+                        LOGGER.debug(() -> "Unable to update");
+                        throw new RuntimeException("Unable to update");
                     }
 
                 } else {
@@ -592,7 +574,7 @@ public class LmdbDataStore implements DataStore {
                     throw new RuntimeException("Unexpected collision");
                 }
 
-            } catch (final RuntimeException | IOException e) {
+            } catch (final RuntimeException e) {
                 if (LOGGER.isTraceEnabled()) {
                     // Only evaluate queue item value in trace as it can be expensive.
                     LOGGER.trace(() -> "Error putting " + lmdbKV + " (" + e.getMessage() + ")", e);
@@ -985,13 +967,6 @@ public class LmdbDataStore implements DataStore {
                 boolean trimmed = true;
                 boolean addMore = true;
 
-//                final byte[] start = ByteBufferUtils.toBytes(keyRange.getStart());
-//                final byte[] stop = ByteBufferUtils.toBytes(keyRange.getStop());
-//
-//                NestedGroupedLmdbRowKeyFactory fac = (NestedGroupedLmdbRowKeyFactory) lmdbRowKeyFactory;
-//                ByteBuffer parentKeyByteBuffer = fac.createKey(parentKey);
-//                final byte[] parentKeyByteBufferBytes = ByteBufferUtils.toBytes(parentKeyByteBuffer);
-
                 try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(
                         readTxn,
                         keyRange)) {
@@ -1002,35 +977,29 @@ public class LmdbDataStore implements DataStore {
                             && !Thread.currentThread().isInterrupted()) {
 
                         final KeyVal<ByteBuffer> keyVal = iterator.next();
-//                        final byte[] currentKeyBytes = ByteBufferUtils.toBytes(keyVal.key());
 
                         // All valid keys are more than a single byte long. Single byte keys are used to store db info.
                         if (keyVal.key().limit() > 1) {
                             final ByteBuffer valueBuffer = keyVal.val();
-                            try (final UnsafeByteBufferInput input =
-                                    serialisers.getInputFactory().createByteBufferInput(valueBuffer)) {
-                                while (!input.end() && addMore) {
-                                    final LmdbValueBytes lmdbValueBytes = LmdbValueBytes.create(input);
-                                    final Key key = keyFactory.keyFromBytes(lmdbValueBytes.fullKeyBytes());
+                            while (valueBuffer.remaining() > 0 && addMore) {
+                                final LmdbRowValue lmdbRowValue = LmdbRowValueFactory.read(valueBuffer);
+                                final Key key = keyFactory.read(lmdbRowValue.getKey());
 //                            if (key.getParent().equals(parentKey)) {
-                                    final StoredValues storedValues =
-                                            valueReferenceIndex.read(
-                                                    serialisers.getInputFactory(),
-                                                    lmdbValueBytes.valueBytes());
-                                    list.add(new ItemImpl(this, key, timeFilter, storedValues));
-                                    if (list.size >= trimmedSize && sorter == null) {
-                                        // Stop without sorting etc.
-                                        addMore = false;
+                                final StoredValues storedValues =
+                                        valueReferenceIndex.read(lmdbRowValue.getValue());
+                                list.add(new ItemImpl(this, key, timeFilter, storedValues));
+                                if (list.size >= trimmedSize && sorter == null) {
+                                    // Stop without sorting etc.
+                                    addMore = false;
 
-                                    } else {
-                                        trimmed = false;
-                                        if (list.size() > maxSize) {
-                                            list.sortAndTrim(sorter, trimmedSize, trimTop);
-                                            trimmed = true;
-                                        }
+                                } else {
+                                    trimmed = false;
+                                    if (list.size() > maxSize) {
+                                        list.sortAndTrim(sorter, trimmedSize, trimTop);
+                                        trimmed = true;
                                     }
-//                            }
                                 }
+//                            }
                             }
                         }
                     }
@@ -1187,13 +1156,13 @@ public class LmdbDataStore implements DataStore {
         public Val getValue(final int index, final boolean evaluateChildren) {
             Val val = cachedValues[index];
             if (val == null) {
-                val = createValue(index, evaluateChildren);
+                val = createValue(index);
                 cachedValues[index] = val;
             }
             return val;
         }
 
-        private Val createValue(final int index, final boolean evaluateChildren) {
+        private Val createValue(final int index) {
             Val val;
             final Generator generator = data.compiledFields[index].getGenerator();
             if (key.isGrouped()) {
