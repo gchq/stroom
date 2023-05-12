@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.10-open-id-2] - 2023-05-12
+
+* Change manage user command to run as processing user.
+
+* Change the CLI commands to also log to stdout/err.
+
+
 ## [v7.2-beta.10-open-id] - 2023-05-10
 
 * Issue **#3117** : Add _Preferred Username_ and _Full name_ to the user permissions data grids when using an external IDP. This is to make it easier to identify which users are which when assigning permissions as the IDP unique identity may be a UUID.
@@ -5278,7 +5285,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id-2...HEAD
+[v7.2-beta.10-open-id-2]: https://github.com/gchq/stroom/compare/v7.2-beta.10-open-id...v7.2-beta.10-open-id-2
 [v7.2-beta.10-open-id]: https://github.com/gchq/stroom/compare/v7.2-beta.10...v7.2-beta.10-open-id
 [v7.2-beta.10]: https://github.com/gchq/stroom/compare/v7.2-beta.9...v7.2-beta.10
 [v7.2-beta.9]: https://github.com/gchq/stroom/compare/v7.2-beta.8...v7.2-beta.9
