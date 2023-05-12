@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
+import java.util.Set;
 import javax.inject.Inject;
 
 /**
@@ -34,6 +35,10 @@ public class ResetPasswordCommand extends AbstractStroomAccountConfiguredCommand
 
     private static final String USERNAME_ARG_NAME = "user";
     private static final String PASSWORD_ARG_NAME = "password";
+
+    private static final Set<String> ARGUMENT_NAMES = Set.of(
+            USERNAME_ARG_NAME,
+            PASSWORD_ARG_NAME);
 
     private final Path configFile;
 
@@ -67,6 +72,11 @@ public class ResetPasswordCommand extends AbstractStroomAccountConfiguredCommand
     }
 
     @Override
+    public Set<String> getArgumentNames() {
+        return ARGUMENT_NAMES;
+    }
+
+    @Override
     protected void runCommand(final Bootstrap<Config> bootstrap,
                               final Namespace namespace,
                               final Config config,
@@ -80,19 +90,11 @@ public class ResetPasswordCommand extends AbstractStroomAccountConfiguredCommand
         injector.injectMembers(this);
 
 
-        try {
-            accountDao.resetPassword(username, newPassword);
+        accountDao.resetPassword(username, newPassword);
 
-            String msg = LogUtil.message("Password reset complete for user {}", username);
-            LOGGER.info(msg);
-            logEvent(username, true, msg);
-            System.exit(0);
-
-        } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage());
-            logEvent(username, false, e.getMessage());
-            System.exit(1);
-        }
+        String msg = LogUtil.message("Password reset complete for user {}", username);
+        LOGGER.info(msg);
+        logEvent(username, true, msg);
     }
 
     private void logEvent(final String username,
