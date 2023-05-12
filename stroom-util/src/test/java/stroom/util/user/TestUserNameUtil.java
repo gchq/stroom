@@ -53,9 +53,9 @@ class TestUserNameUtil {
                                 user("123", "jbloggs", "Joe Bloggs"),
                                 user("456", "jdoe", "John Doe")))
                 .addCase("""
-                                
+
                                 123,jbloggs,Joe Bloggs
-                                
+
                                 456,jdoe,John Doe
                                 """,
                         List.of(
