@@ -9,17 +9,19 @@ import net.openhft.hashing.LongHashFunction;
 import java.nio.ByteBuffer;
 
 public class ValHasher {
+    private int bufferSize = 128;
 
-    public static long hash(final Val[] values) {
+    public long hash(final Val[] values) {
         if (values == null) {
             return -1;
         } else if (values.length == 0) {
             return 0;
         }
-        try (final MyByteBufferOutput output = new MyByteBufferOutput(1024, -1)) {
+        try (final MyByteBufferOutput output = new MyByteBufferOutput(bufferSize, -1)) {
             ValSerialiser.writeArray(output, values);
             output.flush();
             final ByteBuffer buffer = output.getByteBuffer().flip();
+            bufferSize = Math.max(bufferSize, buffer.capacity());
             return LongHashFunction.xx3().hashBytes(buffer);
         }
     }

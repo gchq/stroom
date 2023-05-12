@@ -275,6 +275,7 @@ public class LmdbRowKeyFactoryFactory {
 
         private final KeyFactory keyFactory;
         private final CompiledDepths compiledDepths;
+        private final ValHasher valHasher = new ValHasher();
 
         public NestedGroupedLmdbRowKeyFactory(final KeyFactory keyFactory,
                                               final CompiledDepths compiledDepths) {
@@ -348,7 +349,7 @@ public class LmdbRowKeyFactoryFactory {
                 final GroupKeyPart groupKeyPart = (GroupKeyPart) last;
 
                 // Create a child group key. <DEPTH><GROUP_HASH>
-                final long groupHash = ValHasher.hash(groupKeyPart.getGroupValues());
+                final long groupHash = valHasher.hash(groupKeyPart.getGroupValues());
                 final ByteBuffer start = ByteBuffer.allocateDirect(PREFIX_LENGTH);
                 start.put(childDepth);
                 start.putLong(groupHash);
@@ -403,6 +404,7 @@ public class LmdbRowKeyFactoryFactory {
 
         private final KeyFactory keyFactory;
         private final CompiledDepths compiledDepths;
+        private final ValHasher valHasher = new ValHasher();
 
         public NestedTimeGroupedLmdbRowKeyFactory(final KeyFactory keyFactory,
                                                   final CompiledDepths compiledDepths) {
@@ -480,7 +482,7 @@ public class LmdbRowKeyFactoryFactory {
                 final GroupKeyPart groupKeyPart = (GroupKeyPart) last;
 
                 // Create a time based child group key. <DEPTH><TIME_MS><GROUP_HASH>
-                final long groupHash = ValHasher.hash(groupKeyPart.getGroupValues());
+                final long groupHash = valHasher.hash(groupKeyPart.getGroupValues());
                 final ByteBuffer start = ByteBuffer.allocateDirect(SHORT_KEY_LENGTH);
                 start.put(childDepth);
                 start.putLong(parentKey.getTimeMs());
@@ -528,7 +530,7 @@ public class LmdbRowKeyFactoryFactory {
                 final GroupKeyPart groupKeyPart = (GroupKeyPart) last;
 
                 // Create a time based child group key. <DEPTH><TIME_MS><GROUP_HASH>
-                final long groupHash = ValHasher.hash(groupKeyPart.getGroupValues());
+                final long groupHash = valHasher.hash(groupKeyPart.getGroupValues());
                 final ByteBuffer start = ByteBuffer.allocateDirect(LONG_PREFIX_LENGTH);
                 start.put(childDepth);
                 start.putLong(timeFilter.getFrom());

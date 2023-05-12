@@ -23,7 +23,6 @@ import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ref.ErrorConsumer;
-import stroom.dashboard.expression.v1.ref.MyByteBufferOutput;
 import stroom.dashboard.expression.v1.ref.StoredValues;
 import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
 import stroom.lmdb.LmdbEnv;
@@ -110,6 +109,7 @@ public class LmdbDataStore implements DataStore {
     private final KeyFactory keyFactory;
     private final LmdbPayloadCreator payloadCreator;
     private final TransferState transferState = new TransferState();
+    private final ValHasher valHasher = new ValHasher();
 
     private final Serialisers serialisers;
 
@@ -325,7 +325,7 @@ public class LmdbDataStore implements DataStore {
                 key = parentKey.resolve(timeMs, uniqueId);
             }
 
-            final long groupHash = ValHasher.hash(groupValues);
+            final long groupHash = valHasher.hash(groupValues);
             final LmdbRowKey rowKey = lmdbRowKeyFactory.create(depth, parentGroupHash, groupHash, timeMs);
             final LmdbRowValue rowValue = lmdbRowValueFactory.create(key, storedValues);
 
@@ -634,7 +634,6 @@ public class LmdbDataStore implements DataStore {
                             consumer.accept(new LmdbData(
                                     lmdbRowKeyFactory,
                                     keyFactory,
-                                    serialisers,
                                     dbi,
                                     readTxn,
                                     compiledFieldArray,
@@ -891,7 +890,6 @@ public class LmdbDataStore implements DataStore {
 
         private final LmdbRowKeyFactory lmdbRowKeyFactory;
         private final KeyFactory keyFactory;
-        private final Serialisers serialisers;
         private final Dbi<ByteBuffer> dbi;
         private final Txn<ByteBuffer> readTxn;
         private final CompiledField[] compiledFields;
@@ -902,7 +900,6 @@ public class LmdbDataStore implements DataStore {
 
         public LmdbData(final LmdbRowKeyFactory lmdbRowKeyFactory,
                         final KeyFactory keyFactory,
-                        final Serialisers serialisers,
                         final Dbi<ByteBuffer> dbi,
                         final Txn<ByteBuffer> readTxn,
                         final CompiledField[] compiledFields,
@@ -912,7 +909,6 @@ public class LmdbDataStore implements DataStore {
                         final ValueReferenceIndex valueReferenceIndex) {
             this.lmdbRowKeyFactory = lmdbRowKeyFactory;
             this.keyFactory = keyFactory;
-            this.serialisers = serialisers;
             this.dbi = dbi;
             this.readTxn = readTxn;
             this.compiledFields = compiledFields;
