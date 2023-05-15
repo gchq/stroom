@@ -1,1 +1,1 @@
-v7.2-beta.10-open-id-5
+v7.2-beta.10-open-id-6
