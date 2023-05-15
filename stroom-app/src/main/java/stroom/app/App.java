@@ -22,7 +22,6 @@ import stroom.app.commands.DbMigrationCommand;
 import stroom.app.commands.ManageUsersCommand;
 import stroom.app.commands.ResetPasswordCommand;
 import stroom.app.guice.AppModule;
-import stroom.app.logging.DefaultLoggingFilter;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 import stroom.config.app.StroomYamlUtil;
@@ -45,6 +44,7 @@ import stroom.util.io.HomeDirProvider;
 import stroom.util.io.PathConfig;
 import stroom.util.io.StroomPathConfig;
 import stroom.util.io.TempDirProvider;
+import stroom.util.logging.DefaultLoggingFilter;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -64,21 +64,16 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
-import org.glassfish.jersey.logging.LoggingFeature;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.Objects;
-import java.util.Set;
-import java.util.logging.Level;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import javax.servlet.SessionCookieConfig;
-import javax.sql.DataSource;
 import javax.validation.ValidatorFactory;
 
 public class App extends Application<Config> {
@@ -107,8 +102,6 @@ public class App extends Application<Config> {
     private ManagedServices managedServices;
     @Inject
     private RestResourceAutoLogger resourceAutoLogger;
-    @Inject
-    private Provider<Set<DataSource>> dataSourcesProvider;
 
     // Injected manually
     private HomeDirProvider homeDirProvider;
@@ -227,12 +220,7 @@ public class App extends Application<Config> {
         // I can't seem to get this to work unless Level is SEVERE
         // TODO need to establish if there is a performance hit for using the JUL to SLF bridge
         //   see http://www.slf4j.org/legacy.html#jul-to-slf4j
-        environment.jersey().register(
-                new DefaultLoggingFilter(
-                        java.util.logging.Logger.getLogger(DefaultLoggingFilter.ENTITY_LOGGER_PROPERTY),
-                        Level.INFO,
-                        LoggingFeature.Verbosity.PAYLOAD_ANY,
-                        LoggingFeature.DEFAULT_MAX_ENTITY_SIZE));
+        environment.jersey().register(DefaultLoggingFilter.createWithDefaults());
 
         // Add useful logging setup.
         registerLogConfiguration(environment);

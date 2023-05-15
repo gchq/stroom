@@ -3,6 +3,7 @@ package stroom.proxy.app.forwarder;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
+import stroom.util.shared.validation.ValidDirectoryPath;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -51,6 +52,7 @@ public class ForwardFileConfig extends AbstractConfig implements ForwardConfig, 
      * The string to use for the destination path.
      */
     @NotNull
+    @ValidDirectoryPath(ensureExistence = true)
     @JsonProperty
     public String getPath() {
         return path;

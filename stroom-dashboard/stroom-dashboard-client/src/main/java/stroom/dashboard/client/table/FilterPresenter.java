@@ -66,6 +66,7 @@ public class FilterPresenter extends MyPresenterWidget<FilterPresenter.FilterVie
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption("Filter '" + field.getName() + "'")
+                .modal(true)
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {

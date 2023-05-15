@@ -362,6 +362,13 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
         onResize();
     }
 
+    /**
+     * A vertical split line for splitting a panel horizontally into two columns. e.g:
+     * <pre>{@code
+     * ┌───┬───┐
+     * │   │   │
+     * └───┴───┘}</pre>
+     */
     class HSplitter extends Splitter {
 
         public HSplitter(final Widget target, final boolean reverse, final int index) {
@@ -524,6 +531,16 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
         }
     }
 
+    /**
+     * A horizontal split line for splitting a panel vertically into two rows. e.g:
+     * <pre>{@code
+     * ┌────┐
+     * │    │
+     * ├────┤
+     * │    │
+     * └────┘
+     * }</pre>
+     */
     class VSplitter extends Splitter {
 
         public VSplitter(final Widget target, final boolean reverse, final int index) {

@@ -47,6 +47,7 @@ dependencies {
     implementation libs.jakarta_el
     implementation libs.javax_inject
     implementation libs.jaxb_api
+    implementation libs.saxon_he
     implementation libs.slf4j_api
     implementation libs.xml_apis
     

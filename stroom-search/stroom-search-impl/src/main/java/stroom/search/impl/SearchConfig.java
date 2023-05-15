@@ -1,6 +1,6 @@
 package stroom.search.impl;
 
-import stroom.query.common.v2.ResultStoreConfig;
+import stroom.query.common.v2.SearchResultStoreConfig;
 import stroom.search.extraction.ExtractionConfig;
 import stroom.search.impl.shard.IndexShardSearchConfig;
 import stroom.util.shared.AbstractConfig;
@@ -26,14 +26,14 @@ public class SearchConfig extends AbstractConfig implements IsStroomConfig {
     private final int maxBooleanClauseCount;
     private final ExtractionConfig extractionConfig;
     private final IndexShardSearchConfig shardConfig;
-    private final ResultStoreConfig resultStoreConfig;
+    private final SearchResultStoreConfig resultStoreConfig;
 
     public SearchConfig() {
         maxStoredDataQueueSize = DEFAULT_MAX_STORED_DATA_QUEUE_SIZE;
         maxBooleanClauseCount = DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT;
         extractionConfig = new ExtractionConfig();
         shardConfig = new IndexShardSearchConfig();
-        resultStoreConfig = new ResultStoreConfig();
+        resultStoreConfig = new SearchResultStoreConfig();
     }
 
     @JsonCreator
@@ -41,7 +41,7 @@ public class SearchConfig extends AbstractConfig implements IsStroomConfig {
                         @JsonProperty("maxBooleanClauseCount") final int maxBooleanClauseCount,
                         @JsonProperty("extraction") final ExtractionConfig extractionConfig,
                         @JsonProperty("shard") final IndexShardSearchConfig shardConfig,
-                        @JsonProperty("resultStore") final ResultStoreConfig resultStoreConfig) {
+                        @JsonProperty("resultStore") final SearchResultStoreConfig resultStoreConfig) {
         this.maxStoredDataQueueSize = maxStoredDataQueueSize;
         this.maxBooleanClauseCount = maxBooleanClauseCount;
         this.extractionConfig = extractionConfig;
@@ -71,7 +71,7 @@ public class SearchConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonProperty("resultStore")
-    public ResultStoreConfig getResultStoreConfig() {
+    public SearchResultStoreConfig getResultStoreConfig() {
         return resultStoreConfig;
     }
 

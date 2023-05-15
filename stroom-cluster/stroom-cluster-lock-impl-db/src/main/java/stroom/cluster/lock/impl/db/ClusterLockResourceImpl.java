@@ -86,14 +86,15 @@ class ClusterLockResourceImpl implements ClusterLockResource {
                 nodeName);
 
         try {
-            final Response response = webTargetFactory.get()
+            try (Response response = webTargetFactory.get()
                     .create(url)
                     .request(MediaType.APPLICATION_JSON)
-                    .put(Entity.json(key));
-            if (response.getStatus() != 200) {
-                throw new WebApplicationException(response);
+                    .put(Entity.json(key))) {
+                if (response.getStatus() != 200) {
+                    throw new WebApplicationException(response);
+                }
+                return response.readEntity(Boolean.class);
             }
-            return response.readEntity(Boolean.class);
         } catch (Throwable e) {
             throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
         }

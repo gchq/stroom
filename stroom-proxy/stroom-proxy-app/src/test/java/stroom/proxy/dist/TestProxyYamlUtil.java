@@ -2,6 +2,7 @@ package stroom.proxy.dist;
 
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.ProxyYamlUtil;
+import stroom.util.NullSafe;
 import stroom.util.io.DiffUtil;
 
 import org.junit.jupiter.api.Test;
@@ -42,7 +43,15 @@ class TestProxyYamlUtil {
         final Path expectedFile = getExpectedYamlFilePath();
         final Path actualFile = getActualYamlFilePath();
 
-        final String actual = getYamlFromJavaModel();
+        final String actual;
+        try {
+            actual = getYamlFromJavaModel();
+        } catch (Exception e) {
+            throw new RuntimeException("Error getting actual", e);
+        }
+        if (NullSafe.isBlankString(actual)) {
+            throw new RuntimeException("Actual is blank");
+        }
 
         // The expected file has already had the DW lines removed
         final List<String> actualLines = GenerateProxyExpectedYaml.removeDropWizardLines(actual);

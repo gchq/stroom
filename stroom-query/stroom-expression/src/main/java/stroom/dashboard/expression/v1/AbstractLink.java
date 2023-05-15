@@ -28,13 +28,6 @@ abstract class AbstractLink extends AbstractManyChildFunction {
             super(childGenerators);
         }
 
-        @Override
-        public void set(final Val[] values) {
-            for (final Generator generator : childGenerators) {
-                generator.set(values);
-            }
-        }
-
         Val makeLink(final Val text, final Val url, final Val type) {
             if (text.type().isError()) {
                 return text;

@@ -18,6 +18,7 @@ package stroom.dashboard.expression.v1;
 
 
 public interface Val extends Param, Appendable {
+    Val[] EMPTY_VALUES = new Val[0];
 
     Integer toInteger();
 
@@ -33,5 +34,25 @@ public interface Val extends Param, Appendable {
 
     static Val[] of(final Val... values) {
         return values;
+    }
+
+    static Val[] of(final String... str) {
+        final Val[] result = new Val[str.length];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = ValString.create(str[i]);
+        }
+        return Val.of(result);
+    }
+
+    static Val[] of(final double... d) {
+        final Val[] result = new Val[d.length];
+        for (int i = 0; i < d.length; i++) {
+            result[i] = ValDouble.create(d[i]);
+        }
+        return Val.of(result);
+    }
+
+    static Val[] empty() {
+        return EMPTY_VALUES;
     }
 }

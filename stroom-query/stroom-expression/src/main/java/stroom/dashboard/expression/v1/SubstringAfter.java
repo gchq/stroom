@@ -16,8 +16,7 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import stroom.dashboard.expression.v1.ref.StoredValues;
 
 import java.text.ParseException;
 import java.util.function.Supplier;
@@ -70,7 +69,7 @@ class SubstringAfter extends AbstractFunction {
 
             // Optimise replacement of static input in case user does something stupid.
             if (afterFunction instanceof StaticValueFunction) {
-                final String after = afterFunction.createGenerator().eval(null).toString();
+                final String after = ((StaticValueFunction) afterFunction).getValue().toString();
                 if (after != null) {
                     final String value = param.toString();
                     final int index = value.indexOf(after);
@@ -103,8 +102,19 @@ class SubstringAfter extends AbstractFunction {
         return hasAggregate;
     }
 
-    private static final class Gen extends AbstractSingleChildGenerator {
+    @Override
+    public boolean requiresChildData() {
+        boolean requiresChildData = super.requiresChildData();
+        if (afterFunction != null && !requiresChildData) {
+            requiresChildData = afterFunction.requiresChildData();
+        }
+        if (function != null && !requiresChildData) {
+            requiresChildData = function.requiresChildData();
+        }
+        return requiresChildData;
+    }
 
+    private static final class Gen extends AbstractSingleChildGenerator {
 
         private final Generator stringGenerator;
 
@@ -114,20 +124,20 @@ class SubstringAfter extends AbstractFunction {
         }
 
         @Override
-        public void set(final Val[] values) {
-            childGenerator.set(values);
-            stringGenerator.set(values);
+        public void set(final Val[] values, final StoredValues storedValues) {
+            childGenerator.set(values, storedValues);
+            stringGenerator.set(values, storedValues);
         }
 
         @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
-            final Val val = childGenerator.eval(childDataSupplier);
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
+            final Val val = childGenerator.eval(storedValues, childDataSupplier);
             if (!val.type().isValue()) {
                 return ValErr.wrap(val);
             }
             final String value = val.toString();
 
-            final Val strVal = stringGenerator.eval(childDataSupplier);
+            final Val strVal = stringGenerator.eval(storedValues, childDataSupplier);
             if (!strVal.type().isValue()) {
                 return ValErr.wrap(strVal);
             }
@@ -139,18 +149,6 @@ class SubstringAfter extends AbstractFunction {
             }
 
             return ValString.create(value.substring(index + str.length()));
-        }
-
-        @Override
-        public void read(final Input input) {
-            super.read(input);
-            stringGenerator.read(input);
-        }
-
-        @Override
-        public void write(final Output output) {
-            super.write(output);
-            stringGenerator.write(output);
         }
     }
 }

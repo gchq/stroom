@@ -39,20 +39,15 @@ import stroom.pipeline.xmlschema.XmlSchemaStore;
 import stroom.pipeline.xmlschema.XmlSchemaStoreImpl;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
+import stroom.test.common.util.test.ContentPackZipDownloader;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.StreamUtil;
 import stroom.xmlschema.shared.XmlSchemaDoc;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 
 public class SchemaFilterFactory {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SchemaFilterFactory.class);
-
-    private static final String SCHEMAS_BASE = "stroomContent/XML Schemas/";
     private final SecurityContext securityContext = new MockSecurityContext();
     private final Persistence persistence = new MemoryPersistence();
     private final XmlSchemaSerialiser serialiser = new XmlSchemaSerialiser(new Serialiser2FactoryImpl());
@@ -77,7 +72,9 @@ public class SchemaFilterFactory {
                 DS3ParserFactory.NAMESPACE_URI,
                 DS3ParserFactory.SYSTEM_ID,
                 ContentPacks.CORE_XML_SCHEMAS_PACK,
-                SCHEMAS_BASE + "data-splitter/data-splitter v3.0.XMLSchema.data.xsd");
+                "XML Schemas/" +
+                        "data-splitter/" +
+                        "data_splitter_v3_0.XMLSchema.9e1e2567-ba83-4720-95c0-f882b951bd3e.data.xsd");
     }
 
     public SchemaFilter getSchemaFilter(final String namespaceURI, final ErrorReceiverProxy errorReceiverProxy) {
@@ -113,7 +110,9 @@ public class SchemaFilterFactory {
 
     private Path getSchemaFile(final ContentPack contentPack,
                                final String fileName) {
-        return FileSystemTestUtil.getExplodedContentPackDir(contentPack)
-                .resolve(fileName);
+        final Path dir = ContentPackZipDownloader.downloadContentPack(
+                contentPack,
+                FileSystemTestUtil.getExplodedContentPacksDir());
+        return dir.resolve(contentPack.getPath()).resolve(fileName);
     }
 }

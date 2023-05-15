@@ -5,7 +5,6 @@ import stroom.query.language.QuotedStringToken.Builder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -14,7 +13,9 @@ public class Tokeniser {
     private List<Token> tokens;
 
     private Tokeniser(final String string) {
-        Objects.requireNonNull(string, "Null query");
+        if (string == null || string.isBlank()) {
+            throw new TokenException(null, "Empty query");
+        }
 
         char[] chars = string.toCharArray();
         final Token unknown = new Token(TokenType.UNKNOWN, chars, 0, chars.length - 1);

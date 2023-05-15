@@ -12,6 +12,7 @@ import stroom.docstore.impl.Persistence;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.docstore.impl.StoreFactoryImpl;
 import stroom.docstore.impl.fs.FSPersistence;
+import stroom.dropwizard.common.DropwizardModule;
 import stroom.dropwizard.common.FilteredHealthCheckServlet;
 import stroom.dropwizard.common.LogLevelInspector;
 import stroom.dropwizard.common.PermissionExceptionMapper;
@@ -30,6 +31,8 @@ import stroom.proxy.app.forwarder.ForwarderDestinationsImpl;
 import stroom.proxy.app.handler.ProxyId;
 import stroom.proxy.app.handler.ProxyRequestHandler;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
+import stroom.proxy.app.jersey.ProxyJerseyModule;
+import stroom.proxy.app.servlet.ProxyQueueMonitoringServlet;
 import stroom.proxy.app.servlet.ProxySecurityFilter;
 import stroom.proxy.app.servlet.ProxyStatusServlet;
 import stroom.proxy.app.servlet.ProxyWelcomeServlet;
@@ -83,7 +86,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
-import javax.ws.rs.client.Client;
 import javax.ws.rs.ext.ExceptionMapper;
 
 public class ProxyModule extends AbstractModule {
@@ -113,6 +115,7 @@ public class ProxyModule extends AbstractModule {
         bind(ProxyId.class).asEagerSingleton();
 
         install(new ProxyConfigModule(proxyConfigHolder));
+        install(new DropwizardModule());
         install(new DbModule());
         install(new ProxyDbModule());
         install(new MockCollectionModule());
@@ -122,6 +125,7 @@ public class ProxyModule extends AbstractModule {
         install(new RemoteFeedModule());
 
         install(new TaskContextModule());
+        install(new ProxyJerseyModule());
 
         bind(BuildInfo.class).toProvider(BuildInfoProvider.class);
 //        bind(BufferFactory.class).to(BufferFactoryImpl.class);
@@ -146,8 +150,6 @@ public class ProxyModule extends AbstractModule {
         // Proxy doesn't do import so bind a dummy ImportConverter for the StoreImpl(s) to use
         bind(ImportConverter.class).to(NoOpImportConverter.class);
 
-        bind(Client.class).toProvider(ProxyJerseyClientProvider.class);
-
         HasHealthCheckBinder.create(binder())
                 .bind(ContentSyncService.class)
                 .bind(FeedStatusResourceImpl.class)
@@ -162,6 +164,7 @@ public class ProxyModule extends AbstractModule {
         ServletBinder.create(binder())
                 .bind(DebugServlet.class)
                 .bind(ProxyStatusServlet.class)
+                .bind(ProxyQueueMonitoringServlet.class)
                 .bind(ProxyWelcomeServlet.class)
                 .bind(ReceiveDataServlet.class);
 

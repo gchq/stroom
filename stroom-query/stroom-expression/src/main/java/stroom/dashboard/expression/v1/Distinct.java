@@ -16,14 +16,12 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import stroom.dashboard.expression.v1.ref.StoredValues;
+import stroom.dashboard.expression.v1.ref.StringListReference;
+import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
 
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Supplier;
 
 @SuppressWarnings("unused") // Used by FunctionFactory
@@ -86,6 +84,7 @@ class Distinct extends AbstractFunction {
     private int limit = DEFAULT_LIMIT;
 
     private Function function;
+    private StringListReference stringListReference;
 
     public Distinct(final String name) {
         super(name, 1, 3);
@@ -111,9 +110,15 @@ class Distinct extends AbstractFunction {
     }
 
     @Override
+    public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
+        stringListReference = valueReferenceIndex.addStringList();
+        super.addValueReferences(valueReferenceIndex);
+    }
+
+    @Override
     public Generator createGenerator() {
         final Generator childGenerator = function.createGenerator();
-        return new Gen(childGenerator, delimiter, limit);
+        return new Gen(childGenerator, delimiter, limit, stringListReference);
     }
 
     @Override
@@ -126,75 +131,101 @@ class Distinct extends AbstractFunction {
         return isAggregate();
     }
 
+    @Override
+    public boolean requiresChildData() {
+        if (function != null) {
+            return function.requiresChildData();
+        }
+        return super.requiresChildData();
+    }
+
     private static class Gen extends AbstractSingleChildGenerator {
 
         private final String delimiter;
         private final int limit;
+        private final StringListReference stringListReference;
         // The distinct input values in input order
-        private final List<String> orderedDistinctValues;
-        // The distinct input values
-        private final Set<String> distinctValues;
+//        private final List<String> orderedDistinctValues;
+//        // The distinct input values
+//        private final Set<String> distinctValues;
 
-        Gen(final Generator childGenerator, final String delimiter, final int limit) {
+        Gen(final Generator childGenerator,
+            final String delimiter,
+            final int limit,
+            final StringListReference stringListReference) {
             super(childGenerator);
             this.delimiter = delimiter;
             this.limit = limit;
-            this.distinctValues = new HashSet<>(limit);
-            this.orderedDistinctValues = new ArrayList<>(limit);
+            this.stringListReference = stringListReference;
+//            this.distinctValues = new HashSet<>(limit);
+//            this.orderedDistinctValues = new ArrayList<>(limit);
         }
 
         @Override
-        public void set(final Val[] values) {
-            childGenerator.set(values);
+        public void set(final Val[] values, final StoredValues storedValues) {
+            childGenerator.set(values, storedValues);
 
-            if (distinctValues.size() < limit) {
-                final Val val = childGenerator.eval(null);
+            final List<String> list = stringListReference.get(storedValues);
+            if (list.size() < limit) {
+                final Val val = childGenerator.eval(storedValues, null);
                 final String value = val.toString();
-                addValueIfDistinct(value);
-            }
-        }
-
-        private void addValueIfDistinct(final String value) {
-            if (value != null) {
-                final boolean isDistinct = distinctValues.add(value);
-                if (isDistinct) {
-                    orderedDistinctValues.add(value);
+                if (value != null && !list.contains(value)) {
+                    list.add(value);
+                    stringListReference.set(storedValues, list);
                 }
             }
         }
 
+//        private void addValueIfDistinct(final String value) {
+//            if (value != null) {
+//                final boolean isDistinct = distinctValues.add(value);
+//                if (isDistinct) {
+//                    orderedDistinctValues.add(value);
+//                }
+//            }
+//        }
+
         @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
-            return ValString.create(String.join(delimiter, orderedDistinctValues));
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
+            final List<String> list = stringListReference.get(storedValues);
+            return ValString.create(String.join(delimiter, list));
         }
 
         @Override
-        public void merge(final Generator generator) {
-            final Gen gen = (Gen) generator;
-            for (final String value : gen.orderedDistinctValues) {
-                if (distinctValues.size() < limit) {
-                    addValueIfDistinct(value);
+        public void merge(final StoredValues existingValues, final StoredValues newValues) {
+            final List<String> existingList = stringListReference.get(existingValues);
+            final List<String> newList = stringListReference.get(newValues);
+            boolean changed = false;
+            for (final String value : newList) {
+                if (existingList.size() < limit) {
+                    if (!existingList.contains(value)) {
+                        existingList.add(value);
+                        changed = true;
+                    }
                 }
             }
-            super.merge(generator);
-        }
-
-        @Override
-        public void read(final Input input) {
-            distinctValues.clear();
-            orderedDistinctValues.clear();
-            final int length = input.readInt();
-            for (int i = 0; i < length; i++) {
-                addValueIfDistinct(input.readString());
+            if (changed) {
+                stringListReference.set(existingValues, existingList);
             }
+            super.merge(existingValues, newValues);
         }
-
-        @Override
-        public void write(final Output output) {
-            output.writeInt(orderedDistinctValues.size());
-            for (final String string : orderedDistinctValues) {
-                output.writeString(string);
-            }
-        }
+//
+//        @Override
+//        public void read(final Input input) {
+//            distinctValues.clear();
+//            orderedDistinctValues.clear();
+//            final int length = input.readInt();
+//            for (int i = 0; i < length; i++) {
+//                addValueIfDistinct(input.readString());
+//            }
+//        }
+//
+//        @Override
+//        public void write(final Output output) {
+//            output.writeInt(orderedDistinctValues.size());
+//            for (final String string : orderedDistinctValues) {
+//                output.writeString(string);
+//            }
+//        }
     }
 }

@@ -1,6 +1,7 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.ValSerialiser;
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.util.logging.Metrics;
 
 import com.esotericsoftware.kryo.io.Input;

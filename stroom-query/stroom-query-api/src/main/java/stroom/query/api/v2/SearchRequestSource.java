@@ -96,7 +96,7 @@ public class SearchRequestSource {
     }
 
     public enum SourceType implements HasDisplayValue {
-        ALERT_RULE("Alert Rule"),
+        ANALYTIC_RULE("Analytic Rule"),
         DASHBOARD_UI("Dashboard UI"),
         QUERY_UI("Query UI"),
         API("API Request"),

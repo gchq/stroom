@@ -161,7 +161,7 @@ public class RecordQueue implements Flushable {
     public <T> Batch<T> getBatch(final ReadQueue<T> readQueue,
                                  final long timeout,
                                  final TimeUnit timeUnit) {
-        Batch<T> batch = Batch.emptyBatch();
+        Batch<T> batch;
         try {
             readLock.lockInterruptibly();
             try {

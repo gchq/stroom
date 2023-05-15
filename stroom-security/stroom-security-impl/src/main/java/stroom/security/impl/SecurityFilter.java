@@ -26,6 +26,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.net.UrlUtils;
 import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.ServletAuthenticationChecker;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,17 +66,20 @@ class SecurityFilter implements Filter {
     private final UriFactory uriFactory;
     private final SecurityContext securityContext;
     private final OpenIdManager openIdManager;
+    private final ServletAuthenticationChecker servletAuthenticationChecker;
 
     @Inject
     SecurityFilter(
             final Provider<AuthenticationConfig> authenticationConfigProvider,
             final UriFactory uriFactory,
             final SecurityContext securityContext,
-            final OpenIdManager openIdManager) {
+            final OpenIdManager openIdManager,
+            final ServletAuthenticationChecker servletAuthenticationChecker) {
         this.authenticationConfigProvider = authenticationConfigProvider;
         this.uriFactory = uriFactory;
         this.securityContext = securityContext;
         this.openIdManager = openIdManager;
+        this.servletAuthenticationChecker = servletAuthenticationChecker;
     }
 
     @Override
@@ -156,10 +160,10 @@ class SecurityFilter implements Filter {
                 if (userIdentity.isPresent()) {
                     securityContext.asUser(userIdentity.get(), () -> process(request, response, chain));
 
-                } else if (shouldBypassAuthentication(fullPath)) {
-                    // Some paths don't need authentication (they contain `/noauth/`.
-                    // If that is the case then proceed as proc user.
-                    securityContext.asProcessingUser(() -> process(request, response, chain));
+                } else if (shouldBypassAuthentication(fullPath, servletPath)) {
+                    // Some paths don't need authentication. If that is the case then proceed as proc user.
+                    securityContext.asProcessingUser(() ->
+                            process(request, response, chain));
 
                 } else if (isApiRequest(servletPath)) {
                     // If we couldn't login with a token or couldn't get a token then error as this is an API call
@@ -169,7 +173,6 @@ class SecurityFilter implements Filter {
 
                 } else if (request.getRequestURI().equals("/")) {
                     // UI request, so instigate an OpenID authentication flow
-                    // like the good relying party we are.
                     try {
                         final String code = UrlUtils.getLastParam(request, OpenId.CODE);
                         final String stateId = UrlUtils.getLastParam(request, OpenId.STATE);
@@ -211,8 +214,14 @@ class SecurityFilter implements Filter {
         return servletPath.startsWith(ResourcePaths.API_ROOT_PATH);
     }
 
-    private boolean shouldBypassAuthentication(final String fullPath) {
-        return fullPath.contains(ResourcePaths.NO_AUTH + "/");
+    private boolean shouldBypassAuthentication(final String fullPath, final String servletPath) {
+        if (servletPath == null) {
+            return false;
+        } else if (fullPath.contains(ResourcePaths.NO_AUTH + "/")) {
+            return true;
+        } else {
+            return servletAuthenticationChecker.isUnauthenticatedPath(servletPath);
+        }
     }
 
     private void process(final HttpServletRequest request,

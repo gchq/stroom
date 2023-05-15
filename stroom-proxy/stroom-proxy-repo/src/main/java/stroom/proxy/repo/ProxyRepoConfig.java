@@ -3,6 +3,7 @@ package stroom.proxy.repo;
 import stroom.util.config.annotations.RequiresProxyRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
+import stroom.util.shared.validation.ValidDirectoryPath;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -43,10 +44,8 @@ public class ProxyRepoConfig extends AbstractConfig implements IsProxyConfig {
         return storingEnabled;
     }
 
-    /**
-     * Optional Repository DIR. If set any incoming request will be written to the file system.
-     */
     @RequiresProxyRestart
+    @ValidDirectoryPath(ensureExistence = true)
     @JsonProperty
     public String getRepoDir() {
         return repoDir;
@@ -60,12 +59,8 @@ public class ProxyRepoConfig extends AbstractConfig implements IsProxyConfig {
                 || (repoDir != null && !repoDir.isEmpty());
     }
 
-    public ProxyRepoConfig withRepoDir(final String repoDir) {
-        return new ProxyRepoConfig(storingEnabled, repoDir);
-    }
-
-    public ProxyRepoConfig withStoringEnabled(final boolean storingEnabled) {
-        return new ProxyRepoConfig(storingEnabled, repoDir);
+    public Builder copy() {
+        return new Builder(this);
     }
 
     public static Builder builder() {
@@ -108,6 +103,11 @@ public class ProxyRepoConfig extends AbstractConfig implements IsProxyConfig {
 
 
         private Builder() {
+        }
+
+        private Builder(final ProxyRepoConfig config) {
+            this.storingEnabled = config.storingEnabled;
+            this.repoDir = config.repoDir;
         }
 
         public Builder storingEnabled(final boolean storingEnabled) {

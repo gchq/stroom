@@ -18,7 +18,7 @@ body,table td,select {
 	font-family: var(--regular-font-family);
 	font-size: var(--font-size-13);
 	font-weight: 400;
-	
+
 	-moz-box-sizing: border-box;
 	-ms-box-sizing: border-box;
 	box-sizing: border-box;
@@ -51,7 +51,7 @@ body,table td,select {
 	border-radius: 6px;
 	box-shadow: 0 0 1px rgba(0, 0, 0, 0.3);
 	white-space: nowrap;
-	
+
 	background-image: var(--button__background-image);
 	background-color: var(--button__background-color);
 	border: 1px solid var(--button__border-color);
@@ -67,7 +67,7 @@ body,table td,select {
 	border: 1px solid #5b7aa1 !important;
 /* 	border-color: #4a90e4 !important; */
 /* 	background-color: white !important; */
-	
+
 	background-image: var(--button__background-image--active) !important;
 	background-color: var(--button__background-color--active) !important;
 	border-color: var(--button__border-color--active) !important;
@@ -76,7 +76,7 @@ body,table td,select {
 /* 	border-color: #aaa; */
 /* 	background-color: white; */
 	box-shadow: 0 0 1px rgba(0, 0, 0, 0.5);
-	
+
 	background-image: var(--button__background-image--hover);
 	background-color: var(--button__background-color--hover);
 	border-color: var(--button__border-color--hover);
@@ -112,7 +112,7 @@ body,table td,select {
 }
 
 .gwt-DialogBox .dialogContent {
-	
+
 }
 
 .gwt-DialogBox .dialogMiddleCenter {
@@ -242,7 +242,7 @@ body,table td,select {
 }
 
 .gwt-TabBar {
-	
+
 }
 
 .gwt-TabBar .gwt-TabBarFirst-wrapper {
@@ -254,11 +254,11 @@ body,table td,select {
 }
 
 .gwt-TabBar .gwt-TabBarRest-wrapper {
-	
+
 }
 
 .gwt-TabBar .gwt-TabBarRest {
-	
+
 }
 
 .gwt-TabBar .gwt-TabBarItem {
@@ -313,11 +313,11 @@ body,table td,select {
 
 /* TREE */
 .gwt-Tree .gwt-TreeItem {
-	
+
 }
 
 .gwt-Tree .gwt-TreeItem-selected {
-	
+
 }
 
 /* INPUT CONTROLS */
@@ -413,8 +413,8 @@ td.datePickerYear {
 }
 
 .gwt-SplitLayoutPanel-Dragger {
+    /* cursor set by .gwt-SplitLayoutPanel-(V|H)Dragger in standard.css */
     background: none;
-	cursor: col-resize;
 	opacity: 0;
 	transition: opacity 0.3s;
     border-style: solid;

@@ -189,7 +189,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
 
         } catch (final TransformerConfigurationException e) {
             fatal(e);
-            throw new LoggedException(e.getMessage(), e);
+            throw LoggedException.wrap(e);
         }
 
         super.startProcessing();
@@ -213,7 +213,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
                 final String message = "XSLT \"" +
                         docRef.getName() +
                         "\" appears to have been deleted";
-                throw new ProcessException(message);
+                throw ProcessException.create(message);
             }
 
             return xsltDoc;

@@ -1,6 +1,7 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.FieldIndex;
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.TableSettings;
 
@@ -23,8 +24,6 @@ public class MapDataStoreFactory implements DataStoreFactory {
                             final TableSettings tableSettings,
                             final FieldIndex fieldIndex,
                             final Map<String, String> paramMap,
-                            final Sizes maxResults,
-                            final Sizes storeSize,
                             final DataStoreSettings dataStoreSettings,
                             final ErrorConsumer errorConsumer) {
         if (dataStoreSettings.isProducePayloads()) {
@@ -36,8 +35,7 @@ public class MapDataStoreFactory implements DataStoreFactory {
                 tableSettings,
                 fieldIndex,
                 paramMap,
-                maxResults,
-                storeSize);
+                dataStoreSettings);
     }
 
     @Override

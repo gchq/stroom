@@ -9,6 +9,8 @@ import stroom.security.api.ClientSecurityUtil;
 import stroom.util.HasHealthCheck;
 import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
+import stroom.util.jersey.JerseyClientFactory;
+import stroom.util.jersey.JerseyClientName;
 import stroom.util.logging.LogUtil;
 
 import com.codahale.metrics.health.HealthCheck;
@@ -31,7 +33,6 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
@@ -49,7 +50,7 @@ public class ContentSyncService implements Managed, HasHealthCheck {
     private final Provider<ContentSyncConfig> contentSyncConfigProvider;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final Set<ImportExportActionHandler> importExportActionHandlers;
-    private final Provider<Client> clientProvider;
+    private final JerseyClientFactory jerseyClientFactory;
 
     private volatile ScheduledExecutorService scheduledExecutorService;
 
@@ -58,10 +59,10 @@ public class ContentSyncService implements Managed, HasHealthCheck {
                               final Provider<ContentSyncConfig> contentSyncConfigProvider,
                               final DefaultOpenIdCredentials defaultOpenIdCredentials,
                               final Set<ImportExportActionHandler> importExportActionHandlers,
-                              final Provider<Client> clientProvider) {
+                              final JerseyClientFactory jerseyClientFactory) {
         this.contentSyncConfigProvider = contentSyncConfigProvider;
         this.importExportActionHandlers = importExportActionHandlers;
-        this.clientProvider = clientProvider;
+        this.jerseyClientFactory = jerseyClientFactory;
         this.proxyConfigProvider = proxyConfigProvider;
         contentSyncConfigProvider.get().validateConfiguration();
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
@@ -111,14 +112,15 @@ public class ContentSyncService implements Managed, HasHealthCheck {
                     try {
                         if (url != null) {
                             LOGGER.info("Syncing content from '" + url + "'");
-                            final Response response = createClient(url, "/list").get();
-                            if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
-                                LOGGER.error(response.getStatusInfo().getReasonPhrase());
-                            } else {
-                                final Set<DocRef> docRefs = response.readEntity(new GenericType<Set<DocRef>>() {
-                                });
-                                docRefs.forEach(docRef -> importDocument(url, docRef, importHandler));
-                                LOGGER.info("Synced {} documents", docRefs.size());
+                            try (Response response = createClient(url, "/list").get()) {
+                                if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
+                                    LOGGER.error(response.getStatusInfo().getReasonPhrase());
+                                } else {
+                                    final Set<DocRef> docRefs = response.readEntity(new GenericType<Set<DocRef>>() {
+                                    });
+                                    docRefs.forEach(docRef -> importDocument(url, docRef, importHandler));
+                                    LOGGER.info("Synced {} documents", docRefs.size());
+                                }
                             }
                         }
                     } catch (Exception e) {
@@ -133,25 +135,25 @@ public class ContentSyncService implements Managed, HasHealthCheck {
                                 final DocRef docRef,
                                 final ImportExportActionHandler importExportActionHandler) {
         LOGGER.info("Fetching " + docRef.getType() + " " + docRef.getName() + " " + docRef.getUuid());
-        final Response response = createClient(url, "/export").post(Entity.json(docRef));
-        if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
-            LOGGER.error(response.getStatusInfo().getReasonPhrase());
-        } else {
-            final DocumentData documentData = response.readEntity(DocumentData.class);
-            final ImportState importState = new ImportState(
-                    documentData.getDocRef(),
-                    documentData.getDocRef().getName());
-            importExportActionHandler.importDocument(
-                    documentData.getDocRef(),
-                    documentData.getDataMap(),
-                    importState,
-                    ImportSettings.auto());
+        try (Response response = createClient(url, "/export").post(Entity.json(docRef))) {
+            if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
+                LOGGER.error(response.getStatusInfo().getReasonPhrase());
+            } else {
+                final DocumentData documentData = response.readEntity(DocumentData.class);
+                final ImportState importState = new ImportState(
+                        documentData.getDocRef(),
+                        documentData.getDocRef().getName());
+                importExportActionHandler.importDocument(
+                        documentData.getDocRef(),
+                        documentData.getDataMap(),
+                        importState,
+                        ImportSettings.auto());
+            }
         }
     }
 
     private Invocation.Builder createClient(final String url, final String path) {
-        final Client client = clientProvider.get();
-        final WebTarget webTarget = client.target(url)
+        final WebTarget webTarget = jerseyClientFactory.createWebTarget(JerseyClientName.CONTENT_SYNC, url)
                 .path(path);
         final Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         ClientSecurityUtil.addAuthorisationHeader(invocationBuilder, getApiKey());

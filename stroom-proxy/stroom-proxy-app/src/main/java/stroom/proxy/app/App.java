@@ -34,6 +34,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.PathConfig;
 import stroom.util.io.TempDirProvider;
+import stroom.util.logging.DefaultLoggingFilter;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -87,6 +88,8 @@ public class App extends Application<Config> {
     private HomeDirProvider homeDirProvider;
     @Inject
     private TempDirProvider tempDirProvider;
+
+    private Injector injector;
 
     private final Path configFile;
 
@@ -142,6 +145,8 @@ public class App extends Application<Config> {
         // Add useful logging setup.
         registerLogConfiguration(environment);
 
+        environment.jersey().register(DefaultLoggingFilter.createWithDefaults());
+
         // We want Stroom to use the root path so we need to move Dropwizard's path.
         environment.jersey().setUrlPattern(ResourcePaths.API_ROOT_PATH + "/*");
 
@@ -154,7 +159,7 @@ public class App extends Application<Config> {
         LOGGER.info("Starting Stroom Proxy");
 
         final ProxyModule proxyModule = new ProxyModule(configuration, environment, configFile);
-        final Injector injector = Guice.createInjector(proxyModule);
+        injector = Guice.createInjector(proxyModule);
         injector.injectMembers(this);
 
         // Ensure we have our home/temp dirs set up
@@ -299,5 +304,9 @@ public class App extends Application<Config> {
                     proxyConfig.getFullPathStr(ProxyConfig.PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE));
             System.exit(1);
         }
+    }
+
+    public Injector getInjector() {
+        return injector;
     }
 }

@@ -2,6 +2,7 @@ package stroom.proxy.repo;
 
 import stroom.util.config.annotations.RequiresProxyRestart;
 import stroom.util.shared.NotInjectableConfig;
+import stroom.util.shared.validation.ValidDirectoryPath;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -34,6 +35,7 @@ public class FileScannerConfig {
 
     @RequiresProxyRestart
     @NotNull
+    @ValidDirectoryPath // if someone sets a path here, it needs to exist really, so don't auto create
     @JsonProperty
     public String getPath() {
         return path;

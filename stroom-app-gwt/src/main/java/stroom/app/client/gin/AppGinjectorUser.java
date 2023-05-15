@@ -22,8 +22,8 @@ import stroom.about.client.gin.AboutModule;
 import stroom.activity.client.ActivityModule;
 import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
-import stroom.alert.rule.client.gin.AlertRuleGinjector;
-import stroom.alert.rule.client.gin.AlertRuleModule;
+import stroom.analytics.client.gin.AnalyticsGinjector;
+import stroom.analytics.client.gin.AnalyticsModule;
 import stroom.annotation.client.AnnotationModule;
 import stroom.cache.client.gin.CacheGinjector;
 import stroom.cache.client.gin.CacheModule;
@@ -127,7 +127,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         SecurityModule.class,
         ElasticClusterModule.class,
         ElasticIndexModule.class,
-        AlertRuleModule.class,
+        AnalyticsModule.class,
         SolrIndexModule.class,
         StatisticsModule.class,
         StreamStoreModule.class,
@@ -161,7 +161,7 @@ public interface AppGinjectorUser extends
         UserPreferencesGinjector,
         ScriptGinjector,
         SecurityGinjector,
-        AlertRuleGinjector,
+        AnalyticsGinjector,
         ElasticClusterGinjector,
         ElasticIndexGinjector,
         SolrIndexGinjector,

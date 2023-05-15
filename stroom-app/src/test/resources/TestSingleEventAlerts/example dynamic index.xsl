@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<xsl:stylesheet xpath-default-namespace="event-logging:3" xmlns="documents:1" xmlns:stroom="stroom" xmlns:sm="stroom-meta" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.0">
+<xsl:stylesheet xpath-default-namespace="event-logging:3"
+                xmlns="index-documents:1"
+                xmlns:stroom="stroom"
+                xmlns:sm="stroom-meta"
+                xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                version="2.0">
     <xsl:template match="/Events">
-        <documents xsi:schemaLocation="documents:1 file://documents-v1.0.0.xsd" version="1.0.0">
-            <xsl:apply-templates />
-        </documents>
+        <index-documents xsi:schemaLocation="index-documents:1 index-documents-v1.0.0.xsd" version="1.0.0">
+            <xsl:apply-templates/>
+        </index-documents>
     </xsl:template>
     <xsl:template match="Event">
         <document>
@@ -13,7 +19,7 @@
                 <indexed>true</indexed>
                 <stored>true</stored>
                 <value>
-                    <xsl:value-of select="@StreamId" />
+                    <xsl:value-of select="@StreamId"/>
                 </value>
             </field>
             <field>
@@ -22,7 +28,7 @@
                 <indexed>true</indexed>
                 <stored>true</stored>
                 <value>
-                    <xsl:value-of select="@EventId" />
+                    <xsl:value-of select="@EventId"/>
                 </value>
             </field>
 
@@ -33,7 +39,7 @@
                 <analyser>Alpha numeric</analyser>
                 <indexed>true</indexed>
                 <value>
-                    <xsl:value-of select="stroom:feed-name()" />
+                    <xsl:value-of select="stroom:feed-name()"/>
                 </value>
             </field>
             <field>
@@ -41,10 +47,10 @@
                 <type>Text</type>
                 <indexed>true</indexed>
                 <value>
-                    <xsl:value-of select="stroom:feed-name()" />
+                    <xsl:value-of select="stroom:feed-name()"/>
                 </value>
             </field>
-            <xsl:apply-templates select="*" />
+            <xsl:apply-templates select="*"/>
         </document>
     </xsl:template>
 
@@ -58,12 +64,12 @@
                     <analyser>Alpha numeric</analyser>
                     <indexed>true</indexed>
                     <value>
-                        <xsl:value-of select="name()" />
+                        <xsl:value-of select="name()"/>
                     </value>
                 </field>
             </xsl:if>
         </xsl:for-each>
-        <xsl:apply-templates />
+        <xsl:apply-templates/>
     </xsl:template>
 
     <!-- Index the time -->
@@ -73,7 +79,7 @@
             <type>Date</type>
             <indexed>true</indexed>
             <value>
-                <xsl:value-of select="." />
+                <xsl:value-of select="."/>
             </value>
         </field>
     </xsl:template>
@@ -85,7 +91,7 @@
             <type>Text</type>
             <indexed>true</indexed>
             <value>
-                <xsl:value-of select="." />
+                <xsl:value-of select="."/>
             </value>
         </field>
     </xsl:template>
@@ -98,7 +104,7 @@
             <analyser>Alpha numeric</analyser>
             <indexed>true</indexed>
             <value>
-                <xsl:value-of select="." />
+                <xsl:value-of select="."/>
             </value>
         </field>
     </xsl:template>
@@ -111,7 +117,7 @@
             <analyser>Alpha numeric</analyser>
             <indexed>true</indexed>
             <value>
-                <xsl:value-of select="." />
+                <xsl:value-of select="."/>
             </value>
         </field>
     </xsl:template>
@@ -123,7 +129,7 @@
             <type>Text</type>
             <indexed>true</indexed>
             <value>
-                <xsl:value-of select="." />
+                <xsl:value-of select="."/>
             </value>
         </field>
     </xsl:template>
@@ -135,7 +141,7 @@
             <type>Text</type>
             <indexed>true</indexed>
             <value>
-                <xsl:value-of select="." />
+                <xsl:value-of select="."/>
             </value>
         </field>
     </xsl:template>
@@ -148,7 +154,7 @@
             <analyser>Alpha numeric</analyser>
             <indexed>true</indexed>
             <value>
-                <xsl:value-of select="." />
+                <xsl:value-of select="."/>
             </value>
         </field>
     </xsl:template>
@@ -162,7 +168,15 @@
             <indexed>true</indexed>
             <caseSensitive>true</caseSensitive>
             <value>
-                <xsl:value-of select="." />
+                <xsl:value-of select="."/>
+            </value>
+        </field>
+        <field>
+            <name>Command (Keyword)</name>
+            <indexed>true</indexed>
+            <caseSensitive>true</caseSensitive>
+            <value>
+                <xsl:value-of select="."/>
             </value>
         </field>
     </xsl:template>
@@ -175,7 +189,7 @@
             <analyser>Alpha numeric</analyser>
             <indexed>true</indexed>
             <value>
-                <xsl:value-of select="." />
+                <xsl:value-of select="."/>
             </value>
         </field>
         <field>
@@ -185,7 +199,7 @@
             <indexed>true</indexed>
             <caseSensitive>true</caseSensitive>
             <value>
-                <xsl:value-of select="." />
+                <xsl:value-of select="."/>
             </value>
         </field>
     </xsl:template>
@@ -198,7 +212,7 @@
                 <type>Text</type>
                 <indexed>true</indexed>
                 <value>
-                    <xsl:value-of select="sm:source/sm:id" />
+                    <xsl:value-of select="sm:source/sm:id"/>
                 </value>
             </field>
             <field>
@@ -206,7 +220,7 @@
                 <type>Text</type>
                 <indexed>true</indexed>
                 <value>
-                    <xsl:value-of select="sm:source/sm:partNo" />
+                    <xsl:value-of select="sm:source/sm:partNo"/>
                 </value>
             </field>
             <field>
@@ -214,7 +228,7 @@
                 <type>Text</type>
                 <indexed>true</indexed>
                 <value>
-                    <xsl:value-of select="sm:source/sm:recordNo" />
+                    <xsl:value-of select="sm:source/sm:recordNo"/>
                 </value>
             </field>
             <field>
@@ -222,7 +236,7 @@
                 <type>Text</type>
                 <indexed>true</indexed>
                 <value>
-                    <xsl:value-of select="sm:source/sm:lineFrom" />
+                    <xsl:value-of select="sm:source/sm:lineFrom"/>
                 </value>
             </field>
             <field>
@@ -230,7 +244,7 @@
                 <type>Text</type>
                 <indexed>true</indexed>
                 <value>
-                    <xsl:value-of select="sm:source/sm:colFrom" />
+                    <xsl:value-of select="sm:source/sm:colFrom"/>
                 </value>
             </field>
             <field>
@@ -238,7 +252,7 @@
                 <type>Text</type>
                 <indexed>true</indexed>
                 <value>
-                    <xsl:value-of select="sm:source/sm:lineTo" />
+                    <xsl:value-of select="sm:source/sm:lineTo"/>
                 </value>
             </field>
             <field>
@@ -246,12 +260,12 @@
                 <type>Text</type>
                 <indexed>true</indexed>
                 <value>
-                    <xsl:value-of select="sm:source/sm:colTo" />
+                    <xsl:value-of select="sm:source/sm:colTo"/>
                 </value>
             </field>
         </xsl:if>
     </xsl:template>
 
     <!-- Suppress other text -->
-    <xsl:template match="text()" />
+    <xsl:template match="text()"/>
 </xsl:stylesheet>

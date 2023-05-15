@@ -76,9 +76,7 @@ public class RollingDestinations {
                 // Try and cope with too many active destinations.
                 if (currentDestinations.size() > maxActiveDestinations) {
                     // If the size is still too big then error.
-                    if (currentDestinations.size() > maxActiveDestinations) {
-                        throw new ProcessException("Too many active destinations: " + currentDestinations.size());
-                    }
+                    throw ProcessException.create("Too many active destinations: " + currentDestinations.size());
                 }
 
                 // Create a new destination.

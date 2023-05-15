@@ -91,7 +91,7 @@ public class JSONWriter extends AbstractWriter {
             }
         } catch (final IOException | RuntimeException e) {
             fatal(e);
-            throw new LoggedException(e.getMessage(), e);
+            throw LoggedException.wrap(e);
         }
 
         return jsonGenerator;

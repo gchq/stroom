@@ -1,6 +1,7 @@
 package stroom.proxy.repo;
 
 import stroom.data.zip.StroomFileNameUtil;
+import stroom.data.zip.StroomZipEntry;
 import stroom.data.zip.StroomZipFile;
 import stroom.data.zip.StroomZipFileType;
 import stroom.meta.api.AttributeMap;
@@ -10,6 +11,7 @@ import stroom.proxy.repo.store.SequentialFileStore;
 import stroom.receive.common.ProgressHandler;
 import stroom.receive.common.StreamHandler;
 import stroom.util.io.ByteCountInputStream;
+import stroom.util.io.FileName;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
@@ -48,7 +50,7 @@ public class SenderImpl implements Sender {
                                   final List<SourceItems> items,
                                   final StreamHandler handler) {
         String targetName;
-        long sequenceId = 1;
+        long sequenceId = 0;
 
         for (final SourceItems sourceItems : items) {
             final SourceItems.Source source = sourceItems.source();
@@ -64,7 +66,8 @@ public class SenderImpl implements Sender {
             try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(fileSet.getZip()))) {
                 final List<SourceItems.Item> repoSourceItems = sourceItems.list();
                 for (final SourceItems.Item item : repoSourceItems) {
-                    targetName = StroomFileNameUtil.getIdPath(sequenceId++);
+                    sequenceId++;
+                    targetName = StroomFileNameUtil.getIdPath(sequenceId);
 
                     // Add attributes as a manifest to the output.
                     if (sequenceId == 1) {
@@ -72,14 +75,14 @@ public class SenderImpl implements Sender {
                         AttributeMapUtil.write(attributeMap, stringWriter);
                         final InputStream inputStream = new ByteArrayInputStream(
                                 stringWriter.toString().getBytes(StandardCharsets.UTF_8));
-                        final String fullTargetName = targetName + StroomZipFileType.MANIFEST.getExtension();
+                        final String fullTargetName = targetName + StroomZipFileType.MANIFEST.getDotExtension();
                         final Consumer<Long> progressHandler = new ProgressHandler("Sending" +
                                 fullTargetName);
                         handler.addEntry(fullTargetName, inputStream, progressHandler);
                     }
 
                     // Figure out if we have meta and/or context extensions.
-                    final String[] extensions = item.extensions().split(",");
+                    final String[] extensions = item.extensions().split(StroomZipEntry.REPO_EXTENSION_DELIMITER);
                     String metaExtension = null;
                     String contextExtension = null;
                     for (final String extension : extensions) {
@@ -97,22 +100,13 @@ public class SenderImpl implements Sender {
                         final StroomZipFileType stroomZipFileType =
                                 StroomZipFileType.fromExtension(extension);
                         if (StroomZipFileType.DATA.equals(stroomZipFileType)) {
-
-                            // Add the data.
                             final String sourceName = item.name();
-                            final String fullSourceName =
-                                    sourceName + extension;
-                            final String fullTargetName =
-                                    targetName + StroomZipFileType.DATA.getExtension();
-
-                            sendEntry(zipFile, fullSourceName, fullTargetName, handler);
-
                             // Add meta if it exists.
                             if (metaExtension != null) {
                                 final String fullMetaSourceName =
-                                        sourceName + metaExtension;
+                                        FileName.fromParts(sourceName, metaExtension).getFullName();
                                 final String fullMetaTargetName =
-                                        targetName + StroomZipFileType.META.getExtension();
+                                        targetName + StroomZipFileType.META.getDotExtension();
 
                                 sendEntry(zipFile, fullMetaSourceName, fullMetaTargetName, handler);
                             }
@@ -120,12 +114,20 @@ public class SenderImpl implements Sender {
                             // Add context if it exists.
                             if (contextExtension != null) {
                                 final String fullContextSourceName =
-                                        sourceName + contextExtension;
+                                        FileName.fromParts(sourceName, contextExtension).getFullName();
                                 final String fullContextTargetName =
-                                        targetName + StroomZipFileType.CONTEXT.getExtension();
+                                        targetName + StroomZipFileType.CONTEXT.getDotExtension();
 
                                 sendEntry(zipFile, fullContextSourceName, fullContextTargetName, handler);
                             }
+
+                            // Add the data.
+                            final String fullSourceName =
+                                    FileName.fromParts(sourceName, extension).getFullName();
+                            final String fullTargetName =
+                                    targetName + StroomZipFileType.DATA.getDotExtension();
+
+                            sendEntry(zipFile, fullSourceName, fullTargetName, handler);
                         }
                     }
                     progressLog.increment("AggregateForwarder - forwardAggregateItem");
@@ -179,7 +181,9 @@ public class SenderImpl implements Sender {
                                final Consumer<Long> progressHandler) {
         try (final StroomZipFile stroomZipFile = new StroomZipFile(zipFilePath)) {
             try {
-                for (final String baseName : stroomZipFile.getStroomZipNameSet().getBaseNameSet()) {
+                final List<String> baseNames = stroomZipFile.getBaseNames();
+                for (final String baseName : baseNames) {
+
                     // Add manifest.
                     addEntry(stroomZipFile, baseName, StroomZipFileType.MANIFEST, handler, progressHandler);
 
@@ -209,7 +213,7 @@ public class SenderImpl implements Sender {
         try (final InputStream inputStream =
                 stroomZipFile.getInputStream(baseName, stroomZipFileType)) {
             if (inputStream != null) {
-                handler.addEntry(baseName + stroomZipFileType.getExtension(), inputStream, progressHandler);
+                handler.addEntry(baseName + stroomZipFileType.getDotExtension(), inputStream, progressHandler);
             }
         }
     }

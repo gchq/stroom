@@ -17,11 +17,13 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ParamSubstituteUtil;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.Sort;
@@ -121,7 +123,12 @@ abstract class AbstractDataStoreTest {
                 .showDetail(true)
                 .build();
 
-        final DataStore dataStore = createBig(tableSettings);
+        final DataStoreSettings dataStoreSettings = DataStoreSettings
+                .createBasicSearchResultStoreSettings()
+                .copy()
+                .maxResults(Sizes.create(Integer.MAX_VALUE))
+                .storeSize(Sizes.create(Integer.MAX_VALUE)).build();
+        final DataStore dataStore = create(tableSettings, dataStoreSettings);
 
         Metrics.measure("Loaded data", () -> {
             for (int i = 0; i < 100; i++) {
@@ -375,7 +382,70 @@ abstract class AbstractDataStoreTest {
         checkResults(dataStore, tableResultRequest, 1, false);
     }
 
-    private void checkResults(final DataStore data,
+    void firstLastSelectorTest() {
+        final Sort sort = new Sort(0, SortDirection.ASCENDING);
+
+        final String param = ParamSubstituteUtil.makeParam("Number");
+        final TableSettings tableSettings = TableSettings.builder()
+                .addFields(Field.builder()
+                        .id("Group")
+                        .name("Group")
+                        .expression("${group}")
+                        .group(0)
+                        .build())
+                .addFields(Field.builder()
+                        .id("Number")
+                        .name("Number")
+                        .expression("concat(first(" + param + "), ' ', last(" + param + "))")
+                        .build())
+                .addFields(Field.builder()
+                        .id("Number Sorted")
+                        .name("Number Sorted")
+                        .expression(param)
+                        .sort(sort)
+                        .build())
+                .build();
+
+        final DataStore dataStore = create(tableSettings);
+
+        for (int i = 1; i <= 30; i++) {
+            dataStore.add(Val.of(ValString.create("group"), ValLong.create(i)));
+        }
+
+        // Wait for all items to be added.
+        try {
+            dataStore.getCompletionState().signalComplete();
+            dataStore.getCompletionState().awaitCompletion();
+        } catch (final InterruptedException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+
+        final ResultRequest tableResultRequest =
+                ResultRequest.builder()
+                        .componentId("componentX")
+                        .addMappings(tableSettings)
+                        .requestedRange(new OffsetRange(0, 3000))
+                        .build();
+
+        final FormatterFactory formatterFactory = new FormatterFactory(null);
+        final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
+
+        final TableResultCreator tableComponentResultCreator = new TableResultCreator(
+                fieldFormatter,
+                defaultMaxResultsSizes);
+        final TableResult searchResult = (TableResult) tableComponentResultCreator.create(dataStore,
+                tableResultRequest);
+
+        assertThat(searchResult.getTotalResults()).isOne();
+
+        for (final Row result : searchResult.getRows()) {
+            final String value = result.getValues().get(1);
+            System.out.println(value);
+            assertThat(value).isEqualTo("1 30");
+        }
+    }
+
+    private void checkResults(final DataStore dataStore,
                               final ResultRequest tableResultRequest,
                               final int sortCol,
                               final boolean numeric) {
@@ -386,7 +456,7 @@ abstract class AbstractDataStoreTest {
         final TableResultCreator tableComponentResultCreator = new TableResultCreator(
                 fieldFormatter,
                 defaultMaxResultsSizes);
-        final TableResult searchResult = (TableResult) tableComponentResultCreator.create(data,
+        final TableResult searchResult = (TableResult) tableComponentResultCreator.create(dataStore,
                 tableResultRequest);
 
         assertThat(searchResult.getTotalResults() <= 50).isTrue();
@@ -411,19 +481,33 @@ abstract class AbstractDataStoreTest {
         }
     }
 
-    DataStore create(TableSettings tableSettings) {
+    DataStore create(final TableSettings tableSettings) {
         // Create a set of sizes that are the minimum values for the combination of user provided sizes for the table
         // and the default maximum sizes.
         final Sizes defaultMaxResultsSizes = Sizes.create(50);
         final Sizes storeSize = Sizes.create(100);
         final Sizes maxResults = Sizes.min(Sizes.create(tableSettings.getMaxResults()), defaultMaxResultsSizes);
-
-        return create(tableSettings, maxResults, storeSize);
+        final DataStoreSettings dataStoreSettings = DataStoreSettings
+                .createBasicSearchResultStoreSettings()
+                .copy()
+                .maxResults(maxResults)
+                .storeSize(storeSize)
+                .build();
+        return create(tableSettings, dataStoreSettings);
     }
 
-    DataStore createBig(TableSettings tableSettings) {
-        return create(tableSettings, Sizes.create(Integer.MAX_VALUE), Sizes.create(Integer.MAX_VALUE));
+    DataStore create(final TableSettings tableSettings, final DataStoreSettings dataStoreSettings) {
+        return create(
+                new QueryKey(UUID.randomUUID().toString()),
+                "0",
+                tableSettings,
+                new SearchResultStoreConfig(),
+                dataStoreSettings);
     }
 
-    abstract DataStore create(TableSettings tableSettings, Sizes maxResults, Sizes storeSize);
+    abstract DataStore create(QueryKey queryKey,
+                              String componentId,
+                              TableSettings tableSettings,
+                              AbstractResultStoreConfig resultStoreConfig,
+                              DataStoreSettings dataStoreSettings);
 }

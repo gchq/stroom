@@ -82,62 +82,68 @@ public final class FlywayUtil {
                                final String flywayTableName,
                                final String moduleName) {
 
-        LOGGER.info(LogUtil.inBoxOnNewLine("Migrating database module: {}", moduleName));
+        if (DbMigrationState.haveBootstrapMigrationsBeenDone()) {
+            // Either this is a reboot of the node with no change to the version of stroom being run
+            // or another node has done the migration for us.
+            LOGGER.info("Skipping database migration for module {} because Stroom is already " +
+                    "at the correct version", moduleName);
+        } else {
+            LOGGER.info(LogUtil.inBoxOnNewLine("Migrating database module: {}", moduleName));
 
-        final String[] migrationLocations = NullSafe.list(flywayLocations)
-                .stream()
-                .filter(Objects::nonNull)
-                .distinct()
-                .toArray(String[]::new);
+            final String[] migrationLocations = NullSafe.list(flywayLocations)
+                    .stream()
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .toArray(String[]::new);
 
-        final FluentConfiguration fluentConfiguration = Flyway.configure()
-                .dataSource(dataSource)
-                .locations(migrationLocations)
-                .table(flywayTableName)
-                .baselineOnMigrate(true);
+            final FluentConfiguration fluentConfiguration = Flyway.configure()
+                    .dataSource(dataSource)
+                    .locations(migrationLocations)
+                    .table(flywayTableName)
+                    .baselineOnMigrate(true);
 
-        // Set the target for the migration, i.e. only migrate up to this point.
-        // Used for testing migrations.
-        if (target != null) {
-            LOGGER.info("Migrating with target version (inc.): {}", target);
-            fluentConfiguration.target(target);
-        }
-
-        final Flyway flyway = fluentConfiguration.load();
-
-        final String statesInfo = Arrays.stream(flyway.info().all())
-                .collect(Collectors.groupingBy(MigrationInfo::getState))
-                .entrySet()
-                .stream()
-                .sorted(Entry.comparingByKey())
-                .map(entry -> entry.getKey() + ":" + entry.getValue().size())
-                .collect(Collectors.joining(", "));
-
-        try {
-            LOGGER.info("{} - Validating existing and pending Flyway DB migration(s) ({}) " +
-                            "using history table '{}' from path {}",
-                    moduleName,
-                    statesInfo,
-                    flywayTableName,
-                    flywayLocations);
-
-            // This will see if anything needs doing
-            final MigrateResult migrateResult = flyway.migrate();
-
-            if (migrateResult.migrationsExecuted > 0) {
-                LOGGER.info("{} - Successfully applied {} Flyway DB migrations using history table '{}'",
-                        moduleName,
-                        migrateResult.migrationsExecuted,
-                        flywayTableName);
-            } else {
-                LOGGER.info("{} - No Flyway DB migration(s) applied in path {}",
-                        moduleName,
-                        flywayLocations);
+            // Set the target for the migration, i.e. only migrate up to this point.
+            // Used for testing migrations.
+            if (target != null) {
+                LOGGER.info("Migrating with target version (inc.): {}", target);
+                fluentConfiguration.target(target);
             }
 
-        } catch (FlywayException e) {
-            LOGGER.error("{} - Error migrating database: {}", moduleName, e.getMessage(), e);
-            throw e;
+            final Flyway flyway = fluentConfiguration.load();
+
+            final String statesInfo = Arrays.stream(flyway.info().all())
+                    .collect(Collectors.groupingBy(MigrationInfo::getState))
+                    .entrySet()
+                    .stream()
+                    .sorted(Entry.comparingByKey())
+                    .map(entry -> entry.getKey() + ":" + entry.getValue().size())
+                    .collect(Collectors.joining(", "));
+
+            try {
+                LOGGER.info("{} - Validating existing and pending Flyway DB migration(s) ({}) " +
+                                "using history table '{}' from path {}",
+                        moduleName,
+                        statesInfo,
+                        flywayTableName,
+                        flywayLocations);
+
+                final MigrateResult migrateResult = flyway.migrate();
+
+                if (migrateResult.migrationsExecuted > 0) {
+                    LOGGER.info("{} - Successfully applied {} Flyway DB migrations using history table '{}'",
+                            moduleName,
+                            migrateResult.migrationsExecuted,
+                            flywayTableName);
+                } else {
+                    LOGGER.info("{} - No Flyway DB migration(s) applied in path {}",
+                            moduleName,
+                            flywayLocations);
+                }
+
+            } catch (FlywayException e) {
+                LOGGER.error("{} - Error migrating database: {}", moduleName, e.getMessage(), e);
+                throw e;
+            }
         }
     }
 }

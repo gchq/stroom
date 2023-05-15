@@ -219,6 +219,18 @@ class DynamicTestBuilder {
             Objects.requireNonNull(testFunction);
             return new AssertionsBuilder<>(testFunction);
         }
+
+        /**
+         * Define the action for the dynamic test lambda, where the test input
+         * uses {@link TestCase#getInput()} to produce some output.
+         * Test assertions are added later with {@link AssertionsBuilder#withAssertions(Consumer)}.
+         */
+        @SuppressWarnings("unused")
+        public AssertionsBuilder<I, O> withSingleArgTestFunction(final Function<I, O> testFunction) {
+            Objects.requireNonNull(testFunction);
+            return new AssertionsBuilder<>(testCase ->
+                    testFunction.apply(testCase.getInput()));
+        }
     }
 
 

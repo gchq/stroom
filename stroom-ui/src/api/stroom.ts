@@ -42,6 +42,18 @@ export interface AbstractField {
     | "IS_NOT_NULL"
     | "MATCHES_REGEX"
   )[];
+  fieldType?:
+    | "ID"
+    | "BOOLEAN"
+    | "INTEGER"
+    | "LONG"
+    | "FLOAT"
+    | "DOUBLE"
+    | "DATE"
+    | "TEXT"
+    | "KEYWORD"
+    | "IPV4_ADDRESS"
+    | "DOC_REF";
   name?: string;
   queryable?: boolean;
   type: string;
@@ -141,8 +153,8 @@ export type AddPermissionEvent = PermissionChangeEvent & {
   userUuid?: string;
 };
 
-export interface AlertRuleDoc {
-  alertRuleType?: "EVENT" | "AGGREGATE";
+export interface AnalyticRuleDoc {
+  analyticRuleType?: "EVENT" | "AGGREGATE";
 
   /** @format int64 */
   createTimeMs?: number;
@@ -153,7 +165,7 @@ export interface AlertRuleDoc {
   destinationFeed?: DocRef;
   languageVersion?: "STROOM_QL_VERSION_0_1" | "SIGMA";
   name?: string;
-  processSettings?: AlertRuleProcessSettings;
+  processSettings?: AnalyticRuleProcessSettings;
   query?: string;
   type?: string;
 
@@ -164,9 +176,8 @@ export interface AlertRuleDoc {
   version?: string;
 }
 
-export interface AlertRuleProcessSettings {
+export interface AnalyticRuleProcessSettings {
   enabled?: boolean;
-  executionWindow?: SimpleDuration;
 
   /** @format int64 */
   maxMetaCreateTimeMs?: number;
@@ -2986,7 +2997,7 @@ export interface SearchRequest {
 export interface SearchRequestSource {
   componentId?: string;
   ownerDocUuid?: string;
-  sourceType?: "ALERT_RULE" | "DASHBOARD_UI" | "QUERY_UI" | "API" | "BATCH_SEARCH";
+  sourceType?: "ANALYTIC_RULE" | "DASHBOARD_UI" | "QUERY_UI" | "API" | "BATCH_SEARCH";
 }
 
 /**
@@ -4373,19 +4384,19 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         ...params,
       }),
   };
-  alertRule = {
+  analyticRule = {
     /**
      * No description
      *
      * @tags Queries
-     * @name FetchAlertRule
-     * @summary Fetch an alert rule doc by its UUID
-     * @request GET:/alertRule/v1/{uuid}
+     * @name FetchAnalyticRule
+     * @summary Fetch an analytic rule doc by its UUID
+     * @request GET:/analyticRule/v1/{uuid}
      * @secure
      */
-    fetchAlertRule: (uuid: string, params: RequestParams = {}) =>
-      this.request<any, AlertRuleDoc>({
-        path: `/alertRule/v1/${uuid}`,
+    fetchAnalyticRule: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, AnalyticRuleDoc>({
+        path: `/analyticRule/v1/${uuid}`,
         method: "GET",
         secure: true,
         ...params,
@@ -4395,14 +4406,14 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Queries
-     * @name UpdateAlertRule
-     * @summary Update an alert rule doc
-     * @request PUT:/alertRule/v1/{uuid}
+     * @name UpdateAnalyticRule
+     * @summary Update an analytic rule doc
+     * @request PUT:/analyticRule/v1/{uuid}
      * @secure
      */
-    updateAlertRule: (uuid: string, data: AlertRuleDoc, params: RequestParams = {}) =>
-      this.request<any, AlertRuleDoc>({
-        path: `/alertRule/v1/${uuid}`,
+    updateAnalyticRule: (uuid: string, data: AnalyticRuleDoc, params: RequestParams = {}) =>
+      this.request<any, AnalyticRuleDoc>({
+        path: `/analyticRule/v1/${uuid}`,
         method: "PUT",
         body: data,
         secure: true,

@@ -67,4 +67,14 @@ abstract class AbstractManyChildFunction extends AbstractFunction {
 
         return false;
     }
+
+    @Override
+    public boolean requiresChildData() {
+        for (final Function function : functions) {
+            if (function.requiresChildData()) {
+                return true;
+            }
+        }
+        return super.requiresChildData();
+    }
 }

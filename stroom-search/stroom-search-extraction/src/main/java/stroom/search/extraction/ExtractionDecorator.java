@@ -3,6 +3,7 @@ package stroom.search.extraction;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValuesConsumer;
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.data.store.api.DataException;
 import stroom.docref.DocRef;
 import stroom.index.shared.IndexConstants;
@@ -15,7 +16,6 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.Coprocessors;
-import stroom.query.common.v2.ErrorConsumer;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.search.extraction.StreamEventMap.EventSet;
@@ -165,11 +165,11 @@ public class ExtractionDecorator {
                             if (values != null) {
                                 if (!taskContext.isTerminated()) {
                                     try {
-                                        info(taskContext, () -> "" +
+                                        info(taskContext, () ->
                                                 "Creating extraction tasks - stored data queue size: " +
-                                                storedDataQueue.size() +
-                                                " stream event map size: " +
-                                                streamEventMap.size());
+                                                        storedDataQueue.size() +
+                                                        " stream event map size: " +
+                                                        streamEventMap.size());
 
                                         // If we have some values then map them.
                                         SearchProgressLog.increment(queryKey,
@@ -246,25 +246,26 @@ public class ExtractionDecorator {
                              final LongAdder extractionCount,
                              final ErrorConsumer errorConsumer) {
         try {
-            while (true) {
-                final EventSet eventSet = streamEventMap.take();
-                if (!parentContext.isTerminated() && eventSet != null) {
-                    SearchProgressLog.add(queryKey,
-                            SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_TAKE,
-                            eventSet.size());
+            while (!parentContext.isTerminated()) {
+                taskContextFactory.childContext(
+                        parentContext,
+                        "Extraction Task",
+                        taskContext -> {
+                            final EventSet eventSet = streamEventMap.take();
+                            if (eventSet != null) {
+                                SearchProgressLog.add(queryKey,
+                                        SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_TAKE,
+                                        eventSet.size());
 
-                    taskContextFactory.childContext(
-                            parentContext,
-                            "Extraction Task",
-                            taskContext ->
-                                    securityContext.useAsRead(() ->
-                                            extractEvents(taskContext,
-                                                    eventSet.getStreamId(),
-                                                    eventSet.getEvents(),
-                                                    extractionCount,
-                                                    errorConsumer))).run();
-                    LOGGER.debug("Completed extraction thread");
-                }
+                                securityContext.useAsRead(() ->
+                                        extractEvents(taskContext,
+                                                eventSet.getStreamId(),
+                                                eventSet.getEvents(),
+                                                extractionCount,
+                                                errorConsumer));
+                            }
+                        }).run();
+                LOGGER.debug("Completed extraction thread");
             }
         } catch (final CompleteException e) {
             LOGGER.debug(() -> "Complete");

@@ -16,17 +16,19 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import stroom.dashboard.expression.v1.ref.FieldValReference;
+import stroom.dashboard.expression.v1.ref.StoredValues;
+import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
 
+import java.util.Objects;
 import java.util.function.Supplier;
 
 @ArchitecturalFunction
 class Ref extends AbstractFunction {
 
-    private static final NullGen NULL_GEN = new NullGen();
     private final String text;
     private final int fieldIndex;
+    private FieldValReference fieldValReference;
 
     public Ref(final String text, final int fieldIndex) {
         super(text, 0, 0);
@@ -35,13 +37,22 @@ class Ref extends AbstractFunction {
     }
 
     @Override
+    public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
+        // If the field index is less than 0 then we will always return null so don't store.
+        if (fieldIndex >= 0) {
+            fieldValReference = valueReferenceIndex.addFieldValue(fieldIndex);
+        }
+        super.addValueReferences(valueReferenceIndex);
+    }
+
+    @Override
     public Generator createGenerator() {
         // If the field index is less than 0 then we will always return null so
         // get the null generator.
-        if (fieldIndex < 0) {
-            return NULL_GEN;
+        if (fieldValReference == null) {
+            return Null.GEN;
         } else {
-            return new Gen(fieldIndex);
+            return new Gen(fieldIndex, fieldValReference);
         }
     }
 
@@ -55,51 +66,51 @@ class Ref extends AbstractFunction {
         return false;
     }
 
-    private static final class NullGen extends AbstractNoChildGenerator {
-
-
-        @Override
-        public void set(final Val[] values) {
-            // Ignore
-        }
-
-        @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
-            return ValNull.INSTANCE;
-        }
-    }
-
     private static final class Gen extends AbstractNoChildGenerator {
 
 
         private final int fieldIndex;
-        private Val current;
+        private final FieldValReference fieldValReference;
 
-        Gen(final int fieldIndex) {
+        Gen(final int fieldIndex,
+            final FieldValReference fieldValReference) {
+            if (fieldIndex < 0) {
+                throw new IndexOutOfBoundsException("Field index must be >= 0");
+            }
+            Objects.requireNonNull(fieldValReference, "Null field val reference");
+
             this.fieldIndex = fieldIndex;
+            this.fieldValReference = fieldValReference;
         }
 
         @Override
-        public void set(final Val[] values) {
-            current = values[fieldIndex];
-            if (current == null) {
-                current = ValNull.INSTANCE;
+        public void set(final Val[] values, final StoredValues storedValues) {
+            final Val val = values[fieldIndex];
+            if (val != null) {
+                fieldValReference.set(storedValues, val);
             }
         }
 
         @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
-            return current;
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
+            return fieldValReference.get(storedValues);
         }
 
         @Override
-        public void read(final Input input) {
-            current = ValSerialiser.read(input);
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final Gen gen = (Gen) o;
+            return fieldIndex == gen.fieldIndex;
         }
 
         @Override
-        public void write(final Output output) {
-            ValSerialiser.write(output, current);
+        public int hashCode() {
+            return Objects.hash(fieldIndex);
         }
     }
 }
