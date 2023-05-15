@@ -15,7 +15,7 @@
 #  depending on the value of includeEnvVarSubstitution.  I.e. in the docker
 #  distribution we want bash style env var substitution but in the zip
 #  distribution we don't.
-#  'envVar()' is our own custom jinja2 filter defined in 
+#  'envVar()' is our own custom jinja2 filter defined in
 #  stroom.dist.GenerateDistributionConfig.
 #  To see how this renders run the main method in GenerateDistributionConfig.
 #  That main method is run from gradle when building the distributions.
@@ -70,16 +70,16 @@ server:
 logging:
   level: WARN
   loggers:
+    # Logs useful information about stroom. Only set DEBUG on specific 'stroom' classes or packages
+    # due to the large volume of logs that would be produced for all of 'stroom' in DEBUG.
     stroom: INFO
+    # Logs useful information about dropwizard when booting stroom
     io.dropwizard: INFO
+    # Logs useful information about the jetty server when booting stroom
     org.eclipse.jetty: INFO
-    org.glassfish: INFO
-    org.glassfish.jersey: INFO
-    # Comment this out if you want logging of the REST request/responses
-    # NOT recommended for production environments as it is very verbose
-    stroom.app.logging.DefaultLoggingFilter: OFF
-    #    org.glassfish.jersey.server.ServerRuntime.Responder: INFO
-    #    org.glassfish.jersey.server.validation.internal.ValidationExceptionMapper: FINER
+    # Logs REST request/responses with headers/payloads. Set this to OFF to turn disable that logging.
+    org.glassfish.jersey.logging.LoggingFeature: INFO
+    # Logs summary information about FlyWay database migrations
     org.flywaydb: INFO
     # Logger and appender for audit logs
     "event-logger":

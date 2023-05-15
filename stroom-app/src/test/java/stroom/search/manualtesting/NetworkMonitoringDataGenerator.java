@@ -1,8 +1,8 @@
 package stroom.search.manualtesting;
 
 
-import stroom.test.common.util.test.data.FlatDataWriterBuilder;
-import stroom.test.common.util.test.data.TestDataGenerator;
+import stroom.test.common.data.DataGenerator;
+import stroom.test.common.data.FlatDataWriterBuilder;
 
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -23,46 +23,46 @@ public class NetworkMonitoringDataGenerator {
         final LocalDateTime endExc = LocalDateTime.of(
                 2018, 1, 1, 0, 0, 0);
 
-        TestDataGenerator.buildDefinition()
-                .addFieldDefinition(TestDataGenerator.randomDateTimeField(
+        DataGenerator.buildDefinition()
+                .addFieldDefinition(DataGenerator.randomDateTimeField(
                         "Date",
                         startInc,
                         endExc,
                         DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale.ENGLISH)))
-                .addFieldDefinition(TestDataGenerator.randomDateTimeField(
+                .addFieldDefinition(DataGenerator.randomDateTimeField(
                         "Time",
                         startInc,
                         endExc,
                         DateTimeFormatter.ofPattern("HH:mm:ss", Locale.ENGLISH)))
-                .addFieldDefinition(TestDataGenerator.randomValueField(
+                .addFieldDefinition(DataGenerator.randomValueField(
                         "EventType",
                         Arrays.asList("authenticationFailed", "authorisationFailed")))
-                .addFieldDefinition(TestDataGenerator.randomNumberedValueField(
+                .addFieldDefinition(DataGenerator.randomNumberedValueField(
                         "Device",
                         "device%s",
                         20))
-                .addFieldDefinition(TestDataGenerator.sequentiallyNumberedValueField(
+                .addFieldDefinition(DataGenerator.sequentiallyNumberedValueField(
                         "UserName",
                         "user-%s",
                         0,
                         20))
-                .addFieldDefinition(TestDataGenerator.randomIpV4Field("ID"))
-                .addFieldDefinition(TestDataGenerator.randomNumberedValueField(
+                .addFieldDefinition(DataGenerator.randomIpV4Field("ID"))
+                .addFieldDefinition(DataGenerator.randomNumberedValueField(
                         "ErrorCode",
                         "E%03d",
                         1000))
-                .addFieldDefinition(TestDataGenerator.randomIpV4Field("IPAddress"))
-                .addFieldDefinition(TestDataGenerator.randomNumberedValueField(
+                .addFieldDefinition(DataGenerator.randomIpV4Field("IPAddress"))
+                .addFieldDefinition(DataGenerator.randomNumberedValueField(
                         "Server",
                         "server-%s",
                         20))
-                .addFieldDefinition(TestDataGenerator.randomClassNamesField(
+                .addFieldDefinition(DataGenerator.randomClassNamesField(
                         "Message",
                         0,
                         5))
                 .setDataWriter(FlatDataWriterBuilder.defaultCsvFormat())
                 .rowCount(rowCount)
-                .consumedBy(TestDataGenerator.getFileOutputConsumer(filePath))
+                .consumedBy(DataGenerator.getFileOutputConsumer(filePath))
                 .generate();
     }
 }

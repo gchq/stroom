@@ -139,7 +139,6 @@ ext.libs = [
         hadoopCommonShaded                  : "uk.gov.gchq.stroom.hadoop.common:hadoop-common-shaded:$versions.hadoopCommonShaded",
         hadoopHdfsShaded                    : "uk.gov.gchq.stroom.hadoop.hdfs:hadoop-hdfs-shaded:$versions.hadoopHdfsShaded",
         stroomStatsSchema                   : "uk.gov.gchq.stroom.stats:stroom-stats-schema:$versions.stroomStats",
-        stroomTestData                      : "uk.gov.gchq.stroom.testdata:stroom-test-data:$versions.stroomTestData",
 
         //------3rd Party-libs---------------
         assertj_core                        : "org.assertj:assertj-core", // version controlled by dropwizard-dependencies
@@ -160,6 +159,7 @@ ext.libs = [
         curator_client                      : "org.apache.curator:curator-client:$versions.curator",
         curator_framework                   : "org.apache.curator:curator-framework:$versions.curator",
         curator_x_discovery                 : "org.apache.curator:curator-x-discovery:$versions.curator",
+        data_faker                          : "net.datafaker:datafaker:1.8.1",
         dropwizard_assets                   : "io.dropwizard:dropwizard-assets", // version controlled by dropwizard-dependencies
         dropwizard_auth                     : "io.dropwizard:dropwizard-auth", // version controlled by dropwizard-dependencies
         dropwizard_auth_jwt                 : "com.github.toastshaman:dropwizard-auth-jwt:1.0.2-0",
@@ -271,6 +271,7 @@ ext.libs = [
         saxon_he                            : "net.sf.saxon:Saxon-HE:9.9.1-8",
         simple_java_mail                    : 'org.simplejavamail:simple-java-mail:4.3.0',
         slf4j_api                           : "org.slf4j:slf4j-api", // version controlled by dropwizard-dependencies
+        snake_yaml                          : "org.yaml:snakeyaml:1.28",
         solrj                               : "org.apache.solr:solr-solrj:8.2.0",
         sqlite                              : "org.xerial:sqlite-jdbc:3.36.0.3",
         stax_api                            : "stax:stax-api:1.0.1",

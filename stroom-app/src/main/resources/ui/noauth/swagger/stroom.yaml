@@ -6306,6 +6306,20 @@ components:
             - IS_NULL
             - IS_NOT_NULL
             - MATCHES_REGEX
+        fieldType:
+          type: string
+          enum:
+          - ID
+          - BOOLEAN
+          - INTEGER
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - DATE
+          - TEXT
+          - KEYWORD
+          - IPV4_ADDRESS
+          - DOC_REF
         name:
           type: string
         queryable:

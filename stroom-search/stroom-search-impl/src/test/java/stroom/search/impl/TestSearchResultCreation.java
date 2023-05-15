@@ -463,7 +463,7 @@ class TestSearchResultCreation {
         final DataStore dataStore = resultStore.getData("table-78LF4");
         dataStore.getData(data -> {
             final Items dataItems = data.get(Key.ROOT_KEY, null);
-            final Item dataItem = dataItems.iterator().next();
+            final Item dataItem = dataItems.getIterable().iterator().next();
             final Val val = dataItem.getValue(2, true);
             assertThat(val.toLong())
                     .isEqualTo(count);

@@ -115,15 +115,16 @@ public class ContentSyncService implements Managed, HasHealthCheck {
                     try {
                         if (url != null) {
                             LOGGER.info("Syncing content from '" + url + "'");
-                            final Response response = createClient(url, "/list", contentSyncConfig).get();
-                            if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
-                                LOGGER.error(response.getStatusInfo().getReasonPhrase());
-                            } else {
-                                final Set<DocRef> docRefs = response.readEntity(new GenericType<Set<DocRef>>() {
-                                });
+                            try (Response response = createClient(url, "/list", contentSyncConfig).get()) {
+                                if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
+                                    LOGGER.error(response.getStatusInfo().getReasonPhrase());
+                                } else {
+                                    final Set<DocRef> docRefs = response.readEntity(new GenericType<Set<DocRef>>() {
+                                    });
                                 docRefs.forEach(docRef ->
                                         importDocument(url, docRef, importHandler, contentSyncConfig));
-                                LOGGER.info("Synced {} documents", docRefs.size());
+                                    LOGGER.info("Synced {} documents", docRefs.size());
+                                }
                             }
                         }
                     } catch (Exception e) {
@@ -139,19 +140,20 @@ public class ContentSyncService implements Managed, HasHealthCheck {
                                 final ImportExportActionHandler importExportActionHandler,
                                 final ContentSyncConfig contentSyncConfig) {
         LOGGER.info("Fetching " + docRef.getType() + " " + docRef.getName() + " " + docRef.getUuid());
-        final Response response = createClient(url, "/export", contentSyncConfig).post(Entity.json(docRef));
-        if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
-            LOGGER.error(response.getStatusInfo().getReasonPhrase());
-        } else {
-            final DocumentData documentData = response.readEntity(DocumentData.class);
-            final ImportState importState = new ImportState(
-                    documentData.getDocRef(),
-                    documentData.getDocRef().getName());
-            importExportActionHandler.importDocument(
-                    documentData.getDocRef(),
-                    documentData.getDataMap(),
-                    importState,
-                    ImportSettings.auto());
+        try (Response response = createClient(url, "/export", contentSyncConfig).post(Entity.json(docRef))) {
+            if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
+                LOGGER.error(response.getStatusInfo().getReasonPhrase());
+            } else {
+                final DocumentData documentData = response.readEntity(DocumentData.class);
+                final ImportState importState = new ImportState(
+                        documentData.getDocRef(),
+                        documentData.getDocRef().getName());
+                importExportActionHandler.importDocument(
+                        documentData.getDocRef(),
+                        documentData.getDataMap(),
+                        importState,
+                        ImportSettings.auto());
+            }
         }
     }
 

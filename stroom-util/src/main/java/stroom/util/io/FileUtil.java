@@ -46,6 +46,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 public final class FileUtil {
 
@@ -97,6 +98,21 @@ public final class FileUtil {
             recursiveDelete(path, success);
         }
         return success.get();
+    }
+
+    /**
+     * @return True if path contains no files or directories.
+     * @throws IOException if it is unable to list the contents of path
+     */
+    public static boolean isEmptyDirectory(final Path path) throws IOException {
+        Objects.requireNonNull(path);
+        if (Files.isDirectory(path)) {
+            try (final Stream<Path> pathStream = Files.list(path)) {
+                return pathStream.findAny().isEmpty();
+            }
+        } else {
+            return false;
+        }
     }
 
     private static void recursiveDelete(final Path path, final AtomicBoolean success) {

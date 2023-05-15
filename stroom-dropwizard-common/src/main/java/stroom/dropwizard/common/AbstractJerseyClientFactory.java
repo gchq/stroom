@@ -4,6 +4,7 @@ import stroom.util.NullSafe;
 import stroom.util.io.PathCreator;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.jersey.JerseyClientName;
+import stroom.util.logging.DefaultLoggingFilter;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -12,7 +13,6 @@ import stroom.util.shared.BuildInfo;
 import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.setup.Environment;
-import org.glassfish.jersey.logging.LoggingFeature;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -154,7 +154,7 @@ public abstract class AbstractJerseyClientFactory implements JerseyClientFactory
             return new JerseyClientBuilder(environment)
                     .using(jerseyClientConfiguration)
                     .build(dropWizardName)
-                    .register(LoggingFeature.class);
+                    .register(DefaultLoggingFilter.createWithDefaults());
         } catch (Exception e) {
             throw new RuntimeException(LogUtil.message("Error building jersey client for '{}': {}",
                     jerseyClientName, e.getMessage()), e);

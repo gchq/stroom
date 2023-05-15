@@ -23,29 +23,23 @@ public class LmdbPayloadCreator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbPayloadCreator.class);
 
-    private final Serialisers serialisers;
-    private final CompiledField[] compiledFields;
+    private final OutputFactoryImpl outputFactory;
     private final int maxPayloadSize;
     private final QueryKey queryKey;
     private final LmdbDataStore lmdbDataStore;
     private final LmdbPayloadQueue currentPayload = new LmdbPayloadQueue(1);
     private final LmdbRowKeyFactory lmdbRowKeyFactory;
-    private final KeyFactory keyFactory;
 
-    LmdbPayloadCreator(final Serialisers serialisers,
+    LmdbPayloadCreator(final OutputFactoryImpl outputFactory,
                        final QueryKey queryKey,
                        final LmdbDataStore lmdbDataStore,
-                       final CompiledField[] compiledFields,
                        final AbstractResultStoreConfig resultStoreConfig,
-                       final LmdbRowKeyFactory lmdbRowKeyFactory,
-                       final KeyFactory keyFactory) {
-        this.serialisers = serialisers;
+                       final LmdbRowKeyFactory lmdbRowKeyFactory) {
+        this.outputFactory = outputFactory;
         this.queryKey = queryKey;
         this.lmdbDataStore = lmdbDataStore;
-        this.compiledFields = compiledFields;
         maxPayloadSize = (int) resultStoreConfig.getMaxPayloadSize().getBytes();
         this.lmdbRowKeyFactory = lmdbRowKeyFactory;
-        this.keyFactory = keyFactory;
     }
 
     /**
@@ -78,9 +72,8 @@ public class LmdbPayloadCreator {
                         LmdbRowKey rowKey = new LmdbRowKey(keyBuffer);
                         // Create a new unique key if this isn't a group key.
                         rowKey = lmdbRowKeyFactory.makeUnique(rowKey);
-
-                        final LmdbValue lmdbValue = new LmdbValue(serialisers, keyFactory, compiledFields, valueBuffer);
-                        final LmdbKV lmdbKV = new LmdbKV(null, rowKey, lmdbValue);
+                        final LmdbRowValue rowValue = new LmdbRowValue(valueBuffer);
+                        final LmdbKV lmdbKV = new LmdbKV(null, rowKey, rowValue);
                         lmdbDataStore.put(lmdbKV);
                     }
                 }
@@ -165,7 +158,7 @@ public class LmdbPayloadCreator {
 
         return Metrics.measure("createPayload", () -> {
             if (maxPayloadSize > 0) {
-                final PayloadOutput payloadOutput = serialisers.getOutputFactory().createPayloadOutput();
+                final PayloadOutput payloadOutput = outputFactory.createPayloadOutput();
                 boolean finalPayload = complete;
                 long size = 0;
                 long count = 0;
@@ -203,7 +196,7 @@ public class LmdbPayloadCreator {
                 return new LmdbPayload(finalPayload, payloadOutput.toBytes());
 
             } else {
-                final PayloadOutput payloadOutput = serialisers.getOutputFactory().createPayloadOutput();
+                final PayloadOutput payloadOutput = outputFactory.createPayloadOutput();
                 try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn)) {
                     for (final KeyVal<ByteBuffer> kv : cursorIterable) {
                         final ByteBuffer keyBuffer = kv.key();

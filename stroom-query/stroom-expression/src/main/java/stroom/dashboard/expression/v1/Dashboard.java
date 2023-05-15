@@ -16,6 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
+import stroom.dashboard.expression.v1.ref.StoredValues;
+
 import java.util.function.Supplier;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
@@ -71,24 +73,17 @@ class Dashboard extends AbstractLink {
         }
 
         @Override
-        public void set(final Val[] values) {
-            for (final Generator generator : childGenerators) {
-                generator.set(values);
-            }
-        }
-
-        @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
             Val link = ValNull.INSTANCE;
 
             if (childGenerators.length == 2) {
-                final Val text = childGenerators[0].eval(childDataSupplier);
-                final Val uuid = childGenerators[1].eval(childDataSupplier);
+                final Val text = childGenerators[0].eval(storedValues, childDataSupplier);
+                final Val uuid = childGenerators[1].eval(storedValues, childDataSupplier);
                 link = makeDashboardLink(text, uuid, ValNull.INSTANCE);
             } else if (childGenerators.length == 3) {
-                final Val text = childGenerators[0].eval(childDataSupplier);
-                final Val uuid = childGenerators[1].eval(childDataSupplier);
-                final Val params = childGenerators[2].eval(childDataSupplier);
+                final Val text = childGenerators[0].eval(storedValues, childDataSupplier);
+                final Val uuid = childGenerators[1].eval(storedValues, childDataSupplier);
+                final Val params = childGenerators[2].eval(storedValues, childDataSupplier);
                 link = makeDashboardLink(text, uuid, params);
             }
 

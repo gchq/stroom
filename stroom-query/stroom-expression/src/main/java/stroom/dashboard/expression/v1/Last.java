@@ -17,6 +17,8 @@
 package stroom.dashboard.expression.v1;
 
 
+import stroom.dashboard.expression.v1.ref.StoredValues;
+
 @FunctionDef(
         name = Last.NAME,
         commonCategory = FunctionCategory.SELECTION,
@@ -53,15 +55,14 @@ public class Last extends AbstractSelectorFunction {
         }
 
         @Override
-        Val select(final ChildData childData) {
-            return childData.last();
-        }
+        Val select(final Generator childGenerator,
+                   final ChildData childData) {
+            final StoredValues storedValues = childData.last();
+            if (storedValues == null) {
+                return null;
+            }
 
-//        public Val select(final Selection<Val> selection) {
-//            if (selection.size() > 0) {
-//                return selection.get(selection.size() - 1);
-//            }
-//            return eval();
-//        }
+            return childGenerator.eval(storedValues, () -> childData);
+        }
     }
 }

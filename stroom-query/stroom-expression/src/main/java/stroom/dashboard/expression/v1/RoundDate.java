@@ -55,6 +55,14 @@ abstract class RoundDate extends AbstractFunction {
         return function.hasAggregate();
     }
 
+    @Override
+    public boolean requiresChildData() {
+        if (function != null) {
+            return function.requiresChildData();
+        }
+        return super.requiresChildData();
+    }
+
     protected abstract RoundCalculator getCalculator();
 
     public abstract static class RoundDateCalculator implements RoundCalculator {

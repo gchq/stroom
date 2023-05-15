@@ -25,11 +25,13 @@ package stroom.dashboard.expression.v1;
         signatures = @FunctionSignature(
                 description = "Returns a null value.",
                 args = {}))
-class Null extends AbstractStaticFunction {
+public class Null extends AbstractStaticFunction {
 
     static final String NAME = "null";
 
+    public static final StaticValueGen GEN = new StaticValueGen(ValNull.INSTANCE);
+
     public Null(final String name) {
-        super(name, ValNull.INSTANCE);
+        super(name, GEN);
     }
 }

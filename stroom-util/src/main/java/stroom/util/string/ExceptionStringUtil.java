@@ -17,6 +17,10 @@ public class ExceptionStringUtil {
         return throwable.getMessage();
     }
 
+    /**
+     * Useful for exceptions whose message is useless without the name of the exception class.
+     * @return The message with the class simple name in brackets, e.g. "some message (RuntimeException)"
+     */
     private static String getMessageAndClassName(final Throwable throwable) {
         LOGGER.debug(throwable::getMessage, throwable);
         if (throwable.getMessage() == null) {

@@ -89,13 +89,14 @@ class CacheResourceImpl implements CacheResource {
             try {
                 WebTarget webTarget = webTargetFactory.get().create(url);
                 webTarget = UriBuilderUtil.addParam(webTarget, "nodeName", nodeName);
-                final Response response = webTarget
+                try (Response response = webTarget
                         .request(MediaType.APPLICATION_JSON)
-                        .get();
-                if (response.getStatus() != 200) {
-                    throw new WebApplicationException(response);
+                        .get()) {
+                    if (response.getStatus() != 200) {
+                        throw new WebApplicationException(response);
+                    }
+                    result = response.readEntity(CacheNamesResponse.class);
                 }
-                result = response.readEntity(CacheNamesResponse.class);
                 if (result == null) {
                     throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
                 }
@@ -123,14 +124,15 @@ class CacheResourceImpl implements CacheResource {
                 WebTarget webTarget = webTargetFactory.get().create(url);
                 webTarget = UriBuilderUtil.addParam(webTarget, "cacheName", cacheName);
                 webTarget = UriBuilderUtil.addParam(webTarget, "nodeName", nodeName);
-                final Response response = webTarget
-                        .request(MediaType.APPLICATION_JSON)
-                        .get();
-                if (response.getStatus() != 200) {
-                    throw new WebApplicationException(response);
-                }
                 CacheInfoResponse result;
-                result = response.readEntity(CacheInfoResponse.class);
+                try (Response response = webTarget
+                        .request(MediaType.APPLICATION_JSON)
+                        .get()) {
+                    if (response.getStatus() != 200) {
+                        throw new WebApplicationException(response);
+                    }
+                    result = response.readEntity(CacheInfoResponse.class);
+                }
                 if (result == null) {
                     throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
                 }
@@ -232,13 +234,14 @@ class CacheResourceImpl implements CacheResource {
                 WebTarget webTarget = webTargetFactory.get().create(url);
                 webTarget = UriBuilderUtil.addParam(webTarget, "cacheName", cacheName);
                 webTarget = UriBuilderUtil.addParam(webTarget, "nodeName", nodeName);
-                final Response response = webTarget
+                try (Response response = webTarget
                         .request(MediaType.APPLICATION_JSON)
-                        .delete();
-                if (response.getStatus() != 200) {
-                    throw new WebApplicationException(response);
+                        .delete()) {
+                    if (response.getStatus() != 200) {
+                        throw new WebApplicationException(response);
+                    }
+                    result = response.readEntity(Long.class);
                 }
-                result = response.readEntity(Long.class);
             } catch (Throwable e) {
                 throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }

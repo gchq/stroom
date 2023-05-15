@@ -1,11 +1,15 @@
 package stroom.data.store.impl.fs;
 
 import stroom.data.store.impl.fs.FsPathHelper.DecodedPath;
+import stroom.util.io.FileUtil;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.string.ExceptionStringUtil;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -16,13 +20,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 public class FsOrphanFileFinderSummary {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsOrphanFileFinderSummary.class);
 
     private final Map<SummaryLine, AtomicLong> summaryMap = new HashMap<>();
+    private final Map<Path, String> badPaths = new HashMap<>();
 
     public void addPath(final Path path) {
         LOGGER.trace("addPath called for path {}", path);
@@ -30,7 +34,8 @@ public class FsOrphanFileFinderSummary {
         try {
             decodedPath = FsPathHelper.decodedPath(path);
         } catch (Exception e) {
-            LOGGER.error("Unable to decode path {}", path, e);
+            LOGGER.debug("Unable to decode path {}", path, e);
+            handleBadPath(path);
             decodedPath = null;
         }
         if (decodedPath != null) {
@@ -42,19 +47,42 @@ public class FsOrphanFileFinderSummary {
         }
     }
 
+    private void handleBadPath(final Path path) {
+        if (path != null) {
+            String message = "";
+            // It is possible there are other paths that stroom can't parse so record them.
+            if (Files.isDirectory(path)) {
+                try {
+                    final boolean isEmpty = FileUtil.isEmptyDirectory(path);
+                    if (isEmpty) {
+                        message = "Empty directory";
+                    } else {
+                        message = "Non-empty directory";
+                    }
+                } catch (IOException e) {
+                    LOGGER.debug("Error checking contents of {}", path, e);
+                    message = "Directory with unknown contents" + ExceptionStringUtil.getMessage(e);
+                }
+            } else {
+                message = "File";
+            }
+            badPaths.put(path, message);
+        }
+    }
+
     @Override
     public String toString() {
         final StringBuilder summary = new StringBuilder();
         if (summaryMap.size() > 0) {
             summary.append("Summary:\n");
-//
+
             final List<Entry<SummaryLine, AtomicLong>> sortedEntries = summaryMap.entrySet()
                     .stream()
                     .sorted(Entry.comparingByKey(Comparator
                             .comparing(SummaryLine::getType)
                             .thenComparing(SummaryLine::getFeed)
                             .thenComparing(SummaryLine::getDate)))
-                    .collect(Collectors.toList());
+                    .toList();
 
             summary.append("\n");
             summary.append(AsciiTable.builder(sortedEntries)
@@ -67,7 +95,23 @@ public class FsOrphanFileFinderSummary {
                     .withColumn(Column.integer("Orphan Count", entry2 -> entry2.getValue().get()))
                     .build());
             summary.append("\n");
+        }
 
+        if (!badPaths.isEmpty()) {
+            if (!summaryMap.isEmpty()) {
+                summary.append("\n");
+            }
+            summary.append("Invalid paths (can't be parsed to extract data/type/feed/id/etc.):\n");
+            final List<Entry<Path, String>> sortedEntries = badPaths.entrySet()
+                    .stream()
+                    .sorted(Entry.comparingByKey())
+                    .toList();
+            summary.append("\n");
+            summary.append(AsciiTable.builder(sortedEntries)
+                    .withColumn(Column.of("Path", Entry::getKey))
+                    .withColumn(Column.of("Info", Entry::getValue))
+                    .build());
+            summary.append("\n");
         }
         return summary.toString();
     }
