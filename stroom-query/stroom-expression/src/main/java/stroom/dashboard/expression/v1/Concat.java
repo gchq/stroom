@@ -16,6 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
+import stroom.dashboard.expression.v1.ref.StoredValues;
+
 import java.util.function.Supplier;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
@@ -54,17 +56,10 @@ class Concat extends AbstractManyChildFunction {
         }
 
         @Override
-        public void set(final Val[] values) {
-            for (final Generator generator : childGenerators) {
-                generator.set(values);
-            }
-        }
-
-        @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
             final StringBuilder sb = new StringBuilder();
             for (final Generator gen : childGenerators) {
-                final Val val = gen.eval(childDataSupplier);
+                final Val val = gen.eval(storedValues, childDataSupplier);
                 if (val.type().isError()) {
                     return val;
                 }

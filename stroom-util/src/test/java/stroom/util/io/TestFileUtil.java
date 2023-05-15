@@ -22,6 +22,8 @@ import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -81,5 +83,41 @@ class TestFileUtil {
         } catch (final RuntimeException e) {
             // Ignore.
         }
+    }
+
+    @Test
+    void testIsEmptyDirectory_empty(@TempDir final Path tempDir) throws IOException {
+
+        final boolean isEmpty = FileUtil.isEmptyDirectory(tempDir);
+        assertThat(isEmpty)
+                .isTrue();
+    }
+
+    @Test
+    void testIsEmptyDirectory_containsFile(@TempDir final Path tempDir) throws IOException {
+
+        Path file = tempDir.resolve("my_file");
+        Files.createFile(file);
+
+        assertThat(file)
+                .isRegularFile();
+
+        final boolean isEmpty = FileUtil.isEmptyDirectory(tempDir);
+        assertThat(isEmpty)
+                .isFalse();
+    }
+
+    @Test
+    void testIsEmptyDirectory_containsDir(@TempDir final Path tempDir) throws IOException {
+
+        Path dir = tempDir.resolve("my_sub_dir");
+        Files.createDirectories(dir);
+
+        assertThat(dir)
+                .isDirectory();
+
+        final boolean isEmpty = FileUtil.isEmptyDirectory(tempDir);
+        assertThat(isEmpty)
+                .isFalse();
     }
 }

@@ -33,7 +33,6 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableResultBuilder;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
-import stroom.query.common.v2.CompiledField;
 import stroom.query.common.v2.CompiledFields;
 import stroom.query.common.v2.CurrentDbState;
 import stroom.query.common.v2.DeleteCommand;
@@ -237,11 +236,10 @@ public class AnalyticsExecutor {
             final PipelineData pipelineData = getPipelineData(extractionPipeline);
 
             // Create field index.
-            final FieldIndex fieldIndex = new FieldIndex();
             final TableSettings tableSettings = searchRequest.getResultRequests().get(0).getMappings().get(0);
             final Map<String, String> paramMap = ParamUtil.createParamMap(searchRequest.getQuery().getParams());
-            final CompiledField[] compiledFields =
-                    CompiledFields.create(tableSettings.getFields(), fieldIndex, paramMap);
+            final CompiledFields compiledFields = CompiledFields.create(tableSettings.getFields(), paramMap);
+            final FieldIndex fieldIndex = compiledFields.getFieldIndex();
 
             // Cache the query for use across multiple streams.
             final SearchExpressionQueryCache searchExpressionQueryCache =

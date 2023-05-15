@@ -78,17 +78,18 @@ public class HttpPostFilter extends AbstractSamplingFilter {
         } else {
             try {
                 final Client client = jerseyClientFactory.getNamedClient(JerseyClientName.HTTP_POST_FILTER);
-                final Response response = client
+                try (Response response = client
                         .target(receivingApiUrl)
                         .request()
                         .accept(MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON)
-                        .post(Entity.xml(xml));
-                if (response.getStatus() != Response.Status.ACCEPTED.ordinal()) {
-                    final String errorMessage = String.format("POST was not accepted by the API: %s", response);
-                    errorReceiverProxy.log(Severity.ERROR, null, null, errorMessage, null);
-                    LOGGER.error(errorMessage);
-                } else {
-                    LOGGER.info("POSTed document to API {}", receivingApiUrl);
+                        .post(Entity.xml(xml))) {
+                    if (response.getStatus() != Response.Status.ACCEPTED.ordinal()) {
+                        final String errorMessage = String.format("POST was not accepted by the API: %s", response);
+                        errorReceiverProxy.log(Severity.ERROR, null, null, errorMessage, null);
+                        LOGGER.error(errorMessage);
+                    } else {
+                        LOGGER.info("POSTed document to API {}", receivingApiUrl);
+                    }
                 }
             } catch (final RuntimeException e) {
                 final String errorMessage = String.format("Unable to POST document to API: %s", e);

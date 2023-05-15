@@ -36,6 +36,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.PathConfig;
 import stroom.util.io.TempDirProvider;
+import stroom.util.logging.DefaultLoggingFilter;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -145,6 +146,8 @@ public class App extends Application<Config> {
 
         // Add useful logging setup.
         registerLogConfiguration(environment);
+
+        environment.jersey().register(DefaultLoggingFilter.createWithDefaults());
 
         // We want Stroom to use the root path so we need to move Dropwizard's path.
         environment.jersey().setUrlPattern(ResourcePaths.API_ROOT_PATH + "/*");

@@ -186,13 +186,14 @@ public class NodeServiceImpl implements NodeService {
             try {
                 final Builder builder = createBuilder(queryParams, url);
 
-                final Response response = responseBuilderFunc.apply(builder);
+                try (Response response = responseBuilderFunc.apply(builder)) {
 
-                LOGGER.debug(() -> "Response status " + response.getStatus());
-                if (response.getStatus() != Status.OK.getStatusCode()) {
-                    throw new WebApplicationException(response);
+                    LOGGER.debug(() -> "Response status " + response.getStatus());
+                    if (response.getStatus() != Status.OK.getStatusCode()) {
+                        throw new WebApplicationException(response);
+                    }
+                    resp = responseMapper.apply(response);
                 }
-                resp = responseMapper.apply(response);
 
                 Objects.requireNonNull(resp, "Null response calling url " + url);
             } catch (final Throwable e) {
@@ -226,11 +227,12 @@ public class NodeServiceImpl implements NodeService {
             try {
                 final Builder builder = createBuilder(queryParams, url);
 
-                final Response response = responseBuilderFunc.apply(builder);
+                try (Response response = responseBuilderFunc.apply(builder)) {
 
-                LOGGER.debug(() -> "Response status " + response.getStatus());
-                if (response.getStatus() != Status.OK.getStatusCode()) {
-                    throw new WebApplicationException(response);
+                    LOGGER.debug(() -> "Response status " + response.getStatus());
+                    if (response.getStatus() != Status.OK.getStatusCode()) {
+                        throw new WebApplicationException(response);
+                    }
                 }
             } catch (final Throwable e) {
                 throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);

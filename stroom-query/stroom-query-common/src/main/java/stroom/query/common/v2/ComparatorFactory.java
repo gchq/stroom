@@ -1,8 +1,8 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.AlphaNumericComparator;
-import stroom.dashboard.expression.v1.AutoComparator;
 import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValComparator;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format.Type;
 
@@ -19,6 +19,6 @@ public class ComparatorFactory {
                 Type.TEXT.equals(field.getFormat().getType())) {
             return new AlphaNumericComparator();
         }
-        return new AutoComparator();
+        return new ValComparator();
     }
 }

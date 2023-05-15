@@ -16,6 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
+import stroom.dashboard.expression.v1.ref.StoredValues;
+
 import java.util.function.Supplier;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
@@ -60,12 +62,15 @@ class CountGroups extends AbstractFunction implements AggregateFunction {
     private static final class Gen extends AbstractNoChildGenerator {
 
         @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
             Val val = null;
             if (childDataSupplier != null) {
                 final ChildData childData = childDataSupplier.get();
                 if (childData != null) {
-                    val = childData.count();
+                    long count = childData.count();
+                    if (count > 0) {
+                        val = ValLong.create(count);
+                    }
                 }
             }
 

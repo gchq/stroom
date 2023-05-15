@@ -4,11 +4,11 @@ import stroom.analytics.api.AlertDefinition;
 import stroom.analytics.api.AlertManager;
 import stroom.analytics.impl.RecordConsumer.Data;
 import stroom.analytics.impl.RecordConsumer.Record;
-import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValuesConsumer;
+import stroom.dashboard.expression.v1.ref.StoredValues;
 import stroom.index.shared.IndexConstants;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.query.api.v2.DateTimeSettings;
@@ -96,17 +96,18 @@ public class AlertWriter implements ValuesConsumer {
     private CompiledFieldValue[] extractAlert(final AlertDefinition rule, final Val[] vals) {
         final TableSettings tableSettings = rule.getTableSettings();
         final List<Field> fields = tableSettings.getFields();
-        final CompiledField[] compiledFields = CompiledFields.create(fields, fieldIndex,
-                paramMapForAlerting);
+        final CompiledFields compiledFields = CompiledFields.create(fields, fieldIndex, paramMapForAlerting);
+        final CompiledField[] compiledFieldArray = compiledFields.getCompiledFields();
+        final StoredValues storedValues = compiledFields.getValueReferenceIndex().createStoredValues();
 
-        final CompiledFieldValue[] output = new CompiledFieldValue[compiledFields.length];
+        final CompiledFieldValue[] output = new CompiledFieldValue[compiledFieldArray.length];
         int index = 0;
 
-        for (final CompiledField compiledField : compiledFields) {
-            final Expression expression = compiledField.getExpression();
+        for (final CompiledField compiledField : compiledFieldArray) {
+            final Generator generator = compiledField.getGenerator();
 
-            if (expression != null) {
-                if (expression.hasAggregate()) {
+            if (generator != null) {
+                if (compiledField.hasAggregate()) {
                     LOGGER.error("Rules error: Dashboard " +
                             rule.getAttributes().getOrDefault(AlertManager.DASHBOARD_NAME_KEY, "Unknown")
                             + " at " + rule.getAttributes().getOrDefault(AlertManager.RULES_FOLDER_KEY,
@@ -115,10 +116,8 @@ public class AlertWriter implements ValuesConsumer {
                     rule.setDisabled(true);
                     return null;
                 } else {
-                    final Generator generator = expression.createGenerator();
-
-                    generator.set(vals);
-                    Val value = generator.eval(null);
+                    generator.set(vals, storedValues);
+                    final Val value = generator.eval(storedValues, null);
                     output[index] = new CompiledFieldValue(compiledField, value);
 
                     if (compiledField.getCompiledFilter() != null) {

@@ -17,6 +17,7 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Field;
@@ -170,7 +171,7 @@ public class TableResultCreator implements ResultCreator {
         int maxResultsAtThisDepth = maxResults.size(depth);
         int resultCountAtThisLevel = 0;
 
-        for (final Item item : items) {
+        for (final Item item : items.getIterable()) {
             boolean hide = false;
 
             // If the result is within the requested window (offset + length) then add it.

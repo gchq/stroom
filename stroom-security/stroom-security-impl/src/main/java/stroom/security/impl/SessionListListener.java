@@ -129,15 +129,16 @@ class SessionListListener implements HttpSessionListener, SessionListService {
                 LOGGER.debug("Sending request to {} for node {}", url, nodeName);
                 WebTarget webTarget = webTargetFactory.create(url);
                 webTarget = UriBuilderUtil.addParam(webTarget, SessionResource.NODE_NAME_PARAM, nodeName);
-                final Response response = webTarget
+                try (Response response = webTarget
                         .request(MediaType.APPLICATION_JSON)
-                        .get();
+                        .get()) {
 
-                if (response.getStatus() != 200) {
-                    throw new WebApplicationException(response);
+                    if (response.getStatus() != 200) {
+                        throw new WebApplicationException(response);
+                    }
+
+                    sessionList = response.readEntity(SessionListResponse.class);
                 }
-
-                sessionList = response.readEntity(SessionListResponse.class);
             } catch (Throwable e) {
                 throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }

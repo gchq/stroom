@@ -16,18 +16,19 @@
 
 package stroom.dashboard.expression.v1;
 
+import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
+
 import java.util.Map;
-import java.util.function.Supplier;
 
 @ArchitecturalFunction
 public class StaticValueFunction implements Function, Appendable {
 
     private final Val value;
-    private final Generator gen;
+    private final StaticValueGen gen;
 
     public StaticValueFunction(final Val value) {
         this.value = value;
-        this.gen = new Gen(value);
+        this.gen = new StaticValueGen(value);
     }
 
     @Override
@@ -37,6 +38,11 @@ public class StaticValueFunction implements Function, Appendable {
 
     @Override
     public void setStaticMappedValues(final Map<String, String> staticMappedValues) {
+        // Ignore
+    }
+
+    @Override
+    public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
         // Ignore
     }
 
@@ -72,17 +78,7 @@ public class StaticValueFunction implements Function, Appendable {
         return false;
     }
 
-    private static final class Gen extends AbstractNoChildGenerator {
-
-        private final Val value;
-
-        Gen(final Val value) {
-            this.value = value;
-        }
-
-        @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
-            return value;
-        }
+    public Val getValue() {
+        return gen.getValue();
     }
 }
