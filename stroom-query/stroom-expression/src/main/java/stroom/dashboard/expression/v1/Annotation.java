@@ -19,6 +19,8 @@ package stroom.dashboard.expression.v1;
 // TODO @AT Confirm behavior of annotation link in the app, i.e. can you have a link with no anno id and/or no linked
 //   event. Need to confirm which args are opt.
 
+import stroom.dashboard.expression.v1.ref.StoredValues;
+
 import java.util.function.Supplier;
 
 /**
@@ -134,33 +136,29 @@ class Annotation extends AbstractLink {
         }
 
         @Override
-        public void set(final Val[] values) {
-            for (final Generator generator : childGenerators) {
-                generator.set(values);
-            }
-        }
-
-        @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
             final StringBuilder sb = new StringBuilder();
-            append(sb, 1, ARG_ANNOTATION_ID);
-            append(sb, 2, ARG_STREAM_ID);
-            append(sb, 3, ARG_EVENT_ID);
-            append(sb, 4, ARG_TITLE);
-            append(sb, 5, ARG_SUBJECT);
-            append(sb, 6, ARG_STATUS);
-            append(sb, 7, ARG_ASSIGNED_TO);
-            append(sb, 8, ARG_COMMENT);
+            append(storedValues, sb, 1, ARG_ANNOTATION_ID);
+            append(storedValues, sb, 2, ARG_STREAM_ID);
+            append(storedValues, sb, 3, ARG_EVENT_ID);
+            append(storedValues, sb, 4, ARG_TITLE);
+            append(storedValues, sb, 5, ARG_SUBJECT);
+            append(storedValues, sb, 6, ARG_STATUS);
+            append(storedValues, sb, 7, ARG_ASSIGNED_TO);
+            append(storedValues, sb, 8, ARG_COMMENT);
 
             return makeLink(getEscapedString(
-                            childGenerators[0].eval(childDataSupplier)),
+                            childGenerators[0].eval(storedValues, childDataSupplier)),
                     EncodingUtil.encodeUrl(sb.toString()),
                     "annotation");
         }
 
-        private void append(final StringBuilder sb, final int index, final String key) {
+        private void append(final StoredValues storedValues,
+                            final StringBuilder sb,
+                            final int index,
+                            final String key) {
             if (index < childGenerators.length) {
-                final Val val = childGenerators[index].eval(null);
+                final Val val = childGenerators[index].eval(storedValues, null);
                 if (val.type().isValue()) {
                     if (sb.length() > 0) {
                         sb.append("&");

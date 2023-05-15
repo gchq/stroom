@@ -22,7 +22,7 @@ public interface ComponentDataModifier {
 
     boolean validate();
 
-    boolean isDirty(ComponentConfig componentData);
+    boolean isDirty(ComponentConfig componentConfig);
 
     Components getComponents();
 

@@ -442,7 +442,9 @@ td {
 }
 
 .statusIcon {
-	padding-top: 1px !important;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
 	cursor: default !important;
 }
 
@@ -597,6 +599,27 @@ input[type="file"] {
 	border-radius: .25rem;
 	height: calc(1.5em + .75rem + 2px);
 }
+
+/* Fix auto fill colours */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+	font-family: var(--regular-font-family);
+	font-size: var(--font-size-13);
+	font-weight: 400;
+	-moz-box-sizing: border-box;
+	-ms-box-sizing: border-box;
+	box-sizing: border-box;
+	background-size: 100% 100%;
+	outline: none;
+	background-color: var(--control__background-color) !important;
+	color: var(--control__text-color) !important;
+	-webkit-box-shadow: 0 0 0px 1000px var(--control__background-color) inset;
+	transition: background-color 5000s ease-in-out 0s;
+	transition: color 5000s ease-in-out 0s;
+}
+
 
 .gwt-TextArea:disabled,
 .gwt-TextBox:disabled,

@@ -5,6 +5,7 @@ package stroom.util.shared;
  */
 public class StringUtil {
 
+
     private StringUtil() {
     }
 
@@ -128,4 +129,5 @@ public class StringUtil {
             return userText.trim();
         }
     }
+
 }

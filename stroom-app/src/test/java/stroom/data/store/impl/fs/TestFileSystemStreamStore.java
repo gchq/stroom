@@ -622,10 +622,10 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 feed2,
                 StreamTypeNames.REFERENCE);
 
-        Set<EffectiveMeta> set = metaService.findEffectiveData(criteria);
+        List<EffectiveMeta> list = metaService.findEffectiveData(criteria);
 
         // Make sure the list contains what it should.
-        verifySet(set, refData1, refData2);
+        verifySet(list, refData1, refData2);
 
         // Try another test that picks up no tom within period but it should get
         // the last one as it would be the most effective.
@@ -635,28 +635,28 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 feed2,
                 StreamTypeNames.REFERENCE);
 
-        set = metaService.findEffectiveData(criteria);
+        list = metaService.findEffectiveData(criteria);
 
         // Make sure the list contains what it should.
-        verifySet(set, refData3);
+        verifySet(list, refData3);
 
-        assertThat(invalidFeeds.contains(set.iterator().next().getId())).isFalse();
+        assertThat(invalidFeeds.contains(list.iterator().next().getId())).isFalse();
     }
 
     /**
      * Check that the list of stream contains the items we expect.
      *
-     * @param set
+     * @param list
      * @param expected
      */
-    private void verifySet(final Set<EffectiveMeta> set, final Meta... expected) {
-        assertThat(set).isNotNull();
-        assertThat(set.size()).isEqualTo(expected.length);
+    private void verifySet(final List<EffectiveMeta> list, final Meta... expected) {
+        assertThat(list).isNotNull();
+        assertThat(list.size()).isEqualTo(expected.length);
         final Set<EffectiveMeta> expectedSet = Arrays.stream(expected)
                 .map(EffectiveMeta::new)
                 .collect(Collectors.toSet());
 
-        assertThat(set).containsAll(expectedSet);
+        assertThat(list).containsAll(expectedSet);
     }
 
     private Meta buildRefData(final String feed,

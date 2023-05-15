@@ -40,8 +40,8 @@
     "name" : "template-pipelines",
     "version" : "0.3"
   }, {
-    "url" : "https://github.com/gchq/stroom-visualisations-dev/releases/download/v3.3.2/visualisations-production-v3.3.2.zip",
+    "url" : "https://github.com/gchq/stroom-visualisations-dev/releases/download/v3.12-alpha.1/visualisations-production-v3.12-alpha.1.zip",
     "name" : "visualisations-production",
-    "version" : "3.3.2"
+    "version" : "3.12-alpha.1"
   } ]
 }

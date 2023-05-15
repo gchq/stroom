@@ -1,5 +1,7 @@
 package stroom.app.guice;
 
+import stroom.analytics.rule.impl.AnalyticRuleModule;
+
 import com.google.inject.AbstractModule;
 
 public class CoreModule extends AbstractModule {
@@ -8,7 +10,9 @@ public class CoreModule extends AbstractModule {
     protected void configure() {
         install(new stroom.activity.impl.ActivityModule());
         install(new stroom.activity.impl.db.ActivityDaoModule());
-        install(new stroom.alert.impl.AlertModule());
+        install(new stroom.analytics.impl.AlertModule());
+        install(new stroom.analytics.impl.AnalyticsModule());
+        install(new stroom.analytics.impl.db.AnalyticsDaoModule());
         install(new stroom.annotation.impl.AnnotationModule());
         install(new stroom.annotation.impl.db.AnnotationDaoModule());
         install(new stroom.annotation.pipeline.AnnotationPipelineModule());
@@ -41,6 +45,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.dictionary.impl.DictionaryModule());
         install(new stroom.docstore.impl.DocStoreModule());
         install(new stroom.docstore.impl.db.DocStoreDbPersistenceModule());
+        install(new stroom.dropwizard.common.DropwizardModule());
         install(new stroom.explorer.impl.ExplorerFavModule());
         install(new stroom.explorer.impl.db.ExplorerFavDbModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
@@ -92,7 +97,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.security.impl.SessionSecurityModule());
         install(new stroom.security.impl.db.SecurityDaoModule());
         install(new stroom.servicediscovery.impl.ServiceDiscoveryModule());
-        install(new stroom.alert.rule.impl.AlertRuleModule());
+        install(new AnalyticRuleModule());
         install(new stroom.statistics.impl.InternalStatisticsModule());
         install(new stroom.statistics.impl.hbase.entity.StroomStatsStoreModule());
         install(new stroom.statistics.impl.hbase.internal.InternalModule());

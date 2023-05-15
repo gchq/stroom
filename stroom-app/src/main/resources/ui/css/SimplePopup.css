@@ -29,6 +29,7 @@
 	border: thin solid var(--dialog__border-color);
 	box-shadow: var(--popup__shadow);
 	border-radius: 8px;
+	z-index: 100;
 }
 
 .simplePopup-content {

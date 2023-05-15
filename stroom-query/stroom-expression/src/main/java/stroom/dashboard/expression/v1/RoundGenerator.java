@@ -16,6 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
+import stroom.dashboard.expression.v1.ref.StoredValues;
+
 import java.util.function.Supplier;
 
 final class RoundGenerator extends AbstractSingleChildGenerator {
@@ -28,13 +30,13 @@ final class RoundGenerator extends AbstractSingleChildGenerator {
     }
 
     @Override
-    public void set(final Val[] values) {
-        childGenerator.set(values);
+    public void set(final Val[] values, final StoredValues storedValues) {
+        childGenerator.set(values, storedValues);
     }
 
     @Override
-    public Val eval(final Supplier<ChildData> childDataSupplier) {
-        final Val val = childGenerator.eval(childDataSupplier);
+    public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
+        final Val val = childGenerator.eval(storedValues, childDataSupplier);
         if (!val.type().isValue()) {
             return val;
         }

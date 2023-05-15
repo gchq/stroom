@@ -25,7 +25,6 @@
 
 @import url("webkit-scrollbar.css");
 @import url("firefox-scrollbar.css");
-@import url("fa-button.css");
 @import url("stroom.css");
 @import url("stroom-control.css");
 @import url("stroom-button.css");
@@ -49,7 +48,7 @@
 @import url("QuickFilter.css");
 @import url("ExpressionItemBox.css");
 @import url("ExplorerTickBoxCell.css");
-@import url("HyperlinkCell.css");
+@import url("CommandLinkCell.css");
 @import url("TermEditor.css");
 @import url("alert.css");
 @import url("spinner.css");

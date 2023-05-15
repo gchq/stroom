@@ -136,10 +136,10 @@ class HeadlessTranslationTaskHandler {
                     // Set the pipeline so it can be used by a filter if needed.
                     final List<DocRef> pipelines = pipelineStore.findByName(feedName);
                     if (pipelines == null || pipelines.size() == 0) {
-                        throw new ProcessException("No pipeline found for feed name '" + feedName + "'");
+                        throw ProcessException.create("No pipeline found for feed name '" + feedName + "'");
                     }
                     if (pipelines.size() > 1) {
-                        throw new ProcessException("More than one pipeline found for feed name '" + feedName + "'");
+                        throw ProcessException.create("More than one pipeline found for feed name '" + feedName + "'");
                     }
 
                     final DocRef pipelineRef = pipelines.get(0);
@@ -153,7 +153,7 @@ class HeadlessTranslationTaskHandler {
                     // Find last XSLT filter.
                     final XMLFilter lastFilter = getLastFilter(pipeline);
                     if (!(lastFilter instanceof HasTargets)) {
-                        throw new ProcessException(
+                        throw ProcessException.create(
                                 "No appendable filters can be found in pipeline '" + pipelineRef.getName() + "'");
                     }
                     ((HasTargets) lastFilter).setTarget(headlessFilter);

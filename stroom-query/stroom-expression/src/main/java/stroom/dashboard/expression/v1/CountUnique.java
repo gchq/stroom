@@ -16,12 +16,12 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import stroom.dashboard.expression.v1.ref.StoredValues;
+import stroom.dashboard.expression.v1.ref.ValListReference;
+import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
 
 import java.text.ParseException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 import java.util.function.Supplier;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
@@ -47,12 +47,13 @@ import java.util.function.Supplier;
                                 argType = Val.class,
                                 isVarargs = true,
                                 minVarargsCount = 2))})
-class CountUnique extends AbstractFunction {
+class CountUnique extends AbstractFunction implements AggregateFunction {
 
     static final String NAME = "countUnique";
 
     private Generator gen;
     private Function function;
+    private ValListReference valListReference;
 
     public CountUnique(final String name) {
         super(name, 1, 1);
@@ -75,8 +76,14 @@ class CountUnique extends AbstractFunction {
              * Optimise replacement of static input in case user does something
              * stupid.
              */
-            gen = new StaticValueFunction(ValInteger.create(1)).createGenerator();
+            gen = new StaticValueGen(ValInteger.create(1));
         }
+    }
+
+    @Override
+    public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
+        valListReference = valueReferenceIndex.addValList();
+        super.addValueReferences(valueReferenceIndex);
     }
 
     @Override
@@ -86,7 +93,7 @@ class CountUnique extends AbstractFunction {
         }
 
         final Generator childGenerator = function.createGenerator();
-        return new Gen(childGenerator);
+        return new Gen(childGenerator, valListReference);
     }
 
     @Override
@@ -99,50 +106,58 @@ class CountUnique extends AbstractFunction {
         return isAggregate();
     }
 
+    @Override
+    public boolean requiresChildData() {
+        if (function != null) {
+            return function.requiresChildData();
+        }
+        return super.requiresChildData();
+    }
+
     private static final class Gen extends AbstractSingleChildGenerator {
 
-        private final Set<Val> uniqueValues = new HashSet<>();
+        private final ValListReference valListReference;
 
-        Gen(final Generator childGenerator) {
+        Gen(final Generator childGenerator,
+            final ValListReference valListReference) {
             super(childGenerator);
+            this.valListReference = valListReference;
         }
 
         @Override
-        public void set(final Val[] values) {
-            childGenerator.set(values);
-            final Val value = childGenerator.eval(null);
-            if (value.type().isValue()) {
-                uniqueValues.add(value);
+        public void set(final Val[] values, final StoredValues storedValues) {
+            childGenerator.set(values, storedValues);
+            final Val val = childGenerator.eval(storedValues, null);
+            if (val.type().isValue()) {
+                final List<Val> list = valListReference.get(storedValues);
+                if (!list.contains(val)) {
+                    list.add(val);
+                    valListReference.set(storedValues, list);
+                }
             }
         }
 
         @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
-            return ValInteger.create(uniqueValues.size());
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
+            final List<Val> list = valListReference.get(storedValues);
+            return ValInteger.create(list.size());
         }
 
         @Override
-        public void merge(final Generator generator) {
-            final Gen gen = (Gen) generator;
-            uniqueValues.addAll(gen.uniqueValues);
-            super.merge(generator);
-        }
-
-        @Override
-        public void read(final Input input) {
-            uniqueValues.clear();
-            final int length = input.readInt(true);
-            for (int i = 0; i < length; i++) {
-                uniqueValues.add(ValSerialiser.read(input));
+        public void merge(final StoredValues existingValues, final StoredValues newValues) {
+            final List<Val> existingList = valListReference.get(existingValues);
+            final List<Val> newList = valListReference.get(newValues);
+            boolean changed = false;
+            for (final Val value : newList) {
+                if (!existingList.contains(value)) {
+                    existingList.add(value);
+                    changed = true;
+                }
             }
-        }
-
-        @Override
-        public void write(final Output output) {
-            output.writeInt(uniqueValues.size(), true);
-            for (final Val val : uniqueValues) {
-                ValSerialiser.write(output, val);
+            if (changed) {
+                valListReference.set(existingValues, existingList);
             }
+            super.merge(existingValues, newValues);
         }
     }
 }

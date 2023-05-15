@@ -1,5 +1,6 @@
 package stroom.proxy.app.handler;
 
+import stroom.proxy.feed.remote.FeedStatus;
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresProxyRestart;
 import stroom.util.shared.AbstractConfig;
@@ -7,6 +8,7 @@ import stroom.util.shared.IsProxyConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
@@ -15,11 +17,28 @@ import javax.validation.constraints.NotNull;
 @JsonPropertyOrder(alphabetic = true)
 public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
 
+    @JsonProperty
+    @JsonPropertyDescription("Turn feed status checking on/off.")
+    private final Boolean enabled;
+    @JsonProperty
+    @JsonPropertyDescription("How should proxy treat incoming data if feed status checking is turned off or we are" +
+            " unable to fetch the status.")
+    private final FeedStatus defaultStatus;
+    @JsonProperty("url")
+    @JsonPropertyDescription("The remote URL to fetch feed status from if enabled.")
     private final String feedStatusUrl;
+    @JsonProperty("apiKey")
+    @JsonPropertyDescription("The api key to use to authenticate with the feed status service.")
     private final String apiKey;
+    @RequiresProxyRestart
+    @NotNull
+    @JsonProperty("feedStatusCache")
+    @JsonPropertyDescription("Configure caching of the fetched feed status.")
     private final CacheConfig feedStatusCache;
 
     public FeedStatusConfig() {
+        enabled = true;
+        defaultStatus = FeedStatus.Receive;
         feedStatusUrl = null;
         apiKey = null;
         feedStatusCache = buildDefaultCacheConfig();
@@ -27,9 +46,13 @@ public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public FeedStatusConfig(@JsonProperty("url") final String feedStatusUrl,
+    public FeedStatusConfig(@JsonProperty("enabled") Boolean enabled,
+                            @JsonProperty("defaultStatus") final FeedStatus defaultStatus,
+                            @JsonProperty("url") final String feedStatusUrl,
                             @JsonProperty("apiKey") final String apiKey,
                             @JsonProperty("feedStatusCache") final CacheConfig feedStatusCache) {
+        this.enabled = enabled;
+        this.defaultStatus = defaultStatus;
         this.feedStatusUrl = feedStatusUrl;
         this.apiKey = apiKey;
 
@@ -45,19 +68,22 @@ public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
                 .build();
     }
 
-    @JsonProperty("url")
+    public Boolean getEnabled() {
+        return enabled;
+    }
+
+    public FeedStatus getDefaultStatus() {
+        return defaultStatus;
+    }
+
     public String getFeedStatusUrl() {
         return feedStatusUrl;
     }
 
-    @JsonProperty("apiKey")
     public String getApiKey() {
         return apiKey;
     }
 
-    @RequiresProxyRestart
-    @NotNull
-    @JsonProperty("feedStatusCache")
     public CacheConfig getFeedStatusCache() {
         return feedStatusCache;
     }
@@ -71,19 +97,24 @@ public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
             return false;
         }
         final FeedStatusConfig that = (FeedStatusConfig) o;
-        return Objects.equals(feedStatusUrl, that.feedStatusUrl) && Objects.equals(apiKey,
-                that.apiKey) && Objects.equals(feedStatusCache, that.feedStatusCache);
+        return Objects.equals(enabled, that.enabled) &&
+                defaultStatus == that.defaultStatus &&
+                Objects.equals(feedStatusUrl, that.feedStatusUrl) &&
+                Objects.equals(apiKey, that.apiKey) &&
+                Objects.equals(feedStatusCache, that.feedStatusCache);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(feedStatusUrl, apiKey, feedStatusCache);
+        return Objects.hash(enabled, defaultStatus, feedStatusUrl, apiKey, feedStatusCache);
     }
 
     @Override
     public String toString() {
         return "FeedStatusConfig{" +
-                "feedStatusUrl='" + feedStatusUrl + '\'' +
+                "enabled=" + enabled +
+                ", defaultStatus=" + defaultStatus +
+                ", feedStatusUrl='" + feedStatusUrl + '\'' +
                 ", apiKey='" + apiKey + '\'' +
                 ", feedStatusCache=" + feedStatusCache +
                 '}';

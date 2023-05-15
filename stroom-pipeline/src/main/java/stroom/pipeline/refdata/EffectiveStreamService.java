@@ -1,5 +1,6 @@
 package stroom.pipeline.refdata;
 
+import stroom.meta.api.EffectiveMeta;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -25,7 +26,7 @@ public class EffectiveStreamService {
         this.effectiveStreamCache = effectiveStreamCache;
     }
 
-    NavigableSet<EffectiveStream> get(final EffectiveStreamKey effectiveStreamKey) {
+    NavigableSet<EffectiveMeta> get(final EffectiveStreamKey effectiveStreamKey) {
         return effectiveStreamCache.get(effectiveStreamKey);
     }
 
@@ -33,7 +34,7 @@ public class EffectiveStreamService {
      * Find the most recent stream that is older than or equal to {@code time} or empty if
      * there isn't one
      */
-    Optional<EffectiveStream> determineEffectiveStream(final PipelineReference pipelineReference,
+    Optional<EffectiveMeta> determineEffectiveStream(final PipelineReference pipelineReference,
                                                        final long time,
                                                        final ReferenceDataResult result) {
 
@@ -47,9 +48,9 @@ public class EffectiveStreamService {
                 time);
 
         // Try and fetch a tree set of effective streams for this key.
-        final NavigableSet<EffectiveStream> effectiveStreams = effectiveStreamCache.get(effectiveStreamKey);
+        final NavigableSet<EffectiveMeta> effectiveStreams = effectiveStreamCache.get(effectiveStreamKey);
 
-        final EffectiveStream effectiveStream;
+        final EffectiveMeta effectiveStream;
 
         if (effectiveStreams != null && effectiveStreams.size() > 0) {
             result.logLazyTemplate(Severity.INFO,
@@ -67,15 +68,15 @@ public class EffectiveStreamService {
 
             if (LOGGER.isTraceEnabled()) {
                 final String streams = effectiveStreams.stream()
-                        .map(stream -> stream.getStreamId() + " - "
-                                + Instant.ofEpochMilli(stream.getEffectiveMs()))
+                        .map(effectiveMeta -> "  " + effectiveMeta.toString())
                         .collect(Collectors.joining("\n"));
-                LOGGER.trace("Comparing {} to Effective streams:\n{}", Instant.ofEpochMilli(time), streams);
+                LOGGER.trace("For key {}, comparing time: {} to effective streams:\n{}",
+                        effectiveStreamKey, Instant.ofEpochMilli(time), streams);
             }
 
             // Try and find the stream before the requested time that is less
             // than or equal to it.
-            effectiveStream = effectiveStreams.floor(new EffectiveStream(0, time));
+            effectiveStream = EffectiveMeta.findLatestBefore(time, effectiveStreams);
         } else {
             // No need to log here as it will get logged by the caller
             effectiveStream = null;

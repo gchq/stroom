@@ -18,12 +18,12 @@ package stroom.annotation.client;
 
 import stroom.annotation.client.ChangeAssignedToPresenter.ChangeAssignedToView;
 import stroom.svg.client.SvgImages;
+import stroom.widget.button.client.InlineSvgButton;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -37,7 +37,7 @@ public class ChangeAssignedToViewImpl extends ViewWithUiHandlers<ChangeAssignedT
     @UiField
     Label assignedToLabel;
     @UiField
-    Button assignedToIcon;
+    InlineSvgButton assignedToIcon;
     @UiField
     Label assignedTo;
     @UiField
@@ -46,7 +46,7 @@ public class ChangeAssignedToViewImpl extends ViewWithUiHandlers<ChangeAssignedT
     @Inject
     public ChangeAssignedToViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        assignedToIcon.getElement().setInnerHTML(SvgImages.MONO_ARROW_DOWN);
+        assignedToIcon.setSvg(SvgImages.MONO_ARROW_DOWN);
     }
 
     @Override

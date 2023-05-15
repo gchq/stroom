@@ -19,6 +19,7 @@ package stroom.dashboard.shared;
 import stroom.util.shared.RandomId;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -41,6 +42,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlType(name = "SplitLayoutConfig", propOrder = {"preferredSize", "dimension", "children"})
 public class SplitLayoutConfig extends LayoutConfig {
 
+    @JsonIgnore
     private final String id;
     /**
      * The preferred size of this layout in width, height.
@@ -145,5 +147,38 @@ public class SplitLayoutConfig extends LayoutConfig {
             return 0;
         }
         return children.size();
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private Size preferredSize;
+        private int dimension;
+        private List<LayoutConfig> children;
+
+        private Builder() {
+        }
+
+        public Builder preferredSize(final Size preferredSize) {
+            this.preferredSize = preferredSize;
+            return this;
+        }
+
+        public Builder dimension(final int dimension) {
+            this.dimension = dimension;
+            return this;
+        }
+
+        public Builder children(final List<LayoutConfig> children) {
+            this.children = children;
+            return this;
+        }
+
+        public SplitLayoutConfig build() {
+            return new SplitLayoutConfig(preferredSize, dimension, children);
+        }
     }
 }

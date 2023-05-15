@@ -20,9 +20,18 @@ import stroom.data.retention.shared.DataRetentionDeleteSummaryRequest;
 import stroom.data.retention.shared.DataRetentionDeleteSummaryResponse;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.DataRetentionRulesResource;
+import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.meta.api.MetaService;
 
+import event.logging.AdvancedQuery;
+import event.logging.Criteria;
+import event.logging.DeleteEventAction;
+import event.logging.Query;
+import event.logging.Term;
+import event.logging.TermCondition;
 import io.swagger.v3.oas.annotations.Parameter;
 
 import javax.inject.Inject;
@@ -33,12 +42,15 @@ class DataRetentionRulesResourceImpl implements DataRetentionRulesResource {
 
     private final Provider<DataRetentionRulesService> dataRetentionRulesServiceProvider;
     private final Provider<MetaService> metaServiceProvider;
+    private final Provider<StroomEventLoggingService> eventLoggingServiceProvider;
 
     @Inject
     DataRetentionRulesResourceImpl(final Provider<DataRetentionRulesService> dataRetentionRulesServiceProvider,
-                                   final Provider<MetaService> metaServiceProvider) {
+                                   final Provider<MetaService> metaServiceProvider,
+                                   final Provider<StroomEventLoggingService> eventLoggingServiceProvider) {
         this.dataRetentionRulesServiceProvider = dataRetentionRulesServiceProvider;
         this.metaServiceProvider = metaServiceProvider;
+        this.eventLoggingServiceProvider = eventLoggingServiceProvider;
     }
 
     @Override
@@ -54,7 +66,6 @@ class DataRetentionRulesResourceImpl implements DataRetentionRulesResource {
     @Override
     public DataRetentionDeleteSummaryResponse getRetentionDeletionSummary(
             @Parameter(description = "request", required = true) DataRetentionDeleteSummaryRequest request) {
-
         return new DataRetentionDeleteSummaryResponse(
                 metaServiceProvider.get()
                         .getRetentionDeleteSummary(
@@ -64,8 +75,30 @@ class DataRetentionRulesResourceImpl implements DataRetentionRulesResource {
                 request.getQueryId());
     }
 
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
     public Boolean cancelQuery(final String queryId) {
-        return metaServiceProvider.get().cancelRetentionDeleteSummary(queryId);
+        return eventLoggingServiceProvider.get()
+                .loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "cancelQuery"))
+                .withDescription("Cancelling data retention delete summary with query id " + queryId)
+                .withDefaultEventAction(DeleteEventAction.builder()
+                        .addCriteria(Criteria.builder()
+                                .withQuery(Query.builder()
+                                        .withAdvanced(AdvancedQuery.builder()
+                                                .addTerm(Term.builder()
+                                                        .withName("queryId")
+                                                        .withCondition(TermCondition.EQUALS)
+                                                        .withValue(queryId)
+                                                        .build())
+                                                .build())
+                                        .build())
+                                .build())
+                        .build())
+                .withSimpleLoggedResult(() -> {
+                    return metaServiceProvider.get()
+                            .cancelRetentionDeleteSummary(queryId);
+                })
+                .getResultAndLog();
     }
 }

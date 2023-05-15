@@ -19,7 +19,7 @@ package stroom.pipeline.refdata.store;
 
 import java.util.Objects;
 
-public class StringValue extends RefDataValue {
+public class StringValue implements RefDataValue {
 
     public static final int TYPE_ID = 0;
 

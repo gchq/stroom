@@ -39,6 +39,7 @@ public class ExplorerTreeFilter {
 
     @JsonProperty
     private final Set<String> includedTypes;
+    @JsonProperty
     private final Set<String> includedRootTypes;
     @JsonProperty
     private final Set<String> tags;

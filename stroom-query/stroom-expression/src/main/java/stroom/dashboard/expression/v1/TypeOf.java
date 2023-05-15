@@ -16,6 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
+import stroom.dashboard.expression.v1.ref.StoredValues;
+
 import java.text.ParseException;
 import java.util.function.Supplier;
 
@@ -76,6 +78,14 @@ class TypeOf extends AbstractFunction {
         return hasAggregate;
     }
 
+    @Override
+    public boolean requiresChildData() {
+        if (function != null) {
+            return function.requiresChildData();
+        }
+        return super.requiresChildData();
+    }
+
     private static final class Gen extends AbstractSingleChildGenerator {
 
 
@@ -84,13 +94,13 @@ class TypeOf extends AbstractFunction {
         }
 
         @Override
-        public void set(final Val[] values) {
-            childGenerator.set(values);
+        public void set(final Val[] values, final StoredValues storedValues) {
+            childGenerator.set(values, storedValues);
         }
 
         @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
-            final Val val = childGenerator.eval(childDataSupplier);
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
+            final Val val = childGenerator.eval(storedValues, childDataSupplier);
             final String type = val.type().toString();
             if (type != null) {
                 return ValString.create(type);

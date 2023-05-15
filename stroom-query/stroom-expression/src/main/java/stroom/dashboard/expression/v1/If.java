@@ -16,6 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
+import stroom.dashboard.expression.v1.ref.StoredValues;
+
 import java.text.ParseException;
 import java.util.function.Supplier;
 
@@ -112,15 +114,8 @@ class If extends AbstractManyChildFunction {
         }
 
         @Override
-        public void set(final Val[] values) {
-            for (final Generator generator : childGenerators) {
-                generator.set(values);
-            }
-        }
-
-        @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
-            final Val val = childGenerators[0].eval(childDataSupplier);
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
+            final Val val = childGenerators[0].eval(storedValues, childDataSupplier);
             if (!val.type().isValue()) {
                 return val;
             }
@@ -131,9 +126,9 @@ class If extends AbstractManyChildFunction {
                     return ValErr.create("Expecting a condition");
                 }
                 if (condition) {
-                    return childGenerators[1].eval(childDataSupplier);
+                    return childGenerators[1].eval(storedValues, childDataSupplier);
                 } else {
-                    return childGenerators[2].eval(childDataSupplier);
+                    return childGenerators[2].eval(storedValues, childDataSupplier);
                 }
             } catch (final RuntimeException e) {
                 return ValErr.create(e.getMessage());

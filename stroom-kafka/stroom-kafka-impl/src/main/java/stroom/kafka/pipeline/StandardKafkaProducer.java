@@ -131,14 +131,14 @@ class StandardKafkaProducer extends AbstractXMLFilter {
         try {
             if (configRef == null) {
                 log(Severity.FATAL_ERROR, "KafkaConfig has not been set", null);
-                throw new LoggedException("KafkaConfig has not been set");
+                throw LoggedException.create("KafkaConfig has not been set");
             }
 
             sharedKafkaProducer = stroomKafkaProducerFactory.getSharedProducer(configRef);
 
             kafkaProducer = sharedKafkaProducer.getKafkaProducer().orElseThrow(() -> {
                 log(Severity.FATAL_ERROR, "No Kafka produce exists for config " + configRef, null);
-                throw new LoggedException("Unable to create Kafka Producer using config " + configRef);
+                throw LoggedException.create("Unable to create Kafka Producer using config " + configRef);
             });
         } catch (KafkaException ex) {
             log(Severity.FATAL_ERROR, "Unable to create Kafka Producer using config " + configRef.getUuid(), ex);
@@ -172,7 +172,7 @@ class StandardKafkaProducer extends AbstractXMLFilter {
                                 // Continue to interrupt this thread.
                                 Thread.currentThread().interrupt();
 
-                                throw new ProcessException("Thread interrupted");
+                                throw ProcessException.create("Thread interrupted");
                             } catch (ExecutionException e) {
                                 log(Severity.ERROR, "Error sending message to Kafka", e);
                             }

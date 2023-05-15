@@ -23,6 +23,7 @@ import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.pipeline.state.IdEnrichmentExpectedIds;
 import stroom.pipeline.state.MetaHolder;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -57,19 +58,18 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
 
     private final MetaHolder metaHolder;
     private final ErrorReceiverProxy errorReceiverProxy;
+    private final IdEnrichmentExpectedIds idEnrichmentExpectedIds;
 
     private int depth;
     private long count;
 
-    // These variables are used in search result output.
-    private String streamId;
-    private long[] eventIds;
-
     @Inject
     public IdEnrichmentFilter(final MetaHolder metaHolder,
-                              final ErrorReceiverProxy errorReceiverProxy) {
+                              final ErrorReceiverProxy errorReceiverProxy,
+                              final IdEnrichmentExpectedIds idEnrichmentExpectedIds) {
         this.metaHolder = metaHolder;
         this.errorReceiverProxy = errorReceiverProxy;
+        this.idEnrichmentExpectedIds = idEnrichmentExpectedIds;
     }
 
     /**
@@ -79,13 +79,14 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
     @Override
     public void startStream() {
         try {
-            if (this.streamId == null) {
+            if (idEnrichmentExpectedIds.getStreamId() == null) {
                 final Meta meta = metaHolder.getMeta();
                 if (meta != null) {
-                    streamId = String.valueOf(meta.getId());
+                    idEnrichmentExpectedIds.setStreamId(meta.getId());
                 } else {
                     final String msg = "No stream set in stream holder";
-                    errorReceiverProxy.log(Severity.WARNING, null, getElementId(), msg, new ProcessException(msg));
+                    errorReceiverProxy
+                            .log(Severity.WARNING, null, getElementId(), msg, ProcessException.create(msg));
                 }
             }
             depth = 0;
@@ -131,6 +132,8 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
         if (depth == 2) {
             // Modify the attributes if this is an event element so that a
             // unique ID is inserted.
+            final Long streamId = idEnrichmentExpectedIds.getStreamId();
+            final long[] eventIds = idEnrichmentExpectedIds.getEventIds();
             if (streamId != null) {
                 // This is a first level element.
                 count++;
@@ -187,7 +190,7 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
                 }
 
                 // Add the ids to the element.
-                idAtts.addAttribute(URI, STREAM_ID, STREAM_ID, STRING, streamId);
+                idAtts.addAttribute(URI, STREAM_ID, STREAM_ID, STRING, String.valueOf(streamId));
                 idAtts.addAttribute(URI, EVENT_ID, EVENT_ID, STRING, eventId);
 
                 newAtts = idAtts;
@@ -213,10 +216,5 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         super.endElement(uri, localName, qName);
         depth--;
-    }
-
-    public void setup(final String streamId, final long[] eventIds) {
-        this.streamId = streamId;
-        this.eventIds = eventIds;
     }
 }

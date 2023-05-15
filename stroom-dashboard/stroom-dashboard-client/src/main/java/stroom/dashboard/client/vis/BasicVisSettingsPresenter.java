@@ -182,13 +182,13 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
     }
 
     @Override
-    public void read(final ComponentConfig componentData) {
-        super.read(componentData);
+    public void read(final ComponentConfig componentConfig) {
+        super.read(componentConfig);
 
         final List<Component> list = getComponents().getSortedComponentsByType(TablePresenter.TYPE.getId());
         getView().setTableList(list);
 
-        final VisComponentSettings settings = (VisComponentSettings) componentData.getSettings();
+        final VisComponentSettings settings = (VisComponentSettings) componentConfig.getSettings();
         getView().setTable(getComponents().get(settings.getTableId()));
         updateFieldNames(getView().getTable());
 

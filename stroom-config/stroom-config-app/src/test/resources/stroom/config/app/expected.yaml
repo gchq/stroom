@@ -19,8 +19,38 @@ appConfig:
   alerting:
     additionalFieldsPrefix: "_"
     reportAllExtractedFieldsEnabled: false
+    resultStore:
+      lmdb:
+        localDir: "analytic_store"
+        maxReaders: 10
+        maxStoreSize: "10G"
+        readAheadEnabled: true
+      maxPayloadSize: "1G"
+      maxPutsBeforeCommit: 10000
+      maxStringFieldLength: 1000
+      minPayloadSize: "1M"
+      offHeapResults: true
+      storeSize: "1000000,100,10,1"
+      valueQueueSize: 10000
     rulesFolderList: []
     timezone: "UTC"
+  analytics:
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverPassword: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+      connectionPool:
+        cachePrepStmts: false
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        leakDetectionThreshold: "PT0S"
+        maxLifetime: "PT30M"
+        maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
   annotation:
     createText: "Create Annotation"
     db:
@@ -166,6 +196,7 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 1000
+      metaStatusUpdateBatchSize: 0
       metaTypeCache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
@@ -463,7 +494,6 @@ appConfig:
       maxElements: 1000000
   processor:
     assignTasks: true
-    createTasks: true
     databaseMultiInsertMaxBatchSize: 500
     db:
       connection:
@@ -501,6 +531,10 @@ appConfig:
       expireAfterWrite: null
       maximumSize: 1000
     queueSize: 1000
+    skipNonProducingFiltersDuration: "PT10S"
+    taskCreationThreadCount: 5
+    tasksToCreate: 1000
+    waitToQueueTasksDuration: "PT10S"
   properties:
     db:
       connection:
@@ -562,12 +596,12 @@ appConfig:
         maxStoreSize: "10G"
         readAheadEnabled: true
       maxPayloadSize: "1G"
-      maxPutsBeforeCommit: 100000
+      maxPutsBeforeCommit: 10000
       maxStringFieldLength: 1000
       minPayloadSize: "1M"
       offHeapResults: true
       storeSize: "1000000,100,10,1"
-      valueQueueSize: 1000000
+      valueQueueSize: 10000
     shard:
       indexShardSearcherCache:
         expireAfterAccess: "PT1M"
@@ -927,16 +961,8 @@ appConfig:
       title: "Splash Screen"
       version: "v0.1"
     theme:
-      backgroundAttachment: "scroll"
       backgroundColour: "#1E88E5"
-      backgroundImage: "none"
-      backgroundOpacity: "0"
-      backgroundPosition: "0 0"
-      backgroundRepeat: "repeat"
       labelColours: "TEST1=#FF0000,TEST2=#FF9900"
-      topMenuTextColour: "#FFFFFF"
-      tubeOpacity: "0.6"
-      tubeVisible: "hidden"
     welcomeHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from\
       \ multiple systems.</p>"
   uiUri:

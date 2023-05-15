@@ -84,7 +84,6 @@ import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.Expander;
-import stroom.util.shared.RandomId;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.Version;
 import stroom.view.client.presenter.DataSourceFieldsMap;
@@ -125,14 +124,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 public class TablePresenter extends AbstractComponentPresenter<TableView>
         implements HasDirtyHandlers, ResultComponent, HasSelection, TableUiHandlers {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     public static final ComponentType TYPE = new ComponentType(1, "table", "Table", ComponentUse.PANEL);
-    private static final int MIN_EXPANDER_COL_WIDTH = 0;
     private static final Version CURRENT_MODEL_VERSION = new Version(6, 1, 26);
 
     private final LocationManager locationManager;
@@ -160,7 +157,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private FieldAddPresenter fieldAddPresenter;
     private boolean ignoreRangeChange;
     private int[] maxResults = TableComponentSettings.DEFAULT_MAX_RESULTS;
-    private final Set<String> usedFieldIds = new HashSet<>();
     private boolean pause;
     private int currentRequestCount;
 
@@ -235,7 +231,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
 
         // Expander column.
-        expanderColumn = new Column<TableRow, Expander>(new ExpanderCell()) {
+        expanderColumn = new Column<TableRow, Expander>(new ExpanderCell(ExpanderCell.DEFAULT_INITIAL_OFFSET_PX)) {
             @Override
             public Expander getValue(final TableRow row) {
                 if (row == null) {
@@ -324,24 +320,17 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         if (currentSearchModel != null && fieldAddPresenter == null) {
             fieldAddPresenter = fieldAddPresenterProvider.get();
 
-            final List<Field> addFields = new ArrayList<>();
+            final List<Field> annotationFields = new ArrayList<>();
+            final List<Field> dataFields = new ArrayList<>();
+            final List<Field> otherFields = new ArrayList<>();
+
             final IndexLoader indexLoader = currentSearchModel.getIndexLoader();
             if (indexLoader.getIndexFieldNames() != null) {
                 final DataSourceFieldsMap indexFieldsMap = indexLoader.getDataSourceFieldsMap();
+
                 for (final String indexFieldName : indexLoader.getIndexFieldNames()) {
                     final Builder fieldBuilder = Field.builder();
                     fieldBuilder.name(indexFieldName);
-
-                    final String expression;
-                    if (indexFieldName.startsWith("annotation:") && indexFieldsMap != null) {
-                        // Turn 'annotation:.*' fields into annotation links that make use of either the special
-                        // eventId/streamId fields (so event results can link back to annotations) OR
-                        // the annotation:Id field so Annotations datasource results can link back.
-                        expression = buildAnnotationFieldExpression(indexFieldsMap, indexFieldName);
-                    } else {
-                        expression = ParamSubstituteUtil.makeParam(indexFieldName);
-                    }
-                    fieldBuilder.expression(expression);
 
                     if (indexFieldsMap != null) {
                         final AbstractField indexField = indexFieldsMap.get(indexFieldName);
@@ -364,38 +353,52 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         }
                     }
 
-                    addFields.add(fieldBuilder.build());
+                    final String expression;
+                    if (indexFieldName.startsWith("annotation:") && indexFieldsMap != null) {
+                        // Turn 'annotation:.*' fields into annotation links that make use of either the special
+                        // eventId/streamId fields (so event results can link back to annotations) OR
+                        // the annotation:Id field so Annotations datasource results can link back.
+                        expression = buildAnnotationFieldExpression(indexFieldsMap, indexFieldName);
+                        fieldBuilder.expression(expression);
+                        annotationFields.add(fieldBuilder.build());
+                    } else {
+                        expression = ParamSubstituteUtil.makeParam(indexFieldName);
+                        fieldBuilder.expression(expression);
+                        dataFields.add(fieldBuilder.build());
+                    }
                 }
             }
-            addFields.sort(Comparator.comparing(Field::getName, String.CASE_INSENSITIVE_ORDER));
 
             final Field count = Field.builder()
                     .name("Count")
                     .format(Format.NUMBER)
                     .expression("count()")
                     .build();
-            addFields.add(count);
+            otherFields.add(count);
 
             final Field countGroups = Field.builder()
                     .name("Count Groups")
                     .format(Format.NUMBER)
                     .expression("countGroups()")
                     .build();
-            addFields.add(countGroups);
+            otherFields.add(countGroups);
 
             final Field custom = Field.builder()
                     .name("Custom")
                     .build();
-            addFields.add(custom);
+            otherFields.add(custom);
+
+            final AutocompletePopupView<Field> popupView = fieldAddPresenter.getView();
+            popupView.clearItems();
+            addFieldGroup(popupView, otherFields, "Counts");
+            addFieldGroup(popupView, dataFields, "Data Source");
+            addFieldGroup(popupView, annotationFields, "Annotations");
 
             final Element target = event.getNativeEvent().getEventTarget().cast();
             final PopupPosition popupPosition = new PopupPosition(
                     target.getAbsoluteLeft() - 3,
                     target.getAbsoluteTop() + target.getClientHeight() + 1);
 
-            final AutocompletePopupView<Field> popupView = fieldAddPresenter.getView();
-            popupView.clearItems();
-            popupView.addItems(addFields);
             popupView.showPopup(popupPosition);
 
             final AddSelectionHandler selectionHandler = new AddSelectionHandler(fieldAddPresenter);
@@ -406,6 +409,16 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 selectionHandlerRegistration.removeHandler();
                 fieldAddPresenter = null;
             });
+        }
+    }
+
+    private void addFieldGroup(final AutocompletePopupView<Field> popupView,
+                               final List<Field> fields,
+                               final String groupName) {
+        if (fields.size() > 0) {
+            fields.sort(Comparator.comparing(Field::getName, String.CASE_INSENSITIVE_ORDER));
+//            items.add(new GroupHeading(items.size(), groupName));
+            popupView.addItems(fields);
         }
     }
 
@@ -434,16 +447,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         if (allFields.contains(fieldName)) {
             params.add(ParamSubstituteUtil.makeParam(fieldName));
         }
-    }
-
-    private String createRandomFieldId() {
-        String id = getComponentConfig().getId() + "|" + RandomId.createId(5);
-        // Make sure we don't duplicate ids.
-        while (usedFieldIds.contains(id)) {
-            id = getComponentConfig().getId() + "|" + RandomId.createId(5);
-        }
-        usedFieldIds.add(id);
-        return id;
     }
 
     private void download() {
@@ -700,11 +703,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
 
         // Set the expander column width.
-        if (maxDepth > 0) {
-            expanderColumnWidth = 16 + (maxDepth * 10);
-        } else {
-            expanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
-        }
+        expanderColumnWidth = ExpanderCell.getColumnWidth(maxDepth) + ExpanderCell.DEFAULT_INITIAL_OFFSET_PX;
         dataGrid.setColumnWidth(expanderColumn, expanderColumnWidth, Unit.PX);
 
         return processed;
@@ -963,6 +962,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
 
         // Ensure all fields have ids.
+        final Set<String> usedFieldIds = new HashSet<>();
         if (getTableSettings().getFields() != null) {
             final String obfuscatedStreamId = IndexConstants.generateObfuscatedColumnName(IndexConstants.STREAM_ID);
             final String obfuscatedEventId = IndexConstants.generateObfuscatedColumnName(IndexConstants.EVENT_ID);
@@ -975,7 +975,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 } else if (obfuscatedEventId.equals(f.getName())) {
                     f = buildSpecialField(IndexConstants.EVENT_ID);
                 } else if (field.getId() == null) {
-                    f = field.copy().id(createRandomFieldId()).build();
+                    f = field.copy().id(fieldsManager.createRandomFieldId(usedFieldIds)).build();
                 }
                 usedFieldIds.add(field.getId());
                 fields.add(f);
@@ -1136,21 +1136,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 HidePopupEvent
                         .builder(presenter)
                         .fire();
-
-                final String fieldName = field.getName();
-                String suffix = "";
-                int count = 1;
-                final Set<String> currentFields = getTableSettings().getFields().stream().map(Field::getName).collect(
-                        Collectors.toSet());
-                while (currentFields.contains(fieldName + suffix)) {
-                    count++;
-                    suffix = " " + count;
-                }
-
-                field = field.copy()
-                        .name(fieldName + suffix)
-                        .id(createRandomFieldId())
-                        .build();
                 fieldsManager.addField(field);
             }
         }

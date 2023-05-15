@@ -62,7 +62,7 @@ public class SimplePipelineTreeBuilder extends DefaultPipelineTreeBuilder {
 
         // Build a simplified version of the pipeline for stepping mode and
         // simple translation assignment.
-        addDescendents(PipelineModel.SOURCE_ELEMENT, fullMap, simpleChildMap);
+        addDescendants(PipelineModel.SOURCE_ELEMENT, fullMap, simpleChildMap);
 
         // Sort all child lists.
         for (final List<PipelineElement> children : simpleChildMap.values()) {
@@ -72,29 +72,29 @@ public class SimplePipelineTreeBuilder extends DefaultPipelineTreeBuilder {
         return simpleChildMap;
     }
 
-    private void addDescendents(final PipelineElement parent,
+    private void addDescendants(final PipelineElement parent,
                                 final Map<PipelineElement, List<PipelineElement>> childMap,
                                 final Map<PipelineElement, List<PipelineElement>> tempChildMap) {
-        final List<PipelineElement> descendents = new ArrayList<>();
-        getDescendentFilters(parent, childMap, descendents);
+        final List<PipelineElement> descendants = new ArrayList<>();
+        getDescendantFilters(parent, childMap, descendants);
 
-        if (descendents.size() > 0) {
-            tempChildMap.put(parent, descendents);
-            for (final PipelineElement descendent : descendents) {
-                addDescendents(descendent, childMap, tempChildMap);
+        if (descendants.size() > 0) {
+            tempChildMap.put(parent, descendants);
+            for (final PipelineElement descendent : descendants) {
+                addDescendants(descendent, childMap, tempChildMap);
             }
         }
     }
 
-    private void getDescendentFilters(final PipelineElement parent,
+    private void getDescendantFilters(final PipelineElement parent,
                                       final Map<PipelineElement, List<PipelineElement>> childMap,
-                                      final List<PipelineElement> descendents) {
+                                      final List<PipelineElement> descendants) {
         final List<PipelineElement> children = childMap.get(parent);
         if (children != null && children.size() > 0) {
             for (final PipelineElement child : children) {
                 final PipelineElementType type = child.getElementType();
                 if (roles == null) {
-                    descendents.add(child);
+                    descendants.add(child);
                 } else {
                     boolean hasRole = false;
                     for (final String role : roles) {
@@ -105,9 +105,9 @@ public class SimplePipelineTreeBuilder extends DefaultPipelineTreeBuilder {
                     }
 
                     if (hasRole) {
-                        descendents.add(child);
+                        descendants.add(child);
                     } else {
-                        getDescendentFilters(child, childMap, descendents);
+                        getDescendantFilters(child, childMap, descendants);
                     }
                 }
             }

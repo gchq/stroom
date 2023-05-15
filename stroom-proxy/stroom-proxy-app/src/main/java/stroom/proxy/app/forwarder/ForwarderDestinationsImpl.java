@@ -68,7 +68,11 @@ public class ForwarderDestinationsImpl implements ForwarderDestinations {
                         if (f instanceof final ForwardHttpPostConfig forwardHttpPostConfig) {
                             return forwardHttpPostHandlersFactory.create(forwardHttpPostConfig);
                         } else if (f instanceof final ForwardFileConfig forwardFileConfig) {
-                            return forwardFileHandlersFactory.create(forwardFileConfig, pathCreator);
+                            return forwardFileHandlersFactory.create(
+                                    forwardFileConfig,
+                                    pathCreator,
+                                    100,
+                                    "Forward: " + forwardFileConfig.getName());
                         } else {
                             throw new RuntimeException("Unknown config type");
                         }

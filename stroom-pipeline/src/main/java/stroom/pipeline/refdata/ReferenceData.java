@@ -20,6 +20,7 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SizeAwareInputStream;
 import stroom.docref.DocRef;
+import stroom.meta.api.EffectiveMeta;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.cache.DocumentPermissionCache;
@@ -41,7 +42,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
-import stroom.util.shared.StringUtil;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -49,7 +49,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -460,17 +459,17 @@ public class ReferenceData {
 
         if (hasPermission) {
             // Find the latest ref stream that is before our lookup time
-            final Optional<EffectiveStream> optEffectiveStream = effectiveStreamService.determineEffectiveStream(
+            final Optional<EffectiveMeta> optEffectiveStream = effectiveStreamService.determineEffectiveStream(
                     pipelineReference, time, result);
 
             // If we have an effective stream then use it.
             if (optEffectiveStream.isPresent()) {
-                final EffectiveStream effectiveStream = optEffectiveStream.get();
+                final EffectiveMeta effectiveStream = optEffectiveStream.get();
 
                 result.logLazyTemplate(Severity.INFO,
                         "Checking effective stream: {} feed: '{}' for presence of map '{}' " +
                                 "(effective time: {}, lookup time: {})",
-                        () -> Arrays.asList(effectiveStream.getStreamId(),
+                        () -> Arrays.asList(effectiveStream.getId(),
                                 pipelineReference.getFeed().getName(),
                                 mapName,
                                 Instant.ofEpochMilli(effectiveStream.getEffectiveMs()).toString(),
@@ -479,7 +478,7 @@ public class ReferenceData {
                 final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                         pipelineReference.getPipeline(),
                         getPipelineVersion(pipelineReference),
-                        effectiveStream.getStreamId());
+                        effectiveStream.getId());
 
                 result.addEffectiveStream(pipelineReference, refStreamDefinition);
 

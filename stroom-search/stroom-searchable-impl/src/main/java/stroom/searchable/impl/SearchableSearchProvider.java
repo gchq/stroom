@@ -12,11 +12,12 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchTaskProgress;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
+import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.ResultStore;
-import stroom.query.common.v2.ResultStoreConfig;
 import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProcess;
 import stroom.query.common.v2.SearchProvider;
+import stroom.query.common.v2.SearchResultStoreConfig;
 import stroom.query.common.v2.Sizes;
 import stroom.searchable.api.Searchable;
 import stroom.searchable.api.SearchableProvider;
@@ -52,7 +53,7 @@ class SearchableSearchProvider implements SearchProvider {
     private final Executor executor;
     private final TaskManager taskManager;
     private final TaskContextFactory taskContextFactory;
-    private final ResultStoreConfig config;
+    private final SearchResultStoreConfig config;
     private final UiConfig clientConfig;
     private final SearchableProvider searchableProvider;
     private final CoprocessorsFactory coprocessorsFactory;
@@ -63,7 +64,7 @@ class SearchableSearchProvider implements SearchProvider {
     SearchableSearchProvider(final Executor executor,
                              final TaskManager taskManager,
                              final TaskContextFactory taskContextFactory,
-                             final ResultStoreConfig config,
+                             final SearchResultStoreConfig config,
                              final UiConfig clientConfig,
                              final SearchableProvider searchableProvider,
                              final CoprocessorsFactory coprocessorsFactory,
@@ -118,7 +119,9 @@ class SearchableSearchProvider implements SearchProvider {
             final SearchRequest modifiedSearchRequest = ExpressionUtil.replaceExpressionParameters(searchRequest);
 
             // Create a handler for search results.
-            final Coprocessors coprocessors = coprocessorsFactory.create(modifiedSearchRequest);
+            final Coprocessors coprocessors =
+                    coprocessorsFactory.create(modifiedSearchRequest,
+                            DataStoreSettings.createBasicSearchResultStoreSettings());
 
             return buildStore(taskContext,
                     modifiedSearchRequest,

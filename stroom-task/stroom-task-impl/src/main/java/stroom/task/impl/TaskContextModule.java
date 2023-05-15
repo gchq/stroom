@@ -16,7 +16,6 @@
 
 package stroom.task.impl;
 
-import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 
 import com.google.inject.AbstractModule;
@@ -26,7 +25,6 @@ public class TaskContextModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(TaskContextFactory.class).to(TaskContextFactoryImpl.class);
-        bind(TaskContext.class).to(TaskContextFactoryImpl.class);
     }
 
     @Override

@@ -29,7 +29,7 @@ import stroom.node.api.NodeInfo;
 import stroom.node.mock.MockNodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
-import stroom.task.api.SimpleTaskContext;
+import stroom.task.api.SimpleTaskContextFactory;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
@@ -109,7 +109,7 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
                 null,
                 pathCreator,
                 nodeInfo,
-                new SimpleTaskContext(),
+                new SimpleTaskContextFactory(),
                 new HasCapacitySelectorFactory());
 
 //        volumeService.volumeList = volumeList;

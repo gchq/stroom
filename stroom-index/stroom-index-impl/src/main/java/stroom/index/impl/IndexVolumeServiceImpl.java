@@ -20,6 +20,7 @@ import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.AuditUtil;
 import stroom.util.NextNameGenerator;
 import stroom.util.NullSafe;
@@ -91,7 +92,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
     private final SecurityContext securityContext;
     private final NodeInfo nodeInfo;
     private final InternalStatisticsReceiver statisticsReceiver;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
     private final Provider<EntityEventBus> entityEventBusProvider;
     private final Provider<VolumeConfig> volumeConfigProvider;
     private final IndexVolumeGroupService indexVolumeGroupService;
@@ -107,7 +108,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
                            final SecurityContext securityContext,
                            final NodeInfo nodeInfo,
                            final InternalStatisticsReceiver statisticsReceiver,
-                           final TaskContext taskContext,
+                           final TaskContextFactory taskContextFactory,
                            final Provider<EntityEventBus> entityEventBusProvider,
                            final Provider<VolumeConfig> volumeConfigProvider,
                            final IndexVolumeGroupService indexVolumeGroupService,
@@ -118,7 +119,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         this.securityContext = securityContext;
         this.nodeInfo = nodeInfo;
         this.statisticsReceiver = statisticsReceiver;
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
         this.entityEventBusProvider = entityEventBusProvider;
         this.volumeConfigProvider = volumeConfigProvider;
         this.indexVolumeGroupService = indexVolumeGroupService;
@@ -364,6 +365,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
     }
 
     private synchronized VolumeMap internalRescan() {
+        final TaskContext taskContext = taskContextFactory.current();
         // Update the index stats for all indexes belonging to this node so all
         // nodes can pile in and do this at the same time
         final String nodeName = nodeInfo.getThisNodeName();
@@ -697,8 +699,8 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         private final int hashcode;
 
         private VolGroupNode(final String groupName, final String nodeName) {
-            this.groupName = Objects.requireNonNull(groupName);
-            this.nodeName = Objects.requireNonNull(nodeName);
+            this.groupName = Objects.requireNonNull(groupName, "Index volume group name must be specified");
+            this.nodeName = Objects.requireNonNull(nodeName, "Index volume node name must be specified");
             this.hashcode = Objects.hash(groupName, nodeName);
         }
 

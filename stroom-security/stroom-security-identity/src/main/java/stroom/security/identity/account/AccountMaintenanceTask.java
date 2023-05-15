@@ -2,6 +2,7 @@ package stroom.security.identity.account;
 
 import stroom.security.identity.config.PasswordPolicyConfig;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.time.StroomDuration;
 
@@ -19,18 +20,20 @@ class AccountMaintenanceTask {
 
     private final Provider<PasswordPolicyConfig> passwordPolicyConfigProvider;
     private final AccountDao accountDao;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
 
     @Inject
     AccountMaintenanceTask(final Provider<PasswordPolicyConfig> passwordPolicyConfigProvider,
                            final AccountDao accountDao,
-                           final TaskContext taskContext) {
+                           final TaskContextFactory taskContextFactory) {
         this.passwordPolicyConfigProvider = passwordPolicyConfigProvider;
         this.accountDao = accountDao;
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
     }
 
     public void exec() {
+        final TaskContext taskContext = taskContextFactory.current();
+
         LOGGER.info("Checking for accounts that are not being used.");
         taskContext.info(() -> "Checking for accounts that are not being used.");
 

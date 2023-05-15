@@ -207,15 +207,19 @@
 	flex-shrink: 0;
 	gap: 5px;
 	cursor: default;
-	overflow: hidden;
 	z-index: 5;
 }
 
-.tabLayout .tabLayout-barInner {
+.tabLayout .tabLayout-tabContainer {
+    display: flex;
+    flex-grow: 1;
+	padding: 0.25rem;
+}
+
+.tabLayout .tabLayout-tabBar {
     display: flex;
     flex-grow: 1;
 	position: relative;
-	margin: 0.25rem;
 }
 
 .tabLayout .tabLayout-content {

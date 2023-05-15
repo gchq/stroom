@@ -7,11 +7,11 @@ import java.util.List;
 
 public class ContentPackCollection {
 
-    @JsonProperty
+    @JsonProperty("content_packs")
     private final List<ContentPack> contentPacks;
 
     @JsonCreator
-    public ContentPackCollection(@JsonProperty("contentPacks") final List<ContentPack> contentPacks) {
+    public ContentPackCollection(@JsonProperty("content_packs") final List<ContentPack> contentPacks) {
         this.contentPacks = contentPacks;
     }
 

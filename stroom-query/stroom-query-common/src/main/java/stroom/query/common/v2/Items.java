@@ -16,9 +16,15 @@
 
 package stroom.query.common.v2;
 
-public interface Items extends Iterable<Item> {
+import stroom.dashboard.expression.v1.ref.StoredValues;
+
+public interface Items {
 
     Item get(int index);
 
     int size();
+
+    Iterable<StoredValues> getStoredValueIterable();
+
+    Iterable<Item> getIterable();
 }

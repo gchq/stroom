@@ -3,6 +3,7 @@ package stroom.pipeline.refdata;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
+import stroom.meta.api.EffectiveMeta;
 import stroom.pipeline.shared.data.PipelineReference;
 
 import org.assertj.core.api.Assertions;
@@ -63,7 +64,7 @@ class TestEffectiveStreamService {
         Mockito.when(mockEffectiveStreamCache.get(Mockito.any()))
                 .thenReturn(Collections.emptyNavigableSet());
 
-        final Optional<EffectiveStream> optEffectiveStream = effectiveStreamService.determineEffectiveStream(
+        final Optional<EffectiveMeta> optEffectiveStream = effectiveStreamService.determineEffectiveStream(
                 pipelineReference,
                 lookupTimeMs,
                 result);
@@ -75,7 +76,7 @@ class TestEffectiveStreamService {
     @Test
     void determineEffectiveStream_oneStreamFound_sameDay() {
 
-        final EffectiveStream effectiveStream1 = EffectiveStream.of(
+        final EffectiveMeta effectiveStream1 = buildEffectiveMeta(
                 1, LOOKUP_TIME.minus(1, ChronoUnit.HOURS));
 
         doDetermineTest(Set.of(
@@ -89,7 +90,7 @@ class TestEffectiveStreamService {
     @Test
     void determineEffectiveStream_oneStreamFound_veryOld() {
 
-        final EffectiveStream effectiveStream1 = EffectiveStream.of(
+        final EffectiveMeta effectiveStream1 = buildEffectiveMeta(
                 1, LOOKUP_TIME.minus(100, ChronoUnit.DAYS));
 
         doDetermineTest(
@@ -105,12 +106,12 @@ class TestEffectiveStreamService {
     void determineEffectiveStream_multStrms_allRecent() {
 
         // This stream is before lookup time so won't be picked
-        final EffectiveStream effectiveStream1 = EffectiveStream.of(
+        final EffectiveMeta effectiveStream1 = buildEffectiveMeta(
                 1, LOOKUP_TIME.plus(1, ChronoUnit.HOURS));
         // This is latest one for our lookup time
-        final EffectiveStream effectiveStream2 = EffectiveStream.of(
+        final EffectiveMeta effectiveStream2 = buildEffectiveMeta(
                 2, LOOKUP_TIME.minus(1, ChronoUnit.HOURS));
-        final EffectiveStream effectiveStream3 = EffectiveStream.of(
+        final EffectiveMeta effectiveStream3 = buildEffectiveMeta(
                 3, LOOKUP_TIME.minus(2, ChronoUnit.HOURS));
 
         doDetermineTest(
@@ -128,12 +129,12 @@ class TestEffectiveStreamService {
     void determineEffectiveStream_multStrms_noneRecent() {
 
         // This stream is before lookup time so won't be picked
-        final EffectiveStream effectiveStream1 = EffectiveStream.of(
+        final EffectiveMeta effectiveStream1 = buildEffectiveMeta(
                 1, LOOKUP_TIME.plus(100, ChronoUnit.DAYS));
         // This is latest one for our lookup time
-        final EffectiveStream effectiveStream2 = EffectiveStream.of(
+        final EffectiveMeta effectiveStream2 = buildEffectiveMeta(
                 2, LOOKUP_TIME.minus(100, ChronoUnit.DAYS));
-        final EffectiveStream effectiveStream3 = EffectiveStream.of(
+        final EffectiveMeta effectiveStream3 = buildEffectiveMeta(
                 3, LOOKUP_TIME.minus(200, ChronoUnit.DAYS));
 
         doDetermineTest(
@@ -151,16 +152,16 @@ class TestEffectiveStreamService {
     void determineEffectiveStream_multStrms_someRecent() {
 
         // This stream is before lookup time so won't be picked
-        final EffectiveStream effectiveStream1 = EffectiveStream.of(
+        final EffectiveMeta effectiveStream1 = buildEffectiveMeta(
                 1, LOOKUP_TIME.plus(1, ChronoUnit.HOURS));
         // This is latest one for our lookup time
-        final EffectiveStream effectiveStream2 = EffectiveStream.of(
+        final EffectiveMeta effectiveStream2 = buildEffectiveMeta(
                 2, LOOKUP_TIME.minus(1, ChronoUnit.HOURS));
-        final EffectiveStream effectiveStream3 = EffectiveStream.of(
+        final EffectiveMeta effectiveStream3 = buildEffectiveMeta(
                 3, LOOKUP_TIME.minus(2, ChronoUnit.HOURS));
-        final EffectiveStream effectiveStream4 = EffectiveStream.of(
+        final EffectiveMeta effectiveStream4 = buildEffectiveMeta(
                 4, LOOKUP_TIME.minus(100, ChronoUnit.DAYS));
-        final EffectiveStream effectiveStream5 = EffectiveStream.of(
+        final EffectiveMeta effectiveStream5 = buildEffectiveMeta(
                 5, LOOKUP_TIME.minus(200, ChronoUnit.DAYS));
 
         doDetermineTest(
@@ -174,14 +175,18 @@ class TestEffectiveStreamService {
                 });
     }
 
-    void doDetermineTest(final Set<EffectiveStream> effectiveStreams,
-                         final Consumer<Optional<EffectiveStream>> resultConsumer) {
+    private EffectiveMeta buildEffectiveMeta(final long id, final Instant effectiveTime) {
+        return new EffectiveMeta(id, "DUMMY_FEED", "DummyType", effectiveTime.toEpochMilli());
+    }
+
+    void doDetermineTest(final Set<EffectiveMeta> effectiveStreams,
+                         final Consumer<Optional<EffectiveMeta>> resultConsumer) {
 
         Mockito.when(mockEffectiveStreamCache.get(Mockito.any()))
                 .thenReturn(new TreeSet<>(effectiveStreams));
 
         final EffectiveStreamService effectiveStreamService = new EffectiveStreamService(mockEffectiveStreamCache);
-        final Optional<EffectiveStream> optEffectiveStream = effectiveStreamService.determineEffectiveStream(
+        final Optional<EffectiveMeta> optEffectiveStream = effectiveStreamService.determineEffectiveStream(
                 pipelineReference,
                 LOOKUP_TIME_MS,
                 RESULT);

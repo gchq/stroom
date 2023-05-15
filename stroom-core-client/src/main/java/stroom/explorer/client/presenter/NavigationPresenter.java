@@ -27,6 +27,7 @@ import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
+import stroom.explorer.client.event.ShowFindEvent;
 import stroom.explorer.client.event.ShowNewMenuEvent;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationProxy;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
@@ -83,6 +84,7 @@ public class NavigationPresenter
 
     private final MenuItems menuItems;
 
+    private final InlineSvgButton find;
     private final InlineSvgButton add;
     private final InlineSvgButton delete;
     private final InlineSvgButton filter;
@@ -122,10 +124,17 @@ public class NavigationPresenter
         filter.setTitle("Filter");
         filter.setEnabled(true);
 
+        find = new InlineSvgButton();
+        find.setSvg(SvgImages.MONO_SEARCH);
+        find.getElement().addClassName("navigation-header-button find");
+        find.setTitle("Find Content");
+        find.setEnabled(true);
+
         final FlowPanel buttons = getView().getButtonContainer();
         buttons.add(add);
         buttons.add(delete);
         buttons.add(filter);
+        buttons.add(find);
 
         view.setUiHandlers(this);
 
@@ -149,6 +158,8 @@ public class NavigationPresenter
     protected void onBind() {
         super.onBind();
 
+        registerHandler(find.addClickHandler((e) ->
+                ShowFindEvent.fire(this)));
         registerHandler(add.addClickHandler((e) ->
                 newItem(add.getElement())));
         registerHandler(delete.addClickHandler((e) ->
@@ -249,7 +260,7 @@ public class NavigationPresenter
     }
 
     private void showMenuItems(final PopupPosition popupPosition,
-                              final Element autoHidePartner) {
+                               final Element autoHidePartner) {
         // Clear the current menus.
         menuItems.clear();
         // Tell all plugins to add new menu items.

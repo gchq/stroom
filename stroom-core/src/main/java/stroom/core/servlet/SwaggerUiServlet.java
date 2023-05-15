@@ -33,7 +33,8 @@ public class SwaggerUiServlet extends HttpServlet implements IsServlet {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SwaggerUiServlet.class);
 
-    private static final Set<String> PATH_SPECS = Set.of("/swagger-ui");
+    private static final Set<String> PATH_SPECS = Set.of(
+            ResourcePaths.addUnauthenticatedPrefix("/swagger-ui"));
 
     private static final String TITLE = "@TITLE@";
     private static final String SWAGGER_SPEC_URL_TAG = "@SWAGGER_SPEC_URL@";

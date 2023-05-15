@@ -175,7 +175,7 @@ public class AttributeMapUtil {
         return str;
     }
 
-    private static void write(final AttributeMap attributeMap, final Writer writer) throws IOException {
+    public static void write(final AttributeMap attributeMap, final Writer writer) throws IOException {
         try {
             attributeMap.entrySet().stream()
                     .sorted(Map.Entry.comparingByKey(String::compareToIgnoreCase))

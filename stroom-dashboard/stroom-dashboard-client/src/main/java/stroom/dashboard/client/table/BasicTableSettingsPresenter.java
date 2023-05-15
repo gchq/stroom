@@ -109,13 +109,13 @@ public class BasicTableSettingsPresenter
     }
 
     @Override
-    public void read(final ComponentConfig componentData) {
-        super.read(componentData);
+    public void read(final ComponentConfig componentConfig) {
+        super.read(componentConfig);
 
         final List<Component> list = getComponents().getSortedComponentsByType(QueryPresenter.TYPE.getId());
         setQueryList(list);
 
-        final TableComponentSettings settings = (TableComponentSettings) componentData.getSettings();
+        final TableComponentSettings settings = (TableComponentSettings) componentConfig.getSettings();
         setQueryId(settings.getQueryId());
         setExtractValues(settings.extractValues());
         setPipeline(settings.getExtractionPipeline());

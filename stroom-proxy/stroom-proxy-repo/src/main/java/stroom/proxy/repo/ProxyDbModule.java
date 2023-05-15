@@ -72,10 +72,13 @@ public class ProxyDbModule extends AbstractModule {
         final Path path = dbDir.resolve("proxy-repo.db");
         final String fullPath = FileUtil.getCanonicalPath(path);
 
+        final String dbUrl = "jdbc:sqlite:" + fullPath;
+        LOGGER.info("Creating DB connection with URL {}", dbUrl);
         final ConnectionConfig connectionConfig = ConnectionConfig.builder()
                 .jdbcDriverClassName("org.sqlite.JDBC")
-                .url("jdbc:sqlite:" + fullPath)
+                .url(dbUrl)
                 .build();
+        LOGGER.info("Successfully created DB connection");
 
         return new MyProxyRepoDbConfig(connectionConfig);
     }

@@ -310,9 +310,9 @@ paths:
       summary: Update an Activity
       tags:
       - Activities
-  /alertRule/v1/{uuid}:
+  /analyticRule/v1/{uuid}:
     get:
-      operationId: fetchAlertRule
+      operationId: fetchAnalyticRule
       parameters:
       - in: path
         name: uuid
@@ -324,13 +324,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AlertRuleDoc'
+                $ref: '#/components/schemas/AnalyticRuleDoc'
           description: default response
-      summary: Fetch an alert rule doc by its UUID
+      summary: Fetch an analytic rule doc by its UUID
       tags:
       - Queries
     put:
-      operationId: updateAlertRule
+      operationId: updateAnalyticRule
       parameters:
       - in: path
         name: uuid
@@ -341,7 +341,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AlertRuleDoc'
+              $ref: '#/components/schemas/AnalyticRuleDoc'
         description: doc
         required: true
       responses:
@@ -349,9 +349,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AlertRuleDoc'
+                $ref: '#/components/schemas/AnalyticRuleDoc'
           description: default response
-      summary: Update an alert rule doc
+      summary: Update an analytic rule doc
       tags:
       - Queries
   /annotation/v1:
@@ -1996,6 +1996,26 @@ paths:
                 uniqueItems: true
           description: default response
       summary: Fetch permissions for explorer items
+      tags:
+      - Explorer (v2)
+  /explorer/v2/findExplorerNodes:
+    post:
+      operationId: findExplorerNodes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindExplorerNodeQuery'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPageExplorerDocContentMatch'
+          description: default response
+      summary: Find explorer nodes using a query
       tags:
       - Explorer (v2)
   /explorer/v2/getFromDocRef:
@@ -6224,19 +6244,6 @@ paths:
       - XSLTs
 components:
   schemas:
-    AbstractAlertRule:
-      type: object
-      discriminator:
-        propertyName: type
-      properties:
-        executionDelay:
-          type: string
-        executionFrequency:
-          type: string
-        type:
-          type: string
-      required:
-      - type
     AbstractFetchDataResult:
       type: object
       discriminator:
@@ -6299,6 +6306,20 @@ components:
             - IS_NULL
             - IS_NOT_NULL
             - MATCHES_REGEX
+        fieldType:
+          type: string
+          enum:
+          - ID
+          - BOOLEAN
+          - INTEGER
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - DATE
+          - TEXT
+          - KEYWORD
+          - IPV4_ADDRESS
+          - DOC_REF
         name:
           type: string
         queryable:
@@ -6442,16 +6463,14 @@ components:
             type: string
           userUuid:
             type: string
-    AlertRuleDoc:
+    AnalyticRuleDoc:
       type: object
       properties:
-        alertRule:
-          $ref: '#/components/schemas/AbstractAlertRule'
-        alertRuleType:
+        analyticRuleType:
           type: string
           enum:
           - EVENT
-          - THRESHOLD
+          - AGGREGATE
         createTimeMs:
           type: integer
           format: int64
@@ -6459,8 +6478,8 @@ components:
           type: string
         description:
           type: string
-        enabled:
-          type: boolean
+        destinationFeed:
+          $ref: '#/components/schemas/DocRef'
         languageVersion:
           type: string
           enum:
@@ -6468,6 +6487,8 @@ components:
           - SIGMA
         name:
           type: string
+        processSettings:
+          $ref: '#/components/schemas/AnalyticRuleProcessSettings'
         query:
           type: string
         type:
@@ -6481,6 +6502,19 @@ components:
           type: string
         version:
           type: string
+    AnalyticRuleProcessSettings:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        maxMetaCreateTimeMs:
+          type: integer
+          format: int64
+        minMetaCreateTimeMs:
+          type: integer
+          format: int64
+        timeToWaitForData:
+          $ref: '#/components/schemas/SimpleDuration'
     Annotation:
       type: object
       properties:
@@ -7139,10 +7173,14 @@ components:
             $ref: '#/components/schemas/ComponentConfig'
           xml:
             wrapped: true
+        designMode:
+          type: boolean
         layout:
           $ref: '#/components/schemas/LayoutConfig'
         layoutConstraints:
           $ref: '#/components/schemas/LayoutConstraints'
+        modelVersion:
+          type: string
         parameters:
           type: string
         preferredSize:
@@ -7324,6 +7362,9 @@ components:
         timeUnit:
           type: string
           enum:
+          - NANOSECONDS
+          - MILLISECONDS
+          - SECONDS
           - MINUTES
           - HOURS
           - DAYS
@@ -7476,6 +7517,19 @@ components:
         uuid:
           type: string
         version:
+          type: string
+    DocContentMatch:
+      type: object
+      properties:
+        docRef:
+          $ref: '#/components/schemas/DocRef'
+        matchLength:
+          type: integer
+          format: int64
+        matchOffset:
+          type: integer
+          format: int64
+        sample:
           type: string
     DocRef:
       type: object
@@ -7830,6 +7884,17 @@ components:
           type: boolean
         leaf:
           type: boolean
+    ExplorerDocContentMatch:
+      type: object
+      properties:
+        docContentMatch:
+          $ref: '#/components/schemas/DocContentMatch'
+        iconClassName:
+          type: string
+        isFavourite:
+          type: boolean
+        path:
+          type: string
     ExplorerNode:
       type: object
       properties:
@@ -8361,6 +8426,24 @@ components:
           items:
             $ref: '#/components/schemas/ExplorerNodeKey'
           uniqueItems: true
+    FindExplorerNodeQuery:
+      type: object
+      properties:
+        matchCase:
+          type: boolean
+        pageRequest:
+          $ref: '#/components/schemas/PageRequest'
+        pattern:
+          type: string
+        regex:
+          type: boolean
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaFieldSort'
     FindFsVolumeCriteria:
       type: object
       properties:
@@ -8775,6 +8858,18 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
+    HoppingWindow:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/Window'
+      - type: object
+        properties:
+          advanceSize:
+            type: string
+          timeField:
+            type: string
+          windowSize:
+            type: string
     IdField:
       type: object
       allOf:
@@ -10126,7 +10221,9 @@ components:
     PropertyPath:
       type: object
       properties:
-        parts:
+        leafPart:
+          type: string
+        parentParts:
           type: array
           items:
             type: string
@@ -10546,6 +10643,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Dependency'
+    ResultPageExplorerDocContentMatch:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExplorerDocContentMatch'
     ResultPageFsVolume:
       type: object
       description: A page of results.
@@ -10687,10 +10794,12 @@ components:
             $ref: '#/components/schemas/TableSettings'
         openGroups:
           type: array
-          description: TODO
+          description: A set of group keys of parent rows we want to display children
+            for
           items:
             type: string
-            description: TODO
+            description: A set of group keys of parent rows we want to display children
+              for
           uniqueItems: true
         requestedRange:
           $ref: '#/components/schemas/OffsetRange'
@@ -10701,6 +10810,8 @@ components:
           enum:
           - FLAT
           - TABLE
+        timeFilter:
+          $ref: '#/components/schemas/TimeFilter'
       required:
       - componentId
       - mappings
@@ -10922,7 +11033,7 @@ components:
         sourceType:
           type: string
           enum:
-          - ALERT_RULE
+          - ANALYTIC_RULE
           - DASHBOARD_UI
           - QUERY_UI
           - API
@@ -11138,6 +11249,24 @@ components:
             $ref: '#/components/schemas/SharedElementData'
         sourceLocation:
           $ref: '#/components/schemas/SourceLocation'
+    SimpleDuration:
+      type: object
+      properties:
+        time:
+          type: integer
+          format: int64
+        timeUnit:
+          type: string
+          enum:
+          - NANOSECONDS
+          - MILLISECONDS
+          - SECONDS
+          - MINUTES
+          - HOURS
+          - DAYS
+          - WEEKS
+          - MONTHS
+          - YEARS
     SimpleUser:
       type: object
       properties:
@@ -11810,6 +11939,8 @@ components:
         including which fields should be included and what sorting, grouping, filtering,
         limiting, etc. should be applied
       properties:
+        aggregateFilter:
+          $ref: '#/components/schemas/ExpressionOperator'
         extractValues:
           type: boolean
         extractionPipeline:
@@ -11841,6 +11972,10 @@ components:
             will include the full detail of any results aggregated into a group as
             well as their aggregates. A value of false will only include the aggregated
             values for each group. Defaults to false.
+        valueFilter:
+          $ref: '#/components/schemas/ExpressionOperator'
+        window:
+          $ref: '#/components/schemas/Window'
       required:
       - fields
       - queryId
@@ -11965,37 +12100,23 @@ components:
     ThemeConfig:
       type: object
       properties:
-        backgroundAttachment:
-          type: string
         backgroundColour:
-          type: string
-        backgroundImage:
-          type: string
-        backgroundOpacity:
-          type: string
-        backgroundPosition:
-          type: string
-        backgroundRepeat:
           type: string
         labelColours:
           type: string
-        topMenuTextColour:
+        pageBorder:
           type: string
-        tubeOpacity:
-          type: string
-        tubeVisible:
-          type: string
-    ThresholdAlertRule:
+    TimeFilter:
       type: object
-      allOf:
-      - $ref: '#/components/schemas/AbstractAlertRule'
-      - type: object
-        properties:
-          threshold:
-            type: integer
-            format: int64
-          thresholdField:
-            type: string
+      description: If the data includes time in the key then you can apply a time
+        filter when retrieving rows
+      properties:
+        from:
+          type: integer
+          format: int64
+        to:
+          type: integer
+          format: int64
     TimeRange:
       type: object
       properties:
@@ -12211,6 +12332,11 @@ components:
             of java.time.format.DateTimeFormatter
         density:
           type: string
+        editorKeyBindings:
+          type: string
+          enum:
+          - STANDARD
+          - VIM
         editorTheme:
           type: string
         font:
@@ -12351,6 +12477,15 @@ components:
       properties:
         html:
           type: string
+    Window:
+      type: object
+      discriminator:
+        propertyName: type
+      properties:
+        type:
+          type: string
+      required:
+      - type
     XPathFilter:
       type: object
       properties:

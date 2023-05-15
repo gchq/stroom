@@ -342,7 +342,7 @@ public class SelectionHandlersPresenter
     }
 
     @Override
-    public boolean isDirty(final ComponentConfig componentData) {
+    public boolean isDirty(final ComponentConfig componentConfig) {
         return dirty;
     }
 

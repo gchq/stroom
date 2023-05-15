@@ -93,7 +93,8 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
     @UiHandler("logo")
     void onLogoClick(final ClickEvent event) {
         if (MouseUtil.isPrimary(event.getNativeEvent())) {
-            getUiHandlers().showAboutDialog();
+//            getUiHandlers().showAboutDialog();
+            getUiHandlers().toggleMenu(event.getNativeEvent(), event.getRelativeElement());
         }
     }
 

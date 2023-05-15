@@ -42,10 +42,15 @@ public class MenuPresenter
         extends MyPresenterWidget<MenuView>
         implements MenuUiHandlers {
 
+    private static final int HORIZONTAL_PADDING = 2;
+    private static final int VERTICAL_PADDING = 4;
+
     private final Provider<MenuPresenter> menuPresenterProvider;
     private MenuPresenter currentMenu;
     private MenuItem currentItem;
+
     private MenuPresenter parent;
+    private MenuItem parentItem;
 
     @Inject
     public MenuPresenter(final EventBus eventBus,
@@ -57,25 +62,17 @@ public class MenuPresenter
     }
 
     @Override
-    public void toggleSubMenu(final MenuItem menuItem, final Element element) {
-        if (currentItem != null && Objects.equals(currentItem, menuItem)) {
-            hideSubMenu();
-        } else {
-            showSubMenu(menuItem, element);
-        }
-    }
-
-    @Override
     public void showSubMenu(final MenuItem menuItem, final Element element) {
-        // Only change the popup if the item selected is changing and we have
-        // some sub items.
-        if (currentItem == null || !currentItem.equals(menuItem)) {
-            // We are changing the highlighted item so close the current popup
-            // if it is open.
-            hideChildren(false, false);
+        if (!Objects.equals(currentItem, menuItem)) {
+            if (currentItem != null) {
+                // We are changing the highlighted item so close the current popup
+                // if it is open.
+                hideChildren(false, false);
+            }
 
             if (menuItem instanceof HasChildren) {
                 // Try and get some sub items.
+                //noinspection PatternVariableCanBeUsed cos GWT
                 final HasChildren hasChildren = (HasChildren) menuItem;
 
                 hasChildren.getChildren().onSuccess(children -> {
@@ -85,7 +82,7 @@ public class MenuPresenter
                         hideChildren(false, false);
 
                         final MenuPresenter presenter = menuPresenterProvider.get();
-                        presenter.setParent(MenuPresenter.this);
+                        presenter.setParent(MenuPresenter.this, menuItem);
 //                        presenter.setHighlightItems(getHighlightItems());
                         presenter.setData(children);
 
@@ -95,10 +92,10 @@ public class MenuPresenter
                         currentItem = menuItem;
 
                         final PopupPosition popupPosition = new PopupPosition(
-                                element.getAbsoluteRight(),
-                                element.getAbsoluteLeft(),
-                                element.getAbsoluteTop(),
-                                element.getAbsoluteTop(),
+                                element.getAbsoluteRight() + HORIZONTAL_PADDING,
+                                element.getAbsoluteLeft() - HORIZONTAL_PADDING,
+                                element.getAbsoluteTop() + VERTICAL_PADDING + 30,
+                                element.getAbsoluteTop() - VERTICAL_PADDING,
                                 HorizontalLocation.RIGHT,
                                 null);
 
@@ -120,32 +117,50 @@ public class MenuPresenter
     }
 
     @Override
-    public void hideSubMenu() {
-        hideChildren(false, false);
+    public void hideExistingSubMenu(final MenuItem newMenuItem) {
+        if (currentItem != null && !Objects.equals(currentItem, newMenuItem)) {
+            hideChildren(false, false);
+        }
     }
 
     @Override
-    public boolean subMenuVisible() {
-        return currentMenu != null;
+    public void ensureParentItemSelected() {
+        if (parent != null && parentItem != null) {
+            parent.getView().ensureItemSelected(parentItem);
+        }
+    }
+
+    public void focus() {
+        getView().focus();
+    }
+
+    public void focus(final boolean hideChildren) {
+        hideChildren(hideChildren, false);
+        getView().focus();
     }
 
     @Override
     public void focusSubMenu() {
         if (currentMenu != null) {
-            currentMenu.selectFirstItem(true);
+            currentMenu.selectFirstItem();
         }
     }
 
-    public void selectFirstItem(final boolean stealFocus) {
-        getView().selectFirstItem(stealFocus);
+    public void selectFirstItem() {
+        getView().selectFirstItem();
     }
 
     @Override
-    public void focusParent() {
+    public void focusParent(final boolean hideChildren) {
         if (parent != null) {
-            hideChildren(false, false);
-            parent.getView().focus();
+            hideChildren(hideChildren, false);
+            parent.focus(hideChildren);
         }
+    }
+
+    @Override
+    public boolean hasParent() {
+        return parent != null;
     }
 
     @Override
@@ -164,22 +179,28 @@ public class MenuPresenter
     }
 
     private void hideSelf(final boolean autoClose, final boolean ok) {
-        HidePopupEvent.builder(this).autoClose(autoClose).ok(ok).fire();
+        getView().cancelDelayedSubMenu();
+        HidePopupEvent.builder(this)
+                .autoClose(autoClose)
+                .ok(ok)
+                .fire();
     }
 
     private void hideChildren(final boolean autoClose, final boolean ok) {
         // First make sure all children are hidden.
         if (currentMenu != null) {
+            currentMenu.getView().cancelDelayedSubMenu();
             currentMenu.hideChildren(autoClose, ok);
             currentMenu.hideSelf(autoClose, ok);
             currentMenu = null;
-            currentItem = null;
         }
+        currentItem = null;
     }
 
     private void hideParent(final boolean autoClose, final boolean ok) {
         // First make sure all children are hidden.
         if (parent != null) {
+            parent.getView().cancelDelayedSubMenu();
             parent.hideSelf(autoClose, ok);
             parent.hideParent(autoClose, ok);
         }
@@ -191,23 +212,33 @@ public class MenuPresenter
     }
 
     public void hideAll(final boolean autoClose, final boolean ok) {
+        getView().cancelDelayedSubMenu();
         hideChildren(autoClose, ok);
         hideSelf(autoClose, ok);
         hideParent(autoClose, ok);
     }
 
-    public void setParent(final MenuPresenter parent) {
+    public void setParent(final MenuPresenter parent, final MenuItem parentItem) {
         this.parent = parent;
+        this.parentItem = parentItem;
     }
 
     public void setData(final List<Item> items) {
         getView().setData(items);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface MenuView extends View, Focus, HasUiHandlers<MenuUiHandlers> {
+
+        void ensureItemSelected(Item parentItem);
 
         void setData(List<Item> items);
 
-        void selectFirstItem(boolean stealFocus);
+        void selectFirstItem();
+
+        void cancelDelayedSubMenu();
     }
 }

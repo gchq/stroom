@@ -23,6 +23,7 @@ class ExtractionElementModule extends PipelineElementModule {
     @Override
     protected void configureElements() {
         bindElement(SearchResultOutputFilter.class);
+        bindElement(DynamicSearchResultOutputFilter.class);
         bindElement(XPathExtractionOutputFilter.class);
     }
 }

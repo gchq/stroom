@@ -22,6 +22,7 @@ import stroom.cache.impl.CacheManagerImpl;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
+import stroom.meta.api.EffectiveMeta;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefDataStore;
@@ -56,12 +57,12 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     private static final String TEST_FEED_2 = "TEST_FEED_2";
     private static final String TEST_PIPELINE_1 = "TEST_PIPELINE_1";
     private static final String TEST_PIPELINE_2 = "TEST_PIPELINE_2";
-    private static final EffectiveStream EFFECTIVE_STREAM_1 = new EffectiveStream(
-            1, DateUtil.parseNormalDateTimeString("2008-01-01T09:47:00.000Z"));
-    private static final EffectiveStream EFFECTIVE_STREAM_2 = new EffectiveStream(
-            2, DateUtil.parseNormalDateTimeString("2009-01-01T09:47:00.000Z"));
-    private static final EffectiveStream EFFECTIVE_STREAM_3 = new EffectiveStream(
-            3, DateUtil.parseNormalDateTimeString("2010-01-01T09:47:00.000Z"));
+    private static final EffectiveMeta EFFECTIVE_STREAM_1 = buildEffectiveMeta(
+            1, "2008-01-01T09:47:00.000Z");
+    private static final EffectiveMeta EFFECTIVE_STREAM_2 = buildEffectiveMeta(
+            2, "2009-01-01T09:47:00.000Z");
+    private static final EffectiveMeta EFFECTIVE_STREAM_3 = buildEffectiveMeta(
+            3, "2010-01-01T09:47:00.000Z");
 
     @Inject
     private FeedStore feedStore;
@@ -113,7 +114,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             pipelineReferences.add(pipelineReference2);
 
 
-            final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
+            final TreeSet<EffectiveMeta> streamSet = new TreeSet<>();
             streamSet.add(EFFECTIVE_STREAM_1);
             streamSet.add(EFFECTIVE_STREAM_2);
             streamSet.add(EFFECTIVE_STREAM_3);
@@ -125,7 +126,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                         null,
                         ReferenceDataConfig::new) {
                     @Override
-                    public TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
+                    public TreeSet<EffectiveMeta> create(final EffectiveStreamKey key) {
                         return streamSet;
                     }
                 };
@@ -154,8 +155,8 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     }
 
     private void addData(final DocRef pipelineRef, final String[] mapNames) {
-        EffectiveStream effectiveStream = EFFECTIVE_STREAM_1;
-        RefStreamDefinition refStreamDefinition1 = getRefStreamDefinition(pipelineRef, effectiveStream.getStreamId());
+        EffectiveMeta effectiveStream = EFFECTIVE_STREAM_1;
+        RefStreamDefinition refStreamDefinition1 = getRefStreamDefinition(pipelineRef, effectiveStream.getId());
 
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition1,
                 effectiveStream.getEffectiveMs(),
@@ -170,7 +171,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                 });
 
         effectiveStream = EFFECTIVE_STREAM_2;
-        RefStreamDefinition refStreamDefinition2 = getRefStreamDefinition(pipelineRef, effectiveStream.getStreamId());
+        RefStreamDefinition refStreamDefinition2 = getRefStreamDefinition(pipelineRef, effectiveStream.getId());
 
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition2,
                 effectiveStream.getEffectiveMs(),
@@ -185,7 +186,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                 });
 
         effectiveStream = EFFECTIVE_STREAM_3;
-        RefStreamDefinition refStreamDefinition3 = getRefStreamDefinition(pipelineRef, effectiveStream.getStreamId());
+        RefStreamDefinition refStreamDefinition3 = getRefStreamDefinition(pipelineRef, effectiveStream.getId());
 
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition3,
                 effectiveStream.getEffectiveMs(),
@@ -235,8 +236,8 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             pipelineReferences.add(pipelineReference);
 
 
-            EffectiveStream effectiveStream = new EffectiveStream(0, 0L);
-            final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
+            EffectiveMeta effectiveStream = buildEffectiveMeta(0, 0L);
+            final TreeSet<EffectiveMeta> streamSet = new TreeSet<>();
             streamSet.add(effectiveStream);
 
             try (final CacheManager cacheManager = new CacheManagerImpl()) {
@@ -246,7 +247,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                         null,
                         ReferenceDataConfig::new) {
                     @Override
-                    public TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
+                    public TreeSet<EffectiveMeta> create(final EffectiveStreamKey key) {
                         return streamSet;
                     }
                 };
@@ -254,7 +255,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                 referenceData.setEffectiveStreamCache(effectiveStreamCache);
 
                 RefStreamDefinition refStreamDefinition = getRefStreamDefinition(pipelineRef,
-                        effectiveStream.getStreamId());
+                        effectiveStream.getId());
 
                 refDataStore.doWithLoaderUnlessComplete(refStreamDefinition,
                         effectiveStream.getEffectiveMs(),
@@ -357,5 +358,16 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
         } else {
             return ((StringValue) refDataValue).getValue();
         }
+    }
+
+    private static EffectiveMeta buildEffectiveMeta(final long id, final String effectiveTimeStr) {
+        return new EffectiveMeta(id,
+                "DUMMY_FEED",
+                "DummyType",
+                DateUtil.parseNormalDateTimeString(effectiveTimeStr));
+    }
+
+    private static EffectiveMeta buildEffectiveMeta(final long id, final long effectiveMs) {
+        return new EffectiveMeta(id, "DUMMY_FEED", "DummyType", effectiveMs);
     }
 }

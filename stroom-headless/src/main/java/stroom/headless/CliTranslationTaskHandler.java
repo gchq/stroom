@@ -132,10 +132,10 @@ class CliTranslationTaskHandler {
                     // Set the pipeline so it can be used by a filter if needed.
                     final List<DocRef> pipelines = pipelineStore.findByName(feedName);
                     if (pipelines == null || pipelines.size() == 0) {
-                        throw new ProcessException("No pipeline found for feed name '" + feedName + "'");
+                        throw ProcessException.create("No pipeline found for feed name '" + feedName + "'");
                     }
                     if (pipelines.size() > 1) {
-                        throw new ProcessException("More than one pipeline found for feed name '" + feedName + "'");
+                        throw ProcessException.create("More than one pipeline found for feed name '" + feedName + "'");
                     }
 
                     final DocRef pipelineRef = pipelines.get(0);

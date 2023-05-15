@@ -25,6 +25,7 @@ import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.Components;
+import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.main.Queryable;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.shared.Automate;
@@ -114,11 +115,9 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final QueryHistoryPresenter historyPresenter;
     private final QueryFavouritesPresenter favouritesPresenter;
     private final Provider<EntityChooser> pipelineSelection;
-    private final Provider<QueryInfoPresenter> queryInfoPresenterProvider;
     private final ProcessorLimitsPresenter processorLimitsPresenter;
     private final RestFactory restFactory;
     private final LocationManager locationManager;
-
     private final IndexLoader indexLoader;
     private final SearchModel searchModel;
     private final ButtonView addOperatorButton;
@@ -160,7 +159,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         this.historyPresenter = historyPresenter;
         this.favouritesPresenter = favouritesPresenter;
         this.pipelineSelection = pipelineSelection;
-        this.queryInfoPresenterProvider = queryInfoPresenterProvider;
         this.processorLimitsPresenter = processorLimitsPresenter;
         this.indexLoader = indexLoader;
         this.restFactory = restFactory;
@@ -505,11 +503,12 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         // Write expression.
         final ExpressionOperator root = expressionPresenter.write();
 
+        final DashboardContext dashboardContext = getDashboardContext();
         final QueryData queryData = new QueryData();
         queryData.setDataSource(getQuerySettings().getDataSource());
         queryData.setExpression(root);
-        queryData.setParams(getDashboardContext().getCombinedParams());
-        queryData.setTimeRange(getDashboardContext().getTimeRange());
+        queryData.setParams(dashboardContext.getParams());
+        queryData.setTimeRange(dashboardContext.getTimeRange());
 
         final EntityChooser chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Process Results With");
@@ -633,10 +632,11 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             final ExpressionOperator decorated = expressionDecorator.apply(root);
 
             // Start search.
+            final DashboardContext dashboardContext = getDashboardContext();
             searchModel.startNewSearch(
                     decorated,
-                    getDashboardContext().getCombinedParams(),
-                    getDashboardContext().getTimeRange(),
+                    dashboardContext.getParams(),
+                    dashboardContext.getTimeRange(),
                     incremental,
                     storeHistory,
                     lastUsedQueryInfo,
@@ -661,10 +661,11 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             final ExpressionOperator root = expressionPresenter.write();
 
             // Start search.
+            final DashboardContext dashboardContext = getDashboardContext();
             searchModel.startNewSearch(
                     root,
-                    getDashboardContext().getCombinedParams(),
-                    getDashboardContext().getTimeRange(),
+                    dashboardContext.getParams(),
+                    dashboardContext.getTimeRange(),
                     true,
                     false,
                     lastUsedQueryInfo,
@@ -896,10 +897,11 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private void downloadQuery() {
         if (getQuerySettings().getDataSource() != null) {
 
+            final DashboardContext dashboardContext = getDashboardContext();
             final DashboardSearchRequest searchRequest = searchModel.createDownloadQueryRequest(
                     expressionPresenter.write(),
-                    getDashboardContext().getCombinedParams(),
-                    getDashboardContext().getTimeRange());
+                    dashboardContext.getParams(),
+                    dashboardContext.getTimeRange());
 
             final Rest<ResourceGeneration> rest = restFactory.create();
             rest

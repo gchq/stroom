@@ -14,6 +14,7 @@ import stroom.resource.impl.ResourceModule;
 import stroom.security.mock.MockSecurityContextModule;
 
 import com.google.inject.AbstractModule;
+import io.dropwizard.setup.Environment;
 
 import java.nio.file.Path;
 
@@ -42,7 +43,7 @@ public class SetupSampleDataModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(Config.class).toInstance(configuration);
-        install(new BootStrapModule(configuration, configHolder.getConfigFile()));
+        install(new BootStrapModule(configuration, new Environment("Test Environment"), configHolder.getConfigFile()));
         install(new UriFactoryModule());
         install(new CoreModule());
         install(new ResourceModule());

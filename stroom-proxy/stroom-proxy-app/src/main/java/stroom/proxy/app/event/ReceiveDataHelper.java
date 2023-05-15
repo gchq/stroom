@@ -113,7 +113,8 @@ public class ReceiveDataHelper {
                         request.getRequestURI(),
                         status.getStroomStatusCode().getCode(),
                         -1,
-                        duration);
+                        duration,
+                        e.getMessage());
             } else {
                 logStream.log(
                         RECEIVE_LOG,
@@ -122,7 +123,8 @@ public class ReceiveDataHelper {
                         request.getRequestURI(),
                         status.getStroomStatusCode().getCode(),
                         -1,
-                        duration);
+                        duration,
+                        e.getMessage());
             }
 
             throw stroomStreamException;

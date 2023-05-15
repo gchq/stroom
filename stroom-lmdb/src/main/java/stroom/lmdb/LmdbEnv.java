@@ -75,7 +75,7 @@ public class LmdbEnv implements AutoCloseable {
         activeReadTransactionsSemaphore = new Semaphore(maxReaders);
 
         if (isReaderBlockedByWriter) {
-            // Read/write lock enforces writes block reads and the semphore ensures we don't have
+            // Read/write lock enforces writes block reads and the semaphore ensures we don't have
             // too many readers.
             readWriteLock = new StampedLock().asReadWriteLock();
             writeTxnLock = readWriteLock.writeLock();
@@ -86,7 +86,7 @@ public class LmdbEnv implements AutoCloseable {
             readTxnGetMethod = work ->
                     getWithReadTxnUnderReadWriteLock(work, readWriteLock.readLock());
         } else {
-            // No lock for readers, only the sempaphor to enforce max concurrent readers
+            // No lock for readers, only the semaphore to enforce max concurrent readers
             // Simple re-entrant lock to enforce max one concurrent writer
             readWriteLock = null;
             writeTxnLock = new ReentrantLock();
@@ -367,8 +367,10 @@ public class LmdbEnv implements AutoCloseable {
         // May be useful to see the sizes of db before they are deleted
         LOGGER.doIfDebugEnabled(this::dumpMdbFileSize);
 
-        if (!FileUtil.deleteDir(localDir)) {
-            throw new RuntimeException("Unable to delete dir: " + FileUtil.getCanonicalPath(localDir));
+        if (Files.isDirectory(localDir)) {
+            if (!FileUtil.deleteDir(localDir)) {
+                throw new RuntimeException("Unable to delete dir: " + FileUtil.getCanonicalPath(localDir));
+            }
         }
     }
 
@@ -476,7 +478,7 @@ public class LmdbEnv implements AutoCloseable {
                     })
                     .sum();
         } catch (IOException
-                | RuntimeException e) {
+                 | RuntimeException e) {
             LOGGER.error("Error calculating disk usage for path {}",
                     localDir.normalize(), e);
             totalSizeBytes = -1;
@@ -547,13 +549,17 @@ public class LmdbEnv implements AutoCloseable {
          * Closes the txn and releases the single write lock
          */
         @Override
-        public void close() throws Exception {
+        public void close() {
             Objects.requireNonNull(writeTxn, "Transaction has already been closed");
             try {
-                writeTxn.close();
+                try {
+                    writeTxn.close();
+                } finally {
+                    writeTxn = null;
+                }
             } finally {
+                // whatever happens we must release the lock
                 writeLock.unlock();
-                writeTxn = null;
             }
         }
     }
@@ -649,6 +655,7 @@ public class LmdbEnv implements AutoCloseable {
          * and then commit if the batch has reach its max size.
          * If the batch size is zero then it will never commit and will
          * always return false.
+         *
          * @return True if a commit took place.
          */
         public boolean commitIfRequired() {
@@ -668,14 +675,15 @@ public class LmdbEnv implements AutoCloseable {
          */
         @Override
         public void close() {
+            Objects.requireNonNull(writeTxnSupplier, "Transaction has already been closed");
             try {
-                if (writeTxn != null) {
-                    try {
+                try {
+                    if (writeTxn != null) {
                         writeTxn.close();
-                    } finally {
-                        writeTxn = null;
-                        writeTxnSupplier = null;
                     }
+                } finally {
+                    writeTxn = null;
+                    writeTxnSupplier = null;
                 }
             } finally {
                 // whatever happens we must release the lock

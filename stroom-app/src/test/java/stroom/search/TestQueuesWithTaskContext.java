@@ -113,7 +113,7 @@ public class TestQueuesWithTaskContext extends AbstractCoreIntegrationTest {
                                                 run = false;
                                             } else {
                                                 queue.put(new Event(1, id,
-                                                        new Val[]{ValString.create("test"), ValString.create("test")}));
+                                                        Val.of(ValString.create("test"), ValString.create("test"))));
                                             }
                                         }
                                     }, executorService);

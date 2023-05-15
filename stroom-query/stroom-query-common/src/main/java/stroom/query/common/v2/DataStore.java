@@ -1,20 +1,13 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValuesConsumer;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import java.util.function.Consumer;
 
-public interface DataStore {
-
-    /**
-     * Add some values to the data store.
-     *
-     * @param values The values to add to the store.
-     */
-    void add(Val[] values);
+public interface DataStore extends ValuesConsumer {
 
     /**
      * Get data from the store
@@ -53,4 +46,8 @@ public interface DataStore {
     void writePayload(Output output);
 
     long getByteSize();
+
+    Serialisers getSerialisers();
+
+    KeyFactory getKeyFactory();
 }

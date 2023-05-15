@@ -178,7 +178,9 @@ class TestJsonSerialisation {
             if (!Modifier.isInterface(clazz.getModifiers())) {
                 final Field[] fields = clazz.getDeclaredFields();
                 for (final Field field : fields) {
-                    if (Map.class.isAssignableFrom(field.getType())) {
+                    // Don't care about static as they are not serialised.
+                    if (Map.class.isAssignableFrom(field.getType())
+                            && !Modifier.isStatic(field.getModifiers())) {
                         final ParameterizedType parameterizedType = (ParameterizedType) field.getGenericType();
                         final Type keyType = parameterizedType.getActualTypeArguments()[0];
                         if (!(keyType instanceof Class && ((Class<?>) keyType).isEnum())) {
@@ -612,7 +614,6 @@ class TestJsonSerialisation {
         final Set<Class<?>> stroomClasses = new HashSet<>();
         try (ScanResult scanResult =
                 new ClassGraph()
-                        .disableJarScanning()
                         .enableClassInfo()             // Scan classes, methods, fields, annotations
                         .acceptPackages(PACKAGE_NAME)  // Scan com.xyz and subpackages (omit to scan all packages)
                         .scan()) {                   // Start the scan
@@ -637,7 +638,6 @@ class TestJsonSerialisation {
 
         try (ScanResult scanResult =
                 new ClassGraph()
-                        .disableJarScanning()
                         .enableClassInfo()
                         .acceptPackages(PACKAGE_NAME)
                         .rejectPackages("hadoopcommonshaded")

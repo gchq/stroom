@@ -243,6 +243,9 @@
 .svgIcon-users {
   background-image: url("../images/users.svg");
 }
+.svgIcon-find {
+  background-image: url("../images/find.svg");
+}
 .svgIcon-users-disabled {
   background-image: url("../images/users-disabled.svg");
 }
@@ -320,8 +323,8 @@
   height: 18px;
 }
 
-.svgIcon-document-AlertRule {
-  background-image: url("../images/document/ReceiveDataRuleSet.svg");
+.svgIcon-document-AnalyticRule {
+  background-image: url("../images/document/AnalyticRule.svg");
 }
 .svgIcon-document-AnalyticOutputStore {
   background-image: url("../images/document/AnalyticOutputStore.svg");

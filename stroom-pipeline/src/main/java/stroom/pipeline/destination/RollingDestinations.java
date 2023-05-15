@@ -18,7 +18,7 @@ package stroom.pipeline.destination;
 
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,15 +40,15 @@ public class RollingDestinations {
     private static final ConcurrentHashMap<Object, RollingDestination> currentDestinations = new ConcurrentHashMap<>();
 
     private final Provider<AppenderConfig> appenderConfigProvider;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
     private final SecurityContext securityContext;
 
     @Inject
     public RollingDestinations(final Provider<AppenderConfig> appenderConfigProvider,
-                               final TaskContext taskContext,
+                               final TaskContextFactory taskContextFactory,
                                final SecurityContext securityContext) {
         this.appenderConfigProvider = appenderConfigProvider;
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
         this.securityContext = securityContext;
     }
 
@@ -76,9 +76,7 @@ public class RollingDestinations {
                 // Try and cope with too many active destinations.
                 if (currentDestinations.size() > maxActiveDestinations) {
                     // If the size is still too big then error.
-                    if (currentDestinations.size() > maxActiveDestinations) {
-                        throw new ProcessException("Too many active destinations: " + currentDestinations.size());
-                    }
+                    throw ProcessException.create("Too many active destinations: " + currentDestinations.size());
                 }
 
                 // Create a new destination.
@@ -145,7 +143,7 @@ public class RollingDestinations {
     }
 
     public void roll() {
-        taskContext.info(() -> "Rolling all destinations");
+        taskContextFactory.current().info(() -> "Rolling all destinations");
         rollAll(false);
     }
 

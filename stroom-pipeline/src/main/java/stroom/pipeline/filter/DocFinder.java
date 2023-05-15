@@ -1,7 +1,7 @@
 package stroom.pipeline.filter;
 
 import stroom.docref.DocRef;
-import stroom.docref.HasFindDocRefsByName;
+import stroom.docref.HasFindDocsByName;
 import stroom.docstore.shared.Doc;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.util.io.PathCreator;
@@ -13,18 +13,19 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class DocFinder<D extends Doc> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DocFinder.class);
 
     private final String type;
     private final PathCreator pathCreator;
-    private final HasFindDocRefsByName hasFindDocRefsByName;
+    private final HasFindDocsByName hasFindDocsByName;
 
     public DocFinder(final String type,
                      final PathCreator pathCreator,
-                     final HasFindDocRefsByName hasFindDocRefsByName) {
+                     final HasFindDocsByName hasFindDocsByName) {
         this.type = type;
         this.pathCreator = pathCreator;
-        this.hasFindDocRefsByName = hasFindDocRefsByName;
+        this.hasFindDocsByName = hasFindDocsByName;
     }
 
     public DocRef findDoc(final DocRef defaultRef,
@@ -60,11 +61,11 @@ public class DocFinder<D extends Doc> {
                 }
                 sb.setLength(sb.length() - 2);
                 sb.append(")");
-                throw new ProcessException(sb.toString());
+                throw ProcessException.create(sb.toString());
             }
 
             LOGGER.debug("Finding " + type + " with resolved name '{}' from pattern '{}'", resolvedName, namePattern);
-            final List<DocRef> docs = hasFindDocRefsByName.findByName(resolvedName);
+            final List<DocRef> docs = hasFindDocsByName.findByName(resolvedName);
             if (docs == null || docs.size() == 0) {
                 if (errorConsumer != null && !suppressNotFoundWarnings) {
                     final StringBuilder sb = new StringBuilder();
@@ -109,7 +110,7 @@ public class DocFinder<D extends Doc> {
                         type + " \"" +
                         defaultRef.getName() +
                         "\" appears to have been deleted";
-                throw new ProcessException(message);
+                throw ProcessException.create(message);
             }
         }
 

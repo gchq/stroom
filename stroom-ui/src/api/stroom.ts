@@ -9,12 +9,6 @@
  * ---------------------------------------------------------------
  */
 
-export interface AbstractAlertRule {
-  executionDelay?: string;
-  executionFrequency?: string;
-  type: string;
-}
-
 export interface AbstractFetchDataResult {
   availableChildStreamTypes?: string[];
   classification?: string;
@@ -48,6 +42,18 @@ export interface AbstractField {
     | "IS_NOT_NULL"
     | "MATCHES_REGEX"
   )[];
+  fieldType?:
+    | "ID"
+    | "BOOLEAN"
+    | "INTEGER"
+    | "LONG"
+    | "FLOAT"
+    | "DOUBLE"
+    | "DATE"
+    | "TEXT"
+    | "KEYWORD"
+    | "IPV4_ADDRESS"
+    | "DOC_REF";
   name?: string;
   queryable?: boolean;
   type: string;
@@ -147,17 +153,19 @@ export type AddPermissionEvent = PermissionChangeEvent & {
   userUuid?: string;
 };
 
-export interface AlertRuleDoc {
-  alertRule?: AbstractAlertRule;
-  alertRuleType?: "EVENT" | "THRESHOLD";
+export interface AnalyticRuleDoc {
+  analyticRuleType?: "EVENT" | "AGGREGATE";
 
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
   description?: string;
-  enabled?: boolean;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  destinationFeed?: DocRef;
   languageVersion?: "STROOM_QL_VERSION_0_1" | "SIGMA";
   name?: string;
+  processSettings?: AnalyticRuleProcessSettings;
   query?: string;
   type?: string;
 
@@ -166,6 +174,17 @@ export interface AlertRuleDoc {
   updateUser?: string;
   uuid?: string;
   version?: string;
+}
+
+export interface AnalyticRuleProcessSettings {
+  enabled?: boolean;
+
+  /** @format int64 */
+  maxMetaCreateTimeMs?: number;
+
+  /** @format int64 */
+  minMetaCreateTimeMs?: number;
+  timeToWaitForData?: SimpleDuration;
 }
 
 export interface Annotation {
@@ -581,8 +600,10 @@ export interface DBTableStatus {
 
 export interface DashboardConfig {
   components?: ComponentConfig[];
+  designMode?: boolean;
   layout?: LayoutConfig;
   layoutConstraints?: LayoutConstraints;
+  modelVersion?: string;
   parameters?: string;
   preferredSize?: Size;
   tabVisibility?: "SHOW_ALL" | "HIDE_SINGLE" | "HIDE_ALL";
@@ -698,7 +719,7 @@ export interface DataRetentionRule {
 
   /** @format int32 */
   ruleNumber?: number;
-  timeUnit?: "MINUTES" | "HOURS" | "DAYS" | "WEEKS" | "MONTHS" | "YEARS";
+  timeUnit?: "NANOSECONDS" | "MILLISECONDS" | "SECONDS" | "MINUTES" | "HOURS" | "DAYS" | "WEEKS" | "MONTHS" | "YEARS";
 }
 
 export interface DataRetentionRules {
@@ -787,6 +808,18 @@ export interface DictionaryDoc {
   updateUser?: string;
   uuid?: string;
   version?: string;
+}
+
+export interface DocContentMatch {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  docRef?: DocRef;
+
+  /** @format int64 */
+  matchLength?: number;
+
+  /** @format int64 */
+  matchOffset?: number;
+  sample?: string;
 }
 
 /**
@@ -1009,6 +1042,13 @@ export interface Expander {
   depth?: number;
   expanded?: boolean;
   leaf?: boolean;
+}
+
+export interface ExplorerDocContentMatch {
+  docContentMatch?: DocContentMatch;
+  iconClassName?: string;
+  isFavourite?: boolean;
+  path?: string;
 }
 
 export interface ExplorerNode {
@@ -1318,6 +1358,15 @@ export interface FindExplorerNodeCriteria {
   temporaryOpenedItems?: ExplorerNodeKey[];
 }
 
+export interface FindExplorerNodeQuery {
+  matchCase?: boolean;
+  pageRequest?: PageRequest;
+  pattern?: string;
+  regex?: boolean;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+}
+
 export interface FindFsVolumeCriteria {
   pageRequest?: PageRequest;
   selection?: SelectionVolumeUseStatus;
@@ -1543,6 +1592,8 @@ export interface GlobalConfigCriteria {
   sort?: string;
   sortList?: CriteriaFieldSort[];
 }
+
+export type HoppingWindow = Window & { advanceSize?: string; timeField?: string; windowSize?: string };
 
 export type IdField = AbstractField;
 
@@ -2390,7 +2441,8 @@ export interface Prop {
 }
 
 export interface PropertyPath {
-  parts?: string[];
+  leafPart?: string;
+  parentParts?: string[];
 }
 
 /**
@@ -2677,6 +2729,15 @@ export interface ResultPageDependency {
 /**
  * A page of results.
  */
+export interface ResultPageExplorerDocContentMatch {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: ExplorerDocContentMatch[];
+}
+
+/**
+ * A page of results.
+ */
 export interface ResultPageFsVolume {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
@@ -2791,7 +2852,7 @@ export interface ResultRequest {
   fetch?: "NONE" | "CHANGES" | "ALL";
   mappings: TableSettings[];
 
-  /** TODO */
+  /** A set of group keys of parent rows we want to display children for */
   openGroups: string[];
 
   /** The offset and length of a range of data in a sub-set of a query result set */
@@ -2799,6 +2860,9 @@ export interface ResultRequest {
 
   /** The style of results required. FLAT will provide a FlatResult object, while TABLE will provide a TableResult object */
   resultStyle: "FLAT" | "TABLE";
+
+  /** If the data includes time in the key then you can apply a time filter when retrieving rows */
+  timeFilter?: TimeFilter;
 }
 
 export interface ResultStoreInfo {
@@ -2933,7 +2997,7 @@ export interface SearchRequest {
 export interface SearchRequestSource {
   componentId?: string;
   ownerDocUuid?: string;
-  sourceType?: "ALERT_RULE" | "DASHBOARD_UI" | "QUERY_UI" | "API" | "BATCH_SEARCH";
+  sourceType?: "ANALYTIC_RULE" | "DASHBOARD_UI" | "QUERY_UI" | "API" | "BATCH_SEARCH";
 }
 
 /**
@@ -3057,6 +3121,12 @@ export interface SharedElementData {
 export interface SharedStepData {
   elementMap?: Record<string, SharedElementData>;
   sourceLocation?: SourceLocation;
+}
+
+export interface SimpleDuration {
+  /** @format int64 */
+  time?: number;
+  timeUnit?: "NANOSECONDS" | "MILLISECONDS" | "SECONDS" | "MINUTES" | "HOURS" | "DAYS" | "WEEKS" | "MONTHS" | "YEARS";
 }
 
 export interface SimpleUser {
@@ -3430,6 +3500,8 @@ export type TableResultRequest = ComponentResultRequest & {
  * An object to describe how the query results should be returned, including which fields should be included and what sorting, grouping, filtering, limiting, etc. should be applied
  */
 export interface TableSettings {
+  /** A logical addOperator term in a query expression tree */
+  aggregateFilter?: ExpressionOperator;
   extractValues?: boolean;
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
@@ -3447,6 +3519,10 @@ export interface TableSettings {
 
   /** When grouping is used a value of true indicates that the results will include the full detail of any results aggregated into a group as well as their aggregates. A value of false will only include the aggregated values for each group. Defaults to false. */
   showDetail?: boolean;
+
+  /** A logical addOperator term in a query expression tree */
+  valueFilter?: ExpressionOperator;
+  window?: Window;
 }
 
 export interface TaskId {
@@ -3519,19 +3595,21 @@ export interface TextConverterDoc {
 export type TextField = AbstractField;
 
 export interface ThemeConfig {
-  backgroundAttachment?: string;
   backgroundColour?: string;
-  backgroundImage?: string;
-  backgroundOpacity?: string;
-  backgroundPosition?: string;
-  backgroundRepeat?: string;
   labelColours?: string;
-  topMenuTextColour?: string;
-  tubeOpacity?: string;
-  tubeVisible?: string;
+  pageBorder?: string;
 }
 
-export type ThresholdAlertRule = AbstractAlertRule & { threshold?: number; thresholdField?: string };
+/**
+ * If the data includes time in the key then you can apply a time filter when retrieving rows
+ */
+export interface TimeFilter {
+  /** @format int64 */
+  from?: number;
+
+  /** @format int64 */
+  to?: number;
+}
 
 export interface TimeRange {
   condition?:
@@ -3680,6 +3758,7 @@ export interface UserPreferences {
   /** A date time formatting pattern string conforming to the specification of java.time.format.DateTimeFormatter */
   dateTimePattern?: string;
   density?: string;
+  editorKeyBindings?: "STANDARD" | "VIM";
   editorTheme?: string;
   font?: string;
   fontSize?: string;
@@ -3765,6 +3844,10 @@ export interface VisualisationDoc {
 
 export interface Welcome {
   html?: string;
+}
+
+export interface Window {
+  type: string;
 }
 
 export interface XPathFilter {
@@ -4301,19 +4384,19 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         ...params,
       }),
   };
-  alertRule = {
+  analyticRule = {
     /**
      * No description
      *
      * @tags Queries
-     * @name FetchAlertRule
-     * @summary Fetch an alert rule doc by its UUID
-     * @request GET:/alertRule/v1/{uuid}
+     * @name FetchAnalyticRule
+     * @summary Fetch an analytic rule doc by its UUID
+     * @request GET:/analyticRule/v1/{uuid}
      * @secure
      */
-    fetchAlertRule: (uuid: string, params: RequestParams = {}) =>
-      this.request<any, AlertRuleDoc>({
-        path: `/alertRule/v1/${uuid}`,
+    fetchAnalyticRule: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, AnalyticRuleDoc>({
+        path: `/analyticRule/v1/${uuid}`,
         method: "GET",
         secure: true,
         ...params,
@@ -4323,14 +4406,14 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Queries
-     * @name UpdateAlertRule
-     * @summary Update an alert rule doc
-     * @request PUT:/alertRule/v1/{uuid}
+     * @name UpdateAnalyticRule
+     * @summary Update an analytic rule doc
+     * @request PUT:/analyticRule/v1/{uuid}
      * @secure
      */
-    updateAlertRule: (uuid: string, data: AlertRuleDoc, params: RequestParams = {}) =>
-      this.request<any, AlertRuleDoc>({
-        path: `/alertRule/v1/${uuid}`,
+    updateAnalyticRule: (uuid: string, data: AnalyticRuleDoc, params: RequestParams = {}) =>
+      this.request<any, AnalyticRuleDoc>({
+        path: `/analyticRule/v1/${uuid}`,
         method: "PUT",
         body: data,
         secure: true,
@@ -5834,6 +5917,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     fetchExplorerPermissions: (data: ExplorerNode[], params: RequestParams = {}) =>
       this.request<any, ExplorerNodePermissions[]>({
         path: `/explorer/v2/fetchExplorerPermissions`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Explorer (v2)
+     * @name FindExplorerNodes
+     * @summary Find explorer nodes using a query
+     * @request POST:/explorer/v2/findExplorerNodes
+     * @secure
+     */
+    findExplorerNodes: (data: FindExplorerNodeQuery, params: RequestParams = {}) =>
+      this.request<any, ResultPageExplorerDocContentMatch>({
+        path: `/explorer/v2/findExplorerNodes`,
         method: "POST",
         body: data,
         secure: true,

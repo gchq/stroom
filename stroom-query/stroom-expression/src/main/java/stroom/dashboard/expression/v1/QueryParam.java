@@ -38,11 +38,10 @@ class QueryParam extends AbstractFunction {
 
     static final String NAME = "param";
 
-    private static final Generator NULL_GEN = new StaticValueFunction(ValNull.INSTANCE).createGenerator();
-
-    private Generator gen = NULL_GEN;
+    private Generator gen = Null.GEN;
 
     private String key;
+    private String value;
 
     public QueryParam(final String name) {
         super(name, 1, 1);
@@ -72,7 +71,7 @@ class QueryParam extends AbstractFunction {
 
         final String v = staticMappedValues.get(key);
         if (v != null) {
-            gen = new StaticValueFunction(ValString.create(v)).createGenerator();
+            gen = new StaticValueGen(ValString.create(v));
         }
     }
 

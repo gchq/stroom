@@ -51,6 +51,7 @@ import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
+import stroom.explorer.client.event.ShowFindEvent;
 import stroom.explorer.client.event.ShowNewMenuEvent;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.BulkActionResult;
@@ -79,7 +80,6 @@ import stroom.security.shared.PermissionNames;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.ClipboardUtil;
-import stroom.widget.menu.client.presenter.GroupHeading;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -108,7 +108,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -122,14 +121,6 @@ public class DocumentPluginEventManager extends Plugin {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
     private static final ExplorerFavouriteResource EXPLORER_FAV_RESOURCE = GWT.create(ExplorerFavouriteResource.class);
-//    private static final KeyTest CTRL_S = event ->
-//            event.getCtrlKey() && !event.getShiftKey() && event.getKeyCode() == 'S';
-//    private static final KeyTest CTRL_SHIFT_S = event ->
-//            event.getCtrlKey() && event.getShiftKey() && event.getKeyCode() == 'S';
-//    private static final KeyTest ALT_W = event ->
-//            event.getAltKey() && !event.getShiftKey() && event.getKeyCode() == 'W';
-//    private static final KeyTest ALT_SHIFT_W = event ->
-//            event.getAltKey() && event.getShiftKey() && event.getKeyCode() == 'W';
 
     private final HasSaveRegistry hasSaveRegistry;
     private final RestFactory restFactory;
@@ -138,9 +129,6 @@ public class DocumentPluginEventManager extends Plugin {
     private final ClientSecurityContext securityContext;
     private TabData selectedTab;
     private MultiSelectionModel<ExplorerNode> selectionModel;
-
-    private final Command itemCloseCommand;
-    private final Command itemSaveCommand;
 
     @Inject
     public DocumentPluginEventManager(final EventBus eventBus,
@@ -156,20 +144,22 @@ public class DocumentPluginEventManager extends Plugin {
         this.documentPluginRegistry = documentPluginRegistry;
         this.securityContext = securityContext;
 
-        itemCloseCommand = () -> {
+        KeyBinding.addCommand(Action.ITEM_CLOSE, () -> {
             if (isTabItemSelected(selectedTab)) {
                 RequestCloseTabEvent.fire(DocumentPluginEventManager.this, selectedTab);
             }
-        };
-        KeyBinding.addCommand(Action.ITEM_CLOSE, itemCloseCommand);
+        });
+        KeyBinding.addCommand(Action.ITEM_CLOSE_ALL, () -> RequestCloseAllTabsEvent.fire(this));
 
-        itemSaveCommand = () -> {
+        KeyBinding.addCommand(Action.ITEM_SAVE, () -> {
             if (isDirty(selectedTab)) {
                 final HasSave hasSave = (HasSave) selectedTab;
                 hasSave.save();
             }
-        };
-        KeyBinding.addCommand(Action.ITEM_SAVE, itemSaveCommand);
+        });
+        KeyBinding.addCommand(Action.ITEM_SAVE_ALL, hasSaveRegistry::save);
+
+        KeyBinding.addCommand(Action.FIND, () -> ShowFindEvent.fire(this));
     }
 
     @Override
@@ -616,9 +606,11 @@ public class DocumentPluginEventManager extends Plugin {
             // Decorate the DocRef with its name from the info service (required by the doc presenter)
             restFactory.create()
                     .onSuccess(result -> {
-                        final DocRefInfo docRefInfo = (DocRefInfo) result;
-                        if (docRefInfo.getDocRef() != null) {
-                            docRef.setName(docRefInfo.getDocRef().getName());
+                        if (result != null) {
+                            final DocRefInfo docRefInfo = (DocRefInfo) result;
+                            if (docRefInfo.getDocRef() != null) {
+                                docRef.setName(docRefInfo.getDocRef().getName());
+                            }
                         }
                     })
                     .call(EXPLORER_RESOURCE)
@@ -802,29 +794,42 @@ public class DocumentPluginEventManager extends Plugin {
                                           final ExplorerNodePermissions documentPermissions,
                                           final DocumentTypes documentTypes) {
         final List<Item> children = new ArrayList<>();
-        final List<DocumentType> availableTypes = documentTypes.getNonSystemTypes().stream()
+        //noinspection SimplifyStreamApiCallChains
+        final List<DocumentType> availableTypes = documentTypes.getNonSystemTypes()
+                .stream()
                 .filter(documentPermissions::hasCreatePermission)
                 .collect(Collectors.toList());
 
         // Group all document types
-        final Map<DocumentTypeGroup, ArrayList<DocumentType>> groupedTypes = new HashMap<>();
-        for (DocumentType documentType : availableTypes) {
-            final DocumentTypeGroup typeGroup = documentType.getGroup();
-            if (!groupedTypes.containsKey(typeGroup)) {
-                groupedTypes.put(typeGroup, new ArrayList<>());
-            }
-            groupedTypes.get(typeGroup).add(documentType);
-        }
+        final Map<DocumentTypeGroup, List<DocumentType>> groupedTypes = availableTypes.stream()
+                .collect(Collectors.groupingBy(DocumentType::getGroup, Collectors.toList()));
 
         // Add each type group as a sorted list of menu items
-        for (DocumentTypeGroup group : groupedTypes.keySet()) {
-            children.add(new GroupHeading(group.getPriority(), group.getName()));
-            children.addAll(groupedTypes.get(group).stream()
-                    .sorted(Comparator.comparing(DocumentType::getDisplayType))
-                    .map(t -> createIconMenuItemFromDocumentType(t, explorerNode))
-                    .collect(Collectors.toList()));
-        }
+        groupedTypes
+                .entrySet()
+                .stream()
+                .sorted(Comparator.comparing(entry -> entry.getKey().getPriority()))
+                .forEach(entry -> {
+                    final DocumentTypeGroup group = entry.getKey();
+                    final List<DocumentType> types = entry.getValue();
+                    if (DocumentTypeGroup.STRUCTURE.equals(group) && types != null && types.size() == 1) {
+                        children.add(createIconMenuItemFromDocumentType(types.get(0), explorerNode));
+                        if (groupedTypes.keySet().size() > 1) {
+                            children.add(new Separator(1));
+                        }
+                    } else if (types != null && !types.isEmpty()) {
+                        final List<Item> grandChildren = types.stream()
+                                .sorted(Comparator.comparing(DocumentType::getDisplayType))
+                                .map(type -> (Item) createIconMenuItemFromDocumentType(type, explorerNode))
+                                .collect(Collectors.toList());
 
+                        // Add the group level item with its children
+                        children.add(new IconParentMenuItem.Builder()
+                                .text(group.getName())
+                                .children(grandChildren)
+                                .build());
+                    }
+                });
         return children;
     }
 

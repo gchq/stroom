@@ -18,9 +18,7 @@ package stroom.dashboard.client.input;
 
 import stroom.dashboard.client.input.KeyValueInputPresenter.KeyValueInputView;
 
-import com.google.gwt.event.dom.client.BlurEvent;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -57,30 +55,34 @@ public class KeyValueInputViewImpl extends ViewWithUiHandlers<KeyValueInputUiHan
     }
 
     @UiHandler("params")
-    public void onParamsKeyDown(final KeyDownEvent event) {
-        switch (event.getNativeKeyCode()) {
-            case KeyCodes.KEY_ENTER:
-            case KeyCodes.KEY_TAB:
-            case KeyCodes.KEY_ESCAPE:
-                onParamsChanged();
-                break;
-            default:
-                if (getUiHandlers() != null) {
-                    getUiHandlers().onDirty();
-                }
-        }
-    }
+    public void onParamsKeyUp(final KeyUpEvent event) {
+//        switch (event.getNativeKeyCode()) {
+//            case KeyCodes.KEY_ENTER:
+//            case KeyCodes.KEY_TAB:
+//            case KeyCodes.KEY_ESCAPE:
+//                onParamsChanged();
+//                break;
+//            default:
+//                if (getUiHandlers() != null) {
+//                    getUiHandlers().onDirty();
+//                }
+//        }
 
-    @UiHandler("params")
-    public void onParamsBlur(final BlurEvent event) {
-        onParamsChanged();
-    }
-
-    private void onParamsChanged() {
         if (getUiHandlers() != null) {
             getUiHandlers().onValueChanged(params.getText());
         }
     }
+
+//    @UiHandler("params")
+//    public void onParamsBlur(final BlurEvent event) {
+//        onParamsChanged();
+//    }
+//
+//    private void onParamsChanged() {
+//        if (getUiHandlers() != null) {
+//            getUiHandlers().onValueChanged(params.getText());
+//        }
+//    }
 
     public interface Binder extends UiBinder<Widget, KeyValueInputViewImpl> {
 

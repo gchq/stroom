@@ -29,7 +29,6 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.explorer.client.event.HighlightExplorerNodeEvent;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;

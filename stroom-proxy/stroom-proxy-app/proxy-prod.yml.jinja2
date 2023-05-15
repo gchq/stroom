@@ -62,10 +62,14 @@ server:
 logging:
   level: WARN
   loggers:
+    # Logs useful information about stroom proxy. Only set DEBUG on specific 'stroom' classes or packages
+    # due to the large volume of logs that would be produced for all of 'stroom' in DEBUG.
     stroom: INFO
+    # Logs useful information about dropwizard when booting stroom
     io.dropwizard: INFO
-    org.eclipse.jetty: INFO
-    org.flywaydb: INFO
+    # Logs useful information about the jetty server when booting stroom
+    # Logs REST request/responses with headers/payloads. Set this to OFF to turn disable that logging.
+    org.glassfish.jersey.logging.LoggingFeature: INFO
     # Logger and appender for proxy receipt audit logs
     "receive":
       level: INFO
@@ -128,6 +132,20 @@ logging:
 # For more information see:
 # https://gchq.github.io/stroom-docs/user-guide/properties.html
 
+# jerseyClients are used for making feed status and content sync REST calls
+jerseyClients:
+  default:
+    timeout: "10s"
+    connectionTimeout: "10s"
+    tls:
+      {% if distribution == "docker" %}
+      verifyHostname: {{ true | envVar('REST_CLIENT_VERIFY_HOSTNAME') }}
+      {% endif %}
+      keyStorePath: "certs/client.jks"
+      keyStorePassword: "password"
+      trustStorePath: "certs/ca.jks"
+      trustStorePassword: "password"
+
 proxyConfig:
   path:
     # By default all files read or written to by stroom-proxy will be in directories relative to
@@ -161,7 +179,7 @@ proxyConfig:
   forwardDestinations:
     - type: "post"
       enabled: {{ true | envVar('FORWARDING_ENABLED') }}
-      name: "upstream"
+      name: "downstream"
       forwardUrl: "{{ 'https://nginx/stroom/datafeed' | envVar('FORWARD_URL') }}"
       sslConfig:
         keyStorePath: "certs/client.jks"
@@ -200,17 +218,5 @@ proxyConfig:
     url: "{{ 'http://stroom:8080/api/feedStatus/v1' | envVar('FEED_STATUS_URL') }}"
     apiKey: ""
 
-  # restClient is used for making feed status REST calls
-  restClient:
-    timeout: "10s"
-    connectionTimeout: "10s"
-    tls:
-      {% if distribution == "docker" %}
-      verifyHostname: {{ true | envVar('REST_CLIENT_VERIFY_HOSTNAME') }}
-      {% endif %}
-      keyStorePath: "certs/client.jks"
-      keyStorePassword: "password"
-      trustStorePath: "certs/ca.jks"
-      trustStorePassword: "password"
 
 # vim: set filetype=yaml tabstop=2 shiftwidth=2 expandtab:

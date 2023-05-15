@@ -39,6 +39,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
+import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskContext;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.common.StroomPipelineTestFileUtil;
@@ -79,8 +80,6 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
     private PipelineDataCache pipelineDataCache;
     @Inject
     private PipelineScopeRunnable pipelineScopeRunnable;
-    @Inject
-    private TaskContext taskContext;
 
     @BeforeEach
     @AfterEach
@@ -209,7 +208,7 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
             // Create the parser.
             final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
-            final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData, taskContext);
+            final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData, new SimpleTaskContext());
 
 //            feedHolderProvider.get().setFeed(new Feed());
 

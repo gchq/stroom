@@ -16,7 +16,6 @@
 
 package stroom.query.client;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
@@ -29,7 +28,6 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -72,13 +70,16 @@ public class ResultStorePlugin extends Plugin implements CurrentUserChangedHandl
 
     @Override
     public void onCurrentUserChanged(final CurrentUserChangedEvent event) {
-        resultStoreModel.fetch(new Range(0, 1),
-                resultStoreInfoResultPage -> {
-                    if (resultStoreInfoResultPage.getValues().size() > 0) {
-                        resultStorePresenter.show();
-                    }
-                },
-                throwable ->
-                        AlertEvent.fireError(this, "Error fetching result stores", throwable.getMessage(), null));
+        // TODO : Decide if we want to know about search result stores that we own being presented at login.
+        // This is related to general session restoration rather than search results specifically.
+
+//        resultStoreModel.fetch(new Range(0, 1),
+//                resultStoreInfoResultPage -> {
+//                    if (resultStoreInfoResultPage.getValues().size() > 0) {
+//                        resultStorePresenter.show();
+//                    }
+//                },
+//                throwable ->
+//                        AlertEvent.fireError(this, "Error fetching result stores", throwable.getMessage(), null));
     }
 }

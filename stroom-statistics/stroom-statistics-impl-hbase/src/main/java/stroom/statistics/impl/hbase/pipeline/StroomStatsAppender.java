@@ -67,7 +67,7 @@ class StroomStatsAppender extends AbstractKafkaAppender {
     public void startProcessing() {
         if (stroomStatStoreRef == null) {
             super.log(Severity.FATAL_ERROR, "Stroom-Stats data source has not been set", null);
-            throw new LoggedException("Stroom-Stats data source has not been set");
+            throw LoggedException.create("Stroom-Stats data source has not been set");
         }
 
         final StroomStatsStoreDoc stroomStatsStoreEntity = stroomStatsStoreStore.readDocument(stroomStatStoreRef);
@@ -77,14 +77,14 @@ class StroomStatsAppender extends AbstractKafkaAppender {
                     Severity.FATAL_ERROR,
                     "Unable to find Stroom-Stats data source " + stroomStatStoreRef,
                     null);
-            throw new LoggedException("Unable to find Stroom-Stats data source " + stroomStatStoreRef);
+            throw LoggedException.create("Unable to find Stroom-Stats data source " + stroomStatStoreRef);
         }
 
         if (!stroomStatsStoreEntity.isEnabled()) {
             final String msg = "Stroom-Stats data source with name [" + stroomStatsStoreEntity.getName() +
                     "] is disabled";
             log(Severity.FATAL_ERROR, msg, null);
-            throw new LoggedException(msg);
+            throw LoggedException.create(msg);
         }
 
         switch (stroomStatsStoreEntity.getStatisticType()) {

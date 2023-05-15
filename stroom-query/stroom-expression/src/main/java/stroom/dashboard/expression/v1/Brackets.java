@@ -48,4 +48,12 @@ class Brackets extends AbstractFunction {
     public boolean hasAggregate() {
         return function.hasAggregate();
     }
+
+    @Override
+    public boolean requiresChildData() {
+        if (function != null) {
+            return function.requiresChildData();
+        }
+        return super.requiresChildData();
+    }
 }

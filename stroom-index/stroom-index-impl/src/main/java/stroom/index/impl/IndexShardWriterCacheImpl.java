@@ -25,7 +25,6 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.concurrent.StripedLock;
@@ -77,7 +76,6 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private final AtomicLong closing = new AtomicLong();
     private final IndexShardWriterExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
-    private final TaskContext taskContext;
     private final SecurityContext securityContext;
     private final PathCreator pathCreator;
 
@@ -91,7 +89,6 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                                      final IndexShardManager indexShardManager,
                                      final IndexShardWriterExecutorProvider executorProvider,
                                      final TaskContextFactory taskContextFactory,
-                                     final TaskContext taskContext,
                                      final SecurityContext securityContext,
                                      final PathCreator pathCreator) {
         this.nodeInfo = nodeInfo;
@@ -101,7 +98,6 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         this.indexShardManager = indexShardManager;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
-        this.taskContext = taskContext;
         this.securityContext = securityContext;
         this.pathCreator = pathCreator;
     }
@@ -376,7 +372,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
     @Override
     public void close(final IndexShardWriter indexShardWriter) {
-        taskContext.info(() -> "Closing index shard writer for shard: " + indexShardWriter.getIndexShardId());
+        taskContextFactory.current().info(() ->
+                "Closing index shard writer for shard: " + indexShardWriter.getIndexShardId());
         close(indexShardWriter, executorProvider.getAsyncExecutor());
     }
 

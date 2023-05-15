@@ -73,7 +73,7 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
 
             if (frequency != null) {
                 if (frequency <= 0) {
-                    throw new ProcessException("Rolling frequency must be greater than 0");
+                    throw ProcessException.create("Rolling frequency must be greater than 0");
                 }
             } else if (schedule == null) {
                 // Default the frequency to an hour if there is no schedule.
@@ -81,7 +81,7 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
             }
 
             if (rollSize <= 0) {
-                throw new ProcessException("Roll size must be greater than 0");
+                throw ProcessException.create("Roll size must be greater than 0");
             }
 
             this.validateSpecificSettings();

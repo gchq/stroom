@@ -30,7 +30,7 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ButtonBase;
 
 abstract class BaseSvgButton extends ButtonBase implements ButtonView {
-
+    private final Element background;
     private final Element face;
     /**
      * If <code>true</code>, this widget is capturing with the mouse held down.
@@ -50,13 +50,15 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
         super(Document.get().createPushButtonElement());
 
         sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.FOCUSEVENTS | Event.KEYEVENTS);
-        getElement().getStyle().setDisplay(Display.INLINE_BLOCK);
+        getElement().setClassName("icon-button");
 
-        getElement().setClassName("fa-button");
+        background = Document.get().createDivElement();
+        background.setClassName("background");
 
         face = Document.get().createDivElement();
         face.setClassName("face");
 
+        getElement().appendChild(background);
         getElement().appendChild(face);
 
         setSvgPreset(preset);
@@ -79,9 +81,9 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
     public void setEnabled(final boolean enabled) {
         super.setEnabled(enabled);
         if (enabled) {
-            face.removeClassName("face--disabled");
+            getElement().removeClassName("disabled");
         } else {
-            face.addClassName("face--disabled");
+            getElement().addClassName("disabled");
         }
     }
 
@@ -201,11 +203,11 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
     }
 
     private void onClickStart() {
-        getElement().addClassName("face--down");
+        getElement().addClassName("down");
     }
 
     private void onClickCancel() {
-        getElement().removeClassName("face--down");
+        getElement().removeClassName("down");
     }
 
     private void onClick() {
@@ -234,9 +236,9 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
     private void setHovering(final boolean hovering) {
         if (isEnabled()) {
             if (hovering) {
-                face.addClassName("face--hovering");
+                getElement().addClassName("hovering");
             } else {
-                face.removeClassName("face--hovering");
+                getElement().removeClassName("hovering");
             }
         }
     }
@@ -245,9 +247,9 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
     public void setVisible(final boolean visible) {
         super.setVisible(visible);
         if (visible) {
-            face.removeClassName("face--invisible");
+            getElement().removeClassName("invisible");
         } else {
-            face.addClassName("face--invisible");
+            getElement().addClassName("invisible");
         }
     }
 }

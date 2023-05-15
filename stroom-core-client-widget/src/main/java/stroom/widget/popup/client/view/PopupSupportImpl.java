@@ -92,9 +92,11 @@ public class PopupSupportImpl implements PopupSupport {
         // Hide the popup because we are going to position it before making it
         // visible.
         popupPanel.setVisible(false);
-        // Way to set popups to be non modal for now.
+        popupPanel.setModal(false);
+
+        // Way to set popups to be modal using glass.
         if (modal != null) {
-            popupPanel.setModal(modal);
+            popupPanel.setGlassEnabled(modal);
         }
 
         // Add auto hide partners.

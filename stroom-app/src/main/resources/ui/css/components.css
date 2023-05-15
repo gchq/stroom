@@ -34,7 +34,7 @@
 
 .button-container {
     display: flex;
-    align-items: center;
+    align-items: top;
     margin: 2px;
 
     /*
@@ -98,75 +98,32 @@
     align-items: center;
     height: 34px;
     padding: 0 2px;
-    border: none;
-    border-radius: .5rem;
-    border: 1px solid transparent;
-    background-color: transparent;
+    border: var(--curve-tab__border);
+    border-radius: var(--curve-tab__border-radius);
+    background-color: var(--curve-tab__background-color);
     color: var(--control__text-color);
 }
 
 .curveTab:hover {
-    border-color: rgba(0,0,0,.2);
+    background: var(--curve-tab__background-color--hover);
+    border: var(--curve-tab__border--hover);
 }
 
 .curveTab-selected {
-    border-color: rgba(0,0,0,.4);
+    background: var(--curve-tab__background-color--selected);
+    border: var(--curve-tab__border--hover);
+    box-shadow: var(--curve-tab__box-shadow--selected);
 }
 
 .curveTab-selected:hover {
-    border-color: rgba(0,0,0,.6);
+    background: var(--curve-tab__background-color--selected);
+    border: var(--curve-tab__border--hover);
+    box-shadow: var(--curve-tab__box-shadow--selected);
 }
 
-.curveTab .curveTab-background {
-	background-color: rgba(0,0,0,.1);
-}
-
-.stroom-theme-dark .curveTab:hover {
-    border-color: rgba(255,255,255,.5);
-}
-
-.stroom-theme-dark .curveTab-selected {
-    border-color: rgba(255,255,255,.8);
-}
-
-.stroom-theme-dark .curveTab-selected:hover {
-    border-color: rgba(255,255,255,1);
-}
-
-.stroom-theme-dark .curveTab .curveTab-background {
-	background-color: rgba(255,255,255,.2);
-}
-
-/*
-.curveTabBar:focus .curveTab-keyboardSelected {
-    border-color: rgba(255,255,255,1);
-}
-*/
 .curveTab-keyboardSelected:focus {
     border-color: var(--focus-border);
     box-shadow: var(--focus-shadow);
-}
-
-.curveTab .curveTab-background {
-	position: absolute;
-	left: 0;
-	top: 0;
-	opacity: 0;
-	height: 100%;
-	width: 100%;
-	overflow: hidden;
-}
-
-.curveTab-selected .curveTab-background {
-	opacity: .8;
-}
-
-.curveTab:hover .curveTab-background {
-	opacity: .9;
-}
-
-.curveTab-selected:hover .curveTab-background {
-	opacity: 1;
 }
 
 /* Tab content */
@@ -250,39 +207,19 @@
     cursor: pointer;
     display: flex;
     height: 34px;
-    border: none;
-    border-radius: .25rem;
-    border: 1px solid transparent;
-    background-color: transparent;
+    border: var(--curve-tab__border);
+    border-radius: var(--curve-tab__border-radius);
+    background-color: var(--curve-tab__background-color);
     color: var(--control__text-color);
     padding: 10px;
     align-items: center;
 }
 
-.curveTabSelector .curveTabSelector-background {
-    position: absolute;
-    left: 0;
-    top: 0;
-    opacity: 0;
-    height: 100%;
-    width: 100%;
-    overflow: hidden;
-    background-color: rgba(255,255,255,.2);
-}
-
 .curveTabSelector:hover {
-    border-color: rgba(255,255,255,.5);
+    background: var(--curve-tab__background-color--selected);
+    border: var(--curve-tab__border--hover);
 }
 
-.curveTabSelector:hover .curveTabSelector-background {
-	opacity: .9;
-}
-
-/*
-.curveTabBar:focus .curveTabSelector-keyboardSelected {
-    border-color: rgba(255,255,255,1);
-}
-*/
 .curveTabSelector-keyboardSelected:focus {
     border-color: var(--focus-border);
     box-shadow: var(--focus-shadow);
@@ -390,7 +327,7 @@
 .linkTab-background {
 	cursor: pointer;
 	white-space: nowrap;
-	font-weight: 500;
+	font-weight: 600;
 	opacity: 0;
 }
 
@@ -590,11 +527,17 @@
 }
 
 .pipelineStructureViewImpl-bar {
-    position: relative;
+	display: flex;
+	align-items: top;
+	flex-direction: row;
+}
+
+.pipelineStructureViewImpl-bar-right {
     padding: 0 4px;
 	display: flex;
 	align-items: center;
 	flex-direction: row;
+	flex-grow: 1;
 }
 
 .pipelineStructureViewImpl-bar div {
@@ -1080,10 +1023,6 @@
     padding-left: 5px;
 }
 
-.expressionViewImpl-button {
-    float: left;
-}
-
 .expressionViewImpl-resizePanel {
     display: block;
 }
@@ -1093,16 +1032,9 @@
     background-color: var(--control__background-color);
 }
 
-.expressionViewImpl-completionLabel {
-    float: left;
-}
-
 .expressionViewImpl-labelPanel {
-    float: right;
-}
-
-.expressionViewImpl-btnPanel {
-    float: left;
+    display: flex;
+    align-items: center;
 }
 
 .characterNavigator {
@@ -1151,6 +1083,7 @@
     text-align: center;
     font-weight: 500;
     background-color: yellow;
+    color: black;
     border: 1px solid black;
     padding: 1px;
 }
@@ -1183,7 +1116,7 @@
 
 .mainViewImpl-spinner {
     position: absolute;
-    top: 2px;
+    top: 7px;
     right: 2px;
     width: 32px;
     height: 32px;
@@ -1707,6 +1640,7 @@ button.main-menu svg {
 .timeRange-selector {
     color: var(--link__text-color);
     cursor: pointer;
+    font-size: 1.1em;
 }
 
 .timeRange-selector:hover {
@@ -1715,9 +1649,8 @@ button.main-menu svg {
 
 .timeRange-popup {
     width: 33rem;
-    height: 21.6rem;
     z-index: 10;
-    padding: 0.4rem;
+    /*padding: 0.6rem 0.6rem 0.4rem 0.6rem;*/
 }
 
 .timeRange-quickSettings {
@@ -1763,11 +1696,8 @@ button.main-menu svg {
 }
 
 .infoTable th, .infoTable td {
-    padding-right: var(--row__padding--horizontal);
-}
-
-.infoTable th:first-child, .infoTable td:first-child {
     padding-left: var(--row__padding--horizontal);
+    padding-right: var(--row__padding--horizontal);
 }
 
 .infoTable td:first-child {
@@ -1822,6 +1752,77 @@ button.main-menu svg {
 
 .nodePingBar-text {
     padding-left: .25em;
+}
+
+.listContainer {
+    overflow: auto;
+}
+
+.find-topBar {
+    position: relative;
+}
+
+.find-buttons {
+    display: flex;
+    position: absolute;
+    right: 5px;
+    top: 6px;
+}
+
+.findCell {
+}
+
+.findCell-row {
+	display: flex;
+	flex-direction: column;
+}
+
+.findCell-main {
+    display: flex;
+    gap: .7rem;
+    padding: .2rem;
+}
+
+.findCell-icon {
+    display: flex;
+    flex-grow: 0;
+    min-width: 18px;
+    min-height: 18px;
+}
+
+.findCell-sample {
+    display: flex;
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.findCell-name {
+    display: flex;
+    flex-grow: 0;
+    align-items: end;
+    white-space: nowrap;
+    opacity: .7;
+}
+
+.findCell-sub {
+    display: flex;
+    gap: .7rem;
+    padding: .2rem;
+}
+
+.findCell-path {
+    display: flex;
+    font-size: 0.7rem;
+    flex-grow: 1;
+    opacity: .5;
+}
+
+.findCell-uuid {
+    display: flex;
+    font-size: .7rem;
+    flex-grow: 0;
+    opacity: .5;
 }
 
 

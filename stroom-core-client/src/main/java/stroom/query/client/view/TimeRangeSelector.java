@@ -1,6 +1,9 @@
 package stroom.query.client.view;
 
 import stroom.query.api.v2.TimeRange;
+import stroom.widget.popup.client.view.HideRequest;
+import stroom.widget.popup.client.view.HideRequestUiHandlers;
+import stroom.widget.popup.client.view.OkCancelContent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -24,18 +27,35 @@ public class TimeRangeSelector extends Composite implements HasValue<TimeRange>,
 
         label = new Label(value.getName(), false);
         label.setStyleName("timeRange-selector");
+        label.setTitle("Time range to apply to all queries in this dashboard.\n" +
+                "The selected time range applies to the time field applicable to each query's data source.");
 
-        this.popup = new PopupPanel(true);
+        this.popup = new PopupPanel(false);
+
+        final HideRequestUiHandlers hideRequestUiHandlers = new HideRequestUiHandlers() {
+            @Override
+            public void hideRequest(final HideRequest request) {
+                if (request.isOk()) {
+                    setValue(timeRangePopup.getValue(), true);
+                }
+                popup.hide();
+            }
+        };
+        final OkCancelContent okCancelContent = new OkCancelContent(hideRequestUiHandlers);
+        okCancelContent.setContent(timeRangePopup.asWidget());
 
         popup.addAutoHidePartner(label.getElement());
-        popup.setWidget(timeRangePopup.asWidget());
+        popup.setWidget(okCancelContent);
         popup.setStyleName("simplePopup-background timeRange-popup");
-        popup.addCloseHandler(event -> {
-            setValue(timeRangePopup.getValue(), true);
-        });
-        timeRangePopup.addValueChangeHandler(timeRange -> popup.hide(false));
+//        popup.addCloseHandler(event -> {
+//            setValue(timeRangePopup.getValue(), true);
+//        });
+//        timeRangePopup.addValueChangeHandler(timeRange -> popup.hide(false));
 
-        label.addClickHandler(event -> popup.showRelativeTo(label));
+        label.addClickHandler(event -> {
+            timeRangePopup.setValue(value, false);
+            popup.showRelativeTo(label);
+        });
 
         initWidget(label);
     }
@@ -56,11 +76,15 @@ public class TimeRangeSelector extends Composite implements HasValue<TimeRange>,
 
     @Override
     public void setValue(final TimeRange value) {
-        this.value = value;
+        setValue(value, false);
     }
 
     @Override
-    public void setValue(final TimeRange value, final boolean fireEvents) {
+    public void setValue(TimeRange value, final boolean fireEvents) {
+        if (value == null) {
+            value = TimeRanges.ALL_TIME;
+        }
+
         this.value = value;
         label.setText(value.getName());
         if (fireEvents) {

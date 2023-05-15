@@ -45,5 +45,12 @@
 }
 
 .explorerCell-text {
-    white-space: nowrap;
+	padding: 0 0 0 var(--row__padding--horizontal);
+	white-space: nowrap;
 }
+
+ .explorerTree .cellTableCell {
+    display: flex;
+    align-items: center;
+    height: var(--row__height);
+ }

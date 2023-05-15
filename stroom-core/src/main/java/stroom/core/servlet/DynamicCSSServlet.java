@@ -34,15 +34,15 @@ public class DynamicCSSServlet extends HttpServlet implements IsServlet {
 
     private static final Set<String> PATH_SPECS = Set.of("/dynamic.css");
 
-    private static final String THEME_BACKGROUND_ATTACHMENT = "@THEME_BACKGROUND_ATTACHMENT@";
+//    private static final String THEME_BACKGROUND_ATTACHMENT = "@THEME_BACKGROUND_ATTACHMENT@";
     private static final String THEME_BACKGROUND_COLOUR = "@THEME_BACKGROUND_COLOUR@";
-    private static final String THEME_BACKGROUND_IMAGE = "@THEME_BACKGROUND_IMAGE@";
-    private static final String THEME_BACKGROUND_POSITION = "@THEME_BACKGROUND_POSITION@";
-    private static final String THEME_BACKGROUND_REPEAT = "@THEME_BACKGROUND_REPEAT@";
-    private static final String THEME_BACKGROUND_OPACITY = "@THEME_BACKGROUND_OPACITY@";
-    private static final String THEME_TOP_MENU_TEXT_COLOUR = "@THEME_TOP_MENU_TEXT_COLOUR@";
-    private static final String THEME_TUBE_VISIBLE = "@THEME_TUBE_VISIBLE@";
-    private static final String THEME_TUBE_OPACITY = "@THEME_TUBE_OPACITY@";
+//    private static final String THEME_BACKGROUND_IMAGE = "@THEME_BACKGROUND_IMAGE@";
+//    private static final String THEME_BACKGROUND_POSITION = "@THEME_BACKGROUND_POSITION@";
+//    private static final String THEME_BACKGROUND_REPEAT = "@THEME_BACKGROUND_REPEAT@";
+//    private static final String THEME_BACKGROUND_OPACITY = "@THEME_BACKGROUND_OPACITY@";
+//    private static final String THEME_TOP_MENU_TEXT_COLOUR = "@THEME_TOP_MENU_TEXT_COLOUR@";
+//    private static final String THEME_TUBE_VISIBLE = "@THEME_TUBE_VISIBLE@";
+//    private static final String THEME_TUBE_OPACITY = "@THEME_TUBE_OPACITY@";
 
     private final transient ThemeConfig themeConfig;
     private String cssTemplate;
@@ -69,23 +69,23 @@ public class DynamicCSSServlet extends HttpServlet implements IsServlet {
 
         String css = getCssTemplate();
 
-        css = replaceAll(css, THEME_BACKGROUND_ATTACHMENT, themeConfig.getBackgroundAttachment());
-
+//        css = replaceAll(css, THEME_BACKGROUND_ATTACHMENT, themeConfig.getBackgroundAttachment());
+//
         css = replaceAll(css, THEME_BACKGROUND_COLOUR, themeConfig.getBackgroundColour());
-
-        css = replaceAll(css, THEME_BACKGROUND_IMAGE, themeConfig.getBackgroundImage());
-
-        css = replaceAll(css, THEME_BACKGROUND_POSITION, themeConfig.getBackgroundPosition());
-
-        css = replaceAll(css, THEME_BACKGROUND_REPEAT, themeConfig.getBackgroundRepeat());
-
-        css = replaceAll(css, THEME_BACKGROUND_OPACITY, themeConfig.getBackgroundOpacity());
-
-        css = replaceAll(css, THEME_TUBE_OPACITY, themeConfig.getTubeOpacity());
-
-        css = replaceAll(css, THEME_TUBE_VISIBLE, themeConfig.getTubeVisible());
-
-        css = replaceAll(css, THEME_TOP_MENU_TEXT_COLOUR, themeConfig.getTopMenuTextColour());
+//
+//        css = replaceAll(css, THEME_BACKGROUND_IMAGE, themeConfig.getBackgroundImage());
+//
+//        css = replaceAll(css, THEME_BACKGROUND_POSITION, themeConfig.getBackgroundPosition());
+//
+//        css = replaceAll(css, THEME_BACKGROUND_REPEAT, themeConfig.getBackgroundRepeat());
+//
+//        css = replaceAll(css, THEME_BACKGROUND_OPACITY, themeConfig.getBackgroundOpacity());
+//
+//        css = replaceAll(css, THEME_TUBE_OPACITY, themeConfig.getTubeOpacity());
+//
+//        css = replaceAll(css, THEME_TUBE_VISIBLE, themeConfig.getTubeVisible());
+//
+//        css = replaceAll(css, THEME_TOP_MENU_TEXT_COLOUR, themeConfig.getTopMenuTextColour());
 
         pw.write(css);
         pw.close();

@@ -75,7 +75,7 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
     @Override
     public void startProcessing() {
         if (kafkaConfigRef == null) {
-            throw new ProcessException("No Kafka config has been specified");
+            throw ProcessException.create("No Kafka config has been specified");
         }
 
         try {
@@ -83,13 +83,13 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
         } catch (final RuntimeException e) {
             String msg = "Error initialising kafka producer - " + e.getMessage();
             log(Severity.FATAL_ERROR, msg, e);
-            throw new LoggedException(msg);
+            throw LoggedException.create(msg);
         }
 
         kafkaProducer = sharedKafkaProducer.getKafkaProducer().orElseThrow(() -> {
             String msg = "No Kafka producer connector is available, check Stroom's configuration";
             log(Severity.FATAL_ERROR, msg, null);
-            throw new LoggedException(msg);
+            throw LoggedException.create(msg);
         });
         super.startProcessing();
     }
@@ -120,7 +120,7 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
                                 // Continue to interrupt this thread.
                                 Thread.currentThread().interrupt();
 
-                                throw new ProcessException("Thread interrupted");
+                                throw ProcessException.create("Thread interrupted");
                             } catch (ExecutionException e) {
                                 log(Severity.ERROR, "Error sending message to Kafka", e);
                             }

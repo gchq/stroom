@@ -98,8 +98,6 @@ public class Pager extends AbstractPager {
 
     private void setupButton(SvgButton button) {
         button.setEnabled(false);
-        button.getElement().getStyle().setPaddingLeft(1, Style.Unit.PX);
-        button.getElement().getStyle().setPaddingRight(1, Style.Unit.PX);
     }
 
     @UiHandler("first")

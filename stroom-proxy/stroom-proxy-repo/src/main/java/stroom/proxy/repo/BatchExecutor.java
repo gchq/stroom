@@ -3,12 +3,12 @@ package stroom.proxy.repo;
 import stroom.proxy.repo.queue.Batch;
 import stroom.proxy.repo.queue.BatchUtil;
 import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.thread.CustomThreadFactory;
 import stroom.util.thread.StroomThreadGroup;
 
 import io.dropwizard.lifecycle.Managed;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -20,7 +20,7 @@ import java.util.function.Supplier;
 
 public class BatchExecutor<T> implements Managed {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BatchExecutor.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BatchExecutor.class);
 
     private final ExecutorService executorService;
     private final int threadCount;
@@ -53,8 +53,8 @@ public class BatchExecutor<T> implements Managed {
     }
 
     private void fillQueue() {
-        while (!Thread.currentThread().isInterrupted()) {
-            try {
+        try {
+            while (!Thread.currentThread().isInterrupted()) {
                 BatchUtil.transferEach(batchSupplier, item -> {
                     try {
                         queue.put(item);
@@ -62,22 +62,30 @@ public class BatchExecutor<T> implements Managed {
                         throw UncheckedInterruptedException.create(e);
                     }
                 });
-            } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
             }
+        } catch (final UncheckedInterruptedException e) {
+            LOGGER.debug(e::getMessage, e);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
+            throw e;
         }
     }
 
     private void process() {
-        while (!Thread.currentThread().isInterrupted()) {
-            try {
-                final T t = queue.take();
-                consumer.accept(t);
-            } catch (final InterruptedException e) {
-                throw UncheckedInterruptedException.create(e);
-            } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
+        try {
+            while (!Thread.currentThread().isInterrupted()) {
+                try {
+                    final T t = queue.take();
+                    consumer.accept(t);
+                } catch (final InterruptedException e) {
+                    throw UncheckedInterruptedException.create(e);
+                }
             }
+        } catch (final UncheckedInterruptedException e) {
+            LOGGER.debug(e::getMessage, e);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
+            throw e;
         }
     }
 

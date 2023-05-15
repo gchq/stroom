@@ -25,10 +25,14 @@ public class ChangeThemeEvent extends GwtEvent<ChangeThemeEvent.Handler> {
     private static Type<Handler> TYPE;
     private final String theme;
     private final String editorTheme;
+    private final String editorKeyBindings;
 
-    private ChangeThemeEvent(final String theme, final String editorTheme) {
+    private ChangeThemeEvent(final String theme,
+                             final String editorTheme,
+                             final String editorKeyBindings) {
         this.theme = theme;
         this.editorTheme = editorTheme;
+        this.editorKeyBindings = editorKeyBindings;
     }
 
     public static Type<Handler> getType() {
@@ -38,8 +42,11 @@ public class ChangeThemeEvent extends GwtEvent<ChangeThemeEvent.Handler> {
         return TYPE;
     }
 
-    public static void fire(final HasHandlers handlers, final String theme, final String editorTheme) {
-        handlers.fireEvent(new ChangeThemeEvent(theme, editorTheme));
+    public static void fire(final HasHandlers handlers,
+                            final String theme,
+                            final String editorTheme,
+                            final String editorKeyBindings) {
+        handlers.fireEvent(new ChangeThemeEvent(theme, editorTheme, editorKeyBindings));
     }
 
     @Override
@@ -58,6 +65,10 @@ public class ChangeThemeEvent extends GwtEvent<ChangeThemeEvent.Handler> {
 
     public String getEditorTheme() {
         return editorTheme;
+    }
+
+    public String getEditorKeyBindings() {
+        return editorKeyBindings;
     }
 
     public interface Handler extends EventHandler {

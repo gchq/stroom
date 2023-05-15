@@ -115,9 +115,9 @@ abstract class AbstractTestStoreAndForward {
                                         attributeMap,
                                         handler -> {
                                             try {
-                                                handler.addEntry("1" + StroomZipFileType.META.getExtension(),
+                                                handler.addEntry("1" + StroomZipFileType.META.getDotExtension(),
                                                         new ByteArrayInputStream(metaBytes), progressHandler);
-                                                handler.addEntry("1" + StroomZipFileType.DATA.getExtension(),
+                                                handler.addEntry("1" + StroomZipFileType.DATA.getDotExtension(),
                                                         new ByteArrayInputStream(dataBytes), progressHandler);
                                             } catch (final IOException e) {
                                                 throw new UncheckedIOException(e);
@@ -135,7 +135,7 @@ abstract class AbstractTestStoreAndForward {
 
             await(forwarderDestinations);
 
-            // Wait fdr source dao to be cleared.
+            // Wait for source dao to be cleared.
             while (sourceDao.countSources() > 0) {
                 ThreadUtil.sleep(1000);
             }

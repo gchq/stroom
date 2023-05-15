@@ -16,6 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
+import stroom.dashboard.expression.v1.ref.StoredValues;
+
 import java.text.ParseException;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -103,7 +105,7 @@ class Decode extends AbstractManyChildFunction {
                 }
             }
 
-            gen = new StaticValueFunction(ValString.create(newValue)).createGenerator();
+            gen = new StaticValueGen(ValString.create(newValue));
 
         } else {
             for (int i = 1; i < params.length - 1; i += 2) {
@@ -148,29 +150,22 @@ class Decode extends AbstractManyChildFunction {
         }
 
         @Override
-        public void set(final Val[] values) {
-            for (final Generator generator : childGenerators) {
-                generator.set(values);
-            }
-        }
-
-        @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
-            final Val val = childGenerators[0].eval(childDataSupplier);
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
+            final Val val = childGenerators[0].eval(storedValues, childDataSupplier);
             if (!val.type().isValue()) {
                 return val;
             }
 
             try {
                 final String value = val.toString();
-                Val newVal = childGenerators[childGenerators.length - 1].eval(childDataSupplier);
+                Val newVal = childGenerators[childGenerators.length - 1].eval(storedValues, childDataSupplier);
                 if (!newVal.type().isValue()) {
                     return ValErr.wrap(newVal);
                 }
                 String newValue = newVal.toString();
 
                 for (int i = 1; i < childGenerators.length - 1; i += 2) {
-                    final Val valRegex = childGenerators[i].eval(childDataSupplier);
+                    final Val valRegex = childGenerators[i].eval(storedValues, childDataSupplier);
                     if (!valRegex.type().isValue()) {
                         return ValErr.wrap(valRegex);
                     }
@@ -182,7 +177,7 @@ class Decode extends AbstractManyChildFunction {
 
                     final Pattern pattern = PatternCache.get(regex);
                     if (pattern.matcher(value).matches()) {
-                        newVal = childGenerators[i + 1].eval(childDataSupplier);
+                        newVal = childGenerators[i + 1].eval(storedValues, childDataSupplier);
                         if (!newVal.type().isValue()) {
                             return ValErr.wrap(newVal);
                         }

@@ -18,12 +18,12 @@
 package stroom.view.client.presenter;
 
 import stroom.data.client.presenter.EditExpressionPresenter;
-import stroom.datasource.api.v2.AbstractField;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.explorer.shared.StandardTagNames;
+import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.shared.DocumentPermissionNames;
@@ -37,15 +37,11 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Objects;
 
 public class ViewSettingsPresenter extends DocumentSettingsPresenter<ViewSettingsView, ViewDoc> {
 
     private final RestFactory restFactory;
-    private final IndexLoader indexLoader;
     private final EntityDropDownPresenter dataSourceSelectionPresenter;
     private final EntityDropDownPresenter pipelineSelectionPresenter;
     private final EditExpressionPresenter expressionPresenter;
@@ -53,13 +49,11 @@ public class ViewSettingsPresenter extends DocumentSettingsPresenter<ViewSetting
     @Inject
     public ViewSettingsPresenter(final EventBus eventBus,
                                  final ViewSettingsView view,
-                                 final IndexLoader indexLoader,
                                  final RestFactory restFactory,
                                  final EntityDropDownPresenter dataSourceSelectionPresenter,
                                  final EntityDropDownPresenter pipelineSelectionPresenter,
                                  final EditExpressionPresenter expressionPresenter) {
         super(eventBus, view);
-        this.indexLoader = indexLoader;
         this.restFactory = restFactory;
         this.dataSourceSelectionPresenter = dataSourceSelectionPresenter;
         this.pipelineSelectionPresenter = pipelineSelectionPresenter;
@@ -82,15 +76,6 @@ public class ViewSettingsPresenter extends DocumentSettingsPresenter<ViewSetting
 
     @Override
     protected void onBind() {
-        registerHandler(indexLoader.addChangeDataHandler(event ->
-                loadedDataSource(indexLoader.getLoadedDataSourceRef(), indexLoader.getDataSourceFieldsMap())));
-        registerHandler(dataSourceSelectionPresenter.addDataSelectionHandler(event -> {
-            if (!Objects.equals(indexLoader.getLoadedDataSourceRef(),
-                    dataSourceSelectionPresenter.getSelectedEntityReference())) {
-                setDirty(true);
-                indexLoader.loadDataSource(dataSourceSelectionPresenter.getSelectedEntityReference());
-            }
-        }));
         registerHandler(pipelineSelectionPresenter.addDataSelectionHandler(event -> {
             if (!Objects.equals(getEntity().getPipeline(),
                     pipelineSelectionPresenter.getSelectedEntityReference())) {
@@ -100,31 +85,13 @@ public class ViewSettingsPresenter extends DocumentSettingsPresenter<ViewSetting
         registerHandler(expressionPresenter.addDirtyHandler(event -> setDirty(true)));
     }
 
-    private void loadedDataSource(final DocRef dataSourceRef, final DataSourceFieldsMap dataSourceFieldsMap) {
-        // Create a list of index fields.
-        final List<AbstractField> fields = new ArrayList<>();
-        if (dataSourceFieldsMap != null) {
-            for (final AbstractField field : dataSourceFieldsMap.values()) {
-                // Protection from default values of false not being in the serialised json
-                if (field.getQueryable() != null
-                        ? field.getQueryable()
-                        : false) {
-                    fields.add(field);
-                }
-            }
-        }
-        fields.sort(Comparator.comparing(AbstractField::getName, String.CASE_INSENSITIVE_ORDER));
-        expressionPresenter.init(restFactory, dataSourceRef, fields);
-    }
-
     @Override
     protected void onRead(final DocRef docRef, final ViewDoc entity) {
         getView().getDescription().setText(entity.getDescription());
         dataSourceSelectionPresenter.setSelectedEntityReference(entity.getDataSource());
         pipelineSelectionPresenter.setSelectedEntityReference(entity.getPipeline());
 
-        // Read data source.
-        indexLoader.loadDataSource(entity.getDataSource());
+        expressionPresenter.init(restFactory, MetaFields.STREAM_STORE_DOC_REF, MetaFields.getAllFields());
 
         // Read expression.
         ExpressionOperator root = entity.getFilter();

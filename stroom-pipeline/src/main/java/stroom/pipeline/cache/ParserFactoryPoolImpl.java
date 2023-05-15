@@ -102,7 +102,7 @@ class ParserFactoryPoolImpl
 
 //                    final String message = "Unknown text converter type: " +
 //                    textConverter.getConverterType().toString();
-//                    throw new ProcessException(message);
+//                    throw ProcessException.create(message);
             }
 
         } catch (final RuntimeException e) {

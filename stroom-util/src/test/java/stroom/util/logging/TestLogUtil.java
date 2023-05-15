@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -103,5 +104,71 @@ class TestLogUtil {
 
         assertThat(LogUtil.withPercentage(null, (int) 100))
                 .isNull();
+    }
+
+    @Test
+    void test() {
+        final String output = LogUtil.toPaddedMultiLine(
+                "  ",
+                List.of("one", "two", "three"),
+                String::toUpperCase);
+        LOGGER.debug("output:\n{}", output);
+        assertThat(output)
+                .isEqualTo("  ONE\n" + "  TWO\n" + "  THREE");
+    }
+
+    @Test
+    void toStringWithoutName() {
+        assertThat(LogUtil.toStringWithoutClassName(new MyPojo("abc", 123)))
+                .isEqualTo("aString='abc', anInt=123");
+
+    }
+
+    @Test
+    void toStringWithoutName_null() {
+        assertThat(LogUtil.toStringWithoutClassName(null))
+                .isNull();
+
+    }
+
+    @Test
+    void toStringWithoutName_empty() {
+        assertThat(LogUtil.toStringWithoutClassName(new Object() {
+            @Override
+            public String toString() {
+                return "";
+            }
+        }))
+                .isEqualTo("");
+
+    }
+
+    @Test
+    void toStringWithoutName_noName() {
+        assertThat(LogUtil.toStringWithoutClassName(new Object() {
+            @Override
+            public String toString() {
+                return "abc";
+            }
+        }))
+                .isEqualTo("abc");
+    }
+
+    private static class MyPojo {
+        private final String aString;
+        private final int anInt;
+
+        private MyPojo(final String aString, final int anInt) {
+            this.aString = aString;
+            this.anInt = anInt;
+        }
+
+        @Override
+        public String toString() {
+            return "MyPojo{" +
+                    "aString='" + aString + '\'' +
+                    ", anInt=" + anInt +
+                    '}';
+        }
     }
 }

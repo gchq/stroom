@@ -30,8 +30,10 @@ import javax.inject.Singleton;
 import javax.sql.DataSource;
 
 import static stroom.proxy.repo.db.jooq.tables.Aggregate.AGGREGATE;
+import static stroom.proxy.repo.db.jooq.tables.Feed.FEED;
 import static stroom.proxy.repo.db.jooq.tables.ForwardAggregate.FORWARD_AGGREGATE;
 import static stroom.proxy.repo.db.jooq.tables.ForwardDest.FORWARD_DEST;
+import static stroom.proxy.repo.db.jooq.tables.ForwardSource.FORWARD_SOURCE;
 import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
 import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
 
@@ -206,6 +208,7 @@ public class SqliteJooqHelper {
                     // The first thread that gets the chance should run the maintenance pragmas.
                     if (maintenanceDue()) {
                         lastRunMaintenance = System.currentTimeMillis();
+                        LOGGER.info("Executing SQLLite pragmas: {}", maintenancePragma);
                         for (final String pragma : maintenancePragma) {
                             pragma(pragma);
                         }
@@ -246,7 +249,7 @@ public class SqliteJooqHelper {
     private void pragma(final String pragma) {
         useConnection(connection -> {
             try {
-                LOGGER.info("Executing pragma: " + pragma);
+                LOGGER.debug("Executing pragma: " + pragma);
                 connection.createStatement().execute(pragma);
             } catch (final SQLException e) {
                 LOGGER.error("Error executing " + pragma + ": " + e.getMessage(), e);
@@ -254,28 +257,80 @@ public class SqliteJooqHelper {
         });
     }
 
-    public void printTableRecordCounts() {
-        printRecordCount(SOURCE, null, "SOURCE");
-        printRecordCount(SOURCE, SOURCE.EXAMINED.eq(true), "SOURCE EXAMINED");
-//        printRecordCount(SOURCE, SOURCE.NEW_POSITION.isNotNull(), "SOURCE NEW POSITION");
-        printRecordCount(SOURCE_ITEM, null, "SOURCE_ITEM");
-        printRecordCount(SOURCE_ITEM, SOURCE_ITEM.FK_AGGREGATE_ID.isNotNull(), "SOURCE_ITEM AGGREGATED");
-        printRecordCount(SOURCE_ITEM, SOURCE_ITEM.NEW_POSITION.isNotNull(), "SOURCE_ITEM NEW POSITION");
-        printRecordCount(AGGREGATE, null, "AGGREGATE");
-        printRecordCount(AGGREGATE, AGGREGATE.NEW_POSITION.isNotNull(), "AGGREGATE NEW POSITION");
-        printRecordCount(FORWARD_DEST, null, "FORWARD_DEST");
-        printRecordCount(FORWARD_AGGREGATE, null, "FORWARD_AGGREGATE");
+    public String printTableRecordCounts() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("<table>");
+        sb.append("<tr>");
+        sb.append("<th>");
+        sb.append("Record Type");
+        sb.append("</th>");
+        sb.append("<th>");
+        sb.append("Record Count");
+        sb.append("</th>");
+        sb.append("</tr>");
+        sb.append("<tr>");
+        printRecordCount(SOURCE, null, "SOURCE", sb);
+        printRecordCount(SOURCE, SOURCE.EXAMINED.eq(true), "SOURCE - EXAMINED", sb);
+        printRecordCount(SOURCE, SOURCE.DELETED.eq(true), "SOURCE - DELETED", sb);
+//        printRecordCount(SOURCE, SOURCE.NEW_POSITION.isNotNull(), "SOURCE NEW POSITION", sb);
+        printRecordCount(SOURCE_ITEM, null, "SOURCE_ITEM", sb);
+        printRecordCount(SOURCE_ITEM, SOURCE_ITEM.FK_AGGREGATE_ID.isNotNull(), "SOURCE_ITEM - AGGREGATED", sb);
+        printRecordCount(SOURCE_ITEM, SOURCE_ITEM.NEW_POSITION.isNotNull(), "SOURCE_ITEM - NEW POSITION", sb);
+        printRecordCount(AGGREGATE, null, "AGGREGATE", sb);
+        printRecordCount(AGGREGATE, AGGREGATE.NEW_POSITION.isNotNull(), "AGGREGATE - NEW POSITION", sb);
+        printRecordCount(AGGREGATE, AGGREGATE.COMPLETE.isTrue(), "AGGREGATE - COMPLETE", sb);
+        printRecordCount(FEED, null, "FEED", sb);
+        printRecordCount(FORWARD_DEST, null, "FORWARD_DEST", sb);
+
+        printRecordCount(FORWARD_AGGREGATE,
+                null, "FORWARD_AGGREGATE", sb);
         printRecordCount(FORWARD_AGGREGATE,
                 FORWARD_AGGREGATE.NEW_POSITION.isNotNull(),
-                "FORWARD_AGGREGATE NEW POSITION");
+                "FORWARD_AGGREGATE - NEW POSITION", sb);
+        printRecordCount(FORWARD_AGGREGATE,
+                FORWARD_AGGREGATE.RETRY_POSITION.isNotNull(),
+                "FORWARD_AGGREGATE - RETRY POSITION", sb);
+        printRecordCount(FORWARD_AGGREGATE,
+                FORWARD_AGGREGATE.SUCCESS.isTrue(),
+                "FORWARD_AGGREGATE - SUCCESS", sb);
+        printRecordCount(FORWARD_AGGREGATE,
+                FORWARD_AGGREGATE.ERROR.isTrue(),
+                "FORWARD_AGGREGATE - ERROR", sb);
+
+        printRecordCount(FORWARD_SOURCE,
+                null, "FORWARD_SOURCE", sb);
+        printRecordCount(FORWARD_SOURCE,
+                FORWARD_SOURCE.NEW_POSITION.isNotNull(),
+                "FORWARD_SOURCE - NEW POSITION", sb);
+        printRecordCount(FORWARD_SOURCE,
+                FORWARD_SOURCE.RETRY_POSITION.isNotNull(),
+                "FORWARD_SOURCE - RETRY POSITION", sb);
+        printRecordCount(FORWARD_SOURCE,
+                FORWARD_SOURCE.SUCCESS.isTrue(),
+                "FORWARD_SOURCE - SUCCESS", sb);
+        printRecordCount(FORWARD_SOURCE,
+                FORWARD_SOURCE.ERROR.isTrue(),
+                "FORWARD_SOURCE - ERROR", sb);
+
+        sb.append("</tr>");
+        sb.append("</table>");
+        return sb.toString();
     }
 
     <R extends Record, T extends Table<R>> void printRecordCount(final T table,
                                                                  final Condition condition,
-                                                                 final String message) {
+                                                                 final String message,
+                                                                 final StringBuilder sb) {
         readOnlyTransaction(context -> {
             final int count = context.fetchCount(table, condition);
-            System.out.println(message + ": " + count);
+            sb.append("<tr>");
+            sb.append("<td>");
+            sb.append(message);
+            sb.append("</td>");
+            sb.append("<td>");
+            sb.append(count);
+            sb.append("</td>");
+            sb.append("</tr>");
         });
     }
 
@@ -285,6 +340,7 @@ public class SqliteJooqHelper {
         printTable(AGGREGATE, null, "AGGREGATE");
         printTable(FORWARD_DEST, null, "FORWARD_DEST");
         printTable(FORWARD_AGGREGATE, null, "FORWARD_AGGREGATE");
+        printTable(FORWARD_SOURCE, null, "FORWARD_SOURCE");
     }
 
     <R extends Record, T extends Table<R>> void printTable(final T table,

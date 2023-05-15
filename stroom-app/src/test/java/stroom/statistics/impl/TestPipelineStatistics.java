@@ -16,7 +16,6 @@
 
 package stroom.statistics.impl;
 
-import stroom.processor.impl.ProcessorTaskManager;
 import stroom.task.api.TaskManager;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTranslationTestHelper;
@@ -40,8 +39,6 @@ class TestPipelineStatistics {
     private TaskManager taskManager;
     @Inject
     private CommonTestControl commonTestControl;
-    @Inject
-    private ProcessorTaskManager processorTaskManager;
 
     // FIXME : Sort out pipeline statistics.
     @Test

@@ -21,7 +21,6 @@ import stroom.data.retention.impl.DataRetentionPolicyExecutor;
 import stroom.data.retention.impl.DataRetentionRulesService;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
-import stroom.data.retention.shared.TimeUnit;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.meta.api.MetaProperties;
@@ -37,6 +36,7 @@ import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.time.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 

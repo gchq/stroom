@@ -219,6 +219,18 @@ class DynamicTestBuilder {
             Objects.requireNonNull(testFunction);
             return new AssertionsBuilder<>(testFunction);
         }
+
+        /**
+         * Define the action for the dynamic test lambda, where the test input
+         * uses {@link TestCase#getInput()} to produce some output.
+         * Test assertions are added later with {@link AssertionsBuilder#withAssertions(Consumer)}.
+         */
+        @SuppressWarnings("unused")
+        public AssertionsBuilder<I, O> withSingleArgTestFunction(final Function<I, O> testFunction) {
+            Objects.requireNonNull(testFunction);
+            return new AssertionsBuilder<>(testCase ->
+                    testFunction.apply(testCase.getInput()));
+        }
     }
 
 
@@ -256,10 +268,18 @@ class DynamicTestBuilder {
          * expected.
          */
         public CasesBuilder<I, O> withSimpleEqualityAssertion() {
-            final Consumer<TestOutcome<I, O>> wrappedConsumer = wrapTestOutcomeConsumer(testOutcome ->
+            final Consumer<TestOutcome<I, O>> wrappedConsumer = wrapTestOutcomeConsumer(testOutcome -> {
+                if (testOutcome.getExpectedOutput() instanceof Collection
+                    && testOutcome.getActualOutput() instanceof Collection) {
+                    // Using contains will give a better error message
+                    Assertions.assertThat((Collection<O>) testOutcome.getActualOutput())
+                            .containsExactlyElementsOf((Collection<O>) testOutcome.getExpectedOutput());
+                } else {
                     Assertions.assertThat(testOutcome.getActualOutput())
                             .withFailMessage(testOutcome::buildFailMessage)
-                            .isEqualTo(testOutcome.getExpectedOutput()));
+                            .isEqualTo(testOutcome.getExpectedOutput());
+                }
+            });
             return new CasesBuilder<>(testAction, wrappedConsumer);
         }
 
@@ -478,7 +498,12 @@ class DynamicTestBuilder {
                         .append(tupleStr)
                         .append(")");
             } else {
-                final String valStr = value.toString();
+                String valStr = value.toString();
+                // No point outputting the lambda reference as it doesn't help
+                if (valStr.contains("$$Lambda")) {
+                    valStr = "lambda";
+                }
+
                 stringBuilder.append("'")
                         .append(valStr)
                         .append("'");

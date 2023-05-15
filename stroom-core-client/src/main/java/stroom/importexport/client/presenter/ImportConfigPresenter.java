@@ -27,6 +27,7 @@ import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportConfigResponse;
 import stroom.importexport.shared.ImportSettings;
 import stroom.util.shared.ResourceKey;
+import stroom.util.shared.StringUtil;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -117,7 +118,13 @@ public class ImportConfigPresenter
                     if (e.isOk()) {
                         // Disable popup buttons as we are submitting.
                         disableButtons();
-                        getView().getForm().submit();
+                        final String filename = getView().getFilename();
+                        if (!StringUtil.isBlank(filename)) {
+                            getView().getForm().submit();
+                        } else {
+                            error("You must select a file to import.");
+                            enableButtons();
+                        }
                     } else {
                         e.hide();
                         enableButtons();
@@ -156,6 +163,8 @@ public class ImportConfigPresenter
     public interface ImportConfigView extends View, Focus {
 
         FormPanel getForm();
+
+        String getFilename();
     }
 
     @ProxyCodeSplit

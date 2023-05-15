@@ -16,54 +16,45 @@
 
 package stroom.pipeline.errorhandler;
 
+import net.sf.saxon.trans.UncheckedXPathException;
+import net.sf.saxon.trans.XPathException;
+
+import java.util.Objects;
+
 /**
  * Exception used to wrap all exceptions generated within transformation code.
  */
-public class ProcessException extends RuntimeException {
+public class ProcessException extends UncheckedXPathException {
 
-    private final String message;
-
-    /**
-     * Wraps Exception constructor.
-     *
-     * @param message the detail message. The detail message is saved for later
-     *                retrieval by the {@link #getMessage()} method.
-     */
-    public ProcessException(final String message) {
-        this(message, null);
+    ProcessException(final XPathException cause) {
+        super(cause);
     }
 
-    /**
-     * Wraps Exception constructor.
-     *
-     * @param message the detail message (which is saved for later retrieval by the
-     *                {@link #getMessage()} method).
-     * @param cause   the cause (which is saved for later retrieval by the
-     *                {@link #getCause()} method). (A <tt>null</tt> value is
-     *                permitted, and indicates that the cause is nonexistent or
-     *                unknown.)
-     */
-    public ProcessException(final String message, final Throwable cause) {
-        super(message, cause);
-        this.message = MessageUtil.getMessage(message, cause);
+    public static ProcessException create(final String message) {
+        return new ProcessException(new XPathException(message));
+    }
+
+    public static ProcessException create(final String message, final Throwable throwable) {
+        return new ProcessException(new XPathException(message, throwable));
     }
 
     public static ProcessException wrap(final Throwable throwable) {
         if (throwable instanceof ProcessException) {
             return (ProcessException) throwable;
         }
-        return new ProcessException(throwable.getMessage(), throwable);
-    }
-
-    public static ProcessException wrap(final String msg, final Throwable throwable) {
-        if (throwable instanceof ProcessException) {
-            return (ProcessException) throwable;
+        if (throwable instanceof XPathException) {
+            return new ProcessException((XPathException) throwable);
         }
-        return new ProcessException(msg, throwable);
+        if (throwable instanceof UncheckedXPathException) {
+            return new ProcessException(((UncheckedXPathException) throwable).getXPathException());
+        }
+        return new ProcessException(new XPathException(throwable));
     }
 
-    @Override
-    public String getMessage() {
-        return message;
+    public static ProcessException wrap(final String message, final Throwable throwable) {
+        if (Objects.equals(message, throwable.getMessage())) {
+            return wrap(throwable);
+        }
+        return new ProcessException(new XPathException(message, throwable));
     }
 }

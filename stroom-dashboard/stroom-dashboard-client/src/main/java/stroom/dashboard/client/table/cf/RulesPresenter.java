@@ -308,7 +308,7 @@ public class RulesPresenter
     }
 
     @Override
-    public boolean isDirty(final ComponentConfig componentData) {
+    public boolean isDirty(final ComponentConfig componentConfig) {
         return dirty;
     }
 

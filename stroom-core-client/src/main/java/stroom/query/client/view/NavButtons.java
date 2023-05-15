@@ -19,6 +19,7 @@ package stroom.query.client.view;
 import stroom.query.client.presenter.NavUiHandlers;
 import stroom.query.client.presenter.QueryUiHandlers;
 import stroom.svg.client.SvgImages;
+import stroom.widget.button.client.InlineSvgButton;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -35,16 +36,16 @@ public class NavButtons extends Composite implements HasUiHandlers<NavUiHandlers
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    Button backward;
+    InlineSvgButton backward;
     @UiField
-    Button forward;
+    InlineSvgButton forward;
 
     private NavUiHandlers uiHandlers;
 
     public NavButtons() {
         initWidget(BINDER.createAndBindUi(this));
-        backward.getElement().setInnerHTML(SvgImages.MONO_BACKWARD);
-        forward.getElement().setInnerHTML(SvgImages.MONO_FORWARD);
+        backward.setSvg(SvgImages.MONO_BACKWARD);
+        forward.setSvg(SvgImages.MONO_FORWARD);
     }
 
     @Override
