@@ -13,6 +13,23 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2-beta.11] - 2023-05-15
+
+* Issue **#3375** : Fix handling of un-parsable paths in the orphan file finder. Now lists them in the summary.
+
+* Issue **#3203** : Allow unauthenticated servlets to have paths without `/noauth/` in. Add path specs `/stroom/datafeed` and `/stroom/datafeed/*` for the data receipt servlet in addition to the existing `/noauth/` ones.
+
+* Issue **#3395** : Fix nested use of selectors such as first() and last() in dashboard tables.
+
+* Issue **#3411** : Fix sorting or search results in LMDB.
+
+* Ensure the same request/response logging feature is used for all jersey clients and server in stroom and proxy.
+
+* Issue **#3449** : Ensure jersey client responses are closed properly.
+
+* Issue **#3429** : Fix error logging.
+
+
 ## [v7.2-beta.10] - 2023-05-05
 
 * Issue **#3428** : Automatically disable rules that error.
@@ -5267,7 +5284,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.10...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.11...HEAD
+[v7.2-beta.11]: https://github.com/gchq/stroom/compare/v7.2-beta.10...v7.2-beta.11
 [v7.2-beta.10]: https://github.com/gchq/stroom/compare/v7.2-beta.9...v7.2-beta.10
 [v7.2-beta.9]: https://github.com/gchq/stroom/compare/v7.2-beta.8...v7.2-beta.9
 [v7.2-beta.8]: https://github.com/gchq/stroom/compare/v7.2-beta.7...v7.2-beta.8
