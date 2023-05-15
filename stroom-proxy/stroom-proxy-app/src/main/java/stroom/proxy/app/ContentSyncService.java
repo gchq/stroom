@@ -121,8 +121,8 @@ public class ContentSyncService implements Managed, HasHealthCheck {
                                 } else {
                                     final Set<DocRef> docRefs = response.readEntity(new GenericType<Set<DocRef>>() {
                                     });
-                                docRefs.forEach(docRef ->
-                                        importDocument(url, docRef, importHandler, contentSyncConfig));
+                                    docRefs.forEach(docRef ->
+                                            importDocument(url, docRef, importHandler, contentSyncConfig));
                                     LOGGER.info("Synced {} documents", docRefs.size());
                                 }
                             }
