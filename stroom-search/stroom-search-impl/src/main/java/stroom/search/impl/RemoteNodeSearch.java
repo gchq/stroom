@@ -117,17 +117,18 @@ public class RemoteNodeSearch implements NodeSearch {
                 RemoteSearchResource.START_PATH_PART);
 
         try {
-            final Response response = webTargetFactory
+            try (Response response = webTargetFactory
                     .create(url)
                     .request(MediaType.APPLICATION_JSON)
-                    .post(Entity.json(clusterSearchTask));
-            if (response.getStatus() == Status.NOT_FOUND.getStatusCode()) {
-                throw new NotFoundException(response);
-            } else if (response.getStatus() != Status.OK.getStatusCode()) {
-                throw new WebApplicationException(response);
-            }
+                    .post(Entity.json(clusterSearchTask))) {
+                if (response.getStatus() == Status.NOT_FOUND.getStatusCode()) {
+                    throw new NotFoundException(response);
+                } else if (response.getStatus() != Status.OK.getStatusCode()) {
+                    throw new WebApplicationException(response);
+                }
 
-            return response.readEntity(Boolean.class);
+                return response.readEntity(Boolean.class);
+            }
         } catch (Throwable e) {
             LOGGER.debug(e::getMessage, e);
             throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
@@ -167,16 +168,17 @@ public class RemoteNodeSearch implements NodeSearch {
             WebTarget webTarget = webTargetFactory.create(url);
             webTarget = UriBuilderUtil.addParam(webTarget, "queryKey", queryKey);
 
-            final Response response = webTarget
+            try (Response response = webTarget
                     .request(MediaType.APPLICATION_JSON)
-                    .get();
-            if (response.getStatus() == Status.NOT_FOUND.getStatusCode()) {
-                throw new NotFoundException(response);
-            } else if (response.getStatus() != Status.OK.getStatusCode()) {
-                throw new WebApplicationException(response);
-            }
+                    .get()) {
+                if (response.getStatus() == Status.NOT_FOUND.getStatusCode()) {
+                    throw new NotFoundException(response);
+                } else if (response.getStatus() != Status.OK.getStatusCode()) {
+                    throw new WebApplicationException(response);
+                }
 
-            return response.readEntity(Boolean.class);
+                return response.readEntity(Boolean.class);
+            }
         } catch (Throwable e) {
             LOGGER.debug(e::getMessage, e);
             throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);

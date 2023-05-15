@@ -85,10 +85,12 @@ public class PostDataHelper {
                 extraHeaders.forEach(builder::header);
             }
             LOGGER.info("Sending POST request to {}", url);
-            final Response response = builder.post(Entity.text(data));
-            postToProxyCount.increment();
-            status = response.getStatus();
-            final String responseText = response.readEntity(String.class);
+            final String responseText;
+            try (Response response = builder.post(Entity.text(data))) {
+                postToProxyCount.increment();
+                status = response.getStatus();
+                responseText = response.readEntity(String.class);
+            }
             LOGGER.info("datafeed response ({}):\n{}", status, responseText);
 
         } catch (final Exception e) {
@@ -126,11 +128,13 @@ public class PostDataHelper {
                 }
             }
 
-            final Response response = builder.post(
-                    Entity.entity(outputStream.toByteArray(), MediaType.APPLICATION_JSON_TYPE));
-            postToProxyCount.increment();
-            status = response.getStatus();
-            final String responseText = response.readEntity(String.class);
+            final String responseText;
+            try (Response response = builder.post(
+                    Entity.entity(outputStream.toByteArray(), MediaType.APPLICATION_JSON_TYPE))) {
+                postToProxyCount.increment();
+                status = response.getStatus();
+                responseText = response.readEntity(String.class);
+            }
             LOGGER.info("datafeed response ({}):\n{}", status, responseText);
 
         } catch (final Exception e) {
