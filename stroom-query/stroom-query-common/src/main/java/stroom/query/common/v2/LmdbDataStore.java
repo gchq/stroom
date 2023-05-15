@@ -292,7 +292,7 @@ public class LmdbDataStore implements DataStore {
                 }
             }
 
-            final Val[] groupValues = storedValueKeyFactory.getGroupValues(parentKey, storedValues);
+            final Val[] groupValues = storedValueKeyFactory.getGroupValues(depth, storedValues);
             final long timeMs = storedValueKeyFactory.getTimeMs(storedValues);
             final long groupHash = valHasher.hash(groupValues);
             final Key key = storedValueKeyFactory.createKey(parentKey, timeMs, groupValues);
@@ -487,68 +487,63 @@ public class LmdbDataStore implements DataStore {
                 if (success) {
                     resultCount.incrementAndGet();
 
-                } else if (lmdbRowKeyFactory.isGroup(lmdbKV)) {
-                    // TODO : POSSIBLY DO SOMETHING TO CHECK ACTUAL KEYS ARE THE SAME AND USE ANOTHER ROW IF NOT.
-
-                    // Get the existing entry for this key.
-                    final ByteBuffer existingValueBuffer = dbi.get(writeTxn.getTxn(), lmdbKV.getRowKey());
-                    final ByteBuffer newValueBuffer = lmdbRowValueFactory.useOutput(output -> {
-//                        boolean merged = false;
-
-
-//                        while (existingValueBuffer.remaining() > 0) {
-//                            final LmdbRowValue existingValue =
-//                                    LmdbRowValueFactory.read(existingValueBuffer);
-//                            final ByteBuffer key = existingValue.getKey();
-//                            final ByteBuffer value = existingValue.getValue();
-
-                        // If this is the same value then update it and reinsert.
-//                            if (key.equals(newValue.getKey())) {
-                        final StoredValues existingStoredValues =
-                                valueReferenceIndex.read(existingValueBuffer);
+                } else {
+                    final int depth = lmdbRowKeyFactory.getDepth(lmdbKV);
+                    if (lmdbRowKeyFactory.isGroup(depth)) {
                         final StoredValues newStoredValues =
-                                valueReferenceIndex.read(lmdbKV.getRowValue());
-                        for (final CompiledField compiledField : compiledFieldArray) {
-                            compiledField.getGenerator().merge(existingStoredValues, newStoredValues);
+                                valueReferenceIndex.read(lmdbKV.getRowValue().duplicate());
+                        final Val[] newGroupValues
+                                = storedValueKeyFactory.getGroupValues(depth, newStoredValues);
+
+                        // Get the existing entry for this key.
+                        final ByteBuffer existingValueBuffer = dbi.get(writeTxn.getTxn(), lmdbKV.getRowKey());
+                        final ByteBuffer newValueBuffer = lmdbRowValueFactory.useOutput(output -> {
+                            boolean merged = false;
+                            while (existingValueBuffer.remaining() > 0) {
+                                final int startPos = existingValueBuffer.position();
+                                final StoredValues existingStoredValues =
+                                        valueReferenceIndex.read(existingValueBuffer);
+                                final int endPos = existingValueBuffer.position();
+                                final Val[] existingGroupValues
+                                        = storedValueKeyFactory.getGroupValues(depth, existingStoredValues);
+
+                                // If this is the same value then update it and reinsert.
+                                if (Arrays.equals(existingGroupValues, newGroupValues)) {
+                                    for (final CompiledField compiledField : compiledFieldArray) {
+                                        compiledField.getGenerator().merge(existingStoredValues, newStoredValues);
+                                    }
+
+                                    LOGGER.trace(() -> "Merging combined value to output");
+                                    valueReferenceIndex.write(existingStoredValues, output);
+
+                                    // Copy any remaining values.
+                                    output.writeByteBuffer(existingValueBuffer);
+                                    merged = true;
+                                } else {
+                                    LOGGER.debug(() -> "Copying value to output");
+                                    output.writeByteBuffer(existingValueBuffer.slice(startPos, endPos - startPos));
+                                }
+                            }
+
+                            // Append if we didn't merge.
+                            if (!merged) {
+                                LOGGER.debug(() -> "Appending value to output");
+                                output.writeByteBuffer(lmdbKV.getRowValue());
+                                resultCount.incrementAndGet();
+                            }
+                        });
+
+                        final boolean ok = put(writeTxn, dbi, lmdbKV.getRowKey(), newValueBuffer);
+                        if (!ok) {
+                            LOGGER.debug(() -> "Unable to update");
+                            throw new RuntimeException("Unable to update");
                         }
 
-                        LOGGER.trace(() -> "Merging combined value to output");
-
-//                                lmdbRowValueFactory.copyPart(key, output);
-//                                lmdbRowValueFactory.writeValue(existingStoredValues, output);
-//
-                        valueReferenceIndex.write(existingStoredValues, output);
-
-//                                // Copy any remaining values.
-//                                output.writeByteBuffer(existingValueBuffer);
-//                                merged = true;
-//
-//                            } else {
-//                                LOGGER.debug(() -> "Copying value to output");
-//                                lmdbRowValueFactory.copyPart(key, output);
-//                                lmdbRowValueFactory.copyPart(value, output);
-//                            }
-//                        }
-//
-//                        // Append if we didn't merge.
-//                        if (!merged) {
-//                            LOGGER.debug(() -> "Appending value to output");
-//                            lmdbRowValueFactory.copyPart(newValue.getKey(), output);
-//                            lmdbRowValueFactory.copyPart(newValue.getValue(), output);
-//                            resultCount.incrementAndGet();
-//                        }
-                    });
-
-                    final boolean ok = put(writeTxn, dbi, lmdbKV.getRowKey(), newValueBuffer);
-                    if (!ok) {
-                        LOGGER.debug(() -> "Unable to update");
-                        throw new RuntimeException("Unable to update");
+                    } else {
+                        // We do not expect a key collision here.
+                        LOGGER.debug(() -> "Unexpected collision");
+                        throw new RuntimeException("Unexpected collision");
                     }
-
-                } else {
-                    // We do not expect a key collision here.
-                    LOGGER.debug(() -> "Unexpected collision");
-                    throw new RuntimeException("Unexpected collision");
                 }
 
             } catch (final RuntimeException e) {

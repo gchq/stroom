@@ -45,9 +45,7 @@ public class StoredValueKeyFactory {
         this.timeGenerator = timeGenerator;
     }
 
-
-    public Val[] getGroupValues(final Key parentKey, final StoredValues storedValues) {
-        final int depth = parentKey.getDepth() + 1;
+    public Val[] getGroupValues(final int depth, final StoredValues storedValues) {
         final boolean grouped = depth <= compiledDepths.getMaxGroupDepth();
 
         if (grouped) {
@@ -91,7 +89,7 @@ public class StoredValueKeyFactory {
         final boolean grouped = depth <= compiledDepths.getMaxGroupDepth();
 
         if (grouped) {
-            return parentKey.resolve(getTimeMs(storedValues), getGroupValues(parentKey, storedValues));
+            return parentKey.resolve(getTimeMs(storedValues), getGroupValues(parentKey.getDepth() + 1, storedValues));
 
         } else {
             // This item will not be grouped.

@@ -79,8 +79,13 @@ public class LmdbRowKeyFactoryFactory {
         }
 
         @Override
-        public boolean isGroup(final LmdbKV lmdbKV) {
+        public boolean isGroup(final int depth) {
             return true;
+        }
+
+        @Override
+        public int getDepth(final LmdbKV lmdbKV) {
+            return 0;
         }
 
         @Override
@@ -127,8 +132,13 @@ public class LmdbRowKeyFactoryFactory {
         }
 
         @Override
-        public boolean isGroup(final LmdbKV lmdbKV) {
+        public boolean isGroup(final int depth) {
             return false;
+        }
+
+        @Override
+        public int getDepth(final LmdbKV lmdbKV) {
+            return 0;
         }
 
         @Override
@@ -169,8 +179,13 @@ public class LmdbRowKeyFactoryFactory {
         }
 
         @Override
-        public boolean isGroup(final LmdbKV lmdbKV) {
+        public boolean isGroup(final int depth) {
             return true;
+        }
+
+        @Override
+        public int getDepth(final LmdbKV lmdbKV) {
+            return 0;
         }
 
         @Override
@@ -225,8 +240,13 @@ public class LmdbRowKeyFactoryFactory {
         }
 
         @Override
-        public boolean isGroup(final LmdbKV lmdbKV) {
+        public boolean isGroup(final int depth) {
             return false;
+        }
+
+        @Override
+        public int getDepth(final LmdbKV lmdbKV) {
+            return 0;
         }
 
         @Override
@@ -317,7 +337,7 @@ public class LmdbRowKeyFactoryFactory {
 
         @Override
         public LmdbKV makeUnique(final LmdbKV lmdbKV) {
-            if (!isGroup(lmdbKV)) {
+            if (!isGroup(getDepth(lmdbKV))) {
                 // Create a child unique key. <DEPTH><PARENT_GROUP_HASH><UNIQUE_ID>
                 lmdbKV.getRowKey().putLong(SHORT_KEY_LENGTH, keyFactory.getUniqueId());
             }
@@ -326,10 +346,13 @@ public class LmdbRowKeyFactoryFactory {
         }
 
         @Override
-        public boolean isGroup(final LmdbKV lmdbKV) {
-            // Get the depth.
-            final int depth = Byte.toUnsignedInt(lmdbKV.getRowKey().get(0));
+        public boolean isGroup(final int depth) {
             return !isDetailLevel(depth);
+        }
+
+        @Override
+        public int getDepth(final LmdbKV lmdbKV) {
+            return Byte.toUnsignedInt(lmdbKV.getRowKey().get(0));
         }
 
         @Override
@@ -452,17 +475,20 @@ public class LmdbRowKeyFactoryFactory {
         @Override
         public LmdbKV makeUnique(final LmdbKV lmdbKV) {
             // If this isn't a group key then make it unique.
-            if (!isGroup(lmdbKV)) {
+            if (!isGroup(getDepth(lmdbKV))) {
                 lmdbKV.getRowKey().putLong(SHORT_KEY_LENGTH, keyFactory.getUniqueId());
             }
             return lmdbKV;
         }
 
         @Override
-        public boolean isGroup(final LmdbKV lmdbKV) {
-            // Get the depth.
-            final int depth = Byte.toUnsignedInt(lmdbKV.getRowKey().get(0));
+        public boolean isGroup(final int depth) {
             return !isDetailLevel(depth);
+        }
+
+        @Override
+        public int getDepth(final LmdbKV lmdbKV) {
+            return Byte.toUnsignedInt(lmdbKV.getRowKey().get(0));
         }
 
         @Override

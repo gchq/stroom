@@ -25,18 +25,26 @@ public interface LmdbRowKeyFactory {
     /**
      * Change a specific part of the supplied keys byte buffer to ensure it is unique if necessary.
      *
-     * @param rowKey The row key to change.
+     * @param lmdbKV The row to change.
      * @return A row key that has been altered to make it unique if necessary.
      */
-    LmdbKV makeUnique(LmdbKV rowKey);
+    LmdbKV makeUnique(LmdbKV lmdbKV);
 
     /**
-     * Determine if the supplied row key is a grouping key.
+     * Determine if we are grouped at the supplied depth.
      *
-     * @param rowKey The row key to test.
-     * @return True if the supplied key is a grouping key.
+     * @param depth The depth.
+     * @return True if the supplied depth is grouped.
      */
-    boolean isGroup(LmdbKV rowKey);
+    boolean isGroup(int depth);
+
+    /**
+     * Get the depth for the supplied key.
+     *
+     * @param lmdbKV The row to test.
+     * @return The depth of the supplied key.
+     */
+    int getDepth(LmdbKV lmdbKV);
 
     /**
      * Create a key range to filter rows to find the children of the supplied parent key.
