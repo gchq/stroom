@@ -17,6 +17,7 @@
 package stroom.query.common.v2;
 
 import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Field;
@@ -31,6 +32,7 @@ import stroom.query.api.v2.TableResultBuilder;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.common.v2.format.FieldFormatter;
+import stroom.util.concurrent.UncheckedInterruptedException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -139,8 +141,11 @@ public class TableResultCreator implements ResultCreator {
                             totalResults,
                             rowCreator,
                             errorConsumer));
-        } catch (final RuntimeException e) {
+        } catch (final UncheckedInterruptedException e) {
             LOGGER.debug(e.getMessage(), e);
+            errorConsumer.add(e);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
             errorConsumer.add(e);
         }
 
@@ -166,7 +171,7 @@ public class TableResultCreator implements ResultCreator {
         int maxResultsAtThisDepth = maxResults.size(depth);
         int resultCountAtThisLevel = 0;
 
-        for (final Item item : items) {
+        for (final Item item : items.getIterable()) {
             boolean hide = false;
 
             // If the result is within the requested window (offset + length) then add it.

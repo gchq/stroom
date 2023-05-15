@@ -2,34 +2,39 @@ package stroom.proxy.app;
 
 import stroom.proxy.repo.FileScanner;
 import stroom.proxy.repo.FileScannerConfig;
-import stroom.proxy.repo.FrequencyExecutor;
+import stroom.proxy.repo.ProxyServices;
 import stroom.proxy.repo.RepoDirProvider;
 import stroom.proxy.repo.store.SequentialFileStore;
 import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 
-import io.dropwizard.lifecycle.Managed;
-
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class FileScanners implements Managed {
+public class FileScanners {
 
-    private final List<Managed> services = new ArrayList<>();
+    private final ProxyConfig proxyConfig;
+    private final SequentialFileStore sequentialFileStore;
+    private final PathCreator pathCreator;
+    private final RepoDirProvider repoDirProvider;
 
     @Inject
     public FileScanners(final ProxyConfig proxyConfig,
                         final SequentialFileStore sequentialFileStore,
                         final PathCreator pathCreator,
                         final RepoDirProvider repoDirProvider) {
+        this.proxyConfig = proxyConfig;
+        this.sequentialFileStore = sequentialFileStore;
+        this.pathCreator = pathCreator;
+        this.repoDirProvider = repoDirProvider;
+    }
+
+    void register(final ProxyServices proxyServices) {
         if (NullSafe.hasItems(proxyConfig, ProxyConfig::getFileScanners)) {
             // Check that all dirs are unique.
             final Set<Path> allPaths = proxyConfig
@@ -53,42 +58,10 @@ public class FileScanners implements Managed {
                         final FileScanner fileScanner = new FileScanner(
                                 pathCreator.toAppPath(fileScannerConfig.getPath()),
                                 sequentialFileStore);
-                        addFrequencyExecutor("File scanner - " + fileScanner.getSourceDir(),
+                        proxyServices.addFrequencyExecutor("File scanner - " + fileScanner.getSourceDir(),
                                 () -> fileScanner::scan,
                                 frequency);
                     });
         }
-    }
-
-    @Override
-    public void start() {
-        services.forEach(service -> {
-            try {
-                service.start();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        });
-    }
-
-    @Override
-    public void stop() {
-        services.forEach(service -> {
-            try {
-                service.stop();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        });
-    }
-
-    private void addFrequencyExecutor(final String threadName,
-                                      final Supplier<Runnable> runnableSupplier,
-                                      final long frequencyMs) {
-        final FrequencyExecutor executor = new FrequencyExecutor(
-                threadName,
-                runnableSupplier,
-                frequencyMs);
-        services.add(executor);
     }
 }

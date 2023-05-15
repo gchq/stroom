@@ -16,8 +16,10 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import stroom.dashboard.expression.v1.ref.CountReference;
+import stroom.dashboard.expression.v1.ref.StoredValues;
+import stroom.dashboard.expression.v1.ref.ValReference;
+import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
 
 import java.util.function.Supplier;
 
@@ -51,8 +53,18 @@ class Average extends AbstractManyChildFunction implements AggregateFunction {
     static final String ALIAS = "mean";
     private final Add.Calc calculator = new Add.Calc();
 
+    private ValReference valReference;
+    private CountReference countReference;
+
     public Average(final String name) {
         super(name, 1, Integer.MAX_VALUE);
+    }
+
+    @Override
+    public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
+        valReference = valueReferenceIndex.addValue();
+        countReference = valueReferenceIndex.addCount();
+        super.addValueReferences(valueReferenceIndex);
     }
 
     @Override
@@ -61,7 +73,7 @@ class Average extends AbstractManyChildFunction implements AggregateFunction {
         // mode.
         if (isAggregate()) {
             final Generator childGenerator = functions[0].createGenerator();
-            return new AggregateGen(childGenerator, calculator);
+            return new AverageGen(childGenerator, calculator, valReference, countReference);
         }
 
         return super.createGenerator();
@@ -77,27 +89,36 @@ class Average extends AbstractManyChildFunction implements AggregateFunction {
         return functions.length == 1;
     }
 
-    private static final class AggregateGen extends AbstractSingleChildGenerator {
+    private static final class AverageGen extends AbstractSingleChildGenerator {
 
         private final Calculator calculator;
 
-        private Val current = ValNull.INSTANCE;
-        private int count;
+        private final ValReference valReference;
+        private final CountReference countReference;
 
-        AggregateGen(final Generator childGenerator, final Calculator calculator) {
+        AverageGen(final Generator childGenerator,
+                   final Calculator calculator,
+                   final ValReference valReference,
+                   final CountReference countReference) {
             super(childGenerator);
             this.calculator = calculator;
+            this.valReference = valReference;
+            this.countReference = countReference;
         }
 
         @Override
-        public void set(final Val[] values) {
-            childGenerator.set(values);
-            current = calculator.calc(current, childGenerator.eval(null));
-            count++;
+        public void set(final Val[] values, final StoredValues storedValues) {
+            childGenerator.set(values, storedValues);
+            Val current = valReference.get(storedValues);
+            current = calculator.calc(current, childGenerator.eval(storedValues, null));
+            valReference.set(storedValues, current);
+            countReference.increment(storedValues);
         }
 
         @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
+            final Val current = valReference.get(storedValues);
+            final long count = countReference.get(storedValues);
             if (!current.type().isValue() || count == 0) {
                 if (current.type().isError()) {
                     return current;
@@ -109,26 +130,13 @@ class Average extends AbstractManyChildFunction implements AggregateFunction {
         }
 
         @Override
-        public void merge(final Generator generator) {
-            final AggregateGen aggregateGen = (AggregateGen) generator;
-            current = calculator.calc(current, aggregateGen.current);
-            count += aggregateGen.count;
+        public void merge(final StoredValues existingValues, final StoredValues newValues) {
+            Val current = valReference.get(existingValues);
+            current = calculator.calc(current, valReference.get(newValues));
+            valReference.set(existingValues, current);
+            countReference.add(existingValues, countReference.get(newValues));
 
-            super.merge(generator);
-        }
-
-        @Override
-        public void read(final Input input) {
-            super.read(input);
-            current = ValSerialiser.read(input);
-            count = input.readInt(true);
-        }
-
-        @Override
-        public void write(final Output output) {
-            super.write(output);
-            ValSerialiser.write(output, current);
-            output.writeInt(count, true);
+            super.merge(existingValues, newValues);
         }
     }
 
@@ -136,23 +144,17 @@ class Average extends AbstractManyChildFunction implements AggregateFunction {
 
         private final Calculator calculator;
 
-        Gen(final Generator[] generators, final Calculator calculator) {
+        Gen(final Generator[] generators,
+            final Calculator calculator) {
             super(generators);
             this.calculator = calculator;
         }
 
         @Override
-        public void set(final Val[] values) {
-            for (final Generator gen : childGenerators) {
-                gen.set(values);
-            }
-        }
-
-        @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
             Val value = ValNull.INSTANCE;
             for (final Generator gen : childGenerators) {
-                final Val val = gen.eval(childDataSupplier);
+                final Val val = gen.eval(storedValues, childDataSupplier);
                 if (!val.type().isValue()) {
                     return val;
                 }

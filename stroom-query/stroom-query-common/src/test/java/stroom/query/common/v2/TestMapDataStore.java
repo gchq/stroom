@@ -33,7 +33,7 @@ class TestMapDataStore extends AbstractDataStoreTest {
                      final AbstractResultStoreConfig resultStoreConfig,
                      final DataStoreSettings dataStoreSettings) {
         final FieldIndex fieldIndex = new FieldIndex();
-        final Serialisers serialisers = new Serialisers(new ResultStoreConfig());
+        final Serialisers serialisers = new Serialisers(new SearchResultStoreConfig());
         return new MapDataStore(
                 serialisers,
                 tableSettings,
@@ -70,5 +70,10 @@ class TestMapDataStore extends AbstractDataStoreTest {
     @Test
     void sortedCountedTextTest3() {
         super.sortedCountedTextTest3();
+    }
+
+    @Test
+    void firstLastSelectorTest() {
+        super.firstLastSelectorTest();
     }
 }

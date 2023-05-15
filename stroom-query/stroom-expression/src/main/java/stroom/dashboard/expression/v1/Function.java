@@ -16,6 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
+import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
+
 import java.text.ParseException;
 import java.util.Map;
 
@@ -36,6 +38,8 @@ public interface Function extends Param {
      * @param staticMappedValues The static mapped values for the Param and Params functions to use.
      */
     void setStaticMappedValues(Map<String, String> staticMappedValues);
+
+    void addValueReferences(ValueReferenceIndex valueReferenceIndex);
 
     /**
      * Create a generator to generate a value for a cell based on the function

@@ -4,6 +4,8 @@ import stroom.data.zip.CharsetConstants;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.proxy.repo.RepoDirProvider;
+import stroom.proxy.repo.queue.QueueMonitor;
+import stroom.proxy.repo.queue.QueueMonitors;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.io.FileUtil;
 import stroom.util.io.WrappedOutputStream;
@@ -48,8 +50,25 @@ public class SequentialFileStore {
     private final AtomicLong addedStoreId = new AtomicLong();
 //    private final DirManager storeDirManager = new DirManager();
 
+    private final QueueMonitor queueMonitor;
+
     @Inject
+    SequentialFileStore(final RepoDirProvider repoDirProvider,
+                        final QueueMonitors queueMonitors,
+                        final FileStores fileStores) {
+        this(repoDirProvider, queueMonitors, fileStores, 1, "File store");
+    }
+
     public SequentialFileStore(final RepoDirProvider repoDirProvider) {
+        this(repoDirProvider, new QueueMonitors(), new FileStores(), 1, "test");
+    }
+
+    public SequentialFileStore(final RepoDirProvider repoDirProvider,
+                               final QueueMonitors queueMonitors,
+                               final FileStores fileStores,
+                               final int order,
+                               final String name) {
+        this.queueMonitor = queueMonitors.create(order, name);
         final Path repoDir = repoDirProvider.get();
 
         // Create the root directory
@@ -57,6 +76,7 @@ public class SequentialFileStore {
 
         // Create the temp directory.
         tempDir = repoDir.resolve("temp");
+        fileStores.add(order, name + " - temp", tempDir);
         if (ensureDirExists(tempDir)) {
             if (!FileUtil.deleteContents(tempDir)) {
                 throw new RuntimeException("Unable to delete contents of: " + FileUtil.getCanonicalPath(tempDir));
@@ -65,6 +85,7 @@ public class SequentialFileStore {
 
         // Create the store directory and initialise the store id.
         storeDir = repoDir.resolve("store");
+        fileStores.add(order, name + " - store", storeDir);
         if (ensureDirExists(storeDir)) {
             long maxId = getMaxId(storeDir);
             boolean deletePartialStore = true;
@@ -91,6 +112,7 @@ public class SequentialFileStore {
 
             storeId.set(maxId);
             addedStoreId.set(maxId);
+            queueMonitor.setWritePos(maxId);
         }
     }
 
@@ -98,7 +120,8 @@ public class SequentialFileStore {
      * Add sources to the DB.
      */
     public long awaitNew(final long lastAddedStoreId) {
-        long currentStoreId = lastAddedStoreId;
+        queueMonitor.setReadPos(lastAddedStoreId);
+        long currentStoreId;
         try {
             lock.lockInterruptibly();
             try {
@@ -154,6 +177,7 @@ public class SequentialFileStore {
                     lock.unlock();
                 }
             }
+            queueMonitor.setWritePos(addedStoreId.get());
         } catch (final InterruptedException e) {
             throw UncheckedInterruptedException.create(e);
         }

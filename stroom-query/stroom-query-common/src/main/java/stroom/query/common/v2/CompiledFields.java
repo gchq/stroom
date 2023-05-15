@@ -19,7 +19,11 @@ package stroom.query.common.v2;
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.ExpressionParser;
 import stroom.dashboard.expression.v1.FieldIndex;
+import stroom.dashboard.expression.v1.Generator;
+import stroom.dashboard.expression.v1.Null;
 import stroom.dashboard.expression.v1.ParamFactory;
+import stroom.dashboard.expression.v1.StaticValueGen;
+import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
 import stroom.query.api.v2.Field;
 
 import java.text.ParseException;
@@ -28,14 +32,29 @@ import java.util.Map;
 
 public class CompiledFields {
 
-    private CompiledFields() {
+    private final CompiledField[] compiledFields;
+    private final FieldIndex fieldIndex;
+    private final ValueReferenceIndex valueReferenceIndex;
+
+    private CompiledFields(final CompiledField[] compiledFields,
+                           final FieldIndex fieldIndex,
+                           final ValueReferenceIndex valueReferenceIndex) {
+        this.compiledFields = compiledFields;
+        this.fieldIndex = fieldIndex;
+        this.valueReferenceIndex = valueReferenceIndex;
     }
 
-    public static CompiledField[] create(final List<Field> fields,
-                                         final FieldIndex fieldIndex,
-                                         final Map<String, String> paramMap) {
+    public static CompiledFields create(final List<Field> fields,
+                                        final Map<String, String> paramMap) {
+        return create(fields, new FieldIndex(), paramMap);
+    }
+
+    public static CompiledFields create(final List<Field> fields,
+                                        final FieldIndex fieldIndex,
+                                        final Map<String, String> paramMap) {
+        final ValueReferenceIndex valueReferenceIndex = new ValueReferenceIndex();
         if (fields == null) {
-            return new CompiledField[0];
+            return new CompiledFields(new CompiledField[0], fieldIndex, valueReferenceIndex);
         }
 
         final ExpressionParser expressionParser = new ExpressionParser(new ParamFactory());
@@ -48,11 +67,17 @@ public class CompiledFields {
             if (field.getGroup() != null) {
                 groupDepth = field.getGroup();
             }
-            Expression expression = null;
+            Generator generator = Null.GEN;
+            boolean hasAggregate = false;
+            boolean requiresChildData = false;
             if (field.getExpression() != null && field.getExpression().trim().length() > 0) {
                 try {
-                    expression = expressionParser.parse(fieldIndex, field.getExpression());
+                    final Expression expression = expressionParser.parse(fieldIndex, field.getExpression());
                     expression.setStaticMappedValues(paramMap);
+                    expression.addValueReferences(valueReferenceIndex);
+                    generator = expression.createGenerator();
+                    hasAggregate = expression.hasAggregate();
+                    requiresChildData = expression.requiresChildData();
                 } catch (final ParseException e) {
                     throw new RuntimeException(e.getMessage(), e);
                 }
@@ -63,13 +88,26 @@ public class CompiledFields {
                 filter = new CompiledFilter(field.getFilter(), paramMap);
             }
 
-            final CompiledField compiledField = new CompiledField(field, groupDepth, expression, filter);
+            final CompiledField compiledField =
+                    new CompiledField(field, groupDepth, generator, hasAggregate, requiresChildData, filter);
 
             // Only include this field if it is used for display, grouping,
             // sorting.
             compiledFields[i++] = compiledField;
         }
 
+        return new CompiledFields(compiledFields, fieldIndex, valueReferenceIndex);
+    }
+
+    public CompiledField[] getCompiledFields() {
         return compiledFields;
+    }
+
+    public FieldIndex getFieldIndex() {
+        return fieldIndex;
+    }
+
+    public ValueReferenceIndex getValueReferenceIndex() {
+        return valueReferenceIndex;
     }
 }

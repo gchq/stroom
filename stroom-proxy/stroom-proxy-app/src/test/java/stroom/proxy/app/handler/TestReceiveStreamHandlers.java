@@ -111,9 +111,11 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
                                                          final boolean isForwardingEnabled,
                                                          final List<String> forwardUrlList) {
         final LogStreamConfig logRequestConfig = new LogStreamConfig();
-        final ProxyRepoConfig proxyRepoConfig = new ProxyRepoConfig()
-                .withRepoDir(FileUtil.getCanonicalPath(getCurrentTestDir()))
-                .withStoringEnabled(isStoringEnabled);
+        final ProxyRepoConfig proxyRepoConfig = ProxyRepoConfig
+                .builder()
+                .repoDir(FileUtil.getCanonicalPath(getCurrentTestDir()))
+                .storingEnabled(isStoringEnabled)
+                .build();
 
         final ProxyConfig.Builder builder = ProxyConfig.builder();
         forwardUrlList.forEach(url -> builder.addForwardDestination(ForwardHttpPostConfig.withForwardUrl(url, url)));

@@ -33,7 +33,6 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableResultBuilder;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
-import stroom.query.common.v2.CompiledField;
 import stroom.query.common.v2.CompiledFields;
 import stroom.query.common.v2.CurrentDbState;
 import stroom.query.common.v2.DeleteCommand;
@@ -48,6 +47,7 @@ import stroom.search.extraction.ExtractionStateHolder;
 import stroom.search.impl.SearchExpressionQueryBuilderFactory;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
+import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
@@ -164,21 +164,54 @@ public class AnalyticsExecutor {
     private void process(final AnalyticRuleDoc analyticRuleDoc,
                          final SearchRequest searchRequest,
                          final DocRef dataSource) {
-        final AnalyticRuleProcessSettings processSettings = analyticRuleDoc.getProcessSettings();
-        if (processSettings != null && processSettings.isEnabled()) {
-            if (AnalyticRuleType.EVENT.equals(analyticRuleDoc.getAnalyticRuleType())) {
-                processEventAnalytic(analyticRuleDoc, searchRequest, dataSource, searchRequest.getKey());
+        taskContextFactory.context(
+                "Analytic: " + analyticRuleDoc.getName() + " (" + analyticRuleDoc.getUuid() + ")",
+                parentTaskContext -> {
+                    final AnalyticRuleProcessSettings processSettings = analyticRuleDoc.getProcessSettings();
+                    if (processSettings != null && processSettings.isEnabled()) {
+                        try {
+                            if (AnalyticRuleType.EVENT.equals(analyticRuleDoc.getAnalyticRuleType())) {
+                                processEventAnalytic(
+                                        analyticRuleDoc,
+                                        searchRequest,
+                                        dataSource,
+                                        searchRequest.getKey(),
+                                        parentTaskContext);
 
-            } else if (AnalyticRuleType.AGGREGATE.equals(analyticRuleDoc.getAnalyticRuleType())) {
-                processAggregateAnalytic(analyticRuleDoc, searchRequest, dataSource, searchRequest.getKey());
-            }
-        }
+                            } else if (AnalyticRuleType.AGGREGATE.equals(analyticRuleDoc.getAnalyticRuleType())) {
+                                processAggregateAnalytic(
+                                        analyticRuleDoc,
+                                        searchRequest,
+                                        dataSource,
+                                        searchRequest.getKey(),
+                                        parentTaskContext);
+                            }
+                        } catch (final RuntimeException e) {
+                            LOGGER.error(e::getMessage, e);
+                            disableRule(analyticRuleDoc);
+                        }
+                    }
+                }).run();
+    }
+
+    private void disableRule(final AnalyticRuleDoc analyticRuleDoc) {
+        LOGGER.info("Disabling: " + analyticRuleDoc.getName());
+        final AnalyticRuleDoc disabledAnalyticRuleDoc = analyticRuleDoc
+                .copy()
+                .processSettings(
+                        analyticRuleDoc.getProcessSettings()
+                                .copy()
+                                .enabled(false)
+                                .build())
+                .build();
+        analyticRuleStore.writeDocument(disabledAnalyticRuleDoc);
     }
 
     private void processEventAnalytic(final AnalyticRuleDoc analyticRuleDoc,
                                       final SearchRequest searchRequest,
                                       final DocRef dataSource,
-                                      final QueryKey queryKey) {
+                                      final QueryKey queryKey,
+                                      final TaskContext parentTaskContext) {
         // Establish the analytic rule state.
         final String analyticUuid = analyticRuleDoc.getUuid();
         AnalyticRuleState analyticRuleState = getAnalyticRuleState(analyticUuid, null);
@@ -203,11 +236,10 @@ public class AnalyticsExecutor {
             final PipelineData pipelineData = getPipelineData(extractionPipeline);
 
             // Create field index.
-            final FieldIndex fieldIndex = new FieldIndex();
             final TableSettings tableSettings = searchRequest.getResultRequests().get(0).getMappings().get(0);
             final Map<String, String> paramMap = ParamUtil.createParamMap(searchRequest.getQuery().getParams());
-            final CompiledField[] compiledFields =
-                    CompiledFields.create(tableSettings.getFields(), fieldIndex, paramMap);
+            final CompiledFields compiledFields = CompiledFields.create(tableSettings.getFields(), paramMap);
+            final FieldIndex fieldIndex = compiledFields.getFieldIndex();
 
             // Cache the query for use across multiple streams.
             final SearchExpressionQueryCache searchExpressionQueryCache =
@@ -221,6 +253,7 @@ public class AnalyticsExecutor {
                                 meta.getFeedName(),
                                 analyticUuid,
                                 extractionPipeline.getUuid(),
+                                parentTaskContext,
                                 taskContext -> {
                                     final DetectionsWriter detectionsWriter = detectionsWriterProvider.get();
 
@@ -266,7 +299,7 @@ public class AnalyticsExecutor {
                     }
                 } catch (final RuntimeException e) {
                     LOGGER.error(e::getMessage, e);
-                    break;
+                    throw e;
                 }
             }
         }
@@ -275,7 +308,8 @@ public class AnalyticsExecutor {
     private void processAggregateAnalytic(final AnalyticRuleDoc analyticRuleDoc,
                                           final SearchRequest searchRequest,
                                           final DocRef dataSource,
-                                          final QueryKey queryKey) {
+                                          final QueryKey queryKey,
+                                          final TaskContext parentTaskContext) {
         // Get or create LMDB data store.
         final LmdbDataStore lmdbDataStore = aggregateRuleValuesConsumerFactory.create(searchRequest);
         CurrentDbState currentDbState = lmdbDataStore.sync();
@@ -323,6 +357,7 @@ public class AnalyticsExecutor {
                                 meta.getFeedName(),
                                 analyticRuleDoc.getUuid(),
                                 extractionPipeline.getUuid(),
+                                parentTaskContext,
                                 taskContext -> {
                                     // After a shutdown we may wish to resume event processing from a specific event id.
                                     Long minEventId = null;
@@ -358,7 +393,7 @@ public class AnalyticsExecutor {
                     }
                 } catch (final RuntimeException e) {
                     LOGGER.error(e::getMessage, e);
-                    break;
+                    throw e;
                 }
             }
 
@@ -377,13 +412,14 @@ public class AnalyticsExecutor {
         }
 
         // Now run aggregate rule.
-        runAggregateAnalyticRule(analyticRuleDoc, lmdbDataStore, currentDbState, analyticRuleState);
+        runAggregateAnalyticRule(analyticRuleDoc, lmdbDataStore, currentDbState, analyticRuleState, parentTaskContext);
     }
 
     private void runAggregateAnalyticRule(final AnalyticRuleDoc analyticRuleDoc,
                                           final LmdbDataStore lmdbDataStore,
                                           final CurrentDbState currentDbState,
-                                          final AnalyticRuleState analyticRuleState) {
+                                          final AnalyticRuleState analyticRuleState,
+                                          final TaskContext parentTaskContext) {
         final DocRef feedDocRef = analyticRuleDoc.getDestinationFeed();
 
         analyticErrorWritingExecutor.exec(
@@ -391,6 +427,7 @@ public class AnalyticsExecutor {
                 feedDocRef.getName(),
                 analyticRuleDoc.getUuid(),
                 null,
+                parentTaskContext,
                 taskContext -> {
                     final DetectionsWriter detectionsWriter = detectionsWriterProvider.get();
                     detectionsWriter.setFeed(feedDocRef);

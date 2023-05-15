@@ -272,10 +272,9 @@ public class Headless extends AbstractCommandLineTool {
     }
 
     private void process(final HeadlessFilter headlessFilter, final Path path) {
-        try {
-            LOGGER.info("Processing: " + FileUtil.getCanonicalPath(path));
+        LOGGER.info("Processing: " + FileUtil.getCanonicalPath(path));
 
-            final StroomZipFile stroomZipFile = new StroomZipFile(path);
+        try (final StroomZipFile stroomZipFile = new StroomZipFile(path)) {
             final List<String> baseNames = stroomZipFile.getBaseNames();
 
             // Process each base file in a consistent order
@@ -291,9 +290,6 @@ public class Headless extends AbstractCommandLineTool {
                         headlessFilter,
                         new SimpleTaskContext());
             }
-
-            // Close the zip file.
-            stroomZipFile.close();
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);
         }

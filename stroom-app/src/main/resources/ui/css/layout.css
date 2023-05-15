@@ -3,6 +3,7 @@
     --row__padding--vertical: .4rem;
     --row__gap--horizontal: .4rem;
     --row__gap--vertical: .25rem;
+    --row__height: 2rem;
     --control__padding--horizontal: .4rem;
     --control__padding--vertical: .4rem;
     --control__gap--vertical: 1rem;
@@ -12,10 +13,11 @@
 }
 
 .stroom-density-compact {
-    --row__padding--horizontal: .1rem;
-    --row__padding--vertical: .1rem;
+    --row__padding--horizontal: .2rem;
+    --row__padding--vertical: .2rem;
     --row__gap--horizontal: .4rem;
     --row__gap--vertical: .1rem;
+    --row__height: 22px;
     --control__padding--horizontal: .4rem;
     --control__padding--vertical: .4rem;
     --control__gap--vertical: .4rem;

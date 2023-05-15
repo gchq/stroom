@@ -1,6 +1,6 @@
 package stroom.analytics.impl;
 
-import stroom.query.common.v2.AnalyticStoreConfig;
+import stroom.query.common.v2.AnalyticResultStoreConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 
@@ -32,14 +32,14 @@ public class AlertConfig extends AbstractConfig implements IsStroomConfig {
     private final String additionalFieldsPrefix;
 
     @JsonPropertyDescription("Configuration for the data store used for analytics.")
-    private final AnalyticStoreConfig analyticStoreConfig;
+    private final AnalyticResultStoreConfig resultStoreConfig;
 
     public AlertConfig() {
         timezone = "UTC";
         rulesFolderList = new ArrayList<>();
         reportAllExtractedFieldsEnabled = false;
         additionalFieldsPrefix = "_";
-        analyticStoreConfig = new AnalyticStoreConfig();
+        resultStoreConfig = new AnalyticResultStoreConfig();
     }
 
     @SuppressWarnings("unused")
@@ -48,12 +48,12 @@ public class AlertConfig extends AbstractConfig implements IsStroomConfig {
                        @JsonProperty("rulesFolderList") final List<String> rulesFolderList,
                        @JsonProperty("reportAllExtractedFieldsEnabled") final boolean reportAllExtractedFieldsEnabled,
                        @JsonProperty("additionalFieldsPrefix") final String additionalFieldsPrefix,
-                       @JsonProperty("analyticStoreConfig") final AnalyticStoreConfig analyticStoreConfig) {
+                       @JsonProperty("resultStore") final AnalyticResultStoreConfig resultStoreConfig) {
         this.timezone = timezone;
         this.rulesFolderList = rulesFolderList;
         this.reportAllExtractedFieldsEnabled = reportAllExtractedFieldsEnabled;
         this.additionalFieldsPrefix = additionalFieldsPrefix;
-        this.analyticStoreConfig = analyticStoreConfig;
+        this.resultStoreConfig = resultStoreConfig;
     }
 
     @JsonProperty
@@ -76,9 +76,9 @@ public class AlertConfig extends AbstractConfig implements IsStroomConfig {
         return timezone;
     }
 
-    @JsonProperty
-    public AnalyticStoreConfig getAnalyticStoreConfig() {
-        return analyticStoreConfig;
+    @JsonProperty("resultStore")
+    public AnalyticResultStoreConfig getResultStoreConfig() {
+        return resultStoreConfig;
     }
 
     @Override
@@ -89,7 +89,7 @@ public class AlertConfig extends AbstractConfig implements IsStroomConfig {
                 .collect(Collectors.joining(", ")) + ']' +
                 ", reportAllExtractedFields='" + reportAllExtractedFieldsEnabled + '\'' +
                 ", additionalFieldsPrefix='" + additionalFieldsPrefix + '\'' +
-                ", analyticStoreConfig='" + analyticStoreConfig + '\'' +
+                ", analyticStoreConfig='" + resultStoreConfig + '\'' +
                 '}';
     }
 }

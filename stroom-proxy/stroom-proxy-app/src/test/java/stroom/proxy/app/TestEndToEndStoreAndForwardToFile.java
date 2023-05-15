@@ -9,6 +9,7 @@ import stroom.util.time.StroomDuration;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
+import com.google.common.io.Files;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -86,7 +87,6 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
     void testBasicZipEndToEnd() {
         LOGGER.info("Starting basic end-end test");
         dbRecordCountAssertion.assertRecordCounts(new DbRecordCounts(0, 0, 0, 1, 0, 0, 0, 0));
-
         mockHttpDestination.setupStroomStubs(mappingBuilder ->
                 mappingBuilder.willReturn(WireMock.ok()));
         // now the stubs are set up wait for proxy to be ready as proxy needs the
@@ -102,7 +102,6 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
 
         Assertions.assertThat(postDataHelper.getPostCount())
                 .isEqualTo(8);
-
 
         // Assert the contents of the files.
         mockFileDestination.assertFileContents(getConfig(), 12);

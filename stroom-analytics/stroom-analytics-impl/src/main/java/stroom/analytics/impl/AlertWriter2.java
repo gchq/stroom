@@ -4,16 +4,17 @@ import stroom.analytics.api.AlertManager;
 import stroom.analytics.impl.RecordConsumer.Data;
 import stroom.analytics.impl.RecordConsumer.Record;
 import stroom.analytics.shared.AnalyticRuleDoc;
-import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValuesConsumer;
+import stroom.dashboard.expression.v1.ref.StoredValues;
 import stroom.index.shared.IndexConstants;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Field;
 import stroom.query.common.v2.CompiledField;
+import stroom.query.common.v2.CompiledFields;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.util.date.DateUtil;
@@ -42,7 +43,7 @@ public class AlertWriter2 implements ValuesConsumer, ProcessLifecycleAware {
 
     private AnalyticRuleDoc analyticRuleDoc;
 
-    private CompiledField[] compiledFields;
+    private CompiledFields compiledFields;
 
     @Inject
     public AlertWriter2(final ErrorReceiverProxy errorReceiverProxy,
@@ -79,7 +80,7 @@ public class AlertWriter2 implements ValuesConsumer, ProcessLifecycleAware {
         this.analyticRuleDoc = analyticRuleDoc;
     }
 
-    public void setCompiledFields(final CompiledField[] compiledFields) {
+    public void setCompiledFields(final CompiledFields compiledFields) {
         this.compiledFields = compiledFields;
     }
 
@@ -95,7 +96,9 @@ public class AlertWriter2 implements ValuesConsumer, ProcessLifecycleAware {
     public void add(final Val[] values) {
         // Analytics generation search extraction - create records when filters match
         if (values == null || values.length == 0) {
-            log(Severity.WARNING, "No values to extract from ", null);
+            log(Severity.WARNING, "Rules error: Query " +
+                    analyticRuleDoc.getUuid() +
+                    ". No values to extract from ", null);
             return;
         }
         final CompiledFieldValue[] outputFields = extractAlert(values);
@@ -105,21 +108,24 @@ public class AlertWriter2 implements ValuesConsumer, ProcessLifecycleAware {
     }
 
     private CompiledFieldValue[] extractAlert(final Val[] vals) {
-        final CompiledFieldValue[] output = new CompiledFieldValue[compiledFields.length];
+        final CompiledField[] compiledFieldArray = compiledFields.getCompiledFields();
+        final StoredValues storedValues = compiledFields.getValueReferenceIndex().createStoredValues();
+        final CompiledFieldValue[] output = new CompiledFieldValue[compiledFieldArray.length];
         int index = 0;
 
-        for (final CompiledField compiledField : compiledFields) {
-            final Expression expression = compiledField.getExpression();
+        for (final CompiledField compiledField : compiledFieldArray) {
+            final Generator generator = compiledField.getGenerator();
 
-            if (expression != null) {
-                if (expression.hasAggregate()) {
-                    LOGGER.error("Rules error: Query contains aggregate functions.  This is not supported.");
+            if (generator != null) {
+                if (compiledField.hasAggregate()) {
+                    LOGGER.error("Rules error: Query " +
+                            analyticRuleDoc.getUuid() +
+                            " contains aggregate functions." +
+                            " This is not supported for Event Type Rules.");
                     return null;
                 } else {
-                    final Generator generator = expression.createGenerator();
-
-                    generator.set(vals);
-                    Val value = generator.eval(null);
+                    generator.set(vals, storedValues);
+                    final Val value = generator.eval(storedValues, null);
                     output[index] = new CompiledFieldValue(compiledField, value);
 
                     if (compiledField.getCompiledFilter() != null) {
@@ -148,6 +154,7 @@ public class AlertWriter2 implements ValuesConsumer, ProcessLifecycleAware {
     }
 
     private void writeRecord(final CompiledFieldValue[] fieldVals) {
+        final CompiledField[] compiledFieldArray = compiledFields.getCompiledFields();
         if (fieldVals == null || fieldVals.length == 0) {
             return;
         }
@@ -160,7 +167,7 @@ public class AlertWriter2 implements ValuesConsumer, ProcessLifecycleAware {
         // Output all the dashboard fields
         Set<String> skipFields = new HashSet<>();
         int index = 0;
-        for (final CompiledField compiledField : compiledFields) {
+        for (final CompiledField compiledField : compiledFieldArray) {
             final Field field = compiledField.getField();
             if (field.isVisible()) {
                 final String fieldName = field.getDisplayValue();

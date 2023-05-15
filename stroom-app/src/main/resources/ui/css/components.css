@@ -1696,11 +1696,8 @@ button.main-menu svg {
 }
 
 .infoTable th, .infoTable td {
-    padding-right: var(--row__padding--horizontal);
-}
-
-.infoTable th:first-child, .infoTable td:first-child {
     padding-left: var(--row__padding--horizontal);
+    padding-right: var(--row__padding--horizontal);
 }
 
 .infoTable td:first-child {

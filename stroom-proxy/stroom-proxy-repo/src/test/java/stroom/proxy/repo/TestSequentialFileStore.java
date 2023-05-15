@@ -32,15 +32,13 @@ class TestSequentialFileStore {
     @Test
     void test() throws IOException {
         final Path repoDir = FileUtil.createTempDirectory("stroom").resolve("repo1");
-        final SequentialFileStore fileStore = new SequentialFileStore(
-                () -> repoDir);
+        final SequentialFileStore fileStore = new SequentialFileStore(() -> repoDir);
 
         addFile(fileStore);
         addFile(fileStore);
 
         // Re open.
-        final SequentialFileStore reopenFileStore = new SequentialFileStore(
-                () -> repoDir);
+        final SequentialFileStore reopenFileStore = new SequentialFileStore(() -> repoDir);
 
         final FileSet fileSet1 = reopenFileStore.getStoreFileSet(1L);
         final FileSet fileSet2 = reopenFileStore.getStoreFileSet(2L);
@@ -63,8 +61,7 @@ class TestSequentialFileStore {
     @Test
     void testPerformance() {
         final Path repoDir = FileUtil.createTempDirectory("stroom").resolve("repo1");
-        final SequentialFileStore fileStore = new SequentialFileStore(
-                () -> repoDir);
+        final SequentialFileStore fileStore = new SequentialFileStore(() -> repoDir);
 
         for (int i = 0; i < 100000; i++) {
             addFile(fileStore);
@@ -84,8 +81,7 @@ class TestSequentialFileStore {
         final int count = 1_000;
         final Path repoDir = FileUtil.createTempDirectory("stroom").resolve("repo1");
         FileUtil.deleteContents(repoDir);
-        final SequentialFileStore fileStore = new SequentialFileStore(
-                () -> repoDir);
+        final SequentialFileStore fileStore = new SequentialFileStore(() -> repoDir);
 
         Metrics.measure("Add files", () -> {
             for (int i = 0; i < count; i++) {

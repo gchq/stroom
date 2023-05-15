@@ -12,8 +12,11 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class HoppingWindow implements Window {
 
+    @JsonProperty
     private final String timeField;
+    @JsonProperty
     private final String windowSize;
+    @JsonProperty
     private final String advanceSize;
 
     @JsonCreator

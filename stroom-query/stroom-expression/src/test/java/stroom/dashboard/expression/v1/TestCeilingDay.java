@@ -24,11 +24,11 @@ class TestCeilingDay extends AbstractFunctionTest<CeilingDay> {
         return Stream.of(
                 TestCase.of(
                         "long date",
-                        ValLong.create(truncated.toEpochMilli()),
+                        ValDate.create(truncated.toEpochMilli()),
                         ValLong.create(time.toEpochMilli())),
                 TestCase.of(
                         "string date",
-                        ValLong.create(truncated.toEpochMilli()),
+                        ValDate.create(truncated.toEpochMilli()),
                         ValString.create(DateUtil.createNormalDateTimeString(time.toEpochMilli())))
         );
     }

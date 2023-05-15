@@ -29,7 +29,9 @@ class Err extends AbstractStaticFunction {
 
     static final String NAME = "err";
 
+    public static final StaticValueGen GEN = new StaticValueGen(ValErr.INSTANCE);
+
     public Err(final String name) {
-        super(name, ValErr.INSTANCE);
+        super(name, GEN);
     }
 }

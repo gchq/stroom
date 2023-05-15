@@ -1,17 +1,23 @@
 package stroom.data.zip;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 public class StroomZipEntries {
 
     private final Map<String, StroomZipEntryGroup> map = new HashMap<>();
+    private final List<String> baseNames = new ArrayList<>();
 
     public StroomZipEntry addFile(final String fileName) {
         final StroomZipEntry stroomZipEntry = StroomZipEntry.createFromFileName(fileName);
-        map.computeIfAbsent(stroomZipEntry.getBaseName(), StroomZipEntryGroup::new).add(stroomZipEntry);
+        map.computeIfAbsent(stroomZipEntry.getBaseName(), k -> {
+            baseNames.add(k);
+            return new StroomZipEntryGroup(k);
+        }).add(stroomZipEntry);
         return stroomZipEntry;
     }
 
@@ -25,6 +31,10 @@ public class StroomZipEntries {
 
     public Collection<StroomZipEntryGroup> getGroups() {
         return map.values();
+    }
+
+    public List<String> getBaseNames() {
+        return baseNames;
     }
 
     public static class StroomZipEntryGroup {

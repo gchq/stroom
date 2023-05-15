@@ -17,6 +17,7 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.api.AlertProcessor;
+import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStructure;
@@ -31,7 +32,6 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.QueryKey;
-import stroom.query.common.v2.ErrorConsumer;
 import stroom.query.common.v2.ErrorConsumerImpl;
 import stroom.search.extraction.ExtractionException;
 import stroom.search.extraction.ExtractionTaskHandler;

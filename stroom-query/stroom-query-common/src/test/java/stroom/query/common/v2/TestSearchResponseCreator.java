@@ -1,9 +1,8 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.Generator;
-import stroom.dashboard.expression.v1.StaticValueFunction;
 import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValString;
+import stroom.dashboard.expression.v1.ref.StoredValues;
+import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
@@ -12,7 +11,6 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.common.v2.MapDataStore.ItemsImpl;
 import stroom.query.test.util.MockitoExtension;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.DurationTimer;
@@ -31,6 +29,7 @@ import org.mockito.stubbing.Answer;
 
 import java.time.Duration;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -278,19 +277,21 @@ class TestSearchResponseCreator {
     }
 
     private DataStore createSingleItemDataObject() {
-        final ItemsImpl items = new ItemsImpl(
-                100,
-                null,
-                null,
-                null,
-                remove ->
-                        LOGGER.info(remove.toString()));
-        final Generator[] generators = new Generator[3];
-        generators[0] = new StaticValueFunction(ValString.create("A")).createGenerator();
-        generators[1] = new StaticValueFunction(ValString.create("B")).createGenerator();
-        generators[2] = new StaticValueFunction(ValString.create("C")).createGenerator();
         final Key rootKey = Key.ROOT_KEY;
-        items.add(rootKey, generators);
+        final ValueReferenceIndex valueReferenceIndex = new ValueReferenceIndex();
+        final StoredValues storedValues = valueReferenceIndex.createStoredValues();
+
+        final Item item = new Item() {
+            @Override
+            public Key getKey() {
+                return rootKey;
+            }
+
+            @Override
+            public Val getValue(final int index, final boolean evaluateChildren) {
+                return null;
+            }
+        };
 
         final CompletionState completionState = new CompletionStateImpl();
 
@@ -303,7 +304,28 @@ class TestSearchResponseCreator {
             public void getData(final Consumer<Data> consumer) {
                 consumer.accept((key, timeFilter) -> {
                     if (key == Key.ROOT_KEY) {
-                        return items;
+                        return new Items() {
+
+                            @Override
+                            public Item get(final int index) {
+                                return item;
+                            }
+
+                            @Override
+                            public int size() {
+                                return 1;
+                            }
+
+                            @Override
+                            public Iterable<StoredValues> getStoredValueIterable() {
+                                return List.of(storedValues);
+                            }
+
+                            @Override
+                            public Iterable<Item> getIterable() {
+                                return List.of(item);
+                            }
+                        };
                     }
                     return null;
                 });
@@ -333,13 +355,13 @@ class TestSearchResponseCreator {
 
             @Override
             public Serialisers getSerialisers() {
-                return new Serialisers(new ResultStoreConfig());
+                return new Serialisers(new SearchResultStoreConfig());
             }
 
             @Override
             public KeyFactory getKeyFactory() {
                 return KeyFactoryFactory.create(
-                        new Serialisers(new ResultStoreConfig()),
+                        new Serialisers(new SearchResultStoreConfig()),
                         new BasicKeyFactoryConfig(),
                         new CompiledDepths(null, false));
             }

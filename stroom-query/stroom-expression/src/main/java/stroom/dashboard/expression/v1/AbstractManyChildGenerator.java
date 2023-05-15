@@ -16,8 +16,7 @@
 
 package stroom.dashboard.expression.v1;
 
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import stroom.dashboard.expression.v1.ref.StoredValues;
 
 import java.util.function.Supplier;
 
@@ -30,37 +29,19 @@ abstract class AbstractManyChildGenerator extends AbstractGenerator {
     }
 
     @Override
-    public abstract void set(Val[] values);
-
-    @Override
-    public abstract Val eval(final Supplier<ChildData> childDataSupplier);
-
-    @Override
-    public void merge(final Generator generator) {
-        addChildren((AbstractManyChildGenerator) generator);
-    }
-
-    private void addChildren(final AbstractManyChildGenerator generator) {
-        for (int i = 0; i < childGenerators.length; i++) {
-            childGenerators[i].merge(generator.childGenerators[i]);
+    public final void set(final Val[] values, final StoredValues storedValues) {
+        for (final Generator generator : childGenerators) {
+            generator.set(values, storedValues);
         }
     }
 
     @Override
-    public void read(final Input input) {
-        if (childGenerators != null) {
-            for (final Generator gen : childGenerators) {
-                gen.read(input);
-            }
-        }
-    }
+    public abstract Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier);
 
     @Override
-    public void write(final Output output) {
-        if (childGenerators != null) {
-            for (final Generator gen : childGenerators) {
-                gen.write(output);
-            }
+    public final void merge(final StoredValues existingValues, final StoredValues newValues) {
+        for (final Generator childGenerator : childGenerators) {
+            childGenerator.merge(existingValues, newValues);
         }
     }
 }

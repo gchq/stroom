@@ -59,12 +59,8 @@ public class ProxyRepoConfig extends AbstractConfig implements IsProxyConfig {
                 || (repoDir != null && !repoDir.isEmpty());
     }
 
-    public ProxyRepoConfig withRepoDir(final String repoDir) {
-        return new ProxyRepoConfig(storingEnabled, repoDir);
-    }
-
-    public ProxyRepoConfig withStoringEnabled(final boolean storingEnabled) {
-        return new ProxyRepoConfig(storingEnabled, repoDir);
+    public Builder copy() {
+        return new Builder(this);
     }
 
     public static Builder builder() {
@@ -107,6 +103,11 @@ public class ProxyRepoConfig extends AbstractConfig implements IsProxyConfig {
 
 
         private Builder() {
+        }
+
+        private Builder(final ProxyRepoConfig config) {
+            this.storingEnabled = config.storingEnabled;
+            this.repoDir = config.repoDir;
         }
 
         public Builder storingEnabled(final boolean storingEnabled) {

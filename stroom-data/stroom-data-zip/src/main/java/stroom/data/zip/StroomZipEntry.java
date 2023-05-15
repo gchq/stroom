@@ -1,8 +1,11 @@
 package stroom.data.zip;
 
+import stroom.util.io.FileName;
+
 public class StroomZipEntry {
 
     private static final String SINGLE_ENTRY_ZIP_BASE_NAME = "001";
+    public static final String REPO_EXTENSION_DELIMITER = ",";
 
     public static final StroomZipEntry SINGLE_DATA_ENTRY =
             createFromBaseName(SINGLE_ENTRY_ZIP_BASE_NAME, StroomZipFileType.DATA);
@@ -22,17 +25,21 @@ public class StroomZipEntry {
     }
 
     public static StroomZipEntry createFromFileName(final String fileName) {
-        final int index = fileName.lastIndexOf(".");
-        if (index != -1) {
-            final String stem = fileName.substring(0, index);
-            final String extension = fileName.substring(index);
-            return new StroomZipEntry(stem, fileName, StroomZipFileType.fromExtension(extension));
+        final FileName fn = FileName.parse(fileName);
+        if (fileName.endsWith(".")) {
+            // We can't cope with zip entries that end with `.` as we are splitting base name and extension.
+            throw new RuntimeException("Zip entries ending with '.' are not supported");
         }
-        return new StroomZipEntry(fileName, fileName, StroomZipFileType.DATA);
+        if (fn.getExtension().contains(REPO_EXTENSION_DELIMITER)) {
+            // We can't cope with zip entries that have extensions that contain `,` as we delimit extensions in the DB.
+            throw new RuntimeException("Zip entries with extensions containing ',' are not supported");
+        }
+        final StroomZipFileType stroomZipFileType = StroomZipFileType.fromExtension(fn.getExtension());
+        return new StroomZipEntry(fn.getBaseName(), fn.getFullName(), stroomZipFileType);
     }
 
-    public static StroomZipEntry createFromBaseName(final String stem, final StroomZipFileType stroomZipFileType) {
-        return new StroomZipEntry(stem, stem + stroomZipFileType.getExtension(), stroomZipFileType);
+    public static StroomZipEntry createFromBaseName(final String baseName, final StroomZipFileType stroomZipFileType) {
+        return new StroomZipEntry(baseName, baseName + stroomZipFileType.getDotExtension(), stroomZipFileType);
     }
 
     public String getBaseName() {

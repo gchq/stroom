@@ -27,10 +27,11 @@ class AnalyticErrorWritingExecutor {
               final String errorFeedName,
               final String analyticUuid,
               final String pipelineUuid,
+              final TaskContext parentTaskContext,
               final Consumer<TaskContext> taskContextConsumer) {
 
         pipelineScopeRunnable.scopeRunnable(() -> {
-            taskContextFactory.context(taskName, taskContext -> {
+            taskContextFactory.childContext(parentTaskContext, taskName, taskContext -> {
                 final AnalyticErrorWriter analyticErrorWriter = analyticErrorWriterProvider.get();
                 analyticErrorWriter.exec(
                         errorFeedName,

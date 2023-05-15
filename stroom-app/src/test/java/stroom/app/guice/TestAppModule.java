@@ -8,6 +8,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import com.google.inject.AbstractModule;
+import io.dropwizard.setup.Environment;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -48,8 +49,10 @@ class TestAppModule extends AbstractCoreIntegrationTest {
     @NotNull
     private BootStrapModule getBootStrapModule() {
         final Config config = new Config(new AppConfig());
-        final BootStrapModule bootStrapModule = new BootStrapModule(config, Path.of("DUMMY"));
-        return bootStrapModule;
+        return new BootStrapModule(
+                config,
+                new Environment("Test Environment"),
+                Path.of("DUMMY"));
     }
 
     @NotNull

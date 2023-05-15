@@ -67,7 +67,6 @@ public abstract class AbstractField implements HasDisplayValue {
         this.conditions = conditions;
     }
 
-    @JsonIgnore
     public abstract FieldType getFieldType();
 
     public String getName() {

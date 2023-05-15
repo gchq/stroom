@@ -16,6 +16,8 @@
 
 package stroom.dashboard.expression.v1;
 
+import stroom.dashboard.expression.v1.ref.StoredValues;
+
 import java.text.ParseException;
 
 @FunctionDef(
@@ -80,26 +82,24 @@ public class Top extends AbstractSelectorFunction {
         }
 
         @Override
-        Val select(final ChildData childData) {
-            return childData.top(delimiter, limit);
+        Val select(final Generator childGenerator,
+                   final ChildData childData) {
+            final Iterable<StoredValues> values = childData.top(limit);
+            if (values == null) {
+                return null;
+            }
+
+            final StringBuilder sb = new StringBuilder();
+            for (final StoredValues storedValues : values) {
+                final Val val = childGenerator.eval(storedValues, () -> childData);
+                if (val.type().isValue()) {
+                    if (sb.length() > 0) {
+                        sb.append(delimiter);
+                    }
+                    sb.append(val);
+                }
+            }
+            return ValString.create(sb.toString());
         }
-//
-//        public Val select(final Selection<Val> selection) {
-//            final StringBuilder sb = new StringBuilder();
-//            for (int i = 0; i < limit && i < selection.size(); i++) {
-//                final Val val = selection.get(i);
-//                if (val.type().isValue()) {
-//                    if (sb.length() > 0) {
-//                        sb.append(delimiter);
-//                    }
-//                    sb.append(val);
-//                }
-//            }
-//            return ValString.create(sb.toString());
-//        }
-//
-//        public int getLimit() {
-//            return limit;
-//        }
     }
 }

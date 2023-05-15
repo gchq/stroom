@@ -29,7 +29,9 @@ class False extends AbstractStaticFunction {
 
     static final String NAME = "false";
 
+    public static final StaticValueGen GEN = new StaticValueGen(ValBoolean.FALSE);
+
     public False(final String name) {
-        super(name, ValBoolean.FALSE);
+        super(name, GEN);
     }
 }

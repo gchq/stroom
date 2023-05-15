@@ -172,14 +172,13 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .addFields(Field.builder()
                         .id("EventTime")
                         .name("EventTime")
-                        .group(0)
                         .expression(ParamSubstituteUtil.makeParam("EventTime"))
                         .format(Format.DATE_TIME)
                         .build())
                 .build();
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final AbstractResultStoreConfig resultStoreConfig = new AnalyticStoreConfig();
+        final AbstractResultStoreConfig resultStoreConfig = new AnalyticResultStoreConfig();
         final DataStoreSettings dataStoreSettings = DataStoreSettings.createAnalyticStoreSettings("test");
         LmdbDataStore dataStore = (LmdbDataStore)
                 create(
@@ -270,5 +269,10 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
     @Test
     void sortedCountedTextTest3() {
         super.sortedCountedTextTest3();
+    }
+
+    @Test
+    void firstLastSelectorTest() {
+        super.firstLastSelectorTest();
     }
 }

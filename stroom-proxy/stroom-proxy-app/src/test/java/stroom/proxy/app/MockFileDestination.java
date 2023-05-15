@@ -10,12 +10,12 @@ import stroom.proxy.repo.store.FileSet;
 import stroom.proxy.repo.store.SequentialFileStore;
 import stroom.test.common.TestUtil;
 import stroom.util.NullSafe;
+import stroom.util.io.FileName;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LogUtil;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
-import org.apache.commons.io.FilenameUtils;
 import org.assertj.core.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,7 +101,8 @@ public class MockFileDestination {
                 .map(ForwardFileConfig.class::cast)
                 .flatMap(forwardFileConfig -> {
                     final Path forwardDir = pathCreator.toAppPath(forwardFileConfig.getPath());
-                    final SequentialFileStore sequentialFileStore = new SequentialFileStore(() -> forwardDir);
+                    final SequentialFileStore sequentialFileStore =
+                            new SequentialFileStore(() -> forwardDir);
                     int id = 1;
                     final List<ForwardFileItem> forwardFileItems = new ArrayList<>();
                     while (true) {
@@ -123,17 +124,15 @@ public class MockFileDestination {
                                     final ZipArchiveEntry entry = entries.nextElement();
                                     if (!entry.isDirectory()) {
                                         final String zipEntryName = entry.getName();
-                                        final String zipEntryBaseName = zipEntryName.substring(
-                                                0, zipEntryName.indexOf('.'));
-                                        final String zipEntryExt = FilenameUtils.getExtension(zipEntryName);
+                                        final FileName fileName = FileName.parse(zipEntryName);
                                         final StroomZipFileType zipEntryType =
-                                                StroomZipFileType.fromExtension("." + zipEntryExt);
+                                                StroomZipFileType.fromExtension(fileName.getExtension());
                                         final String zipEntryContent = new String(
                                                 zipFile.getInputStream(entry).readAllBytes(),
                                                 StandardCharsets.UTF_8);
                                         zipItems.add(new ZipItem(
                                                 zipEntryType,
-                                                zipEntryBaseName,
+                                                fileName.getBaseName(),
                                                 zipEntryContent));
                                     }
                                 }
@@ -215,7 +214,7 @@ public class MockFileDestination {
             for (int i = 0; i < forwardFileItem.zipItems().size(); i++) {
                 final ZipItem zipItem = forwardFileItem.zipItems().get(i);
                 final String expectedName = expectedFiles.get(i);
-                final String actualName = zipItem.baseName() + zipItem.type().getExtension();
+                final String actualName = zipItem.baseName() + zipItem.type().getDotExtension();
                 Assertions.assertThat(actualName).isEqualTo(expectedName);
                 Assertions.assertThat(zipItem.content().length()).isGreaterThan(1);
             }

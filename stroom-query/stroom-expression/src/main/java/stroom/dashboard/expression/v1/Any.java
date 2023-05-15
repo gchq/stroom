@@ -17,6 +17,8 @@
 package stroom.dashboard.expression.v1;
 
 
+import stroom.dashboard.expression.v1.ref.StoredValues;
+
 import java.util.function.Supplier;
 
 @FunctionDef(
@@ -60,8 +62,8 @@ public class Any extends AbstractSelectorFunction {
         }
 
         @Override
-        public Val eval(final Supplier<ChildData> childDataSupplier) {
-            return childGenerator.eval(childDataSupplier);
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
+            return childGenerator.eval(storedValues, childDataSupplier);
         }
     }
 }

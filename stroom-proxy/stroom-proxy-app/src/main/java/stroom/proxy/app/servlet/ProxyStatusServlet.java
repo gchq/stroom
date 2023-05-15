@@ -2,6 +2,7 @@ package stroom.proxy.app.servlet;
 
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.IsServlet;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.Unauthenticated;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,7 +28,8 @@ public class ProxyStatusServlet extends HttpServlet implements IsServlet {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyStatusServlet.class);
 
-    private static final Set<String> PATH_SPECS = Set.of("/status");
+    private static final Set<String> PATH_SPECS = Set.of(
+            ResourcePaths.addUnauthenticatedPrefix("/status"));
 
     private final Provider<BuildInfo> buildInfoProvider;
 

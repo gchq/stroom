@@ -7,8 +7,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public final class ValSerialiser {
-
-    public static final Val[] EMPTY_VALUES = new Val[0];
     private static final Serialiser[] SERIALISERS = new Serialiser[20];
 
     static {
@@ -42,7 +40,7 @@ public final class ValSerialiser {
                 (output, value) -> output.writeString(((ValErr) value).getMessage()));
     }
 
-    static Val read(final Input input) {
+    public static Val read(final Input input) {
         final int id = input.readByte();
         final Serialiser serialiser = SERIALISERS[id];
         return serialiser.reader.apply(input);
@@ -56,7 +54,7 @@ public final class ValSerialiser {
     }
 
     public static Val[] readArray(final Input input) {
-        Val[] values = EMPTY_VALUES;
+        Val[] values = Val.empty();
 
         final int valueCount = input.readByteUnsigned();
         if (valueCount > 0) {

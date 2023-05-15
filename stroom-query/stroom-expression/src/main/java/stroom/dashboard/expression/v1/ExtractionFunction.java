@@ -59,5 +59,13 @@ abstract class ExtractionFunction extends AbstractFunction {
         return hasAggregate;
     }
 
+    @Override
+    public boolean requiresChildData() {
+        if (function != null) {
+            return function.requiresChildData();
+        }
+        return super.requiresChildData();
+    }
+
     abstract Extractor getExtractor();
 }

@@ -4,11 +4,11 @@ class LmdbKV implements LmdbQueueItem {
 
     private final CurrentDbState currentDbState;
     private final LmdbRowKey rowKey;
-    private final LmdbValue rowValue;
+    private final LmdbRowValue rowValue;
 
     public LmdbKV(final CurrentDbState currentDbState,
                   final LmdbRowKey rowKey,
-                  final LmdbValue rowValue) {
+                  final LmdbRowValue rowValue) {
         this.currentDbState = currentDbState;
         this.rowKey = rowKey;
         this.rowValue = rowValue;
@@ -22,7 +22,7 @@ class LmdbKV implements LmdbQueueItem {
         return rowKey;
     }
 
-    public LmdbValue getRowValue() {
+    public LmdbRowValue getRowValue() {
         return rowValue;
     }
 
